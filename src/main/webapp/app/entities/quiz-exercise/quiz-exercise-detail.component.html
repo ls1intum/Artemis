@@ -10,7 +10,7 @@
             jhiTranslate="arTeMiSApp.quizExercise.new.title"
             translateValues="{param: '{{quizExercise.course.title}}'}">
         </span>
-        <button type="button" class="btn btn-primary pull-right">
+        <button type="button" class="btn btn-primary pull-right active">
             <span jhiTranslate="arTeMiSApp.quizExercise.maxScore"></span>&nbsp;
             <span class="badge badge-light">{{calculateMaxExerciseScore()}}</span>
             <span class="sr-only" jhiTranslate="arTeMiSApp.quizExercise.maxScore"></span>
@@ -81,6 +81,7 @@
                                    (ngModelChange)="onDateTimeChange()"
                                    (change)="onDateTimeChange()"
                                    [minDate]="minDate"
+                                   [markDisabled]="isDateInPast"
                                    ngbDatepicker #d="ngbDatepicker">
                             <button [disabled]="!quizExercise.isPlannedToStart"
                                     class="btn btn-outline-secondary"
@@ -222,17 +223,24 @@
             </button>
         </div>
         <hr/>
-        <div class="input-group" style="width: 40%;">
-            <div class="custom-file">
-                <input id="importFileInput" type="file" accept=".json" class="custom-file-input" (change)="setImportFile($event)" placeholder="Upload file..." />
-                <label class="custom-file-label" for="importFileInput">{{importFileName}}</label>
+        <div class="question-options row d-flex justify-content-start">
+            <div class="col-3">
+                <span jhiTranslate="arTeMiSApp.quizExercise.importJSON"
+                      class="colon-suffix no-flex-shrink">
+                </span>
             </div>
-            <div class="input-group-append">
-                <button
-                    class="btn btn-outline-primary"
-                    (click)="importQuiz()"
-                    jhiTranslate="entity.action.import" [ngClass]="{disabled: !importFile}">
-                </button>
+            <div class="input-group col-6">
+                <div class="custom-file">
+                    <input id="importFileInput" type="file" accept=".json" class="custom-file-input" (change)="setImportFile($event)" placeholder="Upload file..." />
+                    <label class="custom-file-label ellipsis" for="importFileInput">{{importFileName}}</label>
+                </div>
+                <div class="input-group-append">
+                    <button
+                        class="btn btn-outline-primary"
+                        (click)="importQuiz()"
+                        jhiTranslate="entity.action.import" [ngClass]="{disabled: !importFile}">
+                    </button>
+                </div>
             </div>
         </div>
     </div>

@@ -14,7 +14,7 @@ import { MultipleChoiceQuestion } from '../../entities/multiple-choice-question'
 import { DragAndDropQuestion } from '../../entities/drag-and-drop-question';
 import { AnswerOption } from '../../entities/answer-option';
 import { Option, Duration } from './quiz-exercise-interfaces';
-import { NgbDateStruct, NgbTimeStruct } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDateStruct, NgbDate, NgbTimeStruct } from '@ng-bootstrap/ng-bootstrap';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 
@@ -98,7 +98,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
 
         /** Set minDate for DatePicker to today **/
         const today = moment();
-        this.minDate = { year: today.year(), month: today.month(), day: today.day() };
+        this.minDate = { year: today.year(), month: today.month() + 1, day: today.date() };
 
         this.paramSub = this.route.params.subscribe(params => {
             /** Query the courseService for the participationId given by the params */
@@ -173,6 +173,18 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         }
         return 'isVisibleBeforeStart';
     }
+
+    /**
+     * @desc Callback for datepicker to decide whether given date should be disabled
+     * All dates which are in the past (< today) are disabled
+     */
+    isDateInPast = (date: NgbDate, current: { month: number }) =>
+        current.month < moment().month() + 1 ||
+        moment()
+            .year(date.year)
+            .month(date.month - 1)
+            .date(date.day)
+            .isBefore(moment());
 
     /**
      * @function addMultipleChoiceQuestion
@@ -409,10 +421,16 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         if (!this.quizExercise) {
             return false;
         }
+        // Release date is valid if it's not null and a valid date; Precondition: isPlannedToStart is set
+        const releaseDateCondition: boolean =
+            this.quizExercise.isPlannedToStart &&
+            (this.quizExercise.releaseDate != null && moment(this.quizExercise.releaseDate).isValid());
+
         const isGenerallyValid: boolean =
             this.quizExercise.title &&
             this.quizExercise.title !== '' &&
             this.quizExercise.duration &&
+            releaseDateCondition &&
             this.quizExercise.questions &&
             !!this.quizExercise.questions.length;
         const areAllQuestionsValid = this.quizExercise.questions.every(function(question) {

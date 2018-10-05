@@ -134,7 +134,12 @@
                 "questionCorrectMapping": "Frage {{index}}: Es existiert keine korrekte Zuordnung.",
                 "questionUnsolvable": "Frage {{index}}: Es gibt Drag Items, die auf mehrere Drop Locations gleichzeitig platziert werden müssten um die Frage richtig zu beantworten.",
                 "misleadingCorrectMapping": "Frage {{index}}: Es gibt mindestens eine korrekte Zuordnung (oder Kombination an korrekten Zuordnungen), die wenn sie verwendet wird, keine korrekte Gesamtlösung mehr zulässt."
-            }
+            },
+            "scoringType": {
+                "all_or_nothing": "Alles-oder-Nichts",
+                "proportional_with_penalty": "Anteilig mit Abzügen"
+            },
+            "importJSON" : "Fragen importieren (JSON)"
         }
     }
 }

@@ -177,12 +177,15 @@
         padding: 15px 5px 5px 5px;
     }
 
-    .question-card-body {
+    .question-card-body,
+    .preview-mc-question,
+    .preview-dnd-question {
         padding: 20px;
     }
 
     .question-collapse {
         margin-top: -15px;
+        width: 3.25rem;
     }
 
     .delete-button,
@@ -379,6 +382,13 @@
         flex-direction: row;
         flex-wrap: wrap;
         justify-content: space-evenly;
+    }
+
+    .ellipsis {
+        text-overflow: ellipsis;
+        /* Required for text-overflow to do anything */
+        white-space: nowrap;
+        overflow: hidden;
     }
 }
 

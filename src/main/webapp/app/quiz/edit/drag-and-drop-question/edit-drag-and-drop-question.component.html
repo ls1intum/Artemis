@@ -7,14 +7,14 @@
             [attr.aria-controls]="'collapseQuestion' + questionIndex">
             <span class="fa fa-3x" [ngClass]="isQuestionCollapsed ? 'fa-angle-right' : 'fa-angle-down'"></span>
         </button>
-        <div class="form-group question-title col-10">
+        <div class="form-group question-title col-9 col-md-9 col-sm-9">
             <input class="form-control" [(ngModel)]="question.title" placeholder="Question Title"/>
         </div>
-        <div class="form-group col-2">
+        <div class="form-group col-2 col-md-2 col-sm-2">
             <span jhiTranslate="arTeMiSApp.question.score" class="colon-suffix"></span>
             <input class="form-control" title="score" type="number" min="0" max="9999" [(ngModel)]="question.score"/>
         </div>
-        <div class="mr-2"><h3><span class="badge badge-info align-text-top">DnD</span></h3></div>
+        <div class="col-1 col-md-1 col-sm-1"><h3><span class="badge badge-warning align-text-top">DnD</span></h3></div>
     </div>
     <div class="card-body question-card-body" [ngbCollapse]="isQuestionCollapsed" id="collapseQuestion{{questionIndex}}">
         <div class="row" *ngIf="reEvaluationInProgress">
@@ -135,7 +135,7 @@
                 </div>
                 <div class="custom-file">
                     <input id="backgroundFileInput" type="file" accept="image/*" class="custom-file-input" (change)="setBackgroundFile($event)" placeholder="Upload file..." />
-                    <label class="custom-file-label" for="backgroundFileInput">{{backgroundFileName}}</label>
+                    <label class="custom-file-label ellipsis" for="backgroundFileInput">{{backgroundFileName}}</label>
                 </div>
             </div>
             <button class="btn btn-outline-secondary btn-lg" type="button" (click)="resetBackground()" *ngIf="reEvaluationInProgress">
@@ -273,7 +273,7 @@
                 </div>
                 <div class="custom-file">
                     <input id="dragItemFileInput" type="file" accept="image/*"  class="custom-file-input" (change)="setDragItemFile($event)" placeholder="Upload file..."/>
-                    <label class="custom-file-label" for="dragItemFileInput">{{dragItemFileName}}</label>
+                    <label class="custom-file-label ellipsis" for="dragItemFileInput">{{dragItemFileName}}</label>
                 </div>
             </div>
             <ng-container *ngIf="!reEvaluationInProgress">
