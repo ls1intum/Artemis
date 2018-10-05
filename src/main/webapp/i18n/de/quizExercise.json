@@ -129,6 +129,8 @@
                 "quizTitle": "Quiz: Der Titel fehlt.",
                 "quizDuration": "Quiz: Die Dauer fehlt oder ist ungültig.",
                 "noQuestion": "Quiz: Das Quiz hat keine Fragen.",
+                "invalidStartTime": "Quiz: Die Startzeit ist nicht gültig.",
+                "startTimeInPast": "Quiz: Die Startzeit liegt in der Vergangenheit.",
                 "questionTitle": "Frage {{index}}: Der Titel fehlt.",
                 "questionCorrectAnswerOption": "Frage {{index}}: Es existiert keine korrekte Antwortmöglichkeit.",
                 "questionCorrectMapping": "Frage {{index}}: Es existiert keine korrekte Zuordnung.",

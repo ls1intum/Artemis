@@ -422,15 +422,18 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
             return false;
         }
         // Release date is valid if it's not null and a valid date; Precondition: isPlannedToStart is set
-        const releaseDateCondition: boolean =
-            this.quizExercise.isPlannedToStart &&
-            (this.quizExercise.releaseDate != null && moment(this.quizExercise.releaseDate).isValid());
+        // Release date should also not be in the past
+        const releaseDateValidAndNotInPastCondition: boolean =
+            !this.quizExercise.isPlannedToStart ||
+            (this.quizExercise.releaseDate != null &&
+                moment(this.quizExercise.releaseDate).isValid() &&
+                moment(this.quizExercise.releaseDate).isAfter(moment()));
 
         const isGenerallyValid: boolean =
             this.quizExercise.title &&
             this.quizExercise.title !== '' &&
             this.quizExercise.duration &&
-            releaseDateCondition &&
+            releaseDateValidAndNotInPastCondition &&
             this.quizExercise.questions &&
             !!this.quizExercise.questions.length;
         const areAllQuestionsValid = this.quizExercise.questions.every(function(question) {
@@ -491,6 +494,15 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                     translateKey: 'arTeMiSApp.quizExercise.invalidReasons.invalidStartTime',
                     translateValues: {}
                 });
+            }
+            // Release Date valid but lies in the past
+            if (this.quizExercise.releaseDate && moment(this.quizExercise.releaseDate).isValid()) {
+                if (moment(this.quizExercise.releaseDate).isBefore(moment())) {
+                    reasons.push({
+                        translateKey: 'arTeMiSApp.quizExercise.invalidReasons.startTimeInPast',
+                        translateValues: {}
+                    });
+                }
             }
         }
         this.quizExercise.questions.forEach(function(question: Question, index: number) {
