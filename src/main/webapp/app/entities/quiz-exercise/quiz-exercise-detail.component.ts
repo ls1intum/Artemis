@@ -271,7 +271,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      *       Populates list of quiz exercises for the selected course
      */
     onCourseSelect(): void {
-        this.allExistingQuestions = [];
+        this.allExistingQuestions = this.existingQuestions = [];
         if (this.selectedCourseId == null) {
             return;
         }
