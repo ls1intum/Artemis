@@ -261,6 +261,8 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
             });
         }
         this.showExistingQuestions = !this.showExistingQuestions;
+        this.selectedCourseId = null;
+        this.allExistingQuestions = this.existingQuestions = [];
     }
 
     /**
@@ -350,6 +352,8 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         }
         this.addQuestions(questions);
         this.showExistingQuestions = !this.showExistingQuestions;
+        this.selectedCourseId = null;
+        this.allExistingQuestions = this.existingQuestions = [];
     }
 
     /**

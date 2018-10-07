@@ -53,6 +53,8 @@
             "minutesShort": "min",
             "secondsShort": "s",
             "questions": "Questions",
+            "noQuestionsFound": "No questions in Course found",
+            "noMatchingQuestionsFound": "No questions in the Course match the selected criteria",
             "multipleChoiceQuestion": "Multiple-Choice Question",
             "dragAndDropQuestion": "Drag-And-Drop Question",
             "addMultipleChoiceQuestion": "Add Multiple-Choice Question",
