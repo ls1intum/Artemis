@@ -576,8 +576,8 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         const fileReader = new FileReader();
         fileReader.onload = () => {
             try {
-                // Read the file and get list of questions from the file,
-                const questions = JSON.parse(fileReader.result) as Question[];
+                // Read the file and get list of questions from the file
+                const questions = JSON.parse(fileReader.result as string) as Question[];
                 this.addQuestions(questions);
                 // Clearing html elements,
                 this.importFile = null;
