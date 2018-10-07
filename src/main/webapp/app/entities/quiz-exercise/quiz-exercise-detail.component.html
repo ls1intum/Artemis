@@ -344,7 +344,7 @@
                 </tbody>
             </table>
         </div>
-        <div *ngIf="existingQuestions.length === 0 && selectedCourseId != null"
+        <div *ngIf="allExistingQuestions.length !== 0 && existingQuestions.length === 0 && selectedCourseId != null"
              jhiTranslate="arTeMiSApp.quizExercise.noMatchingQuestionsFound"
              class="ml-3">
         </div>
