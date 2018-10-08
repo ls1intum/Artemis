@@ -8,8 +8,7 @@ import { JhiWebsocketService } from '../../core';
 import { EditorComponent } from '../editor.component';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import 'brace/theme/dreamweaver';
-
-declare let ace: any;
+import * as ace from 'ace-builds';
 
 @Component({
     selector: 'jhi-editor-ace',
@@ -59,6 +58,7 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
      * @desc Sets the theme and other editor options
      */
     ngAfterViewInit(): void {
+        console.log('ACE', ace);
         ace.require('ace/ext/language_tools');
         this.editor.setTheme('dreamweaver');
         this.editor.getEditor().setOptions({
