@@ -97,7 +97,7 @@ public class BitbucketService implements VersionControlService {
     }
 
     @Override
-    public void addBambooService(String vcsTopLevelIdentifier, String vcsLowerLevelIdentifier, String bambooUrl, String buildKey, String bambooUsername, String bambooPassword) {
+    public void addBambooService(String projectKey, String repositorySlug, String bambooUrl, String buildKey, String bambooUsername, String bambooPassword) {
         // NOT NEEDED
     }
 
@@ -582,22 +582,18 @@ public class BitbucketService implements VersionControlService {
     }
 
     @Override
-    public void grantInstructorPermission(String groupName, String topLevelEntity, String parentEntity) {
-        grantGroupPermissionToProject(topLevelEntity, groupName, "PROJECT_ADMIN");
+    public void grantProjectPermissions(String projectKey, String instructorGroupName, String tutorGroupName) {
+        grantGroupPermissionToProject(projectKey, instructorGroupName, "PROJECT_ADMIN"); // instructors get administrative permissions
+        grantGroupPermissionToProject(projectKey, tutorGroupName, "PROJECT_WRITE"); // tutors get write-permissions
     }
 
     @Override
-    public void grantTutorPermission(String groupName, String topLevelEntity, String parentEntity) {
-        grantGroupPermissionToProject(topLevelEntity, groupName, "PROJECT_WRITE");
-    }
-
-    @Override
-    public String getTopLevelIdentifier(URL repositoryUrl) {
+    public String getProjectName(URL repositoryUrl) {
         return getProjectKeyFromUrl(repositoryUrl);
     }
 
     @Override
-    public String getLowerLevelIdentifier(URL repositoryUrl) {
+    public String getRepositoryName(URL repositoryUrl) {
         return getRepositorySlugFromUrl(repositoryUrl);
     }
 

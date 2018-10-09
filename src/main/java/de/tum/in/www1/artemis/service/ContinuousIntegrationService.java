@@ -34,20 +34,13 @@ public interface ContinuousIntegrationService {
     public void copyBuildPlanFromTemplate(String buildplanName, String projectName, String templateBuildPlanName, String templateProjectName);
 
     /**
-     * Grants instructor permissions for the given groupname on a project.
+     * Grants permissions for the instructors/tutors on a project.
      *
-     * @param groupName The group name that should be granted the permissions
-     * @param projectName The name of the project to which the permission should be granted
+     * @param projectKey The key of the project
+     * @param instructorGroupName The name of the group that contains the instructors
+     * @param tutorGroupName The name of the group that contains the tutors
      */
-    public void grantInstructorPermission(String groupName, String projectName);
-
-    /**
-     * Grants tutor permissions for the given groupname on a project.
-     *
-     * @param groupName The group name that should be granted the permissions
-     * @param projectName The name of the project to which the permission should be granted
-     */
-    public void grantTutorPermission(String groupName, String projectName);
+    public void grantProjectPermissions(String projectKey, String instructorGroupName, String tutorGroupName);
 
     /**
      * Creates the base build plan for the given programming exercise

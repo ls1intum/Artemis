@@ -18,13 +18,13 @@ public interface ContinuousIntegrationUpdateService {
     /**
      * Updates the configured repository for a given plan to the given CI Server repository (and do other related stuff).
      *
-     * @param topLevelIdentifier      The top level identifier of the plan (project/view), e.g. 'EIST16W1'.
-     * @param lowerLevelIdentifier    The lower level identifier of the plan, which is usually the name, e.g. 'ga56hur'.
+     * @param projectKey              The key of the project, e.g. 'EIST16W1'.
+     * @param planKey                 The key of the plan, which is usually the name, e.g. 'ga56hur'.
      * @param ciRepositoryName        The name of the configured repository in the CI plan.
-     * @param vcsTopLevelIdentifier   The top level identifier of the repository.
-     * @param vcsLowerLevelIdentifier The lower level identifier of the repository.
+     * @param repoProjectKey          The key of the project that contains the repository.
+     * @param repoName                The lower level identifier of the repository.
      */
-    public String updatePlanRepository(String topLevelIdentifier, String lowerLevelIdentifier, String ciRepositoryName, String vcsTopLevelIdentifier, String vcsLowerLevelIdentifier);
+    public String updatePlanRepository(String projectKey, String planKey, String ciRepositoryName, String repoProjectKey, String repoName);
 
     /**
      * Triggers an build (if needed)

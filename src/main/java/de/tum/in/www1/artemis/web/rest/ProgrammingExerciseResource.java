@@ -140,7 +140,6 @@ public class ProgrammingExerciseResource {
         } catch (Exception e) {
             log.error("Error while setting up programming exercise", e);
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "internalServerError", "Internal server error")).body(null);
-
         }
 
         ResponseEntity<ProgrammingExercise> errorResponse = checkProgrammingExerciseForError(programmingExercise);

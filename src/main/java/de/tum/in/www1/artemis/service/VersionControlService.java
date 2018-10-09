@@ -26,14 +26,14 @@ public interface VersionControlService {
     /**
      * Add a Bamboo-Service on the VCS-Server
      *
-     * @param vcsTopLevelIdentifier   The project key/namespace
-     * @param vcsLowerLevelIdentifier The repository slug/project name
+     * @param projectKey              The project key
+     * @param repositorySlug          The repository slug
      * @param bambooUrl               The base URL of the Bamboo-Server
      * @param buildKey                The buildKey (including Project and Build Plan)
      * @param bambooUsername          The Bamboo Username
      * @param bambooPassword          The Bamboo Password
      */
-    public void addBambooService(String vcsTopLevelIdentifier, String vcsLowerLevelIdentifier, String bambooUrl, String buildKey, String bambooUsername, String bambooPassword);
+    public void addBambooService(String projectKey, String repositorySlug, String bambooUrl, String buildKey, String bambooUsername, String bambooPassword);
 
     public void deleteRepository(URL repositoryUrl);
 
@@ -57,57 +57,48 @@ public interface VersionControlService {
     public String getLastCommitHash(Object requestBody) throws Exception;
 
     /**
-     * Creates a Top Level Entity (new project/namespace).
+     * Creates a project on the VCS.
      *
-     * @param projectName TODO
-     * @param projectKey TODO
-     * @throws Exception if the top level entity could not be created
+     * @param projectName The name of the new project
+     * @param projectKey The key/short name of tne new project
+     * @throws Exception if the project could not be created
      */
     public void createProject(String projectName, String projectKey) throws Exception;
 
 
     /**
-     * Creates a Lower Level Entity (new repository/project).
+     * Creates a repository on the VCS.
      *
-     * @param entityName The name of the new lower level entity
-     * @param topLevelEntity name of the top level entity that contains the newly created entity
-     * @param parentEntity name of parent entity (for sub-groups in Gitlab), null if not applicable
-     * @throws Exception if the lower level entity could not be created
+     * @param repoName The name of repository
+     * @param projectKey The key of the project that contains the repository (must exist)
+     * @param parentProjectKey The key of parent project (for sub-groups in Gitlab), null if not applicable
+     * @throws Exception if the repository could not be created
      */
-    public void createRepository(String entityName, String topLevelEntity, String parentEntity) throws Exception;
+    public void createRepository(String repoName, String projectKey, String parentProjectKey) throws Exception;
 
     /**
-     * Grants instructor permissions for the given groupname on a project/group.
+     * Grants permissions for the instructors/tutors on a project.
      *
-     * @param groupName The groupname that should be granted the permissions
-     * @param topLevelEntity The top level entity for which the permission should be granted
-     * @param parentEntity name of parent entity (for sub-groups in Gitlab), null if not applicable
+     * @param projectKey The key of the project
+     * @param instructorGroupName The name of the group that contains the instructors
+     * @param tutorGroupName The name of the group that contains the tutors
      */
-    public void grantInstructorPermission(String groupName, String topLevelEntity, String parentEntity);
+    public void grantProjectPermissions(String projectKey, String instructorGroupName, String tutorGroupName);
 
     /**
-     * Grants tutor permissions for the given groupname on a project/group.
-     *
-     * @param groupName The groupname that should be granted the permissions
-     * @param topLevelEntity The top level entity for which the permission should be granted
-     * @param parentEntity name of parent entity (for sub-groups in Gitlab), null if not applicable
-     */
-    public void grantTutorPermission(String groupName, String topLevelEntity, String parentEntity);
-
-    /**
-     * Get the top level identifier of a repository (project/namespace)
+     * Gets the project name of a given repository url
      *
      * @param repositoryUrl The repository url
-     * @return the top level identifier
+     * @return The project name
      */
-    public String getTopLevelIdentifier(URL repositoryUrl);
+    public String getProjectName(URL repositoryUrl);
 
     /**
-     * Get the lower level identifier of a repository (repository/project)
+     * Gets the repository name of a given repository url
      *
      * @param repositoryUrl The repository url
-     * @return the lower level identifier
+     * @return The repository name
      */
-    public String getLowerLevelIdentifier(URL repositoryUrl);
+    public String getRepositoryName(URL repositoryUrl);
 
 }

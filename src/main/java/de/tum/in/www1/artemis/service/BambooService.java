@@ -269,22 +269,19 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
-    public void grantInstructorPermission(String groupName, String projectName) {
-        grantPermission(groupName, projectName, new String[]{"READ", "WRITE", "BUILD", "CLONE", "ADMINISTRATION"});
+    public void grantProjectPermissions(String projectKey, String instructorGroupName, String tutorGroupName) {
+        grantGroupPermissionToProject(projectKey, instructorGroupName, new String[]{"READ", "WRITE", "BUILD", "CLONE", "ADMINISTRATION"});
+        grantGroupPermissionToProject(projectKey, tutorGroupName, new String[]{"READ", "BUILD"});
+
     }
 
-    @Override
-    public void grantTutorPermission(String groupName, String projectName) {
-        grantPermission(groupName, projectName, new String[]{"READ", "BUILD"});
-    }
-
-    private void grantPermission(String groupName, String projectName, String[] permissions) {
+    private void grantGroupPermissionToProject(String projectKey, String groupName, String[] permissions) {
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(permissions, headers);
         RestTemplate restTemplate = new RestTemplate();
         try {
             restTemplate.exchange(
-                BAMBOO_SERVER_URL + "/rest/api/latest/permissions/projectplan/" + projectName.toUpperCase() + "/groups/" + groupName,
+                BAMBOO_SERVER_URL + "/rest/api/latest/permissions/projectplan/" + projectKey.toUpperCase() + "/groups/" + groupName,
                 HttpMethod.PUT,
                 entity,
                 Object.class);
@@ -315,8 +312,8 @@ public class BambooService implements ContinuousIntegrationService {
             getProjectKeyFromBuildPlanId(buildPlanId),
             getPlanKeyFromBuildPlanId(buildPlanId),
             ASSIGNMENT_REPO_NAME,
-            versionControlService.getTopLevelIdentifier(repositoryUrl),
-            versionControlService.getLowerLevelIdentifier(repositoryUrl)
+            versionControlService.getProjectName(repositoryUrl),
+            versionControlService.getRepositoryName(repositoryUrl)
         );
         enablePlan(getProjectKeyFromBuildPlanId(buildPlanId), getPlanKeyFromBuildPlanId(buildPlanId));
         // We need to trigger an initial update in order for Gitlab to work correctly
@@ -416,8 +413,8 @@ public class BambooService implements ContinuousIntegrationService {
         }
     }
 
-    public String updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String vcsTopLevelIdentifier, String vcsLowerLevelIdentifier) throws BambooException {
-        return continuousIntegrationUpdateService.updatePlanRepository(bambooProject, bambooPlan, bambooRepositoryName, vcsTopLevelIdentifier, vcsLowerLevelIdentifier);
+    public String updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoName) throws BambooException {
+        return continuousIntegrationUpdateService.updatePlanRepository(bambooProject, bambooPlan, bambooRepositoryName, repoProjectName, repoName);
     }
 
     /**
