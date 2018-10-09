@@ -12,7 +12,6 @@ import { FileUploadExerciseService } from './file-upload-exercise.service';
     templateUrl: './file-upload-exercise-detail.component.html'
 })
 export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
-
     fileUploadExercise: FileUploadExercise;
     private subscription: Subscription;
     private eventSubscriber: Subscription;
@@ -21,8 +20,7 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
         private eventManager: JhiEventManager,
         private fileUploadExerciseService: FileUploadExerciseService,
         private route: ActivatedRoute
-    ) {
-    }
+    ) {}
 
     ngOnInit() {
         this.subscription = this.route.params.subscribe(params => {
@@ -31,11 +29,10 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
         this.registerChangeInFileUploadExercises();
     }
 
-    load(id) {
-        this.fileUploadExerciseService.find(id)
-            .subscribe((fileUploadExerciseResponse: HttpResponse<FileUploadExercise>) => {
-                this.fileUploadExercise = fileUploadExerciseResponse.body;
-            });
+    load(id: number) {
+        this.fileUploadExerciseService.find(id).subscribe((fileUploadExerciseResponse: HttpResponse<FileUploadExercise>) => {
+            this.fileUploadExercise = fileUploadExerciseResponse.body;
+        });
     }
     previousState() {
         window.history.back();
@@ -47,9 +44,8 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     registerChangeInFileUploadExercises() {
-        this.eventSubscriber = this.eventManager.subscribe(
-            'fileUploadExerciseListModification',
-            response => this.load(this.fileUploadExercise.id)
+        this.eventSubscriber = this.eventManager.subscribe('fileUploadExerciseListModification', () =>
+            this.load(this.fileUploadExercise.id)
         );
     }
 }

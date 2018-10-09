@@ -8,20 +8,20 @@ import { TextExercise } from './text-exercise.model';
 import { TextExercisePopupService } from './text-exercise-popup.service';
 import { TextExerciseService } from './text-exercise.service';
 
+import { Subscription } from 'rxjs/Subscription';
+
 @Component({
     selector: 'jhi-text-exercise-delete-dialog',
     templateUrl: './text-exercise-delete-dialog.component.html'
 })
 export class TextExerciseDeleteDialogComponent {
-
     textExercise: TextExercise;
 
     constructor(
         private textExerciseService: TextExerciseService,
         public activeModal: NgbActiveModal,
         private eventManager: JhiEventManager
-    ) {
-    }
+    ) {}
 
     clear() {
         this.activeModal.dismiss('cancel');
@@ -43,18 +43,13 @@ export class TextExerciseDeleteDialogComponent {
     template: ''
 })
 export class TextExerciseDeletePopupComponent implements OnInit, OnDestroy {
+    routeSub: Subscription;
 
-    routeSub: any;
-
-    constructor(
-        private route: ActivatedRoute,
-        private textExercisePopupService: TextExercisePopupService
-    ) {}
+    constructor(private route: ActivatedRoute, private textExercisePopupService: TextExercisePopupService) {}
 
     ngOnInit() {
         this.routeSub = this.route.params.subscribe(params => {
-            this.textExercisePopupService
-                .open(TextExerciseDeleteDialogComponent as Component, params['id']);
+            this.textExercisePopupService.open(TextExerciseDeleteDialogComponent as Component, params['id']);
         });
     }
 

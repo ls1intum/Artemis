@@ -14,40 +14,29 @@ import {
     modelingExerciseRoute,
     ModelingExerciseService
 } from './';
-import { CourseModelingExerciseService } from '../course/course.service';
 import { SortByModule } from '../../components/pipes';
+import { FormDateTimePickerModule } from '../../shared/dateTimePicker/date-time-picker.module';
 
-const ENTITY_STATES = [
-    ...modelingExerciseRoute,
-    ...modelingExercisePopupRoute,
-];
+const ENTITY_STATES = [...modelingExerciseRoute, ...modelingExercisePopupRoute];
 
 @NgModule({
-    imports: [
-        ArTEMiSSharedModule,
-        RouterModule.forChild(ENTITY_STATES),
-        SortByModule
-    ],
+    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, FormDateTimePickerModule],
     declarations: [
         ModelingExerciseComponent,
         ModelingExerciseDetailComponent,
         ModelingExerciseDialogComponent,
         ModelingExerciseDeleteDialogComponent,
         ModelingExercisePopupComponent,
-        ModelingExerciseDeletePopupComponent,
+        ModelingExerciseDeletePopupComponent
     ],
     entryComponents: [
         ModelingExerciseComponent,
         ModelingExerciseDialogComponent,
         ModelingExercisePopupComponent,
         ModelingExerciseDeleteDialogComponent,
-        ModelingExerciseDeletePopupComponent,
+        ModelingExerciseDeletePopupComponent
     ],
-    providers: [
-        ModelingExerciseService,
-        ModelingExercisePopupService,
-        CourseModelingExerciseService,
-    ],
+    providers: [ModelingExerciseService, ModelingExercisePopupService],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArTEMiSModelingExerciseModule {}

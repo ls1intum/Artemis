@@ -12,7 +12,7 @@
             "updated": "A Quiz Exercise is updated with identifier {{ param }}",
             "deleted": "A Quiz Exercise is deleted with identifier {{ param }}",
             "delete": {
-                "question": "Are you sure you want to delete Quiz Exercise {{ id }}?"
+                "question": "Are you sure you want to delete Quiz Exercise {{ title }}?"
             },
             "edit": {
                 "title": "Edit Quiz Exercise for {{ param }}",
@@ -53,8 +53,12 @@
             "minutesShort": "min",
             "secondsShort": "s",
             "questions": "Questions",
+            "noQuestionsFound": "No questions in Course found",
+            "noMatchingQuestionsFound": "No questions in the Course match the selected criteria",
             "multipleChoiceQuestion": "Multiple-Choice Question",
             "dragAndDropQuestion": "Drag-And-Drop Question",
+            "addMultipleChoiceQuestion": "Add Multiple-Choice Question",
+            "addDragAndDropQuestion": "Add Drag-And-Drop Question",
             "addExistingQuestions": "Add Existing Questions",
             "addSelectedQuestions": "Add Selected Questions",
             "selectCourse": "Select a Course",
@@ -65,6 +69,7 @@
             "quiz": "Quiz",
             "totalPoints": "Total Points",
             "totalScore": "Result",
+            "maxScore": "Max. Score",
             "remainingTime": "Remaining Time",
             "waitingForStart": "Waiting for Start",
             "quizInstructions": {
@@ -128,12 +133,19 @@
                 "quizTitle": "Quiz: The title is missing.",
                 "quizDuration": "Quiz: The duration is missing or invalid.",
                 "noQuestion": "Quiz: The quiz has no question.",
+                "invalidStartTime": "Quiz: The Start Time is not valid.",
+                "startTimeInPast": "Quiz: The Start Time lies in the past.",
                 "questionTitle": "Question {{index}}: The title is missing.",
                 "questionCorrectAnswerOption": "Question {{index}}: No answer option is correct.",
                 "questionCorrectMapping": "Question {{index}}: No correct mapping.",
                 "questionUnsolvable": "Question {{index}}: The question cannot be answered correctly without using a drag item twice.",
                 "misleadingCorrectMapping": "Question {{index}}: You have defined at least one correct mapping (or group of correct mappings), that when used, makes it impossible to answer the question correctly."
-            }
+            },
+            "scoringType": {
+                "all_or_nothing": "All or Nothing",
+                "proportional_with_penalty": "Proportional with Penalty"
+            },
+            "importJSON" : "Import Question(s) in JSON Format"
         }
     }
 }

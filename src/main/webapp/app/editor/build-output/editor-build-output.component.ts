@@ -1,42 +1,38 @@
 import { Participation } from '../../entities/participation';
 import { JhiAlertService } from 'ng-jhipster';
 import { AfterViewInit, Component, Input, OnChanges, SimpleChanges } from '@angular/core';
-import { WindowRef } from '../../shared/websocket/window.service';
+import { WindowRef } from '../../core/websocket/window.service';
 import { RepositoryService } from '../../entities/repository/repository.service';
 import { EditorComponent } from '../editor.component';
-import { JhiWebsocketService } from '../../shared';
-import { ParticipationResultService, Result, ResultService } from '../../entities/result';
+import { JhiWebsocketService } from '../../core';
+import { Result, ResultService } from '../../entities/result';
 import * as $ from 'jquery';
 import * as interact from 'interactjs';
+import { BuildLogEntry } from '../../entities/build-log';
 
 @Component({
     selector: 'jhi-editor-build-output',
     templateUrl: './editor-build-output.component.html',
-    providers: [
-        JhiAlertService,
-        WindowRef,
-        RepositoryService,
-        ResultService,
-        ParticipationResultService
-    ]
+    providers: [JhiAlertService, WindowRef, RepositoryService, ResultService]
 })
-
 export class EditorBuildOutputComponent implements AfterViewInit, OnChanges {
-
-    buildLogs = [];
+    buildLogs: BuildLogEntry[] = [];
 
     /** Resizable sizing constants **/
     resizableMinHeight = 100;
     resizableMaxHeight = 500;
 
-    @Input() participation: Participation;
-    @Input() isBuilding: boolean;
+    @Input()
+    participation: Participation;
+    @Input()
+    isBuilding: boolean;
 
-    constructor(private parent: EditorComponent,
-                private jhiWebsocketService: JhiWebsocketService,
-                private repositoryService: RepositoryService,
-                private resultService: ResultService,
-                private participationResultService: ParticipationResultService) {}
+    constructor(
+        private parent: EditorComponent,
+        private jhiWebsocketService: JhiWebsocketService,
+        private repositoryService: RepositoryService,
+        private resultService: ResultService
+    ) {}
 
     /**
      * @function ngAfterViewInit
@@ -54,13 +50,14 @@ export class EditorBuildOutputComponent implements AfterViewInit, OnChanges {
                     min: { height: this.resizableMinHeight },
                     max: { height: this.resizableMaxHeight }
                 },
-                inertia: true,
-            }).on('resizemove', function(event) {
+                inertia: true
+            })
+            .on('resizemove', function(event) {
                 const target = event.target;
                 // Update element size
-                target.style.width  = event.rect.width + 'px';
+                target.style.width = event.rect.width + 'px';
                 target.style.height = event.rect.height + 'px';
-        });
+            });
     }
 
     /**
@@ -70,18 +67,26 @@ export class EditorBuildOutputComponent implements AfterViewInit, OnChanges {
      *          OR
      *       - Repository status was 'building' and is now done
      * @param {SimpleChanges} changes
+     *
+     * TODO: avoid this call and rather use the websocket mechanism to retrieve the latest result
+     * TODO: in any case make sure to ask the server for the latest rated result if the call cannot be avoided
+     *
      */
     ngOnChanges(changes: SimpleChanges): void {
-        if ((changes.participation && this.participation) ||
-            (changes.isBuilding && changes.isBuilding.currentValue === false && this.participation)) {
+        if (
+            (changes.participation && this.participation) ||
+            (changes.isBuilding && changes.isBuilding.currentValue === false && this.participation)
+        ) {
             if (!this.participation.results) {
-                this.participationResultService.query(
-                    this.participation.exercise.course.id,
-                    this.participation.exercise.id,
-                    this.participation.id,
-                    {showAllResults: false, ratedOnly: this.participation.exercise.type === 'quiz'})
-                    .subscribe( results => {
-                       this.toggleBuildLogs(results.body);
+                this.resultService
+                    .findResultsForParticipation(
+                        this.participation.exercise.course.id,
+                        this.participation.exercise.id,
+                        this.participation.id,
+                        { showAllResults: false, ratedOnly: this.participation.exercise.type === 'quiz' }
+                    )
+                    .subscribe(results => {
+                        this.toggleBuildLogs(results.body);
                     });
             } else {
                 this.toggleBuildLogs(this.participation.results);
@@ -94,7 +99,7 @@ export class EditorBuildOutputComponent implements AfterViewInit, OnChanges {
      * @desc Gets the buildlogs for the current participation
      */
     getBuildLogs() {
-        this.repositoryService.buildlogs(this.participation.id).subscribe( buildLogs => {
+        this.repositoryService.buildlogs(this.participation.id).subscribe(buildLogs => {
             this.buildLogs = buildLogs;
             $('.buildoutput').scrollTop($('.buildoutput')[0].scrollHeight);
         });
@@ -102,7 +107,7 @@ export class EditorBuildOutputComponent implements AfterViewInit, OnChanges {
 
     toggleBuildLogs(results: Result[]) {
         if (results && results[0]) {
-            this.resultService.details(results[0].id).subscribe( details => {
+            this.resultService.getFeedbackDetailsForResult(results[0].id).subscribe(details => {
                 if (details.body.length === 0) {
                     this.getBuildLogs();
                 } else {

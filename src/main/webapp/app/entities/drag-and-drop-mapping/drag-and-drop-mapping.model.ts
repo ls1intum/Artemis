@@ -5,7 +5,6 @@ import { DragAndDropSubmittedAnswer } from '../drag-and-drop-submitted-answer';
 import { DragAndDropQuestion } from '../drag-and-drop-question';
 
 export class DragAndDropMapping implements BaseEntity {
-
     public id: number;
     public tempID: number;
     public dragItemIndex: number;
@@ -16,6 +15,8 @@ export class DragAndDropMapping implements BaseEntity {
     public submittedAnswer: DragAndDropSubmittedAnswer;
     public question: DragAndDropQuestion;
 
-    constructor() {
+    constructor(dragItem?: DragItem, dropLocation?: DropLocation) {
+        this.dragItem = dragItem;
+        this.dropLocation = dropLocation;
     }
 }

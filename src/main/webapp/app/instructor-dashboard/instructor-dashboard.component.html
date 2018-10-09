@@ -37,7 +37,7 @@
                     replaceUrl="true"
                     queryParamsHandling="merge"
                     >
-              <i class="fa fa-download fa-fw"></i>&nbsp;<span data-translate="artemisApp.instructorDashboard.exportRepos.title">Export Repos</span>
+              <i class="fa fa-download fa-fw"></i>&nbsp;<span jhiTranslate="arTeMiSApp.instructorDashboard.exportRepos.title">Export Repos</span>
             </button>
             <button class="btn btn-primary btn-sm" (click)="refresh()">
                 <i class="fa fa-refresh fa-fw"></i>&nbsp;Refresh
@@ -97,7 +97,7 @@
                 <td>
                     <span *ngIf="result.score != null">{{result.score}}%</span>
                 </td>
-                <td>{{durationString(result.completionDate, (result.participation.initializationDate ? result.participation.initializationDate: exercise.releaseDate))}} minutes</td>
+                <td>{{durationString(result.completionDate, (result.participation.initializationDate ? result.participation.initializationDate : exercise.releaseDate))}} minutes</td>
                 <td *ngIf="exercise.type !== QUIZ">
                     <button *ngIf="exercise.type === PROGRAMMING" class="btn btn-outline-secondary btn-sm" (click)="goToRepository(result)"><i
                         class="fa fa-code-fork"></i>&nbsp;Repository

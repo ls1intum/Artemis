@@ -43,14 +43,6 @@ public class QuizExercise extends Exercise implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @Column(name = "description")
-    @JsonView(QuizView.Before.class)
-    private String description;
-
-    @Column(name = "explanation")
-    @JsonView(QuizView.After.class)
-    private String explanation;
-
     @Column(name = "randomize_question_order")
     @JsonView(QuizView.Before.class)
     private Boolean randomizeQuestionOrder;
@@ -90,32 +82,6 @@ public class QuizExercise extends Exercise implements Serializable {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonView(QuizView.During.class)
     private List<Question> questions = new ArrayList<>();
-
-    public String getDescription() {
-        return description;
-    }
-
-    public QuizExercise description(String description) {
-        this.description = description;
-        return this;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getExplanation() {
-        return explanation;
-    }
-
-    public QuizExercise explanation(String explanation) {
-        this.explanation = explanation;
-        return this;
-    }
-
-    public void setExplanation(String explanation) {
-        this.explanation = explanation;
-    }
 
     public Boolean isRandomizeQuestionOrder() {
         return randomizeQuestionOrder;
@@ -262,6 +228,7 @@ public class QuizExercise extends Exercise implements Serializable {
      * @return true if quiz has ended, false otherwise
      */
     @JsonView(QuizView.Before.class)
+    @Override
     public Boolean isEnded() {
         return isStarted() && getRemainingTime() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS <= 0;
     }
@@ -476,7 +443,7 @@ public class QuizExercise extends Exercise implements Serializable {
     public Participation findRelevantParticipation(List<Participation> participations) {
         for (Participation participation : participations) {
             if (participation.getExercise().equals(this)) {
-                // in quiz exercises we don't care about the ParticipationState
+                // in quiz exercises we don't care about the InitializationState
                 // => return the first participation we find
                 return participation;
             }
@@ -637,8 +604,6 @@ public class QuizExercise extends Exercise implements Serializable {
         return "QuizExercise{" +
             "id=" + getId() +
             ", title='" + getTitle() + "'" +
-            ", description='" + getDescription() + "'" +
-            ", explanation='" + getExplanation() + "'" +
             ", randomizeQuestionOrder='" + isRandomizeQuestionOrder() + "'" +
             ", allowedNumberOfAttempts='" + getAllowedNumberOfAttempts() + "'" +
             ", isVisibleBeforeStart='" + isIsVisibleBeforeStart() + "'" +

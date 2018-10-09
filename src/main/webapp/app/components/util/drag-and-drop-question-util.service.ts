@@ -1,9 +1,12 @@
 import { Injectable } from '@angular/core';
+import { DragAndDropQuestion } from '../../entities/drag-and-drop-question';
+import { DragAndDropMapping } from '../../entities/drag-and-drop-mapping';
+import { DropLocation } from '../../entities/drop-location';
+import { DragItem } from '../../entities/drag-item';
 
 @Injectable()
 export class DragAndDropQuestionUtil {
-
-    constructor() { }
+    constructor() {}
 
     /**
      * Get a sample solution for the given drag and drop question
@@ -12,18 +15,18 @@ export class DragAndDropQuestionUtil {
      * @param [mappings] {Array} (optional) the mappings we try to use in the sample solution (this may contain incorrect mappings - they will be filtered out)
      * @return {Array} array of mappings that would solve this question (may be empty, if question is unsolvable)
      */
-    solve(question, mappings) {
+    solve(question: DragAndDropQuestion, mappings: DragAndDropMapping[]) {
         if (!question.correctMappings) {
             return [];
         }
 
-        const sampleMappings = [];
+        const sampleMappings = new Array<DragAndDropMapping>();
         let availableDragItems = question.dragItems;
 
         // filter out dropLocations that do not need to be mapped
         let remainingDropLocations = question.dropLocations.filter(function(dropLocation) {
             return question.correctMappings.some(function(mapping) {
-                return this.isSameDropLocationOrDragItem(mapping.dropLocation, dropLocation);
+                return this.isSameDropLocation(mapping.dropLocation, dropLocation);
             }, this);
         }, this);
 
@@ -34,10 +37,10 @@ export class DragAndDropQuestionUtil {
                 if (correctMapping) {
                     sampleMappings.push(correctMapping);
                     remainingDropLocations = remainingDropLocations.filter(function(dropLocation) {
-                        return !this.isSameDropLocationOrDragItem(dropLocation, mapping.dropLocation);
+                        return !this.isSameDropLocation(dropLocation, mapping.dropLocation);
                     }, this);
                     availableDragItems = availableDragItems.filter(function(dragItem) {
-                        return !this.isSameDropLocationOrDragItem(dragItem, mapping.dragItem);
+                        return !this.isSameDragItem(dragItem, mapping.dragItem);
                     }, this);
                 }
             }, this);
@@ -62,7 +65,12 @@ export class DragAndDropQuestionUtil {
      * @param sampleMappings {Array} the mappings so far
      * @return {boolean} true, if the question was solved (solution is saved in sampleMappings), otherwise false
      */
-    solveRec(correctMappings, remainingDropLocations, availableDragItems, sampleMappings) {
+    solveRec(
+        correctMappings: DragAndDropMapping[],
+        remainingDropLocations: DropLocation[],
+        availableDragItems: DragItem[],
+        sampleMappings: DragAndDropMapping[]
+    ) {
         if (remainingDropLocations.length === 0) {
             return true;
         }
@@ -96,7 +104,7 @@ export class DragAndDropQuestionUtil {
      * @param question {object} the question to check
      * @return {boolean} true, if the condition is met, otherwise false
      */
-    validateNoMisleadingCorrectMapping(question) {
+    validateNoMisleadingCorrectMapping(question: DragAndDropQuestion) {
         if (!question.correctMappings) {
             // no correct mappings at all means there can be no misleading mappings
             return true;
@@ -115,7 +123,7 @@ export class DragAndDropQuestionUtil {
                 if (shareOneDropLocation) {
                     const allDropLocationsForDragItem1 = this.getAllDropLocationsForDragItem(question.correctMappings, dragItem1);
                     const allDropLocationsForDragItem2 = this.getAllDropLocationsForDragItem(question.correctMappings, dragItem2);
-                    if (!this.isSameSetOfDropLocationsOrDragItems(allDropLocationsForDragItem1, allDropLocationsForDragItem2)) {
+                    if (!this.isSameSetOfDropLocations(allDropLocationsForDragItem1, allDropLocationsForDragItem2)) {
                         // condition is violated for this pair of dragItems
                         return false;
                     }
@@ -134,7 +142,7 @@ export class DragAndDropQuestionUtil {
      * @param dropLocation {object} the drop location to search for
      * @return {boolean} true if they are mapped together, otherwise false
      */
-    isMappedTogether(mappings, dragItem, dropLocation) {
+    isMappedTogether(mappings: DragAndDropMapping[], dragItem: DragItem, dropLocation: DropLocation) {
         return !!this.getMapping(mappings, dragItem, dropLocation);
     }
 
@@ -146,13 +154,10 @@ export class DragAndDropQuestionUtil {
      * @param dropLocation {object} the drop location to search for
      * @return {object | null} the found mapping, or null if it doesn't exist
      */
-    getMapping(mappings, dragItem, dropLocation) {
-        return mappings.find(function(mapping) {
-            return (
-                this.isSameDropLocationOrDragItem(dropLocation, mapping.dropLocation)
-                &&
-                this.isSameDropLocationOrDragItem(dragItem, mapping.dragItem)
-            );
+    getMapping(mappings: DragAndDropMapping[], dragItem: DragItem, dropLocation: DropLocation) {
+        const that = this;
+        return mappings.find(function(mapping: DragAndDropMapping) {
+            return that.isSameDropLocation(dropLocation, mapping.dropLocation) && that.isSameDragItem(dragItem, mapping.dragItem);
         }, this);
     }
 
@@ -163,10 +168,10 @@ export class DragAndDropQuestionUtil {
      * @param dragItem {object} the drag item that the returned drop locations have to be mapped to
      * @return {Array} the resulting drop locations
      */
-    getAllDropLocationsForDragItem(mappings, dragItem) {
+    getAllDropLocationsForDragItem(mappings: DragAndDropMapping[], dragItem: DragItem): DropLocation[] {
         return mappings
             .filter(function(mapping) {
-                return this.isSameDropLocationOrDragItem(mapping.dragItem, dragItem);
+                return this.isSameDragItem(mapping.dragItem, dragItem);
             }, this)
             .map(function(mapping) {
                 return mapping.dropLocation;
@@ -180,7 +185,7 @@ export class DragAndDropQuestionUtil {
      * @param set2 {Array} another set of drag items or drop locations
      * @return {boolean} true if the sets contain the same items, otherwise false
      */
-    isSameSetOfDropLocationsOrDragItems(set1, set2) {
+    isSameSetOfDropLocations(set1: DropLocation[], set2: DropLocation[]): boolean {
         const service = this;
         if (set1.length !== set2.length) {
             // different number of elements => impossible to contain the same elements
@@ -188,28 +193,38 @@ export class DragAndDropQuestionUtil {
         }
         return (
             // for every element in set1 there has to be an identical element in set2 and vice versa
-            set1.every(function(element1) {
-                return set2.some(function(element2) {
-                    return service.isSameDropLocationOrDragItem(element1, element2);
+            set1.every(function(element1: DropLocation) {
+                return set2.some(function(element2: DropLocation) {
+                    return service.isSameDropLocation(element1, element2);
                 });
-            })
-            &&
-            set2.every(function(element2) {
-                return set1.some(function(element1) {
-                    return service.isSameDropLocationOrDragItem(element1, element2);
+            }) &&
+            set2.every(function(element2: DropLocation) {
+                return set1.some(function(element1: DropLocation) {
+                    return service.isSameDropLocation(element1, element2);
                 });
             })
         );
     }
 
     /**
-     * compare if the two objects are the same drag item or drop location
+     * compare if the two objects are drop location
      *
-     * @param a {object} a drag item or drop location
-     * @param b {object} another drag item or drop location
+     * @param a {object} a drop location
+     * @param b {object} another drop location
      * @return {boolean}
      */
-    isSameDropLocationOrDragItem(a, b) {
-        return a === b || (a && b && (a.id && b.id && a.id === b.id || a.tempID && b.tempID && a.tempID === b.tempID));
+    isSameDropLocation(a: DropLocation, b: DropLocation): boolean {
+        return a === b || (a && b && ((a.id && b.id && a.id === b.id) || (a.tempID && b.tempID && a.tempID === b.tempID)));
+    }
+
+    /**
+     * compare if the two objects are the same drag item
+     *
+     * @param a {object} a drag item
+     * @param b {object} another drag item
+     * @return {boolean}
+     */
+    isSameDragItem(a: DragItem, b: DragItem): boolean {
+        return a === b || (a && b && ((a.id && b.id && a.id === b.id) || (a.tempID && b.tempID && a.tempID === b.tempID)));
     }
 }

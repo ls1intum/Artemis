@@ -3,6 +3,7 @@ import { Result, ResultService } from './';
 import { RepositoryService } from '../repository/repository.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Feedback } from '../feedback/index';
+import { BuildLogEntry } from '../../entities/build-log';
 
 // Modal -> Result details view
 @Component({
@@ -10,18 +11,17 @@ import { Feedback } from '../feedback/index';
     templateUrl: './result-detail.component.html'
 })
 export class ResultDetailComponent implements OnInit {
-    @Input() result: Result;
+    @Input()
+    result: Result;
     isLoading: boolean;
     feedbackList: Feedback[];
-    buildLogs;
+    buildLogs: BuildLogEntry[];
 
-    constructor(public activeModal: NgbActiveModal,
-                private resultService: ResultService,
-                private repositoryService: RepositoryService) {}
+    constructor(public activeModal: NgbActiveModal, private resultService: ResultService, private repositoryService: RepositoryService) {}
 
     ngOnInit(): void {
         this.isLoading = true;
-        this.resultService.details(this.result.id).subscribe(res => {
+        this.resultService.getFeedbackDetailsForResult(this.result.id).subscribe(res => {
             this.feedbackList = res.body;
             if (!this.feedbackList || this.feedbackList.length === 0) {
                 // If we don't have received any feedback, we fetch the buid log outputs

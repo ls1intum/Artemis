@@ -1,13 +1,13 @@
 {
     "compilerOptions": {
-        "target": "es2018",
+        "target": "es6",
         "module": "es6",
         "moduleResolution": "node",
         "sourceMap": false,
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
-        "removeComments": false,
-        "noImplicitAny": false,
+        "removeComments": true,
+        "noImplicitAny": true,
         "suppressImplicitAnyIndexErrors": true,
         "skipLibCheck": true,
         "outDir": "build/www/app",
@@ -24,7 +24,8 @@
     "angularCompilerOptions": {
         "genDir": "build/aot",
         "skipMetadataEmit" : true,
-        "fullTemplateTypeCheck": true
+        "fullTemplateTypeCheck": true,
+        "preserveWhitespaces": true
     },
     "exclude": [
         "src/test"

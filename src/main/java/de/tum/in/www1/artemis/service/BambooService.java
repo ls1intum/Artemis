@@ -1,16 +1,36 @@
 package de.tum.in.www1.artemis.service;
 
-import de.tum.in.www1.artemis.domain.BuildLogEntry;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.Participation;
-import de.tum.in.www1.artemis.domain.Result;
+import com.atlassian.bamboo.specs.api.builders.BambooKey;
+import com.atlassian.bamboo.specs.api.builders.applink.ApplicationLink;
+import com.atlassian.bamboo.specs.api.builders.permission.PermissionType;
+import com.atlassian.bamboo.specs.api.builders.permission.Permissions;
+import com.atlassian.bamboo.specs.api.builders.permission.PlanPermissions;
+import com.atlassian.bamboo.specs.api.builders.plan.Job;
+import com.atlassian.bamboo.specs.api.builders.plan.Plan;
+import com.atlassian.bamboo.specs.api.builders.plan.PlanIdentifier;
+import com.atlassian.bamboo.specs.api.builders.plan.Stage;
+import com.atlassian.bamboo.specs.api.builders.plan.configuration.ConcurrentBuilds;
+import com.atlassian.bamboo.specs.api.builders.project.Project;
+import com.atlassian.bamboo.specs.api.builders.repository.VcsChangeDetection;
+import com.atlassian.bamboo.specs.api.builders.repository.VcsRepositoryIdentifier;
+import com.atlassian.bamboo.specs.builders.repository.bitbucket.server.BitbucketServerRepository;
+import com.atlassian.bamboo.specs.builders.repository.viewer.BitbucketServerRepositoryViewer;
+import com.atlassian.bamboo.specs.builders.task.CheckoutItem;
+import com.atlassian.bamboo.specs.builders.task.MavenTask;
+import com.atlassian.bamboo.specs.builders.task.ScriptTask;
+import com.atlassian.bamboo.specs.builders.task.VcsCheckoutTask;
+import com.atlassian.bamboo.specs.builders.trigger.BitbucketServerTrigger;
+import com.atlassian.bamboo.specs.model.task.ScriptTaskProperties;
+import com.atlassian.bamboo.specs.util.BambooServer;
+import com.atlassian.bamboo.specs.util.SimpleUserPasswordCredentials;
+import com.atlassian.bamboo.specs.util.UserPasswordCredentials;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,7 +53,10 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -71,7 +94,15 @@ public class BambooService implements ContinuousIntegrationService {
     @Value("${artemis.result-retrieval-delay}")
     private int RESULT_RETRIEVAL_DELAY = 10000;
 
-    private static String REPO_REFERRAL_NAME = "Assignment";
+
+    //TODO: get these values from somewhere?!?
+    private final String TEST_REPO_NAME = "Tests";
+
+    private final String ASSIGNMENT_REPO_NAME = "Assignment";
+
+    private final String SERVER_URL = "https://artemis.ase.in.tum.de";
+
+    private final String ASSIGNMENT_REPO_PATH = "assignment";
 
     private final GitService gitService;
     private final ResultRepository resultRepository;
@@ -83,6 +114,101 @@ public class BambooService implements ContinuousIntegrationService {
         this.resultRepository = resultRepository;
         this.feedbackRepository = feedbackRepository;
         this.participationRepository = participationRepository;
+    }
+
+    public void createBaseBuildPlanForExercise(ProgrammingExercise exercise) {
+        UserPasswordCredentials userPasswordCredentials = new SimpleUserPasswordCredentials(BAMBOO_USER, BAMBOO_PASSWORD);
+        BambooServer bambooServer = new BambooServer(BAMBOO_SERVER_URL.toString(), userPasswordCredentials);
+
+        //TODO: Get some of these values from the exercise object or a config object
+
+        //Bamboo build plan
+        final String planKey = "BASE";
+        final String planName = "Artemis Build Plan for Exercise XYZ";
+        final String planDescription = "Artemis BASE Build Plan for Exercise XYZ";
+
+        //Bamboo build project
+        final String projectKey = "PROJECTKEY";
+        final String projectName = "Artemis Project for Exercise XYZ";
+
+        //Bitbucket project and repos
+        final String vcsProjectKey = "PROJECTKEY";
+        final String vcsAssignmentRepositorySlug = "exercise-assignment";
+        final String vcsTestRepositorySlug = "exercise-tests";
+
+        //Permissions TODO get these values from the course
+        final String adminGroupName = "ls1instructor";  //see admin-group-name
+        final String teachingAssistantGroupName = "eist2018tutors";
+        final String instructorGroupName = "eist2018students";
+
+        final Plan plan = createPlan(planKey, planName, planDescription, projectKey, projectName, vcsProjectKey, vcsAssignmentRepositorySlug, vcsTestRepositorySlug);
+        bambooServer.publish(plan);
+
+        final PlanPermissions planPermission = setPlanPermission(projectKey, planKey, adminGroupName, instructorGroupName, teachingAssistantGroupName);
+        bambooServer.publish(planPermission);
+    }
+
+
+    private Project createProject(String name, String key) {
+        return new Project()
+            .key(key)
+            .name(name);
+    }
+
+    private Plan createPlan(String planKey, String planName, String planDescription, String projectKey, String projectName,
+                     String vcsProjectKey, String vcsAssignmentRepositorySlug, String vcsTestRepositorySlug) {
+        @SuppressWarnings("unchecked")
+        final Plan plan = new Plan(createProject(projectName, projectKey), planName, planKey)
+            .description(planDescription)
+            .pluginConfigurations(new ConcurrentBuilds().useSystemWideDefault(true))
+            .planRepositories(
+                createBuildPlanRepository(ASSIGNMENT_REPO_NAME, vcsProjectKey, vcsAssignmentRepositorySlug),
+                createBuildPlanRepository(TEST_REPO_NAME, vcsProjectKey, vcsTestRepositorySlug))
+            .stages(new Stage("Default Stage")
+                .jobs(new Job("Default Job",
+                    new BambooKey("JOB1"))
+                    .tasks(new VcsCheckoutTask()
+                            .description("Checkout Default Repository")
+                            .checkoutItems(new CheckoutItem()
+                                    .repository(new VcsRepositoryIdentifier()
+                                        .name(ASSIGNMENT_REPO_NAME))
+                                    .path(ASSIGNMENT_REPO_PATH),	//TODO: this path needs to be specified in the Maven pom.xml in the Tests Repo
+                                new CheckoutItem()
+                                    .repository(new VcsRepositoryIdentifier()
+                                        .name(TEST_REPO_NAME))),
+                        new MavenTask()
+                            .goal("clean test")
+                            .jdk("JDK 1.8")
+                            .executableLabel("Maven 3")
+                            .hasTests(true))
+                    .finalTasks(new ScriptTask()
+                        .description("Notify ArTEMiS")
+                        .interpreter(ScriptTaskProperties.Interpreter.BINSH_OR_CMDEXE)
+                        .inlineBody("curl -k -X POST " + SERVER_URL + "/api/results/${bamboo.planKey}"))))
+            .triggers(new BitbucketServerTrigger());
+        return plan;
+    }
+
+    private BitbucketServerRepository createBuildPlanRepository(String name, String vcsProjectKey, String repositorySlug) {
+        return new BitbucketServerRepository()
+            .name(name)
+            .server(new ApplicationLink()
+                .id(BITBUCKET_APPLICATION_LINK_ID))
+            .projectKey(vcsProjectKey)
+            .repositorySlug(repositorySlug)
+            .shallowClonesEnabled(true)
+            .remoteAgentCacheEnabled(false)
+            .changeDetection(new VcsChangeDetection());
+    }
+
+    private PlanPermissions setPlanPermission(String bambooProjectKey, String bambooPlanKey, String teachingAssistantGroupName, String instructorGroupName, String adminGroupName) {
+        final PlanPermissions planPermission = new PlanPermissions(new PlanIdentifier(bambooProjectKey, bambooPlanKey))
+            .permissions(new Permissions()
+                .userPermissions(BAMBOO_USER, PermissionType.EDIT, PermissionType.BUILD, PermissionType.CLONE, PermissionType.VIEW, PermissionType.ADMIN)
+                .groupPermissions(adminGroupName, PermissionType.CLONE, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW, PermissionType.ADMIN)
+                .groupPermissions(instructorGroupName, PermissionType.CLONE, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW, PermissionType.ADMIN)
+                .groupPermissions(teachingAssistantGroupName, PermissionType.BUILD, PermissionType.VIEW));
+        return planPermission;
     }
 
     public BitbucketClient getBitbucketClient() {
@@ -133,7 +259,7 @@ public class BambooService implements ContinuousIntegrationService {
         updatePlanRepository(
             getProjectKeyFromBuildPlanId(buildPlanId),
             getPlanKeyFromBuildPlanId(buildPlanId),
-            REPO_REFERRAL_NAME,
+            ASSIGNMENT_REPO_NAME,
             getProjectKeyFromUrl(repositoryUrl),
             getRepositorySlugFromUrl(repositoryUrl)
         );

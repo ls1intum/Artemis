@@ -1,29 +1,10 @@
 {
     "fluentMethods": true,
-    "relationships": [
-        {
-            "relationshipType": "one-to-one",
-            "relationshipName": "result",
-            "otherEntityName": "result",
-            "otherEntityField": "id",
-            "ownerSide": true,
-            "otherEntityRelationshipName": "submission"
-        },
-        {
-            "relationshipType": "many-to-one",
-            "relationshipName": "participation",
-            "otherEntityName": "participation",
-            "otherEntityField": "id"
-        }
-    ],
+    "relationships": [],
     "fields": [
         {
             "fieldName": "submitted",
             "fieldType": "Boolean"
-        },
-        {
-            "fieldName": "submissionDate",
-            "fieldType": "ZonedDateTime"
         },
         {
             "fieldName": "type",

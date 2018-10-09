@@ -2,27 +2,23 @@ package de.tum.in.www1.artemis;
 
 import de.tum.in.www1.artemis.config.ApplicationProperties;
 import de.tum.in.www1.artemis.config.DefaultProfileUtil;
+import de.tum.in.www1.artemis.service.AutomaticSubmissionService;
 import de.tum.in.www1.artemis.service.QuizScheduleService;
 import io.github.jhipster.config.JHipsterConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.actuate.autoconfigure.MetricFilterAutoConfiguration;
-import org.springframework.boot.actuate.autoconfigure.MetricRepositoryAutoConfiguration;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.core.env.Environment;
 
 import javax.annotation.PostConstruct;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collection;
 
-@ComponentScan
-@EnableAutoConfiguration(exclude = {MetricFilterAutoConfiguration.class, MetricRepositoryAutoConfiguration.class})
+@SpringBootApplication
 @EnableConfigurationProperties({LiquibaseProperties.class, ApplicationProperties.class})
 public class ArTEMiSApp {
 
@@ -30,10 +26,12 @@ public class ArTEMiSApp {
 
     private final Environment env;
     private final QuizScheduleService quizScheduleService;
+    private final AutomaticSubmissionService automaticSubmissionService;
 
-    public ArTEMiSApp(Environment env, QuizScheduleService quizScheduleService) {
+    public ArTEMiSApp(Environment env, QuizScheduleService quizScheduleService, AutomaticSubmissionService automaticSubmissionService) {
         this.env = env;
         this.quizScheduleService = quizScheduleService;
+        this.automaticSubmissionService = automaticSubmissionService;
     }
 
     /**
@@ -57,21 +55,28 @@ public class ArTEMiSApp {
 
         // activate Quiz Schedule Service
         quizScheduleService.startSchedule(3000);
+        // activate Automatic Submission Service
+        automaticSubmissionService.startSchedule(3000);
     }
 
     /**
      * Main method, used to run the application.
      *
      * @param args the command line arguments
-     * @throws UnknownHostException if the local host name could not be resolved into an address
      */
-    public static void main(String[] args) throws UnknownHostException {
+    public static void main(String[] args) {
         SpringApplication app = new SpringApplication(ArTEMiSApp.class);
         DefaultProfileUtil.addDefaultProfile(app);
         Environment env = app.run(args).getEnvironment();
         String protocol = "http";
         if (env.getProperty("server.ssl.key-store") != null) {
             protocol = "https";
+        }
+        String hostAddress = "localhost";
+        try {
+            hostAddress = InetAddress.getLocalHost().getHostAddress();
+        } catch (Exception e) {
+            log.warn("The host name could not be determined, using `localhost` as fallback");
         }
         log.info("\n----------------------------------------------------------\n\t" +
                 "Application '{}' is running! Access URLs:\n\t" +
@@ -82,7 +87,7 @@ public class ArTEMiSApp {
             protocol,
             env.getProperty("server.port"),
             protocol,
-            InetAddress.getLocalHost().getHostAddress(),
+            hostAddress,
             env.getProperty("server.port"),
             env.getActiveProfiles());
     }

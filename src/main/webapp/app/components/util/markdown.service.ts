@@ -1,11 +1,11 @@
 import { Injectable, SecurityContext } from '@angular/core';
 import * as showdown from 'showdown';
 import { DomSanitizer } from '@angular/platform-browser';
+import { MarkDownElement } from '../../entities/question';
 
 @Injectable()
 export class ArtemisMarkdown {
-
-    constructor(private sanitizer: DomSanitizer) { }
+    constructor(private sanitizer: DomSanitizer) {}
 
     /**
      * Parse the markdown text and apply the result to the target object's data
@@ -16,7 +16,8 @@ export class ArtemisMarkdown {
      * @param markdownText {string} the markdown text to parse
      * @param targetObject {object} the object that the result will be saved in. Fields modified are 'text', 'hint' and 'explanation'.
      */
-    parseTextHintExplanation(markdownText, targetObject) {
+    parseTextHintExplanation(markdownText: string, targetObject: MarkDownElement) {
+        // TODO: what is the proper type?
         // split markdownText into main text, hint and explanation
         const markdownTextParts = markdownText.split(/\[-e]|\[-h]/g);
         targetObject.text = markdownTextParts[0].trim();
@@ -52,7 +53,7 @@ export class ArtemisMarkdown {
      * @param sourceObject
      * @return {string}
      */
-    generateTextHintExplanation(sourceObject) {
+    generateTextHintExplanation(sourceObject: MarkDownElement) {
         return (
             sourceObject.text +
             (sourceObject.hint ? '\n\t[-h] ' + sourceObject.hint : '') +
@@ -65,8 +66,9 @@ export class ArtemisMarkdown {
      *
      * @param editor {object} the editor into which the hint markdown will be inserted
      */
-    addHintAtCursor(editor) {
-        const addedText = '\n\t[-h] Add a hint here (visible during the quiz via \'?\'-Button)';
+    addHintAtCursor(editor: any) {
+        // TODO: what is the proper type?
+        const addedText = "\n\t[-h] Add a hint here (visible during the quiz via '?'-Button)";
         editor.focus();
         editor.clearSelection();
         editor.moveCursorTo(editor.getCursorPosition().row, Number.POSITIVE_INFINITY);
@@ -81,7 +83,8 @@ export class ArtemisMarkdown {
      *
      * @param editor {object} the editor into which the explanation markdown will be inserted
      */
-    addExplanationAtCursor(editor) {
+    addExplanationAtCursor(editor: any) {
+        // TODO: what is the proper type?
         const addedText = '\n\t[-e] Add an explanation here (only visible in feedback after quiz has ended)';
         editor.focus();
         editor.clearSelection();
@@ -97,7 +100,7 @@ export class ArtemisMarkdown {
      * @param {string} markdownText the original markdown text
      * @returns {string} the resulting html as a string
      */
-    htmlForMarkdown(markdownText) {
+    htmlForMarkdown(markdownText: string) {
         const converter = new showdown.Converter({
             parseImgDimensions: true,
             headerLevelStart: 3,

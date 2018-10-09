@@ -12,7 +12,7 @@
             "updated": "Quiz aktualisiert mit ID {{ param }}",
             "deleted": "Quiz gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Quiz {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Quiz {{ title }} wirklich dauerhaft gelöscht werden?"
             },
             "edit": {
                 "title": "Quiz für {{ param }} bearbeiten",
@@ -53,6 +53,8 @@
             "minutesShort": "min",
             "secondsShort": "s",
             "questions": "Fragen",
+            "noQuestionsFound": "Keine Fragen in Kurs gefunden",
+            "noMatchingQuestionsFound": "Keine Fragen des Kurses entsprechen den Suchkriterien",
             "multipleChoiceQuestion": "Multiple-Choice Frage",
             "dragAndDropQuestion": "Drag-And-Drop Frage",
             "addExistingQuestions": "Vorhandene Fragen hinzufügen",
@@ -65,6 +67,7 @@
             "quiz": "Quiz",
             "totalPoints": "Gesamtpunktzahl",
             "totalScore": "Ergebnis",
+            "maxScore": "Max. Punkte",
             "remainingTime": "Verbleibende Zeit",
             "waitingForStart": "Warte auf Start",
             "quizInstructions": {
@@ -128,12 +131,19 @@
                 "quizTitle": "Quiz: Der Titel fehlt.",
                 "quizDuration": "Quiz: Die Dauer fehlt oder ist ungültig.",
                 "noQuestion": "Quiz: Das Quiz hat keine Fragen.",
+                "invalidStartTime": "Quiz: Die Startzeit ist nicht gültig.",
+                "startTimeInPast": "Quiz: Die Startzeit liegt in der Vergangenheit.",
                 "questionTitle": "Frage {{index}}: Der Titel fehlt.",
                 "questionCorrectAnswerOption": "Frage {{index}}: Es existiert keine korrekte Antwortmöglichkeit.",
                 "questionCorrectMapping": "Frage {{index}}: Es existiert keine korrekte Zuordnung.",
                 "questionUnsolvable": "Frage {{index}}: Es gibt Drag Items, die auf mehrere Drop Locations gleichzeitig platziert werden müssten um die Frage richtig zu beantworten.",
                 "misleadingCorrectMapping": "Frage {{index}}: Es gibt mindestens eine korrekte Zuordnung (oder Kombination an korrekten Zuordnungen), die wenn sie verwendet wird, keine korrekte Gesamtlösung mehr zulässt."
-            }
+            },
+            "scoringType": {
+                "all_or_nothing": "Alles-oder-Nichts",
+                "proportional_with_penalty": "Anteilig mit Abzügen"
+            },
+            "importJSON" : "Fragen importieren (JSON)"
         }
     }
 }

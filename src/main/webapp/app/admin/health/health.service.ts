@@ -5,7 +5,6 @@ import { SERVER_API_URL } from '../../app.constants';
 
 @Injectable()
 export class JhiHealthService {
-
     separator: string;
 
     constructor(private http: HttpClient) {
@@ -16,20 +15,20 @@ export class JhiHealthService {
         return this.http.get(SERVER_API_URL + 'management/health');
     }
 
-    transformHealthData(data): any {
-        const response = [];
+    transformHealthData(data: any): any {
+        const response: any[] = [];
         this.flattenHealthData(response, null, data);
         return response;
     }
 
-    getBaseName(name): string {
+    getBaseName(name: string): string {
         if (name) {
             const split = name.split('.');
             return split[0];
         }
     }
 
-    getSubSystemName(name): string {
+    getSubSystemName(name: string): string {
         if (name) {
             const split = name.split('.');
             split.splice(0, 1);
@@ -39,7 +38,7 @@ export class JhiHealthService {
     }
 
     /* private methods */
-    private addHealthObject(result, isLeaf, healthObject, name): any {
+    private addHealthObject(result: any, isLeaf: boolean, healthObject: any, name: string): any {
         const healthData: any = {
             name
         };
@@ -73,7 +72,7 @@ export class JhiHealthService {
         return healthData;
     }
 
-    private flattenHealthData(result, path, data): any {
+    private flattenHealthData(result: any, path: any, data: any): any {
         for (const key in data) {
             if (data.hasOwnProperty(key)) {
                 const value = data[key];
@@ -90,11 +89,11 @@ export class JhiHealthService {
         return result;
     }
 
-    private getModuleName(path, name): string {
+    private getModuleName(path: string, name: string): string {
         let result;
         if (path && name) {
             result = path + this.separator + name;
-        }  else if (path) {
+        } else if (path) {
             result = path;
         } else if (name) {
             result = name;
@@ -104,7 +103,7 @@ export class JhiHealthService {
         return result;
     }
 
-    private hasSubSystem(healthObject): boolean {
+    private hasSubSystem(healthObject: any): boolean {
         let result = false;
 
         for (const key in healthObject) {
@@ -118,7 +117,7 @@ export class JhiHealthService {
         return result;
     }
 
-    private isHealthObject(healthObject): boolean {
+    private isHealthObject(healthObject: any): boolean {
         let result = false;
 
         for (const key in healthObject) {

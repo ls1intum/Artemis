@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -180,7 +179,7 @@ public class CourseService {
     @Transactional(readOnly = true)
     public Course findOne(Long id) {
         log.debug("Request to get Course : {}", id);
-        return courseRepository.findOne(id);
+        return courseRepository.findById(id).get();
     }
 
     /**
@@ -190,7 +189,7 @@ public class CourseService {
      */
     public void delete(Long id) {
         log.debug("Request to delete Course : {}", id);
-        courseRepository.delete(id);
+        courseRepository.deleteById(id);
     }
 
     public List<String> getAllTeachingAssistantGroupNames() {

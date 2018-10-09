@@ -16,12 +16,18 @@ bootRun {
     args = []
 }
 
-task webpackBuildDev(type: YarnTask) {
+task webpackBuildDev(type: YarnTask, dependsOn: 'yarn_install') {
+    onlyIf { shouldWebpackRun() == true }
     args = ["run", "webpack:build"]
 }
 
 war {
     webAppDirName = 'build/www/'
+}
+
+task copyIntoStatic (type: Copy) {
+    from 'build/www/'
+    into 'build/resources/main/static'
 }
 
 processResources {
@@ -38,4 +44,11 @@ processResources {
 }
 
 processResources.dependsOn webpackBuildDev
-webpackBuildDev.onlyIf { project.hasProperty('webpack') }
+copyIntoStatic.dependsOn processResources
+bootJar.dependsOn copyIntoStatic
+
+yarn_install.onlyIf { shouldWebpackRun() == true }
+
+def shouldWebpackRun() {
+    file('build/www/app/main.bundle.js').exists() == false || project.hasProperty('webpack')
+}

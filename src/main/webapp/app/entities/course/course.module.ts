@@ -7,53 +7,36 @@ import {
     CourseDeleteDialogComponent,
     CourseDeletePopupComponent,
     CourseDetailComponent,
-    CourseDialogComponent,
-    CourseParticipationService,
-    CoursePopupComponent,
+    CourseExerciseService,
     coursePopupRoute,
-    CoursePopupService,
     courseRoute,
     CourseScoreCalculationComponent,
-    CourseService
+    CourseService,
+    CourseUpdateComponent
 } from './';
-import { CourseResultService, CourseScoresService } from './course.service';
-import { CourseScoreCalculationService } from './courseScoreCalculation.service';
+import { CourseScoreCalculationService } from './course-score-calculation.service';
+import { FormDateTimePickerModule } from '../../shared/dateTimePicker/date-time-picker.module';
 
-const ENTITY_STATES = [
-    ...courseRoute,
-    ...coursePopupRoute,
-];
+const ENTITY_STATES = [...courseRoute, ...coursePopupRoute];
 
 @NgModule({
-    imports: [
-        ArTEMiSSharedModule,
-        RouterModule.forChild(ENTITY_STATES)
-    ],
+    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), FormDateTimePickerModule],
     declarations: [
         CourseComponent,
         CourseDetailComponent,
-        CourseDialogComponent,
         CourseDeleteDialogComponent,
-        CoursePopupComponent,
+        CourseUpdateComponent,
         CourseDeletePopupComponent,
         CourseScoreCalculationComponent
     ],
     entryComponents: [
         CourseComponent,
-        CourseDialogComponent,
-        CoursePopupComponent,
+        CourseUpdateComponent,
         CourseDeleteDialogComponent,
         CourseDeletePopupComponent,
         CourseScoreCalculationComponent
     ],
-    providers: [
-        CourseService,
-        CoursePopupService,
-        CourseParticipationService,
-        CourseResultService,
-        CourseScoresService,
-        CourseScoreCalculationService
-    ],
+    providers: [CourseService, CourseExerciseService, CourseScoreCalculationService],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArTEMiSCourseModule {}

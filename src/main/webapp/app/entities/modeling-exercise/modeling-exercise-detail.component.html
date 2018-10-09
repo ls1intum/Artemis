@@ -16,7 +16,7 @@
         <dd>
             <span>{{modelingExercise.dueDate | date:'medium'}}</span>
         </dd>
-        <dt><span data-translate="artemisApp.exercise.maxScore">Max Score</span></dt>
+        <dt><span jhiTranslate="arTeMiSApp.exercise.maxScore">Max Score</span></dt>
         <dd>
             <span>{{modelingExercise.maxScore}}</span>
         </dd>
@@ -30,7 +30,7 @@
                 <a [routerLink]="['/course', modelingExercise.course?.id]">{{modelingExercise.course?.title}}</a>
             </div>
         </dd>
-        <dt><span jhiTranslate="arTeMiSApp.quizExercise.description">Problem Statement</span></dt>
+        <dt><span jhiTranslate="arTeMiSApp.exercise.problemStatement">Problem Statement</span></dt>
         <dd>
             <span>{{modelingExercise.problemStatement}}</span>
         </dd>

@@ -239,7 +239,32 @@ public class RepositoryResource {
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("file", filename)).build();
     }
 
+    /**
+     * GET /repository/{participationId}/pull: Pull into the participation repository
+     *
+     * @param participationId Participation ID
+     * @param request
+     * @param authentication
+     * @return
+     * @throws IOException
+     * @throws GitAPIException
+     */
+    @GetMapping(value = "/repository/{participationId}/pull", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> pullChanges(@PathVariable Long participationId, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
+        log.debug("REST request to commit Repository for Participation : {}", participationId);
+        Participation participation = participationService.findOne(participationId);
 
+        if (!userHasPermissions(participation)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+
+        if (!Optional.ofNullable(participation).isPresent()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        Repository repository = gitService.get().getOrCheckoutRepository(participation);
+
+        gitService.get().pull(repository);
+
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 
 
     /**
@@ -253,7 +278,7 @@ public class RepositoryResource {
      * @throws GitAPIException
      */
     @PostMapping(value = "/repository/{participationId}/commit", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> updateFile(@PathVariable Long participationId, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
+    public ResponseEntity<Void> commitChanges(@PathVariable Long participationId, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
         log.debug("REST request to commit Repository for Participation : {}", participationId);
         Participation participation = participationService.findOne(participationId);
 
@@ -329,6 +354,8 @@ public class RepositoryResource {
 
     private boolean userHasPermissions(Participation participation) {
         if (!authCheckService.isOwnerOfParticipation(participation)) {
+            //if the user is not the owner of the participation, the user can only see it in case he is
+            //a teaching assistant or an instructor of the course, or in case he is admin
             User user = userService.getUserWithGroupsAndAuthorities();
             Course course = participation.getExercise().getCourse();
             if (!authCheckService.isTeachingAssistantInCourse(course, user) &&

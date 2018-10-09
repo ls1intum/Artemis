@@ -6,7 +6,11 @@
 Bootstrap tweaks
 ===============================================================*/
 
-body, h1, h2, h3, h4 {
+body,
+h1,
+h2,
+h3,
+h4 {
     font-weight: 300;
 }
 
@@ -20,7 +24,7 @@ a:not(.btn):hover {
     font-weight: bold;
 }
 
-.popover{
+.popover {
     max-width: 100%;
 }
 
@@ -39,12 +43,13 @@ Generic styles
 ========================================================================== */
 
 /* Error highlight on input fields */
-.ng-valid[required], .ng-valid.required  {
-  border-left: 5px solid green;
+.ng-valid[required],
+.ng-valid.required {
+    border-left: 5px solid green;
 }
 
-.ng-invalid:not(form)  {
-  border-left: 5px solid red;
+.ng-invalid:not(form) {
+    border-left: 5px solid red;
 }
 
 /* other generic styles */
@@ -74,7 +79,7 @@ Generic styles
 
 .break {
     white-space: normal;
-    word-break:break-all;
+    word-break: break-all;
 }
 
 .readonly {
@@ -83,17 +88,18 @@ Generic styles
 }
 
 .footer {
-    border-top: 1px solid rgba(0,0,0,.125);
+    border-top: 1px solid rgba(0, 0, 0, 0.125);
 }
 
 /* ==========================================================================
 make sure browsers use the pointer cursor for anchors, even with no href
 ========================================================================== */
 a:hover {
-  cursor: pointer;
+    cursor: pointer;
 }
 
-.hand, [jhisortby] {
+.hand,
+[jhisortby] {
     cursor: pointer;
 }
 
@@ -103,7 +109,7 @@ Custom alerts for notification
 .alerts {
     .alert {
         text-overflow: ellipsis;
-        pre{
+        pre {
             background: none;
             border: none;
             font: inherit;
@@ -156,25 +162,27 @@ entity tables helpers
         }
     }
 }
-@include no-padding("left");
-@include no-padding("right");
-@include no-padding("top");
-@include no-padding("bottom");
-@include no-padding("all");
+@include no-padding('left');
+@include no-padding('right');
+@include no-padding('top');
+@include no-padding('bottom');
+@include no-padding('all');
 
 /* bootstrap 3 input-group 100% width
    http://stackoverflow.com/questions/23436430/bootstrap-3-input-group-100-width */
-.width-min { width: 1% !important; }
+.width-min {
+    width: 1% !important;
+}
 
 /* Makes toolbar not wrap on smaller screens
    http://www.sketchingwithcss.com/samplechapter/cheatsheet.html#right */
 .flex-btn-group-container {
-   display: -webkit-flex;
-   display: flex !important;
-   -webkit-flex-direction: row;
-   flex-direction: row;
-   -webkit-justify-content: flex-end;
-   justify-content: flex-end;
+    display: -webkit-flex;
+    display: flex !important;
+    -webkit-flex-direction: row;
+    flex-direction: row;
+    -webkit-justify-content: flex-end;
+    justify-content: flex-end;
 }
 
 /* ==========================================================================
@@ -202,17 +210,20 @@ entity detail page css
 /* ==========================================================================
 ui bootstrap tweaks
 ========================================================================== */
-.nav, .pagination, .carousel, .card-title a {
+.nav,
+.pagination,
+.carousel,
+.card-title a {
     cursor: pointer;
 }
 
 .datetime-picker-dropdown > li.date-picker-menu div > table .btn-default,
-.uib-datepicker-popup  > li > div.uib-datepicker > table .btn-default {
+.uib-datepicker-popup > li > div.uib-datepicker > table .btn-default {
     border: 0;
 }
 
 .datetime-picker-dropdown > li.date-picker-menu div > table:focus,
-.uib-datepicker-popup  > li > div.uib-datepicker > table:focus {
+.uib-datepicker-popup > li > div.uib-datepicker > table:focus {
     outline: none;
 }
 
@@ -221,27 +232,31 @@ ui bootstrap tweaks
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
- }
+}
 
 .card-header {
     padding: 10px 15px;
     border-bottom: 1px solid transparent;
     border-top-right-radius: 3px;
-    border-top-left-radius: 3px; }
+    border-top-left-radius: 3px;
+}
 .card-header > .dropdown .dropdown-toggle {
-    color: inherit; }
+    color: inherit;
+}
 
 .card-title {
     margin-top: 0;
     margin-bottom: 0;
     font-size: 16px;
-    color: inherit; }
+    color: inherit;
+}
 .card-title > a,
 .card-title > small,
 .card-title > .small,
 .card-title > small > a,
 .card-title > .small > a {
-    color: inherit; }
+    color: inherit;
+}
 
 .card-body {
     input {
@@ -283,7 +298,8 @@ a.result-orange:hover {
     color: orange;
 }
 
-.negative, .positive {
+.negative,
+.positive {
     padding: 2px 4px;
     border-radius: 4px;
     font-family: Menlo, Monaco, Consolas, Courier New, monospace;
@@ -328,7 +344,8 @@ pre {
     border-radius: 4px;
 }
 
-code-error, code-success {
+code-error,
+code-success {
     padding: 2px 4px;
     font-size: 90%;
     border-radius: 4px;
@@ -341,7 +358,7 @@ code-success {
     color: green;
     background-color: #f2f9f2;
     border-radius: 4px;
-    font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+    font-family: Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
 code-error {
@@ -414,7 +431,7 @@ code.password:hover {
                 color: $success;
                 &.half {
                     &:after {
-                        content: "\F00C";
+                        content: '\F00C';
                     }
                 }
                 ~ i {
@@ -425,7 +442,7 @@ code.password:hover {
                 color: $danger;
                 &.half {
                     &:after {
-                        content: "\f00d";
+                        content: '\f00d';
                     }
                 }
                 ~ i {
@@ -434,4 +451,682 @@ code.password:hover {
             }
         }
     }
+}
+
+// We want overlays to always appear over user content, so set a baseline
+// very high z-index for the overlay container, which is where we create the new
+// stacking context for all overlays.
+$cdk-z-index-overlay-container: 1000;
+$cdk-z-index-overlay: 1000;
+$cdk-z-index-overlay-backdrop: 1000;
+
+// Background color for all of the backdrops
+$cdk-overlay-dark-backdrop-background: rgba(0, 0, 0, 0.288);
+
+// Default backdrop animation is based on the Material Design swift-ease-out.
+$backdrop-animation-duration: 400ms !default;
+$backdrop-animation-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1) !default;
+
+.cdk-overlay-container,
+.cdk-global-overlay-wrapper {
+    // Disable events from being captured on the overlay container.
+    pointer-events: none;
+
+    // The container should be the size of the viewport.
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+}
+
+// The overlay-container is an invisible element which contains all individual overlays.
+.cdk-overlay-container {
+    position: fixed;
+    z-index: $cdk-z-index-overlay-container;
+
+    &:empty {
+        // Hide the element when it doesn't have any child nodes. This doesn't
+        // include overlays that have been detached, rather than disposed.
+        display: none;
+    }
+}
+
+// We use an extra wrapper element in order to use make the overlay itself a flex item.
+// This makes centering the overlay easy without running into the subpixel rendering
+// problems tied to using `transform` and without interfering with the other position
+// strategies.
+.cdk-global-overlay-wrapper {
+    display: flex;
+    position: absolute;
+    z-index: $cdk-z-index-overlay;
+}
+
+// A single overlay pane.
+.cdk-overlay-pane {
+    // Note: it's important for this one to start off `absolute`,
+    // in order for us to be able to measure it correctly.
+    position: absolute;
+    pointer-events: auto;
+    box-sizing: border-box;
+    z-index: $cdk-z-index-overlay;
+
+    // For connected-position overlays, we set `display: flex` in
+    // order to force `max-width` and `max-height` to take effect.
+    display: flex;
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.cdk-overlay-backdrop {
+    // TODO(jelbourn): reuse sidenav fullscreen mixin.
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+
+    z-index: $cdk-z-index-overlay-backdrop;
+    pointer-events: auto;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity $backdrop-animation-duration $backdrop-animation-timing-function;
+    opacity: 0;
+
+    &.cdk-overlay-backdrop-showing {
+        opacity: 1;
+
+        // In high contrast mode the rgba background will become solid so we need to fall back
+        // to making it opaque using `opacity`. Note that we can't use the `cdk-high-contrast`
+        // mixin, because we can't normalize the import path to the _a11y.scss both for the
+        // source and when this file is distributed. See #10908.
+        @media screen and (-ms-high-contrast: active) {
+            opacity: 0.6;
+        }
+    }
+}
+
+.cdk-overlay-dark-backdrop {
+    background: $cdk-overlay-dark-backdrop-background;
+}
+
+.cdk-overlay-transparent-backdrop {
+    // Note: as of Firefox 57, having the backdrop be `background: none` will prevent it from
+    // capturing the user's mouse scroll events. Since we also can't use something like
+    // `rgba(0, 0, 0, 0)`, we work around the inconsistency by not setting the background at
+    // all and using `opacity` to make the element transparent.
+    &,
+    &.cdk-overlay-backdrop-showing {
+        opacity: 0;
+    }
+}
+
+// Overlay parent element used with the connected position strategy. Used to constrain the
+// overlay element's size to fit within the viewport.
+.cdk-overlay-connected-position-bounding-box {
+    position: absolute;
+    z-index: $cdk-z-index-overlay;
+
+    // We use `display: flex` on this element exclusively for centering connected overlays.
+    // When *not* centering, a top/left/bottom/right will be set which overrides the normal
+    // flex layout.
+    display: flex;
+
+    // We use the `column` direction here to avoid some flexbox issues in Edge
+    // when using the "grow after open" options.
+    flex-direction: column;
+
+    // Add some dimensions so the element has an `innerText` which some people depend on in tests.
+    min-width: 1px;
+    min-height: 1px;
+}
+
+// Used when disabling global scrolling.
+.cdk-global-scrollblock {
+    position: fixed;
+
+    // Necessary for the content not to lose its width. Note that we're using 100%, instead of
+    // 100vw, because 100vw includes the width plus the scrollbar, whereas 100% is the width
+    // that the element had before we made it `fixed`.
+    width: 100%;
+
+    // Note: this will always add a scrollbar to whatever element it is on, which can
+    // potentially result in double scrollbars. It shouldn't be an issue, because we won't
+    // block scrolling on a page that doesn't have a scrollbar in the first place.
+    overflow-y: scroll;
+}
+
+.owl-dialog-container {
+    position: relative;
+    pointer-events: auto;
+    box-sizing: border-box;
+    display: block;
+    padding: 1.5em;
+    box-shadow: 0 11px 15px -7px rgba(0, 0, 0, 0.2), 0px 24px 38px 3px rgba(0, 0, 0, 0.14), 0px 9px 46px 8px rgba(0, 0, 0, 0.12);
+    border-radius: 2px;
+    overflow: auto;
+    background: #fff;
+    color: rgba(0, 0, 0, 0.87);
+    width: 100%;
+    height: 100%;
+    outline: none;
+}
+
+$theme-color: #3f51b5;
+
+.owl-dt-container,
+.owl-dt-container * {
+    box-sizing: border-box;
+}
+
+.owl-dt-container {
+    display: block;
+    font-size: 1rem;
+    background: #ffffff;
+    pointer-events: auto;
+    z-index: 1000;
+}
+
+.owl-dt-container-row {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+
+    &:last-child {
+        border-bottom: none;
+    }
+}
+
+.owl-dt-calendar {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.owl-dt-calendar-control {
+    display: flex;
+    align-items: center;
+    font-size: 1em;
+    width: 100%;
+    padding: 0.5em;
+    color: #000000;
+
+    .owl-dt-calendar-control-content {
+        flex: 1 1 auto;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        .owl-dt-calendar-control-button {
+            padding: 0 0.8em;
+
+            &:hover {
+                background-color: rgba(0, 0, 0, 0.12);
+            }
+        }
+    }
+}
+
+.owl-dt-calendar-main {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    padding: 0 0.5em 0.5em;
+    outline: 0;
+}
+
+.owl-dt-calendar-view {
+    display: block;
+    flex: 1 1 auto;
+}
+
+.owl-dt-calendar-multi-year-view {
+    display: flex;
+    align-items: center;
+
+    .owl-dt-calendar-table {
+        width: calc(100% - 3em);
+
+        .owl-dt-calendar-header th {
+            padding-bottom: 0.25em;
+        }
+    }
+}
+
+.owl-dt-calendar-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+
+    .owl-dt-calendar-header {
+        color: rgba(0, 0, 0, 0.4);
+
+        .owl-dt-weekdays {
+            th {
+                font-size: 0.7em;
+                font-weight: 400;
+                text-align: center;
+                padding-bottom: 1em;
+            }
+        }
+
+        .owl-dt-calendar-table-divider {
+            position: relative;
+            height: 1px;
+            padding-bottom: 0.5em;
+
+            &:after {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -0.5em;
+                right: -0.5em;
+                height: 1px;
+                background: rgba(0, 0, 0, 0.12);
+            }
+        }
+    }
+
+    .owl-dt-calendar-cell {
+        position: relative;
+        height: 0;
+        line-height: 0;
+        text-align: center;
+        outline: 0;
+        color: rgba(0, 0, 0, 0.85);
+        -webkit-appearance: none;
+        -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .owl-dt-calendar-cell-content {
+        position: absolute;
+        top: 5%;
+        left: 5%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
+        width: 90%;
+        height: 90%;
+        font-size: 0.8em;
+        line-height: 1;
+        border: 1px solid transparent;
+        border-radius: 999px;
+        color: inherit;
+        cursor: pointer;
+    }
+
+    .owl-dt-calendar-cell-out {
+        opacity: 0.2;
+    }
+
+    .owl-dt-calendar-cell-today:not(.owl-dt-calendar-cell-selected) {
+        border-color: rgba(0, 0, 0, 0.4);
+    }
+
+    .owl-dt-calendar-cell-selected {
+        color: hsla(0, 0%, 100%, 0.85);
+        background-color: $theme-color;
+
+        &.owl-dt-calendar-cell-today {
+            box-shadow: inset 0 0 0 1px hsla(0, 0%, 100%, 0.85);
+        }
+    }
+
+    .owl-dt-calendar-cell-disabled {
+        cursor: default;
+
+        & > .owl-dt-calendar-cell-content:not(.owl-dt-calendar-cell-selected) {
+            color: rgba(0, 0, 0, 0.4);
+        }
+
+        & > .owl-dt-calendar-cell-content.owl-dt-calendar-cell-selected {
+            opacity: 0.4;
+        }
+
+        & > .owl-dt-calendar-cell-today:not(.owl-dt-calendar-cell-selected) {
+            border-color: rgba(0, 0, 0, 0.2);
+        }
+    }
+
+    .owl-dt-calendar-cell-active:focus > .owl-dt-calendar-cell-content:not(.owl-dt-calendar-cell-selected),
+    :not(.owl-dt-calendar-cell-disabled):hover > .owl-dt-calendar-cell-content:not(.owl-dt-calendar-cell-selected) {
+        background-color: rgba(0, 0, 0, 0.04);
+    }
+
+    .owl-dt-calendar-cell-in-range {
+        background: rgba($theme-color, 0.2);
+
+        &.owl-dt-calendar-cell-range-from {
+            border-top-left-radius: 999px;
+            border-bottom-left-radius: 999px;
+        }
+
+        &.owl-dt-calendar-cell-range-to {
+            border-top-right-radius: 999px;
+            border-bottom-right-radius: 999px;
+        }
+    }
+}
+
+.owl-dt-timer {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    height: 7em;
+    padding: 0.5em;
+    outline: none;
+}
+
+.owl-dt-timer-box {
+    position: relative;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    width: 25%;
+    height: 100%;
+}
+
+.owl-dt-timer-content {
+    flex: 1 1 auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin: 0.2em 0;
+
+    .owl-dt-timer-input {
+        display: block;
+        width: 2em;
+        text-align: center;
+        border: 1px solid rgba(0, 0, 0, 0.5);
+        border-radius: 3px;
+        outline: medium none;
+        font-size: 1.2em;
+        padding: 0.2em;
+    }
+}
+
+.owl-dt-timer-divider {
+    display: inline-block;
+    align-self: flex-end;
+    position: absolute;
+    width: 0.6em;
+    height: 100%;
+    left: -0.3em;
+
+    &:before,
+    &:after {
+        content: '';
+        display: inline-block;
+        width: 0.35em;
+        height: 0.35em;
+        position: absolute;
+        left: 50%;
+        border-radius: 50%;
+        transform: translateX(-50%);
+        background-color: currentColor;
+    }
+
+    &:before {
+        top: 35%;
+    }
+
+    &:after {
+        bottom: 35%;
+    }
+}
+
+.owl-dt-control-button {
+    user-select: none;
+    cursor: pointer;
+    outline: none;
+    border: none;
+    -webkit-tap-highlight-color: transparent;
+    display: inline-block;
+    white-space: nowrap;
+    text-decoration: none;
+    vertical-align: baseline;
+    margin: 0;
+    padding: 0;
+    background-color: transparent;
+    font-size: 1em;
+    color: inherit;
+
+    .owl-dt-control-button-content {
+        position: relative;
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        outline: none;
+    }
+}
+
+.owl-dt-control-period-button {
+    .owl-dt-control-button-content {
+        height: 1.5em;
+        padding: 0 0.5em;
+        border-radius: 3px;
+        transition: background-color 100ms linear;
+    }
+
+    &:hover > .owl-dt-control-button-content {
+        background-color: rgba(0, 0, 0, 0.12);
+    }
+
+    .owl-dt-control-button-arrow {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 1em;
+        height: 1em;
+        margin: 0.1em;
+        transition: transform 200ms ease;
+    }
+}
+
+.owl-dt-control-arrow-button {
+    .owl-dt-control-button-content {
+        padding: 0;
+        border-radius: 50%;
+        width: 1.5em;
+        height: 1.5em;
+    }
+
+    &[disabled] {
+        color: rgba(0, 0, 0, 0.4);
+        cursor: default;
+    }
+
+    svg {
+        width: 50%;
+        height: 50%;
+        fill: currentColor;
+    }
+}
+
+.owl-dt-inline-container,
+.owl-dt-popup-container {
+    position: relative;
+    width: 18.5em;
+    box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2), 0 8px 10px 1px rgba(0, 0, 0, 0.14), 0 3px 14px 2px rgba(0, 0, 0, 0.12);
+
+    .owl-dt-calendar,
+    .owl-dt-timer {
+        width: 100%;
+    }
+
+    .owl-dt-calendar {
+        height: 20.25em;
+    }
+}
+
+.owl-dt-dialog-container {
+    max-height: 95vh;
+    margin: -1.5em;
+
+    .owl-dt-calendar {
+        min-width: 250px;
+        min-height: 330px;
+        max-width: 750px;
+        max-height: 750px;
+    }
+
+    .owl-dt-timer {
+        min-width: 250px;
+        max-width: 750px;
+    }
+}
+
+@media all and (orientation: landscape) {
+    .owl-dt-dialog-container {
+        .owl-dt-calendar {
+            width: 58vh;
+            height: 62vh;
+        }
+
+        .owl-dt-timer {
+            width: 58vh;
+        }
+    }
+}
+
+@media all and (orientation: portrait) {
+    .owl-dt-dialog-container {
+        .owl-dt-calendar {
+            width: 80vw;
+            height: 80vw;
+        }
+
+        .owl-dt-timer {
+            width: 80vw;
+        }
+    }
+}
+
+.owl-dt-container-buttons {
+    display: flex;
+    width: 100%;
+    height: 2em;
+    color: $theme-color;
+}
+
+.owl-dt-container-control-button {
+    font-size: 1em;
+    width: 50%;
+    height: 100%;
+    border-radius: 0;
+
+    .owl-dt-control-button-content {
+        height: 100%;
+        width: 100%;
+        transition: background-color 100ms linear;
+    }
+
+    &:hover {
+        .owl-dt-control-button-content {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+    }
+}
+
+.owl-dt-container-info {
+    padding: 0 0.5em;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+
+    .owl-dt-container-range {
+        outline: none;
+
+        .owl-dt-container-range-content {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5em 0;
+            font-size: 0.8em;
+        }
+
+        &:last-child {
+            border-top: 1px solid rgba(0, 0, 0, 0.12);
+        }
+    }
+
+    .owl-dt-container-info-active {
+        color: $theme-color;
+    }
+}
+
+.owl-dt-container-disabled,
+.owl-dt-trigger-disabled {
+    opacity: 0.35;
+    filter: Alpha(Opacity=35);
+    background-image: none;
+    cursor: default !important;
+}
+
+.owl-dt-timer-hour12 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: $theme-color;
+
+    .owl-dt-timer-hour12-box {
+        border: 1px solid currentColor;
+        border-radius: 2px;
+        transition: background 200ms ease;
+
+        .owl-dt-control-button-content {
+            width: 100%;
+            height: 100%;
+            padding: 0.5em;
+        }
+
+        &:focus,
+        &:hover {
+            .owl-dt-control-button-content {
+                background: $theme-color;
+                color: #ffffff;
+            }
+        }
+    }
+}
+
+.owl-dt-calendar-only-current-month {
+    .owl-dt-calendar-cell-out {
+        visibility: hidden;
+        cursor: default;
+    }
+}
+
+.owl-dt-inline {
+    display: inline-block;
+}
+
+.owl-dt-control {
+    outline: none;
+    cursor: pointer;
+
+    .owl-dt-control-content {
+        outline: none;
+    }
+
+    &:focus > .owl-dt-control-content {
+        background-color: rgba(0, 0, 0, 0.12);
+    }
+
+    &:not(:-moz-focusring):focus > .owl-dt-control-content {
+        box-shadow: none;
+    }
+}
+
+.owl-hidden-accessible {
+    border: 0;
+    clip: rect(0 0 0 0);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    width: 1px;
+}
+
+.clock {
+    float: right;
+    margin-top: 0.2em;
 }

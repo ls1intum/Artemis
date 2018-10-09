@@ -18,12 +18,12 @@
             <form class="form" role="form" (ngSubmit)="login()">
                 <div class="form-group">
                     <label for="username" jhiTranslate="global.form.username">Login</label>
-                    <input type="text" class="form-control" name="username" id="username" placeholder="{{'global.form.username.placeholder' | translate}}"
+                    <input type="text" class="form-control" autocomplete="username" name="username" id="username" placeholder="{{'global.form.username.placeholder' | translate}}"
                     [(ngModel)]="username">
                 </div>
                 <div class="form-group">
                     <label for="password" jhiTranslate="login.form.password">Password</label>
-                    <input type="password" class="form-control" name="password" id="password" placeholder="{{'login.form.password.placeholder' | translate}}"
+                    <input type="password" class="form-control" autocomplete="password" name="password" id="password" placeholder="{{'login.form.password.placeholder' | translate}}"
                            [(ngModel)]="password">
                 </div>
                 <div class="form-group">

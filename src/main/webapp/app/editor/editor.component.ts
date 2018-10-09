@@ -7,27 +7,16 @@ import { Participation, ParticipationService } from '../entities/participation';
 import { ParticipationDataProvider } from '../courses/exercises/participation-data-provider';
 import { RepositoryFileService, RepositoryService } from '../entities/repository/repository.service';
 import { Result } from '../entities/result';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import * as $ from 'jquery';
 import * as interact from 'interactjs';
 
 @Component({
     selector: 'jhi-editor',
     templateUrl: './editor.component.html',
-    providers:  [
-        JhiAlertService,
-        CourseService,
-        RepositoryFileService
-    ]
+    providers: [JhiAlertService, CourseService, RepositoryFileService]
 })
-
-/**
- * @class EditorComponent
- * @desc This component acts as a wrapper for the upgraded editor component (directive).
- * The dependencies are passed along to the directive, from there to the legacy component.
- */
 export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDestroy {
-
     /** Dependencies as defined by the Editor component */
     participation: Participation;
     repository: RepositoryService;
@@ -57,11 +46,13 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
      * @param {RepositoryService} repositoryService
      * @param {RepositoryFileService} repositoryFileService
      */
-    constructor(private route: ActivatedRoute,
-                private participationService: ParticipationService,
-                private participationDataProvider: ParticipationDataProvider,
-                private repositoryService: RepositoryService,
-                private repositoryFileService: RepositoryFileService) {}
+    constructor(
+        private route: ActivatedRoute,
+        private participationService: ParticipationService,
+        private participationDataProvider: ParticipationDataProvider,
+        private repositoryService: RepositoryService,
+        private repositoryFileService: RepositoryFileService
+    ) {}
 
     /**
      * @function ngOnInit
@@ -75,7 +66,10 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
 
         this.paramSub = this.route.params.subscribe(params => {
             // Cast params id to Number or strict comparison will lead to result false (due to differing types)
-            if (this.participationDataProvider.participationStorage && this.participationDataProvider.participationStorage.id === Number(params['participationId'])) {
+            if (
+                this.participationDataProvider.participationStorage &&
+                this.participationDataProvider.participationStorage.id === Number(params['participationId'])
+            ) {
                 this.participation = this.participationDataProvider.participationStorage;
                 this.checkIfRepositoryIsClean();
             } else {
@@ -86,11 +80,14 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
                 });
             }
             /** Query the repositoryFileService for files in the repository */
-            this.repositoryFileService.query(params['participationId']).subscribe(files => {
-                this.repositoryFiles = files;
-            }, err => {
-                console.log('There was an error while getting files: ' + err.body.msg);
-            });
+            this.repositoryFileService.query(params['participationId']).subscribe(
+                files => {
+                    this.repositoryFiles = files;
+                },
+                (error: HttpErrorResponse) => {
+                    console.log('There was an error while getting files: ' + error.message + ': ' + error.error);
+                }
+            );
         });
     }
 
@@ -110,13 +107,14 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
                     min: { width: this.resizableMinWidth },
                     max: { width: this.resizableMaxWidth }
                 },
-                inertia: true,
-            }).on('resizemove', function(event) {
-            const target = event.target;
-            // Update element size
-            target.style.width  = event.rect.width + 'px';
-            target.style.height = event.rect.height + 'px';
-        });
+                inertia: true
+            })
+            .on('resizemove', function(event) {
+                const target = event.target;
+                // Update element size
+                target.style.width = event.rect.width + 'px';
+                target.style.height = event.rect.height + 'px';
+            });
     }
 
     /**
@@ -143,7 +141,7 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
      * @desc Callback function for a save status changes of files
      * @param $event Event object which contains information regarding the save status of files
      */
-    updateSaveStatusLabel($event) {
+    updateSaveStatusLabel($event: any) {
         this.isSaved = $event.isSaved;
         if (!this.isSaved) {
             this.isCommitted = false;
@@ -156,7 +154,7 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
      * @desc Callback function for when a new result is received from the result component
      * @param $event Event object which contains the newly received result
      */
-    updateLatestResult($event) {
+    updateLatestResult($event: any) {
         this.isBuilding = false;
         this.latestResult = $event.newResult;
     }
@@ -166,7 +164,7 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
      * @desc Callback function for when a new file is selected within the file-browser component
      * @param $event Event object which contains the new file name
      */
-    updateSelectedFile($event) {
+    updateSelectedFile($event: any) {
         this.file = $event.fileName;
     }
 
@@ -174,19 +172,22 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
      * @function updateRepositoryCommitStatus
      * @desc Callback function for when a file was created or deleted; updates the current repository files
      */
-    updateRepositoryCommitStatus($event) {
+    updateRepositoryCommitStatus($event: any) {
         this.isSaved = false;
         this.isCommitted = false;
         /** Query the repositoryFileService for updated files in the repository */
-        this.repositoryFileService.query(this.participation.id).subscribe(files => {
-            this.repositoryFiles = files;
-            // Select newly created file
-            if ($event.mode === 'create') {
-                this.file = $event.file;
+        this.repositoryFileService.query(this.participation.id).subscribe(
+            files => {
+                this.repositoryFiles = files;
+                // Select newly created file
+                if ($event.mode === 'create') {
+                    this.file = $event.file;
+                }
+            },
+            (error: HttpErrorResponse) => {
+                console.log('There was an error while getting files: ' + error.message + ': ' + error.error);
             }
-        }, err => {
-            console.log('There was an error while getting files: ' + err.body.msg);
-        });
+        );
     }
 
     /**
@@ -195,7 +196,7 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
      * @param $event
      * @param horizontal
      */
-    toggleCollapse($event, horizontal: boolean) {
+    toggleCollapse($event: any, horizontal: boolean) {
         const target = $event.toElement || $event.relatedTarget || $event.target;
         target.blur();
         const $card = $(target).closest('.card');
@@ -210,10 +211,10 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
 
     /**
      * @function commit
-     * @desc Commits the current repository filess
+     * @desc Commits the current repository files
      * @param $event
      */
-    commit($event) {
+    commit($event: any) {
         const target = $event.toElement || $event.relatedTarget || $event.target;
         target.blur();
         this.isBuilding = true;
@@ -223,7 +224,8 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
             },
             err => {
                 console.log('Error during commit ocurred!', err);
-            });
+            }
+        );
     }
 
     /**

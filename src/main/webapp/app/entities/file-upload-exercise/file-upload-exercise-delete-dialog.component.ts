@@ -8,20 +8,20 @@ import { FileUploadExercise } from './file-upload-exercise.model';
 import { FileUploadExercisePopupService } from './file-upload-exercise-popup.service';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
 
+import { Subscription } from 'rxjs/Subscription';
+
 @Component({
     selector: 'jhi-file-upload-exercise-delete-dialog',
     templateUrl: './file-upload-exercise-delete-dialog.component.html'
 })
 export class FileUploadExerciseDeleteDialogComponent {
-
     fileUploadExercise: FileUploadExercise;
 
     constructor(
         private fileUploadExerciseService: FileUploadExerciseService,
         public activeModal: NgbActiveModal,
         private eventManager: JhiEventManager
-    ) {
-    }
+    ) {}
 
     clear() {
         this.activeModal.dismiss('cancel');
@@ -43,18 +43,13 @@ export class FileUploadExerciseDeleteDialogComponent {
     template: ''
 })
 export class FileUploadExerciseDeletePopupComponent implements OnInit, OnDestroy {
+    routeSub: Subscription;
 
-    routeSub: any;
-
-    constructor(
-        private route: ActivatedRoute,
-        private fileUploadExercisePopupService: FileUploadExercisePopupService
-    ) {}
+    constructor(private route: ActivatedRoute, private fileUploadExercisePopupService: FileUploadExercisePopupService) {}
 
     ngOnInit() {
         this.routeSub = this.route.params.subscribe(params => {
-            this.fileUploadExercisePopupService
-                .open(FileUploadExerciseDeleteDialogComponent as Component, params['id']);
+            this.fileUploadExercisePopupService.open(FileUploadExerciseDeleteDialogComponent as Component, params['id']);
         });
     }
 

@@ -8,12 +8,13 @@ import { ProgrammingExercise } from './programming-exercise.model';
 import { ProgrammingExercisePopupService } from './programming-exercise-popup.service';
 import { ProgrammingExerciseService } from './programming-exercise.service';
 
+import { Subscription } from 'rxjs/Subscription';
+
 @Component({
     selector: 'jhi-programming-exercise-delete-dialog',
     templateUrl: './programming-exercise-delete-dialog.component.html'
 })
 export class ProgrammingExerciseDeleteDialogComponent {
-
     programmingExercise: ProgrammingExercise;
 
     constructor(
@@ -27,7 +28,7 @@ export class ProgrammingExerciseDeleteDialogComponent {
     }
 
     confirmDelete(id: number) {
-        this.programmingExerciseService.delete(id).subscribe((response) => {
+        this.programmingExerciseService.delete(id).subscribe(response => {
             this.eventManager.broadcast({
                 name: 'programmingExerciseListModification',
                 content: 'Deleted an programmingExercise'
@@ -42,18 +43,13 @@ export class ProgrammingExerciseDeleteDialogComponent {
     template: ''
 })
 export class ProgrammingExerciseDeletePopupComponent implements OnInit, OnDestroy {
+    routeSub: Subscription;
 
-    routeSub: any;
-
-    constructor(
-        private route: ActivatedRoute,
-        private programmingExercisePopupService: ProgrammingExercisePopupService
-    ) {}
+    constructor(private route: ActivatedRoute, private programmingExercisePopupService: ProgrammingExercisePopupService) {}
 
     ngOnInit() {
-        this.routeSub = this.route.params.subscribe((params) => {
-            this.programmingExercisePopupService
-                .open(ProgrammingExerciseDeleteDialogComponent as Component, params['id']);
+        this.routeSub = this.route.params.subscribe(params => {
+            this.programmingExercisePopupService.open(ProgrammingExerciseDeleteDialogComponent as Component, params['id']);
         });
     }
 

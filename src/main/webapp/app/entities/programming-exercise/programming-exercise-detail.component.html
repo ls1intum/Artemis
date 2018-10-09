@@ -3,15 +3,15 @@
     <hr>
     <jhi-alert-error></jhi-alert-error>
     <dl class="row-md jh-entity-details">
-        <dt><span data-translate="artemisApp.exercise.releaseDate">Release Date</span></dt>
+        <dt><span jhiTranslate="arTeMiSApp.exercise.releaseDate">Release Date</span></dt>
         <dd>
             <span>{{programmingExercise.releaseDate | date:'medium'}}</span>
         </dd>
-        <dt><span data-translate="artemisApp.exercise.dueDate">Due Date</span></dt>
+        <dt><span jhiTranslate="arTeMiSApp.exercise.dueDate">Due Date</span></dt>
         <dd>
             <span>{{programmingExercise.dueDate | date:'medium'}}</span>
         </dd>
-        <dt><span data-translate="artemisApp.exercise.maxScore">Max Score</span></dt>
+        <dt><span jhiTranslate="arTeMiSApp.exercise.maxScore">Max Score</span></dt>
         <dd>
             <span>{{programmingExercise.maxScore}}</span>
         </dd>
@@ -31,7 +31,7 @@
         <dd>
             <span>{{programmingExercise.allowOnlineEditor}}</span>
         </dd>
-        <dt><span data-translate="arTeMiSApp.exerciseLtiConfiguration.lti">LTI</span></dt>
+        <dt><span jhiTranslate="arTeMiSApp.exerciseLtiConfiguration.lti">LTI</span></dt>
         <dd>
             <a [routerLink]="['/', { outlets: { popup: 'exercise/'+ programmingExercise.id + '/lti-configuration'} }]">LTI Configuration</a>
         </dd>

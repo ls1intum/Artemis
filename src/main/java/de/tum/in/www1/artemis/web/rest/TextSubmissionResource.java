@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.TextSubmission;
-
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -12,9 +11,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.swing.text.html.Option;
 import java.net.URI;
 import java.net.URISyntaxException;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -99,8 +98,8 @@ public class TextSubmissionResource {
     @Timed
     public ResponseEntity<TextSubmission> getTextSubmission(@PathVariable Long id) {
         log.debug("REST request to get TextSubmission : {}", id);
-        TextSubmission textSubmission = textSubmissionRepository.findOne(id);
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(textSubmission));
+        Optional<TextSubmission> textSubmission = textSubmissionRepository.findById(id);
+        return ResponseUtil.wrapOrNotFound(textSubmission);
     }
 
     /**
@@ -113,7 +112,7 @@ public class TextSubmissionResource {
     @Timed
     public ResponseEntity<Void> deleteTextSubmission(@PathVariable Long id) {
         log.debug("REST request to delete TextSubmission : {}", id);
-        textSubmissionRepository.delete(id);
+        textSubmissionRepository.deleteById(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 }

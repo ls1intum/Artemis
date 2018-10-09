@@ -11,6 +11,10 @@
             "error": "Error"
         },
         "indicator": {
+            "discoveryComposite": "Discovery Composite",
+            "refreshScope": "Microservice Refresh Scope",
+            "configServer": "Microservice Config Server",
+            "hystrix": "Hystrix",
             "diskSpace": "Festplattenspeicher",
             "mail": "Email",
             "db": "Datenbank"
@@ -20,6 +24,7 @@
             "status": "Status"
         },
         "status": {
+            "UNKNOWN": "UNKNOWN",
             "UP": "UP",
             "DOWN": "DOWN"
         }

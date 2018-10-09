@@ -1,12 +1,12 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs/Subscription';
-import { JhiAlertService, JhiEventManager, JhiParseLinks } from 'ng-jhipster';
+import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { ProgrammingExercise } from './programming-exercise.model';
 import { ProgrammingExerciseService } from './programming-exercise.service';
-import { ITEMS_PER_PAGE, Principal } from '../../shared';
-import { Course, CourseProgrammingExerciseService, CourseService } from '../course';
+import { ITEMS_PER_PAGE } from '../../shared';
+import { Course, CourseExerciseService, CourseService } from '../course';
 import { ActivatedRoute } from '@angular/router';
 
 @Component({
@@ -21,19 +21,16 @@ export class ProgrammingExerciseComponent implements OnInit, OnDestroy {
     courseId: number;
     itemsPerPage: number;
     links: any;
-    page: any;
-    predicate: any;
-    reverse: any;
-    totalItems: number;
+    page: number;
+    predicate: string;
+    reverse: boolean;
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
-        private courseProgrammingExerciseService: CourseProgrammingExerciseService,
+        private courseExerciseService: CourseExerciseService,
         private courseService: CourseService,
         private jhiAlertService: JhiAlertService,
         private eventManager: JhiEventManager,
-        private parseLinks: JhiParseLinks,
-        private principal: Principal,
         private route: ActivatedRoute
     ) {
         this.programmingExercises = [];
@@ -62,7 +59,7 @@ export class ProgrammingExerciseComponent implements OnInit, OnDestroy {
             (res: HttpResponse<ProgrammingExercise[]>) => {
                 this.programmingExercises = res.body;
             },
-            (res: HttpErrorResponse) => this.onError(res.message)
+            (res: HttpErrorResponse) => this.onError(res)
         );
     }
 
@@ -78,21 +75,23 @@ export class ProgrammingExerciseComponent implements OnInit, OnDestroy {
     }
 
     loadAllForCourse() {
-        this.courseProgrammingExerciseService.query(this.courseId, {
-            page: this.page,
-            size: this.itemsPerPage
-        }).subscribe(
-            (res: HttpResponse<ProgrammingExercise[]>) => {
-                this.programmingExercises = res.body;
-            },
-            (res: HttpResponse<ProgrammingExercise>[]) => this.onError(res)
-        );
+        this.courseExerciseService
+            .findAllProgrammingExercises(this.courseId, {
+                page: this.page,
+                size: this.itemsPerPage
+            })
+            .subscribe(
+                (res: HttpResponse<ProgrammingExercise[]>) => {
+                    this.programmingExercises = res.body;
+                },
+                (res: HttpErrorResponse) => this.onError(res)
+            );
         this.courseService.find(this.courseId).subscribe(res => {
             this.course = res.body;
         });
     }
 
-    loadPage(page) {
+    loadPage(page: number) {
         this.page = page;
         this.loadAll();
     }
@@ -101,12 +100,12 @@ export class ProgrammingExerciseComponent implements OnInit, OnDestroy {
         return item.id;
     }
     registerChangeInProgrammingExercises() {
-        this.eventSubscriber = this.eventManager.subscribe('programmingExerciseListModification', response => this.load());
+        this.eventSubscriber = this.eventManager.subscribe('programmingExerciseListModification', () => this.load());
     }
 
-    private onError(error) {
+    private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message, null, null);
     }
 
-    callback() { }
+    callback() {}
 }

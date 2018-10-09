@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ParticipationState;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
@@ -20,7 +20,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
-import static de.tum.in.www1.artemis.domain.enumeration.ParticipationState.INITIALIZED;
+import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.INITIALIZED;
 
 /**
  * Service Implementation for managing Participation.
@@ -83,7 +83,9 @@ public class ParticipationService {
         // common for all exercises
         // Check if participation already exists
         Participation participation = participationRepository.findOneByExerciseIdAndStudentLogin(exercise.getId(), username);
-        if (!Optional.ofNullable(participation).isPresent() || (!(exercise instanceof QuizExercise) && participation.getInitializationState() == ParticipationState.FINISHED)) { //create a new participation only if it was finished before (not for quiz exercise)
+        if (!Optional.ofNullable(participation).isPresent() ||
+            (exercise instanceof ProgrammingExercise && participation.getInitializationState() == InitializationState.FINISHED)) {
+            // create a new participation only if it was finished before (only for programming exercises)
             participation = new Participation();
             participation.setExercise(exercise);
 
@@ -101,7 +103,7 @@ public class ParticipationService {
 //                participation.setLti(true);
 //            } //TODO use lti in the future
             ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
-            participation.setInitializationState(ParticipationState.UNINITIALIZED);
+            participation.setInitializationState(InitializationState.UNINITIALIZED);
             participation = copyRepository(participation, programmingExercise);
             participation = configureRepository(participation, programmingExercise);
             participation = copyBuildPlan(participation, programmingExercise);
@@ -189,7 +191,7 @@ public class ParticipationService {
             // update result and participation state
             result.setRated(true);
             result.setCompletionDate(ZonedDateTime.now());
-            participation.setInitializationState(ParticipationState.FINISHED);
+            participation.setInitializationState(InitializationState.FINISHED);
 
             // calculate scores and update result and submission accordingly
             quizSubmission.calculateAndUpdateScores(quizExercise);
@@ -219,11 +221,11 @@ public class ParticipationService {
     }
 
     private Participation copyRepository(Participation participation, ProgrammingExercise exercise) {
-        if (!participation.getInitializationState().hasCompletedState(ParticipationState.REPO_COPIED)) {
+        if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED)) {
             URL repositoryUrl = versionControlService.get().copyRepository(exercise.getBaseRepositoryUrlAsUrl(), participation.getStudent().getLogin());
             if (Optional.ofNullable(repositoryUrl).isPresent()) {
                 participation.setRepositoryUrl(repositoryUrl.toString());
-                participation.setInitializationState(ParticipationState.REPO_COPIED);
+                participation.setInitializationState(InitializationState.REPO_COPIED);
             }
             return save(participation);
         } else {
@@ -232,9 +234,9 @@ public class ParticipationService {
     }
 
     private Participation configureRepository(Participation participation, ProgrammingExercise exercise) {
-        if (!participation.getInitializationState().hasCompletedState(ParticipationState.REPO_CONFIGURED)) {
+        if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
             versionControlService.get().configureRepository(participation.getRepositoryUrlAsUrl(), participation.getStudent().getLogin());
-            participation.setInitializationState(ParticipationState.REPO_CONFIGURED);
+            participation.setInitializationState(InitializationState.REPO_CONFIGURED);
             return save(participation);
         } else {
             return participation;
@@ -242,10 +244,10 @@ public class ParticipationService {
     }
 
     private Participation copyBuildPlan(Participation participation, ProgrammingExercise exercise) {
-        if (!participation.getInitializationState().hasCompletedState(ParticipationState.BUILD_PLAN_COPIED)) {
+        if (!participation.getInitializationState().hasCompletedState(InitializationState.BUILD_PLAN_COPIED)) {
             String buildPlanId = continuousIntegrationService.get().copyBuildPlan(exercise.getBaseBuildPlanId(), participation.getStudent().getLogin());
             participation.setBuildPlanId(buildPlanId);
-            participation.setInitializationState(ParticipationState.BUILD_PLAN_COPIED);
+            participation.setInitializationState(InitializationState.BUILD_PLAN_COPIED);
             return save(participation);
         } else {
             return participation;
@@ -253,12 +255,12 @@ public class ParticipationService {
     }
 
     private Participation configureBuildPlan(Participation participation, ProgrammingExercise exercise) {
-        if (!participation.getInitializationState().hasCompletedState(ParticipationState.BUILD_PLAN_CONFIGURED)) {
+        if (!participation.getInitializationState().hasCompletedState(InitializationState.BUILD_PLAN_CONFIGURED)) {
             continuousIntegrationService.get().configureBuildPlan(
                 participation.getBuildPlanId(),
                 participation.getRepositoryUrlAsUrl(),
                 participation.getStudent().getLogin());
-            participation.setInitializationState(ParticipationState.BUILD_PLAN_CONFIGURED);
+            participation.setInitializationState(InitializationState.BUILD_PLAN_CONFIGURED);
             return save(participation);
         } else {
             return participation;
@@ -297,7 +299,7 @@ public class ParticipationService {
     @Transactional(readOnly = true)
     public Participation findOne(Long id) {
         log.debug("Request to get Participation : {}", id);
-        return participationRepository.findOne(id);
+        return participationRepository.findById(id).get();
     }
 
     /**
@@ -313,7 +315,7 @@ public class ParticipationService {
 
         Participation participation = participationRepository.findOneByExerciseIdAndStudentLoginAndInitializationState(exerciseId, username, INITIALIZED);
         if(!Optional.ofNullable(participation).isPresent()) {
-            participation = participationRepository.findOneByExerciseIdAndStudentLoginAndInitializationState(exerciseId, username, ParticipationState.INACTIVE);
+            participation = participationRepository.findOneByExerciseIdAndStudentLoginAndInitializationState(exerciseId, username, InitializationState.INACTIVE);
         }
         return participation;
     }
@@ -345,7 +347,7 @@ public class ParticipationService {
     }
 
     @Transactional(readOnly = true)
-    public List<Participation> findByBuildPlanIdAndInitializationState(String buildPlanId, ParticipationState state) {
+    public List<Participation> findByBuildPlanIdAndInitializationState(String buildPlanId, InitializationState state) {
         log.debug("Request to get Participation for build plan id: {}", buildPlanId);
         return participationRepository.findByBuildPlanIdAndInitializationState(buildPlanId, state);
     }
@@ -373,7 +375,7 @@ public class ParticipationService {
     @Transactional(noRollbackFor={Throwable.class})
     public void delete(Long id, boolean deleteBuildPlan, boolean deleteRepository) {
         log.debug("Request to delete Participation : {}", id);
-        Participation participation = participationRepository.findOne(id);
+        Participation participation = participationRepository.findById(id).get();
         if (participation != null && participation.getExercise() instanceof ProgrammingExercise) {
             if (deleteBuildPlan && participation.getBuildPlanId() != null) {
                 try {
@@ -402,7 +404,7 @@ public class ParticipationService {
         if (participation.getResults() != null && participation.getResults().size() > 0) {
             log.info("Will delete " + participation.getResults().size() + " results");
             for (Result result : participation.getResults()) {
-                resultRepository.delete(result.getId());
+                resultRepository.deleteById(result.getId());
             }
         }
 

@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { UserRouteAccessService } from '../../shared';
+import { UserRouteAccessService } from '../../core';
 import { TextExerciseComponent } from './text-exercise.component';
 import { TextExerciseDetailComponent } from './text-exercise-detail.component';
 import { TextExercisePopupComponent } from './text-exercise-dialog.component';
@@ -11,15 +11,34 @@ export const textExerciseRoute: Routes = [
         path: 'text-exercise',
         component: TextExerciseComponent,
         data: {
-            authorities: ['ROLE_USER'],
+            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'arTeMiSApp.textExercise.home.title'
         },
         canActivate: [UserRouteAccessService]
-    }, {
+    },
+    {
         path: 'text-exercise/:id',
         component: TextExerciseDetailComponent,
         data: {
-            authorities: ['ROLE_USER'],
+            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'arTeMiSApp.textExercise.home.title'
+        },
+        canActivate: [UserRouteAccessService]
+    },
+    {
+        path: 'course/:courseId/text-exercise',
+        component: TextExerciseComponent,
+        data: {
+            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'arTeMiSApp.textExercise.home.title'
+        },
+        canActivate: [UserRouteAccessService]
+    },
+    {
+        path: 'course/:courseId/text-exercise/:id',
+        component: TextExerciseDetailComponent,
+        data: {
+            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'arTeMiSApp.textExercise.home.title'
         },
         canActivate: [UserRouteAccessService]
@@ -28,10 +47,10 @@ export const textExerciseRoute: Routes = [
 
 export const textExercisePopupRoute: Routes = [
     {
-        path: 'text-exercise-new',
+        path: 'course/:courseId/text-exercise-new',
         component: TextExercisePopupComponent,
         data: {
-            authorities: ['ROLE_USER'],
+            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'arTeMiSApp.textExercise.home.title'
         },
         canActivate: [UserRouteAccessService],
@@ -41,7 +60,7 @@ export const textExercisePopupRoute: Routes = [
         path: 'text-exercise/:id/edit',
         component: TextExercisePopupComponent,
         data: {
-            authorities: ['ROLE_USER'],
+            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'arTeMiSApp.textExercise.home.title'
         },
         canActivate: [UserRouteAccessService],
@@ -51,7 +70,7 @@ export const textExercisePopupRoute: Routes = [
         path: 'text-exercise/:id/delete',
         component: TextExerciseDeletePopupComponent,
         data: {
-            authorities: ['ROLE_USER'],
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'arTeMiSApp.textExercise.home.title'
         },
         canActivate: [UserRouteAccessService],

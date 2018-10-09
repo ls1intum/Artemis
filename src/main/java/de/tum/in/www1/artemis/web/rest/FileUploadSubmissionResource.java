@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
-
 import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -14,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -99,8 +97,8 @@ public class FileUploadSubmissionResource {
     @Timed
     public ResponseEntity<FileUploadSubmission> getFileUploadSubmission(@PathVariable Long id) {
         log.debug("REST request to get FileUploadSubmission : {}", id);
-        FileUploadSubmission fileUploadSubmission = fileUploadSubmissionRepository.findOne(id);
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(fileUploadSubmission));
+        Optional<FileUploadSubmission> fileUploadSubmission = fileUploadSubmissionRepository.findById(id);
+        return ResponseUtil.wrapOrNotFound(fileUploadSubmission);
     }
 
     /**
@@ -113,7 +111,7 @@ public class FileUploadSubmissionResource {
     @Timed
     public ResponseEntity<Void> deleteFileUploadSubmission(@PathVariable Long id) {
         log.debug("REST request to delete FileUploadSubmission : {}", id);
-        fileUploadSubmissionRepository.delete(id);
+        fileUploadSubmissionRepository.deleteById(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 }

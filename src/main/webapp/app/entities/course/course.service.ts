@@ -1,348 +1,218 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
-import { SERVER_API_URL } from '../../app.constants';
+import { Observable } from 'rxjs';
+import * as moment from 'moment';
+import { map } from 'rxjs/operators';
 
-import { JhiDateUtils } from 'ng-jhipster';
-
+import { SERVER_API_URL } from 'app/app.constants';
+import { createRequestOption } from 'app/shared';
 import { Course } from './course.model';
-import { createRequestOption } from '../../shared';
-import { Exercise } from '../exercise/exercise.model';
 import { ProgrammingExercise } from '../programming-exercise/programming-exercise.model';
 import { ModelingExercise } from '../modeling-exercise/modeling-exercise.model';
-import { Participation } from '../participation';
-import { Result } from '../result/result.model';
+import { Participation } from '../participation/participation.model';
+import { TextExercise } from '../text-exercise/text-exercise.model';
+import { FileUploadExercise } from '../file-upload-exercise/file-upload-exercise.model';
+import { Exercise } from '../exercise/exercise.model';
+import { ExerciseService } from '../exercise/exercise.service';
 
 export type EntityResponseType = HttpResponse<Course>;
+export type EntityArrayResponseType = HttpResponse<Course[]>;
 
 @Injectable()
 export class CourseService {
+    private resourceUrl = SERVER_API_URL + 'api/courses';
 
-    private resourceUrl =  SERVER_API_URL + 'api/courses';
-
-    constructor(private http: HttpClient, private dateUtils: JhiDateUtils) { }
+    constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
 
     create(course: Course): Observable<EntityResponseType> {
-        const copy = this.convert(course);
-        return this.http.post<Course>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+        const copy = this.convertDateFromClient(course);
+        return this.http
+            .post<Course>(this.resourceUrl, copy, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     update(course: Course): Observable<EntityResponseType> {
-        const copy = this.convert(course);
-        return this.http.put<Course>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+        const copy = this.convertDateFromClient(course);
+        return this.http
+            .put<Course>(this.resourceUrl, copy, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     find(id: number): Observable<EntityResponseType> {
-        return this.http.get<Course>(`${this.resourceUrl}/${id}`, { observe: 'response'})
-            .map((res: EntityResponseType) => this.convertResponse(res));
+        return this.http
+            .get<Course>(`${this.resourceUrl}/${id}`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
-    findAll(): Observable<Course[]> {
-        return this.http.get<Course[]>(`${this.resourceUrl}/for-dashboard`);
+    findAll(): Observable<EntityArrayResponseType> {
+        return this.http
+            .get<Course[]>(`${this.resourceUrl}/for-dashboard`, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
     }
 
-    query(req?: any): Observable<HttpResponse<Course[]>> {
-        const options = createRequestOption(req);
-        return this.http.get<Course[]>(this.resourceUrl, { params: options, observe: 'response' })
-            .map((res: HttpResponse<Course[]>) => this.convertArrayResponse(res));
+    // TODO: deprecated --> this method does not scale and should not be used in the future
+    findAllParticipations(courseId: number): Observable<Participation[]> {
+        return this.http.get<Participation[]>(`${this.resourceUrl}/${courseId}/participations`);
     }
 
-    delete(id: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response'});
+    query(): Observable<EntityArrayResponseType> {
+        return this.http
+            .get<Course[]>(this.resourceUrl, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
     }
 
-    private convertResponse(res: EntityResponseType): EntityResponseType {
-        const body: Course = this.convertItemFromServer(res.body);
-        return res.clone({body});
+    delete(id: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }
 
-    private convertArrayResponse(res: HttpResponse<Course[]>): HttpResponse<Course[]> {
-        const jsonResponse: Course[] = res.body;
-        const body: Course[] = [];
-        for (let i = 0; i < jsonResponse.length; i++) {
-            body.push(this.convertItemFromServer(jsonResponse[i]));
-        }
-        return res.clone({body});
+    getAllCourseScoresOfCourseUsers(courseId: number): Observable<any> {
+        return this.http.get(`${this.resourceUrl}/${courseId}/getAllCourseScoresOfCourseUsers`);
     }
 
-    /**
-     * Convert a returned JSON object to Course.
-     */
-    private convertItemFromServer(course: Course): Course {
-        const copy: Course = Object.assign({}, course);
-        copy.startDate = this.dateUtils.convertDateTimeFromServer(course.startDate);
-        copy.endDate = this.dateUtils.convertDateTimeFromServer(course.endDate);
+    findAllResults(courseId: number): Observable<any> {
+        return this.http.get(`${this.resourceUrl}/${courseId}/results`);
+    }
+
+    private convertDateFromClient(course: Course): Course {
+        const copy: Course = Object.assign({}, course, {
+            startDate: course.startDate != null && moment(course.startDate).isValid() ? course.startDate.toJSON() : null,
+            endDate: course.endDate != null && moment(course.endDate).isValid() ? course.endDate.toJSON() : null
+        });
         return copy;
     }
 
-    /**
-     * Convert a Course to a JSON which can be sent to the server.
-     */
-    private convert(course: Course): Course {
-        const copy: Course = Object.assign({}, course);
-        copy.startDate = this.dateUtils.toDate(course.startDate);
-        copy.endDate = this.dateUtils.toDate(course.endDate);
-        return copy;
+    private convertDateFromServer(res: EntityResponseType): EntityResponseType {
+        res.body.startDate = res.body.startDate != null ? moment(res.body.startDate) : null;
+        res.body.endDate = res.body.endDate != null ? moment(res.body.endDate) : null;
+        res.body.exercises = this.exerciseService.convertExercisesDateFromServer(res.body.exercises);
+        return res;
+    }
+
+    private convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
+        res.body.forEach((course: Course) => {
+            course.startDate = course.startDate != null ? moment(course.startDate) : null;
+            course.endDate = course.endDate != null ? moment(course.endDate) : null;
+            course.exercises = this.exerciseService.convertExercisesDateFromServer(course.exercises);
+        });
+        return res;
     }
 }
 
 @Injectable()
 export class CourseExerciseService {
-    private resourceUrl =  SERVER_API_URL + `api/courses`;
+    private resourceUrl = SERVER_API_URL + `api/courses`;
 
-    constructor(private httpClient: HttpClient, private http: HttpClient, private dateUtils: JhiDateUtils) { }
+    constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
 
-    find(courseId: number, exerciseId: number): Observable<Exercise> {
-        return this.http.get(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}`).map((res: HttpResponse<Exercise>) => {
-            return this.convertExerciseFromServer(res.body);
-        });
+    findExercise(courseId: number, exerciseId: number): Observable<Exercise> {
+        return this.http
+            .get<Exercise>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}`)
+            .map((res: Exercise) => this.convertDateFromServer(res));
     }
 
-    query(courseId: number, req?: any): Observable<HttpResponse<Course[]>> {
+    findAllExercises(courseId: number, req?: any): Observable<HttpResponse<Exercise[]>> {
         const options = createRequestOption(req);
-        return this.http.get(`${this.resourceUrl}/${courseId}/exercises/`, { params: options, observe: 'response' })
-            .map((res: HttpResponse<Course[]>) => this.convertArrayResponse(res));
+        return this.http
+            .get<Exercise[]>(`${this.resourceUrl}/${courseId}/exercises/`, { params: options, observe: 'response' })
+            .map((res: HttpResponse<Exercise[]>) => this.convertDateArrayFromServer(res));
     }
 
-    start(courseId: number, exerciseId: number) {
-        return this.http.post(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/participations`, {}).map((res: any) => {
-            if (res && res.exercise) {
-                const exercise = this.convertGenericFromServer(res.exercise);
-                exercise.participation = this.convertGenericFromServer(res);
-                return exercise;
-            }
-            return this.convertGenericFromServer(res);
-        });
+    // exercise specific calls
+
+    findProgrammingExercise(courseId: number, exerciseId: number): Observable<ProgrammingExercise> {
+        return this.http
+            .get<ProgrammingExercise>(`${this.resourceUrl}/${courseId}/programming-exercises/${exerciseId}`)
+            .map((res: ProgrammingExercise) => this.convertDateFromServer(res));
     }
 
-    private convertGenericFromServer(any) {
-        const entity = Object.assign({}, any);
-        return entity;
-    }
-
-    resume(courseId: number, exerciseId: number) {
-        return this.http.put(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/resume-participation`, {}).map((res: any) => {
-            if (res && res.exercise) {
-                const exercise = this.convertGenericFromServer(res.exercise);
-                exercise.participation = this.convertGenericFromServer(res);
-                return exercise;
-            }
-            return this.convertGenericFromServer(res);
-        });
-    }
-
-    private convertResponse(res: EntityResponseType): EntityResponseType {
-        const body: Course = this.convertCourseFromServer(res.body);
-        return res.clone({body});
-    }
-
-    private convertArrayResponse(res: HttpResponse<Course[]>): HttpResponse<Course[]> {
-        const jsonResponse: Course[] = res.body;
-        const body: Course[] = [];
-        for (let i = 0; i < jsonResponse.length; i++) {
-            body.push(this.convertCourseFromServer(jsonResponse[i]));
-        }
-        return res.clone({body});
-    }
-
-    /**
-     * Convert a returned JSON object to Exercise.
-     */
-    private convertExerciseFromServer(exercise: Exercise): Exercise {
-        const entity: Exercise = Object.assign({}, exercise);
-        entity.releaseDate = this.dateUtils
-            .convertDateTimeFromServer(exercise.releaseDate);
-        entity.dueDate = this.dateUtils
-            .convertDateTimeFromServer(exercise.dueDate);
-        return entity;
-    }
-
-    private convertParticipationFromServer(participation: Participation): Participation {
-        const entity: Participation = Object.assign({}, participation);
-        return entity;
-    }
-
-    private convertCourseFromServer(course: Course): Course {
-        const entity: Course = Object.assign({}, course);
-        return entity;
-    }
-}
-
-// TODO: move into its own file
-
-@Injectable()
-export class CourseProgrammingExerciseService {
-
-    private resourceUrl =  SERVER_API_URL + 'api/courses';
-
-    constructor(private http: HttpClient) { }
-
-    find(courseId: number, exerciseId: number): Observable<ProgrammingExercise> {
-        return this.http.get(`${this.resourceUrl}/${courseId}/programming-exercises/${exerciseId}`).map((res: HttpResponse<ProgrammingExercise>) => {
-            return this.convertItemFromServer(res.body);
-        });
-    }
-
-    query(courseId: number, req?: any): Observable<HttpResponse<ProgrammingExercise[]>> {
+    findAllProgrammingExercises(courseId: number, req?: any): Observable<HttpResponse<ProgrammingExercise[]>> {
         const options = createRequestOption(req);
-        return this.http.get(`${this.resourceUrl}/${courseId}/programming-exercises/`, { params: options, observe: 'response' })
-            .map((res: HttpResponse<ProgrammingExercise[]>) => this.convertArrayResponse(res));
+        return this.http
+            .get<ProgrammingExercise[]>(`${this.resourceUrl}/${courseId}/programming-exercises/`, { params: options, observe: 'response' })
+            .map((res: HttpResponse<ProgrammingExercise[]>) => this.convertDateArrayFromServer(res));
     }
 
-    start(courseId: number, exerciseId: number): Observable<Participation> {
-        return this.http.post(`${this.resourceUrl}/${courseId}/programming-exercises/${exerciseId}/participations`, {}).map((res: HttpResponse<Participation>) => {
-            if (res.body) {
-                // make sure the bidirectional association is available
-                const participation = res.body;
-                participation.exercise.participations.push(participation);
+    findModelingExercise(courseId: number, exerciseId: number): Observable<ModelingExercise> {
+        return this.http
+            .get<ModelingExercise>(`${this.resourceUrl}/${courseId}/modeling-exercises/${exerciseId}`)
+            .map((res: ModelingExercise) => this.convertDateFromServer(res));
+    }
+
+    findAllModelingExercises(courseId: number, req?: any): Observable<HttpResponse<ModelingExercise[]>> {
+        const options = createRequestOption(req);
+        return this.http
+            .get<ModelingExercise[]>(`${this.resourceUrl}/${courseId}/modeling-exercises/`, { params: options, observe: 'response' })
+            .map((res: HttpResponse<ModelingExercise[]>) => this.convertDateArrayFromServer(res));
+    }
+
+    findTextExercise(courseId: number, exerciseId: number): Observable<TextExercise> {
+        return this.http
+            .get<TextExercise>(`${this.resourceUrl}/${courseId}/text-exercises/${exerciseId}`)
+            .map((res: TextExercise) => this.convertDateFromServer(res));
+    }
+
+    findAllTextExercises(courseId: number, req?: any): Observable<HttpResponse<TextExercise[]>> {
+        const options = createRequestOption(req);
+        return this.http
+            .get<TextExercise[]>(`${this.resourceUrl}/${courseId}/text-exercises/`, { params: options, observe: 'response' })
+            .map((res: HttpResponse<TextExercise[]>) => this.convertDateArrayFromServer(res));
+    }
+
+    findFileUploadExercise(courseId: number, exerciseId: number): Observable<FileUploadExercise> {
+        return this.http
+            .get<FileUploadExercise>(`${this.resourceUrl}/${courseId}/file-upload-exercises/${exerciseId}`)
+            .map((res: FileUploadExercise) => this.convertDateFromServer(res));
+    }
+
+    findAllFileUploadExercises(courseId: number, req?: any): Observable<HttpResponse<FileUploadExercise[]>> {
+        const options = createRequestOption(req);
+        return this.http
+            .get<FileUploadExercise[]>(`${this.resourceUrl}/${courseId}/file-upload-exercises/`, { params: options, observe: 'response' })
+            .map((res: HttpResponse<FileUploadExercise[]>) => this.convertDateArrayFromServer(res));
+    }
+
+    startExercise(courseId: number, exerciseId: number): Observable<Participation> {
+        return this.http
+            .post<Participation>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/participations`, {})
+            .map((participation: Participation) => {
+                return this.handleParticipation(participation);
+            });
+    }
+
+    resumeExercise(courseId: number, exerciseId: number): Observable<Participation> {
+        return this.http
+            .put(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/resume-participation`, {})
+            .map((participation: Participation) => {
+                return this.handleParticipation(participation);
+            });
+    }
+
+    handleParticipation(participation: Participation) {
+        if (participation) {
+            // convert date
+            participation.initializationDate = participation.initializationDate ? moment(participation.initializationDate) : null;
+            if (participation.exercise) {
+                const exercise = participation.exercise;
+                exercise.dueDate = exercise.dueDate ? moment(exercise.dueDate) : null;
+                exercise.releaseDate = exercise.releaseDate ? moment(exercise.releaseDate) : null;
+                exercise.participations = [participation];
                 return participation;
             }
-            return this.convertParticipationFromServer(res.body);
+        }
+        return participation;
+    }
+
+    private convertDateFromServer<T extends Exercise>(res: T): T {
+        res.releaseDate = res.releaseDate != null ? moment(res.releaseDate) : null;
+        res.dueDate = res.dueDate != null ? moment(res.dueDate) : null;
+        return res;
+    }
+
+    private convertDateArrayFromServer<T extends Exercise>(res: HttpResponse<T[]>): HttpResponse<T[]> {
+        res.body.forEach((exercise: T) => {
+            exercise.releaseDate = exercise.releaseDate != null ? moment(exercise.releaseDate) : null;
+            exercise.dueDate = exercise.dueDate != null ? moment(exercise.dueDate) : null;
         });
-    }
-
-    private convertParticipationFromServer(participation: Participation): Participation {
-        const entity: Participation = Object.assign({}, participation);
-        return entity;
-    }
-
-    private convertResponse(res: HttpResponse<ProgrammingExercise>): HttpResponse<ProgrammingExercise> {
-        const body: ProgrammingExercise = this.convertItemFromServer(res.body);
-        return res.clone({body});
-    }
-
-    private convertArrayResponse(res: HttpResponse<ProgrammingExercise[]>): HttpResponse<ProgrammingExercise[]> {
-        const jsonResponse: ProgrammingExercise[] = res.body;
-        const body: ProgrammingExercise[] = [];
-        for (let i = 0; i < jsonResponse.length; i++) {
-            body.push(this.convertItemFromServer(jsonResponse[i]));
-        }
-        return res.clone({body});
-    }
-
-    /**
-     * Convert a returned JSON object to ProgrammingExercise.
-     */
-    private convertItemFromServer(programmingExercise: ProgrammingExercise): ProgrammingExercise {
-        const entity: ProgrammingExercise = Object.assign(new ProgrammingExercise(), programmingExercise);
-        return entity;
-    }
-}
-
-@Injectable()
-export class CourseParticipationService {
-    private resourceUrl =  SERVER_API_URL + 'api/courses';
-
-    constructor(private http: HttpClient) { }
-
-    findAll(courseId: number): Observable<any> {
-        return this.http.get(`${this.resourceUrl}/${courseId}/participations`);
-    }
-
-    private convertParticipationFromServer(participation: Participation): Participation {
-        const entity: Participation = Object.assign({}, participation);
-        return entity;
-    }
-
-    private convertArrayResponse(res: HttpResponse<Participation[]>): HttpResponse<Participation[]> {
-        const jsonResponse: Participation[] = res.body;
-        const body: Participation[] = [];
-        for (let i = 0; i < jsonResponse.length; i++) {
-            body.push(this.convertParticipationFromServer(jsonResponse[i]));
-        }
-        return res.clone({body});
-    }
-}
-
-@Injectable()
-export class CourseResultService {
-    private resourceUrl =  SERVER_API_URL + 'api/courses';
-
-    constructor(private http: HttpClient) { }
-
-    findAll(courseId: number): Observable<any> {
-        return this.http.get(`${this.resourceUrl}/${courseId}/results`);
-    }
-
-    private convertResultFromServer(participation: Result): Result {
-        const entity: Result = Object.assign({}, participation);
-        return entity;
-    }
-
-    private convertArrayResponse(res: HttpResponse<Result[]>): HttpResponse<Result[]> {
-        const jsonResponse: Result[] = res.body;
-        const body: Result[] = [];
-        for (let i = 0; i < jsonResponse.length; i++) {
-            body.push(this.convertResultFromServer(jsonResponse[i]));
-        }
-        return res.clone({body});
-    }
-}
-
-@Injectable()
-export class CourseScoresService {
-    private resourceUrl =  SERVER_API_URL + 'api/courses';
-
-    constructor(private http: HttpClient) { }
-
-    find(courseId: number): Observable<any> {
-        return this.http.get(`${this.resourceUrl}/${courseId}/getAllCourseScoresOfCourseUsers`);
-    }
-}
-
-@Injectable()
-export class CourseModelingExerciseService {
-
-    private resourceUrl =  SERVER_API_URL + 'api/courses';
-
-    constructor(private http: HttpClient) { }
-
-    find(courseId: number, exerciseId: number): Observable<ModelingExercise> {
-        return this.http.get(`${this.resourceUrl}/${courseId}/modeling-exercises/${exerciseId}`).map((res: HttpResponse<ModelingExercise>) => {
-            return this.convertItemFromServer(res.body);
-        });
-    }
-
-    query(courseId: number, req?: any): Observable<HttpResponse<ModelingExercise[]>> {
-        const options = createRequestOption(req);
-        return this.http.get(`${this.resourceUrl}/${courseId}/modeling-exercises/`, { params: options, observe: 'response' })
-            .map((res: HttpResponse<ModelingExercise[]>) => this.convertArrayResponse(res));
-    }
-
-    // TODO: all this code is duplicated, move them into a common class
-    start(courseId: number, exerciseId: number): Observable<Participation> {
-        return this.http.post(`${this.resourceUrl}/${courseId}/modeling-exercises/${exerciseId}/participations`, {}).map((res: HttpResponse<Participation>) => {
-            if (res.body) {
-                // make sure the bidirectional association is available
-                const participation = res.body;
-                participation.exercise.participations.push(participation);
-                return participation;
-            }
-            return this.convertParticipationFromServer(res.body);
-        });
-    }
-
-    private convertParticipationFromServer(participation: Participation): Participation {
-        const entity: Participation = Object.assign({}, participation);
-        return entity;
-    }
-
-    private convertArrayResponse(res: HttpResponse<ModelingExercise[]>): HttpResponse<ModelingExercise[]> {
-        const jsonResponse: ModelingExercise[] = res.body;
-        const body: ModelingExercise[] = [];
-        for (let i = 0; i < jsonResponse.length; i++) {
-            body.push(this.convertItemFromServer(jsonResponse[i]));
-        }
-        return res.clone({body});
-    }
-
-    /**
-     * Convert a returned JSON object to ModelingExercise.
-     */
-    private convertItemFromServer(modelingExercise: ModelingExercise): ModelingExercise {
-        const entity: ModelingExercise = Object.assign(new ModelingExercise(), modelingExercise);
-        return entity;
+        return res;
     }
 }

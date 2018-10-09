@@ -13,18 +13,12 @@ import { Subscription } from 'rxjs/Subscription';
     templateUrl: './instructor-dashboard-repo-export-dialog.component.html',
     styles: ['textarea { width: 100%; }']
 })
-
 export class InstructorDashboardExportReposComponent {
-
     exercise: Exercise;
     exportInProgress: boolean;
     studentIdList: string;
 
-    constructor(
-        private exerciseService: ExerciseService,
-        public activeModal: NgbActiveModal,
-        private jhiAlertService: JhiAlertService
-    ) {
+    constructor(private exerciseService: ExerciseService, public activeModal: NgbActiveModal, private jhiAlertService: JhiAlertService) {
         this.exportInProgress = false;
     }
 
@@ -34,28 +28,29 @@ export class InstructorDashboardExportReposComponent {
 
     exportRepos(exerciseId: number) {
         this.exportInProgress = true;
-        const studentIdList = this.studentIdList.split(',').map( e => e.trim());
+        const studentIdList = this.studentIdList.split(',').map(e => e.trim());
         this.exerciseService.exportRepos(exerciseId, studentIdList).subscribe(
-          response => {
-              this.jhiAlertService.success(
-                  'Export of repos was successful. The exported zip file with all repositories is currently being downloaded'
-              );
-              this.activeModal.dismiss(true);
-              this.exportInProgress = false;
-              if (response.body) {
-                const zipFile = new Blob([response.body], { type: 'application/zip' });
-                const url = window.URL.createObjectURL(zipFile);
-                const link = document.createElement('a');
-                link.setAttribute('href', url);
-                link.setAttribute('download', response.headers.get('filename'));
-                document.body.appendChild(link); // Required for FF
-                link.click();
-                window.URL.revokeObjectURL(url);
-              }
-          },
-          err => {
-              this.exportInProgress = false;
-          });
+            response => {
+                this.jhiAlertService.success(
+                    'Export of repos was successful. The exported zip file with all repositories is currently being downloaded'
+                );
+                this.activeModal.dismiss(true);
+                this.exportInProgress = false;
+                if (response.body) {
+                    const zipFile = new Blob([response.body], { type: 'application/zip' });
+                    const url = window.URL.createObjectURL(zipFile);
+                    const link = document.createElement('a');
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', response.headers.get('filename'));
+                    document.body.appendChild(link); // Required for FF
+                    link.click();
+                    window.URL.revokeObjectURL(url);
+                }
+            },
+            err => {
+                this.exportInProgress = false;
+            }
+        );
     }
 }
 
@@ -64,20 +59,14 @@ export class InstructorDashboardExportReposComponent {
     template: ''
 })
 export class InstructorDashboardExportReposPopupComponent implements OnInit, OnDestroy {
-
     routeSub: Subscription;
 
-    constructor(
-        private route: ActivatedRoute,
-        private instructorDashboardPopupService: InstructorDashboardPopupService
-    ) {}
+    constructor(private route: ActivatedRoute, private instructorDashboardPopupService: InstructorDashboardPopupService) {}
 
     ngOnInit() {
         this.routeSub = this.route.params.subscribe(params => {
-            this.instructorDashboardPopupService
-                .open(InstructorDashboardExportReposComponent as Component, params['id'], true);
+            this.instructorDashboardPopupService.open(InstructorDashboardExportReposComponent as Component, params['id'], true);
         });
-        console.log(this.routeSub);
     }
 
     ngOnDestroy() {

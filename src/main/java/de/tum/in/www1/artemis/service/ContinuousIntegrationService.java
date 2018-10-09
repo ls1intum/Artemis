@@ -1,14 +1,10 @@
 package de.tum.in.www1.artemis.service;
 
-import de.tum.in.www1.artemis.domain.BuildLogEntry;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.Participation;
-import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.*;
 import org.springframework.http.ResponseEntity;
 
 import java.net.URL;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Created by muenchdo on 07/09/16.
@@ -18,6 +14,13 @@ public interface ContinuousIntegrationService {
     public enum BuildStatus {
         INACTIVE, QUEUED, BUILDING
     }
+
+    /**
+     * Creates the base build plan for the given programming exercise
+     *
+     * @param exercise a programming exercise with the required information to create the base build plan
+     */
+    public void createBaseBuildPlanForExercise(ProgrammingExercise exercise);
 
     /**
      * Copy the base build plan for the given user on the CI system.

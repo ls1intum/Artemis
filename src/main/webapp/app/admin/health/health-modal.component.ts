@@ -8,16 +8,15 @@ import { JhiHealthService } from './health.service';
     templateUrl: './health-modal.component.html'
 })
 export class JhiHealthModalComponent {
-
     currentHealth: any;
 
     constructor(private healthService: JhiHealthService, public activeModal: NgbActiveModal) {}
 
-    baseName(name) {
+    baseName(name: string) {
         return this.healthService.getBaseName(name);
     }
 
-    subSystemName(name) {
+    subSystemName(name: string) {
         return this.healthService.getSubSystemName(name);
     }
 
@@ -28,7 +27,8 @@ export class JhiHealthModalComponent {
 
         // Should display storage space in an human readable unit
         const val = value / 1073741824;
-        if (val > 1) { // Value
+        if (val > 1) {
+            // Value
             return val.toFixed(2) + ' GB';
         } else {
             return (value / 1048576).toFixed(2) + ' MB';

@@ -169,7 +169,7 @@ public class StatisticService {
             if(result.getSubmission() instanceof QuizSubmission){
                 quizSubmission = (QuizSubmission) result.getSubmission();
             } else {
-                quizSubmission = quizSubmissionRepository.findOne(result.getSubmission().getId());
+                quizSubmission = quizSubmissionRepository.findById(result.getSubmission().getId()).get();
             }
             quizExercise.getQuizPointStatistic().addResult(result.getScore(), result.isRated());
             for (Question question : quizExercise.getQuestions()) {
@@ -195,7 +195,7 @@ public class StatisticService {
             if(result.getSubmission() instanceof QuizSubmission){
                 quizSubmission = (QuizSubmission) result.getSubmission();
             } else {
-                quizSubmission = quizSubmissionRepository.findOne(result.getSubmission().getId());
+                quizSubmission = quizSubmissionRepository.findById(result.getSubmission().getId()).get();
             }
             quizExercise.getQuizPointStatistic().removeOldResult(result.getScore(), result.isRated());
             for (Question question : quizExercise.getQuestions()) {
