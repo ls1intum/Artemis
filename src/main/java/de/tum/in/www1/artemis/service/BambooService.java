@@ -501,7 +501,9 @@ public class BambooService implements ContinuousIntegrationService {
             ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findByCommitHash((String) buildResults.get("vcsRevisionKey"));
             if (programmingSubmission == null) { // no matching programmingsubmission
                 log.warn("Could not find ProgrammingSubmission for Commit-Hash {} (Participation {}, Build-Plan {})", buildResults.get("vcsRevisionKey"), participation.getId(), participation.getBuildPlanId());
-
+                // TODO Think about this case and handle it properly (e.g. by creating this submission now)
+                // this might be a wrong build (what could be the reason), or this might be due to test changes
+                // what happens if only the test has changes? should we then create a new submission?
             } else {
                 log.info("Found corresponding submission to build result with Commit-Hash {}", buildResults.get("vcsRevisionKey"));
                 result.setSubmission(programmingSubmission);

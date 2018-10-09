@@ -338,7 +338,8 @@ public class BitbucketService implements VersionControlService {
      * @param projectKey  The project key
      * @throws BitbucketException if the project could not be created
      */
-    private void createProject(String projectName, String projectKey) throws BitbucketException {
+    @Override
+    public void createProject(String projectName, String projectKey) throws BitbucketException {
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
 
         Map<String, Object> body = new HashMap<>();
@@ -576,12 +577,7 @@ public class BitbucketService implements VersionControlService {
     }
 
     @Override
-    public void createTopLevelEntity(String entityName, String parentEntity) throws Exception {
-        createProject(entityName, entityName); // TODO: check if project name should be the project key
-    }
-
-    @Override
-    public void createLowerLevelEntity(String entityName, String topLevelEntity, String parentEntity) throws Exception {
+    public void createRepository(String entityName, String topLevelEntity, String parentEntity) throws Exception {
         createRepository(entityName, topLevelEntity);
     }
 

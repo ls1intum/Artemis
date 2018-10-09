@@ -59,11 +59,11 @@ public interface VersionControlService {
     /**
      * Creates a Top Level Entity (new project/namespace).
      *
-     * @param entityName The name of the new top level entity
-     * @param parentEntity name of parent entity (for sub-groups in Gitlab), null if not applicable
+     * @param projectName TODO
+     * @param projectKey TODO
      * @throws Exception if the top level entity could not be created
      */
-    public void createTopLevelEntity(String entityName, String parentEntity) throws Exception;
+    public void createProject(String projectName, String projectKey) throws Exception;
 
 
     /**
@@ -74,7 +74,7 @@ public interface VersionControlService {
      * @param parentEntity name of parent entity (for sub-groups in Gitlab), null if not applicable
      * @throws Exception if the lower level entity could not be created
      */
-    public void createLowerLevelEntity(String entityName, String topLevelEntity, String parentEntity) throws Exception;
+    public void createRepository(String entityName, String topLevelEntity, String parentEntity) throws Exception;
 
     /**
      * Grants instructor permissions for the given groupname on a project/group.
