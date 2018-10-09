@@ -10,6 +10,8 @@ import { AceEditorComponent } from 'ng2-ace-editor';
 import 'brace/theme/dreamweaver';
 import 'brace/ext/modelist';
 import 'brace/mode/java';
+import 'brace/mode/javascript';
+import 'brace/mode/markdown';
 // TODO: consider adding any modes we might need
 
 declare let ace: any;
@@ -119,9 +121,7 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
     loadFile(fileName: string) {
         // This fetches a list of all supported editor modes and matches it afterwards against the file extension
         const aceModeList = ace.acequire('ace/ext/modelist');
-        console.log('aceModeList', aceModeList);
-        // TODO: handle the case that fileName is null or undefined
-        const fileNameSplit = fileName.split('/');
+        const fileNameSplit = fileName ? fileName.split('/') : '';
         const aceMode = aceModeList.getModeForPath(fileNameSplit[fileNameSplit.length - 1]);
 
         /** Query the repositoryFileService for the specified file in the repository */
