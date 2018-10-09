@@ -61,13 +61,18 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
 
     dragItemPicture: string;
     backgroundFile: Blob | File;
+    backgroundFileName: string;
     dragItemFile: Blob | File;
+    dragItemFileName: string;
 
     dropAllowed = false;
 
     showPreview: boolean;
     isUploadingBackgroundFile: boolean;
     isUploadingDragItemFile: boolean;
+
+    /** Status boolean for collapse status **/
+    isQuestionCollapsed: boolean;
 
     /**
      * Keep track of what the current drag action is doing
@@ -97,10 +102,13 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
         /** Create question backup for resets **/
         this.backupQuestion = JSON.parse(JSON.stringify(this.question));
 
-        /** Assign status booleans **/
+        /** Assign status booleans and strings **/
         this.showPreview = false;
         this.isUploadingBackgroundFile = false;
+        this.backgroundFileName = '';
         this.isUploadingDragItemFile = false;
+        this.dragItemFileName = '';
+        this.isQuestionCollapsed = false;
 
         /** Initialize DropLocation and MouseEvent objects **/
         this.currentDropLocation = new DropLocation();
@@ -198,6 +206,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
         if ($event.target.files.length) {
             const fileList: FileList = $event.target.files;
             this.backgroundFile = fileList[0];
+            this.backgroundFileName = this.backgroundFile['name'];
         }
     }
 
@@ -214,11 +223,13 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
                 this.question.backgroundFilePath = result.path;
                 this.isUploadingBackgroundFile = false;
                 this.backgroundFile = null;
+                this.backgroundFileName = '';
             },
             error => {
                 console.error('Error during file upload in uploadBackground()', error.message);
                 this.isUploadingBackgroundFile = false;
                 this.backgroundFile = null;
+                this.backgroundFileName = '';
             }
         );
     }
@@ -476,6 +487,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
         if ($event.target.files.length) {
             const fileList: FileList = $event.target.files;
             this.dragItemFile = fileList[0];
+            this.dragItemFileName = this.dragItemFile['name'];
         }
     }
 
@@ -500,11 +512,13 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
                 this.questionUpdated.emit();
                 this.isUploadingDragItemFile = false;
                 this.dragItemFile = null;
+                this.dragItemFileName = '';
             },
             error => {
                 console.error('Error during file upload in uploadDragItem()', error.message);
                 this.isUploadingDragItemFile = false;
                 this.dragItemFile = null;
+                this.dragItemFileName = '';
             }
         );
     }
