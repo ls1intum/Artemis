@@ -77,13 +77,13 @@ public interface VersionControlService {
     public void createRepository(String repoName, String projectKey, String parentProjectKey) throws Exception;
 
     /**
-     * Grants permissions for the instructors/tutors on a project.
+     * Grants permissions for the instructors/teachingAssistants on a project.
      *
      * @param projectKey The key of the project
      * @param instructorGroupName The name of the group that contains the instructors
-     * @param tutorGroupName The name of the group that contains the tutors
+     * @param teachingAssistantGroupName The name of the group that contains the teachingAssistants
      */
-    public void grantProjectPermissions(String projectKey, String instructorGroupName, String tutorGroupName);
+    public void grantProjectPermissions(String projectKey, String instructorGroupName, String teachingAssistantGroupName);
 
     /**
      * Gets the project name of a given repository url

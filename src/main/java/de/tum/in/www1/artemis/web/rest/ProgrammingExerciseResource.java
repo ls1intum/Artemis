@@ -136,7 +136,7 @@ public class ProgrammingExerciseResource {
         }
 
         try {
-            programmingExerciseService.setupProgrammingExercise(programmingExercise, programmingExercise.getTitle().toUpperCase().replace(" ", "")); // Setup all repositories etc
+            programmingExerciseService.setupProgrammingExercise(programmingExercise); // Setup all repositories etc
         } catch (Exception e) {
             log.error("Error while setting up programming exercise", e);
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "internalServerError", "Internal server error")).body(null);

@@ -92,6 +92,20 @@ public class ProgrammingExercise extends Exercise implements Serializable {
         return null;
     }
 
+    // TODO start: Replace dummy values
+    public String getShortName() {
+        return "DUMMYSHORTNAME"; // TODO: Use generated value
+    }
+
+    public String getCIProjectKey() {
+        return "DUMMYPROJECT"; // TODO: Use generated value
+    }
+
+    public String getVCSProjectKey() {
+        return "DUMMYPROJECT"; // TODO: Use generated value
+    }
+    // TODO end: Replace dummy values
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

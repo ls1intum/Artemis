@@ -89,8 +89,6 @@ public class BambooService implements ContinuousIntegrationService {
 
     private final String ASSIGNMENT_REPO_NAME = "Assignment";
 
-    private final String SERVER_URL = "https://artemis.ase.in.tum.de";
-
     private final String ASSIGNMENT_REPO_PATH = "assignment";
 
     private final GitService gitService;
@@ -113,7 +111,7 @@ public class BambooService implements ContinuousIntegrationService {
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
     }
 
-    public void createBaseBuildPlanForExercise(ProgrammingExercise exercise) {
+    public void createBaseBuildPlanForExercise(ProgrammingExercise exercise, String vcsRepositorySlug) {
         UserPasswordCredentials userPasswordCredentials = new SimpleUserPasswordCredentials(BAMBOO_USER, BAMBOO_PASSWORD);
         BambooServer bambooServer = new BambooServer(BAMBOO_SERVER_URL.toString(), userPasswordCredentials);
 
@@ -121,22 +119,23 @@ public class BambooService implements ContinuousIntegrationService {
 
         //Bamboo build plan
         final String planKey = "BASE";
-        final String planName = "Artemis Build Plan for Exercise XYZ";
-        final String planDescription = "Artemis BASE Build Plan for Exercise XYZ";
+        final String planName = "Artemis Build Plan for Exercise " + exercise.getTitle();
+        final String planDescription = "Artemis BASE Build Plan for Exercise " + exercise.getTitle();
 
         //Bamboo build project
-        final String projectKey = "PROJECTKEY";
-        final String projectName = "Artemis Project for Exercise XYZ";
+        final String projectKey = exercise.getCIProjectKey();
+        final String projectName = "Artemis Project for Exercise " + exercise.getTitle();
 
         //Bitbucket project and repos
-        final String vcsProjectKey = "PROJECTKEY";
-        final String vcsAssignmentRepositorySlug = "exercise-assignment";
-        final String vcsTestRepositorySlug = "exercise-tests";
+        final String vcsProjectKey = exercise.getVCSProjectKey();
+        final String vcsAssignmentRepositorySlug = vcsRepositorySlug; // exercise.getShortName() + "-assignment"
+        final String vcsTestRepositorySlug = exercise.getShortName() + "-tests";
 
-        //Permissions TODO get these values from the course
-        final String adminGroupName = "ls1instructor";  //see admin-group-name
-        final String teachingAssistantGroupName = "eist2018tutors";
-        final String instructorGroupName = "eist2018students";
+        //Permissions
+        Course course = exercise.getCourse();
+        final String adminGroupName = "ls1instructor";  //see admin-group-name // TODO: maybe get this from the JiraAuthenticationProvider
+        final String teachingAssistantGroupName = course.getTeachingAssistantGroupName();
+        final String instructorGroupName = course.getInstructorGroupName();
 
         final Plan plan = createPlan(planKey, planName, planDescription, projectKey, projectName, vcsProjectKey, vcsAssignmentRepositorySlug, vcsTestRepositorySlug);
         bambooServer.publish(plan);
@@ -181,7 +180,7 @@ public class BambooService implements ContinuousIntegrationService {
                     .finalTasks(new ScriptTask()
                         .description("Notify ArTEMiS")
                         .interpreter(ScriptTaskProperties.Interpreter.BINSH_OR_CMDEXE)
-                        .inlineBody("curl -k -X POST " + SERVER_URL + "/api/results/${bamboo.planKey}"))))
+                        .inlineBody("curl -k -X POST " + BAMBOO_SERVER_URL + "/api/results/${bamboo.planKey}"))))
             .triggers(new BitbucketServerTrigger());
         return plan;
     }
@@ -269,9 +268,9 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
-    public void grantProjectPermissions(String projectKey, String instructorGroupName, String tutorGroupName) {
+    public void grantProjectPermissions(String projectKey, String instructorGroupName, String teachingAssistantGroupName) {
         grantGroupPermissionToProject(projectKey, instructorGroupName, new String[]{"READ", "WRITE", "BUILD", "CLONE", "ADMINISTRATION"});
-        grantGroupPermissionToProject(projectKey, tutorGroupName, new String[]{"READ", "BUILD"});
+        grantGroupPermissionToProject(projectKey, teachingAssistantGroupName, new String[]{"READ", "BUILD"});
 
     }
 
@@ -727,7 +726,7 @@ public class BambooService implements ContinuousIntegrationService {
         if(latestResult.containsKey("artifact")) {
             // The URL points to the directory. Bamboo returns an "Index of" page.
             // Recursively walk through the responses until we get the actual artifact.
-            return retrievArtifactPage((String)latestResult.get("artifact"));
+            return retrieveArtifactPage((String)latestResult.get("artifact"));
         }
         else {
             throw new BambooException("No build artifact available for this plan");
@@ -741,7 +740,7 @@ public class BambooService implements ContinuousIntegrationService {
      * @param url
      * @return
      */
-    private ResponseEntity retrievArtifactPage(String url) throws BambooException {
+    private ResponseEntity retrieveArtifactPage(String url) throws BambooException {
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
         RestTemplate restTemplate = new RestTemplate();
@@ -762,7 +761,7 @@ public class BambooService implements ContinuousIntegrationService {
             if (m.find()) {
                 url = m.group(1);
                 // Recursively walk through the responses until we get the actual artifact.
-                return retrievArtifactPage(BAMBOO_SERVER_URL + url);
+                return retrieveArtifactPage(BAMBOO_SERVER_URL + url);
             } else {
                 throw new BambooException("No artifact link found on artifact page");
             }

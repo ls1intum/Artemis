@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import org.slf4j.Logger;
@@ -40,15 +41,21 @@ public class ProgrammingExerciseService {
      *
      * @param programmingExercise The programmingExercise that should be setup
      */
-    public void setupProgrammingExercise(ProgrammingExercise programmingExercise, String exerciseShortForm) throws Exception {
-        versionControlService.createProject(exerciseShortForm, null); // Create project
+    public void setupProgrammingExercise(ProgrammingExercise programmingExercise) throws Exception {
+        versionControlService.createProject(programmingExercise.getTitle(), programmingExercise.getVCSProjectKey()); // Create project
 
-        versionControlService.createRepository(exerciseShortForm, exerciseShortForm, null); // Create exercise repository
-        versionControlService.createRepository("tests", exerciseShortForm, null); // Create tests repository
-        versionControlService.createRepository("solution", exerciseShortForm, null); // Create solution repository
+        versionControlService.createRepository(programmingExercise.getShortName(), programmingExercise.getVCSProjectKey(), null); // Create exercise repository
+        versionControlService.createRepository("tests", programmingExercise.getVCSProjectKey(), null); // Create tests repository
+        versionControlService.createRepository("solution", programmingExercise.getVCSProjectKey(), null); // Create solution repository
 
-        continuousIntegrationService.createProject(exerciseShortForm);
-        continuousIntegrationService.copyBuildPlanFromTemplate(exerciseShortForm, exerciseShortForm, "JAVA", "TEMPLATE");
+        continuousIntegrationService.createProject(programmingExercise.getCIProjectKey());
+        continuousIntegrationService.createBaseBuildPlanForExercise(programmingExercise, programmingExercise.getShortName()); // plan for the exercise (students)
+        continuousIntegrationService.createBaseBuildPlanForExercise(programmingExercise, "solution"); // plan for the solution (instructors) with solution repository // TODO: check if hardcoding is ok
+
+        // Permissions
+        Course course = programmingExercise.getCourse();
+        versionControlService.grantProjectPermissions(programmingExercise.getVCSProjectKey(), course.getInstructorGroupName(), course.getTeachingAssistantGroupName());
+        continuousIntegrationService.grantProjectPermissions(programmingExercise.getCIProjectKey(), course.getInstructorGroupName(), course.getTeachingAssistantGroupName());
     }
 
 }

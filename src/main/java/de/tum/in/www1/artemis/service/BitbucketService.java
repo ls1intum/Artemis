@@ -582,9 +582,9 @@ public class BitbucketService implements VersionControlService {
     }
 
     @Override
-    public void grantProjectPermissions(String projectKey, String instructorGroupName, String tutorGroupName) {
+    public void grantProjectPermissions(String projectKey, String instructorGroupName, String teachingAssistantGroupName) {
         grantGroupPermissionToProject(projectKey, instructorGroupName, "PROJECT_ADMIN"); // instructors get administrative permissions
-        grantGroupPermissionToProject(projectKey, tutorGroupName, "PROJECT_WRITE"); // tutors get write-permissions
+        grantGroupPermissionToProject(projectKey, teachingAssistantGroupName, "PROJECT_WRITE"); // teachingAssistants get write-permissions
     }
 
     @Override

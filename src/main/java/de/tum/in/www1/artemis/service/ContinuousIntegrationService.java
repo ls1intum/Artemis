@@ -34,20 +34,21 @@ public interface ContinuousIntegrationService {
     public void copyBuildPlanFromTemplate(String buildplanName, String projectName, String templateBuildPlanName, String templateProjectName);
 
     /**
-     * Grants permissions for the instructors/tutors on a project.
+     * Grants permissions for the instructors/teachingAssistants on a project.
      *
      * @param projectKey The key of the project
      * @param instructorGroupName The name of the group that contains the instructors
-     * @param tutorGroupName The name of the group that contains the tutors
+     * @param teachingAssistantGroupName The name of the group that contains the tutors
      */
-    public void grantProjectPermissions(String projectKey, String instructorGroupName, String tutorGroupName);
+    public void grantProjectPermissions(String projectKey, String instructorGroupName, String teachingAssistantGroupName);
 
     /**
      * Creates the base build plan for the given programming exercise
      *
      * @param exercise a programming exercise with the required information to create the base build plan
+     * @param vcsRepositorySlug the slug of the repository (used to seperate between exercise and solution)
      */
-    public void createBaseBuildPlanForExercise(ProgrammingExercise exercise);
+    public void createBaseBuildPlanForExercise(ProgrammingExercise exercise, String vcsRepositorySlug);
 
     /**
      * Copy the base build plan for the given user on the CI system.
