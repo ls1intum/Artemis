@@ -30,6 +30,9 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, A
     questionEditorMode = 'markdown';
     questionEditorAutoUpdate = true;
 
+    /** Status boolean for collapse status **/
+    isQuestionCollapsed: boolean;
+
     showPreview: boolean;
 
     constructor(private artemisMarkdown: ArtemisMarkdown) {}

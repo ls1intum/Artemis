@@ -279,9 +279,11 @@ public class CompassService {
     // Call every hour and free memory for unused calculation engines (older than 1 day)
     @Scheduled(fixedRate=TIME_TO_CHECK_FOR_UNUSED_ENGINES)
     private static void cleanUpCalculationEngines() {
+        LoggerFactory.getLogger(CompassService.class).info("Compass evaluates the need of keeping " + compassCalculationEngines.size() + " calculation engines in memory");
         compassCalculationEngines = compassCalculationEngines.entrySet().stream().
             filter(map -> Duration.between(map.getValue().getLastUsedAt(), LocalDateTime.now()).toDays() < DAYS_TO_KEEP_UNUSED_ENGINE)
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        LoggerFactory.getLogger(CompassService.class).info("After evaluation, there are still " + compassCalculationEngines.size() + " calculation engines in memory");
     }
 
 }

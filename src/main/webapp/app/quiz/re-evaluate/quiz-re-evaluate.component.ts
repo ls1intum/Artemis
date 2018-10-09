@@ -22,7 +22,6 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     private subscription: Subscription;
 
     quizExercise: QuizExercise;
-    quizExerciseQuestion: Question[];
     modalService: NgbModal;
     popupService: QuizExercisePopupService;
     router: Router;

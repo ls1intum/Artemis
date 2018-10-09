@@ -39,14 +39,9 @@ export class NavbarComponent implements OnInit {
             this.languages = languages;
         });
 
-        this.profileService.getProfileInfo().then(
-            profileInfo => {
-                this.inProduction = profileInfo.inProduction;
-            },
-            error => {
-                console.debug('Could not retrieve profile information', error);
-            }
-        );
+        this.profileService.getProfileInfo().then(profileInfo => {
+            this.inProduction = profileInfo.inProduction;
+        });
         this.getCurrentAccount();
     }
 
