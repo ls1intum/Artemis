@@ -21,9 +21,14 @@ public class ProgrammingExerciseService {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseService.class);
 
+    private final VersionControlService versionControlService;
+    private final ContinuousIntegrationService continuousIntegrationService;
     private final ContinuousIntegrationUpdateService continuousIntegrationUpdateService;
 
-    public ProgrammingExerciseService(ContinuousIntegrationUpdateService continuousIntegrationUpdateService) {
+    public ProgrammingExerciseService(VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService,
+                                      ContinuousIntegrationUpdateService continuousIntegrationUpdateService) {
+        this.versionControlService = versionControlService;
+        this.continuousIntegrationService = continuousIntegrationService;
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
     }
 
@@ -36,6 +41,22 @@ public class ProgrammingExerciseService {
         for (Participation participation : programmingExercise.getParticipations()) {
             continuousIntegrationUpdateService.triggerUpdate(participation.getBuildPlanId(), false);
         }
+    }
+
+    /**
+     * Setups all needed repositories etc. for the given programmingExercise.
+     *
+     * @param programmingExercise The programmingExercise that should be setup
+     */
+    public void setupProgrammingExercise(ProgrammingExercise programmingExercise, String exerciseShortForm) throws Exception {
+        versionControlService.createTopLevelEntity(exerciseShortForm, null); // Create project
+
+        versionControlService.createLowerLevelEntity(exerciseShortForm, exerciseShortForm, null); // Create exercise repository
+        versionControlService.createLowerLevelEntity("tests", exerciseShortForm, null); // Create tests repository
+        versionControlService.createLowerLevelEntity("solution", exerciseShortForm, null); // Create solution repository
+
+        continuousIntegrationService.createProject(exerciseShortForm);
+        continuousIntegrationService.copyBuildPlanFromTemplate(exerciseShortForm, exerciseShortForm, "JAVA", "TEMPLATE");
     }
 
 }

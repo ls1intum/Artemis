@@ -57,6 +57,44 @@ public interface VersionControlService {
     public String getLastCommitHash(Object requestBody) throws Exception;
 
     /**
+     * Creates a Top Level Entity (new project/namespace).
+     *
+     * @param entityName The name of the new top level entity
+     * @param parentEntity name of parent entity (for sub-groups in Gitlab), null if not applicable
+     * @throws Exception if the top level entity could not be created
+     */
+    public void createTopLevelEntity(String entityName, String parentEntity) throws Exception;
+
+
+    /**
+     * Creates a Lower Level Entity (new repository/project).
+     *
+     * @param entityName The name of the new lower level entity
+     * @param topLevelEntity name of the top level entity that contains the newly created entity
+     * @param parentEntity name of parent entity (for sub-groups in Gitlab), null if not applicable
+     * @throws Exception if the lower level entity could not be created
+     */
+    public void createLowerLevelEntity(String entityName, String topLevelEntity, String parentEntity) throws Exception;
+
+    /**
+     * Grants instructor permissions for the given groupname on a project/group.
+     *
+     * @param groupName The groupname that should be granted the permissions
+     * @param topLevelEntity The top level entity for which the permission should be granted
+     * @param parentEntity name of parent entity (for sub-groups in Gitlab), null if not applicable
+     */
+    public void grantInstructorPermission(String groupName, String topLevelEntity, String parentEntity);
+
+    /**
+     * Grants tutor permissions for the given groupname on a project/group.
+     *
+     * @param groupName The groupname that should be granted the permissions
+     * @param topLevelEntity The top level entity for which the permission should be granted
+     * @param parentEntity name of parent entity (for sub-groups in Gitlab), null if not applicable
+     */
+    public void grantTutorPermission(String groupName, String topLevelEntity, String parentEntity);
+
+    /**
      * Get the top level identifier of a repository (project/namespace)
      *
      * @param repositoryUrl The repository url

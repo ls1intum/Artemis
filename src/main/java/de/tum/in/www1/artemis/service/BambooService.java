@@ -222,11 +222,83 @@ public class BambooService implements ContinuousIntegrationService {
         return bambooClient;
     }
 
+
+    @Override
+    public void createProject(String projectName) {
+        try {
+            createProjectImpl(projectName);
+        }
+        catch(BambooException bambooException) {
+            if (bambooException.getMessage().contains("already exists")) {
+                log.info("Project already exists. Reusing it...");
+            }
+            else throw bambooException;
+        }
+
+    }
+
+    private void createProjectImpl(String projectName) throws BambooException {
+        try {
+            log.info("Creating project " + projectName);
+            String message = getBambooClient().getProjectHelper().createProject(projectName, projectName, "Project created by ArTEMiS");
+            log.info("Project was successfully created. " + message);
+
+        } catch (CliClient.ClientException clientException) {
+            log.error(clientException.getMessage(), clientException);
+            if (clientException.getMessage().contains("already exists")) {
+                throw new BambooException(clientException.getMessage());
+            }
+        } catch (CliClient.RemoteRestException e) {
+            log.error(e.getMessage(), e);
+            throw new BambooException("Something went wrong while creating the project", e);
+        }
+    }
+
+    @Override
+    public void copyBuildPlanFromTemplate(String buildplanName, String projectName, String templateBuildPlanName, String templateProjectName) {
+        try {
+            clonePlan(templateProjectName, templateBuildPlanName, projectName, buildplanName);
+        }
+        catch(BambooException bambooException) {
+            if (bambooException.getMessage().contains("already exists")) {
+                log.info("Build Plan already exists. Going to reuse it...");
+                return;
+            }
+            else throw bambooException;
+        }
+    }
+
+    @Override
+    public void grantInstructorPermission(String groupName, String projectName) {
+        grantPermission(groupName, projectName, new String[]{"READ", "WRITE", "BUILD", "CLONE", "ADMINISTRATION"});
+    }
+
+    @Override
+    public void grantTutorPermission(String groupName, String projectName) {
+        grantPermission(groupName, projectName, new String[]{"READ", "BUILD"});
+    }
+
+    private void grantPermission(String groupName, String projectName, String[] permissions) {
+        HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
+        HttpEntity<?> entity = new HttpEntity<>(permissions, headers);
+        RestTemplate restTemplate = new RestTemplate();
+        try {
+            restTemplate.exchange(
+                BAMBOO_SERVER_URL + "/rest/api/latest/permissions/projectplan/" + projectName.toUpperCase() + "/groups/" + groupName,
+                HttpMethod.PUT,
+                entity,
+                Object.class);
+        } catch (Exception e) {
+            log.error("HttpError while setting permissions for build plan", e);
+        }
+    }
+
     @Override
     public String copyBuildPlan(String baseBuildPlanId, String wantedPlanKey) {
         wantedPlanKey = cleanPlanKey(wantedPlanKey);
+        String projectKey = getProjectKeyFromBuildPlanId(baseBuildPlanId);
         try {
-            return clonePlan(getProjectKeyFromBuildPlanId(baseBuildPlanId), getPlanKeyFromBuildPlanId(baseBuildPlanId), wantedPlanKey);
+            return clonePlan(projectKey, getPlanKeyFromBuildPlanId(baseBuildPlanId), projectKey, wantedPlanKey); // Save the new plan in the same project
         }
         catch(BambooException bambooException) {
             if (bambooException.getMessage().contains("already exists")) {
@@ -301,12 +373,13 @@ public class BambooService implements ContinuousIntegrationService {
      *
      * @param baseProject The Bamboo project in which the plan is contained.
      * @param basePlan    The plan's name.
+     * @param toProject   The Bamboo project in which the new plan should be contained.
      * @param name        The name to give the cloned plan.
      * @return            The name of the new build plan
      */
-    public String clonePlan(String baseProject, String basePlan, String name) throws BambooException {
+    public String clonePlan(String baseProject, String basePlan, String toProject, String name) throws BambooException {
 
-        String toPlan = baseProject + "-" + name;
+        String toPlan = toProject + "-" + name;
         try {
             log.info("Clone build plan " + baseProject + "-" + basePlan + " to " + toPlan);
             String message = getBambooClient().getPlanHelper().clonePlan(baseProject + "-" + basePlan, toPlan, toPlan, "", "", true);

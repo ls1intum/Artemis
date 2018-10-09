@@ -99,7 +99,7 @@ public class GitlabService implements VersionControlService {
             }
         }
 
-        giveWritePermission(repositoryUrl, username);
+        giveWritePermissionRepository(repositoryUrl, username);
     }
 
     @Override
@@ -162,16 +162,18 @@ public class GitlabService implements VersionControlService {
     }
 
     /**
-     * Gets the namespace from the given URL
+     * Gets the namespace from the given URL (including %2F if it is a subgroup)
      *
      * @param repositoryUrl The complete repository-url (including protocol, host and the complete path)
      * @return The namespace
      * @throws GitlabException if the URL is invalid and no namespace could be extracted
      */
     private String getNamespaceFromUrl(URL repositoryUrl) throws GitlabException {
-        // https://ga42xab@gitlabbruegge.in.tum.de/EIST2016RME/RMEXERCISE-ga42xab.git -> EIST2016RME
+        // https://ga42xab@gitlabbruegge.in.tum.de/EIST2016/RME/RMEXERCISE-ga42xab.git -> EIST2016&2FRME (see the "%2F")
         String[] urlParts = repositoryUrl.getFile().split("/");
-        if (urlParts.length > 1) {
+        if (urlParts.length > 2) { // Can have a subgroup or no subgroup
+            return urlParts[1] + "%2F" + urlParts[2];
+        } else if (urlParts.length > 1) {
             return urlParts[1];
         }
 
@@ -187,10 +189,17 @@ public class GitlabService implements VersionControlService {
      * @throws GitlabException if the URL is invalid and no project name could be extracted
      */
     private String getProjectNameFromUrl(URL repositoryUrl) {
-        // https://ga42xab@gitlabbruegge.in.tum.de/EIST2016RME/RMEXERCISE-ga42xab.git -> RMEXERCISE-ga42xab
+        // https://ga42xab@gitlabbruegge.in.tum.de/EIST2016/RME/RMEXERCISE-ga42xab.git -> RMEXERCISE-ga42xab
         String[] urlParts = repositoryUrl.getFile().split("/");
-        if (urlParts.length > 2) {
-            String repositoryName = urlParts[2];
+
+        String repositoryName = null;
+        if (urlParts.length > 3) { // Can have a subgroup or no subgroup
+            repositoryName = urlParts[3];
+        } else if (urlParts.length > 2) {
+            repositoryName = urlParts[2];
+        }
+
+        if (repositoryName != null) {
             if (repositoryName.endsWith(".git")) {
                 repositoryName = repositoryName.substring(0, repositoryName.length() - 4);
             }
@@ -369,7 +378,7 @@ public class GitlabService implements VersionControlService {
      * @param username       The user whom to give write permissions.
      * @throws GitlabException if the permission could not be granted
      */
-    private void giveWritePermission(URL repositoryUrl, String username) throws GitlabException {
+    private void giveWritePermissionRepository(URL repositoryUrl, String username) throws GitlabException {
         URI baseUri = buildUri(GITLAB_SERVER_URL + API_PATH + "projects/", getURLEncodedIdentifier(repositoryUrl), "/members");
         Map<String, Object> body = new HashMap<>();
         body.put("user_id", getUserId(username, true));
@@ -396,6 +405,44 @@ public class GitlabService implements VersionControlService {
         } catch (Exception e) {
             log.error("Could not give write permission", e);
             throw new GitlabException("Error while giving repository permissions");
+        }
+    }
+
+    /**
+     * Gives user permission for a group.
+     *
+     * @param groupIdentifer  The group's identifier
+     * @param username        The user whom to give write permissions
+     * @param permissionLevel The level of permission the user should be granted
+     * @throws GitlabException if the permission could not be granted
+     */
+    private void giveGroupPermission(String groupIdentifer, String username, Integer permissionLevel) throws GitlabException {
+        URI baseUri = buildUri(GITLAB_SERVER_URL + API_PATH + "groups/", groupIdentifer, "/members");
+        Map<String, Object> body = new HashMap<>();
+        body.put("user_id", getUserId(username, true));
+        body.put("access_level", permissionLevel);
+
+        HttpHeaders headers = HeaderUtil.createPrivateTokenAuthorization(GITLAB_PRIVATE_TOKEN);
+        HttpEntity<?> entity = new HttpEntity<>(body, headers);
+
+        RestTemplate restTemplate = new RestTemplate();
+        try {
+            restTemplate.exchange(
+                baseUri,
+                HttpMethod.POST,
+                entity,
+                Map.class);
+        } catch(HttpClientErrorException e) {
+            if (e.getStatusCode().equals(HttpStatus.CONFLICT)) {
+                //TODO: Maybe check if the user has at least the access_level that would be given to him
+                log.info("User already had permission. Assuming he has the correct permission.");
+                return;
+            }
+            log.error("Could not give permission", e);
+            throw new GitlabException("Error while giving group permissions");
+        } catch (Exception e) {
+            log.error("Could not give permission", e);
+            throw new GitlabException("Error while giving group permissions");
         }
     }
 
@@ -540,6 +587,64 @@ public class GitlabService implements VersionControlService {
             log.error("Error when getting hash of last commit");
             throw new GitlabException("Could not get hash of last commit", e);
         }
+    }
+
+    @Override
+    public void createTopLevelEntity(String entityName, String parentEntity) throws Exception {
+        // TODO: Reimplement this correctly when https://gitlab.com/gitlab-org/gitlab-ce/issues/33054 is live
+        /*
+        Integer parentGroupId;
+        try {
+            parentGroupId = getNamespaceId(parentEntity);
+        } catch (GitlabException e) {
+            log.error("Error when getting id of group {}", parentEntity);
+            throw new GitlabException("Error when getting id of group", e);
+        }
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("name", entityName);
+        body.put("path", entityName.toLowerCase());
+        body.put("parent_id", parentGroupId);
+
+        HttpHeaders headers = HeaderUtil.createPrivateTokenAuthorization(GITLAB_PRIVATE_TOKEN);
+        HttpEntity<?> entity = new HttpEntity<>(body, headers);
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<Map> response;
+        try {
+            response = restTemplate.exchange(
+                GITLAB_SERVER_URL + API_PATH + "groups/",
+                HttpMethod.POST,
+                entity,
+                Map.class);
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode().equals(HttpStatus.BAD_REQUEST)) {
+                log.info("Subgroup already exists...");
+            } else {
+                throw e;
+            }
+        } catch (Exception e) {
+            log.error("Could create SubGroup {} for group {} " + entityName, parentEntity, e);
+            throw new GitlabException("Error while creating subgroup");
+        }
+        */
+    }
+
+    @Override
+    public void createLowerLevelEntity(String name, String topLevelEntity, String parentEntity) throws Exception {
+        // TODO: Reimplement this correctly when https://gitlab.com/gitlab-org/gitlab-ce/issues/33054 is live
+        // TODO: we might also import a template
+    }
+
+    @Override
+    public void grantInstructorPermission(String username, String topLevelEntity, String parentEntity) {
+        // TODO: Reimplement this correctly when https://gitlab.com/gitlab-org/gitlab-ce/issues/33054 is live
+        // giveGroupPermission(getURLEncodedIdentifier(parentEntity, topLevelEntity), username, 40);
+    }
+
+    @Override
+    public void grantTutorPermission(String username, String topLevelEntity, String parentEntity) {
+        // TODO: Reimplement this correctly when https://gitlab.com/gitlab-org/gitlab-ce/issues/33054 is live
+        // giveGroupPermission(getURLEncodedIdentifier(parentEntity, topLevelEntity), username, 30);
     }
 
     @Override

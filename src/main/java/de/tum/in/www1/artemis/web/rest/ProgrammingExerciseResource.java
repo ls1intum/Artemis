@@ -41,10 +41,12 @@ public class ProgrammingExerciseResource {
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final Optional<VersionControlService> versionControlService;
     private final ExerciseService exerciseService;
+    private final ProgrammingExerciseService programmingExerciseService;
 
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, UserService userService,
                                        AuthorizationCheckService authCheckService, CourseService courseService,
-                                       Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, ExerciseService exerciseService) {
+                                       Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
+                                       ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
@@ -52,6 +54,7 @@ public class ProgrammingExerciseResource {
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.exerciseService = exerciseService;
+        this.programmingExerciseService = programmingExerciseService;
     }
 
     /**
@@ -99,6 +102,52 @@ public class ProgrammingExerciseResource {
         if(errorResponse != null) {
             return errorResponse;
         }
+        ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
+        return ResponseEntity.created(new URI("/api/programming-exercises/" + result.getId()))
+            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
+            .body(result);
+    }
+
+    /**
+     * POST  /programming-exercises/setup : Setup a new programmingExercise (with all needed repositories etc.)
+     *
+     * @param programmingExercise the programmingExercise to setup
+     * @return the ResponseEntity with status 201 (Created) and with body the new programmingExercise, or with status 400 (Bad Request) if the parameters are invalid
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PostMapping("/programming-exercises/setup")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @Timed
+    public ResponseEntity<ProgrammingExercise> setupProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise) throws URISyntaxException {
+        log.debug("REST request to setup ProgrammingExercise : {}", programmingExercise);
+        if (programmingExercise.getId() != null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new programmingExercise cannot already have an ID")).body(null);
+        }
+        // fetch course from database to make sure client didn't change groups
+        Course course = courseService.findOne(programmingExercise.getCourse().getId());
+        if (course == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this programming exercise does not exist")).body(null);
+        }
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
+            !authCheckService.isInstructorInCourse(course, user) &&
+            !authCheckService.isAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        try {
+            programmingExerciseService.setupProgrammingExercise(programmingExercise, programmingExercise.getTitle().toUpperCase().replace(" ", "")); // Setup all repositories etc
+        } catch (Exception e) {
+            log.error("Error while setting up programming exercise", e);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "internalServerError", "Internal server error")).body(null);
+
+        }
+
+        ResponseEntity<ProgrammingExercise> errorResponse = checkProgrammingExerciseForError(programmingExercise);
+        if(errorResponse != null) {
+            return errorResponse;
+        }
+
         ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
         return ResponseEntity.created(new URI("/api/programming-exercises/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))

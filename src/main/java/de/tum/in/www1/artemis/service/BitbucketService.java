@@ -332,6 +332,91 @@ public class BitbucketService implements VersionControlService {
     }
 
     /**
+     * Create a new project
+     *
+     * @param projectName The project name
+     * @param projectKey  The project key
+     * @throws BitbucketException if the project could not be created
+     */
+    private void createProject(String projectName, String projectKey) throws BitbucketException {
+        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("key", projectKey);
+        body.put("name", projectName);
+        HttpEntity<?> entity = new HttpEntity<>(body, headers);
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        log.debug("Creating Bitbucket project {} with key {}", projectName, projectKey);
+
+        try {
+            restTemplate.exchange(
+                BITBUCKET_SERVER_URL + "/rest/api/1.0/projects",
+                HttpMethod.POST,
+                entity,
+                Map.class);
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode() == HttpStatus.CONFLICT) {
+                log.info("Project {} already exists, reusing it..", projectName);
+                return;
+            }
+            log.error("Could not create Bitbucket project {} with key {}", projectName, projectKey, e);
+            throw new BitbucketException("Error while creating Bitbucket project");
+        }
+    }
+
+    /**
+     * Create a new repo
+     *
+     * @param repoName The project name
+     * @param projectKey  The project key of the parent project
+     * @throws BitbucketException if the repo could not be created
+     */
+    private void createRepository(String repoName, String projectKey) throws BitbucketException {
+        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("name", repoName);
+        HttpEntity<?> entity = new HttpEntity<>(body, headers);
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        log.debug("Creating Bitbucket repo {} with parent key {}", repoName, projectKey);
+
+        try {
+            restTemplate.exchange(
+                BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos",
+                HttpMethod.POST,
+                entity,
+                Map.class);
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode() == HttpStatus.CONFLICT) {
+                log.info("Project {} (parent {}) already exists, reusing it..", repoName, projectKey);
+                return;
+            }
+            log.error("Could not create Bitbucket repo {} with parent key {}", repoName, projectKey, e);
+            throw new BitbucketException("Error while creating Bitbucket repo");
+        }
+    }
+
+    public void grantGroupPermissionToProject(String projectKey, String groupName, String permission) {
+        String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/permissions/groups/?name="; // GROUPNAME&PERMISSION
+        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
+        HttpEntity<?> entity = new HttpEntity<>(headers);
+        RestTemplate restTemplate = new RestTemplate();
+        try {
+            restTemplate.exchange(
+                baseUrl + groupName + "&permission=" + permission,
+                HttpMethod.PUT,
+                entity, Map.class);
+        } catch (Exception e) {
+            log.error("Could not give project permission", e);
+            throw new BitbucketException("Error while giving project permissions");
+        }
+    }
+
+    /**
      * Get all existing WebHooks for a specific repository.
      *
      * @param projectKey     The project key of the repository's project.
@@ -488,6 +573,26 @@ public class BitbucketService implements VersionControlService {
             log.error("Error when getting hash of last commit");
             throw new BitbucketException("Could not get hash of last commit", e);
         }
+    }
+
+    @Override
+    public void createTopLevelEntity(String entityName, String parentEntity) throws Exception {
+        createProject(entityName, entityName); // TODO: check if project name should be the project key
+    }
+
+    @Override
+    public void createLowerLevelEntity(String entityName, String topLevelEntity, String parentEntity) throws Exception {
+        createRepository(entityName, topLevelEntity);
+    }
+
+    @Override
+    public void grantInstructorPermission(String groupName, String topLevelEntity, String parentEntity) {
+        grantGroupPermissionToProject(topLevelEntity, groupName, "PROJECT_ADMIN");
+    }
+
+    @Override
+    public void grantTutorPermission(String groupName, String topLevelEntity, String parentEntity) {
+        grantGroupPermissionToProject(topLevelEntity, groupName, "PROJECT_WRITE");
     }
 
     @Override
