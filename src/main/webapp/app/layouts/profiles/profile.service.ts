@@ -19,17 +19,19 @@ export class ProfileService {
                 .pipe(
                     map((res: HttpResponse<ProfileInfo>) => {
                         const data = res.body;
-                        const pi = new ProfileInfo();
-                        pi.activeProfiles = data.activeProfiles;
+                        const profileInfo = new ProfileInfo();
+                        profileInfo.activeProfiles = data.activeProfiles;
                         const displayRibbonOnProfiles = data['display-ribbon-on-profiles'].split(',');
-                        if (pi.activeProfiles) {
-                            const ribbonProfiles = displayRibbonOnProfiles.filter((profile: string) => pi.activeProfiles.includes(profile));
+                        if (profileInfo.activeProfiles) {
+                            const ribbonProfiles = displayRibbonOnProfiles.filter((profile: string) =>
+                                profileInfo.activeProfiles.includes(profile)
+                            );
                             if (ribbonProfiles.length !== 0) {
-                                pi.ribbonEnv = ribbonProfiles[0];
+                                profileInfo.ribbonEnv = ribbonProfiles[0];
                             }
-                            pi.inProduction = pi.activeProfiles.includes('prod');
+                            profileInfo.inProduction = profileInfo.activeProfiles.includes('prod');
                         }
-                        return pi;
+                        return profileInfo;
                     })
                 )
                 .toPromise();
