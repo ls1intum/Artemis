@@ -118,6 +118,17 @@ public class BitbucketService implements VersionControlService {
         return BITBUCKET_SERVER_URL;
     }
 
+    @Override
+    public URL getCloneURL(String projectKey, String repositorySlug) {
+        log.error("URL: " + BITBUCKET_SERVER_URL.getProtocol() + "://" + BITBUCKET_SERVER_URL.getAuthority() + buildRepositoryPath(projectKey, repositorySlug));
+        try {
+            return new URL(BITBUCKET_SERVER_URL.getProtocol() + "://" + BITBUCKET_SERVER_URL.getAuthority() + buildRepositoryPath(projectKey, repositorySlug));
+        } catch (MalformedURLException e) {
+            log.error("Couldn't construct clone URL");
+            throw new BitbucketException("Clone URL could not be constructed");
+        }
+    }
+
     /**
      * Gets the project key from the given URL
      *
@@ -374,7 +385,7 @@ public class BitbucketService implements VersionControlService {
      * @param projectKey  The project key of the parent project
      * @throws BitbucketException if the repo could not be created
      */
-    private void createRepository(String repoName, String projectKey) throws BitbucketException {
+    private void createRepository(String projectKey, String repoName) throws BitbucketException {
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
 
         Map<String, Object> body = new HashMap<>();
@@ -597,10 +608,14 @@ public class BitbucketService implements VersionControlService {
         return getRepositorySlugFromUrl(repositoryUrl);
     }
 
+    private String buildRepositoryPath(String projectKey, String repositorySlug) {
+        return BITBUCKET_SERVER_URL.getPath() + "/scm/" + projectKey + "/" + repositorySlug + ".git";
+    }
+
     private URL buildCloneUrl(String projectKey, String repositorySlug, String username) {
         URL cloneUrl = null;
         try {
-            cloneUrl = new URL(BITBUCKET_SERVER_URL.getProtocol() + "://" + username + "@" + BITBUCKET_SERVER_URL.getAuthority() + BITBUCKET_SERVER_URL.getPath() + "/scm/" + projectKey + "/" + repositorySlug + ".git");
+            cloneUrl = new URL(BITBUCKET_SERVER_URL.getProtocol() + "://" + username + "@" + BITBUCKET_SERVER_URL.getAuthority() + buildRepositoryPath(projectKey, repositorySlug));
         } catch (MalformedURLException e) {
             log.error("Could not build clone URL", e);
         }

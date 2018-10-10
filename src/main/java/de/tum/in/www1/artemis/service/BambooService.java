@@ -111,15 +111,14 @@ public class BambooService implements ContinuousIntegrationService {
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
     }
 
-    public void createBaseBuildPlanForExercise(ProgrammingExercise exercise, String vcsRepositorySlug) {
+    public void createBaseBuildPlanForExercise(ProgrammingExercise exercise, String planKey, String vcsRepositorySlug) {
         UserPasswordCredentials userPasswordCredentials = new SimpleUserPasswordCredentials(BAMBOO_USER, BAMBOO_PASSWORD);
         BambooServer bambooServer = new BambooServer(BAMBOO_SERVER_URL.toString(), userPasswordCredentials);
 
         //TODO: Get some of these values from the exercise object or a config object
 
         //Bamboo build plan
-        final String planKey = "BASE";
-        final String planName = "Artemis Build Plan for Exercise " + exercise.getTitle();
+        final String planName = "Artemis Build Plan for Exercise " + exercise.getTitle() + " (" + planKey + ")"; // Must be unique
         final String planDescription = "Artemis BASE Build Plan for Exercise " + exercise.getTitle();
 
         //Bamboo build project
@@ -129,7 +128,7 @@ public class BambooService implements ContinuousIntegrationService {
         //Bitbucket project and repos
         final String vcsProjectKey = exercise.getVCSProjectKey();
         final String vcsAssignmentRepositorySlug = vcsRepositorySlug; // exercise.getShortName() + "-assignment"
-        final String vcsTestRepositorySlug = exercise.getShortName() + "-tests";
+        final String vcsTestRepositorySlug = "tests";
 
         //Permissions
         Course course = exercise.getCourse();

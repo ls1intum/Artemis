@@ -40,6 +40,15 @@ public interface VersionControlService {
     public URL getRepositoryWebUrl(Participation participation);
 
     /**
+     * Get the clone URL used for cloning
+     *
+     * @param projectKey              The project key
+     * @param repositorySlug          The repository slug
+     * @return                        The clone URL
+     */
+    public URL getCloneURL(String projectKey, String repositorySlug);
+
+    /**
      * Check if the given repository url is valid and accessible.
      *
      * @param repositoryUrl   repository URL
@@ -74,7 +83,7 @@ public interface VersionControlService {
      * @param parentProjectKey The key of parent project (for sub-groups in Gitlab), null if not applicable
      * @throws Exception if the repository could not be created
      */
-    public void createRepository(String repoName, String projectKey, String parentProjectKey) throws Exception;
+    public void createRepository(String projectKey, String repoName, String parentProjectKey) throws Exception;
 
     /**
      * Grants permissions for the instructors/teachingAssistants on a project.
