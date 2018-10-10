@@ -308,7 +308,8 @@ public class ParticipationResource {
     /**
      * GET  /courses/:courseId/exercises/:exerciseId/participation: get the user's participation for a specific exercise.
      *
-     * @param courseId   only included for API consistency, not actually used
+     * Please note: 'courseId' is only included in the call for API consistency, it is not actually used
+     * //TODO remove courseId from the URL
      * @param exerciseId the id of the exercise for which to retrieve the participation
      * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
      */
@@ -316,7 +317,7 @@ public class ParticipationResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     @Transactional(readOnly = true)
-    public ResponseEntity<MappingJacksonValue> getParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) {
+    public ResponseEntity<MappingJacksonValue> getParticipation(@PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to get Participation for Exercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
         if (exercise == null) {
