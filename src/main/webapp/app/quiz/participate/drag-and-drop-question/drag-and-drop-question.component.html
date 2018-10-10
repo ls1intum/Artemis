@@ -1,22 +1,22 @@
 <div class="dnd-question" [ngClass]="{disabled: clickDisabled && !showResult, result: showResult && !forceSampleSolution, incorrect: (score || 0) < question.score && !forceSampleSolution}">
-    <h2><span>{{questionIndex}})</span> {{question.title}}</h2>
+    <h3><span>{{questionIndex}})</span> {{question.title}}</h3>
     <p [innerHTML]="rendered.text"></p><span style="color:red;" *ngIf="question.invalid" jhiTranslate="arTeMiSApp.question.invalidText"></span>
-    <h4 *ngIf="question.hint || (question.explanation && showResult)">
+    <div class="hint" *ngIf="question.hint || (question.explanation && showResult)">
         <ng-template #renderedHint>
             <div [innerHTML]="rendered.hint"></div>
         </ng-template>
-        <span class="label label-info" [ngbPopover]="renderedHint" placement="top" triggers="mouseenter:mouseleave" *ngIf="question.hint">
+        <span class="label label-info" [ngbPopover]="renderedHint" placement="right" triggers="mouseenter:mouseleave" *ngIf="question.hint">
             <i class="fa fa-question-circle-o"></i>
             <span jhiTranslate="arTeMiSApp.question.hint"></span>
-        </span> &nbsp;
+        </span></br>
         <ng-template #renderedExplanation>
             <div [innerHTML]="rendered.explanation"></div>
         </ng-template>
-        <span class="label label-primary" [ngbPopover]="renderedExplanation" placement="top" triggers="mouseenter:mouseleave" *ngIf="question.explanation && showResult">
+        <span class="label label-primary" [ngbPopover]="renderedExplanation" placement="right" triggers="mouseenter:mouseleave" *ngIf="question.explanation && showResult">
             <i class="fa fa-exclamation-circle"></i>
             <span jhiTranslate="arTeMiSApp.question.explanation"></span>
         </span>
-    </h4>
+    </div>
     <div class="question-score" *ngIf="!showResult || forceSampleSolution">
         <span jhiTranslate="arTeMiSApp.question.score" class="colon-suffix"></span>
         <span>{{question.score}}</span>
@@ -112,10 +112,10 @@
             </div>
         </div>
         <div *ngIf="showResult && !forceSampleSolution">
-            <div class="btn btn-default" *ngIf="!showingSampleSolution" (click)="showSampleSolution()">
+            <div class="btn btn-outline-primary" *ngIf="!showingSampleSolution" (click)="showSampleSolution()">
                 Show Sample Solution
             </div>
-            <div class="btn btn-default" *ngIf="showingSampleSolution" (click)="hideSampleSolution()">
+            <div class="btn btn-outline-primary" *ngIf="showingSampleSolution" (click)="hideSampleSolution()">
                 Hide Sample Solution
             </div>
         </div>

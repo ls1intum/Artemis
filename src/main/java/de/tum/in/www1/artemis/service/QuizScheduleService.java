@@ -4,6 +4,9 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -36,9 +39,29 @@ public class QuizScheduleService {
 
     private final SimpMessageSendingOperations messagingTemplate;
     private final ParticipationRepository participationRepository;
+    private final ResultRepository resultRepository;
+    private final QuizSubmissionRepository quizSubmissionRepository;
     private final UserService userService;
     private final QuizExerciseService quizExerciseService;
     private final StatisticService statisticService;
+
+
+    public QuizScheduleService(SimpMessageSendingOperations messagingTemplate,
+                               ParticipationRepository participationRepository,
+                               ResultRepository resultRepository,
+                               QuizSubmissionRepository quizSubmissionRepository,
+                               UserService userService,
+                               QuizExerciseService quizExerciseService,
+                               StatisticService statisticService) {
+        this.messagingTemplate = messagingTemplate;
+        this.participationRepository = participationRepository;
+        this.resultRepository = resultRepository;
+        this.quizSubmissionRepository = quizSubmissionRepository;
+        this.userService = userService;
+        this.quizExerciseService = quizExerciseService;
+        this.statisticService = statisticService;
+    }
+
 
     /**
      * add a quizSubmission to the submissionHashMap
@@ -143,17 +166,6 @@ public class QuizScheduleService {
         return null;
     }
 
-    public QuizScheduleService(SimpMessageSendingOperations messagingTemplate,
-                               ParticipationRepository participationRepository,
-                               UserService userService,
-                               QuizExerciseService quizExerciseService,
-                               StatisticService statisticService) {
-        this.messagingTemplate = messagingTemplate;
-        this.participationRepository = participationRepository;
-        this.userService = userService;
-        this.quizExerciseService = quizExerciseService;
-        this.statisticService = statisticService;
-    }
 
     /**
      * start scheduler
@@ -387,10 +399,13 @@ public class QuizScheduleService {
             participation.addResult(result);
             participation.setInitializationState(InitializationState.FINISHED);
 
-            //save participation with result and quizSubmission
-            participationRepository.save(participation);
-
             participation.setExercise(quizExercise);
+
+            //save participation, result and quizSubmission
+            participationRepository.save(participation);
+            quizSubmissionRepository.save(quizSubmission);
+            resultRepository.save(result);
+
             //add the participation to the participationHashMap for the send out at the end of the quiz
             QuizScheduleService.addParticipation(quizExercise.getId(), participation);
             //add the result of the participation resultHashMap for the statistic-Update
