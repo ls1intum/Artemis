@@ -409,6 +409,9 @@ public class ParticipationService {
             log.info("Will delete " + participation.getResults().size() + " results");
             for (Result result : participation.getResults()) {
                 resultRepository.deleteById(result.getId());
+                if (result.getSubmission() != null) {
+                    submissionRepository.deleteById(result.getSubmission().getId());
+                }
             }
         }
         if (participation.getSubmissions() != null && participation.getSubmissions().size() > 0) {

@@ -373,9 +373,6 @@ public class QuizScheduleService {
 
         if (quizExercise != null && username != null && quizSubmission != null) {
 
-            // update submission with score
-            quizSubmission.calculateAndUpdateScores(quizExercise);
-
             //create and save new participation
             Participation participation = new Participation();
             Optional<User> user = userService.getUserByLogin(username);
@@ -397,8 +394,11 @@ public class QuizScheduleService {
 
             // add result to participation
             participation.addResult(result);
-            participation.setInitializationState(InitializationState.FINISHED);
 
+            // add submission to participation
+            participation.addSubmissions(quizSubmission);
+
+            participation.setInitializationState(InitializationState.FINISHED);
             participation.setExercise(quizExercise);
 
             //save participation, result and quizSubmission
