@@ -232,6 +232,7 @@ public class QuizExerciseService {
         log.debug("Request to delete Exercise : {}", id);
         // delete all participations belonging to this quiz
         participationService.deleteAllByExerciseId(id, false, false);
+
         quizExerciseRepository.deleteById(id);
     }
 

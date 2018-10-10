@@ -1,5 +1,5 @@
 <div class="container" *ngIf="quizExercise">
-    <h2>
+    <h4>
         <span
             *ngIf="quizExercise.id && quizExercise.course"
             jhiTranslate="arTeMiSApp.quizExercise.edit.title"
@@ -10,12 +10,12 @@
             jhiTranslate="arTeMiSApp.quizExercise.new.title"
             translateValues="{param: '{{quizExercise.course.title}}'}">
         </span>
-        <button type="button" class="btn btn-primary pull-right active">
+        <span class="badge badge-info align-text-top pull-right">
             <span jhiTranslate="arTeMiSApp.quizExercise.maxScore"></span>&nbsp;
             <span class="badge badge-light">{{calculateMaxExerciseScore()}}</span>
             <span class="sr-only" jhiTranslate="arTeMiSApp.quizExercise.maxScore"></span>
-        </button>
-    </h2>
+        </span>
+    </h4>
     <hr/>
     <div class="edit-quiz">
         <input
