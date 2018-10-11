@@ -132,23 +132,23 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
                     this.editorFileSessions[fileName].code = fileObj.fileContent;
                     this.editorFileSessions[fileName].fileName = fileName;
                 }
+
+                // Add session onChange function
+                // TODO: avoid initial on change call and we should be good
+                // this.editor
+                //     .getEditor()
+                //     .session.on(
+                //         'change',
+                //         () => console.log('session change...'),
+                //         (this.editorFileSessions[fileName].unsavedChanges = true),
+                //         this.updateSaveStatusLabel()
+                //     )
+                //     .bind(this);
+
                 /**
                  * Assign the obtained file content to the editor and set the ace mode
                  * Additionally, we resize the editor window and set focus to it
                  */
-
-                // Add session onChange function
-                // TODO: avoid initial on change call and we should be good
-                this.editor
-                    .getEditor()
-                    .session.on(
-                        'change',
-                        () => console.log('session change...'),
-                        (this.editorFileSessions[fileName].unsavedChanges = true),
-                        this.updateSaveStatusLabel()
-                    )
-                    .bind(this);
-
                 this.editorText = fileObj.fileContent;
                 this.editor.setMode(aceMode);
                 this.editor.getEditor().resize();
