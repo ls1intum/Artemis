@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import de.tum.in.www1.artemis.config.Constants;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,6 +10,8 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -181,5 +184,61 @@ public class FileService {
         } while (!fileCreated);
 
         return newFile;
+    }
+
+    /**
+     * This copies the directory at the old directory path to the new path, including all files and subfolders
+     *
+     * @param oldDirectoryPath    the path of the folder that should be copied
+     * @param targetDirectoryPath the path of the folder where the copy should be lcoated
+     * @throws IOException
+     */
+    public void copyDirectory(String oldDirectoryPath, String targetDirectoryPath) throws IOException {
+        File oldDirectory = new File(oldDirectoryPath);
+        if (!oldDirectory.exists()) {
+            log.error("Directory {} should be copied but does not exist.", oldDirectoryPath);
+            throw new RuntimeException("Directory " + oldDirectoryPath + " should be copied but does not exist.");
+        }
+
+        File targetDirectory = new File(targetDirectoryPath);
+
+        FileUtils.copyDirectory(oldDirectory, targetDirectory);
+    }
+
+    /**
+     * This renames the directory at the old directory path to the new path
+     *
+     * @param oldDirectoryPath    the path of the folder that should be renamed
+     * @param targetDirectoryPath the path of the folder where the renamed folder should be located
+     * @throws IOException
+     */
+    public void renameDirectory(String oldDirectoryPath, String targetDirectoryPath) throws IOException {
+        File oldDirectory = new File(oldDirectoryPath);
+        if (!oldDirectory.exists()) {
+            log.error("Directory {} should be renamed but does not exist.", oldDirectoryPath);
+            throw new RuntimeException("Directory " + oldDirectoryPath + " should be copied but does not exist.");
+        }
+
+        File targetDirectory = new File(targetDirectoryPath);
+
+        FileUtils.moveDirectory(oldDirectory, targetDirectory);
+    }
+
+    /**
+     * This replace all occurences of the target String with the replacement String in the given file and saves the file
+     *
+     * @param filePath          the path where the file is located
+     * @param targetString      the string that should be replaced
+     * @param replacementString the string that should be used to replace the target
+     * @throws IOException
+     */
+    public void replaceVariablesInFile(String filePath, String targetString, String replacementString) throws IOException {
+        // https://stackoverflow.com/questions/3935791/find-and-replace-words-lines-in-a-file
+        Path replaceFilePath = Paths.get(filePath);
+        Charset charset = StandardCharsets.UTF_8;
+
+        String fileContent = new String(Files.readAllBytes(replaceFilePath), charset);
+        fileContent = fileContent.replaceAll(targetString, replacementString);
+        Files.write(replaceFilePath, fileContent.getBytes(charset));
     }
 }
