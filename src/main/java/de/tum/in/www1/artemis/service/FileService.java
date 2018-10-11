@@ -216,7 +216,7 @@ public class FileService {
         File oldDirectory = new File(oldDirectoryPath);
         if (!oldDirectory.exists()) {
             log.error("Directory {} should be renamed but does not exist.", oldDirectoryPath);
-            throw new RuntimeException("Directory " + oldDirectoryPath + " should be copied but does not exist.");
+            throw new RuntimeException("Directory " + oldDirectoryPath + " should be renamed but does not exist.");
         }
 
         File targetDirectory = new File(targetDirectoryPath);
