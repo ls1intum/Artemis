@@ -107,15 +107,18 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
                     // Search through all exercises and the participations within each of them to obtain the target participation
                     const filteredExercise = this.course.exercises.find(
                         exercise =>
+                            exercise.participations != null &&
                             exercise.participations.find(exerciseParticipation => exerciseParticipation.id === participationId) !==
-                            undefined
+                                undefined
                     );
-                    const participation: Participation = filteredExercise.participations.find(
-                        currentParticipation => currentParticipation.id === participationId
-                    );
-                    // Just make sure we have indeed found the desired participation
-                    if (participation && participation.id === participationId) {
-                        this.participationDataProvider.participationStorage = participation;
+                    if (filteredExercise) {
+                        const participation: Participation = filteredExercise.participations.find(
+                            currentParticipation => currentParticipation.id === participationId
+                        );
+                        // Just make sure we have indeed found the desired participation
+                        if (participation && participation.id === participationId) {
+                            this.participationDataProvider.participationStorage = participation;
+                        }
                     }
                 }
             });
