@@ -104,9 +104,16 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
                 if (event.url.startsWith('/editor')) {
                     // Extract participation id from event url and cast to number
                     const participationId = Number(event.url.split('/').slice(-1));
-                    const filteredExercise = this.course.exercises.find(exercise => exercise['participation'].id === participationId);
-                    const participation: Participation = filteredExercise['participation'];
-                    // Just make sure we have indeed the correct participation
+                    // Search through all exercises and the participations within each of them to obtain the target participation
+                    const filteredExercise = this.course.exercises.find(
+                        exercise =>
+                            exercise.participations.find(exerciseParticipation => exerciseParticipation.id === participationId) !==
+                            undefined
+                    );
+                    const participation: Participation = filteredExercise.participations.find(
+                        currentParticipation => currentParticipation.id === participationId
+                    );
+                    // Just make sure we have indeed found the desired participation
                     if (participation && participation.id === participationId) {
                         this.participationDataProvider.participationStorage = participation;
                     }
