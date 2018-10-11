@@ -12,6 +12,7 @@ import { Feedback } from '../../entities/feedback';
 import { EditorInstructionsResultDetailComponent } from './editor-instructions-result-detail';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import * as interact from 'interactjs';
+import { Interactable } from 'interactjs';
 import * as Remarkable from 'remarkable';
 
 interface Step {
@@ -33,9 +34,10 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
     resultDetails: Feedback[];
     steps = new Array<Step>();
 
-    /** Resizable sizing constants **/
+    /** Resizable constants **/
     initialInstructionsWidth: number;
     minInstructionsWidth: number;
+    interactResizable: Interactable;
 
     // Can be used to remove the click listeners for result details
     listenerRemoveFunctions: Function[];
@@ -78,8 +80,8 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
      */
     ngAfterViewInit(): void {
         this.initialInstructionsWidth = this.$window.nativeWindow.screen.width - 300 / 2;
-        this.minInstructionsWidth = 300;
-        interact('.resizable-instructions')
+        this.minInstructionsWidth = this.$window.nativeWindow.screen.width / 4 - 50;
+        this.interactResizable = interact('.resizable-instructions')
             .resizable({
                 // Enable resize from left edge; triggered by class rg-left
                 edges: { left: '.rg-left', right: false, bottom: false, top: false },
@@ -92,9 +94,8 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
             })
             .on('resizemove', function(event) {
                 const target = event.target;
-                // Update element size
+                // Update element width
                 target.style.width = event.rect.width + 'px';
-                target.style.height = event.rect.height + 'px';
             });
     }
 
@@ -472,7 +473,7 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
      * @param {boolean} horizontal
      */
     toggleEditorCollapse($event: any, horizontal: boolean) {
-        this.parent.toggleCollapse($event, horizontal);
+        this.parent.toggleCollapse($event, horizontal, this.interactResizable, this.minInstructionsWidth);
     }
 
     /**

@@ -3,6 +3,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { AfterViewInit, Component, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
+import { WindowRef } from '../core/websocket/window.service';
 import { Participation, ParticipationService } from '../entities/participation';
 import { ParticipationDataProvider } from '../courses/exercises/participation-data-provider';
 import { RepositoryFileService, RepositoryService } from '../entities/repository/repository.service';
@@ -10,11 +11,12 @@ import { Result } from '../entities/result';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import * as $ from 'jquery';
 import * as interact from 'interactjs';
+import { Interactable } from 'interactjs';
 
 @Component({
     selector: 'jhi-editor',
     templateUrl: './editor.component.html',
-    providers: [JhiAlertService, CourseService, RepositoryFileService]
+    providers: [JhiAlertService, WindowRef, CourseService, RepositoryFileService]
 })
 export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDestroy {
     /** Dependencies as defined by the Editor component */
@@ -34,13 +36,15 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
     isBuilding = false;
     isCommitted: boolean;
 
-    /** Resizable sizing constants **/
+    /** Resizable constants **/
     resizableMinWidth = 100;
     resizableMaxWidth = 800;
+    interactResizable: Interactable;
 
     /**
      * @constructor EditorComponent
      * @param {ActivatedRoute} route
+     * @param {WindowRef} $window
      * @param {ParticipationService} participationService
      * @param {ParticipationDataProvider} participationDataProvider
      * @param {RepositoryService} repositoryService
@@ -48,6 +52,7 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
      */
     constructor(
         private route: ActivatedRoute,
+        private $window: WindowRef,
         private participationService: ParticipationService,
         private participationDataProvider: ParticipationDataProvider,
         private repositoryService: RepositoryService,
@@ -70,6 +75,7 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
                 this.participationDataProvider.participationStorage &&
                 this.participationDataProvider.participationStorage.id === Number(params['participationId'])
             ) {
+                // We found a matching participation in the data provider, so we can avoid doing a REST call
                 this.participation = this.participationDataProvider.participationStorage;
                 this.checkIfRepositoryIsClean();
             } else {
@@ -98,7 +104,8 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
      *       The 'resizemove' callback function processes the event values and sets new width and height values for the element.
      */
     ngAfterViewInit(): void {
-        interact('.resizable-filebrowser')
+        this.resizableMinWidth = this.$window.nativeWindow.screen.width / 6;
+        this.interactResizable = interact('.resizable-filebrowser')
             .resizable({
                 // Enable resize from right edge; triggered by class rg-right
                 edges: { left: false, right: '.rg-right', bottom: false, top: false },
@@ -111,9 +118,8 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
             })
             .on('resizemove', function(event) {
                 const target = event.target;
-                // Update element size
+                // Update element width
                 target.style.width = event.rect.width + 'px';
-                target.style.height = event.rect.height + 'px';
             });
     }
 
@@ -193,19 +199,40 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
     /**
      * @function toggleCollapse
      * @desc Collapse parts of the editor (file browser, build output...)
-     * @param $event
-     * @param horizontal
+     * @param $event {object} Click event object; contains target information
+     * @param horizontal {boolean} Used to decide which height to use for the collapsed element
+     * @param interactResizable {Interactable} The interactjs element, used to en-/disable resizing
+     * @param minWidth {number} Width to set the element to after toggling the collapse
+     * @param minHeight {number} Height to set the element to after toggling the collapse
      */
-    toggleCollapse($event: any, horizontal: boolean) {
+    toggleCollapse($event: any, horizontal: boolean, interactResizable?: Interactable, minWidth?: number, minHeight?: number) {
         const target = $event.toElement || $event.relatedTarget || $event.target;
         target.blur();
         const $card = $(target).closest('.card');
 
+        // If the resizable object wasn't provided, we use the one from this component => filebrowser resizable
+        if (!interactResizable) {
+            interactResizable = this.interactResizable;
+            // Since it's the filebrowser resizable, we use the minWidth from this component
+            minWidth = this.resizableMinWidth;
+        }
+
         if ($card.hasClass('collapsed')) {
             $card.removeClass('collapsed');
+            interactResizable.resizable({ enabled: true });
+
+            // Reset min width if argument was provided
+            if (minWidth) {
+                $card.width(minWidth + 'px');
+            }
+            // Reset min height if argument was provided
+            if (minHeight) {
+                $card.height(minHeight + 'px');
+            }
         } else {
             $card.addClass('collapsed');
             horizontal ? $card.height('35px') : $card.width('55px');
+            interactResizable.resizable({ enabled: false });
         }
     }
 
