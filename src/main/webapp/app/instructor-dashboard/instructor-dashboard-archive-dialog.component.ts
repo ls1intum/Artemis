@@ -14,15 +14,10 @@ import { Subscription } from 'rxjs/Subscription';
     templateUrl: './instructor-dashboard-archive-dialog.component.html'
 })
 export class InstructorDashboardArchiveDialogComponent {
-
     exercise: Exercise;
     archiveInProgress: boolean;
 
-    constructor(
-        private exerciseService: ExerciseService,
-        public activeModal: NgbActiveModal,
-        private jhiAlertService: JhiAlertService
-    ) {
+    constructor(private exerciseService: ExerciseService, public activeModal: NgbActiveModal, private jhiAlertService: JhiAlertService) {
         this.archiveInProgress = false;
     }
 
@@ -50,7 +45,8 @@ export class InstructorDashboardArchiveDialogComponent {
             },
             err => {
                 this.archiveInProgress = false;
-            });
+            }
+        );
     }
 }
 
@@ -59,18 +55,13 @@ export class InstructorDashboardArchiveDialogComponent {
     template: ''
 })
 export class InstructorDashboardArchivePopupComponent implements OnInit, OnDestroy {
-
     routeSub: Subscription;
 
-    constructor(
-        private route: ActivatedRoute,
-        private instructorDashboardPopupService: InstructorDashboardPopupService
-    ) {}
+    constructor(private route: ActivatedRoute, private instructorDashboardPopupService: InstructorDashboardPopupService) {}
 
     ngOnInit() {
         this.routeSub = this.route.params.subscribe(params => {
-            this.instructorDashboardPopupService
-                .open(InstructorDashboardArchiveDialogComponent as Component, params['id'], true);
+            this.instructorDashboardPopupService.open(InstructorDashboardArchiveDialogComponent as Component, params['id'], true);
         });
     }
 

@@ -12,17 +12,11 @@ import { ParticipationService } from './participation.service';
     templateUrl: './participation-detail.component.html'
 })
 export class ParticipationDetailComponent implements OnInit, OnDestroy {
-
     participation: Participation;
     private subscription: Subscription;
     private eventSubscriber: Subscription;
 
-    constructor(
-        private eventManager: JhiEventManager,
-        private participationService: ParticipationService,
-        private route: ActivatedRoute
-    ) {
-    }
+    constructor(private eventManager: JhiEventManager, private participationService: ParticipationService, private route: ActivatedRoute) {}
 
     ngOnInit() {
         this.subscription = this.route.params.subscribe(params => {
@@ -32,10 +26,9 @@ export class ParticipationDetailComponent implements OnInit, OnDestroy {
     }
 
     load(id: number) {
-        this.participationService.find(id)
-            .subscribe((participationResponse: HttpResponse<Participation>) => {
-                this.participation = participationResponse.body;
-            });
+        this.participationService.find(id).subscribe((participationResponse: HttpResponse<Participation>) => {
+            this.participation = participationResponse.body;
+        });
     }
     previousState() {
         window.history.back();
@@ -47,9 +40,6 @@ export class ParticipationDetailComponent implements OnInit, OnDestroy {
     }
 
     registerChangeInParticipations() {
-        this.eventSubscriber = this.eventManager.subscribe(
-            'participationListModification',
-            () => this.load(this.participation.id)
-        );
+        this.eventSubscriber = this.eventManager.subscribe('participationListModification', () => this.load(this.participation.id));
     }
 }

@@ -12,7 +12,6 @@ import { ProgrammingExerciseService } from './programming-exercise.service';
     templateUrl: './programming-exercise-detail.component.html'
 })
 export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
-
     programmingExercise: ProgrammingExercise;
     private subscription: Subscription;
     private eventSubscriber: Subscription;
@@ -21,8 +20,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private eventManager: JhiEventManager,
         private programmingExerciseService: ProgrammingExerciseService,
         private route: ActivatedRoute
-    ) {
-    }
+    ) {}
 
     ngOnInit() {
         this.subscription = this.route.params.subscribe(params => {
@@ -32,10 +30,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     load(exerciseId: number) {
-        this.programmingExerciseService.find(exerciseId)
-            .subscribe((programmingExerciseResponse: HttpResponse<ProgrammingExercise>) => {
-                this.programmingExercise = programmingExerciseResponse.body;
-            });
+        this.programmingExerciseService.find(exerciseId).subscribe((programmingExerciseResponse: HttpResponse<ProgrammingExercise>) => {
+            this.programmingExercise = programmingExerciseResponse.body;
+        });
     }
     previousState() {
         window.history.back();
@@ -47,9 +44,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     registerChangeInProgrammingExercises() {
-        this.eventSubscriber = this.eventManager.subscribe(
-            'programmingExerciseListModification',
-            () => this.load(this.programmingExercise.id)
+        this.eventSubscriber = this.eventManager.subscribe('programmingExerciseListModification', () =>
+            this.load(this.programmingExercise.id)
         );
     }
 }

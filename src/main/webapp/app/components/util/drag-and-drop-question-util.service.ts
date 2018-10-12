@@ -6,8 +6,7 @@ import { DragItem } from '../../entities/drag-item';
 
 @Injectable()
 export class DragAndDropQuestionUtil {
-
-    constructor() { }
+    constructor() {}
 
     /**
      * Get a sample solution for the given drag and drop question
@@ -66,7 +65,12 @@ export class DragAndDropQuestionUtil {
      * @param sampleMappings {Array} the mappings so far
      * @return {boolean} true, if the question was solved (solution is saved in sampleMappings), otherwise false
      */
-    solveRec(correctMappings: DragAndDropMapping[], remainingDropLocations: DropLocation[], availableDragItems: DragItem[], sampleMappings: DragAndDropMapping[]) {
+    solveRec(
+        correctMappings: DragAndDropMapping[],
+        remainingDropLocations: DropLocation[],
+        availableDragItems: DragItem[],
+        sampleMappings: DragAndDropMapping[]
+    ) {
         if (remainingDropLocations.length === 0) {
             return true;
         }
@@ -153,8 +157,7 @@ export class DragAndDropQuestionUtil {
     getMapping(mappings: DragAndDropMapping[], dragItem: DragItem, dropLocation: DropLocation) {
         const that = this;
         return mappings.find(function(mapping: DragAndDropMapping) {
-            return that.isSameDropLocation(dropLocation, mapping.dropLocation)
-                && that.isSameDragItem(dragItem, mapping.dragItem);
+            return that.isSameDropLocation(dropLocation, mapping.dropLocation) && that.isSameDragItem(dragItem, mapping.dragItem);
         }, this);
     }
 
@@ -194,8 +197,7 @@ export class DragAndDropQuestionUtil {
                 return set2.some(function(element2: DropLocation) {
                     return service.isSameDropLocation(element1, element2);
                 });
-            })
-            &&
+            }) &&
             set2.every(function(element2: DropLocation) {
                 return set1.some(function(element1: DropLocation) {
                     return service.isSameDropLocation(element1, element2);
@@ -212,7 +214,7 @@ export class DragAndDropQuestionUtil {
      * @return {boolean}
      */
     isSameDropLocation(a: DropLocation, b: DropLocation): boolean {
-        return a === b || (a && b && (a.id && b.id && a.id === b.id || a.tempID && b.tempID && a.tempID === b.tempID));
+        return a === b || (a && b && ((a.id && b.id && a.id === b.id) || (a.tempID && b.tempID && a.tempID === b.tempID)));
     }
 
     /**
@@ -223,6 +225,6 @@ export class DragAndDropQuestionUtil {
      * @return {boolean}
      */
     isSameDragItem(a: DragItem, b: DragItem): boolean {
-        return a === b || (a && b && (a.id && b.id && a.id === b.id || a.tempID && b.tempID && a.tempID === b.tempID));
+        return a === b || (a && b && ((a.id && b.id && a.id === b.id) || (a.tempID && b.tempID && a.tempID === b.tempID)));
     }
 }

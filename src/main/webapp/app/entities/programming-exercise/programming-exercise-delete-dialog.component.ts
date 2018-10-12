@@ -15,7 +15,6 @@ import { Subscription } from 'rxjs/Subscription';
     templateUrl: './programming-exercise-delete-dialog.component.html'
 })
 export class ProgrammingExerciseDeleteDialogComponent {
-
     programmingExercise: ProgrammingExercise;
 
     constructor(
@@ -44,18 +43,13 @@ export class ProgrammingExerciseDeleteDialogComponent {
     template: ''
 })
 export class ProgrammingExerciseDeletePopupComponent implements OnInit, OnDestroy {
-
     routeSub: Subscription;
 
-    constructor(
-        private route: ActivatedRoute,
-        private programmingExercisePopupService: ProgrammingExercisePopupService
-    ) {}
+    constructor(private route: ActivatedRoute, private programmingExercisePopupService: ProgrammingExercisePopupService) {}
 
     ngOnInit() {
         this.routeSub = this.route.params.subscribe(params => {
-            this.programmingExercisePopupService
-                .open(ProgrammingExerciseDeleteDialogComponent as Component, params['id']);
+            this.programmingExercisePopupService.open(ProgrammingExerciseDeleteDialogComponent as Component, params['id']);
         });
     }
 

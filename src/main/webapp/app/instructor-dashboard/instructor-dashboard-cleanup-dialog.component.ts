@@ -14,18 +14,13 @@ import { Subscription } from 'rxjs/Subscription';
     templateUrl: './instructor-dashboard-cleanup-dialog.component.html'
 })
 export class InstructorDashboardCleanupDialogComponent {
-
     exercise: Exercise;
     confirmExerciseName: string;
     deleteRepositories: boolean;
     cleanupInProgress: boolean;
     deleteInProgress: boolean;
 
-    constructor(
-        private exerciseService: ExerciseService,
-        public activeModal: NgbActiveModal,
-        private jhiAlertService: JhiAlertService
-    ) {
+    constructor(private exerciseService: ExerciseService, public activeModal: NgbActiveModal, private jhiAlertService: JhiAlertService) {
         this.confirmExerciseName = '';
         this.deleteRepositories = false;
         this.cleanupInProgress = false;
@@ -41,9 +36,13 @@ export class InstructorDashboardCleanupDialogComponent {
             response => {
                 this.deleteInProgress = false;
                 if (this.deleteRepositories) {
-                    this.jhiAlertService.success('Cleanup was successful. All build plans and repositories have been deleted. All participations have been marked as Finished.');
+                    this.jhiAlertService.success(
+                        'Cleanup was successful. All build plans and repositories have been deleted. All participations have been marked as Finished.'
+                    );
                 } else {
-                    this.jhiAlertService.success('Cleanup was successful. All build plans have been deleted. Students can resume their participation.');
+                    this.jhiAlertService.success(
+                        'Cleanup was successful. All build plans have been deleted. Students can resume their participation.'
+                    );
                 }
                 this.activeModal.dismiss(true);
                 const blob = new Blob([response.body], { type: 'application/zip' });
@@ -57,7 +56,8 @@ export class InstructorDashboardCleanupDialogComponent {
             },
             err => {
                 this.deleteInProgress = false;
-            });
+            }
+        );
     }
 }
 
@@ -66,18 +66,13 @@ export class InstructorDashboardCleanupDialogComponent {
     template: ''
 })
 export class InstructorDashboardCleanupPopupComponent implements OnInit, OnDestroy {
-
     routeSub: Subscription;
 
-    constructor(
-        private route: ActivatedRoute,
-        private instructorDashboardPopupService: InstructorDashboardPopupService
-    ) {}
+    constructor(private route: ActivatedRoute, private instructorDashboardPopupService: InstructorDashboardPopupService) {}
 
     ngOnInit() {
         this.routeSub = this.route.params.subscribe(params => {
-            this.instructorDashboardPopupService
-                .open(InstructorDashboardCleanupDialogComponent as Component, params['id'], true);
+            this.instructorDashboardPopupService.open(InstructorDashboardCleanupDialogComponent as Component, params['id'], true);
         });
     }
 

@@ -5,7 +5,6 @@ import { SERVER_API_URL } from '../../app.constants';
 
 @Injectable()
 export class ActivateService {
-
     constructor(private http: HttpClient) {}
 
     get(key: string): Observable<void> {

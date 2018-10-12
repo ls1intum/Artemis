@@ -15,7 +15,6 @@ import { Subscription } from 'rxjs/Subscription';
         </div>`
 })
 export class JhiAlertErrorComponent implements OnDestroy {
-
     alerts: any[];
     cleanHttpErrorListener: Subscription;
     // tslint:disable-next-line: no-unused-variable
@@ -51,13 +50,15 @@ export class JhiAlertErrorComponent implements OnDestroy {
                             const fieldError = fieldErrors[i];
                             // convert 'something[14].other[4].id' to 'something[].other[].id' so translations can be written to it
                             const convertedField = fieldError.field.replace(/\[\d*\]/g, '[]');
-                            const fieldName = translateService.instant('arTeMiSApp.' +
-                                fieldError.objectName + '.' + convertedField);
-                            this.addErrorAlert(
-                                'Error on field "' + fieldName + '"', 'error.' + fieldError.message, { fieldName });
+                            const fieldName = translateService.instant('arTeMiSApp.' + fieldError.objectName + '.' + convertedField);
+                            this.addErrorAlert('Error on field "' + fieldName + '"', 'error.' + fieldError.message, { fieldName });
                         }
                     } else if (httpErrorResponse.error !== '' && httpErrorResponse.error.message) {
-                        this.addErrorAlert(httpErrorResponse.error.message, httpErrorResponse.error.message, httpErrorResponse.error.params);
+                        this.addErrorAlert(
+                            httpErrorResponse.error.message,
+                            httpErrorResponse.error.message,
+                            httpErrorResponse.error.params
+                        );
                     } else {
                         this.addErrorAlert(httpErrorResponse.error);
                     }
@@ -85,7 +86,7 @@ export class JhiAlertErrorComponent implements OnDestroy {
     }
 
     addErrorAlert(message: string, key?: string, data?: any) {
-        key = (key && key !== null) ? key : message;
+        key = key && key !== null ? key : message;
         this.alerts.push(
             this.alertService.addAlert(
                 {

@@ -12,17 +12,12 @@ import { Subscription } from 'rxjs/Subscription';
     templateUrl: './exercise-lti-configuration-dialog.component.html'
 })
 export class ExerciseLtiConfigurationDialogComponent implements OnInit {
-
     exercise: Exercise;
     ltiConfiguration: LtiConfiguration;
 
-    constructor(
-        public activeModal: NgbActiveModal,
-    ) {
-    }
+    constructor(public activeModal: NgbActiveModal) {}
 
-    ngOnInit() {
-    }
+    ngOnInit() {}
 
     clear() {
         this.activeModal.dismiss('cancel');
@@ -34,18 +29,13 @@ export class ExerciseLtiConfigurationDialogComponent implements OnInit {
     template: ''
 })
 export class ExerciseLtiConfigurationPopupComponent implements OnInit, OnDestroy {
-
     routeSub: Subscription;
 
-    constructor(
-        private route: ActivatedRoute,
-        private exercisePopupService: ExercisePopupService
-    ) {}
+    constructor(private route: ActivatedRoute, private exercisePopupService: ExercisePopupService) {}
 
     ngOnInit() {
         this.routeSub = this.route.params.subscribe(params => {
-            this.exercisePopupService
-                .open(ExerciseLtiConfigurationDialogComponent as Component, params['id'], true);
+            this.exercisePopupService.open(ExerciseLtiConfigurationDialogComponent as Component, params['id'], true);
         });
     }
 

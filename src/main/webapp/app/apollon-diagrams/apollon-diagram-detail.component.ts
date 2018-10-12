@@ -13,7 +13,8 @@ import { ApollonDiagram, ApollonDiagramService } from '../entities/apollon-diagr
     providers: [ApollonDiagramService]
 })
 export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
-    @ViewChild('editorContainer') editorContainer: ElementRef;
+    @ViewChild('editorContainer')
+    editorContainer: ElementRef;
 
     diagramTitle = '';
     diagram: ApollonDiagram | null = null;

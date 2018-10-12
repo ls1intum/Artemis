@@ -11,14 +11,13 @@ import { BuildLogEntry } from '../../entities/build-log';
     templateUrl: './result-detail.component.html'
 })
 export class ResultDetailComponent implements OnInit {
-    @Input() result: Result;
+    @Input()
+    result: Result;
     isLoading: boolean;
     feedbackList: Feedback[];
     buildLogs: BuildLogEntry[];
 
-    constructor(public activeModal: NgbActiveModal,
-                private resultService: ResultService,
-                private repositoryService: RepositoryService) {}
+    constructor(public activeModal: NgbActiveModal, private resultService: ResultService, private repositoryService: RepositoryService) {}
 
     ngOnInit(): void {
         this.isLoading = true;

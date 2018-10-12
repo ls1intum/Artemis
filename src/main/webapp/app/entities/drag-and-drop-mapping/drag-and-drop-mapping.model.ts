@@ -5,7 +5,6 @@ import { DragAndDropSubmittedAnswer } from '../drag-and-drop-submitted-answer';
 import { DragAndDropQuestion } from '../drag-and-drop-question';
 
 export class DragAndDropMapping implements BaseEntity {
-
     public id: number;
     public tempID: number;
     public dragItemIndex: number;

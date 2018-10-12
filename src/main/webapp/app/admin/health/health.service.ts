@@ -5,7 +5,6 @@ import { SERVER_API_URL } from '../../app.constants';
 
 @Injectable()
 export class JhiHealthService {
-
     separator: string;
 
     constructor(private http: HttpClient) {
@@ -94,7 +93,7 @@ export class JhiHealthService {
         let result;
         if (path && name) {
             result = path + this.separator + name;
-        }  else if (path) {
+        } else if (path) {
             result = path;
         } else if (name) {
             result = name;

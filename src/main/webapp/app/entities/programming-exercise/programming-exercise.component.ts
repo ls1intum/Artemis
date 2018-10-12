@@ -75,15 +75,17 @@ export class ProgrammingExerciseComponent implements OnInit, OnDestroy {
     }
 
     loadAllForCourse() {
-        this.courseExerciseService.findAllProgrammingExercises(this.courseId, {
-            page: this.page,
-            size: this.itemsPerPage
-        }).subscribe(
-            (res: HttpResponse<ProgrammingExercise[]>) => {
-                this.programmingExercises = res.body;
-            },
-            (res: HttpErrorResponse) => this.onError(res)
-        );
+        this.courseExerciseService
+            .findAllProgrammingExercises(this.courseId, {
+                page: this.page,
+                size: this.itemsPerPage
+            })
+            .subscribe(
+                (res: HttpResponse<ProgrammingExercise[]>) => {
+                    this.programmingExercises = res.body;
+                },
+                (res: HttpErrorResponse) => this.onError(res)
+            );
         this.courseService.find(this.courseId).subscribe(res => {
             this.course = res.body;
         });
@@ -105,5 +107,5 @@ export class ProgrammingExerciseComponent implements OnInit, OnDestroy {
         this.jhiAlertService.error(error.message, null, null);
     }
 
-    callback() { }
+    callback() {}
 }

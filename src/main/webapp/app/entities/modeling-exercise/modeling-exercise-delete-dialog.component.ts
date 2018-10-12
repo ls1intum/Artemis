@@ -15,15 +15,13 @@ import { Subscription } from 'rxjs/Subscription';
     templateUrl: './modeling-exercise-delete-dialog.component.html'
 })
 export class ModelingExerciseDeleteDialogComponent {
-
     modelingExercise: ModelingExercise;
 
     constructor(
         private modelingExerciseService: ModelingExerciseService,
         public activeModal: NgbActiveModal,
         private eventManager: JhiEventManager
-    ) {
-    }
+    ) {}
 
     clear() {
         this.activeModal.dismiss('cancel');
@@ -45,18 +43,13 @@ export class ModelingExerciseDeleteDialogComponent {
     template: ''
 })
 export class ModelingExerciseDeletePopupComponent implements OnInit, OnDestroy {
-
     routeSub: Subscription;
 
-    constructor(
-        private route: ActivatedRoute,
-        private modelingExercisePopupService: ModelingExercisePopupService
-    ) {}
+    constructor(private route: ActivatedRoute, private modelingExercisePopupService: ModelingExercisePopupService) {}
 
     ngOnInit() {
         this.routeSub = this.route.params.subscribe(params => {
-            this.modelingExercisePopupService
-                .open(ModelingExerciseDeleteDialogComponent as Component, params['id']);
+            this.modelingExercisePopupService.open(ModelingExerciseDeleteDialogComponent as Component, params['id']);
         });
     }
 

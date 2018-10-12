@@ -16,36 +16,26 @@ import {
 } from './';
 import { SortByModule } from '../../components/pipes';
 
-const ENTITY_STATES = [
-    ...textExerciseRoute,
-    ...textExercisePopupRoute,
-];
+const ENTITY_STATES = [...textExerciseRoute, ...textExercisePopupRoute];
 
 @NgModule({
-    imports: [
-        ArTEMiSSharedModule,
-        RouterModule.forChild(ENTITY_STATES),
-        SortByModule
-    ],
+    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule],
     declarations: [
         TextExerciseComponent,
         TextExerciseDetailComponent,
         TextExerciseDialogComponent,
         TextExerciseDeleteDialogComponent,
         TextExercisePopupComponent,
-        TextExerciseDeletePopupComponent,
+        TextExerciseDeletePopupComponent
     ],
     entryComponents: [
         TextExerciseComponent,
         TextExerciseDialogComponent,
         TextExercisePopupComponent,
         TextExerciseDeleteDialogComponent,
-        TextExerciseDeletePopupComponent,
+        TextExerciseDeletePopupComponent
     ],
-    providers: [
-        TextExerciseService,
-        TextExercisePopupService,
-    ],
+    providers: [TextExerciseService, TextExercisePopupService],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArTEMiSTextExerciseModule {}

@@ -3,15 +3,16 @@ import { DragItem } from '../../../entities/drag-item';
 
 @Component({
     selector: 'jhi-drag-item',
-    templateUrl: './drag-item.component.html',
+    templateUrl: './drag-item.component.html'
 })
 export class DragItemComponent {
-
-    @Input() dragItem: DragItem;
-    @Input() clickDisabled: boolean;
+    @Input()
+    dragItem: DragItem;
+    @Input()
+    clickDisabled: boolean;
     // Unused
-    @Input() invalid: boolean;
+    @Input()
+    invalid: boolean;
 
     constructor() {}
-
 }

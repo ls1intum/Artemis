@@ -16,36 +16,26 @@ import {
 } from './';
 import { SortByModule } from '../../components/pipes';
 
-const ENTITY_STATES = [
-    ...fileUploadExerciseRoute,
-    ...fileUploadExercisePopupRoute,
-];
+const ENTITY_STATES = [...fileUploadExerciseRoute, ...fileUploadExercisePopupRoute];
 
 @NgModule({
-    imports: [
-        ArTEMiSSharedModule,
-        RouterModule.forChild(ENTITY_STATES),
-        SortByModule
-    ],
+    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule],
     declarations: [
         FileUploadExerciseComponent,
         FileUploadExerciseDetailComponent,
         FileUploadExerciseDialogComponent,
         FileUploadExerciseDeleteDialogComponent,
         FileUploadExercisePopupComponent,
-        FileUploadExerciseDeletePopupComponent,
+        FileUploadExerciseDeletePopupComponent
     ],
     entryComponents: [
         FileUploadExerciseComponent,
         FileUploadExerciseDialogComponent,
         FileUploadExercisePopupComponent,
         FileUploadExerciseDeleteDialogComponent,
-        FileUploadExerciseDeletePopupComponent,
+        FileUploadExerciseDeletePopupComponent
     ],
-    providers: [
-        FileUploadExerciseService,
-        FileUploadExercisePopupService,
-    ],
+    providers: [FileUploadExerciseService, FileUploadExercisePopupService],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArTEMiSFileUploadExerciseModule {}

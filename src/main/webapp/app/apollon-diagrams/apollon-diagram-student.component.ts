@@ -12,7 +12,8 @@ import * as ApollonDiagramTitleFormatter from './apollonDiagramTitleFormatter';
     providers: []
 })
 export class ApollonDiagramStudentComponent implements OnInit, OnDestroy {
-    @ViewChild('editorContainer') editorContainer: ElementRef;
+    @ViewChild('editorContainer')
+    editorContainer: ElementRef;
 
     diagramTitle = '';
     diagram: ApollonDiagram | null = null;

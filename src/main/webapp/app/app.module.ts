@@ -41,6 +41,7 @@ import { ArTEMiSStatisticModule } from './statistics/statistic.module';
 import { ArTEMiSModelingEditorModule } from './modeling-editor/modeling-editor.module';
 import { QuizExerciseExportComponent } from './entities/quiz-exercise/quiz-exercise-export.component';
 import { PendingChangesGuard } from './shared/guard/pending-changes.guard';
+import { ParticipationDataProvider } from './courses/exercises/participation-data-provider';
 
 @NgModule({
     imports: [
@@ -89,6 +90,7 @@ import { PendingChangesGuard } from './shared/guard/pending-changes.guard';
         DifferencePipe,
         JhiWebsocketService,
         Principal,
+        ParticipationDataProvider,
         PendingChangesGuard,
         /**
          * @description Interceptor declarations:

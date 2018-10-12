@@ -18,7 +18,6 @@ import { Subscription } from 'rxjs/Subscription';
     templateUrl: './modeling-exercise-dialog.component.html'
 })
 export class ModelingExerciseDialogComponent implements OnInit {
-
     modelingExercise: ModelingExercise;
     isSaving: boolean;
 
@@ -30,13 +29,16 @@ export class ModelingExerciseDialogComponent implements OnInit {
         private modelingExerciseService: ModelingExerciseService,
         private courseService: CourseService,
         private eventManager: JhiEventManager
-    ) {
-    }
+    ) {}
 
     ngOnInit() {
         this.isSaving = false;
-        this.courseService.query()
-            .subscribe((res: HttpResponse<Course[]>) => { this.courses = res.body; }, (res: HttpErrorResponse) => this.onError(res));
+        this.courseService.query().subscribe(
+            (res: HttpResponse<Course[]>) => {
+                this.courses = res.body;
+            },
+            (res: HttpErrorResponse) => this.onError(res)
+        );
     }
 
     clear() {
@@ -46,21 +48,21 @@ export class ModelingExerciseDialogComponent implements OnInit {
     save() {
         this.isSaving = true;
         if (this.modelingExercise.id !== undefined) {
-            this.subscribeToSaveResponse(
-                this.modelingExerciseService.update(this.modelingExercise));
+            this.subscribeToSaveResponse(this.modelingExerciseService.update(this.modelingExercise));
         } else {
-            this.subscribeToSaveResponse(
-                this.modelingExerciseService.create(this.modelingExercise));
+            this.subscribeToSaveResponse(this.modelingExerciseService.create(this.modelingExercise));
         }
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ModelingExercise>>) {
-        result.subscribe((res: HttpResponse<ModelingExercise>) =>
-            this.onSaveSuccess(res.body), (res: HttpErrorResponse) => this.onSaveError());
+        result.subscribe(
+            (res: HttpResponse<ModelingExercise>) => this.onSaveSuccess(res.body),
+            (res: HttpErrorResponse) => this.onSaveError()
+        );
     }
 
     private onSaveSuccess(result: ModelingExercise) {
-        this.eventManager.broadcast({ name: 'modelingExerciseListModification', content: 'OK'});
+        this.eventManager.broadcast({ name: 'modelingExerciseListModification', content: 'OK' });
         this.isSaving = false;
         this.activeModal.dismiss(result);
     }
@@ -83,26 +85,19 @@ export class ModelingExerciseDialogComponent implements OnInit {
     template: ''
 })
 export class ModelingExercisePopupComponent implements OnInit, OnDestroy {
-
     routeSub: Subscription;
 
-    constructor(
-        private route: ActivatedRoute,
-        private modelingExercisePopupService: ModelingExercisePopupService
-    ) {}
+    constructor(private route: ActivatedRoute, private modelingExercisePopupService: ModelingExercisePopupService) {}
 
     ngOnInit() {
         this.routeSub = this.route.params.subscribe(params => {
-            if ( params['id'] ) {
-                this.modelingExercisePopupService
-                    .open(ModelingExerciseDialogComponent as Component, params['id']);
+            if (params['id']) {
+                this.modelingExercisePopupService.open(ModelingExerciseDialogComponent as Component, params['id']);
             } else {
-                if ( params['courseId'] ) {
-                    this.modelingExercisePopupService
-                        .open(ModelingExerciseDialogComponent as Component, undefined, params['courseId']);
+                if (params['courseId']) {
+                    this.modelingExercisePopupService.open(ModelingExerciseDialogComponent as Component, undefined, params['courseId']);
                 } else {
-                    this.modelingExercisePopupService
-                        .open(ModelingExerciseDialogComponent as Component);
+                    this.modelingExercisePopupService.open(ModelingExerciseDialogComponent as Component);
                 }
             }
         });

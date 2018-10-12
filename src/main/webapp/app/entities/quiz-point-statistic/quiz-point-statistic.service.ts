@@ -10,41 +10,44 @@ export type EntityResponseType = HttpResponse<QuizPointStatistic>;
 
 @Injectable()
 export class QuizPointStatisticService {
+    private resourceUrl = SERVER_API_URL + 'api/quiz-point-statistics';
 
-    private resourceUrl =  SERVER_API_URL + 'api/quiz-point-statistics';
-
-    constructor(private http: HttpClient) { }
+    constructor(private http: HttpClient) {}
 
     create(quizPointStatistic: QuizPointStatistic): Observable<EntityResponseType> {
         const copy = this.convert(quizPointStatistic);
-        return this.http.post<QuizPointStatistic>(this.resourceUrl, copy, { observe: 'response' })
+        return this.http
+            .post<QuizPointStatistic>(this.resourceUrl, copy, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
     update(quizPointStatistic: QuizPointStatistic): Observable<EntityResponseType> {
         const copy = this.convert(quizPointStatistic);
-        return this.http.put<QuizPointStatistic>(this.resourceUrl, copy, { observe: 'response' })
+        return this.http
+            .put<QuizPointStatistic>(this.resourceUrl, copy, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
     find(id: number): Observable<EntityResponseType> {
-        return this.http.get<QuizPointStatistic>(`${this.resourceUrl}/${id}`, { observe: 'response'})
+        return this.http
+            .get<QuizPointStatistic>(`${this.resourceUrl}/${id}`, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
     query(req?: any): Observable<HttpResponse<QuizPointStatistic[]>> {
         const options = createRequestOption(req);
-        return this.http.get<QuizPointStatistic[]>(this.resourceUrl, { params: options, observe: 'response' })
+        return this.http
+            .get<QuizPointStatistic[]>(this.resourceUrl, { params: options, observe: 'response' })
             .map((res: HttpResponse<QuizPointStatistic[]>) => this.convertArrayResponse(res));
     }
 
     delete(id: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${id}`, { observe: 'response'});
+        return this.http.delete<void>(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {
         const body: QuizPointStatistic = this.convertItemFromServer(res.body);
-        return res.clone({body});
+        return res.clone({ body });
     }
 
     private convertArrayResponse(res: HttpResponse<QuizPointStatistic[]>): HttpResponse<QuizPointStatistic[]> {
@@ -53,7 +56,7 @@ export class QuizPointStatisticService {
         for (let i = 0; i < jsonResponse.length; i++) {
             body.push(this.convertItemFromServer(jsonResponse[i]));
         }
-        return res.clone({body});
+        return res.clone({ body });
     }
 
     /**
