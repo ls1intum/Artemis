@@ -111,6 +111,8 @@ public class ModelingAssessmentService {
             DecimalFormat formatter = new DecimalFormat("#.##"); // limit decimal places to 2
             result.setResultString(formatter.format(totalScore) + " of " + formatter.format(modelingExercise.getMaxScore()) + " points");
             result.setSuccessful(percentageScore.longValue() == 100L);
+
+            //TODO avoid rounding errors to build 99 instead of 100 percent
         }
 
         resultRepository.save(result);
@@ -131,6 +133,7 @@ public class ModelingAssessmentService {
         for (JsonElement assessment : assessments) {
             totalScore += assessment.getAsJsonObject().getAsJsonPrimitive("credits").getAsDouble();
         }
+        //TODO round this value to max two numbers after the comma
         return totalScore;
     }
 }

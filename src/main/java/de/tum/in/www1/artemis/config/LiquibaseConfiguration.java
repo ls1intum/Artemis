@@ -34,6 +34,7 @@ public class LiquibaseConfiguration {
             DataSource dataSource, LiquibaseProperties liquibaseProperties) {
 
         // Use liquibase.integration.spring.SpringLiquibase if you don't want Liquibase to start asynchronously
+        // TODO in the future we might want to use SpringLiquibase liquibase = new SpringLiquibase(); to avoid problems
         SpringLiquibase liquibase = new AsyncSpringLiquibase(taskExecutor, env);
         liquibase.setDataSource(dataSource);
         liquibase.setChangeLog("classpath:config/liquibase/master.xml");
