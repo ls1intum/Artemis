@@ -26,37 +26,13 @@
 
     <div class="editor-main">
         <div class="editor-sidebar-left">
-            <div id="cardFiles" class="card resizable-filebrowser" [ngStyle]="{'width.px':400}">
-                <div class="card-header bg-primary text-white" (click)="toggleCollapse($event, false)">
-                    <span class="pull-right "><i class="fa fa-chevron-left"></i></span>
-                    <h3 class="card-title">
-                        <i class="fa fa-folder-open"></i>
-                        <span> &nbsp;{{participation?.exercise.title}}</span>
-                    </h3>
-                </div>
-
-                <jhi-editor-file-browser [participation]="participation"
-                                         [fileName]="file"
-                                         [repositoryFiles]="repositoryFiles"
-                                         (selectedFile)="updateSelectedFile($event)"
-                                         (createdFile)="updateRepositoryCommitStatus($event)"
-                                         (deletedFile)="updateRepositoryCommitStatus($event)">
-                </jhi-editor-file-browser>
-
-                <div class="card-footer text-nowrap">
-                    <span [innerHtml]="saveStatusLabel | safeHtml"></span>
-                    <hr/>
-                    <span *ngIf="isCommitted">
-                        <i class="fa fa-check-circle text-success"></i> <span class="text-success"> All changes committed.</span>
-                    </span>
-                    <span *ngIf="!isCommitted">
-                        <i class="fa fa-warning text-warning"></i> <span class="text-warning"> There are uncommitted changes.</span>
-                    </span>
-                </div>
-
-                <!-- Required for resizing; don't remove empty span -->
-                <div class="rg-right"><span></span></div>
-            </div>
+            <jhi-editor-file-browser [participation]="participation"
+                                     [fileName]="file"
+                                     [repositoryFiles]="repositoryFiles"
+                                     (selectedFile)="updateSelectedFile($event)"
+                                     (createdFile)="updateRepositoryCommitStatus($event)"
+                                     (deletedFile)="updateRepositoryCommitStatus($event)">
+            </jhi-editor-file-browser>
         </div>
 
         <div class="editor-center">
