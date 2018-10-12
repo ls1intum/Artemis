@@ -1,6 +1,6 @@
 import { CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
-import { AfterViewInit, Component, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
 import { WindowRef } from '../core/websocket/window.service';
@@ -10,7 +10,6 @@ import { RepositoryFileService, RepositoryService } from '../entities/repository
 import { Result } from '../entities/result';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import * as $ from 'jquery';
-import * as interact from 'interactjs';
 import { Interactable } from 'interactjs';
 
 @Component({
@@ -18,7 +17,7 @@ import { Interactable } from 'interactjs';
     templateUrl: './editor.component.html',
     providers: [JhiAlertService, WindowRef, CourseService, RepositoryFileService]
 })
-export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDestroy {
+export class EditorComponent implements OnInit, OnChanges, OnDestroy {
     /** Dependencies as defined by the Editor component */
     participation: Participation;
     repository: RepositoryService;
@@ -35,11 +34,6 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
     isSaved = true;
     isBuilding = false;
     isCommitted: boolean;
-
-    /** Resizable constants **/
-    resizableMinWidth = 100;
-    resizableMaxWidth = 800;
-    interactResizable: Interactable;
 
     /**
      * @constructor EditorComponent
@@ -98,32 +92,6 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
 
         /** Assign repository */
         this.repository = this.repositoryService;
-    }
-
-    /**
-     * @function ngAfterViewInit
-     * @desc After the view was initialized, we create an interact.js resizable object,
-     *       designate the edges which can be used to resize the target element and set min and max values.
-     *       The 'resizemove' callback function processes the event values and sets new width and height values for the element.
-     */
-    ngAfterViewInit(): void {
-        this.resizableMinWidth = this.$window.nativeWindow.screen.width / 6;
-        this.interactResizable = interact('.resizable-filebrowser')
-            .resizable({
-                // Enable resize from right edge; triggered by class rg-right
-                edges: { left: false, right: '.rg-right', bottom: false, top: false },
-                // Set min and max width
-                restrictSize: {
-                    min: { width: this.resizableMinWidth },
-                    max: { width: this.resizableMaxWidth }
-                },
-                inertia: true
-            })
-            .on('resizemove', function(event) {
-                const target = event.target;
-                // Update element width
-                target.style.width = event.rect.width + 'px';
-            });
     }
 
     /**
@@ -208,17 +176,10 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
      * @param minWidth {number} Width to set the element to after toggling the collapse
      * @param minHeight {number} Height to set the element to after toggling the collapse
      */
-    toggleCollapse($event: any, horizontal: boolean, interactResizable?: Interactable, minWidth?: number, minHeight?: number) {
+    toggleCollapse($event: any, horizontal: boolean, interactResizable: Interactable, minWidth?: number, minHeight?: number) {
         const target = $event.toElement || $event.relatedTarget || $event.target;
         target.blur();
         const $card = $(target).closest('.card');
-
-        // If the resizable object wasn't provided, we use the one from this component => filebrowser resizable
-        if (!interactResizable) {
-            interactResizable = this.interactResizable;
-            // Since it's the filebrowser resizable, we use the minWidth from this component
-            minWidth = this.resizableMinWidth;
-        }
 
         if ($card.hasClass('collapsed')) {
             $card.removeClass('collapsed');

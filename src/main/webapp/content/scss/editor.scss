@@ -64,6 +64,7 @@ body {
     font-size: 14px;
 }
 
+.editor-wrapper > .editor-main > .editor-sidebar-left,
 .editor-wrapper > .editor-main > .editor-sidebar-right {
     overflow: initial;
 }
@@ -74,6 +75,12 @@ body {
     padding-bottom: 100px;
 }
 
+.editor-wrapper > .editor-main > .editor-sidebar-left .card-body {
+    overflow-y: scroll;
+    height: inherit;
+}
+
+.editor-wrapper > .editor-main > .editor-sidebar-left .card:not(.collapsed),
 .editor-wrapper > .editor-main > .editor-sidebar-right .card:not(.collapsed) {
     height: 100%;
 }
@@ -203,7 +210,7 @@ File browser styles
 ========================================================================== */
 
 .treeview-container {
-    overflow-y: scroll;
+    overflow-y: hidden !important;
 
     .treeview-item {
         cursor: pointer;
@@ -331,7 +338,11 @@ Stepwizard styles (editor instructions)
 
 .editor-sidebar-left .card-second-header {
     padding: 3px 5px;
-    overflow-x: hidden;
+    min-height: 40px;
+}
+
+.editor-sidebar-right .card-second-header {
+    min-height: 40px;
 }
 
 .card-second-header {

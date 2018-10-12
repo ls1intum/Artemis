@@ -1,16 +1,40 @@
-<div class="card-second-header">
-    <a class="btn btn-small" (click)="openCreateFileModal()"><i class="fa fa-plus"></i> </a>
-    <a class="btn btn-small" (click)="openDeleteFileModal()"><i class="fa fa-trash"></i> </a>
+<div id="cardFiles" class="card resizable-filebrowser" [ngStyle]="{'width.px':400}">
+    <div class="card-header bg-primary text-white" (click)="toggleEditorCollapse($event, false)">
+        <span class="pull-right "><i class="fa fa-chevron-left"></i></span>
+        <h3 class="card-title">
+            <i class="fa fa-folder-open"></i>
+            <span> &nbsp;{{participation?.exercise.title}}</span>
+        </h3>
+    </div>
+
+    <div class="card-second-header">
+        <a class="btn btn-small" (click)="openCreateFileModal()"><i class="fa fa-plus"></i> </a>
+        <a class="btn btn-small" (click)="openDeleteFileModal()"><i class="fa fa-trash"></i> </a>
+    </div>
+
+    <div class="card-body">
+        <ngx-treeview #treeview [config]="treeviewConfig"
+                      [items]="filesTreeViewItem"
+                      [itemTemplate]="itemTemplate">
+        </ngx-treeview>
+    </div>
+
+    <div class="card-footer text-nowrap">
+        <span [innerHtml]="getSaveStatusLabel() | safeHtml"></span>
+        <hr/>
+        <span *ngIf="isExerciseCommitted()">
+            <i class="fa fa-check-circle text-success"></i> <span class="text-success"> All changes committed.</span>
+        </span>
+        <span *ngIf="!isExerciseCommitted()">
+            <i class="fa fa-warning text-warning"></i> <span class="text-warning"> There are uncommitted changes.</span>
+        </span>
+    </div>
+
+    <!-- Required for resizing; don't remove empty span -->
+    <div class="rg-right"><span></span></div>
 </div>
 
-<div class="card-body">
-    <ngx-treeview #treeview [config]="treeviewConfig"
-                  [items]="filesTreeViewItem"
-                  [itemTemplate]="itemTemplate">
-    </ngx-treeview>
-</div>
-
-
+<!--Treeview Item Template-->
 <ng-template #itemTemplate let-item="item" let-onCollapseExpand="onCollapseExpand" let-onCheckedChange="onCheckedChange">
     <li *ngIf="item.children"
         (click)="onCollapseExpand()"
