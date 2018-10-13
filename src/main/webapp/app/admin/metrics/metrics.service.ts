@@ -3,9 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from '../../app.constants';
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class JhiMetricsService {
-
     constructor(private http: HttpClient) {}
 
     getMetrics(): Observable<any> {
@@ -13,6 +12,6 @@ export class JhiMetricsService {
     }
 
     threadDump(): Observable<any> {
-        return this.http.get(SERVER_API_URL + 'management/dump');
+        return this.http.get(SERVER_API_URL + 'management/threaddump');
     }
 }
