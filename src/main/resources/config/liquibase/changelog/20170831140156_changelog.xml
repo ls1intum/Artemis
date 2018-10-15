@@ -67,7 +67,7 @@
             </column>
             <column name="max_score" type="INT"/>
             <column name="min_score" type="INT"/>
-            <column name="text" type="VARCHAR(255)"/>
+            <column name="text" type="VARCHAR(1000)"/>
             <column name="title" type="VARCHAR(255)"/>
             <column name="background_file_path" type="VARCHAR(255)"/>
             <column name="exercise_id" type="BIGINT"/>
