@@ -247,27 +247,6 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
         });
     }
 
-    getClonePopoverTemplate(exercise: Exercise) {
-        const html = [
-            '<p>Clone your personal repository for this exercise:</p>',
-            '<pre style="max-width: 100%;">',
-            exercise.participations[0].repositoryUrl,
-            '</pre>',
-            this.repositoryPassword
-                ? '<p>Your password is: <code class="password">' + this.repositoryPassword + '</code> (hover to show)<p>'
-                : '',
-            '<button class="btn btn-primary btn-sm mr-2" ngxClipboard [cbContent]="\'',
-            exercise.participations[0].repositoryUrl,
-            '\'" (cbOnSuccess)="onCopySuccess()" (cbOnError)="onCopyFailure()">Copy URL</button>',
-            '<a class="btn btn-primary btn-sm mr-2" href="',
-            this.buildSourceTreeUrl(exercise.participations[0].repositoryUrl),
-            '">Clone in SourceTree</a>',
-            ' <a href="http://www.sourcetreeapp.com" target="_blank">Atlassian SourceTree</a> is the free Git client for Windows or Mac. '
-        ].join('');
-
-        return html;
-    }
-
     onCopyFailure() {
         console.log('copy fail!');
     }
