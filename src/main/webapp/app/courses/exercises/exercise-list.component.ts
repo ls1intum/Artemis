@@ -74,7 +74,6 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
     numOfInactiveExercises = 0;
     showInactiveExercises = false;
     private repositoryPassword: string;
-    lastPopoverRef: NgbPopover;
 
     constructor(
         private jhiAlertService: JhiAlertService,
@@ -251,19 +250,30 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
     getClonePopoverTemplate(exercise: Exercise) {
         const html = [
             '<p>Clone your personal repository for this exercise:</p>',
-            '<pre style="max-width: 550px;">',
+            '<pre style="max-width: 100%;">',
             exercise.participations[0].repositoryUrl,
             '</pre>',
             this.repositoryPassword
                 ? '<p>Your password is: <code class="password">' + this.repositoryPassword + '</code> (hover to show)<p>'
                 : '',
-            '<a class="btn btn-primary btn-sm" href="',
+            '<button class="btn btn-primary btn-sm mr-2" ngxClipboard [cbContent]="\'',
+            exercise.participations[0].repositoryUrl,
+            '\'" (cbOnSuccess)="onCopySuccess()" (cbOnError)="onCopyFailure()">Copy URL</button>',
+            '<a class="btn btn-primary btn-sm mr-2" href="',
             this.buildSourceTreeUrl(exercise.participations[0].repositoryUrl),
             '">Clone in SourceTree</a>',
             ' <a href="http://www.sourcetreeapp.com" target="_blank">Atlassian SourceTree</a> is the free Git client for Windows or Mac. '
         ].join('');
 
         return html;
+    }
+
+    onCopyFailure() {
+        console.log('copy fail!');
+    }
+
+    onCopySuccess() {
+        console.log('copy success!');
     }
 
     participationStatus(exercise: Exercise): ParticipationStatus {
@@ -318,29 +328,6 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
 
     hasResults(participation: Participation): boolean {
         return participation.results && participation.results.length > 0;
-    }
-
-    @HostListener('document:click', ['$event'])
-    clickOutside(event: any) {
-        // If there's a last element-reference AND the click-event target is outside this element
-        if (
-            this.lastPopoverRef &&
-            (this.lastPopoverRef as any)._elementRef.nativeElement.contains(event.target) &&
-            !(this.lastPopoverRef as any)._windowRef &&
-            !(this.lastPopoverRef as any)._windowRef.location.nativeElement.contains(event.target)
-        ) {
-            this.lastPopoverRef.close();
-            this.lastPopoverRef = null;
-        }
-    }
-
-    setCurrentPopoverOpen(popReference: any) {
-        // If there's a last element-reference AND the new reference is different
-        if (this.lastPopoverRef && this.lastPopoverRef !== popReference) {
-            this.lastPopoverRef.close();
-        }
-        // Registering new popover ref
-        this.lastPopoverRef = popReference;
     }
 
     ngOnDestroy(): void {
