@@ -26,7 +26,11 @@ export class CourseScoreCalculationService {
                 if (participation !== null) {
                     const result: Result = this.getResultForParticipation(participation, exercise.dueDate);
                     if (result !== null) {
-                        absoluteScore = absoluteScore + result.score * this.SCORE_NORMALIZATION_VALUE * exercise.maxScore;
+                        let score = result.score;
+                        if (score === null) {
+                            score = 0;
+                        }
+                        absoluteScore = absoluteScore + score * this.SCORE_NORMALIZATION_VALUE * exercise.maxScore;
                     }
                 }
             }
@@ -130,11 +134,6 @@ export class CourseScoreCalculationService {
                 chosenResult.score = 0;
             } else {
                 chosenResult = resultsArray[resultsArray.length - 1];
-            }
-
-            // when the db has stored null for score
-            if (chosenResult.score == null) {
-                chosenResult.score = 0;
             }
         } else {
             chosenResult = new Result();
