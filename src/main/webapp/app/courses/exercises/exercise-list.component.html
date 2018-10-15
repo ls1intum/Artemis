@@ -67,9 +67,8 @@
                             <i class="fa fa-folder-open fa-fw"></i>&nbsp;<span class="d-none d-md-inline">Open exercise</span></a>
                         <ng-template #popContent><div [innerHtml]="getClonePopoverTemplate(exercise) | safeHtml"></div></ng-template>
                         <button placement="left"
-                                #popoverRef="ngbPopover"
-                                (click)="setCurrentPopoverOpen(popoverRef)"
                                 [ngbPopover]="popContent"
+                                [autoClose]="'outside'"
                                 type="button" class="btn btn-primary btn-sm btn-block"><i
                             class="fa fa-download fa-fw"></i>&nbsp;<span class="d-none d-md-inline">Clone repository</span>
                         </button>
