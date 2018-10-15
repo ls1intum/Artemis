@@ -41,6 +41,7 @@
     "ngx-infinite-scroll": "^6.0.1",
     "ngx-treeview": "^6.0.1",
     "ngx-webstorage": "^2.0.1",
+    "ngx-clipboard": "^11.1.9",
     "reflect-metadata": "^0.1.12",
     "remarkable": "^1.7.1",
     "rxjs": "^6.3.3",
