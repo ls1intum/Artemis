@@ -73,7 +73,8 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
     now = Date.now();
     numOfInactiveExercises = 0;
     showInactiveExercises = false;
-    private repositoryPassword: string;
+    repositoryPassword: string;
+    wasCopied = false;
 
     constructor(
         private jhiAlertService: JhiAlertService,
@@ -252,7 +253,10 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
     }
 
     onCopySuccess() {
-        console.log('copy success!');
+        this.wasCopied = true;
+        setTimeout(() => {
+            this.wasCopied = false;
+        }, 3000);
     }
 
     participationStatus(exercise: Exercise): ParticipationStatus {
