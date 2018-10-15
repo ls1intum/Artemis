@@ -262,10 +262,15 @@
         }
     }
 
+    .question-title-display {
+        max-width: 80%;
+    }
+
     .question-score {
         position: absolute;
         top: 20px;
         right: 20px;
+        max-width: 15%;
 
         &.result {
             font-weight: bold;
