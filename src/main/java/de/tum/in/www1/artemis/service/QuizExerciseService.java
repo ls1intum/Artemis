@@ -151,10 +151,10 @@ public class QuizExerciseService {
         log.debug("Request to get Quiz Exercise : {}", id);
         long start = System.currentTimeMillis();
         Optional<QuizExercise> quizExercise = quizExerciseRepository.findById(id);
-        log.info("    loaded quiz after {} ms", System.currentTimeMillis() - start);
+        log.debug("    loaded quiz after {} ms", System.currentTimeMillis() - start);
         if (quizExercise.isPresent()) {
             quizExercise.get().getQuestions().size();
-            log.info("    loaded questions after {} ms", System.currentTimeMillis() - start);
+            log.debug("    loaded questions after {} ms", System.currentTimeMillis() - start);
             return quizExercise.get();
         }
         return null;
