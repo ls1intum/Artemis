@@ -110,7 +110,7 @@ public class ModelingAssessmentService {
             result.setScore(Math.round(percentageScore));
             DecimalFormat formatter = new DecimalFormat("#.##"); // limit decimal places to 2
             result.setResultString(formatter.format(totalScore) + " of " + formatter.format(modelingExercise.getMaxScore()) + " points");
-            result.setSuccessful(percentageScore.longValue() == 100L);
+            result.setSuccessful(result.getScore() == 100L);
         }
 
         resultRepository.save(result);
