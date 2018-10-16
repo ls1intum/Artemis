@@ -107,12 +107,10 @@ public class ModelingAssessmentService {
             Double maxScore = modelingExercise.getMaxScore();
             Double totalScore = Math.min(Math.max(0, calculateTotalScore(assessmentJson)), maxScore);
             Double percentageScore = totalScore/maxScore*100;
-            result.setScore(percentageScore.longValue());
+            result.setScore(Math.round(percentageScore));
             DecimalFormat formatter = new DecimalFormat("#.##"); // limit decimal places to 2
             result.setResultString(formatter.format(totalScore) + " of " + formatter.format(modelingExercise.getMaxScore()) + " points");
-            result.setSuccessful(percentageScore.longValue() == 100L);
-
-            //TODO avoid rounding errors to build 99 instead of 100 percent
+            result.setSuccessful(result.getScore() == 100L);
         }
 
         resultRepository.save(result);
