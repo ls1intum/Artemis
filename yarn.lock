@@ -242,10 +242,10 @@
   resolved "https://registry.yarnpkg.com/@types/angular/-/angular-1.6.51.tgz#a67515b0ba6a2ff68894a39405c1343cbf9c36d4"
   integrity sha512-wYU+/zlJWih7ZmonWVjGQ18tG7GboI9asMNjRBM5fpIFJWXSioQttCTw9qGL44cP82ghM8sCV9apEqm1zBDq2w==
 
-"@types/chart.js@^2.7.37":
-  version "2.7.37"
-  resolved "https://registry.yarnpkg.com/@types/chart.js/-/chart.js-2.7.37.tgz#6d3443f6ea2561c1a229d8e5e51976b1812b139c"
-  integrity sha512-fObBolG64X0Ns/8K7F+yW1aas5eaJWkpdYUcxutSUbCWHvPhcs90jfmG0b8U4WIvCZAT96hoAU99TT/EOWhoxA==
+"@types/chart.js@^2.7.38":
+  version "2.7.38"
+  resolved "https://registry.yarnpkg.com/@types/chart.js/-/chart.js-2.7.38.tgz#b8590885aea0b71d4e8400af45cd85eab960d528"
+  integrity sha512-4QKl58JGG4uTlORHzl59iVMb65O1BY6QcWjGPJPHQZWbBqK3YQcXV7j887hOrqRacQTfZ8vRYcXcNoB7KQ4aIg==
 
 "@types/jasmine@^2.8.9":
   version "2.8.9"
@@ -257,10 +257,10 @@
   resolved "https://registry.yarnpkg.com/@types/jest/-/jest-23.3.5.tgz#870a1434208b60603745bfd214fc3fc675142364"
   integrity sha512-3LI+vUC3Wju28vbjIjsTKakhMB8HC4l+tMz+Z8WRzVK+kmvezE5jcOvKtBpznWSI5KDLFo+FouUhpTKoekadCA==
 
-"@types/jquery@^3.3.17":
-  version "3.3.17"
-  resolved "https://registry.yarnpkg.com/@types/jquery/-/jquery-3.3.17.tgz#0903a65889625facd424f19c6c0a03fddf00b4c6"
-  integrity sha512-4KeUvF8TCKc6akcKVqS8ld0nY4uILk1wBdK6/2Zlz3AjNNXhVimVL04X+sAIgm+c3Wy2KNXI0ANXFkezMNSq5Q==
+"@types/jquery@^3.3.18":
+  version "3.3.18"
+  resolved "https://registry.yarnpkg.com/@types/jquery/-/jquery-3.3.18.tgz#ab419606bc9a01419682617b247eed039cff124e"
+  integrity sha512-+Qjd+g/oOCRGLq7FR0XoJ+1cBvUBn46Ha58QmEZOvIVphF8DzZ/ZL30rL6xcJVA1V4cGDtJWgpQduIIAtZuPnw==
   dependencies:
     "@types/sizzle" "*"
 
@@ -269,15 +269,15 @@
   resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.117.tgz#695a7f514182771a1e0f4345d189052ee33c8778"
   integrity sha512-xyf2m6tRbz8qQKcxYZa7PA4SllYcay+eh25DN3jmNYY6gSTL7Htc/bttVdkqj2wfJGbeWlQiX8pIyJpKU+tubw==
 
-"@types/node@^10.11.7":
-  version "10.11.7"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-10.11.7.tgz#0e75ca9357d646ca754016ca1d68a127ad7e7300"
-  integrity sha512-yOxFfkN9xUFLyvWaeYj90mlqTJ41CsQzWKS3gXdOMOyPVacUsymejKxJ4/pMW7exouubuEeZLJawGgcNGYlTeg==
+"@types/node@^10.12.0":
+  version "10.12.0"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-10.12.0.tgz#ea6dcbddbc5b584c83f06c60e82736d8fbb0c235"
+  integrity sha512-3TUHC3jsBAB7qVRGxT6lWyYo2v96BMmD2PTcl47H25Lu7UXtFH/2qqmKiVrnel6Ne//0TFYf6uvNX+HW2FRkLQ==
 
-"@types/remarkable@^1.7.0":
-  version "1.7.0"
-  resolved "https://registry.yarnpkg.com/@types/remarkable/-/remarkable-1.7.0.tgz#a8ad2beb31f7ff784747fc2e6d98b23a1684072c"
-  integrity sha512-EvsUZ0VI5KkO1GFJn6toYdum10ABrcjb/g6R866V39y9GJfu117Rh62r8P9AfkWXxY4TSTbPIOIwoaIMWpHZmg==
+"@types/remarkable@^1.7.1":
+  version "1.7.1"
+  resolved "https://registry.yarnpkg.com/@types/remarkable/-/remarkable-1.7.1.tgz#9029dc75c6ba80d33c3f6da16e9418eb81ed2767"
+  integrity sha512-eOWGbv+nRk1AJeAkP9gFZM72U+c0U6cEvKtUc9vxOlAbSj+fqrvbQKOq9FhHzHN5tovBJ/Uoc2aoIRZ2BAESUg==
 
 "@types/showdown@^1.7.5":
   version "1.7.5"
