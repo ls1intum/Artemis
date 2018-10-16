@@ -56,7 +56,7 @@ public class ArTEMiSApp {
         // activate Quiz Schedule Service
         quizScheduleService.startSchedule(3000);
         // activate Automatic Submission Service
-        automaticSubmissionService.startSchedule(3000);
+        automaticSubmissionService.startSchedule(10000);
     }
 
     /**

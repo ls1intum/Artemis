@@ -1,6 +1,9 @@
 {
     "arTeMiSApp": {
         "editor": {
+            "home": {
+                "title": "Editor"
+            },
             "testStatusLabels": {
                 "noResult": "No results",
                 "testPassing": "Test passing",

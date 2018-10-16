@@ -86,26 +86,39 @@ public class CourseResource {
     }
 
     /**
-     * PUT  /courses : Updates an existing course.
+     * PUT  /courses : Updates an existing updatedCourse.
      *
-     * @param course the course to update
-     * @return the ResponseEntity with status 200 (OK) and with body the updated course,
-     * or with status 400 (Bad Request) if the course is not valid,
-     * or with status 500 (Internal Server Error) if the course couldn't be updated
+     * @param updatedCourse the updatedCourse to update
+     * @return the ResponseEntity with status 200 (OK) and with body the updated updatedCourse,
+     * or with status 400 (Bad Request) if the updatedCourse is not valid,
+     * or with status 500 (Internal Server Error) if the updatedCourse couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/courses")
-    @PreAuthorize("hasAnyRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     @Timed
-    public ResponseEntity<Course> updateCourse(@RequestBody Course course) throws URISyntaxException {
-        log.debug("REST request to update Course : {}", course);
-        if (course.getId() == null) {
-            return createCourse(course);
+    @Transactional
+    public ResponseEntity<Course> updateCourse(@RequestBody Course updatedCourse) throws URISyntaxException {
+        log.debug("REST request to update Course : {}", updatedCourse);
+        if (updatedCourse.getId() == null) {
+            return createCourse(updatedCourse);
         }
-        Course result = courseService.save(course);
-        return ResponseEntity.ok()
-            .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, course.getId().toString()))
-            .body(result);
+        Course existingCourse = courseRepository.getOne(updatedCourse.getId());
+        if (existingCourse == null) {
+            return ResponseEntity.notFound().build();
+        }
+        User user = userService.getUserWithGroupsAndAuthorities();
+        //only allow admins or instructors of the existing updatedCourse to change it
+        //this is important, otherwise someone could put himself into the instructor group of the updated Course
+        if (user.getGroups().contains(existingCourse.getInstructorGroupName()) || authCheckService.isAdmin()) {
+            Course result = courseService.save(updatedCourse);
+            return ResponseEntity.ok()
+                .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, updatedCourse.getId().toString()))
+                .body(result);
+        }
+        else {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
     }
 
     /**

@@ -22,7 +22,15 @@ patch-package
    type SnapTarget = SnapPosition | SnapFunction
    type SnapOptions = {
      targets?: SnapTarget[]
-@@ -111,6 +121,7 @@ declare namespace interact {
+@@ -97,6 +107,7 @@ declare namespace interact {
+   }
+ 
+   interface ResizableOptions {
++    enabled?: boolean
+     max?: number
+     maxPerElement?: number
+     manualStart?: boolean
+@@ -111,6 +122,7 @@ declare namespace interact {
      axis?: 'x' | 'y'
      //
      invert?: 'none' | 'negate' | 'reposition'
@@ -30,7 +38,7 @@ patch-package
      squareResize?: boolean
      onstart?: Listener
      onmove?: Listener
-@@ -192,6 +203,7 @@ declare namespace interact {
+@@ -192,6 +204,7 @@ declare namespace interact {
      dragLeave?: DOMElement
      // resize
      axes: Position

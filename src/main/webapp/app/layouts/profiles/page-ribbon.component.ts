@@ -22,9 +22,7 @@ export class PageRibbonComponent implements OnInit {
                     this.ribbonEnv = 'test';
                 }
             },
-            error => {
-                console.debug('Could not retrieve profile information', error);
-            }
+            reason => {}
         );
     }
 }

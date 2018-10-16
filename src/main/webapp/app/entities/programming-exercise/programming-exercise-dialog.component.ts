@@ -18,7 +18,6 @@ import { Subscription } from 'rxjs/Subscription';
     templateUrl: './programming-exercise-dialog.component.html'
 })
 export class ProgrammingExerciseDialogComponent implements OnInit {
-
     programmingExercise: ProgrammingExercise;
     isSaving: boolean;
 
@@ -30,13 +29,16 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
         private programmingExerciseService: ProgrammingExerciseService,
         private courseService: CourseService,
         private eventManager: JhiEventManager
-    ) {
-    }
+    ) {}
 
     ngOnInit() {
         this.isSaving = false;
-        this.courseService.query()
-            .subscribe((res: HttpResponse<Course[]>) => { this.courses = res.body; }, (res: HttpErrorResponse) => this.onError(res));
+        this.courseService.query().subscribe(
+            (res: HttpResponse<Course[]>) => {
+                this.courses = res.body;
+            },
+            (res: HttpErrorResponse) => this.onError(res)
+        );
     }
 
     clear() {
@@ -46,26 +48,27 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
     save() {
         this.isSaving = true;
         if (this.programmingExercise.id !== undefined) {
-            this.subscribeToSaveResponse(
-                this.programmingExerciseService.update(this.programmingExercise));
+            this.subscribeToSaveResponse(this.programmingExerciseService.update(this.programmingExercise));
         } else {
-            this.subscribeToSaveResponse(
-                this.programmingExerciseService.create(this.programmingExercise));
+            this.subscribeToSaveResponse(this.programmingExerciseService.create(this.programmingExercise));
         }
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ProgrammingExercise>>) {
-        result.subscribe((res: HttpResponse<ProgrammingExercise>) =>
-            this.onSaveSuccess(res.body), (res: HttpErrorResponse) => this.onSaveError());
+        result.subscribe(
+            (res: HttpResponse<ProgrammingExercise>) => this.onSaveSuccess(res.body),
+            (res: HttpErrorResponse) => this.onSaveError(res)
+        );
     }
 
     private onSaveSuccess(result: ProgrammingExercise) {
-        this.eventManager.broadcast({ name: 'programmingExerciseListModification', content: 'OK'});
+        this.eventManager.broadcast({ name: 'programmingExerciseListModification', content: 'OK' });
         this.isSaving = false;
         this.activeModal.dismiss(result);
     }
 
-    private onSaveError() {
+    private onSaveError(error: HttpErrorResponse) {
+        this.jhiAlertService.error(error.message, null, null);
         this.isSaving = false;
     }
 
@@ -83,26 +86,23 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
     template: ''
 })
 export class ProgrammingExercisePopupComponent implements OnInit, OnDestroy {
-
     routeSub: Subscription;
 
-    constructor(
-        private route: ActivatedRoute,
-        private programmingExercisePopupService: ProgrammingExercisePopupService
-    ) {}
+    constructor(private route: ActivatedRoute, private programmingExercisePopupService: ProgrammingExercisePopupService) {}
 
     ngOnInit() {
         this.routeSub = this.route.params.subscribe(params => {
-            if ( params['id'] ) {
-                this.programmingExercisePopupService
-                    .open(ProgrammingExerciseDialogComponent as Component, params['id']);
+            if (params['id']) {
+                this.programmingExercisePopupService.open(ProgrammingExerciseDialogComponent as Component, params['id']);
             } else {
-                if ( params['courseId'] ) {
-                    this.programmingExercisePopupService
-                        .open(ProgrammingExerciseDialogComponent as Component, undefined, params['courseId']);
+                if (params['courseId']) {
+                    this.programmingExercisePopupService.open(
+                        ProgrammingExerciseDialogComponent as Component,
+                        undefined,
+                        params['courseId']
+                    );
                 } else {
-                    this.programmingExercisePopupService
-                        .open(ProgrammingExerciseDialogComponent as Component);
+                    this.programmingExercisePopupService.open(ProgrammingExerciseDialogComponent as Component);
                 }
             }
         });

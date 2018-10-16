@@ -6,6 +6,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -34,6 +35,7 @@ public class ParticipationService {
     private final ParticipationRepository participationRepository;
     private final ExerciseRepository exerciseRepository;
     private final ResultRepository resultRepository;
+    private final SubmissionRepository submissionRepository;
     private final QuizSubmissionService quizSubmissionService;
     private final UserService userService;
     private final Optional<GitService> gitService;
@@ -43,6 +45,7 @@ public class ParticipationService {
     public ParticipationService(ParticipationRepository participationRepository,
                                 ExerciseRepository exerciseRepository,
                                 ResultRepository resultRepository,
+                                SubmissionRepository submissionRepository,
                                 QuizSubmissionService quizSubmissionService,
                                 UserService userService,
                                 Optional<GitService> gitService,
@@ -51,6 +54,7 @@ public class ParticipationService {
         this.participationRepository = participationRepository;
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
+        this.submissionRepository = submissionRepository;
         this.quizSubmissionService = quizSubmissionService;
         this.userService = userService;
         this.gitService = gitService;
@@ -402,9 +406,22 @@ public class ParticipationService {
             }
         }
         if (participation.getResults() != null && participation.getResults().size() > 0) {
-            log.info("Will delete " + participation.getResults().size() + " results");
             for (Result result : participation.getResults()) {
                 resultRepository.deleteById(result.getId());
+                //The following code is necessary, because we might have submissions in results which are not properly connected to a participation and CASCASE_REMOVE is not active in this case
+                if (result.getSubmission() != null) {
+                    Submission submissionToDelete = result.getSubmission();
+                    submissionRepository.deleteById(submissionToDelete.getId());
+                    result.setSubmission(null);
+                    //make sure submissions don't get deleted twice (see below)
+                    participation.removeSubmissions(submissionToDelete);
+                }
+            }
+        }
+        //The following case is necessary, because we might have submissions without result
+        if (participation.getSubmissions() != null && participation.getSubmissions().size() > 0) {
+            for (Submission submission : participation.getSubmissions()) {
+                submissionRepository.deleteById(submission.getId());
             }
         }
 

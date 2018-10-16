@@ -4,6 +4,9 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -36,9 +39,29 @@ public class QuizScheduleService {
 
     private final SimpMessageSendingOperations messagingTemplate;
     private final ParticipationRepository participationRepository;
+    private final ResultRepository resultRepository;
+    private final QuizSubmissionRepository quizSubmissionRepository;
     private final UserService userService;
     private final QuizExerciseService quizExerciseService;
     private final StatisticService statisticService;
+
+
+    public QuizScheduleService(SimpMessageSendingOperations messagingTemplate,
+                               ParticipationRepository participationRepository,
+                               ResultRepository resultRepository,
+                               QuizSubmissionRepository quizSubmissionRepository,
+                               UserService userService,
+                               QuizExerciseService quizExerciseService,
+                               StatisticService statisticService) {
+        this.messagingTemplate = messagingTemplate;
+        this.participationRepository = participationRepository;
+        this.resultRepository = resultRepository;
+        this.quizSubmissionRepository = quizSubmissionRepository;
+        this.userService = userService;
+        this.quizExerciseService = quizExerciseService;
+        this.statisticService = statisticService;
+    }
+
 
     /**
      * add a quizSubmission to the submissionHashMap
@@ -143,17 +166,6 @@ public class QuizScheduleService {
         return null;
     }
 
-    public QuizScheduleService(SimpMessageSendingOperations messagingTemplate,
-                               ParticipationRepository participationRepository,
-                               UserService userService,
-                               QuizExerciseService quizExerciseService,
-                               StatisticService statisticService) {
-        this.messagingTemplate = messagingTemplate;
-        this.participationRepository = participationRepository;
-        this.userService = userService;
-        this.quizExerciseService = quizExerciseService;
-        this.statisticService = statisticService;
-    }
 
     /**
      * start scheduler
@@ -250,7 +262,9 @@ public class QuizScheduleService {
 
                 int num = createParticipations(quizExercise, submissions);
 
-                log.info("Processed {} submissions after {} ms in quiz {}", num, System.currentTimeMillis() - start, quizExercise.getTitle());
+                if (num > 0) {
+                    log.info("Processed {} submissions after {} ms in quiz {}", num, System.currentTimeMillis() - start, quizExercise.getTitle());
+                }
             }
 
             // Send out Participations from ParticipationHashMap to each user if the quiz has ended
@@ -277,7 +291,9 @@ public class QuizScheduleService {
                         messagingTemplate.convertAndSendToUser(participation.getStudent().getLogin(), "/topic/quizExercise/" + quizId + "/participation", participation);
                         counter++;
                     }
-                    log.info("Sent out {} participations after {} ms for quiz {}", counter, System.currentTimeMillis() - start, quizExercise.getTitle());
+                    if (counter > 0) {
+                        log.info("Sent out {} participations after {} ms for quiz {}", counter, System.currentTimeMillis() - start, quizExercise.getTitle());
+                    }
                 }
             }
 
@@ -295,7 +311,7 @@ public class QuizScheduleService {
                 // update statistic with all results of the quizExercise
                 try {
                     statisticService.updateStatistics(resultHashMap.remove(quizId), quizExercise);
-                    log.info("Updated statistics after {} ms for quiz {}", System.currentTimeMillis() - start, quizExercise.getTitle());
+                    log.debug("Updated statistics after {} ms for quiz {}", System.currentTimeMillis() - start, quizExercise.getTitle());
                 } catch (Exception e) {
                     log.error("Exception in StatisticService.updateStatistics():\n{}", e.getMessage());
                 }
@@ -361,9 +377,6 @@ public class QuizScheduleService {
 
         if (quizExercise != null && username != null && quizSubmission != null) {
 
-            // update submission with score
-            quizSubmission.calculateAndUpdateScores(quizExercise);
-
             //create and save new participation
             Participation participation = new Participation();
             Optional<User> user = userService.getUserByLogin(username);
@@ -385,12 +398,18 @@ public class QuizScheduleService {
 
             // add result to participation
             participation.addResult(result);
+
+            // add submission to participation
+            participation.addSubmissions(quizSubmission);
+
             participation.setInitializationState(InitializationState.FINISHED);
-
-            //save participation with result and quizSubmission
-            participationRepository.save(participation);
-
             participation.setExercise(quizExercise);
+
+            //save participation, result and quizSubmission
+            participationRepository.save(participation);
+            quizSubmissionRepository.save(quizSubmission);
+            resultRepository.save(result);
+
             //add the participation to the participationHashMap for the send out at the end of the quiz
             QuizScheduleService.addParticipation(quizExercise.getId(), participation);
             //add the result of the participation resultHashMap for the statistic-Update

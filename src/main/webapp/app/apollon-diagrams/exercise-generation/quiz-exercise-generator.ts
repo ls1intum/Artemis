@@ -59,7 +59,7 @@ export async function generateDragAndDropQuizExercise(
 
     // Generate a quiz exercise object
     const quizExercise = new QuizExercise();
-    quizExercise.title = '<INSERT EXERCISE TITLE HERE>';
+    quizExercise.title = '<INSERT QUIZ EXERCISE TITLE HERE>';
     quizExercise.duration = 600;
     quizExercise.isVisibleBeforeStart = false;
     quizExercise.isOpenForPractice = false;

@@ -131,6 +131,7 @@ public class ModelingAssessmentService {
         for (JsonElement assessment : assessments) {
             totalScore += assessment.getAsJsonObject().getAsJsonPrimitive("credits").getAsDouble();
         }
+        //TODO round this value to max two numbers after the comma
         return totalScore;
     }
 }

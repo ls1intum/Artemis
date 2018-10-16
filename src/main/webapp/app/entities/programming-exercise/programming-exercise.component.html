@@ -44,13 +44,13 @@
                     <div class="btn-group flex-btn-group-container">
                         <button type="submit"
                                 [routerLink]="['/exercise', programmingExercise.id, 'participation' ]"
-                                class="btn btn-primary btn-sm">
+                                class="btn btn-primary btn-sm mr-1">
                             <span class="fa fa-list-alt"></span>
                             <span class="d-none d-md-inline" jhiTranslate="arTeMiSApp.exercise.participations">Participations</span>
                         </button>
                         <button type="submit"
                                 [routerLink]="['../programming-exercise', programmingExercise.id ]"
-                                class="btn btn-info btn-sm">
+                                class="btn btn-info btn-sm mr-1">
                             <span class="fa fa-eye"></span>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                         </button>
@@ -58,7 +58,7 @@
                                 [routerLink]="['/', { outlets: { popup: 'programming-exercise/'+ programmingExercise.id + '/edit'} }]"
                                 replaceUrl="true"
                                 queryParamsHandling="merge"
-                                class="btn btn-primary btn-sm">
+                                class="btn btn-primary btn-sm mr-1">
                             <span class="fa fa-pencil"></span>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                         </button>
@@ -66,7 +66,7 @@
                                 [routerLink]="['/', { outlets: { popup: 'exercise/'+ programmingExercise.id + '/reset'} }]"
                                 replaceUrl="true"
                                 queryParamsHandling="merge"
-                                class="btn btn-danger btn-sm">
+                                class="btn btn-danger btn-sm mr-1">
                             <span class="fa fa-remove"></span>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.reset">Reset</span>
                         </button>
@@ -74,7 +74,7 @@
                                 [routerLink]="['/', { outlets: { popup: 'programming-exercise/'+ programmingExercise.id + '/delete'} }]"
                                 replaceUrl="true"
                                 queryParamsHandling="merge"
-                                class="btn btn-danger btn-sm">
+                                class="btn btn-danger btn-sm mr-1">
                             <span class="fa fa-remove"></span>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
                         </button>

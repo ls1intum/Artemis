@@ -1,17 +1,17 @@
 <div class="quiz-header container" *ngIf="quizExercise">
-    <h1 [ngSwitch]="mode">
+    <h2 [ngSwitch]="mode">
         {{quizExercise.course.title}} - {{quizExercise.title}}
         <span *ngSwitchCase="'practice'" class="in-parentheses" jhiTranslate="arTeMiSApp.quizExercise.practiceMode"></span>
         <span *ngSwitchCase="'preview'" class="in-parentheses" jhiTranslate="arTeMiSApp.quizExercise.previewMode"></span>
         <span *ngSwitchCase="'solution'" class="in-parentheses" jhiTranslate="arTeMiSApp.quizExercise.solution"></span>
-    </h1>
+    </h2>
     <p *ngIf="!waitingForQuizStart && !submission.submitted && !showingResult" jhiTranslate="arTeMiSApp.quizExercise.quizInstructions.default"></p>
     <p *ngIf="!waitingForQuizStart && submission.submitted && !showingResult" jhiTranslate="arTeMiSApp.quizExercise.quizInstructions.wait"></p>
     <p *ngIf="!waitingForQuizStart && showingResult && mode !== 'solution'" jhiTranslate="arTeMiSApp.quizExercise.quizInstructions.result" translateValues="{userScore: '{{userScore}}', maxScore: '{{totalScore}}', percentage: '{{result.score}}'}"></p>
 </div>
 <div class="quiz-content container" *ngIf="quizExercise">
     <div *ngFor="let question of quizExercise.questions; let i = index">
-        <jhi-multiple-choice-question *ngIf="question.type === MULTIPLE_CHOICE" [question]="question" [(selectedAnswerOptions)]="selectedAnswerOptions[question.id]" [fnOnSelection]="onSelectionChanged.bind(this)" [clickDisabled]="submission.submitted || remainingTimeSeconds < 0" [showResult]="showingResult" [forceSampleSolution]="mode == 'solution'" [questionIndex]="i + 1" [score]="questionScores[question.id]"></jhi-multiple-choice-question>
+        <jhi-multiple-choice-question *ngIf="question.type === MULTIPLE_CHOICE" [question]="question" [(selectedAnswerOptions)]="selectedAnswerOptions[question.id]" [fnOnSelection]="onSelectionChanged.bind(this)" [clickDisabled]="submission.submitted || remainingTimeSeconds < 0" [showResult]="showingResult" [forceSampleSolution]="mode === 'solution'" [questionIndex]="i + 1" [score]="questionScores[question.id]"></jhi-multiple-choice-question>
         <jhi-drag-and-drop-question *ngIf="question.type === DRAG_AND_DROP" [question]="question" [(mappings)]="dragAndDropMappings[question.id]" [fnOnMappingUpdate]="onSelectionChanged.bind(this)" [clickDisabled]="submission.submitted || remainingTimeSeconds < 0" [showResult]="showingResult" [forceSampleSolution]="mode === 'solution'" [questionIndex]="i + 1" [score]="questionScores[question.id]"></jhi-drag-and-drop-question>
     </div>
 </div>

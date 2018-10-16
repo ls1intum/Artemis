@@ -1,20 +1,23 @@
 import { RepositoryFileService } from '../../entities/repository/repository.service';
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, AfterViewInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Participation } from '../../entities/participation';
 import { JhiWebsocketService } from '../../core';
+import { WindowRef } from '../../core/websocket/window.service';
 import { EditorComponent } from '../editor.component';
 import { EditorFileBrowserCreateComponent } from './editor-file-browser-create';
 import { EditorFileBrowserDeleteComponent } from './editor-file-browser-delete';
 import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem } from 'ngx-treeview';
 import { HttpErrorResponse } from '@angular/common/http';
+import * as interact from 'interactjs';
+import { Interactable } from 'interactjs';
 
 @Component({
     selector: 'jhi-editor-file-browser',
     templateUrl: './editor-file-browser.component.html',
-    providers: [NgbModal, RepositoryFileService]
+    providers: [NgbModal, RepositoryFileService, WindowRef]
 })
-export class EditorFileBrowserComponent implements OnChanges {
+export class EditorFileBrowserComponent implements OnChanges, AfterViewInit {
     @Input()
     participation: Participation;
     @Input()
@@ -39,17 +42,47 @@ export class EditorFileBrowserComponent implements OnChanges {
         hasAllCheckBox: false,
         hasFilter: false,
         hasCollapseExpand: false,
-        decoupleChildFromParent: false,
-        // Make sure the treeview div has enough height to expand
-        maxHeight: 380
+        decoupleChildFromParent: false
     });
+
+    /** Resizable constants **/
+    resizableMinWidth = 100;
+    resizableMaxWidth = 800;
+    interactResizable: Interactable;
 
     constructor(
         private parent: EditorComponent,
+        private $window: WindowRef,
         private jhiWebsocketService: JhiWebsocketService,
         private repositoryFileService: RepositoryFileService,
         public modalService: NgbModal
     ) {}
+
+    /**
+     * @function ngAfterViewInit
+     * @desc After the view was initialized, we create an interact.js resizable object,
+     *       designate the edges which can be used to resize the target element and set min and max values.
+     *       The 'resizemove' callback function processes the event values and sets new width and height values for the element.
+     */
+    ngAfterViewInit(): void {
+        this.resizableMinWidth = this.$window.nativeWindow.screen.width / 6;
+        this.interactResizable = interact('.resizable-filebrowser')
+            .resizable({
+                // Enable resize from right edge; triggered by class rg-right
+                edges: { left: false, right: '.rg-right', bottom: false, top: false },
+                // Set min and max width
+                restrictSize: {
+                    min: { width: this.resizableMinWidth },
+                    max: { width: this.resizableMaxWidth }
+                },
+                inertia: true
+            })
+            .on('resizemove', function(event) {
+                const target = event.target;
+                // Update element width
+                target.style.width = event.rect.width + 'px';
+            });
+    }
 
     /**
      * @function ngOnInit
@@ -250,6 +283,24 @@ export class EditorFileBrowserComponent implements OnChanges {
             }
         }
         return tree;
+    }
+
+    getSaveStatusLabel(): string {
+        return this.parent.saveStatusLabel;
+    }
+
+    isExerciseCommitted(): boolean {
+        return this.parent.isCommitted;
+    }
+
+    /**
+     * @function toggleEditorCollapse
+     * @desc Calls the parent (editorComponent) toggleCollapse method
+     * @param $event
+     * @param {boolean} horizontal
+     */
+    toggleEditorCollapse($event: any, horizontal: boolean) {
+        this.parent.toggleCollapse($event, horizontal, this.interactResizable, this.resizableMinWidth);
     }
 
     /**
