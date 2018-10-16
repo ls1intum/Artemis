@@ -26,6 +26,8 @@ public class AutomaticSubmissionService {
     private static final Logger log = LoggerFactory.getLogger(AutomaticSubmissionService.class);
 
     // Map<exerciseId, Map<username, submission>
+    // TODO I think we can get rid of this hash map and rather manipulate the existing database objects directly.
+    // This would also prevent problems when the server is restarted during a modeling exercise
     private static Map<Long, Map<String, Submission>> submissionHashMap = new ConcurrentHashMap<>();
 
     private static ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
