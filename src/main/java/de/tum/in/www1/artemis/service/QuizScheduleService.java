@@ -262,7 +262,9 @@ public class QuizScheduleService {
 
                 int num = createParticipations(quizExercise, submissions);
 
-                log.info("Processed {} submissions after {} ms in quiz {}", num, System.currentTimeMillis() - start, quizExercise.getTitle());
+                if (num > 0) {
+                    log.info("Processed {} submissions after {} ms in quiz {}", num, System.currentTimeMillis() - start, quizExercise.getTitle());
+                }
             }
 
             // Send out Participations from ParticipationHashMap to each user if the quiz has ended
@@ -289,7 +291,9 @@ public class QuizScheduleService {
                         messagingTemplate.convertAndSendToUser(participation.getStudent().getLogin(), "/topic/quizExercise/" + quizId + "/participation", participation);
                         counter++;
                     }
-                    log.info("Sent out {} participations after {} ms for quiz {}", counter, System.currentTimeMillis() - start, quizExercise.getTitle());
+                    if (counter > 0) {
+                        log.info("Sent out {} participations after {} ms for quiz {}", counter, System.currentTimeMillis() - start, quizExercise.getTitle());
+                    }
                 }
             }
 
@@ -307,7 +311,7 @@ public class QuizScheduleService {
                 // update statistic with all results of the quizExercise
                 try {
                     statisticService.updateStatistics(resultHashMap.remove(quizId), quizExercise);
-                    log.info("Updated statistics after {} ms for quiz {}", System.currentTimeMillis() - start, quizExercise.getTitle());
+                    log.debug("Updated statistics after {} ms for quiz {}", System.currentTimeMillis() - start, quizExercise.getTitle());
                 } catch (Exception e) {
                     log.error("Exception in StatisticService.updateStatistics():\n{}", e.getMessage());
                 }

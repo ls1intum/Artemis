@@ -17,8 +17,8 @@ import java.util.concurrent.ScheduledFuture;
 
 /*
  * This service handles automatic submission after exercises ended. Currently it is only used for modeling exercises.
- * It manages a hashmap with submissions, which stores not submitted submissions. It checks periodically, whether
- * the exercise the submission belongs to has ended yet and submits it automatically if that's the case.
+ * It manages a hash map with submissions, which stores not submitted submissions. It checks periodically, whether
+ * the exercise (the submission belongs to) has ended yet and submits it automatically if that's the case.
  */
 @Service
 public class AutomaticSubmissionService {
@@ -77,7 +77,7 @@ public class AutomaticSubmissionService {
      *
      * @param exerciseId     the exerciseId of the exercise the submission belongs to (first Key)
      * @param username       the username of the user, who submitted the submission (second Key)
-     * @param submission the submission, which should be added (Value)
+     * @param submission     the submission, which should be added (Value)
      */
     public static void updateSubmission(Long exerciseId, String username, Submission submission) {
 
@@ -117,7 +117,9 @@ public class AutomaticSubmissionService {
 
                 int num = handleSubmissions(exercise, submissions);
 
-                log.info("Processed {} submissions after {} ms in exercise {}", num, System.currentTimeMillis() - start, exercise.getTitle());
+                if (num > 0) {
+                    log.info("Processed {} submissions after {} ms in exercise {}", num, System.currentTimeMillis() - start, exercise.getTitle());
+                }
             }
         } catch (Exception e) {
             log.error("Exception in AutomaticSubmissionService:\n{}", e.getMessage());
@@ -159,9 +161,9 @@ public class AutomaticSubmissionService {
                     Participation participation = submission.getParticipation();
                     // retrieve submission from the submission's participation to solve lazy loading problem
                     // without it, changes in the submission are not reflected in the participation's submissions
-                    for (Submission s : participation.getSubmissions()) {
-                        if (s.equals(submission)) {
-                            submission = s;
+                    for (Submission participationSubmission : participation.getSubmissions()) {
+                        if (participationSubmission.equals(submission)) {
+                            submission = participationSubmission;
                             break;
                         }
                     }
