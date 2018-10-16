@@ -406,16 +406,20 @@ public class ParticipationService {
             }
         }
         if (participation.getResults() != null && participation.getResults().size() > 0) {
-            log.info("Will delete " + participation.getResults().size() + " results");
             for (Result result : participation.getResults()) {
                 resultRepository.deleteById(result.getId());
+                //The following code is necessary, because we might have submissions in results which are not properly connected to a participation and CASCASE_REMOVE is not active in this case
                 if (result.getSubmission() != null) {
-                    submissionRepository.deleteById(result.getSubmission().getId());
+                    Submission submissionToDelete = result.getSubmission();
+                    submissionRepository.deleteById(submissionToDelete.getId());
+                    result.setSubmission(null);
+                    //make sure submissions don't get deleted twice (see below)
+                    participation.removeSubmissions(submissionToDelete);
                 }
             }
         }
+        //The following case is necessary, because we might have submissions without result
         if (participation.getSubmissions() != null && participation.getSubmissions().size() > 0) {
-            log.info("Will delete " + participation.getResults().size() + " submissions");
             for (Submission submission : participation.getSubmissions()) {
                 submissionRepository.deleteById(submission.getId());
             }
