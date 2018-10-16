@@ -59,4 +59,11 @@ public class ModelIndex {
     int getModelCollectionSize() {
         return modelMap.size();
     }
+
+    /**
+     * Used for evaluation
+     */
+    public int getNumberOfUniqueElements() {
+        return this.uniqueModelElementList.size();
+    }
 }
