@@ -4,21 +4,6 @@ import { DragAndDropQuestionUtil } from '../../../components/util/drag-and-drop-
 import { DragAndDropQuestion } from '../../../entities/drag-and-drop-question';
 import { DragAndDropMapping } from '../../../entities/drag-and-drop-mapping';
 import { DropLocation } from '../../../entities/drop-location';
-import { polyfill } from 'mobile-drag-drop';
-import { scrollBehaviourDragImageTranslateOverride } from 'mobile-drag-drop/scroll-behaviour';
-
-// options are optional ;)
-polyfill({
-    // use this to make use of the scroll behaviour
-    dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride
-});
-
-// dragenter listener
-(event: any) => {
-    event.preventDefault();
-};
-
-window.addEventListener('touchmove', function() {});
 
 @Component({
     selector: 'jhi-drag-and-drop-question',
@@ -85,14 +70,15 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy {
     /**
      * Handles drag-available UI
      */
-    drag() {
+    drag(event: Event) {
         this.dropAllowed = true;
+        event.preventDefault();
     }
 
     /**
      * Handles drag-available UI
      */
-    drop() {
+    drop(event: Event) {
         this.dropAllowed = false;
     }
 
@@ -104,7 +90,7 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy {
      * @param dragEvent {object} the drag item that was dropped
      */
     onDragDrop(dropLocation: DropLocation, dragEvent: any) {
-        this.drop();
+        this.drop(<Event>dragEvent);
         const dragItem = dragEvent.dragData;
         if (dropLocation) {
             // check if this mapping is new

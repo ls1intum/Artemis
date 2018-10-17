@@ -45,6 +45,10 @@ import 'zone.js/dist/zone'; // Included with Angular CLI.
 /** IE10 and IE11 requires the following for NgClass support on SVG elements */
 // import 'classlist.js';  // Run `npm install --save classlist.js`.
 
+/** Drag and Drop Support on Mobile devices */
+import { polyfill } from 'mobile-drag-drop';
+import { scrollBehaviourDragImageTranslateOverride } from 'mobile-drag-drop/scroll-behaviour';
+
 /**
  * Required to support Web Animations `@angular/animation`.
  * Needed for: All but Chrome, Firefox and Opera. http://caniuse.com/#feat=web-animation
@@ -66,3 +70,15 @@ import 'zone.js/dist/zone'; // Included with Angular CLI.
 // import 'intl/locale-data/jsonp/en';
 
 require('../manifest.webapp');
+
+/** Drag and Drop Support on Mobile devices */
+polyfill({
+    // use this to make use of the scroll behaviour
+    dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride,
+    holdToDrag: 300
+});
+
+// workaround for iOS10/iOS11 touchmove behaviour (https://github.com/timruffles/mobile-drag-drop/issues/77)
+try {
+    window.addEventListener('touchmove', function() {}, { passive: false });
+} catch (e) {}

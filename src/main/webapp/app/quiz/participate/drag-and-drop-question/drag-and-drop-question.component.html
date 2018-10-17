@@ -37,7 +37,7 @@
                     <div class="drop-location" *ngFor="let dropLocation of question.dropLocations" [ngClass]="dropAllowed ? 'drop-allowed' : ''"
                          [ngStyle]="{top: dropLocation.posY/2 + '%', left: dropLocation.posX/2 + '%', width: dropLocation.width/2 + '%', height: dropLocation.height/2 + '%'}"
                          (onDropSuccess)="onDragDrop(dropLocation, $event)" dnd-droppable>
-                        <jhi-drag-item (dragenter)="drag()" (dragend)="drop()" *ngIf="dragItemForDropLocation(dropLocation)" [dragItem]="dragItemForDropLocation(dropLocation)" [clickDisabled]="clickDisabled"></jhi-drag-item>
+                        <jhi-drag-item (dragenter)="drag($event)" (dragend)="drop($event)" *ngIf="dragItemForDropLocation(dropLocation)" [dragItem]="dragItemForDropLocation(dropLocation)" [clickDisabled]="clickDisabled"></jhi-drag-item>
                     </div>
                 </div>
                 <div *ngIf="showResult && !showingSampleSolution">
@@ -108,7 +108,7 @@
                 <span jhiTranslate="arTeMiSApp.dragAndDropQuestion.studentInstructions"></span>
             </div>
             <div class="drag-items" [ngClass]="dropAllowed ? 'drop-allowed' : ''" (onDropSuccess)="onDragDrop(null, $event)" dnd-droppable>
-                <jhi-drag-item (dragenter)="drag()" (dragend)="drop()" *ngFor="let dragItem of getUnassignedDragItems()" [dragItem]="dragItem" [clickDisabled]="clickDisabled"></jhi-drag-item>
+                <jhi-drag-item (dragenter)="drag($event)" (dragend)="drop($event)" *ngFor="let dragItem of getUnassignedDragItems()" [dragItem]="dragItem" [clickDisabled]="clickDisabled"></jhi-drag-item>
             </div>
         </div>
         <div *ngIf="showResult && !forceSampleSolution">
