@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -263,8 +264,8 @@ public class ExerciseService {
                         }
 
                     }
-                } catch (IOException | GitAPIException ex) {
-                    log.error("export repository Participation for " + participation.getRepositoryUrlAsUrl() + "and Students" + studentIds + " did not work as expected");
+                } catch (IOException | GitAPIException | GitException ex) {
+                    log.error("export repository Participation for " + participation.getRepositoryUrlAsUrl() + "and Students" + studentIds + " did not work as expected: " + ex);
                 }
             });
             if (!exercise.getParticipations().isEmpty() && !zippedRepoFiles.isEmpty()) {
@@ -316,8 +317,8 @@ public class ExerciseService {
                         //3. delete the locally cloned repo again
                         gitService.get().deleteLocalRepository(participation);
                     }
-                } catch (IOException | GitAPIException ex) {
-                    log.error("Archiving and deleting the repository " + participation.getRepositoryUrlAsUrl() + " did not work as expected");
+                } catch (IOException | GitAPIException | GitException ex) {
+                    log.error("Archiving and deleting the repository " + participation.getRepositoryUrlAsUrl() + " did not work as expected: " + ex);
                 }
             });
 

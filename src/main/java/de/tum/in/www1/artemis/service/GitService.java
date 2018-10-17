@@ -3,12 +3,15 @@ package de.tum.in.www1.artemis.service;
 import de.tum.in.www1.artemis.domain.File;
 import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.exception.GitException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PullResult;
 import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.InvalidRemoteException;
+import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.slf4j.Logger;
@@ -16,9 +19,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -48,6 +55,14 @@ public class GitService {
 
     private final HashMap<Path, Repository> cachedRepositories = new HashMap<>();
 
+    public GitService() {
+        log.info("Default Charset=" + Charset.defaultCharset());
+        log.info("file.encoding=" + System.getProperty("file.encoding"));
+        log.info("sun.jnu.encoding=" + System.getProperty("sun.jnu.encoding"));
+        log.info("Default Charset=" + Charset.defaultCharset());
+        log.info("Default Charset in Use=" + new OutputStreamWriter(new ByteArrayOutputStream()).getEncoding());
+    }
+
     /**
      * Get the local repository for a given participation.
      * If the local repo does not exist yet, it will be checked out.
@@ -74,10 +89,13 @@ public class GitService {
      * @throws GitAPIException
      */
     public Repository getOrCheckoutRepository(URL repoUrl) throws IOException, GitAPIException {
+
         Path localPath = new java.io.File(REPO_CLONE_PATH + folderNameForRepositoryUrl(repoUrl)).toPath();
 
         // check if Repository object already created and available in cachedRepositories
         if (cachedRepositories.containsKey(localPath)) {
+            // in this case we pull for changes to make sure the Git repo is up to date
+            Git.open(localPath.toFile()).pull().call();
             return cachedRepositories.get(localPath);
         }
 
@@ -85,16 +103,25 @@ public class GitService {
         if (!Files.exists(localPath)) {
             // Repository is not yet available on the server
             // We need to check it out from the remote repository
-            log.info("Cloning from " + repoUrl + " to " + localPath);
-            Git result = Git.cloneRepository()
-                .setURI(repoUrl.toString())
-                .setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD))
-                .setDirectory(localPath.toFile())
-                .call();
-            result.close();
+            try {
+                log.info("Cloning from " + repoUrl + " to " + localPath);
+                Git result = Git.cloneRepository()
+                    .setURI(repoUrl.toString())
+                    .setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD))
+                    .setDirectory(localPath.toFile())
+                    .call();
+                result.close();
+            }
+            catch (GitAPIException | InvalidPathException e) {
+                //cleanup the folder to avoid problems in the future
+                localPath.toFile().delete();
+                throw new GitException(e);
+            }
         }
         else {
-            log.info("Repository at " + localPath + " already exists");
+            log.debug("Repository at " + localPath + " already exists");
+            // in this case we pull for changes to make sure the Git repo is up to date
+            Git.open(localPath.toFile()).pull().call();
         }
 
         // Open the repository from the filesystem
