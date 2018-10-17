@@ -181,7 +181,7 @@ public class ExerciseService {
     }
 
     /**
-     * Delete build plans (except BASE) and optionally repositories of all exercise participations.
+     * Delete build plans (except BASE) and optionally git repositories of all exercise participations.
      *
      * @param id id of the exercise for which build plans in respective participations are deleted
      */
