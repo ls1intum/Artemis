@@ -26,7 +26,7 @@ interface Step {
     providers: [JhiAlertService, WindowRef, RepositoryService, ResultService, EditorService]
 })
 export class EditorInstructionsComponent implements AfterViewInit, OnChanges, OnDestroy {
-    isLoading = false;
+    isLoadingResults = false;
     haveDetailsBeenLoaded = false;
     markDown: Remarkable;
     readMeFileRawContent: string;
@@ -102,9 +102,11 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
             this.loadReadme();
         }
 
-        if (changes.latestResult && changes.latestResult.currentValue && !this.isLoading) {
-            // New result available
-            this.loadResultsDetails();
+        if (changes.latestResult && changes.latestResult.currentValue && !this.isLoadingResults) {
+            // New result available, only render it if the readme was alredy downloaded
+            if (this.readMeFileRawContent) {
+                this.loadResultsDetails();
+            }
         }
     }
 
@@ -115,12 +117,14 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
     loadReadme() {
         // Only do this if we already received a participation object from parent
         if (this.participation) {
+            this.setupMarkDown();
             this.repositoryFileService.get(this.participation.id, 'README.md').subscribe(
                 fileObj => {
                     this.readMeFileRawContent = fileObj.fileContent;
                     this.renderReadme();
                 },
                 err => {
+                    //TODO: handle the case that there is no README.md file
                     console.log('Error while getting README.md file!', err);
                 }
             );
@@ -132,20 +136,23 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
      * @desc Fetches details for the result (if we received one) => Input latestResult
      */
     loadResultsDetails() {
-        if (!this.latestResult) {
+        if (!this.latestResult || this.isLoadingResults) {
             return;
         }
-        this.isLoading = true;
+        this.isLoadingResults = true;
 
         this.resultService.getFeedbackDetailsForResult(this.latestResult.id).subscribe(
             resultDetails => {
                 this.resultDetails = resultDetails.body;
                 this.haveDetailsBeenLoaded = true;
-                this.renderReadme();
-                this.isLoading = false;
+                if (this.readMeFileRawContent) {
+                    this.renderReadme();
+                }
+                this.isLoadingResults = false;
             },
             err => {
                 console.log('Error while loading result details!', err);
+                this.isLoadingResults = false;
             }
         );
     }
@@ -156,11 +163,13 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
      * Information regarding the syntax for the parser and stateBlock: https://github.com/jonschlinkert/remarkable/tree/master/docs
      */
     setupMarkDown() {
-        this.markDown = new Remarkable();
-        this.markDown.inline.ruler.before('text', 'testsStatus', this.remarkableTestsStatusParser.bind(this), {});
-        this.markDown.block.ruler.before('paragraph', 'plantUml', this.remarkablePlantUmlParser.bind(this), {});
-        this.markDown.renderer.rules['testsStatus'] = this.remarkableTestsStatusRenderer.bind(this);
-        this.markDown.renderer.rules['plantUml'] = this.remarkablePlantUmlRenderer.bind(this);
+        if (!this.markDown) {
+            this.markDown = new Remarkable();
+            this.markDown.inline.ruler.before('text', 'testsStatus', this.remarkableTestsStatusParser.bind(this), {});
+            this.markDown.block.ruler.before('paragraph', 'plantUml', this.remarkablePlantUmlParser.bind(this), {});
+            this.markDown.renderer.rules['testsStatus'] = this.remarkableTestsStatusRenderer.bind(this);
+            this.markDown.renderer.rules['plantUml'] = this.remarkablePlantUmlRenderer.bind(this);
+        }
     }
 
     /**
@@ -168,12 +177,14 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
      * @desc Prepares and starts the rendering process of the README.md file
      */
     renderReadme() {
-        this.isLoading = true;
+        console.log('reanderReadme() invoked');
+        if (this.readMeFileRawContent) {
+            console.log('with valid readMeFileRawContent');
+        }
         // Reset steps array
         this.steps = [];
         // Render README.md file via Remarkable
         this.readMeFileRenderedContent = this.markDown.render(this.readMeFileRawContent);
-        this.isLoading = false;
 
         // Detach test status click listeners if already initialized; if not, set it empty
         if (this.listenerRemoveFunctions && this.listenerRemoveFunctions.length) {
@@ -194,7 +205,7 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
             this.listenerRemoveFunctions.push(listenerRemoveFunction);
         });
 
-        if (!this.haveDetailsBeenLoaded) {
+        if (!this.isLoadingResults && !this.haveDetailsBeenLoaded) {
             this.loadResultsDetails();
         }
     }
