@@ -93,9 +93,6 @@ export class EditorFileBrowserComponent implements OnChanges, AfterViewInit {
         /**
          * Initialize treeview
          */
-        if (this.participation) {
-            this.getRepositoryFiles();
-        }
         /**
          * Update the treeview when files have been added or removed
          */
@@ -186,7 +183,7 @@ export class EditorFileBrowserComponent implements OnChanges, AfterViewInit {
      * @param files: Provided repository files by parent editor component
      */
     setupTreeview(files: string[]) {
-        let tree = this.buildTree(files);
+        let tree = this.buildTree(files.sort());
         tree = this.compressTree(tree);
         this.filesTreeViewItem = this.transformTreeToTreeViewItem(tree);
     }

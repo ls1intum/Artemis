@@ -2,16 +2,13 @@
 
     <nav class="navbar navbar-light navbar-expand-md jh-navbar">
         <div class="jh-logo-container float-left editor-top-left">
-            <a class="logo float-left" routerLink="/">
-                <span jhiTranslate="global.title" class="navbar-title">ArTEMiS:</span> <span>{{participation?.exercise.course.title}}</span>
-            </a>
+            <span class="navbar-title">Online Code Editor for Exercise:</span> <span>{{participation?.exercise.course.title}}</span>
         </div>
         <div class="navbar-collapse collapse editor-top-right">
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item dropdown pointer">
                     <jhi-result [participation]="participation"
                                 [isBuilding]="isBuilding"
-                                [doInitialRefresh]="doInitialRefresh"
                                 (newResult)="updateLatestResult($event)"
                                 [hidden]="isBuilding">
                     </jhi-result>
