@@ -27,9 +27,6 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
     latestResult: Result;
     saveStatusLabel: string;
 
-    /** Enable initial refresh call for result component **/
-    doInitialRefresh = true;
-
     /** File Status Booleans **/
     isSaved = true;
     isBuilding = false;
@@ -71,18 +68,17 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
             ) {
                 // We found a matching participation in the data provider, so we can avoid doing a REST call
                 this.participation = this.participationDataProvider.participationStorage;
-                this.checkIfRepositoryIsClean();
             } else {
                 /** Query the participationService for the participationId given by the params */
                 this.participationService.find(params['participationId']).subscribe((response: HttpResponse<Participation>) => {
                     this.participation = response.body;
-                    this.checkIfRepositoryIsClean();
                 });
             }
             /** Query the repositoryFileService for files in the repository */
             this.repositoryFileService.query(params['participationId']).subscribe(
                 files => {
                     this.repositoryFiles = files;
+                    this.checkIfRepositoryIsClean();
                 },
                 (error: HttpErrorResponse) => {
                     console.log('There was an error while getting files: ' + error.message + ': ' + error.error);

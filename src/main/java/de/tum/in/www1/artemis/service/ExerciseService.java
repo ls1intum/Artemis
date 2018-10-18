@@ -264,7 +264,7 @@ public class ExerciseService {
                         }
 
                     }
-                } catch (IOException | GitAPIException | GitException ex) {
+                } catch (IOException | GitAPIException | GitException | InterruptedException ex) {
                     log.error("export repository Participation for " + participation.getRepositoryUrlAsUrl() + "and Students" + studentIds + " did not work as expected: " + ex);
                 }
             });
@@ -317,7 +317,7 @@ public class ExerciseService {
                         //3. delete the locally cloned repo again
                         gitService.get().deleteLocalRepository(participation);
                     }
-                } catch (IOException | GitAPIException | GitException ex) {
+                } catch (IOException | GitAPIException | GitException | InterruptedException ex) {
                     log.error("Archiving and deleting the repository " + participation.getRepositoryUrlAsUrl() + " did not work as expected: " + ex);
                 }
             });

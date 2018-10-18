@@ -578,12 +578,12 @@
     }
 
     .drop-allowed {
-        background: rgba(173, 216, 230, 0.8) !important;
+        background: rgba(173, 216, 230, 0.8) !important; //light blue
     }
 
     .drop-hover,
     .dnd-drag-over {
-        background: rgba(144, 238, 144, 0.8) !important;
+        background: rgba(144, 238, 144, 0.8) !important; //light green
     }
 
     .drag-item {

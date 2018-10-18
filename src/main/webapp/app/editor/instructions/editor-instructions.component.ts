@@ -25,7 +25,7 @@ interface Step {
     templateUrl: './editor-instructions.component.html',
     providers: [JhiAlertService, WindowRef, RepositoryService, ResultService, EditorService]
 })
-export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnChanges, OnDestroy {
+export class EditorInstructionsComponent implements AfterViewInit, OnChanges, OnDestroy {
     isLoading = false;
     haveDetailsBeenLoaded = false;
     markDown: Remarkable;
@@ -60,17 +60,6 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
         private elementRef: ElementRef,
         private renderer: Renderer2
     ) {}
-
-    /**
-     * @function ngOnInit
-     * @desc Initializes the Remarkable object and loads the repository README.md file
-     */
-    ngOnInit(): void {
-        // Initialize array for listener remove functions
-        this.listenerRemoveFunctions = [];
-        this.setupMarkDown();
-        this.loadReadme();
-    }
 
     /**
      * @function ngAfterViewInit

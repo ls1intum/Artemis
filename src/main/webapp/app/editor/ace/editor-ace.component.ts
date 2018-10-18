@@ -190,7 +190,7 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
      */
     onFileTextChanged(code: string) {
         /** Is the code different to what we have on our session? This prevents us from saving when a file is loaded **/
-        if (this.editorFileSessions[this.fileName].code !== code) {
+        if (this.editorFileSessions[this.fileName] && this.editorFileSessions[this.fileName].code !== code) {
             // Assign received code to our session
             this.editorFileSessions[this.fileName].code = code;
             this.editorFileSessions[this.fileName].unsavedChanges = true;
