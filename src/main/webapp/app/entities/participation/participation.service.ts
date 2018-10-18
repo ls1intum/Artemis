@@ -40,6 +40,12 @@ export class ParticipationService {
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
+    findWithLatestResult(id: number): Observable<EntityResponseType> {
+        return this.http
+            .get<Participation>(`${this.resourceUrl}/${id}/withLatestResult`, { observe: 'response' })
+            .map((res: EntityResponseType) => this.convertDateFromServer(res));
+    }
+
     /*
      * Finds one participation for the currently logged in user for the given exercise in the given course
      */

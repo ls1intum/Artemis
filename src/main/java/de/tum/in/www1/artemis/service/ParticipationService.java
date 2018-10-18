@@ -307,6 +307,19 @@ public class ParticipationService {
     }
 
     /**
+     * Get one participation by id.
+     *
+     * @param id the id of the entity
+     * @return the entity
+     */
+    @Transactional(readOnly = true)
+    public Participation findOneWithEagerResults(Long id) {
+        log.debug("Request to get Participation : {}", id);
+        return participationRepository.findByIdWithEagerResults(id);
+    }
+
+
+    /**
      * Get one initialized/inactive participation by its student and exercise.
      *
      * @param exerciseId the project key of the exercise

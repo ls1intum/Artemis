@@ -109,6 +109,7 @@ export class EditorBuildOutputComponent implements AfterViewInit, OnChanges {
     }
 
     toggleBuildLogs(results: Result[]) {
+        // TODO: can we use the result in editor-instructions.component.ts?
         if (results && results[0]) {
             this.resultService.getFeedbackDetailsForResult(results[0].id).subscribe(details => {
                 if (details.body.length === 0) {

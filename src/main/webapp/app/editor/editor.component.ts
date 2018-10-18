@@ -68,11 +68,15 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
             ) {
                 // We found a matching participation in the data provider, so we can avoid doing a REST call
                 this.participation = this.participationDataProvider.participationStorage;
+                this.obtainLatestResult();
             } else {
                 /** Query the participationService for the participationId given by the params */
-                this.participationService.find(params['participationId']).subscribe((response: HttpResponse<Participation>) => {
-                    this.participation = response.body;
-                });
+                this.participationService
+                    .findWithLatestResult(params['participationId'])
+                    .subscribe((response: HttpResponse<Participation>) => {
+                        this.participation = response.body;
+                        this.obtainLatestResult();
+                    });
             }
             /** Query the repositoryFileService for files in the repository */
             this.repositoryFileService.query(params['participationId']).subscribe(
@@ -88,6 +92,12 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
 
         /** Assign repository */
         this.repository = this.repositoryService;
+    }
+
+    obtainLatestResult() {
+        if (this.participation.results && this.participation.results.length > 0) {
+            this.latestResult = this.participation.results[0];
+        }
     }
 
     /**
