@@ -10,7 +10,7 @@ export type EntityResponseType = HttpResponse<QuizExercise>;
 
 @Injectable()
 export class QuizExerciseService {
-    private resourceUrl = SERVER_API_URL + 'api/quiz-exercises';
+    public resourceUrl = SERVER_API_URL + 'api/quiz-exercises';
 
     constructor(private http: HttpClient) {}
 

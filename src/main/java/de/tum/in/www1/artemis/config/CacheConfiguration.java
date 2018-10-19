@@ -64,12 +64,16 @@ public class CacheConfiguration {
             cm.createCache(de.tum.in.www1.artemis.domain.DragAndDropQuestion.class.getName(), jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.DragAndDropQuestion.class.getName() + ".dropLocations", jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.DragAndDropQuestion.class.getName() + ".dragItems", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.DragAndDropQuestion.class.getName() + ".correctMappings", jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.DropLocation.class.getName(), jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.DragItem.class.getName(), jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.Submission.class.getName(), jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.ModelingSubmission.class.getName(), jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.QuizSubmission.class.getName(), jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.QuizSubmission.class.getName() + ".submittedAnswers", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.ProgrammingSubmission.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.TextSubmission.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.FileUploadSubmission.class.getName(), jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.DragAndDropSubmittedAnswer.class.getName(), jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.Question.class.getName() + ".quizExercises", jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.Result.class.getName() + ".feedbacks", jcacheConfiguration);

@@ -1,54 +1,40 @@
 /* tslint:disable max-line-length */
-import { ComponentFixture, TestBed, async } from '@angular/core/testing';
-import { HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute } from '@angular/router';
+import { of } from 'rxjs';
 
-import { ArTEMiSTestModule } from '../../../test.module';
-import { DragAndDropQuestionStatisticDetailComponent } from '../../../../../../main/webapp/app/entities/drag-and-drop-question-statistic/drag-and-drop-question-statistic-detail.component';
-import { DragAndDropQuestionStatisticService } from '../../../../../../main/webapp/app/entities/drag-and-drop-question-statistic/drag-and-drop-question-statistic.service';
-import { DragAndDropQuestionStatistic } from '../../../../../../main/webapp/app/entities/drag-and-drop-question-statistic/drag-and-drop-question-statistic.model';
+import { ArTeMiSTestModule } from '../../../test.module';
+import { DragAndDropQuestionStatisticDetailComponent } from 'app/entities/drag-and-drop-question-statistic/drag-and-drop-question-statistic-detail.component';
+import { DragAndDropQuestionStatistic } from 'app/shared/model/drag-and-drop-question-statistic.model';
 
 describe('Component Tests', () => {
-
     describe('DragAndDropQuestionStatistic Management Detail Component', () => {
         let comp: DragAndDropQuestionStatisticDetailComponent;
         let fixture: ComponentFixture<DragAndDropQuestionStatisticDetailComponent>;
-        let service: DragAndDropQuestionStatisticService;
-
-        beforeEach(async(() => {
-            TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
-                declarations: [DragAndDropQuestionStatisticDetailComponent],
-                providers: [
-                    DragAndDropQuestionStatisticService
-                ]
-            })
-            .overrideTemplate(DragAndDropQuestionStatisticDetailComponent, '')
-            .compileComponents();
-        }));
+        const route = ({ data: of({ dragAndDropQuestionStatistic: new DragAndDropQuestionStatistic(123) }) } as any) as ActivatedRoute;
 
         beforeEach(() => {
+            TestBed.configureTestingModule({
+                imports: [ArTeMiSTestModule],
+                declarations: [DragAndDropQuestionStatisticDetailComponent],
+                providers: [{ provide: ActivatedRoute, useValue: route }]
+            })
+                .overrideTemplate(DragAndDropQuestionStatisticDetailComponent, '')
+                .compileComponents();
             fixture = TestBed.createComponent(DragAndDropQuestionStatisticDetailComponent);
             comp = fixture.componentInstance;
-            service = fixture.debugElement.injector.get(DragAndDropQuestionStatisticService);
         });
 
         describe('OnInit', () => {
             it('Should call load all on init', () => {
                 // GIVEN
 
-                spyOn(service, 'find').and.returnValue(Observable.of(new HttpResponse({
-                    body: new DragAndDropQuestionStatistic(123)
-                })));
-
                 // WHEN
                 comp.ngOnInit();
 
                 // THEN
-                expect(service.find).toHaveBeenCalledWith(123);
-                expect(comp.dragAndDropQuestionStatistic).toEqual(jasmine.objectContaining({id: 123}));
+                expect(comp.dragAndDropQuestionStatistic).toEqual(jasmine.objectContaining({ id: 123 }));
             });
         });
     });
-
 });

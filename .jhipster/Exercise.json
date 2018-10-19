@@ -1,20 +1,14 @@
 {
-    "fluentMethods": true,
-    "relationships": [
+    "name": "Exercise",
+    "fields": [
         {
-            "relationshipType": "one-to-many",
-            "relationshipName": "participations",
-            "otherEntityName": "participation",
-            "otherEntityRelationshipName": "exercise"
+            "fieldName": "problemStatement",
+            "fieldType": "String"
         },
         {
-            "relationshipType": "many-to-one",
-            "relationshipName": "course",
-            "otherEntityName": "course",
-            "otherEntityField": "title"
-        }
-    ],
-    "fields": [
+            "fieldName": "gradingInstructions",
+            "fieldType": "String"
+        },
         {
             "fieldName": "problemStatement",
             "fieldType": "String"
@@ -49,10 +43,27 @@
             "fieldType": "String"
         }
     ],
-    "changelogDate": "20171130173537",
+    "relationships": [
+        {
+            "relationshipType": "one-to-many",
+            "relationshipName": "participations",
+            "otherEntityName": "participation",
+            "otherEntityRelationshipName": "exercise"
+        },
+        {
+            "relationshipType": "many-to-one",
+            "relationshipName": "course",
+            "otherEntityName": "course",
+            "otherEntityField": "title"
+        }
+    ],
+    "changelogDate": "20180927081352",
     "entityTableName": "exercise",
     "dto": "no",
     "pagination": "infinite-scroll",
     "service": "no",
-    "jpaMetamodelFiltering": false
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
 }

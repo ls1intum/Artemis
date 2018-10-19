@@ -1,13 +1,15 @@
 {
     "arTeMiSApp": {
-        "ParticipationState" : {
+        "InitializationState" : {
             "null": "",
             "UNINITIALIZED": "UNINITIALIZED",
             "REPO_COPIED": "REPO_COPIED",
             "REPO_CONFIGURED": "REPO_CONFIGURED",
             "BUILD_PLAN_COPIED": "BUILD_PLAN_COPIED",
             "BUILD_PLAN_CONFIGURED": "BUILD_PLAN_CONFIGURED",
-            "INITIALIZED": "INITIALIZED"
+            "INITIALIZED": "INITIALIZED",
+            "INACTIVE": "INACTIVE",
+            "FINISHED": "FINISHED"
         }
     }
 }

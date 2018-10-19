@@ -1,51 +1,34 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-import { ArTEMiSSharedModule } from '../../shared';
+import { ArTeMiSSharedModule } from 'app/shared';
 import {
     TextExerciseComponent,
-    TextExerciseDeleteDialogComponent,
-    TextExerciseDeletePopupComponent,
     TextExerciseDetailComponent,
-    TextExerciseDialogComponent,
-    TextExercisePopupComponent,
-    textExercisePopupRoute,
-    TextExercisePopupService,
+    TextExerciseUpdateComponent,
+    TextExerciseDeletePopupComponent,
+    TextExerciseDeleteDialogComponent,
     textExerciseRoute,
-    TextExerciseService
+    textExercisePopupRoute
 } from './';
-import { SortByModule } from '../../components/pipes';
 
-const ENTITY_STATES = [
-    ...textExerciseRoute,
-    ...textExercisePopupRoute,
-];
+const ENTITY_STATES = [...textExerciseRoute, ...textExercisePopupRoute];
 
 @NgModule({
-    imports: [
-        ArTEMiSSharedModule,
-        RouterModule.forChild(ENTITY_STATES),
-        SortByModule
-    ],
+    imports: [ArTeMiSSharedModule, RouterModule.forChild(ENTITY_STATES)],
     declarations: [
         TextExerciseComponent,
         TextExerciseDetailComponent,
-        TextExerciseDialogComponent,
+        TextExerciseUpdateComponent,
         TextExerciseDeleteDialogComponent,
-        TextExercisePopupComponent,
-        TextExerciseDeletePopupComponent,
+        TextExerciseDeletePopupComponent
     ],
     entryComponents: [
         TextExerciseComponent,
-        TextExerciseDialogComponent,
-        TextExercisePopupComponent,
+        TextExerciseUpdateComponent,
         TextExerciseDeleteDialogComponent,
-        TextExerciseDeletePopupComponent,
-    ],
-    providers: [
-        TextExerciseService,
-        TextExercisePopupService,
+        TextExerciseDeletePopupComponent
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
-export class ArTEMiSTextExerciseModule {}
+export class ArTeMiSTextExerciseModule {}

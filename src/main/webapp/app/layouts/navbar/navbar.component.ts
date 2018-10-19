@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { JhiLanguageService } from 'ng-jhipster';
+import { SessionStorageService } from 'ngx-webstorage';
 
 import { ProfileService } from '../profiles/profile.service';
 import { JhiLanguageHelper, LoginModalService, LoginService, Principal, User } from '../../core';
@@ -25,6 +26,7 @@ export class NavbarComponent implements OnInit {
         private loginService: LoginService,
         private languageService: JhiLanguageService,
         private languageHelper: JhiLanguageHelper,
+        private sessionStorage: SessionStorageService,
         private principal: Principal,
         private loginModalService: LoginModalService,
         private profileService: ProfileService,
@@ -49,6 +51,7 @@ export class NavbarComponent implements OnInit {
     }
 
     changeLanguage(languageKey: string) {
+        this.sessionStorage.store('locale', languageKey);
         this.languageService.changeLanguage(languageKey);
     }
 

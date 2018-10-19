@@ -16,7 +16,7 @@ export type EntityArrayResponseType = HttpResponse<Participation[]>;
 
 @Injectable()
 export class ParticipationService {
-    private resourceUrl = SERVER_API_URL + 'api/participations';
+    public resourceUrl = SERVER_API_URL + 'api/participations';
 
     constructor(private http: HttpClient) {}
 

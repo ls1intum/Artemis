@@ -1,61 +1,40 @@
 <div>
-    <h4>
-        <span *ngIf="course">{{course.title}} - </span><span *ngIf="fileUploadExercises">{{fileUploadExercises.length}} </span>
+    <h2 id="page-heading">
         <span jhiTranslate="arTeMiSApp.fileUploadExercise.home.title">File Upload Exercises</span>
-        <button *ngIf="course" class="btn btn-primary float-right jh-create-entity create-file-upload-exercise" [routerLink]="['/', { outlets: { popup: ['course', course.id, 'file-upload-exercise-new'] } }]">
-            <span class="fa fa-plus"></span>
-            <span jhiTranslate="arTeMiSApp.fileUploadExercise.home.createLabel">
-            Create File Upload Exercise
+        <button id="jh-create-entity" class="btn btn-primary float-right jh-create-entity create-file-upload-exercise" [routerLink]="['/file-upload-exercise/new']">
+            <fa-icon [icon]="'plus'"></fa-icon>
+            <span  jhiTranslate="arTeMiSApp.fileUploadExercise.home.createLabel">
+            Create new File Upload Exercise
             </span>
         </button>
-    </h4>
+    </h2>
     <jhi-alert></jhi-alert>
-    <div class="row">
-    </div>
     <br/>
     <div class="table-responsive" *ngIf="fileUploadExercises">
         <table class="table table-striped">
             <thead>
-            <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
-                <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<span class="fa fa-sort"></span></th>
-                <th jhiSortBy="title"><span jhiTranslate="arTeMiSApp.exercise.title">Title</span>&nbsp;<span class="fa fa-sort"></span></th>
-                <th jhiSortBy="problemStatement"><span jhiTranslate="arTeMiSApp.exercise.problemStatement">Problem Statement</span>&nbsp;<span class="fa fa-sort"></span></th>
-                <th jhiSortBy="releaseDate"><span jhiTranslate="arTeMiSApp.exercise.releaseDate">Release Date</span>&nbsp;<span class="fa fa-sort"></span></th>
-                <th jhiSortBy="dueDate"><span jhiTranslate="arTeMiSApp.exercise.dueDate">Due Date</span>&nbsp;<span class="fa fa-sort"></span></th>
-                <th jhiSortBy="maxScore"><span jhiTranslate="arTeMiSApp.exercise.maxScore">Max Score</span>&nbsp;<span class="fa fa-sort"></span></th>
-                <th><span jhiTranslate="arTeMiSApp.fileUploadExercise.filePattern">File Pattern</span></th>
-                <th></th>
+            <tr>
+            <th><span jhiTranslate="global.field.id">ID</span></th>
+            <th><span jhiTranslate="arTeMiSApp.fileUploadExercise.filePattern">File Pattern</span></th>
+            <th></th>
             </tr>
             </thead>
-            <tbody infinite-scroll (scrolled)="loadPage(page + 1)" [infiniteScrollDisabled]="page >= links['last']" [infiniteScrollDistance]="0">
-            <tr *ngFor="let fileUploadExercise of fileUploadExercises | sortBy: predicate: reverse ;trackBy: trackId">
-                <td><a [routerLink]="['../file-upload-exercise', fileUploadExercise.id ]">{{fileUploadExercise.id}}</a></td>
-                <td>{{fileUploadExercise.title}}</td>
-                <td>{{fileUploadExercise.problemStatement}}</td>
-                <td>{{fileUploadExercise.releaseDate | date:'medium'}}</td>
-                <td>{{fileUploadExercise.dueDate | date:'medium'}}</td>
-                <td>{{fileUploadExercise.maxScore}}</td>
+            <tbody>
+            <tr *ngFor="let fileUploadExercise of fileUploadExercises ;trackBy: trackId">
+                <td><a [routerLink]="['/file-upload-exercise', fileUploadExercise.id, 'view' ]">{{fileUploadExercise.id}}</a></td>
                 <td>{{fileUploadExercise.filePattern}}</td>
                 <td class="text-right">
                     <div class="btn-group flex-btn-group-container">
                         <button type="submit"
-                                [routerLink]="['/exercise', fileUploadExercise.id, 'participation' ]"
-                                class="btn btn-primary btn-sm">
-                            <span class="fa fa-list-alt"></span>
-                            <span class="d-none d-md-inline" jhiTranslate="arTeMiSApp.exercise.participations">Participations</span>
-                        </button>
-                        <button type="submit"
-                                [routerLink]="['../file-upload-exercise', fileUploadExercise.id ]"
+                                [routerLink]="['/file-upload-exercise', fileUploadExercise.id, 'view' ]"
                                 class="btn btn-info btn-sm">
-                            <span class="fa fa-eye"></span>
+                            <fa-icon [icon]="'eye'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                         </button>
                         <button type="submit"
-                                [routerLink]="['/', { outlets: { popup: 'file-upload-exercise/'+ fileUploadExercise.id + '/edit'} }]"
-                                replaceUrl="true"
-                                queryParamsHandling="merge"
+                                [routerLink]="['/file-upload-exercise', fileUploadExercise.id, 'edit']"
                                 class="btn btn-primary btn-sm">
-                            <span class="fa fa-pencil"></span>
+                            <fa-icon [icon]="'pencil-alt'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                         </button>
                         <button type="submit"
@@ -63,7 +42,7 @@
                                 replaceUrl="true"
                                 queryParamsHandling="merge"
                                 class="btn btn-danger btn-sm">
-                            <span class="fa fa-remove"></span>
+                            <fa-icon [icon]="'times'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
                         </button>
                     </div>

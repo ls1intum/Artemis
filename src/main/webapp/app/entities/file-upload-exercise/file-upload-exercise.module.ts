@@ -1,51 +1,34 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-import { ArTEMiSSharedModule } from '../../shared';
+import { ArTeMiSSharedModule } from 'app/shared';
 import {
     FileUploadExerciseComponent,
-    FileUploadExerciseDeleteDialogComponent,
-    FileUploadExerciseDeletePopupComponent,
     FileUploadExerciseDetailComponent,
-    FileUploadExerciseDialogComponent,
-    FileUploadExercisePopupComponent,
-    fileUploadExercisePopupRoute,
-    FileUploadExercisePopupService,
+    FileUploadExerciseUpdateComponent,
+    FileUploadExerciseDeletePopupComponent,
+    FileUploadExerciseDeleteDialogComponent,
     fileUploadExerciseRoute,
-    FileUploadExerciseService
+    fileUploadExercisePopupRoute
 } from './';
-import { SortByModule } from '../../components/pipes';
 
-const ENTITY_STATES = [
-    ...fileUploadExerciseRoute,
-    ...fileUploadExercisePopupRoute,
-];
+const ENTITY_STATES = [...fileUploadExerciseRoute, ...fileUploadExercisePopupRoute];
 
 @NgModule({
-    imports: [
-        ArTEMiSSharedModule,
-        RouterModule.forChild(ENTITY_STATES),
-        SortByModule
-    ],
+    imports: [ArTeMiSSharedModule, RouterModule.forChild(ENTITY_STATES)],
     declarations: [
         FileUploadExerciseComponent,
         FileUploadExerciseDetailComponent,
-        FileUploadExerciseDialogComponent,
+        FileUploadExerciseUpdateComponent,
         FileUploadExerciseDeleteDialogComponent,
-        FileUploadExercisePopupComponent,
-        FileUploadExerciseDeletePopupComponent,
+        FileUploadExerciseDeletePopupComponent
     ],
     entryComponents: [
         FileUploadExerciseComponent,
-        FileUploadExerciseDialogComponent,
-        FileUploadExercisePopupComponent,
+        FileUploadExerciseUpdateComponent,
         FileUploadExerciseDeleteDialogComponent,
-        FileUploadExerciseDeletePopupComponent,
-    ],
-    providers: [
-        FileUploadExerciseService,
-        FileUploadExercisePopupService,
+        FileUploadExerciseDeletePopupComponent
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
-export class ArTEMiSFileUploadExerciseModule {}
+export class ArTeMiSFileUploadExerciseModule {}

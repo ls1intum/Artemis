@@ -1,5 +1,6 @@
 {
-    "fluentMethods": true,
+    "name": "MultipleChoiceQuestionStatistic",
+    "fields": [],
     "relationships": [
         {
             "relationshipType": "one-to-many",
@@ -8,11 +9,13 @@
             "otherEntityRelationshipName": "multipleChoiceQuestionStatistic"
         }
     ],
-    "fields": [],
-    "changelogDate": "20180116211220",
-    "entityTableName": "multiple_choice_question_statistic",
+    "changelogDate": "20180927081345",
+    "entityTableName": "mc_question_statistic",
     "dto": "no",
     "pagination": "no",
     "service": "no",
-    "jpaMetamodelFiltering": false
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
 }

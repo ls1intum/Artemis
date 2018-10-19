@@ -8,7 +8,7 @@ import { User } from '../../core';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
-    private resourceUrl = SERVER_API_URL + 'api/users';
+    public resourceUrl = SERVER_API_URL + 'api/users';
 
     constructor(private http: HttpClient) {}
 
