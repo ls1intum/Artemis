@@ -1,14 +1,5 @@
 {
-    "fluentMethods": true,
-    "relationships": [
-        {
-            "relationshipType": "one-to-one",
-            "relationshipName": "question",
-            "otherEntityName": "question",
-            "ownerSide": false,
-            "otherEntityRelationshipName": "questionStatistic"
-        }
-    ],
+    "name": "QuestionStatistic",
     "fields": [
         {
             "fieldName": "ratedCorrectCounter",
@@ -19,10 +10,22 @@
             "fieldType": "Integer"
         }
     ],
-    "changelogDate": "20180116211219",
+    "relationships": [
+        {
+            "relationshipType": "one-to-one",
+            "relationshipName": "question",
+            "otherEntityName": "question",
+            "ownerSide": false,
+            "otherEntityRelationshipName": "questionStatistic"
+        }
+    ],
+    "changelogDate": "20180927081344",
     "entityTableName": "question_statistic",
     "dto": "no",
     "pagination": "no",
     "service": "no",
-    "jpaMetamodelFiltering": false
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
 }

@@ -1,6 +1,5 @@
 {
-    "fluentMethods": true,
-    "relationships": [],
+    "name": "Statistic",
     "fields": [
         {
             "fieldName": "released",
@@ -15,10 +14,14 @@
             "fieldType": "Integer"
         }
     ],
-    "changelogDate": "20180116211217",
+    "relationships": [],
+    "changelogDate": "20180927081342",
     "entityTableName": "statistic",
     "dto": "no",
     "pagination": "no",
     "service": "no",
-    "jpaMetamodelFiltering": false
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
 }

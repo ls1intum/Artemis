@@ -20,6 +20,7 @@
             "hint": "Hint",
             "explanation": "Explanation",
             "isCorrect": "Is Correct",
+            "invalid": "Invalid",
             "question": "Question"
         }
     }

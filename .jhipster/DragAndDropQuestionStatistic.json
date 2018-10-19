@@ -1,5 +1,6 @@
 {
-    "fluentMethods": true,
+    "name": "DragAndDropQuestionStatistic",
+    "fields": [],
     "relationships": [
         {
             "relationshipType": "one-to-many",
@@ -8,11 +9,13 @@
             "otherEntityRelationshipName": "dragAndDropQuestionStatistic"
         }
     ],
-    "fields": [],
-    "changelogDate": "20180116211221",
-    "entityTableName": "drag_and_drop_question_statistic",
+    "changelogDate": "20180927081346",
+    "entityTableName": "dnd_question_statistic",
     "dto": "no",
     "pagination": "no",
     "service": "no",
-    "jpaMetamodelFiltering": false
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
 }

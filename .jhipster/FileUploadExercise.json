@@ -1,16 +1,19 @@
 {
-    "fluentMethods": true,
-    "relationships": [],
+    "name": "FileUploadExercise",
     "fields": [
         {
             "fieldName": "filePattern",
             "fieldType": "String"
         }
     ],
-    "changelogDate": "20180817185555",
+    "relationships": [],
+    "changelogDate": "20180927081354",
     "entityTableName": "file_upload_exercise",
     "dto": "no",
     "pagination": "no",
     "service": "no",
-    "jpaMetamodelFiltering": false
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
 }

@@ -1,6 +1,5 @@
 {
-    "fluentMethods": true,
-    "relationships": [],
+    "name": "ProgrammingExercise",
     "fields": [
         {
             "fieldName": "baseRepositoryUrl",
@@ -23,10 +22,14 @@
             "fieldType": "Boolean"
         }
     ],
-    "changelogDate": "20171130173538",
+    "relationships": [],
+    "changelogDate": "20180927081355",
     "entityTableName": "programming_exercise",
     "dto": "no",
     "pagination": "no",
     "service": "no",
-    "jpaMetamodelFiltering": false
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
 }

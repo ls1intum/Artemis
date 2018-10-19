@@ -4,28 +4,28 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, of } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
 
-import { ArTEMiSTestModule } from '../../../test.module';
-import { ResultDeleteDialogComponent } from 'app/entities/result/result-delete-dialog.component';
-import { ResultService } from 'app/entities/result/result.service';
+import { ArTeMiSTestModule } from '../../../test.module';
+import { ApollonDiagramDeleteDialogComponent } from 'app/entities/apollon-diagram/apollon-diagram-delete-dialog.component';
+import { ApollonDiagramService } from 'app/entities/apollon-diagram/apollon-diagram.service';
 
 describe('Component Tests', () => {
-    describe('Result Management Delete Component', () => {
-        let comp: ResultDeleteDialogComponent;
-        let fixture: ComponentFixture<ResultDeleteDialogComponent>;
-        let service: ResultService;
+    describe('ApollonDiagram Management Delete Component', () => {
+        let comp: ApollonDiagramDeleteDialogComponent;
+        let fixture: ComponentFixture<ApollonDiagramDeleteDialogComponent>;
+        let service: ApollonDiagramService;
         let mockEventManager: any;
         let mockActiveModal: any;
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
-                declarations: [ResultDeleteDialogComponent]
+                imports: [ArTeMiSTestModule],
+                declarations: [ApollonDiagramDeleteDialogComponent]
             })
-                .overrideTemplate(ResultDeleteDialogComponent, '')
+                .overrideTemplate(ApollonDiagramDeleteDialogComponent, '')
                 .compileComponents();
-            fixture = TestBed.createComponent(ResultDeleteDialogComponent);
+            fixture = TestBed.createComponent(ApollonDiagramDeleteDialogComponent);
             comp = fixture.componentInstance;
-            service = fixture.debugElement.injector.get(ResultService);
+            service = fixture.debugElement.injector.get(ApollonDiagramService);
             mockEventManager = fixture.debugElement.injector.get(JhiEventManager);
             mockActiveModal = fixture.debugElement.injector.get(NgbActiveModal);
         });

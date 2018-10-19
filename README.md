@@ -1,5 +1,5 @@
 # ArTEMiS: AuTomated assEssment Management System 
-This application was generated using JHipster 5.3.1, you can find documentation and help at [http://www.jhipster.tech/documentation-archive/v5.3.1](http://www.jhipster.tech/documentation-archive/v5.3.1).
+This application was generated using JHipster 5.5.0, you can find documentation and help at [http://www.jhipster.tech/documentation-archive/v5.5.0](http://www.jhipster.tech/documentation-archive/v5.5.0).
 
 **Curent version:** 2.2.0
 

@@ -1,21 +1,5 @@
 {
-    "fluentMethods": true,
-    "relationships": [
-        {
-            "relationshipType": "one-to-one",
-            "relationshipName": "quizPointStatistic",
-            "otherEntityName": "quizPointStatistic",
-            "otherEntityField": "id",
-            "ownerSide": true,
-            "otherEntityRelationshipName": "quiz"
-        },
-        {
-            "relationshipType": "one-to-many",
-            "relationshipName": "questions",
-            "otherEntityName": "question",
-            "otherEntityRelationshipName": "exercise"
-        }
-    ],
+    "name": "QuizExercise",
     "fields": [
         {
             "fieldName": "description",
@@ -50,10 +34,29 @@
             "fieldType": "Integer"
         }
     ],
-    "changelogDate": "20171130173540",
+    "relationships": [
+        {
+            "relationshipType": "one-to-one",
+            "relationshipName": "quizPointStatistic",
+            "otherEntityName": "quizPointStatistic",
+            "otherEntityField": "id",
+            "ownerSide": true,
+            "otherEntityRelationshipName": "quiz"
+        },
+        {
+            "relationshipType": "one-to-many",
+            "relationshipName": "questions",
+            "otherEntityName": "question",
+            "otherEntityRelationshipName": "exercise"
+        }
+    ],
+    "changelogDate": "20180927081357",
     "entityTableName": "quiz_exercise",
     "dto": "no",
     "pagination": "no",
     "service": "no",
-    "jpaMetamodelFiltering": false
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
 }

@@ -1,5 +1,15 @@
 {
-    "fluentMethods": true,
+    "name": "LtiOutcomeUrl",
+    "fields": [
+        {
+            "fieldName": "url",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "sourcedId",
+            "fieldType": "String"
+        }
+    ],
     "relationships": [
         {
             "relationshipType": "many-to-one",
@@ -14,20 +24,13 @@
             "otherEntityField": "id"
         }
     ],
-    "fields": [
-        {
-            "fieldName": "url",
-            "fieldType": "String"
-        },
-        {
-            "fieldName": "sourcedId",
-            "fieldType": "String"
-        }
-    ],
-    "changelogDate": "20171130173541",
+    "changelogDate": "20180927081358",
     "entityTableName": "lti_outcome_url",
     "dto": "no",
     "pagination": "no",
     "service": "no",
-    "jpaMetamodelFiltering": false
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
 }

@@ -11,13 +11,19 @@ def profiles = 'dev'
 if (project.hasProperty('no-liquibase')) {
     profiles += ',no-liquibase'
 }
+if (project.hasProperty('tls')) {
+    profiles += ',tls'
+}
 
 bootRun {
     args = []
 }
 
 task webpackBuildDev(type: YarnTask, dependsOn: 'yarn_install') {
-    onlyIf { shouldWebpackRun() == true }
+    inputs.dir("src/main/webapp/")
+    inputs.files(fileTree('src/main/webapp/'))
+    outputs.dir("build/www/")
+    outputs.file("build/www/app/main.bundle.js")
     args = ["run", "webpack:build"]
 }
 
@@ -50,5 +56,5 @@ bootJar.dependsOn copyIntoStatic
 yarn_install.onlyIf { shouldWebpackRun() == true }
 
 def shouldWebpackRun() {
-    file('build/www/app/main.bundle.js').exists() == false || project.hasProperty('webpack')
+    project.hasProperty('webpack')
 }

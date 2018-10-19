@@ -1,3 +1,5 @@
+
+
 {
   "name": "ArTEMiS",
   "version": "2.2.0",
@@ -136,14 +138,14 @@
     ]
   },
   "scripts": {
-    "precommit": "lint-staged",
-    "prettier:format": "yarn prettier --write 'src/**/*.{ts,css,scss}'",
+    "prettier:format": "prettier --write \"src/**/*.{ts,css,scss}\"",
     "lint": "tslint --project tsconfig.json -e 'node_modules/**'",
     "lint:fix": "yarn run lint --fix",
     "ngc": "ngc -p tsconfig-aot.json",
     "cleanup": "rimraf build/{aot,www}",
     "clean-www": "rimraf build//www/app/{src,build/}",
     "start": "yarn run webpack:dev",
+    "start-tls": "yarn run webpack:dev --env.tls",
     "serve": "yarn run start",
     "build": "yarn run webpack:prod",
     "test": "yarn run lint && jest --coverage --logHeapUsage -w=2 --config src/test/javascript/jest.conf.js",

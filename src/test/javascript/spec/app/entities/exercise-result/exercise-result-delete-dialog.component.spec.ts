@@ -4,28 +4,28 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, of } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
 
-import { ArTEMiSTestModule } from '../../../test.module';
-import { DragAndDropAssignmentDeleteDialogComponent } from 'app/entities/drag-and-drop-assignment/drag-and-drop-assignment-delete-dialog.component';
-import { DragAndDropAssignmentService } from 'app/entities/drag-and-drop-assignment/drag-and-drop-assignment.service';
+import { ArTeMiSTestModule } from '../../../test.module';
+import { ExerciseResultDeleteDialogComponent } from 'app/entities/exercise-result/exercise-result-delete-dialog.component';
+import { ExerciseResultService } from 'app/entities/exercise-result/exercise-result.service';
 
 describe('Component Tests', () => {
-    describe('DragAndDropAssignment Management Delete Component', () => {
-        let comp: DragAndDropAssignmentDeleteDialogComponent;
-        let fixture: ComponentFixture<DragAndDropAssignmentDeleteDialogComponent>;
-        let service: DragAndDropAssignmentService;
+    describe('ExerciseResult Management Delete Component', () => {
+        let comp: ExerciseResultDeleteDialogComponent;
+        let fixture: ComponentFixture<ExerciseResultDeleteDialogComponent>;
+        let service: ExerciseResultService;
         let mockEventManager: any;
         let mockActiveModal: any;
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
-                declarations: [DragAndDropAssignmentDeleteDialogComponent]
+                imports: [ArTeMiSTestModule],
+                declarations: [ExerciseResultDeleteDialogComponent]
             })
-                .overrideTemplate(DragAndDropAssignmentDeleteDialogComponent, '')
+                .overrideTemplate(ExerciseResultDeleteDialogComponent, '')
                 .compileComponents();
-            fixture = TestBed.createComponent(DragAndDropAssignmentDeleteDialogComponent);
+            fixture = TestBed.createComponent(ExerciseResultDeleteDialogComponent);
             comp = fixture.componentInstance;
-            service = fixture.debugElement.injector.get(DragAndDropAssignmentService);
+            service = fixture.debugElement.injector.get(ExerciseResultService);
             mockEventManager = fixture.debugElement.injector.get(JhiEventManager);
             mockActiveModal = fixture.debugElement.injector.get(NgbActiveModal);
         });
