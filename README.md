@@ -84,6 +84,7 @@ artemis:
     bitbucket-application-link-id: de1bf2e0-eb40-3a2d-9494-93cbe2e22d08
     user: <user>
     password: <password>
+    empty-commit-necessary: true
   lti:
     id: exerciseapp_lti
     oauth-key: exerciseapp_lti_key

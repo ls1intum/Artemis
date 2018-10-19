@@ -260,10 +260,7 @@ public class ParticipationService {
 
     private Participation configureBuildPlan(Participation participation, ProgrammingExercise exercise) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.BUILD_PLAN_CONFIGURED)) {
-            continuousIntegrationService.get().configureBuildPlan(
-                participation.getBuildPlanId(),
-                participation.getRepositoryUrlAsUrl(),
-                participation.getStudent().getLogin());
+            continuousIntegrationService.get().configureBuildPlan(participation);
             participation.setInitializationState(InitializationState.BUILD_PLAN_CONFIGURED);
             return save(participation);
         } else {
