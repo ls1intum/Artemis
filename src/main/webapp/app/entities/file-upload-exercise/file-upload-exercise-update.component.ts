@@ -3,15 +3,15 @@ import { ActivatedRoute } from '@angular/router';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-import { IFileUploadExercise } from 'app/shared/model/file-upload-exercise.model';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise/file-upload-exercise.model';
 
 @Component({
     selector: 'jhi-file-upload-exercise-update',
     templateUrl: './file-upload-exercise-update.component.html'
 })
 export class FileUploadExerciseUpdateComponent implements OnInit {
-    fileUploadExercise: IFileUploadExercise;
+    fileUploadExercise: FileUploadExercise;
     isSaving: boolean;
 
     constructor(private fileUploadExerciseService: FileUploadExerciseService, private activatedRoute: ActivatedRoute) {}
@@ -36,8 +36,8 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         }
     }
 
-    private subscribeToSaveResponse(result: Observable<HttpResponse<IFileUploadExercise>>) {
-        result.subscribe((res: HttpResponse<IFileUploadExercise>) => this.onSaveSuccess(), (res: HttpErrorResponse) => this.onSaveError());
+    private subscribeToSaveResponse(result: Observable<HttpResponse<FileUploadExercise>>) {
+        result.subscribe((res: HttpResponse<FileUploadExercise>) => this.onSaveSuccess(), (res: HttpErrorResponse) => this.onSaveError());
     }
 
     private onSaveSuccess() {

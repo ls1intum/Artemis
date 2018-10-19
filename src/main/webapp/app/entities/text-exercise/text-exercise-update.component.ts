@@ -3,15 +3,15 @@ import { ActivatedRoute } from '@angular/router';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-import { ITextExercise } from 'app/shared/model/text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
+import { TextExercise } from 'app/entities/text-exercise/text-exercise.model';
 
 @Component({
     selector: 'jhi-text-exercise-update',
     templateUrl: './text-exercise-update.component.html'
 })
 export class TextExerciseUpdateComponent implements OnInit {
-    textExercise: ITextExercise;
+    textExercise: TextExercise;
     isSaving: boolean;
 
     constructor(private textExerciseService: TextExerciseService, private activatedRoute: ActivatedRoute) {}
@@ -36,8 +36,8 @@ export class TextExerciseUpdateComponent implements OnInit {
         }
     }
 
-    private subscribeToSaveResponse(result: Observable<HttpResponse<ITextExercise>>) {
-        result.subscribe((res: HttpResponse<ITextExercise>) => this.onSaveSuccess(), (res: HttpErrorResponse) => this.onSaveError());
+    private subscribeToSaveResponse(result: Observable<HttpResponse<TextExercise>>) {
+        result.subscribe((res: HttpResponse<TextExercise>) => this.onSaveSuccess(), (res: HttpErrorResponse) => this.onSaveError());
     }
 
     private onSaveSuccess() {

@@ -3887,10 +3887,10 @@ gaze@^1.0.0:
   dependencies:
     globule "^1.0.0"
 
-generator-jhipster@5.4.2:
-  version "5.4.2"
-  resolved "https://registry.yarnpkg.com/generator-jhipster/-/generator-jhipster-5.4.2.tgz#3a408dd489d2c380045d38467095b0da2dc15889"
-  integrity sha512-iuTZGPonlMFWrabTC7x27UnCa8sckWFKD7HiwMp2JOYLlLU+BPt0WJWlQ9hJv5JHHx+pe0pUxwEHbi0fSu0Ljw==
+generator-jhipster@5.5.0:
+  version "5.5.0"
+  resolved "https://registry.yarnpkg.com/generator-jhipster/-/generator-jhipster-5.5.0.tgz#e461214f48d27f024d13dfc1d47679b6ae44efd8"
+  integrity sha512-3PRUS1hPPw7anrX71XmrFBtSi3fNtC3iqJHVOZlYgSC2iOHPnTvOC09GIhNMjGK8pSdAyqUEAL4ZXD8EI77PYQ==
   dependencies:
     axios "0.18.0"
     chalk "2.4.1"

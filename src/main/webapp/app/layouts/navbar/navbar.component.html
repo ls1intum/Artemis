@@ -11,19 +11,19 @@
     </div>
     <div class="navbar-collapse collapse" id="navbarResponsive" [ngbCollapse]="isNavbarCollapsed" [ngSwitch]="isAuthenticated()">
         <ul class="navbar-nav ml-auto">
-            <li *ngSwitchCase="true" class="nav-item">
-                <a class="nav-link" routerLink="courses" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+            <li class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+                <a class="nav-link" routerLink="courses" (click)="collapseNavbar()">
                     <span>
-                        <i class="fa fa-graduation-cap fa-lg" aria-hidden="true"></i>
-                        <span jhiTranslate="global.menu.courses" class="d-md-none d-lg-inline">Courses</span>
+                        <fa-icon [icon]="'home'"></fa-icon>
+                        <span jhiTranslate="global.menu.courses">Courses</span>
                     </span>
                 </a>
             </li>
-            <li *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_TA', 'ROLE_INSTRUCTOR']" class="nav-item">
-                <a *ngSwitchCase="true" class="nav-link" routerLink="course" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+            <li *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_TA', 'ROLE_INSTRUCTOR']" ngbDropdown class="nav-item dropdown pointer" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+                <a class="nav-link" routerLink="course" (click)="collapseNavbar()">
                     <span>
-                        <i class="fa fa-th-list" aria-hidden="true"></i>
-                        <span jhiTranslate="global.menu.course" class="d-md-none d-lg-inline">Course Administration</span>
+                        <fa-icon [icon]="'th-list'"></fa-icon>
+                        <span jhiTranslate="global.menu.course">Course Administration</span>
                     </span>
                 </a>
             </li>
@@ -78,8 +78,10 @@
                         </a>
                     </li>
                     <!-- jhipster-needle-add-element-to-admin-menu - JHipster will add entities to the admin menu here -->
+
                 </ul>
             </li>
+<!--
             <li ngbDropdown class="nav-item dropdown pointer" *ngIf="languages && languages.length > 1">
                 <a class="nav-link dropdown-toggle" ngbDropdownToggle href="javascript:void(0);" id="languagesnavBarDropdown">
                     <span>
@@ -93,6 +95,7 @@
                     </li>
                 </ul>
             </li>
+-->
             <li ngbDropdown class="nav-item dropdown pointer" placement="bottom-right" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
                 <a class="nav-link dropdown-toggle" ngbDropdownToggle href="javascript:void(0);" id="account-menu">
                   <span *ngIf="!getImageUrl()">

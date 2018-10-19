@@ -15,7 +15,6 @@ import { Subscription } from 'rxjs/Subscription';
         </div>`
 })
 export class JhiAlertErrorComponent implements OnDestroy {
-
     alerts: any[];
     cleanHttpErrorListener: Subscription;
     /* tslint:disable */
@@ -36,7 +35,7 @@ export class JhiAlertErrorComponent implements OnDestroy {
                     const arr = httpErrorResponse.headers.keys();
                     let errorHeader = null;
                     let entityKey = null;
-                    arr.forEach(entry: string) => {
+                    arr.forEach((entry: string) => {
                         if (entry.toLowerCase().endsWith('app-error')) {
                             errorHeader = httpErrorResponse.headers.get(entry);
                         } else if (entry.toLowerCase().endsWith('app-params')) {
@@ -83,7 +82,7 @@ export class JhiAlertErrorComponent implements OnDestroy {
         });
     }
 
-    setClasses(alert) {
+    setClasses(alert: any) {
         return {
             toast: !!alert.toast,
             [alert.position]: true
@@ -98,7 +97,7 @@ export class JhiAlertErrorComponent implements OnDestroy {
     }
 
     addErrorAlert(message: string, key?: string, data?: any) {
-        key = (key && key !== null) ? key : message;
+        key = key && key !== null ? key : message;
         this.alerts.push(
             this.alertService.addAlert(
                 {
