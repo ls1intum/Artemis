@@ -1,0 +1,76 @@
+{
+    "name": "ExerciseResult",
+    "fields": [
+        {
+            "fieldName": "resultString",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "completionDate",
+            "fieldType": "ZonedDateTime"
+        },
+        {
+            "fieldName": "successful",
+            "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "buildArtifact",
+            "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "score",
+            "fieldType": "Long"
+        },
+        {
+            "fieldName": "rated",
+            "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "hasFeedback",
+            "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "assessmentType",
+            "fieldType": "AssessmentType",
+            "fieldValues": "AUTOMATIC,MANUAL,SEMIAUTOMATIC"
+        }
+    ],
+    "relationships": [
+        {
+            "relationshipType": "one-to-one",
+            "relationshipName": "assessor",
+            "otherEntityName": "user",
+            "otherEntityField": "id",
+            "ownerSide": true,
+            "otherEntityRelationshipName": "exerciseResult"
+        },
+        {
+            "relationshipType": "one-to-many",
+            "relationshipName": "feedbacks",
+            "otherEntityName": "feedback",
+            "otherEntityRelationshipName": "result"
+        },
+        {
+            "relationshipType": "one-to-one",
+            "relationshipName": "submission",
+            "otherEntityName": "submission",
+            "ownerSide": false,
+            "otherEntityRelationshipName": "result"
+        },
+        {
+            "relationshipType": "many-to-one",
+            "relationshipName": "participation",
+            "otherEntityName": "participation",
+            "otherEntityField": "id"
+        }
+    ],
+    "changelogDate": "20180927081409",
+    "entityTableName": "result",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no",
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
+}

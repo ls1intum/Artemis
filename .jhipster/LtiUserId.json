@@ -1,5 +1,11 @@
 {
-    "fluentMethods": true,
+    "name": "LtiUserId",
+    "fields": [
+        {
+            "fieldName": "ltiUserId",
+            "fieldType": "String"
+        }
+    ],
     "relationships": [
         {
             "relationshipType": "one-to-one",
@@ -10,16 +16,13 @@
             "otherEntityRelationshipName": "ltiUserId"
         }
     ],
-    "fields": [
-        {
-            "fieldName": "ltiUserId",
-            "fieldType": "String"
-        }
-    ],
-    "changelogDate": "20171130173551",
+    "changelogDate": "20180927081408",
     "entityTableName": "lti_user_id",
     "dto": "no",
     "pagination": "no",
     "service": "no",
-    "jpaMetamodelFiltering": false
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
 }

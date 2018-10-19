@@ -1,5 +1,40 @@
 {
-    "fluentMethods": true,
+    "name": "Exercise",
+    "fields": [
+        {
+            "fieldName": "problemStatement",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "gradingInstructions",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "title",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "releaseDate",
+            "fieldType": "ZonedDateTime"
+        },
+        {
+            "fieldName": "dueDate",
+            "fieldType": "ZonedDateTime"
+        },
+        {
+            "fieldName": "maxScore",
+            "fieldType": "Double"
+        },
+        {
+            "fieldName": "difficulty",
+            "fieldType": "DifficultyLevel",
+            "fieldValues": "EASY,MEDIUM,HARD"
+        },
+        {
+            "fieldName": "categories",
+            "fieldType": "String"
+        }
+    ],
     "relationships": [
         {
             "relationshipType": "one-to-many",
@@ -14,24 +49,13 @@
             "otherEntityField": "title"
         }
     ],
-    "fields": [
-        {
-            "fieldName": "title",
-            "fieldType": "String"
-        },
-        {
-            "fieldName": "releaseDate",
-            "fieldType": "ZonedDateTime"
-        },
-        {
-            "fieldName": "dueDate",
-            "fieldType": "ZonedDateTime"
-        }
-    ],
-    "changelogDate": "20171130173537",
+    "changelogDate": "20180927081352",
     "entityTableName": "exercise",
     "dto": "no",
     "pagination": "infinite-scroll",
     "service": "no",
-    "jpaMetamodelFiltering": false
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
 }

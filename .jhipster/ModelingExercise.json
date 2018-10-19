@@ -1,16 +1,28 @@
 {
-    "fluentMethods": true,
-    "relationships": [],
+    "name": "ModelingExercise",
     "fields": [
         {
-            "fieldName": "baseFilePath",
+            "fieldName": "diagramType",
+            "fieldType": "DiagramType",
+            "fieldValues": "CLASS,ACTIVITY,USE_CASE,COMMUNICATION"
+        },
+        {
+            "fieldName": "sampleSolutionModel",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "sampleSolutionExplanation",
             "fieldType": "String"
         }
     ],
-    "changelogDate": "20171130173539",
+    "relationships": [],
+    "changelogDate": "20180927081356",
     "entityTableName": "modeling_exercise",
     "dto": "no",
     "pagination": "no",
     "service": "no",
-    "jpaMetamodelFiltering": false
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
 }

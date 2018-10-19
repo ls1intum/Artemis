@@ -1,0 +1,28 @@
+{
+    "name": "QuizPointStatistic",
+    "fields": [],
+    "relationships": [
+        {
+            "relationshipType": "one-to-many",
+            "relationshipName": "pointCounters",
+            "otherEntityName": "pointCounter",
+            "otherEntityRelationshipName": "quizPointStatistic"
+        },
+        {
+            "relationshipType": "one-to-one",
+            "relationshipName": "quiz",
+            "otherEntityName": "quizExercise",
+            "ownerSide": false,
+            "otherEntityRelationshipName": "quizPointStatistic"
+        }
+    ],
+    "changelogDate": "20180927081343",
+    "entityTableName": "quiz_point_statistic",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no",
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
+}

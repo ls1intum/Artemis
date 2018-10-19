@@ -1,18 +1,18 @@
 {
-    "name": "ModelingSubmission",
+    "name": "ApollonDiagram",
     "fields": [
         {
-            "fieldName": "model",
+            "fieldName": "title",
             "fieldType": "String"
         },
         {
-            "fieldName": "explanationText",
+            "fieldName": "jsonRepresentation",
             "fieldType": "String"
         }
     ],
     "relationships": [],
-    "changelogDate": "20180927081412",
-    "entityTableName": "modeling_submission",
+    "changelogDate": "20180927081419",
+    "entityTableName": "apollon_diagram",
     "dto": "no",
     "pagination": "no",
     "service": "no",

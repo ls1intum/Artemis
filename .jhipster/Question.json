@@ -1,13 +1,5 @@
 {
-    "fluentMethods": true,
-    "relationships": [
-        {
-            "relationshipType": "many-to-one",
-            "relationshipName": "exercise",
-            "otherEntityName": "quizExercise",
-            "otherEntityField": "id"
-        }
-    ],
+    "name": "Question",
     "fields": [
         {
             "fieldName": "title",
@@ -37,12 +29,35 @@
         {
             "fieldName": "randomizeOrder",
             "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "invalid",
+            "fieldType": "Boolean"
         }
     ],
-    "changelogDate": "20171130173543",
+    "relationships": [
+        {
+            "relationshipType": "one-to-one",
+            "relationshipName": "questionStatistic",
+            "otherEntityName": "questionStatistic",
+            "otherEntityField": "id",
+            "ownerSide": true,
+            "otherEntityRelationshipName": "question"
+        },
+        {
+            "relationshipType": "many-to-one",
+            "relationshipName": "exercise",
+            "otherEntityName": "quizExercise",
+            "otherEntityField": "id"
+        }
+    ],
+    "changelogDate": "20180927081400",
     "entityTableName": "question",
     "dto": "no",
     "pagination": "no",
     "service": "no",
-    "jpaMetamodelFiltering": false
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
 }

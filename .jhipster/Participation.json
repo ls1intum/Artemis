@@ -1,10 +1,39 @@
 {
-    "fluentMethods": true,
+    "name": "Participation",
+    "fields": [
+        {
+            "fieldName": "repositoryUrl",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "buildPlanId",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "initializationState",
+            "fieldType": "InitializationState",
+            "fieldValues": "UNINITIALIZED,REPO_COPIED,REPO_CONFIGURED,BUILD_PLAN_COPIED,BUILD_PLAN_CONFIGURED,INITIALIZED"
+        },
+        {
+            "fieldName": "initializationDate",
+            "fieldType": "ZonedDateTime"
+        },
+        {
+            "fieldName": "presentationScore",
+            "fieldType": "Integer"
+        }
+    ],
     "relationships": [
         {
             "relationshipType": "one-to-many",
             "relationshipName": "results",
-            "otherEntityName": "result",
+            "otherEntityName": "exerciseResult",
+            "otherEntityRelationshipName": "participation"
+        },
+        {
+            "relationshipType": "one-to-many",
+            "relationshipName": "submissions",
+            "otherEntityName": "submission",
             "otherEntityRelationshipName": "participation"
         },
         {
@@ -20,29 +49,13 @@
             "otherEntityField": "title"
         }
     ],
-    "fields": [
-        {
-            "fieldName": "repositoryUrl",
-            "fieldType": "String"
-        },
-        {
-            "fieldName": "buildPlanId",
-            "fieldType": "String"
-        },
-        {
-            "fieldName": "initializationState",
-            "fieldType": "ParticipationState",
-            "fieldValues": "UNINITIALIZED,REPO_COPIED,REPO_CONFIGURED,BUILD_PLAN_COPIED,BUILD_PLAN_CONFIGURED,INITIALIZED"
-        },
-        {
-            "fieldName": "initializationDate",
-            "fieldType": "ZonedDateTime"
-        }
-    ],
-    "changelogDate": "20171130173550",
+    "changelogDate": "20180927081407",
     "entityTableName": "participation",
     "dto": "no",
     "pagination": "no",
     "service": "serviceClass",
-    "jpaMetamodelFiltering": false
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
 }

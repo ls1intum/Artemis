@@ -1,0 +1,52 @@
+{
+    "name": "DragAndDropMapping",
+    "fields": [
+        {
+            "fieldName": "dragItemIndex",
+            "fieldType": "Integer"
+        },
+        {
+            "fieldName": "dropLocationIndex",
+            "fieldType": "Integer"
+        },
+        {
+            "fieldName": "invalid",
+            "fieldType": "Boolean"
+        }
+    ],
+    "relationships": [
+        {
+            "relationshipType": "many-to-one",
+            "relationshipName": "dragItem",
+            "otherEntityName": "dragItem",
+            "otherEntityField": "id"
+        },
+        {
+            "relationshipType": "many-to-one",
+            "relationshipName": "dropLocation",
+            "otherEntityName": "dropLocation",
+            "otherEntityField": "id"
+        },
+        {
+            "relationshipType": "many-to-one",
+            "relationshipName": "submittedAnswer",
+            "otherEntityName": "dragAndDropSubmittedAnswer",
+            "otherEntityField": "id"
+        },
+        {
+            "relationshipType": "many-to-one",
+            "relationshipName": "question",
+            "otherEntityName": "dragAndDropQuestion",
+            "otherEntityField": "id"
+        }
+    ],
+    "changelogDate": "20180927081418",
+    "entityTableName": "drag_and_drop_mapping",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no",
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
+}

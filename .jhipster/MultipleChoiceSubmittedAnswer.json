@@ -1,5 +1,6 @@
 {
-    "fluentMethods": true,
+    "name": "MultipleChoiceSubmittedAnswer",
+    "fields": [],
     "relationships": [
         {
             "relationshipType": "many-to-many",
@@ -10,11 +11,13 @@
             "ownerSide": true
         }
     ],
-    "fields": [],
-    "changelogDate": "20171130173546",
-    "entityTableName": "mc_submitted_answer",
+    "changelogDate": "20180927081403",
+    "entityTableName": "multiple_choice_submitted_answer",
     "dto": "no",
     "pagination": "no",
     "service": "no",
-    "jpaMetamodelFiltering": false
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
 }
