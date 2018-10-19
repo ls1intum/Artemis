@@ -1,0 +1,29 @@
+{
+    "name": "AnswerCounter",
+    "fields": [],
+    "relationships": [
+        {
+            "relationshipType": "one-to-one",
+            "relationshipName": "answer",
+            "otherEntityName": "answerOption",
+            "otherEntityField": "id",
+            "ownerSide": true,
+            "otherEntityRelationshipName": "answerCounter"
+        },
+        {
+            "relationshipType": "many-to-one",
+            "relationshipName": "multipleChoiceQuestionStatistic",
+            "otherEntityName": "multipleChoiceQuestionStatistic",
+            "otherEntityField": "id"
+        }
+    ],
+    "changelogDate": "20180927081349",
+    "entityTableName": "answer_counter",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no",
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
+}

@@ -1,18 +1,18 @@
 {
-    "name": "ModelingSubmission",
+    "name": "StatisticCounter",
     "fields": [
         {
-            "fieldName": "model",
-            "fieldType": "String"
+            "fieldName": "ratedCounter",
+            "fieldType": "Integer"
         },
         {
-            "fieldName": "explanationText",
-            "fieldType": "String"
+            "fieldName": "unRatedCounter",
+            "fieldType": "Integer"
         }
     ],
     "relationships": [],
-    "changelogDate": "20180927081412",
-    "entityTableName": "modeling_submission",
+    "changelogDate": "20180927081347",
+    "entityTableName": "statistic_counter",
     "dto": "no",
     "pagination": "no",
     "service": "no",

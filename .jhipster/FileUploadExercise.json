@@ -1,18 +1,14 @@
 {
-    "name": "ModelingSubmission",
+    "name": "FileUploadExercise",
     "fields": [
         {
-            "fieldName": "model",
-            "fieldType": "String"
-        },
-        {
-            "fieldName": "explanationText",
+            "fieldName": "filePattern",
             "fieldType": "String"
         }
     ],
     "relationships": [],
-    "changelogDate": "20180927081412",
-    "entityTableName": "modeling_submission",
+    "changelogDate": "20180927081354",
+    "entityTableName": "file_upload_exercise",
     "dto": "no",
     "pagination": "no",
     "service": "no",

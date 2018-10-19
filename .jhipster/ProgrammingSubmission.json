@@ -1,18 +1,14 @@
 {
-    "name": "ModelingSubmission",
+    "name": "ProgrammingSubmission",
     "fields": [
         {
-            "fieldName": "model",
-            "fieldType": "String"
-        },
-        {
-            "fieldName": "explanationText",
+            "fieldName": "commitHash",
             "fieldType": "String"
         }
     ],
     "relationships": [],
-    "changelogDate": "20180927081412",
-    "entityTableName": "modeling_submission",
+    "changelogDate": "20180927081414",
+    "entityTableName": "programming_submission",
     "dto": "no",
     "pagination": "no",
     "service": "no",

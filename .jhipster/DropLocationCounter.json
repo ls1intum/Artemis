@@ -1,0 +1,29 @@
+{
+    "name": "DropLocationCounter",
+    "fields": [],
+    "relationships": [
+        {
+            "relationshipType": "one-to-one",
+            "relationshipName": "dropLocation",
+            "otherEntityName": "dropLocation",
+            "otherEntityField": "id",
+            "ownerSide": true,
+            "otherEntityRelationshipName": "dropLocationCounter"
+        },
+        {
+            "relationshipType": "many-to-one",
+            "relationshipName": "dragAndDropQuestionStatistic",
+            "otherEntityName": "dragAndDropQuestionStatistic",
+            "otherEntityField": "id"
+        }
+    ],
+    "changelogDate": "20180927081350",
+    "entityTableName": "drop_location_counter",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no",
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
+}

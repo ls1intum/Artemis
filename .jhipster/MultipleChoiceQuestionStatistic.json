@@ -1,0 +1,21 @@
+{
+    "name": "MultipleChoiceQuestionStatistic",
+    "fields": [],
+    "relationships": [
+        {
+            "relationshipType": "one-to-many",
+            "relationshipName": "answerCounters",
+            "otherEntityName": "answerCounter",
+            "otherEntityRelationshipName": "multipleChoiceQuestionStatistic"
+        }
+    ],
+    "changelogDate": "20180927081345",
+    "entityTableName": "multiple_choice_question_statistic",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no",
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
+}
