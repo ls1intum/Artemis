@@ -22,6 +22,8 @@
             <th><span jhiTranslate="arTeMiSApp.question.score">Score</span></th>
             <th><span jhiTranslate="arTeMiSApp.question.scoringType">Scoring Type</span></th>
             <th><span jhiTranslate="arTeMiSApp.question.randomizeOrder">Randomize Order</span></th>
+            <th><span jhiTranslate="arTeMiSApp.question.invalid">Invalid</span></th>
+            <th><span jhiTranslate="arTeMiSApp.question.questionStatistic">Question Statistic</span></th>
             <th><span jhiTranslate="arTeMiSApp.question.exercise">Exercise</span></th>
             <th></th>
             </tr>
@@ -36,6 +38,12 @@
                 <td>{{question.score}}</td>
                 <td jhiTranslate="{{'arTeMiSApp.ScoringType.' + question.scoringType}}">{{question.scoringType}}</td>
                 <td>{{question.randomizeOrder}}</td>
+                <td>{{question.invalid}}</td>
+                <td>
+                    <div *ngIf="question.questionStatistic">
+                        <a [routerLink]="['../question-statistic', question.questionStatistic?.id, 'view' ]" >{{question.questionStatistic?.id}}</a>
+                    </div>
+                </td>
                 <td>
                     <div *ngIf="question.exercise">
                         <a [routerLink]="['../quiz-exercise', question.exercise?.id, 'view' ]" >{{question.exercise?.id}}</a>

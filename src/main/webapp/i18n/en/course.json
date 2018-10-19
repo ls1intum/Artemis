@@ -19,6 +19,10 @@
             "title": "Title",
             "studentGroupName": "Student Group Name",
             "teachingAssistantGroupName": "Teaching Assistant Group Name",
+            "instructorGroupName": "Instructor Group Name",
+            "startDate": "Start Date",
+            "endDate": "End Date",
+            "onlineCourse": "Online Course",
             "exercises": "Exercises"
         }
     }

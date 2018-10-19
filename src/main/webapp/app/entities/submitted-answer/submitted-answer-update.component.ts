@@ -16,7 +16,7 @@ import { QuizSubmissionService } from 'app/entities/quiz-submission';
     templateUrl: './submitted-answer-update.component.html'
 })
 export class SubmittedAnswerUpdateComponent implements OnInit {
-    private _submittedAnswer: ISubmittedAnswer;
+    submittedAnswer: ISubmittedAnswer;
     isSaving: boolean;
 
     questions: IQuestion[];
@@ -86,12 +86,5 @@ export class SubmittedAnswerUpdateComponent implements OnInit {
 
     trackQuizSubmissionById(index: number, item: IQuizSubmission) {
         return item.id;
-    }
-    get submittedAnswer() {
-        return this._submittedAnswer;
-    }
-
-    set submittedAnswer(submittedAnswer: ISubmittedAnswer) {
-        this._submittedAnswer = submittedAnswer;
     }
 }

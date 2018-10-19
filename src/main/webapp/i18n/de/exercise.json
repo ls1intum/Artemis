@@ -16,9 +16,14 @@
             "detail": {
                 "title": "Exercise"
             },
+            "problemStatement": "Problem Statement",
+            "gradingInstructions": "Grading Instructions",
             "title": "Title",
             "releaseDate": "Release Date",
             "dueDate": "Due Date",
+            "maxScore": "Max Score",
+            "difficulty": "Difficulty",
+            "categories": "Categories",
             "participations": "Participations",
             "course": "Course"
         }

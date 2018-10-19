@@ -11,7 +11,7 @@ type EntityArrayResponseType = HttpResponse<IModelingSubmission[]>;
 
 @Injectable({ providedIn: 'root' })
 export class ModelingSubmissionService {
-    private resourceUrl = SERVER_API_URL + 'api/modeling-submissions';
+    public resourceUrl = SERVER_API_URL + 'api/modeling-submissions';
 
     constructor(private http: HttpClient) {}
 

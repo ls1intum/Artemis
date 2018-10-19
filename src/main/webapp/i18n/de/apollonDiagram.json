@@ -1,0 +1,23 @@
+
+{
+    "arTeMiSApp": {
+        "apollonDiagram" : {
+            "home": {
+                "title": "Apollon Diagrams",
+                "createLabel": "Apollon Diagram erstellen",
+                "createOrEditLabel": "Apollon Diagram erstellen oder bearbeiten"
+            },
+            "created": "Apollon Diagram erstellt mit ID {{ param }}",
+            "updated": "Apollon Diagram aktualisiert mit ID {{ param }}",
+            "deleted": "Apollon Diagram gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Apollon Diagram {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Apollon Diagram"
+            },
+            "title": "Title",
+            "jsonRepresentation": "Json Representation"
+        }
+    }
+}

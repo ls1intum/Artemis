@@ -29,6 +29,11 @@
                     <input type="checkbox" class="form-control" name="isCorrect" id="field_isCorrect"
                         [(ngModel)]="answerOption.isCorrect" />
                 </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.answerOption.invalid" for="field_invalid">Invalid</label>
+                    <input type="checkbox" class="form-control" name="invalid" id="field_invalid"
+                        [(ngModel)]="answerOption.invalid" />
+                </div>
 
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="arTeMiSApp.answerOption.question" for="field_question">Question</label>

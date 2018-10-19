@@ -25,10 +25,12 @@ public class QuizSubmission implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "score_in_points")
+    private Double scoreInPoints;
+
     @OneToMany(mappedBy = "submission")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<SubmittedAnswer> submittedAnswers = new HashSet<>();
-
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
         return id;
@@ -36,6 +38,19 @@ public class QuizSubmission implements Serializable {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Double getScoreInPoints() {
+        return scoreInPoints;
+    }
+
+    public QuizSubmission scoreInPoints(Double scoreInPoints) {
+        this.scoreInPoints = scoreInPoints;
+        return this;
+    }
+
+    public void setScoreInPoints(Double scoreInPoints) {
+        this.scoreInPoints = scoreInPoints;
     }
 
     public Set<SubmittedAnswer> getSubmittedAnswers() {
@@ -88,6 +103,7 @@ public class QuizSubmission implements Serializable {
     public String toString() {
         return "QuizSubmission{" +
             "id=" + getId() +
+            ", scoreInPoints=" + getScoreInPoints() +
             "}";
     }
 }

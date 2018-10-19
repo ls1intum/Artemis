@@ -1,0 +1,35 @@
+<div class="row justify-content-center">
+    <div class="col-8">
+        <div *ngIf="answerCounter">
+            <h2><span jhiTranslate="arTeMiSApp.answerCounter.detail.title">Answer Counter</span> {{answerCounter.id}}</h2>
+            <hr>
+            <jhi-alert-error></jhi-alert-error>
+            <dl class="row-md jh-entity-details">
+                <dt><span jhiTranslate="arTeMiSApp.answerCounter.answer">Answer</span></dt>
+                <dd>
+                    <div *ngIf="answerCounter.answer">
+                        <a [routerLink]="['/answer-option', answerCounter.answer?.id, 'view']">{{answerCounter.answer?.id}}</a>
+                    </div>
+                </dd>
+                <dt><span jhiTranslate="arTeMiSApp.answerCounter.multipleChoiceQuestionStatistic">Multiple Choice Question Statistic</span></dt>
+                <dd>
+                    <div *ngIf="answerCounter.multipleChoiceQuestionStatistic">
+                        <a [routerLink]="['/multiple-choice-question-statistic', answerCounter.multipleChoiceQuestionStatistic?.id, 'view']">{{answerCounter.multipleChoiceQuestionStatistic?.id}}</a>
+                    </div>
+                </dd>
+            </dl>
+
+            <button type="submit"
+                    (click)="previousState()"
+                    class="btn btn-info">
+                <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
+            </button>
+
+            <button type="button"
+                    [routerLink]="['/answer-counter', answerCounter.id, 'edit']"
+                    class="btn btn-primary">
+                <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+            </button>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,23 @@
+
+{
+    "arTeMiSApp": {
+        "pointCounter" : {
+            "home": {
+                "title": "Point Counters",
+                "createLabel": "Point Counter erstellen",
+                "createOrEditLabel": "Point Counter erstellen oder bearbeiten"
+            },
+            "created": "Point Counter erstellt mit ID {{ param }}",
+            "updated": "Point Counter aktualisiert mit ID {{ param }}",
+            "deleted": "Point Counter gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Point Counter {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Point Counter"
+            },
+            "points": "Points",
+            "quizPointStatistic": "Quiz Point Statistic"
+        }
+    }
+}

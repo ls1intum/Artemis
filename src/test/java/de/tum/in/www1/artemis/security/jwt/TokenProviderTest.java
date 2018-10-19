@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.security.jwt;
 
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import java.security.Key;
 import java.util.*;
 

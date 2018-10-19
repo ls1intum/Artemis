@@ -14,7 +14,7 @@ import { AnswerOptionService } from 'app/entities/answer-option';
     templateUrl: './multiple-choice-submitted-answer-update.component.html'
 })
 export class MultipleChoiceSubmittedAnswerUpdateComponent implements OnInit {
-    private _multipleChoiceSubmittedAnswer: IMultipleChoiceSubmittedAnswer;
+    multipleChoiceSubmittedAnswer: IMultipleChoiceSubmittedAnswer;
     isSaving: boolean;
 
     answeroptions: IAnswerOption[];
@@ -85,12 +85,5 @@ export class MultipleChoiceSubmittedAnswerUpdateComponent implements OnInit {
             }
         }
         return option;
-    }
-    get multipleChoiceSubmittedAnswer() {
-        return this._multipleChoiceSubmittedAnswer;
-    }
-
-    set multipleChoiceSubmittedAnswer(multipleChoiceSubmittedAnswer: IMultipleChoiceSubmittedAnswer) {
-        this._multipleChoiceSubmittedAnswer = multipleChoiceSubmittedAnswer;
     }
 }

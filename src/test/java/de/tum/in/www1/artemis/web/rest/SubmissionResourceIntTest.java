@@ -21,9 +21,14 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.util.List;
 
 
+import static de.tum.in.www1.artemis.web.rest.TestUtil.sameInstant;
 import static de.tum.in.www1.artemis.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
@@ -42,6 +47,9 @@ public class SubmissionResourceIntTest {
 
     private static final Boolean DEFAULT_SUBMITTED = false;
     private static final Boolean UPDATED_SUBMITTED = true;
+
+    private static final ZonedDateTime DEFAULT_SUBMISSION_DATE = ZonedDateTime.ofInstant(Instant.ofEpochMilli(0L), ZoneOffset.UTC);
+    private static final ZonedDateTime UPDATED_SUBMISSION_DATE = ZonedDateTime.now(ZoneId.systemDefault()).withNano(0);
 
     private static final SubmissionType DEFAULT_TYPE = SubmissionType.MANUAL;
     private static final SubmissionType UPDATED_TYPE = SubmissionType.TIMEOUT;
@@ -85,6 +93,7 @@ public class SubmissionResourceIntTest {
     public static Submission createEntity(EntityManager em) {
         Submission submission = new Submission()
             .submitted(DEFAULT_SUBMITTED)
+            .submissionDate(DEFAULT_SUBMISSION_DATE)
             .type(DEFAULT_TYPE);
         return submission;
     }
@@ -110,6 +119,7 @@ public class SubmissionResourceIntTest {
         assertThat(submissionList).hasSize(databaseSizeBeforeCreate + 1);
         Submission testSubmission = submissionList.get(submissionList.size() - 1);
         assertThat(testSubmission.isSubmitted()).isEqualTo(DEFAULT_SUBMITTED);
+        assertThat(testSubmission.getSubmissionDate()).isEqualTo(DEFAULT_SUBMISSION_DATE);
         assertThat(testSubmission.getType()).isEqualTo(DEFAULT_TYPE);
     }
 
@@ -144,6 +154,7 @@ public class SubmissionResourceIntTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(submission.getId().intValue())))
             .andExpect(jsonPath("$.[*].submitted").value(hasItem(DEFAULT_SUBMITTED.booleanValue())))
+            .andExpect(jsonPath("$.[*].submissionDate").value(hasItem(sameInstant(DEFAULT_SUBMISSION_DATE))))
             .andExpect(jsonPath("$.[*].type").value(hasItem(DEFAULT_TYPE.toString())));
     }
     
@@ -159,6 +170,7 @@ public class SubmissionResourceIntTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.id").value(submission.getId().intValue()))
             .andExpect(jsonPath("$.submitted").value(DEFAULT_SUBMITTED.booleanValue()))
+            .andExpect(jsonPath("$.submissionDate").value(sameInstant(DEFAULT_SUBMISSION_DATE)))
             .andExpect(jsonPath("$.type").value(DEFAULT_TYPE.toString()));
     }
 
@@ -184,6 +196,7 @@ public class SubmissionResourceIntTest {
         em.detach(updatedSubmission);
         updatedSubmission
             .submitted(UPDATED_SUBMITTED)
+            .submissionDate(UPDATED_SUBMISSION_DATE)
             .type(UPDATED_TYPE);
 
         restSubmissionMockMvc.perform(put("/api/submissions")
@@ -196,6 +209,7 @@ public class SubmissionResourceIntTest {
         assertThat(submissionList).hasSize(databaseSizeBeforeUpdate);
         Submission testSubmission = submissionList.get(submissionList.size() - 1);
         assertThat(testSubmission.isSubmitted()).isEqualTo(UPDATED_SUBMITTED);
+        assertThat(testSubmission.getSubmissionDate()).isEqualTo(UPDATED_SUBMISSION_DATE);
         assertThat(testSubmission.getType()).isEqualTo(UPDATED_TYPE);
     }
 

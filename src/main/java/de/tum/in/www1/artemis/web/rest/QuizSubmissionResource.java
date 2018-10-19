@@ -28,7 +28,7 @@ public class QuizSubmissionResource {
 
     private static final String ENTITY_NAME = "quizSubmission";
 
-    private final QuizSubmissionRepository quizSubmissionRepository;
+    private QuizSubmissionRepository quizSubmissionRepository;
 
     public QuizSubmissionResource(QuizSubmissionRepository quizSubmissionRepository) {
         this.quizSubmissionRepository = quizSubmissionRepository;

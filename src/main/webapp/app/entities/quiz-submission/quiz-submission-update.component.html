@@ -9,6 +9,11 @@
                     <input type="text" class="form-control" id="id" name="id"
                         [(ngModel)]="quizSubmission.id" readonly />
                 </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.quizSubmission.scoreInPoints" for="field_scoreInPoints">Score In Points</label>
+                    <input type="number" class="form-control" name="scoreInPoints" id="field_scoreInPoints"
+                        [(ngModel)]="quizSubmission.scoreInPoints" />
+                </div>
 
             </div>
             <div>

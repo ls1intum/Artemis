@@ -28,7 +28,7 @@ public class MultipleChoiceSubmittedAnswerResource {
 
     private static final String ENTITY_NAME = "multipleChoiceSubmittedAnswer";
 
-    private final MultipleChoiceSubmittedAnswerRepository multipleChoiceSubmittedAnswerRepository;
+    private MultipleChoiceSubmittedAnswerRepository multipleChoiceSubmittedAnswerRepository;
 
     public MultipleChoiceSubmittedAnswerResource(MultipleChoiceSubmittedAnswerRepository multipleChoiceSubmittedAnswerRepository) {
         this.multipleChoiceSubmittedAnswerRepository = multipleChoiceSubmittedAnswerRepository;

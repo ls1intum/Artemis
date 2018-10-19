@@ -1,0 +1,35 @@
+<div class="row justify-content-center">
+    <div class="col-8">
+        <div *ngIf="dropLocationCounter">
+            <h2><span jhiTranslate="arTeMiSApp.dropLocationCounter.detail.title">Drop Location Counter</span> {{dropLocationCounter.id}}</h2>
+            <hr>
+            <jhi-alert-error></jhi-alert-error>
+            <dl class="row-md jh-entity-details">
+                <dt><span jhiTranslate="arTeMiSApp.dropLocationCounter.dropLocation">Drop Location</span></dt>
+                <dd>
+                    <div *ngIf="dropLocationCounter.dropLocation">
+                        <a [routerLink]="['/drop-location', dropLocationCounter.dropLocation?.id, 'view']">{{dropLocationCounter.dropLocation?.id}}</a>
+                    </div>
+                </dd>
+                <dt><span jhiTranslate="arTeMiSApp.dropLocationCounter.dragAndDropQuestionStatistic">Drag And Drop Question Statistic</span></dt>
+                <dd>
+                    <div *ngIf="dropLocationCounter.dragAndDropQuestionStatistic">
+                        <a [routerLink]="['/drag-and-drop-question-statistic', dropLocationCounter.dragAndDropQuestionStatistic?.id, 'view']">{{dropLocationCounter.dragAndDropQuestionStatistic?.id}}</a>
+                    </div>
+                </dd>
+            </dl>
+
+            <button type="submit"
+                    (click)="previousState()"
+                    class="btn btn-info">
+                <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
+            </button>
+
+            <button type="button"
+                    [routerLink]="['/drop-location-counter', dropLocationCounter.id, 'edit']"
+                    class="btn btn-primary">
+                <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+            </button>
+        </div>
+    </div>
+</div>

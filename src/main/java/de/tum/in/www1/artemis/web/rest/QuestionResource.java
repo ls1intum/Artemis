@@ -28,7 +28,7 @@ public class QuestionResource {
 
     private static final String ENTITY_NAME = "question";
 
-    private final QuestionRepository questionRepository;
+    private QuestionRepository questionRepository;
 
     public QuestionResource(QuestionRepository questionRepository) {
         this.questionRepository = questionRepository;

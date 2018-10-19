@@ -11,7 +11,7 @@ type EntityArrayResponseType = HttpResponse<IDragItem[]>;
 
 @Injectable({ providedIn: 'root' })
 export class DragItemService {
-    private resourceUrl = SERVER_API_URL + 'api/drag-items';
+    public resourceUrl = SERVER_API_URL + 'api/drag-items';
 
     constructor(private http: HttpClient) {}
 

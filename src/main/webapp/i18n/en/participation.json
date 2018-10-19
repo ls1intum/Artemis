@@ -20,7 +20,9 @@
             "buildPlanId": "Build Plan Id",
             "initializationState": "Initialization State",
             "initializationDate": "Initialization Date",
+            "presentationScore": "Presentation Score",
             "results": "Results",
+            "submissions": "Submissions",
             "student": "Student",
             "exercise": "Exercise"
         }

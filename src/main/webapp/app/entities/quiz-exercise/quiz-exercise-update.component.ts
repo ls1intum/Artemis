@@ -2,25 +2,50 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { JhiAlertService } from 'ng-jhipster';
 
 import { IQuizExercise } from 'app/shared/model/quiz-exercise.model';
 import { QuizExerciseService } from './quiz-exercise.service';
+import { IQuizPointStatistic } from 'app/shared/model/quiz-point-statistic.model';
+import { QuizPointStatisticService } from 'app/entities/quiz-point-statistic';
 
 @Component({
     selector: 'jhi-quiz-exercise-update',
     templateUrl: './quiz-exercise-update.component.html'
 })
 export class QuizExerciseUpdateComponent implements OnInit {
-    private _quizExercise: IQuizExercise;
+    quizExercise: IQuizExercise;
     isSaving: boolean;
 
-    constructor(private quizExerciseService: QuizExerciseService, private activatedRoute: ActivatedRoute) {}
+    quizpointstatistics: IQuizPointStatistic[];
+
+    constructor(
+        private jhiAlertService: JhiAlertService,
+        private quizExerciseService: QuizExerciseService,
+        private quizPointStatisticService: QuizPointStatisticService,
+        private activatedRoute: ActivatedRoute
+    ) {}
 
     ngOnInit() {
         this.isSaving = false;
         this.activatedRoute.data.subscribe(({ quizExercise }) => {
             this.quizExercise = quizExercise;
         });
+        this.quizPointStatisticService.query({ filter: 'quiz-is-null' }).subscribe(
+            (res: HttpResponse<IQuizPointStatistic[]>) => {
+                if (!this.quizExercise.quizPointStatistic || !this.quizExercise.quizPointStatistic.id) {
+                    this.quizpointstatistics = res.body;
+                } else {
+                    this.quizPointStatisticService.find(this.quizExercise.quizPointStatistic.id).subscribe(
+                        (subRes: HttpResponse<IQuizPointStatistic>) => {
+                            this.quizpointstatistics = [subRes.body].concat(res.body);
+                        },
+                        (subRes: HttpErrorResponse) => this.onError(subRes.message)
+                    );
+                }
+            },
+            (res: HttpErrorResponse) => this.onError(res.message)
+        );
     }
 
     previousState() {
@@ -48,11 +73,12 @@ export class QuizExerciseUpdateComponent implements OnInit {
     private onSaveError() {
         this.isSaving = false;
     }
-    get quizExercise() {
-        return this._quizExercise;
+
+    private onError(errorMessage: string) {
+        this.jhiAlertService.error(errorMessage, null, null);
     }
 
-    set quizExercise(quizExercise: IQuizExercise) {
-        this._quizExercise = quizExercise;
+    trackQuizPointStatisticById(index: number, item: IQuizPointStatistic) {
+        return item.id;
     }
 }

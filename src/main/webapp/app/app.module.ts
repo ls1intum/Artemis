@@ -30,8 +30,8 @@ import { JhiMainComponent, NavbarComponent, FooterComponent, PageRibbonComponent
         ArTeMiSCoreModule,
         ArTeMiSHomeModule,
         ArTeMiSAccountModule,
-        ArTeMiSEntityModule
         // jhipster-needle-angular-add-module JHipster will add new module here
+        ArTeMiSEntityModule
     ],
     declarations: [JhiMainComponent, NavbarComponent, ErrorComponent, PageRibbonComponent, ActiveMenuDirective, FooterComponent],
     providers: [

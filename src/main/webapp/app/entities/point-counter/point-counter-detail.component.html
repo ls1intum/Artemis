@@ -1,0 +1,33 @@
+<div class="row justify-content-center">
+    <div class="col-8">
+        <div *ngIf="pointCounter">
+            <h2><span jhiTranslate="arTeMiSApp.pointCounter.detail.title">Point Counter</span> {{pointCounter.id}}</h2>
+            <hr>
+            <jhi-alert-error></jhi-alert-error>
+            <dl class="row-md jh-entity-details">
+                <dt><span jhiTranslate="arTeMiSApp.pointCounter.points">Points</span></dt>
+                <dd>
+                    <span>{{pointCounter.points}}</span>
+                </dd>
+                <dt><span jhiTranslate="arTeMiSApp.pointCounter.quizPointStatistic">Quiz Point Statistic</span></dt>
+                <dd>
+                    <div *ngIf="pointCounter.quizPointStatistic">
+                        <a [routerLink]="['/quiz-point-statistic', pointCounter.quizPointStatistic?.id, 'view']">{{pointCounter.quizPointStatistic?.id}}</a>
+                    </div>
+                </dd>
+            </dl>
+
+            <button type="submit"
+                    (click)="previousState()"
+                    class="btn btn-info">
+                <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
+            </button>
+
+            <button type="button"
+                    [routerLink]="['/point-counter', pointCounter.id, 'edit']"
+                    class="btn btn-primary">
+                <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+            </button>
+        </div>
+    </div>
+</div>

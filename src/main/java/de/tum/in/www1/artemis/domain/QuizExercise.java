@@ -49,10 +49,12 @@ public class QuizExercise implements Serializable {
     @Column(name = "duration")
     private Integer duration;
 
+    @OneToOne    @JoinColumn(unique = true)
+    private QuizPointStatistic quizPointStatistic;
+
     @OneToMany(mappedBy = "exercise")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Question> questions = new HashSet<>();
-
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
         return id;
@@ -164,6 +166,19 @@ public class QuizExercise implements Serializable {
 
     public void setDuration(Integer duration) {
         this.duration = duration;
+    }
+
+    public QuizPointStatistic getQuizPointStatistic() {
+        return quizPointStatistic;
+    }
+
+    public QuizExercise quizPointStatistic(QuizPointStatistic quizPointStatistic) {
+        this.quizPointStatistic = quizPointStatistic;
+        return this;
+    }
+
+    public void setQuizPointStatistic(QuizPointStatistic quizPointStatistic) {
+        this.quizPointStatistic = quizPointStatistic;
     }
 
     public Set<Question> getQuestions() {

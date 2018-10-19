@@ -11,7 +11,7 @@ import { DragAndDropSubmittedAnswerService } from './drag-and-drop-submitted-ans
     templateUrl: './drag-and-drop-submitted-answer-update.component.html'
 })
 export class DragAndDropSubmittedAnswerUpdateComponent implements OnInit {
-    private _dragAndDropSubmittedAnswer: IDragAndDropSubmittedAnswer;
+    dragAndDropSubmittedAnswer: IDragAndDropSubmittedAnswer;
     isSaving: boolean;
 
     constructor(private dragAndDropSubmittedAnswerService: DragAndDropSubmittedAnswerService, private activatedRoute: ActivatedRoute) {}
@@ -50,12 +50,5 @@ export class DragAndDropSubmittedAnswerUpdateComponent implements OnInit {
 
     private onSaveError() {
         this.isSaving = false;
-    }
-    get dragAndDropSubmittedAnswer() {
-        return this._dragAndDropSubmittedAnswer;
-    }
-
-    set dragAndDropSubmittedAnswer(dragAndDropSubmittedAnswer: IDragAndDropSubmittedAnswer) {
-        this._dragAndDropSubmittedAnswer = dragAndDropSubmittedAnswer;
     }
 }

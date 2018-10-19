@@ -37,6 +37,12 @@
                 <dd>
                     <span>{{quizExercise.duration}}</span>
                 </dd>
+                <dt><span jhiTranslate="arTeMiSApp.quizExercise.quizPointStatistic">Quiz Point Statistic</span></dt>
+                <dd>
+                    <div *ngIf="quizExercise.quizPointStatistic">
+                        <a [routerLink]="['/quiz-point-statistic', quizExercise.quizPointStatistic?.id, 'view']">{{quizExercise.quizPointStatistic?.id}}</a>
+                    </div>
+                </dd>
             </dl>
 
             <button type="submit"

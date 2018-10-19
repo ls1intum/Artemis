@@ -11,7 +11,7 @@ import { ProgrammingExerciseService } from './programming-exercise.service';
     templateUrl: './programming-exercise-update.component.html'
 })
 export class ProgrammingExerciseUpdateComponent implements OnInit {
-    private _programmingExercise: IProgrammingExercise;
+    programmingExercise: IProgrammingExercise;
     isSaving: boolean;
 
     constructor(private programmingExerciseService: ProgrammingExerciseService, private activatedRoute: ActivatedRoute) {}
@@ -47,12 +47,5 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     private onSaveError() {
         this.isSaving = false;
-    }
-    get programmingExercise() {
-        return this._programmingExercise;
-    }
-
-    set programmingExercise(programmingExercise: IProgrammingExercise) {
-        this._programmingExercise = programmingExercise;
     }
 }

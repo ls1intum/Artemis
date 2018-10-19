@@ -9,6 +9,8 @@ import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Objects;
 
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+
 /**
  * A Feedback.
  */
@@ -29,9 +31,16 @@ public class Feedback implements Serializable {
     @Column(name = "detail_text")
     private String detailText;
 
+    @Column(name = "positive")
+    private Boolean positive;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "jhi_type")
+    private FeedbackType type;
+
     @ManyToOne
     @JsonIgnoreProperties("feedbacks")
-    private Result result;
+    private ExerciseResult result;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -68,17 +77,43 @@ public class Feedback implements Serializable {
         this.detailText = detailText;
     }
 
-    public Result getResult() {
-        return result;
+    public Boolean isPositive() {
+        return positive;
     }
 
-    public Feedback result(Result result) {
-        this.result = result;
+    public Feedback positive(Boolean positive) {
+        this.positive = positive;
         return this;
     }
 
-    public void setResult(Result result) {
-        this.result = result;
+    public void setPositive(Boolean positive) {
+        this.positive = positive;
+    }
+
+    public FeedbackType getType() {
+        return type;
+    }
+
+    public Feedback type(FeedbackType type) {
+        this.type = type;
+        return this;
+    }
+
+    public void setType(FeedbackType type) {
+        this.type = type;
+    }
+
+    public ExerciseResult getResult() {
+        return result;
+    }
+
+    public Feedback result(ExerciseResult exerciseResult) {
+        this.result = exerciseResult;
+        return this;
+    }
+
+    public void setResult(ExerciseResult exerciseResult) {
+        this.result = exerciseResult;
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
@@ -108,6 +143,8 @@ public class Feedback implements Serializable {
             "id=" + getId() +
             ", text='" + getText() + "'" +
             ", detailText='" + getDetailText() + "'" +
+            ", positive='" + isPositive() + "'" +
+            ", type='" + getType() + "'" +
             "}";
     }
 }

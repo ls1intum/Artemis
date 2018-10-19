@@ -11,7 +11,7 @@ type EntityArrayResponseType = HttpResponse<IFeedback[]>;
 
 @Injectable({ providedIn: 'root' })
 export class FeedbackService {
-    private resourceUrl = SERVER_API_URL + 'api/feedbacks';
+    public resourceUrl = SERVER_API_URL + 'api/feedbacks';
 
     constructor(private http: HttpClient) {}
 

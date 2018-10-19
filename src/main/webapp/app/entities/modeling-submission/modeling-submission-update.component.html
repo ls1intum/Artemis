@@ -10,9 +10,14 @@
                         [(ngModel)]="modelingSubmission.id" readonly />
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="arTeMiSApp.modelingSubmission.submissionPath" for="field_submissionPath">Submission Path</label>
-                    <input type="text" class="form-control" name="submissionPath" id="field_submissionPath"
-                        [(ngModel)]="modelingSubmission.submissionPath" />
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.modelingSubmission.model" for="field_model">Model</label>
+                    <input type="text" class="form-control" name="model" id="field_model"
+                        [(ngModel)]="modelingSubmission.model" />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.modelingSubmission.explanationText" for="field_explanationText">Explanation Text</label>
+                    <input type="text" class="form-control" name="explanationText" id="field_explanationText"
+                        [(ngModel)]="modelingSubmission.explanationText" />
                 </div>
 
             </div>

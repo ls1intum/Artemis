@@ -50,6 +50,13 @@
                         [(ngModel)]="quizExercise.duration" />
                 </div>
 
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.quizExercise.quizPointStatistic" for="field_quizPointStatistic">Quiz Point Statistic</label>
+                    <select class="form-control" id="field_quizPointStatistic" name="quizPointStatistic" [(ngModel)]="quizExercise.quizPointStatistic">
+                        <option [ngValue]="null"></option>
+                        <option [ngValue]="quizPointStatisticOption.id === quizExercise.quizPointStatistic?.id ? quizExercise.quizPointStatistic : quizPointStatisticOption" *ngFor="let quizPointStatisticOption of quizpointstatistics; trackBy: trackQuizPointStatisticById">{{quizPointStatisticOption.id}}</option>
+                    </select>
+                </div>
             </div>
             <div>
                 <button type="button" id="cancel-save" class="btn btn-secondary"  (click)="previousState()">

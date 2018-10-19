@@ -1,11 +1,13 @@
 package de.tum.in.www1.artemis.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
 
 import java.io.Serializable;
+import java.time.ZonedDateTime;
 import java.util.Objects;
 
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
@@ -27,9 +29,19 @@ public class Submission implements Serializable {
     @Column(name = "submitted")
     private Boolean submitted;
 
+    @Column(name = "submission_date")
+    private ZonedDateTime submissionDate;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "jhi_type")
     private SubmissionType type;
+
+    @OneToOne    @JoinColumn(unique = true)
+    private ExerciseResult result;
+
+    @ManyToOne
+    @JsonIgnoreProperties("submissions")
+    private Participation participation;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -53,6 +65,19 @@ public class Submission implements Serializable {
         this.submitted = submitted;
     }
 
+    public ZonedDateTime getSubmissionDate() {
+        return submissionDate;
+    }
+
+    public Submission submissionDate(ZonedDateTime submissionDate) {
+        this.submissionDate = submissionDate;
+        return this;
+    }
+
+    public void setSubmissionDate(ZonedDateTime submissionDate) {
+        this.submissionDate = submissionDate;
+    }
+
     public SubmissionType getType() {
         return type;
     }
@@ -64,6 +89,32 @@ public class Submission implements Serializable {
 
     public void setType(SubmissionType type) {
         this.type = type;
+    }
+
+    public ExerciseResult getResult() {
+        return result;
+    }
+
+    public Submission result(ExerciseResult exerciseResult) {
+        this.result = exerciseResult;
+        return this;
+    }
+
+    public void setResult(ExerciseResult exerciseResult) {
+        this.result = exerciseResult;
+    }
+
+    public Participation getParticipation() {
+        return participation;
+    }
+
+    public Submission participation(Participation participation) {
+        this.participation = participation;
+        return this;
+    }
+
+    public void setParticipation(Participation participation) {
+        this.participation = participation;
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
@@ -92,6 +143,7 @@ public class Submission implements Serializable {
         return "Submission{" +
             "id=" + getId() +
             ", submitted='" + isSubmitted() + "'" +
+            ", submissionDate='" + getSubmissionDate() + "'" +
             ", type='" + getType() + "'" +
             "}";
     }

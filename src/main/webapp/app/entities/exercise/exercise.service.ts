@@ -14,7 +14,7 @@ type EntityArrayResponseType = HttpResponse<IExercise[]>;
 
 @Injectable({ providedIn: 'root' })
 export class ExerciseService {
-    private resourceUrl = SERVER_API_URL + 'api/exercises';
+    public resourceUrl = SERVER_API_URL + 'api/exercises';
 
     constructor(private http: HttpClient) {}
 

@@ -6,23 +6,23 @@ import { JhiAlertService } from 'ng-jhipster';
 
 import { IFeedback } from 'app/shared/model/feedback.model';
 import { FeedbackService } from './feedback.service';
-import { IResult } from 'app/shared/model/result.model';
-import { ResultService } from 'app/entities/result';
+import { IExerciseResult } from 'app/shared/model/exercise-result.model';
+import { ExerciseResultService } from 'app/entities/exercise-result';
 
 @Component({
     selector: 'jhi-feedback-update',
     templateUrl: './feedback-update.component.html'
 })
 export class FeedbackUpdateComponent implements OnInit {
-    private _feedback: IFeedback;
+    feedback: IFeedback;
     isSaving: boolean;
 
-    results: IResult[];
+    exerciseresults: IExerciseResult[];
 
     constructor(
         private jhiAlertService: JhiAlertService,
         private feedbackService: FeedbackService,
-        private resultService: ResultService,
+        private exerciseResultService: ExerciseResultService,
         private activatedRoute: ActivatedRoute
     ) {}
 
@@ -31,9 +31,9 @@ export class FeedbackUpdateComponent implements OnInit {
         this.activatedRoute.data.subscribe(({ feedback }) => {
             this.feedback = feedback;
         });
-        this.resultService.query().subscribe(
-            (res: HttpResponse<IResult[]>) => {
-                this.results = res.body;
+        this.exerciseResultService.query().subscribe(
+            (res: HttpResponse<IExerciseResult[]>) => {
+                this.exerciseresults = res.body;
             },
             (res: HttpErrorResponse) => this.onError(res.message)
         );
@@ -69,14 +69,7 @@ export class FeedbackUpdateComponent implements OnInit {
         this.jhiAlertService.error(errorMessage, null, null);
     }
 
-    trackResultById(index: number, item: IResult) {
+    trackExerciseResultById(index: number, item: IExerciseResult) {
         return item.id;
-    }
-    get feedback() {
-        return this._feedback;
-    }
-
-    set feedback(feedback: IFeedback) {
-        this._feedback = feedback;
     }
 }

@@ -1,8 +1,18 @@
 import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 
-import { ArTeMiSSubmissionModule } from './submission/submission.module';
+import { ArTeMiSStatisticModule } from './statistic/statistic.module';
+import { ArTeMiSQuizPointStatisticModule } from './quiz-point-statistic/quiz-point-statistic.module';
+import { ArTeMiSQuestionStatisticModule } from './question-statistic/question-statistic.module';
+import { ArTeMiSMultipleChoiceQuestionStatisticModule } from './multiple-choice-question-statistic/multiple-choice-question-statistic.module';
+import { ArTeMiSDragAndDropQuestionStatisticModule } from './drag-and-drop-question-statistic/drag-and-drop-question-statistic.module';
+import { ArTeMiSStatisticCounterModule } from './statistic-counter/statistic-counter.module';
+import { ArTeMiSPointCounterModule } from './point-counter/point-counter.module';
+import { ArTeMiSAnswerCounterModule } from './answer-counter/answer-counter.module';
+import { ArTeMiSDropLocationCounterModule } from './drop-location-counter/drop-location-counter.module';
 import { ArTeMiSCourseModule } from './course/course.module';
 import { ArTeMiSExerciseModule } from './exercise/exercise.module';
+import { ArTeMiSTextExerciseModule } from './text-exercise/text-exercise.module';
+import { ArTeMiSFileUploadExerciseModule } from './file-upload-exercise/file-upload-exercise.module';
 import { ArTeMiSProgrammingExerciseModule } from './programming-exercise/programming-exercise.module';
 import { ArTeMiSModelingExerciseModule } from './modeling-exercise/modeling-exercise.module';
 import { ArTeMiSQuizExerciseModule } from './quiz-exercise/quiz-exercise.module';
@@ -17,20 +27,35 @@ import { ArTeMiSDropLocationModule } from './drop-location/drop-location.module'
 import { ArTeMiSDragItemModule } from './drag-item/drag-item.module';
 import { ArTeMiSParticipationModule } from './participation/participation.module';
 import { ArTeMiSLtiUserIdModule } from './lti-user-id/lti-user-id.module';
-import { ArTeMiSResultModule } from './result/result.module';
+import { ArTeMiSExerciseResultModule } from './exercise-result/exercise-result.module';
 import { ArTeMiSFeedbackModule } from './feedback/feedback.module';
+import { ArTeMiSSubmissionModule } from './submission/submission.module';
 import { ArTeMiSModelingSubmissionModule } from './modeling-submission/modeling-submission.module';
 import { ArTeMiSQuizSubmissionModule } from './quiz-submission/quiz-submission.module';
+import { ArTeMiSProgrammingSubmissionModule } from './programming-submission/programming-submission.module';
+import { ArTeMiSTextSubmissionModule } from './text-submission/text-submission.module';
+import { ArTeMiSFileUploadSubmissionModule } from './file-upload-submission/file-upload-submission.module';
 import { ArTeMiSDragAndDropSubmittedAnswerModule } from './drag-and-drop-submitted-answer/drag-and-drop-submitted-answer.module';
-import { ArTeMiSDragAndDropAssignmentModule } from './drag-and-drop-assignment/drag-and-drop-assignment.module';
+import { ArTeMiSDragAndDropMappingModule } from './drag-and-drop-mapping/drag-and-drop-mapping.module';
+import { ArTeMiSApollonDiagramModule } from './apollon-diagram/apollon-diagram.module';
 /* jhipster-needle-add-entity-module-import - JHipster will add entity modules imports here */
 
 @NgModule({
     // prettier-ignore
     imports: [
-        ArTeMiSSubmissionModule,
+        ArTeMiSStatisticModule,
+        ArTeMiSQuizPointStatisticModule,
+        ArTeMiSQuestionStatisticModule,
+        ArTeMiSMultipleChoiceQuestionStatisticModule,
+        ArTeMiSDragAndDropQuestionStatisticModule,
+        ArTeMiSStatisticCounterModule,
+        ArTeMiSPointCounterModule,
+        ArTeMiSAnswerCounterModule,
+        ArTeMiSDropLocationCounterModule,
         ArTeMiSCourseModule,
         ArTeMiSExerciseModule,
+        ArTeMiSTextExerciseModule,
+        ArTeMiSFileUploadExerciseModule,
         ArTeMiSProgrammingExerciseModule,
         ArTeMiSModelingExerciseModule,
         ArTeMiSQuizExerciseModule,
@@ -45,12 +70,17 @@ import { ArTeMiSDragAndDropAssignmentModule } from './drag-and-drop-assignment/d
         ArTeMiSDragItemModule,
         ArTeMiSParticipationModule,
         ArTeMiSLtiUserIdModule,
-        ArTeMiSResultModule,
+        ArTeMiSExerciseResultModule,
         ArTeMiSFeedbackModule,
+        ArTeMiSSubmissionModule,
         ArTeMiSModelingSubmissionModule,
         ArTeMiSQuizSubmissionModule,
+        ArTeMiSProgrammingSubmissionModule,
+        ArTeMiSTextSubmissionModule,
+        ArTeMiSFileUploadSubmissionModule,
         ArTeMiSDragAndDropSubmittedAnswerModule,
-        ArTeMiSDragAndDropAssignmentModule,
+        ArTeMiSDragAndDropMappingModule,
+        ArTeMiSApollonDiagramModule,
         /* jhipster-needle-add-entity-module - JHipster will add entity modules here */
     ],
     declarations: [],

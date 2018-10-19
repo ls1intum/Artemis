@@ -11,7 +11,7 @@ type EntityArrayResponseType = HttpResponse<IQuizSubmission[]>;
 
 @Injectable({ providedIn: 'root' })
 export class QuizSubmissionService {
-    private resourceUrl = SERVER_API_URL + 'api/quiz-submissions';
+    public resourceUrl = SERVER_API_URL + 'api/quiz-submissions';
 
     constructor(private http: HttpClient) {}
 

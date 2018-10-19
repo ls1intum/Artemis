@@ -23,6 +23,8 @@
             "score": "Score",
             "scoringType": "Scoring Type",
             "randomizeOrder": "Randomize Order",
+            "invalid": "Invalid",
+            "questionStatistic": "Question Statistic",
             "exercise": "Exercise"
         }
     }

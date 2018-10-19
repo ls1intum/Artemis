@@ -11,7 +11,7 @@ import { DragAndDropQuestionService } from './drag-and-drop-question.service';
     templateUrl: './drag-and-drop-question-update.component.html'
 })
 export class DragAndDropQuestionUpdateComponent implements OnInit {
-    private _dragAndDropQuestion: IDragAndDropQuestion;
+    dragAndDropQuestion: IDragAndDropQuestion;
     isSaving: boolean;
 
     constructor(private dragAndDropQuestionService: DragAndDropQuestionService, private activatedRoute: ActivatedRoute) {}
@@ -47,12 +47,5 @@ export class DragAndDropQuestionUpdateComponent implements OnInit {
 
     private onSaveError() {
         this.isSaving = false;
-    }
-    get dragAndDropQuestion() {
-        return this._dragAndDropQuestion;
-    }
-
-    set dragAndDropQuestion(dragAndDropQuestion: IDragAndDropQuestion) {
-        this._dragAndDropQuestion = dragAndDropQuestion;
     }
 }

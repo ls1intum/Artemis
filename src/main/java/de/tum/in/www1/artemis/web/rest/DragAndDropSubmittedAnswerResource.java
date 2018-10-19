@@ -28,7 +28,7 @@ public class DragAndDropSubmittedAnswerResource {
 
     private static final String ENTITY_NAME = "dragAndDropSubmittedAnswer";
 
-    private final DragAndDropSubmittedAnswerRepository dragAndDropSubmittedAnswerRepository;
+    private DragAndDropSubmittedAnswerRepository dragAndDropSubmittedAnswerRepository;
 
     public DragAndDropSubmittedAnswerResource(DragAndDropSubmittedAnswerRepository dragAndDropSubmittedAnswerRepository) {
         this.dragAndDropSubmittedAnswerRepository = dragAndDropSubmittedAnswerRepository;

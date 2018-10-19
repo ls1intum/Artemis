@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <!--
+        Added the constraints for entity DragAndDropMapping.
+    -->
+    <changeSet id="20180927081418-2" author="jhipster">
+        
+        <addForeignKeyConstraint baseColumnNames="drag_item_id"
+                                 baseTableName="drag_and_drop_mapping"
+                                 constraintName="fk_drag_and_drop_mapping_drag_item_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="drag_item"/>
+
+        <addForeignKeyConstraint baseColumnNames="drop_location_id"
+                                 baseTableName="drag_and_drop_mapping"
+                                 constraintName="fk_drag_and_drop_mapping_drop_location_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="drop_location"/>
+
+        <addForeignKeyConstraint baseColumnNames="submitted_answer_id"
+                                 baseTableName="drag_and_drop_mapping"
+                                 constraintName="fk_drag_and_drop_mapping_submitted_answer_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="dnd_submitted_answer"/>
+
+        <addForeignKeyConstraint baseColumnNames="question_id"
+                                 baseTableName="drag_and_drop_mapping"
+                                 constraintName="fk_drag_and_drop_mapping_question_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="drag_and_drop_question"/>
+
+    </changeSet>
+</databaseChangeLog>

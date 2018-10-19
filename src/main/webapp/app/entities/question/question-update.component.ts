@@ -6,6 +6,8 @@ import { JhiAlertService } from 'ng-jhipster';
 
 import { IQuestion } from 'app/shared/model/question.model';
 import { QuestionService } from './question.service';
+import { IQuestionStatistic } from 'app/shared/model/question-statistic.model';
+import { QuestionStatisticService } from 'app/entities/question-statistic';
 import { IQuizExercise } from 'app/shared/model/quiz-exercise.model';
 import { QuizExerciseService } from 'app/entities/quiz-exercise';
 
@@ -14,14 +16,17 @@ import { QuizExerciseService } from 'app/entities/quiz-exercise';
     templateUrl: './question-update.component.html'
 })
 export class QuestionUpdateComponent implements OnInit {
-    private _question: IQuestion;
+    question: IQuestion;
     isSaving: boolean;
+
+    questionstatistics: IQuestionStatistic[];
 
     quizexercises: IQuizExercise[];
 
     constructor(
         private jhiAlertService: JhiAlertService,
         private questionService: QuestionService,
+        private questionStatisticService: QuestionStatisticService,
         private quizExerciseService: QuizExerciseService,
         private activatedRoute: ActivatedRoute
     ) {}
@@ -31,6 +36,21 @@ export class QuestionUpdateComponent implements OnInit {
         this.activatedRoute.data.subscribe(({ question }) => {
             this.question = question;
         });
+        this.questionStatisticService.query({ filter: 'question-is-null' }).subscribe(
+            (res: HttpResponse<IQuestionStatistic[]>) => {
+                if (!this.question.questionStatistic || !this.question.questionStatistic.id) {
+                    this.questionstatistics = res.body;
+                } else {
+                    this.questionStatisticService.find(this.question.questionStatistic.id).subscribe(
+                        (subRes: HttpResponse<IQuestionStatistic>) => {
+                            this.questionstatistics = [subRes.body].concat(res.body);
+                        },
+                        (subRes: HttpErrorResponse) => this.onError(subRes.message)
+                    );
+                }
+            },
+            (res: HttpErrorResponse) => this.onError(res.message)
+        );
         this.quizExerciseService.query().subscribe(
             (res: HttpResponse<IQuizExercise[]>) => {
                 this.quizexercises = res.body;
@@ -69,14 +89,11 @@ export class QuestionUpdateComponent implements OnInit {
         this.jhiAlertService.error(errorMessage, null, null);
     }
 
-    trackQuizExerciseById(index: number, item: IQuizExercise) {
+    trackQuestionStatisticById(index: number, item: IQuestionStatistic) {
         return item.id;
     }
-    get question() {
-        return this._question;
-    }
 
-    set question(question: IQuestion) {
-        this._question = question;
+    trackQuizExerciseById(index: number, item: IQuizExercise) {
+        return item.id;
     }
 }

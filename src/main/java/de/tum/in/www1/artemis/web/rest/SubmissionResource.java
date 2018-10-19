@@ -28,7 +28,7 @@ public class SubmissionResource {
 
     private static final String ENTITY_NAME = "submission";
 
-    private final SubmissionRepository submissionRepository;
+    private SubmissionRepository submissionRepository;
 
     public SubmissionResource(SubmissionRepository submissionRepository) {
         this.submissionRepository = submissionRepository;

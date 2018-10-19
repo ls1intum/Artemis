@@ -22,8 +22,11 @@ public class ModelingSubmission implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "submission_path")
-    private String submissionPath;
+    @Column(name = "model")
+    private String model;
+
+    @Column(name = "explanation_text")
+    private String explanationText;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -34,17 +37,30 @@ public class ModelingSubmission implements Serializable {
         this.id = id;
     }
 
-    public String getSubmissionPath() {
-        return submissionPath;
+    public String getModel() {
+        return model;
     }
 
-    public ModelingSubmission submissionPath(String submissionPath) {
-        this.submissionPath = submissionPath;
+    public ModelingSubmission model(String model) {
+        this.model = model;
         return this;
     }
 
-    public void setSubmissionPath(String submissionPath) {
-        this.submissionPath = submissionPath;
+    public void setModel(String model) {
+        this.model = model;
+    }
+
+    public String getExplanationText() {
+        return explanationText;
+    }
+
+    public ModelingSubmission explanationText(String explanationText) {
+        this.explanationText = explanationText;
+        return this;
+    }
+
+    public void setExplanationText(String explanationText) {
+        this.explanationText = explanationText;
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
@@ -72,7 +88,8 @@ public class ModelingSubmission implements Serializable {
     public String toString() {
         return "ModelingSubmission{" +
             "id=" + getId() +
-            ", submissionPath='" + getSubmissionPath() + "'" +
+            ", model='" + getModel() + "'" +
+            ", explanationText='" + getExplanationText() + "'" +
             "}";
     }
 }

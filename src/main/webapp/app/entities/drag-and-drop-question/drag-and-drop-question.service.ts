@@ -11,7 +11,7 @@ type EntityArrayResponseType = HttpResponse<IDragAndDropQuestion[]>;
 
 @Injectable({ providedIn: 'root' })
 export class DragAndDropQuestionService {
-    private resourceUrl = SERVER_API_URL + 'api/drag-and-drop-questions';
+    public resourceUrl = SERVER_API_URL + 'api/drag-and-drop-questions';
 
     constructor(private http: HttpClient) {}
 

@@ -1,0 +1,82 @@
+<div>
+    <h2 id="page-heading">
+        <span jhiTranslate="arTeMiSApp.dragAndDropMapping.home.title">Drag And Drop Mappings</span>
+        <button id="jh-create-entity" class="btn btn-primary float-right jh-create-entity create-drag-and-drop-mapping" [routerLink]="['/drag-and-drop-mapping/new']">
+            <fa-icon [icon]="'plus'"></fa-icon>
+            <span  jhiTranslate="arTeMiSApp.dragAndDropMapping.home.createLabel">
+            Create new Drag And Drop Mapping
+            </span>
+        </button>
+    </h2>
+    <jhi-alert></jhi-alert>
+    <br/>
+    <div class="table-responsive" *ngIf="dragAndDropMappings">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+            <th><span jhiTranslate="global.field.id">ID</span></th>
+            <th><span jhiTranslate="arTeMiSApp.dragAndDropMapping.dragItemIndex">Drag Item Index</span></th>
+            <th><span jhiTranslate="arTeMiSApp.dragAndDropMapping.dropLocationIndex">Drop Location Index</span></th>
+            <th><span jhiTranslate="arTeMiSApp.dragAndDropMapping.invalid">Invalid</span></th>
+            <th><span jhiTranslate="arTeMiSApp.dragAndDropMapping.dragItem">Drag Item</span></th>
+            <th><span jhiTranslate="arTeMiSApp.dragAndDropMapping.dropLocation">Drop Location</span></th>
+            <th><span jhiTranslate="arTeMiSApp.dragAndDropMapping.submittedAnswer">Submitted Answer</span></th>
+            <th><span jhiTranslate="arTeMiSApp.dragAndDropMapping.question">Question</span></th>
+            <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr *ngFor="let dragAndDropMapping of dragAndDropMappings ;trackBy: trackId">
+                <td><a [routerLink]="['/drag-and-drop-mapping', dragAndDropMapping.id, 'view' ]">{{dragAndDropMapping.id}}</a></td>
+                <td>{{dragAndDropMapping.dragItemIndex}}</td>
+                <td>{{dragAndDropMapping.dropLocationIndex}}</td>
+                <td>{{dragAndDropMapping.invalid}}</td>
+                <td>
+                    <div *ngIf="dragAndDropMapping.dragItem">
+                        <a [routerLink]="['../drag-item', dragAndDropMapping.dragItem?.id, 'view' ]" >{{dragAndDropMapping.dragItem?.id}}</a>
+                    </div>
+                </td>
+                <td>
+                    <div *ngIf="dragAndDropMapping.dropLocation">
+                        <a [routerLink]="['../drop-location', dragAndDropMapping.dropLocation?.id, 'view' ]" >{{dragAndDropMapping.dropLocation?.id}}</a>
+                    </div>
+                </td>
+                <td>
+                    <div *ngIf="dragAndDropMapping.submittedAnswer">
+                        <a [routerLink]="['../drag-and-drop-submitted-answer', dragAndDropMapping.submittedAnswer?.id, 'view' ]" >{{dragAndDropMapping.submittedAnswer?.id}}</a>
+                    </div>
+                </td>
+                <td>
+                    <div *ngIf="dragAndDropMapping.question">
+                        <a [routerLink]="['../drag-and-drop-question', dragAndDropMapping.question?.id, 'view' ]" >{{dragAndDropMapping.question?.id}}</a>
+                    </div>
+                </td>
+                <td class="text-right">
+                    <div class="btn-group flex-btn-group-container">
+                        <button type="submit"
+                                [routerLink]="['/drag-and-drop-mapping', dragAndDropMapping.id, 'view' ]"
+                                class="btn btn-info btn-sm">
+                            <fa-icon [icon]="'eye'"></fa-icon>
+                            <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
+                        </button>
+                        <button type="submit"
+                                [routerLink]="['/drag-and-drop-mapping', dragAndDropMapping.id, 'edit']"
+                                class="btn btn-primary btn-sm">
+                            <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                            <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                        </button>
+                        <button type="submit"
+                                [routerLink]="['/', { outlets: { popup: 'drag-and-drop-mapping/'+ dragAndDropMapping.id + '/delete'} }]"
+                                replaceUrl="true"
+                                queryParamsHandling="merge"
+                                class="btn btn-danger btn-sm">
+                            <fa-icon [icon]="'times'"></fa-icon>
+                            <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

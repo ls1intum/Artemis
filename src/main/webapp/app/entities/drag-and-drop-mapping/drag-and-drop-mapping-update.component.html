@@ -1,0 +1,67 @@
+<div class="row justify-content-center">
+    <div class="col-8">
+        <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
+            <h2 id="jhi-drag-and-drop-mapping-heading" jhiTranslate="arTeMiSApp.dragAndDropMapping.home.createOrEditLabel">Create or edit a Drag And Drop Mapping</h2>
+            <div>
+                <jhi-alert-error></jhi-alert-error>
+                <div class="form-group" [hidden]="!dragAndDropMapping.id">
+                    <label for="id" jhiTranslate="global.field.id">ID</label>
+                    <input type="text" class="form-control" id="id" name="id"
+                        [(ngModel)]="dragAndDropMapping.id" readonly />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.dragAndDropMapping.dragItemIndex" for="field_dragItemIndex">Drag Item Index</label>
+                    <input type="number" class="form-control" name="dragItemIndex" id="field_dragItemIndex"
+                        [(ngModel)]="dragAndDropMapping.dragItemIndex" />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.dragAndDropMapping.dropLocationIndex" for="field_dropLocationIndex">Drop Location Index</label>
+                    <input type="number" class="form-control" name="dropLocationIndex" id="field_dropLocationIndex"
+                        [(ngModel)]="dragAndDropMapping.dropLocationIndex" />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.dragAndDropMapping.invalid" for="field_invalid">Invalid</label>
+                    <input type="checkbox" class="form-control" name="invalid" id="field_invalid"
+                        [(ngModel)]="dragAndDropMapping.invalid" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.dragAndDropMapping.dragItem" for="field_dragItem">Drag Item</label>
+                    <select class="form-control" id="field_dragItem" name="dragItem" [(ngModel)]="dragAndDropMapping.dragItem" >
+                        <option [ngValue]="null"></option>
+                        <option [ngValue]="dragItemOption.id === dragAndDropMapping.dragItem?.id ? dragAndDropMapping.dragItem : dragItemOption" *ngFor="let dragItemOption of dragitems; trackBy: trackDragItemById">{{dragItemOption.id}}</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.dragAndDropMapping.dropLocation" for="field_dropLocation">Drop Location</label>
+                    <select class="form-control" id="field_dropLocation" name="dropLocation" [(ngModel)]="dragAndDropMapping.dropLocation" >
+                        <option [ngValue]="null"></option>
+                        <option [ngValue]="dropLocationOption.id === dragAndDropMapping.dropLocation?.id ? dragAndDropMapping.dropLocation : dropLocationOption" *ngFor="let dropLocationOption of droplocations; trackBy: trackDropLocationById">{{dropLocationOption.id}}</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.dragAndDropMapping.submittedAnswer" for="field_submittedAnswer">Submitted Answer</label>
+                    <select class="form-control" id="field_submittedAnswer" name="submittedAnswer" [(ngModel)]="dragAndDropMapping.submittedAnswer" >
+                        <option [ngValue]="null"></option>
+                        <option [ngValue]="dragAndDropSubmittedAnswerOption.id === dragAndDropMapping.submittedAnswer?.id ? dragAndDropMapping.submittedAnswer : dragAndDropSubmittedAnswerOption" *ngFor="let dragAndDropSubmittedAnswerOption of draganddropsubmittedanswers; trackBy: trackDragAndDropSubmittedAnswerById">{{dragAndDropSubmittedAnswerOption.id}}</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.dragAndDropMapping.question" for="field_question">Question</label>
+                    <select class="form-control" id="field_question" name="question" [(ngModel)]="dragAndDropMapping.question" >
+                        <option [ngValue]="null"></option>
+                        <option [ngValue]="dragAndDropQuestionOption.id === dragAndDropMapping.question?.id ? dragAndDropMapping.question : dragAndDropQuestionOption" *ngFor="let dragAndDropQuestionOption of draganddropquestions; trackBy: trackDragAndDropQuestionById">{{dragAndDropQuestionOption.id}}</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <button type="button" id="cancel-save" class="btn btn-secondary"  (click)="previousState()">
+                    <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                </button>
+                <button type="submit" id="save-entity" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
+                    <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

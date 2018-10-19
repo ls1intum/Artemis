@@ -19,12 +19,24 @@
                     <input type="text" class="form-control" name="detailText" id="field_detailText"
                         [(ngModel)]="feedback.detailText" />
                 </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.feedback.positive" for="field_positive">Positive</label>
+                    <input type="checkbox" class="form-control" name="positive" id="field_positive"
+                        [(ngModel)]="feedback.positive" />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.feedback.type" for="field_type">Type</label>
+                    <select class="form-control" name="type" [(ngModel)]="feedback.type" id="field_type" >
+                        <option value="AUTOMATIC">{{'arTeMiSApp.FeedbackType.AUTOMATIC' | translate}}</option>
+                        <option value="MANUAL">{{'arTeMiSApp.FeedbackType.MANUAL' | translate}}</option>
+                    </select>
+                </div>
 
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="arTeMiSApp.feedback.result" for="field_result">Result</label>
                     <select class="form-control" id="field_result" name="result" [(ngModel)]="feedback.result" >
                         <option [ngValue]="null"></option>
-                        <option [ngValue]="resultOption.id === feedback.result?.id ? feedback.result : resultOption" *ngFor="let resultOption of results; trackBy: trackResultById">{{resultOption.id}}</option>
+                        <option [ngValue]="exerciseResultOption.id === feedback.result?.id ? feedback.result : exerciseResultOption" *ngFor="let exerciseResultOption of exerciseresults; trackBy: trackExerciseResultById">{{exerciseResultOption.id}}</option>
                     </select>
                 </div>
             </div>

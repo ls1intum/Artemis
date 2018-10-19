@@ -1,4 +1,5 @@
-import { IQuestion } from 'app/shared/model/question.model';
+import { IQuizPointStatistic } from 'app/shared/model//quiz-point-statistic.model';
+import { IQuestion } from 'app/shared/model//question.model';
 
 export interface IQuizExercise {
     id?: number;
@@ -10,6 +11,7 @@ export interface IQuizExercise {
     isOpenForPractice?: boolean;
     isPlannedToStart?: boolean;
     duration?: number;
+    quizPointStatistic?: IQuizPointStatistic;
     questions?: IQuestion[];
 }
 
@@ -24,6 +26,7 @@ export class QuizExercise implements IQuizExercise {
         public isOpenForPractice?: boolean,
         public isPlannedToStart?: boolean,
         public duration?: number,
+        public quizPointStatistic?: IQuizPointStatistic,
         public questions?: IQuestion[]
     ) {
         this.randomizeQuestionOrder = this.randomizeQuestionOrder || false;

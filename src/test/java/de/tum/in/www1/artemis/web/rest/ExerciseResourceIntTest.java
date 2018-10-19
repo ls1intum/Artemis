@@ -35,6 +35,7 @@ import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 /**
  * Test class for the ExerciseResource REST controller.
  *
@@ -44,6 +45,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(classes = ArTeMiSApp.class)
 public class ExerciseResourceIntTest {
 
+    private static final String DEFAULT_PROBLEM_STATEMENT = "AAAAAAAAAA";
+    private static final String UPDATED_PROBLEM_STATEMENT = "BBBBBBBBBB";
+
+    private static final String DEFAULT_GRADING_INSTRUCTIONS = "AAAAAAAAAA";
+    private static final String UPDATED_GRADING_INSTRUCTIONS = "BBBBBBBBBB";
+
     private static final String DEFAULT_TITLE = "AAAAAAAAAA";
     private static final String UPDATED_TITLE = "BBBBBBBBBB";
 
@@ -52,6 +59,15 @@ public class ExerciseResourceIntTest {
 
     private static final ZonedDateTime DEFAULT_DUE_DATE = ZonedDateTime.ofInstant(Instant.ofEpochMilli(0L), ZoneOffset.UTC);
     private static final ZonedDateTime UPDATED_DUE_DATE = ZonedDateTime.now(ZoneId.systemDefault()).withNano(0);
+
+    private static final Double DEFAULT_MAX_SCORE = 1D;
+    private static final Double UPDATED_MAX_SCORE = 2D;
+
+    private static final DifficultyLevel DEFAULT_DIFFICULTY = DifficultyLevel.EASY;
+    private static final DifficultyLevel UPDATED_DIFFICULTY = DifficultyLevel.MEDIUM;
+
+    private static final String DEFAULT_CATEGORIES = "AAAAAAAAAA";
+    private static final String UPDATED_CATEGORIES = "BBBBBBBBBB";
 
     @Autowired
     private ExerciseRepository exerciseRepository;
@@ -91,9 +107,14 @@ public class ExerciseResourceIntTest {
      */
     public static Exercise createEntity(EntityManager em) {
         Exercise exercise = new Exercise()
+            .problemStatement(DEFAULT_PROBLEM_STATEMENT)
+            .gradingInstructions(DEFAULT_GRADING_INSTRUCTIONS)
             .title(DEFAULT_TITLE)
             .releaseDate(DEFAULT_RELEASE_DATE)
-            .dueDate(DEFAULT_DUE_DATE);
+            .dueDate(DEFAULT_DUE_DATE)
+            .maxScore(DEFAULT_MAX_SCORE)
+            .difficulty(DEFAULT_DIFFICULTY)
+            .categories(DEFAULT_CATEGORIES);
         return exercise;
     }
 
@@ -117,9 +138,14 @@ public class ExerciseResourceIntTest {
         List<Exercise> exerciseList = exerciseRepository.findAll();
         assertThat(exerciseList).hasSize(databaseSizeBeforeCreate + 1);
         Exercise testExercise = exerciseList.get(exerciseList.size() - 1);
+        assertThat(testExercise.getProblemStatement()).isEqualTo(DEFAULT_PROBLEM_STATEMENT);
+        assertThat(testExercise.getGradingInstructions()).isEqualTo(DEFAULT_GRADING_INSTRUCTIONS);
         assertThat(testExercise.getTitle()).isEqualTo(DEFAULT_TITLE);
         assertThat(testExercise.getReleaseDate()).isEqualTo(DEFAULT_RELEASE_DATE);
         assertThat(testExercise.getDueDate()).isEqualTo(DEFAULT_DUE_DATE);
+        assertThat(testExercise.getMaxScore()).isEqualTo(DEFAULT_MAX_SCORE);
+        assertThat(testExercise.getDifficulty()).isEqualTo(DEFAULT_DIFFICULTY);
+        assertThat(testExercise.getCategories()).isEqualTo(DEFAULT_CATEGORIES);
     }
 
     @Test
@@ -152,9 +178,14 @@ public class ExerciseResourceIntTest {
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(exercise.getId().intValue())))
+            .andExpect(jsonPath("$.[*].problemStatement").value(hasItem(DEFAULT_PROBLEM_STATEMENT.toString())))
+            .andExpect(jsonPath("$.[*].gradingInstructions").value(hasItem(DEFAULT_GRADING_INSTRUCTIONS.toString())))
             .andExpect(jsonPath("$.[*].title").value(hasItem(DEFAULT_TITLE.toString())))
             .andExpect(jsonPath("$.[*].releaseDate").value(hasItem(sameInstant(DEFAULT_RELEASE_DATE))))
-            .andExpect(jsonPath("$.[*].dueDate").value(hasItem(sameInstant(DEFAULT_DUE_DATE))));
+            .andExpect(jsonPath("$.[*].dueDate").value(hasItem(sameInstant(DEFAULT_DUE_DATE))))
+            .andExpect(jsonPath("$.[*].maxScore").value(hasItem(DEFAULT_MAX_SCORE.doubleValue())))
+            .andExpect(jsonPath("$.[*].difficulty").value(hasItem(DEFAULT_DIFFICULTY.toString())))
+            .andExpect(jsonPath("$.[*].categories").value(hasItem(DEFAULT_CATEGORIES.toString())));
     }
     
     @Test
@@ -168,9 +199,14 @@ public class ExerciseResourceIntTest {
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.id").value(exercise.getId().intValue()))
+            .andExpect(jsonPath("$.problemStatement").value(DEFAULT_PROBLEM_STATEMENT.toString()))
+            .andExpect(jsonPath("$.gradingInstructions").value(DEFAULT_GRADING_INSTRUCTIONS.toString()))
             .andExpect(jsonPath("$.title").value(DEFAULT_TITLE.toString()))
             .andExpect(jsonPath("$.releaseDate").value(sameInstant(DEFAULT_RELEASE_DATE)))
-            .andExpect(jsonPath("$.dueDate").value(sameInstant(DEFAULT_DUE_DATE)));
+            .andExpect(jsonPath("$.dueDate").value(sameInstant(DEFAULT_DUE_DATE)))
+            .andExpect(jsonPath("$.maxScore").value(DEFAULT_MAX_SCORE.doubleValue()))
+            .andExpect(jsonPath("$.difficulty").value(DEFAULT_DIFFICULTY.toString()))
+            .andExpect(jsonPath("$.categories").value(DEFAULT_CATEGORIES.toString()));
     }
 
     @Test
@@ -194,9 +230,14 @@ public class ExerciseResourceIntTest {
         // Disconnect from session so that the updates on updatedExercise are not directly saved in db
         em.detach(updatedExercise);
         updatedExercise
+            .problemStatement(UPDATED_PROBLEM_STATEMENT)
+            .gradingInstructions(UPDATED_GRADING_INSTRUCTIONS)
             .title(UPDATED_TITLE)
             .releaseDate(UPDATED_RELEASE_DATE)
-            .dueDate(UPDATED_DUE_DATE);
+            .dueDate(UPDATED_DUE_DATE)
+            .maxScore(UPDATED_MAX_SCORE)
+            .difficulty(UPDATED_DIFFICULTY)
+            .categories(UPDATED_CATEGORIES);
 
         restExerciseMockMvc.perform(put("/api/exercises")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -207,9 +248,14 @@ public class ExerciseResourceIntTest {
         List<Exercise> exerciseList = exerciseRepository.findAll();
         assertThat(exerciseList).hasSize(databaseSizeBeforeUpdate);
         Exercise testExercise = exerciseList.get(exerciseList.size() - 1);
+        assertThat(testExercise.getProblemStatement()).isEqualTo(UPDATED_PROBLEM_STATEMENT);
+        assertThat(testExercise.getGradingInstructions()).isEqualTo(UPDATED_GRADING_INSTRUCTIONS);
         assertThat(testExercise.getTitle()).isEqualTo(UPDATED_TITLE);
         assertThat(testExercise.getReleaseDate()).isEqualTo(UPDATED_RELEASE_DATE);
         assertThat(testExercise.getDueDate()).isEqualTo(UPDATED_DUE_DATE);
+        assertThat(testExercise.getMaxScore()).isEqualTo(UPDATED_MAX_SCORE);
+        assertThat(testExercise.getDifficulty()).isEqualTo(UPDATED_DIFFICULTY);
+        assertThat(testExercise.getCategories()).isEqualTo(UPDATED_CATEGORIES);
     }
 
     @Test

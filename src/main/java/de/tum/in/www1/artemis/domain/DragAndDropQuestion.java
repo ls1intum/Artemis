@@ -31,11 +31,12 @@ public class DragAndDropQuestion implements Serializable {
     @OneToMany(mappedBy = "question")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<DropLocation> dropLocations = new HashSet<>();
-
     @OneToMany(mappedBy = "question")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<DragItem> dragItems = new HashSet<>();
-
+    @OneToMany(mappedBy = "question")
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    private Set<DragAndDropMapping> correctMappings = new HashSet<>();
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
         return id;
@@ -106,6 +107,31 @@ public class DragAndDropQuestion implements Serializable {
 
     public void setDragItems(Set<DragItem> dragItems) {
         this.dragItems = dragItems;
+    }
+
+    public Set<DragAndDropMapping> getCorrectMappings() {
+        return correctMappings;
+    }
+
+    public DragAndDropQuestion correctMappings(Set<DragAndDropMapping> dragAndDropMappings) {
+        this.correctMappings = dragAndDropMappings;
+        return this;
+    }
+
+    public DragAndDropQuestion addCorrectMappings(DragAndDropMapping dragAndDropMapping) {
+        this.correctMappings.add(dragAndDropMapping);
+        dragAndDropMapping.setQuestion(this);
+        return this;
+    }
+
+    public DragAndDropQuestion removeCorrectMappings(DragAndDropMapping dragAndDropMapping) {
+        this.correctMappings.remove(dragAndDropMapping);
+        dragAndDropMapping.setQuestion(null);
+        return this;
+    }
+
+    public void setCorrectMappings(Set<DragAndDropMapping> dragAndDropMappings) {
+        this.correctMappings = dragAndDropMappings;
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 

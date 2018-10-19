@@ -13,7 +13,7 @@ import { IUser, UserService } from 'app/core';
     templateUrl: './lti-user-id-update.component.html'
 })
 export class LtiUserIdUpdateComponent implements OnInit {
-    private _ltiUserId: ILtiUserId;
+    ltiUserId: ILtiUserId;
     isSaving: boolean;
 
     users: IUser[];
@@ -70,12 +70,5 @@ export class LtiUserIdUpdateComponent implements OnInit {
 
     trackUserById(index: number, item: IUser) {
         return item.id;
-    }
-    get ltiUserId() {
-        return this._ltiUserId;
-    }
-
-    set ltiUserId(ltiUserId: ILtiUserId) {
-        this._ltiUserId = ltiUserId;
     }
 }

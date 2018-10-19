@@ -28,7 +28,7 @@ public class FeedbackResource {
 
     private static final String ENTITY_NAME = "feedback";
 
-    private final FeedbackRepository feedbackRepository;
+    private FeedbackRepository feedbackRepository;
 
     public FeedbackResource(FeedbackRepository feedbackRepository) {
         this.feedbackRepository = feedbackRepository;

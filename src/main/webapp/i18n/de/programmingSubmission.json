@@ -1,0 +1,22 @@
+
+{
+    "arTeMiSApp": {
+        "programmingSubmission" : {
+            "home": {
+                "title": "Programming Submissions",
+                "createLabel": "Programming Submission erstellen",
+                "createOrEditLabel": "Programming Submission erstellen oder bearbeiten"
+            },
+            "created": "Programming Submission erstellt mit ID {{ param }}",
+            "updated": "Programming Submission aktualisiert mit ID {{ param }}",
+            "deleted": "Programming Submission gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Programming Submission {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Programming Submission"
+            },
+            "commitHash": "Commit Hash"
+        }
+    }
+}

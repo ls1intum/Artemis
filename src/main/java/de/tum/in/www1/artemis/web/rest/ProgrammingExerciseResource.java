@@ -28,7 +28,7 @@ public class ProgrammingExerciseResource {
 
     private static final String ENTITY_NAME = "programmingExercise";
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;

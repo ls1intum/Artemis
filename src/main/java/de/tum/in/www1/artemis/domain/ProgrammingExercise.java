@@ -25,6 +25,9 @@ public class ProgrammingExercise implements Serializable {
     @Column(name = "base_repository_url")
     private String baseRepositoryUrl;
 
+    @Column(name = "solution_repository_url")
+    private String solutionRepositoryUrl;
+
     @Column(name = "base_build_plan_id")
     private String baseBuildPlanId;
 
@@ -54,6 +57,19 @@ public class ProgrammingExercise implements Serializable {
 
     public void setBaseRepositoryUrl(String baseRepositoryUrl) {
         this.baseRepositoryUrl = baseRepositoryUrl;
+    }
+
+    public String getSolutionRepositoryUrl() {
+        return solutionRepositoryUrl;
+    }
+
+    public ProgrammingExercise solutionRepositoryUrl(String solutionRepositoryUrl) {
+        this.solutionRepositoryUrl = solutionRepositoryUrl;
+        return this;
+    }
+
+    public void setSolutionRepositoryUrl(String solutionRepositoryUrl) {
+        this.solutionRepositoryUrl = solutionRepositoryUrl;
     }
 
     public String getBaseBuildPlanId() {
@@ -121,6 +137,7 @@ public class ProgrammingExercise implements Serializable {
         return "ProgrammingExercise{" +
             "id=" + getId() +
             ", baseRepositoryUrl='" + getBaseRepositoryUrl() + "'" +
+            ", solutionRepositoryUrl='" + getSolutionRepositoryUrl() + "'" +
             ", baseBuildPlanId='" + getBaseBuildPlanId() + "'" +
             ", publishBuildPlanUrl='" + isPublishBuildPlanUrl() + "'" +
             ", allowOnlineEditor='" + isAllowOnlineEditor() + "'" +

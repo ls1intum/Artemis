@@ -25,8 +25,7 @@ public class LtiUserId implements Serializable {
     @Column(name = "lti_user_id")
     private String ltiUserId;
 
-    @OneToOne
-    @JoinColumn(unique = true)
+    @OneToOne    @JoinColumn(unique = true)
     private User user;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove

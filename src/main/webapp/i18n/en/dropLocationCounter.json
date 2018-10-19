@@ -1,0 +1,23 @@
+
+{
+    "arTeMiSApp": {
+        "dropLocationCounter" : {
+            "home": {
+                "title": "Drop Location Counters",
+                "createLabel": "Create a new Drop Location Counter",
+                "createOrEditLabel": "Create or edit a Drop Location Counter"
+            },
+            "created": "A new Drop Location Counter is created with identifier {{ param }}",
+            "updated": "A Drop Location Counter is updated with identifier {{ param }}",
+            "deleted": "A Drop Location Counter is deleted with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete Drop Location Counter {{ id }}?"
+            },
+            "detail": {
+                "title": "Drop Location Counter"
+            },
+            "dropLocation": "Drop Location",
+            "dragAndDropQuestionStatistic": "Drag And Drop Question Statistic"
+        }
+    }
+}

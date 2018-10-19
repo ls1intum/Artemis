@@ -1,4 +1,4 @@
-import { IAnswerOption } from 'app/shared/model/answer-option.model';
+import { IAnswerOption } from 'app/shared/model//answer-option.model';
 
 export interface IMultipleChoiceQuestion {
     id?: number;

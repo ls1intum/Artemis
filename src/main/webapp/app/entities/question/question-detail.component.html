@@ -33,6 +33,16 @@
                 <dd>
                     <span>{{question.randomizeOrder}}</span>
                 </dd>
+                <dt><span jhiTranslate="arTeMiSApp.question.invalid">Invalid</span></dt>
+                <dd>
+                    <span>{{question.invalid}}</span>
+                </dd>
+                <dt><span jhiTranslate="arTeMiSApp.question.questionStatistic">Question Statistic</span></dt>
+                <dd>
+                    <div *ngIf="question.questionStatistic">
+                        <a [routerLink]="['/question-statistic', question.questionStatistic?.id, 'view']">{{question.questionStatistic?.id}}</a>
+                    </div>
+                </dd>
                 <dt><span jhiTranslate="arTeMiSApp.question.exercise">Exercise</span></dt>
                 <dd>
                     <div *ngIf="question.exercise">

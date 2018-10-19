@@ -1,0 +1,31 @@
+<div class="row justify-content-center">
+    <div class="col-8">
+        <div *ngIf="questionStatistic">
+            <h2><span jhiTranslate="arTeMiSApp.questionStatistic.detail.title">Question Statistic</span> {{questionStatistic.id}}</h2>
+            <hr>
+            <jhi-alert-error></jhi-alert-error>
+            <dl class="row-md jh-entity-details">
+                <dt><span jhiTranslate="arTeMiSApp.questionStatistic.ratedCorrectCounter">Rated Correct Counter</span></dt>
+                <dd>
+                    <span>{{questionStatistic.ratedCorrectCounter}}</span>
+                </dd>
+                <dt><span jhiTranslate="arTeMiSApp.questionStatistic.unRatedCorrectCounter">Un Rated Correct Counter</span></dt>
+                <dd>
+                    <span>{{questionStatistic.unRatedCorrectCounter}}</span>
+                </dd>
+            </dl>
+
+            <button type="submit"
+                    (click)="previousState()"
+                    class="btn btn-info">
+                <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
+            </button>
+
+            <button type="button"
+                    [routerLink]="['/question-statistic', questionStatistic.id, 'edit']"
+                    class="btn btn-primary">
+                <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+            </button>
+        </div>
+    </div>
+</div>

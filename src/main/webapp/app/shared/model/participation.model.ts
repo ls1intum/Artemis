@@ -1,9 +1,10 @@
 import { Moment } from 'moment';
-import { IResult } from 'app/shared/model/result.model';
+import { IExerciseResult } from 'app/shared/model//exercise-result.model';
+import { ISubmission } from 'app/shared/model//submission.model';
 import { IUser } from 'app/core/user/user.model';
-import { IExercise } from 'app/shared/model/exercise.model';
+import { IExercise } from 'app/shared/model//exercise.model';
 
-export const enum ParticipationState {
+export const enum InitializationState {
     UNINITIALIZED = 'UNINITIALIZED',
     REPO_COPIED = 'REPO_COPIED',
     REPO_CONFIGURED = 'REPO_CONFIGURED',
@@ -16,9 +17,11 @@ export interface IParticipation {
     id?: number;
     repositoryUrl?: string;
     buildPlanId?: string;
-    initializationState?: ParticipationState;
+    initializationState?: InitializationState;
     initializationDate?: Moment;
-    results?: IResult[];
+    presentationScore?: number;
+    results?: IExerciseResult[];
+    submissions?: ISubmission[];
     student?: IUser;
     exercise?: IExercise;
 }
@@ -28,9 +31,11 @@ export class Participation implements IParticipation {
         public id?: number,
         public repositoryUrl?: string,
         public buildPlanId?: string,
-        public initializationState?: ParticipationState,
+        public initializationState?: InitializationState,
         public initializationDate?: Moment,
-        public results?: IResult[],
+        public presentationScore?: number,
+        public results?: IExerciseResult[],
+        public submissions?: ISubmission[],
         public student?: IUser,
         public exercise?: IExercise
     ) {}

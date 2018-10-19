@@ -14,7 +14,7 @@ import { DragAndDropQuestionService } from 'app/entities/drag-and-drop-question'
     templateUrl: './drop-location-update.component.html'
 })
 export class DropLocationUpdateComponent implements OnInit {
-    private _dropLocation: IDropLocation;
+    dropLocation: IDropLocation;
     isSaving: boolean;
 
     draganddropquestions: IDragAndDropQuestion[];
@@ -71,12 +71,5 @@ export class DropLocationUpdateComponent implements OnInit {
 
     trackDragAndDropQuestionById(index: number, item: IDragAndDropQuestion) {
         return item.id;
-    }
-    get dropLocation() {
-        return this._dropLocation;
-    }
-
-    set dropLocation(dropLocation: IDropLocation) {
-        this._dropLocation = dropLocation;
     }
 }

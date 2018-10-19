@@ -1,16 +1,18 @@
 /* tslint:disable max-line-length */
 import { TestBed, getTestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpClient, HttpResponse } from '@angular/common/http';
+import { of } from 'rxjs';
+import { take, map } from 'rxjs/operators';
 import { LtiOutcomeUrlService } from 'app/entities/lti-outcome-url/lti-outcome-url.service';
-import { LtiOutcomeUrl } from 'app/shared/model/lti-outcome-url.model';
-import { SERVER_API_URL } from 'app/app.constants';
+import { ILtiOutcomeUrl, LtiOutcomeUrl } from 'app/shared/model/lti-outcome-url.model';
 
 describe('Service Tests', () => {
     describe('LtiOutcomeUrl Service', () => {
         let injector: TestBed;
         let service: LtiOutcomeUrlService;
         let httpMock: HttpTestingController;
-
+        let elemDefault: ILtiOutcomeUrl;
         beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [HttpClientTestingModule]
@@ -18,73 +20,82 @@ describe('Service Tests', () => {
             injector = getTestBed();
             service = injector.get(LtiOutcomeUrlService);
             httpMock = injector.get(HttpTestingController);
+
+            elemDefault = new LtiOutcomeUrl(0, 'AAAAAAA', 'AAAAAAA');
         });
 
-        describe('Service methods', () => {
-            it('should call correct URL', () => {
-                service.find(123).subscribe(() => {});
+        describe('Service methods', async () => {
+            it('should find an element', async () => {
+                const returnedFromService = Object.assign({}, elemDefault);
+                service
+                    .find(123)
+                    .pipe(take(1))
+                    .subscribe(resp => expect(resp).toMatchObject({ body: elemDefault }));
 
                 const req = httpMock.expectOne({ method: 'GET' });
-
-                const resourceUrl = SERVER_API_URL + 'api/lti-outcome-urls';
-                expect(req.request.url).toEqual(resourceUrl + '/' + 123);
+                req.flush(JSON.stringify(returnedFromService));
             });
 
-            it('should create a LtiOutcomeUrl', () => {
-                service.create(new LtiOutcomeUrl(null)).subscribe(received => {
-                    expect(received.body.id).toEqual(null);
-                });
-
+            it('should create a LtiOutcomeUrl', async () => {
+                const returnedFromService = Object.assign(
+                    {
+                        id: 0
+                    },
+                    elemDefault
+                );
+                const expected = Object.assign({}, returnedFromService);
+                service
+                    .create(new LtiOutcomeUrl(null))
+                    .pipe(take(1))
+                    .subscribe(resp => expect(resp).toMatchObject({ body: expected }));
                 const req = httpMock.expectOne({ method: 'POST' });
-                req.flush({ id: null });
+                req.flush(JSON.stringify(returnedFromService));
             });
 
-            it('should update a LtiOutcomeUrl', () => {
-                service.update(new LtiOutcomeUrl(123)).subscribe(received => {
-                    expect(received.body.id).toEqual(123);
-                });
+            it('should update a LtiOutcomeUrl', async () => {
+                const returnedFromService = Object.assign(
+                    {
+                        url: 'BBBBBB',
+                        sourcedId: 'BBBBBB'
+                    },
+                    elemDefault
+                );
 
+                const expected = Object.assign({}, returnedFromService);
+                service
+                    .update(expected)
+                    .pipe(take(1))
+                    .subscribe(resp => expect(resp).toMatchObject({ body: expected }));
                 const req = httpMock.expectOne({ method: 'PUT' });
-                req.flush({ id: 123 });
+                req.flush(JSON.stringify(returnedFromService));
             });
 
-            it('should return a LtiOutcomeUrl', () => {
-                service.find(123).subscribe(received => {
-                    expect(received.body.id).toEqual(123);
-                });
-
+            it('should return a list of LtiOutcomeUrl', async () => {
+                const returnedFromService = Object.assign(
+                    {
+                        url: 'BBBBBB',
+                        sourcedId: 'BBBBBB'
+                    },
+                    elemDefault
+                );
+                const expected = Object.assign({}, returnedFromService);
+                service
+                    .query(expected)
+                    .pipe(
+                        take(1),
+                        map(resp => resp.body)
+                    )
+                    .subscribe(body => expect(body).toContainEqual(expected));
                 const req = httpMock.expectOne({ method: 'GET' });
-                req.flush({ id: 123 });
+                req.flush(JSON.stringify([returnedFromService]));
+                httpMock.verify();
             });
 
-            it('should return a list of LtiOutcomeUrl', () => {
-                service.query(null).subscribe(received => {
-                    expect(received.body[0].id).toEqual(123);
-                });
-
-                const req = httpMock.expectOne({ method: 'GET' });
-                req.flush([new LtiOutcomeUrl(123)]);
-            });
-
-            it('should delete a LtiOutcomeUrl', () => {
-                service.delete(123).subscribe(received => {
-                    expect(received.url).toContain('/' + 123);
-                });
+            it('should delete a LtiOutcomeUrl', async () => {
+                const rxPromise = service.delete(123).subscribe(resp => expect(resp.ok));
 
                 const req = httpMock.expectOne({ method: 'DELETE' });
-                req.flush(null);
-            });
-
-            it('should propagate not found response', () => {
-                service.find(123).subscribe(null, (_error: any) => {
-                    expect(_error.status).toEqual(404);
-                });
-
-                const req = httpMock.expectOne({ method: 'GET' });
-                req.flush('Invalid request parameters', {
-                    status: 404,
-                    statusText: 'Bad Request'
-                });
+                req.flush({ status: 200 });
             });
         });
 

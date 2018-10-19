@@ -1,0 +1,78 @@
+<div>
+    <h2 id="page-heading">
+        <span jhiTranslate="arTeMiSApp.exerciseResult.home.title">Exercise Results</span>
+        <button id="jh-create-entity" class="btn btn-primary float-right jh-create-entity create-exercise-result" [routerLink]="['/exercise-result/new']">
+            <fa-icon [icon]="'plus'"></fa-icon>
+            <span  jhiTranslate="arTeMiSApp.exerciseResult.home.createLabel">
+            Create new Exercise Result
+            </span>
+        </button>
+    </h2>
+    <jhi-alert></jhi-alert>
+    <br/>
+    <div class="table-responsive" *ngIf="exerciseResults">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+            <th><span jhiTranslate="global.field.id">ID</span></th>
+            <th><span jhiTranslate="arTeMiSApp.exerciseResult.resultString">Result String</span></th>
+            <th><span jhiTranslate="arTeMiSApp.exerciseResult.completionDate">Completion Date</span></th>
+            <th><span jhiTranslate="arTeMiSApp.exerciseResult.successful">Successful</span></th>
+            <th><span jhiTranslate="arTeMiSApp.exerciseResult.buildArtifact">Build Artifact</span></th>
+            <th><span jhiTranslate="arTeMiSApp.exerciseResult.score">Score</span></th>
+            <th><span jhiTranslate="arTeMiSApp.exerciseResult.rated">Rated</span></th>
+            <th><span jhiTranslate="arTeMiSApp.exerciseResult.hasFeedback">Has Feedback</span></th>
+            <th><span jhiTranslate="arTeMiSApp.exerciseResult.assessmentType">Assessment Type</span></th>
+            <th><span jhiTranslate="arTeMiSApp.exerciseResult.assessor">Assessor</span></th>
+            <th><span jhiTranslate="arTeMiSApp.exerciseResult.participation">Participation</span></th>
+            <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr *ngFor="let exerciseResult of exerciseResults ;trackBy: trackId">
+                <td><a [routerLink]="['/exercise-result', exerciseResult.id, 'view' ]">{{exerciseResult.id}}</a></td>
+                <td>{{exerciseResult.resultString}}</td>
+                <td>{{exerciseResult.completionDate | date:'medium'}}</td>
+                <td>{{exerciseResult.successful}}</td>
+                <td>{{exerciseResult.buildArtifact}}</td>
+                <td>{{exerciseResult.score}}</td>
+                <td>{{exerciseResult.rated}}</td>
+                <td>{{exerciseResult.hasFeedback}}</td>
+                <td jhiTranslate="{{'arTeMiSApp.AssessmentType.' + exerciseResult.assessmentType}}">{{exerciseResult.assessmentType}}</td>
+                <td>
+                    {{exerciseResult.assessor?.id}}
+                </td>
+                <td>
+                    <div *ngIf="exerciseResult.participation">
+                        <a [routerLink]="['../participation', exerciseResult.participation?.id, 'view' ]" >{{exerciseResult.participation?.id}}</a>
+                    </div>
+                </td>
+                <td class="text-right">
+                    <div class="btn-group flex-btn-group-container">
+                        <button type="submit"
+                                [routerLink]="['/exercise-result', exerciseResult.id, 'view' ]"
+                                class="btn btn-info btn-sm">
+                            <fa-icon [icon]="'eye'"></fa-icon>
+                            <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
+                        </button>
+                        <button type="submit"
+                                [routerLink]="['/exercise-result', exerciseResult.id, 'edit']"
+                                class="btn btn-primary btn-sm">
+                            <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                            <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                        </button>
+                        <button type="submit"
+                                [routerLink]="['/', { outlets: { popup: 'exercise-result/'+ exerciseResult.id + '/delete'} }]"
+                                replaceUrl="true"
+                                queryParamsHandling="merge"
+                                class="btn btn-danger btn-sm">
+                            <fa-icon [icon]="'times'"></fa-icon>
+                            <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

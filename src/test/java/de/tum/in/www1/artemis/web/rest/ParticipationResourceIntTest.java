@@ -36,7 +36,7 @@ import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import de.tum.in.www1.artemis.domain.enumeration.ParticipationState;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 /**
  * Test class for the ParticipationResource REST controller.
  *
@@ -52,11 +52,14 @@ public class ParticipationResourceIntTest {
     private static final String DEFAULT_BUILD_PLAN_ID = "AAAAAAAAAA";
     private static final String UPDATED_BUILD_PLAN_ID = "BBBBBBBBBB";
 
-    private static final ParticipationState DEFAULT_INITIALIZATION_STATE = ParticipationState.UNINITIALIZED;
-    private static final ParticipationState UPDATED_INITIALIZATION_STATE = ParticipationState.REPO_COPIED;
+    private static final InitializationState DEFAULT_INITIALIZATION_STATE = InitializationState.UNINITIALIZED;
+    private static final InitializationState UPDATED_INITIALIZATION_STATE = InitializationState.REPO_COPIED;
 
     private static final ZonedDateTime DEFAULT_INITIALIZATION_DATE = ZonedDateTime.ofInstant(Instant.ofEpochMilli(0L), ZoneOffset.UTC);
     private static final ZonedDateTime UPDATED_INITIALIZATION_DATE = ZonedDateTime.now(ZoneId.systemDefault()).withNano(0);
+
+    private static final Integer DEFAULT_PRESENTATION_SCORE = 1;
+    private static final Integer UPDATED_PRESENTATION_SCORE = 2;
 
     @Autowired
     private ParticipationRepository participationRepository;
@@ -102,7 +105,8 @@ public class ParticipationResourceIntTest {
             .repositoryUrl(DEFAULT_REPOSITORY_URL)
             .buildPlanId(DEFAULT_BUILD_PLAN_ID)
             .initializationState(DEFAULT_INITIALIZATION_STATE)
-            .initializationDate(DEFAULT_INITIALIZATION_DATE);
+            .initializationDate(DEFAULT_INITIALIZATION_DATE)
+            .presentationScore(DEFAULT_PRESENTATION_SCORE);
         return participation;
     }
 
@@ -130,6 +134,7 @@ public class ParticipationResourceIntTest {
         assertThat(testParticipation.getBuildPlanId()).isEqualTo(DEFAULT_BUILD_PLAN_ID);
         assertThat(testParticipation.getInitializationState()).isEqualTo(DEFAULT_INITIALIZATION_STATE);
         assertThat(testParticipation.getInitializationDate()).isEqualTo(DEFAULT_INITIALIZATION_DATE);
+        assertThat(testParticipation.getPresentationScore()).isEqualTo(DEFAULT_PRESENTATION_SCORE);
     }
 
     @Test
@@ -165,7 +170,8 @@ public class ParticipationResourceIntTest {
             .andExpect(jsonPath("$.[*].repositoryUrl").value(hasItem(DEFAULT_REPOSITORY_URL.toString())))
             .andExpect(jsonPath("$.[*].buildPlanId").value(hasItem(DEFAULT_BUILD_PLAN_ID.toString())))
             .andExpect(jsonPath("$.[*].initializationState").value(hasItem(DEFAULT_INITIALIZATION_STATE.toString())))
-            .andExpect(jsonPath("$.[*].initializationDate").value(hasItem(sameInstant(DEFAULT_INITIALIZATION_DATE))));
+            .andExpect(jsonPath("$.[*].initializationDate").value(hasItem(sameInstant(DEFAULT_INITIALIZATION_DATE))))
+            .andExpect(jsonPath("$.[*].presentationScore").value(hasItem(DEFAULT_PRESENTATION_SCORE)));
     }
     
     @Test
@@ -182,7 +188,8 @@ public class ParticipationResourceIntTest {
             .andExpect(jsonPath("$.repositoryUrl").value(DEFAULT_REPOSITORY_URL.toString()))
             .andExpect(jsonPath("$.buildPlanId").value(DEFAULT_BUILD_PLAN_ID.toString()))
             .andExpect(jsonPath("$.initializationState").value(DEFAULT_INITIALIZATION_STATE.toString()))
-            .andExpect(jsonPath("$.initializationDate").value(sameInstant(DEFAULT_INITIALIZATION_DATE)));
+            .andExpect(jsonPath("$.initializationDate").value(sameInstant(DEFAULT_INITIALIZATION_DATE)))
+            .andExpect(jsonPath("$.presentationScore").value(DEFAULT_PRESENTATION_SCORE));
     }
 
     @Test
@@ -209,7 +216,8 @@ public class ParticipationResourceIntTest {
             .repositoryUrl(UPDATED_REPOSITORY_URL)
             .buildPlanId(UPDATED_BUILD_PLAN_ID)
             .initializationState(UPDATED_INITIALIZATION_STATE)
-            .initializationDate(UPDATED_INITIALIZATION_DATE);
+            .initializationDate(UPDATED_INITIALIZATION_DATE)
+            .presentationScore(UPDATED_PRESENTATION_SCORE);
 
         restParticipationMockMvc.perform(put("/api/participations")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -224,6 +232,7 @@ public class ParticipationResourceIntTest {
         assertThat(testParticipation.getBuildPlanId()).isEqualTo(UPDATED_BUILD_PLAN_ID);
         assertThat(testParticipation.getInitializationState()).isEqualTo(UPDATED_INITIALIZATION_STATE);
         assertThat(testParticipation.getInitializationDate()).isEqualTo(UPDATED_INITIALIZATION_DATE);
+        assertThat(testParticipation.getPresentationScore()).isEqualTo(UPDATED_PRESENTATION_SCORE);
     }
 
     @Test

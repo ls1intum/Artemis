@@ -11,7 +11,7 @@ type EntityArrayResponseType = HttpResponse<IMultipleChoiceQuestion[]>;
 
 @Injectable({ providedIn: 'root' })
 export class MultipleChoiceQuestionService {
-    private resourceUrl = SERVER_API_URL + 'api/multiple-choice-questions';
+    public resourceUrl = SERVER_API_URL + 'api/multiple-choice-questions';
 
     constructor(private http: HttpClient) {}
 

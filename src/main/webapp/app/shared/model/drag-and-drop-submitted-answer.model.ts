@@ -1,10 +1,10 @@
-import { IDragAndDropAssignment } from 'app/shared/model/drag-and-drop-assignment.model';
+import { IDragAndDropMapping } from 'app/shared/model//drag-and-drop-mapping.model';
 
 export interface IDragAndDropSubmittedAnswer {
     id?: number;
-    assignments?: IDragAndDropAssignment[];
+    mappings?: IDragAndDropMapping[];
 }
 
 export class DragAndDropSubmittedAnswer implements IDragAndDropSubmittedAnswer {
-    constructor(public id?: number, public assignments?: IDragAndDropAssignment[]) {}
+    constructor(public id?: number, public mappings?: IDragAndDropMapping[]) {}
 }

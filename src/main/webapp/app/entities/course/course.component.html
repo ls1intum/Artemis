@@ -18,6 +18,10 @@
             <th><span jhiTranslate="arTeMiSApp.course.title">Title</span></th>
             <th><span jhiTranslate="arTeMiSApp.course.studentGroupName">Student Group Name</span></th>
             <th><span jhiTranslate="arTeMiSApp.course.teachingAssistantGroupName">Teaching Assistant Group Name</span></th>
+            <th><span jhiTranslate="arTeMiSApp.course.instructorGroupName">Instructor Group Name</span></th>
+            <th><span jhiTranslate="arTeMiSApp.course.startDate">Start Date</span></th>
+            <th><span jhiTranslate="arTeMiSApp.course.endDate">End Date</span></th>
+            <th><span jhiTranslate="arTeMiSApp.course.onlineCourse">Online Course</span></th>
             <th></th>
             </tr>
             </thead>
@@ -27,6 +31,10 @@
                 <td>{{course.title}}</td>
                 <td>{{course.studentGroupName}}</td>
                 <td>{{course.teachingAssistantGroupName}}</td>
+                <td>{{course.instructorGroupName}}</td>
+                <td>{{course.startDate | date:'medium'}}</td>
+                <td>{{course.endDate | date:'medium'}}</td>
+                <td>{{course.onlineCourse}}</td>
                 <td class="text-right">
                     <div class="btn-group flex-btn-group-container">
                         <button type="submit"

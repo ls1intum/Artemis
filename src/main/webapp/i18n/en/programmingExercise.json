@@ -17,6 +17,7 @@
                 "title": "Programming Exercise"
             },
             "baseRepositoryUrl": "Base Repository Url",
+            "solutionRepositoryUrl": "Solution Repository Url",
             "baseBuildPlanId": "Base Build Plan Id",
             "publishBuildPlanUrl": "Publish Build Plan Url",
             "allowOnlineEditor": "Allow Online Editor"

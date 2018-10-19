@@ -16,7 +16,10 @@
             <tr>
             <th><span jhiTranslate="global.field.id">ID</span></th>
             <th><span jhiTranslate="arTeMiSApp.submission.submitted">Submitted</span></th>
+            <th><span jhiTranslate="arTeMiSApp.submission.submissionDate">Submission Date</span></th>
             <th><span jhiTranslate="arTeMiSApp.submission.type">Type</span></th>
+            <th><span jhiTranslate="arTeMiSApp.submission.result">Result</span></th>
+            <th><span jhiTranslate="arTeMiSApp.submission.participation">Participation</span></th>
             <th></th>
             </tr>
             </thead>
@@ -24,7 +27,18 @@
             <tr *ngFor="let submission of submissions ;trackBy: trackId">
                 <td><a [routerLink]="['/submission', submission.id, 'view' ]">{{submission.id}}</a></td>
                 <td>{{submission.submitted}}</td>
+                <td>{{submission.submissionDate | date:'medium'}}</td>
                 <td jhiTranslate="{{'arTeMiSApp.SubmissionType.' + submission.type}}">{{submission.type}}</td>
+                <td>
+                    <div *ngIf="submission.result">
+                        <a [routerLink]="['../exercise-result', submission.result?.id, 'view' ]" >{{submission.result?.id}}</a>
+                    </div>
+                </td>
+                <td>
+                    <div *ngIf="submission.participation">
+                        <a [routerLink]="['../participation', submission.participation?.id, 'view' ]" >{{submission.participation?.id}}</a>
+                    </div>
+                </td>
                 <td class="text-right">
                     <div class="btn-group flex-btn-group-container">
                         <button type="submit"

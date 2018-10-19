@@ -1,4 +1,5 @@
-import { IQuizExercise } from 'app/shared/model/quiz-exercise.model';
+import { IQuestionStatistic } from 'app/shared/model//question-statistic.model';
+import { IQuizExercise } from 'app/shared/model//quiz-exercise.model';
 
 export const enum ScoringType {
     ALL_OR_NOTHING = 'ALL_OR_NOTHING',
@@ -15,6 +16,8 @@ export interface IQuestion {
     score?: number;
     scoringType?: ScoringType;
     randomizeOrder?: boolean;
+    invalid?: boolean;
+    questionStatistic?: IQuestionStatistic;
     exercise?: IQuizExercise;
 }
 
@@ -28,8 +31,11 @@ export class Question implements IQuestion {
         public score?: number,
         public scoringType?: ScoringType,
         public randomizeOrder?: boolean,
+        public invalid?: boolean,
+        public questionStatistic?: IQuestionStatistic,
         public exercise?: IQuizExercise
     ) {
         this.randomizeOrder = this.randomizeOrder || false;
+        this.invalid = this.invalid || false;
     }
 }

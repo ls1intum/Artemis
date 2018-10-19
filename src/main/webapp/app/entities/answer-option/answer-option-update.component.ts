@@ -14,7 +14,7 @@ import { MultipleChoiceQuestionService } from 'app/entities/multiple-choice-ques
     templateUrl: './answer-option-update.component.html'
 })
 export class AnswerOptionUpdateComponent implements OnInit {
-    private _answerOption: IAnswerOption;
+    answerOption: IAnswerOption;
     isSaving: boolean;
 
     multiplechoicequestions: IMultipleChoiceQuestion[];
@@ -71,12 +71,5 @@ export class AnswerOptionUpdateComponent implements OnInit {
 
     trackMultipleChoiceQuestionById(index: number, item: IMultipleChoiceQuestion) {
         return item.id;
-    }
-    get answerOption() {
-        return this._answerOption;
-    }
-
-    set answerOption(answerOption: IAnswerOption) {
-        this._answerOption = answerOption;
     }
 }

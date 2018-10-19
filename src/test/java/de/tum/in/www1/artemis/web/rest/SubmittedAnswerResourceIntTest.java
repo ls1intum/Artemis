@@ -39,6 +39,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(classes = ArTeMiSApp.class)
 public class SubmittedAnswerResourceIntTest {
 
+    private static final Double DEFAULT_SCORE_IN_POINTS = 1D;
+    private static final Double UPDATED_SCORE_IN_POINTS = 2D;
+
     @Autowired
     private SubmittedAnswerRepository submittedAnswerRepository;
 
@@ -76,7 +79,8 @@ public class SubmittedAnswerResourceIntTest {
      * if they test an entity which requires the current entity.
      */
     public static SubmittedAnswer createEntity(EntityManager em) {
-        SubmittedAnswer submittedAnswer = new SubmittedAnswer();
+        SubmittedAnswer submittedAnswer = new SubmittedAnswer()
+            .scoreInPoints(DEFAULT_SCORE_IN_POINTS);
         return submittedAnswer;
     }
 
@@ -100,6 +104,7 @@ public class SubmittedAnswerResourceIntTest {
         List<SubmittedAnswer> submittedAnswerList = submittedAnswerRepository.findAll();
         assertThat(submittedAnswerList).hasSize(databaseSizeBeforeCreate + 1);
         SubmittedAnswer testSubmittedAnswer = submittedAnswerList.get(submittedAnswerList.size() - 1);
+        assertThat(testSubmittedAnswer.getScoreInPoints()).isEqualTo(DEFAULT_SCORE_IN_POINTS);
     }
 
     @Test
@@ -131,7 +136,8 @@ public class SubmittedAnswerResourceIntTest {
         restSubmittedAnswerMockMvc.perform(get("/api/submitted-answers?sort=id,desc"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(jsonPath("$.[*].id").value(hasItem(submittedAnswer.getId().intValue())));
+            .andExpect(jsonPath("$.[*].id").value(hasItem(submittedAnswer.getId().intValue())))
+            .andExpect(jsonPath("$.[*].scoreInPoints").value(hasItem(DEFAULT_SCORE_IN_POINTS.doubleValue())));
     }
     
     @Test
@@ -144,7 +150,8 @@ public class SubmittedAnswerResourceIntTest {
         restSubmittedAnswerMockMvc.perform(get("/api/submitted-answers/{id}", submittedAnswer.getId()))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(jsonPath("$.id").value(submittedAnswer.getId().intValue()));
+            .andExpect(jsonPath("$.id").value(submittedAnswer.getId().intValue()))
+            .andExpect(jsonPath("$.scoreInPoints").value(DEFAULT_SCORE_IN_POINTS.doubleValue()));
     }
 
     @Test
@@ -167,6 +174,8 @@ public class SubmittedAnswerResourceIntTest {
         SubmittedAnswer updatedSubmittedAnswer = submittedAnswerRepository.findById(submittedAnswer.getId()).get();
         // Disconnect from session so that the updates on updatedSubmittedAnswer are not directly saved in db
         em.detach(updatedSubmittedAnswer);
+        updatedSubmittedAnswer
+            .scoreInPoints(UPDATED_SCORE_IN_POINTS);
 
         restSubmittedAnswerMockMvc.perform(put("/api/submitted-answers")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -177,6 +186,7 @@ public class SubmittedAnswerResourceIntTest {
         List<SubmittedAnswer> submittedAnswerList = submittedAnswerRepository.findAll();
         assertThat(submittedAnswerList).hasSize(databaseSizeBeforeUpdate);
         SubmittedAnswer testSubmittedAnswer = submittedAnswerList.get(submittedAnswerList.size() - 1);
+        assertThat(testSubmittedAnswer.getScoreInPoints()).isEqualTo(UPDATED_SCORE_IN_POINTS);
     }
 
     @Test

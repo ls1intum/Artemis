@@ -13,6 +13,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.Objects;
 
+import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
+
 /**
  * A Exercise.
  */
@@ -27,6 +29,12 @@ public class Exercise implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "problem_statement")
+    private String problemStatement;
+
+    @Column(name = "grading_instructions")
+    private String gradingInstructions;
+
     @Column(name = "title")
     private String title;
 
@@ -36,10 +44,19 @@ public class Exercise implements Serializable {
     @Column(name = "due_date")
     private ZonedDateTime dueDate;
 
+    @Column(name = "max_score")
+    private Double maxScore;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "difficulty")
+    private DifficultyLevel difficulty;
+
+    @Column(name = "categories")
+    private String categories;
+
     @OneToMany(mappedBy = "exercise")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Participation> participations = new HashSet<>();
-
     @ManyToOne
     @JsonIgnoreProperties("exercises")
     private Course course;
@@ -51,6 +68,32 @@ public class Exercise implements Serializable {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getProblemStatement() {
+        return problemStatement;
+    }
+
+    public Exercise problemStatement(String problemStatement) {
+        this.problemStatement = problemStatement;
+        return this;
+    }
+
+    public void setProblemStatement(String problemStatement) {
+        this.problemStatement = problemStatement;
+    }
+
+    public String getGradingInstructions() {
+        return gradingInstructions;
+    }
+
+    public Exercise gradingInstructions(String gradingInstructions) {
+        this.gradingInstructions = gradingInstructions;
+        return this;
+    }
+
+    public void setGradingInstructions(String gradingInstructions) {
+        this.gradingInstructions = gradingInstructions;
     }
 
     public String getTitle() {
@@ -90,6 +133,45 @@ public class Exercise implements Serializable {
 
     public void setDueDate(ZonedDateTime dueDate) {
         this.dueDate = dueDate;
+    }
+
+    public Double getMaxScore() {
+        return maxScore;
+    }
+
+    public Exercise maxScore(Double maxScore) {
+        this.maxScore = maxScore;
+        return this;
+    }
+
+    public void setMaxScore(Double maxScore) {
+        this.maxScore = maxScore;
+    }
+
+    public DifficultyLevel getDifficulty() {
+        return difficulty;
+    }
+
+    public Exercise difficulty(DifficultyLevel difficulty) {
+        this.difficulty = difficulty;
+        return this;
+    }
+
+    public void setDifficulty(DifficultyLevel difficulty) {
+        this.difficulty = difficulty;
+    }
+
+    public String getCategories() {
+        return categories;
+    }
+
+    public Exercise categories(String categories) {
+        this.categories = categories;
+        return this;
+    }
+
+    public void setCategories(String categories) {
+        this.categories = categories;
     }
 
     public Set<Participation> getParticipations() {
@@ -155,9 +237,14 @@ public class Exercise implements Serializable {
     public String toString() {
         return "Exercise{" +
             "id=" + getId() +
+            ", problemStatement='" + getProblemStatement() + "'" +
+            ", gradingInstructions='" + getGradingInstructions() + "'" +
             ", title='" + getTitle() + "'" +
             ", releaseDate='" + getReleaseDate() + "'" +
             ", dueDate='" + getDueDate() + "'" +
+            ", maxScore=" + getMaxScore() +
+            ", difficulty='" + getDifficulty() + "'" +
+            ", categories='" + getCategories() + "'" +
             "}";
     }
 }

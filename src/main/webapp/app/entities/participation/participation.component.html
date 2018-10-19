@@ -19,6 +19,7 @@
             <th><span jhiTranslate="arTeMiSApp.participation.buildPlanId">Build Plan Id</span></th>
             <th><span jhiTranslate="arTeMiSApp.participation.initializationState">Initialization State</span></th>
             <th><span jhiTranslate="arTeMiSApp.participation.initializationDate">Initialization Date</span></th>
+            <th><span jhiTranslate="arTeMiSApp.participation.presentationScore">Presentation Score</span></th>
             <th><span jhiTranslate="arTeMiSApp.participation.student">Student</span></th>
             <th><span jhiTranslate="arTeMiSApp.participation.exercise">Exercise</span></th>
             <th></th>
@@ -29,8 +30,9 @@
                 <td><a [routerLink]="['/participation', participation.id, 'view' ]">{{participation.id}}</a></td>
                 <td>{{participation.repositoryUrl}}</td>
                 <td>{{participation.buildPlanId}}</td>
-                <td jhiTranslate="{{'arTeMiSApp.ParticipationState.' + participation.initializationState}}">{{participation.initializationState}}</td>
+                <td jhiTranslate="{{'arTeMiSApp.InitializationState.' + participation.initializationState}}">{{participation.initializationState}}</td>
                 <td>{{participation.initializationDate | date:'medium'}}</td>
+                <td>{{participation.presentationScore}}</td>
                 <td>
                     {{participation.student?.login}}
                 </td>
