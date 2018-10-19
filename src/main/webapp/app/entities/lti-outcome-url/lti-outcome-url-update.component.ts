@@ -15,7 +15,7 @@ import { ExerciseService } from 'app/entities/exercise';
     templateUrl: './lti-outcome-url-update.component.html'
 })
 export class LtiOutcomeUrlUpdateComponent implements OnInit {
-    private _ltiOutcomeUrl: ILtiOutcomeUrl;
+    ltiOutcomeUrl: ILtiOutcomeUrl;
     isSaving: boolean;
 
     users: IUser[];
@@ -85,12 +85,5 @@ export class LtiOutcomeUrlUpdateComponent implements OnInit {
 
     trackExerciseById(index: number, item: IExercise) {
         return item.id;
-    }
-    get ltiOutcomeUrl() {
-        return this._ltiOutcomeUrl;
-    }
-
-    set ltiOutcomeUrl(ltiOutcomeUrl: ILtiOutcomeUrl) {
-        this._ltiOutcomeUrl = ltiOutcomeUrl;
     }
 }

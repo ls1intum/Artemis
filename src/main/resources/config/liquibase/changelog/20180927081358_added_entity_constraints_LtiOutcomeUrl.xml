@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <!--
+        Added the constraints for entity LtiOutcomeUrl.
+    -->
+    <changeSet id="20180927081358-2" author="jhipster">
+        
+        <addForeignKeyConstraint baseColumnNames="user_id"
+                                 baseTableName="lti_outcome_url"
+                                 constraintName="fk_lti_outcome_url_user_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="jhi_user"/>
+
+        <addForeignKeyConstraint baseColumnNames="exercise_id"
+                                 baseTableName="lti_outcome_url"
+                                 constraintName="fk_lti_outcome_url_exercise_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="exercise"/>
+
+    </changeSet>
+</databaseChangeLog>

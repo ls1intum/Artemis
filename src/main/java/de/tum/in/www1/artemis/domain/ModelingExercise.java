@@ -8,6 +8,8 @@ import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Objects;
 
+import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
+
 /**
  * A ModelingExercise.
  */
@@ -22,8 +24,15 @@ public class ModelingExercise implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "base_file_path")
-    private String baseFilePath;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "diagram_type")
+    private DiagramType diagramType;
+
+    @Column(name = "sample_solution_model")
+    private String sampleSolutionModel;
+
+    @Column(name = "sample_solution_explanation")
+    private String sampleSolutionExplanation;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -34,17 +43,43 @@ public class ModelingExercise implements Serializable {
         this.id = id;
     }
 
-    public String getBaseFilePath() {
-        return baseFilePath;
+    public DiagramType getDiagramType() {
+        return diagramType;
     }
 
-    public ModelingExercise baseFilePath(String baseFilePath) {
-        this.baseFilePath = baseFilePath;
+    public ModelingExercise diagramType(DiagramType diagramType) {
+        this.diagramType = diagramType;
         return this;
     }
 
-    public void setBaseFilePath(String baseFilePath) {
-        this.baseFilePath = baseFilePath;
+    public void setDiagramType(DiagramType diagramType) {
+        this.diagramType = diagramType;
+    }
+
+    public String getSampleSolutionModel() {
+        return sampleSolutionModel;
+    }
+
+    public ModelingExercise sampleSolutionModel(String sampleSolutionModel) {
+        this.sampleSolutionModel = sampleSolutionModel;
+        return this;
+    }
+
+    public void setSampleSolutionModel(String sampleSolutionModel) {
+        this.sampleSolutionModel = sampleSolutionModel;
+    }
+
+    public String getSampleSolutionExplanation() {
+        return sampleSolutionExplanation;
+    }
+
+    public ModelingExercise sampleSolutionExplanation(String sampleSolutionExplanation) {
+        this.sampleSolutionExplanation = sampleSolutionExplanation;
+        return this;
+    }
+
+    public void setSampleSolutionExplanation(String sampleSolutionExplanation) {
+        this.sampleSolutionExplanation = sampleSolutionExplanation;
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
@@ -72,7 +107,9 @@ public class ModelingExercise implements Serializable {
     public String toString() {
         return "ModelingExercise{" +
             "id=" + getId() +
-            ", baseFilePath='" + getBaseFilePath() + "'" +
+            ", diagramType='" + getDiagramType() + "'" +
+            ", sampleSolutionModel='" + getSampleSolutionModel() + "'" +
+            ", sampleSolutionExplanation='" + getSampleSolutionExplanation() + "'" +
             "}";
     }
 }

@@ -30,6 +30,7 @@ import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 /**
  * Test class for the ModelingExerciseResource REST controller.
  *
@@ -39,8 +40,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(classes = ArTeMiSApp.class)
 public class ModelingExerciseResourceIntTest {
 
-    private static final String DEFAULT_BASE_FILE_PATH = "AAAAAAAAAA";
-    private static final String UPDATED_BASE_FILE_PATH = "BBBBBBBBBB";
+    private static final DiagramType DEFAULT_DIAGRAM_TYPE = DiagramType.CLASS;
+    private static final DiagramType UPDATED_DIAGRAM_TYPE = DiagramType.ACTIVITY;
+
+    private static final String DEFAULT_SAMPLE_SOLUTION_MODEL = "AAAAAAAAAA";
+    private static final String UPDATED_SAMPLE_SOLUTION_MODEL = "BBBBBBBBBB";
+
+    private static final String DEFAULT_SAMPLE_SOLUTION_EXPLANATION = "AAAAAAAAAA";
+    private static final String UPDATED_SAMPLE_SOLUTION_EXPLANATION = "BBBBBBBBBB";
 
     @Autowired
     private ModelingExerciseRepository modelingExerciseRepository;
@@ -80,7 +87,9 @@ public class ModelingExerciseResourceIntTest {
      */
     public static ModelingExercise createEntity(EntityManager em) {
         ModelingExercise modelingExercise = new ModelingExercise()
-            .baseFilePath(DEFAULT_BASE_FILE_PATH);
+            .diagramType(DEFAULT_DIAGRAM_TYPE)
+            .sampleSolutionModel(DEFAULT_SAMPLE_SOLUTION_MODEL)
+            .sampleSolutionExplanation(DEFAULT_SAMPLE_SOLUTION_EXPLANATION);
         return modelingExercise;
     }
 
@@ -104,7 +113,9 @@ public class ModelingExerciseResourceIntTest {
         List<ModelingExercise> modelingExerciseList = modelingExerciseRepository.findAll();
         assertThat(modelingExerciseList).hasSize(databaseSizeBeforeCreate + 1);
         ModelingExercise testModelingExercise = modelingExerciseList.get(modelingExerciseList.size() - 1);
-        assertThat(testModelingExercise.getBaseFilePath()).isEqualTo(DEFAULT_BASE_FILE_PATH);
+        assertThat(testModelingExercise.getDiagramType()).isEqualTo(DEFAULT_DIAGRAM_TYPE);
+        assertThat(testModelingExercise.getSampleSolutionModel()).isEqualTo(DEFAULT_SAMPLE_SOLUTION_MODEL);
+        assertThat(testModelingExercise.getSampleSolutionExplanation()).isEqualTo(DEFAULT_SAMPLE_SOLUTION_EXPLANATION);
     }
 
     @Test
@@ -137,7 +148,9 @@ public class ModelingExerciseResourceIntTest {
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(modelingExercise.getId().intValue())))
-            .andExpect(jsonPath("$.[*].baseFilePath").value(hasItem(DEFAULT_BASE_FILE_PATH.toString())));
+            .andExpect(jsonPath("$.[*].diagramType").value(hasItem(DEFAULT_DIAGRAM_TYPE.toString())))
+            .andExpect(jsonPath("$.[*].sampleSolutionModel").value(hasItem(DEFAULT_SAMPLE_SOLUTION_MODEL.toString())))
+            .andExpect(jsonPath("$.[*].sampleSolutionExplanation").value(hasItem(DEFAULT_SAMPLE_SOLUTION_EXPLANATION.toString())));
     }
     
     @Test
@@ -151,7 +164,9 @@ public class ModelingExerciseResourceIntTest {
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.id").value(modelingExercise.getId().intValue()))
-            .andExpect(jsonPath("$.baseFilePath").value(DEFAULT_BASE_FILE_PATH.toString()));
+            .andExpect(jsonPath("$.diagramType").value(DEFAULT_DIAGRAM_TYPE.toString()))
+            .andExpect(jsonPath("$.sampleSolutionModel").value(DEFAULT_SAMPLE_SOLUTION_MODEL.toString()))
+            .andExpect(jsonPath("$.sampleSolutionExplanation").value(DEFAULT_SAMPLE_SOLUTION_EXPLANATION.toString()));
     }
 
     @Test
@@ -175,7 +190,9 @@ public class ModelingExerciseResourceIntTest {
         // Disconnect from session so that the updates on updatedModelingExercise are not directly saved in db
         em.detach(updatedModelingExercise);
         updatedModelingExercise
-            .baseFilePath(UPDATED_BASE_FILE_PATH);
+            .diagramType(UPDATED_DIAGRAM_TYPE)
+            .sampleSolutionModel(UPDATED_SAMPLE_SOLUTION_MODEL)
+            .sampleSolutionExplanation(UPDATED_SAMPLE_SOLUTION_EXPLANATION);
 
         restModelingExerciseMockMvc.perform(put("/api/modeling-exercises")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -186,7 +203,9 @@ public class ModelingExerciseResourceIntTest {
         List<ModelingExercise> modelingExerciseList = modelingExerciseRepository.findAll();
         assertThat(modelingExerciseList).hasSize(databaseSizeBeforeUpdate);
         ModelingExercise testModelingExercise = modelingExerciseList.get(modelingExerciseList.size() - 1);
-        assertThat(testModelingExercise.getBaseFilePath()).isEqualTo(UPDATED_BASE_FILE_PATH);
+        assertThat(testModelingExercise.getDiagramType()).isEqualTo(UPDATED_DIAGRAM_TYPE);
+        assertThat(testModelingExercise.getSampleSolutionModel()).isEqualTo(UPDATED_SAMPLE_SOLUTION_MODEL);
+        assertThat(testModelingExercise.getSampleSolutionExplanation()).isEqualTo(UPDATED_SAMPLE_SOLUTION_EXPLANATION);
     }
 
     @Test

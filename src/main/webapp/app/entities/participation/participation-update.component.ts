@@ -17,7 +17,7 @@ import { ExerciseService } from 'app/entities/exercise';
     templateUrl: './participation-update.component.html'
 })
 export class ParticipationUpdateComponent implements OnInit {
-    private _participation: IParticipation;
+    participation: IParticipation;
     isSaving: boolean;
 
     users: IUser[];
@@ -37,6 +37,8 @@ export class ParticipationUpdateComponent implements OnInit {
         this.isSaving = false;
         this.activatedRoute.data.subscribe(({ participation }) => {
             this.participation = participation;
+            this.initializationDate =
+                this.participation.initializationDate != null ? this.participation.initializationDate.format(DATE_TIME_FORMAT) : null;
         });
         this.userService.query().subscribe(
             (res: HttpResponse<IUser[]>) => {
@@ -58,7 +60,7 @@ export class ParticipationUpdateComponent implements OnInit {
 
     save() {
         this.isSaving = true;
-        this.participation.initializationDate = moment(this.initializationDate, DATE_TIME_FORMAT);
+        this.participation.initializationDate = this.initializationDate != null ? moment(this.initializationDate, DATE_TIME_FORMAT) : null;
         if (this.participation.id !== undefined) {
             this.subscribeToSaveResponse(this.participationService.update(this.participation));
         } else {
@@ -89,13 +91,5 @@ export class ParticipationUpdateComponent implements OnInit {
 
     trackExerciseById(index: number, item: IExercise) {
         return item.id;
-    }
-    get participation() {
-        return this._participation;
-    }
-
-    set participation(participation: IParticipation) {
-        this._participation = participation;
-        this.initializationDate = moment(participation.initializationDate).format(DATE_TIME_FORMAT);
     }
 }

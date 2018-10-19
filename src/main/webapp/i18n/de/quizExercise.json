@@ -24,6 +24,7 @@
             "isOpenForPractice": "Is Open For Practice",
             "isPlannedToStart": "Is Planned To Start",
             "duration": "Duration",
+            "quizPointStatistic": "Quiz Point Statistic",
             "questions": "Questions"
         }
     }

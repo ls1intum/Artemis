@@ -11,7 +11,7 @@ import { QuizSubmissionService } from './quiz-submission.service';
     templateUrl: './quiz-submission-update.component.html'
 })
 export class QuizSubmissionUpdateComponent implements OnInit {
-    private _quizSubmission: IQuizSubmission;
+    quizSubmission: IQuizSubmission;
     isSaving: boolean;
 
     constructor(private quizSubmissionService: QuizSubmissionService, private activatedRoute: ActivatedRoute) {}
@@ -47,12 +47,5 @@ export class QuizSubmissionUpdateComponent implements OnInit {
 
     private onSaveError() {
         this.isSaving = false;
-    }
-    get quizSubmission() {
-        return this._quizSubmission;
-    }
-
-    set quizSubmission(quizSubmission: IQuizSubmission) {
-        this._quizSubmission = quizSubmission;
     }
 }

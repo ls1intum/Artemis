@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <!--
+        Added the constraints for entity AnswerCounter.
+    -->
+    <changeSet id="20180927081349-2" author="jhipster">
+        
+        <addForeignKeyConstraint baseColumnNames="answer_id"
+                                 baseTableName="answer_counter"
+                                 constraintName="fk_answer_counter_answer_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="answer_option"/>
+
+        <addForeignKeyConstraint baseColumnNames="multiple_choice_question_statistic_id"
+                                 baseTableName="answer_counter"
+                                 constraintName="fk_answer_counter_multiple_choice_question_statistic_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="mc_question_statistic"/>
+
+    </changeSet>
+</databaseChangeLog>

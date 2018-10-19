@@ -1,0 +1,59 @@
+<div class="row justify-content-center">
+    <div class="col-8">
+        <div *ngIf="dragAndDropMapping">
+            <h2><span jhiTranslate="arTeMiSApp.dragAndDropMapping.detail.title">Drag And Drop Mapping</span> {{dragAndDropMapping.id}}</h2>
+            <hr>
+            <jhi-alert-error></jhi-alert-error>
+            <dl class="row-md jh-entity-details">
+                <dt><span jhiTranslate="arTeMiSApp.dragAndDropMapping.dragItemIndex">Drag Item Index</span></dt>
+                <dd>
+                    <span>{{dragAndDropMapping.dragItemIndex}}</span>
+                </dd>
+                <dt><span jhiTranslate="arTeMiSApp.dragAndDropMapping.dropLocationIndex">Drop Location Index</span></dt>
+                <dd>
+                    <span>{{dragAndDropMapping.dropLocationIndex}}</span>
+                </dd>
+                <dt><span jhiTranslate="arTeMiSApp.dragAndDropMapping.invalid">Invalid</span></dt>
+                <dd>
+                    <span>{{dragAndDropMapping.invalid}}</span>
+                </dd>
+                <dt><span jhiTranslate="arTeMiSApp.dragAndDropMapping.dragItem">Drag Item</span></dt>
+                <dd>
+                    <div *ngIf="dragAndDropMapping.dragItem">
+                        <a [routerLink]="['/drag-item', dragAndDropMapping.dragItem?.id, 'view']">{{dragAndDropMapping.dragItem?.id}}</a>
+                    </div>
+                </dd>
+                <dt><span jhiTranslate="arTeMiSApp.dragAndDropMapping.dropLocation">Drop Location</span></dt>
+                <dd>
+                    <div *ngIf="dragAndDropMapping.dropLocation">
+                        <a [routerLink]="['/drop-location', dragAndDropMapping.dropLocation?.id, 'view']">{{dragAndDropMapping.dropLocation?.id}}</a>
+                    </div>
+                </dd>
+                <dt><span jhiTranslate="arTeMiSApp.dragAndDropMapping.submittedAnswer">Submitted Answer</span></dt>
+                <dd>
+                    <div *ngIf="dragAndDropMapping.submittedAnswer">
+                        <a [routerLink]="['/drag-and-drop-submitted-answer', dragAndDropMapping.submittedAnswer?.id, 'view']">{{dragAndDropMapping.submittedAnswer?.id}}</a>
+                    </div>
+                </dd>
+                <dt><span jhiTranslate="arTeMiSApp.dragAndDropMapping.question">Question</span></dt>
+                <dd>
+                    <div *ngIf="dragAndDropMapping.question">
+                        <a [routerLink]="['/drag-and-drop-question', dragAndDropMapping.question?.id, 'view']">{{dragAndDropMapping.question?.id}}</a>
+                    </div>
+                </dd>
+            </dl>
+
+            <button type="submit"
+                    (click)="previousState()"
+                    class="btn btn-info">
+                <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
+            </button>
+
+            <button type="button"
+                    [routerLink]="['/drag-and-drop-mapping', dragAndDropMapping.id, 'edit']"
+                    class="btn btn-primary">
+                <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+            </button>
+        </div>
+    </div>
+</div>

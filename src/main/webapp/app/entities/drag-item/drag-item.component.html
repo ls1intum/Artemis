@@ -17,9 +17,7 @@
             <th><span jhiTranslate="global.field.id">ID</span></th>
             <th><span jhiTranslate="arTeMiSApp.dragItem.pictureFilePath">Picture File Path</span></th>
             <th><span jhiTranslate="arTeMiSApp.dragItem.text">Text</span></th>
-            <th><span jhiTranslate="arTeMiSApp.dragItem.correctScore">Correct Score</span></th>
-            <th><span jhiTranslate="arTeMiSApp.dragItem.incorrectScore">Incorrect Score</span></th>
-            <th><span jhiTranslate="arTeMiSApp.dragItem.correctLocation">Correct Location</span></th>
+            <th><span jhiTranslate="arTeMiSApp.dragItem.invalid">Invalid</span></th>
             <th><span jhiTranslate="arTeMiSApp.dragItem.question">Question</span></th>
             <th></th>
             </tr>
@@ -29,13 +27,7 @@
                 <td><a [routerLink]="['/drag-item', dragItem.id, 'view' ]">{{dragItem.id}}</a></td>
                 <td>{{dragItem.pictureFilePath}}</td>
                 <td>{{dragItem.text}}</td>
-                <td>{{dragItem.correctScore}}</td>
-                <td>{{dragItem.incorrectScore}}</td>
-                <td>
-                    <div *ngIf="dragItem.correctLocation">
-                        <a [routerLink]="['../drop-location', dragItem.correctLocation?.id, 'view' ]" >{{dragItem.correctLocation?.id}}</a>
-                    </div>
-                </td>
+                <td>{{dragItem.invalid}}</td>
                 <td>
                     <div *ngIf="dragItem.question">
                         <a [routerLink]="['../drag-and-drop-question', dragItem.question?.id, 'view' ]" >{{dragItem.question?.id}}</a>

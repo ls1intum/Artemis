@@ -11,7 +11,7 @@ type EntityArrayResponseType = HttpResponse<ILtiOutcomeUrl[]>;
 
 @Injectable({ providedIn: 'root' })
 export class LtiOutcomeUrlService {
-    private resourceUrl = SERVER_API_URL + 'api/lti-outcome-urls';
+    public resourceUrl = SERVER_API_URL + 'api/lti-outcome-urls';
 
     constructor(private http: HttpClient) {}
 

@@ -11,7 +11,7 @@ import { MultipleChoiceQuestionService } from './multiple-choice-question.servic
     templateUrl: './multiple-choice-question-update.component.html'
 })
 export class MultipleChoiceQuestionUpdateComponent implements OnInit {
-    private _multipleChoiceQuestion: IMultipleChoiceQuestion;
+    multipleChoiceQuestion: IMultipleChoiceQuestion;
     isSaving: boolean;
 
     constructor(private multipleChoiceQuestionService: MultipleChoiceQuestionService, private activatedRoute: ActivatedRoute) {}
@@ -50,12 +50,5 @@ export class MultipleChoiceQuestionUpdateComponent implements OnInit {
 
     private onSaveError() {
         this.isSaving = false;
-    }
-    get multipleChoiceQuestion() {
-        return this._multipleChoiceQuestion;
-    }
-
-    set multipleChoiceQuestion(multipleChoiceQuestion: IMultipleChoiceQuestion) {
-        this._multipleChoiceQuestion = multipleChoiceQuestion;
     }
 }

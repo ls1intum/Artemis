@@ -1,4 +1,4 @@
-import { IDragAndDropQuestion } from 'app/shared/model/drag-and-drop-question.model';
+import { IDragAndDropQuestion } from 'app/shared/model//drag-and-drop-question.model';
 
 export interface IDropLocation {
     id?: number;
@@ -6,6 +6,7 @@ export interface IDropLocation {
     posY?: number;
     width?: number;
     height?: number;
+    invalid?: boolean;
     question?: IDragAndDropQuestion;
 }
 
@@ -16,6 +17,9 @@ export class DropLocation implements IDropLocation {
         public posY?: number,
         public width?: number,
         public height?: number,
+        public invalid?: boolean,
         public question?: IDragAndDropQuestion
-    ) {}
+    ) {
+        this.invalid = this.invalid || false;
+    }
 }

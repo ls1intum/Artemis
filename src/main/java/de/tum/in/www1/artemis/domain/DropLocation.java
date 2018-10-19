@@ -35,6 +35,9 @@ public class DropLocation implements Serializable {
     @Column(name = "height")
     private Integer height;
 
+    @Column(name = "invalid")
+    private Boolean invalid;
+
     @ManyToOne
     @JsonIgnoreProperties("dropLocations")
     private DragAndDropQuestion question;
@@ -100,6 +103,19 @@ public class DropLocation implements Serializable {
         this.height = height;
     }
 
+    public Boolean isInvalid() {
+        return invalid;
+    }
+
+    public DropLocation invalid(Boolean invalid) {
+        this.invalid = invalid;
+        return this;
+    }
+
+    public void setInvalid(Boolean invalid) {
+        this.invalid = invalid;
+    }
+
     public DragAndDropQuestion getQuestion() {
         return question;
     }
@@ -142,6 +158,7 @@ public class DropLocation implements Serializable {
             ", posY=" + getPosY() +
             ", width=" + getWidth() +
             ", height=" + getHeight() +
+            ", invalid='" + isInvalid() + "'" +
             "}";
     }
 }

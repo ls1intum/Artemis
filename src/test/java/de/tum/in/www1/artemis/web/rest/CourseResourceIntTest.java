@@ -22,9 +22,14 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.util.List;
 
 
+import static de.tum.in.www1.artemis.web.rest.TestUtil.sameInstant;
 import static de.tum.in.www1.artemis.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
@@ -48,6 +53,18 @@ public class CourseResourceIntTest {
 
     private static final String DEFAULT_TEACHING_ASSISTANT_GROUP_NAME = "AAAAAAAAAA";
     private static final String UPDATED_TEACHING_ASSISTANT_GROUP_NAME = "BBBBBBBBBB";
+
+    private static final String DEFAULT_INSTRUCTOR_GROUP_NAME = "AAAAAAAAAA";
+    private static final String UPDATED_INSTRUCTOR_GROUP_NAME = "BBBBBBBBBB";
+
+    private static final ZonedDateTime DEFAULT_START_DATE = ZonedDateTime.ofInstant(Instant.ofEpochMilli(0L), ZoneOffset.UTC);
+    private static final ZonedDateTime UPDATED_START_DATE = ZonedDateTime.now(ZoneId.systemDefault()).withNano(0);
+
+    private static final ZonedDateTime DEFAULT_END_DATE = ZonedDateTime.ofInstant(Instant.ofEpochMilli(0L), ZoneOffset.UTC);
+    private static final ZonedDateTime UPDATED_END_DATE = ZonedDateTime.now(ZoneId.systemDefault()).withNano(0);
+
+    private static final Boolean DEFAULT_ONLINE_COURSE = false;
+    private static final Boolean UPDATED_ONLINE_COURSE = true;
 
     @Autowired
     private CourseRepository courseRepository;
@@ -92,7 +109,11 @@ public class CourseResourceIntTest {
         Course course = new Course()
             .title(DEFAULT_TITLE)
             .studentGroupName(DEFAULT_STUDENT_GROUP_NAME)
-            .teachingAssistantGroupName(DEFAULT_TEACHING_ASSISTANT_GROUP_NAME);
+            .teachingAssistantGroupName(DEFAULT_TEACHING_ASSISTANT_GROUP_NAME)
+            .instructorGroupName(DEFAULT_INSTRUCTOR_GROUP_NAME)
+            .startDate(DEFAULT_START_DATE)
+            .endDate(DEFAULT_END_DATE)
+            .onlineCourse(DEFAULT_ONLINE_COURSE);
         return course;
     }
 
@@ -119,6 +140,10 @@ public class CourseResourceIntTest {
         assertThat(testCourse.getTitle()).isEqualTo(DEFAULT_TITLE);
         assertThat(testCourse.getStudentGroupName()).isEqualTo(DEFAULT_STUDENT_GROUP_NAME);
         assertThat(testCourse.getTeachingAssistantGroupName()).isEqualTo(DEFAULT_TEACHING_ASSISTANT_GROUP_NAME);
+        assertThat(testCourse.getInstructorGroupName()).isEqualTo(DEFAULT_INSTRUCTOR_GROUP_NAME);
+        assertThat(testCourse.getStartDate()).isEqualTo(DEFAULT_START_DATE);
+        assertThat(testCourse.getEndDate()).isEqualTo(DEFAULT_END_DATE);
+        assertThat(testCourse.isOnlineCourse()).isEqualTo(DEFAULT_ONLINE_COURSE);
     }
 
     @Test
@@ -153,7 +178,11 @@ public class CourseResourceIntTest {
             .andExpect(jsonPath("$.[*].id").value(hasItem(course.getId().intValue())))
             .andExpect(jsonPath("$.[*].title").value(hasItem(DEFAULT_TITLE.toString())))
             .andExpect(jsonPath("$.[*].studentGroupName").value(hasItem(DEFAULT_STUDENT_GROUP_NAME.toString())))
-            .andExpect(jsonPath("$.[*].teachingAssistantGroupName").value(hasItem(DEFAULT_TEACHING_ASSISTANT_GROUP_NAME.toString())));
+            .andExpect(jsonPath("$.[*].teachingAssistantGroupName").value(hasItem(DEFAULT_TEACHING_ASSISTANT_GROUP_NAME.toString())))
+            .andExpect(jsonPath("$.[*].instructorGroupName").value(hasItem(DEFAULT_INSTRUCTOR_GROUP_NAME.toString())))
+            .andExpect(jsonPath("$.[*].startDate").value(hasItem(sameInstant(DEFAULT_START_DATE))))
+            .andExpect(jsonPath("$.[*].endDate").value(hasItem(sameInstant(DEFAULT_END_DATE))))
+            .andExpect(jsonPath("$.[*].onlineCourse").value(hasItem(DEFAULT_ONLINE_COURSE.booleanValue())));
     }
     
     @Test
@@ -169,7 +198,11 @@ public class CourseResourceIntTest {
             .andExpect(jsonPath("$.id").value(course.getId().intValue()))
             .andExpect(jsonPath("$.title").value(DEFAULT_TITLE.toString()))
             .andExpect(jsonPath("$.studentGroupName").value(DEFAULT_STUDENT_GROUP_NAME.toString()))
-            .andExpect(jsonPath("$.teachingAssistantGroupName").value(DEFAULT_TEACHING_ASSISTANT_GROUP_NAME.toString()));
+            .andExpect(jsonPath("$.teachingAssistantGroupName").value(DEFAULT_TEACHING_ASSISTANT_GROUP_NAME.toString()))
+            .andExpect(jsonPath("$.instructorGroupName").value(DEFAULT_INSTRUCTOR_GROUP_NAME.toString()))
+            .andExpect(jsonPath("$.startDate").value(sameInstant(DEFAULT_START_DATE)))
+            .andExpect(jsonPath("$.endDate").value(sameInstant(DEFAULT_END_DATE)))
+            .andExpect(jsonPath("$.onlineCourse").value(DEFAULT_ONLINE_COURSE.booleanValue()));
     }
 
     @Test
@@ -195,7 +228,11 @@ public class CourseResourceIntTest {
         updatedCourse
             .title(UPDATED_TITLE)
             .studentGroupName(UPDATED_STUDENT_GROUP_NAME)
-            .teachingAssistantGroupName(UPDATED_TEACHING_ASSISTANT_GROUP_NAME);
+            .teachingAssistantGroupName(UPDATED_TEACHING_ASSISTANT_GROUP_NAME)
+            .instructorGroupName(UPDATED_INSTRUCTOR_GROUP_NAME)
+            .startDate(UPDATED_START_DATE)
+            .endDate(UPDATED_END_DATE)
+            .onlineCourse(UPDATED_ONLINE_COURSE);
 
         restCourseMockMvc.perform(put("/api/courses")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -209,6 +246,10 @@ public class CourseResourceIntTest {
         assertThat(testCourse.getTitle()).isEqualTo(UPDATED_TITLE);
         assertThat(testCourse.getStudentGroupName()).isEqualTo(UPDATED_STUDENT_GROUP_NAME);
         assertThat(testCourse.getTeachingAssistantGroupName()).isEqualTo(UPDATED_TEACHING_ASSISTANT_GROUP_NAME);
+        assertThat(testCourse.getInstructorGroupName()).isEqualTo(UPDATED_INSTRUCTOR_GROUP_NAME);
+        assertThat(testCourse.getStartDate()).isEqualTo(UPDATED_START_DATE);
+        assertThat(testCourse.getEndDate()).isEqualTo(UPDATED_END_DATE);
+        assertThat(testCourse.isOnlineCourse()).isEqualTo(UPDATED_ONLINE_COURSE);
     }
 
     @Test

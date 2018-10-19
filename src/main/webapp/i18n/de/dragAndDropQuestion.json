@@ -18,7 +18,8 @@
             },
             "backgroundFilePath": "Background File Path",
             "dropLocations": "Drop Locations",
-            "dragItems": "Drag Items"
+            "dragItems": "Drag Items",
+            "correctMappings": "Correct Mappings"
         }
     }
 }

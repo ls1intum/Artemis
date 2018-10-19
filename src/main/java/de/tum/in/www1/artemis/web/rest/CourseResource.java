@@ -28,7 +28,7 @@ public class CourseResource {
 
     private static final String ENTITY_NAME = "course";
 
-    private final CourseService courseService;
+    private CourseService courseService;
 
     public CourseResource(CourseService courseService) {
         this.courseService = courseService;

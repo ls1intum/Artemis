@@ -42,6 +42,9 @@ public class ProgrammingExerciseResourceIntTest {
     private static final String DEFAULT_BASE_REPOSITORY_URL = "AAAAAAAAAA";
     private static final String UPDATED_BASE_REPOSITORY_URL = "BBBBBBBBBB";
 
+    private static final String DEFAULT_SOLUTION_REPOSITORY_URL = "AAAAAAAAAA";
+    private static final String UPDATED_SOLUTION_REPOSITORY_URL = "BBBBBBBBBB";
+
     private static final String DEFAULT_BASE_BUILD_PLAN_ID = "AAAAAAAAAA";
     private static final String UPDATED_BASE_BUILD_PLAN_ID = "BBBBBBBBBB";
 
@@ -90,6 +93,7 @@ public class ProgrammingExerciseResourceIntTest {
     public static ProgrammingExercise createEntity(EntityManager em) {
         ProgrammingExercise programmingExercise = new ProgrammingExercise()
             .baseRepositoryUrl(DEFAULT_BASE_REPOSITORY_URL)
+            .solutionRepositoryUrl(DEFAULT_SOLUTION_REPOSITORY_URL)
             .baseBuildPlanId(DEFAULT_BASE_BUILD_PLAN_ID)
             .publishBuildPlanUrl(DEFAULT_PUBLISH_BUILD_PLAN_URL)
             .allowOnlineEditor(DEFAULT_ALLOW_ONLINE_EDITOR);
@@ -117,6 +121,7 @@ public class ProgrammingExerciseResourceIntTest {
         assertThat(programmingExerciseList).hasSize(databaseSizeBeforeCreate + 1);
         ProgrammingExercise testProgrammingExercise = programmingExerciseList.get(programmingExerciseList.size() - 1);
         assertThat(testProgrammingExercise.getBaseRepositoryUrl()).isEqualTo(DEFAULT_BASE_REPOSITORY_URL);
+        assertThat(testProgrammingExercise.getSolutionRepositoryUrl()).isEqualTo(DEFAULT_SOLUTION_REPOSITORY_URL);
         assertThat(testProgrammingExercise.getBaseBuildPlanId()).isEqualTo(DEFAULT_BASE_BUILD_PLAN_ID);
         assertThat(testProgrammingExercise.isPublishBuildPlanUrl()).isEqualTo(DEFAULT_PUBLISH_BUILD_PLAN_URL);
         assertThat(testProgrammingExercise.isAllowOnlineEditor()).isEqualTo(DEFAULT_ALLOW_ONLINE_EDITOR);
@@ -153,6 +158,7 @@ public class ProgrammingExerciseResourceIntTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(programmingExercise.getId().intValue())))
             .andExpect(jsonPath("$.[*].baseRepositoryUrl").value(hasItem(DEFAULT_BASE_REPOSITORY_URL.toString())))
+            .andExpect(jsonPath("$.[*].solutionRepositoryUrl").value(hasItem(DEFAULT_SOLUTION_REPOSITORY_URL.toString())))
             .andExpect(jsonPath("$.[*].baseBuildPlanId").value(hasItem(DEFAULT_BASE_BUILD_PLAN_ID.toString())))
             .andExpect(jsonPath("$.[*].publishBuildPlanUrl").value(hasItem(DEFAULT_PUBLISH_BUILD_PLAN_URL.booleanValue())))
             .andExpect(jsonPath("$.[*].allowOnlineEditor").value(hasItem(DEFAULT_ALLOW_ONLINE_EDITOR.booleanValue())));
@@ -170,6 +176,7 @@ public class ProgrammingExerciseResourceIntTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.id").value(programmingExercise.getId().intValue()))
             .andExpect(jsonPath("$.baseRepositoryUrl").value(DEFAULT_BASE_REPOSITORY_URL.toString()))
+            .andExpect(jsonPath("$.solutionRepositoryUrl").value(DEFAULT_SOLUTION_REPOSITORY_URL.toString()))
             .andExpect(jsonPath("$.baseBuildPlanId").value(DEFAULT_BASE_BUILD_PLAN_ID.toString()))
             .andExpect(jsonPath("$.publishBuildPlanUrl").value(DEFAULT_PUBLISH_BUILD_PLAN_URL.booleanValue()))
             .andExpect(jsonPath("$.allowOnlineEditor").value(DEFAULT_ALLOW_ONLINE_EDITOR.booleanValue()));
@@ -197,6 +204,7 @@ public class ProgrammingExerciseResourceIntTest {
         em.detach(updatedProgrammingExercise);
         updatedProgrammingExercise
             .baseRepositoryUrl(UPDATED_BASE_REPOSITORY_URL)
+            .solutionRepositoryUrl(UPDATED_SOLUTION_REPOSITORY_URL)
             .baseBuildPlanId(UPDATED_BASE_BUILD_PLAN_ID)
             .publishBuildPlanUrl(UPDATED_PUBLISH_BUILD_PLAN_URL)
             .allowOnlineEditor(UPDATED_ALLOW_ONLINE_EDITOR);
@@ -211,6 +219,7 @@ public class ProgrammingExerciseResourceIntTest {
         assertThat(programmingExerciseList).hasSize(databaseSizeBeforeUpdate);
         ProgrammingExercise testProgrammingExercise = programmingExerciseList.get(programmingExerciseList.size() - 1);
         assertThat(testProgrammingExercise.getBaseRepositoryUrl()).isEqualTo(UPDATED_BASE_REPOSITORY_URL);
+        assertThat(testProgrammingExercise.getSolutionRepositoryUrl()).isEqualTo(UPDATED_SOLUTION_REPOSITORY_URL);
         assertThat(testProgrammingExercise.getBaseBuildPlanId()).isEqualTo(UPDATED_BASE_BUILD_PLAN_ID);
         assertThat(testProgrammingExercise.isPublishBuildPlanUrl()).isEqualTo(UPDATED_PUBLISH_BUILD_PLAN_URL);
         assertThat(testProgrammingExercise.isAllowOnlineEditor()).isEqualTo(UPDATED_ALLOW_ONLINE_EDITOR);

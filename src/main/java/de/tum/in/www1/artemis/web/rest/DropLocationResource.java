@@ -28,7 +28,7 @@ public class DropLocationResource {
 
     private static final String ENTITY_NAME = "dropLocation";
 
-    private final DropLocationRepository dropLocationRepository;
+    private DropLocationRepository dropLocationRepository;
 
     public DropLocationResource(DropLocationRepository dropLocationRepository) {
         this.dropLocationRepository = dropLocationRepository;

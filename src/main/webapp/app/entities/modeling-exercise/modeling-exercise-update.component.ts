@@ -11,7 +11,7 @@ import { ModelingExerciseService } from './modeling-exercise.service';
     templateUrl: './modeling-exercise-update.component.html'
 })
 export class ModelingExerciseUpdateComponent implements OnInit {
-    private _modelingExercise: IModelingExercise;
+    modelingExercise: IModelingExercise;
     isSaving: boolean;
 
     constructor(private modelingExerciseService: ModelingExerciseService, private activatedRoute: ActivatedRoute) {}
@@ -47,12 +47,5 @@ export class ModelingExerciseUpdateComponent implements OnInit {
 
     private onSaveError() {
         this.isSaving = false;
-    }
-    get modelingExercise() {
-        return this._modelingExercise;
-    }
-
-    set modelingExercise(modelingExercise: IModelingExercise) {
-        this._modelingExercise = modelingExercise;
     }
 }

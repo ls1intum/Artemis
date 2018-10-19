@@ -1,0 +1,39 @@
+<div class="row justify-content-center">
+    <div class="col-8">
+        <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
+            <h2 id="jhi-statistic-heading" jhiTranslate="arTeMiSApp.statistic.home.createOrEditLabel">Create or edit a Statistic</h2>
+            <div>
+                <jhi-alert-error></jhi-alert-error>
+                <div class="form-group" [hidden]="!statistic.id">
+                    <label for="id" jhiTranslate="global.field.id">ID</label>
+                    <input type="text" class="form-control" id="id" name="id"
+                        [(ngModel)]="statistic.id" readonly />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.statistic.released" for="field_released">Released</label>
+                    <input type="checkbox" class="form-control" name="released" id="field_released"
+                        [(ngModel)]="statistic.released" />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.statistic.participantsRated" for="field_participantsRated">Participants Rated</label>
+                    <input type="number" class="form-control" name="participantsRated" id="field_participantsRated"
+                        [(ngModel)]="statistic.participantsRated" />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.statistic.participantsUnrated" for="field_participantsUnrated">Participants Unrated</label>
+                    <input type="number" class="form-control" name="participantsUnrated" id="field_participantsUnrated"
+                        [(ngModel)]="statistic.participantsUnrated" />
+                </div>
+
+            </div>
+            <div>
+                <button type="button" id="cancel-save" class="btn btn-secondary"  (click)="previousState()">
+                    <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                </button>
+                <button type="submit" id="save-entity" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
+                    <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

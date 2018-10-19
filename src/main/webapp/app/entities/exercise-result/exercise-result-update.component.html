@@ -1,0 +1,83 @@
+<div class="row justify-content-center">
+    <div class="col-8">
+        <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
+            <h2 id="jhi-exercise-result-heading" jhiTranslate="arTeMiSApp.exerciseResult.home.createOrEditLabel">Create or edit a Exercise Result</h2>
+            <div>
+                <jhi-alert-error></jhi-alert-error>
+                <div class="form-group" [hidden]="!exerciseResult.id">
+                    <label for="id" jhiTranslate="global.field.id">ID</label>
+                    <input type="text" class="form-control" id="id" name="id"
+                        [(ngModel)]="exerciseResult.id" readonly />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.exerciseResult.resultString" for="field_resultString">Result String</label>
+                    <input type="text" class="form-control" name="resultString" id="field_resultString"
+                        [(ngModel)]="exerciseResult.resultString" />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.exerciseResult.completionDate" for="field_completionDate">Completion Date</label>
+                    <div class="d-flex">
+                        <input id="field_completionDate" type="datetime-local" class="form-control" name="completionDate" [(ngModel)]="completionDate"
+                        />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.exerciseResult.successful" for="field_successful">Successful</label>
+                    <input type="checkbox" class="form-control" name="successful" id="field_successful"
+                        [(ngModel)]="exerciseResult.successful" />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.exerciseResult.buildArtifact" for="field_buildArtifact">Build Artifact</label>
+                    <input type="checkbox" class="form-control" name="buildArtifact" id="field_buildArtifact"
+                        [(ngModel)]="exerciseResult.buildArtifact" />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.exerciseResult.score" for="field_score">Score</label>
+                    <input type="number" class="form-control" name="score" id="field_score"
+                        [(ngModel)]="exerciseResult.score" />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.exerciseResult.rated" for="field_rated">Rated</label>
+                    <input type="checkbox" class="form-control" name="rated" id="field_rated"
+                        [(ngModel)]="exerciseResult.rated" />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.exerciseResult.hasFeedback" for="field_hasFeedback">Has Feedback</label>
+                    <input type="checkbox" class="form-control" name="hasFeedback" id="field_hasFeedback"
+                        [(ngModel)]="exerciseResult.hasFeedback" />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.exerciseResult.assessmentType" for="field_assessmentType">Assessment Type</label>
+                    <select class="form-control" name="assessmentType" [(ngModel)]="exerciseResult.assessmentType" id="field_assessmentType" >
+                        <option value="AUTOMATIC">{{'arTeMiSApp.AssessmentType.AUTOMATIC' | translate}}</option>
+                        <option value="MANUAL">{{'arTeMiSApp.AssessmentType.MANUAL' | translate}}</option>
+                        <option value="SEMIAUTOMATIC">{{'arTeMiSApp.AssessmentType.SEMIAUTOMATIC' | translate}}</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.exerciseResult.assessor" for="field_assessor">Assessor</label>
+                    <select class="form-control" id="field_assessor" name="assessor" [(ngModel)]="exerciseResult.assessor" >
+                        <option [ngValue]="null"></option>
+                        <option [ngValue]="userOption.id === exerciseResult.assessor?.id ? exerciseResult.assessor : userOption" *ngFor="let userOption of users; trackBy: trackUserById">{{userOption.id}}</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.exerciseResult.participation" for="field_participation">Participation</label>
+                    <select class="form-control" id="field_participation" name="participation" [(ngModel)]="exerciseResult.participation" >
+                        <option [ngValue]="null"></option>
+                        <option [ngValue]="participationOption.id === exerciseResult.participation?.id ? exerciseResult.participation : participationOption" *ngFor="let participationOption of participations; trackBy: trackParticipationById">{{participationOption.id}}</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <button type="button" id="cancel-save" class="btn btn-secondary"  (click)="previousState()">
+                    <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                </button>
+                <button type="submit" id="save-entity" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
+                    <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

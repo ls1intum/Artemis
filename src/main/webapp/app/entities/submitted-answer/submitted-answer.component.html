@@ -15,6 +15,7 @@
             <thead>
             <tr>
             <th><span jhiTranslate="global.field.id">ID</span></th>
+            <th><span jhiTranslate="arTeMiSApp.submittedAnswer.scoreInPoints">Score In Points</span></th>
             <th><span jhiTranslate="arTeMiSApp.submittedAnswer.question">Question</span></th>
             <th><span jhiTranslate="arTeMiSApp.submittedAnswer.submission">Submission</span></th>
             <th></th>
@@ -23,6 +24,7 @@
             <tbody>
             <tr *ngFor="let submittedAnswer of submittedAnswers ;trackBy: trackId">
                 <td><a [routerLink]="['/submitted-answer', submittedAnswer.id, 'view' ]">{{submittedAnswer.id}}</a></td>
+                <td>{{submittedAnswer.scoreInPoints}}</td>
                 <td>
                     <div *ngIf="submittedAnswer.question">
                         <a [routerLink]="['../question', submittedAnswer.question?.id, 'view' ]" >{{submittedAnswer.question?.id}}</a>

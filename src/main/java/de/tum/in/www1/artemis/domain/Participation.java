@@ -13,7 +13,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.Objects;
 
-import de.tum.in.www1.artemis.domain.enumeration.ParticipationState;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 
 /**
  * A Participation.
@@ -37,15 +37,20 @@ public class Participation implements Serializable {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "initialization_state")
-    private ParticipationState initializationState;
+    private InitializationState initializationState;
 
     @Column(name = "initialization_date")
     private ZonedDateTime initializationDate;
 
+    @Column(name = "presentation_score")
+    private Integer presentationScore;
+
     @OneToMany(mappedBy = "participation")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private Set<Result> results = new HashSet<>();
-
+    private Set<ExerciseResult> results = new HashSet<>();
+    @OneToMany(mappedBy = "participation")
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    private Set<Submission> submissions = new HashSet<>();
     @ManyToOne
     @JsonIgnoreProperties("")
     private User student;
@@ -89,16 +94,16 @@ public class Participation implements Serializable {
         this.buildPlanId = buildPlanId;
     }
 
-    public ParticipationState getInitializationState() {
+    public InitializationState getInitializationState() {
         return initializationState;
     }
 
-    public Participation initializationState(ParticipationState initializationState) {
+    public Participation initializationState(InitializationState initializationState) {
         this.initializationState = initializationState;
         return this;
     }
 
-    public void setInitializationState(ParticipationState initializationState) {
+    public void setInitializationState(InitializationState initializationState) {
         this.initializationState = initializationState;
     }
 
@@ -115,29 +120,67 @@ public class Participation implements Serializable {
         this.initializationDate = initializationDate;
     }
 
-    public Set<Result> getResults() {
+    public Integer getPresentationScore() {
+        return presentationScore;
+    }
+
+    public Participation presentationScore(Integer presentationScore) {
+        this.presentationScore = presentationScore;
+        return this;
+    }
+
+    public void setPresentationScore(Integer presentationScore) {
+        this.presentationScore = presentationScore;
+    }
+
+    public Set<ExerciseResult> getResults() {
         return results;
     }
 
-    public Participation results(Set<Result> results) {
-        this.results = results;
+    public Participation results(Set<ExerciseResult> exerciseResults) {
+        this.results = exerciseResults;
         return this;
     }
 
-    public Participation addResults(Result result) {
-        this.results.add(result);
-        result.setParticipation(this);
+    public Participation addResults(ExerciseResult exerciseResult) {
+        this.results.add(exerciseResult);
+        exerciseResult.setParticipation(this);
         return this;
     }
 
-    public Participation removeResults(Result result) {
-        this.results.remove(result);
-        result.setParticipation(null);
+    public Participation removeResults(ExerciseResult exerciseResult) {
+        this.results.remove(exerciseResult);
+        exerciseResult.setParticipation(null);
         return this;
     }
 
-    public void setResults(Set<Result> results) {
-        this.results = results;
+    public void setResults(Set<ExerciseResult> exerciseResults) {
+        this.results = exerciseResults;
+    }
+
+    public Set<Submission> getSubmissions() {
+        return submissions;
+    }
+
+    public Participation submissions(Set<Submission> submissions) {
+        this.submissions = submissions;
+        return this;
+    }
+
+    public Participation addSubmissions(Submission submission) {
+        this.submissions.add(submission);
+        submission.setParticipation(this);
+        return this;
+    }
+
+    public Participation removeSubmissions(Submission submission) {
+        this.submissions.remove(submission);
+        submission.setParticipation(null);
+        return this;
+    }
+
+    public void setSubmissions(Set<Submission> submissions) {
+        this.submissions = submissions;
     }
 
     public User getStudent() {
@@ -195,6 +238,7 @@ public class Participation implements Serializable {
             ", buildPlanId='" + getBuildPlanId() + "'" +
             ", initializationState='" + getInitializationState() + "'" +
             ", initializationDate='" + getInitializationDate() + "'" +
+            ", presentationScore=" + getPresentationScore() +
             "}";
     }
 }

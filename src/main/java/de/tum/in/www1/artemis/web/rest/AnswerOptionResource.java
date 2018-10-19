@@ -28,7 +28,7 @@ public class AnswerOptionResource {
 
     private static final String ENTITY_NAME = "answerOption";
 
-    private final AnswerOptionRepository answerOptionRepository;
+    private AnswerOptionRepository answerOptionRepository;
 
     public AnswerOptionResource(AnswerOptionRepository answerOptionRepository) {
         this.answerOptionRepository = answerOptionRepository;

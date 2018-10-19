@@ -13,19 +13,9 @@
                 <dd>
                     <span>{{dragItem.text}}</span>
                 </dd>
-                <dt><span jhiTranslate="arTeMiSApp.dragItem.correctScore">Correct Score</span></dt>
+                <dt><span jhiTranslate="arTeMiSApp.dragItem.invalid">Invalid</span></dt>
                 <dd>
-                    <span>{{dragItem.correctScore}}</span>
-                </dd>
-                <dt><span jhiTranslate="arTeMiSApp.dragItem.incorrectScore">Incorrect Score</span></dt>
-                <dd>
-                    <span>{{dragItem.incorrectScore}}</span>
-                </dd>
-                <dt><span jhiTranslate="arTeMiSApp.dragItem.correctLocation">Correct Location</span></dt>
-                <dd>
-                    <div *ngIf="dragItem.correctLocation">
-                        <a [routerLink]="['/drop-location', dragItem.correctLocation?.id, 'view']">{{dragItem.correctLocation?.id}}</a>
-                    </div>
+                    <span>{{dragItem.invalid}}</span>
                 </dd>
                 <dt><span jhiTranslate="arTeMiSApp.dragItem.question">Question</span></dt>
                 <dd>

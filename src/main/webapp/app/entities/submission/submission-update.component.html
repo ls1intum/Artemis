@@ -15,6 +15,13 @@
                         [(ngModel)]="submission.submitted" />
                 </div>
                 <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.submission.submissionDate" for="field_submissionDate">Submission Date</label>
+                    <div class="d-flex">
+                        <input id="field_submissionDate" type="datetime-local" class="form-control" name="submissionDate" [(ngModel)]="submissionDate"
+                        />
+                    </div>
+                </div>
+                <div class="form-group">
                     <label class="form-control-label" jhiTranslate="arTeMiSApp.submission.type" for="field_type">Type</label>
                     <select class="form-control" name="type" [(ngModel)]="submission.type" id="field_type" >
                         <option value="MANUAL">{{'arTeMiSApp.SubmissionType.MANUAL' | translate}}</option>
@@ -22,6 +29,20 @@
                     </select>
                 </div>
 
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.submission.result" for="field_result">Result</label>
+                    <select class="form-control" id="field_result" name="result" [(ngModel)]="submission.result">
+                        <option [ngValue]="null"></option>
+                        <option [ngValue]="exerciseResultOption.id === submission.result?.id ? submission.result : exerciseResultOption" *ngFor="let exerciseResultOption of results; trackBy: trackExerciseResultById">{{exerciseResultOption.id}}</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.submission.participation" for="field_participation">Participation</label>
+                    <select class="form-control" id="field_participation" name="participation" [(ngModel)]="submission.participation" >
+                        <option [ngValue]="null"></option>
+                        <option [ngValue]="participationOption.id === submission.participation?.id ? submission.participation : participationOption" *ngFor="let participationOption of participations; trackBy: trackParticipationById">{{participationOption.id}}</option>
+                    </select>
+                </div>
             </div>
             <div>
                 <button type="button" id="cancel-save" class="btn btn-secondary"  (click)="previousState()">

@@ -15,14 +15,16 @@
             <thead>
             <tr>
             <th><span jhiTranslate="global.field.id">ID</span></th>
-            <th><span jhiTranslate="arTeMiSApp.modelingSubmission.submissionPath">Submission Path</span></th>
+            <th><span jhiTranslate="arTeMiSApp.modelingSubmission.model">Model</span></th>
+            <th><span jhiTranslate="arTeMiSApp.modelingSubmission.explanationText">Explanation Text</span></th>
             <th></th>
             </tr>
             </thead>
             <tbody>
             <tr *ngFor="let modelingSubmission of modelingSubmissions ;trackBy: trackId">
                 <td><a [routerLink]="['/modeling-submission', modelingSubmission.id, 'view' ]">{{modelingSubmission.id}}</a></td>
-                <td>{{modelingSubmission.submissionPath}}</td>
+                <td>{{modelingSubmission.model}}</td>
+                <td>{{modelingSubmission.explanationText}}</td>
                 <td class="text-right">
                     <div class="btn-group flex-btn-group-container">
                         <button type="submit"

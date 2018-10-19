@@ -28,7 +28,7 @@ public class DragItemResource {
 
     private static final String ENTITY_NAME = "dragItem";
 
-    private final DragItemRepository dragItemRepository;
+    private DragItemRepository dragItemRepository;
 
     public DragItemResource(DragItemRepository dragItemRepository) {
         this.dragItemRepository = dragItemRepository;

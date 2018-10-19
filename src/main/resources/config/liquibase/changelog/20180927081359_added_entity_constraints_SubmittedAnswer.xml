@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <!--
+        Added the constraints for entity SubmittedAnswer.
+    -->
+    <changeSet id="20180927081359-2" author="jhipster">
+        
+        <addForeignKeyConstraint baseColumnNames="question_id"
+                                 baseTableName="submitted_answer"
+                                 constraintName="fk_submitted_answer_question_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="question"/>
+
+        <addForeignKeyConstraint baseColumnNames="submission_id"
+                                 baseTableName="submitted_answer"
+                                 constraintName="fk_submitted_answer_submission_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="quiz_submission"/>
+
+    </changeSet>
+</databaseChangeLog>

@@ -13,10 +13,18 @@
                 <dd>
                     <span>{{feedback.detailText}}</span>
                 </dd>
+                <dt><span jhiTranslate="arTeMiSApp.feedback.positive">Positive</span></dt>
+                <dd>
+                    <span>{{feedback.positive}}</span>
+                </dd>
+                <dt><span jhiTranslate="arTeMiSApp.feedback.type">Type</span></dt>
+                <dd>
+                    <span jhiTranslate="{{'arTeMiSApp.FeedbackType.' + feedback.type}}">{{feedback.type}}</span>
+                </dd>
                 <dt><span jhiTranslate="arTeMiSApp.feedback.result">Result</span></dt>
                 <dd>
                     <div *ngIf="feedback.result">
-                        <a [routerLink]="['/result', feedback.result?.id, 'view']">{{feedback.result?.id}}</a>
+                        <a [routerLink]="['/exercise-result', feedback.result?.id, 'view']">{{feedback.result?.id}}</a>
                     </div>
                 </dd>
             </dl>

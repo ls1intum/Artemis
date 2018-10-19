@@ -1,5 +1,5 @@
 # ArTEMiS
-This application was generated using JHipster 5.3.1, you can find documentation and help at [https://www.jhipster.tech/documentation-archive/v5.3.1](https://www.jhipster.tech/documentation-archive/v5.3.1).
+This application was generated using JHipster 5.5.0, you can find documentation and help at [https://www.jhipster.tech/documentation-archive/v5.5.0](https://www.jhipster.tech/documentation-archive/v5.5.0).
 
 ## Development
 
@@ -23,7 +23,7 @@ auto-refreshes when files change on your hard drive.
     ./gradlew
     yarn start
 
-[Yarn][] is also used to manage CSS and JavaScript dependencies used in this application. You can upgrade dependencies by
+Yarn is also used to manage CSS and JavaScript dependencies used in this application. You can upgrade dependencies by
 specifying a newer version in [package.json](package.json). You can also run `yarn update` and `yarn install` to manage dependencies.
 Add the `help` flag on any command to see how you can use it. For example, `yarn help update`.
 
@@ -164,7 +164,7 @@ To stop it and remove the container, run:
 You can also fully dockerize your application and all the services that it depends on.
 To achieve this, first build a docker image of your app by running:
 
-    ./gradlew bootWar -Pprod buildDocker
+    ./gradlew bootWar -Pprod jibDockerBuild
 
 Then run:
 
@@ -177,15 +177,15 @@ For more information refer to [Using Docker and Docker-Compose][], this page als
 To configure CI for your project, run the ci-cd sub-generator (`jhipster ci-cd`), this will let you generate configuration files for a number of Continuous Integration systems. Consult the [Setting up Continuous Integration][] page for more information.
 
 [JHipster Homepage and latest documentation]: https://www.jhipster.tech
-[JHipster 5.3.1 archive]: https://www.jhipster.tech/documentation-archive/v5.3.1
+[JHipster 5.5.0 archive]: https://www.jhipster.tech/documentation-archive/v5.5.0
 
-[Using JHipster in development]: https://www.jhipster.tech/documentation-archive/v5.3.1/development/
-[Service Discovery and Configuration with the JHipster-Registry]: https://www.jhipster.tech/documentation-archive/v5.3.1/microservices-architecture/#jhipster-registry
-[Using Docker and Docker-Compose]: https://www.jhipster.tech/documentation-archive/v5.3.1/docker-compose
-[Using JHipster in production]: https://www.jhipster.tech/documentation-archive/v5.3.1/production/
-[Running tests page]: https://www.jhipster.tech/documentation-archive/v5.3.1/running-tests/
-[Code quality page]: https://www.jhipster.tech/documentation-archive/v5.3.1/code-quality/
-[Setting up Continuous Integration]: https://www.jhipster.tech/documentation-archive/v5.3.1/setting-up-ci/
+[Using JHipster in development]: https://www.jhipster.tech/documentation-archive/v5.5.0/development/
+[Service Discovery and Configuration with the JHipster-Registry]: https://www.jhipster.tech/documentation-archive/v5.5.0/microservices-architecture/#jhipster-registry
+[Using Docker and Docker-Compose]: https://www.jhipster.tech/documentation-archive/v5.5.0/docker-compose
+[Using JHipster in production]: https://www.jhipster.tech/documentation-archive/v5.5.0/production/
+[Running tests page]: https://www.jhipster.tech/documentation-archive/v5.5.0/running-tests/
+[Code quality page]: https://www.jhipster.tech/documentation-archive/v5.5.0/code-quality/
+[Setting up Continuous Integration]: https://www.jhipster.tech/documentation-archive/v5.5.0/setting-up-ci/
 
 [Gatling]: http://gatling.io/
 [Node.js]: https://nodejs.org/
@@ -200,4 +200,4 @@ To configure CI for your project, run the ci-cd sub-generator (`jhipster ci-cd`)
 [DefinitelyTyped]: http://definitelytyped.org/
 [OpenAPI-Generator]: https://openapi-generator.tech
 [Swagger-Editor]: http://editor.swagger.io
-[Doing API-First development]: https://www.jhipster.tech/documentation-archive/v5.3.1/doing-api-first-development/
+[Doing API-First development]: https://www.jhipster.tech/documentation-archive/v5.5.0/doing-api-first-development/

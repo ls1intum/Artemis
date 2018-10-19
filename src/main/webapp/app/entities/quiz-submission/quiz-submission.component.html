@@ -15,12 +15,14 @@
             <thead>
             <tr>
             <th><span jhiTranslate="global.field.id">ID</span></th>
+            <th><span jhiTranslate="arTeMiSApp.quizSubmission.scoreInPoints">Score In Points</span></th>
             <th></th>
             </tr>
             </thead>
             <tbody>
             <tr *ngFor="let quizSubmission of quizSubmissions ;trackBy: trackId">
                 <td><a [routerLink]="['/quiz-submission', quizSubmission.id, 'view' ]">{{quizSubmission.id}}</a></td>
+                <td>{{quizSubmission.scoreInPoints}}</td>
                 <td class="text-right">
                     <div class="btn-group flex-btn-group-container">
                         <button type="submit"

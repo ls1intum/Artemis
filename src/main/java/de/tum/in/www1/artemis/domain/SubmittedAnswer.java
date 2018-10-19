@@ -23,6 +23,9 @@ public class SubmittedAnswer implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "score_in_points")
+    private Double scoreInPoints;
+
     @ManyToOne
     @JsonIgnoreProperties("")
     private Question question;
@@ -38,6 +41,19 @@ public class SubmittedAnswer implements Serializable {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Double getScoreInPoints() {
+        return scoreInPoints;
+    }
+
+    public SubmittedAnswer scoreInPoints(Double scoreInPoints) {
+        this.scoreInPoints = scoreInPoints;
+        return this;
+    }
+
+    public void setScoreInPoints(Double scoreInPoints) {
+        this.scoreInPoints = scoreInPoints;
     }
 
     public Question getQuestion() {
@@ -91,6 +107,7 @@ public class SubmittedAnswer implements Serializable {
     public String toString() {
         return "SubmittedAnswer{" +
             "id=" + getId() +
+            ", scoreInPoints=" + getScoreInPoints() +
             "}";
     }
 }

@@ -20,23 +20,11 @@
                         [(ngModel)]="dragItem.text" />
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="arTeMiSApp.dragItem.correctScore" for="field_correctScore">Correct Score</label>
-                    <input type="number" class="form-control" name="correctScore" id="field_correctScore"
-                        [(ngModel)]="dragItem.correctScore" />
-                </div>
-                <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="arTeMiSApp.dragItem.incorrectScore" for="field_incorrectScore">Incorrect Score</label>
-                    <input type="number" class="form-control" name="incorrectScore" id="field_incorrectScore"
-                        [(ngModel)]="dragItem.incorrectScore" />
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.dragItem.invalid" for="field_invalid">Invalid</label>
+                    <input type="checkbox" class="form-control" name="invalid" id="field_invalid"
+                        [(ngModel)]="dragItem.invalid" />
                 </div>
 
-                <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="arTeMiSApp.dragItem.correctLocation" for="field_correctLocation">Correct Location</label>
-                    <select class="form-control" id="field_correctLocation" name="correctLocation" [(ngModel)]="dragItem.correctLocation">
-                        <option [ngValue]="null"></option>
-                        <option [ngValue]="dropLocationOption.id === dragItem.correctLocation?.id ? dragItem.correctLocation : dropLocationOption" *ngFor="let dropLocationOption of correctlocations; trackBy: trackDropLocationById">{{dropLocationOption.id}}</option>
-                    </select>
-                </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="arTeMiSApp.dragItem.question" for="field_question">Question</label>
                     <select class="form-control" id="field_question" name="question" [(ngModel)]="dragItem.question" >

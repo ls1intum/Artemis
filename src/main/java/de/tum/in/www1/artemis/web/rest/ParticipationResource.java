@@ -28,7 +28,7 @@ public class ParticipationResource {
 
     private static final String ENTITY_NAME = "participation";
 
-    private final ParticipationService participationService;
+    private ParticipationService participationService;
 
     public ParticipationResource(ParticipationService participationService) {
         this.participationService = participationService;

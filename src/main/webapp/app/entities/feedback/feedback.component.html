@@ -17,6 +17,8 @@
             <th><span jhiTranslate="global.field.id">ID</span></th>
             <th><span jhiTranslate="arTeMiSApp.feedback.text">Text</span></th>
             <th><span jhiTranslate="arTeMiSApp.feedback.detailText">Detail Text</span></th>
+            <th><span jhiTranslate="arTeMiSApp.feedback.positive">Positive</span></th>
+            <th><span jhiTranslate="arTeMiSApp.feedback.type">Type</span></th>
             <th><span jhiTranslate="arTeMiSApp.feedback.result">Result</span></th>
             <th></th>
             </tr>
@@ -26,9 +28,11 @@
                 <td><a [routerLink]="['/feedback', feedback.id, 'view' ]">{{feedback.id}}</a></td>
                 <td>{{feedback.text}}</td>
                 <td>{{feedback.detailText}}</td>
+                <td>{{feedback.positive}}</td>
+                <td jhiTranslate="{{'arTeMiSApp.FeedbackType.' + feedback.type}}">{{feedback.type}}</td>
                 <td>
                     <div *ngIf="feedback.result">
-                        <a [routerLink]="['../result', feedback.result?.id, 'view' ]" >{{feedback.result?.id}}</a>
+                        <a [routerLink]="['../exercise-result', feedback.result?.id, 'view' ]" >{{feedback.result?.id}}</a>
                     </div>
                 </td>
                 <td class="text-right">

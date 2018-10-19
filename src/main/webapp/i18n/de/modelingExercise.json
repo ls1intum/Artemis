@@ -16,7 +16,9 @@
             "detail": {
                 "title": "Modeling Exercise"
             },
-            "baseFilePath": "Base File Path"
+            "diagramType": "Diagram Type",
+            "sampleSolutionModel": "Sample Solution Model",
+            "sampleSolutionExplanation": "Sample Solution Explanation"
         }
     }
 }

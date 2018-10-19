@@ -15,9 +15,14 @@
             <thead>
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="reset.bind(this)">
             <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="problemStatement"><span jhiTranslate="arTeMiSApp.exercise.problemStatement">Problem Statement</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="gradingInstructions"><span jhiTranslate="arTeMiSApp.exercise.gradingInstructions">Grading Instructions</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="title"><span jhiTranslate="arTeMiSApp.exercise.title">Title</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="releaseDate"><span jhiTranslate="arTeMiSApp.exercise.releaseDate">Release Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="dueDate"><span jhiTranslate="arTeMiSApp.exercise.dueDate">Due Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="maxScore"><span jhiTranslate="arTeMiSApp.exercise.maxScore">Max Score</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="difficulty"><span jhiTranslate="arTeMiSApp.exercise.difficulty">Difficulty</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+            <th jhiSortBy="categories"><span jhiTranslate="arTeMiSApp.exercise.categories">Categories</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th jhiSortBy="course.title"><span jhiTranslate="arTeMiSApp.exercise.course">Course</span> <fa-icon [icon]="'sort'"></fa-icon></th>
             <th></th>
             </tr>
@@ -25,9 +30,14 @@
             <tbody infinite-scroll (scrolled)="loadPage(page + 1)" [infiniteScrollDisabled]="page >= links['last']" [infiniteScrollDistance]="0">
             <tr *ngFor="let exercise of exercises ;trackBy: trackId">
                 <td><a [routerLink]="['/exercise', exercise.id, 'view' ]">{{exercise.id}}</a></td>
+                <td>{{exercise.problemStatement}}</td>
+                <td>{{exercise.gradingInstructions}}</td>
                 <td>{{exercise.title}}</td>
                 <td>{{exercise.releaseDate | date:'medium'}}</td>
                 <td>{{exercise.dueDate | date:'medium'}}</td>
+                <td>{{exercise.maxScore}}</td>
+                <td jhiTranslate="{{'arTeMiSApp.DifficultyLevel.' + exercise.difficulty}}">{{exercise.difficulty}}</td>
+                <td>{{exercise.categories}}</td>
                 <td>
                     <div *ngIf="exercise.course">
                         <a [routerLink]="['../course', exercise.course?.id, 'view' ]" >{{exercise.course?.title}}</a>

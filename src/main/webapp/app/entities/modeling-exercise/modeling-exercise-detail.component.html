@@ -5,9 +5,17 @@
             <hr>
             <jhi-alert-error></jhi-alert-error>
             <dl class="row-md jh-entity-details">
-                <dt><span jhiTranslate="arTeMiSApp.modelingExercise.baseFilePath">Base File Path</span></dt>
+                <dt><span jhiTranslate="arTeMiSApp.modelingExercise.diagramType">Diagram Type</span></dt>
                 <dd>
-                    <span>{{modelingExercise.baseFilePath}}</span>
+                    <span jhiTranslate="{{'arTeMiSApp.DiagramType.' + modelingExercise.diagramType}}">{{modelingExercise.diagramType}}</span>
+                </dd>
+                <dt><span jhiTranslate="arTeMiSApp.modelingExercise.sampleSolutionModel">Sample Solution Model</span></dt>
+                <dd>
+                    <span>{{modelingExercise.sampleSolutionModel}}</span>
+                </dd>
+                <dt><span jhiTranslate="arTeMiSApp.modelingExercise.sampleSolutionExplanation">Sample Solution Explanation</span></dt>
+                <dd>
+                    <span>{{modelingExercise.sampleSolutionExplanation}}</span>
                 </dd>
             </dl>
 

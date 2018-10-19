@@ -1,8 +1,9 @@
 export interface IModelingSubmission {
     id?: number;
-    submissionPath?: string;
+    model?: string;
+    explanationText?: string;
 }
 
 export class ModelingSubmission implements IModelingSubmission {
-    constructor(public id?: number, public submissionPath?: string) {}
+    constructor(public id?: number, public model?: string, public explanationText?: string) {}
 }

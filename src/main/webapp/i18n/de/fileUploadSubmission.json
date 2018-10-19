@@ -1,0 +1,22 @@
+
+{
+    "arTeMiSApp": {
+        "fileUploadSubmission" : {
+            "home": {
+                "title": "File Upload Submissions",
+                "createLabel": "File Upload Submission erstellen",
+                "createOrEditLabel": "File Upload Submission erstellen oder bearbeiten"
+            },
+            "created": "File Upload Submission erstellt mit ID {{ param }}",
+            "updated": "File Upload Submission aktualisiert mit ID {{ param }}",
+            "deleted": "File Upload Submission gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll File Upload Submission {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "File Upload Submission"
+            },
+            "filePath": "File Path"
+        }
+    }
+}

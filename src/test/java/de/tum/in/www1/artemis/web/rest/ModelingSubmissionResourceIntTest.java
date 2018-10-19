@@ -39,8 +39,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(classes = ArTeMiSApp.class)
 public class ModelingSubmissionResourceIntTest {
 
-    private static final String DEFAULT_SUBMISSION_PATH = "AAAAAAAAAA";
-    private static final String UPDATED_SUBMISSION_PATH = "BBBBBBBBBB";
+    private static final String DEFAULT_MODEL = "AAAAAAAAAA";
+    private static final String UPDATED_MODEL = "BBBBBBBBBB";
+
+    private static final String DEFAULT_EXPLANATION_TEXT = "AAAAAAAAAA";
+    private static final String UPDATED_EXPLANATION_TEXT = "BBBBBBBBBB";
 
     @Autowired
     private ModelingSubmissionRepository modelingSubmissionRepository;
@@ -80,7 +83,8 @@ public class ModelingSubmissionResourceIntTest {
      */
     public static ModelingSubmission createEntity(EntityManager em) {
         ModelingSubmission modelingSubmission = new ModelingSubmission()
-            .submissionPath(DEFAULT_SUBMISSION_PATH);
+            .model(DEFAULT_MODEL)
+            .explanationText(DEFAULT_EXPLANATION_TEXT);
         return modelingSubmission;
     }
 
@@ -104,7 +108,8 @@ public class ModelingSubmissionResourceIntTest {
         List<ModelingSubmission> modelingSubmissionList = modelingSubmissionRepository.findAll();
         assertThat(modelingSubmissionList).hasSize(databaseSizeBeforeCreate + 1);
         ModelingSubmission testModelingSubmission = modelingSubmissionList.get(modelingSubmissionList.size() - 1);
-        assertThat(testModelingSubmission.getSubmissionPath()).isEqualTo(DEFAULT_SUBMISSION_PATH);
+        assertThat(testModelingSubmission.getModel()).isEqualTo(DEFAULT_MODEL);
+        assertThat(testModelingSubmission.getExplanationText()).isEqualTo(DEFAULT_EXPLANATION_TEXT);
     }
 
     @Test
@@ -137,7 +142,8 @@ public class ModelingSubmissionResourceIntTest {
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(modelingSubmission.getId().intValue())))
-            .andExpect(jsonPath("$.[*].submissionPath").value(hasItem(DEFAULT_SUBMISSION_PATH.toString())));
+            .andExpect(jsonPath("$.[*].model").value(hasItem(DEFAULT_MODEL.toString())))
+            .andExpect(jsonPath("$.[*].explanationText").value(hasItem(DEFAULT_EXPLANATION_TEXT.toString())));
     }
     
     @Test
@@ -151,7 +157,8 @@ public class ModelingSubmissionResourceIntTest {
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.id").value(modelingSubmission.getId().intValue()))
-            .andExpect(jsonPath("$.submissionPath").value(DEFAULT_SUBMISSION_PATH.toString()));
+            .andExpect(jsonPath("$.model").value(DEFAULT_MODEL.toString()))
+            .andExpect(jsonPath("$.explanationText").value(DEFAULT_EXPLANATION_TEXT.toString()));
     }
 
     @Test
@@ -175,7 +182,8 @@ public class ModelingSubmissionResourceIntTest {
         // Disconnect from session so that the updates on updatedModelingSubmission are not directly saved in db
         em.detach(updatedModelingSubmission);
         updatedModelingSubmission
-            .submissionPath(UPDATED_SUBMISSION_PATH);
+            .model(UPDATED_MODEL)
+            .explanationText(UPDATED_EXPLANATION_TEXT);
 
         restModelingSubmissionMockMvc.perform(put("/api/modeling-submissions")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -186,7 +194,8 @@ public class ModelingSubmissionResourceIntTest {
         List<ModelingSubmission> modelingSubmissionList = modelingSubmissionRepository.findAll();
         assertThat(modelingSubmissionList).hasSize(databaseSizeBeforeUpdate);
         ModelingSubmission testModelingSubmission = modelingSubmissionList.get(modelingSubmissionList.size() - 1);
-        assertThat(testModelingSubmission.getSubmissionPath()).isEqualTo(UPDATED_SUBMISSION_PATH);
+        assertThat(testModelingSubmission.getModel()).isEqualTo(UPDATED_MODEL);
+        assertThat(testModelingSubmission.getExplanationText()).isEqualTo(UPDATED_EXPLANATION_TEXT);
     }
 
     @Test

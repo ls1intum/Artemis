@@ -16,6 +16,7 @@
             <tr>
             <th><span jhiTranslate="global.field.id">ID</span></th>
             <th><span jhiTranslate="arTeMiSApp.programmingExercise.baseRepositoryUrl">Base Repository Url</span></th>
+            <th><span jhiTranslate="arTeMiSApp.programmingExercise.solutionRepositoryUrl">Solution Repository Url</span></th>
             <th><span jhiTranslate="arTeMiSApp.programmingExercise.baseBuildPlanId">Base Build Plan Id</span></th>
             <th><span jhiTranslate="arTeMiSApp.programmingExercise.publishBuildPlanUrl">Publish Build Plan Url</span></th>
             <th><span jhiTranslate="arTeMiSApp.programmingExercise.allowOnlineEditor">Allow Online Editor</span></th>
@@ -26,6 +27,7 @@
             <tr *ngFor="let programmingExercise of programmingExercises ;trackBy: trackId">
                 <td><a [routerLink]="['/programming-exercise', programmingExercise.id, 'view' ]">{{programmingExercise.id}}</a></td>
                 <td>{{programmingExercise.baseRepositoryUrl}}</td>
+                <td>{{programmingExercise.solutionRepositoryUrl}}</td>
                 <td>{{programmingExercise.baseBuildPlanId}}</td>
                 <td>{{programmingExercise.publishBuildPlanUrl}}</td>
                 <td>{{programmingExercise.allowOnlineEditor}}</td>

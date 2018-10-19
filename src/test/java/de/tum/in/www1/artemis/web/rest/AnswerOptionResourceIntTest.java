@@ -51,6 +51,9 @@ public class AnswerOptionResourceIntTest {
     private static final Boolean DEFAULT_IS_CORRECT = false;
     private static final Boolean UPDATED_IS_CORRECT = true;
 
+    private static final Boolean DEFAULT_INVALID = false;
+    private static final Boolean UPDATED_INVALID = true;
+
     @Autowired
     private AnswerOptionRepository answerOptionRepository;
 
@@ -92,7 +95,8 @@ public class AnswerOptionResourceIntTest {
             .text(DEFAULT_TEXT)
             .hint(DEFAULT_HINT)
             .explanation(DEFAULT_EXPLANATION)
-            .isCorrect(DEFAULT_IS_CORRECT);
+            .isCorrect(DEFAULT_IS_CORRECT)
+            .invalid(DEFAULT_INVALID);
         return answerOption;
     }
 
@@ -120,6 +124,7 @@ public class AnswerOptionResourceIntTest {
         assertThat(testAnswerOption.getHint()).isEqualTo(DEFAULT_HINT);
         assertThat(testAnswerOption.getExplanation()).isEqualTo(DEFAULT_EXPLANATION);
         assertThat(testAnswerOption.isIsCorrect()).isEqualTo(DEFAULT_IS_CORRECT);
+        assertThat(testAnswerOption.isInvalid()).isEqualTo(DEFAULT_INVALID);
     }
 
     @Test
@@ -155,7 +160,8 @@ public class AnswerOptionResourceIntTest {
             .andExpect(jsonPath("$.[*].text").value(hasItem(DEFAULT_TEXT.toString())))
             .andExpect(jsonPath("$.[*].hint").value(hasItem(DEFAULT_HINT.toString())))
             .andExpect(jsonPath("$.[*].explanation").value(hasItem(DEFAULT_EXPLANATION.toString())))
-            .andExpect(jsonPath("$.[*].isCorrect").value(hasItem(DEFAULT_IS_CORRECT.booleanValue())));
+            .andExpect(jsonPath("$.[*].isCorrect").value(hasItem(DEFAULT_IS_CORRECT.booleanValue())))
+            .andExpect(jsonPath("$.[*].invalid").value(hasItem(DEFAULT_INVALID.booleanValue())));
     }
     
     @Test
@@ -172,7 +178,8 @@ public class AnswerOptionResourceIntTest {
             .andExpect(jsonPath("$.text").value(DEFAULT_TEXT.toString()))
             .andExpect(jsonPath("$.hint").value(DEFAULT_HINT.toString()))
             .andExpect(jsonPath("$.explanation").value(DEFAULT_EXPLANATION.toString()))
-            .andExpect(jsonPath("$.isCorrect").value(DEFAULT_IS_CORRECT.booleanValue()));
+            .andExpect(jsonPath("$.isCorrect").value(DEFAULT_IS_CORRECT.booleanValue()))
+            .andExpect(jsonPath("$.invalid").value(DEFAULT_INVALID.booleanValue()));
     }
 
     @Test
@@ -199,7 +206,8 @@ public class AnswerOptionResourceIntTest {
             .text(UPDATED_TEXT)
             .hint(UPDATED_HINT)
             .explanation(UPDATED_EXPLANATION)
-            .isCorrect(UPDATED_IS_CORRECT);
+            .isCorrect(UPDATED_IS_CORRECT)
+            .invalid(UPDATED_INVALID);
 
         restAnswerOptionMockMvc.perform(put("/api/answer-options")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -214,6 +222,7 @@ public class AnswerOptionResourceIntTest {
         assertThat(testAnswerOption.getHint()).isEqualTo(UPDATED_HINT);
         assertThat(testAnswerOption.getExplanation()).isEqualTo(UPDATED_EXPLANATION);
         assertThat(testAnswerOption.isIsCorrect()).isEqualTo(UPDATED_IS_CORRECT);
+        assertThat(testAnswerOption.isInvalid()).isEqualTo(UPDATED_INVALID);
     }
 
     @Test

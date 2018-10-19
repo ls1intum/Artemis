@@ -28,7 +28,7 @@ public class LtiOutcomeUrlResource {
 
     private static final String ENTITY_NAME = "ltiOutcomeUrl";
 
-    private final LtiOutcomeUrlRepository ltiOutcomeUrlRepository;
+    private LtiOutcomeUrlRepository ltiOutcomeUrlRepository;
 
     public LtiOutcomeUrlResource(LtiOutcomeUrlRepository ltiOutcomeUrlRepository) {
         this.ltiOutcomeUrlRepository = ltiOutcomeUrlRepository;

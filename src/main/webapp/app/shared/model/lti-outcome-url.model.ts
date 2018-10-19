@@ -1,5 +1,5 @@
 import { IUser } from 'app/core/user/user.model';
-import { IExercise } from 'app/shared/model/exercise.model';
+import { IExercise } from 'app/shared/model//exercise.model';
 
 export interface ILtiOutcomeUrl {
     id?: number;

@@ -11,7 +11,7 @@ type EntityArrayResponseType = HttpResponse<ISubmittedAnswer[]>;
 
 @Injectable({ providedIn: 'root' })
 export class SubmittedAnswerService {
-    private resourceUrl = SERVER_API_URL + 'api/submitted-answers';
+    public resourceUrl = SERVER_API_URL + 'api/submitted-answers';
 
     constructor(private http: HttpClient) {}
 

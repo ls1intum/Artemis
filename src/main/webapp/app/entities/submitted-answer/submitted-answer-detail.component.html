@@ -5,6 +5,10 @@
             <hr>
             <jhi-alert-error></jhi-alert-error>
             <dl class="row-md jh-entity-details">
+                <dt><span jhiTranslate="arTeMiSApp.submittedAnswer.scoreInPoints">Score In Points</span></dt>
+                <dd>
+                    <span>{{submittedAnswer.scoreInPoints}}</span>
+                </dd>
                 <dt><span jhiTranslate="arTeMiSApp.submittedAnswer.question">Question</span></dt>
                 <dd>
                     <div *ngIf="submittedAnswer.question">

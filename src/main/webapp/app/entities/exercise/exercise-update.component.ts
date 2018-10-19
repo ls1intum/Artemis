@@ -16,7 +16,7 @@ import { CourseService } from 'app/entities/course';
     templateUrl: './exercise-update.component.html'
 })
 export class ExerciseUpdateComponent implements OnInit {
-    private _exercise: IExercise;
+    exercise: IExercise;
     isSaving: boolean;
 
     courses: ICourse[];
@@ -34,6 +34,8 @@ export class ExerciseUpdateComponent implements OnInit {
         this.isSaving = false;
         this.activatedRoute.data.subscribe(({ exercise }) => {
             this.exercise = exercise;
+            this.releaseDate = this.exercise.releaseDate != null ? this.exercise.releaseDate.format(DATE_TIME_FORMAT) : null;
+            this.dueDate = this.exercise.dueDate != null ? this.exercise.dueDate.format(DATE_TIME_FORMAT) : null;
         });
         this.courseService.query().subscribe(
             (res: HttpResponse<ICourse[]>) => {
@@ -49,8 +51,8 @@ export class ExerciseUpdateComponent implements OnInit {
 
     save() {
         this.isSaving = true;
-        this.exercise.releaseDate = moment(this.releaseDate, DATE_TIME_FORMAT);
-        this.exercise.dueDate = moment(this.dueDate, DATE_TIME_FORMAT);
+        this.exercise.releaseDate = this.releaseDate != null ? moment(this.releaseDate, DATE_TIME_FORMAT) : null;
+        this.exercise.dueDate = this.dueDate != null ? moment(this.dueDate, DATE_TIME_FORMAT) : null;
         if (this.exercise.id !== undefined) {
             this.subscribeToSaveResponse(this.exerciseService.update(this.exercise));
         } else {
@@ -77,14 +79,5 @@ export class ExerciseUpdateComponent implements OnInit {
 
     trackCourseById(index: number, item: ICourse) {
         return item.id;
-    }
-    get exercise() {
-        return this._exercise;
-    }
-
-    set exercise(exercise: IExercise) {
-        this._exercise = exercise;
-        this.releaseDate = moment(exercise.releaseDate).format(DATE_TIME_FORMAT);
-        this.dueDate = moment(exercise.dueDate).format(DATE_TIME_FORMAT);
     }
 }

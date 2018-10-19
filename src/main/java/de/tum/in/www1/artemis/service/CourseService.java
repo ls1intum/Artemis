@@ -8,9 +8,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
 import java.util.List;
 import java.util.Optional;
+
 /**
  * Service Implementation for managing Course.
  */
@@ -20,7 +20,7 @@ public class CourseService {
 
     private final Logger log = LoggerFactory.getLogger(CourseService.class);
 
-    private final CourseRepository courseRepository;
+    private CourseRepository courseRepository;
 
     public CourseService(CourseRepository courseRepository) {
         this.courseRepository = courseRepository;
@@ -33,7 +33,8 @@ public class CourseService {
      * @return the persisted entity
      */
     public Course save(Course course) {
-        log.debug("Request to save Course : {}", course);        return courseRepository.save(course);
+        log.debug("Request to save Course : {}", course);
+        return courseRepository.save(course);
     }
 
     /**

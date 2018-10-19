@@ -9,9 +9,25 @@
                 <dd>
                     <span>{{submission.submitted}}</span>
                 </dd>
+                <dt><span jhiTranslate="arTeMiSApp.submission.submissionDate">Submission Date</span></dt>
+                <dd>
+                    <span>{{submission.submissionDate}}</span>
+                </dd>
                 <dt><span jhiTranslate="arTeMiSApp.submission.type">Type</span></dt>
                 <dd>
                     <span jhiTranslate="{{'arTeMiSApp.SubmissionType.' + submission.type}}">{{submission.type}}</span>
+                </dd>
+                <dt><span jhiTranslate="arTeMiSApp.submission.result">Result</span></dt>
+                <dd>
+                    <div *ngIf="submission.result">
+                        <a [routerLink]="['/exercise-result', submission.result?.id, 'view']">{{submission.result?.id}}</a>
+                    </div>
+                </dd>
+                <dt><span jhiTranslate="arTeMiSApp.submission.participation">Participation</span></dt>
+                <dd>
+                    <div *ngIf="submission.participation">
+                        <a [routerLink]="['/participation', submission.participation?.id, 'view']">{{submission.participation?.id}}</a>
+                    </div>
                 </dd>
             </dl>
 

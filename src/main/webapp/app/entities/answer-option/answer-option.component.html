@@ -19,6 +19,7 @@
             <th><span jhiTranslate="arTeMiSApp.answerOption.hint">Hint</span></th>
             <th><span jhiTranslate="arTeMiSApp.answerOption.explanation">Explanation</span></th>
             <th><span jhiTranslate="arTeMiSApp.answerOption.isCorrect">Is Correct</span></th>
+            <th><span jhiTranslate="arTeMiSApp.answerOption.invalid">Invalid</span></th>
             <th><span jhiTranslate="arTeMiSApp.answerOption.question">Question</span></th>
             <th></th>
             </tr>
@@ -30,6 +31,7 @@
                 <td>{{answerOption.hint}}</td>
                 <td>{{answerOption.explanation}}</td>
                 <td>{{answerOption.isCorrect}}</td>
+                <td>{{answerOption.invalid}}</td>
                 <td>
                     <div *ngIf="answerOption.question">
                         <a [routerLink]="['../multiple-choice-question', answerOption.question?.id, 'view' ]" >{{answerOption.question?.id}}</a>

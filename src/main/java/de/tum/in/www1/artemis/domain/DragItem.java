@@ -29,15 +29,8 @@ public class DragItem implements Serializable {
     @Column(name = "text")
     private String text;
 
-    @Column(name = "correct_score")
-    private Integer correctScore;
-
-    @Column(name = "incorrect_score")
-    private Integer incorrectScore;
-
-    @OneToOne
-    @JoinColumn(unique = true)
-    private DropLocation correctLocation;
+    @Column(name = "invalid")
+    private Boolean invalid;
 
     @ManyToOne
     @JsonIgnoreProperties("dragItems")
@@ -78,43 +71,17 @@ public class DragItem implements Serializable {
         this.text = text;
     }
 
-    public Integer getCorrectScore() {
-        return correctScore;
+    public Boolean isInvalid() {
+        return invalid;
     }
 
-    public DragItem correctScore(Integer correctScore) {
-        this.correctScore = correctScore;
+    public DragItem invalid(Boolean invalid) {
+        this.invalid = invalid;
         return this;
     }
 
-    public void setCorrectScore(Integer correctScore) {
-        this.correctScore = correctScore;
-    }
-
-    public Integer getIncorrectScore() {
-        return incorrectScore;
-    }
-
-    public DragItem incorrectScore(Integer incorrectScore) {
-        this.incorrectScore = incorrectScore;
-        return this;
-    }
-
-    public void setIncorrectScore(Integer incorrectScore) {
-        this.incorrectScore = incorrectScore;
-    }
-
-    public DropLocation getCorrectLocation() {
-        return correctLocation;
-    }
-
-    public DragItem correctLocation(DropLocation dropLocation) {
-        this.correctLocation = dropLocation;
-        return this;
-    }
-
-    public void setCorrectLocation(DropLocation dropLocation) {
-        this.correctLocation = dropLocation;
+    public void setInvalid(Boolean invalid) {
+        this.invalid = invalid;
     }
 
     public DragAndDropQuestion getQuestion() {
@@ -157,8 +124,7 @@ public class DragItem implements Serializable {
             "id=" + getId() +
             ", pictureFilePath='" + getPictureFilePath() + "'" +
             ", text='" + getText() + "'" +
-            ", correctScore=" + getCorrectScore() +
-            ", incorrectScore=" + getIncorrectScore() +
+            ", invalid='" + isInvalid() + "'" +
             "}";
     }
 }

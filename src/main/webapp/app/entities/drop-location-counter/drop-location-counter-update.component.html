@@ -1,0 +1,38 @@
+<div class="row justify-content-center">
+    <div class="col-8">
+        <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
+            <h2 id="jhi-drop-location-counter-heading" jhiTranslate="arTeMiSApp.dropLocationCounter.home.createOrEditLabel">Create or edit a Drop Location Counter</h2>
+            <div>
+                <jhi-alert-error></jhi-alert-error>
+                <div class="form-group" [hidden]="!dropLocationCounter.id">
+                    <label for="id" jhiTranslate="global.field.id">ID</label>
+                    <input type="text" class="form-control" id="id" name="id"
+                        [(ngModel)]="dropLocationCounter.id" readonly />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.dropLocationCounter.dropLocation" for="field_dropLocation">Drop Location</label>
+                    <select class="form-control" id="field_dropLocation" name="dropLocation" [(ngModel)]="dropLocationCounter.dropLocation">
+                        <option [ngValue]="null"></option>
+                        <option [ngValue]="dropLocationOption.id === dropLocationCounter.dropLocation?.id ? dropLocationCounter.dropLocation : dropLocationOption" *ngFor="let dropLocationOption of droplocations; trackBy: trackDropLocationById">{{dropLocationOption.id}}</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.dropLocationCounter.dragAndDropQuestionStatistic" for="field_dragAndDropQuestionStatistic">Drag And Drop Question Statistic</label>
+                    <select class="form-control" id="field_dragAndDropQuestionStatistic" name="dragAndDropQuestionStatistic" [(ngModel)]="dropLocationCounter.dragAndDropQuestionStatistic" >
+                        <option [ngValue]="null"></option>
+                        <option [ngValue]="dragAndDropQuestionStatisticOption.id === dropLocationCounter.dragAndDropQuestionStatistic?.id ? dropLocationCounter.dragAndDropQuestionStatistic : dragAndDropQuestionStatisticOption" *ngFor="let dragAndDropQuestionStatisticOption of draganddropquestionstatistics; trackBy: trackDragAndDropQuestionStatisticById">{{dragAndDropQuestionStatisticOption.id}}</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <button type="button" id="cancel-save" class="btn btn-secondary"  (click)="previousState()">
+                    <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                </button>
+                <button type="submit" id="save-entity" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
+                    <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

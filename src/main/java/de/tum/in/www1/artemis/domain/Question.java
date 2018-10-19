@@ -47,6 +47,12 @@ public class Question implements Serializable {
     @Column(name = "randomize_order")
     private Boolean randomizeOrder;
 
+    @Column(name = "invalid")
+    private Boolean invalid;
+
+    @OneToOne    @JoinColumn(unique = true)
+    private QuestionStatistic questionStatistic;
+
     @ManyToOne
     @JsonIgnoreProperties("questions")
     private QuizExercise exercise;
@@ -151,6 +157,32 @@ public class Question implements Serializable {
         this.randomizeOrder = randomizeOrder;
     }
 
+    public Boolean isInvalid() {
+        return invalid;
+    }
+
+    public Question invalid(Boolean invalid) {
+        this.invalid = invalid;
+        return this;
+    }
+
+    public void setInvalid(Boolean invalid) {
+        this.invalid = invalid;
+    }
+
+    public QuestionStatistic getQuestionStatistic() {
+        return questionStatistic;
+    }
+
+    public Question questionStatistic(QuestionStatistic questionStatistic) {
+        this.questionStatistic = questionStatistic;
+        return this;
+    }
+
+    public void setQuestionStatistic(QuestionStatistic questionStatistic) {
+        this.questionStatistic = questionStatistic;
+    }
+
     public QuizExercise getExercise() {
         return exercise;
     }
@@ -196,6 +228,7 @@ public class Question implements Serializable {
             ", score=" + getScore() +
             ", scoringType='" + getScoringType() + "'" +
             ", randomizeOrder='" + isRandomizeOrder() + "'" +
+            ", invalid='" + isInvalid() + "'" +
             "}";
     }
 }

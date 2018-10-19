@@ -28,7 +28,7 @@ public class DragAndDropQuestionResource {
 
     private static final String ENTITY_NAME = "dragAndDropQuestion";
 
-    private final DragAndDropQuestionRepository dragAndDropQuestionRepository;
+    private DragAndDropQuestionRepository dragAndDropQuestionRepository;
 
     public DragAndDropQuestionResource(DragAndDropQuestionRepository dragAndDropQuestionRepository) {
         this.dragAndDropQuestionRepository = dragAndDropQuestionRepository;

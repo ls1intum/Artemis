@@ -47,7 +47,19 @@
                     <input type="checkbox" class="form-control" name="randomizeOrder" id="field_randomizeOrder"
                         [(ngModel)]="question.randomizeOrder" />
                 </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.question.invalid" for="field_invalid">Invalid</label>
+                    <input type="checkbox" class="form-control" name="invalid" id="field_invalid"
+                        [(ngModel)]="question.invalid" />
+                </div>
 
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.question.questionStatistic" for="field_questionStatistic">Question Statistic</label>
+                    <select class="form-control" id="field_questionStatistic" name="questionStatistic" [(ngModel)]="question.questionStatistic">
+                        <option [ngValue]="null"></option>
+                        <option [ngValue]="questionStatisticOption.id === question.questionStatistic?.id ? question.questionStatistic : questionStatisticOption" *ngFor="let questionStatisticOption of questionstatistics; trackBy: trackQuestionStatisticById">{{questionStatisticOption.id}}</option>
+                    </select>
+                </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="arTeMiSApp.question.exercise" for="field_exercise">Exercise</label>
                     <select class="form-control" id="field_exercise" name="exercise" [(ngModel)]="question.exercise" >

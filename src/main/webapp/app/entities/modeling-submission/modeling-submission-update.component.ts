@@ -11,7 +11,7 @@ import { ModelingSubmissionService } from './modeling-submission.service';
     templateUrl: './modeling-submission-update.component.html'
 })
 export class ModelingSubmissionUpdateComponent implements OnInit {
-    private _modelingSubmission: IModelingSubmission;
+    modelingSubmission: IModelingSubmission;
     isSaving: boolean;
 
     constructor(private modelingSubmissionService: ModelingSubmissionService, private activatedRoute: ActivatedRoute) {}
@@ -47,12 +47,5 @@ export class ModelingSubmissionUpdateComponent implements OnInit {
 
     private onSaveError() {
         this.isSaving = false;
-    }
-    get modelingSubmission() {
-        return this._modelingSubmission;
-    }
-
-    set modelingSubmission(modelingSubmission: IModelingSubmission) {
-        this._modelingSubmission = modelingSubmission;
     }
 }

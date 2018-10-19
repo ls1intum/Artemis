@@ -23,6 +23,7 @@
             <th><span jhiTranslate="arTeMiSApp.quizExercise.isOpenForPractice">Is Open For Practice</span></th>
             <th><span jhiTranslate="arTeMiSApp.quizExercise.isPlannedToStart">Is Planned To Start</span></th>
             <th><span jhiTranslate="arTeMiSApp.quizExercise.duration">Duration</span></th>
+            <th><span jhiTranslate="arTeMiSApp.quizExercise.quizPointStatistic">Quiz Point Statistic</span></th>
             <th></th>
             </tr>
             </thead>
@@ -37,6 +38,11 @@
                 <td>{{quizExercise.isOpenForPractice}}</td>
                 <td>{{quizExercise.isPlannedToStart}}</td>
                 <td>{{quizExercise.duration}}</td>
+                <td>
+                    <div *ngIf="quizExercise.quizPointStatistic">
+                        <a [routerLink]="['../quiz-point-statistic', quizExercise.quizPointStatistic?.id, 'view' ]" >{{quizExercise.quizPointStatistic?.id}}</a>
+                    </div>
+                </td>
                 <td class="text-right">
                     <div class="btn-group flex-btn-group-container">
                         <button type="submit"

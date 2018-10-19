@@ -11,7 +11,7 @@ type EntityArrayResponseType = HttpResponse<IDropLocation[]>;
 
 @Injectable({ providedIn: 'root' })
 export class DropLocationService {
-    private resourceUrl = SERVER_API_URL + 'api/drop-locations';
+    public resourceUrl = SERVER_API_URL + 'api/drop-locations';
 
     constructor(private http: HttpClient) {}
 

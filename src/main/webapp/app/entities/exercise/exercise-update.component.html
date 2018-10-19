@@ -10,6 +10,16 @@
                         [(ngModel)]="exercise.id" readonly />
                 </div>
                 <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.problemStatement" for="field_problemStatement">Problem Statement</label>
+                    <input type="text" class="form-control" name="problemStatement" id="field_problemStatement"
+                        [(ngModel)]="exercise.problemStatement" />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.gradingInstructions" for="field_gradingInstructions">Grading Instructions</label>
+                    <input type="text" class="form-control" name="gradingInstructions" id="field_gradingInstructions"
+                        [(ngModel)]="exercise.gradingInstructions" />
+                </div>
+                <div class="form-group">
                     <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.title" for="field_title">Title</label>
                     <input type="text" class="form-control" name="title" id="field_title"
                         [(ngModel)]="exercise.title" />
@@ -27,6 +37,24 @@
                         <input id="field_dueDate" type="datetime-local" class="form-control" name="dueDate" [(ngModel)]="dueDate"
                         />
                     </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.maxScore" for="field_maxScore">Max Score</label>
+                    <input type="number" class="form-control" name="maxScore" id="field_maxScore"
+                        [(ngModel)]="exercise.maxScore" />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.difficulty" for="field_difficulty">Difficulty</label>
+                    <select class="form-control" name="difficulty" [(ngModel)]="exercise.difficulty" id="field_difficulty" >
+                        <option value="EASY">{{'arTeMiSApp.DifficultyLevel.EASY' | translate}}</option>
+                        <option value="MEDIUM">{{'arTeMiSApp.DifficultyLevel.MEDIUM' | translate}}</option>
+                        <option value="HARD">{{'arTeMiSApp.DifficultyLevel.HARD' | translate}}</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.categories" for="field_categories">Categories</label>
+                    <input type="text" class="form-control" name="categories" id="field_categories"
+                        [(ngModel)]="exercise.categories" />
                 </div>
 
                 <div class="form-group">
