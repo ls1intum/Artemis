@@ -172,7 +172,7 @@ entity LtiUserId (lti_user_id) {
     ltiUserId String
 }
 
-entity Result (result) {
+entity ExerciseResult (result) {
     resultString String,
     completionDate ZonedDateTime,
     successful Boolean,
