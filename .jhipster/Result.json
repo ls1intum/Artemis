@@ -45,7 +45,7 @@
         }
     ],
     "changelogDate": "20171130173552",
-    "entityTableName": "result",
+    "entityTableName": "exercise_result",
     "dto": "no",
     "pagination": "no",
     "service": "no",
