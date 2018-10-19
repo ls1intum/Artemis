@@ -12,7 +12,7 @@
         }
     ],
     "changelogDate": "20180927081403",
-    "entityTableName": "multiple_choice_submitted_answer",
+    "entityTableName": "mc_submitted_answer",
     "dto": "no",
     "pagination": "no",
     "service": "no",

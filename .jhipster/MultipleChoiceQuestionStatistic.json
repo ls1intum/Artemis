@@ -10,7 +10,7 @@
         }
     ],
     "changelogDate": "20180927081345",
-    "entityTableName": "multiple_choice_question_statistic",
+    "entityTableName": "mc_question_statistic",
     "dto": "no",
     "pagination": "no",
     "service": "no",

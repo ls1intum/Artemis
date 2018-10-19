@@ -10,7 +10,7 @@
         }
     ],
     "changelogDate": "20180927081417",
-    "entityTableName": "drag_and_drop_submitted_answer",
+    "entityTableName": "dnd_submitted_answer",
     "dto": "no",
     "pagination": "no",
     "service": "no",
