@@ -1,18 +1,21 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 
-import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiEventManager } from 'ng-jhipster';
 
-import { IFileUploadExercise } from 'app/shared/model/file-upload-exercise.model';
+import { FileUploadExercise } from './file-upload-exercise.model';
+import { FileUploadExercisePopupService } from './file-upload-exercise-popup.service';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
+
+import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     selector: 'jhi-file-upload-exercise-delete-dialog',
     templateUrl: './file-upload-exercise-delete-dialog.component.html'
 })
 export class FileUploadExerciseDeleteDialogComponent {
-    fileUploadExercise: IFileUploadExercise;
+    fileUploadExercise: FileUploadExercise;
 
     constructor(
         private fileUploadExerciseService: FileUploadExerciseService,
@@ -40,33 +43,17 @@ export class FileUploadExerciseDeleteDialogComponent {
     template: ''
 })
 export class FileUploadExerciseDeletePopupComponent implements OnInit, OnDestroy {
-    private ngbModalRef: NgbModalRef;
+    routeSub: Subscription;
 
-    constructor(private activatedRoute: ActivatedRoute, private router: Router, private modalService: NgbModal) {}
+    constructor(private route: ActivatedRoute, private fileUploadExercisePopupService: FileUploadExercisePopupService) {}
 
     ngOnInit() {
-        this.activatedRoute.data.subscribe(({ fileUploadExercise }) => {
-            setTimeout(() => {
-                this.ngbModalRef = this.modalService.open(FileUploadExerciseDeleteDialogComponent as Component, {
-                    size: 'lg',
-                    backdrop: 'static'
-                });
-                this.ngbModalRef.componentInstance.fileUploadExercise = fileUploadExercise;
-                this.ngbModalRef.result.then(
-                    result => {
-                        this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
-                        this.ngbModalRef = null;
-                    },
-                    reason => {
-                        this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
-                        this.ngbModalRef = null;
-                    }
-                );
-            }, 0);
+        this.routeSub = this.route.params.subscribe(params => {
+            this.fileUploadExercisePopupService.open(FileUploadExerciseDeleteDialogComponent as Component, params['id']);
         });
     }
 
     ngOnDestroy() {
-        this.ngbModalRef = null;
+        this.routeSub.unsubscribe();
     }
 }

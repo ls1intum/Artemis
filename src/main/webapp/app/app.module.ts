@@ -70,7 +70,6 @@ import { ParticipationDataProvider } from './courses/exercises/participation-dat
         ArTEMiSStatisticModule,
         ArTEMiSModelingEditorModule
         // jhipster-needle-angular-add-module JHipster will add new module here
-        ArTeMiSEntityModule
     ],
     declarations: [
         JhiMainComponent,

@@ -17,10 +17,10 @@ export class Principal {
         private languageService: JhiLanguageService,
         private sessionStorage: SessionStorageService,
         private account: AccountService,
-        private trackerService: JhiTrackerService
+        private websocketService: JhiWebsocketService
     ) {}
 
-    authenticate(identity) {
+    authenticate(identity: User) {
         this.userIdentity = identity;
         this.authenticated = identity !== null;
         this.authenticationState.next(this.userIdentity);

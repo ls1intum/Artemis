@@ -1,18 +1,21 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 
-import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiEventManager } from 'ng-jhipster';
 
-import { ITextExercise } from 'app/shared/model/text-exercise.model';
+import { TextExercise } from './text-exercise.model';
+import { TextExercisePopupService } from './text-exercise-popup.service';
 import { TextExerciseService } from './text-exercise.service';
+
+import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     selector: 'jhi-text-exercise-delete-dialog',
     templateUrl: './text-exercise-delete-dialog.component.html'
 })
 export class TextExerciseDeleteDialogComponent {
-    textExercise: ITextExercise;
+    textExercise: TextExercise;
 
     constructor(
         private textExerciseService: TextExerciseService,
@@ -40,33 +43,17 @@ export class TextExerciseDeleteDialogComponent {
     template: ''
 })
 export class TextExerciseDeletePopupComponent implements OnInit, OnDestroy {
-    private ngbModalRef: NgbModalRef;
+    routeSub: Subscription;
 
-    constructor(private activatedRoute: ActivatedRoute, private router: Router, private modalService: NgbModal) {}
+    constructor(private route: ActivatedRoute, private textExercisePopupService: TextExercisePopupService) {}
 
     ngOnInit() {
-        this.activatedRoute.data.subscribe(({ textExercise }) => {
-            setTimeout(() => {
-                this.ngbModalRef = this.modalService.open(TextExerciseDeleteDialogComponent as Component, {
-                    size: 'lg',
-                    backdrop: 'static'
-                });
-                this.ngbModalRef.componentInstance.textExercise = textExercise;
-                this.ngbModalRef.result.then(
-                    result => {
-                        this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
-                        this.ngbModalRef = null;
-                    },
-                    reason => {
-                        this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
-                        this.ngbModalRef = null;
-                    }
-                );
-            }, 0);
+        this.routeSub = this.route.params.subscribe(params => {
+            this.textExercisePopupService.open(TextExerciseDeleteDialogComponent as Component, params['id']);
         });
     }
 
     ngOnDestroy() {
-        this.ngbModalRef = null;
+        this.routeSub.unsubscribe();
     }
 }

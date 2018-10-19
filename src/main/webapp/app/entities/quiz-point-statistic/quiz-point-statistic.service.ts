@@ -4,10 +4,10 @@ import { Observable } from 'rxjs';
 
 import { SERVER_API_URL } from 'app/app.constants';
 import { createRequestOption } from 'app/shared';
-import { IQuizPointStatistic } from 'app/shared/model/quiz-point-statistic.model';
+import { QuizPointStatistic } from 'app/entities/quiz-point-statistic/quiz-point-statistic.model';
 
-type EntityResponseType = HttpResponse<IQuizPointStatistic>;
-type EntityArrayResponseType = HttpResponse<IQuizPointStatistic[]>;
+type EntityResponseType = HttpResponse<QuizPointStatistic>;
+type EntityArrayResponseType = HttpResponse<QuizPointStatistic[]>;
 
 @Injectable({ providedIn: 'root' })
 export class QuizPointStatisticService {
@@ -15,21 +15,21 @@ export class QuizPointStatisticService {
 
     constructor(private http: HttpClient) {}
 
-    create(quizPointStatistic: IQuizPointStatistic): Observable<EntityResponseType> {
-        return this.http.post<IQuizPointStatistic>(this.resourceUrl, quizPointStatistic, { observe: 'response' });
+    create(quizPointStatistic: QuizPointStatistic): Observable<EntityResponseType> {
+        return this.http.post<QuizPointStatistic>(this.resourceUrl, quizPointStatistic, { observe: 'response' });
     }
 
-    update(quizPointStatistic: IQuizPointStatistic): Observable<EntityResponseType> {
-        return this.http.put<IQuizPointStatistic>(this.resourceUrl, quizPointStatistic, { observe: 'response' });
+    update(quizPointStatistic: QuizPointStatistic): Observable<EntityResponseType> {
+        return this.http.put<QuizPointStatistic>(this.resourceUrl, quizPointStatistic, { observe: 'response' });
     }
 
     find(id: number): Observable<EntityResponseType> {
-        return this.http.get<IQuizPointStatistic>(`${this.resourceUrl}/${id}`, { observe: 'response' });
+        return this.http.get<QuizPointStatistic>(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }
 
     query(req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
-        return this.http.get<IQuizPointStatistic[]>(this.resourceUrl, { params: options, observe: 'response' });
+        return this.http.get<QuizPointStatistic[]>(this.resourceUrl, { params: options, observe: 'response' });
     }
 
     delete(id: number): Observable<HttpResponse<any>> {

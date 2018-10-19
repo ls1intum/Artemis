@@ -6,7 +6,11 @@ import { JhiWebsocketService } from '../websocket/websocket.service';
 
 @Injectable({ providedIn: 'root' })
 export class LoginService {
-    constructor(private principal: Principal, private trackerService: JhiTrackerService, private authServerProvider: AuthServerProvider) {}
+    constructor(
+        private principal: Principal,
+        private websocketService: JhiWebsocketService,
+        private authServerProvider: AuthServerProvider
+    ) {}
 
     login(credentials: Credentials, callback?: any) {
         const cb = callback || function() {};
