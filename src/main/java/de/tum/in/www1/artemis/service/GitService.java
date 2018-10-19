@@ -198,11 +198,18 @@ public class GitService {
      * @return The PullResult which contains FetchResult and MergeResult.
      * @throws GitAPIException
      */
-    public PullResult pull(Repository repo) throws GitAPIException {
-        Git git = new Git(repo);
-        // flush cache of files
-        repo.setFiles(null);
-        return git.pull().setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
+    public PullResult pull(Repository repo) {
+        try {
+            Git git = new Git(repo);
+            // flush cache of files
+            repo.setFiles(null);
+            return git.pull().setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
+        }
+        catch (GitAPIException ex) {
+            log.error("Cannot pull the repo " + repo.getLocalPath() + " due to the following exception: " + ex);
+            //TODO: we should send this error to the client and let the user handle it there, e.g. by choosing to reset the repository
+        }
+        return null;
     }
 
     /**

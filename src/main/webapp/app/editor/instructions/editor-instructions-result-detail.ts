@@ -11,25 +11,28 @@ import { BuildLogEntry } from 'app/entities/build-log';
     templateUrl: '../../entities/result/result-detail.component.html'
 })
 export class EditorInstructionsResultDetailComponent implements OnInit {
-    @Input() result: Result;
-    @Input() tests: string;
+    @Input()
+    result: Result;
+    @Input()
+    tests: string;
     isLoading: boolean;
     filterTests: string[];
     feedbackList: Feedback[];
     buildLogs: BuildLogEntry[];
 
-    constructor(public activeModal: NgbActiveModal,
-                private resultService: ResultService) {}
+    constructor(public activeModal: NgbActiveModal, private resultService: ResultService) {}
 
     ngOnInit(): void {
-        this.isLoading = true;
         this.filterTests = this.tests.split(',');
-        this.resultService.getFeedbackDetailsForResult(this.result.id).subscribe(res => {
-            this.feedbackList = res.body.filter(
-                detail => this.filterTests.indexOf(detail.text) !== -1
-            );
-            this.isLoading = false;
-        });
+        if (this.result.feedbacks && this.result.feedbacks.length > 0) {
+            this.feedbackList = this.result.feedbacks.filter(detail => this.filterTests.indexOf(detail.text) !== -1);
+        } else {
+            this.isLoading = true;
+            this.resultService.getFeedbackDetailsForResult(this.result.id).subscribe(res => {
+                this.feedbackList = res.body.filter(detail => this.filterTests.indexOf(detail.text) !== -1);
+                this.isLoading = false;
+            });
+        }
         this.isLoading = false;
     }
 }
