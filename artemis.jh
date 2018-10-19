@@ -264,9 +264,9 @@ relationship OneToMany {
     DragAndDropQuestionStatistic{DropLocationCounters} to DropLocationCounter{DragAndDropQuestionStatistic},
     Course{exercises} to Exercise{course(title)},
     Exercise{participations} to Participation{exercise(title)},
-    Participation{results} to Result{participation},
+    Participation{results} to ExerciseResult{participation},
     Participation{submissions} to Submission{participation},
-    Result{feedbacks} to Feedback{result},
+    ExerciseResult{feedbacks} to Feedback{result},
     QuizExercise{questions} to Question{exercise},
     MultipleChoiceQuestion{answerOptions} to AnswerOption{question},
     DragAndDropQuestion{dropLocations} to DropLocation{question},
@@ -281,9 +281,9 @@ relationship OneToOne {
     Question{questionStatistic} to QuestionStatistic{question},
     AnswerCounter{answer} to AnswerOption,
     DropLocationCounter{dropLocation} to DropLocation,
-    Submission{result} to Result{submission},
+    Submission{result} to ExerciseResult{submission},
     LtiUserId{user} to User,
-    Result{assessor} to User
+    ExerciseResult{assessor} to User
 }
 
 relationship ManyToOne {
