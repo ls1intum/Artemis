@@ -33,6 +33,7 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
     readMeFileRenderedContent: string;
     resultDetails: Feedback[];
     steps = new Array<Step>();
+    doneOnce = false;
 
     /** Resizable constants **/
     initialInstructionsWidth: number;
@@ -97,8 +98,6 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.participation && this.participation) {
             // Initialize array for listener remove functions
-            this.listenerRemoveFunctions = [];
-            this.setupMarkDown();
             this.loadReadme();
         }
 
@@ -117,14 +116,13 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
     loadReadme() {
         // Only do this if we already received a participation object from parent
         if (this.participation) {
-            this.setupMarkDown();
             this.repositoryFileService.get(this.participation.id, 'README.md').subscribe(
                 fileObj => {
                     this.readMeFileRawContent = fileObj.fileContent;
                     this.renderReadme();
                 },
                 err => {
-                    //TODO: handle the case that there is no README.md file
+                    // TODO: handle the case that there is no README.md file
                     console.log('Error while getting README.md file!', err);
                 }
             );
@@ -145,10 +143,17 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
             resultDetails => {
                 this.resultDetails = resultDetails.body;
                 this.haveDetailsBeenLoaded = true;
+                this.isLoadingResults = false;
                 if (this.readMeFileRawContent) {
                     this.renderReadme();
+                    // TODO this is an ugly workaround, because otherwise the functionality to click on the test case feedback does not work ==> Find a better solution
+                    if (this.doneOnce === false) {
+                        setTimeout(() => {
+                            this.doneOnce = true;
+                            this.renderReadme();
+                        }, 10);
+                    }
                 }
-                this.isLoadingResults = false;
             },
             err => {
                 console.log('Error while loading result details!', err);
@@ -177,10 +182,7 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
      * @desc Prepares and starts the rendering process of the README.md file
      */
     renderReadme() {
-        console.log('reanderReadme() invoked');
-        if (this.readMeFileRawContent) {
-            console.log('with valid readMeFileRawContent');
-        }
+        this.setupMarkDown();
         // Reset steps array
         this.steps = [];
         // Render README.md file via Remarkable
