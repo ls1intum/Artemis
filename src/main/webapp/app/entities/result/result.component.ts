@@ -54,6 +54,22 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             const exercise = this.participation.exercise;
 
             if (this.participation.results && this.participation.results.length > 0) {
+                if (exercise.type === ExerciseType.MODELING) {
+                    // sort results by completionDate descending to ensure the newest result is shown
+                    // this is important for modeling exercises since students can have multiple tries
+                    // think about if this should be used for all types of exercises
+                    this.participation.results.sort(
+                        (r1: Result, r2: Result): number => {
+                            if (r1.completionDate > r2.completionDate) {
+                                return -1;
+                            }
+                            if (r1.completionDate < r2.completionDate) {
+                                return 1;
+                            }
+                            return 0;
+                        }
+                    );
+                }
                 // Make sure result and participation are connected
                 this.result = this.participation.results[0];
                 this.result.participation = this.participation;
@@ -88,7 +104,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
 
     handleNewResult(newResult: Result) {
         this.result = newResult;
-        //Reconnect the new result with the existing participation
+        // Reconnect the new result with the existing participation
         this.result.participation = this.participation;
         this.participation.results = [this.result];
         this.newResult.emit({
