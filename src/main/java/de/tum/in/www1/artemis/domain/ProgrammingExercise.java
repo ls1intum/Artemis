@@ -104,6 +104,14 @@ public class ProgrammingExercise extends Exercise implements Serializable {
     public String getVCSProjectKey() {
         return "DUMMYPROJECT"; // TODO: Use generated value
     }
+
+    public String getProgrammingLanguage() {
+        return "Java";
+    }
+
+    public String getBuildTool() {
+        return "Maven";
+    }
     // TODO end: Replace dummy values
 
     @Override
