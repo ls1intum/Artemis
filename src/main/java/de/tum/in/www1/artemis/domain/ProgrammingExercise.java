@@ -128,6 +128,14 @@ public class ProgrammingExercise extends Exercise implements Serializable {
     public String getBuildTool() {
         return "Maven";
     }
+
+    public String getPackageName() {
+        return "dummypackage.dummyexercise";
+    }
+
+    public String getPackageFolderName() {
+        return getPackageName().replace(".", "/");
+    }
     // TODO end: Replace dummy values
 
     @Override

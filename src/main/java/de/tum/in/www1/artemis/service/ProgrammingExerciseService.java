@@ -12,6 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -72,14 +74,14 @@ public class ProgrammingExerciseService {
         String exerciseTemplatePath = frameworkPath + File.separator + "exercise"; // Path where the exercise template is located (used for exercise & solution)
 
         Repository exerciseRepo = gitService.getOrCheckoutRepository(exerciseRepoUrl);
-        setupTemplateAndPush(exerciseRepo, exerciseTemplatePath, "Exercise");
+        setupTemplateAndPush(exerciseRepo, exerciseTemplatePath, "Exercise", programmingExercise);
 
         String testTemplatePath = frameworkPath + File.separator + "test"; // Path where the test template is located
         Repository testRepo = gitService.getOrCheckoutRepository(testsRepoUrl);
-        setupTemplateAndPush(testRepo, testTemplatePath, "Test");
+        setupTemplateAndPush(testRepo, testTemplatePath, "Test", programmingExercise);
 
         Repository solutionRepo = gitService.getOrCheckoutRepository(solutionRepoUrl);
-        setupTemplateAndPush(solutionRepo, exerciseTemplatePath, "Solution"); // Solution is based on the same template as exercise
+        setupTemplateAndPush(solutionRepo, exerciseTemplatePath, "Solution", programmingExercise); // Solution is based on the same template as exercise
 
         // We have to wait to have pushed one commit to each repository as we can only create the buildPlans then (https://confluence.atlassian.com/bamkb/cannot-create-linked-repository-or-plan-repository-942840872.html)
         continuousIntegrationService.createProject(programmingExercise.getCIProjectKey());
@@ -92,9 +94,25 @@ public class ProgrammingExerciseService {
     }
 
     // Copy template and push, if no file is in the directory
-    private void setupTemplateAndPush(Repository repository, String templatePath, String templateName) throws Exception {
+    private void setupTemplateAndPush(Repository repository, String templatePath, String templateName, ProgrammingExercise programmingExercise) throws Exception {
         if (gitService.listFiles(repository).size() == 0) { // Only copy template if repo is empty
             fileService.copyDirectory(templatePath, repository.getLocalPath().toAbsolutePath().toString());
+            fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageFolderName());
+
+            List<String> fileTargets = new ArrayList<>();
+            List<String> fileReplacements = new ArrayList<>();
+            // This is based on the correct order and assumes that boths lists have the same length, it replaces fileTargets.get(i) with fileReplacements.get(i)
+
+            fileTargets.add("${packageName}");
+            fileReplacements.add(programmingExercise.getPackageName());
+
+            fileTargets.add("${exerciseNameCompact}");
+            fileReplacements.add(programmingExercise.getShortName().toLowerCase()); // Used e.g. in artifactId
+
+            fileTargets.add("${exerciseName}");
+            fileReplacements.add(programmingExercise.getTitle());
+
+            fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), fileTargets, fileReplacements);
 
             gitService.stageAllChanges(repository);
             gitService.commitAndPush(repository, templateName + "-Template pushed by ArTEMiS");

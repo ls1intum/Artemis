@@ -9,6 +9,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -16,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.UUID;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
@@ -225,20 +227,97 @@ public class FileService {
     }
 
     /**
-     * This replace all occurences of the target String with the replacement String in the given file and saves the file
+     * This replace all occurences of the target String with the replacement String in the given directory (recursive!)
      *
-     * @param filePath          the path where the file is located
+     * @param startPath         the path where the file is located
      * @param targetString      the string that should be replaced
      * @param replacementString the string that should be used to replace the target
      * @throws IOException
      */
-    public void replaceVariablesInFile(String filePath, String targetString, String replacementString) throws IOException {
+    public void replaceVariablesInDirectoryName(String startPath, String targetString, String replacementString) throws IOException {
+        log.debug("Replacing {} with {} in directory {}", targetString, replacementString, startPath);
+        File directory = new File(startPath);
+        if (!directory.exists() || !directory.isDirectory()) {
+            throw new RuntimeException("Directory " + startPath + " should be replaced but does not exist.");
+        }
+
+        if (startPath.contains(targetString)) {
+            log.debug("Target String found, replacing..");
+            String targetPath = startPath.replace(targetString, replacementString);
+            renameDirectory(startPath, targetPath);
+            directory = new File(targetPath);
+        }
+
+        String[] subdirectories = directory.list(new FilenameFilter() { // Get all subdirectories
+            @Override
+            public boolean accept(File current, String name) {
+                return new File(current, name).isDirectory();
+            }
+        });
+
+        for (String subdirectory : subdirectories) {
+            replaceVariablesInDirectoryName(directory.getAbsolutePath() + File.separator + subdirectory, targetString, replacementString);
+        }
+    }
+
+    /**
+     * This replace all occurences of the target Strings with the replacement Strings in the given file and saves the file
+     *
+     * @see {@link #replaceVariablesInFile(String, List, List) replaceVariablesInFile}
+     * @param startPath          the path where the start directory is located
+     * @param targetStrings      the strings that should be replaced
+     * @param replacementStrings the strings that should be used to replace the target strings
+     * @throws IOException
+     */
+    public void replaceVariablesInFileRecursive(String startPath, List<String> targetStrings, List<String> replacementStrings) throws IOException {
+        log.debug("Replacing {} with {} in files in directory {}", targetStrings, replacementStrings, startPath);
+        File directory = new File(startPath);
+        if (!directory.exists() || !directory.isDirectory()) {
+            throw new RuntimeException("Files in directory " + startPath + " should be replaced but the directory does not exist.");
+        }
+
+        String[] files = directory.list(new FilenameFilter() { // Get all files in directory
+            @Override
+            public boolean accept(File current, String name) {
+                return new File(current, name).isFile();
+            }
+        });
+
+        for (String file : files) {
+            replaceVariablesInFile(directory.getAbsolutePath() + File.separator + file, targetStrings, replacementStrings);
+        }
+
+        // Recursive call
+        String[] subdirectories = directory.list(new FilenameFilter() { // Get all subdirectories
+            @Override
+            public boolean accept(File current, String name) {
+                return new File(current, name).isDirectory();
+            }
+        });
+
+        for (String subdirectory : subdirectories) {
+            replaceVariablesInFileRecursive(directory.getAbsolutePath() + File.separator + subdirectory, targetStrings, replacementStrings);
+        }
+    }
+
+    /**
+     * This replace all occurrences of the target Strings with the replacement Strings in the given file and saves the file. It assumes that the size of the lists is equal and the order of the argument is the same
+     *
+     * @param filePath           the path where the file is located
+     * @param targetStrings      the strings that should be replaced
+     * @param replacementStrings the strings that should be used to replace the target strings
+     * @throws IOException
+     */
+    public void replaceVariablesInFile(String filePath, List<String> targetStrings, List<String> replacementStrings) throws IOException {
+        log.debug("Replacing {} with {} in file {}", targetStrings, replacementStrings, filePath);
         // https://stackoverflow.com/questions/3935791/find-and-replace-words-lines-in-a-file
         Path replaceFilePath = Paths.get(filePath);
         Charset charset = StandardCharsets.UTF_8;
 
         String fileContent = new String(Files.readAllBytes(replaceFilePath), charset);
-        fileContent = fileContent.replaceAll(targetString, replacementString);
+        for (int i = 0; i < targetStrings.size(); i++) {
+            fileContent = fileContent.replace(targetStrings.get(i), replacementStrings.get(i));
+        }
         Files.write(replaceFilePath, fileContent.getBytes(charset));
     }
 }
