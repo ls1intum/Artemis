@@ -1,5 +1,11 @@
 {
-    "fluentMethods": true,
+    "name": "PointCounter",
+    "fields": [
+        {
+            "fieldName": "points",
+            "fieldType": "Double"
+        }
+    ],
     "relationships": [
         {
             "relationshipType": "many-to-one",
@@ -8,16 +14,13 @@
             "otherEntityField": "id"
         }
     ],
-    "fields": [
-        {
-            "fieldName": "points",
-            "fieldType": "Double"
-        }
-    ],
-    "changelogDate": "20180116211223",
+    "changelogDate": "20180927081348",
     "entityTableName": "point_counter",
     "dto": "no",
     "pagination": "no",
     "service": "no",
-    "jpaMetamodelFiltering": false
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
 }

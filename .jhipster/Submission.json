@@ -1,10 +1,13 @@
 {
-    "fluentMethods": true,
-    "relationships": [],
+    "name": "Submission",
     "fields": [
         {
             "fieldName": "submitted",
             "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "submissionDate",
+            "fieldType": "ZonedDateTime"
         },
         {
             "fieldName": "type",
@@ -12,10 +15,29 @@
             "fieldValues": "MANUAL,TIMEOUT"
         }
     ],
-    "changelogDate": "20170831094159",
+    "relationships": [
+        {
+            "relationshipType": "one-to-one",
+            "relationshipName": "result",
+            "otherEntityName": "exerciseResult",
+            "otherEntityField": "id",
+            "ownerSide": true,
+            "otherEntityRelationshipName": "submission"
+        },
+        {
+            "relationshipType": "many-to-one",
+            "relationshipName": "participation",
+            "otherEntityName": "participation",
+            "otherEntityField": "id"
+        }
+    ],
+    "changelogDate": "20180927081411",
     "entityTableName": "submission",
     "dto": "no",
     "pagination": "no",
     "service": "no",
-    "jpaMetamodelFiltering": false
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
 }

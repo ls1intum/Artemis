@@ -1,6 +1,5 @@
 {
-    "fluentMethods": true,
-    "relationships": [],
+    "name": "ModelingExercise",
     "fields": [
         {
             "fieldName": "diagramType",
@@ -16,10 +15,14 @@
             "fieldType": "String"
         }
     ],
-    "changelogDate": "20171130173539",
+    "relationships": [],
+    "changelogDate": "20180927081356",
     "entityTableName": "modeling_exercise",
     "dto": "no",
     "pagination": "no",
     "service": "no",
-    "jpaMetamodelFiltering": false
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
 }

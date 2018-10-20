@@ -61,15 +61,16 @@ public interface ContinuousIntegrationService {
     public String copyBuildPlan(String baseBuildPlanId, String username);
 
     /**
-     * Configure the build plan with the given identifier on the CI system. Common configurations:
+     * Configure the build plan with the given participation on the CI system. Common configurations:
      * - update the repository in the build plan
      * - set appropriate user permissions
+     * - initialize/enable the build plan so that it works
      *
-     * @param buildPlanId   unique identifier for build plan on CI system
-     * @param repositoryUrl url of user's personal repository copy
-     * @param username      username of  user for whom to configure build plan
+     * @param participation contains the unique identifier for build plan on CI system and
+     * the url of user's personal repository copy
+
      */
-    public void configureBuildPlan(String buildPlanId, URL repositoryUrl, String username);
+    public void configureBuildPlan(Participation participation);
 
     /**
      * Delete build plan with given identifier from CI system.

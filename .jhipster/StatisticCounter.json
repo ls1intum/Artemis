@@ -1,6 +1,5 @@
 {
-    "fluentMethods": true,
-    "relationships": [],
+    "name": "StatisticCounter",
     "fields": [
         {
             "fieldName": "ratedCounter",
@@ -11,10 +10,14 @@
             "fieldType": "Integer"
         }
     ],
-    "changelogDate": "20180116211222",
+    "relationships": [],
+    "changelogDate": "20180927081347",
     "entityTableName": "statistic_counter",
     "dto": "no",
     "pagination": "no",
     "service": "no",
-    "jpaMetamodelFiltering": false
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
 }

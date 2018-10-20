@@ -17,6 +17,8 @@ import { DragAndDropSubmittedAnswer } from '../../entities/drag-and-drop-submitt
 import { QuestionType } from '../../entities/question';
 import { MultipleChoiceQuestionComponent } from 'app/quiz/participate/multiple-choice-question/multiple-choice-question.component';
 import { DragAndDropQuestionComponent } from 'app/quiz/participate/drag-and-drop-question/drag-and-drop-question.component';
+import { DragAndDropMapping } from 'app/entities/drag-and-drop-mapping';
+import { AnswerOption } from 'app/entities/answer-option';
 
 @Component({
     selector: 'jhi-quiz',
@@ -62,8 +64,8 @@ export class QuizComponent implements OnInit, OnDestroy {
     submission = new QuizSubmission();
     quizExercise: QuizExercise;
     totalScore: number;
-    selectedAnswerOptions = {};
-    dragAndDropMappings = {};
+    selectedAnswerOptions = new Map<number, AnswerOption[]>();
+    dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
     result: Result;
     questionScores = {};
     id: number;
@@ -390,8 +392,8 @@ export class QuizComponent implements OnInit, OnDestroy {
             : 0;
 
         // prepare selection arrays for each question
-        this.selectedAnswerOptions = {};
-        this.dragAndDropMappings = {};
+        this.selectedAnswerOptions = new Map<number, AnswerOption[]>();
+        this.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
 
         if (this.quizExercise.questions) {
             this.quizExercise.questions.forEach(question => {
@@ -417,8 +419,8 @@ export class QuizComponent implements OnInit, OnDestroy {
     applySubmission() {
         // create dictionaries (key: questionID, value: Array of selected answerOptions / mappings)
         // for the submittedAnswers to hand the selected options / mappings in individual arrays to the question components
-        this.selectedAnswerOptions = {};
-        this.dragAndDropMappings = {};
+        this.selectedAnswerOptions = new Map<number, AnswerOption[]>();
+        this.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
 
         if (this.quizExercise.questions) {
             // iterate through all questions of this quiz

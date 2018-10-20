@@ -63,6 +63,9 @@ spring:
         cache-duration: PT1S # 1 second, see the ISO 8601 standard
     thymeleaf:
         cache: false
+    sleuth:
+        sampler:
+            probability: 1 # report 100% of traces
     zipkin: # Use the "zipkin" Maven profile to have the Spring Cloud Zipkin dependencies
         base-url: http://localhost:9411
         enabled: false
@@ -70,23 +73,9 @@ spring:
             discovery:
                 enabled: true
 
-# ===================================================================
-# To enable SSL in development, uncomment the the "server.ssl" properties below.
-#
-# JHipster has generated a self-signed certificate, which will be used to encrypt traffic.
-# As your browser will not understand this certificate, you will need to import it.
-#
-# Another (easiest) solution with Chrome is to enable the "allow-insecure-localhost" flag
-# at chrome://flags/#allow-insecure-localhost
-# ===================================================================
 server:
     port: 8080
     url: https://artemis.ase.in.tum.de
-#    ssl:
-#        key-store: classpath:config/tls/keystore.p12
-#        key-store-password: password
-#        key-store-type: PKCS12
-#        key-alias: selfsigned
 
 # ===================================================================
 # ArTEMiS specific properties
@@ -110,6 +99,7 @@ artemis:
     bitbucket-application-link-id: <application-link-id>
     user: <username>
     password: <password>
+    empty-commit-necessary: true
   lti:
     id: artemis_lti
     oauth-key: artemis_lti_key
@@ -131,7 +121,7 @@ artemis:
 
 jhipster:
     http:
-        version: V_1_1 # To use HTTP/2 you will need SSL support (see above the "server.ssl" configuration)
+        version: V_1_1 # To use HTTP/2 you will need to activate TLS (see application-tls.yml)
     cache: # Cache configuration
         ehcache: # Ehcache configuration
             time-to-live-seconds: 3600 # By default objects stay 1 hour in the cache
@@ -158,6 +148,8 @@ jhipster:
     metrics: # DropWizard Metrics configuration, used by MetricsConfiguration
         jmx:
             enabled: true
+        prometheus: 
+            enabled: false #expose metrics via prometheus 
         logs: # Reports Dropwizard metrics in the logs
             enabled: false
             report-frequency: 60 # in seconds

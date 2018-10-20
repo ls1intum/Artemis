@@ -4,33 +4,33 @@ entity Statistic (statistic) {      //abstract
     participantsUnrated Integer
 }
 
-entity QuizPointStatistic (quizPointStatistic){ //extends Statistic
+entity QuizPointStatistic (quizPointStatistic) { //extends Statistic
 }
 
-entity QuestionStatistic (questionStatistic){   //extends Statistic, abstract
+entity QuestionStatistic (questionStatistic) {   //extends Statistic, abstract
     ratedCorrectCounter Integer,
     unRatedCorrectCounter Integer,
 }
 
-entity MultipleChoiceQuestionStatistic (multipleChoiceQuestionStatistic){   //extends QuestionStatistic
+entity MultipleChoiceQuestionStatistic (mcQuestionStatistic) {   //extends QuestionStatistic
 }
 
-entity DragAndDropQuestionStatistic (dragAndDropQuestionStatistic){   //extends QuestionStatistic
+entity DragAndDropQuestionStatistic (dndQuestionStatistic) {   //extends QuestionStatistic
 }
 
-entity StatisticCounter(statisticCounter){ //abstract
+entity StatisticCounter(statisticCounter) { //abstract
     ratedCounter Integer,
     UnRatedCounter Integer
 }
 
-entity PointCounter(pointCounter){         //extends PointCounter
+entity PointCounter(pointCounter) {         //extends PointCounter
     points Double
 }
 
-entity AnswerCounter(answerCounter){       //extends StatisticCounter
+entity AnswerCounter(answerCounter) {       //extends StatisticCounter
 }
 
-entity DropLocationCounter(dropLocationCounter){    //extends StatisticCounter
+entity DropLocationCounter(dropLocationCounter) {    //extends StatisticCounter
 }
 
 entity Course (course) {
@@ -138,7 +138,7 @@ entity AnswerOption {
     invalid Boolean
 }
 
-entity MultipleChoiceSubmittedAnswer {      //extends SubmittedAnswer
+entity MultipleChoiceSubmittedAnswer (mcSubmittedAnswer) {      //extends SubmittedAnswer
 
 }
 
@@ -172,7 +172,7 @@ entity LtiUserId (lti_user_id) {
     ltiUserId String
 }
 
-entity Result (result) {
+entity ExerciseResult (result) {
     resultString String,
     completionDate ZonedDateTime,
     successful Boolean,
@@ -243,7 +243,7 @@ entity FileUploadSubmission {       //extends Submission
 }
 
 
-entity DragAndDropSubmittedAnswer {      //extends SubmittedAnswer
+entity DragAndDropSubmittedAnswer (dndSubmittedAnswer) {      //extends SubmittedAnswer
 
 }
 
@@ -264,9 +264,9 @@ relationship OneToMany {
     DragAndDropQuestionStatistic{DropLocationCounters} to DropLocationCounter{DragAndDropQuestionStatistic},
     Course{exercises} to Exercise{course(title)},
     Exercise{participations} to Participation{exercise(title)},
-    Participation{results} to Result{participation},
+    Participation{results} to ExerciseResult{participation},
     Participation{submissions} to Submission{participation},
-    Result{feedbacks} to Feedback{result},
+    ExerciseResult{feedbacks} to Feedback{result},
     QuizExercise{questions} to Question{exercise},
     MultipleChoiceQuestion{answerOptions} to AnswerOption{question},
     DragAndDropQuestion{dropLocations} to DropLocation{question},
@@ -281,9 +281,9 @@ relationship OneToOne {
     Question{questionStatistic} to QuestionStatistic{question},
     AnswerCounter{answer} to AnswerOption,
     DropLocationCounter{dropLocation} to DropLocation,
-    Submission{result} to Result{submission},
+    Submission{result} to ExerciseResult{submission},
     LtiUserId{user} to User,
-    Result{assessor} to User
+    ExerciseResult{assessor} to User
 }
 
 relationship ManyToOne {

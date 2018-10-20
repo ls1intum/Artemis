@@ -1,5 +1,6 @@
 {
-    "fluentMethods": true,
+    "name": "MultipleChoiceQuestion",
+    "fields": [],
     "relationships": [
         {
             "relationshipType": "one-to-many",
@@ -8,11 +9,13 @@
             "otherEntityRelationshipName": "question"
         }
     ],
-    "fields": [],
-    "changelogDate": "20171130173544",
+    "changelogDate": "20180927081401",
     "entityTableName": "multiple_choice_question",
     "dto": "no",
     "pagination": "no",
     "service": "no",
-    "jpaMetamodelFiltering": false
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
 }

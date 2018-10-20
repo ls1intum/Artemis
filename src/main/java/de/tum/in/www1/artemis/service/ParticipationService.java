@@ -265,10 +265,7 @@ public class ParticipationService {
 
     private Participation configureBuildPlan(Participation participation, ProgrammingExercise exercise) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.BUILD_PLAN_CONFIGURED)) {
-            continuousIntegrationService.get().configureBuildPlan(
-                participation.getBuildPlanId(),
-                participation.getRepositoryUrlAsUrl(),
-                participation.getStudent().getLogin());
+            continuousIntegrationService.get().configureBuildPlan(participation);
             participation.setInitializationState(InitializationState.BUILD_PLAN_CONFIGURED);
             return save(participation);
         } else {
@@ -310,6 +307,19 @@ public class ParticipationService {
         log.debug("Request to get Participation : {}", id);
         return participationRepository.findById(id).get();
     }
+
+    /**
+     * Get one participation by id.
+     *
+     * @param id the id of the entity
+     * @return the entity
+     */
+    @Transactional(readOnly = true)
+    public Participation findOneWithEagerResults(Long id) {
+        log.debug("Request to get Participation : {}", id);
+        return participationRepository.findByIdWithEagerResults(id);
+    }
+
 
     /**
      * Get one initialized/inactive participation by its student and exercise.
@@ -411,16 +421,20 @@ public class ParticipationService {
             }
         }
         if (participation.getResults() != null && participation.getResults().size() > 0) {
-            log.info("Will delete " + participation.getResults().size() + " results");
             for (Result result : participation.getResults()) {
                 resultRepository.deleteById(result.getId());
+                //The following code is necessary, because we might have submissions in results which are not properly connected to a participation and CASCASE_REMOVE is not active in this case
                 if (result.getSubmission() != null) {
-                    submissionRepository.deleteById(result.getSubmission().getId());
+                    Submission submissionToDelete = result.getSubmission();
+                    submissionRepository.deleteById(submissionToDelete.getId());
+                    result.setSubmission(null);
+                    //make sure submissions don't get deleted twice (see below)
+                    participation.removeSubmissions(submissionToDelete);
                 }
             }
         }
+        //The following case is necessary, because we might have submissions without result
         if (participation.getSubmissions() != null && participation.getSubmissions().size() > 0) {
-            log.info("Will delete " + participation.getResults().size() + " submissions");
             for (Submission submission : participation.getSubmissions()) {
                 submissionRepository.deleteById(submission.getId());
             }

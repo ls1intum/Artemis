@@ -88,7 +88,8 @@ module.exports = (options) => ({
         }),
         new HtmlWebpackPlugin({
             template: './src/main/webapp/index.html',
-            chunksSortMode: 'dependency',
+            chunks: ['vendors', 'polyfills', 'main', 'global'],
+            chunksSortMode: 'manual',
             inject: 'body'
         })
     ]

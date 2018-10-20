@@ -1,5 +1,11 @@
 {
-    "fluentMethods": true,
+    "name": "QuizSubmission",
+    "fields": [
+        {
+            "fieldName": "scoreInPoints",
+            "fieldType": "Double"
+        }
+    ],
     "relationships": [
         {
             "relationshipType": "one-to-many",
@@ -8,16 +14,13 @@
             "otherEntityRelationshipName": "submission"
         }
     ],
-    "fields": [
-        {
-            "fieldName": "scoreInPoints",
-            "fieldType": "Double"
-        }
-    ],
-    "changelogDate": "20171130173556",
+    "changelogDate": "20180927081413",
     "entityTableName": "quiz_submission",
     "dto": "no",
     "pagination": "no",
     "service": "no",
-    "jpaMetamodelFiltering": false
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
 }

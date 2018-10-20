@@ -1,5 +1,11 @@
 {
-    "fluentMethods": true,
+    "name": "DragAndDropQuestion",
+    "fields": [
+        {
+            "fieldName": "backgroundFilePath",
+            "fieldType": "String"
+        }
+    ],
     "relationships": [
         {
             "relationshipType": "one-to-many",
@@ -12,18 +18,21 @@
             "relationshipName": "dragItems",
             "otherEntityName": "dragItem",
             "otherEntityRelationshipName": "question"
-        }
-    ],
-    "fields": [
+        },
         {
-            "fieldName": "backgroundFilePath",
-            "fieldType": "String"
+            "relationshipType": "one-to-many",
+            "relationshipName": "correctMappings",
+            "otherEntityName": "dragAndDropMapping",
+            "otherEntityRelationshipName": "question"
         }
     ],
-    "changelogDate": "20171130173547",
+    "changelogDate": "20180927081404",
     "entityTableName": "drag_and_drop_question",
     "dto": "no",
     "pagination": "no",
     "service": "no",
-    "jpaMetamodelFiltering": false
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
 }

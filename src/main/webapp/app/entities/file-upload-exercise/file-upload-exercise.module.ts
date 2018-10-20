@@ -12,40 +12,33 @@ import {
     fileUploadExercisePopupRoute,
     FileUploadExercisePopupService,
     fileUploadExerciseRoute,
-    FileUploadExerciseService
+    FileUploadExerciseService,
+    FileUploadExerciseUpdateComponent
 } from './';
 import { SortByModule } from '../../components/pipes';
 
-const ENTITY_STATES = [
-    ...fileUploadExerciseRoute,
-    ...fileUploadExercisePopupRoute,
-];
+const ENTITY_STATES = [...fileUploadExerciseRoute, ...fileUploadExercisePopupRoute];
 
 @NgModule({
-    imports: [
-        ArTEMiSSharedModule,
-        RouterModule.forChild(ENTITY_STATES),
-        SortByModule
-    ],
+    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule],
     declarations: [
         FileUploadExerciseComponent,
         FileUploadExerciseDetailComponent,
+        FileUploadExerciseUpdateComponent,
         FileUploadExerciseDialogComponent,
         FileUploadExerciseDeleteDialogComponent,
         FileUploadExercisePopupComponent,
-        FileUploadExerciseDeletePopupComponent,
+        FileUploadExerciseDeletePopupComponent
     ],
     entryComponents: [
         FileUploadExerciseComponent,
+        FileUploadExerciseUpdateComponent,
         FileUploadExerciseDialogComponent,
         FileUploadExercisePopupComponent,
         FileUploadExerciseDeleteDialogComponent,
-        FileUploadExerciseDeletePopupComponent,
+        FileUploadExerciseDeletePopupComponent
     ],
-    providers: [
-        FileUploadExerciseService,
-        FileUploadExercisePopupService,
-    ],
+    providers: [FileUploadExerciseService, FileUploadExercisePopupService],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArTEMiSFileUploadExerciseModule {}

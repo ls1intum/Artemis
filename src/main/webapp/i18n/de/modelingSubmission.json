@@ -16,7 +16,8 @@
             "detail": {
                 "title": "Modeling Submission"
             },
-            "submissionPath": "Submission Path"
+            "model": "Model",
+            "explanationText": "Explanation Text"
         }
     }
 }
