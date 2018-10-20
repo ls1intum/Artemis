@@ -2,10 +2,10 @@ import { DatePipe } from '@angular/common';
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { NgbDateAdapter } from '@ng-bootstrap/ng-bootstrap';
 import {
-    ArTEMiSSharedCommonModule,
     ArTEMiSSharedLibsModule,
-    HasAnyAuthorityDirective,
+    ArTEMiSSharedCommonModule,
     JhiLoginModalComponent,
+    HasAnyAuthorityDirective,
     SafeHtmlPipe,
     SafeUrlPipe
 } from './';

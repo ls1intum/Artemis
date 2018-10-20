@@ -8,6 +8,7 @@ import { JhiWebsocketService } from '../../core';
 import { Result, ResultService } from '../../entities/result';
 import * as $ from 'jquery';
 import * as interact from 'interactjs';
+import { Interactable } from 'interactjs';
 import { BuildLogEntry } from '../../entities/build-log';
 
 @Component({
@@ -18,9 +19,10 @@ import { BuildLogEntry } from '../../entities/build-log';
 export class EditorBuildOutputComponent implements AfterViewInit, OnChanges {
     buildLogs: BuildLogEntry[] = [];
 
-    /** Resizable sizing constants **/
+    /** Resizable constants **/
     resizableMinHeight = 100;
     resizableMaxHeight = 500;
+    interactResizable: Interactable;
 
     @Input()
     participation: Participation;
@@ -29,6 +31,7 @@ export class EditorBuildOutputComponent implements AfterViewInit, OnChanges {
 
     constructor(
         private parent: EditorComponent,
+        private $window: WindowRef,
         private jhiWebsocketService: JhiWebsocketService,
         private repositoryService: RepositoryService,
         private resultService: ResultService
@@ -41,7 +44,8 @@ export class EditorBuildOutputComponent implements AfterViewInit, OnChanges {
      *       The 'resizemove' callback function processes the event values and sets new width and height values for the element.
      */
     ngAfterViewInit(): void {
-        interact('.resizable-buildoutput')
+        this.resizableMinHeight = this.$window.nativeWindow.screen.height / 7;
+        this.interactResizable = interact('.resizable-buildoutput')
             .resizable({
                 // Enable resize from top edge; triggered by class rg-top
                 edges: { left: false, right: false, bottom: false, top: '.rg-top' },
@@ -54,8 +58,7 @@ export class EditorBuildOutputComponent implements AfterViewInit, OnChanges {
             })
             .on('resizemove', function(event) {
                 const target = event.target;
-                // Update element size
-                target.style.width = event.rect.width + 'px';
+                // Update element height
                 target.style.height = event.rect.height + 'px';
             });
     }
@@ -106,6 +109,7 @@ export class EditorBuildOutputComponent implements AfterViewInit, OnChanges {
     }
 
     toggleBuildLogs(results: Result[]) {
+        // TODO: can we use the result in editor-instructions.component.ts?
         if (results && results[0]) {
             this.resultService.getFeedbackDetailsForResult(results[0].id).subscribe(details => {
                 if (details.body.length === 0) {
@@ -124,6 +128,6 @@ export class EditorBuildOutputComponent implements AfterViewInit, OnChanges {
      * @param {boolean} horizontal
      */
     toggleEditorCollapse($event: any, horizontal: boolean) {
-        this.parent.toggleCollapse($event, horizontal);
+        this.parent.toggleCollapse($event, horizontal, this.interactResizable, undefined, this.resizableMinHeight);
     }
 }

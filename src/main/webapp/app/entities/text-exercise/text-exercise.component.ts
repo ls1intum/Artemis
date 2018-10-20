@@ -75,15 +75,17 @@ export class TextExerciseComponent implements OnInit, OnDestroy {
     }
 
     loadAllForCourse() {
-        this.courseExerciseService.findAllTextExercises(this.courseId, {
-            page: this.page,
-            size: this.itemsPerPage
-        }).subscribe(
-            (res: HttpResponse<TextExercise[]>) => {
-                this.textExercises = res.body;
-            },
-            (res: HttpErrorResponse) => this.onError(res)
-        );
+        this.courseExerciseService
+            .findAllTextExercises(this.courseId, {
+                page: this.page,
+                size: this.itemsPerPage
+            })
+            .subscribe(
+                (res: HttpResponse<TextExercise[]>) => {
+                    this.textExercises = res.body;
+                },
+                (res: HttpErrorResponse) => this.onError(res)
+            );
         this.courseService.find(this.courseId).subscribe(res => {
             this.course = res.body;
         });
@@ -105,5 +107,5 @@ export class TextExerciseComponent implements OnInit, OnDestroy {
         this.jhiAlertService.error(error.message, null, null);
     }
 
-    callback() { }
+    callback() {}
 }

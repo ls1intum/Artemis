@@ -15,7 +15,7 @@ export type EntityArrayResponseType = HttpResponse<Exercise[]>;
 
 @Injectable()
 export class ExerciseService {
-    private resourceUrl = SERVER_API_URL + 'api/exercises';
+    public resourceUrl = SERVER_API_URL + 'api/exercises';
 
     constructor(private http: HttpClient, private participationService: ParticipationService) {}
 
@@ -54,9 +54,9 @@ export class ExerciseService {
         return this.http.get(`${this.resourceUrl}/${id}/archive`, { observe: 'response', responseType: 'blob' });
     }
 
-    cleanup(id: number, deleteRepositories: boolean): Observable<HttpResponse<Blob>> {
+    cleanup(id: number, deleteRepositories: boolean): Observable<HttpResponse<void>> {
         const params = new HttpParams().set('deleteRepositories', deleteRepositories.toString());
-        return this.http.delete(`${this.resourceUrl}/${id}/cleanup`, { params, observe: 'response', responseType: 'blob' });
+        return this.http.delete<void>(`${this.resourceUrl}/${id}/cleanup`, { params, observe: 'response' });
     }
 
     reset(id: number): Observable<HttpResponse<void>> {

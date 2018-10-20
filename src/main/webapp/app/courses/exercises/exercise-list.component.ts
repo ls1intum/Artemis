@@ -1,16 +1,18 @@
-import { Component, HostListener, Input, OnInit, Pipe, PipeTransform } from '@angular/core';
+import { Component, HostListener, Input, OnInit, OnDestroy, Pipe, PipeTransform } from '@angular/core';
 import { Course, CourseExerciseService } from '../../entities/course';
 import { Exercise, ExerciseType, ParticipationStatus } from '../../entities/exercise';
 import { Principal } from '../../core';
 import { WindowRef } from '../../core/websocket/window.service';
 import { NgbModal, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService } from 'ng-jhipster';
-import { Router } from '@angular/router';
+import { Router, NavigationStart } from '@angular/router';
 import { InitializationState, Participation, ParticipationService } from '../../entities/participation';
-import * as moment from 'moment';
+import { ParticipationDataProvider } from '../../courses/exercises/participation-data-provider';
 import { HttpClient } from '@angular/common/http';
+import { Subscription } from 'rxjs';
 import { SERVER_API_URL } from '../../app.constants';
 import { QuizExercise } from '../../entities/quiz-exercise';
+import * as moment from 'moment';
 
 @Pipe({ name: 'showExercise' })
 export class ShowExercisePipe implements PipeTransform {
@@ -27,13 +29,14 @@ export class ShowExercisePipe implements PipeTransform {
     templateUrl: './exercise-list.component.html',
     providers: [JhiAlertService, WindowRef, ParticipationService, CourseExerciseService, NgbModal]
 })
-export class ExerciseListComponent implements OnInit {
-    // make constants available to html for comparison
+export class ExerciseListComponent implements OnInit, OnDestroy {
+    // Make constants available to html for comparison
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
 
     _course: Course;
+    routerSubscription: Subscription;
 
     @Input()
     get course(): Course {
@@ -65,13 +68,13 @@ export class ExerciseListComponent implements OnInit {
      * the app can be written in a filtering/sorting service and injected into the component.
      */
 
-    // exercises are sorted by dueDate
+    // Exercises are sorted by dueDate
     exercises: Exercise[];
     now = Date.now();
     numOfInactiveExercises = 0;
     showInactiveExercises = false;
-    private repositoryPassword: string;
-    lastPopoverRef: NgbPopover;
+    repositoryPassword: string;
+    wasCopied = false;
 
     constructor(
         private jhiAlertService: JhiAlertService,
@@ -80,7 +83,8 @@ export class ExerciseListComponent implements OnInit {
         private principal: Principal,
         private httpClient: HttpClient,
         private courseExerciseService: CourseExerciseService,
-        private router: Router
+        private router: Router,
+        private participationDataProvider: ParticipationDataProvider
     ) {
         // Initialize array to avoid undefined errors
         this.exercises = [];
@@ -88,11 +92,36 @@ export class ExerciseListComponent implements OnInit {
 
     ngOnInit(): void {
         this.principal.identity().then(account => {
-            // only load password if current user login starts with 'edx'
+            // Only load password if current user login starts with 'edx'
             if (account && account.login && account.login.startsWith('edx')) {
                 this.getRepositoryPassword();
             }
         });
+        // Listen to NavigationStart events; if we are routing to the online editor, we pass the participation (if we find one)
+        this.routerSubscription = this.router.events
+            .filter(event => event instanceof NavigationStart)
+            .subscribe((event: NavigationStart) => {
+                if (event.url.startsWith('/editor')) {
+                    // Extract participation id from event url and cast to number
+                    const participationId = Number(event.url.split('/').slice(-1));
+                    // Search through all exercises and the participations within each of them to obtain the target participation
+                    const filteredExercise = this.course.exercises.find(
+                        exercise =>
+                            exercise.participations != null &&
+                            exercise.participations.find(exerciseParticipation => exerciseParticipation.id === participationId) !==
+                                undefined
+                    );
+                    if (filteredExercise) {
+                        const participation: Participation = filteredExercise.participations.find(
+                            currentParticipation => currentParticipation.id === participationId
+                        );
+                        // Just make sure we have indeed found the desired participation
+                        if (participation && participation.id === participationId) {
+                            this.participationDataProvider.participationStorage = participation;
+                        }
+                    }
+                }
+            });
     }
 
     initExercises(exercises: Exercise[]) {
@@ -103,16 +132,16 @@ export class ExerciseListComponent implements OnInit {
         this.numOfInactiveExercises = exercises.filter(exercise => !this.showExercise(exercise)).length;
 
         for (const exercise of exercises) {
-            // we assume that exercise has a participation and a result if available because of the explicit courses dashboard call
+            // We assume that exercise has a participation and a result if available because of the explicit courses dashboard call
             exercise.course = this._course;
             exercise.participationStatus = this.participationStatus(exercise);
 
             if (this.hasParticipations(exercise)) {
-                // reconnect 'participation --> exercise' in case it is needed
+                // Reconnect 'participation --> exercise' in case it is needed
                 exercise.participations[0].exercise = exercise;
             }
 
-            // if the User is a student: subscribe the release Websocket of every quizExercise
+            // If the User is a student: subscribe the release Websocket of every quizExercise
             if (exercise.type === ExerciseType.QUIZ) {
                 const quizExercise = exercise as QuizExercise;
                 quizExercise.isActiveQuiz = this.isActiveQuiz(exercise);
@@ -164,7 +193,7 @@ export class ExerciseListComponent implements OnInit {
         exercise.loading = true;
 
         if (exercise.type === ExerciseType.QUIZ) {
-            // start the quiz
+            // Start the quiz
             return this.router.navigate(['/quiz', exercise.id]);
         }
 
@@ -219,22 +248,15 @@ export class ExerciseListComponent implements OnInit {
         });
     }
 
-    getClonePopoverTemplate(exercise: Exercise) {
-        const html = [
-            '<p>Clone your personal repository for this exercise:</p>',
-            '<pre style="max-width: 550px;">',
-            exercise.participations[0].repositoryUrl,
-            '</pre>',
-            this.repositoryPassword
-                ? '<p>Your password is: <code class="password">' + this.repositoryPassword + '</code> (hover to show)<p>'
-                : '',
-            '<a class="btn btn-primary btn-sm" href="',
-            this.buildSourceTreeUrl(exercise.participations[0].repositoryUrl),
-            '">Clone in SourceTree</a>',
-            ' <a href="http://www.sourcetreeapp.com" target="_blank">Atlassian SourceTree</a> is the free Git client for Windows or Mac. '
-        ].join('');
+    onCopyFailure() {
+        console.log('copy fail!');
+    }
 
-        return html;
+    onCopySuccess() {
+        this.wasCopied = true;
+        setTimeout(() => {
+            this.wasCopied = false;
+        }, 3000);
     }
 
     participationStatus(exercise: Exercise): ParticipationStatus {
@@ -291,26 +313,8 @@ export class ExerciseListComponent implements OnInit {
         return participation.results && participation.results.length > 0;
     }
 
-    @HostListener('document:click', ['$event'])
-    clickOutside(event: any) {
-        // If there's a last element-reference AND the click-event target is outside this element
-        if (
-            this.lastPopoverRef &&
-            (this.lastPopoverRef as any)._elementRef.nativeElement.contains(event.target) &&
-            !(this.lastPopoverRef as any)._windowRef &&
-            !(this.lastPopoverRef as any)._windowRef.location.nativeElement.contains(event.target)
-        ) {
-            this.lastPopoverRef.close();
-            this.lastPopoverRef = null;
-        }
-    }
-
-    setCurrentPopoverOpen(popReference: any) {
-        // If there's a last element-reference AND the new reference is different
-        if (this.lastPopoverRef && this.lastPopoverRef !== popReference) {
-            this.lastPopoverRef.close();
-        }
-        // Registering new popover ref
-        this.lastPopoverRef = popReference;
+    ngOnDestroy(): void {
+        // Remove router event subscription
+        this.routerSubscription.unsubscribe();
     }
 }

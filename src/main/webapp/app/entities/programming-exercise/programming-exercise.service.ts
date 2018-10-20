@@ -13,7 +13,7 @@ export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
 
 @Injectable()
 export class ProgrammingExerciseService {
-    private resourceUrl = SERVER_API_URL + 'api/programming-exercises';
+    public resourceUrl = SERVER_API_URL + 'api/programming-exercises';
 
     constructor(private http: HttpClient) {}
 

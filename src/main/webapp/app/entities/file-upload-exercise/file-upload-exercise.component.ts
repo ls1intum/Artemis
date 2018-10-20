@@ -75,15 +75,17 @@ export class FileUploadExerciseComponent implements OnInit, OnDestroy {
     }
 
     loadAllForCourse() {
-        this.courseExerciseService.findAllFileUploadExercises(this.courseId, {
-            page: this.page,
-            size: this.itemsPerPage
-        }).subscribe(
-            (res: HttpResponse<FileUploadExercise[]>) => {
-                this.fileUploadExercises = res.body;
-            },
-            (res: HttpErrorResponse) => this.onError(res)
-        );
+        this.courseExerciseService
+            .findAllFileUploadExercises(this.courseId, {
+                page: this.page,
+                size: this.itemsPerPage
+            })
+            .subscribe(
+                (res: HttpResponse<FileUploadExercise[]>) => {
+                    this.fileUploadExercises = res.body;
+                },
+                (res: HttpErrorResponse) => this.onError(res)
+            );
         this.courseService.find(this.courseId).subscribe(res => {
             this.course = res.body;
         });
@@ -105,5 +107,5 @@ export class FileUploadExerciseComponent implements OnInit, OnDestroy {
         this.jhiAlertService.error(error.message, null, null);
     }
 
-    callback() { }
+    callback() {}
 }

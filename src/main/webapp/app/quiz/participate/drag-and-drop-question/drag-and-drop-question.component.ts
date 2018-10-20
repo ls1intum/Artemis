@@ -4,6 +4,21 @@ import { DragAndDropQuestionUtil } from '../../../components/util/drag-and-drop-
 import { DragAndDropQuestion } from '../../../entities/drag-and-drop-question';
 import { DragAndDropMapping } from '../../../entities/drag-and-drop-mapping';
 import { DropLocation } from '../../../entities/drop-location';
+import { polyfill } from 'mobile-drag-drop';
+import { scrollBehaviourDragImageTranslateOverride } from 'mobile-drag-drop/scroll-behaviour';
+
+// options are optional ;)
+polyfill({
+    // use this to make use of the scroll behaviour
+    dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride
+});
+
+// dragenter listener
+(event: any) => {
+    event.preventDefault();
+};
+
+window.addEventListener('touchmove', function() {});
 
 @Component({
     selector: 'jhi-drag-and-drop-question',

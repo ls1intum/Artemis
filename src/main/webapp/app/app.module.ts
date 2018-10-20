@@ -3,7 +3,8 @@ import './vendor.ts';
 import { Injector, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
-import { LocalStorageService, Ng2Webstorage, SessionStorageService } from 'ngx-webstorage';
+import { NgbDatepickerConfig } from '@ng-bootstrap/ng-bootstrap';
+import { Ng2Webstorage, LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { JhiEventManager } from 'ng-jhipster';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
@@ -26,6 +27,7 @@ import { DifferencePipe, MomentModule } from 'angular2-moment';
 import { ArTEMiSEditorModule } from './editor';
 import { RepositoryInterceptor, RepositoryService } from './entities/repository';
 import { ArTEMiSQuizModule } from './quiz/participate';
+import * as moment from 'moment';
 // jhipster-needle-angular-add-module-import JHipster will add new module here
 import {
     ActiveMenuDirective,
@@ -41,6 +43,7 @@ import { ArTEMiSStatisticModule } from './statistics/statistic.module';
 import { ArTEMiSModelingEditorModule } from './modeling-editor/modeling-editor.module';
 import { QuizExerciseExportComponent } from './entities/quiz-exercise/quiz-exercise-export.component';
 import { PendingChangesGuard } from './shared/guard/pending-changes.guard';
+import { ParticipationDataProvider } from './courses/exercises/participation-data-provider';
 
 @NgModule({
     imports: [
@@ -89,6 +92,7 @@ import { PendingChangesGuard } from './shared/guard/pending-changes.guard';
         DifferencePipe,
         JhiWebsocketService,
         Principal,
+        ParticipationDataProvider,
         PendingChangesGuard,
         /**
          * @description Interceptor declarations:
@@ -131,4 +135,8 @@ import { PendingChangesGuard } from './shared/guard/pending-changes.guard';
     ],
     bootstrap: [JhiMainComponent]
 })
-export class ArTEMiSAppModule {}
+export class ArTeMiSAppModule {
+    constructor(private dpConfig: NgbDatepickerConfig) {
+        this.dpConfig.minDate = { year: moment().year() - 100, month: 1, day: 1 };
+    }
+}

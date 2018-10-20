@@ -23,6 +23,7 @@
                 "saved": "Saved!",
                 "quizHasStarted": "The quiz has started. No more changes allowed.<br><br>Retroactive corrections can be made, once the quiz has ended. To do so, go back to the overview and click on \"Re-evaluate\", once the quiz has ended. (\"Re-evaluate\" is not available to TAs.)"
             },
+            "saveError": "An error occurred during save. Please review your input data and try again later.",
             "new": {
                 "title": "New Quiz Exercise for {{ param }}"
             },

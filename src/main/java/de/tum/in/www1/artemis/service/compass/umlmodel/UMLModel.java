@@ -28,7 +28,7 @@ public class UMLModel {
         return sim1 * sim2;
     }
 
-    private double similarityScore(UMLModel reference) {
+    public double similarityScore(UMLModel reference) {
         double similarity = 0;
 
         int elementCount = connectableList.size() + relationList.size();

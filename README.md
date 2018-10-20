@@ -1,7 +1,7 @@
 # ArTEMiS: AuTomated assEssment Management System 
-This application was generated using JHipster 5.3.1, you can find documentation and help at [http://www.jhipster.tech/documentation-archive/v5.3.1](http://www.jhipster.tech/documentation-archive/v5.3.1).
+This application was generated using JHipster 5.5.0, you can find documentation and help at [http://www.jhipster.tech/documentation-archive/v5.5.0](http://www.jhipster.tech/documentation-archive/v5.5.0).
 
-**Curent version:** 2.2.0
+**Curent version:** 2.2.1
 
 ## Main features
 ArTEMiS has the following main features:
@@ -84,6 +84,7 @@ artemis:
     bitbucket-application-link-id: de1bf2e0-eb40-3a2d-9494-93cbe2e22d08
     user: <user>
     password: <password>
+    empty-commit-necessary: true
   lti:
     id: exerciseapp_lti
     oauth-key: exerciseapp_lti_key

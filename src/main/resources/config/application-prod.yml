@@ -57,6 +57,9 @@ spring:
         password:
     thymeleaf:
         cache: true
+    sleuth:
+        sampler:
+            probability: 1 # report 100% of traces
     zipkin: # Use the "zipkin" Maven profile to have the Spring Cloud Zipkin dependencies
         base-url: http://localhost:9411
         enabled: false
@@ -66,7 +69,7 @@ spring:
 
 
 # ===================================================================
-# To enable SSL in production, generate a certificate using:
+# To enable TLS in production, generate a certificate using:
 # keytool -genkey -alias artemis -storetype PKCS12 -keyalg RSA -keysize 2048 -keystore keystore.p12 -validity 3650
 #
 # You can also use Let's Encrypt:
@@ -124,6 +127,8 @@ jhipster:
     metrics: # DropWizard Metrics configuration, used by MetricsConfiguration
         jmx:
             enabled: true
+        prometheus: 
+            enabled: false #expose metrics via prometheus 
         logs: # Reports Dropwizard metrics in the logs
             enabled: false
             report-frequency: 60 # in seconds

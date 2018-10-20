@@ -1,54 +1,40 @@
 /* tslint:disable max-line-length */
-import { ComponentFixture, TestBed, async } from '@angular/core/testing';
-import { HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute } from '@angular/router';
+import { of } from 'rxjs';
 
-import { ArTEMiSTestModule } from '../../../test.module';
-import { AnswerCounterDetailComponent } from '../../../../../../main/webapp/app/entities/answer-counter/answer-counter-detail.component';
-import { AnswerCounterService } from '../../../../../../main/webapp/app/entities/answer-counter/answer-counter.service';
-import { AnswerCounter } from '../../../../../../main/webapp/app/entities/answer-counter/answer-counter.model';
+import { ArTeMiSTestModule } from '../../../test.module';
+import { AnswerCounterDetailComponent } from 'app/entities/answer-counter/answer-counter-detail.component';
+import { AnswerCounter } from 'app/shared/model/answer-counter.model';
 
 describe('Component Tests', () => {
-
     describe('AnswerCounter Management Detail Component', () => {
         let comp: AnswerCounterDetailComponent;
         let fixture: ComponentFixture<AnswerCounterDetailComponent>;
-        let service: AnswerCounterService;
-
-        beforeEach(async(() => {
-            TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
-                declarations: [AnswerCounterDetailComponent],
-                providers: [
-                    AnswerCounterService
-                ]
-            })
-            .overrideTemplate(AnswerCounterDetailComponent, '')
-            .compileComponents();
-        }));
+        const route = ({ data: of({ answerCounter: new AnswerCounter(123) }) } as any) as ActivatedRoute;
 
         beforeEach(() => {
+            TestBed.configureTestingModule({
+                imports: [ArTeMiSTestModule],
+                declarations: [AnswerCounterDetailComponent],
+                providers: [{ provide: ActivatedRoute, useValue: route }]
+            })
+                .overrideTemplate(AnswerCounterDetailComponent, '')
+                .compileComponents();
             fixture = TestBed.createComponent(AnswerCounterDetailComponent);
             comp = fixture.componentInstance;
-            service = fixture.debugElement.injector.get(AnswerCounterService);
         });
 
         describe('OnInit', () => {
             it('Should call load all on init', () => {
                 // GIVEN
 
-                spyOn(service, 'find').and.returnValue(Observable.of(new HttpResponse({
-                    body: new AnswerCounter(123)
-                })));
-
                 // WHEN
                 comp.ngOnInit();
 
                 // THEN
-                expect(service.find).toHaveBeenCalledWith(123);
-                expect(comp.answerCounter).toEqual(jasmine.objectContaining({id: 123}));
+                expect(comp.answerCounter).toEqual(jasmine.objectContaining({ id: 123 }));
             });
         });
     });
-
 });

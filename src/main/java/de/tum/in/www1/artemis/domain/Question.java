@@ -44,7 +44,7 @@ public abstract class Question implements Serializable {
     @JsonView(QuizView.Before.class)
     private String title;
 
-    @Column(name = "text")
+    @Column(name = "text", length = 1000)
     @JsonView(QuizView.Before.class)
     private String text;
 

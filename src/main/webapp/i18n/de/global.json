@@ -11,6 +11,8 @@
                 "main": "Entitäten",
                 "course": "Kurse",
                 "exercise": "Exercise",
+                "textExercise": "Text Exercise",
+                "fileUploadExercise": "File Upload Exercise",
                 "programmingExercise": "Programming Exercise",
                 "modelingExercise": "Modeling Exercise",
                 "quizExercise": "Quiz Exercise",
@@ -25,11 +27,14 @@
                 "dragItem": "Drag Item",
                 "participation": "Participation",
                 "ltiUserId": "Lti User Id",
-                "result": "Result",
+                "exerciseResult": "Exercise Result",
                 "feedback": "Feedback",
                 "submission": "Submission",
                 "modelingSubmission": "Modeling Submission",
                 "quizSubmission": "Quiz Submission",
+                "programmingSubmission": "Programming Submission",
+                "textSubmission": "Text Submission",
+                "fileUploadSubmission": "File Upload Submission",
                 "dragAndDropSubmittedAnswer": "Drag And Drop Submitted Answer",
                 "dragAndDropAssignment": "Drag And Drop Assignment",
                 "statistic": "Statistic",
@@ -77,6 +82,8 @@
         "form": {
             "username": "Benutzername",
             "username.placeholder": "Ihr Benutzername",
+            "currentpassword": "Aktuelles Passwort",
+            "currentpassword.placeholder": "Aktuelles Passwort",
             "newpassword": "Neues Passwort",
             "newpassword.placeholder": "Neues Passwort",
             "confirmpassword": "Neues Passwort bestätigen",
@@ -177,7 +184,7 @@
         }
     },
     "error": {
-        "internalServerError": "Internal server error",
+        "internalServerError": "Interner Serverfehler",
         "server.not.reachable": "Server ist nicht erreichbar",
         "url.not.found": "Nicht gefunden",
         "NotNull": "Feld {{fieldName}} kann nicht leer sein!",
@@ -186,7 +193,8 @@
         "emailexists": "Email wird bereits verwendet!",
         "idexists": "Ein neuer {{entityName}} kann noch keine ID haben",
         "invalid.build.plan.id": "Die Build Plan ID scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für ArTEMiS zugänglich ist.",
-        "invalid.repository.url": "Die Repository URL scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für ArTEMiS zugänglich ist."
+        "invalid.repository.url": "Die Repository URL scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für ArTEMiS zugänglich ist.",
+        "idnull": "Ungültige ID"
     },
     "footer": "Dies ist Ihre Fußzeile",
     "justNow": "gerade eben",

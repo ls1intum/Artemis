@@ -15,15 +15,13 @@ import { Subscription } from 'rxjs/Subscription';
     templateUrl: './file-upload-exercise-delete-dialog.component.html'
 })
 export class FileUploadExerciseDeleteDialogComponent {
-
     fileUploadExercise: FileUploadExercise;
 
     constructor(
         private fileUploadExerciseService: FileUploadExerciseService,
         public activeModal: NgbActiveModal,
         private eventManager: JhiEventManager
-    ) {
-    }
+    ) {}
 
     clear() {
         this.activeModal.dismiss('cancel');
@@ -45,18 +43,13 @@ export class FileUploadExerciseDeleteDialogComponent {
     template: ''
 })
 export class FileUploadExerciseDeletePopupComponent implements OnInit, OnDestroy {
-
     routeSub: Subscription;
 
-    constructor(
-        private route: ActivatedRoute,
-        private fileUploadExercisePopupService: FileUploadExercisePopupService
-    ) {}
+    constructor(private route: ActivatedRoute, private fileUploadExercisePopupService: FileUploadExercisePopupService) {}
 
     ngOnInit() {
         this.routeSub = this.route.params.subscribe(params => {
-            this.fileUploadExercisePopupService
-                .open(FileUploadExerciseDeleteDialogComponent as Component, params['id']);
+            this.fileUploadExercisePopupService.open(FileUploadExerciseDeleteDialogComponent as Component, params['id']);
         });
     }
 

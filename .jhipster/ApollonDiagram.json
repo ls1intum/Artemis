@@ -1,6 +1,5 @@
 {
-    "fluentMethods": true,
-    "relationships": [],
+    "name": "ApollonDiagram",
     "fields": [
         {
             "fieldName": "title",
@@ -11,10 +10,14 @@
             "fieldType": "String"
         }
     ],
-    "changelogDate": "20180313165121",
+    "relationships": [],
+    "changelogDate": "20180927081419",
     "entityTableName": "apollon_diagram",
     "dto": "no",
     "pagination": "no",
     "service": "no",
-    "jpaMetamodelFiltering": false
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
 }
