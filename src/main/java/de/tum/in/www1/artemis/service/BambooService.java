@@ -286,8 +286,9 @@ public class BambooService implements ContinuousIntegrationService {
                 }
                 else {
                     //only delete the git repository, if the online editor is NOT allowed
-                    //this saves some performance, when the student opens the online editor
-                    if (!exercise.isAllowOnlineEditor()) {
+                    //this saves some performance on the server, when the student opens the online editor, because the repo does not need to be cloned again
+                    //Note: the null check is necessary, because otherwise we might get a null pointer exception
+                    if (exercise.isAllowOnlineEditor() == null || exercise.isAllowOnlineEditor() == Boolean.FALSE) {
                         gitService.deleteLocalRepository(repo);
                     }
                 }
