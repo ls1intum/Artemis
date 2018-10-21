@@ -88,7 +88,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
 
     handleNewResult(newResult: Result) {
         this.result = newResult;
-        //Reconnect the new result with the existing participation
+        // Reconnect the new result with the existing participation
         this.result.participation = this.participation;
         this.participation.results = [this.result];
         this.newResult.emit({
