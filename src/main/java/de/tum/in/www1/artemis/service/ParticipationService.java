@@ -103,6 +103,10 @@ public class ParticipationService {
             }
             participation = save(participation);
         }
+        else {
+            //make sure participation and exercise are connected
+            participation.setExercise(exercise);
+        }
 
 
         // specific to programming exercises
@@ -127,7 +131,7 @@ public class ParticipationService {
             }
         }
 
-        save(participation);
+        participation = save(participation);
         return participation;
     }
 
