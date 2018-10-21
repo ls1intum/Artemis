@@ -77,39 +77,6 @@ server:
     port: 8080
 
 # ===================================================================
-# ArTEMiS specific properties
-# ===================================================================
-
-artemis:
-  repo-clone-path: ./repos/
-  encryption-password: <encryption-password>
-  result-retrieval-delay: 5000
-  jira:
-    url: https://jirabruegge.in.tum.de
-    user: <username>
-    password: <password>
-    admin-group-name: <group>
-  bitbucket:
-    url: https://repobruegge.in.tum.de
-    user: <username>
-    password: <password>
-  bamboo:
-    url: https://bamboobruegge.in.tum.de
-    bitbucket-application-link-id: <application-link-id>
-    user: <username>
-    password: <password>
-    empty-commit-necessary: true
-  lti:
-    id: artemis_lti
-    oauth-key: artemis_lti_key
-    oauth-secret: <secret>
-    user-prefix: edx_
-    user-group-name: edx
-  git:
-    name: ArTEMiS
-    email: <email>
-
-# ===================================================================
 # JHipster specific properties
 #
 # Full reference is available at: https://www.jhipster.tech/common-application-properties/
@@ -155,13 +122,3 @@ jhipster:
             host: localhost
             port: 5000
             queue-size: 512
-
-# ===================================================================
-# Application specific properties
-# Add your own application properties here, see the ApplicationProperties class
-# to have type-safe configuration, like in the JHipsterProperties above
-#
-# More documentation is available at:
-# https://www.jhipster.tech/common-application-properties/
-# ===================================================================
-
