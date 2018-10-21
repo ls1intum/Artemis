@@ -98,6 +98,7 @@ artemis:
     bitbucket-application-link-id: <application-link-id>
     user: <username>
     password: <password>
+    empty-commit-necessary: true
   lti:
     id: artemis_lti
     oauth-key: artemis_lti_key
