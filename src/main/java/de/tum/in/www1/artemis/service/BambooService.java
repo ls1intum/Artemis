@@ -280,20 +280,29 @@ public class BambooService implements ContinuousIntegrationService {
                 Repository repo = gitService.getOrCheckoutRepository(repositoryUrl);
                 gitService.commitAndPush(repo, "Setup");
                 ProgrammingExercise exercise = (ProgrammingExercise) participation.getExercise();
-                //only delete the git repository, if the online editor is NOT allowed
-                //this saves some performance, when the student opens the online editor
-                if (!exercise.isAllowOnlineEditor()) {
+                if (exercise == null) {
+                    log.warn("Cannot access exercise in 'configureBuildPlan' to determine if deleting the repo after cloning make sense. Will decide to delete the repo");
                     gitService.deleteLocalRepository(repo);
+                }
+                else {
+                    //only delete the git repository, if the online editor is NOT allowed
+                    //this saves some performance, when the student opens the online editor
+                    if (!exercise.isAllowOnlineEditor()) {
+                        gitService.deleteLocalRepository(repo);
+                    }
                 }
             } catch (GitAPIException ex) {
                 log.error("Git error while doing empty commit", ex);
-                throw new GitException("Git error while doing empty commit");
+                return;
             } catch (IOException ex) {
                 log.error("IOError while doing empty commit", ex);
-                throw new GitException("IOError while doing empty commit");
+                return;
             } catch (InterruptedException ex) {
                 log.error("InterruptedException while doing empty commit", ex);
-                throw new GitException("IOError while doing empty commit");
+                return;
+            } catch (NullPointerException ex) {
+                log.error("NullPointerException while doing empty commit", ex);
+                return;
             }
         }
     }
