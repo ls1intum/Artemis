@@ -1,5 +1,6 @@
 {
-    "fluentMethods": true,
+    "name": "DropLocationCounter",
+    "fields": [],
     "relationships": [
         {
             "relationshipType": "one-to-one",
@@ -16,11 +17,13 @@
             "otherEntityField": "id"
         }
     ],
-    "fields": [],
-    "changelogDate": "20180116211225",
+    "changelogDate": "20180927081350",
     "entityTableName": "drop_location_counter",
     "dto": "no",
     "pagination": "no",
     "service": "no",
-    "jpaMetamodelFiltering": false
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
 }

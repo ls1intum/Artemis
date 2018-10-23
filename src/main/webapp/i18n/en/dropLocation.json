@@ -20,6 +20,7 @@
             "posY": "Pos Y",
             "width": "Width",
             "height": "Height",
+            "invalid": "Invalid",
             "question": "Question"
         }
     }

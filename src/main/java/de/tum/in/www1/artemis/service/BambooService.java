@@ -27,10 +27,12 @@ import com.atlassian.bamboo.specs.util.UserPasswordCredentials;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.exception.BambooException;
+import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -47,6 +49,7 @@ import org.swift.bitbucket.cli.BitbucketClient;
 import org.swift.bitbucket.cli.objects.RemoteRepository;
 import org.swift.common.cli.CliClient;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -78,6 +81,9 @@ public class BambooService implements ContinuousIntegrationService {
 
     @Value("${artemis.bamboo.url}")
     private URL BAMBOO_SERVER_URL;
+
+    @Value("${artemis.bamboo.empty-commit-necessary}")
+    private Boolean BAMBOO_EMPTY_COMMIT_WORKAROUND_NECESSARY;
 
     @Value("${artemis.bamboo.bitbucket-application-link-id}")
     private String BITBUCKET_APPLICATION_LINK_ID;
@@ -255,7 +261,9 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
-    public void configureBuildPlan(String buildPlanId, URL repositoryUrl, String planKey) {
+    public void configureBuildPlan(Participation participation) {
+        String buildPlanId = participation.getBuildPlanId();
+        URL repositoryUrl = participation.getRepositoryUrlAsUrl();
         updatePlanRepository(
             getProjectKeyFromBuildPlanId(buildPlanId),
             getPlanKeyFromBuildPlanId(buildPlanId),
@@ -264,6 +272,40 @@ public class BambooService implements ContinuousIntegrationService {
             getRepositorySlugFromUrl(repositoryUrl)
         );
         enablePlan(getProjectKeyFromBuildPlanId(buildPlanId), getPlanKeyFromBuildPlanId(buildPlanId));
+
+        // Empty commit - Bamboo bug workaround
+
+        if(BAMBOO_EMPTY_COMMIT_WORKAROUND_NECESSARY) {
+            try {
+                Repository repo = gitService.getOrCheckoutRepository(repositoryUrl);
+                gitService.commitAndPush(repo, "Setup");
+                ProgrammingExercise exercise = (ProgrammingExercise) participation.getExercise();
+                if (exercise == null) {
+                    log.warn("Cannot access exercise in 'configureBuildPlan' to determine if deleting the repo after cloning make sense. Will decide to delete the repo");
+                    gitService.deleteLocalRepository(repo);
+                }
+                else {
+                    //only delete the git repository, if the online editor is NOT allowed
+                    //this saves some performance on the server, when the student opens the online editor, because the repo does not need to be cloned again
+                    //Note: the null check is necessary, because otherwise we might get a null pointer exception
+                    if (exercise.isAllowOnlineEditor() == null || exercise.isAllowOnlineEditor() == Boolean.FALSE) {
+                        gitService.deleteLocalRepository(repo);
+                    }
+                }
+            } catch (GitAPIException ex) {
+                log.error("Git error while doing empty commit", ex);
+                return;
+            } catch (IOException ex) {
+                log.error("IOError while doing empty commit", ex);
+                return;
+            } catch (InterruptedException ex) {
+                log.error("InterruptedException while doing empty commit", ex);
+                return;
+            } catch (NullPointerException ex) {
+                log.error("NullPointerException while doing empty commit", ex);
+                return;
+            }
+        }
     }
 
     @Override

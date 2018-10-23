@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, OnChanges, SimpleChanges } from '@angular
 import { QuizExerciseService } from './quiz-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { Course } from '../course/course.model';
 import { CourseService } from '../course/course.service';
 import { QuizExercise } from './quiz-exercise.model';
@@ -14,9 +14,10 @@ import { MultipleChoiceQuestion } from '../../entities/multiple-choice-question'
 import { DragAndDropQuestion } from '../../entities/drag-and-drop-question';
 import { AnswerOption } from '../../entities/answer-option';
 import { Option, Duration } from './quiz-exercise-interfaces';
+import { NgbDateStruct, NgbDate, NgbTimeStruct } from '@ng-bootstrap/ng-bootstrap';
 import * as moment from 'moment';
 import { Moment } from 'moment';
-import { NgbTimeStruct } from '@ng-bootstrap/ng-bootstrap';
+import { JhiAlertService } from 'ng-jhipster';
 
 interface Reason {
     translateKey: string;
@@ -46,6 +47,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     startDate: Moment;
     startTime: NgbTimeStruct;
     dateTime: Moment;
+    minDate: NgbDateStruct;
 
     /** Constants for 'Add existing questions' and 'Import file' features **/
     showExistingQuestions = false;
@@ -79,7 +81,8 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
         private router: Router,
         private translateService: TranslateService,
-        private fileUploaderService: FileUploaderService
+        private fileUploaderService: FileUploaderService,
+        private jhiAlertService: JhiAlertService
     ) {}
 
     ngOnInit(): void {
@@ -94,6 +97,10 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         this.searchQueryText = '';
         this.dndFilterEnabled = true;
         this.mcqFilterEnabled = true;
+
+        /** Set minDate for DatePicker to today **/
+        const today = moment();
+        this.minDate = { year: today.year(), month: today.month() + 1, day: today.date() };
 
         this.paramSub = this.route.params.subscribe(params => {
             /** Query the courseService for the participationId given by the params */
@@ -170,6 +177,18 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     }
 
     /**
+     * @desc Callback for datepicker to decide whether given date should be disabled
+     * All dates which are in the past (< today) are disabled
+     */
+    isDateInPast = (date: NgbDate, current: { month: number }) =>
+        current.month < moment().month() + 1 ||
+        moment()
+            .year(date.year)
+            .month(date.month - 1)
+            .date(date.day)
+            .isBefore(moment());
+
+    /**
      * @function addMultipleChoiceQuestion
      * @desc Add an empty multiple choice question to the quiz
      */
@@ -219,6 +238,16 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     }
 
     /**
+     * @function calculateMaxExerciseScore
+     * @desc Iterates over the questions of the quizExercise and calculates the sum of all question scores
+     */
+    calculateMaxExerciseScore(): number {
+        let scoreSum = 0;
+        this.quizExercise.questions.forEach(question => (scoreSum += question.score));
+        return scoreSum;
+    }
+
+    /**
      * @function showHideExistingQuestions
      * @desc Toggles existing questions view
      */
@@ -234,6 +263,8 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
             });
         }
         this.showExistingQuestions = !this.showExistingQuestions;
+        this.selectedCourseId = null;
+        this.allExistingQuestions = this.existingQuestions = [];
     }
 
     /**
@@ -242,7 +273,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      *       Populates list of quiz exercises for the selected course
      */
     onCourseSelect(): void {
-        this.allExistingQuestions = [];
+        this.allExistingQuestions = this.existingQuestions = [];
         if (this.selectedCourseId == null) {
             return;
         }
@@ -251,23 +282,24 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         const selectedCourse = this.courses.find(course => course.id === Number(this.selectedCourseId));
 
         // For the given course, get list of all quiz exercises. And for all quiz exercises, get list of all questions in a quiz exercise,
-        this.repository.findForCourse(selectedCourse.id).subscribe((quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
-            if (quizExercisesResponse.body) {
-                const quizExercises = quizExercisesResponse.body;
-                for (const quizExercise of quizExercises) {
-                    this.repository.find(quizExercise.id).subscribe((response: HttpResponse<QuizExercise>) => {
-                        const quizExerciseResponse = response.body;
-                        for (const question of quizExerciseResponse.questions) {
-                            question.exercise = quizExercise;
-                            this.allExistingQuestions.push(question);
-                        }
-                        this.applyFilter();
-                    });
+        this.repository.findForCourse(selectedCourse.id).subscribe(
+            (quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
+                if (quizExercisesResponse.body) {
+                    const quizExercises = quizExercisesResponse.body;
+                    for (const quizExercise of quizExercises) {
+                        this.repository.find(quizExercise.id).subscribe((response: HttpResponse<QuizExercise>) => {
+                            const quizExerciseResponse = response.body;
+                            for (const question of quizExerciseResponse.questions) {
+                                question.exercise = quizExercise;
+                                this.allExistingQuestions.push(question);
+                            }
+                            this.applyFilter();
+                        });
+                    }
                 }
-            } else {
-                this.onSaveError();
-            }
-        });
+            },
+            (res: HttpErrorResponse) => this.onError(res)
+        );
     }
 
     /**
@@ -323,6 +355,8 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         }
         this.addQuestions(questions);
         this.showExistingQuestions = !this.showExistingQuestions;
+        this.selectedCourseId = null;
+        this.allExistingQuestions = this.existingQuestions = [];
     }
 
     /**
@@ -394,10 +428,19 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         if (!this.quizExercise) {
             return false;
         }
+        // Release date is valid if it's not null and a valid date; Precondition: isPlannedToStart is set
+        // Release date should also not be in the past
+        const releaseDateValidAndNotInPastCondition: boolean =
+            !this.quizExercise.isPlannedToStart ||
+            (this.quizExercise.releaseDate != null &&
+                moment(this.quizExercise.releaseDate).isValid() &&
+                moment(this.quizExercise.releaseDate).isAfter(moment()));
+
         const isGenerallyValid: boolean =
             this.quizExercise.title &&
             this.quizExercise.title !== '' &&
             this.quizExercise.duration &&
+            releaseDateValidAndNotInPastCondition &&
             this.quizExercise.questions &&
             !!this.quizExercise.questions.length;
         const areAllQuestionsValid = this.quizExercise.questions.every(function(question) {
@@ -450,6 +493,24 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                 translateKey: 'arTeMiSApp.quizExercise.invalidReasons.noQuestion',
                 translateValues: {}
             });
+        }
+        /** We only verify the releaseDate if the checkbox is activated **/
+        if (this.quizExercise.isPlannedToStart) {
+            if (this.quizExercise.releaseDate == null || !moment(this.quizExercise.releaseDate).isValid()) {
+                reasons.push({
+                    translateKey: 'arTeMiSApp.quizExercise.invalidReasons.invalidStartTime',
+                    translateValues: {}
+                });
+            }
+            // Release Date valid but lies in the past
+            if (this.quizExercise.releaseDate && moment(this.quizExercise.releaseDate).isValid()) {
+                if (moment(this.quizExercise.releaseDate).isBefore(moment())) {
+                    reasons.push({
+                        translateKey: 'arTeMiSApp.quizExercise.invalidReasons.startTimeInPast',
+                        translateValues: {}
+                    });
+                }
+            }
         }
         this.quizExercise.questions.forEach(function(question: Question, index: number) {
             if (!question.title || question.title === '') {
@@ -518,11 +579,12 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         const fileReader = new FileReader();
         fileReader.onload = () => {
             try {
-                // Read the file and get list of questions from the file,
-                const questions = JSON.parse(fileReader.result) as Question[];
+                // Read the file and get list of questions from the file
+                const questions = JSON.parse(fileReader.result as string) as Question[];
                 this.addQuestions(questions);
                 // Clearing html elements,
                 this.importFile = null;
+                this.importFileName = '';
                 const control = document.getElementById('importFileInput') as HTMLInputElement;
                 control.value = null;
             } catch (e) {
@@ -605,21 +667,27 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         }
         this.isSaving = true;
         if (this.quizExercise.id !== undefined) {
-            this.repository.update(this.quizExercise).subscribe((quizExerciseResponse: HttpResponse<QuizExercise>) => {
-                if (quizExerciseResponse.body) {
-                    this.onSaveSuccess(quizExerciseResponse.body);
-                } else {
-                    this.onSaveError();
-                }
-            });
+            this.repository.update(this.quizExercise).subscribe(
+                (quizExerciseResponse: HttpResponse<QuizExercise>) => {
+                    if (quizExerciseResponse.body) {
+                        this.onSaveSuccess(quizExerciseResponse.body);
+                    } else {
+                        this.onSaveError();
+                    }
+                },
+                (res: HttpErrorResponse) => this.onSaveError(res)
+            );
         } else {
-            this.repository.create(this.quizExercise).subscribe((quizExerciseResponse: HttpResponse<QuizExercise>) => {
-                if (quizExerciseResponse.body) {
-                    this.onSaveSuccess(quizExerciseResponse.body);
-                } else {
-                    this.onSaveError();
-                }
-            });
+            this.repository.create(this.quizExercise).subscribe(
+                (quizExerciseResponse: HttpResponse<QuizExercise>) => {
+                    if (quizExerciseResponse.body) {
+                        this.onSaveSuccess(quizExerciseResponse.body);
+                    } else {
+                        this.onSaveError();
+                    }
+                },
+                (res: HttpErrorResponse) => this.onSaveError(res)
+            );
         }
     }
 
@@ -640,9 +708,14 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      * @function onSaveError
      * @desc Callback function for when the save fails
      */
-    onSaveError(): void {
+    onSaveError(error?: HttpErrorResponse): void {
         console.error('Saving Quiz Failed! Please try again later.');
+        this.jhiAlertService.error('arTeMiSApp.quizExercise.saveError');
         this.isSaving = false;
+    }
+
+    private onError(error: HttpErrorResponse) {
+        this.jhiAlertService.error(error.message, null, null);
     }
 
     /**
@@ -682,9 +755,14 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         if (newTimeValue != null) {
             this.startTime = newTimeValue;
         }
-        // We then set the hours and minutes of our dateTime to the respective time values from our time picker
-        this.dateTime = this.startDate.hours(this.startTime.hour).minutes(this.startTime.minute);
-        this.quizExercise.releaseDate = this.dateTime;
+        // If the Start Date is valid, we process it, otherwise we set Release Date null
+        if (this.startDate && this.startDate.isValid()) {
+            // We then set the hours and minutes of our dateTime to the respective time values from our time picker
+            this.dateTime = this.startDate.hours(this.startTime.hour).minutes(this.startTime.minute);
+            this.quizExercise.releaseDate = this.dateTime;
+        } else {
+            this.quizExercise.releaseDate = null;
+        }
     }
 
     /**

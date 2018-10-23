@@ -1,4 +1,6 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+
 import { RouterModule } from '@angular/router';
 
 import { ArTEMiSSharedModule } from '../shared';
@@ -13,32 +15,15 @@ import { HomeComponent } from '../home';
 import { ParticipationService } from '../entities/participation';
 import { MomentModule } from 'angular2-moment';
 import { JhiMainComponent } from '../layouts';
+import { ClipboardModule } from 'ngx-clipboard';
 
-const ENTITY_STATES = [
-    ...coursesRoute
-];
+const ENTITY_STATES = [...coursesRoute];
 
 @NgModule({
-    imports: [
-        ArTEMiSSharedModule,
-        ArTEMiSResultModule,
-        MomentModule,
-        RouterModule.forChild(ENTITY_STATES)
-    ],
-    declarations: [
-        CoursesComponent,
-        ExerciseListComponent,
-        ShowExercisePipe
-    ],
-    exports: [
-        ResultComponent
-    ],
-    entryComponents: [
-        HomeComponent,
-        CourseComponent,
-        JhiMainComponent,
-        ResultComponent
-    ],
+    imports: [BrowserModule, ArTEMiSSharedModule, ArTEMiSResultModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES)],
+    declarations: [CoursesComponent, ExerciseListComponent, ShowExercisePipe],
+    exports: [ResultComponent],
+    entryComponents: [HomeComponent, CourseComponent, JhiMainComponent, ResultComponent],
     providers: [
         CourseService,
         JhiAlertService,

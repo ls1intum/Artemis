@@ -1,17 +1,18 @@
 package de.tum.in.www1.artemis.service.compass.controller;
 
 import de.tum.in.www1.artemis.service.compass.assessment.Context;
-import de.tum.in.www1.artemis.service.compass.strategy.ClassContext;
 import de.tum.in.www1.artemis.service.compass.umlmodel.*;
 
 import java.util.Collection;
-import java.util.HashSet;
 
 public class SimilarityDetector {
 
+    /**
+     * Determine elementId and context for each model element of a new model
+     * @param model the new model which contains the model elements
+     * @param index the modelIndex which keeps track of all elementIds
+     */
     public static void analyzeSimilarity(UMLModel model, ModelIndex index) {
-
-        // TODO: parse connectables
 
         for (UMLClass umlClass : model.getConnectableList()) {
             umlClass.setElementID(index.getElementID(umlClass));
@@ -29,10 +30,10 @@ public class SimilarityDetector {
             relation.setElementID(index.getElementID(relation));
         }
 
-        analyzeSimilarity(model);
+        setContext(model);
     }
 
-    private static void analyzeSimilarity(UMLModel model) {
+    private static void setContext(UMLModel model) {
         for (UMLClass umlClass : model.getConnectableList()) {
             umlClass.setContext(generateContextForElement(model, umlClass));
             for (UMLAttribute attribute : umlClass.getAttributeList()) {
@@ -63,7 +64,13 @@ public class SimilarityDetector {
                 }
             }
         }
-        else if (element.getClass() == UMLClass.class) {
+
+        /*
+         * Do not use context for classes
+         * Class context reduces the automatic assessment rate significantly
+         */
+
+        /*else if (element.getClass() == UMLClass.class) {
             return ClassContext.getWeakContext((UMLClass) element, model);
         }
         else if (element.getClass() == UMLRelation.class) {
@@ -77,12 +84,13 @@ public class SimilarityDetector {
             if (!edges.isEmpty()) {
                 return new Context(edges);
             }
-        }
+        }*/
 
         return Context.NO_CONTEXT;
     }
 
-    public static double diversity (Collection<UMLModel> modelList) {
+    @SuppressWarnings("unused")
+    static double diversity (Collection<UMLModel> modelList) {
         double diversity = 0;
 
         for (UMLModel model : modelList) {

@@ -30,7 +30,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
     modelingExercise: ModelingExercise;
     result: Result;
     assessments: ModelingAssessment[];
-    assessmentsNames: Map<string, string>;
+    assessmentsNames: Map<string, Map<string, string>>;
     assessmentsAreValid: boolean;
     invalidError = '';
     totalScore = 0;
@@ -230,6 +230,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         let totalScore = 0;
         for (const assessment of this.assessments) {
             totalScore += assessment.credits;
+            // TODO: due to the JS rounding problems, it might be the case that we get something like 16.999999999999993 here, so we better round this number
             if (assessment.credits == null) {
                 this.assessmentsAreValid = false;
                 return (this.invalidError = 'The score field must be a number and can not be empty!');

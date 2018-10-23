@@ -1,16 +1,19 @@
 {
-    "fluentMethods": true,
-    "relationships": [],
+    "name": "ProgrammingSubmission",
     "fields": [
         {
             "fieldName": "commitHash",
             "fieldType": "String"
         }
     ],
-    "changelogDate": "20180811194842",
+    "relationships": [],
+    "changelogDate": "20180927081414",
     "entityTableName": "programming_submission",
     "dto": "no",
     "pagination": "no",
     "service": "no",
-    "jpaMetamodelFiltering": false
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
 }

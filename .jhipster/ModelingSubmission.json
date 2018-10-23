@@ -1,6 +1,5 @@
 {
-    "fluentMethods": true,
-    "relationships": [],
+    "name": "ModelingSubmission",
     "fields": [
         {
             "fieldName": "model",
@@ -11,10 +10,14 @@
             "fieldType": "String"
         }
     ],
-    "changelogDate": "20171130173555",
+    "relationships": [],
+    "changelogDate": "20180927081412",
     "entityTableName": "modeling_submission",
     "dto": "no",
     "pagination": "no",
     "service": "no",
-    "jpaMetamodelFiltering": false
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
 }

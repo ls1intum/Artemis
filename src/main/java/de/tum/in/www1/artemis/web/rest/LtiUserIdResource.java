@@ -25,7 +25,7 @@ public class LtiUserIdResource {
 
     private static final String ENTITY_NAME = "ltiUserId";
 
-    private final LtiUserIdRepository ltiUserIdRepository;
+    private LtiUserIdRepository ltiUserIdRepository;
 
     public LtiUserIdResource(LtiUserIdRepository ltiUserIdRepository) {
         this.ltiUserIdRepository = ltiUserIdRepository;

@@ -1,54 +1,40 @@
 /* tslint:disable max-line-length */
-import { ComponentFixture, TestBed, async } from '@angular/core/testing';
-import { HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute } from '@angular/router';
+import { of } from 'rxjs';
 
-import { ArTEMiSTestModule } from '../../../test.module';
-import { FileUploadSubmissionDetailComponent } from '../../../../../../main/webapp/app/entities/file-upload-submission/file-upload-submission-detail.component';
-import { FileUploadSubmissionService } from '../../../../../../main/webapp/app/entities/file-upload-submission/file-upload-submission.service';
-import { FileUploadSubmission } from '../../../../../../main/webapp/app/entities/file-upload-submission/file-upload-submission.model';
+import { ArTeMiSTestModule } from '../../../test.module';
+import { FileUploadSubmissionDetailComponent } from 'app/entities/file-upload-submission/file-upload-submission-detail.component';
+import { FileUploadSubmission } from 'app/shared/model/file-upload-submission.model';
 
 describe('Component Tests', () => {
-
     describe('FileUploadSubmission Management Detail Component', () => {
         let comp: FileUploadSubmissionDetailComponent;
         let fixture: ComponentFixture<FileUploadSubmissionDetailComponent>;
-        let service: FileUploadSubmissionService;
-
-        beforeEach(async(() => {
-            TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
-                declarations: [FileUploadSubmissionDetailComponent],
-                providers: [
-                    FileUploadSubmissionService
-                ]
-            })
-            .overrideTemplate(FileUploadSubmissionDetailComponent, '')
-            .compileComponents();
-        }));
+        const route = ({ data: of({ fileUploadSubmission: new FileUploadSubmission(123) }) } as any) as ActivatedRoute;
 
         beforeEach(() => {
+            TestBed.configureTestingModule({
+                imports: [ArTeMiSTestModule],
+                declarations: [FileUploadSubmissionDetailComponent],
+                providers: [{ provide: ActivatedRoute, useValue: route }]
+            })
+                .overrideTemplate(FileUploadSubmissionDetailComponent, '')
+                .compileComponents();
             fixture = TestBed.createComponent(FileUploadSubmissionDetailComponent);
             comp = fixture.componentInstance;
-            service = fixture.debugElement.injector.get(FileUploadSubmissionService);
         });
 
         describe('OnInit', () => {
             it('Should call load all on init', () => {
                 // GIVEN
 
-                spyOn(service, 'find').and.returnValue(Observable.of(new HttpResponse({
-                    body: new FileUploadSubmission(123)
-                })));
-
                 // WHEN
                 comp.ngOnInit();
 
                 // THEN
-                expect(service.find).toHaveBeenCalledWith(123);
-                expect(comp.fileUploadSubmission).toEqual(jasmine.objectContaining({id: 123}));
+                expect(comp.fileUploadSubmission).toEqual(jasmine.objectContaining({ id: 123 }));
             });
         });
     });
-
 });

@@ -26,7 +26,7 @@ import { QuizReEvaluateService } from './quiz-re-evaluate.service';
         ReEvaluateDragAndDropQuestionComponent,
         QuizReEvaluateWarningComponent
     ],
-    entryComponents: [HomeComponent, QuizComponent, QuizExerciseComponent, JhiMainComponent],
+    entryComponents: [HomeComponent, QuizComponent, QuizExerciseComponent, JhiMainComponent, QuizReEvaluateWarningComponent],
     providers: [RepositoryService, JhiAlertService, QuizReEvaluateService],
     exports: [
         QuizReEvaluateComponent,

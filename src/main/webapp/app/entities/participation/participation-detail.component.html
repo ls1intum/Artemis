@@ -1,4 +1,5 @@
-
+<div class="row justify-content-center">
+    <div class="col-8">
 <div *ngIf="participation">
     <h2><span jhiTranslate="arTeMiSApp.participation.detail.title">Participation</span> {{participation.id}}</h2>
     <hr>
@@ -32,9 +33,11 @@
         </dd>
     </dl>
 
-    <button type="submit"
-            (click)="previousState()"
-            class="btn btn-info">
-        <span class="fa fa-arrow-left"></span>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
-    </button>
+<button type="submit"
+    (click)="previousState()"
+    class="btn btn-info">
+    <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
+</button>
+</div>
+    </div>
 </div>

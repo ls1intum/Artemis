@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import de.tum.in.www1.artemis.domain.File;
 import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.exception.GitException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
 import org.eclipse.jgit.api.Git;
@@ -16,14 +17,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
+import java.io.*;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.charset.Charset;
+import java.nio.file.*;
 import java.util.*;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
+import java.util.concurrent.*;
+import java.util.zip.*;
 
 
 @Service
@@ -46,7 +46,16 @@ public class GitService {
     @Value("${artemis.git.email}")
     private String GIT_EMAIL;
 
-    private final HashMap<Path, Repository> cachedRepositories = new HashMap<>();
+    private final Map<Path, Repository> cachedRepositories = new ConcurrentHashMap<>();
+    private final Map<Path, Path> cloneInProgressOperations = new ConcurrentHashMap<>();
+
+    public GitService() {
+        log.info("Default Charset=" + Charset.defaultCharset());
+        log.info("file.encoding=" + System.getProperty("file.encoding"));
+        log.info("sun.jnu.encoding=" + System.getProperty("sun.jnu.encoding"));
+        log.info("Default Charset=" + Charset.defaultCharset());
+        log.info("Default Charset in Use=" + new OutputStreamWriter(new ByteArrayOutputStream()).getEncoding());
+    }
 
     /**
      * Get the local repository for a given participation.
@@ -57,7 +66,7 @@ public class GitService {
      * @throws IOException
      * @throws GitAPIException
      */
-    public Repository getOrCheckoutRepository(Participation participation) throws IOException, GitAPIException {
+    public Repository getOrCheckoutRepository(Participation participation) throws IOException, GitAPIException, InterruptedException {
         URL repoUrl = participation.getRepositoryUrlAsUrl();
         Repository repository = getOrCheckoutRepository(repoUrl);
         repository.setParticipation(participation);
@@ -73,28 +82,61 @@ public class GitService {
      * @throws IOException
      * @throws GitAPIException
      */
-    public Repository getOrCheckoutRepository(URL repoUrl) throws IOException, GitAPIException {
+    public Repository getOrCheckoutRepository(URL repoUrl) throws IOException, GitAPIException, InterruptedException {
+
         Path localPath = new java.io.File(REPO_CLONE_PATH + folderNameForRepositoryUrl(repoUrl)).toPath();
 
         // check if Repository object already created and available in cachedRepositories
         if (cachedRepositories.containsKey(localPath)) {
-            return cachedRepositories.get(localPath);
+            // in this case we pull for changes to make sure the Git repo is up to date
+            Repository repository = cachedRepositories.get(localPath);
+            pull(repository);
+            return repository;
         }
+
+        // make sure that multiple clone operations for the same repository cannot happen at the same time
+        int numberOfAttempts = 5;
+        while (cloneInProgressOperations.containsKey(localPath)) {
+            log.warn("Clone is already in progress. This will lead to an error. Wait for a second");
+            Thread.sleep(1000);
+            if (numberOfAttempts == 0) {
+                throw new GitException("Cannot clone the same repository multiple times");
+            } else {
+              numberOfAttempts--;
+            }
+        }
+        boolean shouldPullChanges = false;
 
         // Check if the repository is already checked out on the server
         if (!Files.exists(localPath)) {
             // Repository is not yet available on the server
             // We need to check it out from the remote repository
-            log.info("Cloning from " + repoUrl + " to " + localPath);
-            Git result = Git.cloneRepository()
-                .setURI(repoUrl.toString())
-                .setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD))
-                .setDirectory(localPath.toFile())
-                .call();
-            result.close();
+            try {
+                log.info("Cloning from " + repoUrl + " to " + localPath);
+                cloneInProgressOperations.put(localPath, localPath);
+                Git result = Git.cloneRepository()
+                    .setURI(repoUrl.toString())
+                    .setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD))
+                    .setDirectory(localPath.toFile())
+                    .call();
+                result.close();
+            }
+            catch (GitAPIException | RuntimeException e) {
+                log.error("Exception during clone " + e);
+                //cleanup the folder to avoid problems in the future
+                localPath.toFile().delete();
+                throw new GitException(e);
+            }
+            finally {
+                //make sure that cloneInProgress is released
+                log.info("Remove " + localPath + " from cloneInProgressMap: ");
+                cloneInProgressOperations.remove(localPath);
+            }
         }
         else {
-            log.info("Repository at " + localPath + " already exists");
+            log.debug("Repository at " + localPath + " already exists");
+            // in this case we pull for changes to make sure the Git repo is up to date
+            shouldPullChanges = true;
         }
 
         // Open the repository from the filesystem
@@ -108,6 +150,10 @@ public class GitService {
         // Create the JGit repository object
         Repository repository = new Repository(builder);
         repository.setLocalPath(localPath);
+
+        if (shouldPullChanges) {
+            pull(repository);
+        }
 
         // Cache the JGit repository object for later use
         // Avoids the expensive re-opening of local repositories
@@ -152,11 +198,18 @@ public class GitService {
      * @return The PullResult which contains FetchResult and MergeResult.
      * @throws GitAPIException
      */
-    public PullResult pull(Repository repo) throws GitAPIException {
-        Git git = new Git(repo);
-        // flush cache of files
-        repo.setFiles(null);
-        return git.pull().setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
+    public PullResult pull(Repository repo) {
+        try {
+            Git git = new Git(repo);
+            // flush cache of files
+            repo.setFiles(null);
+            return git.pull().setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
+        }
+        catch (GitAPIException ex) {
+            log.error("Cannot pull the repo " + repo.getLocalPath() + " due to the following exception: " + ex);
+            //TODO: we should send this error to the client and let the user handle it there, e.g. by choosing to reset the repository
+        }
+        return null;
     }
 
     /**

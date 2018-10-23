@@ -40,7 +40,7 @@
                 <td class="text-right">
                     <div class="btn-group flex-btn-group-container">
                         <div class="d-inline-block" ngbDropdown>
-                            <button class="btn btn-primary btn-sm" ngbDropdownToggle>
+                            <button class="btn btn-primary btn-sm mr-1" ngbDropdownToggle>
                                 <span class="fa fa-list-alt"></span>&nbsp;
                                 <span class="hidden-xs hidden-sm" jhiTranslate="arTeMiSApp.course.exercises"></span>
                                 <span class="caret"></span>
@@ -58,25 +58,25 @@
                                         routerLink="{{course.id}}/modeling-exercise"
                                         jhiTranslate="arTeMiSApp.course.modelingExercises"
                                 ></button>
-                                <button class="dropdown-item"
+<!--                                <button class="dropdown-item"
                                         routerLink="{{course.id}}/text-exercise"
                                         jhiTranslate="arTeMiSApp.course.textExercises"
                                 ></button>
                                 <button class="dropdown-item"
                                         routerLink="{{course.id}}/file-upload-exercise"
                                         jhiTranslate="arTeMiSApp.course.fileUploadExercises"
-                                ></button>
+                                ></button>-->
                             </div>
                         </div>
                         <button type="submit"
                                 [routerLink]="['/course', course.id, 'view' ]"
-                                class="btn btn-info btn-sm">
+                                class="btn btn-info btn-sm mr-1">
                             <span class="'eye'"></span>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                         </button>
                         <button type="submit"
                                 [routerLink]="['/course', course.id, 'edit']"
-                                class="btn btn-primary btn-sm">
+                                class="btn btn-primary btn-sm mr-1">
                             <span class="'pencil-alt'"></span>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                         </button>
@@ -84,7 +84,7 @@
                                 [routerLink]="['/', { outlets: { popup: 'course/'+ course.id + '/delete'} }]"
                                 replaceUrl="true"
                                 queryParamsHandling="merge"
-                                class="btn btn-danger btn-sm">
+                                class="btn btn-danger btn-sm mr-1">
                             <span class="'times'"></span>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
                         </button>

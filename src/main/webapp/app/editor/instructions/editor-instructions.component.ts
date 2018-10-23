@@ -12,6 +12,7 @@ import { Feedback } from '../../entities/feedback';
 import { EditorInstructionsResultDetailComponent } from './editor-instructions-result-detail';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import * as interact from 'interactjs';
+import { Interactable } from 'interactjs';
 import * as Remarkable from 'remarkable';
 
 interface Step {
@@ -24,18 +25,20 @@ interface Step {
     templateUrl: './editor-instructions.component.html',
     providers: [JhiAlertService, WindowRef, RepositoryService, ResultService, EditorService]
 })
-export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnChanges, OnDestroy {
-    isLoading = false;
+export class EditorInstructionsComponent implements AfterViewInit, OnChanges, OnDestroy {
+    isLoadingResults = false;
     haveDetailsBeenLoaded = false;
     markDown: Remarkable;
     readMeFileRawContent: string;
     readMeFileRenderedContent: string;
     resultDetails: Feedback[];
     steps = new Array<Step>();
+    doneOnce = false;
 
-    /** Resizable sizing constants **/
+    /** Resizable constants **/
     initialInstructionsWidth: number;
     minInstructionsWidth: number;
+    interactResizable: Interactable;
 
     // Can be used to remove the click listeners for result details
     listenerRemoveFunctions: Function[];
@@ -60,17 +63,6 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
     ) {}
 
     /**
-     * @function ngOnInit
-     * @desc Initializes the Remarkable object and loads the repository README.md file
-     */
-    ngOnInit(): void {
-        // Initialize array for listener remove functions
-        this.listenerRemoveFunctions = [];
-        this.setupMarkDown();
-        this.loadReadme();
-    }
-
-    /**
      * @function ngAfterViewInit
      * @desc After the view was initialized, we create an interact.js resizable object,
      *       designate the edges which can be used to resize the target element and set min and max values.
@@ -78,8 +70,8 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
      */
     ngAfterViewInit(): void {
         this.initialInstructionsWidth = this.$window.nativeWindow.screen.width - 300 / 2;
-        this.minInstructionsWidth = 300;
-        interact('.resizable-instructions')
+        this.minInstructionsWidth = this.$window.nativeWindow.screen.width / 4 - 50;
+        this.interactResizable = interact('.resizable-instructions')
             .resizable({
                 // Enable resize from left edge; triggered by class rg-left
                 edges: { left: '.rg-left', right: false, bottom: false, top: false },
@@ -92,9 +84,8 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
             })
             .on('resizemove', function(event) {
                 const target = event.target;
-                // Update element size
+                // Update element width
                 target.style.width = event.rect.width + 'px';
-                target.style.height = event.rect.height + 'px';
             });
     }
 
@@ -107,14 +98,14 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.participation && this.participation) {
             // Initialize array for listener remove functions
-            this.listenerRemoveFunctions = [];
-            this.setupMarkDown();
             this.loadReadme();
         }
 
-        if (changes.latestResult && changes.latestResult.currentValue && !this.isLoading) {
-            // New result available
-            this.loadResultsDetails();
+        if (changes.latestResult && changes.latestResult.currentValue && !this.isLoadingResults) {
+            // New result available, only render it if the readme was alredy downloaded
+            if (this.readMeFileRawContent) {
+                this.loadResultsDetails();
+            }
         }
     }
 
@@ -131,6 +122,7 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
                     this.renderReadme();
                 },
                 err => {
+                    // TODO: handle the case that there is no README.md file
                     console.log('Error while getting README.md file!', err);
                 }
             );
@@ -142,20 +134,30 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
      * @desc Fetches details for the result (if we received one) => Input latestResult
      */
     loadResultsDetails() {
-        if (!this.latestResult) {
+        if (!this.latestResult || this.isLoadingResults) {
             return;
         }
-        this.isLoading = true;
+        this.isLoadingResults = true;
 
         this.resultService.getFeedbackDetailsForResult(this.latestResult.id).subscribe(
             resultDetails => {
                 this.resultDetails = resultDetails.body;
                 this.haveDetailsBeenLoaded = true;
-                this.renderReadme();
-                this.isLoading = false;
+                this.isLoadingResults = false;
+                if (this.readMeFileRawContent) {
+                    this.renderReadme();
+                    // TODO this is an ugly workaround, because otherwise the functionality to click on the test case feedback does not work ==> Find a better solution
+                    if (this.doneOnce === false) {
+                        setTimeout(() => {
+                            this.doneOnce = true;
+                            this.renderReadme();
+                        }, 10);
+                    }
+                }
             },
             err => {
                 console.log('Error while loading result details!', err);
+                this.isLoadingResults = false;
             }
         );
     }
@@ -166,11 +168,13 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
      * Information regarding the syntax for the parser and stateBlock: https://github.com/jonschlinkert/remarkable/tree/master/docs
      */
     setupMarkDown() {
-        this.markDown = new Remarkable();
-        this.markDown.inline.ruler.before('text', 'testsStatus', this.remarkableTestsStatusParser.bind(this), {});
-        this.markDown.block.ruler.before('paragraph', 'plantUml', this.remarkablePlantUmlParser.bind(this), {});
-        this.markDown.renderer.rules['testsStatus'] = this.remarkableTestsStatusRenderer.bind(this);
-        this.markDown.renderer.rules['plantUml'] = this.remarkablePlantUmlRenderer.bind(this);
+        if (!this.markDown) {
+            this.markDown = new Remarkable();
+            this.markDown.inline.ruler.before('text', 'testsStatus', this.remarkableTestsStatusParser.bind(this), {});
+            this.markDown.block.ruler.before('paragraph', 'plantUml', this.remarkablePlantUmlParser.bind(this), {});
+            this.markDown.renderer.rules['testsStatus'] = this.remarkableTestsStatusRenderer.bind(this);
+            this.markDown.renderer.rules['plantUml'] = this.remarkablePlantUmlRenderer.bind(this);
+        }
     }
 
     /**
@@ -178,12 +182,11 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
      * @desc Prepares and starts the rendering process of the README.md file
      */
     renderReadme() {
-        this.isLoading = true;
+        this.setupMarkDown();
         // Reset steps array
         this.steps = [];
         // Render README.md file via Remarkable
         this.readMeFileRenderedContent = this.markDown.render(this.readMeFileRawContent);
-        this.isLoading = false;
 
         // Detach test status click listeners if already initialized; if not, set it empty
         if (this.listenerRemoveFunctions && this.listenerRemoveFunctions.length) {
@@ -204,7 +207,7 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
             this.listenerRemoveFunctions.push(listenerRemoveFunction);
         });
 
-        if (!this.haveDetailsBeenLoaded) {
+        if (!this.isLoadingResults && !this.haveDetailsBeenLoaded) {
             this.loadResultsDetails();
         }
     }
@@ -472,7 +475,7 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
      * @param {boolean} horizontal
      */
     toggleEditorCollapse($event: any, horizontal: boolean) {
-        this.parent.toggleCollapse($event, horizontal);
+        this.parent.toggleCollapse($event, horizontal, this.interactResizable, this.minInstructionsWidth);
     }
 
     /**

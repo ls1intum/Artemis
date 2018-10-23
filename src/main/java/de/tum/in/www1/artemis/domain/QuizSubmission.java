@@ -25,7 +25,7 @@ public class QuizSubmission extends Submission implements Serializable {
     @JsonView(QuizView.After.class)
     private Double scoreInPoints;
 
-    @OneToMany(mappedBy = "submission", cascade= CascadeType.ALL, fetch= FetchType.EAGER, orphanRemoval=true)
+    @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonView(QuizView.Before.class)
     private Set<SubmittedAnswer> submittedAnswers = new HashSet<>();

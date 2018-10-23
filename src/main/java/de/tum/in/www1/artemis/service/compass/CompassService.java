@@ -5,6 +5,7 @@ import de.tum.in.www1.artemis.domain.ModelingExercise;
 import de.tum.in.www1.artemis.domain.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.compass.grade.CompassGrade;
 import de.tum.in.www1.artemis.service.compass.grade.Grade;
@@ -176,6 +177,13 @@ public class CompassService {
                 // automatic assessment holds confidence and coverage threshold
                 if (grade.getConfidence() >= CONFIDENCE_THRESHOLD && grade.getCoverage() >= COVERAGE_THRESHOLD) {
                     ModelingExercise modelingExercise = modelingExerciseRepository.findById(result.getParticipation().getExercise().getId()).get();
+                    /*
+                     * Workaround for ignoring automatic assessments of unsupported modeling exercise types
+                     * TODO remove this after adapting compass
+                     */
+                    if (!modelingExercise.getDiagramType().equals(DiagramType.CLASS)) {
+                        return;
+                    }
                     // Round compass grades to avoid machine precision errors, make the grades more readable
                     // and give a slight advantage which makes 100% scores easier reachable
                     // see: https://confluencebruegge.in.tum.de/display/ArTEMiS/Feature+suggestions for more information
@@ -279,9 +287,11 @@ public class CompassService {
     // Call every hour and free memory for unused calculation engines (older than 1 day)
     @Scheduled(fixedRate=TIME_TO_CHECK_FOR_UNUSED_ENGINES)
     private static void cleanUpCalculationEngines() {
+        LoggerFactory.getLogger(CompassService.class).info("Compass evaluates the need of keeping " + compassCalculationEngines.size() + " calculation engines in memory");
         compassCalculationEngines = compassCalculationEngines.entrySet().stream().
             filter(map -> Duration.between(map.getValue().getLastUsedAt(), LocalDateTime.now()).toDays() < DAYS_TO_KEEP_UNUSED_ENGINE)
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        LoggerFactory.getLogger(CompassService.class).info("After evaluation, there are still " + compassCalculationEngines.size() + " calculation engines in memory");
     }
 
 }

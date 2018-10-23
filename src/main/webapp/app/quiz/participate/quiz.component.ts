@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChildren, QueryList } from '@angular/core';
 import { JhiWebsocketService } from '../../core';
 import * as moment from 'moment';
 import * as _ from 'lodash';
@@ -15,6 +15,10 @@ import { MultipleChoiceQuestion } from '../../entities/multiple-choice-question'
 import { MultipleChoiceSubmittedAnswer } from '../../entities/multiple-choice-submitted-answer';
 import { DragAndDropSubmittedAnswer } from '../../entities/drag-and-drop-submitted-answer';
 import { QuestionType } from '../../entities/question';
+import { MultipleChoiceQuestionComponent } from 'app/quiz/participate/multiple-choice-question/multiple-choice-question.component';
+import { DragAndDropQuestionComponent } from 'app/quiz/participate/drag-and-drop-question/drag-and-drop-question.component';
+import { DragAndDropMapping } from 'app/entities/drag-and-drop-mapping';
+import { AnswerOption } from 'app/entities/answer-option';
 
 @Component({
     selector: 'jhi-quiz',
@@ -25,6 +29,12 @@ export class QuizComponent implements OnInit, OnDestroy {
     // make constants available to html for comparison
     readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
+
+    @ViewChildren(MultipleChoiceQuestionComponent)
+    mcQuestionComponents: QueryList<MultipleChoiceQuestionComponent>;
+
+    @ViewChildren(DragAndDropQuestionComponent)
+    dndQuestionComponents: QueryList<DragAndDropQuestionComponent>;
 
     private subscription: Subscription;
     private subscriptionData: Subscription;
@@ -54,8 +64,8 @@ export class QuizComponent implements OnInit, OnDestroy {
     submission = new QuizSubmission();
     quizExercise: QuizExercise;
     totalScore: number;
-    selectedAnswerOptions = {};
-    dragAndDropMappings = {};
+    selectedAnswerOptions = new Map<number, AnswerOption[]>();
+    dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
     result: Result;
     questionScores = {};
     id: number;
@@ -382,8 +392,8 @@ export class QuizComponent implements OnInit, OnDestroy {
             : 0;
 
         // prepare selection arrays for each question
-        this.selectedAnswerOptions = {};
-        this.dragAndDropMappings = {};
+        this.selectedAnswerOptions = new Map<number, AnswerOption[]>();
+        this.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
 
         if (this.quizExercise.questions) {
             this.quizExercise.questions.forEach(question => {
@@ -409,8 +419,8 @@ export class QuizComponent implements OnInit, OnDestroy {
     applySubmission() {
         // create dictionaries (key: questionID, value: Array of selected answerOptions / mappings)
         // for the submittedAnswers to hand the selected options / mappings in individual arrays to the question components
-        this.selectedAnswerOptions = {};
-        this.dragAndDropMappings = {};
+        this.selectedAnswerOptions = new Map<number, AnswerOption[]>();
+        this.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
 
         if (this.quizExercise.questions) {
             // iterate through all questions of this quiz
@@ -579,38 +589,49 @@ export class QuizComponent implements OnInit, OnDestroy {
      * This method is typically invoked after the quiz has ended and makes sure that the (random) order of the quiz
      * questions and answer options for the particular user is respected
      *
-     * @param fullQuizExercise {object} the quizExercise containing additional information
+     * @param fullQuizExerciseFromServer {object} the quizExercise containing additional information
      */
-    transferInformationToQuizExercise(fullQuizExercise: QuizExercise) {
-        this.quizExercise.questions.forEach(function(question) {
+    transferInformationToQuizExercise(fullQuizExerciseFromServer: QuizExercise) {
+        this.quizExercise.questions.forEach(function(clientQuestion) {
             // find updated question
-            const fullQuestion = fullQuizExercise.questions.find(function(localQuestion) {
-                return question.id === localQuestion.id;
+            const fullQuestionFromServer = fullQuizExerciseFromServer.questions.find(function(fullQuestion) {
+                return clientQuestion.id === fullQuestion.id;
             });
-            if (fullQuestion) {
-                question.explanation = fullQuestion.explanation;
+            if (fullQuestionFromServer) {
+                clientQuestion.explanation = fullQuestionFromServer.explanation;
 
-                if (question.type === QuestionType.MULTIPLE_CHOICE) {
-                    const mcQuestion = question as MultipleChoiceQuestion;
+                if (clientQuestion.type === QuestionType.MULTIPLE_CHOICE) {
+                    const mcClientQuestion = clientQuestion as MultipleChoiceQuestion;
+                    const mcFullQuestionFromServer = fullQuestionFromServer as MultipleChoiceQuestion;
 
-                    mcQuestion.answerOptions.forEach(function(answerOption) {
+                    mcClientQuestion.answerOptions.forEach(function(clientAnswerOption) {
                         // find updated answerOption
-                        const fullAnswerOption = mcQuestion.answerOptions.find(function(option) {
-                            return answerOption.id === option.id;
+                        const fullAnswerOptionFromServer = mcFullQuestionFromServer.answerOptions.find(function(option) {
+                            return clientAnswerOption.id === option.id;
                         });
-                        if (fullAnswerOption) {
-                            answerOption.explanation = fullAnswerOption.explanation;
-                            answerOption.isCorrect = fullAnswerOption.isCorrect;
+                        if (fullAnswerOptionFromServer) {
+                            clientAnswerOption.explanation = fullAnswerOptionFromServer.explanation;
+                            clientAnswerOption.isCorrect = fullAnswerOptionFromServer.isCorrect;
                         }
                     });
-                } else if (question.type === QuestionType.DRAG_AND_DROP) {
-                    const dndQuestion = fullQuestion as DragAndDropQuestion;
-                    dndQuestion.correctMappings = dndQuestion.correctMappings;
+                } else if (clientQuestion.type === QuestionType.DRAG_AND_DROP) {
+                    const dndClientQuestion = clientQuestion as DragAndDropQuestion;
+                    const dndFullQuestionFromServer = fullQuestionFromServer as DragAndDropQuestion;
+
+                    dndClientQuestion.correctMappings = dndFullQuestionFromServer.correctMappings;
                 } else {
-                    console.log('Unknown question type ' + question);
+                    console.log('Unknown question type ' + clientQuestion);
                 }
             }
         }, this);
+
+        // make sure that a possible explanation is updated correctly in all sub components
+        this.mcQuestionComponents.forEach(function(mcQuestionComponent) {
+            mcQuestionComponent.watchCollection();
+        });
+        this.dndQuestionComponents.forEach(function(dndQuestionComponent) {
+            dndQuestionComponent.watchCollection();
+        });
     }
 
     /**

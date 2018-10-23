@@ -3,8 +3,22 @@ import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { DragAndDropQuestionUtil } from '../../../components/util/drag-and-drop-question-util.service';
 import { DragAndDropQuestion } from '../../../entities/drag-and-drop-question';
 import { DragAndDropMapping } from '../../../entities/drag-and-drop-mapping';
-import { MarkDownElement } from '../../../entities/question';
 import { DropLocation } from '../../../entities/drop-location';
+import { polyfill } from 'mobile-drag-drop';
+import { scrollBehaviourDragImageTranslateOverride } from 'mobile-drag-drop/scroll-behaviour';
+
+// options are optional ;)
+polyfill({
+    // use this to make use of the scroll behaviour
+    dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride
+});
+
+// dragenter listener
+(event: any) => {
+    event.preventDefault();
+};
+
+window.addEventListener('touchmove', function() {});
 
 @Component({
     selector: 'jhi-drag-and-drop-question',
@@ -18,11 +32,7 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy {
     @Input()
     set question(question) {
         this._question = question;
-        this.rendered = {
-            text: this.artemisMarkdown.htmlForMarkdown(this.question.text),
-            hint: this.artemisMarkdown.htmlForMarkdown(this.question.hint),
-            explanation: this.artemisMarkdown.htmlForMarkdown(this.question.explanation)
-        };
+        this.watchCollection();
     }
     get question() {
         return this._question;
@@ -54,7 +64,7 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy {
     mappingsChange = new EventEmitter();
 
     showingSampleSolution = false;
-    rendered: MarkDownElement;
+    rendered: DragAndDropQuestion;
     sampleSolutionMappings = new Array<DragAndDropMapping>();
     dropAllowed = false;
 
@@ -63,6 +73,14 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy {
     ngOnInit() {}
 
     ngOnDestroy() {}
+
+    watchCollection() {
+        // update html for text, hint and explanation for the question
+        this.rendered = new DragAndDropQuestion();
+        this.rendered.text = this.artemisMarkdown.htmlForMarkdown(this.question.text);
+        this.rendered.hint = this.artemisMarkdown.htmlForMarkdown(this.question.hint);
+        this.rendered.explanation = this.artemisMarkdown.htmlForMarkdown(this.question.explanation);
+    }
 
     /**
      * Handles drag-available UI
@@ -174,7 +192,7 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Check if the assigned drag item fro the given location is correct
+     * Check if the assigned drag item from the given location is correct
      * (Only possible if this.question.correctMappings is available)
      *
      * @param dropLocation {object} the drop location to check for correctness

@@ -16,6 +16,7 @@ import { ComponentCanDeactivate } from '../shared';
 import { JhiWebsocketService } from '../core';
 import { Observable } from 'rxjs/Observable';
 import { TranslateService } from '@ngx-translate/core';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-modeling-editor',
@@ -44,7 +45,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
     submissionState: State;
 
     assessments: ModelingAssessment[];
-    assessmentsNames: Map<string, string>;
+    assessmentsNames: Map<string, Map<string, string>>;
     totalScore: number;
 
     /**
@@ -96,7 +97,8 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                         ) {
                             this.modelingExercise.diagramType = DiagramType.CLASS;
                         }
-                        this.isActive = this.modelingExercise.dueDate == null || new Date() <= this.modelingExercise.dueDate.toDate();
+                        this.isActive =
+                            this.modelingExercise.dueDate == null || new Date() <= moment(this.modelingExercise.dueDate).toDate();
                         this.submission = data.modelingSubmission;
                         if (this.submission && this.submission.id && !this.submission.submitted) {
                             this.subscribeToWebsocket();

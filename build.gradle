@@ -6,12 +6,14 @@ buildscript {
         mavenCentral()
         maven { url "http://repo.spring.io/plugins-release" }
         maven { url "https://plugins.gradle.org/m2/" }
+        jcenter()
     }
     dependencies {
         classpath "org.springframework.boot:spring-boot-gradle-plugin:${spring_boot_version}"
         classpath "io.spring.gradle:propdeps-plugin:0.0.10.RELEASE"
-        classpath "org.openapitools:openapi-generator-gradle-plugin:3.0.1"
+        classpath "org.openapitools:openapi-generator-gradle-plugin:3.3.0"
         classpath "gradle.plugin.com.gorylenko.gradle-git-properties:gradle-git-properties:1.5.2"
+        classpath "com.github.ben-manes:gradle-versions-plugin:0.20.0"
         //jhipster-needle-gradle-buildscript-dependency - JHipster will add additional gradle build script plugins here
     }
 }
@@ -21,9 +23,10 @@ plugins {
     id "net.ltgt.apt-eclipse" version "0.18"
     id "net.ltgt.apt-idea" version "0.18"
     id "net.ltgt.apt" version "0.18"
-    id "io.spring.dependency-management" version "1.0.5.RELEASE"
+    id "io.spring.dependency-management" version "1.0.6.RELEASE"
     id "com.moowork.node" version "1.2.0"
-    id 'org.liquibase.gradle' version '2.0.0'
+    id 'org.liquibase.gradle' version "2.0.1"
+    id "com.github.ben-manes.versions" version "0.20.0"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
 }
 
@@ -40,6 +43,7 @@ apply plugin: 'propdeps'
 apply plugin: 'com.moowork.node'
 apply plugin: 'io.spring.dependency-management'
 apply plugin: 'idea'
+apply plugin: "com.github.ben-manes.versions"
 
 dependencyManagement {
   imports {
@@ -51,7 +55,7 @@ dependencyManagement {
 defaultTasks 'bootRun'
 
 group = 'de.tum.in.www1.artemis'
-version = '2.2.0'
+version = '2.2.1'
 description = 'AuTomated assEssment Management System for Interactive Learning'
 
 bootWar {
@@ -162,6 +166,7 @@ configurations {
 repositories {
     mavenLocal()
     mavenCentral()
+    jcenter()
     //jhipster-needle-gradle-repositories - JHipster will add additional repositories
 }
 
@@ -187,8 +192,10 @@ dependencies {
     compile "io.dropwizard.metrics:metrics-jvm"
     compile "io.dropwizard.metrics:metrics-servlet"
     compile "io.dropwizard.metrics:metrics-servlets"
+    compile "io.prometheus:simpleclient"
+    compile "io.prometheus:simpleclient_dropwizard"
+    compile "io.prometheus:simpleclient_servlet"
     compile "net.logstash.logback:logstash-logback-encoder"
-    compile "com.fasterxml.jackson.datatype:jackson-datatype-json-org"
     compile "com.fasterxml.jackson.datatype:jackson-datatype-hppc"
     compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
     compile "com.fasterxml.jackson.datatype:jackson-datatype-hibernate5"
@@ -267,7 +274,7 @@ task cleanResources(type: Delete) {
 }
 
 wrapper {
-    gradleVersion = '4.10'
+    gradleVersion = '4.10.2'
 }
 
 task stage(dependsOn: 'bootWar') {

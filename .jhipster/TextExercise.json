@@ -1,16 +1,19 @@
 {
-    "fluentMethods": true,
-    "relationships": [],
+    "name": "TextExercise",
     "fields": [
         {
             "fieldName": "sampleSolution",
             "fieldType": "String"
         }
     ],
-    "changelogDate": "20180817185554",
+    "relationships": [],
+    "changelogDate": "20180927081353",
     "entityTableName": "text_exercise",
     "dto": "no",
     "pagination": "no",
     "service": "no",
-    "jpaMetamodelFiltering": false
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
 }

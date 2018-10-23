@@ -29,8 +29,6 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     participation: Participation;
     @Input()
     isBuilding: boolean;
-    @Input()
-    doInitialRefresh: boolean;
     @Output()
     newResult = new EventEmitter<object>();
 
@@ -63,13 +61,6 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
 
             this.init();
 
-            // Initial refresh call will only be called if input 'doInitialRefresh' is provided (currently only
-            // set to true by the online editor
-            // TODO: can we avoid this case for the online editor and provide a valid participation with a result?
-            if (this.doInitialRefresh && !this.result) {
-                this.refreshResult();
-            }
-
             if (exercise && exercise.type === ExerciseType.PROGRAMMING) {
                 this.principal.identity().then(account => {
                     // only subscribe for the currently logged in user
@@ -97,6 +88,9 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
 
     handleNewResult(newResult: Result) {
         this.result = newResult;
+        // Reconnect the new result with the existing participation
+        this.result.participation = this.participation;
+        this.participation.results = [this.result];
         this.newResult.emit({
             newResult
         });

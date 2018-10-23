@@ -8,6 +8,11 @@ import { JhiWebsocketService } from '../../core';
 import { EditorComponent } from '../editor.component';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import 'brace/theme/dreamweaver';
+import 'brace/ext/modelist';
+import 'brace/mode/java';
+import 'brace/mode/javascript';
+import 'brace/mode/markdown';
+// TODO: consider adding any modes we might need
 
 declare let ace: any;
 
@@ -59,12 +64,10 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
      * @desc Sets the theme and other editor options
      */
     ngAfterViewInit(): void {
-        ace.require('ace/ext/language_tools');
+        ace.acequire('ace/ext/language_tools');
         this.editor.setTheme('dreamweaver');
         this.editor.getEditor().setOptions({
-            animatedScroll: true,
-            enableBasicAutocompletion: true,
-            enableLiveAutocompletion: true
+            animatedScroll: true
         });
     }
 
@@ -117,9 +120,8 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
      */
     loadFile(fileName: string) {
         // This fetches a list of all supported editor modes and matches it afterwards against the file extension
-        const aceModeList = ace.require('ace/ext/modelist');
-        // TODO: handle the case that fileName is null or undefined
-        const fileNameSplit = fileName.split('/');
+        const aceModeList = ace.acequire('ace/ext/modelist');
+        const fileNameSplit = fileName ? fileName.split('/') : '';
         const aceMode = aceModeList.getModeForPath(fileNameSplit[fileNameSplit.length - 1]);
 
         /** Query the repositoryFileService for the specified file in the repository */
@@ -188,7 +190,7 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
      */
     onFileTextChanged(code: string) {
         /** Is the code different to what we have on our session? This prevents us from saving when a file is loaded **/
-        if (this.editorFileSessions[this.fileName].code !== code) {
+        if (this.editorFileSessions[this.fileName] && this.editorFileSessions[this.fileName].code !== code) {
             // Assign received code to our session
             this.editorFileSessions[this.fileName].code = code;
             this.editorFileSessions[this.fileName].unsavedChanges = true;

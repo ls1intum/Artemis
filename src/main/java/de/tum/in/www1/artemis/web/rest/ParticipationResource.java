@@ -11,7 +11,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.json.MappingJacksonValue;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -20,8 +19,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.Principal;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * REST controller for managing Participation.
@@ -216,22 +214,50 @@ public class ParticipationResource {
      * @param id the id of the participation to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
      */
-    @GetMapping("/participations/{id}")
+    @GetMapping("/participations/{id}/withLatestResult")
     @Timed
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Participation> getParticipation(@PathVariable Long id, AbstractAuthenticationToken authentication) {
+    public ResponseEntity<Participation> getParticipation(@PathVariable Long id) {
         log.debug("REST request to get Participation : {}", id);
-        Participation participation = participationService.findOne(id);
+        Participation participation = participationService.findOneWithEagerResults(id);
+        if (participation == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        Result result = participation.getExercise().findLatestRelevantResult(participation);
+        Set<Result> results = new HashSet<Result>();
+        if (result != null) {
+            results.add(result);
+        }
+        participation.setResults(results);
         Course course = participation.getExercise().getCourse();
         if (!authCheckService.isOwnerOfParticipation(participation)) {
              if(!courseService.userHasAtLeastTAPermissions(course)) {
                  return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
              }
         }
+        return  new ResponseEntity<>(participation, HttpStatus.OK);
+    }
+
+    /**
+     * GET  /participations/:id : get the "id" participation.
+     *
+     * @param id the id of the participation to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
+     */
+    @GetMapping("/participations/{id}")
+    @Timed
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Participation> getParticipationWithLatestResult(@PathVariable Long id) {
+        log.debug("REST request to get Participation : {}", id);
+        Participation participation = participationService.findOne(id);
+        Course course = participation.getExercise().getCourse();
+        if (!authCheckService.isOwnerOfParticipation(participation)) {
+            if(!courseService.userHasAtLeastTAPermissions(course)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        }
         return Optional.ofNullable(participation)
-            .map(result -> new ResponseEntity<>(
-                result,
-                HttpStatus.OK))
+            .map(result -> new ResponseEntity<>(result, HttpStatus.OK))
             .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
@@ -308,7 +334,8 @@ public class ParticipationResource {
     /**
      * GET  /courses/:courseId/exercises/:exerciseId/participation: get the user's participation for a specific exercise.
      *
-     * @param courseId   only included for API consistency, not actually used
+     * Please note: 'courseId' is only included in the call for API consistency, it is not actually used
+     * //TODO remove courseId from the URL
      * @param exerciseId the id of the exercise for which to retrieve the participation
      * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
      */
@@ -316,7 +343,7 @@ public class ParticipationResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     @Transactional(readOnly = true)
-    public ResponseEntity<MappingJacksonValue> getParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) {
+    public ResponseEntity<MappingJacksonValue> getParticipation(@PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to get Participation for Exercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
         if (exercise == null) {

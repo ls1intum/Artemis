@@ -7,6 +7,7 @@ import {
     TextExerciseDeleteDialogComponent,
     TextExerciseDeletePopupComponent,
     TextExerciseDetailComponent,
+    TextExerciseUpdateComponent,
     TextExerciseDialogComponent,
     TextExercisePopupComponent,
     textExercisePopupRoute,
@@ -16,36 +17,28 @@ import {
 } from './';
 import { SortByModule } from '../../components/pipes';
 
-const ENTITY_STATES = [
-    ...textExerciseRoute,
-    ...textExercisePopupRoute,
-];
+const ENTITY_STATES = [...textExerciseRoute, ...textExercisePopupRoute];
 
 @NgModule({
-    imports: [
-        ArTEMiSSharedModule,
-        RouterModule.forChild(ENTITY_STATES),
-        SortByModule
-    ],
+    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule],
     declarations: [
         TextExerciseComponent,
         TextExerciseDetailComponent,
+        TextExerciseUpdateComponent,
         TextExerciseDialogComponent,
         TextExerciseDeleteDialogComponent,
         TextExercisePopupComponent,
-        TextExerciseDeletePopupComponent,
+        TextExerciseDeletePopupComponent
     ],
     entryComponents: [
         TextExerciseComponent,
         TextExerciseDialogComponent,
+        TextExerciseUpdateComponent,
         TextExercisePopupComponent,
         TextExerciseDeleteDialogComponent,
-        TextExerciseDeletePopupComponent,
+        TextExerciseDeletePopupComponent
     ],
-    providers: [
-        TextExerciseService,
-        TextExercisePopupService,
-    ],
+    providers: [TextExerciseService, TextExercisePopupService],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArTEMiSTextExerciseModule {}

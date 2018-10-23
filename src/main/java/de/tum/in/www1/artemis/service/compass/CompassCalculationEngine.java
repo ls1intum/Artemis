@@ -2,21 +2,21 @@ package de.tum.in.www1.artemis.service.compass;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import de.tum.in.www1.artemis.service.compass.assessment.Assessment;
 import de.tum.in.www1.artemis.service.compass.assessment.Result;
 import de.tum.in.www1.artemis.service.compass.assessment.Score;
 import de.tum.in.www1.artemis.service.compass.controller.*;
 import de.tum.in.www1.artemis.service.compass.grade.CompassGrade;
 import de.tum.in.www1.artemis.service.compass.grade.Grade;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLClass;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.AbstractMap;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 
 public class CompassCalculationEngine implements CalculationEngine {
@@ -71,6 +71,10 @@ public class CompassCalculationEngine implements CalculationEngine {
 
     Collection<UMLModel> getUmlModelCollection() {
         return modelIndex.getModelCollection();
+    }
+
+    Map<Long, UMLModel> getModelMap() {
+        return modelIndex.getModelMap();
     }
 
     double getTotalCoverage() {
@@ -183,5 +187,49 @@ public class CompassCalculationEngine implements CalculationEngine {
             return null;
         }
         return JSONParser.exportToJSON(grade, model);
+    }
+
+    void printStatistic() {
+        // Variability of solutions
+        System.out.println("Number of unique elements (without context) == similarity sets: " +
+            this.modelIndex.getNumberOfUniqueElements() + "\n");
+
+        int totalModelElements = 0;
+        for (UMLModel umlModel: this.getUmlModelCollection()) {
+            totalModelElements += umlModel.getConnectableList().size() + umlModel.getRelationList().size();
+            for (UMLClass umlClass: umlModel.getConnectableList()) {
+                totalModelElements += umlClass.getMethodList().size() + umlClass.getAttributeList().size();
+            }
+        }
+
+        System.out.println("Number of total model elements: " + totalModelElements + "\n");
+        double optimalEqu = (totalModelElements * 1.0) / this.getModelMap().size();
+        System.out.println("Number of optimal similarity sets: " + optimalEqu + "\n");
+        System.out.println("Variance: " +
+                (this.modelIndex.getNumberOfUniqueElements() - optimalEqu) / (totalModelElements - optimalEqu) + "\n");
+
+        // Total coverage and confidence
+        this.automaticAssessmentController.assessModelsAutomatically(modelIndex, assessmentIndex);
+        System.out.println("Total confidence: " + this.automaticAssessmentController.getTotalConfidence() + "\n");
+        System.out.println("Total coverage: " + this.automaticAssessmentController.getTotalCoverage() + "\n");
+
+        // Conflicts
+        int conflicts = 0;
+        double uniqueElementsContext = 0;
+        for(Assessment assessment: this.assessmentIndex.getAssessmentsMap().values()) {
+            for(List<Score> scores: assessment.getContextScoreList().values()) {
+                uniqueElementsContext ++;
+                double uniqueScore = -1;
+                for (Score score: scores) {
+                    if (uniqueScore != -1 && uniqueScore != score.getPoints()) {
+                        conflicts ++;
+                        break;
+                    }
+                    uniqueScore = score.getPoints();
+                }
+            }
+        }
+        System.out.println("Total conflicts (with context): " + conflicts + "\n");
+        System.out.println("Relative conflicts (with context): " + (conflicts / uniqueElementsContext) + "\n");
     }
 }
