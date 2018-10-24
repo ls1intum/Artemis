@@ -15,10 +15,26 @@ public interface CalculationEngine {
 
     Collection<Long> getModelIds();
 
+    /**
+     * Add a new assessment
+     *
+     * @param assessment the new assessment as raw sting
+     * @param modelId the id of the corresponding model
+     */
     void notifyNewAssessment(String assessment, long modelId);
 
+    /**
+     * Add a new model
+     *
+     * @param model the new model as raw sting
+     * @param modelId the id of the new model
+     */
     void notifyNewModel(String model, long modelId);
 
+    /**
+     *
+     * @return the time when the engine has been used last
+     */
     LocalDateTime getLastUsedAt();
 
     Map<Long, Grade> getModelsWaitingForAssessment();

@@ -11,6 +11,13 @@ import java.util.Map;
 
 public class GradeParser {
 
+    /**
+     * Build a compassGrade out of a json formatted assessment
+     *
+     * @param assessment a json formatted assessment
+     * @return a compassGrade object
+     * @throws JsonIOException on unexpected json format
+     */
     public static CompassGrade importFromJSON(JsonObject assessment) throws JsonIOException {
         Map<String, String> commentMapping = new HashMap<>();
         Map<String, Double> pointMapping = new HashMap<>();

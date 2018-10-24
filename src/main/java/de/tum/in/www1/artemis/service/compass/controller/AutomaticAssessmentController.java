@@ -21,7 +21,14 @@ public class AutomaticAssessmentController {
     private double totalCoverage;
     private double totalConfidence;
 
-
+    /**
+     * Add a score to an assessment, creates a new assessment if it does not exists
+     *
+     * @param index manages all assessments
+     * @param scoreHashMap maps elementIds to scores
+     * @param model the UML model - contains all elements with its corresponding jsonIds
+     * @throws IOException if the score for the element is null
+     */
     public void addScoresToAssessment(AssessmentIndex index, Map<String, Score> scoreHashMap, UMLModel model) throws IOException {
 
         for (String jsonElementID : scoreHashMap.keySet()) {
@@ -44,7 +51,12 @@ public class AutomaticAssessmentController {
     }
 
 
-
+    /**
+     * Loops over all models and triggers their automatic assessments
+     *
+     * @param modelIndex manages all models
+     * @param assessmentIndex manages all assessments
+     */
     public void assessModelsAutomatically(ModelIndex modelIndex, AssessmentIndex assessmentIndex) {
 
         totalCoverage = 0;
@@ -63,7 +75,13 @@ public class AutomaticAssessmentController {
         totalCoverage /= modelIndex.getModelCollectionSize();
     }
 
-
+    /**
+     * Loop over all elements of a model, get their assessments and build a result with them
+     *
+     * @param model the UML model which contains all the model elements
+     * @param assessmentIndex manages all assessments
+     * @return a result
+     */
     public Result assessModelAutomatically(UMLModel model, AssessmentIndex assessmentIndex) {
             List<Result> resultList = new ArrayList<>();
 

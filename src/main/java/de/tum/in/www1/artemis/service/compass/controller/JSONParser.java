@@ -18,6 +18,15 @@ public class JSONParser {
 
     private final static Logger log = LoggerFactory.getLogger(JSONParser.class);
 
+    /**
+     * Process a json object retrieved from a json formatted file to retrieve an UML model
+     * TODO adapt the parser to support different UML diagrams
+     *
+     * @param root the json object of an UML diagram
+     * @param modelId the Id of the model
+     * @return the model as java object
+     * @throws IOException on unexpected json formats
+     */
     public static UMLModel buildModelFromJSON(JsonObject root, long modelId) throws IOException {
         JsonObject entities = root.getAsJsonObject(JSONMapping.elements);
         JsonArray allElementIds = entities.getAsJsonArray(JSONMapping.idArray);
@@ -128,6 +137,14 @@ public class JSONParser {
     }
 
 
+    /**
+     * Process a json object retrieved from a json formatted file containing assessments
+     * TODO adapt the parser to support different UML diagrams
+     *
+     * @param root the json object of an assessment
+     * @param model the corresponding UML model
+     * @return a map of elementIds to scores
+     */
     public static Map<String, Score> getScoresFromJSON(JsonObject root, UMLModel model) {
         Map<String, Score> scoreHashMap = new HashMap<>();
 
@@ -215,6 +232,14 @@ public class JSONParser {
     }
 
 
+    /**
+     * Export the grade to a json object which can be written to the file system
+     * TODO adapt the parser to support different UML diagrams
+     *
+     * @param result the grade which should be exported
+     * @param model the corresponding UML model
+     * @return a json object representing
+     */
     public static JsonObject exportToJSON (Grade result, UMLModel model) {
         JsonObject obj = new JsonObject();
         JsonArray assessments = new JsonArray();

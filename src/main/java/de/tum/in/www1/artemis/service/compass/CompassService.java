@@ -42,12 +42,24 @@ public class CompassService {
      */
     private static Map<Long, CalculationEngine> compassCalculationEngines = new ConcurrentHashMap<>();
 
+    /**
+     * Remove an engine from memory after it has been unused for this number of days
+     */
     private final static int DAYS_TO_KEEP_UNUSED_ENGINE = 1;
+    /**
+     * Time to check for unused engines
+     */
     private final static int TIME_TO_CHECK_FOR_UNUSED_ENGINES = 3600000;
 
+    /**
+     * Confidence and coverage parameters to accept an automatic assessment
+     */
     private final static double CONFIDENCE_THRESHOLD = 0.75;
     private final static double COVERAGE_THRESHOLD = 0.8;
 
+    /**
+     * Number of optimal models to keep in cache
+     */
     private final static int NUMBER_OF_OPTIMAL_MODELS = 10;
     private static Map<Long, Thread> optimalModelThreads = new ConcurrentHashMap<>();
 
@@ -67,13 +79,19 @@ public class CompassService {
      *
      * @return new Id and partial grade of the optimalModel for next manual assessment, null if all models have been assessed
      */
-    public Map.Entry<Long, Grade> getNextOptimalModel(long exerciseId) {
+    private Map.Entry<Long, Grade> getNextOptimalModel(long exerciseId) {
         if (!loadExerciseIfSuspended(exerciseId)) {
             return null;
         }
         return compassCalculationEngines.get(exerciseId).getNextOptimalModel();
     }
 
+    /**
+     * Remove a model from the waiting list of models which should be assessed next
+     *
+     * @param exerciseId the exerciseId
+     * @param modelId the modelId which can be removed
+     */
     public void removeModelWaitingForAssessment(long exerciseId, long modelId) {
         if (!loadExerciseIfSuspended(exerciseId)) {
             return;
@@ -81,6 +99,11 @@ public class CompassService {
         compassCalculationEngines.get(exerciseId).removeModelWaitingForAssessment(modelId, true);
     }
 
+    /**
+     *
+     * @param exerciseId the exerciseId
+     * @return List of model Ids waiting for an assessment by an assessor
+     */
     public Set<Long> getModelsWaitingForAssessment(long exerciseId) {
         if (!loadExerciseIfSuspended(exerciseId)) {
             return new HashSet<>();
@@ -99,6 +122,11 @@ public class CompassService {
         return optimalModels.keySet();
     }
 
+    /**
+     * Empty the waiting list
+     *
+     * @param exerciseId the exerciseId
+     */
     public void resetModelsWaitingForAssessment(long exerciseId) {
         if (!loadExerciseIfSuspended(exerciseId)) {
             return;
@@ -109,6 +137,14 @@ public class CompassService {
         }
     }
 
+    /**
+     * Use this if you want to reduce the effort of manual assessments
+     *
+     * @param exerciseId the exerciseId
+     * @param modelId the model id
+     * @return an partial assessment for model elements where an automatic assessment is already possible,
+     * other model elements have to be assessed by the assessor
+     */
     public JsonObject getPartialAssessment(long exerciseId, long modelId) {
         if (!loadExerciseIfSuspended(exerciseId)) {
             return null;
@@ -149,6 +185,13 @@ public class CompassService {
         return null;
     }
 
+    /**
+     * Add an assessment to an engine
+     *
+     * @param exerciseId the exerciseId
+     * @param modelId the corresponding modelId
+     * @param assessment the new assessment as raw string
+     */
     public void addAssessment(long exerciseId, long modelId, String assessment) {
         log.info("Add assessment for exercise" + exerciseId + " and model " + modelId);
         if (!loadExerciseIfSuspended(exerciseId)) {
@@ -237,6 +280,13 @@ public class CompassService {
         return new CompassGrade(grade.getCoverage(), grade.getConfidence(), pointsSum.doubleValue(), grade.getJsonIdCommentsMapping(), jsonIdPointsMapping);
     }
 
+    /**
+     * Add a model to an engine
+     *
+     * @param exerciseId the exerciseId
+     * @param modelId the modelId
+     * @param model the new model as raw string
+     */
     public void addModel(long exerciseId, long modelId, String model) {
         if (!loadExerciseIfSuspended(exerciseId)) {
             return;
@@ -256,7 +306,7 @@ public class CompassService {
         return false;
     }
 
-    public void loadExercise(long exerciseId) {
+    private void loadExercise(long exerciseId) {
         if (compassCalculationEngines.containsKey(exerciseId)) {
             return;
         }

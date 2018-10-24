@@ -7,6 +7,7 @@ import java.util.List;
 
 public class UMLClass extends UMLElement {
 
+    // TODO move activity diagram types into its own class
     public enum UMLClassType {
         CLASS, ABSTRACT_CLASS, ENUMERATION, INTERFACE,
         ACTIVITY_CONTROL_INITIAL_NODE, ACTIVITY_CONTROL_FINAL_NODE, ACTIVITY_ACTION_NODE, ACTIVITY_OBJECT, ACTIVITY_MERGE_NODE, ACTIVITY_FORK_NODE, ACTIVITY_FORK_NODE_HORIZONTAL
@@ -26,7 +27,13 @@ public class UMLClass extends UMLElement {
         this.type = UMLClassType.valueOf(type);
     }
 
-    // checks for name similarity
+    /**
+     * checks for name similarity
+     *
+     * @param element the element to compare with
+     * @return the similarity as number [0-1]
+     */
+    @Override
     public double similarity(UMLElement element) {
         double similarity = 0;
 
@@ -42,7 +49,12 @@ public class UMLClass extends UMLElement {
         return similarity;
     }
 
-    // checks for overall similarity
+    /**
+     * checks for overall similarity including attributes and methods
+     *
+     * @param element the element to compare with
+     * @return the similarity as number [0-1]
+     */
     double overallSimilarity(UMLElement element) {
         double similarity = 0;
 

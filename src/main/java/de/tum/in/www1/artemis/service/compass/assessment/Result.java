@@ -70,7 +70,13 @@ public class Result implements Grade {
         }
     }
 
-
+    /**
+     * Process a list of results to build a new result out of it
+     *
+     * @param resultList a list of results to be contained in the new result
+     * @param coverage the coverage is directly reused for the returned result
+     * @return the calculated result
+     */
     public static Result buildResultFromResultList (List<Result> resultList, double coverage) {
         HashMap<UMLElement, Score> newScoreMapping = new HashMap<>();
 
@@ -81,6 +87,10 @@ public class Result implements Grade {
         return new Result(newScoreMapping, coverage);
     }
 
+    /**
+     *
+     * @return number of elements for which a score exists
+     */
     public int entitiesCovered() {
         return elementScoreMapping.size();
     }

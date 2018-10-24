@@ -9,6 +9,7 @@ public class SimilarityDetector {
 
     /**
      * Determine elementId and context for each model element of a new model
+     *
      * @param model the new model which contains the model elements
      * @param index the modelIndex which keeps track of all elementIds
      */

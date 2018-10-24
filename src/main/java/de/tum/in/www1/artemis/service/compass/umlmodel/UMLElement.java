@@ -10,6 +10,12 @@ public abstract class UMLElement {
     String jsonElementID;
     private Context context;
 
+    /**
+     * Compare this with another element to calculate the similarity
+     *
+     * @param element the element to compare with
+     * @return the similarity as number [0-1]
+     */
     public abstract double similarity(UMLElement element);
 
     public abstract String getName();

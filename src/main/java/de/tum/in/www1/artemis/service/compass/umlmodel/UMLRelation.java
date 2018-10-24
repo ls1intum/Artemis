@@ -5,6 +5,7 @@ import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 public class UMLRelation extends UMLElement {
 
     // PLAIN is legacy
+    // TODO move activity diagram types into its own class
     public enum UMLRelationType {
         PLAIN, DEPENDENCY, AGGREGATION, INHERITANCE, REALIZATION, COMPOSITION, ASSOCIATION_UNIDIRECTIONAL, ASSOCIATION_BIDIRECTIONAL,
         ACTIVITY_CONTROL_FLOW
@@ -35,6 +36,12 @@ public class UMLRelation extends UMLElement {
         this.type = UMLRelationType.valueOf(type.toUpperCase());
     }
 
+    /**
+     * Compare this with another element to calculate the similarity
+     *
+     * @param element the element to compare with
+     * @return the similarity as number [0-1]
+     */
     @Override
     public double similarity(UMLElement element) {
         if (element.getClass() != UMLRelation.class) {
@@ -74,6 +81,7 @@ public class UMLRelation extends UMLElement {
             weight += CompassConfiguration.RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
         }
 
+        // bidirectional associations can be swapped
         if (type == UMLRelationType.ASSOCIATION_BIDIRECTIONAL) {
             double similarityReverse = 0;
 

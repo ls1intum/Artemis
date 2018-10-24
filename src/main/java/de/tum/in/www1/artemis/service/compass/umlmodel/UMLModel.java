@@ -21,6 +21,12 @@ public class UMLModel {
         this.modelID = modelID;
     }
 
+    /**
+     * Compare this with another model to calculate the similarity
+     *
+     * @param reference the uml model to compare with
+     * @return the similarity as number [0-1]
+     */
     public double similarity(UMLModel reference) {
         double sim1 = reference.similarityScore(this);
         double sim2 = this.similarityScore(reference);
@@ -28,7 +34,7 @@ public class UMLModel {
         return sim1 * sim2;
     }
 
-    public double similarityScore(UMLModel reference) {
+    private double similarityScore(UMLModel reference) {
         double similarity = 0;
 
         int elementCount = connectableList.size() + relationList.size();
@@ -104,6 +110,11 @@ public class UMLModel {
         return lastAssessmentResult == null;
     }
 
+    /**
+     * check if all model elements have been assessed
+     *
+     * @return isEntirelyAssessed
+     */
     public boolean isEntirelyAssessed () {
         if (isUnassessed() || lastAssessmentResult.getCoverage() != 1) {
             return false;
@@ -146,6 +157,7 @@ public class UMLModel {
         return connectableList.stream().mapToInt(UMLClass::getElementCount).sum() + relationList.size();
     }
 
+    @SuppressWarnings("unused")
     public double getLastAssessmentConfidence () {
         if (isUnassessed()) {
             return -1;
@@ -162,6 +174,11 @@ public class UMLModel {
         return lastAssessmentResult.getCoverage();
     }
 
+    /**
+     *
+     * @param jsonID an id retrieved from the json file
+     * @return the element corresponding to the id
+     */
     public UMLElement getElementByJSONID (String jsonID) {
         UMLElement element;
 

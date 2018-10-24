@@ -14,6 +14,13 @@ public class UMLAttribute extends UMLElement {
         this.jsonElementID = jsonElementID;
     }
 
+    /**
+     * Compare this with another element to calculate the similarity
+     *
+     * @param element the element to compare with
+     * @return the similarity as number [0-1]
+     */
+    @Override
     public double similarity(UMLElement element) {
         double similarity = 0;
 

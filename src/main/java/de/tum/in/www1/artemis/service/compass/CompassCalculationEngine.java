@@ -77,15 +77,17 @@ public class CompassCalculationEngine implements CalculationEngine {
         return modelIndex.getModelMap();
     }
 
+    @SuppressWarnings("unused")
     double getTotalCoverage() {
         return automaticAssessmentController.getTotalCoverage();
     }
 
+    @SuppressWarnings("unused")
     double getTotalConfidence() {
         return automaticAssessmentController.getTotalConfidence();
     }
 
-    void assessModelsAutomatically() {
+    private void assessModelsAutomatically() {
         automaticAssessmentController.assessModelsAutomatically(modelIndex, assessmentIndex);
     }
 
@@ -189,6 +191,7 @@ public class CompassCalculationEngine implements CalculationEngine {
         return JSONParser.exportToJSON(grade, model);
     }
 
+    // Used for internal analysis of metrics
     void printStatistic() {
         // Variability of solutions
         System.out.println("Number of unique elements (without context) == similarity sets: " +
