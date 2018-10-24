@@ -70,6 +70,7 @@ public class ModelingSubmissionService {
         if (modelingSubmission.isSubmitted()) {
             notifyCompass(modelingSubmission, modelingExercise);
             checkAutomaticResult(modelingSubmission);
+            participation.addResult(modelingSubmission.getResult());
             participation.setInitializationState(InitializationState.FINISHED);
         } else if (modelingExercise.getDueDate() != null && !modelingExercise.isEnded()) {
             // save submission to HashMap if exercise not ended yet
