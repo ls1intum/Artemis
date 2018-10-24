@@ -119,6 +119,9 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Initializes the Apollon editor in read only mode.
+     */
     initializeApollonEditor(initialState: State) {
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();
@@ -156,6 +159,10 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Creates the assessment elements for each model element.
+     * The default score is 0.
+     */
     initializeAssessments() {
         if (!this.apollonEditor) {
             return;
@@ -192,6 +199,9 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Adds the partial assessment to the assessment array if it does not exist in the assessment array.
+     */
     pushAssessmentIfNotExists(id: string, newAssessment: ModelingAssessment, partialAssessment: boolean) {
         if (partialAssessment) {
             for (const elem of this.assessments) {
@@ -222,6 +232,14 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Calculates the total score of the current assessment.
+     * Returns an error if the total score cannot be calculated
+     * because a score is not a number/empty.
+     * This function originally checked whether the total score is negative
+     * or greater than the max. score, but we decided to remove the restriction
+     * and instead set the score the boundaries on the server.
+     */
     checkScoreBoundaries() {
         if (!this.assessments || this.assessments.length === 0) {
             this.totalScore = 0;
@@ -253,6 +271,10 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         this.assessmentsNames = this.modelingAssessmentService.getNamesForAssessments(this.assessments, this.apollonEditor.getState());
     }
 
+    /**
+     * Checks whether a model element is selected or not.
+     * Is used for displaying the corresponding assessment element.
+     */
     isSelected(id: string, type: ModelElementType) {
         if (type === ModelElementType.RELATIONSHIP) {
             if (!this.selectedRelationships) {
