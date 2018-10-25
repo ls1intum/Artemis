@@ -5,14 +5,14 @@
         <div class="button-toolbar pull-right">
             <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                 <button *ngIf="exercise.type === PROGRAMMING"
-                        class="btn btn-danger btn-sm"
+                        class="btn btn-danger btn-sm mr-1"
                         [routerLink]="['/', { outlets: { popup: 'exercise/'+ exercise.id + '/archive'} }]"
                         replaceUrl="true"
                         queryParamsHandling="merge">
                     <i class="fa fa-archive" aria-hidden="true"></i>&nbsp;<span>Archive</span>
                 </button>
                 <button *ngIf="exercise.type === PROGRAMMING"
-                        class="btn btn-danger btn-sm"
+                        class="btn btn-danger btn-sm mr-1"
                         [routerLink]="['/', { outlets: { popup: 'exercise/'+ exercise.id + '/cleanup'} }]"
                         replaceUrl="true"
                         queryParamsHandling="merge">
@@ -21,30 +21,28 @@
             </span>
             <button type="submit"
                     routerLink="/exercise/{{exercise.id}}/participation"
-                    class="btn btn-primary btn-sm">
+                    class="btn btn-primary btn-sm mr-1">
                 <i class="fa fa-eraser" aria-hidden="true"></i>&nbsp;<span>Participations</span>
             </button>
 
-            <button class="btn btn-primary btn-sm" (click)="exportNames()">
+            <button class="btn btn-primary btn-sm mr-1" (click)="exportNames()">
                 <i class="fa fa-download fa-fw"></i>&nbsp;Export Names
             </button>
-            <button class="btn btn-primary btn-sm" (click)="exportResults()">
+            <button class="btn btn-primary btn-sm mr-1" (click)="exportResults()">
                 <i class="fa fa-download fa-fw"></i>&nbsp;Export Results
             </button>
             <button *ngIf="exercise.type === PROGRAMMING"
-                    class="btn btn-primary btn-sm"
+                    class="btn btn-primary btn-sm mr-1"
                     [routerLink]="['/', { outlets: { popup: 'exercise/'+ exercise.id + '/exportRepos'} }]"
                     replaceUrl="true"
                     queryParamsHandling="merge"
                     >
               <i class="fa fa-download fa-fw"></i>&nbsp;<span jhiTranslate="instructorDashboard.exportRepos.title">Download Repos</span>
             </button>
-            <button class="btn btn-primary btn-sm" (click)="refresh()">
+            <button class="btn btn-primary btn-sm mr-1" (click)="refresh()">
                 <i class="fa fa-refresh fa-fw"></i>&nbsp;Refresh
             </button>
         </div>
-
-
 
         <label class="radio-inline">
             <input type="radio" [(ngModel)]="showAllResults" (click)="toggleShowAllResults('unsuccessful')" [value]="'unsuccessful'">

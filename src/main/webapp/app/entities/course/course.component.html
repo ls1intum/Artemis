@@ -69,6 +69,12 @@
                             </div>
                         </div>
                         <button type="submit"
+                                [routerLink]="['/course', course.id, 'dashboard' ]"
+                                class="btn btn-info btn-sm mr-1">
+                            <span class="eye"></span>
+                            <span class="d-none d-md-inline" jhiTranslate="entity.action.dashboard">Dashboard</span>
+                        </button>
+                        <button type="submit"
                                 [routerLink]="['/course', course.id, 'view' ]"
                                 class="btn btn-info btn-sm mr-1">
                             <span class="'eye'"></span>

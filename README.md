@@ -63,39 +63,40 @@ Depending on your system, you can install Yarn either from source or as a pre-pa
 
 ### Server Setup
 
-To start the ArTEMiS application server from the development environment, first import the project into IntelliJ and then make sure to install the Spring Boot plugins to run the main class de.tum.in.www1.artemis.ArTEMiSApp. Before the application runs, you have to configure the file application-dev.yml in the folder src/main/resources/config/ and add the following details:
+To start the ArTEMiS application server from the development environment, first import the project into IntelliJ and then make sure to install the Spring Boot plugins to run the main class de.tum.in.www1.artemis.ArTEMiSApp. Before the application runs, you have to configure the file `application-artemis.yml` in the folder `src/main/resources/config`. 
 
 ```
 artemis:
   repo-clone-path: ./repos/
-  encryption-password: <password>
+  encryption-password: <encrypt-password>
   result-retrieval-delay: 5000
   jira:
     url: https://jirabruegge.in.tum.de
-    user: <user>
+    user: <username>
     password: <password>
-    admin-group-name: <admin-group>
+    admin-group-name: tumuser
   bitbucket:
     url: https://repobruegge.in.tum.de
-    user: <user>
+    user: <username>
     password: <password>
   bamboo:
     url: https://bamboobruegge.in.tum.de
     bitbucket-application-link-id: de1bf2e0-eb40-3a2d-9494-93cbe2e22d08
-    user: <user>
+    user: <username>
     password: <password>
     empty-commit-necessary: true
   lti:
-    id: exerciseapp_lti
-    oauth-key: exerciseapp_lti_key
+    id: artemis_lti
+    oauth-key: artemis_lti_key
     oauth-secret: <secret>
     user-prefix: edx_
     user-group-name: edx
   git:
     name: ArTEMiS
-    email: <email>
+    email: artemis@in.tum.de
 ```
-Change the entries with ```<...>``` with proper values, e.g. your TUM Online account to connect to the given instances of JIRA, Bitbucket and Bamboo. Alternatively, you can connect to your local JIRA, Bitbucket and Bamboo instances using Docker. 
+Change all entries with ```<...>``` with proper values, e.g. your TUM Online account credentials to connect to the given instances of JIRA, Bitbucket and Bamboo. Alternatively, you can connect to your local JIRA, Bitbucket and Bamboo instances.
+Be careful that you don't commit changes in this file. Best practice is to specify that your local git repository ignores this file or assumes that this file is unchanged. 
 
 The ArTEMiS server should startup by running the main class ```de.tum.in.www1.artemis.ArTEMiSApp``` using Spring Boot.
 
@@ -112,7 +113,7 @@ You can download the required jar files here:
 
 **Please note:** ArTEMiS uses Spring profiles to segregate parts of the application configuration and make it only available in certain environments. For development purposes, the following program arguments can be used to enable the `dev` profile and the profiles for JIRA, Bitbucket and Bamboo:
 
-    --spring.profiles.active=dev,bamboo,bitbucket,jira 
+    --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis
 
 ### Client Setup
 
@@ -128,7 +129,7 @@ To start the client application in the browser, use the following command:
 yarn start
 ```
 
-This compiles TypeScript code to JavaScript code, starts the hot module replacement feature in Webpack (i.e. whenever you change a TypeScript file and save, the client is automatically reloaded with the new code) and will start the client application in your browser on `http://localhost:9000`. If you have activated the JIRA profile (see above in Server Setup) and if you have configured `application-dev.yml` correctly, then you should be able to login with your TUM Online account.
+This compiles TypeScript code to JavaScript code, starts the hot module replacement feature in Webpack (i.e. whenever you change a TypeScript file and save, the client is automatically reloaded with the new code) and will start the client application in your browser on `http://localhost:9000`. If you have activated the JIRA profile (see above in Server Setup) and if you have configured `application-artemis.yml` correctly, then you should be able to login with your TUM Online account.
 
 For more information, review [Working with Angular](https://www.jhipster.tech/development/#working-with-angular). For further instructions on how to develop with JHipster, have a look at [Using JHipster in development](http://www.jhipster.tech/development).
 

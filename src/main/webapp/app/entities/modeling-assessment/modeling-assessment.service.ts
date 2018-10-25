@@ -104,6 +104,9 @@ export class ModelingAssessmentService {
         return copy;
     }
 
+    /**
+     * Creates the labels for the assessment elements for displaying them in the modeling and assessment editor.
+     */
     getNamesForAssessments(assessments: ModelingAssessment[], model: State): Map<string, Map<string, string>> {
         const assessmentsNames = new Map<string, Map<string, string>>();
         for (const assessment of assessments) {
@@ -193,6 +196,10 @@ export class ModelingAssessmentService {
         return assessmentsNames;
     }
 
+    /**
+     * Calculates the positions for the symbols used for visualizing the scores of the assessment.
+     * For associations the symbol is positioned at the source entity of the association.
+     */
     getElementPositions(assessments: ModelingAssessment[], model: State): Map<string, Point> {
         const SYMBOL_HEIGHT = 31;
         const SYMBOL_WIDTH = 65;
@@ -305,6 +312,11 @@ export class ModelingAssessmentService {
         return positions;
     }
 
+    /**
+     * Creates an array filled with n integers starting from the number provided by startFrom.
+     * Example: numberToArray(5, 0) returns the array
+     * [0, 1, 2, 3, 4]
+     */
     numberToArray(n: number, startFrom: number): number[] {
         n = Math.floor(Math.abs(n));
         return [...Array(n).keys()].map(i => i + startFrom);

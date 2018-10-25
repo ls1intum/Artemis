@@ -57,7 +57,7 @@ public class Participation implements Serializable {
 
     /**
      * Results are not cascaded through the participation because ideally we want the relationship between participations,
-     * submissions and results as follows: each participations has multiple submissions. For each submission there can be
+     * submissions and results as follows: each participation has multiple submissions. For each submission there can be
      * a result. Therefore, the result is persisted with the submission. Refer to Submission.result for cascading settings.
      */
     @OneToMany(mappedBy = "participation")

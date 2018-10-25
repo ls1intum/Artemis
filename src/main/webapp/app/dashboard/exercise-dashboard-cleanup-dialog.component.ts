@@ -4,16 +4,16 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService } from 'ng-jhipster';
 
-import { InstructorDashboardPopupService } from './instructor-dashboard-popup.service';
+import { ExerciseDashboardPopupService } from './exercise-dashboard-popup.service';
 import { Exercise, ExerciseService } from '../entities/exercise';
 
 import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     selector: 'jhi-instructor-dashboard-cleanup-dialog',
-    templateUrl: './instructor-dashboard-cleanup-dialog.component.html'
+    templateUrl: './exercise-dashboard-cleanup-dialog.component.html'
 })
-export class InstructorDashboardCleanupDialogComponent {
+export class ExerciseDashboardCleanupDialogComponent {
     exercise: Exercise;
     confirmExerciseName: string;
     deleteRepositories: boolean;
@@ -61,11 +61,11 @@ export class InstructorDashboardCleanupDialogComponent {
 export class InstructorDashboardCleanupPopupComponent implements OnInit, OnDestroy {
     routeSub: Subscription;
 
-    constructor(private route: ActivatedRoute, private instructorDashboardPopupService: InstructorDashboardPopupService) {}
+    constructor(private route: ActivatedRoute, private instructorDashboardPopupService: ExerciseDashboardPopupService) {}
 
     ngOnInit() {
         this.routeSub = this.route.params.subscribe(params => {
-            this.instructorDashboardPopupService.open(InstructorDashboardCleanupDialogComponent as Component, params['id'], true);
+            this.instructorDashboardPopupService.open(ExerciseDashboardCleanupDialogComponent as Component, params['id'], true);
         });
     }
 
