@@ -37,6 +37,12 @@
                 <td class="text-right">
                     <div class="btn-group flex-btn-group-container">
                         <button type="submit"
+                                [routerLink]="['/course', modelingExercise.course.id, 'exercise', modelingExercise.id, 'dashboard' ]"
+                                class="btn btn-info btn-sm mr-1">
+                            <span class="fa fa-eye"></span>
+                            <span class="d-none d-md-inline" jhiTranslate="entity.action.dashboard">Dashboard</span>
+                        </button>
+                        <button type="submit"
                                 [routerLink]="['/exercise', modelingExercise.id, 'participation' ]"
                                 class="btn btn-primary btn-sm mr-1">
                             <span class="fa fa-list-alt"></span>

@@ -12,7 +12,7 @@ import { Result } from '../entities/result/result.model';
 import * as moment from 'moment';
 
 @Injectable()
-export class InstructorDashboardPopupService {
+export class ExerciseDashboardPopupService {
     private ngbModalRef: NgbModalRef;
 
     constructor(
