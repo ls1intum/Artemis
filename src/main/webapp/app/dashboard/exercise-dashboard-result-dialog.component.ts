@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { InstructorDashboardPopupService } from './instructor-dashboard-popup.service';
+import { ExerciseDashboardPopupService } from './exercise-dashboard-popup.service';
 import { Result, ResultService } from '../entities/result';
 import { Participation } from '../entities/participation';
 import { Feedback, FeedbackType } from '../entities/feedback';
@@ -15,9 +15,9 @@ import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     selector: 'jhi-instructor-dashboard-result-dialog',
-    templateUrl: './instructor-dashboard-result-dialog.component.html'
+    templateUrl: './exercise-dashboard-result-dialog.component.html'
 })
-export class InstructorDashboardResultDialogComponent implements OnInit {
+export class ExerciseDashboardResultDialogComponent implements OnInit {
     participation: Participation;
     result: Result;
     feedbacks: Feedback[] = [];
@@ -89,12 +89,12 @@ export class InstructorDashboardResultDialogComponent implements OnInit {
 export class InstructorDashboardResultPopupComponent implements OnInit, OnDestroy {
     routeSub: Subscription;
 
-    constructor(private route: ActivatedRoute, private instructorDashboardPopupService: InstructorDashboardPopupService) {}
+    constructor(private route: ActivatedRoute, private instructorDashboardPopupService: ExerciseDashboardPopupService) {}
 
     ngOnInit() {
         this.routeSub = this.route.params.subscribe(params => {
             this.instructorDashboardPopupService.open(
-                InstructorDashboardResultDialogComponent as Component,
+                ExerciseDashboardResultDialogComponent as Component,
                 params['participationId'],
                 false
             );

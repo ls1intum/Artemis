@@ -6,33 +6,33 @@ import { UserRouteAccessService } from '../core';
 import { HomeComponent } from '../home';
 import { MomentModule } from 'angular2-moment';
 import { JhiMainComponent } from '../layouts';
-import { InstructorDashboardComponent } from './instructor-dashboard.component';
+import { ExerciseDashboardComponent } from './exercise-dashboard.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArTEMiSResultModule, ResultComponent, ResultDetailComponent } from '../entities/result';
 import {
-    InstructorDashboardArchiveDialogComponent,
+    ExerciseDashboardArchiveDialogComponent,
     InstructorDashboardArchivePopupComponent
-} from './instructor-dashboard-archive-dialog.component';
+} from './exercise-dashboard-archive-dialog.component';
 import {
-    InstructorDashboardCleanupDialogComponent,
+    ExerciseDashboardCleanupDialogComponent,
     InstructorDashboardCleanupPopupComponent
-} from './instructor-dashboard-cleanup-dialog.component';
+} from './exercise-dashboard-cleanup-dialog.component';
 import {
     InstructorDashboardExportReposComponent,
     InstructorDashboardExportReposPopupComponent
-} from './instructor-dashboard-repo-export-dialog.component';
-import { InstructorDashboardPopupService } from './instructor-dashboard-popup.service';
+} from './exercise-dashboard-repo-export-dialog.component';
+import { ExerciseDashboardPopupService } from './exercise-dashboard-popup.service';
 import {
-    InstructorDashboardResultDialogComponent,
+    ExerciseDashboardResultDialogComponent,
     InstructorDashboardResultPopupComponent
-} from './instructor-dashboard-result-dialog.component';
+} from './exercise-dashboard-result-dialog.component';
 import { SortByModule } from '../components/pipes';
 import { FormDateTimePickerModule } from '../shared/dateTimePicker/date-time-picker.module';
 
 const ENTITY_STATES = [
     {
         path: 'course/:courseId/exercise/:exerciseId/dashboard',
-        component: InstructorDashboardComponent,
+        component: ExerciseDashboardComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
             pageTitle: 'instructorDashboard.title'
@@ -92,31 +92,31 @@ const ENTITY_STATES = [
         FormDateTimePickerModule
     ],
     declarations: [
-        InstructorDashboardComponent,
-        InstructorDashboardArchiveDialogComponent,
+        ExerciseDashboardComponent,
+        ExerciseDashboardArchiveDialogComponent,
         InstructorDashboardArchivePopupComponent,
-        InstructorDashboardCleanupDialogComponent,
+        ExerciseDashboardCleanupDialogComponent,
         InstructorDashboardCleanupPopupComponent,
-        InstructorDashboardResultDialogComponent,
+        ExerciseDashboardResultDialogComponent,
         InstructorDashboardResultPopupComponent,
         InstructorDashboardExportReposComponent,
         InstructorDashboardExportReposPopupComponent
     ],
     entryComponents: [
         HomeComponent,
-        InstructorDashboardComponent,
+        ExerciseDashboardComponent,
         JhiMainComponent,
         ResultComponent,
         ResultDetailComponent,
-        InstructorDashboardArchiveDialogComponent,
+        ExerciseDashboardArchiveDialogComponent,
         InstructorDashboardArchivePopupComponent,
-        InstructorDashboardCleanupDialogComponent,
+        ExerciseDashboardCleanupDialogComponent,
         InstructorDashboardCleanupPopupComponent,
-        InstructorDashboardResultDialogComponent,
+        ExerciseDashboardResultDialogComponent,
         InstructorDashboardResultPopupComponent,
         InstructorDashboardExportReposComponent,
         InstructorDashboardExportReposPopupComponent
     ],
-    providers: [InstructorDashboardPopupService]
+    providers: [ExerciseDashboardPopupService]
 })
 export class ArTEMiSInstructorDashboardModule {}

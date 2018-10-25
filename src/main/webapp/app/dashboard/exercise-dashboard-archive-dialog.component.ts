@@ -4,25 +4,20 @@ import { ActivatedRoute } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService } from 'ng-jhipster';
 
-import { InstructorDashboardPopupService } from './instructor-dashboard-popup.service';
+import { ExerciseDashboardPopupService } from './exercise-dashboard-popup.service';
 import { Exercise, ExerciseService } from '../entities/exercise';
 
 import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     selector: 'jhi-instructor-dashboard-archive-dialog',
-    templateUrl: './instructor-dashboard-archive-dialog.component.html'
+    templateUrl: './exercise-dashboard-archive-dialog.component.html'
 })
-export class InstructorDashboardArchiveDialogComponent {
-
+export class ExerciseDashboardArchiveDialogComponent {
     exercise: Exercise;
     archiveInProgress: boolean;
 
-    constructor(
-        private exerciseService: ExerciseService,
-        public activeModal: NgbActiveModal,
-        private jhiAlertService: JhiAlertService
-    ) {
+    constructor(private exerciseService: ExerciseService, public activeModal: NgbActiveModal, private jhiAlertService: JhiAlertService) {
         this.archiveInProgress = false;
     }
 
@@ -50,7 +45,8 @@ export class InstructorDashboardArchiveDialogComponent {
             },
             err => {
                 this.archiveInProgress = false;
-            });
+            }
+        );
     }
 }
 
@@ -59,18 +55,13 @@ export class InstructorDashboardArchiveDialogComponent {
     template: ''
 })
 export class InstructorDashboardArchivePopupComponent implements OnInit, OnDestroy {
-
     routeSub: Subscription;
 
-    constructor(
-        private route: ActivatedRoute,
-        private instructorDashboardPopupService: InstructorDashboardPopupService
-    ) {}
+    constructor(private route: ActivatedRoute, private instructorDashboardPopupService: ExerciseDashboardPopupService) {}
 
     ngOnInit() {
         this.routeSub = this.route.params.subscribe(params => {
-            this.instructorDashboardPopupService
-                .open(InstructorDashboardArchiveDialogComponent as Component, params['id'], true);
+            this.instructorDashboardPopupService.open(ExerciseDashboardArchiveDialogComponent as Component, params['id'], true);
         });
     }
 

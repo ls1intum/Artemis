@@ -16,10 +16,10 @@ import { Moment } from 'moment';
 
 @Component({
     selector: 'jhi-instructor-dashboard',
-    templateUrl: './instructor-dashboard.component.html',
+    templateUrl: './exercise-dashboard.component.html',
     providers: [JhiAlertService, ModelingAssessmentService]
 })
-export class InstructorDashboardComponent implements OnInit, OnDestroy {
+export class ExerciseDashboardComponent implements OnInit, OnDestroy {
     // make constants available to html for comparison
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;

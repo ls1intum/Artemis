@@ -8,10 +8,10 @@ import { Participation } from '../entities/participation';
 
 @Component({
     selector: 'jhi-instructor-course-dashboard',
-    templateUrl: './instructor-course-dashboard.component.html',
+    templateUrl: './course-dashboard.component.html',
     providers: [JhiAlertService]
 })
-export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
+export class CourseDashboardComponent implements OnInit, OnDestroy {
     course: Course;
     paramSub: Subscription;
     predicate: string;

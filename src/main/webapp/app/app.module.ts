@@ -20,7 +20,7 @@ import { ArTEMiSHomeModule } from './home/home.module';
 import { ArTEMiSAccountModule } from './account/account.module';
 import { ArTEMiSCoursesModule } from './courses';
 import { ArTEMiSEntityModule } from './entities/entity.module';
-import { ArTEMiSInstructorCourseDashboardModule, ArTEMiSInstructorDashboardModule } from './instructor-dashboard';
+import { ArTEMiSInstructorCourseDashboardModule, ArTEMiSInstructorDashboardModule } from './dashboard';
 import { ArTEMiSAssessmentDashboardModule } from './assessment-dashboard';
 import { PaginationConfig } from './blocks/config/uib-pagination.config';
 import { DifferencePipe, MomentModule } from 'angular2-moment';
