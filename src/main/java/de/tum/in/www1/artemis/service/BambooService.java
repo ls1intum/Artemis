@@ -71,6 +71,9 @@ public class BambooService implements ContinuousIntegrationService {
 
     private final Logger log = LoggerFactory.getLogger(BambooService.class);
 
+    @Value("${artemis.jira.admin-group-name}")
+    private String ADMIN_GROUP_NAME;
+
     @Value("${artemis.bamboo.url}")
     private URL BAMBOO_SERVER_URL;
 
@@ -130,24 +133,22 @@ public class BambooService implements ContinuousIntegrationService {
         final String planDescription = "Artemis BASE Build Plan for Exercise " + exercise.getTitle();
 
         //Bamboo build project
-        final String projectKey = exercise.getCIProjectKey();
+        final String projectKey = exercise.getProjectKey();
         final String projectName = "Artemis Project for Exercise " + exercise.getTitle();
 
         //Bitbucket project and repos
-        final String vcsProjectKey = exercise.getVCSProjectKey();
         final String vcsAssignmentRepositorySlug = vcsRepositorySlug; // exercise.getShortName() + "-assignment"
         final String vcsTestRepositorySlug = "tests";
 
         //Permissions
         Course course = exercise.getCourse();
-        final String adminGroupName = "ls1instructor";  //see admin-group-name // TODO: maybe get this from the JiraAuthenticationProvider
         final String teachingAssistantGroupName = course.getTeachingAssistantGroupName();
         final String instructorGroupName = course.getInstructorGroupName();
 
-        final Plan plan = createPlan(planKey, planName, planDescription, projectKey, projectName, vcsProjectKey, vcsAssignmentRepositorySlug, vcsTestRepositorySlug);
+        final Plan plan = createPlan(planKey, planName, planDescription, projectKey, projectName, projectKey, vcsAssignmentRepositorySlug, vcsTestRepositorySlug);
         bambooServer.publish(plan);
 
-        final PlanPermissions planPermission = setPlanPermission(projectKey, planKey, adminGroupName, instructorGroupName, teachingAssistantGroupName);
+        final PlanPermissions planPermission = setPlanPermission(projectKey, planKey, ADMIN_GROUP_NAME, instructorGroupName, teachingAssistantGroupName);
         bambooServer.publish(planPermission);
     }
 
