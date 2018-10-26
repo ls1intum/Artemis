@@ -92,7 +92,7 @@ public class ProgrammingExerciseService {
         // We have to wait to have pushed one commit to each repository as we can only create the buildPlans then (https://confluence.atlassian.com/bamkb/cannot-create-linked-repository-or-plan-repository-942840872.html)
         continuousIntegrationService.createProject(projectKey);
         continuousIntegrationService.createBaseBuildPlanForExercise(programmingExercise, "BASE", exerciseRepoName); // plan for the exercise (students)
-        continuousIntegrationService.createBaseBuildPlanForExercise(programmingExercise, "SOLUTION", solutionRepoName); // plan for the solution (instructors) with solution repository // TODO: check if hardcoding is ok
+        continuousIntegrationService.createBaseBuildPlanForExercise(programmingExercise, "SOLUTION", solutionRepoName); // plan for the solution (instructors) with solution repository
 
         continuousIntegrationService.grantProjectPermissions(projectKey, course.getInstructorGroupName(), course.getTeachingAssistantGroupName());
 

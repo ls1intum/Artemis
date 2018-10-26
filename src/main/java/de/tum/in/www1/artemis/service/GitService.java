@@ -35,7 +35,7 @@ public class GitService {
     private String GIT_USER;
 
     @Value("${artemis.version-control.secret}")
-    private String GIT_PASSWORD; // TODO: check if this also works for a private-token
+    private String GIT_PASSWORD;
 
     @Value("${artemis.repo-clone-path}")
     private String REPO_CLONE_PATH;

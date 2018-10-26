@@ -126,11 +126,9 @@ public class BambooService implements ContinuousIntegrationService {
         UserPasswordCredentials userPasswordCredentials = new SimpleUserPasswordCredentials(BAMBOO_USER, BAMBOO_PASSWORD);
         BambooServer bambooServer = new BambooServer(BAMBOO_SERVER_URL.toString(), userPasswordCredentials);
 
-        //TODO: Get some of these values from the exercise object or a config object
-
         //Bamboo build plan
         final String planName = "Artemis Build Plan for Exercise " + exercise.getTitle() + " (" + planKey + ")"; // Must be unique
-        final String planDescription = "Artemis BASE Build Plan for Exercise " + exercise.getTitle();
+        final String planDescription = "Artemis Build Plan for Exercise " + exercise.getTitle();
 
         //Bamboo build project
         final String projectKey = exercise.getProjectKey();
