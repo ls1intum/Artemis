@@ -15,6 +15,11 @@
                         [(ngModel)]="course.title" />
                 </div>
                 <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.course.shortName" for="field_shortName">Short Name</label>
+                    <input type="text" class="form-control" name="shortName" id="field_shortName"
+                        [(ngModel)]="course.shortName" />
+                </div>
+                <div class="form-group">
                     <label class="form-control-label" jhiTranslate="arTeMiSApp.course.studentGroupName" for="field_studentGroupName">Student Group Name</label>
                     <input type="text" class="form-control" name="studentGroupName" id="field_studentGroupName"
                         [(ngModel)]="course.studentGroupName" />

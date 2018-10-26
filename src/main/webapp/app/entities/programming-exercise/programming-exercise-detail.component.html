@@ -1,53 +1,75 @@
-<div *ngIf="programmingExercise">
-    <h2><span jhiTranslate="arTeMiSApp.programmingExercise.detail.title">Programming Exercise</span> {{programmingExercise.id}}</h2>
-    <hr>
-    <jhi-alert-error></jhi-alert-error>
-    <dl class="row-md jh-entity-details">
-        <dt><span jhiTranslate="arTeMiSApp.exercise.releaseDate">Release Date</span></dt>
-        <dd>
-            <span>{{programmingExercise.releaseDate | date:'medium'}}</span>
-        </dd>
-        <dt><span jhiTranslate="arTeMiSApp.exercise.dueDate">Due Date</span></dt>
-        <dd>
-            <span>{{programmingExercise.dueDate | date:'medium'}}</span>
-        </dd>
-        <dt><span jhiTranslate="arTeMiSApp.exercise.maxScore">Max Score</span></dt>
-        <dd>
-            <span>{{programmingExercise.maxScore}}</span>
-        </dd>
-        <dt><span jhiTranslate="arTeMiSApp.programmingExercise.baseRepositoryUrl">Base Repository Url</span></dt>
-        <dd>
-            <span>{{programmingExercise.baseRepositoryUrl}}</span>
-        </dd>
-        <dt><span jhiTranslate="arTeMiSApp.programmingExercise.baseBuildPlanId">Base Build Plan Id</span></dt>
-        <dd>
-            <span>{{programmingExercise.baseBuildPlanId}}</span>
-        </dd>
-        <dt><span jhiTranslate="arTeMiSApp.programmingExercise.publishBuildPlanUrl">Publish Build Plan Url</span></dt>
-        <dd>
-            <span>{{programmingExercise.publishBuildPlanUrl}}</span>
-        </dd>
-        <dt><span jhiTranslate="arTeMiSApp.programmingExercise.allowOnlineEditor">Allow Online Editor</span></dt>
-        <dd>
-            <span>{{programmingExercise.allowOnlineEditor}}</span>
-        </dd>
-        <dt><span jhiTranslate="arTeMiSApp.exerciseLtiConfiguration.lti">LTI</span></dt>
-        <dd>
-            <a [routerLink]="['/', { outlets: { popup: 'exercise/'+ programmingExercise.id + '/lti-configuration'} }]">LTI Configuration</a>
-        </dd>
-    </dl>
+<div class="row justify-content-center">
+    <div class="col-8">
+        <div *ngIf="programmingExercise">
+            <h2><span jhiTranslate="arTeMiSApp.programmingExercise.detail.title">Programming Exercise</span> {{programmingExercise.id}}</h2>
+            <hr>
+            <jhi-alert-error></jhi-alert-error>
+            <dl class="row-md jh-entity-details">
+                <dt><span jhiTranslate="arTeMiSApp.exercise.title">Title</span></dt>
+                <dd>
+                    <span>{{modelingExercise.title}}</span>
+                </dd>
+                <dt><span jhiTranslate="arTeMiSApp.exercise.releaseDate">Release Date</span></dt>
+                <dd>
+                    <span>{{programmingExercise.releaseDate | date:'medium'}}</span>
+                </dd>
+                <dt><span jhiTranslate="arTeMiSApp.exercise.dueDate">Due Date</span></dt>
+                <dd>
+                    <span>{{programmingExercise.dueDate | date:'medium'}}</span>
+                </dd>
+                <dt><span jhiTranslate="arTeMiSApp.exercise.maxScore">Max Score</span></dt>
+                <dd>
+                    <span>{{programmingExercise.maxScore}}</span>
+                </dd>
+                <dt><span jhiTranslate="arTeMiSApp.programmingExercise.baseRepositoryUrl">Base Repository Url</span></dt>
+                <dd>
+                    <span>{{programmingExercise.baseRepositoryUrl}}</span>
+                </dd>
+                <dt><span jhiTranslate="arTeMiSApp.programmingExercise.solutionRepositoryUrl">Solution Repository Url</span></dt>
+                <dd>
+                    <span>{{programmingExercise.solutionRepositoryUrl}}</span>
+                </dd>
+                <dt><span jhiTranslate="arTeMiSApp.programmingExercise.baseBuildPlanId">Base Build Plan Id</span></dt>
+                <dd>
+                    <span>{{programmingExercise.baseBuildPlanId}}</span>
+                </dd>
+                <dt><span jhiTranslate="arTeMiSApp.programmingExercise.solutionBuildPlanId">Solution Build Plan Id</span></dt>
+                <dd>
+                    <span>{{programmingExercise.solutionBuildPlanId}}</span>
+                </dd>
+                <dt><span jhiTranslate="arTeMiSApp.programmingExercise.publishBuildPlanUrl">Publish Build Plan Url</span></dt>
+                <dd>
+                    <span>{{programmingExercise.publishBuildPlanUrl}}</span>
+                </dd>
+                <dt><span jhiTranslate="arTeMiSApp.programmingExercise.allowOnlineEditor">Allow Online Editor</span></dt>
+                <dd>
+                    <span>{{programmingExercise.allowOnlineEditor}}</span>
+                </dd>
+                <dt><span jhiTranslate="arTeMiSApp.programmingExercise.programmingLanguage">Programming Language</span></dt>
+                <dd>
+                    <span jhiTranslate="{{'arTeMiSApp.ProgrammingLanguage.' + programmingExercise.programmingLanguage}}">{{programmingExercise.programmingLanguage}}</span>
+                </dd>
+                <dt><span jhiTranslate="arTeMiSApp.programmingExercise.packageName">Package Name</span></dt>
+                <dd>
+                    <span>{{programmingExercise.packageName}}</span>
+                </dd>
+                <dt><span jhiTranslate="arTeMiSApp.exerciseLtiConfiguration.lti">LTI</span></dt>
+                <dd>
+                    <a [routerLink]="['/', { outlets: { popup: 'exercise/'+ programmingExercise.id + '/lti-configuration'} }]">LTI Configuration</a>
+                </dd>
+            </dl>
 
-    <button type="submit"
-            (click)="previousState()"
-            class="btn btn-info">
-        <span class="fa fa-arrow-left"></span>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
-    </button>
+            <button type="submit"
+                    (click)="previousState()"
+                    class="btn btn-info">
+                <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
+            </button>
 
-    <button type="button"
-            [routerLink]="['/', { outlets: { popup: 'programming-exercise/'+ programmingExercise.id + '/edit'} }]"
-            replaceUrl="true"
-            queryParamsHandling="merge"
-            class="btn btn-primary">
-        <span class="fa fa-pencil"></span>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
-    </button>
+            <button type="button"
+                    [routerLink]="['/programming-exercise', programmingExercise.id, 'edit']"
+                    class="btn btn-primary">
+                <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+            </button>
+        </div>
+    </div>
 </div>

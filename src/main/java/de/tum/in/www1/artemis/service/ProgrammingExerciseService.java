@@ -69,7 +69,7 @@ public class ProgrammingExerciseService {
         URL solutionRepoUrl = versionControlService.getCloneURL(programmingExercise.getVCSProjectKey(), "solution");
 
         String templatePath = System.getProperty("user.dir") + File.separator + "src" + File.separator + "main" + File.separator + "resources" + File.separator + "config" + File.separator + "templates"; // TODO: check if this works
-        String frameworkPath = templatePath + File.separator + programmingExercise.getProgrammingLanguage().toLowerCase() + File.separator + programmingExercise.getBuildTool().toLowerCase(); // Path, depending on programming language and build tools
+        String frameworkPath = templatePath + File.separator + programmingExercise.getProgrammingLanguage().toString().toLowerCase() + File.separator + programmingExercise.getBuildTool().toLowerCase(); // Path, depending on programming language and build tools
 
         String exerciseTemplatePath = frameworkPath + File.separator + "exercise"; // Path where the exercise template is located (used for exercise & solution)
 

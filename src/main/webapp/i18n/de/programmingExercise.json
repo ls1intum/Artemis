@@ -4,7 +4,8 @@
         "programmingExercise" : {
             "home": {
                 "title": "Programming Exercises",
-                "createLabel": "Programming Exercise erstellen",
+                "createLabel": "neue Programmieraufgabe erstellen",
+                "linkLabel": "neue Programmieraufgabe verlinken",
                 "createOrEditLabel": "Programming Exercise erstellen oder bearbeiten"
             },
             "created": "Programming Exercise erstellt mit ID {{ param }}",
@@ -16,14 +17,17 @@
             "detail": {
                 "title": "Programming Exercise"
             },
-            "baseRepositoryUrl": "Base Repository Url",
-            "solutionRepositoryUrl": "Solution Repository Url",
-            "baseBuildPlanId": "Base Build Plan Id",
+            "baseRepositoryUrl": "Template Repository Url",
+            "solutionRepositoryUrl": "Solution Repository Url (optional)",
+            "baseBuildPlanId": "Template Build Plan Id",
+            "solutionBuildPlanId": "Solution Build Plan Id (optional)",
             "publishBuildPlanUrl": "Publish Build Plan Url",
-            "allowOnlineEditor": "Allow Online Editor"
+            "allowOnlineEditor": "Allow Online Editor",
+            "programmingLanguage": "Programming Language",
+            "packageName": "Package Name"
         },
         "editor": {
-            "title": "Editor"
+            "title": "Code Editor"
         }
     }
 }

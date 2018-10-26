@@ -3,27 +3,28 @@
     "arTeMiSApp": {
         "course" : {
             "home": {
-                "title": "Courses",
-                "createLabel": "Course erstellen",
-                "createOrEditLabel": "Course erstellen oder bearbeiten"
+                "title": "Kurse",
+                "createLabel": "Kurs erstellen",
+                "createOrEditLabel": "Kurs erstellen oder bearbeiten"
             },
-            "created": "Course erstellt mit ID {{ param }}",
-            "updated": "Course aktualisiert mit ID {{ param }}",
-            "deleted": "Course gelöscht mit ID {{ param }}",
+            "created": "Kurs erstellt mit ID {{ param }}",
+            "updated": "Kurs aktualisiert mit ID {{ param }}",
+            "deleted": "Kurs gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Course {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Kurs {{ title }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Course"
+                "title": "Kurs"
             },
-            "title": "Title",
-            "studentGroupName": "Student Group Name",
-            "teachingAssistantGroupName": "Teaching Assistant Group Name",
-            "instructorGroupName": "Instructor Group Name",
-            "startDate": "Start Date",
-            "endDate": "End Date",
-            "onlineCourse": "Online Course",
-            "exercises": "Exercises",
+            "title": "Titel",
+            "shortName": "Kurzname",
+            "studentGroupName": "Studenten Gruppen Name",
+            "teachingAssistantGroupName": "Tutor Gruppen Name",
+            "instructorGroupName": "Instructor Gruppen Name",
+            "startDate": "Start Datum",
+            "endDate": "End Datum",
+            "onlineCourse": "Online Kurs",
+            "exercises": "Aufgaben",
             "programmingExercises": "Programmieraufgaben",
             "quizExercises": "Quizaufgaben",
             "modelingExercises": "Modellierungsaufgaben (Beta)",

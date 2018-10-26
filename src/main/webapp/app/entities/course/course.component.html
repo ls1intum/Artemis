@@ -18,6 +18,7 @@
             <tr>
             <th><span jhiTranslate="global.field.id">ID</span></th>
             <th><span jhiTranslate="arTeMiSApp.course.title">Title</span></th>
+            <th><span jhiTranslate="arTeMiSApp.course.shortName">Short Name</span></th>
             <th><span jhiTranslate="arTeMiSApp.course.studentGroupName">Student Group Name</span></th>
             <th><span jhiTranslate="arTeMiSApp.course.teachingAssistantGroupName">Teaching Assistant Group Name</span></th>
             <th><span jhiTranslate="arTeMiSApp.course.instructorGroupName">Instructor Group Name</span></th>
@@ -31,6 +32,7 @@
             <tr *ngFor="let course of courses ;trackBy: trackId">
                 <td><a [routerLink]="['/course', course.id, 'view' ]">{{course.id}}</a></td>
                 <td>{{course.title}}</td>
+                <td>{{course.shortName}}</td>
                 <td>{{course.studentGroupName}}</td>
                 <td>{{course.teachingAssistantGroupName}}</td>
                 <td>{{course.instructorGroupName}}</td>

@@ -19,6 +19,7 @@
             "sampleSolution" : "Musterlösung",
             "gradingInstructions": "Benotungshinweise",
             "title": "Titel",
+            "shortName": "Kurzname",
             "releaseDate": "Veröffentlichungsdatum",
             "dueDate": "Abgabedatum",
             "maxScore": "Max Punktezahl",

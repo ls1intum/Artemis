@@ -2,10 +2,16 @@
     <h4>
         <span *ngIf="course">{{course.title}} - </span><span *ngIf="programmingExercises">{{programmingExercises.length}} </span>
         <span jhiTranslate="arTeMiSApp.programmingExercise.home.title">Programming Exercises</span>
-        <button *ngIf="course" class="btn btn-primary float-right jh-create-entity create-programming-exercise" [routerLink]="['/', { outlets: { popup: ['course', course.id, 'programming-exercise-new'] } }]">
-            <span class="fa fa-plus"></span>
-            <span jhiTranslate="arTeMiSApp.programmingExercise.home.createLabel">
-            Create Programming Exercise
+        <button *ngIf="course" id="jh-link-entity" class="btn btn-primary float-right jh-link-entity link-programming-exercise mr-1" [routerLink]="['/', { outlets: { popup: ['course', course.id, 'programming-exercise-new'] } }]">
+            <fa-icon [icon]="'plus'"></fa-icon>
+            <span class="hidden-sm-down" jhiTranslate="arTeMiSApp.programmingExercise.home.linkLabel">
+            Link new Programming Exercise
+            </span>
+        </button>
+        <button *ngIf="course" id="jh-create-entity" class="btn btn-primary float-right jh-create-entity create-programming-exercise mr-1" [routerLink]="['new']">
+            <fa-icon [icon]="'plus'"></fa-icon>
+            <span class="hidden-sm-down" jhiTranslate="arTeMiSApp.programmingExercise.home.createLabel">
+            Create new Programming Exercise
             </span>
         </button>
     </h4>
@@ -19,6 +25,7 @@
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
             <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<span class="fa fa-sort"></span></th>
             <th jhiSortBy="title"><span jhiTranslate="arTeMiSApp.exercise.title">Title</span>&nbsp;<span class="fa fa-sort"></span></th>
+            <th jhiSortBy="title"><span jhiTranslate="arTeMiSApp.exercise.shortName">Short Name</span>&nbsp;<span class="fa fa-sort"></span></th>
             <th jhiSortBy="releaseDate"><span jhiTranslate="arTeMiSApp.exercise.releaseDate">Release Date</span>&nbsp;<span class="fa fa-sort"></span></th>
             <th jhiSortBy="dueDate"><span jhiTranslate="arTeMiSApp.exercise.dueDate">Due Date</span>&nbsp;<span class="fa fa-sort"></span></th>
             <th jhiSortBy="maxScore"><span jhiTranslate="arTeMiSApp.exercise.maxScore">Max Score</span>&nbsp;<span class="fa fa-sort"></span></th>
@@ -33,6 +40,7 @@
             <tr *ngFor="let programmingExercise of programmingExercises | sortBy: predicate: reverse ;trackBy: trackId">
                 <td><a [routerLink]="['../programming-exercise', programmingExercise.id ]">{{programmingExercise.id}}</a></td>
                 <td>{{programmingExercise.title}}</td>
+                <td>{{programmingExercise.shortName}}</td>
                 <td>{{programmingExercise.releaseDate | date:'medium'}}</td>
                 <td>{{programmingExercise.dueDate | date:'medium'}}</td>
                 <td>{{programmingExercise.maxScore}}</td>
@@ -55,18 +63,22 @@
                             <span class="d-none d-md-inline" jhiTranslate="arTeMiSApp.exercise.participations">Participations</span>
                         </button>
                         <button type="submit"
-                                [routerLink]="['../programming-exercise', programmingExercise.id ]"
+                                [routerLink]="['/course', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'view' ]"
                                 class="btn btn-info btn-sm mr-1">
-                            <span class="fa fa-eye"></span>
+                            <fa-icon [icon]="'eye'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                         </button>
                         <button type="submit"
-                                [routerLink]="['/', { outlets: { popup: 'programming-exercise/'+ programmingExercise.id + '/edit'} }]"
-                                replaceUrl="true"
-                                queryParamsHandling="merge"
+                                [routerLink]="['/course', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'edit']"
                                 class="btn btn-primary btn-sm mr-1">
-                            <span class="fa fa-pencil"></span>
+                            <fa-icon [icon]="'pencil-alt'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                        </button>
+                        <button type="submit"
+                                [routerLink]="['/', { outlets: { popup: ['course', course.id, 'programming-exercise', programmingExercise.id, 'editlink'] } }]"
+                                class="btn btn-primary btn-sm mr-1">
+                            <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                            <span class="d-none d-md-inline" jhiTranslate="entity.action.editLink">Edit Link</span>
                         </button>
                         <button type="submit"
                                 [routerLink]="['/', { outlets: { popup: 'exercise/'+ programmingExercise.id + '/reset'} }]"
@@ -77,7 +89,7 @@
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.reset">Reset</span>
                         </button>
                         <button type="submit"
-                                [routerLink]="['/', { outlets: { popup: 'programming-exercise/'+ programmingExercise.id + '/delete'} }]"
+                                [routerLink]="['/', { outlets: { popup: ['course', course.id, 'programming-exercise', programmingExercise.id, 'delete'] } }]"
                                 replaceUrl="true"
                                 queryParamsHandling="merge"
                                 class="btn btn-danger btn-sm mr-1">

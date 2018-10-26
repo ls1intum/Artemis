@@ -51,6 +51,10 @@ public abstract class Exercise implements Serializable {
     @JsonView(QuizView.Before.class)
     private String title;
 
+    @Column(name = "short_name")
+    @JsonView(QuizView.Before.class)
+    private String shortName;
+
     @Column(name = "release_date")
     @JsonView(QuizView.Before.class)
     private ZonedDateTime releaseDate;
@@ -106,6 +110,19 @@ public abstract class Exercise implements Serializable {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public String getShortName() {
+        return shortName;
+    }
+
+    public Exercise shortName(String shortName) {
+        this.shortName = shortName;
+        return this;
+    }
+
+    public void setShortName(String shortName) {
+        this.shortName = shortName;
     }
 
     public ZonedDateTime getReleaseDate() {
@@ -328,6 +345,7 @@ public abstract class Exercise implements Serializable {
             ", problemStatement='" + getProblemStatement() + "'" +
             ", gradingInstructions='" + getGradingInstructions() + "'" +
             ", title='" + getTitle() + "'" +
+            ", shortName='" + getShortName() + "'" +
             ", releaseDate='" + getReleaseDate() + "'" +
             ", dueDate='" + getDueDate() + "'" +
             ", maxScore=" + getMaxScore() +

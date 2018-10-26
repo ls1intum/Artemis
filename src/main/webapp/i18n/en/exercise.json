@@ -19,6 +19,7 @@
             "sampleSolution" : "Sample Solution",
             "gradingInstructions": "Grading Instructions",
             "title": "Title",
+            "shortName": "Short Name",
             "releaseDate": "Release Date",
             "dueDate": "Due Date",
             "maxScore": "Max Score",
