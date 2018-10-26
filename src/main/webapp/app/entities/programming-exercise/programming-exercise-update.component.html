@@ -55,11 +55,16 @@
                     </select>
                 </div>
 
-
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="arTeMiSApp.programmingExercise.allowOnlineEditor" for="field_allowOnlineEditor">Allow Online Editor</label>
                     <input type="checkbox" class="form-control" name="allowOnlineEditor" id="field_allowOnlineEditor"
                         [(ngModel)]="programmingExercise.allowOnlineEditor" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.programmingExercise.publishBuildPlanUrl" for="field_publishBuildPlanUrl">Publish Build Plan Url</label>
+                    <input type="checkbox" class="form-control" name="publishBuildPlanUrl" id="field_publishBuildPlanUrl"
+                           [(ngModel)]="programmingExercise.publishBuildPlanUrl" />
                 </div>
 
             </div>
