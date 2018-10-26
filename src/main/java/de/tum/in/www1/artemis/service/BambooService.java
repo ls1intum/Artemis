@@ -187,7 +187,7 @@ public class BambooService implements ContinuousIntegrationService {
                     .finalTasks(new ScriptTask()
                         .description("Notify ArTEMiS")
                         .interpreter(ScriptTaskProperties.Interpreter.BINSH_OR_CMDEXE)
-                        .inlineBody("curl -k -X POST " + BAMBOO_SERVER_URL + "/api/results/${bamboo.planKey}"))))
+                        .inlineBody("curl -k -X POST " + SERVER_URL + "/api/results/${bamboo.planKey}"))))
             .triggers(new BitbucketServerTrigger());
         return plan;
     }
