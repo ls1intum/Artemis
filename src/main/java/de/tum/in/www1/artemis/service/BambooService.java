@@ -135,8 +135,8 @@ public class BambooService implements ContinuousIntegrationService {
 
         //Bitbucket project and repos
         final String vcsProjectKey = exercise.getVCSProjectKey();
-        final String vcsAssignmentRepositorySlug = vcsRepositorySlug; // exercise.getShortName() + "-assignment"
-        final String vcsTestRepositorySlug = "tests";
+        final String vcsAssignmentRepositorySlug = exercise.getShortName() + "-exercise";
+        final String vcsTestRepositorySlug = exercise.getShortName() + "-tests";
 
         //Permissions
         Course course = exercise.getCourse();
