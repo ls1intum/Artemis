@@ -174,27 +174,15 @@ public class ProgrammingExercise extends Exercise implements Serializable {
         return null;
     }
 
-    // TODO start: Replace dummy values
     @JsonIgnore
-    public String getCIProjectKey() {
-        return "DUMMYPROJECT"; // TODO: Use generated value
-    }
-
-    @JsonIgnore
-    public String getVCSProjectKey() {
-        return "DUMMYPROJECT"; // TODO: Use generated value
-    }
-
-    @JsonIgnore
-    public String getBuildTool() {
-        return "Maven";
+    public String getProjectKey() {
+        return this.getCourse().getShortName() + this.getShortName();
     }
 
     @JsonIgnore
     public String getPackageFolderName() {
         return getPackageName().replace(".", "/");
     }
-    // TODO end: Replace dummy values
 
     @Override
     public boolean equals(Object o) {

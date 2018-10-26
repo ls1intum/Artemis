@@ -140,11 +140,16 @@ public class ProgrammingExerciseResource {
             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
+        //make sure that we use the values from the database and not the once which might have been altered in the client
+        programmingExercise.setCourse(course);
 
         try {
+            //TODO: check that shortname is available, check that the course shortname is available
+            //TODO: check that programming language is set and that packageName is valid with regex, e.g. regex='^[a-z][a-z0-9_]*(\.[a-z0-9_]+)+[0-9a-z_]$'
             programmingExerciseService.setupProgrammingExercise(programmingExercise); // Setup all repositories etc
         } catch (Exception e) {
             log.error("Error while setting up programming exercise", e);
+            //TODO: define own exception and pass the error message to the client
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "internalServerError", "Internal server error")).body(null);
         }
 
@@ -154,7 +159,7 @@ public class ProgrammingExerciseResource {
         }
 
         ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
-        return ResponseEntity.created(new URI("/api/programming-exercises/" + result.getId()))
+        return ResponseEntity.created(new URI("/api/programming-exercises" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
             .body(result);
     }
