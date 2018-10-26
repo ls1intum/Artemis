@@ -56,21 +56,23 @@ public class ProgrammingExerciseService {
     public void setupProgrammingExercise(ProgrammingExercise programmingExercise) throws Exception {
 
         String projectKey = programmingExercise.getProjectKey();
-        String lowerCaseProjectKey = projectKey.toLowerCase();
+        String exerciseRepoName = programmingExercise.getShortName() + "-exercise";
+        String testRepoName = programmingExercise.getShortName() + "-tests";
+        String solutionRepoName = programmingExercise.getShortName() + "-solution";
 
         // Create VCS repositories
         versionControlService.createProject(programmingExercise.getTitle(), projectKey); // Create project
-        versionControlService.createRepository(projectKey, programmingExercise.getShortName() + "-exercise", null); // Create template repository
-        versionControlService.createRepository(projectKey, programmingExercise.getShortName() + "-tests", null); // Create tests repository
-        versionControlService.createRepository(projectKey, programmingExercise.getShortName() + "-solution", null); // Create solution repository
+        versionControlService.createRepository(projectKey, exerciseRepoName, null); // Create template repository
+        versionControlService.createRepository(projectKey, testRepoName, null); // Create tests repository
+        versionControlService.createRepository(projectKey, solutionRepoName, null); // Create solution repository
 
         // Set permissions for VCS
         Course course = programmingExercise.getCourse();
         versionControlService.grantProjectPermissions(projectKey, course.getInstructorGroupName(), course.getTeachingAssistantGroupName());
 
-        URL exerciseRepoUrl = versionControlService.getCloneURL(projectKey, programmingExercise.getShortName() + "-exercise");
-        URL testsRepoUrl = versionControlService.getCloneURL(projectKey, programmingExercise.getShortName() + "-tests");
-        URL solutionRepoUrl = versionControlService.getCloneURL(projectKey, programmingExercise.getShortName() + "-solution");
+        URL exerciseRepoUrl = versionControlService.getCloneURL(projectKey, exerciseRepoName);
+        URL testsRepoUrl = versionControlService.getCloneURL(projectKey, testRepoName);
+        URL solutionRepoUrl = versionControlService.getCloneURL(projectKey, solutionRepoName);
 
         // TODO: we should put these files into the "war executable" into resources/templates
         String templatePath = System.getProperty("user.dir") + File.separator + "src" + File.separator + "main" + File.separator + "resources" + File.separator + "config" + File.separator + "templates";
@@ -89,15 +91,15 @@ public class ProgrammingExerciseService {
 
         // We have to wait to have pushed one commit to each repository as we can only create the buildPlans then (https://confluence.atlassian.com/bamkb/cannot-create-linked-repository-or-plan-repository-942840872.html)
         continuousIntegrationService.createProject(projectKey);
-        continuousIntegrationService.createBaseBuildPlanForExercise(programmingExercise, "BASE", programmingExercise.getShortName() + "-exercise"); // plan for the exercise (students)
-        continuousIntegrationService.createBaseBuildPlanForExercise(programmingExercise, "SOLUTION", programmingExercise.getShortName() + "-solution"); // plan for the solution (instructors) with solution repository // TODO: check if hardcoding is ok
+        continuousIntegrationService.createBaseBuildPlanForExercise(programmingExercise, "BASE", exerciseRepoName); // plan for the exercise (students)
+        continuousIntegrationService.createBaseBuildPlanForExercise(programmingExercise, "SOLUTION", solutionRepoName); // plan for the solution (instructors) with solution repository // TODO: check if hardcoding is ok
 
         continuousIntegrationService.grantProjectPermissions(projectKey, course.getInstructorGroupName(), course.getTeachingAssistantGroupName());
 
         programmingExercise.setBaseBuildPlanId(projectKey + "-BASE"); // Set build plan id to newly created BaseBuild plan
-        programmingExercise.setBaseRepositoryUrl(versionControlService.getCloneURL(projectKey, programmingExercise.getShortName() + "-exercise").toString());
+        programmingExercise.setBaseRepositoryUrl(versionControlService.getCloneURL(projectKey, exerciseRepoName).toString());
         programmingExercise.setSolutionBuildPlanId(projectKey + "-SOLUTION");
-        programmingExercise.setSolutionRepositoryUrl(versionControlService.getCloneURL(projectKey, programmingExercise.getShortName() + "-solution").toString());
+        programmingExercise.setSolutionRepositoryUrl(versionControlService.getCloneURL(projectKey, solutionRepoName).toString());
     }
 
     // Copy template and push, if no file is in the directory
