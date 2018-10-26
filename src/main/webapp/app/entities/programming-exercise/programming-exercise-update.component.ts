@@ -54,9 +54,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     save() {
         this.isSaving = true;
         if (this.programmingExercise.id !== undefined) {
+            // TODO how can we support edit in this case? some attributes cannot be easily changed
             this.subscribeToSaveResponse(this.programmingExerciseService.update(this.programmingExercise));
         } else {
-            this.subscribeToSaveResponse(this.programmingExerciseService.create(this.programmingExercise));
+            this.subscribeToSaveResponse(this.programmingExerciseService.automaticSetup(this.programmingExercise));
         }
     }
 
