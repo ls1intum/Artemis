@@ -129,7 +129,7 @@ public class QuizExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "quizHasStarted", "The quiz has already started. Use the re-evaluate endpoint to make retroactive corrections.")).body(null);
         }
 
-        reconnectJSONIgnoreAttributes(quizExercise);
+        quizExercise.reconnectJSONIgnoreAttributes();
 
         // reset Released-Flag in all statistics if they are released but the quiz hasn't ended yet
         if (!quizExercise.isStarted() || quizExercise.getRemainingTime() > 0) {
@@ -422,7 +422,7 @@ public class QuizExerciseResource {
         boolean updateOfResultsAndStatisticsNecessary = quizExercise.checkIfRecalculationIsNecessary(originalQuizExercise);
 
         //update QuizExercise
-        reconnectJSONIgnoreAttributes(quizExercise);
+        quizExercise.reconnectJSONIgnoreAttributes();
 
         //adjust existing results if an answer or and question was deleted and recalculate them
         quizExerciseService.adjustResultsOnQuizChanges(quizExercise);
@@ -438,80 +438,6 @@ public class QuizExerciseResource {
         return ResponseEntity.ok()
             .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, quizExercise.getId().toString()))
             .body(result);
-    }
-
-    /**
-     * Recreate missing pointers from children to parents that were removed by @JSONIgnore
-     *
-     * @param quizExercise the quiz exercise for which the pointers should be recreated
-     */
-    private void reconnectJSONIgnoreAttributes(QuizExercise quizExercise) {
-        // iterate through questions to add missing pointer back to quizExercise
-        // Note: This is necessary because of the @IgnoreJSON in question and answerOption
-        //       that prevents infinite recursive JSON serialization.
-        for (Question question : quizExercise.getQuestions()) {
-            if (question.getId() != null) {
-                question.setExercise(quizExercise);
-                //reconnect QuestionStatistics
-                if (question.getQuestionStatistic() != null) {
-                    question.getQuestionStatistic().setQuestion(question);
-                }
-                // do the same for answerOptions (if question is multiple choice)
-                if (question instanceof MultipleChoiceQuestion) {
-                    MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) question;
-                    MultipleChoiceQuestionStatistic mcStatistic = (MultipleChoiceQuestionStatistic) mcQuestion.getQuestionStatistic();
-                    //reconnect answerCounters
-                    for (AnswerCounter answerCounter : mcStatistic.getAnswerCounters()) {
-                        if (answerCounter.getId() != null) {
-                            answerCounter.setMultipleChoiceQuestionStatistic(mcStatistic);
-                        }
-                    }
-                    // reconnect answerOptions
-                    for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {
-                        if (answerOption.getId() != null) {
-                            answerOption.setQuestion(mcQuestion);
-                        }
-                    }
-                }
-                if (question instanceof DragAndDropQuestion) {
-                    DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
-                    DragAndDropQuestionStatistic dragAndDropStatistic = (DragAndDropQuestionStatistic) dragAndDropQuestion.getQuestionStatistic();
-                    // reconnect dropLocations
-                    for (DropLocation dropLocation : dragAndDropQuestion.getDropLocations()) {
-                        if (dropLocation.getId() != null) {
-                            dropLocation.setQuestion(dragAndDropQuestion);
-                        }
-                    }
-                    // reconnect dragItems
-                    for (DragItem dragItem : dragAndDropQuestion.getDragItems()) {
-                        if (dragItem.getId() != null) {
-                            dragItem.setQuestion(dragAndDropQuestion);
-                        }
-                    }
-                    // reconnect correctMappings
-                    for (DragAndDropMapping mapping : dragAndDropQuestion.getCorrectMappings()) {
-                        if (mapping.getId() != null) {
-                            mapping.setQuestion(dragAndDropQuestion);
-                        }
-                    }
-                    //reconnect dropLocationCounters
-                    for (DropLocationCounter dropLocationCounter : dragAndDropStatistic.getDropLocationCounters()) {
-                        if (dropLocationCounter.getId() != null) {
-                            dropLocationCounter.setDragAndDropQuestionStatistic(dragAndDropStatistic);
-                            dropLocationCounter.getDropLocation().setQuestion(dragAndDropQuestion);
-                        }
-                    }
-                }
-            }
-        }
-        //reconnect quizPointStatistic
-        quizExercise.getQuizPointStatistic().setQuiz(quizExercise);
-        //reconnect pointCounters
-        for (PointCounter pointCounter : quizExercise.getQuizPointStatistic().getPointCounters()) {
-            if (pointCounter.getId() != null) {
-                pointCounter.setQuizPointStatistic(quizExercise.getQuizPointStatistic());
-            }
-        }
     }
 
 }
