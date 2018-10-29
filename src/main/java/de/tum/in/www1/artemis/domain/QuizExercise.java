@@ -643,7 +643,7 @@ public class QuizExercise extends Exercise implements Serializable {
         }
         quizPointStatistic.getPointCounters().removeAll(pointCounterToDelete);
     }
-    
+
     /**
      * Recreate missing pointers from children to parents that were removed by @JSONIgnore
      *

@@ -3,28 +3,11 @@
     <jhi-alert></jhi-alert>
     <div>
         <div class="button-toolbar pull-right">
-            <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                <button *ngIf="exercise.type === PROGRAMMING"
-                        class="btn btn-danger btn-sm mr-1"
-                        [routerLink]="['/', { outlets: { popup: 'exercise/'+ exercise.id + '/archive'} }]"
-                        replaceUrl="true"
-                        queryParamsHandling="merge">
-                    <i class="fa fa-archive" aria-hidden="true"></i>&nbsp;<span>Archive</span>
-                </button>
-                <button *ngIf="exercise.type === PROGRAMMING"
-                        class="btn btn-danger btn-sm mr-1"
-                        [routerLink]="['/', { outlets: { popup: 'exercise/'+ exercise.id + '/cleanup'} }]"
-                        replaceUrl="true"
-                        queryParamsHandling="merge">
-                    <i class="fa fa-eraser" aria-hidden="true"></i>&nbsp;<span>Cleanup</span>
-                </button>
-            </span>
             <button type="submit"
                     routerLink="/exercise/{{exercise.id}}/participation"
                     class="btn btn-primary btn-sm mr-1">
                 <i class="fa fa-eraser" aria-hidden="true"></i>&nbsp;<span>Participations</span>
             </button>
-
             <button class="btn btn-primary btn-sm mr-1" (click)="exportNames()">
                 <i class="fa fa-download fa-fw"></i>&nbsp;Export Names
             </button>

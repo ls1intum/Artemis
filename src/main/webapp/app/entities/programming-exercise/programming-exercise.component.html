@@ -80,7 +80,23 @@
                             <fa-icon [icon]="'pencil-alt'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.editLink">Edit Link</span>
                         </button>
-                        <button type="submit"
+                        <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
+                                [routerLink]="['/', { outlets: { popup: 'exercise/'+ programmingExercise.id + '/archive'} }]"
+                                replaceUrl="true"
+                                queryParamsHandling="merge"
+                                class="btn btn-danger btn-sm mr-1">
+                            <span class="fa fa-archive"></span>
+                            <span class="d-none d-md-inline" jhiTranslate="entity.action.archive">Archive</span>
+                        </button>
+                        <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
+                                [routerLink]="['/', { outlets: { popup: 'exercise/'+ programmingExercise.id + '/cleanup'} }]"
+                                replaceUrl="true"
+                                queryParamsHandling="merge"
+                                class="btn btn-danger btn-sm mr-1">
+                            <span class="fa fa-eraser"></span>
+                            <span class="d-none d-md-inline" jhiTranslate="entity.action.cleanup">Cleanup</span>
+                        </button>
+                        <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
                                 [routerLink]="['/', { outlets: { popup: 'exercise/'+ programmingExercise.id + '/reset'} }]"
                                 replaceUrl="true"
                                 queryParamsHandling="merge"
