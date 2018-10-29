@@ -24,6 +24,9 @@ public class ProgrammingExercise extends Exercise implements Serializable {
     @Column(name = "solution_repository_url")
     private String solutionRepositoryUrl;
 
+    @Column(name = "test_repository_url")
+    private String testRepositoryUrl;
+
     @Column(name = "base_build_plan_id")
     private String baseBuildPlanId;
 
@@ -63,6 +66,19 @@ public class ProgrammingExercise extends Exercise implements Serializable {
 
     public ProgrammingExercise solutionRepositoryUrl(String solutionRepositoryUrl) {
         this.solutionRepositoryUrl = solutionRepositoryUrl;
+        return this;
+    }
+
+    public void setTestRepositoryUrl(String testRepositoryUrl) {
+        this.testRepositoryUrl = testRepositoryUrl;
+    }
+
+    public String getTestRepositoryUrl() {
+        return testRepositoryUrl;
+    }
+
+    public ProgrammingExercise testRepositoryUrl(String testRepositoryUrl) {
+        this.testRepositoryUrl = testRepositoryUrl;
         return this;
     }
 
@@ -174,9 +190,29 @@ public class ProgrammingExercise extends Exercise implements Serializable {
         return null;
     }
 
+    public URL getTestRepositoryUrlAsUrl() {
+        if (testRepositoryUrl == null) {
+            return null;
+        }
+        try {
+            return new URL(testRepositoryUrl);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     @JsonIgnore
     public String getProjectKey() {
-        return this.getCourse().getShortName() + this.getShortName();
+        //this is the key used for Bitbucket and Bamboo
+        //remove all whitespace and make sure it is upper case
+        return (this.getCourse().getShortName() + this.getShortName()).toUpperCase().replaceAll("\\s+","");
+    }
+
+    @JsonIgnore
+    public String getProjectName() {
+        //this is the name used for Bitbucket and Bamboo
+        return this.getCourse().getShortName() + " " + this.getTitle();
     }
 
     @JsonIgnore

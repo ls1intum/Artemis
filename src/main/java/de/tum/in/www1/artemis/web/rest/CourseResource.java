@@ -225,7 +225,7 @@ public class CourseResource {
             return ResponseEntity.notFound().build();
         }
         for(Exercise exercise : course.getExercises()) {
-            exerciseService.delete(exercise.getId());
+            exerciseService.delete(exercise, false, false);
         }
 
         courseService.delete(id);

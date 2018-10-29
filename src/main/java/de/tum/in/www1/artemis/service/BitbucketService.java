@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import de.tum.in.www1.artemis.domain.Participation;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -26,6 +27,9 @@ import java.util.Map;
 public class BitbucketService implements VersionControlService {
 
     private final Logger log = LoggerFactory.getLogger(BitbucketService.class);
+
+    @Value("${artemis.jira.admin-group-name}")
+    private String ADMIN_GROUP_NAME;
 
     @Value("${artemis.version-control.url}")
     private URL BITBUCKET_SERVER_URL;
@@ -102,6 +106,20 @@ public class BitbucketService implements VersionControlService {
     }
 
     @Override
+    public void deleteProject(String projectKey) {
+        String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey;
+        log.info("Delete bitbucket project " + projectKey);
+        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
+        HttpEntity<?> entity = new HttpEntity<>(headers);
+        RestTemplate restTemplate = new RestTemplate();
+        try {
+            restTemplate.exchange(baseUrl, HttpMethod.DELETE, entity, Map.class);
+        } catch (Exception e) {
+            log.error("Could not delete project", e);
+        }
+    }
+
+    @Override
     public void deleteRepository(URL repositoryUrl) {
         deleteRepositoryImpl(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl));
     }
@@ -120,7 +138,7 @@ public class BitbucketService implements VersionControlService {
 
     @Override
     public URL getCloneURL(String projectKey, String repositorySlug) {
-        log.error("URL: " + BITBUCKET_SERVER_URL.getProtocol() + "://" + BITBUCKET_SERVER_URL.getAuthority() + buildRepositoryPath(projectKey, repositorySlug));
+        log.debug("getCloneURL: " + BITBUCKET_SERVER_URL.getProtocol() + "://" + BITBUCKET_SERVER_URL.getAuthority() + buildRepositoryPath(projectKey, repositorySlug));
         try {
             return new URL(BITBUCKET_SERVER_URL.getProtocol() + "://" + BITBUCKET_SERVER_URL.getAuthority() + buildRepositoryPath(projectKey, repositorySlug));
         } catch (MalformedURLException e) {
@@ -345,12 +363,13 @@ public class BitbucketService implements VersionControlService {
     /**
      * Create a new project
      *
-     * @param projectName The project name
-     * @param projectKey  The project key
+     * @param programmingExercise
      * @throws BitbucketException if the project could not be created
      */
     @Override
-    public void createProject(String projectName, String projectKey) throws BitbucketException {
+    public void createProjectForExercise(ProgrammingExercise programmingExercise) throws BitbucketException {
+        String projectKey = programmingExercise.getProjectKey();
+        String projectName = programmingExercise.getProjectName();
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
 
         Map<String, Object> body = new HashMap<>();
@@ -363,16 +382,12 @@ public class BitbucketService implements VersionControlService {
         log.debug("Creating Bitbucket project {} with key {}", projectName, projectKey);
 
         try {
-            restTemplate.exchange(
-                BITBUCKET_SERVER_URL + "/rest/api/1.0/projects",
-                HttpMethod.POST,
-                entity,
-                Map.class);
+            restTemplate.exchange(BITBUCKET_SERVER_URL + "/rest/api/1.0/projects", HttpMethod.POST, entity, Map.class);
+            grantGroupPermissionToProject(projectKey, ADMIN_GROUP_NAME, "PROJECT_ADMIN"); // admins get administrative permissions
+            grantGroupPermissionToProject(projectKey, programmingExercise.getCourse().getInstructorGroupName(), "PROJECT_ADMIN"); // instructors get administrative permissions
+            grantGroupPermissionToProject(projectKey, programmingExercise.getCourse().getTeachingAssistantGroupName(), "PROJECT_WRITE"); // teachingAssistants get write-permissions
+
         } catch (HttpClientErrorException e) {
-            if (e.getStatusCode() == HttpStatus.CONFLICT) {
-                log.info("Project {} already exists, reusing it..", projectName);
-                return;
-            }
             log.error("Could not create Bitbucket project {} with key {}", projectName, projectKey, e);
             throw new BitbucketException("Error while creating Bitbucket project");
         }
@@ -418,10 +433,7 @@ public class BitbucketService implements VersionControlService {
         HttpEntity<?> entity = new HttpEntity<>(headers);
         RestTemplate restTemplate = new RestTemplate();
         try {
-            restTemplate.exchange(
-                baseUrl + groupName + "&permission=" + permission,
-                HttpMethod.PUT,
-                entity, Map.class);
+            restTemplate.exchange(baseUrl + groupName + "&permission=" + permission, HttpMethod.PUT, entity, Map.class);
         } catch (Exception e) {
             log.error("Could not give project permission", e);
             throw new BitbucketException("Error while giving project permissions");
@@ -590,12 +602,6 @@ public class BitbucketService implements VersionControlService {
     @Override
     public void createRepository(String entityName, String topLevelEntity, String parentEntity) throws Exception {
         createRepository(entityName, topLevelEntity);
-    }
-
-    @Override
-    public void grantProjectPermissions(String projectKey, String instructorGroupName, String teachingAssistantGroupName) {
-        grantGroupPermissionToProject(projectKey, instructorGroupName, "PROJECT_ADMIN"); // instructors get administrative permissions
-        grantGroupPermissionToProject(projectKey, teachingAssistantGroupName, "PROJECT_WRITE"); // teachingAssistants get write-permissions
     }
 
     @Override

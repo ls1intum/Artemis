@@ -1,12 +1,10 @@
 package de.tum.in.www1.artemis.service;
 
 import de.tum.in.www1.artemis.domain.Participation;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 
 import java.net.URL;
 
-/**
- * Created by muenchdo on 07/09/16.
- */
 public interface VersionControlService {
 
     public URL copyRepository(URL baseRepositoryUrl, String username);
@@ -33,10 +31,29 @@ public interface VersionControlService {
      * @param bambooUsername          The Bamboo Username
      * @param bambooPassword          The Bamboo Password
      */
+    //TODO: we should rename this method, because it's not very clear what it means
     public void addBambooService(String projectKey, String repositorySlug, String bambooUrl, String buildKey, String bambooUsername, String bambooPassword);
 
+    /**
+     * Deletes the project for the given project key
+     *
+     * @param projectKey
+     */
+    public void deleteProject(String projectKey);
+
+    /**
+     * Deletes the repository at the given url
+     *
+     * @param repositoryUrl
+     */
     public void deleteRepository(URL repositoryUrl);
 
+    /**
+     * Generates the web url for the repository that belongs to the given participation
+     *
+     * @param participation a participation of a programming exercise
+     * @return the URL of the repository of the participation
+     */
     public URL getRepositoryWebUrl(Participation participation);
 
     /**
@@ -52,7 +69,7 @@ public interface VersionControlService {
      * Check if the given repository url is valid and accessible.
      *
      * @param repositoryUrl   repository URL
-     * @return
+     * @return                whether the repository is valid
      */
     public Boolean repositoryUrlIsValid(URL repositoryUrl);
 
@@ -68,12 +85,10 @@ public interface VersionControlService {
     /**
      * Creates a project on the VCS.
      *
-     * @param projectName The name of the new project
-     * @param projectKey The key/short name of tne new project
+     * @param programmingExercise
      * @throws Exception if the project could not be created
      */
-    public void createProject(String projectName, String projectKey) throws Exception;
-
+    public void createProjectForExercise(ProgrammingExercise programmingExercise) throws Exception;
 
     /**
      * Creates a repository on the VCS.
@@ -84,15 +99,6 @@ public interface VersionControlService {
      * @throws Exception if the repository could not be created
      */
     public void createRepository(String projectKey, String repoName, String parentProjectKey) throws Exception;
-
-    /**
-     * Grants permissions for the instructors/teachingAssistants on a project.
-     *
-     * @param projectKey The key of the project
-     * @param instructorGroupName The name of the group that contains the instructors
-     * @param teachingAssistantGroupName The name of the group that contains the teachingAssistants
-     */
-    public void grantProjectPermissions(String projectKey, String instructorGroupName, String teachingAssistantGroupName);
 
     /**
      * Gets the project name of a given repository url
@@ -109,5 +115,4 @@ public interface VersionControlService {
      * @return The repository name
      */
     public String getRepositoryName(URL repositoryUrl);
-
 }

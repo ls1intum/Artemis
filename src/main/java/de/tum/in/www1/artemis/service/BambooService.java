@@ -122,24 +122,24 @@ public class BambooService implements ContinuousIntegrationService {
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
     }
 
-    public void createBaseBuildPlanForExercise(ProgrammingExercise exercise, String planKey, String vcsRepositorySlug) {
+    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, String vcsRepositorySlug) {
         UserPasswordCredentials userPasswordCredentials = new SimpleUserPasswordCredentials(BAMBOO_USER, BAMBOO_PASSWORD);
         BambooServer bambooServer = new BambooServer(BAMBOO_SERVER_URL.toString(), userPasswordCredentials);
 
         //Bamboo build plan
-        final String planName = "Artemis Build Plan for Exercise " + exercise.getTitle() + " (" + planKey + ")"; // Must be unique
-        final String planDescription = "Artemis Build Plan for Exercise " + exercise.getTitle();
+        final String planName = planKey; // Must be unique within the project
+        final String planDescription = planKey + " Build Plan for Exercise " + programmingExercise.getTitle();
 
         //Bamboo build project
-        final String projectKey = exercise.getProjectKey();
-        final String projectName = "Artemis Project for Exercise " + exercise.getTitle();
+        final String projectKey = programmingExercise.getProjectKey();
+        final String projectName = programmingExercise.getProjectName();
 
         //Bitbucket project and repos
-        final String vcsAssignmentRepositorySlug = vcsRepositorySlug; // Will either be exercise.getShortName() + "-exercsise" or exercise.getShortName() + "-solution"
-        final String vcsTestRepositorySlug = exercise.getShortName() + "-tests";
+        final String vcsAssignmentRepositorySlug = vcsRepositorySlug; // Will either be programmingExercise.getShortName() + "-exercsise" or programmingExercise.getShortName() + "-solution"
+        final String vcsTestRepositorySlug = programmingExercise.getShortName() + "-tests";
 
         //Permissions
-        Course course = exercise.getCourse();
+        Course course = programmingExercise.getCourse();
         final String teachingAssistantGroupName = course.getTeachingAssistantGroupName();
         final String instructorGroupName = course.getInstructorGroupName();
 
@@ -227,74 +227,6 @@ public class BambooService implements ContinuousIntegrationService {
         return bambooClient;
     }
 
-
-    @Override
-    public void createProject(String projectName) {
-        try {
-            createProjectImpl(projectName);
-        }
-        catch(BambooException bambooException) {
-            if (bambooException.getMessage().contains("already exists")) {
-                log.info("Project already exists. Reusing it...");
-            }
-            else throw bambooException;
-        }
-
-    }
-
-    private void createProjectImpl(String projectName) throws BambooException {
-        try {
-            log.info("Creating project " + projectName);
-            String message = getBambooClient().getProjectHelper().createProject(projectName, projectName, "Project created by ArTEMiS");
-            log.info("Project was successfully created. " + message);
-
-        } catch (CliClient.ClientException clientException) {
-            log.error(clientException.getMessage(), clientException);
-            if (clientException.getMessage().contains("already exists")) {
-                throw new BambooException(clientException.getMessage());
-            }
-        } catch (CliClient.RemoteRestException e) {
-            log.error(e.getMessage(), e);
-            throw new BambooException("Something went wrong while creating the project", e);
-        }
-    }
-
-    @Override
-    public void copyBuildPlanFromTemplate(String buildplanName, String projectName, String templateBuildPlanName, String templateProjectName) {
-        try {
-            clonePlan(templateProjectName, templateBuildPlanName, projectName, buildplanName);
-        }
-        catch(BambooException bambooException) {
-            if (bambooException.getMessage().contains("already exists")) {
-                log.info("Build Plan already exists. Going to reuse it...");
-                return;
-            }
-            else throw bambooException;
-        }
-    }
-
-    @Override
-    public void grantProjectPermissions(String projectKey, String instructorGroupName, String teachingAssistantGroupName) {
-        grantGroupPermissionToProject(projectKey, instructorGroupName, new String[]{"READ", "WRITE", "BUILD", "CLONE", "ADMINISTRATION"});
-        grantGroupPermissionToProject(projectKey, teachingAssistantGroupName, new String[]{"READ", "BUILD"});
-
-    }
-
-    private void grantGroupPermissionToProject(String projectKey, String groupName, String[] permissions) {
-        HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
-        HttpEntity<?> entity = new HttpEntity<>(permissions, headers);
-        RestTemplate restTemplate = new RestTemplate();
-        try {
-            restTemplate.exchange(
-                BAMBOO_SERVER_URL + "/rest/api/latest/permissions/projectplan/" + projectKey.toUpperCase() + "/groups/" + groupName,
-                HttpMethod.PUT,
-                entity,
-                Object.class);
-        } catch (Exception e) {
-            log.error("HttpError while setting permissions for build plan", e);
-        }
-    }
-
     @Override
     public String copyBuildPlan(String baseBuildPlanId, String wantedPlanKey) {
         wantedPlanKey = cleanPlanKey(wantedPlanKey);
@@ -364,6 +296,17 @@ public class BambooService implements ContinuousIntegrationService {
     @Override
     public void deleteBuildPlan(String buildPlanId) {
         deletePlan(getProjectKeyFromBuildPlanId(buildPlanId), getPlanKeyFromBuildPlanId(buildPlanId));
+    }
+
+    @Override
+    public void deleteProject(String projectKey) {
+        try {
+            log.info("Delete project " + projectKey);
+            String message = getBambooClient().getProjectHelper().deleteProject(projectKey);
+            log.info("Delete project was successful. " + message);
+        } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
+            log.error(e.getMessage());
+        }
     }
 
     @Override
@@ -465,15 +408,13 @@ public class BambooService implements ContinuousIntegrationService {
      * @param planKey
      * @return
      */
-    public String deletePlan(String projectKey, String planKey) {
+    private void deletePlan(String projectKey, String planKey) {
         try {
             log.info("Delete build plan " + projectKey + "-" + planKey);
             String message = getBambooClient().getPlanHelper().deletePlan(projectKey + "-" + planKey);
             log.info("Delete build plan was successful. " + message);
-            return message;
         } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
             log.error(e.getMessage());
-            throw new BambooException("Something went wrong while deleting the build plan", e);
         }
     }
 

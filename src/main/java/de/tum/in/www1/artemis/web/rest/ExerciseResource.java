@@ -156,9 +156,8 @@ public class ExerciseResource {
             if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
-            exerciseService.reset(exercise);
+            exerciseService.delete(exercise, true, false);
         }
-        exerciseService.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 

@@ -401,12 +401,7 @@ public class ParticipationService {
         Participation participation = participationRepository.findById(id).get();
         if (participation != null && participation.getExercise() instanceof ProgrammingExercise) {
             if (deleteBuildPlan && participation.getBuildPlanId() != null) {
-                try {
-                    continuousIntegrationService.get().deleteBuildPlan(participation.getBuildPlanId());
-                }
-                catch(Exception ex) {
-                    log.error("Could not delete build plan: " + ex.getMessage());
-                }
+                continuousIntegrationService.get().deleteBuildPlan(participation.getBuildPlanId());
             }
             if (deleteRepository && participation.getRepositoryUrl() != null) {
                 try {

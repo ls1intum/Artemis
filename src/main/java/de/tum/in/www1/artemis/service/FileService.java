@@ -248,12 +248,8 @@ public class FileService {
             directory = new File(targetPath);
         }
 
-        String[] subdirectories = directory.list(new FilenameFilter() { // Get all subdirectories
-            @Override
-            public boolean accept(File current, String name) {
-                return new File(current, name).isDirectory();
-            }
-        });
+        // Get all subdirectories
+        String[] subdirectories = directory.list((current, name) -> new File(current, name).isDirectory());
 
         for (String subdirectory : subdirectories) {
             replaceVariablesInDirectoryName(directory.getAbsolutePath() + File.separator + subdirectory, targetString, replacementString);

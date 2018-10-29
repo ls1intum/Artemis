@@ -281,7 +281,7 @@ public class ProgrammingExerciseResource {
     @DeleteMapping("/programming-exercises/{id}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @Timed
-    public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean deleteStudentReposBuildPlans, @RequestParam(defaultValue = "false") boolean deleteBaseReposBuildPlans) {
         log.debug("REST request to delete ProgrammingExercise : {}", id);
         Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(id);
         if (programmingExercise.isPresent()) {
@@ -291,7 +291,7 @@ public class ProgrammingExerciseResource {
                 !authCheckService.isAdmin()) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
-            exerciseService.delete(id);
+            exerciseService.delete(programmingExercise.get(), deleteStudentReposBuildPlans, deleteBaseReposBuildPlans);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
         }
         else {

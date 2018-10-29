@@ -4,27 +4,23 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService } from 'ng-jhipster';
 
-import { ExerciseDashboardPopupService } from './exercise-dashboard-popup.service';
-import { Exercise, ExerciseService } from '../entities/exercise';
+import { ExerciseDashboardPopupService } from '../../dashboard/exercise-dashboard-popup.service';
+import { Exercise, ExerciseService } from '../exercise/index';
 
 import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     selector: 'jhi-instructor-dashboard-cleanup-dialog',
-    templateUrl: './exercise-dashboard-cleanup-dialog.component.html'
+    templateUrl: './programming-exercise-cleanup-dialog.component.html'
 })
-export class ExerciseDashboardCleanupDialogComponent {
+export class ProgrammingExerciseCleanupDialogComponent {
     exercise: Exercise;
-    confirmExerciseName: string;
-    deleteRepositories: boolean;
-    cleanupInProgress: boolean;
-    deleteInProgress: boolean;
+    confirmExerciseName = '';
+    deleteRepositories = false;
+    cleanupInProgress = false;
+    deleteInProgress = false;
 
-    constructor(private exerciseService: ExerciseService, public activeModal: NgbActiveModal, private jhiAlertService: JhiAlertService) {
-        this.confirmExerciseName = '';
-        this.deleteRepositories = false;
-        this.cleanupInProgress = false;
-    }
+    constructor(private exerciseService: ExerciseService, public activeModal: NgbActiveModal, private jhiAlertService: JhiAlertService) {}
 
     clear() {
         this.activeModal.dismiss('cancel');
@@ -65,7 +61,7 @@ export class InstructorDashboardCleanupPopupComponent implements OnInit, OnDestr
 
     ngOnInit() {
         this.routeSub = this.route.params.subscribe(params => {
-            this.instructorDashboardPopupService.open(ExerciseDashboardCleanupDialogComponent as Component, params['id'], true);
+            this.instructorDashboardPopupService.open(ProgrammingExerciseCleanupDialogComponent as Component, params['id'], true);
         });
     }
 

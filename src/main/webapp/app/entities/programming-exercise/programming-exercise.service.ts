@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpResponse, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from '../../app.constants';
 
@@ -51,8 +51,11 @@ export class ProgrammingExerciseService {
             .map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res));
     }
 
-    delete(id: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${id}`, { observe: 'response' });
+    delete(id: number, deleteStudentReposBuildPlans: boolean, deleteBaseReposBuildPlans: boolean): Observable<HttpResponse<void>> {
+        let params = new HttpParams();
+        params = params.set('deleteStudentReposBuildPlans', deleteStudentReposBuildPlans.toString());
+        params = params.set('deleteBaseReposBuildPlans', deleteBaseReposBuildPlans.toString());
+        return this.http.delete<void>(`${this.resourceUrl}/${id}`, { params, observe: 'response' });
     }
 
     private convertDateFromClient(exercise: Exercise): Exercise {

@@ -6,41 +6,11 @@ import org.springframework.http.ResponseEntity;
 import java.net.URL;
 import java.util.List;
 
-/**
- * Created by muenchdo on 07/09/16.
- */
 public interface ContinuousIntegrationService {
 
     public enum BuildStatus {
         INACTIVE, QUEUED, BUILDING
     }
-
-
-    /**
-     * Creates a project that contains the build plans.
-     *
-     * @param projectName The name of the new project
-     */
-    public void createProject(String projectName);
-
-    /**
-     * Creates a new build plan that
-     *
-     * @param buildplanName The name of the newly created build plan
-     * @param projectName   The name of the project where the new build plan should be located
-     * @param templateBuildPlanName The name of the build plan that contains the template
-     * @param templateProjectName   The name of the project that contains the templateBuildPlan
-     */
-    public void copyBuildPlanFromTemplate(String buildplanName, String projectName, String templateBuildPlanName, String templateProjectName);
-
-    /**
-     * Grants permissions for the instructors/teachingAssistants on a project.
-     *
-     * @param projectKey The key of the project
-     * @param instructorGroupName The name of the group that contains the instructors
-     * @param teachingAssistantGroupName The name of the group that contains the tutors
-     */
-    public void grantProjectPermissions(String projectKey, String instructorGroupName, String teachingAssistantGroupName);
 
     /**
      * Creates the base build plan for the given programming exercise
@@ -49,7 +19,7 @@ public interface ContinuousIntegrationService {
      * @param planKey the key of the plan
      * @param vcsRepositorySlug the slug of the repository (used to seperate between exercise and solution)
      */
-    public void createBaseBuildPlanForExercise(ProgrammingExercise exercise, String planKey, String vcsRepositorySlug);
+    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, String vcsRepositorySlug);
 
     /**
      * Copy the base build plan for the given user on the CI system.
@@ -66,11 +36,16 @@ public interface ContinuousIntegrationService {
      * - set appropriate user permissions
      * - initialize/enable the build plan so that it works
      *
-     * @param participation contains the unique identifier for build plan on CI system and
-     * the url of user's personal repository copy
-
+     * @param participation contains the unique identifier for build plan on CI system and the url of user's personal repository copy
      */
     public void configureBuildPlan(Participation participation);
+
+    /**
+     * Delete project with given identifier from CI system.
+     *
+     * @param projectKey unique identifier for the project on CI system
+     */
+    public void deleteProject(String projectKey);
 
     /**
      * Delete build plan with given identifier from CI system.

@@ -64,14 +64,17 @@ public class GitService {
      * @param participation Participation the remote repository belongs to.
      * @return
      * @throws IOException
-     * @throws GitAPIException
+     * @throws InterruptedException
      */
-    public Repository getOrCheckoutRepository(Participation participation) throws IOException, GitAPIException, InterruptedException {
+    public Repository getOrCheckoutRepository(Participation participation) throws IOException, InterruptedException {
         URL repoUrl = participation.getRepositoryUrlAsUrl();
         Repository repository = getOrCheckoutRepository(repoUrl);
         repository.setParticipation(participation);
         return repository;
     }
+
+
+
 
     /**
      * Get the local repository for a given remote repository URL.
@@ -80,9 +83,9 @@ public class GitService {
      * @param repoUrl The remote repository.
      * @return
      * @throws IOException
-     * @throws GitAPIException
+     * @throws InterruptedException
      */
-    public Repository getOrCheckoutRepository(URL repoUrl) throws IOException, GitAPIException, InterruptedException {
+    public Repository getOrCheckoutRepository(URL repoUrl) throws IOException, InterruptedException {
 
         Path localPath = new java.io.File(REPO_CLONE_PATH + folderNameForRepositoryUrl(repoUrl)).toPath();
 
@@ -299,6 +302,19 @@ public class GitService {
         if (Files.exists(repoPath)) {
             FileUtils.deleteDirectory(repoPath.toFile());
             log.info("Deleted Repository at " + repoPath);
+        }
+    }
+
+    public void deleteLocalRepository(URL repoUrl) {
+        Path repoPath = new java.io.File(REPO_CLONE_PATH + folderNameForRepositoryUrl(repoUrl)).toPath();
+        cachedRepositories.remove(repoPath);
+        if (Files.exists(repoPath)) {
+            try {
+                FileUtils.deleteDirectory(repoPath.toFile());
+                log.info("Deleted Repository at " + repoPath);
+            } catch (IOException e) {
+                log.error("Could not delete repository at " + repoPath, e);
+            }
         }
     }
 
