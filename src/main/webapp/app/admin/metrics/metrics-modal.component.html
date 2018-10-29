@@ -16,8 +16,8 @@
         <h6>
             <span class="badge" [ngClass]="getBadgeClass(entry.value.threadState)">{{entry.value.threadState}}</span>&nbsp;{{entry.value.threadName}} (ID {{entry.value.threadId}})
             <a (click)="entry.show = !entry.show" href="javascript:void(0);">
-               <span [hidden]="entry.show" jhiTranslate="metrics.jvm.threads.dump.show">Show StackTrace</span>
-               <span [hidden]="!entry.show" jhiTranslate="metrics.jvm.threads.dump.hide">Hide StackTrace</span>
+                <span [hidden]="entry.show" jhiTranslate="metrics.jvm.threads.dump.show">Show StackTrace</span>
+                <span [hidden]="!entry.show" jhiTranslate="metrics.jvm.threads.dump.hide">Hide StackTrace</span>
             </a>
         </h6>
         <div class="card" [hidden]="!entry.show">
@@ -30,22 +30,22 @@
         </div>
         <table class="table table-sm table-responsive">
             <thead>
-                <tr>
-                    <th jhiTranslate="metrics.jvm.threads.dump.blockedtime">Blocked Time</th>
-                    <th jhiTranslate="metrics.jvm.threads.dump.blockedcount">Blocked Count</th>
-                    <th jhiTranslate="metrics.jvm.threads.dump.waitedtime">Waited Time</th>
-                    <th jhiTranslate="metrics.jvm.threads.dump.waitedcount">Waited Count</th>
-                    <th jhiTranslate="metrics.jvm.threads.dump.lockname">Lock Name</th>
-                </tr>
+            <tr>
+                <th jhiTranslate="metrics.jvm.threads.dump.blockedtime">Blocked Time</th>
+                <th jhiTranslate="metrics.jvm.threads.dump.blockedcount">Blocked Count</th>
+                <th jhiTranslate="metrics.jvm.threads.dump.waitedtime">Waited Time</th>
+                <th jhiTranslate="metrics.jvm.threads.dump.waitedcount">Waited Count</th>
+                <th jhiTranslate="metrics.jvm.threads.dump.lockname">Lock Name</th>
+            </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td>{{entry.value.blockedTime}}</td>
-                    <td>{{entry.value.blockedCount}}</td>
-                    <td>{{entry.value.waitedTime}}</td>
-                    <td>{{entry.value.waitedCount}}</td>
-                    <td class="thread-dump-modal-lock" title="{{entry.value.lockName}}"><code>{{entry.value.lockName}}</code></td>
-                </tr>
+            <tr>
+                <td>{{entry.value.blockedTime}}</td>
+                <td>{{entry.value.blockedCount}}</td>
+                <td>{{entry.value.waitedTime}}</td>
+                <td>{{entry.value.waitedCount}}</td>
+                <td class="thread-dump-modal-lock" title="{{entry.value.lockName}}"><code>{{entry.value.lockName}}</code></td>
+            </tr>
             </tbody>
         </table>
 

@@ -4,7 +4,7 @@ import { Injector, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { NgbDatepickerConfig } from '@ng-bootstrap/ng-bootstrap';
-import { Ng2Webstorage, LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { NgxWebstorageModule, LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { JhiEventManager } from 'ng-jhipster';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
@@ -50,7 +50,7 @@ import { ParticipationDataProvider } from './courses/exercises/participation-dat
         BrowserModule,
         BrowserAnimationsModule,
         ArTEMiSAppRoutingModule,
-        Ng2Webstorage.forRoot({ prefix: 'jhi', separator: '-' }),
+        NgxWebstorageModule.forRoot({ prefix: 'jhi', separator: '-' }),
         /**
          * @external Moment is a date library for parsing, validating, manipulating, and formatting dates.
          */
