@@ -326,12 +326,30 @@ public class CompassService {
         }
     }
 
-    private CalculationEngine getEngine(long exerciseId) {
-        return compassCalculationEngines.get(exerciseId);
-    }
-
-    private void suspendEngine(long exerciseId) {
-        compassCalculationEngines.remove(exerciseId);
+    /**
+     * format:
+     *  uniqueElements
+     *      [{id}
+     *          name
+     *          apollonId
+     *          conflict]
+     *  numberModels
+     *  numberConflicts
+     *  totalConfidence
+     *  totalCoverage
+     *  models
+     *      [{id}
+     *          confidence
+     *          coverage
+     *          conflicts]
+     *
+     * @return statistics about the UML model
+     */
+    public JsonObject getStatistics(long exerciseId) {
+        if (!loadExerciseIfSuspended(exerciseId)) {
+            return new JsonObject();
+        }
+        return compassCalculationEngines.get(exerciseId).getStatistics();
     }
 
     // Call every hour and free memory for unused calculation engines (older than 1 day)

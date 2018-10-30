@@ -43,4 +43,10 @@ public interface CalculationEngine {
 
     JsonObject exportToJson(Grade grade, long modelId);
 
+    /**
+     *
+     * @return statistics about the UML model
+     */
+    JsonObject getStatistics();
+
 }

@@ -38,6 +38,10 @@ export class ModelingExerciseService {
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
+    getStatistics(id: number): Observable<HttpResponse<string>> {
+        return this.http.get<string>(`${this.resourceUrl}/${id}/statistics`, { observe: 'response' });
+    }
+
     query(req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
         return this.http

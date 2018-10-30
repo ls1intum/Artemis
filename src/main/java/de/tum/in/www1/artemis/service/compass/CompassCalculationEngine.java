@@ -191,6 +191,95 @@ public class CompassCalculationEngine implements CalculationEngine {
         return JSONParser.exportToJSON(grade, model);
     }
 
+    /**
+     * format:
+     *  uniqueElements
+     *      [{id}
+     *          name
+     *          apollonId
+     *          conflict]
+     *  numberModels
+     *  numberConflicts
+     *  totalConfidence
+     *  totalCoverage
+     *  models
+     *      [{id}
+     *          confidence
+     *          coverage
+     *          conflicts]
+     *
+     * @return statistics about the UML model
+     */
+    @Override
+    public JsonObject getStatistics() {
+        JsonObject jsonObject = new JsonObject();
+
+        JsonObject uniqueElements = new JsonObject();
+        int conflicts = 0;
+        for (UMLElement umlElement : this.modelIndex.getUniqueElements()) {
+            JsonObject uniqueElement = new JsonObject();
+            uniqueElement.addProperty("name", umlElement.getName());
+            uniqueElement.addProperty("apollonId", umlElement.getJSONElementID());
+            boolean conflict = this.hasConflict(umlElement.getElementID());
+            if (conflict) {
+                conflicts ++;
+            }
+            uniqueElement.addProperty("conflict", conflict);
+            uniqueElements.add(umlElement.getElementID() + "", uniqueElement);
+        }
+        jsonObject.add("uniqueElements", uniqueElements);
+
+        jsonObject.addProperty("numberModels", this.modelIndex.getModelCollection().size());
+        jsonObject.addProperty("numberConflicts", conflicts);
+        jsonObject.addProperty("totalConfidence", this.getTotalConfidence());
+        jsonObject.addProperty("totalCoverage", this.getTotalCoverage());
+
+        JsonObject models = new JsonObject();
+        for (Map.Entry<Long, UMLModel> modelEntry: this.getModelMap().entrySet()) {
+            JsonObject model = new JsonObject();
+            model.addProperty("coverage", modelEntry.getValue().getLastAssessmentCoverage());
+            model.addProperty("confidence", modelEntry.getValue().getLastAssessmentCoverage());
+            int modelConflicts = 0;
+            List<UMLElement> elements = new ArrayList<>();
+            elements.addAll(modelEntry.getValue().getConnectableList());
+            elements.addAll(modelEntry.getValue().getRelationList());
+            for (UMLClass umlClass: modelEntry.getValue().getConnectableList()) {
+                elements.addAll(umlClass.getAttributeList());
+                elements.addAll(umlClass.getMethodList());
+            }
+            for (UMLElement element: elements) {
+                boolean modelConflict = this.hasConflict(element.getElementID());
+                if (modelConflict) {
+                    modelConflicts++;
+                }
+            }
+            model.addProperty("conflicts", modelConflicts);
+            models.add(modelEntry.getKey().toString(), model);
+        }
+        jsonObject.add("models", models);
+
+        return jsonObject;
+    }
+
+    private boolean hasConflict(int elementId) {
+        boolean conflict = false;
+        Assessment assessment = this.assessmentIndex.getAssessmentsMap().get(elementId);
+        if (assessment == null) {
+            return false;
+        }
+        for (List<Score> scores: this.assessmentIndex.getAssessmentsMap().get(elementId).getContextScoreList().values()) {
+            double uniqueScore = -1;
+            for (Score score: scores) {
+                if (uniqueScore != -1 && uniqueScore != score.getPoints()) {
+                    conflict = true;
+                    break;
+                }
+                uniqueScore = score.getPoints();
+            }
+        }
+        return conflict;
+    }
+
     // Used for internal analysis of metrics
     void printStatistic() {
         // Variability of solutions

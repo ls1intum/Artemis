@@ -4,10 +4,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLModel;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 
@@ -71,5 +68,9 @@ public class ModelIndex {
      */
     public int getNumberOfUniqueElements() {
         return this.uniqueModelElementList.size();
+    }
+
+    public Collection<UMLElement> getUniqueElements() {
+        return uniqueModelElementList;
     }
 }

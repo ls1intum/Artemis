@@ -215,6 +215,20 @@ public class ModelingExerciseResource {
     }
 
     /**
+     * GET  /modeling-exercises/:id/statistics : get the "id" modelingExercise statistics.
+     *
+     * @param id the id of the modelingExercise for which the statistics should be retrieved
+     * @return the json encoded modelingExercise statistics
+     */
+    @GetMapping(value = "/modeling-exercises/{id}/statistics")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @Timed
+    public ResponseEntity<String> getModelingExerciseStatistics(@PathVariable Long id) {
+        log.debug("REST request to get ModelingExercise Statistics for Exercise: {}", id);
+        return ResponseEntity.ok(compassService.getStatistics(id).toString());
+    }
+
+    /**
      * DELETE  /modeling-exercises/:id : delete the "id" modelingExercise.
      *
      * @param id the id of the modelingExercise to delete
