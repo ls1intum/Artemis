@@ -174,7 +174,7 @@ dependencies {
 
     compile fileTree(dir: 'libs', include: '*.jar')
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
-    compile group: 'org.eclipse.jgit', name: 'org.eclipse.jgit', version: '5.1.1.201809181055-r'
+    compile group: 'org.eclipse.jgit', name: 'org.eclipse.jgit', version: '5.1.3.201810200350-r'
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
     compile group: 'net.sourceforge.plantuml', name: 'plantuml', version: '8059'
     compile "org.imsglobal:basiclti-util:1.2.0"
