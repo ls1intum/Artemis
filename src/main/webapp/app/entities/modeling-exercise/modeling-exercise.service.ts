@@ -12,7 +12,7 @@ import { EntityArrayResponseType, Exercise } from 'app/entities/exercise';
 export type EntityResponseType = HttpResponse<ModelingExercise>;
 export type EntityArrayResponseType = HttpResponse<ModelingExercise[]>;
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class ModelingExerciseService {
     public resourceUrl = SERVER_API_URL + 'api/modeling-exercises';
 

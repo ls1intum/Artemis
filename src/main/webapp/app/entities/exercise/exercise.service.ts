@@ -13,7 +13,7 @@ import { ParticipationService } from '../participation/participation.service';
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class ExerciseService {
     public resourceUrl = SERVER_API_URL + 'api/exercises';
 
@@ -99,7 +99,7 @@ export class ExerciseService {
     }
 }
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class ExerciseLtiConfigurationService {
     private resourceUrl = SERVER_API_URL + 'api/lti/configuration';
 

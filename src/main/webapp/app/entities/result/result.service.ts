@@ -14,7 +14,7 @@ import { Exercise } from '../exercise/exercise.model';
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class ResultService {
     private courseResourceUrl = SERVER_API_URL + 'api/courses';
     private resultResourceUrl = SERVER_API_URL + 'api/results';
@@ -80,24 +80,28 @@ export class ResultService {
         return this.http.delete<void>(`${this.resultResourceUrl}/${id}`, { observe: 'response' });
     }
 
-    private convertDateFromClient(result: Result): Result {
+    protected convertDateFromClient(result: Result): Result {
         const copy: Result = Object.assign({}, result, {
             completionDate: result.completionDate != null && moment(result.completionDate).isValid() ? result.completionDate.toJSON() : null
         });
         return copy;
     }
 
-    private convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
-        res.body.forEach((result: Result) => {
-            result.completionDate = result.completionDate != null ? moment(result.completionDate) : null;
-            result.participation = this.convertParticipationDateFromServer(result.participation);
-        });
+    protected convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
+        if (res.body) {
+            res.body.forEach((result: Result) => {
+                result.completionDate = result.completionDate != null ? moment(result.completionDate) : null;
+                result.participation = this.convertParticipationDateFromServer(result.participation);
+            });
+        }
         return res;
     }
 
-    private convertDateFromServer(res: EntityResponseType): EntityResponseType {
-        res.body.completionDate = res.body.completionDate != null ? moment(res.body.completionDate) : null;
-        res.body.participation = this.convertParticipationDateFromServer(res.body.participation);
+    protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
+        if (res.body) {
+            res.body.completionDate = res.body.completionDate != null ? moment(res.body.completionDate) : null;
+            res.body.participation = this.convertParticipationDateFromServer(res.body.participation);
+        }
         return res;
     }
 

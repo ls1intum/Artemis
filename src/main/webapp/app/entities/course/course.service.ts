@@ -18,7 +18,7 @@ import { ExerciseService } from '../exercise/exercise.service';
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class CourseService {
     private resourceUrl = SERVER_API_URL + 'api/courses';
 
@@ -73,7 +73,7 @@ export class CourseService {
         return this.http.get(`${this.resourceUrl}/${courseId}/results`);
     }
 
-    private convertDateFromClient(course: Course): Course {
+    protected convertDateFromClient(course: Course): Course {
         const copy: Course = Object.assign({}, course, {
             startDate: course.startDate != null && moment(course.startDate).isValid() ? course.startDate.toJSON() : null,
             endDate: course.endDate != null && moment(course.endDate).isValid() ? course.endDate.toJSON() : null
@@ -81,24 +81,28 @@ export class CourseService {
         return copy;
     }
 
-    private convertDateFromServer(res: EntityResponseType): EntityResponseType {
-        res.body.startDate = res.body.startDate != null ? moment(res.body.startDate) : null;
-        res.body.endDate = res.body.endDate != null ? moment(res.body.endDate) : null;
-        res.body.exercises = this.exerciseService.convertExercisesDateFromServer(res.body.exercises);
+    protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
+        if (res.body) {
+            res.body.startDate = res.body.startDate != null ? moment(res.body.startDate) : null;
+            res.body.endDate = res.body.endDate != null ? moment(res.body.endDate) : null;
+            res.body.exercises = this.exerciseService.convertExercisesDateFromServer(res.body.exercises);
+        }
         return res;
     }
 
-    private convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
-        res.body.forEach((course: Course) => {
-            course.startDate = course.startDate != null ? moment(course.startDate) : null;
-            course.endDate = course.endDate != null ? moment(course.endDate) : null;
-            course.exercises = this.exerciseService.convertExercisesDateFromServer(course.exercises);
-        });
+    protected convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
+        if (res.body) {
+            res.body.forEach((course: Course) => {
+                course.startDate = course.startDate != null ? moment(course.startDate) : null;
+                course.endDate = course.endDate != null ? moment(course.endDate) : null;
+                course.exercises = this.exerciseService.convertExercisesDateFromServer(course.exercises);
+            });
+        }
         return res;
     }
 }
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class CourseExerciseService {
     private resourceUrl = SERVER_API_URL + `api/courses`;
 
@@ -202,17 +206,19 @@ export class CourseExerciseService {
         return participation;
     }
 
-    private convertDateFromServer<T extends Exercise>(res: T): T {
+    protected convertDateFromServer<T extends Exercise>(res: T): T {
         res.releaseDate = res.releaseDate != null ? moment(res.releaseDate) : null;
         res.dueDate = res.dueDate != null ? moment(res.dueDate) : null;
         return res;
     }
 
-    private convertDateArrayFromServer<T extends Exercise>(res: HttpResponse<T[]>): HttpResponse<T[]> {
-        res.body.forEach((exercise: T) => {
-            exercise.releaseDate = exercise.releaseDate != null ? moment(exercise.releaseDate) : null;
-            exercise.dueDate = exercise.dueDate != null ? moment(exercise.dueDate) : null;
-        });
+    protected convertDateArrayFromServer<T extends Exercise>(res: HttpResponse<T[]>): HttpResponse<T[]> {
+        if (res.body) {
+            res.body.forEach((exercise: T) => {
+                exercise.releaseDate = exercise.releaseDate != null ? moment(exercise.releaseDate) : null;
+                exercise.dueDate = exercise.dueDate != null ? moment(exercise.dueDate) : null;
+            });
+        }
         return res;
     }
 }

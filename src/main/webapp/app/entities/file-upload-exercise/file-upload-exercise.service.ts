@@ -12,7 +12,7 @@ import { Exercise } from 'app/entities/exercise';
 export type EntityResponseType = HttpResponse<FileUploadExercise>;
 export type EntityArrayResponseType = HttpResponse<FileUploadExercise[]>;
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class FileUploadExerciseService {
     private resourceUrl = SERVER_API_URL + 'api/file-upload-exercises';
 

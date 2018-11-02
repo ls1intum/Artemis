@@ -12,7 +12,7 @@ import { Exercise } from 'app/entities/exercise';
 export type EntityResponseType = HttpResponse<TextExercise>;
 export type EntityArrayResponseType = HttpResponse<TextExercise[]>;
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class TextExerciseService {
     private resourceUrl = SERVER_API_URL + 'api/text-exercises';
 

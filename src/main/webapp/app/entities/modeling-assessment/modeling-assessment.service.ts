@@ -19,7 +19,7 @@ import {
 
 export type EntityResponseType = HttpResponse<Result>;
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class ModelingAssessmentService {
     private resourceUrl = SERVER_API_URL + 'api/modeling-assessments';
 
