@@ -197,6 +197,10 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
             return this.router.navigate(['/quiz', exercise.id]);
         }
 
+        if (exercise.type === ExerciseType.TEXT) {
+            return this.router.navigate(['/text-exercise', exercise.id]);
+        }
+
         this.courseExerciseService
             .startExercise(this.course.id, exercise.id)
             .finally(() => (exercise.loading = false))
