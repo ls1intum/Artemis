@@ -20,14 +20,14 @@ export class ExerciseService {
     constructor(private http: HttpClient, private participationService: ParticipationService) {}
 
     create(exercise: Exercise): Observable<EntityResponseType> {
-        const copy = this.convertDateFromClient(exercise);
+        const copy = Exercise.convertDateFromClient(exercise);
         return this.http
             .post<Exercise>(this.resourceUrl, copy, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
     update(exercise: Exercise): Observable<EntityResponseType> {
-        const copy = this.convertDateFromClient(exercise);
+        const copy = Exercise.convertDateFromClient(exercise);
         return this.http
             .put<Exercise>(this.resourceUrl, copy, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
@@ -65,14 +65,6 @@ export class ExerciseService {
 
     exportRepos(id: number, students: string[]): Observable<HttpResponse<Blob>> {
         return this.http.get(`${this.resourceUrl}/${id}/participations/${students}`, { observe: 'response', responseType: 'blob' });
-    }
-
-    convertDateFromClient(exercise: Exercise): Exercise {
-        const copy: Exercise = Object.assign({}, exercise, {
-            releaseDate: exercise.releaseDate != null && exercise.releaseDate.isValid() ? exercise.releaseDate.toJSON() : null,
-            dueDate: exercise.dueDate != null && exercise.dueDate.isValid() ? exercise.dueDate.toJSON() : null
-        });
-        return copy;
     }
 
     convertExerciseDateFromServer(exercise: Exercise) {

@@ -19,55 +19,33 @@ export class FileUploadExerciseService {
     constructor(private http: HttpClient) {}
 
     create(fileUploadExercise: FileUploadExercise): Observable<EntityResponseType> {
-        const copy = this.convertDateFromClient(fileUploadExercise);
+        const copy = Exercise.convertDateFromClient(fileUploadExercise);
         return this.http
             .post<FileUploadExercise>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res));
+            .map((res: EntityResponseType) => Exercise.convertDateFromServer(res));
     }
 
     update(fileUploadExercise: FileUploadExercise): Observable<EntityResponseType> {
-        const copy = this.convertDateFromClient(fileUploadExercise);
+        const copy = Exercise.convertDateFromClient(fileUploadExercise);
         return this.http
             .put<FileUploadExercise>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res));
+            .map((res: EntityResponseType) => Exercise.convertDateFromServer(res));
     }
 
     find(id: number): Observable<EntityResponseType> {
         return this.http
             .get<FileUploadExercise>(`${this.resourceUrl}/${id}`, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res));
+            .map((res: EntityResponseType) => Exercise.convertDateFromServer(res));
     }
 
     query(req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
         return this.http
             .get<FileUploadExercise[]>(this.resourceUrl, { params: options, observe: 'response' })
-            .map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res));
+            .map((res: EntityArrayResponseType) => Exercise.convertDateArrayFromServer(res));
     }
 
     delete(id: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/${id}`, { observe: 'response' });
-    }
-
-    private convertDateFromClient(exercise: FileUploadExercise): FileUploadExercise {
-        const copy: FileUploadExercise = Object.assign({}, exercise, {
-            releaseDate: exercise.releaseDate != null && exercise.releaseDate.isValid() ? exercise.releaseDate.toJSON() : null,
-            dueDate: exercise.dueDate != null && exercise.dueDate.isValid() ? exercise.dueDate.toJSON() : null
-        });
-        return copy;
-    }
-
-    private convertDateFromServer(res: EntityResponseType): EntityResponseType {
-        res.body.releaseDate = res.body.releaseDate != null ? moment(res.body.releaseDate) : null;
-        res.body.dueDate = res.body.dueDate != null ? moment(res.body.dueDate) : null;
-        return res;
-    }
-
-    private convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
-        res.body.forEach((exercise: Exercise) => {
-            exercise.releaseDate = exercise.releaseDate != null ? moment(exercise.releaseDate) : null;
-            exercise.dueDate = exercise.dueDate != null ? moment(exercise.dueDate) : null;
-        });
-        return res;
     }
 }
