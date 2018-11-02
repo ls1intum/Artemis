@@ -11,7 +11,7 @@ import { Result } from '../entities/result/result.model';
 
 import * as moment from 'moment';
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class ExerciseDashboardPopupService {
     private ngbModalRef: NgbModalRef;
 

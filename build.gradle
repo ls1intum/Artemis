@@ -20,9 +20,9 @@ buildscript {
 
 plugins {
     id "org.sonarqube" version "2.6.2"
-    id "net.ltgt.apt-eclipse" version "0.18"
-    id "net.ltgt.apt-idea" version "0.18"
-    id "net.ltgt.apt" version "0.18"
+    id "net.ltgt.apt-eclipse" version "0.19"
+    id "net.ltgt.apt-idea" version "0.19"
+    id "net.ltgt.apt" version "0.19"
     id "io.spring.dependency-management" version "1.0.6.RELEASE"
     id "com.moowork.node" version "1.2.0"
     id 'org.liquibase.gradle' version "2.0.1"
@@ -151,7 +151,7 @@ liquibase {
             referenceUrl 'hibernate:spring:de.tum.in.www1.artemis.domain?dialect=org.hibernate.dialect.MySQL5InnoDBDialect&amp;hibernate.physical_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy&amp;hibernate.implicit_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy'
             defaultSchemaName 'ArTEMiS'
             logLevel 'debug'
-            classpath 'src/main/resources/'
+            classpath "$buildDir/classes/java/main"
         }
     }
 

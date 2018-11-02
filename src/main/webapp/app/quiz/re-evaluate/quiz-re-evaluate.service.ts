@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { SERVER_API_URL } from '../../app.constants';
 import { QuizExercise } from '../../entities/quiz-exercise/quiz-exercise.model';
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class QuizReEvaluateService {
     private resourceUrl = SERVER_API_URL + 'api/quiz-exercises-re-evaluate';
 

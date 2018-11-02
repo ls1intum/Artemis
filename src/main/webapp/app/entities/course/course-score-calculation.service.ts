@@ -8,7 +8,7 @@ import { Participation } from '../participation';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class CourseScoreCalculationService {
     private SCORE_NORMALIZATION_VALUE = 0.01;
     private courses: Course[] = [];

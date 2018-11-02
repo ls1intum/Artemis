@@ -7,7 +7,7 @@ import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { DatePipe } from '@angular/common';
 import { CourseService } from '../course';
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class FileUploadExercisePopupService {
     private ngbModalRef: NgbModalRef;
 

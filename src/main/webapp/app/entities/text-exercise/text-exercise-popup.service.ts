@@ -7,7 +7,7 @@ import { TextExerciseService } from './text-exercise.service';
 import { DatePipe } from '@angular/common';
 import { CourseService } from '../course';
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class TextExercisePopupService {
     private ngbModalRef: NgbModalRef;
 

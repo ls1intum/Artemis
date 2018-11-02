@@ -3,9 +3,8 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from '../../app.constants';
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class ActivateService {
-
     constructor(private http: HttpClient) {}
 
     get(key: string): Observable<void> {
