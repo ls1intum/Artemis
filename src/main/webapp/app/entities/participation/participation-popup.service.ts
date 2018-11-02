@@ -6,7 +6,7 @@ import { DatePipe } from '@angular/common';
 import { Participation } from './participation.model';
 import { ParticipationService } from './participation.service';
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class ParticipationPopupService {
     private ngbModalRef: NgbModalRef;
 
