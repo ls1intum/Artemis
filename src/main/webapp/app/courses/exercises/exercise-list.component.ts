@@ -198,7 +198,7 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
         }
 
         if (exercise.type === ExerciseType.TEXT) {
-            return this.router.navigate(['/text-exercise', exercise.id]);
+            return this.router.navigate(['/text', exercise.id]);
         }
 
         this.courseExerciseService
