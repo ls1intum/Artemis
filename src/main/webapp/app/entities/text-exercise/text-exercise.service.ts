@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
-import { SERVER_API_URL } from '../../app.constants';
+import { SERVER_API_URL } from 'app/app.constants';
 
 import * as moment from 'moment';
 
 import { TextExercise } from './text-exercise.model';
-import { createRequestOption } from '../../shared';
+import { createRequestOption } from 'app/shared';
 import { Exercise } from 'app/entities/exercise';
 
 export type EntityResponseType = HttpResponse<TextExercise>;
@@ -51,8 +51,8 @@ export class TextExerciseService {
 
     private convertDateFromClient(exercise: TextExercise): TextExercise {
         const copy: TextExercise = Object.assign({}, exercise, {
-            releaseDate: exercise.releaseDate != null && exercise.releaseDate.isValid() ? exercise.releaseDate.toJSON() : null,
-            dueDate: exercise.dueDate != null && exercise.dueDate.isValid() ? exercise.dueDate.toJSON() : null
+            releaseDate: exercise.releaseDate != null && moment(exercise.releaseDate).isValid() ? exercise.releaseDate.toJSON() : null,
+            dueDate: exercise.dueDate != null && moment(exercise.dueDate).isValid() ? exercise.dueDate.toJSON() : null
         });
         return copy;
     }
