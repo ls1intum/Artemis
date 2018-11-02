@@ -8,7 +8,7 @@ import { createRequestOption } from '../../shared';
 
 export type EntityResponseType = HttpResponse<QuizExercise>;
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class QuizExerciseService {
     public resourceUrl = SERVER_API_URL + 'api/quiz-exercises';
 

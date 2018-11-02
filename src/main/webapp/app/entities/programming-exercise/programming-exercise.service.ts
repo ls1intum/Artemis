@@ -6,12 +6,11 @@ import { SERVER_API_URL } from '../../app.constants';
 import { ProgrammingExercise } from './programming-exercise.model';
 import { createRequestOption } from '../../shared';
 import * as moment from 'moment';
-import { Exercise } from 'app/entities/exercise';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseService {
     public resourceUrl = SERVER_API_URL + 'api/programming-exercises';
 
@@ -58,25 +57,29 @@ export class ProgrammingExerciseService {
         return this.http.delete<void>(`${this.resourceUrl}/${id}`, { params, observe: 'response' });
     }
 
-    private convertDateFromClient(exercise: Exercise): Exercise {
-        const copy: Exercise = Object.assign({}, exercise, {
+    protected convertDateFromClient(exercise: ProgrammingExercise): ProgrammingExercise {
+        const copy: ProgrammingExercise = Object.assign({}, exercise, {
             releaseDate: exercise.releaseDate != null && moment(exercise.releaseDate).isValid() ? exercise.releaseDate.toJSON() : null,
             dueDate: exercise.dueDate != null && moment(exercise.dueDate).isValid() ? exercise.dueDate.toJSON() : null
         });
         return copy;
     }
 
-    private convertDateFromServer(res: EntityResponseType): EntityResponseType {
-        res.body.releaseDate = res.body.releaseDate != null ? moment(res.body.releaseDate) : null;
-        res.body.dueDate = res.body.dueDate != null ? moment(res.body.dueDate) : null;
+    protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
+        if (res.body) {
+            res.body.releaseDate = res.body.releaseDate != null ? moment(res.body.releaseDate) : null;
+            res.body.dueDate = res.body.dueDate != null ? moment(res.body.dueDate) : null;
+        }
         return res;
     }
 
-    private convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
-        res.body.forEach((exercise: Exercise) => {
-            exercise.releaseDate = exercise.releaseDate != null ? moment(exercise.releaseDate) : null;
-            exercise.dueDate = exercise.dueDate != null ? moment(exercise.dueDate) : null;
-        });
+    protected convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
+        if (res.body) {
+            res.body.forEach((exercise: ProgrammingExercise) => {
+                exercise.releaseDate = exercise.releaseDate != null ? moment(exercise.releaseDate) : null;
+                exercise.dueDate = exercise.dueDate != null ? moment(exercise.dueDate) : null;
+            });
+        }
         return res;
     }
 }

@@ -12,7 +12,7 @@ import { Exercise } from 'app/entities/exercise';
 export type EntityResponseType = HttpResponse<TextExercise>;
 export type EntityArrayResponseType = HttpResponse<TextExercise[]>;
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class TextExerciseService {
     private resourceUrl = SERVER_API_URL + 'api/text-exercises';
 
@@ -49,7 +49,7 @@ export class TextExerciseService {
         return this.http.delete<void>(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }
 
-    private convertDateFromClient(exercise: TextExercise): TextExercise {
+    protected convertDateFromClient(exercise: TextExercise): TextExercise {
         const copy: TextExercise = Object.assign({}, exercise, {
             releaseDate: exercise.releaseDate != null && exercise.releaseDate.isValid() ? exercise.releaseDate.toJSON() : null,
             dueDate: exercise.dueDate != null && exercise.dueDate.isValid() ? exercise.dueDate.toJSON() : null
@@ -57,17 +57,21 @@ export class TextExerciseService {
         return copy;
     }
 
-    private convertDateFromServer(res: EntityResponseType): EntityResponseType {
-        res.body.releaseDate = res.body.releaseDate != null ? moment(res.body.releaseDate) : null;
-        res.body.dueDate = res.body.dueDate != null ? moment(res.body.dueDate) : null;
+    protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
+        if (res.body) {
+            res.body.releaseDate = res.body.releaseDate != null ? moment(res.body.releaseDate) : null;
+            res.body.dueDate = res.body.dueDate != null ? moment(res.body.dueDate) : null;
+        }
         return res;
     }
 
-    private convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
-        res.body.forEach((exercise: Exercise) => {
-            exercise.releaseDate = exercise.releaseDate != null ? moment(exercise.releaseDate) : null;
-            exercise.dueDate = exercise.dueDate != null ? moment(exercise.dueDate) : null;
-        });
+    protected convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
+        if (res.body) {
+            res.body.forEach((exercise: Exercise) => {
+                exercise.releaseDate = exercise.releaseDate != null ? moment(exercise.releaseDate) : null;
+                exercise.dueDate = exercise.dueDate != null ? moment(exercise.dueDate) : null;
+            });
+        }
         return res;
     }
 }

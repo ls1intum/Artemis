@@ -4,7 +4,7 @@ import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from '../../app.constants';
 import { User } from 'app/core';
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class Register {
     constructor(private http: HttpClient) {}
 

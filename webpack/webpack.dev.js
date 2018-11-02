@@ -58,7 +58,7 @@ module.exports = (options) => webpackMerge(commonConfig({ env: ENV }), {
             test: /\.ts$/,
             enforce: 'pre',
             loader: 'tslint-loader',
-            exclude: ['node_modules', new RegExp('reflect-metadata\\' + path.sep + 'Reflect\\.ts')]
+            exclude: [/node_modules/, new RegExp('reflect-metadata\\' + path.sep + 'Reflect\\.ts')]
         },
         {
             test: /\.ts$/,
@@ -86,7 +86,7 @@ module.exports = (options) => webpackMerge(commonConfig({ env: ENV }), {
                 },
                 'angular-router-loader'
             ],
-            exclude: ['node_modules']
+            exclude: /node_modules/
         },
         {
             test: /\.scss$/,
@@ -146,8 +146,7 @@ module.exports = (options) => webpackMerge(commonConfig({ env: ENV }), {
             utils.root('src/test'),
         ]),
         new WebpackNotifierPlugin({
-            title: 'JHipster',
-            contentImage: path.join(__dirname, 'logo-jhipster.png')
+            title: 'ArTEMiS'
         })
     ].filter(Boolean),
     mode: 'development'
