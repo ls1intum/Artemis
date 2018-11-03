@@ -124,6 +124,10 @@
                       class="colon-suffix no-flex-shrink" *ngIf="reEvaluationInProgress"></span>
             </div>
             <div class="input-group col-lg-6 col-md-8 col-sm-8 col-xs-10 background-file">
+                <div class="custom-file">
+                    <input id="backgroundFileInput" type="file" accept="image/*" class="custom-file-input" (change)="setBackgroundFile($event)"/>
+                    <label class="custom-file-label ellipsis" for="backgroundFileInput">{{backgroundFileName}}</label>
+                </div>
                 <div class="input-group-prepend">
                     <button
                         class="btn btn-outline-primary"
@@ -132,10 +136,6 @@
                         <span *ngIf="isUploadingBackgroundFile" jhiTranslate="arTeMiSApp.dragAndDropQuestion.uploading"></span>
                         <span *ngIf="!isUploadingBackgroundFile" jhiTranslate="arTeMiSApp.dragAndDropQuestion.upload"></span>
                     </button>
-                </div>
-                <div class="custom-file">
-                    <input id="backgroundFileInput" type="file" accept="image/*" class="custom-file-input" (change)="setBackgroundFile($event)"/>
-                    <label class="custom-file-label ellipsis" for="backgroundFileInput">{{backgroundFileName}}</label>
                 </div>
             </div>
             <button class="btn btn-outline-secondary btn-lg" type="button" (click)="resetBackground()" *ngIf="reEvaluationInProgress">
