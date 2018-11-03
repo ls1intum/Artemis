@@ -199,7 +199,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
 
         const mcQuestion = new MultipleChoiceQuestion();
         mcQuestion.title = '';
-        mcQuestion.text = 'Enter your question text here';
+        mcQuestion.text = 'Enter your long question if needed';
         mcQuestion.scoringType = ScoringType.ALL_OR_NOTHING; // explicit default value for multiple questions
         mcQuestion.randomizeOrder = true;
         mcQuestion.score = 1;
@@ -227,7 +227,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
 
         const dndQuestion = new DragAndDropQuestion();
         dndQuestion.title = '';
-        dndQuestion.text = 'Enter your question text here';
+        dndQuestion.text = 'Enter your long question if needed';
         dndQuestion.scoringType = ScoringType.PROPORTIONAL_WITH_PENALTY; // explicit default value for drag and drop questions
         dndQuestion.randomizeOrder = true;
         dndQuestion.score = 1;
