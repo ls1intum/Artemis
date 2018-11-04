@@ -16,6 +16,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     programmingExercise: ProgrammingExercise;
     isSaving: boolean;
     maxScorePattern = '^[1-9]{1}[0-9]{0,4}$'; // make sure max score is a positive natural integer and not too large
+    packageNamePattern = '^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)+[0-9a-z_]$'; // package name must have at least 1 dot and must not start with a number
     courses: Course[];
 
     constructor(
