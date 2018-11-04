@@ -68,13 +68,13 @@
                             <fa-icon [icon]="'eye'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                         </button>
-                        <button type="submit"
+                        <button type="submit" *ngIf="programmingExercise.shortName !== null"
                                 [routerLink]="['/course', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'edit']"
                                 class="btn btn-primary btn-sm mr-1">
                             <fa-icon [icon]="'pencil-alt'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                         </button>
-                        <button type="submit"
+                        <button type="submit" *ngIf="programmingExercise.shortName === null"
                                 [routerLink]="['/', { outlets: { popup: ['course', course.id, 'programming-exercise', programmingExercise.id, 'editlink'] } }]"
                                 class="btn btn-primary btn-sm mr-1">
                             <fa-icon [icon]="'pencil-alt'"></fa-icon>
