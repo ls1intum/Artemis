@@ -1,7 +1,6 @@
-
 {
     "arTeMiSApp": {
-        "programmingExercise" : {
+        "programmingExercise": {
             "home": {
                 "title": "Programming Exercises",
                 "createLabel": "neue Programmieraufgabe erstellen",
@@ -18,9 +17,12 @@
                 "title": "Programming Exercise"
             },
             "baseRepositoryUrl": "Template Repository Url",
+            "testRepositoryUrl": "Test Repository Url (optional)",
             "solutionRepositoryUrl": "Solution Repository Url (optional)",
             "baseBuildPlanId": "Template Build Plan Id",
             "solutionBuildPlanId": "Solution Build Plan Id (optional)",
+            "repositories": "Repositories",
+            "buildplans": "Build Plans",
             "publishBuildPlanUrl": "Publish Build Plan Url",
             "allowOnlineEditor": "Allow Online Editor",
             "programmingLanguage": "Programming Language",

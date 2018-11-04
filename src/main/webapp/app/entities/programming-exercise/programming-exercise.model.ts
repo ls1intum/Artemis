@@ -9,6 +9,7 @@ export const enum ProgrammingLanguage {
 export class ProgrammingExercise extends Exercise {
     public baseRepositoryUrl: string;
     public solutionRepositoryUrl: string;
+    public testRepositoryUrl: string;
     public baseBuildPlanId: string;
     public solutionBuildPlanId: string;
     public publishBuildPlanUrl = false; // default value
