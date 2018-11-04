@@ -23,7 +23,7 @@
             "solutionBuildPlanId": "Solution Build Plan Id (optional)",
             "repositories": "Repositories",
             "buildplans": "Build Plans",
-            "publishBuildPlanUrl": "Publish Build Plan Url",
+            "publishBuildPlanUrl": "Publish Build Plan",
             "allowOnlineEditor": "Allow Online Editor",
             "programmingLanguage": "Programming Language",
             "packageName": "Package Name"

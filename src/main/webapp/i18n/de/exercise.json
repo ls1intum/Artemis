@@ -16,7 +16,7 @@
                 "title": "Übung"
             },
             "problemStatement": "Aufgabenstellung",
-            "sampleSolution" : "Musterlösung",
+            "sampleSolution": "Musterlösung",
             "gradingInstructions": "Benotungshinweise",
             "title": "Titel",
             "shortName": "Kurzname",
@@ -24,6 +24,9 @@
             "dueDate": "Abgabedatum",
             "maxScore": "Max Punktezahl",
             "participations": "Teilnahmen",
+            "exportNames": "Namen exportieren",
+            "exportResults": "Ergebnisse exportieren",
+            "refresh": "Aktualisieren",
             "course": "Kurs",
             "type": "Typ",
             "mcqType": "Multiple Choice Fragen",

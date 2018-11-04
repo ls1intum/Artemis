@@ -38,6 +38,9 @@ export const programmingExerciseRoute: Routes = [
     {
         path: 'course/:courseId/programming-exercise/:id/view',
         component: ProgrammingExerciseDetailComponent,
+        resolve: {
+            programmingExercise: ProgrammingExerciseResolve
+        },
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'arTeMiSApp.programmingExercise.home.title'
@@ -94,6 +97,9 @@ export const programmingExercisePopupRoute: Routes = [
     {
         path: 'course/:courseId/programming-exercise/:id/delete',
         component: ProgrammingExerciseDeletePopupComponent,
+        resolve: {
+            programmingExercise: ProgrammingExerciseResolve
+        },
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'arTeMiSApp.programmingExercise.home.title'

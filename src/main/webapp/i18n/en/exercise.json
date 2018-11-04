@@ -16,7 +16,7 @@
                 "title": "Exercise"
             },
             "problemStatement": "Problem Statement",
-            "sampleSolution" : "Sample Solution",
+            "sampleSolution": "Sample Solution",
             "gradingInstructions": "Grading Instructions",
             "title": "Title",
             "shortName": "Short Name",
@@ -26,6 +26,9 @@
             "difficulty": "Difficulty",
             "categories": "Categories",
             "participations": "Participations",
+            "exportNames": "Export Names",
+            "exportResults": "Export Results",
+            "refresh": "Refresh",
             "course": "Course",
             "type": "Type",
             "mcqType": "Multiple Choice Question",
