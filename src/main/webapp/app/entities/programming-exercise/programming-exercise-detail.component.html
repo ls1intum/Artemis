@@ -9,6 +9,10 @@
                 <dd>
                     <span>{{programmingExercise.title}}</span>
                 </dd>
+                <dt><span jhiTranslate="arTeMiSApp.exercise.shortName">Short Name</span></dt>
+                <dd>
+                    <span>{{programmingExercise.shortName}}</span>
+                </dd>
                 <dt><span jhiTranslate="arTeMiSApp.exercise.releaseDate">Release Date</span></dt>
                 <dd>
                     <span>{{programmingExercise.releaseDate | date:'medium'}}</span>
@@ -65,7 +69,7 @@
 
             <button type="submit"
                     (click)="previousState()"
-                    class="btn btn-info">
+                    class="btn btn-info mr-1">
                 <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
             </button>
 

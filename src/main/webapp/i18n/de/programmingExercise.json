@@ -4,7 +4,9 @@
             "home": {
                 "title": "Programming Exercises",
                 "createLabel": "neue Programmieraufgabe erstellen",
+                "editLabel": "Programmieraufgabe bearbeiten",
                 "linkLabel": "neue Programmieraufgabe verlinken",
+                "editLinkLabel": "verlinkte Programmieraufgabe bearbeiten",
                 "createOrEditLabel": "Programming Exercise erstellen oder bearbeiten"
             },
             "created": "Programming Exercise erstellt mit ID {{ param }}",

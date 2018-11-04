@@ -1,7 +1,8 @@
 <div class="row justify-content-center">
     <div class="col-8">
         <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
-            <h2 id="jhi-programming-exercise-heading" jhiTranslate="arTeMiSApp.programmingExercise.home.createOrEditLabel">Create or edit a Programming Exercise</h2>
+            <h2 *ngIf="!programmingExercise.id" id="jhi-programming-exercise-heading-create" jhiTranslate="arTeMiSApp.programmingExercise.home.createLabel">Create new Programming Exercise</h2>
+            <h2 *ngIf="programmingExercise.id" id="jhi-programming-exercise-heading-edit" jhiTranslate="arTeMiSApp.programmingExercise.home.editLabel">Edit Programming Exercise</h2>
             <div>
                 <jhi-alert-error></jhi-alert-error>
                 <div class="form-group" [hidden]="!programmingExercise.id">
@@ -12,28 +13,28 @@
 
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.title" for="field_title">Title</label>
-                    <input type="text" class="form-control" name="title" id="field_title"
+                    <input required type="text" class="form-control" name="title" id="field_title"
                            [(ngModel)]="programmingExercise.title" />
                 </div>
 
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.shortName" for="field_shortName">Key</label>
-                    <input type="text" class="form-control" name="shortName" id="field_shortName"
-                           [(ngModel)]="programmingExercise.shortName" />
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.shortName" for="field_shortName">Short Name</label>
+                    <input required type="text" class="form-control" name="shortName" id="field_shortName"
+                           [(ngModel)]="programmingExercise.shortName" [readonly]="programmingExercise.id"/>
                 </div>
 
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="arTeMiSApp.programmingExercise.programmingLanguage" for="field_programmingLanguage">Programming Language</label>
-                    <select class="form-control" [(ngModel)]="programmingExercise.programmingLanguage" name="programmingLanguage" id="field_programmingLanguage">
+                    <select required class="form-control" [(ngModel)]="programmingExercise.programmingLanguage" name="programmingLanguage" id="field_programmingLanguage" [disabled]="programmingExercise.id">
                         <option value="JAVA">Java</option>
-                        <option value="PYTHON">Python</option>
+<!-- not supported yet  <option value="PYTHON">Python</option>-->
                     </select>
                 </div>
 
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="arTeMiSApp.programmingExercise.packageName" for="field_packageName">Package Name</label>
-                    <input type="text" class="form-control" name="title" id="field_packageName"
-                           [(ngModel)]="programmingExercise.packageName" />
+                    <input required type="text" class="form-control" name="packageName" id="field_packageName"
+                           [(ngModel)]="programmingExercise.packageName" [readonly]="programmingExercise.id"/>
                 </div>
 
                 <div class="form-group">
@@ -44,13 +45,12 @@
                 </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.maxScore" for="field_maxScore">Max Score</label>
-                    <input type="text" class="form-control" name="maxScore" id="field_maxScore"
+                    <input required type="number" [pattern]="maxScorePattern" class="form-control" min="0" max="9999" name="maxScore" id="field_maxScore"
                            [(ngModel)]="programmingExercise.maxScore" />
                 </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.course" for="field_course">Course</label>
                     <select class="form-control" id="field_course" name="course" [(ngModel)]="programmingExercise.course" >
-                        <option [ngValue]="null"></option>
                         <option [ngValue]="course.id === programmingExercise.course?.id ? programmingExercise.course : course" *ngFor="let course of courses; trackBy: trackCourseById">{{course.title}}</option>
                     </select>
                 </div>

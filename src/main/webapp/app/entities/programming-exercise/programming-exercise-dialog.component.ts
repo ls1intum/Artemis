@@ -20,6 +20,7 @@ import { Subscription } from 'rxjs/Subscription';
 export class ProgrammingExerciseDialogComponent implements OnInit {
     programmingExercise: ProgrammingExercise;
     isSaving: boolean;
+    maxScorePattern = '^[1-9]{1}[0-9]{0,4}$'; // make sure max score is a positive natural integer and not too large
 
     courses: Course[];
 

@@ -84,7 +84,7 @@
                     <button *ngIf="exercise.type === PROGRAMMING" class="btn btn-primary btn-sm mr-1" (click)="goToBuildPlan(result)">
                         <i class="fa fa-file-code-o"></i>Build plan
                     </button>
-                    <button routerLink="/editor/{{result.participation.id}}" class="btn btn-info btn-sm mr-1" *ngIf="exercise.type === PROGRAMMING && exercise.allowOnlineEditor">
+                    <button routerLink="/editor/{{result.participation.id}}" class="btn btn-info btn-sm mr-1" *ngIf="exercise.type === PROGRAMMING && result.participation.exercise.allowOnlineEditor">
                         <i class="fa fa-folder-open fa-fw"></i>Online editor
                     </button>
                     <button *ngIf="exercise.type === PROGRAMMING" [routerLink]="['/', { outlets: { popup: 'participation/' + result.participation.id + '/result/new'} }]" class="btn btn-warning btn-sm mr-1">
