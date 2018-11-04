@@ -57,9 +57,7 @@ public class ProgrammingExerciseService {
      * @param programmingExercise The programmingExercise that should be setup
      */
     public void setupProgrammingExercise(ProgrammingExercise programmingExercise) throws Exception {
-
         String projectKey = programmingExercise.getProjectKey();
-        String projectName = programmingExercise.getProjectName();
         String exerciseRepoName = programmingExercise.getShortName() + "-exercise";
         String testRepoName = programmingExercise.getShortName() + "-tests";
         String solutionRepoName = programmingExercise.getShortName() + "-solution";

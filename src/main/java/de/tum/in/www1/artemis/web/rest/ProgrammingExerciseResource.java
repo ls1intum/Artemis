@@ -20,6 +20,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -42,6 +44,9 @@ public class ProgrammingExerciseResource {
     private final Optional<VersionControlService> versionControlService;
     private final ExerciseService exerciseService;
     private final ProgrammingExerciseService programmingExerciseService;
+
+    private final String packageNameRegex = "^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)+[0-9a-z_]$";
+    private final Pattern packageNamePattern = Pattern.compile(packageNameRegex);
 
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, UserService userService,
                                        AuthorizationCheckService authCheckService, CourseService courseService,
@@ -129,6 +134,15 @@ public class ProgrammingExerciseResource {
         if (programmingExercise.getId() != null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new programmingExercise cannot already have an ID")).body(null);
         }
+
+        if (programmingExercise == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "programmingExerciseNotSet", "The programming exercise is not set")).body(null);
+        }
+
+        if (programmingExercise.getCourse() == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotSet", "The course is not set")).body(null);
+        }
+
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(programmingExercise.getCourse().getId());
         if (course == null) {
@@ -143,14 +157,59 @@ public class ProgrammingExerciseResource {
         //make sure that we use the values from the database and not the once which might have been altered in the client
         programmingExercise.setCourse(course);
 
+        // Check if exercise title is set
+        if (programmingExercise.getTitle() == null || programmingExercise.getTitle().length() < 3) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "programmingExerciseTitleInvalid", "The title of the programming exercise is invalid")).body(null);
+        }
+
+        // Check if exercise shortname is set
+        if (programmingExercise.getShortName() == null || programmingExercise.getShortName().length() < 3) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "programmingExerciseShortnameInvalid", "The shortname of the programming exercise is invalid")).body(null);
+        }
+
+        // Check if course shortname is set
+        if (course.getShortName() == null || course.getShortName().length() < 2) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseShortnameInvalid", "The shortname of the course is invalid")).body(null);
+        }
+
+        // Check if programming language is set
+        if (programmingExercise.getProgrammingLanguage() == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "programmingLanguageNotSet", "No programming language was specified")).body(null);
+        }
+
+        // Check if package name is set
+        if (programmingExercise.getPackageName() == null || programmingExercise.getPackageName().length() < 3) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "packagenameInvalid", "The packagename is invalid")).body(null);
+        }
+
+        // Check if package name matches regex
+        Matcher packageNameMatcher = packageNamePattern.matcher(programmingExercise.getPackageName());
+        if (!packageNameMatcher.matches()) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "packagenameInvalid", "The packagename is invalid")).body(null);
+        }
+
+        // Check if release date is set
+        if (programmingExercise.getReleaseDate() == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "releasedateInvalid", "The release date is invalid")).body(null);
+        }
+
+        // Check if due date is set
+        if (programmingExercise.getDueDate() == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "duedateInvalid", "The due date is invalid")).body(null);
+        }
+
+        // Check if max score is set
+        if (programmingExercise.getMaxScore() == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "maxscoreInvalid", "The max score is invalid")).body(null);
+        }
+
+        // TODO: Check that the Projects/Repositories do not exist yet
         try {
-            //TODO: check that shortname is available, check that the course shortname is available
-            //TODO: check that programming language is set and that packageName is valid with regex, e.g. regex='^[a-z][a-z0-9_]*(\.[a-z0-9_]+)+[0-9a-z_]$'
             programmingExerciseService.setupProgrammingExercise(programmingExercise); // Setup all repositories etc
         } catch (Exception e) {
             log.error("Error while setting up programming exercise", e);
             //TODO: define own exception and pass the error message to the client
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "internalServerError", "Internal server error")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "errorProgrammingExercise", "An error occurred while setting up the exercise: " + e.getMessage())).body(null);
         }
 
         ResponseEntity<ProgrammingExercise> errorResponse = checkProgrammingExerciseForError(programmingExercise);
