@@ -52,14 +52,14 @@ export abstract class Exercise implements BaseEntity {
     public isAtLeastTutor: boolean;
     public loading: boolean;
 
-    protected static convertDateFromClient<E extends Exercise>(exercise: E): E {
+    static convertDateFromClient<E extends Exercise>(exercise: E): E {
         return Object.assign({}, exercise, {
             releaseDate: exercise.releaseDate != null && moment(exercise.releaseDate).isValid() ? exercise.releaseDate.toJSON() : null,
             dueDate: exercise.dueDate != null && moment(exercise.dueDate).isValid() ? exercise.dueDate.toJSON() : null
         });
     }
 
-    protected static convertDateFromServer<ERT extends EntityResponseType>(res: ERT): ERT {
+    static convertDateFromServer<ERT extends EntityResponseType>(res: ERT): ERT {
         if (res.body) {
             res.body.releaseDate = res.body.releaseDate != null ? moment(res.body.releaseDate) : null;
             res.body.dueDate = res.body.dueDate != null ? moment(res.body.dueDate) : null;
@@ -67,7 +67,7 @@ export abstract class Exercise implements BaseEntity {
         return res;
     }
 
-    protected static convertDateArrayFromServer<E extends Exercise, EART extends EntityArrayResponseType>(res: EART): EART {
+    static convertDateArrayFromServer<E extends Exercise, EART extends EntityArrayResponseType>(res: EART): EART {
         if (res.body) {
             res.body.forEach((exercise: E) => {
                 exercise.releaseDate = exercise.releaseDate != null ? moment(exercise.releaseDate) : null;
