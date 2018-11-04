@@ -56,68 +56,76 @@
                 <td>{{programmingExercise.allowOnlineEditor}}</td>
                 <td class="text-right">
                     <div class="btn-group flex-btn-group-container">
-                        <button type="submit"
-                                [routerLink]="['/course', programmingExercise.course.id, 'exercise', programmingExercise.id, 'dashboard' ]"
-                                class="btn btn-info btn-sm mr-1">
-                            <span class="fa fa-eye"></span>
-                            <span class="d-none d-md-inline" jhiTranslate="entity.action.dashboard">Dashboard</span>
-                        </button>
-                        <button type="submit"
-                                [routerLink]="['/exercise', programmingExercise.id, 'participation' ]"
-                                class="btn btn-primary btn-sm mr-1">
-                            <span class="fa fa-list-alt"></span>
-                            <span class="d-none d-md-inline" jhiTranslate="arTeMiSApp.exercise.participations">Participations</span>
-                        </button>
-                        <button type="submit"
-                                [routerLink]="['/course', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'view' ]"
-                                class="btn btn-info btn-sm mr-1">
-                            <fa-icon [icon]="'eye'"></fa-icon>
-                            <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
-                        </button>
-                        <button type="submit" *ngIf="programmingExercise.shortName !== null"
-                                [routerLink]="['/course', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'edit']"
-                                class="btn btn-primary btn-sm mr-1">
-                            <fa-icon [icon]="'pencil-alt'"></fa-icon>
-                            <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
-                        </button>
-                        <button type="submit" *ngIf="programmingExercise.shortName === null"
-                                [routerLink]="['/', { outlets: { popup: ['course', course.id, 'programming-exercise', programmingExercise.id, 'editlink'] } }]"
-                                class="btn btn-primary btn-sm mr-1">
-                            <fa-icon [icon]="'pencil-alt'"></fa-icon>
-                            <span class="d-none d-md-inline" jhiTranslate="entity.action.editLink">Edit Link</span>
-                        </button>
-                        <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
-                                [routerLink]="['/', { outlets: { popup: 'exercise/'+ programmingExercise.id + '/archive'} }]"
-                                replaceUrl="true"
-                                queryParamsHandling="merge"
-                                class="btn btn-danger btn-sm mr-1">
-                            <span class="fa fa-archive"></span>
-                            <span class="d-none d-md-inline" jhiTranslate="entity.action.archive">Archive</span>
-                        </button>
-                        <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
-                                [routerLink]="['/', { outlets: { popup: 'exercise/'+ programmingExercise.id + '/cleanup'} }]"
-                                replaceUrl="true"
-                                queryParamsHandling="merge"
-                                class="btn btn-danger btn-sm mr-1">
-                            <span class="fa fa-eraser"></span>
-                            <span class="d-none d-md-inline" jhiTranslate="entity.action.cleanup">Cleanup</span>
-                        </button>
-                        <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
-                                [routerLink]="['/', { outlets: { popup: 'exercise/'+ programmingExercise.id + '/reset'} }]"
-                                replaceUrl="true"
-                                queryParamsHandling="merge"
-                                class="btn btn-danger btn-sm mr-1">
-                            <span class="fa fa-remove"></span>
-                            <span class="d-none d-md-inline" jhiTranslate="entity.action.reset">Reset</span>
-                        </button>
-                        <button type="submit"
-                                [routerLink]="['/', { outlets: { popup: ['course', course.id, 'programming-exercise', programmingExercise.id, 'delete'] } }]"
-                                replaceUrl="true"
-                                queryParamsHandling="merge"
-                                class="btn btn-danger btn-sm mr-1">
-                            <span class="fa fa-remove"></span>
-                            <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
-                        </button>
+                        <div class="btn-group-vertical mr-1 mb-1">
+                            <button type="submit"
+                                    [routerLink]="['/course', programmingExercise.course.id, 'exercise', programmingExercise.id, 'dashboard' ]"
+                                    class="btn btn-info btn-sm mr-1 mb-1">
+                                <span class="fa fa-eye"></span>
+                                <span class="d-none d-md-inline" jhiTranslate="entity.action.dashboard">Dashboard</span>
+                            </button>
+                            <button type="submit"
+                                    [routerLink]="['/exercise', programmingExercise.id, 'participation' ]"
+                                    class="btn btn-primary btn-sm mr-1 mb-1">
+                                <span class="fa fa-list-alt"></span>
+                                <span class="d-none d-md-inline" jhiTranslate="arTeMiSApp.exercise.participations">Participations</span>
+                            </button>
+                        </div>
+                        <div class="btn-group-vertical mr-1 mb-1">
+                            <button type="submit"
+                                    [routerLink]="['/course', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'view' ]"
+                                    class="btn btn-info btn-sm mr-1 mb-1">
+                                <fa-icon [icon]="'eye'"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
+                            </button>
+                            <button type="submit" *ngIf="programmingExercise.shortName !== null"
+                                    [routerLink]="['/course', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'edit']"
+                                    class="btn btn-primary btn-sm mr-1 mb-1">
+                                <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                            </button>
+                            <button type="submit" *ngIf="programmingExercise.shortName === null"
+                                    [routerLink]="['/', { outlets: { popup: ['course', course.id, 'programming-exercise', programmingExercise.id, 'editlink'] } }]"
+                                    class="btn btn-primary btn-sm mr-1 mb-1">
+                                <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                                <span class="d-none d-md-inline" jhiTranslate="entity.action.editLink">Edit Link</span>
+                            </button>
+                        </div>
+                        <div class="btn-group-vertical mr-1 mb-1">
+                            <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
+                                    [routerLink]="['/', { outlets: { popup: 'exercise/'+ programmingExercise.id + '/archive'} }]"
+                                    replaceUrl="true"
+                                    queryParamsHandling="merge"
+                                    class="btn btn-danger btn-sm mr-1 mb-1">
+                                <span class="fa fa-archive"></span>
+                                <span class="d-none d-md-inline" jhiTranslate="entity.action.archive">Archive</span>
+                            </button>
+                            <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
+                                    [routerLink]="['/', { outlets: { popup: 'exercise/'+ programmingExercise.id + '/cleanup'} }]"
+                                    replaceUrl="true"
+                                    queryParamsHandling="merge"
+                                    class="btn btn-danger btn-sm mr-1 mb-1">
+                                <span class="fa fa-eraser"></span>
+                                <span class="d-none d-md-inline" jhiTranslate="entity.action.cleanup">Cleanup</span>
+                            </button>
+                        </div>
+                        <div class="btn-group-vertical mr-1 mb-1">
+                            <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
+                                    [routerLink]="['/', { outlets: { popup: 'exercise/'+ programmingExercise.id + '/reset'} }]"
+                                    replaceUrl="true"
+                                    queryParamsHandling="merge"
+                                    class="btn btn-danger btn-sm mr-1 mb-1">
+                                <span class="fa fa-remove"></span>
+                                <span class="d-none d-md-inline" jhiTranslate="entity.action.reset">Reset</span>
+                            </button>
+                            <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']"
+                                    [routerLink]="['/', { outlets: { popup: ['course', course.id, 'programming-exercise', programmingExercise.id, 'delete'] } }]"
+                                    replaceUrl="true"
+                                    queryParamsHandling="merge"
+                                    class="btn btn-danger btn-sm mr-1 mb-1">
+                                <span class="fa fa-remove"></span>
+                                <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
+                            </button>
+                        </div>
                     </div>
                 </td>
             </tr>
