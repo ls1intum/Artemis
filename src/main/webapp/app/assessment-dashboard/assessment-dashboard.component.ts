@@ -83,6 +83,11 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
         this.eventSubscriber = this.eventManager.subscribe('resultListModification', () => this.getResults(true));
     }
 
+    /**
+     * Get all results for the current exercise, this includes information about all submitted models ( = submissions)
+     *
+     * @param {boolean} forceReload force REST call to update nextOptimalSubmissionIds
+     */
     getResults(forceReload: boolean) {
         this.resultService
             .getResultsForExercise(this.exercise.course.id, this.exercise.id, {
@@ -102,6 +107,11 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
             });
     }
 
+    /**
+     * Check if nextOptimalSubmissionIds are needed then applyFilter
+     *
+     * @param {boolean} forceReload force REST call to update nextOptimalSubmissionIds
+     */
     filterResults(forceReload: boolean) {
         this.results = [];
         if (this.nextOptimalSubmissionIds.length < 3 || forceReload) {
@@ -114,6 +124,9 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Mark results as optimal and split them up in all, optimal and not optimal sets
+     */
     applyFilter() {
         // A result is optimal if it is part of nextOptimalSubmissionIds and nobody is currently assessing it or you are currently assessing it
         this.allResults.forEach(result => {
@@ -143,6 +156,9 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
         this.getResults(true);
     }
 
+    /**
+     * Reset optimality attribute of models
+     */
     resetOptimality() {
         this.modelingAssessmentService.resetOptimality(this.exercise.id).subscribe(() => {
             this.filterResults(true);
@@ -155,6 +171,11 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Select the next optimal submission to assess or otherwise trigger the REST call
+     *
+     * @param {number} attempts Count the attempts to reduce frequency on repeated failure (network errors)
+     */
     assessNextOptimal(attempts: number) {
         if (attempts > 3) {
             this.busy = false;
