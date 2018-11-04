@@ -188,16 +188,6 @@ public class ProgrammingExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "packagenameInvalid", "The packagename is invalid")).body(null);
         }
 
-        // Check if release date is set
-        if (programmingExercise.getReleaseDate() == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "releasedateInvalid", "The release date is invalid")).body(null);
-        }
-
-        // Check if due date is set
-        if (programmingExercise.getDueDate() == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "duedateInvalid", "The due date is invalid")).body(null);
-        }
-
         // Check if max score is set
         if (programmingExercise.getMaxScore() == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "maxscoreInvalid", "The max score is invalid")).body(null);
