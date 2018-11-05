@@ -195,22 +195,20 @@ public class ProgrammingExerciseResource {
 
         // TODO: Check that the Projects/Repositories do not exist yet
         try {
-            programmingExerciseService.setupProgrammingExercise(programmingExercise); // Setup all repositories etc
+            ProgrammingExercise result = programmingExerciseService.setupProgrammingExercise(programmingExercise); // Setup all repositories etc
+            ResponseEntity<ProgrammingExercise> errorResponse = checkProgrammingExerciseForError(programmingExercise);
+            if(errorResponse != null) {
+                return errorResponse;
+            }
+
+            return ResponseEntity.created(new URI("/api/programming-exercises" + result.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
+                .body(result);
         } catch (Exception e) {
             log.error("Error while setting up programming exercise", e);
             //TODO: define own exception and pass the error message to the client
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "errorProgrammingExercise", "An error occurred while setting up the exercise: " + e.getMessage())).body(null);
         }
-
-        ResponseEntity<ProgrammingExercise> errorResponse = checkProgrammingExerciseForError(programmingExercise);
-        if(errorResponse != null) {
-            return errorResponse;
-        }
-
-        ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
-        return ResponseEntity.created(new URI("/api/programming-exercises" + result.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
-            .body(result);
     }
 
     /**

@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis.service;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
+import de.tum.in.www1.artemis.security.JiraAuthenticationProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -26,15 +29,18 @@ public class CourseService {
     private final UserService userService;
     private final ExerciseService exerciseService;
     private final AuthorizationCheckService authCheckService;
+    private final Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider;
 
     public CourseService(CourseRepository courseRepository,
                          UserService userService,
                          ExerciseService exerciseService,
-                         AuthorizationCheckService authCheckService) {
+                         AuthorizationCheckService authCheckService,
+                         Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider) {
         this.courseRepository = courseRepository;
         this.userService = userService;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
+        this.artemisAuthenticationProvider = artemisAuthenticationProvider;
     }
 
     /**
@@ -44,6 +50,22 @@ public class CourseService {
      * @return the persisted entity
      */
     public Course save(Course course) {
+        if (course.getInstructorGroupName() != null) {
+            if(!artemisAuthenticationProvider.get().checkIfGroupExists(course.getInstructorGroupName())) {
+                throw new ArtemisAuthenticationException("The group " + course.getInstructorGroupName() + " for instructors does not exist");
+            }
+        }
+        if (course.getTeachingAssistantGroupName() != null) {
+            if(!artemisAuthenticationProvider.get().checkIfGroupExists(course.getTeachingAssistantGroupName())) {
+                throw new ArtemisAuthenticationException("The group " + course.getTeachingAssistantGroupName() + " for teaching assistants does not exist");
+            }
+        }
+        if (course.getStudentGroupName() != null) {
+            if(!artemisAuthenticationProvider.get().checkIfGroupExists(course.getStudentGroupName())) {
+                throw new ArtemisAuthenticationException("The group " + course.getStudentGroupName() + " for students does not exist");
+            }
+        }
+
         log.debug("Request to save Course : {}", course);
         return courseRepository.save(course);
     }

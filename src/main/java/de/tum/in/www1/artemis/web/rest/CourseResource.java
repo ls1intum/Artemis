@@ -81,7 +81,7 @@ public class CourseResource {
         }
         Course result = courseService.save(course);
         return ResponseEntity.created(new URI("/api/courses/" + result.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
+            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getTitle()))
             .body(result);
     }
 
@@ -113,7 +113,7 @@ public class CourseResource {
         if (user.getGroups().contains(existingCourse.getInstructorGroupName()) || authCheckService.isAdmin()) {
             Course result = courseService.save(updatedCourse);
             return ResponseEntity.ok()
-                .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, updatedCourse.getId().toString()))
+                .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, updatedCourse.getTitle()))
                 .body(result);
         }
         else {
@@ -227,9 +227,9 @@ public class CourseResource {
         for(Exercise exercise : course.getExercises()) {
             exerciseService.delete(exercise, false, false);
         }
-
+        String title = course.getTitle();
         courseService.delete(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, title)).build();
     }
 
 

@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +27,7 @@ public class ProgrammingExerciseService {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseService.class);
 
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
     private final FileService fileService;
     private final GitService gitService;
     private final Optional<VersionControlService> versionControlService;
@@ -39,8 +41,9 @@ public class ProgrammingExerciseService {
     @Value("${server.url}")
     private String ARTEMIS_BASE_URL;
 
-    public ProgrammingExerciseService(FileService fileService, GitService gitService, Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
+    public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService, Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
                                       Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, ResourceLoader resourceLoader, SubmissionRepository submissionRepository, ParticipationRepository participationRepository) {
+        this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
         this.versionControlService = versionControlService;
@@ -82,7 +85,7 @@ public class ProgrammingExerciseService {
      *
      * @param programmingExercise The programmingExercise that should be setup
      */
-    public void setupProgrammingExercise(ProgrammingExercise programmingExercise) throws Exception {
+    public ProgrammingExercise setupProgrammingExercise(ProgrammingExercise programmingExercise) throws Exception {
         String projectKey = programmingExercise.getProjectKey();
         String exerciseRepoName = programmingExercise.getShortName() + "-exercise";
         String testRepoName = programmingExercise.getShortName() + "-tests";
@@ -97,8 +100,6 @@ public class ProgrammingExerciseService {
         URL exerciseRepoUrl = versionControlService.get().getCloneURL(projectKey, exerciseRepoName);
         URL testsRepoUrl = versionControlService.get().getCloneURL(projectKey, testRepoName);
         URL solutionRepoUrl = versionControlService.get().getCloneURL(projectKey, solutionRepoName);
-
-        versionControlService.get().addWebHook(testsRepoUrl, ARTEMIS_BASE_URL + "/api/programming-exercises/test-cases-changed/" + programmingExercise.getId(), "ArTEMiS Tests WebHook");
 
         String templatePath = "classpath:templates" + File.separator + programmingExercise.getProgrammingLanguage().toString().toLowerCase();
         Resource templateFolderResource = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResource(templatePath);
@@ -124,6 +125,11 @@ public class ProgrammingExerciseService {
         programmingExercise.setSolutionBuildPlanId(projectKey + "-SOLUTION");
         programmingExercise.setSolutionRepositoryUrl(versionControlService.get().getCloneURL(projectKey, solutionRepoName).toString());
         programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneURL(projectKey, testRepoName).toString());
+
+        //save to get the id required for the webhook
+        ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
+        versionControlService.get().addWebHook(testsRepoUrl, ARTEMIS_BASE_URL + "/api/programming-exercises/test-cases-changed/" + programmingExercise.getId(), "ArTEMiS Tests WebHook");
+        return result;
     }
 
     // Copy template and push, if no file is in the directory

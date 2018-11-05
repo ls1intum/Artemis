@@ -1,10 +1,11 @@
 package de.tum.in.www1.artemis.security;
 
 import de.tum.in.www1.artemis.domain.Authority;
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
@@ -56,12 +57,12 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
 
     private final UserService userService;
     private final UserRepository userRepository;
-    private final CourseService courseService;
+    private final CourseRepository courseRepository;
 
-    public JiraAuthenticationProvider(UserService userService, UserRepository userRepository, CourseService courseService) {
+    public JiraAuthenticationProvider(UserService userService, UserRepository userRepository, CourseRepository courseRepository) {
         this.userService = userService;
         this.userRepository = userRepository;
-        this.courseService = courseService;
+        this.courseRepository = courseRepository;
     }
 
     @Override
@@ -154,7 +155,9 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
             authorities.add(adminAuthority);
         }
 
-        List<String> instructorGroups = courseService.getAllInstructorGroupNames();
+        List<Course> courses = courseRepository.findAll();
+        List<String> instructorGroups = courses.stream().map(Course::getInstructorGroupName).collect(Collectors.toList());
+        List<String> teachingAssistantGroups = courses.stream().map(Course::getTeachingAssistantGroupName).collect(Collectors.toList());
 
         // Check if user is an instructor in any course
         if (groups.stream().anyMatch(group -> instructorGroups.contains(group))) {
@@ -162,8 +165,6 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
             instructorAuthority.setName(AuthoritiesConstants.INSTRUCTOR);
             authorities.add(instructorAuthority);
         }
-
-        List<String> teachingAssistantGroups = courseService.getAllTeachingAssistantGroupNames();
 
         // Check if user is a tutor in any course
         if (groups.stream().anyMatch(group -> teachingAssistantGroups.contains(group))) {
@@ -207,6 +208,36 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
             log.error("Could not add JIRA user to group " + group, e);
             throw new ArtemisAuthenticationException("Error while adding user to JIRA group");
         }
+    }
+
+    /**
+     *
+     * Checks if the group exists in JIRA to avoid specifying a group that does not exist
+     *
+     * @param group
+     * @return
+     */
+    @Override
+    public Boolean checkIfGroupExists(String group) {
+        HttpHeaders headers = HeaderUtil.createAuthorization(JIRA_USER, JIRA_PASSWORD);
+        HttpEntity<?> entity = new HttpEntity<>(headers);
+        RestTemplate restTemplate = new RestTemplate();
+        try {
+            ResponseEntity<Map> response = restTemplate.exchange(
+                JIRA_URL + "/rest/api/2/group/member?groupname=" + group,
+                HttpMethod.GET,
+                entity,
+                Map.class);
+            if (response.getStatusCode().equals(HttpStatus.OK)) {
+                return true;
+            }
+        } catch (HttpClientErrorException e) {
+            log.info("JIRA group " + group + " does not exit");
+            if(e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
+                return false;
+            }
+        }
+        return false;
     }
 
     /**

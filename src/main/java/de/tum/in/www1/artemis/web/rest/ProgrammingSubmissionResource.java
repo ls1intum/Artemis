@@ -57,7 +57,7 @@ public class ProgrammingSubmissionResource {
     @PostMapping("/programming-exercises/test-cases-changed/{exerciseId}")
     @Timed
     public ResponseEntity<Void> testCaseChanged(@PathVariable Long exerciseId, @RequestBody Object requestBody) {
-        log.debug("REST request to inform about changed test cases of ProgrammingExercise : {}", exerciseId);
+        log.info("REST request to inform about changed test cases of ProgrammingExercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
 
         if (exercise == null || !(exercise instanceof ProgrammingExercise)) {
