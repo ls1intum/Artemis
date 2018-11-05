@@ -26,6 +26,7 @@ import com.atlassian.bamboo.specs.util.SimpleUserPasswordCredentials;
 import com.atlassian.bamboo.specs.util.UserPasswordCredentials;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
@@ -95,11 +96,9 @@ public class BambooService implements ContinuousIntegrationService {
     @Value("${server.url}")
     private URL SERVER_URL;
 
-    //TODO: get these values from somewhere?!?
+    //NOTE: the following values are hard-coded at the moment
     private final String TEST_REPO_NAME = "Tests";
-
     private final String ASSIGNMENT_REPO_NAME = "Assignment";
-
     private final String ASSIGNMENT_REPO_PATH = "assignment";
 
     private final GitService gitService;
@@ -432,7 +431,7 @@ public class BambooService implements ContinuousIntegrationService {
         Map buildResults = new HashMap<>();
         try {
             buildResults = retrieveLatestBuildResult(participation.getBuildPlanId());
-            isOldBuildResult = TimeUnit.SECONDS.toMillis(ZonedDateTime.now().toEpochSecond() - ((ZonedDateTime) buildResults.get("buildCompletedDate")).toEpochSecond()) > (20 * 1000);     // older than 20s
+            isOldBuildResult = TimeUnit.SECONDS.toMillis(ZonedDateTime.now().toEpochSecond() - ((ZonedDateTime) buildResults.get("buildCompletedDate")).toEpochSecond()) > (60 * 1000);     // older than 60s
         } catch (Exception ex) {
             log.warn("Exception when retrieving a Bamboo build result for build plan " + participation.getBuildPlanId() + ": " + ex.getMessage());
         }
@@ -452,6 +451,7 @@ public class BambooService implements ContinuousIntegrationService {
         if (buildResults.containsKey("buildReason")) {
             String buildReason = (String)buildResults.get("buildReason");
             if (buildReason.contains("First build for this plan")) {
+                //Filter the first build plan that was automatically executed when the build plan was created
                 return null;
             }
         }
@@ -459,6 +459,7 @@ public class BambooService implements ContinuousIntegrationService {
         //TODO: only save this result if it is newer (e.g. + 5s) than the last saved result for this participation --> this avoids saving exact same results multiple times
 
         Result result = new Result();
+        result.setRated(participation.getExercise().getDueDate() == null || ZonedDateTime.now().isBefore(participation.getExercise().getDueDate()));
         result.setSuccessful((boolean) buildResults.get("successful"));
         result.setResultString((String) buildResults.get("buildTestSummary"));
         result.setCompletionDate((ZonedDateTime) buildResults.get("buildCompletedDate"));
@@ -478,17 +479,24 @@ public class BambooService implements ContinuousIntegrationService {
 
         if (buildResults.containsKey("vcsRevisionKey")) {
             ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findByCommitHash((String) buildResults.get("vcsRevisionKey"));
-            if (programmingSubmission == null) { // no matching programmingsubmission
+            if (programmingSubmission == null) { // no matching programming submission
                 log.warn("Could not find ProgrammingSubmission for Commit-Hash {} (Participation {}, Build-Plan {})", buildResults.get("vcsRevisionKey"), participation.getId(), participation.getBuildPlanId());
                 // TODO Think about this case and handle it properly (e.g. by creating this submission now)
                 // this might be a wrong build (what could be the reason), or this might be due to test changes
                 // what happens if only the test has changes? should we then create a new submission?
+                programmingSubmission = new ProgrammingSubmission();
+                participation.addSubmissions(programmingSubmission);
+                programmingSubmission.setSubmitted(false);
+                programmingSubmission.setType(SubmissionType.OTHER);
+                programmingSubmission.setSubmissionDate(result.getCompletionDate());
+                log.info("Could not find corresponding submission to build result with Commit-Hash {}. Will create it afterwards", buildResults.get("vcsRevisionKey"));
             } else {
                 log.info("Found corresponding submission to build result with Commit-Hash {}", buildResults.get("vcsRevisionKey"));
-                result.setSubmission(programmingSubmission);
-                programmingSubmission.setResult(result);
-                programmingSubmissionRepository.save(programmingSubmission); // result gets saved later, no need to save it now
             }
+            // connect submission and result
+            result.setSubmission(programmingSubmission);
+            programmingSubmission.setResult(result);
+            programmingSubmissionRepository.save(programmingSubmission); // result gets saved later, no need to save it now
 
         } else { // No commit hash in build result
             log.warn("Could not find Commit-Hash (Participation {}, Build-Plan {})", participation.getId(), participation.getBuildPlanId());
@@ -665,7 +673,7 @@ public class BambooService implements ContinuousIntegrationService {
      * @param planKey
      * @return
      */
-    //TODO: save this in the result class so that ArTEMiS does not need to retrieve it everytime
+    //TODO: save this in the result class so that ArTEMiS does not need to retrieve it every time
     public List<BuildLogEntry> retrieveLatestBuildLogs(String planKey) {
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);

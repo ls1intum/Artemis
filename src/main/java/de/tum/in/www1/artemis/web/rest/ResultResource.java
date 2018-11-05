@@ -109,7 +109,6 @@ public class ResultResource {
 
         Result savedResult = resultRepository.save(result);
         try {
-            // TODO this seems to break in too many cases - track how often this warning can be found in server logs
             participation.addResult(savedResult);
             participationService.save(participation);
         } catch (NullPointerException e) {
@@ -137,7 +136,9 @@ public class ResultResource {
     @PostMapping(value = "/results/{planKey}")
     @Transactional
     public ResponseEntity<?> notifyResult(@PathVariable("planKey") String planKey) {
-        if (planKey.contains("base")) {
+        if (planKey.toLowerCase().endsWith("base") || planKey.toLowerCase().endsWith("solution")) {
+            //TODO: can we do this check more precise and compare it with the saved values from the exercises?
+            //In the future we also might want to save these results in the database
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
         List<Participation> participations = participationService.findByBuildPlanIdAndInitializationState(planKey, InitializationState.INITIALIZED);
@@ -151,15 +152,8 @@ public class ResultResource {
                     }
                 }
             }
-            //TODO: we should also get build dates after the due date, but mark the result as unrated
-            if (participation.getExercise().getDueDate() == null || ZonedDateTime.now().isBefore(participation.getExercise().getDueDate())) {
-                resultService.onResultNotified(participation);
-                return ResponseEntity.ok().build();
-            }
-            else {
-                log.warn("REST request for new result of overdue exercise. Participation: {}", participation);
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            }
+            resultService.onResultNotified(participation);
+            return ResponseEntity.ok().build();
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }

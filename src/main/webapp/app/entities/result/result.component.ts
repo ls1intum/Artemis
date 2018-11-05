@@ -103,6 +103,10 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     handleNewResult(newResult: Result) {
+        if (newResult.rated !== undefined && newResult.rated !== null && newResult.rated === false) {
+            // do not handle unrated results
+            return;
+        }
         this.result = newResult;
         // Reconnect the new result with the existing participation
         this.result.participation = this.participation;
