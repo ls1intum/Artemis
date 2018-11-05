@@ -2,8 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRouteSnapshot, Resolve, RouterStateSnapshot, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core';
-import { of } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Observable, of } from 'rxjs';
+import { filter, map } from 'rxjs/operators';
 import { Course } from 'app/entities/course/course.model';
 import { CourseService } from './course.service';
 import { CourseComponent } from './course.component';
@@ -16,10 +16,13 @@ import { CourseScoreCalculationComponent } from './course-score-calculation.comp
 export class CourseResolve implements Resolve<Course> {
     constructor(private service: CourseService) {}
 
-    resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
+    resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<Course> {
         const id = route.params['id'] ? route.params['id'] : null;
         if (id) {
-            return this.service.find(id).pipe(map((course: HttpResponse<Course>) => course.body));
+            return this.service.find(id).pipe(
+                filter((response: HttpResponse<Course>) => response.ok),
+                map((course: HttpResponse<Course>) => course.body)
+            );
         }
         return of(new Course());
     }
