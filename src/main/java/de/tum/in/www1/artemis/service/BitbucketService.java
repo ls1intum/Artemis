@@ -419,10 +419,10 @@ public class BitbucketService implements VersionControlService {
                 Map.class);
         } catch (HttpClientErrorException e) {
             if (e.getStatusCode() == HttpStatus.CONFLICT) {
-                log.info("Project {} (parent {}) already exists, reusing it..", repoName, projectKey);
+                log.info("Repository {} (parent {}) already exists, reusing it...", repoName, projectKey);
                 return;
             }
-            log.error("Could not create Bitbucket repo {} with parent key {}", repoName, projectKey, e);
+            log.error("Could not create Bitbucket repo {} with projectKey key {}", repoName, projectKey, e);
             throw new BitbucketException("Error while creating Bitbucket repo");
         }
     }

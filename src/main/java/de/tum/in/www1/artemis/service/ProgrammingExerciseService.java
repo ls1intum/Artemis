@@ -6,6 +6,7 @@ import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternUtils;
@@ -34,6 +35,9 @@ public class ProgrammingExerciseService {
     private final ParticipationRepository participationRepository;
 
     private final ResourceLoader resourceLoader;
+
+    @Value("${server.url}")
+    private String ARTEMIS_BASE_URL;
 
     public ProgrammingExerciseService(FileService fileService, GitService gitService, Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
                                       Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, ResourceLoader resourceLoader, SubmissionRepository submissionRepository, ParticipationRepository participationRepository) {
@@ -93,6 +97,8 @@ public class ProgrammingExerciseService {
         URL exerciseRepoUrl = versionControlService.get().getCloneURL(projectKey, exerciseRepoName);
         URL testsRepoUrl = versionControlService.get().getCloneURL(projectKey, testRepoName);
         URL solutionRepoUrl = versionControlService.get().getCloneURL(projectKey, solutionRepoName);
+
+        versionControlService.get().addWebHook(testsRepoUrl, ARTEMIS_BASE_URL + "/api/programming-exercises/test-cases-changed/" + programmingExercise.getId(), "ArTEMiS Tests WebHook");
 
         String templatePath = "classpath:templates" + File.separator + programmingExercise.getProgrammingLanguage().toString().toLowerCase();
         Resource templateFolderResource = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResource(templatePath);
