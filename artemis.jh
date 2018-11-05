@@ -222,6 +222,7 @@ enum InitializationState {
 enum SubmissionType {
 	MANUAL,
     TIMEOUT,
+    TEST,
     OTHER
 }
 

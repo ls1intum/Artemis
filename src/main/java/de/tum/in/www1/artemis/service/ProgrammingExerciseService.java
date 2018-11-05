@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Participation;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
@@ -14,8 +12,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.net.URL;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -25,13 +25,13 @@ public class ProgrammingExerciseService {
 
     private final FileService fileService;
     private final GitService gitService;
-    private final VersionControlService versionControlService;
-    private final ContinuousIntegrationService continuousIntegrationService;
-    private final ContinuousIntegrationUpdateService continuousIntegrationUpdateService;
+    private final Optional<VersionControlService> versionControlService;
+    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+    private final Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService;
     private final ResourceLoader resourceLoader;
 
-    public ProgrammingExerciseService(FileService fileService, GitService gitService, VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService,
-                                      ContinuousIntegrationUpdateService continuousIntegrationUpdateService, ResourceLoader resourceLoader) {
+    public ProgrammingExerciseService(FileService fileService, GitService gitService, Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
+                                      Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, ResourceLoader resourceLoader) {
         this.fileService = fileService;
         this.gitService = gitService;
         this.versionControlService = versionControlService;
@@ -45,9 +45,21 @@ public class ProgrammingExerciseService {
      *
      * @param programmingExercise The programmingExercise where the test cases got changed
      */
-    public void notifyChangedTestCases(ProgrammingExercise programmingExercise) {
+    public void notifyChangedTestCases(ProgrammingExercise programmingExercise, Object requestBody) {
         for (Participation participation : programmingExercise.getParticipations()) {
-            continuousIntegrationUpdateService.triggerUpdate(participation.getBuildPlanId(), false);
+
+            ProgrammingSubmission submission = new ProgrammingSubmission();
+            submission.setType(SubmissionType.TEST);
+            submission.setSubmissionDate(ZonedDateTime.now());
+            participation.addSubmissions(submission);
+            try {
+                String lastCommitHash = versionControlService.get().getLastCommitHash(requestBody);
+                submission.setCommitHash(lastCommitHash);
+            } catch (Exception e) {
+                log.warn("Commit hash could not be parsed for submission from participation " + participation);
+            }
+            //TODO: save the submission and participation
+            continuousIntegrationUpdateService.get().triggerUpdate(participation.getBuildPlanId(), false);
         }
     }
 
@@ -63,14 +75,14 @@ public class ProgrammingExerciseService {
         String solutionRepoName = programmingExercise.getShortName() + "-solution";
 
         // Create VCS repositories
-        versionControlService.createProjectForExercise(programmingExercise); // Create project
-        versionControlService.createRepository(projectKey, exerciseRepoName, null); // Create template repository
-        versionControlService.createRepository(projectKey, testRepoName, null); // Create tests repository
-        versionControlService.createRepository(projectKey, solutionRepoName, null); // Create solution repository
+        versionControlService.get().createProjectForExercise(programmingExercise); // Create project
+        versionControlService.get().createRepository(projectKey, exerciseRepoName, null); // Create template repository
+        versionControlService.get().createRepository(projectKey, testRepoName, null); // Create tests repository
+        versionControlService.get().createRepository(projectKey, solutionRepoName, null); // Create solution repository
 
-        URL exerciseRepoUrl = versionControlService.getCloneURL(projectKey, exerciseRepoName);
-        URL testsRepoUrl = versionControlService.getCloneURL(projectKey, testRepoName);
-        URL solutionRepoUrl = versionControlService.getCloneURL(projectKey, solutionRepoName);
+        URL exerciseRepoUrl = versionControlService.get().getCloneURL(projectKey, exerciseRepoName);
+        URL testsRepoUrl = versionControlService.get().getCloneURL(projectKey, testRepoName);
+        URL solutionRepoUrl = versionControlService.get().getCloneURL(projectKey, solutionRepoName);
 
         String templatePath = "classpath:templates" + File.separator + programmingExercise.getProgrammingLanguage().toString().toLowerCase();
         Resource templateFolderResource = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResource(templatePath);
@@ -88,14 +100,14 @@ public class ProgrammingExerciseService {
         setupTemplateAndPush(solutionRepo, exerciseTemplatePath, "Solution", programmingExercise); // Solution is based on the same template as exercise
 
         // We have to wait to have pushed one commit to each repository as we can only create the buildPlans then (https://confluence.atlassian.com/bamkb/cannot-create-linked-repository-or-plan-repository-942840872.html)
-        continuousIntegrationService.createBuildPlanForExercise(programmingExercise, "BASE", exerciseRepoName); // plan for the exercise (students)
-        continuousIntegrationService.createBuildPlanForExercise(programmingExercise, "SOLUTION", solutionRepoName); // plan for the solution (instructors) with solution repository
+        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, "BASE", exerciseRepoName); // plan for the exercise (students)
+        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, "SOLUTION", solutionRepoName); // plan for the solution (instructors) with solution repository
 
         programmingExercise.setBaseBuildPlanId(projectKey + "-BASE"); // Set build plan id to newly created BaseBuild plan
-        programmingExercise.setBaseRepositoryUrl(versionControlService.getCloneURL(projectKey, exerciseRepoName).toString());
+        programmingExercise.setBaseRepositoryUrl(versionControlService.get().getCloneURL(projectKey, exerciseRepoName).toString());
         programmingExercise.setSolutionBuildPlanId(projectKey + "-SOLUTION");
-        programmingExercise.setSolutionRepositoryUrl(versionControlService.getCloneURL(projectKey, solutionRepoName).toString());
-        programmingExercise.setTestRepositoryUrl(versionControlService.getCloneURL(projectKey, testRepoName).toString());
+        programmingExercise.setSolutionRepositoryUrl(versionControlService.get().getCloneURL(projectKey, solutionRepoName).toString());
+        programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneURL(projectKey, testRepoName).toString());
     }
 
     // Copy template and push, if no file is in the directory

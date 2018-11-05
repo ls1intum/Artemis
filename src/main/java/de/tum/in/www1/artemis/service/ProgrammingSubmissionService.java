@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZonedDateTime;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -20,10 +21,10 @@ public class ProgrammingSubmissionService {
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
     private final ParticipationRepository participationRepository;
-    private final VersionControlService versionControlService;
+    private final Optional<VersionControlService> versionControlService;
 
     public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ParticipationRepository participationRepository,
-                                        VersionControlService versionControlService) {
+                                        Optional<VersionControlService> versionControlService) {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.participationRepository = participationRepository;
         this.versionControlService = versionControlService;
@@ -39,7 +40,7 @@ public class ProgrammingSubmissionService {
         ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();
 
         try {
-            String lastCommitHash = versionControlService.getLastCommitHash(requestBody);
+            String lastCommitHash = versionControlService.get().getLastCommitHash(requestBody);
             programmingSubmission.setCommitHash(lastCommitHash);
         } catch (Exception e) {
             log.warn("Commit hash could not be parsed for submission from participation " + participation);

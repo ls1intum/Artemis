@@ -59,10 +59,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -107,12 +104,12 @@ public class BambooService implements ContinuousIntegrationService {
     private final FeedbackRepository feedbackRepository;
     private final ParticipationRepository participationRepository;
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
-    private final VersionControlService versionControlService;
-    private final ContinuousIntegrationUpdateService continuousIntegrationUpdateService;
+    private final Optional<VersionControlService> versionControlService;
+    private final Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService;
 
     public BambooService(GitService gitService, ResultRepository resultRepository, FeedbackRepository feedbackRepository, ParticipationRepository participationRepository,
-                         ProgrammingSubmissionRepository programmingSubmissionRepository, VersionControlService versionControlService,
-                         ContinuousIntegrationUpdateService continuousIntegrationUpdateService) {
+                         ProgrammingSubmissionRepository programmingSubmissionRepository, Optional<VersionControlService> versionControlService,
+                         Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService) {
         this.gitService = gitService;
         this.resultRepository = resultRepository;
         this.feedbackRepository = feedbackRepository;
@@ -251,12 +248,12 @@ public class BambooService implements ContinuousIntegrationService {
             getProjectKeyFromBuildPlanId(buildPlanId),
             getPlanKeyFromBuildPlanId(buildPlanId),
             ASSIGNMENT_REPO_NAME,
-            versionControlService.getProjectName(repositoryUrl),
-            versionControlService.getRepositoryName(repositoryUrl)
+            versionControlService.get().getProjectName(repositoryUrl),
+            versionControlService.get().getRepositoryName(repositoryUrl)
         );
         enablePlan(getProjectKeyFromBuildPlanId(buildPlanId), getPlanKeyFromBuildPlanId(buildPlanId));
         // We need to trigger an initial update in order for Gitlab to work correctly
-        continuousIntegrationUpdateService.triggerUpdate(buildPlanId, true);
+        continuousIntegrationUpdateService.get().triggerUpdate(buildPlanId, true);
 
         // Empty commit - Bamboo bug workaround
 
@@ -398,7 +395,7 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     public String updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoName) throws BambooException {
-        return continuousIntegrationUpdateService.updatePlanRepository(bambooProject, bambooPlan, bambooRepositoryName, repoProjectName, repoName);
+        return continuousIntegrationUpdateService.get().updatePlanRepository(bambooProject, bambooPlan, bambooRepositoryName, repoProjectName, repoName);
     }
 
     /**

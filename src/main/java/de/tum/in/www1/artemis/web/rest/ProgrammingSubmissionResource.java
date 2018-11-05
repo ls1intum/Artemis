@@ -56,7 +56,7 @@ public class ProgrammingSubmissionResource {
      */
     @PostMapping("/programming-exercises/test-cases-changed/{exerciseId}")
     @Timed
-    public ResponseEntity<Void> createProgrammingExercise(@PathVariable Long exerciseId) {
+    public ResponseEntity<Void> testCaseChanged(@PathVariable Long exerciseId, @RequestBody Object requestBody) {
         log.debug("REST request to inform about changed test cases of ProgrammingExercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
 
@@ -65,10 +65,8 @@ public class ProgrammingSubmissionResource {
             return ResponseEntity.notFound().build();
         }
 
-        //TODO: should we create a new submission for all participations due to the test case change so that we can later handle it appropriately?
-
         ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
-        programmingExerciseService.notifyChangedTestCases(programmingExercise);
+        programmingExerciseService.notifyChangedTestCases(programmingExercise, requestBody);
 
         return ResponseEntity.ok().build();
     }
