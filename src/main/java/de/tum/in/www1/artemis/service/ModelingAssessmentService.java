@@ -79,7 +79,7 @@ public class ModelingAssessmentService {
     public Result submitManualAssessment(Long resultId, Long exerciseId, String modelingAssessment) {
         Result result = saveManualAssessment(resultId, exerciseId, modelingAssessment);
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        Boolean rated = result.getSubmission().getSubmissionDate().isBefore(modelingExercise.getDueDate());
+        Boolean rated = modelingExercise.getDueDate() == null || result.getSubmission().getSubmissionDate().isBefore(modelingExercise.getDueDate());
         result.setRated(rated);
         result.setCompletionDate(ZonedDateTime.now());
 
