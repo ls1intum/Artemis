@@ -55,7 +55,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     save() {
         this.isSaving = true;
         if (this.programmingExercise.id !== undefined) {
-            // TODO how can we support edit in this case? some attributes cannot be easily changed
             this.subscribeToSaveResponse(this.programmingExerciseService.update(this.programmingExercise));
         } else {
             this.subscribeToSaveResponse(this.programmingExerciseService.automaticSetup(this.programmingExercise));
@@ -75,12 +74,15 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     private onSaveError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message, null, null);
+        const errorMessage = error.headers.get('X-arTeMiSApp-alert');
+        // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
+        const jhiAlert = this.jhiAlertService.error(errorMessage);
+        jhiAlert.msg = errorMessage;
         this.isSaving = false;
     }
 
     private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message, null, null);
+        this.jhiAlertService.error(error.message);
     }
 
     trackCourseById(index: number, item: Course) {

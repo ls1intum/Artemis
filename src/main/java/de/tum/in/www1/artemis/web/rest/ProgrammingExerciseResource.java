@@ -132,21 +132,21 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<ProgrammingExercise> setupProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise) throws URISyntaxException {
         log.debug("REST request to setup ProgrammingExercise : {}", programmingExercise);
         if (programmingExercise.getId() != null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new programmingExercise cannot already have an ID")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("A new programmingExercise cannot already have an ID", "idexists")).body(null);
         }
 
         if (programmingExercise == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "programmingExerciseNotSet", "The programming exercise is not set")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The programming exercise is not set", "programmingExerciseNotSet")).body(null);
         }
 
         if (programmingExercise.getCourse() == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotSet", "The course is not set")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The course is not set", "courseNotSet")).body(null);
         }
 
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(programmingExercise.getCourse().getId());
         if (course == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this programming exercise does not exist")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The course belonging to this programming exercise does not exist", "courseNotFound")).body(null);
         }
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
@@ -159,38 +159,38 @@ public class ProgrammingExerciseResource {
 
         // Check if exercise title is set
         if (programmingExercise.getTitle() == null || programmingExercise.getTitle().length() < 3) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "programmingExerciseTitleInvalid", "The title of the programming exercise is invalid")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The title of the programming exercise is too short", "programmingExerciseTitleInvalid")).body(null);
         }
 
         // Check if exercise shortname is set
         if (programmingExercise.getShortName() == null || programmingExercise.getShortName().length() < 3) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "programmingExerciseShortnameInvalid", "The shortname of the programming exercise is invalid")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The shortname of the programming exercise is not set or too short", "programmingExerciseShortnameInvalid")).body(null);
         }
 
         // Check if course shortname is set
         if (course.getShortName() == null || course.getShortName().length() < 2) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseShortnameInvalid", "The shortname of the course is invalid")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The shortname of the course is not set or too short", "courseShortnameInvalid")).body(null);
         }
 
         // Check if programming language is set
         if (programmingExercise.getProgrammingLanguage() == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "programmingLanguageNotSet", "No programming language was specified")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("No programming language was specified", "programmingLanguageNotSet")).body(null);
         }
 
         // Check if package name is set
         if (programmingExercise.getPackageName() == null || programmingExercise.getPackageName().length() < 3) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "packagenameInvalid", "The packagename is invalid")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The packagename is invalid", "packagenameInvalid")).body(null);
         }
 
         // Check if package name matches regex
         Matcher packageNameMatcher = packageNamePattern.matcher(programmingExercise.getPackageName());
         if (!packageNameMatcher.matches()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "packagenameInvalid", "The packagename is invalid")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The packagename is invalid", "packagenameInvalid")).body(null);
         }
 
         // Check if max score is set
         if (programmingExercise.getMaxScore() == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "maxscoreInvalid", "The max score is invalid")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The max score is invalid", "maxscoreInvalid")).body(null);
         }
 
         // TODO: Check that the Projects/Repositories do not exist yet
@@ -207,7 +207,7 @@ public class ProgrammingExerciseResource {
         } catch (Exception e) {
             log.error("Error while setting up programming exercise", e);
             //TODO: define own exception and pass the error message to the client
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "errorProgrammingExercise", "An error occurred while setting up the exercise: " + e.getMessage())).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("An error occurred while setting up the exercise: " + e.getMessage(), "errorProgrammingExercise")).body(null);
         }
     }
 
@@ -231,7 +231,7 @@ public class ProgrammingExerciseResource {
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(programmingExercise.getCourse().getId());
         if (course == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this programming exercise does not exist")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("courseNotFound", "The course belonging to this programming exercise does not exist")).body(null);
         }
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isTeachingAssistantInCourse(course, user) &&

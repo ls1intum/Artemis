@@ -1,9 +1,10 @@
 <div class="row justify-content-center">
     <div class="col-8">
         <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
-            <h2 *ngIf="!programmingExercise.id" id="jhi-programming-exercise-heading-create" jhiTranslate="arTeMiSApp.programmingExercise.home.createLabel">Create new Programming Exercise</h2>
-            <h2 *ngIf="programmingExercise.id" id="jhi-programming-exercise-heading-edit" jhiTranslate="arTeMiSApp.programmingExercise.home.editLabel">Edit Programming Exercise</h2>
+            <h4 *ngIf="!programmingExercise.id" id="jhi-programming-exercise-heading-create" jhiTranslate="arTeMiSApp.programmingExercise.home.createLabel">Create new Programming Exercise</h4>
+            <h4 *ngIf="programmingExercise.id" id="jhi-programming-exercise-heading-edit" jhiTranslate="arTeMiSApp.programmingExercise.home.editLabel">Edit Programming Exercise</h4>
             <div>
+                <jhi-alert></jhi-alert>
                 <jhi-alert-error></jhi-alert-error>
                 <div class="form-group" [hidden]="!programmingExercise.id">
                     <label for="id" jhiTranslate="global.field.id">ID</label>

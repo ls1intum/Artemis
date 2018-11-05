@@ -4,6 +4,7 @@
             "home": {
                 "title": "Kurse",
                 "createLabel": "Kurs erstellen",
+                "editLabel": "Kurs bearbeiten",
                 "createOrEditLabel": "Kurs erstellen oder bearbeiten"
             },
             "created": "Kurs erstellt mit Titel {{ param }}",

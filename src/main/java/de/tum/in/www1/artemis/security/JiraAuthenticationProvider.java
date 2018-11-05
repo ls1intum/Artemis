@@ -232,7 +232,7 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
                 return true;
             }
         } catch (HttpClientErrorException e) {
-            log.info("JIRA group " + group + " does not exit");
+            log.warn("JIRA group " + group + " does not exit");
             if(e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
                 return false;
             }

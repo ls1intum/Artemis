@@ -70,7 +70,7 @@ export class TextExerciseDialogComponent implements OnInit {
     }
 
     private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message, null, null);
+        this.jhiAlertService.error(error.message);
     }
 
     trackCourseById(index: number, item: Course) {
