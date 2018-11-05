@@ -174,7 +174,7 @@ public class BambooService implements ContinuousIntegrationService {
                             .checkoutItems(new CheckoutItem()
                                     .repository(new VcsRepositoryIdentifier()
                                         .name(ASSIGNMENT_REPO_NAME))
-                                    .path(ASSIGNMENT_REPO_PATH),	//TODO: this path needs to be specified in the Maven pom.xml in the Tests Repo
+                                    .path(ASSIGNMENT_REPO_PATH),	//NOTE: this path needs to be specified in the Maven pom.xml in the Tests Repo
                                 new CheckoutItem()
                                     .repository(new VcsRepositoryIdentifier()
                                         .name(TEST_REPO_NAME))),

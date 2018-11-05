@@ -13,17 +13,17 @@ import scala.util.parsing.json._
 
 class QuizParticipationSimulation extends Simulation {
 
-    // TODO: update these values to fit the tested exercise
+    // NOTE: update these values to fit the tested exercise
     val exerciseId = 187
     val backgroundPicturePath = "/api/files/drag-and-drop/backgrounds/98/DragAndDropBackground_2018-02-16T11-45-42-684_7f0aa8e4.png"
 
-    // TODO: Adjust these numbers for desired load
+    // NOTE: Adjust these numbers for desired load
     val numUsersSubmit = 200
     val numUsersNoSubmit = 200
 
     val feeder: Iterator[Map[String, String]] = Iterator.tabulate(500)(i => Map(
-        "username" -> ("<USERNAME>"),   // TODO: generate real username for each value of i (removed for security)
-        "password" -> ("<PASSWORD>")    // TODO: generate real password for each value of i (removed for security)
+        "username" -> ("<USERNAME>"),   // NOTE: generate real username for each value of i (removed for security)
+        "password" -> ("<PASSWORD>")    // NOTE: generate real password for each value of i (removed for security)
     ))
 
     val baseURL = "http://localhost:8080"
