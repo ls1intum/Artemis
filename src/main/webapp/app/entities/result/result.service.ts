@@ -23,8 +23,9 @@ export class ResultService {
 
     create(result: Result): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(result);
+        // NOTE: we deviate from the standard URL scheme to avoid conflicts with a different POST request on results
         return this.http
-            .post<Result>(this.resultResourceUrl, copy, { observe: 'response' })
+            .post<Result>(SERVER_API_URL + 'api/manual-results', copy, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 

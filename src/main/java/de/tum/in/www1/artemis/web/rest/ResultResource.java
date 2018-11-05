@@ -72,12 +72,13 @@ public class ResultResource {
 
     /**
      * POST  /results : Create a new manual result.
+     * NOTE: we deviate from the standard URL scheme to avoid conflicts with a different POST request on results
      *
      * @param result the result to create
      * @return the ResponseEntity with status 201 (Created) and with body the new result, or with status 400 (Bad Request) if the result has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/results")
+    @PostMapping("/manual-results")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Result> createResult(@RequestBody Result result) throws URISyntaxException {
@@ -131,7 +132,7 @@ public class ResultResource {
 
     /**
      * POST  /results/:planKey : Notify the application about a new build result for a programming exercise
-     * This API is invoked by the CI Server at the end of the build/test result
+     * This API is invoked by the CI Server at the end of the build/test result and does not need any security
      *
      * @param planKey the plan key of the plan which is notifying about a new result
      * @return the ResponseEntity with status 200 (OK), or with status 400 (Bad Request) if the result has already an ID

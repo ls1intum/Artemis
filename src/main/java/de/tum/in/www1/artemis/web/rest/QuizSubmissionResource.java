@@ -90,7 +90,7 @@ public class QuizSubmissionResource {
 
     /**
      * POST  /courses/:courseId/exercises/:exerciseId/submissions/preview : Submit a new quizSubmission for preview mode.
-     * Nothing will be saved in database.
+     * Note that in this case, nothing will be saved in database.
      *
      * @param courseId       only included for API consistency, not actually used
      * @param exerciseId     the id of the exercise for which to init a participation
