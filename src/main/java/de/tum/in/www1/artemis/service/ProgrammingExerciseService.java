@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
@@ -28,16 +30,21 @@ public class ProgrammingExerciseService {
     private final Optional<VersionControlService> versionControlService;
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService;
+    private final SubmissionRepository submissionRepository;
+    private final ParticipationRepository participationRepository;
+
     private final ResourceLoader resourceLoader;
 
     public ProgrammingExerciseService(FileService fileService, GitService gitService, Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-                                      Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, ResourceLoader resourceLoader) {
+                                      Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, ResourceLoader resourceLoader, SubmissionRepository submissionRepository, ParticipationRepository participationRepository) {
         this.fileService = fileService;
         this.gitService = gitService;
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
         this.resourceLoader = resourceLoader;
+        this.participationRepository = participationRepository;
+        this.submissionRepository = submissionRepository;
     }
 
     /**
@@ -58,7 +65,10 @@ public class ProgrammingExerciseService {
             } catch (Exception e) {
                 log.warn("Commit hash could not be parsed for submission from participation " + participation);
             }
-            //TODO: save the submission and participation
+
+            submissionRepository.save(submission);
+            participationRepository.save(participation);
+
             continuousIntegrationUpdateService.get().triggerUpdate(participation.getBuildPlanId(), false);
         }
     }
