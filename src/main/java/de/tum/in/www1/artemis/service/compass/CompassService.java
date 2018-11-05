@@ -197,7 +197,7 @@ public class CompassService {
                 assessmentRepository.writeAssessment(exerciseId, result.getParticipation().getStudent().getId(), modelId,
                     false, json.toString());
 
-                result.setRated(true);
+                result.setRated(modelingExercise.getDueDate() == null || modelingSubmission.get().getSubmissionDate().isBefore(modelingExercise.getDueDate()));
                 result.setAssessmentType(AssessmentType.AUTOMATIC);
                 double maxPoints = modelingExercise.getMaxScore();
                 // biased points
