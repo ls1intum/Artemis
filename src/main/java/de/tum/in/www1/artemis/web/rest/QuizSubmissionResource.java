@@ -97,7 +97,7 @@ public class QuizSubmissionResource {
      * @param quizSubmission the quizSubmission to submit
      * @return the ResponseEntity with status 200 and body the result or the appropriate error code.
      */
-    @GetMapping("/courses/{courseId}/exercises/{exerciseId}/submissions/preview")
+    @PostMapping("/courses/{courseId}/exercises/{exerciseId}/submissions/preview")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Result> submitForPreview(@PathVariable Long courseId, @PathVariable Long exerciseId, @RequestBody QuizSubmission quizSubmission) {
