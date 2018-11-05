@@ -186,7 +186,7 @@ public class ModelingAssessmentResource {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        Result result = modelingAssessmentService.updateManualResult(resultId, exerciseId, modelingAssessment, false);
+        Result result = modelingAssessmentService.saveManualAssessment(resultId, exerciseId, modelingAssessment);
 
         return ResponseEntity.ok(result);
     }
@@ -216,7 +216,7 @@ public class ModelingAssessmentResource {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        Result result = modelingAssessmentService.updateManualResult(resultId, exerciseId, modelingAssessment, true);
+        Result result = modelingAssessmentService.submitManualAssessment(resultId, exerciseId, modelingAssessment);
         Long submissionId = result.getSubmission().getId();
         // add assessment to compass to include it in the automatic grading process
         compassService.addAssessment(exerciseId, submissionId, modelingAssessment);

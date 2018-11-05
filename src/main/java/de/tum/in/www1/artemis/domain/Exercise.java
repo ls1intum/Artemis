@@ -300,7 +300,7 @@ public abstract class Exercise implements Serializable {
     }
 
     /**
-     * Get the latest relevant result from the given participation
+     * Get the latest relevant result from the given participation (rated == true or rated == null)
      * (relevancy depends on Exercise type => this should be overridden by subclasses if necessary)
      *
      * @param participation the participation whose results we are considering
@@ -310,7 +310,12 @@ public abstract class Exercise implements Serializable {
         // for most types of exercises => return latest result (all results are relevant)
         Result latestResult = null;
         for (Result result : participation.getResults()) {
-            if (latestResult == null || latestResult.getCompletionDate().isBefore(result.getCompletionDate())) {
+            //NOTE: for the dashboard we only use rated results
+            if (latestResult == null) {
+                latestResult = result;
+            }
+            //NOTE: isRatedNull is a compatibility mechanism that we should deactivate soon
+            else if (latestResult.getCompletionDate().isBefore(result.getCompletionDate()) && (result.isRatedNull() || result.isRated())) {
                 latestResult = result;
             }
         }

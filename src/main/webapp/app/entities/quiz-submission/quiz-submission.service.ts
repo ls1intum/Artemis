@@ -57,7 +57,7 @@ export class QuizSubmissionService {
     submitForPreview(quizSubmission: QuizSubmission, courseId: number, exerciseId: number): Observable<ResultResponseType> {
         const copy = this.convert(quizSubmission);
         return this.http
-            .post<Result>(`api/courses/${courseId}/exercises/${exerciseId}/submissions/preview`, copy, { observe: 'response' })
+            .get<Result>(`api/courses/${courseId}/exercises/${exerciseId}/submissions/preview`, copy, { observe: 'response' })
             .map((res: ResultResponseType) => this.convertResponse(res));
     }
 

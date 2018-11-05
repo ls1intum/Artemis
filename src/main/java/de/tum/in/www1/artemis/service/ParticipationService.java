@@ -147,6 +147,8 @@ public class ParticipationService {
      * @param username the username of the user that the participation belongs to
      * @return the found or created participation
      */
+
+    //TODO The method name is misleading. It sounds that data is only read, but it is also changed, see e.g. below setRated(true)
     public Participation getParticipationForQuiz(QuizExercise quizExercise, String username) {
         if (quizExercise.isEnded()) {
             // try getting participation from database first
@@ -194,10 +196,7 @@ public class ParticipationService {
         Result result = new Result().submission(quizSubmission);
 
         // construct participation
-        participation = new Participation()
-            .initializationState(INITIALIZED)
-            .exercise(quizExercise)
-            .addResult(result);
+        participation = new Participation().initializationState(INITIALIZED).exercise(quizExercise).addResult(result);
 
         if (quizExercise.isEnded() && quizSubmission.getSubmissionDate() != null) {
             // update result and participation state

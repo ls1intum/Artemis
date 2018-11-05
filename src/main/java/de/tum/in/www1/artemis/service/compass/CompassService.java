@@ -172,6 +172,7 @@ public class CompassService {
         Result result = resultRepository.findDistinctBySubmissionId(modelId).orElse(new Result().submission(modelingSubmission.get()).participation(modelingSubmission.get().getParticipation()));
         // unrated result exists
         if (result != null) {
+            //TODO: the following line is clearly wrong because isRated was used in the wrong way :-( This should be invoked if there was not manual assessment before
             if (!result.isRated()) {
                 Grade grade = engine.getResultForModel(modelId);
                 // automatic assessment holds confidence and coverage threshold
