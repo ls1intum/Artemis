@@ -170,53 +170,51 @@ public class CompassService {
             return;
         }
         Result result = resultRepository.findDistinctBySubmissionId(modelId).orElse(new Result().submission(modelingSubmission.get()).participation(modelingSubmission.get().getParticipation()));
-        // unrated result exists
-        if (result != null) {
-            //TODO: the following line is clearly wrong because isRated was used in the wrong way :-( This should be invoked if there was not manual assessment before
-            if (!result.isRated()) {
-                Grade grade = engine.getResultForModel(modelId);
-                // automatic assessment holds confidence and coverage threshold
-                if (grade.getConfidence() >= CONFIDENCE_THRESHOLD && grade.getCoverage() >= COVERAGE_THRESHOLD) {
-                    ModelingExercise modelingExercise = modelingExerciseRepository.findById(result.getParticipation().getExercise().getId()).get();
-                    /*
-                     * Workaround for ignoring automatic assessments of unsupported modeling exercise types
-                     * TODO remove this after adapting compass
-                     */
-                    if (!modelingExercise.getDiagramType().equals(DiagramType.CLASS)) {
-                        return;
-                    }
-                    // Round compass grades to avoid machine precision errors, make the grades more readable
-                    // and give a slight advantage which makes 100% scores easier reachable
-                    // see: https://confluencebruegge.in.tum.de/display/ArTEMiS/Feature+suggestions for more information
-                    grade = roundGrades(grade);
-                    // Save to file system + database
-                    JsonObject json = engine.exportToJson(grade, modelId);
-                    if (json == null || json.toString().isEmpty()) {
-                        log.error("Unable to export automatic assessment to json");
-                        return;
-                    }
-                    assessmentRepository.writeAssessment(exerciseId, result.getParticipation().getStudent().getId(), modelId,
-                        false, json.toString());
-
-                    result.setRated(true);
-                    result.setAssessmentType(AssessmentType.AUTOMATIC);
-                    double maxPoints = modelingExercise.getMaxScore();
-                    // biased points
-                    double points = Math.max(Math.min(grade.getPoints(), maxPoints), 0);
-                    result.setScore((long) (points * 100 / maxPoints));
-                    result.setCompletionDate(ZonedDateTime.now());
-                    DecimalFormat formatter = new DecimalFormat("#.##"); // limit decimal places to 2
-                    result.setResultString(formatter.format(points) + " of " + formatter.format(modelingExercise.getMaxScore()) + " points");
-
-                    resultRepository.save(result);
-                    engine.removeModelWaitingForAssessment(modelId, true);
-                } else {
-                    log.info("Model " + modelId + " got a confidence of " + grade.getConfidence() + " and a coverage of " + grade.getCoverage());
+        // only automatically assess when there is not yet an assessment.
+        //TODO: the following line is clearly wrong because isRated was used in the wrong way :-( This should be invoked if there was not manual assessment before
+        if (result.getAssessmentType() == null) {
+            Grade grade = engine.getResultForModel(modelId);
+            // automatic assessment holds confidence and coverage threshold
+            if (grade.getConfidence() >= CONFIDENCE_THRESHOLD && grade.getCoverage() >= COVERAGE_THRESHOLD) {
+                ModelingExercise modelingExercise = modelingExerciseRepository.findById(result.getParticipation().getExercise().getId()).get();
+                /*
+                 * Workaround for ignoring automatic assessments of unsupported modeling exercise types
+                 * TODO remove this after adapting compass
+                 */
+                if (!modelingExercise.getDiagramType().equals(DiagramType.CLASS)) {
+                    return;
                 }
-            } else {
-                // Make sure next optimal model is in a valid state
+                // Round compass grades to avoid machine precision errors, make the grades more readable
+                // and give a slight advantage which makes 100% scores easier reachable
+                // see: https://confluencebruegge.in.tum.de/display/ArTEMiS/Feature+suggestions for more information
+                grade = roundGrades(grade);
+                // Save to file system + database
+                JsonObject json = engine.exportToJson(grade, modelId);
+                if (json == null || json.toString().isEmpty()) {
+                    log.error("Unable to export automatic assessment to json");
+                    return;
+                }
+                assessmentRepository.writeAssessment(exerciseId, result.getParticipation().getStudent().getId(), modelId,
+                    false, json.toString());
+
+                result.setRated(true);
+                result.setAssessmentType(AssessmentType.AUTOMATIC);
+                double maxPoints = modelingExercise.getMaxScore();
+                // biased points
+                double points = Math.max(Math.min(grade.getPoints(), maxPoints), 0);
+                result.setScore((long) (points * 100 / maxPoints));
+                result.setCompletionDate(ZonedDateTime.now());
+                DecimalFormat formatter = new DecimalFormat("#.##"); // limit decimal places to 2
+                result.setResultString(formatter.format(points) + " of " + formatter.format(modelingExercise.getMaxScore()) + " points");
+
+                resultRepository.save(result);
                 engine.removeModelWaitingForAssessment(modelId, true);
+            } else {
+                log.info("Model " + modelId + " got a confidence of " + grade.getConfidence() + " and a coverage of " + grade.getCoverage());
             }
+        } else {
+            // Make sure next optimal model is in a valid state
+            engine.removeModelWaitingForAssessment(modelId, true);
         }
     }
 
