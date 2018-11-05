@@ -9,9 +9,9 @@
                 "editLinkLabel": "Edit linked Programming Exercise",
                 "createOrEditLabel": "Create or edit a Programming Exercise"
             },
-            "created": "A new Programming Exercise is created with identifier {{ param }}",
-            "updated": "A Programming Exercise is updated with identifier {{ param }}",
-            "deleted": "A Programming Exercise is deleted with identifier {{ param }}",
+            "created": "A new Programming Exercise was created with title {{ param }}",
+            "updated": "A Programming Exercise was updated with title {{ param }}",
+            "deleted": "A Programming Exercise was deleted with title {{ param }}",
             "delete": {
                 "question": "Are you sure you want to delete Programming Exercise {{ title }}?"
             },

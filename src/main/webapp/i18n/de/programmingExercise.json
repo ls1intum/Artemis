@@ -9,9 +9,9 @@
                 "editLinkLabel": "verlinkte Programmieraufgabe bearbeiten",
                 "createOrEditLabel": "Programming Exercise erstellen oder bearbeiten"
             },
-            "created": "Programming Exercise erstellt mit ID {{ param }}",
-            "updated": "Programming Exercise aktualisiert mit ID {{ param }}",
-            "deleted": "Programming Exercise gelöscht mit ID {{ param }}",
+            "created": "Programming Exercise erstellt mit Title {{ param }}",
+            "updated": "Programming Exercise aktualisiert mit Title {{ param }}",
+            "deleted": "Programming Exercise gelöscht mit Title {{ param }}",
             "delete": {
                 "question": "Soll Programming Exercise {{ title }} wirklich dauerhaft gelöscht werden?"
             },

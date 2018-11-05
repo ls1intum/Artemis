@@ -115,7 +115,7 @@ public class ProgrammingExerciseResource {
         }
         ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
         return ResponseEntity.created(new URI("/api/programming-exercises/" + result.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
+            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getTitle()))
             .body(result);
     }
 
@@ -202,7 +202,7 @@ public class ProgrammingExerciseResource {
             }
 
             return ResponseEntity.created(new URI("/api/programming-exercises" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
+                .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getTitle()))
                 .body(result);
         } catch (Exception e) {
             log.error("Error while setting up programming exercise", e);
@@ -245,7 +245,7 @@ public class ProgrammingExerciseResource {
         }
         ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
         return ResponseEntity.ok()
-            .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, programmingExercise.getId().toString()))
+            .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, programmingExercise.getTitle()))
             .body(result);
     }
 
@@ -338,8 +338,9 @@ public class ProgrammingExerciseResource {
                 !authCheckService.isAdmin()) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
+            String title = programmingExercise.get().getTitle();
             exerciseService.delete(programmingExercise.get(), deleteStudentReposBuildPlans, deleteBaseReposBuildPlans);
-            return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+            return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, title)).build();
         }
         else {
             return ResponseEntity.notFound().build();
