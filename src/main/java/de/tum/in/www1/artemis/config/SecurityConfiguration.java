@@ -102,12 +102,10 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/content/**")
             .antMatchers("/test/**");
 
-        web.ignoring()
-            .antMatchers(HttpMethod.POST, "/api/results/*-*");
-        web.ignoring()
-            .antMatchers(HttpMethod.POST, "/api/programming-submissions/*");
-        web.ignoring()
-            .antMatchers(HttpMethod.POST, "/api/programming-exercises/test-cases-changed/*");
+        //TODO: test if we have security problems here for other /results/ calls, e.g. create new result
+        web.ignoring().antMatchers(HttpMethod.POST, "/api/results/*-*");
+        web.ignoring().antMatchers(HttpMethod.POST, "/api/programming-submissions/*");
+        web.ignoring().antMatchers(HttpMethod.POST, "/api/programming-exercises/test-cases-changed/*");
     }
 
     @Override

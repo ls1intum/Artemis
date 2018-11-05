@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
@@ -201,6 +202,7 @@ public class ParticipationService {
         if (quizExercise.isEnded() && quizSubmission.getSubmissionDate() != null) {
             // update result and participation state
             result.setRated(true);
+            result.setAssessmentType(AssessmentType.AUTOMATIC);
             result.setCompletionDate(ZonedDateTime.now());
             participation.setInitializationState(InitializationState.FINISHED);
 

@@ -65,6 +65,8 @@ public class ProgrammingSubmissionResource {
             return ResponseEntity.notFound().build();
         }
 
+        //TODO: should we create a new submission for all participations due to the test case change so that we can later handle it appropriately?
+
         ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
         programmingExerciseService.notifyChangedTestCases(programmingExercise);
 

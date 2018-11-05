@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -106,6 +107,9 @@ public class ResultResource {
         if(!result.getFeedbacks().isEmpty()) {
             result.setHasFeedback(true);
         }
+
+        result.setAssessmentType(AssessmentType.MANUAL);
+        result.setAssessor(user);
 
         Result savedResult = resultRepository.save(result);
         try {

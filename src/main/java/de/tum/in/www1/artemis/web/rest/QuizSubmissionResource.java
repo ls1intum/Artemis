@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
@@ -126,6 +127,7 @@ public class QuizSubmissionResource {
         // create result
         Result result = new Result().participation(participation).submission(quizSubmission);
         result.setRated(false);
+        result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setCompletionDate(ZonedDateTime.now());
         // calculate score and update result accordingly
         result.evaluateSubmission();

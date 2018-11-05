@@ -25,6 +25,7 @@ import com.atlassian.bamboo.specs.util.BambooServer;
 import com.atlassian.bamboo.specs.util.SimpleUserPasswordCredentials;
 import com.atlassian.bamboo.specs.util.UserPasswordCredentials;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.exception.BambooException;
@@ -460,6 +461,7 @@ public class BambooService implements ContinuousIntegrationService {
 
         Result result = new Result();
         result.setRated(participation.getExercise().getDueDate() == null || ZonedDateTime.now().isBefore(participation.getExercise().getDueDate()));
+        result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setSuccessful((boolean) buildResults.get("successful"));
         result.setResultString((String) buildResults.get("buildTestSummary"));
         result.setCompletionDate((ZonedDateTime) buildResults.get("buildCompletedDate"));

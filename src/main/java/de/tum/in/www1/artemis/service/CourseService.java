@@ -258,6 +258,8 @@ public class CourseService {
     public Result choseResultInParticipation(Participation participation, boolean hasDueDate) {
         List<Result> results = new ArrayList<>(participation.getResults());
 
+        //TODO take the field result.isRated into account
+
         Result chosenResult;
         //edge case of no result submitted to a participation
         if (results.size() <= 0) {

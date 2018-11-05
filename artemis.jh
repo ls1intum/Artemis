@@ -195,8 +195,7 @@ entity ExerciseResult (result) {
 
 enum AssessmentType {
     AUTOMATIC,
-    MANUAL,
-    SEMIAUTOMATIC
+    MANUAL
 }
 
 entity Feedback(feedback) {
@@ -222,7 +221,8 @@ enum InitializationState {
 
 enum SubmissionType {
 	MANUAL,
-    TIMEOUT
+    TIMEOUT,
+    OTHER
 }
 
 entity Submission {                 //abstract
