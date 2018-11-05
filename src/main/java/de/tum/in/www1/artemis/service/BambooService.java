@@ -143,7 +143,7 @@ public class BambooService implements ContinuousIntegrationService {
         final Plan plan = createPlan(planKey, planName, planDescription, projectKey, projectName, projectKey, vcsAssignmentRepositorySlug, vcsTestRepositorySlug);
         bambooServer.publish(plan);
 
-        final PlanPermissions planPermission = setPlanPermission(projectKey, planKey, ADMIN_GROUP_NAME, instructorGroupName, teachingAssistantGroupName);
+        final PlanPermissions planPermission = setPlanPermission(projectKey, planKey, teachingAssistantGroupName, instructorGroupName, ADMIN_GROUP_NAME);
         bambooServer.publish(planPermission);
     }
 
@@ -206,7 +206,7 @@ public class BambooService implements ContinuousIntegrationService {
                 .userPermissions(BAMBOO_USER, PermissionType.EDIT, PermissionType.BUILD, PermissionType.CLONE, PermissionType.VIEW, PermissionType.ADMIN)
                 .groupPermissions(adminGroupName, PermissionType.CLONE, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW, PermissionType.ADMIN)
                 .groupPermissions(instructorGroupName, PermissionType.CLONE, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW, PermissionType.ADMIN)
-                .groupPermissions(teachingAssistantGroupName, PermissionType.BUILD, PermissionType.VIEW));
+                .groupPermissions(teachingAssistantGroupName, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW));
         return planPermission;
     }
 
