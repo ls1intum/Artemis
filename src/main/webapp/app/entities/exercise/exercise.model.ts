@@ -1,9 +1,7 @@
 import { BaseEntity } from 'app/shared';
 import { Course } from '../course';
 import { Participation } from '../participation';
-import * as moment from 'moment';
 import { Moment } from 'moment';
-import { EntityArrayResponseType, EntityResponseType } from 'app/entities/exercise/exercise.service';
 
 export const enum DifficultyLevel {
     EASY = 'EASY',
