@@ -20,14 +20,14 @@ export class ExerciseService {
     constructor(private http: HttpClient, private participationService: ParticipationService) {}
 
     create(exercise: Exercise): Observable<EntityResponseType> {
-        const copy = Exercise.convertDateFromClient(exercise);
+        const copy = this.convertDateFromClient(exercise);
         return this.http
             .post<Exercise>(this.resourceUrl, copy, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
     update(exercise: Exercise): Observable<EntityResponseType> {
-        const copy = Exercise.convertDateFromClient(exercise);
+        const copy = this.convertDateFromClient(exercise);
         return this.http
             .put<Exercise>(this.resourceUrl, copy, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
@@ -67,14 +67,14 @@ export class ExerciseService {
         return this.http.get(`${this.resourceUrl}/${id}/participations/${students}`, { observe: 'response', responseType: 'blob' });
     }
 
-    convertExerciseDateFromServer(exercise: Exercise) {
+    convertExerciseDateFromServer(exercise: Exercise): Exercise {
         exercise.releaseDate = exercise.releaseDate != null ? moment(exercise.releaseDate) : null;
         exercise.dueDate = exercise.dueDate != null ? moment(exercise.dueDate) : null;
         exercise.participations = this.participationService.convertParticipationsDateFromServer(exercise.participations);
         return exercise;
     }
 
-    convertExercisesDateFromServer(exercises: Exercise[]) {
+    convertExercisesDateFromServer(exercises: Exercise[]): Exercise[] {
         const convertedExercises: Exercise[] = [];
         if (exercises != null && exercises.length > 0) {
             exercises.forEach((exercise: Exercise) => {
@@ -84,17 +84,28 @@ export class ExerciseService {
         return convertedExercises;
     }
 
-    convertDateFromServer(res: EntityResponseType): EntityResponseType {
-        res.body.releaseDate = res.body.releaseDate != null ? moment(res.body.releaseDate) : null;
-        res.body.dueDate = res.body.dueDate != null ? moment(res.body.dueDate) : null;
-        res.body.participations = this.participationService.convertParticipationsDateFromServer(res.body.participations);
+    convertDateFromClient<E extends Exercise>(exercise: E): E {
+        return Object.assign({}, exercise, {
+            releaseDate: exercise.releaseDate != null && moment(exercise.releaseDate).isValid() ? exercise.releaseDate.toJSON() : null,
+            dueDate: exercise.dueDate != null && moment(exercise.dueDate).isValid() ? exercise.dueDate.toJSON() : null
+        });
+    }
+
+    convertDateFromServer<ERT extends EntityResponseType>(res: ERT): ERT {
+        if (res.body) {
+            res.body.releaseDate = res.body.releaseDate != null ? moment(res.body.releaseDate) : null;
+            res.body.dueDate = res.body.dueDate != null ? moment(res.body.dueDate) : null;
+            res.body.participations = this.participationService.convertParticipationsDateFromServer(res.body.participations);
+        }
         return res;
     }
 
-    convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
-        res.body.forEach((exercise: Exercise) => {
-            this.convertExerciseDateFromServer(exercise);
-        });
+    convertDateArrayFromServer<E extends Exercise, EART extends EntityArrayResponseType>(res: EART): EART {
+        if (res.body) {
+            res.body.forEach((exercise: Exercise) => {
+                this.convertExerciseDateFromServer(exercise);
+            });
+        }
         return res;
     }
 }

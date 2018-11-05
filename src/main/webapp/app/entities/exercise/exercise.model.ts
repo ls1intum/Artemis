@@ -52,31 +52,6 @@ export abstract class Exercise implements BaseEntity {
     public isAtLeastTutor: boolean;
     public loading: boolean;
 
-    static convertDateFromClient<E extends Exercise>(exercise: E): E {
-        return Object.assign({}, exercise, {
-            releaseDate: exercise.releaseDate != null && moment(exercise.releaseDate).isValid() ? exercise.releaseDate.toJSON() : null,
-            dueDate: exercise.dueDate != null && moment(exercise.dueDate).isValid() ? exercise.dueDate.toJSON() : null
-        });
-    }
-
-    static convertDateFromServer<ERT extends EntityResponseType>(res: ERT): ERT {
-        if (res.body) {
-            res.body.releaseDate = res.body.releaseDate != null ? moment(res.body.releaseDate) : null;
-            res.body.dueDate = res.body.dueDate != null ? moment(res.body.dueDate) : null;
-        }
-        return res;
-    }
-
-    static convertDateArrayFromServer<E extends Exercise, EART extends EntityArrayResponseType>(res: EART): EART {
-        if (res.body) {
-            res.body.forEach((exercise: E) => {
-                exercise.releaseDate = exercise.releaseDate != null ? moment(exercise.releaseDate) : null;
-                exercise.dueDate = exercise.dueDate != null ? moment(exercise.dueDate) : null;
-            });
-        }
-        return res;
-    }
-
     protected constructor(type: ExerciseType) {
         this.type = type;
     }
