@@ -360,6 +360,29 @@ public class BitbucketService implements VersionControlService {
         }
     }
 
+    @Override
+    public boolean checkIfProjectExists(String projectKey) {
+        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
+        HttpEntity<?> entity = new HttpEntity<>(headers);
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<Map> response = null;
+        try {
+            response = restTemplate.exchange(
+                BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey,
+                HttpMethod.GET,
+                entity,
+                Map.class);
+            log.debug("Bitbucket project " + projectKey + " already exists");
+            return true;
+        } catch (HttpClientErrorException e) {
+            log.debug("Bitbucket project " + projectKey + " does not exit");
+            if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     /**
      * Create a new project
      *

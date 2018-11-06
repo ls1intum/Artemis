@@ -40,12 +40,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.swift.bamboo.cli.BambooClient;
 import org.swift.bitbucket.cli.BitbucketClient;
@@ -721,6 +719,29 @@ public class BambooService implements ContinuousIntegrationService {
         else {
             throw new BambooException("No build artifact available for this plan");
         }
+    }
+
+    @Override
+    public boolean checkIfProjectExists(String projectKey) {
+        HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
+        HttpEntity<?> entity = new HttpEntity<>(headers);
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<Map> response = null;
+        try {
+            response = restTemplate.exchange(
+                BAMBOO_SERVER_URL + "/rest/api/latest/project/" + projectKey,
+                HttpMethod.GET,
+                entity,
+                Map.class);
+            log.debug("Bamboo project " + projectKey + " already exists");
+            return true;
+        } catch (HttpClientErrorException e) {
+            log.debug("Bamboo project " + projectKey + " does not exit");
+            if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**

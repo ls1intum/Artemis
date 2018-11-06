@@ -115,4 +115,12 @@ public interface VersionControlService {
      * @return The repository name
      */
     public String getRepositoryName(URL repositoryUrl);
+
+    /**
+     * Checks if the project with the given projectKey already exists
+     *
+     * @param projectKey
+     * @return true if the project exists, false otherwise
+     */
+    public boolean checkIfProjectExists(String projectKey);
 }

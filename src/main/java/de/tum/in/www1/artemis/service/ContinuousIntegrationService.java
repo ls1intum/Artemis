@@ -114,4 +114,12 @@ public interface ContinuousIntegrationService {
      * @return the binary build artifact. Typically a JAR/WAR ResponseEntity.
      */
     public ResponseEntity retrieveLatestArtifact(Participation participation);
+
+    /**
+     * Checks if the project with the given projectKey already exists
+     *
+     * @param projectKey
+     * @return true if the project exists, false otherwise
+     */
+    public boolean checkIfProjectExists(String projectKey);
 }

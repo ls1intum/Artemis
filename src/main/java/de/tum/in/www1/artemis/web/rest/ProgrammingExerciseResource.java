@@ -193,7 +193,14 @@ public class ProgrammingExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The max score is invalid", "maxscoreInvalid")).body(null);
         }
 
-        // TODO: Check that the Projects/Repositories do not exist yet
+        if(versionControlService.get().checkIfProjectExists(programmingExercise.getProjectKey())) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The project already exists in the VCS Server. Please choose a different short name!", "vcsProjectExists")).body(null);
+        }
+
+        if(continuousIntegrationService.get().checkIfProjectExists(programmingExercise.getProjectKey())) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The project already exists in the CI Server. Please choose a different short name!", "ciProjectExists")).body(null);
+        }
+
         try {
             ProgrammingExercise result = programmingExerciseService.setupProgrammingExercise(programmingExercise); // Setup all repositories etc
             ResponseEntity<ProgrammingExercise> errorResponse = checkProgrammingExerciseForError(programmingExercise);
@@ -206,7 +213,6 @@ public class ProgrammingExerciseResource {
                 .body(result);
         } catch (Exception e) {
             log.error("Error while setting up programming exercise", e);
-            //TODO: define own exception and pass the error message to the client
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("An error occurred while setting up the exercise: " + e.getMessage(), "errorProgrammingExercise")).body(null);
         }
     }
