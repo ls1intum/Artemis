@@ -114,9 +114,10 @@ public class ProgrammingExerciseService {
             participation.addSubmissions(submission);
             try {
                 String lastCommitHash = versionControlService.get().getLastCommitHash(requestBody);
+                log.info("create new programmingSubmission with commitHash: " + lastCommitHash);
                 submission.setCommitHash(lastCommitHash);
-            } catch (Exception e) {
-                log.warn("Commit hash could not be parsed for submission from participation " + participation);
+            } catch (Exception ex) {
+                log.error("Commit hash could not be parsed for submission from participation " + participation, ex);
             }
 
             submissionRepository.save(submission);

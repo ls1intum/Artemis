@@ -42,7 +42,7 @@ public class ProgrammingSubmissionResource {
      */
     @PostMapping(value = "/programming-submissions/{participationId}")
     public ResponseEntity<?> notifyPush(@PathVariable("participationId") Long participationId, @RequestBody Object requestBody) {
-        log.debug("REST request to inform about new push: {}", participationId);
+        log.info("REST request to inform about new push: {}", participationId);
         programmingSubmissionService.notifyPush(participationId, requestBody);
 
         return ResponseEntity.status(HttpStatus.OK).build();
@@ -61,7 +61,7 @@ public class ProgrammingSubmissionResource {
         Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
 
         if (exercise == null || !(exercise instanceof ProgrammingExercise)) {
-            log.info("REST request to inform about changed test cases of not existing ProgrammingExercise : {}", exerciseId);
+            log.warn("REST request to inform about changed test cases of non existing ProgrammingExercise : {}", exerciseId);
             return ResponseEntity.notFound().build();
         }
 
