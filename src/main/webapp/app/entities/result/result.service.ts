@@ -1,15 +1,15 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
-import { SERVER_API_URL } from '../../app.constants';
+import { SERVER_API_URL } from 'app/app.constants';
 
 import * as moment from 'moment';
 
 import { Result } from './result.model';
-import { createRequestOption } from '../../shared';
-import { Feedback } from '../feedback/feedback.model';
-import { Participation } from '../participation/participation.model';
-import { Exercise } from '../exercise/exercise.model';
+import { createRequestOption } from 'app/shared';
+import { Feedback } from 'app/entities/feedback';
+import { Participation } from 'app/entities/participation';
+import { ExerciseService } from 'app/entities/exercise';
 
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;
@@ -19,7 +19,7 @@ export class ResultService {
     private courseResourceUrl = SERVER_API_URL + 'api/courses';
     private resultResourceUrl = SERVER_API_URL + 'api/results';
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
 
     create(result: Result): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(result);
@@ -52,24 +52,24 @@ export class ResultService {
         exerciseId: number,
         participationId: number,
         req?: any
-    ): Observable<HttpResponse<Result[]>> {
+    ): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
         return this.http
             .get(`${this.courseResourceUrl}/${courseId}/exercises/${exerciseId}/participations/${participationId}/results`, {
                 params: options,
                 observe: 'response'
             })
-            .map((res: HttpResponse<Result[]>) => this.convertDateArrayFromServer(res));
+            .map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res));
     }
 
-    getResultsForExercise(courseId: number, exerciseId: number, req?: any): Observable<HttpResponse<Result[]>> {
+    getResultsForExercise(courseId: number, exerciseId: number, req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
         return this.http
             .get<Result[]>(`${this.courseResourceUrl}/${courseId}/exercises/${exerciseId}/results`, {
                 params: options,
                 observe: 'response'
             })
-            .map((res: HttpResponse<Result[]>) => this.convertDateArrayFromServer(res));
+            .map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res));
     }
 
     getFeedbackDetailsForResult(resultId: number): Observable<HttpResponse<Feedback[]>> {
@@ -108,16 +108,8 @@ export class ResultService {
     convertParticipationDateFromServer(participation: Participation) {
         if (participation) {
             participation.initializationDate = participation.initializationDate != null ? moment(participation.initializationDate) : null;
-            participation.exercise = this.convertExerciseDateFromServer(participation.exercise);
+            participation.exercise = this.exerciseService.convertExerciseDateFromServer(participation.exercise);
         }
         return participation;
-    }
-
-    convertExerciseDateFromServer(exercise: Exercise) {
-        if (exercise) {
-            exercise.releaseDate = exercise.releaseDate != null ? moment(exercise.releaseDate) : null;
-            exercise.dueDate = exercise.dueDate != null ? moment(exercise.dueDate) : null;
-        }
-        return exercise;
     }
 }
