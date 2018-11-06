@@ -60,12 +60,14 @@ public class ProgrammingExerciseService {
 
 
         try {
-            String templatePath = "classpath:templates" + File.separator + "java";
+            String templatePath = "classpath:templates/java";
             log.info("templatePath: " + templatePath);
-            String exercisePath = templatePath + File.separator + "exercise" + File.separator + "**" + File.separator + "*.*";
+            String exercisePath = templatePath + "/exercise/**/*.*";
             log.info("exercisePath: " + exercisePath);
-            String testPath = templatePath + File.separator + "test" + File.separator + "**" + File.separator + "*.*";
+            String testPath = templatePath + "/test/**/*.*";
             log.info("testPath: " + testPath);
+
+            String exercisePath2ndAlternative = templatePath + "/exercise/**/.*";
 
             Resource[] exerciseResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(exercisePath);
             log.info("exerciseResources: ");
@@ -75,9 +77,19 @@ public class ProgrammingExerciseService {
                 int index = fileUrl.indexOf(prefix);
                 log.info(" - " + fileUrl.substring(index + prefix.length()));
             }
+
             Resource[] testResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(testPath);
             log.info("testResources: ");
             for (Resource resource : testResources) {
+                String fileUrl = resource.getURI().toString();
+                String prefix = "java" + File.separator + "test";
+                int index = fileUrl.indexOf(prefix);
+                log.info(" - " + fileUrl.substring(index + prefix.length()));
+            }
+
+            Resource[] exercisePath2ndAlternativeResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(exercisePath2ndAlternative);
+            log.info("exercisePath2ndAlternativeResources: ");
+            for (Resource resource : exercisePath2ndAlternativeResources) {
                 String fileUrl = resource.getURI().toString();
                 String prefix = "java" + File.separator + "test";
                 int index = fileUrl.indexOf(prefix);
@@ -137,11 +149,11 @@ public class ProgrammingExerciseService {
 
         String programmingLanguage = programmingExercise.getProgrammingLanguage().toString().toLowerCase();
 
-        String templatePath = "classpath:templates" + File.separator + programmingLanguage;
+        String templatePath = "classpath:templates/java";
         log.info("templatePath: " + templatePath);
-        String exercisePath = templatePath + File.separator + "exercise" + File.separator + "**" + File.separator + "*.*";
+        String exercisePath = templatePath + "/exercise/**/*.*";
         log.info("exercisePath: " + exercisePath);
-        String testPath = templatePath + File.separator + "test" + File.separator + "**" + File.separator + "*.*";
+        String testPath = templatePath + "/test/**/*.*";
         log.info("testPath: " + testPath);
 
         Resource[] exerciseResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(exercisePath);
