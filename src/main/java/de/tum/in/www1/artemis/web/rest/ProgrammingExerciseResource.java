@@ -193,12 +193,13 @@ public class ProgrammingExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The max score is invalid", "maxscoreInvalid")).body(null);
         }
 
-        if(versionControlService.get().checkIfProjectExists(programmingExercise.getProjectKey())) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The project already exists in the VCS Server. Please choose a different short name!", "vcsProjectExists")).body(null);
+        String projectKey = programmingExercise.getProjectKey();
+        if(versionControlService.get().checkIfProjectExists(projectKey)) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The project " + projectKey + " already exists in the VCS Server. Please choose a different short name!", "vcsProjectExists")).body(null);
         }
 
-        if(continuousIntegrationService.get().checkIfProjectExists(programmingExercise.getProjectKey())) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The project already exists in the CI Server. Please choose a different short name!", "ciProjectExists")).body(null);
+        if(continuousIntegrationService.get().checkIfProjectExists(projectKey)) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The project " + projectKey + " already exists in the CI Server. Please choose a different short name!", "ciProjectExists")).body(null);
         }
 
         try {
