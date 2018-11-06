@@ -86,15 +86,6 @@ public class ProgrammingExerciseService {
                 int index = fileUrl.indexOf(prefix);
                 log.info(" - " + fileUrl.substring(index + prefix.length()));
             }
-
-            Resource[] exercisePath2ndAlternativeResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(exercisePath2ndAlternative);
-            log.info("exercisePath2ndAlternativeResources: ");
-            for (Resource resource : exercisePath2ndAlternativeResources) {
-                String fileUrl = resource.getURI().toString();
-                String prefix = "java" + File.separator + "test";
-                int index = fileUrl.indexOf(prefix);
-                log.info(" - " + fileUrl.substring(index + prefix.length()));
-            }
         } catch (IOException ex) {
             log.error(ex.getMessage(), ex);
         }
