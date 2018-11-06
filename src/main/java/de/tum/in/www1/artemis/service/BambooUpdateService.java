@@ -1,21 +1,17 @@
 package de.tum.in.www1.artemis.service;
 
 import de.tum.in.www1.artemis.exception.BambooException;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 import org.swift.bamboo.cli.BambooClient;
 import org.swift.bitbucket.cli.BitbucketClient;
 import org.swift.bitbucket.cli.objects.RemoteRepository;
 import org.swift.common.cli.CliClient;
 
 import java.net.URL;
-import java.util.Map;
 
 @Profile("bamboo")
 @Service

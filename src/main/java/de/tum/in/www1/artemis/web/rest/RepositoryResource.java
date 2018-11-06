@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
@@ -13,7 +14,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import com.codahale.metrics.annotation.Timed;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.FileInputStream;

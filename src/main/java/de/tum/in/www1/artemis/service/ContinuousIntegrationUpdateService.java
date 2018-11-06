@@ -1,15 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import de.tum.in.www1.artemis.domain.BuildLogEntry;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.Participation;
-import de.tum.in.www1.artemis.domain.Result;
-import org.springframework.http.ResponseEntity;
-
-import java.net.URL;
-import java.util.List;
-import java.util.Set;
-
 /**
  * This service manages the update of the Build plan on the Continuous Integration Service depending on the current VCS and CI profiles.
  */
