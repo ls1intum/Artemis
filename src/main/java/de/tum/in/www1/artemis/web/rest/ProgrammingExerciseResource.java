@@ -194,12 +194,15 @@ public class ProgrammingExerciseResource {
         }
 
         String projectKey = programmingExercise.getProjectKey();
-        if(versionControlService.get().checkIfProjectExists(projectKey)) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The project " + projectKey + " already exists in the VCS Server. Please choose a different short name!", "vcsProjectExists")).body(null);
+        String projectName = programmingExercise.getProjectName();
+        String errorMessageVCS = versionControlService.get().checkIfProjectExists(projectKey, projectName);
+        if(errorMessageVCS != null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(errorMessageVCS, "vcsProjectExists")).body(null);
         }
 
-        if(continuousIntegrationService.get().checkIfProjectExists(projectKey)) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The project " + projectKey + " already exists in the CI Server. Please choose a different short name!", "ciProjectExists")).body(null);
+        String errorMessageCI = continuousIntegrationService.get().checkIfProjectExists(projectKey, projectName);
+        if(errorMessageCI != null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(errorMessageCI, "ciProjectExists")).body(null);
         }
 
         try {

@@ -14,7 +14,6 @@ import com.atlassian.bamboo.specs.api.builders.project.Project;
 import com.atlassian.bamboo.specs.api.builders.repository.VcsChangeDetection;
 import com.atlassian.bamboo.specs.api.builders.repository.VcsRepositoryIdentifier;
 import com.atlassian.bamboo.specs.builders.repository.bitbucket.server.BitbucketServerRepository;
-import com.atlassian.bamboo.specs.builders.repository.viewer.BitbucketServerRepositoryViewer;
 import com.atlassian.bamboo.specs.builders.task.CheckoutItem;
 import com.atlassian.bamboo.specs.builders.task.MavenTask;
 import com.atlassian.bamboo.specs.builders.task.ScriptTask;
@@ -29,7 +28,6 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.exception.BambooException;
-import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
@@ -46,8 +44,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.swift.bamboo.cli.BambooClient;
-import org.swift.bitbucket.cli.BitbucketClient;
-import org.swift.bitbucket.cli.objects.RemoteRepository;
 import org.swift.common.cli.CliClient;
 
 import java.io.IOException;
@@ -722,7 +718,7 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
-    public boolean checkIfProjectExists(String projectKey) {
+    public String checkIfProjectExists(String projectKey, String projectName) {
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
         RestTemplate restTemplate = new RestTemplate();
@@ -733,15 +729,31 @@ public class BambooService implements ContinuousIntegrationService {
                 HttpMethod.GET,
                 entity,
                 Map.class);
-            log.debug("Bamboo project " + projectKey + " already exists");
-            return true;
+            log.warn("Bamboo project " + projectKey + " already exists");
+            return "The project " + projectKey + " already exists in the CI Server. Please choose a different short name!";
         } catch (HttpClientErrorException e) {
             log.debug("Bamboo project " + projectKey + " does not exit");
             if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
-                return false;
+                //only if this is the case, we additionally check that the project name is unique
+                response = restTemplate.exchange(
+                    BAMBOO_SERVER_URL + "/rest/api/latest/search/projects?searchTerm=" + projectName,
+                    HttpMethod.GET,
+                    entity,
+                    Map.class);
+                if ((Integer)response.getBody().get("size") != 0) {
+                    List<Object> ciProjects = (List<Object>) response.getBody().get("searchResults");
+                    for (Object ciProject : ciProjects) {
+                        String ciProjectName = (String) ((Map)((Map) ciProject).get("searchEntity")).get("projectName");
+                        if (ciProjectName.equalsIgnoreCase(projectName)) {
+                            log.warn("Bamboo project with name" + projectName + " already exists");
+                            return "The project " + projectName + " already exists in the CI Server. Please choose a different title!";
+                        }
+                    }
+                }
+                return null;
             }
         }
-        return true;
+        return "The project already exists in the CI Server. Please choose a different title and short name!";
     }
 
     /**

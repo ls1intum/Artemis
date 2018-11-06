@@ -120,7 +120,8 @@ public interface VersionControlService {
      * Checks if the project with the given projectKey already exists
      *
      * @param projectKey
+     * @param projectName
      * @return true if the project exists, false otherwise
      */
-    public boolean checkIfProjectExists(String projectKey);
+    public String checkIfProjectExists(String projectKey, String projectName);
 }

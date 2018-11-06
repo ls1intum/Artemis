@@ -361,26 +361,45 @@ public class BitbucketService implements VersionControlService {
     }
 
     @Override
-    public boolean checkIfProjectExists(String projectKey) {
+    public String checkIfProjectExists(String projectKey, String projectName) {
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
         RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<Map> response = null;
         try {
+            //first check that the project key is unique
             response = restTemplate.exchange(
                 BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey,
                 HttpMethod.GET,
                 entity,
                 Map.class);
-            log.debug("Bitbucket project " + projectKey + " already exists");
-            return true;
+            log.warn("Bitbucket project with key " + projectKey + " already exists");
+            return "The project " + projectKey + " already exists in the VCS Server. Please choose a different short name!";
         } catch (HttpClientErrorException e) {
             log.debug("Bitbucket project " + projectKey + " does not exit");
             if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
-                return false;
+                //only if this is the case, we additionally check that the project name is unique
+
+                response = restTemplate.exchange(
+                    BITBUCKET_SERVER_URL + "/rest/api/1.0/projects?name=" + projectName,
+                    HttpMethod.GET,
+                    entity,
+                    Map.class);
+
+                if ((Integer)response.getBody().get("size") != 0) {
+                    List<Object> vcsProjects = (List<Object>) response.getBody().get("values");
+                    for (Object vcsProject : vcsProjects) {
+                        String vcsProjectName = (String) ((Map) vcsProject).get("name");
+                        if (vcsProjectName.equalsIgnoreCase(projectName)) {
+                            log.warn("Bitbucket project with name" + projectName + " already exists");
+                            return "The project " + projectName + " already exists in the VCS Server. Please choose a different title!";
+                        }
+                    }
+                }
+                return null;
             }
         }
-        return true;
+        return "The project already exists in the VCS Server. Please choose a different title and short name!";
     }
 
     /**
@@ -398,6 +417,7 @@ public class BitbucketService implements VersionControlService {
         Map<String, Object> body = new HashMap<>();
         body.put("key", projectKey);
         body.put("name", projectName);
+        //TODO: add a description
         HttpEntity<?> entity = new HttpEntity<>(body, headers);
 
         RestTemplate restTemplate = new RestTemplate();
@@ -412,7 +432,7 @@ public class BitbucketService implements VersionControlService {
 
         } catch (HttpClientErrorException e) {
             log.error("Could not create Bitbucket project {} with key {}", projectName, projectKey, e);
-            throw new BitbucketException("Error while creating Bitbucket project");
+            throw new BitbucketException("Error while creating Bitbucket project. Try a different name!");
         }
     }
 
