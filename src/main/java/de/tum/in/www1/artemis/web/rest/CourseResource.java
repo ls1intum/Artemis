@@ -110,7 +110,7 @@ public class CourseResource {
     @PutMapping("/courses")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
     @Timed
-    @Transactional(readOnly = true)
+    @Transactional
     public ResponseEntity<Course> updateCourse(@RequestBody Course updatedCourse) throws URISyntaxException {
         log.debug("REST request to update Course : {}", updatedCourse);
         if (updatedCourse.getId() == null) {
