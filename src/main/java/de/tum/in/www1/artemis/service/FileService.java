@@ -6,16 +6,19 @@ import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -191,20 +194,28 @@ public class FileService {
     /**
      * This copies the directory at the old directory path to the new path, including all files and subfolders
      *
-     * @param oldDirectoryPath    the path of the folder that should be copied
+     * @param resources the resources that should be copied
      * @param targetDirectoryPath the path of the folder where the copy should be lcoated
      * @throws IOException
      */
-    public void copyDirectory(String oldDirectoryPath, String targetDirectoryPath) throws IOException {
-        File oldDirectory = new File(oldDirectoryPath);
-        if (!oldDirectory.exists()) {
-            log.error("Directory {} should be copied but does not exist.", oldDirectoryPath);
-            throw new RuntimeException("Directory " + oldDirectoryPath + " should be copied but does not exist.");
+    public void copyResources(Resource[] resources, String prefix, String targetDirectoryPath) throws IOException {
+
+        for (Resource resource : resources) {
+
+            String fileUrl = java.net.URLDecoder.decode(resource.getURL().toString(), "UTF-8");
+            int index = fileUrl.indexOf(prefix);
+            String targetFilePath = fileUrl.substring(index + prefix.length());//.replaceAll("%7B", "{").replaceAll("%7D", "}");
+
+            Path copyPath = Paths.get(targetDirectoryPath + targetFilePath);
+            File parentFolder = copyPath.toFile().getParentFile();
+            if(!parentFolder.exists()) {
+                Files.createDirectories(parentFolder.toPath());
+            }
+
+            log.info("resource: " + resource.getURL().toString());
+            log.info("copyPath: " + copyPath);
+            Files.copy(resource.getInputStream(), copyPath);
         }
-
-        File targetDirectory = new File(targetDirectoryPath);
-
-        FileUtils.copyDirectory(oldDirectory, targetDirectory);
     }
 
     /**

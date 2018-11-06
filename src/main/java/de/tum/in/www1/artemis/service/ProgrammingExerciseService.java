@@ -18,9 +18,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -55,6 +57,35 @@ public class ProgrammingExerciseService {
         this.resourceLoader = resourceLoader;
         this.participationRepository = participationRepository;
         this.submissionRepository = submissionRepository;
+
+
+        try {
+            String templatePath = "classpath:templates" + File.separator + "java";
+            log.info("templatePath: " + templatePath);
+            String exercisePath = templatePath + File.separator + "exercise" + File.separator + "**" + File.separator + "*.*";
+            log.info("exercisePath: " + exercisePath);
+            String testPath = templatePath + File.separator + "test" + File.separator + "**" + File.separator + "*.*";
+            log.info("testPath: " + testPath);
+
+            Resource[] exerciseResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(exercisePath);
+            log.info("exerciseResources: ");
+            for (Resource resource : exerciseResources) {
+                String fileUrl = resource.getURI().toString();
+                String prefix = "java" + File.separator + "exercise";
+                int index = fileUrl.indexOf(prefix);
+                log.info(" - " + fileUrl.substring(index + prefix.length()));
+            }
+            Resource[] testResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(testPath);
+            log.info("testResources: ");
+            for (Resource resource : testResources) {
+                String fileUrl = resource.getURI().toString();
+                String prefix = "java" + File.separator + "test";
+                int index = fileUrl.indexOf(prefix);
+                log.info(" - " + fileUrl.substring(index + prefix.length()));
+            }
+        } catch (IOException ex) {
+            log.error(ex.getMessage(), ex);
+        }
     }
 
     /**
@@ -104,21 +135,49 @@ public class ProgrammingExerciseService {
         URL testsRepoUrl = versionControlService.get().getCloneURL(projectKey, testRepoName);
         URL solutionRepoUrl = versionControlService.get().getCloneURL(projectKey, solutionRepoName);
 
-        String templatePath = "classpath:templates" + File.separator + programmingExercise.getProgrammingLanguage().toString().toLowerCase();
-        Resource templateFolderResource = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResource(templatePath);
-        String absoluteTemplatePath = templateFolderResource.getFile().getAbsolutePath();
-        String exerciseTemplatePath = absoluteTemplatePath + File.separator + "exercise"; // Path where the exercise template is located (used for exercise & solution)
+        String programmingLanguage = programmingExercise.getProgrammingLanguage().toString().toLowerCase();
+
+        String templatePath = "classpath:templates" + File.separator + programmingLanguage;
+        log.info("templatePath: " + templatePath);
+        String exercisePath = templatePath + File.separator + "exercise" + File.separator + "**" + File.separator + "*.*";
+        log.info("exercisePath: " + exercisePath);
+        String testPath = templatePath + File.separator + "test" + File.separator + "**" + File.separator + "*.*";
+        log.info("testPath: " + testPath);
+
+        Resource[] exerciseResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(exercisePath);
+        log.info("exerciseResources: ");
+        for (Resource resource : exerciseResources) {
+            String fileUrl = resource.getURI().toString();
+            String prefix = "java" + File.separator + "exercise";
+            int index = fileUrl.indexOf(prefix);
+            log.info(" - " + fileUrl.substring(index + prefix.length()));
+        }
+        Resource[] testResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(testPath);
+        log.info("testResources: ");
+        for (Resource resource : testResources) {
+            String fileUrl = resource.getURI().toString();
+            String prefix = "java" + File.separator + "test";
+            int index = fileUrl.indexOf(prefix);
+            log.info(" - " + fileUrl.substring(index + prefix.length()));
+        }
 
         Repository exerciseRepo = gitService.getOrCheckoutRepository(exerciseRepoUrl);
-        setupTemplateAndPush(exerciseRepo, exerciseTemplatePath, "Exercise", programmingExercise);
-
-        String testTemplatePath = absoluteTemplatePath + File.separator + "test"; // Path where the test template is located
         Repository testRepo = gitService.getOrCheckoutRepository(testsRepoUrl);
-        setupTemplateAndPush(testRepo, testTemplatePath, "Test", programmingExercise);
-
         Repository solutionRepo = gitService.getOrCheckoutRepository(solutionRepoUrl);
-        setupTemplateAndPush(solutionRepo, exerciseTemplatePath, "Solution", programmingExercise); // Solution is based on the same template as exercise
 
+        try {
+            String exercisePrefix = programmingLanguage + File.separator + "exercise";
+            String testPrefix = programmingLanguage + File.separator + "test";
+            setupTemplateAndPush(exerciseRepo, exerciseResources, exercisePrefix,"Exercise", programmingExercise);
+            setupTemplateAndPush(testRepo, testResources, testPrefix,"Test", programmingExercise);
+            setupTemplateAndPush(solutionRepo, exerciseResources, exercisePrefix,"Solution", programmingExercise); // Solution is based on the same template as exercise
+
+        } catch (Exception ex) {
+            //if any exception occurs, try to at least push an empty commit, so that the repositories can be used by the build plans
+            gitService.commitAndPush(exerciseRepo, "Setup");
+            gitService.commitAndPush(testRepo, "Setup");
+            gitService.commitAndPush(solutionRepo, "Setup");
+        }
         // We have to wait to have pushed one commit to each repository as we can only create the buildPlans then (https://confluence.atlassian.com/bamkb/cannot-create-linked-repository-or-plan-repository-942840872.html)
         continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, "BASE", exerciseRepoName); // plan for the exercise (students)
         continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, "SOLUTION", solutionRepoName); // plan for the solution (instructors) with solution repository
@@ -136,9 +195,9 @@ public class ProgrammingExerciseService {
     }
 
     // Copy template and push, if no file is in the directory
-    private void setupTemplateAndPush(Repository repository, String templatePath, String templateName, ProgrammingExercise programmingExercise) throws Exception {
+    private void setupTemplateAndPush(Repository repository, Resource[] resources, String prefix, String templateName, ProgrammingExercise programmingExercise) throws Exception {
         if (gitService.listFiles(repository).size() == 0) { // Only copy template if repo is empty
-            fileService.copyDirectory(templatePath, repository.getLocalPath().toAbsolutePath().toString());
+            fileService.copyResources(resources, prefix, repository.getLocalPath().toAbsolutePath().toString());
             fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageFolderName());
 
             List<String> fileTargets = new ArrayList<>();
