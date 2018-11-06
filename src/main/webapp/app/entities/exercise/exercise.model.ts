@@ -1,4 +1,4 @@
-import { BaseEntity } from './../../shared';
+import { BaseEntity } from 'app/shared';
 import { Course } from '../course';
 import { Participation } from '../participation';
 import { Moment } from 'moment';
@@ -50,7 +50,7 @@ export abstract class Exercise implements BaseEntity {
     public isAtLeastTutor: boolean;
     public loading: boolean;
 
-    constructor(type: ExerciseType) {
+    protected constructor(type: ExerciseType) {
         this.type = type;
     }
 }
