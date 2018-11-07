@@ -57,38 +57,6 @@ public class ProgrammingExerciseService {
         this.resourceLoader = resourceLoader;
         this.participationRepository = participationRepository;
         this.submissionRepository = submissionRepository;
-
-
-        try {
-            String templatePath = "classpath:templates/java";
-            log.info("templatePath: " + templatePath);
-            String exercisePath = templatePath + "/exercise/**/*.*";
-            log.info("exercisePath: " + exercisePath);
-            String testPath = templatePath + "/test/**/*.*";
-            log.info("testPath: " + testPath);
-
-            String exercisePath2ndAlternative = templatePath + "/exercise/**/.*";
-
-            Resource[] exerciseResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(exercisePath);
-            log.info("exerciseResources: ");
-            for (Resource resource : exerciseResources) {
-                String fileUrl = resource.getURI().toString();
-                String prefix = "java" + File.separator + "exercise";
-                int index = fileUrl.indexOf(prefix);
-                log.info(" - " + fileUrl.substring(index + prefix.length()));
-            }
-
-            Resource[] testResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(testPath);
-            log.info("testResources: ");
-            for (Resource resource : testResources) {
-                String fileUrl = resource.getURI().toString();
-                String prefix = "java" + File.separator + "test";
-                int index = fileUrl.indexOf(prefix);
-                log.info(" - " + fileUrl.substring(index + prefix.length()));
-            }
-        } catch (IOException ex) {
-            log.error(ex.getMessage(), ex);
-        }
     }
 
     /**
