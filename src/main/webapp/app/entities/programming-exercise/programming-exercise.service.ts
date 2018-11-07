@@ -25,10 +25,10 @@ export class ProgrammingExerciseService {
     }
 
     automaticSetup(programmingExercise: ProgrammingExercise): Observable<EntityResponseType> {
-        const copy = this.convertDateFromClient(programmingExercise);
+        const copy = this.exerciseService.convertDateFromClient(programmingExercise);
         return this.http
             .post<ProgrammingExercise>(this.resourceUrl + '/setup', copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res));
+            .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
     update(programmingExercise: ProgrammingExercise): Observable<EntityResponseType> {
