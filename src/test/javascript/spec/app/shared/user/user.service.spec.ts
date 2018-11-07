@@ -1,25 +1,19 @@
 import { TestBed } from '@angular/core/testing';
 import { JhiDateUtils } from 'ng-jhipster';
 
-import { UserService, User } from './../../../../../../main/webapp/app/shared';
-import { SERVER_API_URL } from './../../../../../../main/webapp/app/app.constants';
+import { UserService, User } from 'app/core';
+import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 
 describe('Service Tests', () => {
-
     describe('User Service', () => {
         let service: UserService;
-        let httpMock;
+        let httpMock: any;
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [
-                    HttpClientTestingModule
-                ],
-                providers: [
-                    JhiDateUtils,
-                    UserService
-                ]
+                imports: [HttpClientTestingModule],
+                providers: [JhiDateUtils, UserService]
             });
 
             service = TestBed.get(UserService);
@@ -34,13 +28,12 @@ describe('Service Tests', () => {
             it('should call correct URL', () => {
                 service.find('user').subscribe(() => {});
 
-                const req  = httpMock.expectOne({ method: 'GET' });
+                const req = httpMock.expectOne({ method: 'GET' });
                 const resourceUrl = SERVER_API_URL + 'api/users';
                 expect(req.request.url).toEqual(`${resourceUrl}/user`);
             });
             it('should return User', () => {
-
-                service.find('user').subscribe((received) => {
+                service.find('user').subscribe(received => {
                     expect(received.body.login).toEqual('user');
                 });
 
@@ -49,8 +42,7 @@ describe('Service Tests', () => {
             });
 
             it('should return Authorities', () => {
-
-                service.authorities().subscribe((_authorities) => {
+                service.authorities().subscribe(_authorities => {
                     expect(_authorities).toEqual(['ROLE_USER', 'ROLE_ADMIN']);
                 });
                 const req = httpMock.expectOne({ method: 'GET' });
@@ -59,17 +51,16 @@ describe('Service Tests', () => {
             });
 
             it('should propagate not found response', () => {
-
                 service.find('user').subscribe(null, (_error: any) => {
                     expect(_error.status).toEqual(404);
                 });
 
-                const req  = httpMock.expectOne({ method: 'GET' });
+                const req = httpMock.expectOne({ method: 'GET' });
                 req.flush('Invalid request parameters', {
-                    status: 404, statusText: 'Bad Request'
+                    status: 404,
+                    statusText: 'Bad Request'
                 });
             });
         });
     });
-
 });

@@ -104,7 +104,7 @@ export class FileUploadExerciseComponent implements OnInit, OnDestroy {
     }
 
     private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message, null, null);
+        this.jhiAlertService.error(error.message);
     }
 
     callback() {}

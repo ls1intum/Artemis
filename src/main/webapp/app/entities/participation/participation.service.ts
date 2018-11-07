@@ -1,20 +1,20 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
-import { SERVER_API_URL } from '../../app.constants';
+import { SERVER_API_URL } from 'app/app.constants';
 
 import * as moment from 'moment';
 
 import { Participation } from './participation.model';
-import { createRequestOption } from '../../shared';
-import { Result } from '../../entities/result/result.model';
-import { Submission } from '../../entities/submission/submission.model';
-import { Exercise } from '../../entities/exercise/exercise.model';
+import { createRequestOption } from 'app/shared';
+import { Result } from 'app/entities/result';
+import { Submission } from 'app/entities/submission';
+import { Exercise } from 'app/entities/exercise';
 
 export type EntityResponseType = HttpResponse<Participation>;
 export type EntityArrayResponseType = HttpResponse<Participation[]>;
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class ParticipationService {
     public resourceUrl = SERVER_API_URL + 'api/participations';
 
@@ -89,7 +89,7 @@ export class ParticipationService {
         });
     }
 
-    convertDateFromClient(participation: Participation): Participation {
+    protected convertDateFromClient(participation: Participation): Participation {
         const copy: Participation = Object.assign({}, participation, {
             initializationDate:
                 participation.initializationDate != null && moment(participation.initializationDate).isValid()
@@ -99,22 +99,26 @@ export class ParticipationService {
         return copy;
     }
 
-    convertDateFromServer(res: EntityResponseType): EntityResponseType {
-        res.body.initializationDate = res.body.initializationDate != null ? moment(res.body.initializationDate) : null;
-        res.body.results = this.convertResultsDateFromServer(res.body.results);
-        res.body.submissions = this.convertSubmissionsDateFromServer(res.body.submissions);
-        res.body.exercise = this.convertExerciseDateFromServer(res.body.exercise);
+    protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
+        if (res.body) {
+            res.body.initializationDate = res.body.initializationDate != null ? moment(res.body.initializationDate) : null;
+            res.body.results = this.convertResultsDateFromServer(res.body.results);
+            res.body.submissions = this.convertSubmissionsDateFromServer(res.body.submissions);
+            res.body.exercise = this.convertExerciseDateFromServer(res.body.exercise);
+        }
         return res;
     }
 
-    convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
-        res.body.forEach((participation: Participation) => {
-            this.convertParticipationDateFromServer(participation);
-        });
+    protected convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
+        if (res.body) {
+            res.body.forEach((participation: Participation) => {
+                this.convertParticipationDateFromServer(participation);
+            });
+        }
         return res;
     }
 
-    convertExerciseDateFromServer(exercise: Exercise) {
+    protected convertExerciseDateFromServer(exercise: Exercise) {
         if (exercise !== null) {
             exercise.releaseDate = exercise.releaseDate != null ? moment(exercise.releaseDate) : null;
             exercise.dueDate = exercise.dueDate != null ? moment(exercise.dueDate) : null;
@@ -122,14 +126,14 @@ export class ParticipationService {
         return exercise;
     }
 
-    convertParticipationDateFromServer(participation: Participation) {
+    protected convertParticipationDateFromServer(participation: Participation) {
         participation.initializationDate = participation.initializationDate != null ? moment(participation.initializationDate) : null;
         participation.results = this.convertResultsDateFromServer(participation.results);
         participation.submissions = this.convertSubmissionsDateFromServer(participation.submissions);
         return participation;
     }
 
-    convertParticipationsDateFromServer(participations: Participation[]) {
+    public convertParticipationsDateFromServer(participations: Participation[]) {
         const convertedParticipations: Participation[] = [];
         if (participations != null && participations.length > 0) {
             participations.forEach((participation: Participation) => {
@@ -139,7 +143,7 @@ export class ParticipationService {
         return convertedParticipations;
     }
 
-    convertResultsDateFromServer(results: Result[]) {
+    protected convertResultsDateFromServer(results: Result[]) {
         const convertedResults: Result[] = [];
         if (results != null && results.length > 0) {
             results.forEach((result: Result) => {
@@ -150,7 +154,7 @@ export class ParticipationService {
         return convertedResults;
     }
 
-    convertSubmissionsDateFromServer(submissions: Submission[]) {
+    protected convertSubmissionsDateFromServer(submissions: Submission[]) {
         const convertedSubmissions: Submission[] = [];
         if (submissions != null && submissions.length > 0) {
             submissions.forEach((submission: Submission) => {

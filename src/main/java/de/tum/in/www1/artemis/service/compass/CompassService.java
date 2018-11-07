@@ -213,69 +213,67 @@ public class CompassService {
             return;
         }
         Result result = resultRepository.findDistinctBySubmissionId(modelId).orElse(new Result().submission(modelingSubmission.get()).participation(modelingSubmission.get().getParticipation()));
-        // unrated result exists
-        if (result != null) {
-            if (!result.isRated()) {
-                Grade grade = engine.getResultForModel(modelId);
-                // automatic assessment holds confidence and coverage threshold
-                if (grade.getConfidence() >= CONFIDENCE_THRESHOLD && grade.getCoverage() >= COVERAGE_THRESHOLD) {
-                    ModelingExercise modelingExercise = modelingExerciseRepository.findById(result.getParticipation().getExercise().getId()).get();
-                    /*
-                     * Workaround for ignoring automatic assessments of unsupported modeling exercise types
-                     * TODO remove this after adapting compass
-                     */
-                    if (!modelingExercise.getDiagramType().equals(DiagramType.CLASS)) {
-                        return;
-                    }
-                    // Round compass grades to avoid machine precision errors, make the grades more readable
-                    // and give a slight advantage which makes 100% scores easier reachable
-                    // see: https://confluencebruegge.in.tum.de/display/ArTEMiS/Feature+suggestions for more information
-                    grade = roundGrades(grade);
-                    // Save to file system + database
-                    JsonObject json = engine.exportToJson(grade, modelId);
-                    if (json == null || json.toString().isEmpty()) {
-                        log.error("Unable to export automatic assessment to json");
-                        return;
-                    }
-                    assessmentRepository.writeAssessment(exerciseId, result.getParticipation().getStudent().getId(), modelId,
-                        false, json.toString());
-
-                    result.setRated(true);
-                    result.setAssessmentType(AssessmentType.AUTOMATIC);
-                    double maxPoints = modelingExercise.getMaxScore();
-                    // biased points
-                    double points = Math.max(Math.min(grade.getPoints(), maxPoints), 0);
-                    result.setScore((long) (points * 100 / maxPoints));
-                    result.setCompletionDate(ZonedDateTime.now());
-                    DecimalFormat formatter = new DecimalFormat("#.##"); // limit decimal places to 2
-                    result.setResultString(formatter.format(points) + " of " + formatter.format(modelingExercise.getMaxScore()) + " points");
-
-                    resultRepository.save(result);
-                    engine.removeModelWaitingForAssessment(modelId, true);
-                } else {
-                    log.info("Model " + modelId + " got a confidence of " + grade.getConfidence() + " and a coverage of " + grade.getCoverage());
+        // only automatically assess when there is not yet an assessment.
+        if (result.getAssessmentType() == null) {
+            Grade grade = engine.getResultForModel(modelId);
+            // automatic assessment holds confidence and coverage threshold
+            if (grade.getConfidence() >= CONFIDENCE_THRESHOLD && grade.getCoverage() >= COVERAGE_THRESHOLD) {
+                ModelingExercise modelingExercise = modelingExerciseRepository.findById(result.getParticipation().getExercise().getId()).get();
+                /*
+                 * Workaround for ignoring automatic assessments of unsupported modeling exercise types
+                 * TODO remove this after adapting compass
+                 */
+                if (!modelingExercise.getDiagramType().equals(DiagramType.CLASS)) {
+                    return;
                 }
-            } else {
-                // Make sure next optimal model is in a valid state
+                // Round compass grades to avoid machine precision errors, make the grades more readable
+                // and give a slight advantage which makes 100% scores easier reachable
+                // see: https://confluencebruegge.in.tum.de/display/ArTEMiS/Feature+suggestions for more information
+                grade = roundGrades(grade);
+                // Save to file system + database
+                JsonObject json = engine.exportToJson(grade, modelId);
+                if (json == null || json.toString().isEmpty()) {
+                    log.error("Unable to export automatic assessment to json");
+                    return;
+                }
+                assessmentRepository.writeAssessment(exerciseId, result.getParticipation().getStudent().getId(), modelId,
+                    false, json.toString());
+
+                result.setRated(modelingExercise.getDueDate() == null || modelingSubmission.get().getSubmissionDate().isBefore(modelingExercise.getDueDate()));
+                result.setAssessmentType(AssessmentType.AUTOMATIC);
+                double maxPoints = modelingExercise.getMaxScore();
+                // biased points
+                double points = Math.max(Math.min(grade.getPoints(), maxPoints), 0);
+                result.setScore((long) (points * 100 / maxPoints));
+                result.setCompletionDate(ZonedDateTime.now());
+                DecimalFormat formatter = new DecimalFormat("#.##"); // limit decimal places to 2
+                result.setResultString(formatter.format(points) + " of " + formatter.format(modelingExercise.getMaxScore()) + " points");
+
+                resultRepository.save(result);
                 engine.removeModelWaitingForAssessment(modelId, true);
+            } else {
+                log.info("Model " + modelId + " got a confidence of " + grade.getConfidence() + " and a coverage of " + grade.getCoverage());
             }
+        } else {
+            // Make sure next optimal model is in a valid state
+            engine.removeModelWaitingForAssessment(modelId, true);
         }
     }
 
     private Grade roundGrades(Grade grade) {
         Map<String, Double> jsonIdPointsMapping = grade.getJsonIdPointsMapping();
         BigDecimal pointsSum = new BigDecimal(0);
-        for (Map.Entry<String, Double> entry: jsonIdPointsMapping.entrySet()) {
-            BigDecimal bd = new BigDecimal(entry.getValue());
-            double fractionalPart = bd.remainder(BigDecimal.ONE).subtract(new BigDecimal(0.15)).doubleValue();
-            bd = bd.setScale(0, RoundingMode.DOWN);
+        for (Map.Entry<String, Double> entry : jsonIdPointsMapping.entrySet()) {
+            BigDecimal point = new BigDecimal(entry.getValue());
+            double fractionalPart = point.remainder(BigDecimal.ONE).subtract(new BigDecimal(0.15)).doubleValue();
+            point = point.setScale(0, RoundingMode.DOWN);
             if (fractionalPart >= 0.5) {
-                bd = bd.add(new BigDecimal(1));
+                point = point.add(new BigDecimal(1));
             } else if (fractionalPart >= 0) {
-                bd = bd.add(new BigDecimal(0.5));
+                point = point.add(new BigDecimal(0.5));
             }
-            jsonIdPointsMapping.put(entry.getKey(), bd.doubleValue());
-            pointsSum = pointsSum.add(bd);
+            jsonIdPointsMapping.put(entry.getKey(), point.doubleValue());
+            pointsSum = pointsSum.add(point);
         }
         return new CompassGrade(grade.getCoverage(), grade.getConfidence(), pointsSum.doubleValue(), grade.getJsonIdCommentsMapping(), jsonIdPointsMapping);
     }

@@ -61,6 +61,7 @@
                 <td>{{quizExercise.maxScore}}</td>
                 <td class="text-right">
                     <div class="btn-group flex-btn-group-container">
+
                         <button type="submit"
                                 (click)="openForPractice(quizExercise.id)"
                                 class="btn btn-warning btn-sm mr-1"
@@ -108,6 +109,12 @@
                                 (click)="exportQuizById(quizExercise.id, true)"
                                 class="btn btn-primary btn-sm mr-1">
                             <span class="hidden-sm-down" jhiTranslate="entity.action.export"></span>
+                        </button>
+                        <button type="submit"
+                                [routerLink]="['/course', quizExercise.course.id, 'exercise', quizExercise.id, 'dashboard' ]"
+                                class="btn btn-info btn-sm mr-1">
+                            <span class="fa fa-eye"></span>
+                            <span class="d-none d-md-inline" jhiTranslate="entity.action.dashboard">Dashboard</span>
                         </button>
                         <button type="submit"
                                 [hidden]="quizIsOver(quizExercise) && userIsInstructor()"

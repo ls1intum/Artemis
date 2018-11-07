@@ -5,9 +5,9 @@ export interface FileUploadResponse {
     path: string;
 }
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class FileUploaderService {
-    constructor(private http: HttpClient) { }
+    constructor(private http: HttpClient) {}
 
     uploadFile(file: Blob | File, fileName?: string): Promise<FileUploadResponse> {
         const formData = new FormData();
@@ -23,7 +23,13 @@ export class FileUploaderService {
         // Get file from the backend using filePath,
         const file = await this.http.get(filePath, { responseType: 'blob' }).toPromise();
         // Generate a temp file name with extension. File extension is necessary as backend stores only specific kind of files,
-        const tempFilename = 'temp' + filePath.split('/').pop().split('#')[0].split('?')[0];
+        const tempFilename =
+            'temp' +
+            filePath
+                .split('/')
+                .pop()
+                .split('#')[0]
+                .split('?')[0];
         const formData = new FormData();
         formData.append('file', file, tempFilename);
         // Upload the file to backend. This will make a new file in the backend in the temp folder

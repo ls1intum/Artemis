@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>ArTEMiS</title>
-    <meta name="description" content="">
+    <meta name="description" content="Description for Artemis">
     <meta name="google" value="notranslate">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="theme-color" content="#000000">
@@ -78,7 +78,10 @@
             setTimeout(showError, 4000);
         }
         function showError() {
-            document.getElementById("jhipster-error").style.display="block";
+            var errorElm = document.getElementById("jhipster-error");
+            if (errorElm && errorElm.style) {
+                errorElm.style.display = "block";
+            }
         }
     </script>
     <!-- uncomment this for adding service worker

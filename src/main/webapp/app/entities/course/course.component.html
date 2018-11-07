@@ -18,6 +18,7 @@
             <tr>
             <th><span jhiTranslate="global.field.id">ID</span></th>
             <th><span jhiTranslate="arTeMiSApp.course.title">Title</span></th>
+            <th><span jhiTranslate="arTeMiSApp.course.shortName">Short Name</span></th>
             <th><span jhiTranslate="arTeMiSApp.course.studentGroupName">Student Group Name</span></th>
             <th><span jhiTranslate="arTeMiSApp.course.teachingAssistantGroupName">Teaching Assistant Group Name</span></th>
             <th><span jhiTranslate="arTeMiSApp.course.instructorGroupName">Instructor Group Name</span></th>
@@ -31,6 +32,7 @@
             <tr *ngFor="let course of courses ;trackBy: trackId">
                 <td><a [routerLink]="['/course', course.id, 'view' ]">{{course.id}}</a></td>
                 <td>{{course.title}}</td>
+                <td>{{course.shortName}}</td>
                 <td>{{course.studentGroupName}}</td>
                 <td>{{course.teachingAssistantGroupName}}</td>
                 <td>{{course.instructorGroupName}}</td>
@@ -41,7 +43,7 @@
                     <div class="btn-group flex-btn-group-container">
                         <div class="d-inline-block" ngbDropdown>
                             <button class="btn btn-primary btn-sm mr-1" ngbDropdownToggle>
-                                <span class="fa fa-list-alt"></span>&nbsp;
+                                <fa-icon [icon]="'list-alt'"></fa-icon>
                                 <span class="hidden-xs hidden-sm" jhiTranslate="arTeMiSApp.course.exercises"></span>
                                 <span class="caret"></span>
                             </button>
@@ -68,24 +70,20 @@
                                 ></button>-->
                             </div>
                         </div>
-                        <button type="submit"
-                                [routerLink]="['/course', course.id, 'view' ]"
-                                class="btn btn-info btn-sm mr-1">
-                            <span class="'eye'"></span>
+                        <button type="submit" [routerLink]="['/course', course.id, 'dashboard' ]" class="btn btn-info btn-sm mr-1">
+                            <fa-icon [icon]="'eye'"></fa-icon>
+                            <span class="d-none d-md-inline" jhiTranslate="entity.action.dashboard">Dashboard</span>
+                        </button>
+                        <button type="submit" [routerLink]="['/course', course.id, 'view' ]" class="btn btn-info btn-sm mr-1">
+                            <fa-icon [icon]="'eye'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                         </button>
-                        <button type="submit"
-                                [routerLink]="['/course', course.id, 'edit']"
-                                class="btn btn-primary btn-sm mr-1">
-                            <span class="'pencil-alt'"></span>
+                        <button type="submit" [routerLink]="['/course', course.id, 'edit']" class="btn btn-primary btn-sm mr-1">
+                            <fa-icon [icon]="'pencil-alt'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                         </button>
-                        <button type="submit"
-                                [routerLink]="['/', { outlets: { popup: 'course/'+ course.id + '/delete'} }]"
-                                replaceUrl="true"
-                                queryParamsHandling="merge"
-                                class="btn btn-danger btn-sm mr-1">
-                            <span class="'times'"></span>
+                        <button type="submit" [routerLink]="['/', { outlets: { popup: 'course/'+ course.id + '/delete'} }]" replaceUrl="true" queryParamsHandling="merge" class="btn btn-danger btn-sm mr-1">
+                            <fa-icon [icon]="'times'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
                         </button>
                     </div>

@@ -1,11 +1,10 @@
 import './vendor.ts';
 
-import { Injector, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { NgbDatepickerConfig } from '@ng-bootstrap/ng-bootstrap';
-import { Ng2Webstorage, LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { JhiEventManager } from 'ng-jhipster';
+import { NgxWebstorageModule } from 'ngx-webstorage';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 import { AuthInterceptor } from './blocks/interceptor/auth.interceptor';
@@ -20,7 +19,7 @@ import { ArTEMiSHomeModule } from './home/home.module';
 import { ArTEMiSAccountModule } from './account/account.module';
 import { ArTEMiSCoursesModule } from './courses';
 import { ArTEMiSEntityModule } from './entities/entity.module';
-import { ArTEMiSInstructorCourseDashboardModule, ArTEMiSInstructorDashboardModule } from './instructor-dashboard';
+import { ArTEMiSInstructorCourseDashboardModule, ArTEMiSInstructorDashboardModule } from './dashboard';
 import { ArTEMiSAssessmentDashboardModule } from './assessment-dashboard';
 import { PaginationConfig } from './blocks/config/uib-pagination.config';
 import { DifferencePipe, MomentModule } from 'angular2-moment';
@@ -51,7 +50,7 @@ import { ParticipationDataProvider } from './courses/exercises/participation-dat
         BrowserModule,
         BrowserAnimationsModule,
         ArTEMiSAppRoutingModule,
-        Ng2Webstorage.forRoot({ prefix: 'jhi', separator: '-' }),
+        NgxWebstorageModule.forRoot({ prefix: 'jhi', separator: '-' }),
         /**
          * @external Moment is a date library for parsing, validating, manipulating, and formatting dates.
          */
@@ -82,10 +81,6 @@ import { ParticipationDataProvider } from './courses/exercises/participation-dat
         FooterComponent,
         QuizExerciseExportComponent
     ],
-    entryComponents: [
-        /** @desc Angular app main component **/
-        JhiMainComponent
-    ],
     providers: [
         ProfileService,
         RepositoryService,
@@ -108,26 +103,22 @@ import { ParticipationDataProvider } from './courses/exercises/participation-dat
         {
             provide: HTTP_INTERCEPTORS,
             useClass: AuthInterceptor,
-            multi: true,
-            deps: [LocalStorageService, SessionStorageService]
+            multi: true
         },
         {
             provide: HTTP_INTERCEPTORS,
             useClass: AuthExpiredInterceptor,
-            multi: true,
-            deps: [Injector]
+            multi: true
         },
         {
             provide: HTTP_INTERCEPTORS,
             useClass: ErrorHandlerInterceptor,
-            multi: true,
-            deps: [JhiEventManager]
+            multi: true
         },
         {
             provide: HTTP_INTERCEPTORS,
             useClass: NotificationInterceptor,
-            multi: true,
-            deps: [Injector]
+            multi: true
         },
         {
             provide: HTTP_INTERCEPTORS,

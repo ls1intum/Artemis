@@ -18,9 +18,9 @@ import { Subscription } from 'rxjs/Subscription';
     templateUrl: './text-exercise-dialog.component.html'
 })
 export class TextExerciseDialogComponent implements OnInit {
-
     textExercise: TextExercise;
     isSaving: boolean;
+    maxScorePattern = '^[1-9]{1}[0-9]{0,4}$'; // make sure max score is a positive natural integer and not too large
 
     courses: Course[];
 
@@ -30,13 +30,16 @@ export class TextExerciseDialogComponent implements OnInit {
         private textExerciseService: TextExerciseService,
         private courseService: CourseService,
         private eventManager: JhiEventManager
-    ) {
-    }
+    ) {}
 
     ngOnInit() {
         this.isSaving = false;
-        this.courseService.query()
-            .subscribe((res: HttpResponse<Course[]>) => { this.courses = res.body; }, (res: HttpErrorResponse) => this.onError(res));
+        this.courseService.query().subscribe(
+            (res: HttpResponse<Course[]>) => {
+                this.courses = res.body;
+            },
+            (res: HttpErrorResponse) => this.onError(res)
+        );
     }
 
     clear() {
@@ -46,21 +49,18 @@ export class TextExerciseDialogComponent implements OnInit {
     save() {
         this.isSaving = true;
         if (this.textExercise.id !== undefined) {
-            this.subscribeToSaveResponse(
-                this.textExerciseService.update(this.textExercise));
+            this.subscribeToSaveResponse(this.textExerciseService.update(this.textExercise));
         } else {
-            this.subscribeToSaveResponse(
-                this.textExerciseService.create(this.textExercise));
+            this.subscribeToSaveResponse(this.textExerciseService.create(this.textExercise));
         }
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<TextExercise>>) {
-        result.subscribe((res: HttpResponse<TextExercise>) =>
-            this.onSaveSuccess(res.body), (res: HttpErrorResponse) => this.onSaveError());
+        result.subscribe((res: HttpResponse<TextExercise>) => this.onSaveSuccess(res.body), (res: HttpErrorResponse) => this.onSaveError());
     }
 
     private onSaveSuccess(result: TextExercise) {
-        this.eventManager.broadcast({ name: 'textExerciseListModification', content: 'OK'});
+        this.eventManager.broadcast({ name: 'textExerciseListModification', content: 'OK' });
         this.isSaving = false;
         this.activeModal.dismiss(result);
     }
@@ -70,7 +70,7 @@ export class TextExerciseDialogComponent implements OnInit {
     }
 
     private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message, null, null);
+        this.jhiAlertService.error(error.message);
     }
 
     trackCourseById(index: number, item: Course) {
@@ -83,26 +83,19 @@ export class TextExerciseDialogComponent implements OnInit {
     template: ''
 })
 export class TextExercisePopupComponent implements OnInit, OnDestroy {
-
     routeSub: Subscription;
 
-    constructor(
-        private route: ActivatedRoute,
-        private textExercisePopupService: TextExercisePopupService
-    ) {}
+    constructor(private route: ActivatedRoute, private textExercisePopupService: TextExercisePopupService) {}
 
     ngOnInit() {
         this.routeSub = this.route.params.subscribe(params => {
-            if ( params['id'] ) {
-                this.textExercisePopupService
-                    .open(TextExerciseDialogComponent as Component, params['id']);
+            if (params['id']) {
+                this.textExercisePopupService.open(TextExerciseDialogComponent as Component, params['id']);
             } else {
-                if ( params['courseId'] ) {
-                    this.textExercisePopupService
-                        .open(TextExerciseDialogComponent as Component, undefined, params['courseId']);
+                if (params['courseId']) {
+                    this.textExercisePopupService.open(TextExerciseDialogComponent as Component, undefined, params['courseId']);
                 } else {
-                    this.textExercisePopupService
-                        .open(TextExerciseDialogComponent as Component);
+                    this.textExercisePopupService.open(TextExerciseDialogComponent as Component);
                 }
             }
         });

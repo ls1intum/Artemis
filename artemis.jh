@@ -35,6 +35,7 @@ entity DropLocationCounter(dropLocationCounter) {    //extends StatisticCounter
 
 entity Course (course) {
     title String,
+    shortName String,
     studentGroupName String,
     teachingAssistantGroupName String,
     instructorGroupName String,
@@ -47,6 +48,7 @@ entity Exercise (exercise) {        //abstract
     problemStatement String,        //LONGTEXT --> lob
     gradingInstructions String,     //LONGTEXT --> lob
     title String,
+    shortName String,
     releaseDate ZonedDateTime,
     dueDate ZonedDateTime,
     maxScore Double,
@@ -72,8 +74,16 @@ entity ProgrammingExercise {        //extends Exercise
     baseRepositoryUrl String,
     solutionRepositoryUrl String,
     baseBuildPlanId String,
+    solutionBuildPlanId String,
     publishBuildPlanUrl Boolean,
-    allowOnlineEditor Boolean
+    allowOnlineEditor Boolean,
+    programmingLanguage ProgrammingLanguage,
+    packageName String
+}
+
+enum ProgrammingLanguage {
+    JAVA,
+    PYTHON
 }
 
 entity ModelingExercise {           //extends Exercise
@@ -185,8 +195,7 @@ entity ExerciseResult (result) {
 
 enum AssessmentType {
     AUTOMATIC,
-    MANUAL,
-    SEMIAUTOMATIC
+    MANUAL
 }
 
 entity Feedback(feedback) {
@@ -212,7 +221,9 @@ enum InitializationState {
 
 enum SubmissionType {
 	MANUAL,
-    TIMEOUT
+    TIMEOUT,
+    TEST,
+    OTHER
 }
 
 entity Submission {                 //abstract

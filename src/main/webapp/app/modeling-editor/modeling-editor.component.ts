@@ -160,6 +160,11 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         });
     }
 
+    /**
+     * This function initialized the Apollon editor depending on the submission status.
+     * If it was already submitted, the Apollon editor is loaded in read-only mode.
+     * Otherwise, it is loaded in the modeling mode and an auto save timer is started.
+     */
     initializeApollonEditor(initialState: State) {
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();
@@ -209,6 +214,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                 diagramType: <ApollonOptions['diagramType']>this.modelingExercise.diagramType
             });
             this.updateSubmissionModel();
+            // auto save of submission if there are changes
             this.autoSaveInterval = window.setInterval(() => {
                 this.autoSaveTimer++;
                 if (this.submission && this.submission.submitted) {
@@ -336,6 +342,9 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         }
     }
 
+    /**
+     * Saves the current model state in the attribute diagramState
+     */
     updateSubmissionModel() {
         this.diagramState = this.apollonEditor.getState();
         const diagramJson = JSON.stringify(this.diagramState);
@@ -344,6 +353,9 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         }
     }
 
+    /**
+     * Retrieves names and positions for displaying the assessment and calculates the total score
+     */
     initializeAssessmentInfo() {
         if (this.assessments && this.submission && this.submission.model) {
             this.submissionState = JSON.parse(this.submission.model);
@@ -361,12 +373,19 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         this.positions = this.modelingAssessmentService.getElementPositions(this.assessments, this.apollonEditor.getState());
     }
 
+    /**
+     * This function is used for limiting the number of symbols for the assessment to 5.
+     * For each point an <i> element is created
+     */
     numberToArray(n: number, startFrom: number): number[] {
         n = n > 5 ? 5 : n;
         n = n < -5 ? -5 : n;
         return this.modelingAssessmentService.numberToArray(n, startFrom);
     }
 
+    /**
+     * Checks whether a model element in the modeling editor is selected.
+     */
     isSelected(id: string, type: ModelElementType) {
         if (
             (!this.selectedEntities || this.selectedEntities.length === 0) &&
@@ -381,6 +400,9 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         }
     }
 
+    /**
+     * This function opens the modal for the help dialog.
+     */
     open(content: any) {
         this.modalService.open(content, { size: 'lg' });
     }
@@ -399,6 +421,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         return true;
     }
 
+    // displays the alert for confirming leaving the page if there are unsaved changes
     @HostListener('window:beforeunload', ['$event'])
     unloadNotification($event: any) {
         if (!this.canDeactivate()) {
@@ -406,6 +429,10 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         }
     }
 
+    /**
+     * starts a retry and resets necessary attributes
+     * the retry is only persisted after saving or submitting the model
+     */
     retry() {
         this.retryStarted = true;
         this.submission.id = null;
@@ -420,6 +447,10 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         }
     }
 
+    /**
+     * counts the number of model elements
+     * is used in the submit() function
+     */
     calculateNumberOfModelElements(): number {
         if (this.diagramState) {
             let total = this.diagramState.entities.allIds.length + this.diagramState.relationships.allIds.length;
