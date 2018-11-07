@@ -205,9 +205,9 @@ public class FileService {
             String fileUrl = java.net.URLDecoder.decode(resource.getURL().toString(), "UTF-8");
             int index = fileUrl.indexOf(prefix);
             String targetFilePath = fileUrl.substring(index + prefix.length());
-            //special case for '.gitignore' file which would not be included in build otherwise
-            if (targetFilePath.endsWith("gitignore")) {
-                targetFilePath = targetFilePath.replaceAll("gitignore", ".gitignore");
+            //special case for '.git.ignore.file' file which would not be included in build otherwise
+            if (targetFilePath.endsWith("git.ignore.file")) {
+                targetFilePath = targetFilePath.replaceAll("git.ignore.file", ".gitignore");
             }
 
             Path copyPath = Paths.get(targetDirectoryPath + targetFilePath);
