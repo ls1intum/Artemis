@@ -181,7 +181,7 @@ entity ShortAnswerQuestion {          //extends Question
 }
 
 entity ShortAnswerSpot {
-	text String,
+	width Integer,
     invalid Boolean
 }
 
@@ -285,7 +285,7 @@ entity DragAndDropMapping {
 }
 
 entity ShortAnswerSubmittedAnswer (saSubmittedAnswer) {      //extends SubmittedAnswer
-
+    text String
 }
 
 entity ShortAnswerMapping {
@@ -303,7 +303,7 @@ relationship OneToMany {
     QuizPointStatistic{PointCounters} to PointCounter{quizPointStatistic},
     MultipleChoiceQuestionStatistic{AnswerCounters} to AnswerCounter{MultipleChoiceQuestionStatistic},
     DragAndDropQuestionStatistic{DropLocationCounters} to DropLocationCounter{DragAndDropQuestionStatistic},
-    ShortAnswerQuestionStatistic {ShortAnswerSpotCounters} to ShortAnswerSpotCounter{ShortAnswerQuestionStatistic},
+    ShortAnswerQuestionStatistic{ShortAnswerSpotCounters} to ShortAnswerSpotCounter{ShortAnswerQuestionStatistic},
     Course{exercises} to Exercise{course(title)},
     Exercise{participations} to Participation{exercise(title)},
     Participation{results} to ExerciseResult{participation},
