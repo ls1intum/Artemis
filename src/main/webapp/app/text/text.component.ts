@@ -1,12 +1,13 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 
-import { Participation, ParticipationService } from 'app/entities/participation';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { TextSubmission } from 'app/entities/text-submission';
-import { TextExercise } from 'app/entities/text-exercise';
+import { TextExercise, TextExerciseService } from 'app/entities/text-exercise';
+import { Result } from 'app/entities/result';
+import { Participation, ParticipationService } from 'app/entities/participation';
 
 @Component({
     templateUrl: './text.component.html',
@@ -17,19 +18,28 @@ export class TextComponent implements OnInit, OnDestroy {
     private id: number;
     private submission: TextSubmission;
     private textExercise: TextExercise;
+    participation: Participation;
+    result: Result;
 
     constructor(
         private route: ActivatedRoute,
+        private textExerciseService: TextExerciseService,
         private participationService: ParticipationService,
         private jhiAlertService: JhiAlertService
     ) {}
 
     ngOnInit() {
         this.subscription = this.route.params.subscribe(params => {
-            this.id = params['id'];
+            if (params['participationId']) {
+                this.textExerciseService.find(params['participationId']).subscribe(
+                    data => {
+                        let exercise = data.body;
+                        console.log(data);
+                    },
+                    (error: HttpErrorResponse) => this.onError(error)
+                );
+            }
         });
-
-        this.init();
     }
 
     ngOnDestroy() {}

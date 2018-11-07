@@ -34,6 +34,7 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
+    readonly TEXT = ExerciseType.TEXT;
 
     _course: Course;
     routerSubscription: Subscription;
@@ -125,6 +126,7 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
     }
 
     initExercises(exercises: Exercise[]) {
+        console.log(exercises);
         if (this.filterByExerciseId) {
             exercises = exercises.filter(exercise => exercise.id === this.filterByExerciseId);
         }
@@ -195,10 +197,6 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
         if (exercise.type === ExerciseType.QUIZ) {
             // Start the quiz
             return this.router.navigate(['/quiz', exercise.id]);
-        }
-
-        if (exercise.type === ExerciseType.TEXT) {
-            return this.router.navigate(['/text', exercise.id]);
         }
 
         this.courseExerciseService
@@ -299,6 +297,14 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
                 participation.initializationState === InitializationState.FINISHED
             ) {
                 return ParticipationStatus.MODELING_EXERCISE;
+            }
+        } else if (exercise.type === ExerciseType.TEXT && this.hasParticipations(exercise)) {
+            const participation = exercise.participations[0];
+            if (
+                participation.initializationState === InitializationState.INITIALIZED ||
+                participation.initializationState === InitializationState.FINISHED
+            ) {
+                return ParticipationStatus.TEXT_EXERCISE;
             }
         }
         if (!this.hasParticipations(exercise)) {

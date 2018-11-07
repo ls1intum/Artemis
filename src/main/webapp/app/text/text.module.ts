@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
 import { textRoute } from './text.route';
-import { TextComponent } from 'app/text/participate/text.component';
+import { TextComponent } from './text.component';
 
 const ENTITY_STATES = [...textRoute];
 

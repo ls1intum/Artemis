@@ -118,7 +118,7 @@ public class ParticipationService {
             participation = configureBuildPlan(participation, programmingExercise);
             participation.setInitializationState(INITIALIZED);
             participation.setInitializationDate(ZonedDateTime.now());
-        } else if (exercise instanceof QuizExercise || exercise instanceof ModelingExercise) {
+        } else if (exercise instanceof QuizExercise || exercise instanceof ModelingExercise || exercise instanceof TextExercise) {
             if (participation.getInitializationState() == null) {
                 participation.setInitializationState(INITIALIZED);
             }

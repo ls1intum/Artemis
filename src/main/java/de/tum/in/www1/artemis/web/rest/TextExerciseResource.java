@@ -2,11 +2,13 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.CourseService;
+import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -40,13 +42,18 @@ public class TextExerciseResource {
     private final UserService userService;
     private final CourseService courseService;
     private final AuthorizationCheckService authCheckService;
+    private final ParticipationService participationService;
 
-    public TextExerciseResource(TextExerciseRepository textExerciseRepository, UserService userService,
-                                AuthorizationCheckService authCheckService, CourseService courseService) {
+    public TextExerciseResource(TextExerciseRepository textExerciseRepository,
+                                UserService userService,
+                                AuthorizationCheckService authCheckService,
+                                CourseService courseService,
+                                ParticipationService participationService) {
         this.textExerciseRepository = textExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
+        this.participationService = participationService;
     }
 
     /**
@@ -64,6 +71,7 @@ public class TextExerciseResource {
         if (textExercise.getId() != null) {
             throw new BadRequestAlertException("A new textExercise cannot already have an ID", ENTITY_NAME, "idexists");
         }
+
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(textExercise.getCourse().getId());
         if (course == null) {
@@ -75,6 +83,7 @@ public class TextExerciseResource {
             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
+
         TextExercise result = textExerciseRepository.save(textExercise);
         return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
@@ -98,6 +107,7 @@ public class TextExerciseResource {
         if (textExercise.getId() == null) {
             return createTextExercise(textExercise);
         }
+
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(textExercise.getCourse().getId());
         if (course == null) {
@@ -109,6 +119,7 @@ public class TextExerciseResource {
             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
+
         TextExercise result = textExerciseRepository.save(textExercise);
         return ResponseEntity.ok()
             .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, textExercise.getId().toString()))
