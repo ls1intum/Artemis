@@ -1,0 +1,33 @@
+{
+    "name": "ShortAnswerQuestion",
+    "fields": [],
+    "relationships": [
+        {
+            "relationshipType": "one-to-many",
+            "relationshipName": "spots",
+            "otherEntityName": "shortAnswerSpot",
+            "otherEntityRelationshipName": "question"
+        },
+        {
+            "relationshipType": "one-to-many",
+            "relationshipName": "solutions",
+            "otherEntityName": "shortAnswerSolution",
+            "otherEntityRelationshipName": "question"
+        },
+        {
+            "relationshipType": "one-to-many",
+            "relationshipName": "correctMappings",
+            "otherEntityName": "shortAnswerMapping",
+            "otherEntityRelationshipName": "question"
+        }
+    ],
+    "changelogDate": "20181107093810",
+    "entityTableName": "short_answer_question",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no",
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
+}

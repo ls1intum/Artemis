@@ -1,0 +1,26 @@
+{
+    "arTeMiSApp": {
+        "shortAnswerMapping": {
+            "home": {
+                "title": "Short Answer Mappings",
+                "createLabel": "Short Answer Mapping erstellen",
+                "createOrEditLabel": "Short Answer Mapping erstellen oder bearbeiten"
+            },
+            "created": "Short Answer Mapping erstellt mit ID {{ param }}",
+            "updated": "Short Answer Mapping aktualisiert mit ID {{ param }}",
+            "deleted": "Short Answer Mapping gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Short Answer Mapping {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Short Answer Mapping"
+            },
+            "shortAnswerSpotIndex": "Short Answer Spot Index",
+            "shortAnswerSolutionIndex": "Short Answer Solution Index",
+            "invalid": "Invalid",
+            "solution": "Solution",
+            "spot": "Spot",
+            "question": "Question"
+        }
+    }
+}

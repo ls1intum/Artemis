@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 
-import { ArTEMiSTestModule } from '../../../test.module';
+import { ArTeMiSTestModule } from '../../../test.module';
 import { SubmissionUpdateComponent } from 'app/entities/submission/submission-update.component';
 import { SubmissionService } from 'app/entities/submission/submission.service';
 import { Submission } from 'app/shared/model/submission.model';
@@ -16,7 +16,7 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
+                imports: [ArTeMiSTestModule],
                 declarations: [SubmissionUpdateComponent]
             })
                 .overrideTemplate(SubmissionUpdateComponent, '')

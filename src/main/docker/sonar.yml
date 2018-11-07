@@ -1,7 +1,7 @@
 version: '2'
 services:
     artemis-sonar:
-        image: sonarqube:6.5-alpine
+        image: sonarqube:7.1
         ports:
             - 9000:9000
             - 9092:9092

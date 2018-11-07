@@ -20,11 +20,9 @@ public class DragAndDropQuestionStatistic extends QuestionStatistic implements S
 
     private static final long serialVersionUID = 1L;
 
-
     @OneToMany(cascade= CascadeType.ALL, fetch= FetchType.EAGER, orphanRemoval=true, mappedBy = "dragAndDropQuestionStatistic")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<DropLocationCounter> dropLocationCounters = new HashSet<>();
-
 
     public Set<DropLocationCounter> getDropLocationCounters() {
         return dropLocationCounters;
