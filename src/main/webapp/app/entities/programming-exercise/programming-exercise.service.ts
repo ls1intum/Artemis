@@ -5,7 +5,6 @@ import { SERVER_API_URL } from 'app/app.constants';
 
 import { ProgrammingExercise } from './programming-exercise.model';
 import { createRequestOption } from 'app/shared';
-import * as moment from 'moment';
 import { ExerciseService } from 'app/entities/exercise';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
