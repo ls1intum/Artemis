@@ -1,0 +1,29 @@
+{
+    "name": "ShortAnswerSpotCounter",
+    "fields": [],
+    "relationships": [
+        {
+            "relationshipType": "one-to-one",
+            "relationshipName": "spot",
+            "otherEntityName": "shortAnswerSpot",
+            "otherEntityField": "id",
+            "ownerSide": true,
+            "otherEntityRelationshipName": "shortAnswerSpotCounter"
+        },
+        {
+            "relationshipType": "many-to-one",
+            "relationshipName": "shortAnswerQuestionStatistic",
+            "otherEntityName": "shortAnswerQuestionStatistic",
+            "otherEntityField": "id"
+        }
+    ],
+    "changelogDate": "20181107093753",
+    "entityTableName": "short_answer_spot_counter",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no",
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
+}
