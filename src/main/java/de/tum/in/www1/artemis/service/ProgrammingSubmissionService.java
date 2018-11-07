@@ -41,8 +41,8 @@ public class ProgrammingSubmissionService {
 
         try {
             String lastCommitHash = versionControlService.get().getLastCommitHash(requestBody);
-            log.info("create new programmingSubmission with commitHash: " + lastCommitHash);
             programmingSubmission.setCommitHash(lastCommitHash);
+            log.info("create new programmingSubmission with commitHash: " + lastCommitHash);
         } catch (Exception ex) {
             log.error("Commit hash could not be parsed for submission from participation " + participation, ex);
         }
