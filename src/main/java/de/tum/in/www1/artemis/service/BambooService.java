@@ -482,22 +482,25 @@ public class BambooService implements ContinuousIntegrationService {
             }
         }
         addFeedbackToResult(result, buildResultDetails);
-
+        // save result, otherwise the next database access programmingSubmissionRepository.findByCommitHash will throw an exception
+        resultRepository.save(result);
         if (buildResults.containsKey("vcsRevisionKey")) {
-            ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findByCommitHash((String) buildResults.get("vcsRevisionKey"));
+            String commitHash = (String) buildResults.get("vcsRevisionKey");
+
+            //Due to test case changes there might be multiple submissions with the same commit hash, but with different participations, therefore we have to take the participation_id into account
+            ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHash(participation.getId(), commitHash);
             if (programmingSubmission == null) { // no matching programming submission
-                log.warn("Could not find ProgrammingSubmission for Commit-Hash {} (Participation {}, Build-Plan {})", buildResults.get("vcsRevisionKey"), participation.getId(), participation.getBuildPlanId());
-                // TODO Think about this case and handle it properly (e.g. by creating this submission now)
+                log.warn("Could not find ProgrammingSubmission for Commit-Hash {} (Participation {}, Build-Plan {}). Will create it subsequently...", commitHash, participation.getId(), participation.getBuildPlanId());
                 // this might be a wrong build (what could be the reason), or this might be due to test changes
                 // what happens if only the test has changes? should we then create a new submission?
                 programmingSubmission = new ProgrammingSubmission();
-                participation.addSubmissions(programmingSubmission);
-                programmingSubmission.setSubmitted(false);
+                programmingSubmission.setParticipation(participation);
+                programmingSubmission.setSubmitted(true);
                 programmingSubmission.setType(SubmissionType.OTHER);
+                programmingSubmission.setCommitHash(commitHash);
                 programmingSubmission.setSubmissionDate(result.getCompletionDate());
-                log.info("Could not find corresponding submission to build result with Commit-Hash {}. Will create it afterwards", buildResults.get("vcsRevisionKey"));
             } else {
-                log.info("Found corresponding submission to build result with Commit-Hash {}", buildResults.get("vcsRevisionKey"));
+                log.info("Found corresponding submission to build result with Commit-Hash {}", commitHash);
             }
             // connect submission and result
             result.setSubmission(programmingSubmission);

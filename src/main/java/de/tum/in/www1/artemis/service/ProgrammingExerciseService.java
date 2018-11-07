@@ -70,7 +70,8 @@ public class ProgrammingExerciseService {
             ProgrammingSubmission submission = new ProgrammingSubmission();
             submission.setType(SubmissionType.TEST);
             submission.setSubmissionDate(ZonedDateTime.now());
-            participation.addSubmissions(submission);
+            submission.setSubmitted(true);
+            submission.setParticipation(participation);
             try {
                 String lastCommitHash = versionControlService.get().getLastCommitHash(requestBody);
                 log.info("create new programmingSubmission with commitHash: " + lastCommitHash);
