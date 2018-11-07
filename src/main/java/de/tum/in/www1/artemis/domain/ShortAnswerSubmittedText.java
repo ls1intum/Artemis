@@ -15,7 +15,7 @@ import java.util.Objects;
  * A ShortAnswerSubmittedText.
  */
 @Entity
-@Table(name = "sa_submitted_text")
+@Table(name = "short_answer_submitted_text")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class ShortAnswerSubmittedText implements Serializable {
 

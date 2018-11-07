@@ -23,7 +23,7 @@
         }
     ],
     "changelogDate": "20181107093826",
-    "entityTableName": "sa_submitted_text",
+    "entityTableName": "short_answer_submitted_text",
     "dto": "no",
     "pagination": "no",
     "service": "no",
