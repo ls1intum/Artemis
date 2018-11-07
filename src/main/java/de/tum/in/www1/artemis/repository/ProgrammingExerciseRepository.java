@@ -18,5 +18,4 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     @Query("SELECT e FROM ProgrammingExercise e WHERE e.course.id = :#{#courseId}")
     List<ProgrammingExercise> findByCourseId(@Param("courseId") Long courseId);
-
 }
