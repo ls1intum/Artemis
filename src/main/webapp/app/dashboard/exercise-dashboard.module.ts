@@ -10,13 +10,13 @@ import { ExerciseDashboardComponent } from './exercise-dashboard.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArTEMiSResultModule, ResultComponent, ResultDetailComponent } from '../entities/result';
 import {
-    ExerciseDashboardArchiveDialogComponent,
+    ProgrammingExerciseArchiveDialogComponent,
     InstructorDashboardArchivePopupComponent
-} from './exercise-dashboard-archive-dialog.component';
+} from '../entities/programming-exercise/programming-exercise-archive-dialog.component';
 import {
-    ExerciseDashboardCleanupDialogComponent,
+    ProgrammingExerciseCleanupDialogComponent,
     InstructorDashboardCleanupPopupComponent
-} from './exercise-dashboard-cleanup-dialog.component';
+} from '../entities/programming-exercise/programming-exercise-cleanup-dialog.component';
 import {
     InstructorDashboardExportReposComponent,
     InstructorDashboardExportReposPopupComponent
@@ -93,9 +93,9 @@ const ENTITY_STATES = [
     ],
     declarations: [
         ExerciseDashboardComponent,
-        ExerciseDashboardArchiveDialogComponent,
+        ProgrammingExerciseArchiveDialogComponent,
         InstructorDashboardArchivePopupComponent,
-        ExerciseDashboardCleanupDialogComponent,
+        ProgrammingExerciseCleanupDialogComponent,
         InstructorDashboardCleanupPopupComponent,
         ExerciseDashboardResultDialogComponent,
         InstructorDashboardResultPopupComponent,
@@ -108,9 +108,9 @@ const ENTITY_STATES = [
         JhiMainComponent,
         ResultComponent,
         ResultDetailComponent,
-        ExerciseDashboardArchiveDialogComponent,
+        ProgrammingExerciseArchiveDialogComponent,
         InstructorDashboardArchivePopupComponent,
-        ExerciseDashboardCleanupDialogComponent,
+        ProgrammingExerciseCleanupDialogComponent,
         InstructorDashboardCleanupPopupComponent,
         ExerciseDashboardResultDialogComponent,
         InstructorDashboardResultPopupComponent,

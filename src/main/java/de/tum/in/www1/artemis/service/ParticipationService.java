@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
@@ -9,6 +10,7 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -31,6 +33,9 @@ import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.INIT
 public class ParticipationService {
 
     private final Logger log = LoggerFactory.getLogger(ParticipationService.class);
+
+    @Value("${server.url}")
+    private String ARTEMIS_BASE_URL;
 
     private final ParticipationRepository participationRepository;
     private final ExerciseRepository exerciseRepository;
@@ -143,6 +148,8 @@ public class ParticipationService {
      * @param username the username of the user that the participation belongs to
      * @return the found or created participation
      */
+
+    //TODO The method name is misleading. It sounds that data is only read, but it is also changed, see e.g. below setRated(true)
     public Participation getParticipationForQuiz(QuizExercise quizExercise, String username) {
         if (quizExercise.isEnded()) {
             // try getting participation from database first
@@ -190,14 +197,12 @@ public class ParticipationService {
         Result result = new Result().submission(quizSubmission);
 
         // construct participation
-        participation = new Participation()
-            .initializationState(INITIALIZED)
-            .exercise(quizExercise)
-            .addResult(result);
+        participation = new Participation().initializationState(INITIALIZED).exercise(quizExercise).addResult(result);
 
         if (quizExercise.isEnded() && quizSubmission.getSubmissionDate() != null) {
             // update result and participation state
             result.setRated(true);
+            result.setAssessmentType(AssessmentType.AUTOMATIC);
             result.setCompletionDate(ZonedDateTime.now());
             participation.setInitializationState(InitializationState.FINISHED);
 
@@ -244,6 +249,7 @@ public class ParticipationService {
     private Participation configureRepository(Participation participation, ProgrammingExercise exercise) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
             versionControlService.get().configureRepository(participation.getRepositoryUrlAsUrl(), participation.getStudent().getLogin());
+            versionControlService.get().addWebHook(participation.getRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + "/api/programmingSubmissions/" + participation.getId(), "ArTEMiS WebHook");
             participation.setInitializationState(InitializationState.REPO_CONFIGURED);
             return save(participation);
         } else {
@@ -396,12 +402,7 @@ public class ParticipationService {
         Participation participation = participationRepository.findById(id).get();
         if (participation != null && participation.getExercise() instanceof ProgrammingExercise) {
             if (deleteBuildPlan && participation.getBuildPlanId() != null) {
-                try {
-                    continuousIntegrationService.get().deleteBuildPlan(participation.getBuildPlanId());
-                }
-                catch(Exception ex) {
-                    log.error("Could not delete build plan: " + ex.getMessage());
-                }
+                continuousIntegrationService.get().deleteBuildPlan(participation.getBuildPlanId());
             }
             if (deleteRepository && participation.getRepositoryUrl() != null) {
                 try {

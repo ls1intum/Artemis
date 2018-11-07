@@ -14,12 +14,25 @@
             "fieldType": "String"
         },
         {
+            "fieldName": "solutionBuildPlanId",
+            "fieldType": "String"
+        },
+        {
             "fieldName": "publishBuildPlanUrl",
             "fieldType": "Boolean"
         },
         {
             "fieldName": "allowOnlineEditor",
             "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "programmingLanguage",
+            "fieldType": "ProgrammingLanguage",
+            "fieldValues": "JAVA,PYTHON"
+        },
+        {
+            "fieldName": "packageName",
+            "fieldType": "String"
         }
     ],
     "relationships": [],

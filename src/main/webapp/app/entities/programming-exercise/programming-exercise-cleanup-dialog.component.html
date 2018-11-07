@@ -6,21 +6,17 @@
     </div>
     <div class="modal-body">
         <jhi-alert-error></jhi-alert-error>
-        <p jhiTranslate="instructorDashboard.cleanup.question"
-           translateValues="{exerciseTitle: '{{exercise.title}}', courseTitle: '{{exercise.course.title}}'}">Confirm cleanup
-        </p>
+        <p jhiTranslate="instructorDashboard.cleanup.question" translateValues="{exerciseTitle: '{{exercise.title}}', courseTitle: '{{exercise.course.title}}'}">Confirm cleanup</p>
         <p></p>
         <div class="checkbox">
             <label class="control-label text-danger">
-                <input type="checkbox" name="deleteRepositories" [(ngModel)]="deleteRepositories"/>Additionally delete all existing student repositories (Be careful: this can NOT be undone!). Before you invok ethis action, we recommend that you archive the exercise first!</label>
-
+                <input type="checkbox" name="deleteRepositories" [(ngModel)]="deleteRepositories"/>Additionally delete all existing student repositories (Be careful: this can NOT be undone!). Before you invoke this action, we recommend that you archive the exercise first!</label>
         </div>
         <div class="form-group">
             <label class="text-danger">Please type in the name of the Exercise to confirm.</label>
             <input type="text" class="form-control" name="confirmExerciseName"
                    value="" [(ngModel)]="confirmExerciseName"  />
         </div>
-
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal" (click)="clear()">

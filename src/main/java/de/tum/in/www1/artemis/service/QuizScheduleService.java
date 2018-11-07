@@ -1,12 +1,12 @@
 package de.tum.in.www1.artemis.service;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -389,6 +389,7 @@ public class QuizScheduleService {
             // create new result
             Result result = new Result().participation(participation).submission(quizSubmission);
             result.setRated(true);
+            result.setAssessmentType(AssessmentType.AUTOMATIC);
             result.setCompletionDate(quizSubmission.getSubmissionDate());
             result.setSubmission(quizSubmission);
 

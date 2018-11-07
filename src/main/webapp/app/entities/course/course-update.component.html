@@ -1,8 +1,10 @@
 <div class="row justify-content-center">
     <div class="col-8">
         <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
-            <h2 id="jhi-course-heading" jhiTranslate="arTeMiSApp.course.home.createOrEditLabel">Create or edit a Course</h2>
+            <h4 *ngIf="!course.id" id="jhi-course-heading-create" jhiTranslate="arTeMiSApp.course.home.createLabel">Create new Course</h4>
+            <h4 *ngIf="course.id" id="jhi-course-heading-edit" jhiTranslate="arTeMiSApp.course.home.editLabel">Edit Course</h4>
             <div>
+                <jhi-alert></jhi-alert>
                 <jhi-alert-error></jhi-alert-error>
                 <div class="form-group" [hidden]="!course.id">
                     <label for="id" jhiTranslate="global.field.id">ID</label>
@@ -11,12 +13,17 @@
                 </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="arTeMiSApp.course.title" for="field_title">Title</label>
-                    <input type="text" class="form-control" name="title" id="field_title"
+                    <input required type="text" class="form-control" name="title" id="field_title"
                         [(ngModel)]="course.title" />
                 </div>
                 <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.course.shortName" for="field_shortName">Short Name</label>
+                    <input required type="text" class="form-control" name="shortName" id="field_shortName"
+                        [(ngModel)]="course.shortName" />
+                </div>
+                <div class="form-group">
                     <label class="form-control-label" jhiTranslate="arTeMiSApp.course.studentGroupName" for="field_studentGroupName">Student Group Name</label>
-                    <input type="text" class="form-control" name="studentGroupName" id="field_studentGroupName"
+                    <input required type="text" class="form-control" name="studentGroupName" id="field_studentGroupName"
                         [(ngModel)]="course.studentGroupName" />
                 </div>
                 <div class="form-group">
@@ -26,7 +33,7 @@
                 </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="arTeMiSApp.course.instructorGroupName" for="field_instructorGroupName">Instructor Group Name</label>
-                    <input type="text" class="form-control" name="instructorGroupName" id="field_instructorGroupName"
+                    <input required type="text" class="form-control" name="instructorGroupName" id="field_instructorGroupName"
                         [(ngModel)]="course.instructorGroupName" />
                 </div>
                 <div class="form-group">

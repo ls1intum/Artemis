@@ -31,16 +31,6 @@ public class QuizExercise extends Exercise implements Serializable {
         INACTIVE, STARTED, FINISHED
     }
 
-    public static Status statusForQuiz(QuizExercise quiz) {
-        if (!quiz.isPlannedToStart || quiz.getReleaseDate().isAfter(ZonedDateTime.now())) {
-            return Status.INACTIVE;
-        } else if (quiz.getDueDate().isBefore(ZonedDateTime.now())) {
-            return Status.FINISHED;
-        } else {
-            return Status.STARTED;
-        }
-    }
-
     private static final long serialVersionUID = 1L;
 
     @Column(name = "randomize_question_order")
@@ -652,5 +642,88 @@ public class QuizExercise extends Exercise implements Serializable {
             }
         }
         quizPointStatistic.getPointCounters().removeAll(pointCounterToDelete);
+    }
+
+    /**
+     * Recreate missing pointers from children to parents that were removed by @JSONIgnore
+     *
+     */
+    public void reconnectJSONIgnoreAttributes() {
+        // iterate through questions to add missing pointer back to quizExercise
+        // Note: This is necessary because of the @IgnoreJSON in question and answerOption
+        //       that prevents infinite recursive JSON serialization.
+        for (Question question : getQuestions()) {
+            if (question.getId() != null) {
+                question.setExercise(this);
+                //reconnect QuestionStatistics
+                if (question.getQuestionStatistic() != null) {
+                    question.getQuestionStatistic().setQuestion(question);
+                }
+                // do the same for answerOptions (if question is multiple choice)
+                if (question instanceof MultipleChoiceQuestion) {
+                    MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) question;
+                    MultipleChoiceQuestionStatistic mcStatistic = (MultipleChoiceQuestionStatistic) mcQuestion.getQuestionStatistic();
+                    //reconnect answerCounters
+                    for (AnswerCounter answerCounter : mcStatistic.getAnswerCounters()) {
+                        if (answerCounter.getId() != null) {
+                            answerCounter.setMultipleChoiceQuestionStatistic(mcStatistic);
+                        }
+                    }
+                    // reconnect answerOptions
+                    for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {
+                        if (answerOption.getId() != null) {
+                            answerOption.setQuestion(mcQuestion);
+                        }
+                    }
+                }
+                if (question instanceof DragAndDropQuestion) {
+                    DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
+                    DragAndDropQuestionStatistic dragAndDropStatistic = (DragAndDropQuestionStatistic) dragAndDropQuestion.getQuestionStatistic();
+                    // reconnect dropLocations
+                    for (DropLocation dropLocation : dragAndDropQuestion.getDropLocations()) {
+                        if (dropLocation.getId() != null) {
+                            dropLocation.setQuestion(dragAndDropQuestion);
+                        }
+                    }
+                    // reconnect dragItems
+                    for (DragItem dragItem : dragAndDropQuestion.getDragItems()) {
+                        if (dragItem.getId() != null) {
+                            dragItem.setQuestion(dragAndDropQuestion);
+                        }
+                    }
+                    // reconnect correctMappings
+                    for (DragAndDropMapping mapping : dragAndDropQuestion.getCorrectMappings()) {
+                        if (mapping.getId() != null) {
+                            mapping.setQuestion(dragAndDropQuestion);
+                        }
+                    }
+                    //reconnect dropLocationCounters
+                    for (DropLocationCounter dropLocationCounter : dragAndDropStatistic.getDropLocationCounters()) {
+                        if (dropLocationCounter.getId() != null) {
+                            dropLocationCounter.setDragAndDropQuestionStatistic(dragAndDropStatistic);
+                            dropLocationCounter.getDropLocation().setQuestion(dragAndDropQuestion);
+                        }
+                    }
+                }
+            }
+        }
+        //reconnect quizPointStatistic
+        getQuizPointStatistic().setQuiz(this);
+        //reconnect pointCounters
+        for (PointCounter pointCounter : getQuizPointStatistic().getPointCounters()) {
+            if (pointCounter.getId() != null) {
+                pointCounter.setQuizPointStatistic(getQuizPointStatistic());
+            }
+        }
+    }
+
+    public static Status statusForQuiz(QuizExercise quiz) {
+        if (!quiz.isPlannedToStart || quiz.getReleaseDate().isAfter(ZonedDateTime.now())) {
+            return Status.INACTIVE;
+        } else if (quiz.getDueDate().isBefore(ZonedDateTime.now())) {
+            return Status.FINISHED;
+        } else {
+            return Status.STARTED;
+        }
     }
 }
