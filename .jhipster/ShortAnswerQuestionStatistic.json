@@ -1,0 +1,21 @@
+{
+    "name": "ShortAnswerQuestionStatistic",
+    "fields": [],
+    "relationships": [
+        {
+            "relationshipType": "one-to-many",
+            "relationshipName": "shortAnswerSpotCounters",
+            "otherEntityName": "shortAnswerSpotCounter",
+            "otherEntityRelationshipName": "shortAnswerQuestionStatistic"
+        }
+    ],
+    "changelogDate": "20181107093748",
+    "entityTableName": "sa_question_statistic",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no",
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
+}

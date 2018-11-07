@@ -1,0 +1,30 @@
+{
+    "name": "ShortAnswerSolution",
+    "fields": [
+        {
+            "fieldName": "text",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "invalid",
+            "fieldType": "Boolean"
+        }
+    ],
+    "relationships": [
+        {
+            "relationshipType": "many-to-one",
+            "relationshipName": "question",
+            "otherEntityName": "shortAnswerQuestion",
+            "otherEntityField": "id"
+        }
+    ],
+    "changelogDate": "20181107093812",
+    "entityTableName": "short_answer_solution",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no",
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
+}
