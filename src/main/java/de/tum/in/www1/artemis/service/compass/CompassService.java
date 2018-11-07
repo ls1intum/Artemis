@@ -171,7 +171,6 @@ public class CompassService {
         }
         Result result = resultRepository.findDistinctBySubmissionId(modelId).orElse(new Result().submission(modelingSubmission.get()).participation(modelingSubmission.get().getParticipation()));
         // only automatically assess when there is not yet an assessment.
-        //TODO: the following line is clearly wrong because isRated was used in the wrong way :-( This should be invoked if there was not manual assessment before
         if (result.getAssessmentType() == null) {
             Grade grade = engine.getResultForModel(modelId);
             // automatic assessment holds confidence and coverage threshold
@@ -221,17 +220,17 @@ public class CompassService {
     private Grade roundGrades(Grade grade) {
         Map<String, Double> jsonIdPointsMapping = grade.getJsonIdPointsMapping();
         BigDecimal pointsSum = new BigDecimal(0);
-        for (Map.Entry<String, Double> entry: jsonIdPointsMapping.entrySet()) {
-            BigDecimal bd = new BigDecimal(entry.getValue());
-            double fractionalPart = bd.remainder(BigDecimal.ONE).subtract(new BigDecimal(0.15)).doubleValue();
-            bd = bd.setScale(0, RoundingMode.DOWN);
+        for (Map.Entry<String, Double> entry : jsonIdPointsMapping.entrySet()) {
+            BigDecimal point = new BigDecimal(entry.getValue());
+            double fractionalPart = point.remainder(BigDecimal.ONE).subtract(new BigDecimal(0.15)).doubleValue();
+            point = point.setScale(0, RoundingMode.DOWN);
             if (fractionalPart >= 0.5) {
-                bd = bd.add(new BigDecimal(1));
+                point = point.add(new BigDecimal(1));
             } else if (fractionalPart >= 0) {
-                bd = bd.add(new BigDecimal(0.5));
+                point = point.add(new BigDecimal(0.5));
             }
-            jsonIdPointsMapping.put(entry.getKey(), bd.doubleValue());
-            pointsSum = pointsSum.add(bd);
+            jsonIdPointsMapping.put(entry.getKey(), point.doubleValue());
+            pointsSum = pointsSum.add(point);
         }
         return new CompassGrade(grade.getCoverage(), grade.getConfidence(), pointsSum.doubleValue(), grade.getJsonIdCommentsMapping(), jsonIdPointsMapping);
     }
