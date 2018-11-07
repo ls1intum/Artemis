@@ -14,12 +14,12 @@ public interface ContinuousIntegrationService {
 
     /**
      * Creates the base build plan for the given programming exercise
-     *
-     * @param exercise a programming exercise with the required information to create the base build plan
+     *  @param exercise a programming exercise with the required information to create the base build plan
      * @param planKey the key of the plan
-     * @param vcsRepositorySlug the slug of the repository (used to seperate between exercise and solution)
+     * @param assignmentVcsRepositorySlug the slug of the assignment repository (used to separate between exercise and solution), i.e. the unique identifier
+     * @param testVcsRepositorySlug the slug of the test repository, i.e. the unique identifier
      */
-    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, String vcsRepositorySlug);
+    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, String assignmentVcsRepositorySlug, String testVcsRepositorySlug);
 
     /**
      * Copy the base build plan for the given user on the CI system.

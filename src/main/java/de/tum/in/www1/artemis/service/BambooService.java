@@ -116,7 +116,7 @@ public class BambooService implements ContinuousIntegrationService {
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
     }
 
-    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, String vcsRepositorySlug) {
+    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, String assignmentVcsRepositorySlug, String testVcsRepositorySlug) {
         UserPasswordCredentials userPasswordCredentials = new SimpleUserPasswordCredentials(BAMBOO_USER, BAMBOO_PASSWORD);
         BambooServer bambooServer = new BambooServer(BAMBOO_SERVER_URL.toString(), userPasswordCredentials);
 
@@ -128,16 +128,12 @@ public class BambooService implements ContinuousIntegrationService {
         final String projectKey = programmingExercise.getProjectKey();
         final String projectName = programmingExercise.getProjectName();
 
-        //Bitbucket project and repos
-        final String vcsAssignmentRepositorySlug = vcsRepositorySlug; // Will either be programmingExercise.getShortName() + "-exercsise" or programmingExercise.getShortName() + "-solution"
-        final String vcsTestRepositorySlug = programmingExercise.getShortName() + "-tests";
-
         //Permissions
         Course course = programmingExercise.getCourse();
         final String teachingAssistantGroupName = course.getTeachingAssistantGroupName();
         final String instructorGroupName = course.getInstructorGroupName();
 
-        final Plan plan = createPlan(planKey, planName, planDescription, projectKey, projectName, projectKey, vcsAssignmentRepositorySlug, vcsTestRepositorySlug);
+        final Plan plan = createPlan(planKey, planName, planDescription, projectKey, projectName, projectKey, assignmentVcsRepositorySlug, testVcsRepositorySlug);
         bambooServer.publish(plan);
 
         final PlanPermissions planPermission = setPlanPermission(projectKey, planKey, teachingAssistantGroupName, instructorGroupName, ADMIN_GROUP_NAME);
@@ -195,7 +191,7 @@ public class BambooService implements ContinuousIntegrationService {
             .server(new ApplicationLink()
                 .id(BITBUCKET_APPLICATION_LINK_ID))
             .projectKey(vcsProjectKey)
-            .repositorySlug(repositorySlug)
+            .repositorySlug(repositorySlug.toLowerCase())   //make sure to use lower case to avoid problems in change detection between Bamboo and Bitbucket
             .shallowClonesEnabled(true)
             .remoteAgentCacheEnabled(false)
             .changeDetection(new VcsChangeDetection());

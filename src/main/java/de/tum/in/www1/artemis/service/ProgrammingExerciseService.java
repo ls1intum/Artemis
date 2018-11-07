@@ -94,9 +94,9 @@ public class ProgrammingExerciseService {
      */
     public ProgrammingExercise setupProgrammingExercise(ProgrammingExercise programmingExercise) throws Exception {
         String projectKey = programmingExercise.getProjectKey();
-        String exerciseRepoName = programmingExercise.getShortName() + "-exercise";
-        String testRepoName = programmingExercise.getShortName() + "-tests";
-        String solutionRepoName = programmingExercise.getShortName() + "-solution";
+        String exerciseRepoName = programmingExercise.getShortName().toLowerCase() + "-exercise";
+        String testRepoName = programmingExercise.getShortName().toLowerCase() + "-tests";
+        String solutionRepoName = programmingExercise.getShortName().toLowerCase() + "-solution";
 
         // Create VCS repositories
         versionControlService.get().createProjectForExercise(programmingExercise); // Create project
@@ -152,8 +152,8 @@ public class ProgrammingExerciseService {
             gitService.commitAndPush(solutionRepo, "Setup");
         }
         // We have to wait to have pushed one commit to each repository as we can only create the buildPlans then (https://confluence.atlassian.com/bamkb/cannot-create-linked-repository-or-plan-repository-942840872.html)
-        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, "BASE", exerciseRepoName); // plan for the exercise (students)
-        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, "SOLUTION", solutionRepoName); // plan for the solution (instructors) with solution repository
+        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, "BASE", exerciseRepoName, testRepoName); // plan for the exercise (students)
+        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, "SOLUTION", solutionRepoName, testRepoName); // plan for the solution (instructors) with solution repository
 
         programmingExercise.setBaseBuildPlanId(projectKey + "-BASE"); // Set build plan id to newly created BaseBuild plan
         programmingExercise.setBaseRepositoryUrl(versionControlService.get().getCloneURL(projectKey, exerciseRepoName).toString());
