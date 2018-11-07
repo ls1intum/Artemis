@@ -36,6 +36,7 @@ export abstract class Exercise implements BaseEntity {
     public problemStatement: string;
     public gradingInstructions: string;
     public title: string;
+    public shortName: string;
     public releaseDate: Moment;
     public dueDate: Moment;
     public maxScore: number;

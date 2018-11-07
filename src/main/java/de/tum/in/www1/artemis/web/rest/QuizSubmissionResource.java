@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
@@ -89,7 +90,7 @@ public class QuizSubmissionResource {
 
     /**
      * POST  /courses/:courseId/exercises/:exerciseId/submissions/preview : Submit a new quizSubmission for preview mode.
-     * Nothing will be saved in database.
+     * Note that in this case, nothing will be saved in database.
      *
      * @param courseId       only included for API consistency, not actually used
      * @param exerciseId     the id of the exercise for which to init a participation
@@ -99,7 +100,7 @@ public class QuizSubmissionResource {
     @PostMapping("/courses/{courseId}/exercises/{exerciseId}/submissions/preview")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
-    public ResponseEntity<Result> getResultForSubmission(@PathVariable Long courseId, @PathVariable Long exerciseId, @RequestBody QuizSubmission quizSubmission) {
+    public ResponseEntity<Result> submitForPreview(@PathVariable Long courseId, @PathVariable Long exerciseId, @RequestBody QuizSubmission quizSubmission) {
         log.debug("REST request to submit QuizSubmission for preview : {}", quizSubmission);
 
         if (quizSubmission.getId() != null) {
@@ -126,6 +127,7 @@ public class QuizSubmissionResource {
         // create result
         Result result = new Result().participation(participation).submission(quizSubmission);
         result.setRated(false);
+        result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setCompletionDate(ZonedDateTime.now());
         // calculate score and update result accordingly
         result.evaluateSubmission();

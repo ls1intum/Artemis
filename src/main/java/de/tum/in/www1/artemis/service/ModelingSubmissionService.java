@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZonedDateTime;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -145,15 +146,22 @@ public class ModelingSubmissionService {
      */
     public ModelingSubmission checkAutomaticResult(ModelingSubmission modelingSubmission) {
         Participation participation = modelingSubmission.getParticipation();
-        if (modelingSubmission.getResult() == null && jsonAssessmentRepository.exists(participation.getExercise().getId(), participation.getStudent().getId(), modelingSubmission.getId(), false)) {
-            Result result = resultRepository.findDistinctBySubmissionId(modelingSubmission.getId()).orElse(null);
-            modelingSubmission.setResult(result);
+        Boolean automaticAssessmentAvailable = jsonAssessmentRepository.exists(participation.getExercise().getId(), participation.getStudent().getId(), modelingSubmission.getId(), false);
+        // create empty result in case submission couldn't be assessed automatically
+        Result result = new Result();
+        if (modelingSubmission.getResult() == null && automaticAssessmentAvailable) {
+            //use the automatic result if available
+            Optional<Result> optionalAutomaticResult = resultRepository.findDistinctBySubmissionId(modelingSubmission.getId());
+            if (optionalAutomaticResult.isPresent()) {
+                result = optionalAutomaticResult.get();
+            }
         } else {
-            // create empty result if submission couldn't be assessed automatically
             // the result is needed for manual assessment
-            Result result = new Result().submission(modelingSubmission).participation(participation).completionDate(ZonedDateTime.now());
-            modelingSubmission.setResult(result);
         }
+        result.submission(modelingSubmission).participation(participation);
+        modelingSubmission.setResult(result);
+        resultRepository.save(result);
+        modelingSubmissionRepository.save(modelingSubmission);
         return modelingSubmission;
     }
 }

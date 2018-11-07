@@ -11,4 +11,5 @@ public interface ArtemisAuthenticationProvider extends AuthenticationProvider {
     public User getOrCreateUser(Authentication authentication, Boolean skipPasswordCheck);
     public void addUserToGroup(String username, String group);
     public Optional<String> getUsernameForEmail(String email);
+    public Boolean checkIfGroupExists(String group);
 }

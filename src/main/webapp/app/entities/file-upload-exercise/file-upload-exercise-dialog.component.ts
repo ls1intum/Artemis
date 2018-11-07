@@ -18,9 +18,9 @@ import { Subscription } from 'rxjs/Subscription';
     templateUrl: './file-upload-exercise-dialog.component.html'
 })
 export class FileUploadExerciseDialogComponent implements OnInit {
-
     fileUploadExercise: FileUploadExercise;
     isSaving: boolean;
+    maxScorePattern = '^[1-9]{1}[0-9]{0,4}$'; // make sure max score is a positive natural integer and not too large
 
     courses: Course[];
 
@@ -30,13 +30,16 @@ export class FileUploadExerciseDialogComponent implements OnInit {
         private fileUploadExerciseService: FileUploadExerciseService,
         private courseService: CourseService,
         private eventManager: JhiEventManager
-    ) {
-    }
+    ) {}
 
     ngOnInit() {
         this.isSaving = false;
-        this.courseService.query()
-            .subscribe((res: HttpResponse<Course[]>) => { this.courses = res.body; }, (res: HttpErrorResponse) => this.onError(res));
+        this.courseService.query().subscribe(
+            (res: HttpResponse<Course[]>) => {
+                this.courses = res.body;
+            },
+            (res: HttpErrorResponse) => this.onError(res)
+        );
     }
 
     clear() {
@@ -46,21 +49,21 @@ export class FileUploadExerciseDialogComponent implements OnInit {
     save() {
         this.isSaving = true;
         if (this.fileUploadExercise.id !== undefined) {
-            this.subscribeToSaveResponse(
-                this.fileUploadExerciseService.update(this.fileUploadExercise));
+            this.subscribeToSaveResponse(this.fileUploadExerciseService.update(this.fileUploadExercise));
         } else {
-            this.subscribeToSaveResponse(
-                this.fileUploadExerciseService.create(this.fileUploadExercise));
+            this.subscribeToSaveResponse(this.fileUploadExerciseService.create(this.fileUploadExercise));
         }
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<FileUploadExercise>>) {
-        result.subscribe((res: HttpResponse<FileUploadExercise>) =>
-            this.onSaveSuccess(res.body), (res: HttpErrorResponse) => this.onSaveError());
+        result.subscribe(
+            (res: HttpResponse<FileUploadExercise>) => this.onSaveSuccess(res.body),
+            (res: HttpErrorResponse) => this.onSaveError()
+        );
     }
 
     private onSaveSuccess(result: FileUploadExercise) {
-        this.eventManager.broadcast({ name: 'fileUploadExerciseListModification', content: 'OK'});
+        this.eventManager.broadcast({ name: 'fileUploadExerciseListModification', content: 'OK' });
         this.isSaving = false;
         this.activeModal.dismiss(result);
     }
@@ -70,7 +73,7 @@ export class FileUploadExerciseDialogComponent implements OnInit {
     }
 
     private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message, null, null);
+        this.jhiAlertService.error(error.message);
     }
 
     trackCourseById(index: number, item: Course) {
@@ -83,26 +86,19 @@ export class FileUploadExerciseDialogComponent implements OnInit {
     template: ''
 })
 export class FileUploadExercisePopupComponent implements OnInit, OnDestroy {
-
     routeSub: Subscription;
 
-    constructor(
-        private route: ActivatedRoute,
-        private fileUploadExercisePopupService: FileUploadExercisePopupService
-    ) {}
+    constructor(private route: ActivatedRoute, private fileUploadExercisePopupService: FileUploadExercisePopupService) {}
 
     ngOnInit() {
         this.routeSub = this.route.params.subscribe(params => {
-            if ( params['id'] ) {
-                this.fileUploadExercisePopupService
-                    .open(FileUploadExerciseDialogComponent as Component, params['id']);
+            if (params['id']) {
+                this.fileUploadExercisePopupService.open(FileUploadExerciseDialogComponent as Component, params['id']);
             } else {
-                if ( params['courseId'] ) {
-                    this.fileUploadExercisePopupService
-                        .open(FileUploadExerciseDialogComponent as Component, undefined, params['courseId']);
+                if (params['courseId']) {
+                    this.fileUploadExercisePopupService.open(FileUploadExerciseDialogComponent as Component, undefined, params['courseId']);
                 } else {
-                    this.fileUploadExercisePopupService
-                        .open(FileUploadExerciseDialogComponent as Component);
+                    this.fileUploadExercisePopupService.open(FileUploadExerciseDialogComponent as Component);
                 }
             }
         });
