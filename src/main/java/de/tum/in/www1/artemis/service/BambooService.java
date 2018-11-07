@@ -9,11 +9,14 @@ import com.atlassian.bamboo.specs.api.builders.plan.Job;
 import com.atlassian.bamboo.specs.api.builders.plan.Plan;
 import com.atlassian.bamboo.specs.api.builders.plan.PlanIdentifier;
 import com.atlassian.bamboo.specs.api.builders.plan.Stage;
+import com.atlassian.bamboo.specs.api.builders.plan.branches.BranchCleanup;
+import com.atlassian.bamboo.specs.api.builders.plan.branches.PlanBranchManagement;
 import com.atlassian.bamboo.specs.api.builders.plan.configuration.ConcurrentBuilds;
 import com.atlassian.bamboo.specs.api.builders.project.Project;
 import com.atlassian.bamboo.specs.api.builders.repository.VcsChangeDetection;
 import com.atlassian.bamboo.specs.api.builders.repository.VcsRepositoryIdentifier;
 import com.atlassian.bamboo.specs.builders.repository.bitbucket.server.BitbucketServerRepository;
+import com.atlassian.bamboo.specs.builders.repository.viewer.BitbucketServerRepositoryViewer;
 import com.atlassian.bamboo.specs.builders.task.CheckoutItem;
 import com.atlassian.bamboo.specs.builders.task.MavenTask;
 import com.atlassian.bamboo.specs.builders.task.ScriptTask;
@@ -89,7 +92,7 @@ public class BambooService implements ContinuousIntegrationService {
     private URL SERVER_URL;
 
     //NOTE: the following values are hard-coded at the moment
-    private final String TEST_REPO_NAME = "Tests";
+    private final String TEST_REPO_NAME = "tests";
     private final String ASSIGNMENT_REPO_NAME = "Assignment";
     private final String ASSIGNMENT_REPO_PATH = "assignment";
 
@@ -178,13 +181,17 @@ public class BambooService implements ContinuousIntegrationService {
                         .description("Notify ArTEMiS")
                         .interpreter(ScriptTaskProperties.Interpreter.BINSH_OR_CMDEXE)
                         .inlineBody("curl -k -X POST " + SERVER_URL + "/api/results/${bamboo.planKey}"))))
-            .triggers(new BitbucketServerTrigger());
+            .triggers(new BitbucketServerTrigger())
+            .planBranchManagement(new PlanBranchManagement()
+                .delete(new BranchCleanup())
+                .notificationForCommitters());
         return plan;
     }
 
     private BitbucketServerRepository createBuildPlanRepository(String name, String vcsProjectKey, String repositorySlug) {
         return new BitbucketServerRepository()
             .name(name)
+            .repositoryViewer(new BitbucketServerRepositoryViewer())
             .server(new ApplicationLink()
                 .id(BITBUCKET_APPLICATION_LINK_ID))
             .projectKey(vcsProjectKey)
