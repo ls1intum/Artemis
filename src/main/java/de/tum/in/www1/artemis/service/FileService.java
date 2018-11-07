@@ -1,18 +1,26 @@
 package de.tum.in.www1.artemis.service;
 
 import de.tum.in.www1.artemis.config.Constants;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
+import java.net.URL;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.UUID;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
@@ -181,5 +189,146 @@ public class FileService {
         } while (!fileCreated);
 
         return newFile;
+    }
+
+    /**
+     * This copies the directory at the old directory path to the new path, including all files and subfolders
+     *
+     * @param resources the resources that should be copied
+     * @param targetDirectoryPath the path of the folder where the copy should be lcoated
+     * @throws IOException
+     */
+    public void copyResources(Resource[] resources, String prefix, String targetDirectoryPath) throws IOException {
+
+        for (Resource resource : resources) {
+
+            String fileUrl = java.net.URLDecoder.decode(resource.getURL().toString(), "UTF-8");
+            int index = fileUrl.indexOf(prefix);
+            String targetFilePath = fileUrl.substring(index + prefix.length());
+            //special case for '.gitignore' file which would not be included in build otherwise
+            if (targetFilePath.endsWith("gitignore")) {
+                targetFilePath = targetFilePath.replaceAll("gitignore", ".gitignore");
+            }
+
+            Path copyPath = Paths.get(targetDirectoryPath + targetFilePath);
+            File parentFolder = copyPath.toFile().getParentFile();
+            if(!parentFolder.exists()) {
+                Files.createDirectories(parentFolder.toPath());
+            }
+
+            log.info("resource: " + resource.getURL().toString());
+            log.info("copyPath: " + copyPath);
+            Files.copy(resource.getInputStream(), copyPath);
+        }
+    }
+
+    /**
+     * This renames the directory at the old directory path to the new path
+     *
+     * @param oldDirectoryPath    the path of the folder that should be renamed
+     * @param targetDirectoryPath the path of the folder where the renamed folder should be located
+     * @throws IOException
+     */
+    public void renameDirectory(String oldDirectoryPath, String targetDirectoryPath) throws IOException {
+        File oldDirectory = new File(oldDirectoryPath);
+        if (!oldDirectory.exists()) {
+            log.error("Directory {} should be renamed but does not exist.", oldDirectoryPath);
+            throw new RuntimeException("Directory " + oldDirectoryPath + " should be renamed but does not exist.");
+        }
+
+        File targetDirectory = new File(targetDirectoryPath);
+
+        FileUtils.moveDirectory(oldDirectory, targetDirectory);
+    }
+
+    /**
+     * This replace all occurences of the target String with the replacement String in the given directory (recursive!)
+     *
+     * @param startPath         the path where the file is located
+     * @param targetString      the string that should be replaced
+     * @param replacementString the string that should be used to replace the target
+     * @throws IOException
+     */
+    public void replaceVariablesInDirectoryName(String startPath, String targetString, String replacementString) throws IOException {
+        log.debug("Replacing {} with {} in directory {}", targetString, replacementString, startPath);
+        File directory = new File(startPath);
+        if (!directory.exists() || !directory.isDirectory()) {
+            throw new RuntimeException("Directory " + startPath + " should be replaced but does not exist.");
+        }
+
+        if (startPath.contains(targetString)) {
+            log.debug("Target String found, replacing..");
+            String targetPath = startPath.replace(targetString, replacementString);
+            renameDirectory(startPath, targetPath);
+            directory = new File(targetPath);
+        }
+
+        // Get all subdirectories
+        String[] subdirectories = directory.list((current, name) -> new File(current, name).isDirectory());
+
+        for (String subdirectory : subdirectories) {
+            replaceVariablesInDirectoryName(directory.getAbsolutePath() + File.separator + subdirectory, targetString, replacementString);
+        }
+    }
+
+    /**
+     * This replace all occurences of the target Strings with the replacement Strings in the given file and saves the file
+     *
+     * @see {@link #replaceVariablesInFile(String, List, List) replaceVariablesInFile}
+     * @param startPath          the path where the start directory is located
+     * @param targetStrings      the strings that should be replaced
+     * @param replacementStrings the strings that should be used to replace the target strings
+     * @throws IOException
+     */
+    public void replaceVariablesInFileRecursive(String startPath, List<String> targetStrings, List<String> replacementStrings) throws IOException {
+        log.debug("Replacing {} with {} in files in directory {}", targetStrings, replacementStrings, startPath);
+        File directory = new File(startPath);
+        if (!directory.exists() || !directory.isDirectory()) {
+            throw new RuntimeException("Files in directory " + startPath + " should be replaced but the directory does not exist.");
+        }
+
+        String[] files = directory.list(new FilenameFilter() { // Get all files in directory
+            @Override
+            public boolean accept(File current, String name) {
+                return new File(current, name).isFile();
+            }
+        });
+
+        for (String file : files) {
+            replaceVariablesInFile(directory.getAbsolutePath() + File.separator + file, targetStrings, replacementStrings);
+        }
+
+        // Recursive call
+        String[] subdirectories = directory.list(new FilenameFilter() { // Get all subdirectories
+            @Override
+            public boolean accept(File current, String name) {
+                return new File(current, name).isDirectory();
+            }
+        });
+
+        for (String subdirectory : subdirectories) {
+            replaceVariablesInFileRecursive(directory.getAbsolutePath() + File.separator + subdirectory, targetStrings, replacementStrings);
+        }
+    }
+
+    /**
+     * This replace all occurrences of the target Strings with the replacement Strings in the given file and saves the file. It assumes that the size of the lists is equal and the order of the argument is the same
+     *
+     * @param filePath           the path where the file is located
+     * @param targetStrings      the strings that should be replaced
+     * @param replacementStrings the strings that should be used to replace the target strings
+     * @throws IOException
+     */
+    public void replaceVariablesInFile(String filePath, List<String> targetStrings, List<String> replacementStrings) throws IOException {
+        log.debug("Replacing {} with {} in file {}", targetStrings, replacementStrings, filePath);
+        // https://stackoverflow.com/questions/3935791/find-and-replace-words-lines-in-a-file
+        Path replaceFilePath = Paths.get(filePath);
+        Charset charset = StandardCharsets.UTF_8;
+
+        String fileContent = new String(Files.readAllBytes(replaceFilePath), charset);
+        for (int i = 0; i < targetStrings.size(); i++) {
+            fileContent = fileContent.replace(targetStrings.get(i), replacementStrings.get(i));
+        }
+        Files.write(replaceFilePath, fileContent.getBytes(charset));
     }
 }

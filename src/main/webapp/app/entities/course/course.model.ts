@@ -5,6 +5,7 @@ import { Moment } from 'moment';
 export class Course implements BaseEntity {
     public id: number;
     public title: string;
+    public shortName: string;
     public studentGroupName: string;
     public teachingAssistantGroupName: string;
     public instructorGroupName: string;

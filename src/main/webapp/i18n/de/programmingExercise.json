@@ -1,29 +1,37 @@
-
 {
     "arTeMiSApp": {
-        "programmingExercise" : {
+        "programmingExercise": {
             "home": {
                 "title": "Programming Exercises",
-                "createLabel": "Programming Exercise erstellen",
+                "createLabel": "neue Programmieraufgabe erstellen",
+                "editLabel": "Programmieraufgabe bearbeiten",
+                "linkLabel": "neue Programmieraufgabe verlinken",
+                "editLinkLabel": "verlinkte Programmieraufgabe bearbeiten",
                 "createOrEditLabel": "Programming Exercise erstellen oder bearbeiten"
             },
-            "created": "Programming Exercise erstellt mit ID {{ param }}",
-            "updated": "Programming Exercise aktualisiert mit ID {{ param }}",
-            "deleted": "Programming Exercise gelöscht mit ID {{ param }}",
+            "created": "Programming Exercise erstellt mit Title {{ param }}",
+            "updated": "Programming Exercise aktualisiert mit Title {{ param }}",
+            "deleted": "Programming Exercise gelöscht mit Title {{ param }}",
             "delete": {
                 "question": "Soll Programming Exercise {{ title }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
                 "title": "Programming Exercise"
             },
-            "baseRepositoryUrl": "Base Repository Url",
-            "solutionRepositoryUrl": "Solution Repository Url",
-            "baseBuildPlanId": "Base Build Plan Id",
-            "publishBuildPlanUrl": "Publish Build Plan Url",
-            "allowOnlineEditor": "Allow Online Editor"
+            "baseRepositoryUrl": "Template Repository Url",
+            "testRepositoryUrl": "Test Repository Url (optional)",
+            "solutionRepositoryUrl": "Solution Repository Url (optional)",
+            "baseBuildPlanId": "Template Build Plan Id",
+            "solutionBuildPlanId": "Solution Build Plan Id (optional)",
+            "repositories": "Repositories",
+            "buildplans": "Build Plans",
+            "publishBuildPlanUrl": "Publish Build Plan",
+            "allowOnlineEditor": "Allow Online Editor",
+            "programmingLanguage": "Programming Language",
+            "packageName": "Package Name"
         },
         "editor": {
-            "title": "Editor"
+            "title": "Code Editor"
         }
     }
 }

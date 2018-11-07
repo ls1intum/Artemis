@@ -25,7 +25,7 @@
         </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.maxScore" for="field_maxScore">Max Score</label>
-            <input type="text" class="form-control" name="maxScore" id="field_maxScore"
+            <input type="number" class="form-control" [pattern]="maxScorePattern" min="0" max="9999" name="maxScore" id="field_maxScore"
                    [(ngModel)]="programmingExercise.maxScore" />
         </div>
         <div class="form-group">
@@ -36,14 +36,24 @@
             </select>
         </div>
         <div class="form-group">
-            <label class="form-control-label" jhiTranslate="arTeMiSApp.programmingExercise.baseRepositoryUrl" for="field_baseRepositoryUrl">Base Repository Url</label>
+            <label class="form-control-label" jhiTranslate="arTeMiSApp.programmingExercise.baseRepositoryUrl" for="field_baseRepositoryUrl">Template Repository Url</label>
             <input type="text" class="form-control" name="baseRepositoryUrl" id="field_baseRepositoryUrl"
                 [(ngModel)]="programmingExercise.baseRepositoryUrl" />
         </div>
         <div class="form-group">
-            <label class="form-control-label" jhiTranslate="arTeMiSApp.programmingExercise.baseBuildPlanId" for="field_baseBuildPlanId">Base Build Plan Id</label>
+            <label class="form-control-label" jhiTranslate="arTeMiSApp.programmingExercise.solutionRepositoryUrl" for="field_solutionRepositoryUrl">Solution Repository Url (optional)</label>
+            <input type="text" class="form-control" name="solutionRepositoryUrl" id="field_solutionRepositoryUrl"
+                   [(ngModel)]="programmingExercise.solutionRepositoryUrl" />
+        </div>
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="arTeMiSApp.programmingExercise.baseBuildPlanId" for="field_baseBuildPlanId">Template Build Plan Id</label>
             <input type="text" class="form-control" name="baseBuildPlanId" id="field_baseBuildPlanId"
                 [(ngModel)]="programmingExercise.baseBuildPlanId" />
+        </div>
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="arTeMiSApp.programmingExercise.solutionBuildPlanId" for="field_solutionBuildPlanId">Solution Build Plan Id (optional)</label>
+            <input type="text" class="form-control" name="solutionBuildPlanId" id="field_solutionBuildPlanId"
+                   [(ngModel)]="programmingExercise.solutionBuildPlanId" />
         </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.programmingExercise.publishBuildPlanUrl" for="field_publishBuildPlanUrl">Publish Build Plan Url</label>

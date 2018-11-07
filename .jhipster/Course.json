@@ -6,6 +6,10 @@
             "fieldType": "String"
         },
         {
+            "fieldName": "shortName",
+            "fieldType": "String"
+        },
+        {
             "fieldName": "studentGroupName",
             "fieldType": "String"
         },

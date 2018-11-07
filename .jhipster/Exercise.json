@@ -10,15 +10,11 @@
             "fieldType": "String"
         },
         {
-            "fieldName": "problemStatement",
-            "fieldType": "String"
-        },
-        {
-            "fieldName": "gradingInstructions",
-            "fieldType": "String"
-        },
-        {
             "fieldName": "title",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "shortName",
             "fieldType": "String"
         },
         {

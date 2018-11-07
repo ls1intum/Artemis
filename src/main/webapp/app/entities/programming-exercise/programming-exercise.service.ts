@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpResponse, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from 'app/app.constants';
 
@@ -24,6 +24,13 @@ export class ProgrammingExerciseService {
             .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
+    automaticSetup(programmingExercise: ProgrammingExercise): Observable<EntityResponseType> {
+        const copy = this.convertDateFromClient(programmingExercise);
+        return this.http
+            .post<ProgrammingExercise>(this.resourceUrl + '/setup', copy, { observe: 'response' })
+            .map((res: EntityResponseType) => this.convertDateFromServer(res));
+    }
+
     update(programmingExercise: ProgrammingExercise): Observable<EntityResponseType> {
         const copy = this.exerciseService.convertDateFromClient(programmingExercise);
         return this.http
@@ -44,7 +51,10 @@ export class ProgrammingExerciseService {
             .map((res: EntityArrayResponseType) => this.exerciseService.convertDateArrayFromServer(res));
     }
 
-    delete(id: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${id}`, { observe: 'response' });
+    delete(id: number, deleteStudentReposBuildPlans: boolean, deleteBaseReposBuildPlans: boolean): Observable<HttpResponse<void>> {
+        let params = new HttpParams();
+        params = params.set('deleteStudentReposBuildPlans', deleteStudentReposBuildPlans.toString());
+        params = params.set('deleteBaseReposBuildPlans', deleteBaseReposBuildPlans.toString());
+        return this.http.delete<void>(`${this.resourceUrl}/${id}`, { params, observe: 'response' });
     }
 }

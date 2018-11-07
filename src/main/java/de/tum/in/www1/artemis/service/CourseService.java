@@ -27,6 +27,7 @@ public class CourseService {
     private final ExerciseService exerciseService;
     private final AuthorizationCheckService authCheckService;
 
+
     public CourseService(CourseRepository courseRepository,
                          UserService userService,
                          ExerciseService exerciseService,
@@ -257,6 +258,8 @@ public class CourseService {
     @Transactional(readOnly = true)
     public Result choseResultInParticipation(Participation participation, boolean hasDueDate) {
         List<Result> results = new ArrayList<>(participation.getResults());
+
+        //TODO take the field result.isRated into account
 
         Result chosenResult;
         //edge case of no result submitted to a participation

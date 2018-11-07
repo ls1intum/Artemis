@@ -4,16 +4,16 @@ import { ActivatedRoute } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService } from 'ng-jhipster';
 
-import { ExerciseDashboardPopupService } from './exercise-dashboard-popup.service';
-import { Exercise, ExerciseService } from '../entities/exercise';
+import { ExerciseDashboardPopupService } from '../../dashboard/exercise-dashboard-popup.service';
+import { Exercise, ExerciseService } from '../exercise/index';
 
 import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     selector: 'jhi-instructor-dashboard-archive-dialog',
-    templateUrl: './exercise-dashboard-archive-dialog.component.html'
+    templateUrl: './programming-exercise-archive-dialog.component.html'
 })
-export class ExerciseDashboardArchiveDialogComponent {
+export class ProgrammingExerciseArchiveDialogComponent {
     exercise: Exercise;
     archiveInProgress: boolean;
 
@@ -61,7 +61,7 @@ export class InstructorDashboardArchivePopupComponent implements OnInit, OnDestr
 
     ngOnInit() {
         this.routeSub = this.route.params.subscribe(params => {
-            this.instructorDashboardPopupService.open(ExerciseDashboardArchiveDialogComponent as Component, params['id'], true);
+            this.instructorDashboardPopupService.open(ProgrammingExerciseArchiveDialogComponent as Component, params['id'], true);
         });
     }
 
