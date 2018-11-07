@@ -447,7 +447,7 @@ public class BitbucketService implements VersionControlService {
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
 
         Map<String, Object> body = new HashMap<>();
-        body.put("name", repoName);
+        body.put("name", repoName.toLowerCase());
         HttpEntity<?> entity = new HttpEntity<>(body, headers);
 
         RestTemplate restTemplate = new RestTemplate();
