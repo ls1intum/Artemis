@@ -41,6 +41,13 @@ public interface ContinuousIntegrationService {
     public void configureBuildPlan(Participation participation);
 
     /**
+     * triggers a build for the build plan in the given participation
+     * @param participation the participation with the id of the build plan that should be triggered
+     */
+    public void triggerBuild(Participation participation);
+
+
+    /**
      * Delete project with given identifier from CI system.
      *
      * @param projectKey unique identifier for the project on CI system
