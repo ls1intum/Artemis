@@ -23,6 +23,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
+import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
 import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.INITIALIZED;
 
 /**
@@ -87,7 +88,7 @@ public class ParticipationService {
      * @return
      */
     @Transactional
-    public Participation init(Exercise exercise, String username) {
+    public Participation startExercise(Exercise exercise, String username) {
 
         // common for all exercises
         // Check if participation already exists
@@ -118,9 +119,10 @@ public class ParticipationService {
             ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
             participation.setInitializationState(InitializationState.UNINITIALIZED);
             participation = copyRepository(participation, programmingExercise);
-            participation = configureRepository(participation, programmingExercise);
             participation = copyBuildPlan(participation, programmingExercise);
             participation = configureBuildPlan(participation, programmingExercise);
+            //we configure the repository (including the webhook) after the build plan, because we might have to push an empty commit due to the bamboo workaround (see empty-commit-necessary)
+            participation = configureRepository(participation, programmingExercise);
             participation.setInitializationState(INITIALIZED);
             participation.setInitializationDate(ZonedDateTime.now());
         } else if (exercise instanceof QuizExercise || exercise instanceof ModelingExercise) {
@@ -249,7 +251,7 @@ public class ParticipationService {
     private Participation configureRepository(Participation participation, ProgrammingExercise exercise) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
             versionControlService.get().configureRepository(participation.getRepositoryUrlAsUrl(), participation.getStudent().getLogin());
-            versionControlService.get().addWebHook(participation.getRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + "/api/programmingSubmissions/" + participation.getId(), "ArTEMiS WebHook");
+            versionControlService.get().addWebHook(participation.getRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participation.getId(), "ArTEMiS WebHook");
             participation.setInitializationState(InitializationState.REPO_CONFIGURED);
             return save(participation);
         } else {
