@@ -31,9 +31,7 @@ import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
 import javax.annotation.PostConstruct;
 import java.util.Optional;
 
-import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
-import static de.tum.in.www1.artemis.config.Constants.RESULT_RESOURCE_API_PATH;
-import static de.tum.in.www1.artemis.config.Constants.TEST_CASE_CHANGED_API_PATH;
+import static de.tum.in.www1.artemis.config.Constants.*;
 
 @Configuration
 @Import(SecurityProblemSupport.class)
