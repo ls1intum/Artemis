@@ -106,7 +106,7 @@ public class ModelingSubmissionResource {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        Participation participation = participationService.init(modelingExercise, principal.getName());
+        Participation participation = participationService.startExercise(modelingExercise, principal.getName());
 
         // update and save submission
         modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, participation);

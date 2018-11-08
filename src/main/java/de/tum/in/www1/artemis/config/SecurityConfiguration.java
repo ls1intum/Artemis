@@ -31,6 +31,10 @@ import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
 import javax.annotation.PostConstruct;
 import java.util.Optional;
 
+import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
+import static de.tum.in.www1.artemis.config.Constants.RESULT_RESOURCE_API_PATH;
+import static de.tum.in.www1.artemis.config.Constants.TEST_CASE_CHANGED_API_PATH;
+
 @Configuration
 @Import(SecurityProblemSupport.class)
 @EnableWebSecurity
@@ -102,9 +106,9 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/content/**")
             .antMatchers("/test/**");
 
-        web.ignoring().antMatchers(HttpMethod.POST, "/api/results/*-*");
-        web.ignoring().antMatchers(HttpMethod.POST, "/api/programming-submissions/*");
-        web.ignoring().antMatchers(HttpMethod.POST, "/api/programming-exercises/test-cases-changed/*");
+        web.ignoring().antMatchers(HttpMethod.POST, RESULT_RESOURCE_API_PATH + "*-*");
+        web.ignoring().antMatchers(HttpMethod.POST, PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + "*");
+        web.ignoring().antMatchers(HttpMethod.POST, TEST_CASE_CHANGED_API_PATH + "*");
     }
 
     @Override
@@ -131,7 +135,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/api/register").permitAll()
             .antMatchers("/api/activate").permitAll()
             .antMatchers("/api/authenticate").permitAll()
-            .antMatchers("/api/account/reset-password/init").permitAll()
+            .antMatchers("/api/account/reset-password/startExercise").permitAll()
             .antMatchers("/api/account/reset-password/finish").permitAll()
             .antMatchers("/api/lti/launch/*").permitAll()
             .antMatchers("/api/**").authenticated()

@@ -61,6 +61,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static de.tum.in.www1.artemis.config.Constants.RESULT_RESOURCE_API_PATH;
+
 @Service
 @Profile("bamboo")
 public class BambooService implements ContinuousIntegrationService {
@@ -176,7 +178,7 @@ public class BambooService implements ContinuousIntegrationService {
                     .finalTasks(new ScriptTask()
                         .description("Notify ArTEMiS")
                         .interpreter(ScriptTaskProperties.Interpreter.BINSH_OR_CMDEXE)
-                        .inlineBody("curl -k -X POST " + SERVER_URL + "/api/results/${bamboo.planKey}"))))
+                        .inlineBody("curl -k -X POST " + SERVER_URL + RESULT_RESOURCE_API_PATH + "${bamboo.planKey}"))))
             .triggers(new BitbucketServerTrigger())
             .planBranchManagement(new PlanBranchManagement()
                 .delete(new BranchCleanup())

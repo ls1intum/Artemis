@@ -26,6 +26,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import static de.tum.in.www1.artemis.config.Constants.TEST_CASE_CHANGED_API_PATH;
+
 @Service
 @Transactional
 public class ProgrammingExerciseService {
@@ -163,7 +165,7 @@ public class ProgrammingExerciseService {
 
         //save to get the id required for the webhook
         ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
-        versionControlService.get().addWebHook(testsRepoUrl, ARTEMIS_BASE_URL + "/api/programming-exercises/test-cases-changed/" + programmingExercise.getId(), "ArTEMiS Tests WebHook");
+        versionControlService.get().addWebHook(testsRepoUrl, ARTEMIS_BASE_URL + TEST_CASE_CHANGED_API_PATH + programmingExercise.getId(), "ArTEMiS Tests WebHook");
         return result;
     }
 
