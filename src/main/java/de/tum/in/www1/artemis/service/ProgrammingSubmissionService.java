@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
@@ -20,14 +21,18 @@ public class ProgrammingSubmissionService {
     private final Logger log = LoggerFactory.getLogger(ProgrammingSubmissionService.class);
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
+    private final ParticipationService participationService;
     private final ParticipationRepository participationRepository;
     private final Optional<VersionControlService> versionControlService;
+    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ParticipationRepository participationRepository,
-                                        Optional<VersionControlService> versionControlService) {
+                                        Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService) {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.participationRepository = participationRepository;
         this.versionControlService = versionControlService;
+        this.continuousIntegrationService = continuousIntegrationService;
+        this.participationService = participationService;
     }
 
     public void notifyPush(Long participationId, Object requestBody) {
@@ -35,6 +40,12 @@ public class ProgrammingSubmissionService {
         if (participation == null) {
             log.error("Invalid participation received while notifying about push: " + participationId);
             return;
+        }
+        if (participation.getInitializationState() == InitializationState.INACTIVE) {
+            //the build plan was deleted before, e.g. due to cleanup, therefore we need to reactivate the build plan by resuming the participation
+            participationService.resume(participation.getExercise(), participation);
+            //in addition we need to trigger a build so that we receive a result in a few seconds
+            continuousIntegrationService.get().triggerBuild(participation);
         }
 
         ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();

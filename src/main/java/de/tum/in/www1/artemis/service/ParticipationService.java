@@ -119,10 +119,11 @@ public class ParticipationService {
             ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
             participation.setInitializationState(InitializationState.UNINITIALIZED);
             participation = copyRepository(participation, programmingExercise);
+            participation = configureRepository(participation);
             participation = copyBuildPlan(participation, programmingExercise);
-            participation = configureBuildPlan(participation, programmingExercise);
-            //we configure the repository (including the webhook) after the build plan, because we might have to push an empty commit due to the bamboo workaround (see empty-commit-necessary)
-            participation = configureRepository(participation, programmingExercise);
+            participation = configureBuildPlan(participation);
+            participation = configureRepositoryWebHook(participation);
+            //we configure the repository webhook after the build plan, because we might have to push an empty commit due to the bamboo workaround (see empty-commit-necessary)
             participation.setInitializationState(INITIALIZED);
             participation.setInitializationDate(ZonedDateTime.now());
         } else if (exercise instanceof QuizExercise || exercise instanceof ModelingExercise) {
@@ -225,7 +226,7 @@ public class ParticipationService {
     public Participation resume(Exercise exercise, Participation participation) {
         ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
         participation = copyBuildPlan(participation, programmingExercise);
-        participation = configureBuildPlan(participation, programmingExercise);
+        participation = configureBuildPlan(participation);
         participation.setInitializationState(INITIALIZED);
         if (participation.getInitializationDate() == null) {
             //only set the date if it was not set before (which should NOT be the case)
@@ -248,10 +249,9 @@ public class ParticipationService {
         }
     }
 
-    private Participation configureRepository(Participation participation, ProgrammingExercise exercise) {
+    private Participation configureRepository(Participation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
             versionControlService.get().configureRepository(participation.getRepositoryUrlAsUrl(), participation.getStudent().getLogin());
-            versionControlService.get().addWebHook(participation.getRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participation.getId(), "ArTEMiS WebHook");
             participation.setInitializationState(InitializationState.REPO_CONFIGURED);
             return save(participation);
         } else {
@@ -270,10 +270,19 @@ public class ParticipationService {
         }
     }
 
-    private Participation configureBuildPlan(Participation participation, ProgrammingExercise exercise) {
+    private Participation configureBuildPlan(Participation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.BUILD_PLAN_CONFIGURED)) {
             continuousIntegrationService.get().configureBuildPlan(participation);
             participation.setInitializationState(InitializationState.BUILD_PLAN_CONFIGURED);
+            return save(participation);
+        } else {
+            return participation;
+        }
+    }
+
+    private Participation configureRepositoryWebHook(Participation participation) {
+        if (!participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
+            versionControlService.get().addWebHook(participation.getRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participation.getId(), "ArTEMiS WebHook");
             return save(participation);
         } else {
             return participation;

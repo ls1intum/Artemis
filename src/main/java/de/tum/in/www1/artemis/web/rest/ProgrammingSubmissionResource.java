@@ -42,6 +42,7 @@ public class ProgrammingSubmissionResource {
      */
     @PostMapping(value = "/programming-submissions/{participationId}")
     public ResponseEntity<?> notifyPush(@PathVariable("participationId") Long participationId, @RequestBody Object requestBody) {
+
         log.info("REST request to inform about new push: {}", participationId);
         programmingSubmissionService.notifyPush(participationId, requestBody);
 

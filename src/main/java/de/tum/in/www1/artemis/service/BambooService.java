@@ -225,7 +225,7 @@ public class BambooService implements ContinuousIntegrationService {
 
     @Override
     public String copyBuildPlan(String baseBuildPlanId, String wantedPlanKey) {
-        wantedPlanKey = cleanPlanKey(wantedPlanKey);
+        wantedPlanKey = getCleanPlanKey(wantedPlanKey);
         String projectKey = getProjectKeyFromBuildPlanId(baseBuildPlanId);
         try {
             return clonePlan(projectKey, getPlanKeyFromBuildPlanId(baseBuildPlanId), projectKey, wantedPlanKey); // Save the new plan in the same project
@@ -292,6 +292,22 @@ public class BambooService implements ContinuousIntegrationService {
                 log.error("NullPointerException while doing empty commit", ex);
                 return;
             }
+        }
+    }
+
+    @Override
+    public void triggerBuild(Participation participation) {
+        HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
+        HttpEntity<?> entity = new HttpEntity<>(headers);
+        RestTemplate restTemplate = new RestTemplate();
+        try {
+            restTemplate.exchange(
+                BAMBOO_SERVER_URL + "/rest/api/latest/queue/" + participation.getBuildPlanId(),
+                HttpMethod.POST,
+                entity,
+                Map.class);
+        } catch (Exception e) {
+            log.error("HttpError while triggering build", e);
         }
     }
 
@@ -875,7 +891,7 @@ public class BambooService implements ContinuousIntegrationService {
         return buildPlanId.split("-")[1];
     }
 
-    private String cleanPlanKey(String name) {
+    private String getCleanPlanKey(String name) {
         return name.toUpperCase().replaceAll("[^A-Z0-9]", "");
     }
 }
