@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.connectors;
 
 import de.tum.in.www1.artemis.domain.*;
 import org.springframework.http.ResponseEntity;

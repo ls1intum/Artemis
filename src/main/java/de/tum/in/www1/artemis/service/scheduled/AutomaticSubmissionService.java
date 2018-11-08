@@ -1,9 +1,12 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.scheduled;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
+import de.tum.in.www1.artemis.service.ExerciseService;
+import de.tum.in.www1.artemis.service.ModelingSubmissionService;
+import de.tum.in.www1.artemis.service.ParticipationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;

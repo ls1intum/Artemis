@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.connectors;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.util.PatchedIMSPOXRequest;
@@ -11,6 +11,7 @@ import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
+import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.util.RandomUtil;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 import org.apache.commons.lang3.tuple.Pair;

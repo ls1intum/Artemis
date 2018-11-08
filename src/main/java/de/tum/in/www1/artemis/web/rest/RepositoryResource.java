@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.web.rest;
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.eclipse.jgit.api.errors.GitAPIException;
