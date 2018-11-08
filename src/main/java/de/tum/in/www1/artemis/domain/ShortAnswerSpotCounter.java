@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import javax.persistence.*;
-
 import java.io.Serializable;
 import java.util.Objects;
 
