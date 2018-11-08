@@ -2,8 +2,8 @@ package de.tum.in.www1.artemis;
 
 import de.tum.in.www1.artemis.config.ApplicationProperties;
 import de.tum.in.www1.artemis.config.DefaultProfileUtil;
-import de.tum.in.www1.artemis.service.AutomaticSubmissionService;
-import de.tum.in.www1.artemis.service.QuizScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.AutomaticSubmissionService;
+import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import io.github.jhipster.config.JHipsterConstants;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;

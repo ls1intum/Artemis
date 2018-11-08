@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.connectors;
 
 /**
  * This service manages the update of the Build plan on the Continuous Integration Service depending on the current VCS and CI profiles.
