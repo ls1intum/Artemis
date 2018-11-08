@@ -1,0 +1,22 @@
+{
+    "arTeMiSApp": {
+        "shortAnswerSpotCounter": {
+            "home": {
+                "title": "Short Answer Spot Counters",
+                "createLabel": "Short Answer Spot Counter erstellen",
+                "createOrEditLabel": "Short Answer Spot Counter erstellen oder bearbeiten"
+            },
+            "created": "Short Answer Spot Counter erstellt mit ID {{ param }}",
+            "updated": "Short Answer Spot Counter aktualisiert mit ID {{ param }}",
+            "deleted": "Short Answer Spot Counter gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Short Answer Spot Counter {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Short Answer Spot Counter"
+            },
+            "spot": "Spot",
+            "shortAnswerQuestionStatistic": "Short Answer Question Statistic"
+        }
+    }
+}

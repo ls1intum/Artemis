@@ -53,6 +53,14 @@
                 "fileUploadExercise": "File Upload Exercise",
                 "textSubmission": "Text Submission",
                 "fileUploadSubmission": "File Upload Submission",
+                "shortAnswerQuestionStatistic": "Short Answer Question Statistic",
+                "shortAnswerSpotCounter": "Short Answer Spot Counter",
+                "shortAnswerQuestion": "Short Answer Question",
+                "shortAnswerSpot": "Short Answer Spot",
+                "shortAnswerSolution": "Short Answer Solution",
+                "shortAnswerSubmittedAnswer": "Short Answer Submitted Answer",
+                "shortAnswerSubmittedText": "Short Answer Submitted Text",
+                "shortAnswerMapping": "Short Answer Mapping",
                 "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)"
             },
             "account": {
@@ -130,7 +138,7 @@
             "id": "ID"
         },
         "ribbon": {
-            "dev":"Development",
+            "dev": "Development",
             "test": "Test Server"
         },
         "item-count": "Showing {{first}} - {{second}} of {{total}} items."
@@ -146,6 +154,7 @@
             "exportRepos": "Download Repositories",
             "delete": "Delete",
             "edit": "Edit",
+            "editLink": "Edit Link",
             "open": "Open",
             "save": "Save",
             "view": "View",
@@ -153,7 +162,7 @@
             "cleanup": "Cleanup",
             "archive": "Archive",
             "submit": "Submit",
-            "reset" : "Reset",
+            "reset": "Reset",
             "re-evaluate": "Re-evaluate",
             "close": "Close",
             "import": "Import",
@@ -198,8 +207,10 @@
         "userexists": "Login name already used!",
         "emailexists": "Email is already in use!",
         "idexists": "A new {{ entityName }} cannot already have an ID",
-        "invalid.build.plan.id": "The Build Plan ID seems to be invalid. Please make sure it exists and is accessible for ArTEMiS.",
-        "invalid.repository.url": "The Repository URL seems to be invalid. Please make sure it exists and is accessible for ArTEMiS."
+        "invalid.template.build.plan.id": "The Template Build Plan ID seems to be invalid. Please make sure it exists and is accessible for ArTEMiS.",
+        "invalid.solution.build.plan.id": "The Solution Build Plan ID seems to be invalid. Please make sure it exists and is accessible for ArTEMiS.",
+        "invalid.template.repository.url": "The Template Repository URL seems to be invalid. Please make sure it exists and is accessible for ArTEMiS.",
+        "invalid.solution.repository.url": "The Solution Repository URL seems to be invalid. Please make sure it exists and is accessible for ArTEMiS."
     },
     "footer": "Found a bug or have some feedback? Please <a href=\"mailto:krusche@in.tum.de\">let us know</a>!",
     "justNow": "just now",

@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -20,7 +21,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -71,12 +71,13 @@ public class ResultResource {
 
     /**
      * POST  /results : Create a new manual result.
+     * NOTE: we deviate from the standard URL scheme to avoid conflicts with a different POST request on results
      *
      * @param result the result to create
      * @return the ResponseEntity with status 201 (Created) and with body the new result, or with status 400 (Bad Request) if the result has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/results")
+    @PostMapping("/manual-results")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Result> createResult(@RequestBody Result result) throws URISyntaxException {
@@ -107,9 +108,11 @@ public class ResultResource {
             result.setHasFeedback(true);
         }
 
+        result.setAssessmentType(AssessmentType.MANUAL);
+        result.setAssessor(user);
+
         Result savedResult = resultRepository.save(result);
         try {
-            // TODO this seems to break in too many cases - track how often this warning can be found in server logs
             participation.addResult(savedResult);
             participationService.save(participation);
         } catch (NullPointerException e) {
@@ -128,7 +131,7 @@ public class ResultResource {
 
     /**
      * POST  /results/:planKey : Notify the application about a new build result for a programming exercise
-     * This API is invoked by the CI Server at the end of the build/test result
+     * This API is invoked by the CI Server at the end of the build/test result and does not need any security
      *
      * @param planKey the plan key of the plan which is notifying about a new result
      * @return the ResponseEntity with status 200 (OK), or with status 400 (Bad Request) if the result has already an ID
@@ -137,7 +140,9 @@ public class ResultResource {
     @PostMapping(value = "/results/{planKey}")
     @Transactional
     public ResponseEntity<?> notifyResult(@PathVariable("planKey") String planKey) {
-        if (planKey.contains("base")) {
+        if (planKey.toLowerCase().endsWith("base") || planKey.toLowerCase().endsWith("solution")) {
+            //TODO: can we do this check more precise and compare it with the saved values from the exercises?
+            //In the future we also might want to save these results in the database
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
         List<Participation> participations = participationService.findByBuildPlanIdAndInitializationState(planKey, InitializationState.INITIALIZED);
@@ -151,15 +156,8 @@ public class ResultResource {
                     }
                 }
             }
-            //TODO: we should also get build dates after the due date, but mark the result as unrated
-            if (participation.getExercise().getDueDate() == null || ZonedDateTime.now().isBefore(participation.getExercise().getDueDate())) {
-                resultService.onResultNotified(participation);
-                return ResponseEntity.ok().build();
-            }
-            else {
-                log.warn("REST request for new result of overdue exercise. Participation: {}", participation);
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            }
+            resultService.onResultNotified(participation);
+            return ResponseEntity.ok().build();
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }

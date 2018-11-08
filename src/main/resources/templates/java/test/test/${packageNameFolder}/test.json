@@ -1,0 +1,38 @@
+[
+  {
+    "package": "de.tum.in.www1.eist.proxy",
+    "class": "ImageSubject",
+    "methods": {
+      "request": {
+        "modifiers": [
+          "public",
+          "abstract"
+        ],
+        "parameters": [ "URL" ],
+        "returnType": "ImageSubject"
+      }
+    }
+  }, 
+  {
+    "package": "de.tum.in.www1.eist.proxy",
+    "class": "ProxyImage",
+    "superclass": "ImageSubject",
+    "methods": {
+      "request": {
+        "parameters": [ "URL" ],
+        "returnType": "ImageSubject"
+      }
+    }
+  },
+  {
+    "package": "de.tum.in.www1.eist.proxy",
+    "class": "RemoteImage",
+    "superclass": "ImageSubject",
+    "methods": {
+      "request": {
+        "parameters": [ "URL" ],
+        "returnType": "ImageSubject"
+      }
+    }
+  }
+]

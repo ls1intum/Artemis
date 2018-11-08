@@ -17,7 +17,6 @@ import java.util.Set;
  */
 @Entity
 @DiscriminatorValue(value="DD")
-//@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeName("drag-and-drop")
 public class DragAndDropSubmittedAnswer extends SubmittedAnswer implements Serializable {
 

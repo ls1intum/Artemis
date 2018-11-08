@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Observable, of } from 'rxjs';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 
-import { ArTEMiSTestModule } from '../../../test.module';
+import { ArTeMiSTestModule } from '../../../test.module';
 import { SubmissionComponent } from 'app/entities/submission/submission.component';
 import { SubmissionService } from 'app/entities/submission/submission.service';
 import { Submission } from 'app/shared/model/submission.model';
@@ -16,7 +16,7 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
+                imports: [ArTeMiSTestModule],
                 declarations: [SubmissionComponent],
                 providers: []
             })

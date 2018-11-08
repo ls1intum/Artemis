@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
@@ -51,6 +52,18 @@ public class Result implements Serializable {
     @JsonView(QuizView.After.class)
     private Long score;
 
+    /**
+     * Describes whether a result counts against the total score of a student.
+     * It determines whether the result is shown in the course dashboard or not.
+     * For quiz exercises:
+     *  - results are rated=true when students participate in the live quiz mode (there can only be one such result)
+     *  - results are rated=false when students participate in the practice mode
+     *
+     * For all other exercises (modeling, programming, etc.)
+     *  - results are rated=true when students submit before the due date (or when the due date is null),
+     *    multiple results can be rated=true, then the result with the last completionDate counts towards the total score of a student
+     *  - results are rated=false when students submit after the due date
+     */
     @Column(name = "rated")
     @JsonView(QuizView.Before.class)
     private Boolean rated;
@@ -204,6 +217,11 @@ public class Result implements Serializable {
 
     public Boolean isRated() {
         return rated != null ? rated : false;
+    }
+
+    @JsonIgnore
+    public Boolean isRatedNull() {
+        return rated == null;
     }
 
     public Result rated(Boolean rated) {

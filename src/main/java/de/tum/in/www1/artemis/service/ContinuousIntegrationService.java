@@ -6,9 +6,6 @@ import org.springframework.http.ResponseEntity;
 import java.net.URL;
 import java.util.List;
 
-/**
- * Created by muenchdo on 07/09/16.
- */
 public interface ContinuousIntegrationService {
 
     public enum BuildStatus {
@@ -17,10 +14,12 @@ public interface ContinuousIntegrationService {
 
     /**
      * Creates the base build plan for the given programming exercise
-     *
-     * @param exercise a programming exercise with the required information to create the base build plan
+     *  @param exercise a programming exercise with the required information to create the base build plan
+     * @param planKey the key of the plan
+     * @param assignmentVcsRepositorySlug the slug of the assignment repository (used to separate between exercise and solution), i.e. the unique identifier
+     * @param testVcsRepositorySlug the slug of the test repository, i.e. the unique identifier
      */
-    public void createBaseBuildPlanForExercise(ProgrammingExercise exercise);
+    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, String assignmentVcsRepositorySlug, String testVcsRepositorySlug);
 
     /**
      * Copy the base build plan for the given user on the CI system.
@@ -37,11 +36,16 @@ public interface ContinuousIntegrationService {
      * - set appropriate user permissions
      * - initialize/enable the build plan so that it works
      *
-     * @param participation contains the unique identifier for build plan on CI system and
-     * the url of user's personal repository copy
-
+     * @param participation contains the unique identifier for build plan on CI system and the url of user's personal repository copy
      */
     public void configureBuildPlan(Participation participation);
+
+    /**
+     * Delete project with given identifier from CI system.
+     *
+     * @param projectKey unique identifier for the project on CI system
+     */
+    public void deleteProject(String projectKey);
 
     /**
      * Delete build plan with given identifier from CI system.
@@ -110,4 +114,13 @@ public interface ContinuousIntegrationService {
      * @return the binary build artifact. Typically a JAR/WAR ResponseEntity.
      */
     public ResponseEntity retrieveLatestArtifact(Participation participation);
+
+    /**
+     * Checks if the project with the given projectKey already exists
+     *
+     * @param projectKey
+     * @param projectName
+     * @return true if the project exists, false otherwise
+     */
+    public String checkIfProjectExists(String projectKey, String projectName);
 }

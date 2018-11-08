@@ -9,6 +9,8 @@ import com.atlassian.bamboo.specs.api.builders.plan.Job;
 import com.atlassian.bamboo.specs.api.builders.plan.Plan;
 import com.atlassian.bamboo.specs.api.builders.plan.PlanIdentifier;
 import com.atlassian.bamboo.specs.api.builders.plan.Stage;
+import com.atlassian.bamboo.specs.api.builders.plan.branches.BranchCleanup;
+import com.atlassian.bamboo.specs.api.builders.plan.branches.PlanBranchManagement;
 import com.atlassian.bamboo.specs.api.builders.plan.configuration.ConcurrentBuilds;
 import com.atlassian.bamboo.specs.api.builders.project.Project;
 import com.atlassian.bamboo.specs.api.builders.repository.VcsChangeDetection;
@@ -25,11 +27,13 @@ import com.atlassian.bamboo.specs.util.BambooServer;
 import com.atlassian.bamboo.specs.util.SimpleUserPasswordCredentials;
 import com.atlassian.bamboo.specs.util.UserPasswordCredentials;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.exception.BambooException;
-import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -37,16 +41,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.swift.bamboo.cli.BambooClient;
-import org.swift.bitbucket.cli.BitbucketClient;
-import org.swift.bitbucket.cli.objects.RemoteRepository;
 import org.swift.common.cli.CliClient;
 
 import java.io.IOException;
@@ -56,10 +56,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -70,14 +67,8 @@ public class BambooService implements ContinuousIntegrationService {
 
     private final Logger log = LoggerFactory.getLogger(BambooService.class);
 
-    @Value("${artemis.bitbucket.url}")
-    private URL BITBUCKET_SERVER_URL;
-
-    @Value("${artemis.bitbucket.user}")
-    private String BITBUCKET_USER;
-
-    @Value("${artemis.bitbucket.password}")
-    private String BITBUCKET_PASSWORD;
+    @Value("${artemis.jira.admin-group-name}")
+    private String ADMIN_GROUP_NAME;
 
     @Value("${artemis.bamboo.url}")
     private URL BAMBOO_SERVER_URL;
@@ -85,72 +76,67 @@ public class BambooService implements ContinuousIntegrationService {
     @Value("${artemis.bamboo.empty-commit-necessary}")
     private Boolean BAMBOO_EMPTY_COMMIT_WORKAROUND_NECESSARY;
 
-    @Value("${artemis.bamboo.bitbucket-application-link-id}")
-    private String BITBUCKET_APPLICATION_LINK_ID;
-
     @Value("${artemis.bamboo.user}")
     private String BAMBOO_USER;
 
     @Value("${artemis.bamboo.password}")
     private String BAMBOO_PASSWORD;
 
-    @Value("${artemis.bitbucket.url}")
-    private URL BITBUCKET_SERVER;
+    @Value("${artemis.bamboo.bitbucket-application-link-id}")
+    private String BITBUCKET_APPLICATION_LINK_ID;
 
     @Value("${artemis.result-retrieval-delay}")
     private int RESULT_RETRIEVAL_DELAY = 10000;
 
+    @Value("${server.url}")
+    private URL SERVER_URL;
 
-    //TODO: get these values from somewhere?!?
-    private final String TEST_REPO_NAME = "Tests";
-
+    //NOTE: the following values are hard-coded at the moment
+    private final String TEST_REPO_NAME = "tests";
     private final String ASSIGNMENT_REPO_NAME = "Assignment";
-
-    private final String SERVER_URL = "https://artemis.ase.in.tum.de";
-
     private final String ASSIGNMENT_REPO_PATH = "assignment";
 
     private final GitService gitService;
     private final ResultRepository resultRepository;
     private final FeedbackRepository feedbackRepository;
     private final ParticipationRepository participationRepository;
+    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
+    private final Optional<VersionControlService> versionControlService;
+    private final Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService;
 
-    public BambooService(GitService gitService, ResultRepository resultRepository, FeedbackRepository feedbackRepository, ParticipationRepository participationRepository) {
+    public BambooService(GitService gitService, ResultRepository resultRepository, FeedbackRepository feedbackRepository, ParticipationRepository participationRepository,
+                         ProgrammingSubmissionRepository programmingSubmissionRepository, Optional<VersionControlService> versionControlService,
+                         Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService) {
         this.gitService = gitService;
         this.resultRepository = resultRepository;
         this.feedbackRepository = feedbackRepository;
         this.participationRepository = participationRepository;
+        this.programmingSubmissionRepository = programmingSubmissionRepository;
+        this.versionControlService = versionControlService;
+        this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
     }
 
-    public void createBaseBuildPlanForExercise(ProgrammingExercise exercise) {
+    public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, String assignmentVcsRepositorySlug, String testVcsRepositorySlug) {
         UserPasswordCredentials userPasswordCredentials = new SimpleUserPasswordCredentials(BAMBOO_USER, BAMBOO_PASSWORD);
         BambooServer bambooServer = new BambooServer(BAMBOO_SERVER_URL.toString(), userPasswordCredentials);
 
-        //TODO: Get some of these values from the exercise object or a config object
-
         //Bamboo build plan
-        final String planKey = "BASE";
-        final String planName = "Artemis Build Plan for Exercise XYZ";
-        final String planDescription = "Artemis BASE Build Plan for Exercise XYZ";
+        final String planName = planKey; // Must be unique within the project
+        final String planDescription = planKey + " Build Plan for Exercise " + programmingExercise.getTitle();
 
         //Bamboo build project
-        final String projectKey = "PROJECTKEY";
-        final String projectName = "Artemis Project for Exercise XYZ";
+        final String projectKey = programmingExercise.getProjectKey();
+        final String projectName = programmingExercise.getProjectName();
 
-        //Bitbucket project and repos
-        final String vcsProjectKey = "PROJECTKEY";
-        final String vcsAssignmentRepositorySlug = "exercise-assignment";
-        final String vcsTestRepositorySlug = "exercise-tests";
+        //Permissions
+        Course course = programmingExercise.getCourse();
+        final String teachingAssistantGroupName = course.getTeachingAssistantGroupName();
+        final String instructorGroupName = course.getInstructorGroupName();
 
-        //Permissions TODO get these values from the course
-        final String adminGroupName = "ls1instructor";  //see admin-group-name
-        final String teachingAssistantGroupName = "eist2018tutors";
-        final String instructorGroupName = "eist2018students";
-
-        final Plan plan = createPlan(planKey, planName, planDescription, projectKey, projectName, vcsProjectKey, vcsAssignmentRepositorySlug, vcsTestRepositorySlug);
+        final Plan plan = createPlan(planKey, planName, planDescription, projectKey, projectName, projectKey, assignmentVcsRepositorySlug, testVcsRepositorySlug);
         bambooServer.publish(plan);
 
-        final PlanPermissions planPermission = setPlanPermission(projectKey, planKey, adminGroupName, instructorGroupName, teachingAssistantGroupName);
+        final PlanPermissions planPermission = setPlanPermission(projectKey, planKey, teachingAssistantGroupName, instructorGroupName, ADMIN_GROUP_NAME);
         bambooServer.publish(planPermission);
     }
 
@@ -178,7 +164,7 @@ public class BambooService implements ContinuousIntegrationService {
                             .checkoutItems(new CheckoutItem()
                                     .repository(new VcsRepositoryIdentifier()
                                         .name(ASSIGNMENT_REPO_NAME))
-                                    .path(ASSIGNMENT_REPO_PATH),	//TODO: this path needs to be specified in the Maven pom.xml in the Tests Repo
+                                    .path(ASSIGNMENT_REPO_PATH),	//NOTE: this path needs to be specified in the Maven pom.xml in the Tests Repo
                                 new CheckoutItem()
                                     .repository(new VcsRepositoryIdentifier()
                                         .name(TEST_REPO_NAME))),
@@ -191,17 +177,21 @@ public class BambooService implements ContinuousIntegrationService {
                         .description("Notify ArTEMiS")
                         .interpreter(ScriptTaskProperties.Interpreter.BINSH_OR_CMDEXE)
                         .inlineBody("curl -k -X POST " + SERVER_URL + "/api/results/${bamboo.planKey}"))))
-            .triggers(new BitbucketServerTrigger());
+            .triggers(new BitbucketServerTrigger())
+            .planBranchManagement(new PlanBranchManagement()
+                .delete(new BranchCleanup())
+                .notificationForCommitters());
         return plan;
     }
 
     private BitbucketServerRepository createBuildPlanRepository(String name, String vcsProjectKey, String repositorySlug) {
         return new BitbucketServerRepository()
             .name(name)
+            .repositoryViewer(new BitbucketServerRepositoryViewer())
             .server(new ApplicationLink()
                 .id(BITBUCKET_APPLICATION_LINK_ID))
             .projectKey(vcsProjectKey)
-            .repositorySlug(repositorySlug)
+            .repositorySlug(repositorySlug.toLowerCase())   //make sure to use lower case to avoid problems in change detection between Bamboo and Bitbucket
             .shallowClonesEnabled(true)
             .remoteAgentCacheEnabled(false)
             .changeDetection(new VcsChangeDetection());
@@ -213,22 +203,8 @@ public class BambooService implements ContinuousIntegrationService {
                 .userPermissions(BAMBOO_USER, PermissionType.EDIT, PermissionType.BUILD, PermissionType.CLONE, PermissionType.VIEW, PermissionType.ADMIN)
                 .groupPermissions(adminGroupName, PermissionType.CLONE, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW, PermissionType.ADMIN)
                 .groupPermissions(instructorGroupName, PermissionType.CLONE, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW, PermissionType.ADMIN)
-                .groupPermissions(teachingAssistantGroupName, PermissionType.BUILD, PermissionType.VIEW));
+                .groupPermissions(teachingAssistantGroupName, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW));
         return planPermission;
-    }
-
-    public BitbucketClient getBitbucketClient() {
-        final BitbucketClient bitbucketClient = new BitbucketClient();
-        //setup the Bamboo Client to use the correct username and password
-
-        String[] args = new String[]{
-            "-s", BITBUCKET_SERVER_URL.toString(),
-            "--user", BITBUCKET_USER,
-            "--password", BITBUCKET_PASSWORD,
-        };
-
-        bitbucketClient.doWork(args); //only invoke this to set server address, username and password so that the following action will work
-        return bitbucketClient;
     }
 
     private BambooClient getBambooClient() {
@@ -248,8 +224,9 @@ public class BambooService implements ContinuousIntegrationService {
     @Override
     public String copyBuildPlan(String baseBuildPlanId, String wantedPlanKey) {
         wantedPlanKey = cleanPlanKey(wantedPlanKey);
+        String projectKey = getProjectKeyFromBuildPlanId(baseBuildPlanId);
         try {
-            return clonePlan(getProjectKeyFromBuildPlanId(baseBuildPlanId), getPlanKeyFromBuildPlanId(baseBuildPlanId), wantedPlanKey);
+            return clonePlan(projectKey, getPlanKeyFromBuildPlanId(baseBuildPlanId), projectKey, wantedPlanKey); // Save the new plan in the same project
         }
         catch(BambooException bambooException) {
             if (bambooException.getMessage().contains("already exists")) {
@@ -258,6 +235,12 @@ public class BambooService implements ContinuousIntegrationService {
             }
             else throw bambooException;
         }
+    }
+
+    //TODO: this method has moved to BitbucketService, but missed the toUpperCase() there, so we reactivated it here
+    private String getProjectKeyFromUrl(URL repositoryUrl) {
+        // https://ga42xab@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
+        return repositoryUrl.getFile().split("/")[2].toUpperCase();
     }
 
     @Override
@@ -269,9 +252,11 @@ public class BambooService implements ContinuousIntegrationService {
             getPlanKeyFromBuildPlanId(buildPlanId),
             ASSIGNMENT_REPO_NAME,
             getProjectKeyFromUrl(repositoryUrl),
-            getRepositorySlugFromUrl(repositoryUrl)
+            versionControlService.get().getRepositoryName(repositoryUrl)
         );
         enablePlan(getProjectKeyFromBuildPlanId(buildPlanId), getPlanKeyFromBuildPlanId(buildPlanId));
+        // We need to trigger an initial update in order for Gitlab to work correctly
+        continuousIntegrationUpdateService.get().triggerUpdate(buildPlanId, true);
 
         // Empty commit - Bamboo bug workaround
 
@@ -311,6 +296,17 @@ public class BambooService implements ContinuousIntegrationService {
     @Override
     public void deleteBuildPlan(String buildPlanId) {
         deletePlan(getProjectKeyFromBuildPlanId(buildPlanId), getPlanKeyFromBuildPlanId(buildPlanId));
+    }
+
+    @Override
+    public void deleteProject(String projectKey) {
+        try {
+            log.info("Delete project " + projectKey);
+            String message = getBambooClient().getProjectHelper().deleteProject(projectKey);
+            log.info("Delete project was successful. " + message);
+        } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
+            log.error(e.getMessage());
+        }
     }
 
     @Override
@@ -358,12 +354,13 @@ public class BambooService implements ContinuousIntegrationService {
      *
      * @param baseProject The Bamboo project in which the plan is contained.
      * @param basePlan    The plan's name.
+     * @param toProject   The Bamboo project in which the new plan should be contained.
      * @param name        The name to give the cloned plan.
      * @return            The name of the new build plan
      */
-    public String clonePlan(String baseProject, String basePlan, String name) throws BambooException {
+    public String clonePlan(String baseProject, String basePlan, String toProject, String name) throws BambooException {
 
-        String toPlan = baseProject + "-" + name;
+        String toPlan = toProject + "-" + name;
         try {
             log.info("Clone build plan " + baseProject + "-" + basePlan + " to " + toPlan);
             String message = getBambooClient().getPlanHelper().clonePlan(baseProject + "-" + basePlan, toPlan, toPlan, "", "", true);
@@ -400,46 +397,8 @@ public class BambooService implements ContinuousIntegrationService {
         }
     }
 
-    /**
-     * Updates the configured repository for a given plan to the given Bitbucket Server repository.
-     *
-     * @param bambooProject        The key of the Bamboo plan's project, e.g. 'EIST16W1'.
-     * @param bambooPlan           The plan key, which is usually the name, e.g. 'ga56hur'.
-     * @param bambooRepositoryName The name of the configured repository in the Bamboo plan.
-     * @param bitbucketProject     The key for the Bitbucket Server (formerly Stash) project to which we want to update the plan.
-     * @param bitbucketRepository  The name/slug for the Bitbucket Server (formerly Stash) repository to which we want to update the plan.
-     */
-    public String updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String bitbucketProject, String bitbucketRepository) throws BambooException {
-
-        try {
-            //get the repositoryId to find the correct value for field2 below
-            final BitbucketClient bitbucketClient = getBitbucketClient();
-            RemoteRepository remoteRepository = bitbucketClient.getRepositoryHelper().getRemoteRepository(bitbucketProject, bitbucketRepository, true);
-
-            final BambooClient bambooClient = new BambooClient();
-            String[] args = new String[]{
-                "--field1", "repository.stash.projectKey", "--value1", bitbucketProject,
-                "--field2", "repository.stash.repositoryId", "--value2", remoteRepository.getId().toString(),
-                "--field3", "repository.stash.repositorySlug", "--value3", bitbucketRepository,
-                "--field4", "repository.stash.repositoryUrl", "--value4", buildSshRepositoryUrl(bitbucketProject, bitbucketRepository), // e.g. "ssh://git@repobruegge.in.tum.de:7999/madm/helloworld.git"
-                "--field5", "repository.stash.server", "--value5", BITBUCKET_APPLICATION_LINK_ID,
-                "--field6", "repository.stash.branch", "--value6", "master",
-                "-s", BAMBOO_SERVER_URL.toString(),
-                "--user", BAMBOO_USER,
-                "--password", BAMBOO_PASSWORD,
-//            "--targetServer", "https://repobruegge.in.tum.de"     //in the future, we might be able to use this and save many other arguments above, then we could also get rid of BITBUCKET_APPLICATION_LINK_ID
-            };
-            //workaround to pass additional fields
-            bambooClient.doWork(args);
-
-            log.info("Update plan repository for build plan " + bambooProject + "-" + bambooPlan);
-            String message = bambooClient.getRepositoryHelper().addOrUpdateRepository(bambooRepositoryName, null, null, bambooProject + "-" + bambooPlan, "BITBUCKET_SERVER", null, false, true, true);
-            log.info("Update plan repository for build plan " + bambooProject + "-" + bambooPlan + " was successful." + message);
-            return message;
-        } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
-            log.error(e.getMessage(), e);
-            throw new BambooException("Something went wrong while updating the plan repository", e);
-        }
+    public String updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String repoProjectName, String repoName) throws BambooException {
+        return continuousIntegrationUpdateService.get().updatePlanRepository(bambooProject, bambooPlan, bambooRepositoryName, repoProjectName, repoName);
     }
 
     /**
@@ -449,15 +408,13 @@ public class BambooService implements ContinuousIntegrationService {
      * @param planKey
      * @return
      */
-    public String deletePlan(String projectKey, String planKey) {
+    private void deletePlan(String projectKey, String planKey) {
         try {
             log.info("Delete build plan " + projectKey + "-" + planKey);
             String message = getBambooClient().getPlanHelper().deletePlan(projectKey + "-" + planKey);
             log.info("Delete build plan was successful. " + message);
-            return message;
         } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
             log.error(e.getMessage());
-            throw new BambooException("Something went wrong while deleting the build plan", e);
         }
     }
 
@@ -475,7 +432,7 @@ public class BambooService implements ContinuousIntegrationService {
         Map buildResults = new HashMap<>();
         try {
             buildResults = retrieveLatestBuildResult(participation.getBuildPlanId());
-            isOldBuildResult = TimeUnit.SECONDS.toMillis(ZonedDateTime.now().toEpochSecond() - ((ZonedDateTime) buildResults.get("buildCompletedDate")).toEpochSecond()) > (20 * 1000);     // older than 20s
+            isOldBuildResult = TimeUnit.SECONDS.toMillis(ZonedDateTime.now().toEpochSecond() - ((ZonedDateTime) buildResults.get("buildCompletedDate")).toEpochSecond()) > (60 * 1000);     // older than 60s
         } catch (Exception ex) {
             log.warn("Exception when retrieving a Bamboo build result for build plan " + participation.getBuildPlanId() + ": " + ex.getMessage());
         }
@@ -495,6 +452,7 @@ public class BambooService implements ContinuousIntegrationService {
         if (buildResults.containsKey("buildReason")) {
             String buildReason = (String)buildResults.get("buildReason");
             if (buildReason.contains("First build for this plan")) {
+                //Filter the first build plan that was automatically executed when the build plan was created
                 return null;
             }
         }
@@ -502,6 +460,8 @@ public class BambooService implements ContinuousIntegrationService {
         //TODO: only save this result if it is newer (e.g. + 5s) than the last saved result for this participation --> this avoids saving exact same results multiple times
 
         Result result = new Result();
+        result.setRated(participation.getExercise().getDueDate() == null || ZonedDateTime.now().isBefore(participation.getExercise().getDueDate()));
+        result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setSuccessful((boolean) buildResults.get("successful"));
         result.setResultString((String) buildResults.get("buildTestSummary"));
         result.setCompletionDate((ZonedDateTime) buildResults.get("buildCompletedDate"));
@@ -518,6 +478,35 @@ public class BambooService implements ContinuousIntegrationService {
             }
         }
         addFeedbackToResult(result, buildResultDetails);
+        // save result, otherwise the next database access programmingSubmissionRepository.findByCommitHash will throw an exception
+        resultRepository.save(result);
+        if (buildResults.containsKey("vcsRevisionKey")) {
+            String commitHash = (String) buildResults.get("vcsRevisionKey");
+
+            //Due to test case changes there might be multiple submissions with the same commit hash, but with different participations, therefore we have to take the participation_id into account
+            ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHash(participation.getId(), commitHash);
+            if (programmingSubmission == null) { // no matching programming submission
+                log.warn("Could not find ProgrammingSubmission for Commit-Hash {} (Participation {}, Build-Plan {}). Will create it subsequently...", commitHash, participation.getId(), participation.getBuildPlanId());
+                // this might be a wrong build (what could be the reason), or this might be due to test changes
+                // what happens if only the test has changes? should we then create a new submission?
+                programmingSubmission = new ProgrammingSubmission();
+                programmingSubmission.setParticipation(participation);
+                programmingSubmission.setSubmitted(true);
+                programmingSubmission.setType(SubmissionType.OTHER);
+                programmingSubmission.setCommitHash(commitHash);
+                programmingSubmission.setSubmissionDate(result.getCompletionDate());
+            } else {
+                log.info("Found corresponding submission to build result with Commit-Hash {}", commitHash);
+            }
+            // connect submission and result
+            result.setSubmission(programmingSubmission);
+            programmingSubmission.setResult(result);
+            programmingSubmissionRepository.save(programmingSubmission); // result gets saved later, no need to save it now
+
+        } else { // No commit hash in build result
+            log.warn("Could not find Commit-Hash (Participation {}, Build-Plan {})", participation.getId(), participation.getBuildPlanId());
+        }
+
         resultRepository.save(result);
         //The following was intended to prevent caching problems, but does not work properly due to lazy instantiation exceptions
 //        Hibernate.initialize(participation.getResults());
@@ -634,6 +623,9 @@ public class BambooService implements ContinuousIntegrationService {
             String dateString = (String) response.getBody().get("buildCompletedDate");
             ZonedDateTime buildCompletedDate = ZonedDateTime.parse(dateString);
             result.put("buildCompletedDate", buildCompletedDate);
+            if (response.getBody().containsKey("vcsRevisionKey")) {
+                result.put("vcsRevisionKey", response.getBody().get("vcsRevisionKey"));
+            }
 
             if(response.getBody().containsKey("artifacts")) {
                 Map<String, Object> artifacts = (Map<String, Object>)response.getBody().get("artifacts");
@@ -686,7 +678,7 @@ public class BambooService implements ContinuousIntegrationService {
      * @param planKey
      * @return
      */
-    //TODO: save this in the result class so that ArTEMiS does not need to retrieve it everytime
+    //TODO: save this in the result class so that ArTEMiS does not need to retrieve it every time
     public List<BuildLogEntry> retrieveLatestBuildLogs(String planKey) {
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
@@ -730,11 +722,50 @@ public class BambooService implements ContinuousIntegrationService {
         if(latestResult.containsKey("artifact")) {
             // The URL points to the directory. Bamboo returns an "Index of" page.
             // Recursively walk through the responses until we get the actual artifact.
-            return retrievArtifactPage((String)latestResult.get("artifact"));
+            return retrieveArtifactPage((String)latestResult.get("artifact"));
         }
         else {
             throw new BambooException("No build artifact available for this plan");
         }
+    }
+
+    @Override
+    public String checkIfProjectExists(String projectKey, String projectName) {
+        HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
+        HttpEntity<?> entity = new HttpEntity<>(headers);
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<Map> response = null;
+        try {
+            response = restTemplate.exchange(
+                BAMBOO_SERVER_URL + "/rest/api/latest/project/" + projectKey,
+                HttpMethod.GET,
+                entity,
+                Map.class);
+            log.warn("Bamboo project " + projectKey + " already exists");
+            return "The project " + projectKey + " already exists in the CI Server. Please choose a different short name!";
+        } catch (HttpClientErrorException e) {
+            log.debug("Bamboo project " + projectKey + " does not exit");
+            if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
+                //only if this is the case, we additionally check that the project name is unique
+                response = restTemplate.exchange(
+                    BAMBOO_SERVER_URL + "/rest/api/latest/search/projects?searchTerm=" + projectName,
+                    HttpMethod.GET,
+                    entity,
+                    Map.class);
+                if ((Integer)response.getBody().get("size") != 0) {
+                    List<Object> ciProjects = (List<Object>) response.getBody().get("searchResults");
+                    for (Object ciProject : ciProjects) {
+                        String ciProjectName = (String) ((Map)((Map) ciProject).get("searchEntity")).get("projectName");
+                        if (ciProjectName.equalsIgnoreCase(projectName)) {
+                            log.warn("Bamboo project with name" + projectName + " already exists");
+                            return "The project " + projectName + " already exists in the CI Server. Please choose a different title!";
+                        }
+                    }
+                }
+                return null;
+            }
+        }
+        return "The project already exists in the CI Server. Please choose a different title and short name!";
     }
 
     /**
@@ -744,7 +775,7 @@ public class BambooService implements ContinuousIntegrationService {
      * @param url
      * @return
      */
-    private ResponseEntity retrievArtifactPage(String url) throws BambooException {
+    private ResponseEntity retrieveArtifactPage(String url) throws BambooException {
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
         RestTemplate restTemplate = new RestTemplate();
@@ -765,7 +796,7 @@ public class BambooService implements ContinuousIntegrationService {
             if (m.find()) {
                 url = m.group(1);
                 // Recursively walk through the responses until we get the actual artifact.
-                return retrievArtifactPage(BAMBOO_SERVER_URL + url);
+                return retrieveArtifactPage(BAMBOO_SERVER_URL + url);
             } else {
                 throw new BambooException("No artifact link found on artifact page");
             }
@@ -834,12 +865,6 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
 
-    private String buildSshRepositoryUrl(String project, String slug) {
-        final int sshPort = 7999;
-
-        return "ssh://git@" + BITBUCKET_SERVER.getHost() + ":" + sshPort + "/" + project.toLowerCase() + "/" + slug.toLowerCase() + ".git";
-    }
-
     private String getProjectKeyFromBuildPlanId(String buildPlanId) {
         return buildPlanId.split("-")[0];
     }
@@ -848,22 +873,7 @@ public class BambooService implements ContinuousIntegrationService {
         return buildPlanId.split("-")[1];
     }
 
-    private String getProjectKeyFromUrl(URL repositoryUrl) {
-        // https://ga42xab@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
-        return repositoryUrl.getFile().split("/")[2].toUpperCase();
-    }
-
-
     private String cleanPlanKey(String name) {
         return name.toUpperCase().replaceAll("[^A-Z0-9]", "");
-    }
-
-    private String getRepositorySlugFromUrl(URL repositoryUrl) {
-        // https://ga42xab@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
-        String repositorySlug = repositoryUrl.getFile().split("/")[3];
-        if (repositorySlug.endsWith(".git")) {
-            repositorySlug = repositorySlug.substring(0, repositorySlug.length() - 4);
-        }
-        return repositorySlug;
     }
 }

@@ -11,7 +11,6 @@ import { ArTEMiSModelingSubmissionModule } from './modeling-submission/modeling-
 import { ArTEMiSResultModule } from './result/result.module';
 import { ArTEMiSTextExerciseModule } from './text-exercise/text-exercise.module';
 import { ArTEMiSFileUploadExerciseModule } from './file-upload-exercise/file-upload-exercise.module';
-
 /* jhipster-needle-add-entity-module-import - JHipster will add entity modules imports here */
 
 @NgModule({
@@ -26,7 +25,7 @@ import { ArTEMiSFileUploadExerciseModule } from './file-upload-exercise/file-upl
         ArTEMiSModelingSubmissionModule,
         ArTEMiSResultModule,
         ArTEMiSTextExerciseModule,
-        ArTEMiSFileUploadExerciseModule,
+        ArTEMiSFileUploadExerciseModule
         /* jhipster-needle-add-entity-module - JHipster will add entity modules here */
     ],
     declarations: [],

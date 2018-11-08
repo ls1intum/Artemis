@@ -1,10 +1,9 @@
 {
     "arTeMiSApp": {
-        "AssessmentType" : {
+        "AssessmentType": {
             "null": "",
             "AUTOMATIC": "AUTOMATIC",
-            "MANUAL": "MANUAL",
-            "SEMIAUTOMATIC": "SEMIAUTOMATIC"
+            "MANUAL": "MANUAL"
         }
     }
 }

@@ -715,7 +715,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     }
 
     private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message, null, null);
+        this.jhiAlertService.error(error.message);
     }
 
     /**

@@ -1,0 +1,23 @@
+{
+    "arTeMiSApp": {
+        "shortAnswerSubmittedText": {
+            "home": {
+                "title": "Short Answer Submitted Texts",
+                "createLabel": "Create a new Short Answer Submitted Text",
+                "createOrEditLabel": "Create or edit a Short Answer Submitted Text"
+            },
+            "created": "A new Short Answer Submitted Text is created with identifier {{ param }}",
+            "updated": "A Short Answer Submitted Text is updated with identifier {{ param }}",
+            "deleted": "A Short Answer Submitted Text is deleted with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete Short Answer Submitted Text {{ id }}?"
+            },
+            "detail": {
+                "title": "Short Answer Submitted Text"
+            },
+            "text": "Text",
+            "spot": "Spot",
+            "submittedAnswer": "Submitted Answer"
+        }
+    }
+}

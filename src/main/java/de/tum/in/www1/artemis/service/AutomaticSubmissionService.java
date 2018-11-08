@@ -173,6 +173,8 @@ public class AutomaticSubmissionService {
                     submission.setType(SubmissionType.TIMEOUT);
                     submission.setSubmissionDate(ZonedDateTime.now());
 
+                    // TODO: we should check if there is a result for the submission. If this is not the case, we should create one
+
                     // Update Participation and save to Database (DB Write)
                     // Remove processed Submissions from SubmissionHashMap
                     submission = updateParticipation(submission);

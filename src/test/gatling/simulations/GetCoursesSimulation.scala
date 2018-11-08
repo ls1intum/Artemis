@@ -5,8 +5,8 @@ import io.gatling.core.Predef._
 import io.gatling.http.Predef._
 
 class GetCoursesSimulation extends Simulation {
-    val username = "<YOUR USERNAME>"    // TODO: replace with actual username
-    val password = "<YOUR PASSWORD>"    // TODO: replace with actual password
+    val username = "<YOUR USERNAME>"    // NOTE: replace with actual username
+    val password = "<YOUR PASSWORD>"    // NOTE: replace with actual password
 
     val baseURL = Option(System.getProperty("baseURL")) getOrElse """http://localhost:8080"""
 

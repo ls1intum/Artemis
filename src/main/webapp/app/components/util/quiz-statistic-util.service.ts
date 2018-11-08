@@ -4,10 +4,9 @@ import { Router } from '@angular/router';
 import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
 import { Question, QuestionType } from '../../entities/question';
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class QuizStatisticUtil {
-    constructor(private router: Router,
-                private quizExerciseService: QuizExerciseService) {}
+    constructor(private router: Router, private quizExerciseService: QuizExerciseService) {}
 
     /**
      * go to the Template with the previous Statistic
@@ -73,18 +72,18 @@ export class QuizStatisticUtil {
         }
         // check if it's allowed to release the statistics, if not send alert and do nothing
         if (released && this.releaseButtonDisabled(quizExercise)) {
-            alert('Quiz hasn\'t ended yet!');
+            alert("Quiz hasn't ended yet!");
             return;
         }
         if (quizExercise.id) {
             quizExercise.quizPointStatistic.released = released;
             if (released) {
                 this.quizExerciseService.releaseStatistics(quizExercise.id).subscribe(
-                    () => {
-                    },
+                    () => {},
                     () => {
                         alert('Error!');
-                    });
+                    }
+                );
             } else {
                 this.quizExerciseService.revokeStatistics(quizExercise.id).subscribe();
             }
@@ -100,11 +99,9 @@ export class QuizStatisticUtil {
      */
     releaseButtonDisabled(quizExercise: QuizExercise) {
         if (quizExercise) {
-            return (!quizExercise.isPlannedToStart
-                || moment().isBefore(quizExercise.dueDate));
+            return !quizExercise.isPlannedToStart || moment().isBefore(quizExercise.dueDate);
         } else {
             return true;
         }
     }
-
 }
