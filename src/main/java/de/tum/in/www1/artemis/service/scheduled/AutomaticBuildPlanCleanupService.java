@@ -4,13 +4,17 @@ import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import io.github.jhipster.config.JHipsterConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 
@@ -21,11 +25,14 @@ public class AutomaticBuildPlanCleanupService {
 
     private static final Logger log = LoggerFactory.getLogger(AutomaticBuildPlanCleanupService.class);
 
+    private final Environment env;
     private final ProgrammingExerciseRepository programmingExerciseRepository;
     private final ParticipationRepository participationRepository;
 
-    public AutomaticBuildPlanCleanupService(ProgrammingExerciseRepository programmingExerciseRepository,
+    public AutomaticBuildPlanCleanupService(Environment env,
+                                            ProgrammingExerciseRepository programmingExerciseRepository,
                                             ParticipationRepository participationRepository) {
+        this.env = env;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationRepository = participationRepository;
     }
@@ -57,9 +64,15 @@ public class AutomaticBuildPlanCleanupService {
         }
     }
 
-    @Scheduled(cron="30 2 * * * *") //execute this every night at 2:30 am
+    @Scheduled(cron="0 0 3 * * *") //execute this every night at 3:00:00 am
     @Transactional
     public void cleanupBuildPlans() {
+        Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
+        if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_PRODUCTION)) {
+            // only execute this on production, i.e. when the prod profile is active and when the SERVER URL is artemis.ase.in.tum.de
+            return;
+        }
+
         long start = System.currentTimeMillis();
         log.info("Find build plans for potential cleanup");
 
