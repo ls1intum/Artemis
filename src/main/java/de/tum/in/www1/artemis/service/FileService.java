@@ -214,8 +214,6 @@ public class FileService {
                 Files.createDirectories(parentFolder.toPath());
             }
 
-            log.info("resource: " + resource.getURL().toString());
-            log.info("copyPath: " + copyPath);
             Files.copy(resource.getInputStream(), copyPath);
         }
     }
