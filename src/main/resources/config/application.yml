@@ -51,6 +51,10 @@ spring:
             enabled: false
     thymeleaf:
         mode: HTML
+    servlet:
+        multipart:
+            max-file-size: 5MB # this should match the value in webapp/app/blocks/config/constants.config.js MAX_FILE_SIZE
+            max-request-size: 10MB
 
 server:
     servlet:
@@ -84,14 +88,3 @@ jhipster:
         #max-age: 1800
     mail:
         from: ArTEMiS@localhost
-
-# ===================================================================
-# Application specific properties
-# Add your own application properties here, see the ApplicationProperties class
-# to have type-safe configuration, like in the JHipsterProperties above
-#
-# More documentation is available at:
-# https://www.jhipster.tech/common-application-properties/
-# ===================================================================
-
-# application:
