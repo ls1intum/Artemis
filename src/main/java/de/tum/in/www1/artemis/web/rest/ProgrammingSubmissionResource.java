@@ -41,6 +41,7 @@ public class ProgrammingSubmissionResource {
      * @return the ResponseEntity with status 200 (OK), or with status 400 (Bad Request) if the latest commit was already notified about
      */
     @PostMapping(value = "/programming-submissions/{participationId}")
+    @Timed
     public ResponseEntity<?> notifyPush(@PathVariable("participationId") Long participationId, @RequestBody Object requestBody) {
 
         log.info("REST request to inform about new push: {}", participationId);
