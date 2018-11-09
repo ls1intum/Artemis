@@ -1,0 +1,21 @@
+{
+    "arTeMiSApp": {
+        "shortAnswerQuestionStatistic": {
+            "home": {
+                "title": "Short Answer Question Statistics",
+                "createLabel": "Short Answer Question Statistic erstellen",
+                "createOrEditLabel": "Short Answer Question Statistic erstellen oder bearbeiten"
+            },
+            "created": "Short Answer Question Statistic erstellt mit ID {{ param }}",
+            "updated": "Short Answer Question Statistic aktualisiert mit ID {{ param }}",
+            "deleted": "Short Answer Question Statistic gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Short Answer Question Statistic {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Short Answer Question Statistic"
+            },
+            "shortAnswerSpotCounters": "Short Answer Spot Counters"
+        }
+    }
+}

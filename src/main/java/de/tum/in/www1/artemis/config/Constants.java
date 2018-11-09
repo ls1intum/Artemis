@@ -22,6 +22,10 @@ public final class Constants {
     public static final String FILEPATH_ID_PLACHEOLDER = "PLACEHOLDER_FOR_ID";
     public static final String FILEPATH_COMPASS = "compass";
 
+    public static final String RESULT_RESOURCE_API_PATH = "/api/results/";
+    public static final String PROGRAMMING_SUBMISSION_RESOURCE_API_PATH = "/api/programming-submissions/";
+    public static final String TEST_CASE_CHANGED_API_PATH = "/api/programming-exercises/test-cases-changed/";
+
     private Constants() {
     }
 }

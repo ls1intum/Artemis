@@ -11,7 +11,8 @@ export const enum ScoringType {
 // IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Question.java
 export const enum QuestionType {
     MULTIPLE_CHOICE = 'multiple-choice',
-    DRAG_AND_DROP = 'drag-and-drop'
+    DRAG_AND_DROP = 'drag-and-drop',
+    SHORT_ANSWER = 'short-answer'
 }
 
 export interface MarkDownElement {

@@ -4,9 +4,11 @@ import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.QuizExercise;
 import de.tum.in.www1.artemis.domain.QuizSubmission;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,6 +63,7 @@ public class QuizSubmissionService {
         // create and save result
         Result result = new Result().participation(participation).submission(quizSubmission);
         result.setRated(false);
+        result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setCompletionDate(ZonedDateTime.now());
         // calculate score and update result accordingly
         result.evaluateSubmission();

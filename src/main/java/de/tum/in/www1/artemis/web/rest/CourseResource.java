@@ -7,8 +7,11 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -47,6 +50,7 @@ public class CourseResource {
     private final ObjectMapper objectMapper;
     private final CourseRepository courseRepository;
     private final ExerciseService exerciseService;
+    private final Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider;
 
     public CourseResource(UserService userService,
                           CourseService courseService,
@@ -54,7 +58,8 @@ public class CourseResource {
                           CourseRepository courseRepository,
                           ExerciseService exerciseService,
                           AuthorizationCheckService authCheckService,
-                          MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
+                          MappingJackson2HttpMessageConverter springMvcJacksonConverter,
+                          Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider) {
         this.userService = userService;
         this.courseService = courseService;
         this.participationService = participationService;
@@ -62,6 +67,7 @@ public class CourseResource {
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
+        this.artemisAuthenticationProvider = artemisAuthenticationProvider;
     }
 
     /**
@@ -79,10 +85,18 @@ public class CourseResource {
         if (course.getId() != null) {
             throw new BadRequestAlertException("A new course cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        Course result = courseService.save(course);
-        return ResponseEntity.created(new URI("/api/courses/" + result.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
-            .body(result);
+        try {
+            checkIfGroupsExists(course);
+            Course result = courseService.save(course);
+            return ResponseEntity.created(new URI("/api/courses/" + result.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getTitle()))
+                .body(result);
+        }
+        catch(ArtemisAuthenticationException ex) {
+            //a specified group does not exist, notify the client
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "groupNotFound", ex.getMessage())).body(null);
+        }
+
     }
 
     /**
@@ -111,13 +125,38 @@ public class CourseResource {
         //only allow admins or instructors of the existing updatedCourse to change it
         //this is important, otherwise someone could put himself into the instructor group of the updated Course
         if (user.getGroups().contains(existingCourse.getInstructorGroupName()) || authCheckService.isAdmin()) {
-            Course result = courseService.save(updatedCourse);
-            return ResponseEntity.ok()
-                .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, updatedCourse.getId().toString()))
-                .body(result);
+            try {
+                checkIfGroupsExists(updatedCourse);
+                Course result = courseService.save(updatedCourse);
+                return ResponseEntity.ok()
+                    .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, updatedCourse.getTitle()))
+                    .body(result);
+            }
+            catch(ArtemisAuthenticationException ex) {
+                //a specified group does not exist, notify the client
+                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(ex.getMessage(), "groupNotFound")).body(null);
+            }
         }
         else {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+    }
+
+    private void checkIfGroupsExists(Course course) {
+        if (course.getInstructorGroupName() != null) {
+            if(!artemisAuthenticationProvider.get().checkIfGroupExists(course.getInstructorGroupName())) {
+                throw new ArtemisAuthenticationException("Cannot save! The group " + course.getInstructorGroupName() + " for instructors does not exist. Please double check the instructor group name!");
+            }
+        }
+        if (course.getTeachingAssistantGroupName() != null) {
+            if(!artemisAuthenticationProvider.get().checkIfGroupExists(course.getTeachingAssistantGroupName())) {
+                throw new ArtemisAuthenticationException("Cannot save! The group " + course.getTeachingAssistantGroupName() + " for teaching assistants does not exist. Please double check the teaching assistants group name!");
+            }
+        }
+        if (course.getStudentGroupName() != null) {
+            if(!artemisAuthenticationProvider.get().checkIfGroupExists(course.getStudentGroupName())) {
+                throw new ArtemisAuthenticationException("Cannot save! The group " + course.getStudentGroupName() + " for students does not exist. Please double check the students group name!");
+            }
         }
     }
 
@@ -225,11 +264,11 @@ public class CourseResource {
             return ResponseEntity.notFound().build();
         }
         for(Exercise exercise : course.getExercises()) {
-            exerciseService.delete(exercise.getId());
+            exerciseService.delete(exercise, false, false);
         }
-
+        String title = course.getTitle();
         courseService.delete(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, title)).build();
     }
 
 

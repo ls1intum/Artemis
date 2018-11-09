@@ -1,7 +1,6 @@
-
 {
     "arTeMiSApp": {
-        "exerciseResult" : {
+        "exerciseResult": {
             "home": {
                 "title": "Exercise Results",
                 "createLabel": "Exercise Result erstellen",

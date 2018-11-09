@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository;
 
 
 /**
- * Spring Data JPA repository for the Submission entity.
+ * Spring Data  repository for the Submission entity.
  */
 @SuppressWarnings("unused")
 @Repository

@@ -1,0 +1,34 @@
+{
+    "name": "ShortAnswerSubmittedText",
+    "fields": [
+        {
+            "fieldName": "text",
+            "fieldType": "String"
+        }
+    ],
+    "relationships": [
+        {
+            "relationshipType": "one-to-one",
+            "relationshipName": "spot",
+            "otherEntityName": "shortAnswerSpot",
+            "otherEntityField": "id",
+            "ownerSide": true,
+            "otherEntityRelationshipName": "shortAnswerSubmittedText"
+        },
+        {
+            "relationshipType": "many-to-one",
+            "relationshipName": "submittedAnswer",
+            "otherEntityName": "shortAnswerSubmittedAnswer",
+            "otherEntityField": "id"
+        }
+    ],
+    "changelogDate": "20181107093826",
+    "entityTableName": "short_answer_submitted_text",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no",
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
+}

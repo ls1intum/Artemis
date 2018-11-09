@@ -72,7 +72,7 @@ export class QuizExerciseExportComponent implements OnInit {
      * @param error Error
      */
     private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message, null, null);
+        this.jhiAlertService.error(error.message);
     }
 
     /**

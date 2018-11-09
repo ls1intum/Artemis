@@ -1,0 +1,23 @@
+{
+    "arTeMiSApp": {
+        "shortAnswerQuestion": {
+            "home": {
+                "title": "Short Answer Questions",
+                "createLabel": "Short Answer Question erstellen",
+                "createOrEditLabel": "Short Answer Question erstellen oder bearbeiten"
+            },
+            "created": "Short Answer Question erstellt mit ID {{ param }}",
+            "updated": "Short Answer Question aktualisiert mit ID {{ param }}",
+            "deleted": "Short Answer Question gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Short Answer Question {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Short Answer Question"
+            },
+            "spots": "Spots",
+            "solutions": "Solutions",
+            "correctMappings": "Correct Mappings"
+        }
+    }
+}

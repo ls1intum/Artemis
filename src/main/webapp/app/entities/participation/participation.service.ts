@@ -1,15 +1,15 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
-import { SERVER_API_URL } from '../../app.constants';
+import { SERVER_API_URL } from 'app/app.constants';
 
 import * as moment from 'moment';
 
 import { Participation } from './participation.model';
-import { createRequestOption } from '../../shared';
-import { Result } from '../../entities/result/result.model';
-import { Submission } from '../../entities/submission/submission.model';
-import { Exercise } from '../../entities/exercise/exercise.model';
+import { createRequestOption } from 'app/shared';
+import { Result } from 'app/entities/result';
+import { Submission } from 'app/entities/submission';
+import { Exercise } from 'app/entities/exercise';
 
 export type EntityResponseType = HttpResponse<Participation>;
 export type EntityArrayResponseType = HttpResponse<Participation[]>;

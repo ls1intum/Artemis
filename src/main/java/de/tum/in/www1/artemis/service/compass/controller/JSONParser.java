@@ -31,29 +31,29 @@ public class JSONParser {
         List<UMLRelation> umlRelationList = new ArrayList<>();
 
         // <editor-fold desc="iterate over every class">
-        for (JsonElement o : allElementIds) {
-            JsonObject connectable = entitiesById.getAsJsonObject(o.getAsString());
+        for (JsonElement elementId : allElementIds) {
+            JsonObject connectable = entitiesById.getAsJsonObject(elementId.getAsString());
 
             String className = connectable.get(JSONMapping.elementName).getAsString();
 
             List<UMLAttribute> umlAttributesList = new ArrayList<>();
             List<UMLMethod> umlMethodList = new ArrayList<>();
 
-            for (JsonElement oo : connectable.getAsJsonArray(JSONMapping.elementAttributes)) {
-                JsonObject attr = oo.getAsJsonObject();
+            for (JsonElement attributeElement : connectable.getAsJsonArray(JSONMapping.elementAttributes)) {
+                JsonObject attribute = attributeElement.getAsJsonObject();
 
-                String[] attributeNameArray = attr.get(JSONMapping.elementName).getAsString().replaceAll(" ", "").split(":");
+                String[] attributeNameArray = attribute.get(JSONMapping.elementName).getAsString().replaceAll(" ", "").split(":");
                 String attributeName = attributeNameArray[0];
                 String attributeType = "";
                 if (attributeNameArray.length == 2) {
                     attributeType = attributeNameArray[1];
                 }
-                UMLAttribute newAttr = new UMLAttribute(attributeName, attributeType, attr.get(JSONMapping.elementID).getAsString());
+                UMLAttribute newAttr = new UMLAttribute(attributeName, attributeType, attribute.get(JSONMapping.elementID).getAsString());
                 umlAttributesList.add(newAttr);
             }
 
-            for (JsonElement oo : connectable.getAsJsonArray(JSONMapping.elementMethods)) {
-                JsonObject method = oo.getAsJsonObject();
+            for (JsonElement methodElement : connectable.getAsJsonArray(JSONMapping.elementMethods)) {
+                JsonObject method = methodElement.getAsJsonObject();
 
                 String[] methodEntryArray = method.get(JSONMapping.elementName).getAsString().replaceAll(" ", "").split(":");
                 String[] methodParts = methodEntryArray[0].split("[()]");
@@ -87,8 +87,8 @@ public class JSONParser {
         // </editor-fold>
 
         // <editor-fold desc="iterate over every relationship">
-        for (JsonElement o : allRelationshipIds) {
-            JsonObject relationship = relationshipsById.getAsJsonObject(o.getAsString());
+        for (JsonElement relationshipElement : allRelationshipIds) {
+            JsonObject relationship = relationshipsById.getAsJsonObject(relationshipElement.getAsString());
 
             JsonObject relationshipSource = relationship.getAsJsonObject(JSONMapping.relationshipSource);
             JsonObject relationshipTarget = relationship.getAsJsonObject(JSONMapping.relationshipTarget);
@@ -139,8 +139,8 @@ public class JSONParser {
             return scoreHashMap;
         }
 
-        for (JsonElement o : assessmentArray) {
-            JsonObject jsonAssessment = o.getAsJsonObject();
+        for (JsonElement assessmentElement : assessmentArray) {
+            JsonObject jsonAssessment = assessmentElement.getAsJsonObject();
 
             String jsonElementID = jsonAssessment.get(JSONMapping.assessmentElementID).getAsString();
             String elementType = jsonAssessment.get(JSONMapping.assessmentElementType).getAsString();
@@ -216,7 +216,7 @@ public class JSONParser {
 
 
     public static JsonObject exportToJSON (Grade result, UMLModel model) {
-        JsonObject obj = new JsonObject();
+        JsonObject jsonObject = new JsonObject();
         JsonArray assessments = new JsonArray();
 
         for (Map.Entry<String, Double> entry : result.getJsonIdPointsMapping().entrySet()) {
@@ -258,11 +258,11 @@ public class JSONParser {
             assessments.add(assessment);
         }
 
-        obj.add(JSONMapping.assessments, assessments);
-        obj.addProperty(JSONMapping.assessmentElementConfidence, result.getConfidence());
-        obj.addProperty(JSONMapping.assessmentElementCoverage, result.getCoverage());
+        jsonObject.add(JSONMapping.assessments, assessments);
+        jsonObject.addProperty(JSONMapping.assessmentElementConfidence, result.getConfidence());
+        jsonObject.addProperty(JSONMapping.assessmentElementCoverage, result.getCoverage());
 
-        return obj;
+        return jsonObject;
     }
 }
 

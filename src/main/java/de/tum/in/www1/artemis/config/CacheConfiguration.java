@@ -104,6 +104,19 @@ public class CacheConfiguration {
             cm.createCache(de.tum.in.www1.artemis.domain.Participation.class.getName() + ".submissions", jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.TextExercise.class.getName(), jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.FileUploadExercise.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.ShortAnswerQuestionStatistic.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.ShortAnswerQuestionStatistic.class.getName() + ".shortAnswerSpotCounters", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.ShortAnswerSpotCounter.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.ShortAnswerQuestion.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.ShortAnswerQuestion.class.getName() + ".spots", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.ShortAnswerQuestion.class.getName() + ".solutions", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.ShortAnswerQuestion.class.getName() + ".correctMappings", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.ShortAnswerSpot.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.ShortAnswerSolution.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.ShortAnswerSubmittedAnswer.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.ShortAnswerSubmittedAnswer.class.getName() + ".submittedTexts", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.ShortAnswerSubmittedText.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.ShortAnswerMapping.class.getName(), jcacheConfiguration);
             // jhipster-needle-ehcache-add-entry
             cm.createCache("files", jcacheConfiguration);
         };

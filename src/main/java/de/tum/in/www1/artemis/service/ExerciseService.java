@@ -4,7 +4,9 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import org.eclipse.jgit.api.errors.GitAPIException;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -171,14 +173,40 @@ public class ExerciseService {
     /**
      * Delete the exercise by id and all its participations.
      *
-     * @param id the id of the entity
+     * @param exercise the exercise to be deleted
+     * @param deleteStudentReposBuildPlans whether the student repos and build plans should be deleted
+     * @param deleteBaseReposBuildPlans whether the template and solution repos and build plans should be deleted
      */
     @Transactional
-    public void delete(Long id) {
-        log.debug("Request to delete Exercise : {}", id);
+    public void delete(Exercise exercise, boolean deleteStudentReposBuildPlans, boolean deleteBaseReposBuildPlans) {
+        log.debug("Request to delete Exercise : {}", exercise.getTitle());
         // delete all participations belonging to this quiz
-        participationService.deleteAllByExerciseId(id, false, false);
-        exerciseRepository.deleteById(id);
+        participationService.deleteAllByExerciseId(exercise.getId(), deleteStudentReposBuildPlans, deleteStudentReposBuildPlans);
+        if (exercise instanceof ProgrammingExercise && deleteBaseReposBuildPlans) {
+            ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
+            if (programmingExercise.getBaseBuildPlanId() != null) {
+                continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getBaseBuildPlanId());
+            }
+            if (programmingExercise.getSolutionBuildPlanId() != null) {
+                continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getSolutionBuildPlanId());
+            }
+            continuousIntegrationService.get().deleteProject(programmingExercise.getProjectKey());
+
+            if (programmingExercise.getBaseRepositoryUrl() != null) {
+                versionControlService.get().deleteRepository(programmingExercise.getBaseRepositoryUrlAsUrl());
+                gitService.get().deleteLocalRepository(programmingExercise.getBaseRepositoryUrlAsUrl());
+            }
+            if (programmingExercise.getSolutionRepositoryUrl() != null) {
+                versionControlService.get().deleteRepository(programmingExercise.getSolutionRepositoryUrlAsUrl());
+                gitService.get().deleteLocalRepository(programmingExercise.getSolutionRepositoryUrlAsUrl());
+            }
+            if (programmingExercise.getTestRepositoryUrl() != null) {
+                versionControlService.get().deleteRepository(programmingExercise.getTestRepositoryUrlAsUrl());
+                gitService.get().deleteLocalRepository(programmingExercise.getTestRepositoryUrlAsUrl());
+            }
+            versionControlService.get().deleteProject(programmingExercise.getProjectKey());
+        }
+        exerciseRepository.deleteById(exercise.getId());
     }
 
     /**
@@ -194,16 +222,7 @@ public class ExerciseService {
         if (Optional.ofNullable(exercise).isPresent() && exercise instanceof ProgrammingExercise) {
             exercise.getParticipations().forEach(participation -> {
                 if (participation.getBuildPlanId() != null) {     //ignore participations without build plan id
-                    try {
-                        continuousIntegrationService.get().deleteBuildPlan(participation.getBuildPlanId());
-                    }
-                    catch(Exception ex) {
-                        log.error(ex.getMessage());
-                        if (ex.getCause() != null) {
-                            log.error(ex.getCause().getMessage());
-                        }
-                    }
-
+                    continuousIntegrationService.get().deleteBuildPlan(participation.getBuildPlanId());
                     participation.setInitializationState(InitializationState.INACTIVE);
                     participation.setBuildPlanId(null);
                     participationService.save(participation);
@@ -264,7 +283,7 @@ public class ExerciseService {
                         }
 
                     }
-                } catch (IOException | GitAPIException | GitException | InterruptedException ex) {
+                } catch (IOException | GitException | InterruptedException ex) {
                     log.error("export repository Participation for " + participation.getRepositoryUrlAsUrl() + "and Students" + studentIds + " did not work as expected: " + ex);
                 }
             });
@@ -317,7 +336,7 @@ public class ExerciseService {
                         //3. delete the locally cloned repo again
                         gitService.get().deleteLocalRepository(participation);
                     }
-                } catch (IOException | GitAPIException | GitException | InterruptedException ex) {
+                } catch (IOException | GitException | InterruptedException ex) {
                     log.error("Archiving and deleting the repository " + participation.getRepositoryUrlAsUrl() + " did not work as expected: " + ex);
                 }
             });
