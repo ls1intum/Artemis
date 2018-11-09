@@ -661,13 +661,20 @@ public class BambooService implements ContinuousIntegrationService {
                 }
             }
 
-            //search for artifacts
+            //search for artifacts: take the first one that is not a build log
             if(response.getBody().containsKey("artifacts")) {
-                Map<String, Object> artifacts = (Map<String, Object>)response.getBody().get("artifacts");
-                if((int)artifacts.get("size") > 0 && artifacts.containsKey("artifact")) {
-                    Map<String, Object> firstArtifact = (Map<String, Object>) ((ArrayList<Map>) artifacts.get("artifact")).get(0);
-                    String artifact = (String) ((Map<String, Object>) firstArtifact.get("link")).get("href");
-                    result.put("artifact", artifact);
+                Map<String, Object> artifactsEntity = (Map<String, Object>)response.getBody().get("artifacts");
+                if((int)artifactsEntity.get("size") > 0 && artifactsEntity.containsKey("artifact")) {
+                    List<Map<String, Object>> artifacts = (List<Map<String, Object>>) artifactsEntity.get("artifact");
+                    for(Map<String, Object> artifact : artifacts) {
+                        if (((String)artifact.get("name")).equalsIgnoreCase("Build log")) {
+                            continue;
+                        }
+                        else {
+                            String link = (String) ((Map<String, Object>) artifact.get("link")).get("href");
+                            result.put("artifact", link);
+                        }
+                    }
                 }
             }
 
