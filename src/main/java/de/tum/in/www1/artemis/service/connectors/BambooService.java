@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.connectors;
 
 import com.atlassian.bamboo.specs.api.builders.BambooKey;
 import com.atlassian.bamboo.specs.api.builders.applink.ApplicationLink;
@@ -60,6 +60,8 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static de.tum.in.www1.artemis.config.Constants.RESULT_RESOURCE_API_PATH;
 
 @Service
 @Profile("bamboo")
@@ -176,7 +178,7 @@ public class BambooService implements ContinuousIntegrationService {
                     .finalTasks(new ScriptTask()
                         .description("Notify ArTEMiS")
                         .interpreter(ScriptTaskProperties.Interpreter.BINSH_OR_CMDEXE)
-                        .inlineBody("curl -k -X POST " + SERVER_URL + "/api/results/${bamboo.planKey}"))))
+                        .inlineBody("curl -k -X POST " + SERVER_URL + RESULT_RESOURCE_API_PATH + "${bamboo.planKey}"))))
             .triggers(new BitbucketServerTrigger())
             .planBranchManagement(new PlanBranchManagement()
                 .delete(new BranchCleanup())
@@ -223,7 +225,7 @@ public class BambooService implements ContinuousIntegrationService {
 
     @Override
     public String copyBuildPlan(String baseBuildPlanId, String wantedPlanKey) {
-        wantedPlanKey = cleanPlanKey(wantedPlanKey);
+        wantedPlanKey = getCleanPlanKey(wantedPlanKey);
         String projectKey = getProjectKeyFromBuildPlanId(baseBuildPlanId);
         try {
             return clonePlan(projectKey, getPlanKeyFromBuildPlanId(baseBuildPlanId), projectKey, wantedPlanKey); // Save the new plan in the same project
@@ -290,6 +292,22 @@ public class BambooService implements ContinuousIntegrationService {
                 log.error("NullPointerException while doing empty commit", ex);
                 return;
             }
+        }
+    }
+
+    @Override
+    public void triggerBuild(Participation participation) {
+        HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
+        HttpEntity<?> entity = new HttpEntity<>(headers);
+        RestTemplate restTemplate = new RestTemplate();
+        try {
+            restTemplate.exchange(
+                BAMBOO_SERVER_URL + "/rest/api/latest/queue/" + participation.getBuildPlanId(),
+                HttpMethod.POST,
+                entity,
+                Map.class);
+        } catch (Exception e) {
+            log.error("HttpError while triggering build", e);
         }
     }
 
@@ -873,7 +891,7 @@ public class BambooService implements ContinuousIntegrationService {
         return buildPlanId.split("-")[1];
     }
 
-    private String cleanPlanKey(String name) {
+    private String getCleanPlanKey(String name) {
         return name.toUpperCase().replaceAll("[^A-Z0-9]", "");
     }
 }

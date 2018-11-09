@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 /**
@@ -38,4 +39,7 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
 
     @Query("select distinct participation from Participation participation left join fetch participation.results where participation.id = :#{#participationId}")
     Participation findByIdWithEagerResults(@Param("participationId") Long participationId);
+
+    @Query("select distinct participation from Participation participation left join fetch participation.results where participation.buildPlanId is not null and participation.exercise.dueDate is not null and participation.exercise.dueDate < current_date")
+    List<Participation> findAllExpiredWithBuildPlanId();
 }

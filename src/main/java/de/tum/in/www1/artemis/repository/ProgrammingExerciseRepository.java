@@ -16,6 +16,9 @@ import java.util.List;
 @Repository
 public interface ProgrammingExerciseRepository extends JpaRepository<ProgrammingExercise, Long> {
 
-    @Query("SELECT e FROM ProgrammingExercise e WHERE e.course.id = :#{#courseId}")
+    @Query("select e from ProgrammingExercise e where e.course.id = :#{#courseId}")
     List<ProgrammingExercise> findByCourseId(@Param("courseId") Long courseId);
+
+    @Query("select distinct p from ProgrammingExercise as p left join fetch p.participations")
+    List<ProgrammingExercise> findAllWithEagerParticipations();
 }

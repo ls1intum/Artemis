@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.connectors;
 
 import de.tum.in.www1.artemis.domain.*;
 import org.springframework.http.ResponseEntity;
@@ -39,6 +39,13 @@ public interface ContinuousIntegrationService {
      * @param participation contains the unique identifier for build plan on CI system and the url of user's personal repository copy
      */
     public void configureBuildPlan(Participation participation);
+
+    /**
+     * triggers a build for the build plan in the given participation
+     * @param participation the participation with the id of the build plan that should be triggered
+     */
+    public void triggerBuild(Participation participation);
+
 
     /**
      * Delete project with given identifier from CI system.

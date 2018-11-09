@@ -31,6 +31,8 @@ import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
 import javax.annotation.PostConstruct;
 import java.util.Optional;
 
+import static de.tum.in.www1.artemis.config.Constants.*;
+
 @Configuration
 @Import(SecurityProblemSupport.class)
 @EnableWebSecurity
@@ -102,9 +104,9 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/content/**")
             .antMatchers("/test/**");
 
-        web.ignoring().antMatchers(HttpMethod.POST, "/api/results/*-*");
-        web.ignoring().antMatchers(HttpMethod.POST, "/api/programming-submissions/*");
-        web.ignoring().antMatchers(HttpMethod.POST, "/api/programming-exercises/test-cases-changed/*");
+        web.ignoring().antMatchers(HttpMethod.POST, RESULT_RESOURCE_API_PATH + "*-*");
+        web.ignoring().antMatchers(HttpMethod.POST, PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + "*");
+        web.ignoring().antMatchers(HttpMethod.POST, TEST_CASE_CHANGED_API_PATH + "*");
     }
 
     @Override

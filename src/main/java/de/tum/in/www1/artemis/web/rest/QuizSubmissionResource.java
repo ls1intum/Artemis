@@ -74,7 +74,7 @@ public class QuizSubmissionResource {
             return ResponseEntity.status(403).headers(HeaderUtil.createFailureAlert("submission", "Forbidden", "You are not allowed to participate in this exercise.")).body(null);
         }
 
-        Participation participation = participationService.init(quizExercise, principal.getName());
+        Participation participation = participationService.startExercise(quizExercise, principal.getName());
         participation.setExercise(quizExercise);
         if (!quizExercise.isEnded() || !quizExercise.isIsOpenForPractice()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("submission", "exerciseNotOpenForPractice", "The exercise is not open for practice or hasn't ended yet.")).body(null);

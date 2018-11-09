@@ -19,7 +19,6 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
     List<Exercise> findByCourseId(@Param("courseId") Long courseId);
 
-
     /**
      * Select Exercise for Course ID
      * WHERE
