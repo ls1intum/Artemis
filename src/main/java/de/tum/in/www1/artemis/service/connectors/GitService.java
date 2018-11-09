@@ -137,7 +137,6 @@ public class GitService {
             }
             finally {
                 //make sure that cloneInProgress is released
-                log.info("Remove " + localPath + " from cloneInProgressMap: ");
                 cloneInProgressOperations.remove(localPath);
             }
         }
