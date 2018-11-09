@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, OnDestroy, OnInit, OnChanges, SimpleChanges, HostListener } from '@angular/core';
 import { QuizExerciseService } from './quiz-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -18,6 +18,7 @@ import { NgbDateStruct, NgbDate, NgbTimeStruct } from '@ng-bootstrap/ng-bootstra
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { JhiAlertService } from 'ng-jhipster';
+import { Observable } from '../../../../../../node_modules/rxjs/Observable';
 
 interface Reason {
     translateKey: string;
@@ -174,6 +175,21 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
             }
         }
         return 'isVisibleBeforeStart';
+    }
+
+    canDeactivate(): Observable<boolean> | boolean {
+        if (!!this.isTrue || this.isSaving || !!this.pendingChanges()) {
+            return false;
+        }
+        return true;
+    }
+
+    // displays the alert for confirming leaving the page if there are unsaved changes
+    @HostListener('window:beforeunload', ['$event'])
+    unloadNotification($event: any) {
+        if (!this.canDeactivate()) {
+            $event.returnValue = this.translateService.instant('pendingChanges');
+        }
     }
 
     /**
