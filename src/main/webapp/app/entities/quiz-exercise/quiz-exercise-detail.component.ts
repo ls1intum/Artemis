@@ -16,6 +16,7 @@ import { AnswerOption } from '../../entities/answer-option';
 import { Option, Duration } from './quiz-exercise-interfaces';
 import { NgbDateStruct, NgbDate, NgbTimeStruct } from '@ng-bootstrap/ng-bootstrap';
 import * as moment from 'moment';
+import { ComponentCanDeactivate } from '../../shared/guard/pending-changes.guard';
 import { Moment } from 'moment';
 import { JhiAlertService } from 'ng-jhipster';
 import { Observable } from '../../../../../../node_modules/rxjs/Observable';
@@ -178,7 +179,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     }
 
     canDeactivate(): Observable<boolean> | boolean {
-        if (!!this.isTrue || this.isSaving || !!this.pendingChanges()) {
+        if (!!this.pendingChanges()) {
             return false;
         }
         return true;
