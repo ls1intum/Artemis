@@ -41,38 +41,8 @@
                 <td>{{course.onlineCourse}}</td>
                 <td class="text-right">
                     <div class="btn-group flex-btn-group-container">
-                        <div class="d-inline-block" ngbDropdown>
-                            <button class="btn btn-primary btn-sm mr-1" ngbDropdownToggle>
-                                <fa-icon [icon]="'list-alt'"></fa-icon>
-                                <span class="hidden-xs hidden-sm" jhiTranslate="arTeMiSApp.course.exercises"></span>
-                                <span class="caret"></span>
-                            </button>
-                            <div ngbDropdownMenu class="dropdown-menu">
-                                <button class="dropdown-item"
-                                        routerLink="{{course.id}}/programming-exercise"
-                                        jhiTranslate="arTeMiSApp.course.programmingExercises"
-                                ></button>
-                                <button class="dropdown-item"
-                                        routerLink="{{course.id}}/quiz-exercise"
-                                        jhiTranslate="arTeMiSApp.course.quizExercises"
-                                ></button>
-                                <button class="dropdown-item"
-                                        routerLink="{{course.id}}/modeling-exercise"
-                                        jhiTranslate="arTeMiSApp.course.modelingExercises"
-                                ></button>
-<!--                                <button class="dropdown-item"
-                                        routerLink="{{course.id}}/text-exercise"
-                                        jhiTranslate="arTeMiSApp.course.textExercises"
-                                ></button>
-                                <button class="dropdown-item"
-                                        routerLink="{{course.id}}/file-upload-exercise"
-                                        jhiTranslate="arTeMiSApp.course.fileUploadExercises"
-                                ></button>-->
-                            </div>
-                        </div>
-
                         <button type="submit" [routerLink]="['/course', course.id, 'overview' ]" class="btn btn-info btn-sm mr-1">
-                            <span class="d-none d-md-inline">ExerciseTest</span>
+                            <span class="d-none d-md-inline">Exercises</span>
                         </button>
                         <button type="submit" [routerLink]="['/course', course.id, 'dashboard' ]" class="btn btn-info btn-sm mr-1">
                             <fa-icon [icon]="'eye'"></fa-icon>

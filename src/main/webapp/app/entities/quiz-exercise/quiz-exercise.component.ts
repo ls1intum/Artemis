@@ -104,6 +104,7 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.subscription = this.route.params.subscribe(params => {
             this.courseId = params['courseId'];
+            console.log(params);
             this.load();
             this.registerChangeInQuizExercises();
         });

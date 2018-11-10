@@ -1,22 +1,25 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Exercise Overview</title>
-    <button class="dropdown-item"
-            routerLink="{{course.id}}/programming-exercise"
-            jhiTranslate="arTeMiSApp.course.programmingExercises"
-    ></button>
-    <button class="dropdown-item"
-            routerLink="{{course.id}}/quiz-exercise"
-            jhiTranslate="arTeMiSApp.course.quizExercises"
-    ></button>
-    <button class="dropdown-item"
-            routerLink="{{course.id}}/modeling-exercise"
-            jhiTranslate="arTeMiSApp.course.modelingExercises"
-    ></button>
-</head>
-<body>
+<div class="edit-mc-question">
+    <div>
+    <h4>
+        <span>Exercise Overview</span>
+    </h4>
+    </div>
 
-</body>
-</html>
+    <div [hidden]="showPreview">
+    <div class="question-options card-header question-card-header">
+        <button
+            class="btn btn-light question-collapse"
+            (click)="isQuestionCollapsed = !isQuestionCollapsed"
+            [attr.aria-expanded]="!isQuestionCollapsed"
+            [attr.aria-controls]="'collapseQuestion' + questionIndex">
+            <span class="fa fa-3x" [ngClass]="isQuestionCollapsed ? 'fa-angle-right' : 'fa-angle-down'" ></span>
+        </button>
+        <span jhiTranslate="arTeMiSApp.course.programmingExercises">Programming Exercises</span>
+    </div>
+    <div class="card-body question-card-body"  [ngbCollapse]="isQuestionCollapsed" id="collapseQuestion{{questionIndex}}">
+        <div>
+           <jhi-quiz-exercise>
+           </jhi-quiz-exercise>
+        </div>
+    </div>
+</div>

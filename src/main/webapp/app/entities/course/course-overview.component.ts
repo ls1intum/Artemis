@@ -10,6 +10,16 @@ import { Course } from './course.model';
     selector: 'jhi-course-overview',
     templateUrl: './course-overview.component.html'
 })
-export class CourseOverviewComponent implements OnInit, OnDestroy {
+export class CourseOverviewComponent implements OnInit {
     course: Course;
+    private subscription: Subscription;
+
+    constructor(private route: ActivatedRoute) {}
+
+    ngOnInit(): void {
+        console.log('hallo');
+        this.subscription = this.route.params.subscribe(params => {
+            console.log(params);
+        });
+    }
 }

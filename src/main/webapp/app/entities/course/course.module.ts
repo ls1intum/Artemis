@@ -2,6 +2,8 @@ import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
 import { ArTEMiSSharedModule } from '../../shared';
+import { ArTEMiSQuizExerciseModule } from '../quiz-exercise/quiz-exercise.module';
+
 import {
     CourseComponent,
     CourseDeleteDialogComponent,
@@ -21,7 +23,7 @@ import { FormDateTimePickerModule } from '../../shared/dateTimePicker/date-time-
 const ENTITY_STATES = [...courseRoute, ...coursePopupRoute];
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), FormDateTimePickerModule],
+    imports: [ArTEMiSSharedModule, ArTEMiSQuizExerciseModule, RouterModule.forChild(ENTITY_STATES), FormDateTimePickerModule],
     declarations: [
         CourseComponent,
         CourseDetailComponent,
