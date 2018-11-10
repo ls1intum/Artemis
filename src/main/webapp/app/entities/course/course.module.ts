@@ -12,6 +12,7 @@ import {
     courseRoute,
     CourseScoreCalculationComponent,
     CourseService,
+    CourseOverviewComponent,
     CourseUpdateComponent
 } from './';
 import { CourseScoreCalculationService } from './course-score-calculation.service';
@@ -27,14 +28,16 @@ const ENTITY_STATES = [...courseRoute, ...coursePopupRoute];
         CourseDeleteDialogComponent,
         CourseUpdateComponent,
         CourseDeletePopupComponent,
-        CourseScoreCalculationComponent
+        CourseScoreCalculationComponent,
+        CourseOverviewComponent
     ],
     entryComponents: [
         CourseComponent,
         CourseUpdateComponent,
         CourseDeleteDialogComponent,
         CourseDeletePopupComponent,
-        CourseScoreCalculationComponent
+        CourseScoreCalculationComponent,
+        CourseOverviewComponent
     ],
     providers: [CourseService, CourseExerciseService, CourseScoreCalculationService],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]

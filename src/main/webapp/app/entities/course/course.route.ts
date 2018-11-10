@@ -9,6 +9,7 @@ import { CourseService } from './course.service';
 import { CourseComponent } from './course.component';
 import { CourseDetailComponent } from './course-detail.component';
 import { CourseUpdateComponent } from './course-update.component';
+import { CourseOverviewComponent } from './course-overview.component';
 import { CourseDeletePopupComponent } from './course-delete-dialog.component';
 import { CourseScoreCalculationComponent } from './course-score-calculation.component';
 
@@ -41,6 +42,18 @@ export const courseRoute: Routes = [
     {
         path: 'course/:id/view',
         component: CourseDetailComponent,
+        resolve: {
+            course: CourseResolve
+        },
+        data: {
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'arTeMiSApp.course.home.title'
+        },
+        canActivate: [UserRouteAccessService]
+    },
+    {
+        path: 'course/:id/overview',
+        component: CourseOverviewComponent,
         resolve: {
             course: CourseResolve
         },
