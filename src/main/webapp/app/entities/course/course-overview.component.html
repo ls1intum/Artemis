@@ -6,16 +6,16 @@
     </div>
 
 
-    <div [hidden]="showPreview">
+    <div>
     <div class="question-options card-header question-card-header">
         <button
             class="btn btn-light question-collapse"
             (click)="isQuestionCollapsed = !isQuestionCollapsed"
             [attr.aria-expanded]="!isQuestionCollapsed"
             [attr.aria-controls]="'collapseQuestion' + questionIndex">
-            <span class="fa fa-3x" [ngClass]="isQuestionCollapsed ? 'fa-angle-right' : 'fa-angle-down'" ></span>
+            <span class="fa fa-2x" [ngClass]="isQuestionCollapsed ? 'fa-angle-right' : 'fa-angle-down'" ></span>
         </button>
-        <span jhiTranslate="arTeMiSApp.course.quizExercises">Quiz Exercises</span>
+        <span class="form-control" jhiTranslate="arTeMiSApp.course.quizExercises">Quiz Exercises</span>
     </div>
     <div class="card-body question-card-body"  [ngbCollapse]="isQuestionCollapsed" id="collapseQuestion{{questionIndex}}">
         <div>
@@ -25,16 +25,16 @@
     </div>
     </div>
 
-    <div [hidden]="showPreview">
+    <div>
         <div class="question-options card-header question-card-header">
             <button
                 class="btn btn-light question-collapse"
                 (click)="isQuestionCollapsed = !isQuestionCollapsed"
                 [attr.aria-expanded]="!isQuestionCollapsed"
                 [attr.aria-controls]="'collapseQuestion' + questionIndex">
-                <span class="fa fa-3x" [ngClass]="isQuestionCollapsed ? 'fa-angle-right' : 'fa-angle-down'" ></span>
+                <span class="fa fa-2x" [ngClass]="isQuestionCollapsed ? 'fa-angle-right' : 'fa-angle-down'" ></span>
             </button>
-            <span jhiTranslate="arTeMiSApp.course.programmingExercises">Programming Exercises</span>
+            <span class="form-control" jhiTranslate="arTeMiSApp.course.programmingExercises">Programming Exercises</span>
         </div>
         <div class="card-body question-card-body"  [ngbCollapse]="isQuestionCollapsed" id="collapseQuestion{{questionIndex}}">
             <div>
@@ -44,16 +44,16 @@
         </div>
     </div>
 
-    <div [hidden]="showPreview">
+    <div>
         <div class="question-options card-header question-card-header">
             <button
                 class="btn btn-light question-collapse"
                 (click)="isQuestionCollapsed = !isQuestionCollapsed"
                 [attr.aria-expanded]="!isQuestionCollapsed"
                 [attr.aria-controls]="'collapseQuestion' + questionIndex">
-                <span class="fa fa-3x" [ngClass]="isQuestionCollapsed ? 'fa-angle-right' : 'fa-angle-down'" ></span>
+                <span class="fa fa-2x" [ngClass]="isQuestionCollapsed ? 'fa-angle-right' : 'fa-angle-down'" ></span>
             </button>
-            <span jhiTranslate="arTeMiSApp.course.modelingExercises">Modelling Exercises</span>
+            <span class="form-control" jhiTranslate="arTeMiSApp.course.modelingExercises">Modelling Exercises</span>
         </div>
         <div class="card-body question-card-body"  [ngbCollapse]="isQuestionCollapsed" id="collapseQuestion{{questionIndex}}">
             <div>
@@ -63,16 +63,16 @@
         </div>
     </div>
 
-    <div [hidden]="showPreview">
+    <div>
         <div class="question-options card-header question-card-header">
             <button
                 class="btn btn-light question-collapse"
                 (click)="isQuestionCollapsed = !isQuestionCollapsed"
                 [attr.aria-expanded]="!isQuestionCollapsed"
                 [attr.aria-controls]="'collapseQuestion' + questionIndex">
-                <span class="fa fa-3x" [ngClass]="isQuestionCollapsed ? 'fa-angle-right' : 'fa-angle-down'" ></span>
+                <span class="fa fa-2x" [ngClass]="isQuestionCollapsed ? 'fa-angle-right' : 'fa-angle-down'" ></span>
             </button>
-            <span jhiTranslate="arTeMiSApp.course.fileUploadExercises">File Upload Exercises</span>
+            <span class="form-control" jhiTranslate="arTeMiSApp.course.fileUploadExercises">File Upload Exercises</span>
         </div>
         <div class="card-body question-card-body"  [ngbCollapse]="isQuestionCollapsed" id="collapseQuestion{{questionIndex}}">
             <div>
@@ -82,16 +82,16 @@
         </div>
     </div>
 
-    <div [hidden]="showPreview">
+    <div>
         <div class="question-options card-header question-card-header">
             <button
                 class="btn btn-light question-collapse"
                 (click)="isQuestionCollapsed = !isQuestionCollapsed"
                 [attr.aria-expanded]="!isQuestionCollapsed"
                 [attr.aria-controls]="'collapseQuestion' + questionIndex">
-                <span class="fa fa-3x" [ngClass]="isQuestionCollapsed ? 'fa-angle-right' : 'fa-angle-down'" ></span>
+                <span class="fa fa-2x" [ngClass]="isQuestionCollapsed ? 'fa-angle-right' : 'fa-angle-down'" ></span>
             </button>
-            <span jhiTranslate="arTeMiSApp.course.textExercises">Text Exercises</span>
+            <span class="form-control"  jhiTranslate="arTeMiSApp.course.textExercises">Text Exercises</span>
         </div>
         <div class="card-body question-card-body"  [ngbCollapse]="isQuestionCollapsed" id="collapseQuestion{{questionIndex}}">
             <div>
