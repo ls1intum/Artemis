@@ -52,7 +52,7 @@ export const courseRoute: Routes = [
         canActivate: [UserRouteAccessService]
     },
     {
-        path: 'course/:courseId/overview',
+        path: 'course/:courseId',
         component: CourseOverviewComponent,
         resolve: {
             course: CourseResolve
