@@ -39,6 +39,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseDeleteDialogComponent,
         ProgrammingExerciseDeletePopupComponent
     ],
+    exports: [ProgrammingExerciseComponent],
     providers: [ProgrammingExerciseService, ProgrammingExercisePopupService],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

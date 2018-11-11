@@ -16,6 +16,7 @@ import {
     FileUploadExerciseUpdateComponent
 } from './';
 import { SortByModule } from '../../components/pipes';
+import { ProgrammingExerciseComponent } from 'app/entities/programming-exercise';
 
 const ENTITY_STATES = [...fileUploadExerciseRoute, ...fileUploadExercisePopupRoute];
 
@@ -38,6 +39,7 @@ const ENTITY_STATES = [...fileUploadExerciseRoute, ...fileUploadExercisePopupRou
         FileUploadExerciseDeleteDialogComponent,
         FileUploadExerciseDeletePopupComponent
     ],
+    exports: [FileUploadExerciseComponent],
     providers: [FileUploadExerciseService, FileUploadExercisePopupService],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

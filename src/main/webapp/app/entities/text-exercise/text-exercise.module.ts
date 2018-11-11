@@ -16,6 +16,7 @@ import {
     TextExerciseService
 } from './';
 import { SortByModule } from '../../components/pipes';
+import { ProgrammingExerciseComponent } from 'app/entities/programming-exercise';
 
 const ENTITY_STATES = [...textExerciseRoute, ...textExercisePopupRoute];
 
@@ -39,6 +40,7 @@ const ENTITY_STATES = [...textExerciseRoute, ...textExercisePopupRoute];
         TextExerciseDeletePopupComponent
     ],
     providers: [TextExerciseService, TextExercisePopupService],
+    exports: [TextExerciseComponent],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArTEMiSTextExerciseModule {}

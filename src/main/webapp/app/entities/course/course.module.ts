@@ -3,6 +3,10 @@ import { RouterModule } from '@angular/router';
 
 import { ArTEMiSSharedModule } from '../../shared';
 import { ArTEMiSQuizExerciseModule } from '../quiz-exercise/quiz-exercise.module';
+import { ArTEMiSTextExerciseModule } from '../text-exercise/text-exercise.module';
+import { ArTEMiSModelingExerciseModule } from '../modeling-exercise/modeling-exercise.module';
+import { ArTEMiSFileUploadExerciseModule } from '../file-upload-exercise/file-upload-exercise.module';
+import { ArTEMiSProgrammingExerciseModule } from '../programming-exercise/programming-exercise.module';
 
 import {
     CourseComponent,
@@ -23,7 +27,16 @@ import { FormDateTimePickerModule } from '../../shared/dateTimePicker/date-time-
 const ENTITY_STATES = [...courseRoute, ...coursePopupRoute];
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, ArTEMiSQuizExerciseModule, RouterModule.forChild(ENTITY_STATES), FormDateTimePickerModule],
+    imports: [
+        ArTEMiSSharedModule,
+        ArTEMiSProgrammingExerciseModule,
+        ArTEMiSFileUploadExerciseModule,
+        ArTEMiSQuizExerciseModule,
+        ArTEMiSTextExerciseModule,
+        ArTEMiSModelingExerciseModule,
+        RouterModule.forChild(ENTITY_STATES),
+        FormDateTimePickerModule
+    ],
     declarations: [
         CourseComponent,
         CourseDetailComponent,
