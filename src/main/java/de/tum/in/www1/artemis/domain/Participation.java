@@ -340,6 +340,22 @@ public class Participation implements Serializable {
         }
     }
 
+    /**
+     * Same functionality as findLatestSubmission() with the difference that this function only returns the found submission,
+     * if it is a text submission.
+     *
+     * @return the latest text submission or null
+     */
+    public TextSubmission findLatestTextSubmission() {
+        Submission submission = findLatestSubmission();
+        submission = (Submission) Hibernate.unproxy(submission);
+        if (submission instanceof TextSubmission) {
+            return (TextSubmission) submission;
+        } else {
+            return null;
+        }
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

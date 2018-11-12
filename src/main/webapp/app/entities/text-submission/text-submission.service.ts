@@ -14,29 +14,29 @@ export class TextSubmissionService {
 
     constructor(private http: HttpClient) {}
 
-    create(textSubmission: TextSubmission, courseId?: number, exerciseId?: number): Observable<EntityResponseType> {
+    create(textSubmission: TextSubmission, exerciseId?: number): Observable<EntityResponseType> {
         const copy = this.convert(textSubmission);
-        // if (courseId && exerciseId) {
-        //     return this.http
-        //         .post<TextSubmission>(`api/courses/${courseId}/exercises/${exerciseId}/text-submissions`, copy, {
-        //             observe: 'response'
-        //         })
-        //         .map((res: EntityResponseType) => this.convertResponse(res));
-        // }
+        if (exerciseId) {
+            return this.http
+                .post<TextSubmission>(`api/exercises/${exerciseId}/text-submissions`, copy, {
+                    observe: 'response'
+                })
+                .map((res: EntityResponseType) => this.convertResponse(res));
+        }
         return this.http
             .post<TextSubmission>(this.resourceUrl, copy, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
-    update(textSubmission: TextSubmission, courseId?: number, exerciseId?: number): Observable<EntityResponseType> {
+    update(textSubmission: TextSubmission, exerciseId?: number): Observable<EntityResponseType> {
         const copy = this.convert(textSubmission);
-        // if (courseId && exerciseId) {
-        //     return this.http
-        //         .put<TextSubmission>(`api/courses/${courseId}/exercises/${exerciseId}/text-submissions`, copy, {
-        //             observe: 'response'
-        //         })
-        //         .map((res: EntityResponseType) => this.convertResponse(res));
-        // }
+        if (exerciseId) {
+            return this.http
+                .put<TextSubmission>(`api/exercises/${exerciseId}/text-submissions`, copy, {
+                    observe: 'response'
+                })
+                .map((res: EntityResponseType) => this.convertResponse(res));
+        }
         return this.http
             .put<TextSubmission>(this.resourceUrl, copy, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertResponse(res));

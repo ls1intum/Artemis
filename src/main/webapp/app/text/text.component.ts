@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
 import { TextExercise, TextExerciseService } from 'app/entities/text-exercise';
@@ -63,34 +63,20 @@ export class TextComponent implements OnInit, OnDestroy {
         this.submission.submitted = false;
         this.isSaving = true;
 
-        if (this.submission.id) {
-            this.textSubmissionService.update(this.submission, this.textExercise.course.id, this.textExercise.id).subscribe(
-                response => {
-                    this.submission = response.body;
-                    this.result = this.submission.result;
-                    this.isSaving = false;
-                    this.jhiAlertService.success('arTeMiSApp.textExercise.saveSuccessful');
-                },
-                e => {
-                    this.jhiAlertService.error('arTeMiSApp.textExercise.error');
-                    this.isSaving = false;
-                }
-            );
-        } else {
-            this.textSubmissionService.create(this.submission, this.textExercise.course.id, this.textExercise.id).subscribe(
-                submission => {
-                    this.submission = submission.body;
-                    this.result = this.submission.result;
-                    this.isSaving = false;
-                    this.jhiAlertService.success('arTeMiSApp.textExercise.saveSuccessful');
-                    this.isActive = this.textExercise.dueDate == null || new Date() <= this.textExercise.dueDate.toDate();
-                },
-                e => {
-                    this.jhiAlertService.error('arTeMiSApp.textExercise.error');
-                    this.isSaving = false;
-                }
-            );
+        let submission: HttpResponse<TextSubmission>;
+
+        this.textSubmissionService[this.submission.id ? 'update' : 'create'](this.submission, this.textExercise.id).subscribe(
+            response => (submission = response),
+            e => this.jhiAlertService.error('arTeMiSApp.textExercise.error')
+        );
+
+        if (submission) {
+            this.submission = submission.body;
+            this.result = this.submission.result;
+            this.jhiAlertService.success('arTeMiSApp.textExercise.saveSuccessful');
         }
+
+        this.isSaving = false;
     }
 
     private onError(error: HttpErrorResponse) {
