@@ -4,12 +4,12 @@
     <div class="row" [ngClass]="{'align-items-center': submission?.submitted}">
         <div class="col-12 col-lg-8">
             <h2>
-                Text Editor <span *ngIf="textExercise">for Exercise: {{modelingExercise.title}}</span>
+                Text Editor <span *ngIf="textExercise">for Exercise: {{textExercise.title}}</span>
             </h2>
         </div>
         <div class="col-12 col-lg-4 text-right">
             <div *ngIf="participation"><jhi-result [participation]="participation"></jhi-result></div><br>
-            <button class="btn btn-primary" (click)="saveDiagram()" [hidden]="submission?.submitted" [disabled]="isSaving">
+            <button class="btn btn-primary" (click)="saveText()" [hidden]="submission?.submitted" [disabled]="isSaving">
                 <ng-container *ngIf="!isSaving">
                     <span class="fa fa-save"></span>
                     <span jhiTranslate="entity.action.save">Save</span>
@@ -20,81 +20,26 @@
                 </ng-container>
             </button>
             <button class="btn btn-success" (click)="submit()"
-                    [disabled]="!submission || !diagramState || diagramState.entities.allIds.length === 0"
+                    [disabled]="!submission"
                     [hidden]="submission?.submitted || !isActive">Submit</button>
             <button class="btn btn-warning" (click)="submit()"
-                    [disabled]="!submission || !diagramState || diagramState.entities.allIds.length === 0"
+                    [disabled]="!submission"
                     [hidden]="submission?.submitted || isActive">Submit (deadline missed)</button>
             <button class="btn btn-info" (click)="retry()"
                     *ngIf="isActive && submission?.submitted && result?.rated && !retryStarted"><span class="fa fa-refresh"></span> Retry</button>
         </div>
     </div><br>
 
-    <div class="row" *ngIf="modelingExercise">
+    <div class="row" *ngIf="textExercise">
         <div class="col">
-            <p class="mb-3"><span><strong>Problem Statement:</strong></span> {{ modelingExercise.problemStatement }}</p>
+            <p class="mb-3"><span><strong>Problem Statement:</strong></span> {{ textExercise.problemStatement }}</p>
         </div>
-        <div class="col text-right" *ngIf="!submission?.submitted"><p><strong>Max. Score: {{ modelingExercise.maxScore }}</strong></p></div>
+        <div class="col text-right" *ngIf="!submission?.submitted"><p><strong>Max. Score: {{ textExercise.maxScore }}</strong></p></div>
     </div>
-
-    <ng-template #help let-c="close" let-d="dismiss">
-        <div class="modal-header">
-            <h4 class="modal-title">How to use the modeling editor</h4>
-            <button type="button" class="close" aria-label="Close" (click)="d()"><span aria-hidden="true">&times;</span></button>
-        </div>
-        <div class="modal-body">
-            <table class="table">
-                <tr>
-                    <th>Add Class</th>
-                    <td>To add a class, simply drag and drop one of the elements on the right side into the editor area on the left side.</td>
-                    <td><img width="500" src="../../content/images/help-add-class.jpg"></td>
-                </tr>
-                <tr>
-                    <th>Edit Class</th>
-                    <td>To edit a class, double click it and a popup will open up, in which you can edit its components, e.g. name, attributes, methods, etc.</td>
-                    <td><img width="500" src="../../content/images/help-edit-class.jpg"></td>
-                </tr>
-                <tr>
-                    <th>Move Class</th>
-                    <td>To move a class, select it with a single click and either use your keyboard arrows or drag and drop it.</td>
-                    <td><img src="../../content/images/help-move-class.jpg"></td>
-                </tr>
-                <tr>
-                    <th>Delete Class</th>
-                    <td>To delete a class, select it with a single click and either press <code>Delete</code> or <code>Backspace</code> on your keyboard.</td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <th>Add Association</th>
-                    <td>To add a association, select the source class with a single click and you will see four blue circles. Those are the possible connection points for associations. Click and hold on one of those and drag it to another blue circle to create a association.</td>
-                    <td><img width="500" src="../../content/images/help-add-association.jpg"></td>
-                </tr>
-                <tr>
-                    <th>Edit Association</th>
-                    <td>To edit a association, double click it and a popup will open up, in which you can edit its properties, e.g. type.</td>
-                    <td><img width="500" src="../../content/images/help-edit-association.jpg"></td>
-                </tr>
-                <tr>
-                    <th>Delete Association</th>
-                    <td>To delete a association, select it with a single click and either press <code>Delete</code> or <code>Backspace</code> on your keyboard.</td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <th>Undo & Redo</th>
-                    <td>With <code>Ctrl+Z</code> and <code>Ctrl+Y</code> you can undo and redo your changes.</td>
-                    <td></td>
-                </tr>
-            </table>
-        </div>
-        <div class="modal-footer">
-            <button type="button" class="btn btn-outline" (click)="c()">Close</button>
-        </div>
-    </ng-template>
-    <div *ngIf="!submission?.submitted"><button class="btn btn-warning" (click)="open(help)"><i class="fa fa-question-circle-o"></i>&nbsp;Help</button></div><br>
 
     <div class="row">
         <div [ngClass]="{'col-9': submission?.submitted, 'col-12': !submission?.submitted}">
-            <div #editorContainer style="width: 100%; height: 100vh;"></div>
+            <textarea title="Solution" [(ngModel)]="submission.text" style="width: 100%; height: 100vh;"></textarea>
             <div class="assessments">
                 <div class="assessments__container">
                     <div class="assessments__canvas">
