@@ -12,13 +12,11 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -205,9 +203,9 @@ public class FileService {
             String fileUrl = java.net.URLDecoder.decode(resource.getURL().toString(), "UTF-8");
             int index = fileUrl.indexOf(prefix);
             String targetFilePath = fileUrl.substring(index + prefix.length());
-            //special case for '.gitignore' file which would not be included in build otherwise
-            if (targetFilePath.endsWith("gitignore")) {
-                targetFilePath = targetFilePath.replaceAll("gitignore", ".gitignore");
+            //special case for '.git.ignore.file' file which would not be included in build otherwise
+            if (targetFilePath.endsWith("git.ignore.file")) {
+                targetFilePath = targetFilePath.replaceAll("git.ignore.file", ".gitignore");
             }
 
             Path copyPath = Paths.get(targetDirectoryPath + targetFilePath);
@@ -216,8 +214,6 @@ public class FileService {
                 Files.createDirectories(parentFolder.toPath());
             }
 
-            log.info("resource: " + resource.getURL().toString());
-            log.info("copyPath: " + copyPath);
             Files.copy(resource.getInputStream(), copyPath);
         }
     }

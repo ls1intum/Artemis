@@ -4,6 +4,7 @@ import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -42,7 +43,8 @@ public class FeedbackService {
 
         // Please note: this is a migration for the old case when we did not store feedback in the database
         // Provide access to results with no feedback in the database
-        if(result.getFeedbacks() == null || result.getFeedbacks().size() == 0) {
+        // TODO: what happens if the build failed?
+        if(!result.isSuccessful() && result.getFeedbacks() == null || result.getFeedbacks().size() == 0) {
             // if the result does not contain any feedback, try to retrieve them from Bamboo and store them in the result and return these.
             return continuousIntegrationService.get().getLatestBuildResultDetails(result);
         }

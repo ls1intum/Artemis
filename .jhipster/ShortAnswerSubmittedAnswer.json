@@ -1,0 +1,21 @@
+{
+    "name": "ShortAnswerSubmittedAnswer",
+    "fields": [],
+    "relationships": [
+        {
+            "relationshipType": "one-to-many",
+            "relationshipName": "submittedTexts",
+            "otherEntityName": "shortAnswerSubmittedText",
+            "otherEntityRelationshipName": "submittedAnswer"
+        }
+    ],
+    "changelogDate": "20181107093825",
+    "entityTableName": "sa_submitted_answer",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no",
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
+}

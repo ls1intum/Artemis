@@ -34,10 +34,10 @@ entity AnswerCounter(answerCounter) {       //extends StatisticCounter
 }
 
 entity DropLocationCounter(dropLocationCounter) {    //extends StatisticCounter
- }
+}
 
- entity ShortAnswerSpotCounter(shortAnswerSpotCounter) {    //extends StatisticCounter
- }
+entity ShortAnswerSpotCounter(shortAnswerSpotCounter) {    //extends StatisticCounter
+}
 
 entity Course (course) {
     title String,
@@ -285,6 +285,9 @@ entity DragAndDropMapping {
 }
 
 entity ShortAnswerSubmittedAnswer (saSubmittedAnswer) {      //extends SubmittedAnswer
+}
+
+entity ShortAnswerSubmittedText (shortAnswerSubmittedText) {
     text String
 }
 
@@ -313,13 +316,13 @@ relationship OneToMany {
     MultipleChoiceQuestion{answerOptions} to AnswerOption{question},
     DragAndDropQuestion{dropLocations} to DropLocation{question},
     DragAndDropQuestion{dragItems} to DragItem{question},
-    ShortAnswerQuestion{shortAnswerSpots} to ShortAnswerSpot{question},
-    ShortAnswerQuestion{shortAnswerSolutions} to ShortAnswerSolution{question},
+    ShortAnswerQuestion{spots} to ShortAnswerSpot{question},
+    ShortAnswerQuestion{solutions} to ShortAnswerSolution{question},
     QuizSubmission{submittedAnswers} to SubmittedAnswer{submission},
     DragAndDropSubmittedAnswer{mappings} to DragAndDropMapping{submittedAnswer},
     DragAndDropQuestion{correctMappings} to DragAndDropMapping{question},
-    ShortAnswerSubmittedAnswer{mappings} to ShortAnswerMapping{submittedAnswer},
     ShortAnswerQuestion{correctMappings} to ShortAnswerMapping{question}
+    ShortAnswerSubmittedAnswer{submittedTexts} to ShortAnswerSubmittedText{submittedAnswer}
 }
 
 relationship OneToOne {
@@ -327,7 +330,8 @@ relationship OneToOne {
     Question{questionStatistic} to QuestionStatistic{question},
     AnswerCounter{answer} to AnswerOption,
     DropLocationCounter{dropLocation} to DropLocation,
-    ShortAnswerCounter{shortAnswerSpot} to ShortAnswerSpot,
+    ShortAnswerSpotCounter{spot} to ShortAnswerSpot,
+    ShortAnswerSubmittedText{spot} to ShortAnswerSpot,
     Submission{result} to ExerciseResult{submission},
     LtiUserId{user} to User,
     ExerciseResult{assessor} to User
@@ -340,8 +344,8 @@ relationship ManyToOne {
     SubmittedAnswer{question} to Question
     DragAndDropMapping{dragItem} to DragItem,
     DragAndDropMapping{dropLocation} to DropLocation,
-    ShortAnswerMapping{shortAnswerSolution} to ShortAnswerSolution,
-    ShortAnswerMapping{shortAnswerSpot} to ShortAnswerSpot
+    ShortAnswerMapping{solution} to ShortAnswerSolution,
+    ShortAnswerMapping{spot} to ShortAnswerSpot
 }
 
 relationship ManyToMany {

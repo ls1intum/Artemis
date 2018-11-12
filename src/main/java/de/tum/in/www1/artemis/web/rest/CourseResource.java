@@ -11,11 +11,14 @@ import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import io.github.jhipster.config.JHipsterConstants;
 import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -42,6 +45,7 @@ public class CourseResource {
 
     private static final String ENTITY_NAME = "course";
 
+    private final Environment env;
     private final UserService userService;
     private final CourseService courseService;
     private final ParticipationService participationService;
@@ -51,7 +55,8 @@ public class CourseResource {
     private final ExerciseService exerciseService;
     private final Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider;
 
-    public CourseResource(UserService userService,
+    public CourseResource(Environment env,
+                          UserService userService,
                           CourseService courseService,
                           ParticipationService participationService,
                           CourseRepository courseRepository,
@@ -59,6 +64,7 @@ public class CourseResource {
                           AuthorizationCheckService authCheckService,
                           MappingJackson2HttpMessageConverter springMvcJacksonConverter,
                           Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider) {
+        this.env = env;
         this.userService = userService;
         this.courseService = courseService;
         this.participationService = participationService;
@@ -85,7 +91,11 @@ public class CourseResource {
             throw new BadRequestAlertException("A new course cannot already have an ID", ENTITY_NAME, "idexists");
         }
         try {
-            checkIfGroupsExists(course);
+            Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
+            if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_PRODUCTION)) {
+                //only execute this method in the production environment because normal developers might not have the right to call this method on the authentication server
+                checkIfGroupsExists(course);
+            }
             Course result = courseService.save(course);
             return ResponseEntity.created(new URI("/api/courses/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getTitle()))
