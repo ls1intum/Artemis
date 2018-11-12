@@ -7,13 +7,18 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import io.github.jhipster.config.JHipsterConstants;
 import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -40,6 +45,7 @@ public class CourseResource {
 
     private static final String ENTITY_NAME = "course";
 
+    private final Environment env;
     private final UserService userService;
     private final CourseService courseService;
     private final ParticipationService participationService;
@@ -47,14 +53,18 @@ public class CourseResource {
     private final ObjectMapper objectMapper;
     private final CourseRepository courseRepository;
     private final ExerciseService exerciseService;
+    private final Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider;
 
-    public CourseResource(UserService userService,
+    public CourseResource(Environment env,
+                          UserService userService,
                           CourseService courseService,
                           ParticipationService participationService,
                           CourseRepository courseRepository,
                           ExerciseService exerciseService,
                           AuthorizationCheckService authCheckService,
-                          MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
+                          MappingJackson2HttpMessageConverter springMvcJacksonConverter,
+                          Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider) {
+        this.env = env;
         this.userService = userService;
         this.courseService = courseService;
         this.participationService = participationService;
@@ -62,6 +72,7 @@ public class CourseResource {
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
+        this.artemisAuthenticationProvider = artemisAuthenticationProvider;
     }
 
     /**
@@ -79,10 +90,22 @@ public class CourseResource {
         if (course.getId() != null) {
             throw new BadRequestAlertException("A new course cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        Course result = courseService.save(course);
-        return ResponseEntity.created(new URI("/api/courses/" + result.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
-            .body(result);
+        try {
+            Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
+            if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_PRODUCTION)) {
+                //only execute this method in the production environment because normal developers might not have the right to call this method on the authentication server
+                checkIfGroupsExists(course);
+            }
+            Course result = courseService.save(course);
+            return ResponseEntity.created(new URI("/api/courses/" + result.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getTitle()))
+                .body(result);
+        }
+        catch(ArtemisAuthenticationException ex) {
+            //a specified group does not exist, notify the client
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "groupNotFound", ex.getMessage())).body(null);
+        }
+
     }
 
     /**
@@ -111,13 +134,38 @@ public class CourseResource {
         //only allow admins or instructors of the existing updatedCourse to change it
         //this is important, otherwise someone could put himself into the instructor group of the updated Course
         if (user.getGroups().contains(existingCourse.getInstructorGroupName()) || authCheckService.isAdmin()) {
-            Course result = courseService.save(updatedCourse);
-            return ResponseEntity.ok()
-                .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, updatedCourse.getId().toString()))
-                .body(result);
+            try {
+                checkIfGroupsExists(updatedCourse);
+                Course result = courseService.save(updatedCourse);
+                return ResponseEntity.ok()
+                    .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, updatedCourse.getTitle()))
+                    .body(result);
+            }
+            catch(ArtemisAuthenticationException ex) {
+                //a specified group does not exist, notify the client
+                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(ex.getMessage(), "groupNotFound")).body(null);
+            }
         }
         else {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+    }
+
+    private void checkIfGroupsExists(Course course) {
+        if (course.getInstructorGroupName() != null) {
+            if(!artemisAuthenticationProvider.get().checkIfGroupExists(course.getInstructorGroupName())) {
+                throw new ArtemisAuthenticationException("Cannot save! The group " + course.getInstructorGroupName() + " for instructors does not exist. Please double check the instructor group name!");
+            }
+        }
+        if (course.getTeachingAssistantGroupName() != null) {
+            if(!artemisAuthenticationProvider.get().checkIfGroupExists(course.getTeachingAssistantGroupName())) {
+                throw new ArtemisAuthenticationException("Cannot save! The group " + course.getTeachingAssistantGroupName() + " for teaching assistants does not exist. Please double check the teaching assistants group name!");
+            }
+        }
+        if (course.getStudentGroupName() != null) {
+            if(!artemisAuthenticationProvider.get().checkIfGroupExists(course.getStudentGroupName())) {
+                throw new ArtemisAuthenticationException("Cannot save! The group " + course.getStudentGroupName() + " for students does not exist. Please double check the students group name!");
+            }
         }
     }
 
@@ -225,11 +273,11 @@ public class CourseResource {
             return ResponseEntity.notFound().build();
         }
         for(Exercise exercise : course.getExercises()) {
-            exerciseService.delete(exercise.getId());
+            exerciseService.delete(exercise, false, false);
         }
-
+        String title = course.getTitle();
         courseService.delete(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, title)).build();
     }
 
 

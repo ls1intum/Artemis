@@ -6,6 +6,8 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
@@ -20,6 +22,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -41,10 +45,15 @@ public class ProgrammingExerciseResource {
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final Optional<VersionControlService> versionControlService;
     private final ExerciseService exerciseService;
+    private final ProgrammingExerciseService programmingExerciseService;
+
+    private final String packageNameRegex = "^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)+[0-9a-z_]$";
+    private final Pattern packageNamePattern = Pattern.compile(packageNameRegex);
 
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, UserService userService,
                                        AuthorizationCheckService authCheckService, CourseService courseService,
-                                       Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, ExerciseService exerciseService) {
+                                       Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
+                                       ExerciseService exerciseService, ProgrammingExerciseService programmingExerciseService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
@@ -52,6 +61,7 @@ public class ProgrammingExerciseResource {
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.exerciseService = exerciseService;
+        this.programmingExerciseService = programmingExerciseService;
     }
 
     /**
@@ -61,10 +71,16 @@ public class ProgrammingExerciseResource {
      */
     private ResponseEntity<ProgrammingExercise> checkProgrammingExerciseForError(ProgrammingExercise exercise) {
         if(!continuousIntegrationService.get().buildPlanIdIsValid(exercise.getBaseBuildPlanId())) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("exercise", "invalid.build.plan.id", "The Base Build Plan ID seems to be invalid.")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("exercise", "invalid.template.build.plan.id", "The Template Build Plan ID seems to be invalid.")).body(null);
         }
         if(exercise.getBaseRepositoryUrlAsUrl() == null || !versionControlService.get().repositoryUrlIsValid(exercise.getBaseRepositoryUrlAsUrl())) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("exercise", "invalid.repository.url", "The Repository URL seems to be invalid.")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("exercise", "invalid.template.repository.url", "The Template Repository URL seems to be invalid.")).body(null);
+        }
+        if(exercise.getSolutionBuildPlanId() != null && !continuousIntegrationService.get().buildPlanIdIsValid(exercise.getSolutionBuildPlanId())) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("exercise", "invalid.solution.build.plan.id", "The Solution Build Plan ID seems to be invalid.")).body(null);
+        }
+        if(exercise.getSolutionRepositoryUrl() != null && !versionControlService.get().repositoryUrlIsValid(exercise.getSolutionRepositoryUrlAsUrl())) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("exercise", "invalid.solution.repository.url", "The Solution Repository URL seems to be invalid.")).body(null);
         }
         return null;
     }
@@ -101,8 +117,110 @@ public class ProgrammingExerciseResource {
         }
         ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
         return ResponseEntity.created(new URI("/api/programming-exercises/" + result.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
+            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getTitle()))
             .body(result);
+    }
+
+    /**
+     * POST  /programming-exercises/setup : Setup a new programmingExercise (with all needed repositories etc.)
+     *
+     * @param programmingExercise the programmingExercise to setup
+     * @return the ResponseEntity with status 201 (Created) and with body the new programmingExercise, or with status 400 (Bad Request) if the parameters are invalid
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PostMapping("/programming-exercises/setup")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @Timed
+    public ResponseEntity<ProgrammingExercise> setupProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise) throws URISyntaxException {
+        log.debug("REST request to setup ProgrammingExercise : {}", programmingExercise);
+        if (programmingExercise.getId() != null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("A new programmingExercise cannot already have an ID", "idexists")).body(null);
+        }
+
+        if (programmingExercise == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The programming exercise is not set", "programmingExerciseNotSet")).body(null);
+        }
+
+        if (programmingExercise.getCourse() == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The course is not set", "courseNotSet")).body(null);
+        }
+
+        // fetch course from database to make sure client didn't change groups
+        Course course = courseService.findOne(programmingExercise.getCourse().getId());
+        if (course == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The course belonging to this programming exercise does not exist", "courseNotFound")).body(null);
+        }
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
+            !authCheckService.isInstructorInCourse(course, user) &&
+            !authCheckService.isAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        //make sure that we use the values from the database and not the once which might have been altered in the client
+        programmingExercise.setCourse(course);
+
+        // Check if exercise title is set
+        if (programmingExercise.getTitle() == null || programmingExercise.getTitle().length() < 3) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The title of the programming exercise is too short", "programmingExerciseTitleInvalid")).body(null);
+        }
+
+        // Check if exercise shortname is set
+        if (programmingExercise.getShortName() == null || programmingExercise.getShortName().length() < 3) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The shortname of the programming exercise is not set or too short", "programmingExerciseShortnameInvalid")).body(null);
+        }
+
+        // Check if course shortname is set
+        if (course.getShortName() == null || course.getShortName().length() < 2) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The shortname of the course is not set or too short", "courseShortnameInvalid")).body(null);
+        }
+
+        // Check if programming language is set
+        if (programmingExercise.getProgrammingLanguage() == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("No programming language was specified", "programmingLanguageNotSet")).body(null);
+        }
+
+        // Check if package name is set
+        if (programmingExercise.getPackageName() == null || programmingExercise.getPackageName().length() < 3) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The packagename is invalid", "packagenameInvalid")).body(null);
+        }
+
+        // Check if package name matches regex
+        Matcher packageNameMatcher = packageNamePattern.matcher(programmingExercise.getPackageName());
+        if (!packageNameMatcher.matches()) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The packagename is invalid", "packagenameInvalid")).body(null);
+        }
+
+        // Check if max score is set
+        if (programmingExercise.getMaxScore() == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The max score is invalid", "maxscoreInvalid")).body(null);
+        }
+
+        String projectKey = programmingExercise.getProjectKey();
+        String projectName = programmingExercise.getProjectName();
+        String errorMessageVCS = versionControlService.get().checkIfProjectExists(projectKey, projectName);
+        if(errorMessageVCS != null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(errorMessageVCS, "vcsProjectExists")).body(null);
+        }
+
+        String errorMessageCI = continuousIntegrationService.get().checkIfProjectExists(projectKey, projectName);
+        if(errorMessageCI != null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(errorMessageCI, "ciProjectExists")).body(null);
+        }
+
+        try {
+            ProgrammingExercise result = programmingExerciseService.setupProgrammingExercise(programmingExercise); // Setup all repositories etc
+            ResponseEntity<ProgrammingExercise> errorResponse = checkProgrammingExerciseForError(programmingExercise);
+            if(errorResponse != null) {
+                return errorResponse;
+            }
+
+            return ResponseEntity.created(new URI("/api/programming-exercises" + result.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getTitle()))
+                .body(result);
+        } catch (Exception e) {
+            log.error("Error while setting up programming exercise", e);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("An error occurred while setting up the exercise: " + e.getMessage(), "errorProgrammingExercise")).body(null);
+        }
     }
 
     /**
@@ -125,7 +243,7 @@ public class ProgrammingExerciseResource {
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(programmingExercise.getCourse().getId());
         if (course == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this programming exercise does not exist")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("courseNotFound", "The course belonging to this programming exercise does not exist")).body(null);
         }
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
@@ -139,7 +257,7 @@ public class ProgrammingExerciseResource {
         }
         ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
         return ResponseEntity.ok()
-            .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, programmingExercise.getId().toString()))
+            .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, programmingExercise.getTitle()))
             .body(result);
     }
 
@@ -222,7 +340,7 @@ public class ProgrammingExerciseResource {
     @DeleteMapping("/programming-exercises/{id}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @Timed
-    public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean deleteStudentReposBuildPlans, @RequestParam(defaultValue = "false") boolean deleteBaseReposBuildPlans) {
         log.debug("REST request to delete ProgrammingExercise : {}", id);
         Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(id);
         if (programmingExercise.isPresent()) {
@@ -232,8 +350,9 @@ public class ProgrammingExerciseResource {
                 !authCheckService.isAdmin()) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
-            exerciseService.delete(id);
-            return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+            String title = programmingExercise.get().getTitle();
+            exerciseService.delete(programmingExercise.get(), deleteStudentReposBuildPlans, deleteBaseReposBuildPlans);
+            return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, title)).build();
         }
         else {
             return ResponseEntity.notFound().build();

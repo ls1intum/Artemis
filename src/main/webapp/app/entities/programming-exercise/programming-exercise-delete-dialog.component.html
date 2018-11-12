@@ -1,4 +1,4 @@
-<form name="deleteForm" (ngSubmit)="confirmDelete(programmingExercise.id)">
+<form name="deleteForm" (ngSubmit)="confirmDelete(programmingExercise.id)" #deleteForm="ngForm">
     <div class="modal-header">
         <h4 class="modal-title" jhiTranslate="entity.delete.title">Confirm delete operation</h4>
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true"
@@ -7,12 +7,26 @@
     <div class="modal-body">
         <jhi-alert-error></jhi-alert-error>
         <p jhiTranslate="arTeMiSApp.programmingExercise.delete.question" translateValues="{title: '{{programmingExercise.title}}'}">Are you sure you want to delete this Programming Exercise?</p>
+        <p></p>
+        <div class="checkbox">
+            <label class="control-label text-danger">
+                <input type="checkbox" name="deleteStudentReposBuildPlans" [(ngModel)]="deleteStudentReposBuildPlans"/>Additionally delete all student repositories and student build plans (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you archive the exercise first!</label>
+        </div>
+        <div class="checkbox">
+            <label class="control-label text-danger">
+                <input type="checkbox" name="deleteBaseReposBuildPlans" [(ngModel)]="deleteBaseReposBuildPlans"/>Additionally delete template, solution and test repos and build plans (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you backup these build plans and repos first!</label>
+        </div>
+        <div class="form-group">
+            <label class="text-danger">Please type in the name of the Exercise to confirm.</label>
+            <input type="text" class="form-control" name="confirmExerciseName"
+                   value="" [(ngModel)]="confirmExerciseName"  />
+        </div>
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">
             <span class="fa fa-ban"></span>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
-        <button type="submit" class="btn btn-danger">
+        <button type="submit" class="btn btn-danger" [disabled]="deleteForm.form.invalid || deleteInProgress || (confirmExerciseName != programmingExercise.title)">
             <span class="fa fa-remove"></span>&nbsp;<span jhiTranslate="entity.action.delete">Delete</span>
         </button>
     </div>

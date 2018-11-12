@@ -1,0 +1,23 @@
+{
+    "arTeMiSApp": {
+        "shortAnswerSubmittedText": {
+            "home": {
+                "title": "Short Answer Submitted Texts",
+                "createLabel": "Short Answer Submitted Text erstellen",
+                "createOrEditLabel": "Short Answer Submitted Text erstellen oder bearbeiten"
+            },
+            "created": "Short Answer Submitted Text erstellt mit ID {{ param }}",
+            "updated": "Short Answer Submitted Text aktualisiert mit ID {{ param }}",
+            "deleted": "Short Answer Submitted Text gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Short Answer Submitted Text {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Short Answer Submitted Text"
+            },
+            "text": "Text",
+            "spot": "Spot",
+            "submittedAnswer": "Submitted Answer"
+        }
+    }
+}

@@ -1,0 +1,23 @@
+{
+    "arTeMiSApp": {
+        "shortAnswerSolution": {
+            "home": {
+                "title": "Short Answer Solutions",
+                "createLabel": "Create a new Short Answer Solution",
+                "createOrEditLabel": "Create or edit a Short Answer Solution"
+            },
+            "created": "A new Short Answer Solution is created with identifier {{ param }}",
+            "updated": "A Short Answer Solution is updated with identifier {{ param }}",
+            "deleted": "A Short Answer Solution is deleted with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete Short Answer Solution {{ id }}?"
+            },
+            "detail": {
+                "title": "Short Answer Solution"
+            },
+            "text": "Text",
+            "invalid": "Invalid",
+            "question": "Question"
+        }
+    }
+}

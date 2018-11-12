@@ -81,7 +81,8 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
             /** Query the repositoryFileService for files in the repository */
             this.repositoryFileService.query(params['participationId']).subscribe(
                 files => {
-                    this.repositoryFiles = files;
+                    // do not display the README.md, because students should not edit it
+                    this.repositoryFiles = files.filter(value => value !== 'README.md');
                     this.checkIfRepositoryIsClean();
                 },
                 (error: HttpErrorResponse) => {
@@ -161,7 +162,8 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
         /** Query the repositoryFileService for updated files in the repository */
         this.repositoryFileService.query(this.participation.id).subscribe(
             files => {
-                this.repositoryFiles = files;
+                // do not display the README.md, because students should not edit it
+                this.repositoryFiles = files.filter(value => value !== 'README.md');
                 // Select newly created file
                 if ($event.mode === 'create') {
                     this.file = $event.file;

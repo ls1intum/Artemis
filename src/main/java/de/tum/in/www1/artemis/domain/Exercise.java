@@ -51,6 +51,10 @@ public abstract class Exercise implements Serializable {
     @JsonView(QuizView.Before.class)
     private String title;
 
+    @Column(name = "short_name")
+    @JsonView(QuizView.Before.class)
+    private String shortName;
+
     @Column(name = "release_date")
     @JsonView(QuizView.Before.class)
     private ZonedDateTime releaseDate;
@@ -106,6 +110,19 @@ public abstract class Exercise implements Serializable {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public String getShortName() {
+        return shortName;
+    }
+
+    public Exercise shortName(String shortName) {
+        this.shortName = shortName;
+        return this;
+    }
+
+    public void setShortName(String shortName) {
+        this.shortName = shortName;
     }
 
     public ZonedDateTime getReleaseDate() {
@@ -283,7 +300,7 @@ public abstract class Exercise implements Serializable {
     }
 
     /**
-     * Get the latest relevant result from the given participation
+     * Get the latest relevant result from the given participation (rated == true or rated == null)
      * (relevancy depends on Exercise type => this should be overridden by subclasses if necessary)
      *
      * @param participation the participation whose results we are considering
@@ -293,7 +310,12 @@ public abstract class Exercise implements Serializable {
         // for most types of exercises => return latest result (all results are relevant)
         Result latestResult = null;
         for (Result result : participation.getResults()) {
-            if (latestResult == null || latestResult.getCompletionDate().isBefore(result.getCompletionDate())) {
+            //NOTE: for the dashboard we only use rated results
+            if (latestResult == null) {
+                latestResult = result;
+            }
+            //NOTE: isRatedNull is a compatibility mechanism that we should deactivate soon
+            else if (latestResult.getCompletionDate().isBefore(result.getCompletionDate()) && (result.isRatedNull() || result.isRated())) {
                 latestResult = result;
             }
         }
@@ -328,6 +350,7 @@ public abstract class Exercise implements Serializable {
             ", problemStatement='" + getProblemStatement() + "'" +
             ", gradingInstructions='" + getGradingInstructions() + "'" +
             ", title='" + getTitle() + "'" +
+            ", shortName='" + getShortName() + "'" +
             ", releaseDate='" + getReleaseDate() + "'" +
             ", dueDate='" + getDueDate() + "'" +
             ", maxScore=" + getMaxScore() +

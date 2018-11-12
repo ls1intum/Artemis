@@ -18,6 +18,9 @@ entity MultipleChoiceQuestionStatistic (mcQuestionStatistic) {   //extends Quest
 entity DragAndDropQuestionStatistic (dndQuestionStatistic) {   //extends QuestionStatistic
 }
 
+entity ShortAnswerQuestionStatistic (saQuestionStatistic) {   //extends QuestionStatistic
+}
+
 entity StatisticCounter(statisticCounter) { //abstract
     ratedCounter Integer,
     UnRatedCounter Integer
@@ -33,8 +36,12 @@ entity AnswerCounter(answerCounter) {       //extends StatisticCounter
 entity DropLocationCounter(dropLocationCounter) {    //extends StatisticCounter
 }
 
+entity ShortAnswerSpotCounter(shortAnswerSpotCounter) {    //extends StatisticCounter
+}
+
 entity Course (course) {
     title String,
+    shortName String,
     studentGroupName String,
     teachingAssistantGroupName String,
     instructorGroupName String,
@@ -47,6 +54,7 @@ entity Exercise (exercise) {        //abstract
     problemStatement String,        //LONGTEXT --> lob
     gradingInstructions String,     //LONGTEXT --> lob
     title String,
+    shortName String,
     releaseDate ZonedDateTime,
     dueDate ZonedDateTime,
     maxScore Double,
@@ -72,8 +80,16 @@ entity ProgrammingExercise {        //extends Exercise
     baseRepositoryUrl String,
     solutionRepositoryUrl String,
     baseBuildPlanId String,
+    solutionBuildPlanId String,
     publishBuildPlanUrl Boolean,
-    allowOnlineEditor Boolean
+    allowOnlineEditor Boolean,
+    programmingLanguage ProgrammingLanguage,
+    packageName String
+}
+
+enum ProgrammingLanguage {
+    JAVA,
+    PYTHON
 }
 
 entity ModelingExercise {           //extends Exercise
@@ -160,6 +176,20 @@ entity DragItem {
     invalid Boolean
 }
 
+entity ShortAnswerQuestion {          //extends Question
+
+}
+
+entity ShortAnswerSpot {
+	width Integer,
+    invalid Boolean
+}
+
+entity ShortAnswerSolution {
+    text String
+    invalid Boolean
+}
+
 entity Participation (participation) {
     repositoryUrl String,
     buildPlanId String,
@@ -185,8 +215,7 @@ entity ExerciseResult (result) {
 
 enum AssessmentType {
     AUTOMATIC,
-    MANUAL,
-    SEMIAUTOMATIC
+    MANUAL
 }
 
 entity Feedback(feedback) {
@@ -212,7 +241,9 @@ enum InitializationState {
 
 enum SubmissionType {
 	MANUAL,
-    TIMEOUT
+    TIMEOUT,
+    TEST,
+    OTHER
 }
 
 entity Submission {                 //abstract
@@ -253,6 +284,19 @@ entity DragAndDropMapping {
     invalid Boolean
 }
 
+entity ShortAnswerSubmittedAnswer (saSubmittedAnswer) {      //extends SubmittedAnswer
+}
+
+entity ShortAnswerSubmittedText (shortAnswerSubmittedText) {
+    text String
+}
+
+entity ShortAnswerMapping {
+	shortAnswerSpotIndex Integer
+    shortAnswerSolutionIndex Integer
+    invalid Boolean
+}
+
 entity ApollonDiagram {
     title String
     jsonRepresentation String       // LONGTEXT --> clob
@@ -262,6 +306,7 @@ relationship OneToMany {
     QuizPointStatistic{PointCounters} to PointCounter{quizPointStatistic},
     MultipleChoiceQuestionStatistic{AnswerCounters} to AnswerCounter{MultipleChoiceQuestionStatistic},
     DragAndDropQuestionStatistic{DropLocationCounters} to DropLocationCounter{DragAndDropQuestionStatistic},
+    ShortAnswerQuestionStatistic{ShortAnswerSpotCounters} to ShortAnswerSpotCounter{ShortAnswerQuestionStatistic},
     Course{exercises} to Exercise{course(title)},
     Exercise{participations} to Participation{exercise(title)},
     Participation{results} to ExerciseResult{participation},
@@ -271,9 +316,13 @@ relationship OneToMany {
     MultipleChoiceQuestion{answerOptions} to AnswerOption{question},
     DragAndDropQuestion{dropLocations} to DropLocation{question},
     DragAndDropQuestion{dragItems} to DragItem{question},
+    ShortAnswerQuestion{spots} to ShortAnswerSpot{question},
+    ShortAnswerQuestion{solutions} to ShortAnswerSolution{question},
     QuizSubmission{submittedAnswers} to SubmittedAnswer{submission},
     DragAndDropSubmittedAnswer{mappings} to DragAndDropMapping{submittedAnswer},
-    DragAndDropQuestion{correctMappings} to DragAndDropMapping{question}
+    DragAndDropQuestion{correctMappings} to DragAndDropMapping{question},
+    ShortAnswerQuestion{correctMappings} to ShortAnswerMapping{question}
+    ShortAnswerSubmittedAnswer{submittedTexts} to ShortAnswerSubmittedText{submittedAnswer}
 }
 
 relationship OneToOne {
@@ -281,6 +330,8 @@ relationship OneToOne {
     Question{questionStatistic} to QuestionStatistic{question},
     AnswerCounter{answer} to AnswerOption,
     DropLocationCounter{dropLocation} to DropLocation,
+    ShortAnswerSpotCounter{spot} to ShortAnswerSpot,
+    ShortAnswerSubmittedText{spot} to ShortAnswerSpot,
     Submission{result} to ExerciseResult{submission},
     LtiUserId{user} to User,
     ExerciseResult{assessor} to User
@@ -292,7 +343,9 @@ relationship ManyToOne {
     LtiOutcomeUrl{exercise} to Exercise,
     SubmittedAnswer{question} to Question
     DragAndDropMapping{dragItem} to DragItem,
-    DragAndDropMapping{dropLocation} to DropLocation
+    DragAndDropMapping{dropLocation} to DropLocation,
+    ShortAnswerMapping{solution} to ShortAnswerSolution,
+    ShortAnswerMapping{spot} to ShortAnswerSpot
 }
 
 relationship ManyToMany {

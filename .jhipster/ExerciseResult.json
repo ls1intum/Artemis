@@ -32,7 +32,7 @@
         {
             "fieldName": "assessmentType",
             "fieldType": "AssessmentType",
-            "fieldValues": "AUTOMATIC,MANUAL,SEMIAUTOMATIC"
+            "fieldValues": "AUTOMATIC,MANUAL"
         }
     ],
     "relationships": [

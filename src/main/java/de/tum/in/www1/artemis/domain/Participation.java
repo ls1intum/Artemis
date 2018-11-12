@@ -302,6 +302,8 @@ public class Participation implements Serializable {
         return sortedResults.get(0);
     }
 
+    //TODO: implement a method Result findLatestResultBeforeDueDate(ZonedDateTime dueDate)
+
     /**
      * Finds the latest submission for the participation. Checks if the participation has any submissions. If there are no submissions,
      * return null. Otherwise sort the submissions by submission date and return the first.

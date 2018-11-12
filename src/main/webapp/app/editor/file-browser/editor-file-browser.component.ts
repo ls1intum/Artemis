@@ -165,7 +165,8 @@ export class EditorFileBrowserComponent implements OnChanges, AfterViewInit {
             /** Query the repositoryFileService for files in the repository */
             this.repositoryFileService.query(this.parent.participation.id).subscribe(
                 files => {
-                    this.repositoryFiles = files;
+                    // do not display the README.md, because students should not edit it
+                    this.repositoryFiles = files.filter(value => value !== 'README.md');
                     this.setupTreeview(this.repositoryFiles);
                 },
                 (error: HttpErrorResponse) => {

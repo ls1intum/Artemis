@@ -29,7 +29,8 @@ import java.util.Objects;
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({
     @JsonSubTypes.Type(value = MultipleChoiceQuestion.class, name = "multiple-choice"),
-    @JsonSubTypes.Type(value = DragAndDropQuestion.class, name = "drag-and-drop")
+    @JsonSubTypes.Type(value = DragAndDropQuestion.class, name = "drag-and-drop"),
+    @JsonSubTypes.Type(value = ShortAnswerQuestion.class, name = "short-answer")
 })
 public abstract class Question implements Serializable {
 

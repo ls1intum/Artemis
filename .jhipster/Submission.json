@@ -12,7 +12,7 @@
         {
             "fieldName": "type",
             "fieldType": "SubmissionType",
-            "fieldValues": "MANUAL,TIMEOUT"
+            "fieldValues": "MANUAL,TIMEOUT,TEST,OTHER"
         }
     ],
     "relationships": [
