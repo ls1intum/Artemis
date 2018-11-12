@@ -30,6 +30,7 @@ import { ArTEMiSQuizModule } from './quiz/participate';
 import { ArTEMiSTextModule } from './text-editor/index';
 import { ArTEMiSModelingStatisticsModule } from './modeling-statistics/';
 import * as moment from 'moment';
+import { ArTEMiSTextTutorModule } from './text/tutor';
 // jhipster-needle-angular-add-module-import JHipster will add new module here
 import {
     ActiveMenuDirective,
@@ -80,6 +81,8 @@ import { ParticipationDataProvider } from './courses/exercises/participation-dat
         ArTEMiSModelingEditorModule,
         ArTEMiSTextModule,
         ArTEMiSModelingStatisticsModule
+        ArTEMiSTextTutorModule,
+        ArTEMiSModelingStatisticsModule,
         // jhipster-needle-angular-add-module JHipster will add new module here
     ],
     declarations: [

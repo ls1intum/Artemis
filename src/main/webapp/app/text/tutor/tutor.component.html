@@ -1,0 +1,68 @@
+<jhi-alert></jhi-alert>
+
+<div class="row">
+    <div class="col">
+        <h2>
+            Assessment <span *ngIf="result">for Submission: {{result.participation.student.firstName}} {{result.participation.student.lastName}}</span>
+        </h2>
+    </div>
+    <div class="col text-right">
+        <span *ngIf="result && result.participation"><jhi-result
+            [participation]="result.participation"></jhi-result></span>
+        <button class="btn btn-primary ml-3" (click)="saveAssessment()"
+                [disabled]="!assessments || !assessmentsAreValid || (result?.assessor && result.assessor.id !== accountId && !isAuthorized)"
+                [hidden]="result && result.rated">Save Assessment
+        </button>
+        <button class="btn btn-success ml-3" (click)="submit()"
+                [disabled]="!assessments || !assessmentsAreValid || (result?.assessor && result.assessor.id !== accountId && !isAuthorized)"
+                [hidden]="result && result.rated">Submit Assessment
+        </button>
+        <button class="btn btn-danger ml-3" (click)="submit()"
+                [disabled]="!assessments || !assessmentsAreValid"
+                [hidden]="!result || !result.rated">Override Assessment
+        </button>
+    </div>
+</div>
+
+<h2>
+    <span *ngIf="busy" style="color:grey"><span class="fa fa-spinner fa-spin"></span>&nbsp;<span>Please wait while finding the next submission!</span></span>
+</h2>
+
+<div class="row" *ngIf="exercise">
+    <div class="col">
+        <p class="mb-3">
+            <strong>Exercise:</strong> {{ exercise.title }}<br>
+            <strong>Problem Statement:</strong> {{ exercise.problemStatement }}
+        </p>
+    </div>
+    <div class="col text-right">
+        <span><h5><strong>Score:</strong> {{ totalScore | number : '1.0-2' }} / {{ exercise.maxScore }}</h5></span>
+        <span *ngIf="result && result.assessor" style="color:red"><h6>Reviewer: {{result.assessor.firstName + (isAuthorized ? '' : ' - submission locked')}}</h6></span>
+    </div>
+</div>
+
+<div>
+    <button type="submit" (click)="previousState()" class="btn btn-info">
+        <span class="fa fa-arrow-left"></span>&nbsp;<span jhiTranslate="entity.action.back">Back</span>
+    </button>
+    <button *ngIf="(result?.rated && !done) || (result?.assessor && result.assessor.id !== accountId && !result?.rated)"
+            [disabled]="busy" class="btn btn-success" (click)="assessNextOptimal(0)">
+        <i class="fa fa-folder-open fa-fw"></i>&nbsp;Assess next submission
+    </button>
+</div>
+
+<div class="p-4">
+
+    <div class="row">
+        <div class="col-8 col-xl-9">
+            <jhi-text-assessment-editor (assessedText)="addAssessment($event)">
+                {{submission?.text}}
+            </jhi-text-assessment-editor>
+        </div>
+        <div class="col-4 col-xl-3">
+            <ng-container *ngFor="let assessment of assessments">
+                <jhi-text-assessment-detail [assessment]="assessment"></jhi-text-assessment-detail>
+            </ng-container>
+        </div>
+    </div>
+</div>

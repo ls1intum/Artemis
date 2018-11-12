@@ -1,0 +1,15 @@
+<div class="card mb-3">
+    <div class="card-header">
+        <h4 class="card-title">Score for "<span class="text-primary">{{assessment.text}}</span>"</h4>
+    </div>
+    <div class="card-body">
+        <div class="form-group row">
+            <label class="col-3">Score </label>
+            <input class="col-2" type="number" step="0.5" [(ngModel)]="assessment.credits" (ngModelChange)="checkScoreBoundaries()">
+        </div>
+        <div class="form-group row">
+            <label class="col-3">Feedback</label>
+            <textarea class="col form-control" rows="2" [(ngModel)]="assessment.comment"></textarea>
+        </div>
+    </div>
+</div>
