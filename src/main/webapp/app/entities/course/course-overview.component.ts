@@ -14,7 +14,11 @@ export class CourseOverviewComponent implements OnInit {
     course: Course;
     private subscription: Subscription;
 
-    isQuestionCollapsed: boolean;
+    isQuestionCollapsed1: boolean;
+    isQuestionCollapsed2: boolean;
+    isQuestionCollapsed3: boolean;
+    isQuestionCollapsed4: boolean;
+    isQuestionCollapsed5: boolean;
     showPreview: boolean;
 
     constructor(private route: ActivatedRoute) {}
