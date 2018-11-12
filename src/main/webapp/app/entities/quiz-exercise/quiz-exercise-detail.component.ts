@@ -16,7 +16,7 @@ import { AnswerOption } from '../../entities/answer-option';
 import { Option, Duration } from './quiz-exercise-interfaces';
 import { NgbDateStruct, NgbDate, NgbTimeStruct } from '@ng-bootstrap/ng-bootstrap';
 import * as moment from 'moment';
-import { ComponentCanDeactivate } from '../../shared/guard/pending-changes.guard';
+import { ComponentCanDeactivate } from '../../shared';
 import { Moment } from 'moment';
 import { JhiAlertService } from 'ng-jhipster';
 import { Observable } from '../../../../../../node_modules/rxjs/Observable';
@@ -31,7 +31,7 @@ interface Reason {
     templateUrl: './quiz-exercise-detail.component.html',
     providers: [DragAndDropQuestionUtil]
 })
-export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy {
+export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy, ComponentCanDeactivate {
     // Make constants available to html for comparison
     readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
