@@ -8,6 +8,8 @@ import { TextSubmission, TextSubmissionService } from 'app/entities/text-submiss
 import { TextExercise, TextExerciseService } from 'app/entities/text-exercise';
 import { Result } from 'app/entities/result';
 import { Participation, ParticipationService } from 'app/entities/participation';
+import { TextService } from 'app/text/text.service';
+import moment = require('moment');
 
 @Component({
     templateUrl: './text.component.html',
@@ -19,16 +21,18 @@ export class TextComponent implements OnInit, OnDestroy {
     private submission: TextSubmission;
     private textExercise: TextExercise;
     participation: Participation;
-    result: Result;
 
+    result: Result;
     isActive: boolean;
     isSaving: boolean;
+    answer: string;
 
     constructor(
         private route: ActivatedRoute,
         private textExerciseService: TextExerciseService,
         private participationService: ParticipationService,
         private textSubmissionService: TextSubmissionService,
+        private textService: TextService,
         private jhiAlertService: JhiAlertService
     ) {
         this.isSaving = false;
@@ -37,15 +41,14 @@ export class TextComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.subscription = this.route.params.subscribe(params => {
             if (params['participationId']) {
-                this.textExerciseService.find(params['participationId']).subscribe(
+                this.textService.get(params['participationId']).subscribe(
                     data => {
-                        this.textExercise = data.body;
-                        this.participation = this.textExercise.participations[0];
-                        this.submission = new TextSubmission();
-
-                        this.isActive = this.textExercise.dueDate == null || new Date() <= this.textExercise.dueDate.toDate();
-
                         console.log(data);
+
+                        this.participation = data.participation;
+                        this.textExercise = this.participation.exercise as TextExercise;
+
+                        this.isActive = this.textExercise.dueDate == null || new Date() <= moment(this.textExercise.dueDate).toDate();
                     },
                     (error: HttpErrorResponse) => this.onError(error)
                 );
@@ -60,7 +63,12 @@ export class TextComponent implements OnInit, OnDestroy {
             return;
         }
 
+        if (!this.submission) {
+            this.submission = new TextSubmission();
+        }
+
         this.submission.submitted = false;
+        this.submission.text = this.answer;
         this.isSaving = true;
 
         let submission: HttpResponse<TextSubmission>;

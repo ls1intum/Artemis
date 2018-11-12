@@ -192,7 +192,7 @@ public class TextSubmissionResource {
     public List<TextSubmission> getAllTextSubmissions() {
         log.debug("REST request to get all TextSubmissions");
         return textSubmissionRepository.findAll();
-        }
+    }
 
     /**
      * GET  /text-submissions/:id : get the "id" textSubmission.

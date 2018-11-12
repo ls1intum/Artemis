@@ -1,10 +1,11 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Participation;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.User;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.CourseService;
@@ -18,10 +19,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -43,17 +46,23 @@ public class TextExerciseResource {
     private final CourseService courseService;
     private final AuthorizationCheckService authCheckService;
     private final ParticipationService participationService;
+    private final ResultRepository resultRepository;
+    private final ObjectMapper objectMapper;
 
     public TextExerciseResource(TextExerciseRepository textExerciseRepository,
                                 UserService userService,
                                 AuthorizationCheckService authCheckService,
                                 CourseService courseService,
-                                ParticipationService participationService) {
+                                ParticipationService participationService,
+                                ResultRepository resultRepository,
+                                ObjectMapper objectMapper) {
         this.textExerciseRepository = textExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.participationService = participationService;
+        this.resultRepository = resultRepository;
+        this.objectMapper = objectMapper;
     }
 
     /**
@@ -209,5 +218,72 @@ public class TextExerciseResource {
             return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
         }
         return ResponseEntity.notFound().build();
+    }
+
+    /**
+     * Returns the data needed for the text editor, which includes the participation, textSubmission with model if existing
+     * and the assessments if the submission was already submitted.
+     *
+     * @param participationId the participationId for which to find the data for the text editor
+     * @return the ResponseEntity with json as body
+     */
+    @GetMapping("/text-editor/{participationId}")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @Transactional(readOnly = true)
+    @Timed
+    public ResponseEntity<JsonNode> getDataForTextEditor(@PathVariable Long participationId) {
+        Participation participation = participationService.findOne(participationId);
+        if (participation == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "participationNotFound", "No participation was found for the given ID.")).body(null);
+        }
+        TextExercise textExercise;
+        if (participation.getExercise() instanceof TextExercise) {
+            textExercise = (TextExercise) participation.getExercise();
+            if (textExercise == null) {
+                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("textExercise", "exerciseEmpty", "The exercise belonging to the participation is null.")).body(null);
+            }
+        } else {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("textExercise", "wrongExerciseType", "The exercise of the participation is not a modeling exercise.")).body(null);
+        }
+
+        // users can only see their own submission (to prevent cheating), TAs, instructors and admins can see all models
+        if (!authCheckService.isOwnerOfParticipation(participation) && !courseService.userHasAtLeastTAPermissions(textExercise.getCourse())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+
+        // if no results, check if there are really no results or the relation to results was not updated yet
+        if (participation.getResults().size() <= 0) {
+            List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId());
+            participation.setResults(new HashSet<>(results));
+        }
+
+        ObjectNode data = objectMapper.createObjectNode();
+
+        TextSubmission textSubmission = participation.findLatestTextSubmission();
+        // NOTE: avoid infinite recursion by setting submissions to null
+        participation.setSubmissions(null);
+        data.set("participation", objectMapper.valueToTree(participation));
+        if (textSubmission != null) {
+            // set reference to participation if null
+            if (textSubmission.getParticipation() == null) {
+                textSubmission.setParticipation(participation);
+            }
+//            Result result = textSubmission.getResult();
+//            if (textSubmission.isSubmitted() && result != null && result.isRated()) {
+//                // find assessments if textSubmission is submitted and result is rated
+//                String assessment = textAssessmentService.findLatestAssessment(textExercise.getId(), participation.getStudent().getId(), textSubmission.getId());
+//                if (assessment != null && assessment != "") {
+//                    try {
+//                        data.set("assessments", objectMapper.readTree(assessment));
+//                    } catch (IOException e) {
+//                        log.error("Error while reading assessment JSON: {}", e.getMessage());
+//                    }
+//                }
+//            }
+
+            data.set("textSubmission", objectMapper.valueToTree(textSubmission));
+        }
+        return ResponseEntity.ok(data);
     }
 }
