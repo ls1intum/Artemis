@@ -1,12 +1,12 @@
-<div class="edit-mc-question">
+<div>
     <div>
     <h4>
         <span>Exercise Overview</span>
     </h4>
     </div>
 
-
-    <div>
+<div class="question card">
+    <div [hidden]="showPreview">
     <div class="question-options card-header question-card-header">
         <button
             class="btn btn-light question-collapse"
@@ -24,7 +24,9 @@
         </div>
     </div>
     </div>
+</div>
 
+    <div class="question card">
     <div>
         <div class="question-options card-header question-card-header">
             <button
@@ -43,7 +45,9 @@
             </div>
         </div>
     </div>
+    </div>
 
+        <div class="question card">
     <div>
         <div class="question-options card-header question-card-header">
             <button
@@ -62,7 +66,8 @@
             </div>
         </div>
     </div>
-
+        </div>
+            <div class="question card">
     <div>
         <div class="question-options card-header question-card-header">
             <button
@@ -81,7 +86,8 @@
             </div>
         </div>
     </div>
-
+            </div>
+                <div class="question card">
     <div>
         <div class="question-options card-header question-card-header">
             <button
@@ -100,4 +106,6 @@
             </div>
         </div>
     </div>
+                </div>
+</div>
 </div>

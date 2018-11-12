@@ -14,12 +14,15 @@ export class CourseOverviewComponent implements OnInit {
     course: Course;
     private subscription: Subscription;
 
+    isQuestionCollapsed: boolean;
+    showPreview: boolean;
+
     constructor(private route: ActivatedRoute) {}
 
     ngOnInit(): void {
-        console.log('hallo');
         this.subscription = this.route.params.subscribe(params => {
             console.log(params);
         });
+        this.showPreview = false;
     }
 }
