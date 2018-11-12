@@ -387,5 +387,4 @@ public class Participation implements Serializable {
             ", presentationScore=" + getPresentationScore() +
             "}";
     }
-
 }

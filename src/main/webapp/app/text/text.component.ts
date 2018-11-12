@@ -42,8 +42,6 @@ export class TextComponent implements OnInit, OnDestroy {
             if (params['participationId']) {
                 this.textService.get(params['participationId']).subscribe(
                     data => {
-                        console.log(data);
-
                         this.participation = data.participation;
                         this.textExercise = this.participation.exercise as TextExercise;
 

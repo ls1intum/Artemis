@@ -25,7 +25,6 @@ export class CourseComponent implements OnInit, OnDestroy {
             (res: HttpErrorResponse) => this.onError(res)
         );
     }
-
     ngOnInit() {
         this.loadAll();
         this.registerChangeInCourses();

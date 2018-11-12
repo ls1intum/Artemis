@@ -126,7 +126,6 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
     }
 
     initExercises(exercises: Exercise[]) {
-        console.log(exercises);
         if (this.filterByExerciseId) {
             exercises = exercises.filter(exercise => exercise.id === this.filterByExerciseId);
         }

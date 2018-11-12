@@ -80,7 +80,6 @@ public class TextExerciseResource {
         if (textExercise.getId() != null) {
             throw new BadRequestAlertException("A new textExercise cannot already have an ID", ENTITY_NAME, "idexists");
         }
-
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(textExercise.getCourse().getId());
         if (course == null) {
@@ -92,7 +91,6 @@ public class TextExerciseResource {
             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-
         TextExercise result = textExerciseRepository.save(textExercise);
         return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
@@ -116,7 +114,6 @@ public class TextExerciseResource {
         if (textExercise.getId() == null) {
             return createTextExercise(textExercise);
         }
-
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(textExercise.getCourse().getId());
         if (course == null) {
@@ -128,7 +125,6 @@ public class TextExerciseResource {
             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-
         TextExercise result = textExerciseRepository.save(textExercise);
         return ResponseEntity.ok()
             .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, textExercise.getId().toString()))
