@@ -179,16 +179,16 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     }
 
     canDeactivate(): Observable<boolean> | boolean {
-        if (!!this.pendingChanges()) {
-            return false;
+        if (this.pendingChanges()) {
+            return true;
         }
-        return true;
+        return false;
     }
 
     // displays the alert for confirming leaving the page if there are unsaved changes
     @HostListener('window:beforeunload', ['$event'])
     unloadNotification($event: any) {
-        if (!this.canDeactivate()) {
+        if (this.canDeactivate()) {
             $event.returnValue = this.translateService.instant('pendingChanges');
         }
     }
