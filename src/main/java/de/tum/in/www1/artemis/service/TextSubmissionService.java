@@ -52,7 +52,6 @@ public class TextSubmissionService {
         User user = participation.getStudent();
 
         if (textSubmission.isSubmitted()) {
-            participation.addResult(textSubmission.getResult());
             participation.setInitializationState(InitializationState.FINISHED);
         } else if (textExercise.getDueDate() != null && !textExercise.isEnded()) {
             // save submission to HashMap if exercise not ended yet

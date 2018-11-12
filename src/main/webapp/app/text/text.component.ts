@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 
 import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
@@ -48,6 +48,16 @@ export class TextComponent implements OnInit, OnDestroy {
                         this.participation = data.participation;
                         this.textExercise = this.participation.exercise as TextExercise;
 
+                        this.submission = data.textSubmission;
+
+                        if (this.submission && this.submission.result) {
+                            this.result = this.submission.result;
+                        }
+
+                        if (this.submission && this.submission.text) {
+                            this.answer = this.submission.text;
+                        }
+
                         this.isActive = this.textExercise.dueDate == null || new Date() <= moment(this.textExercise.dueDate).toDate();
                     },
                     (error: HttpErrorResponse) => this.onError(error)
@@ -85,6 +95,36 @@ export class TextComponent implements OnInit, OnDestroy {
         }
 
         this.isSaving = false;
+    }
+
+    submit() {
+        if (!this.submission) {
+            return;
+        }
+
+        this.submission.text = this.answer;
+
+        const confirmSubmit = window.confirm('arTeMiSApp.textExercise.confirmSubmission');
+
+        if (confirmSubmit) {
+            this.submission.submitted = true;
+            this.textSubmissionService.update(this.submission, this.textExercise.id).subscribe(
+                response => {
+                    this.submission = response.body;
+                    this.result = this.submission.result;
+
+                    if (this.isActive) {
+                        this.jhiAlertService.success('arTeMiSApp.textExercise.submitSuccessful');
+                    } else {
+                        this.jhiAlertService.warning('arTeMiSApp.textExercise.submitDeadlineMissed');
+                    }
+                },
+                err => {
+                    this.jhiAlertService.error('arTeMiSApp.modelingEditor.error');
+                    this.submission.submitted = false;
+                }
+            );
+        }
     }
 
     private onError(error: HttpErrorResponse) {
