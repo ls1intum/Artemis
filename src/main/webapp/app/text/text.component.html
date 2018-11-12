@@ -25,8 +25,6 @@
             <button class="btn btn-warning" (click)="submit()"
                     [disabled]="!submission"
                     [hidden]="submission?.submitted || isActive">Submit (deadline missed)</button>
-            <button class="btn btn-info" (click)="retry()"
-                    *ngIf="isActive && submission?.submitted && result?.rated && !retryStarted"><span class="fa fa-refresh"></span> Retry</button>
         </div>
     </div><br>
 
@@ -40,45 +38,45 @@
     <div class="row">
         <div [ngClass]="{'col-9': submission?.submitted, 'col-12': !submission?.submitted}">
             <textarea title="Solution" [(ngModel)]="answer" style="width: 100%; height: 50vh;" [readonly]="submission?.submitted" [disabled]="submission?.submitted"></textarea>
-            <div class="assessments">
-                <div class="assessments__container">
-                    <div class="assessments__canvas">
-                        <ng-container *ngIf="result?.rated && assessments && positions">
-                            <div *ngFor="let assessment of assessments"
-                                 [style.top.px]="positions[assessment.id].y"
-                                 [style.left.px]="positions[assessment.id].x">
-                                <i class="fa" [ngClass]="{'fa-check': assessment.credits > 0, 'fa-times': assessment.credits < 0}" *ngFor="let i of numberToArray(assessment.credits, 0)"></i>
-                                <i class="fa half" [ngClass]="{'fa-check': assessment.credits > 0, 'fa-times': assessment.credits < 0}" *ngIf="assessment.credits % 1 !== 0"></i>
-                            </div>
-                        </ng-container>
-                    </div>
-                </div>
-            </div>
+            <!--<div class="assessments">-->
+                <!--<div class="assessments__container">-->
+                    <!--<div class="assessments__canvas">-->
+                        <!--<ng-container *ngIf="result?.rated && assessments && positions">-->
+                            <!--<div *ngFor="let assessment of assessments"-->
+                                 <!--[style.top.px]="positions[assessment.id].y"-->
+                                 <!--[style.left.px]="positions[assessment.id].x">-->
+                                <!--<i class="fa" [ngClass]="{'fa-check': assessment.credits > 0, 'fa-times': assessment.credits < 0}" *ngFor="let i of numberToArray(assessment.credits, 0)"></i>-->
+                                <!--<i class="fa half" [ngClass]="{'fa-check': assessment.credits > 0, 'fa-times': assessment.credits < 0}" *ngIf="assessment.credits % 1 !== 0"></i>-->
+                            <!--</div>-->
+                        <!--</ng-container>-->
+                    <!--</div>-->
+                <!--</div>-->
+            <!--</div>-->
         </div>
         <div class="col-3" *ngIf="submission?.submitted">
             <h4>Assessment</h4>
-            <p *ngIf="!assessments || assessments?.length === 0">There is no assessment available yet.</p>
-            <ng-container *ngIf="assessments?.length > 0">
-                <p>Select entities and/or associations in the editor to filter the assessment.</p>
-                <table class="table">
-                    <thead class="thead-light">
-                    <tr>
-                        <th>Element</th>
-                        <th class="text-center">Score</th>
-                    </tr>
-                    </thead>
-                    <tbody *ngIf="assessmentsNames">
-                    <tr *ngFor="let assessment of assessments" [hidden]="(assessment.credits === 0 && !assessment.comment) || !isSelected(assessment.id, assessment.type)">
-                        <td>
-                            <span>{{assessmentsNames[assessment.id]['type']}} </span>
-                            <code class="text-primary">{{assessmentsNames[assessment.id]['name']}}</code><br>
-                            <span *ngIf="assessment.comment" [ngClass]="{'text-success': assessment.credits > 0, 'text-danger': assessment.credits < 0}"><strong>Feedback:</strong> {{assessment.comment}}</span>
-                        </td>
-                        <td class="text-center">{{assessment.credits | number:'1.0-1'}}</td>
-                    </tr>
-                    </tbody>
-                </table>
-            </ng-container>
+            <!--<p *ngIf="!assessments || assessments?.length === 0">There is no assessment available yet.</p>-->
+            <!--<ng-container *ngIf="assessments?.length > 0">-->
+                <!--<p>Select entities and/or associations in the editor to filter the assessment.</p>-->
+                <!--<table class="table">-->
+                    <!--<thead class="thead-light">-->
+                    <!--<tr>-->
+                        <!--<th>Element</th>-->
+                        <!--<th class="text-center">Score</th>-->
+                    <!--</tr>-->
+                    <!--</thead>-->
+                    <!--<tbody *ngIf="assessmentsNames">-->
+                    <!--<tr *ngFor="let assessment of assessments" [hidden]="(assessment.credits === 0 && !assessment.comment) || !isSelected(assessment.id, assessment.type)">-->
+                        <!--<td>-->
+                            <!--<span>{{assessmentsNames[assessment.id]['type']}} </span>-->
+                            <!--<code class="text-primary">{{assessmentsNames[assessment.id]['name']}}</code><br>-->
+                            <!--<span *ngIf="assessment.comment" [ngClass]="{'text-success': assessment.credits > 0, 'text-danger': assessment.credits < 0}"><strong>Feedback:</strong> {{assessment.comment}}</span>-->
+                        <!--</td>-->
+                        <!--<td class="text-center">{{assessment.credits | number:'1.0-1'}}</td>-->
+                    <!--</tr>-->
+                    <!--</tbody>-->
+                <!--</table>-->
+            <!--</ng-container>-->
         </div>
     </div>
 </div>

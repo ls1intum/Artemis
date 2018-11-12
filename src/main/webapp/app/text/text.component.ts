@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 
 import { ActivatedRoute } from '@angular/router';
-import { Observable, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
@@ -9,7 +9,7 @@ import { TextExercise, TextExerciseService } from 'app/entities/text-exercise';
 import { Result } from 'app/entities/result';
 import { Participation, ParticipationService } from 'app/entities/participation';
 import { TextService } from 'app/text/text.service';
-import moment = require('moment');
+import * as moment from 'moment';
 
 @Component({
     templateUrl: './text.component.html',
@@ -17,12 +17,11 @@ import moment = require('moment');
 })
 export class TextComponent implements OnInit, OnDestroy {
     private subscription: Subscription;
-    private id: number;
-    private submission: TextSubmission;
-    private textExercise: TextExercise;
-    participation: Participation;
 
+    textExercise: TextExercise;
+    participation: Participation;
     result: Result;
+    submission: TextSubmission;
     isActive: boolean;
     isSaving: boolean;
     answer: string;
