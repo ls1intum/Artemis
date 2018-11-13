@@ -210,6 +210,7 @@ entity ExerciseResult (result) {
     score Long,
     rated Boolean,
     hasFeedback Boolean,
+    hasComplaint Boolean,
     assessmentType AssessmentType
 }
 
@@ -302,6 +303,17 @@ entity ApollonDiagram {
     jsonRepresentation String       // LONGTEXT --> clob
 }
 
+entity Complaint {
+    text String,
+    accepted Boolean,
+    submittedTime ZonedDateTime
+}
+
+entity ComplaintResponse {
+    text String
+    submittedTime ZonedDateTime
+}
+
 relationship OneToMany {
     QuizPointStatistic{PointCounters} to PointCounter{quizPointStatistic},
     MultipleChoiceQuestionStatistic{AnswerCounters} to AnswerCounter{MultipleChoiceQuestionStatistic},
@@ -334,7 +346,9 @@ relationship OneToOne {
     ShortAnswerSubmittedText{spot} to ShortAnswerSpot,
     Submission{result} to ExerciseResult{submission},
     LtiUserId{user} to User,
-    ExerciseResult{assessor} to User
+    ExerciseResult{assessor} to User,
+    Feedback{complaint} to Complaint{feedback},
+    Complaint{complaintResponse} to ComplaintResponse{complaint}
 }
 
 relationship ManyToOne {
