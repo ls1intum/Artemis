@@ -259,6 +259,7 @@ public class TextExerciseResource {
         TextSubmission textSubmission = participation.findLatestTextSubmission();
         // NOTE: avoid infinite recursion by setting submissions to null
         participation.setSubmissions(null);
+        ((TextExercise) participation.getExercise()).setSampleSolution(null);
         data.set("participation", objectMapper.valueToTree(participation));
         if (textSubmission != null) {
             // set reference to participation if null
