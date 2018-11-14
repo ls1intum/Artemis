@@ -299,8 +299,13 @@ public class ResultResource {
 
         for (Participation participation : participations) {
 
-            Result relevantResult = exercise.findLatestRelevantResult(participation);
-
+            Result relevantResult = null;
+            if (ratedOnly == true) {
+                relevantResult = exercise.findLatestRatedResultWithCompletionDate(participation);
+            }
+            else {
+                relevantResult = exercise.findLatestResult(participation);
+            }
             if (relevantResult == null) {
                 continue;
             }

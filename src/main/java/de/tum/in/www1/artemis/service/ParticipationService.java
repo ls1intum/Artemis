@@ -329,15 +329,27 @@ public class ParticipationService {
     }
 
     /**
-     * Get one participation by id.
+     * Get one participation by id including all results
      *
-     * @param id the id of the entity
-     * @return the entity
+     * @param id the id of the participation
+     * @return the participation with all its results
      */
     @Transactional(readOnly = true)
     public Participation findOneWithEagerResults(Long id) {
         log.debug("Request to get Participation : {}", id);
         return participationRepository.findByIdWithEagerResults(id);
+    }
+
+    /**
+     * Get one participation by id including all submissions.
+     *
+     * @param id the id of the entity
+     * @return the participation with all its submissions
+     */
+    @Transactional(readOnly = true)
+    public Participation findOneWithEagerSubmissions(Long id) {
+        log.debug("Request to get Participation : {}", id);
+        return participationRepository.findByIdWithEagerSubmissions(id);
     }
 
 
@@ -399,6 +411,11 @@ public class ParticipationService {
     @Transactional(readOnly = true)
     public List<Participation> findByExerciseIdWithEagerResults(Long exerciseId) {
         return participationRepository.findByExerciseIdWithEagerResults(exerciseId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Participation> findByExerciseIdWithEagerSubmissions(Long exerciseId) {
+        return participationRepository.findByExerciseIdWithEagerSubmissions(exerciseId);
     }
 
     @Transactional(readOnly = true)

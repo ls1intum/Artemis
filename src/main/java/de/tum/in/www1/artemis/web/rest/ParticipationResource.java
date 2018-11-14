@@ -228,7 +228,7 @@ public class ParticipationResource {
         if (participation == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        Result result = participation.getExercise().findLatestRelevantResult(participation);
+        Result result = participation.getExercise().findLatestRatedResultWithCompletionDate(participation);
         Set<Result> results = new HashSet<Result>();
         if (result != null) {
             results.add(result);

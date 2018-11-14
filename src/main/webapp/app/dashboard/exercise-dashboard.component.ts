@@ -74,7 +74,7 @@ export class ExerciseDashboardComponent implements OnInit, OnDestroy {
         this.resultService
             .getResultsForExercise(this.exercise.course.id, this.exercise.id, {
                 showAllResults: this.showAllResults,
-                ratedOnly: this.exercise.type === ExerciseType.QUIZ,
+                ratedOnly: true,
                 withSubmissions: this.exercise.type === ExerciseType.MODELING,
                 withAssessors: this.exercise.type === ExerciseType.MODELING
             })

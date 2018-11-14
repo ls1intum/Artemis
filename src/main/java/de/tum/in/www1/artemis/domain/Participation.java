@@ -320,6 +320,7 @@ public class Participation implements Serializable {
             return null;
         }
         List<Submission> sortedSubmissions = submissions.stream().collect(Collectors.toList());
+        //TODO: what happens if the submissionDate is null?
         Collections.sort(sortedSubmissions, (r1, r2) -> r2.getSubmissionDate().compareTo(r1.getSubmissionDate()));
         return sortedSubmissions.get(0);
     }

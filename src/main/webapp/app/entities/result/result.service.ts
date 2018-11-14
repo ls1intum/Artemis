@@ -60,7 +60,7 @@ export class ResultService {
                 params: options,
                 observe: 'response'
             })
-            .map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res));
+            .map((res: EntityArrayResponseType) => this.convertArrayResponse(res));
     }
 
     getResultsForExercise(courseId: number, exerciseId: number, req?: any): Observable<EntityArrayResponseType> {
@@ -70,7 +70,7 @@ export class ResultService {
                 params: options,
                 observe: 'response'
             })
-            .map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res));
+            .map((res: EntityArrayResponseType) => this.convertArrayResponse(res));
     }
 
     getFeedbackDetailsForResult(resultId: number): Observable<HttpResponse<Feedback[]>> {
@@ -88,7 +88,7 @@ export class ResultService {
         return copy;
     }
 
-    protected convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
+    protected convertArrayResponse(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((result: Result) => {
                 result.completionDate = result.completionDate != null ? moment(result.completionDate) : null;

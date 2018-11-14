@@ -331,7 +331,7 @@ public class CourseResource {
             ObjectNode participationJson = objectMapper.valueToTree(participation);
 
             // only transmit the relevant result
-            Result result = exercise.findLatestRelevantResult(participation);
+            Result result = exercise.findLatestRatedResultWithCompletionDate(participation);
             List<Result> results = Optional.ofNullable(result).map(Arrays::asList).orElse(new ArrayList<>());
 
             // add results to json

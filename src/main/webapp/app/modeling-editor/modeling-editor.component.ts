@@ -83,8 +83,12 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         this.subscription = this.route.params.subscribe(params => {
             if (params['participationId']) {
                 this.modelingEditorService.get(params['participationId']).subscribe(
-                    data => {
-                        this.participation = data.participation;
+                    modelingSubmission => {
+                        // reconnect participation <--> result
+                        if (modelingSubmission.result) {
+                            modelingSubmission.participation.results = [modelingSubmission.result];
+                        }
+                        this.participation = modelingSubmission.participation;
                         this.modelingExercise = this.participation.exercise as ModelingExercise;
                         /**
                          * set diagramType to class diagram if exercise is null, use case or communication
@@ -99,7 +103,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                         }
                         this.isActive =
                             this.modelingExercise.dueDate == null || new Date() <= moment(this.modelingExercise.dueDate).toDate();
-                        this.submission = data.modelingSubmission;
+                        this.submission = modelingSubmission;
                         if (this.submission && this.submission.id && !this.submission.submitted) {
                             this.subscribeToWebsocket();
                         }
@@ -111,9 +115,9 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                         } else {
                             this.initializeApollonEditor(null);
                         }
-                        if (this.submission && this.submission.submitted && this.result && this.result.rated) {
-                            if (data.assessments) {
-                                this.assessments = data.assessments;
+                        if (this.submission && this.submission.submitted && this.result && this.result.completionDate) {
+                            if (this.result.assessments) {
+                                this.assessments = JSON.parse(this.result.assessments);
                                 this.initializeAssessmentInfo();
                             } else {
                                 this.modelingAssessmentService
@@ -252,9 +256,9 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                     this.isSaving = false;
                     this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
                 },
-                e => {
-                    this.jhiAlertService.error('arTeMiSApp.modelingEditor.error');
+                error => {
                     this.isSaving = false;
+                    this.jhiAlertService.error('arTeMiSApp.modelingEditor.error');
                 }
             );
         } else {
@@ -267,7 +271,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                     this.isActive = this.modelingExercise.dueDate == null || new Date() <= this.modelingExercise.dueDate.toDate();
                     this.subscribeToWebsocket();
                 },
-                e => {
+                error => {
                     this.jhiAlertService.error('arTeMiSApp.modelingEditor.error');
                     this.isSaving = false;
                 }
@@ -435,10 +439,12 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
      */
     retry() {
         this.retryStarted = true;
-        this.submission.id = null;
-        this.submission.submitted = false;
-        this.submission.result = null;
+        const currentModel = this.submission.model;
+        this.submission = new ModelingSubmission();
+        this.submission.model = currentModel;
         this.assessments = [];
+        this.result = null; // TODO: think about how we could visualize old results and assessments after retry
+
         clearInterval(this.autoSaveInterval);
         if (this.submission.model) {
             this.initializeApollonEditor(JSON.parse(this.submission.model));

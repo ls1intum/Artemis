@@ -10,6 +10,7 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -52,7 +53,9 @@ public class ModelingAssessmentResource {
         this.modelingAssessmentService = modelingAssessmentService;
     }
 
-    @DeleteMapping("/modeling-assessments/exercise/{exerciseId}/optimal-models")
+    //TODO: all API path in this class do not really make sense, we should restructure them and potentially start with /exercise/
+
+    @DeleteMapping("/modeling-assessments/exercise/{exerciseId}/optimal-model-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<String> resetOptimalModels(@PathVariable Long exerciseId) {
@@ -75,10 +78,10 @@ public class ModelingAssessmentResource {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
-    @GetMapping("/modeling-assessments/exercise/{exerciseId}/optimal-models")
+    @GetMapping("/modeling-assessments/exercise/{exerciseId}/optimal-model-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
-    public ResponseEntity<String> getNextOptimalModels(@PathVariable Long exerciseId) {
+    public ResponseEntity<String> getNextOptimalModelSubmissions(@PathVariable Long exerciseId) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(modelingExercise.getCourse().getId());
@@ -92,12 +95,13 @@ public class ModelingAssessmentResource {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        Set<Long> optimalModels = compassService.getModelsWaitingForAssessment(exerciseId);
+        //TODO: we need to make sure that per participation there is only one optimalModel
+        Set<Long> optimalModelSubmissions = compassService.getModelsWaitingForAssessment(exerciseId);
         JsonArray response = new JsonArray();
-        for (Long optimalModel: optimalModels) {
+        for (Long optimalModelSubmissionId : optimalModelSubmissions) {
             JsonObject entry = new JsonObject();
             response.add(entry);
-            entry.addProperty("id", optimalModel);
+            entry.addProperty("id", optimalModelSubmissionId);
         }
         return ResponseEntity.ok(response.toString());
     }
@@ -174,17 +178,8 @@ public class ModelingAssessmentResource {
         if (modelingExercise == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("modelingExercise", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
         }
-        // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(modelingExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this modeling exercise does not exist")).body(null);
-        }
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-            !authCheckService.isInstructorInCourse(course, user) &&
-            !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+        ResponseEntity<Result> responseFailure = checkModelingExercise(modelingExercise);
+        if (responseFailure != null) return responseFailure;
 
         Result result = modelingAssessmentService.saveManualAssessment(resultId, exerciseId, modelingAssessment);
 
@@ -204,8 +199,21 @@ public class ModelingAssessmentResource {
     @Timed
     public ResponseEntity<Result> submitModelingAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody String modelingAssessment) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(modelingExercise.getCourse().getId());
+
+        ResponseEntity<Result> responseFailure = checkModelingExercise(modelingExercise);
+        if (responseFailure != null) return responseFailure;
+
+        Result result = modelingAssessmentService.submitManualAssessment(resultId, exerciseId, modelingAssessment);
+        Long submissionId = result.getSubmission().getId();
+        // add assessment to compass to include it in the automatic grading process
+        compassService.addAssessment(exerciseId, submissionId, modelingAssessment);
+
+        return ResponseEntity.ok(result);
+    }
+
+    @Nullable
+    private ResponseEntity<Result> checkModelingExercise(ModelingExercise modelingExercise) {
+        Course course = modelingExercise.getCourse();
         if (course == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this modeling exercise does not exist")).body(null);
         }
@@ -215,12 +223,6 @@ public class ModelingAssessmentResource {
             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-
-        Result result = modelingAssessmentService.submitManualAssessment(resultId, exerciseId, modelingAssessment);
-        Long submissionId = result.getSubmission().getId();
-        // add assessment to compass to include it in the automatic grading process
-        compassService.addAssessment(exerciseId, submissionId, modelingAssessment);
-
-        return ResponseEntity.ok(result);
+        return null;
     }
 }
