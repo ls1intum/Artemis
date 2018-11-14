@@ -10,19 +10,21 @@ import {
     SimpleChanges,
     ElementRef
 } from '@angular/core';
-import { DragAndDropQuestion } from '../../../entities/drag-and-drop-question';
-import { DropLocation } from '../../../entities/drop-location';
-import { DragItem } from '../../../entities/drag-item';
-import { DragAndDropMapping } from '../../../entities/drag-and-drop-mapping';
+import { ShortAnswerQuestion } from '../../../entities/short-answer-question';
+import { ShortAnswerSpot } from '../../../entities/short-answer-spot';
+import { ShortAnswerSolution } from '../../../entities/short-answer-solution';
+import { ShortAnswerMapping } from '../../../entities/short-answer-mapping';
+
 import { DragAndDropMouseEvent } from '../../../entities/drag-item/drag-and-drop-mouse-event.class';
 import { DragState } from '../../../entities/drag-item/drag-state.enum';
+
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
 import { DragAndDropQuestionUtil } from 'app/components/util/drag-and-drop-question-util.service';
 import * as $ from 'jquery';
-import { FileUploaderService } from 'app/shared/http/file-uploader.service';
+import { DropLocation } from 'app/entities/drop-location';
 
 @Component({
     selector: 'jhi-edit-short-answer-question',
@@ -36,7 +38,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     private clickLayer: ElementRef;
 
     @Input()
-    question: DragAndDropQuestion;
+    question: ShortAnswerQuestion;
     @Input()
     questionIndex: number;
     @Input()
@@ -57,7 +59,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     questionEditorMode = 'markdown';
     questionEditorAutoUpdate = true;
 
-    backupQuestion: DragAndDropQuestion;
+    backupQuestion: ShortAnswerQuestion;
 
     dropAllowed = false;
 
@@ -73,10 +75,10 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     draggingState: number = DragState.NONE;
 
     /**
-     * Keep track of the currently dragged drop location
-     * @type {DropLocation}
+     * Keep track of the currently dragged ShortAnswerSpot
+     * @type {ShortAnswerSpot}
      */
-    currentDropLocation: DropLocation;
+    currentSpot: ShortAnswerSpot;
 
     /**
      * Keep track of the current mouse location
@@ -86,9 +88,9 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
 
     constructor(
         private artemisMarkdown: ArtemisMarkdown,
-        private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
-        private fileUploaderService: FileUploaderService
-    ) {}
+        private dragAndDropQuestionUtil: DragAndDropQuestionUtil
+    ) //TODO: Check if saQuestionUtil is needed
+    {}
 
     ngOnInit(): void {
         /** Create question backup for resets **/
@@ -98,8 +100,8 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         this.showPreview = false;
         this.isQuestionCollapsed = false;
 
-        /** Initialize DropLocation and MouseEvent objects **/
-        this.currentDropLocation = new DropLocation();
+        /** Initialize ShortAnswerSpot and MouseEvent objects **/
+        this.currentSpot = new ShortAnswerSpot();
         this.mouse = new DragAndDropMouseEvent();
     }
 
@@ -193,7 +195,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @function mouseMove
      * @desc React to mousemove events on the entire page to update:
      * - mouse object (always)
-     * - current drop location (only while dragging)
+     * - current solution spot (only while dragging)
      * @param e {object} Mouse move event
      */
     mouseMove(e: any): void {
@@ -218,37 +220,22 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         if (this.draggingState !== DragState.NONE) {
             switch (this.draggingState) {
                 case DragState.CREATE:
-                case DragState.RESIZE_BOTH:
-                    // Update current drop location's position and size
-                    this.currentDropLocation.posX = Math.round((200 * Math.min(this.mouse.x, this.mouse.startX)) / backgroundWidth);
-                    this.currentDropLocation.posY = Math.round((200 * Math.min(this.mouse.y, this.mouse.startY)) / backgroundHeight);
-                    this.currentDropLocation.width = Math.round((200 * Math.abs(this.mouse.x - this.mouse.startX)) / backgroundWidth);
-                    this.currentDropLocation.height = Math.round((200 * Math.abs(this.mouse.y - this.mouse.startY)) / backgroundHeight);
+                case DragState.RESIZE_X:
+                    // Update current drop location's position and size (only x-axis)
+                    this.currentSpot.posX = Math.round((200 * Math.min(this.mouse.x, this.mouse.startX)) / backgroundWidth);
+                    this.currentSpot.width = Math.round((200 * Math.abs(this.mouse.x - this.mouse.startX)) / backgroundWidth);
                     break;
                 case DragState.MOVE:
                     // update current drop location's position
-                    this.currentDropLocation.posX = Math.round(
-                        Math.min(
-                            Math.max(0, (200 * (this.mouse.x + this.mouse.offsetX)) / backgroundWidth),
-                            200 - this.currentDropLocation.width
-                        )
+                    this.currentSpot.posX = Math.round(
+                        Math.min(Math.max(0, (200 * (this.mouse.x + this.mouse.offsetX)) / backgroundWidth), 200 - this.currentSpot.width)
                     );
-                    this.currentDropLocation.posY = Math.round(
+                    this.currentSpot.posY = Math.round(
                         Math.min(
                             Math.max(0, (200 * (this.mouse.y + this.mouse.offsetY)) / backgroundHeight),
-                            200 - this.currentDropLocation.height
+                            200 - /*this.spot.height*/ 50 //TODO: Change to actual spot height of SaSolutionsSpots (fix value)
                         )
                     );
-                    break;
-                case DragState.RESIZE_X:
-                    // Update current drop location's position and size (only x-axis)
-                    this.currentDropLocation.posX = Math.round((200 * Math.min(this.mouse.x, this.mouse.startX)) / backgroundWidth);
-                    this.currentDropLocation.width = Math.round((200 * Math.abs(this.mouse.x - this.mouse.startX)) / backgroundWidth);
-                    break;
-                case DragState.RESIZE_Y:
-                    // update current drop location's position and size (only y-axis)
-                    this.currentDropLocation.posY = Math.round((200 * Math.min(this.mouse.y, this.mouse.startY)) / backgroundHeight);
-                    this.currentDropLocation.height = Math.round((200 * Math.abs(this.mouse.y - this.mouse.startY)) / backgroundHeight);
                     break;
             }
         }
@@ -265,21 +252,16 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
                     const jQueryBackgroundElement = $('.click-layer-question-' + this.questionIndex);
                     const backgroundWidth = jQueryBackgroundElement.width();
                     const backgroundHeight = jQueryBackgroundElement.height();
-                    if (
-                        (this.currentDropLocation.width / 200) * backgroundWidth < 14 &&
-                        (this.currentDropLocation.height / 200) * backgroundHeight < 14
-                    ) {
+                    if ((this.currentSpot.width / 200) * backgroundWidth < 14) {
                         // Remove drop Location if too small (assume it was an accidental click/drag),
-                        this.deleteDropLocation(this.currentDropLocation);
+                        this.deleteSpot(this.currentSpot);
                     } else {
                         // Notify parent of new drop location
                         this.questionUpdated.emit();
                     }
                     break;
                 case DragState.MOVE:
-                case DragState.RESIZE_BOTH:
                 case DragState.RESIZE_X:
-                case DragState.RESIZE_Y:
                     // Notify parent of changed drop location
                     this.questionUpdated.emit();
                     break;
@@ -287,7 +269,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         }
         // Update state
         this.draggingState = DragState.NONE;
-        this.currentDropLocation = null;
+        this.currentSpot = null;
     }
 
     /**
@@ -295,24 +277,24 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @desc React to mouse down events on the background to start dragging
      */
     backgroundMouseDown(): void {
-        if (this.question.backgroundFilePath && this.draggingState === DragState.NONE) {
+        if (this.draggingState === DragState.NONE) {
             // Save current mouse position as starting position
             this.mouse.startX = this.mouse.x;
             this.mouse.startY = this.mouse.y;
 
             // Create new drop location
-            this.currentDropLocation = new DropLocation();
-            this.currentDropLocation.tempID = this.pseudoRandomLong();
-            this.currentDropLocation.posX = this.mouse.x;
-            this.currentDropLocation.posY = this.mouse.y;
-            this.currentDropLocation.width = 0;
-            this.currentDropLocation.height = 0;
+            this.currentSpot = new ShortAnswerSpot();
+            this.currentSpot.tempID = this.pseudoRandomLong();
+            this.currentSpot.posX = this.mouse.x;
+            this.currentSpot.posY = this.mouse.y;
+            this.currentSpot.width = 0;
 
             // Add drop location to question
-            if (!this.question.dropLocations) {
-                this.question.dropLocations = [];
+            //TODO: adapt it for SA
+            if (!this.question.spots) {
+                this.question.spots = [];
             }
-            this.question.dropLocations.push(this.currentDropLocation);
+            this.question.spots.push(this.currentSpot);
 
             // Update state
             this.draggingState = DragState.CREATE;
@@ -320,124 +302,109 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * @function dropLocationMouseDown
-     * @desc React to mousedown events on a drop location to start moving it
-     * @param dropLocation {object} the drop location to move
+     * @function spotMouseDown
+     * @desc React to mousedown events on a spot to start moving it
+     * @param spot {object} the spot to move
      */
-    dropLocationMouseDown(dropLocation: DropLocation): void {
+    spotMouseDown(spot: ShortAnswerSpot): void {
         if (this.draggingState === DragState.NONE) {
             const jQueryBackgroundElement = $('.click-layer-question-' + this.questionIndex);
             const backgroundWidth = jQueryBackgroundElement.width();
             const backgroundHeight = jQueryBackgroundElement.height();
 
-            const dropLocationX = (dropLocation.posX / 200) * backgroundWidth;
-            const dropLocationY = (dropLocation.posY / 200) * backgroundHeight;
+            const dropLocationX = (spot.posX / 200) * backgroundWidth;
+            const dropLocationY = (spot.posY / 200) * backgroundHeight;
 
             // Save offset of mouse in drop location
             this.mouse.offsetX = dropLocationX - this.mouse.x;
             this.mouse.offsetY = dropLocationY - this.mouse.y;
 
             // Update state
-            this.currentDropLocation = dropLocation;
+            this.currentSpot = spot;
             this.draggingState = DragState.MOVE;
         }
     }
 
     /**
-     * @function deleteDropLocation
-     * @desc Delete the given drop location
-     * @param dropLocationToDelete {object} the drop location to delete
+     * @function deleteSpot
+     * @desc Delete the given spot
+     * @param spotToDelete {object} the spot to delete
      */
-    deleteDropLocation(dropLocationToDelete: DropLocation): void {
-        this.question.dropLocations = this.question.dropLocations.filter(dropLocation => dropLocation !== dropLocationToDelete);
-        this.deleteMappingsForDropLocation(dropLocationToDelete);
+    deleteSpot(spotToDelete: ShortAnswerSpot): void {
+        this.question.spots = this.question.spots.filter(spot => spot !== spotToDelete);
+        this.deleteMappingsForSpot(spotToDelete);
     }
 
     /**
      * @function resizeMouseDown
-     * @desc React to mousedown events on the resize handles to start resizing the drop location
-     * @param dropLocation {object} the drop location that will be resized
+     * @desc React to mousedown events on the resize handles to start resizing the spot
+     * @param spot {object} the spot that will be resized
      * @param resizeLocationY {string} 'top', 'middle' or 'bottom'
      * @param resizeLocationX {string} 'left', 'center' or 'right'
      */
-    resizeMouseDown(dropLocation: DropLocation, resizeLocationY: string, resizeLocationX: string): void {
+    resizeMouseDown(spot: ShortAnswerSpot, resizeLocationX: string): void {
         if (this.draggingState === DragState.NONE) {
             const backgroundWidth = this.clickLayer.nativeElement.offsetWidth;
             const backgroundHeight = this.clickLayer.nativeElement.offsetHeight;
 
             // Update state
-            this.draggingState = DragState.RESIZE_BOTH; // Default is both, will be overwritten later, if needed
-            this.currentDropLocation = dropLocation;
-
-            switch (resizeLocationY) {
-                case 'top':
-                    // Use opposite end as startY
-                    this.mouse.startY = ((dropLocation.posY + dropLocation.height) / 200) * backgroundHeight;
-                    break;
-                case 'middle':
-                    // Limit to x-axis, startY will not be used
-                    this.draggingState = DragState.RESIZE_X;
-                    break;
-                case 'bottom':
-                    // Use opposite end as startY
-                    this.mouse.startY = (dropLocation.posY / 200) * backgroundHeight;
-                    break;
-            }
+            this.draggingState = DragState.RESIZE_X; // Default is both, will be overwritten later, if needed
+            this.currentSpot = spot;
 
             switch (resizeLocationX) {
                 case 'left':
                     // Use opposite end as startX
-                    this.mouse.startX = ((dropLocation.posX + dropLocation.width) / 200) * backgroundWidth;
+                    this.mouse.startX = ((spot.posX + spot.width) / 200) * backgroundWidth;
                     break;
                 case 'center':
                     // Limit to y-axis, startX will not be used
-                    this.draggingState = DragState.RESIZE_Y;
+                    this.draggingState = DragState.RESIZE_Y; //Why resize_y and not resize_x
                     break;
                 case 'right':
                     // Use opposite end as startX
-                    this.mouse.startX = (dropLocation.posX / 200) * backgroundWidth;
+                    this.mouse.startX = (spot.posX / 200) * backgroundWidth;
                     break;
             }
         }
     }
 
     /**
-     * @function addTextDragItem
-     * @desc Add an empty Text Drag Item to the question
+     * @function addTextSolution
+     * @desc Add an empty Text solution to the question
      */
-    addTextDragItem(): void {
+    addTextSolution(): void {
         // Add drag item to question
-        if (!this.question.dragItems) {
-            this.question.dragItems = [];
+        if (!this.question.solutions) {
+            this.question.solutions = [];
         }
-        const dragItem = new DragItem();
-        dragItem.tempID = this.pseudoRandomLong();
-        dragItem.text = 'Text';
-        this.question.dragItems.push(dragItem);
+        const solution = new ShortAnswerSolution();
+        solution.tempID = this.pseudoRandomLong();
+        solution.text = 'Text';
+        this.question.solutions.push(solution);
         this.questionUpdated.emit();
     }
 
     /**
-     * @function deleteDragItem
-     * @desc Delete the drag item from the question
-     * @param dragItemToDelete {object} the drag item that should be deleted
+     * @function deleteSolution
+     * @desc Delete the solution from the question
+     * @param solutionToDelete {object} the solution that should be deleted
      */
-    deleteDragItem(dragItemToDelete: DragItem): void {
-        this.question.dragItems = this.question.dragItems.filter(dragItem => dragItem !== dragItemToDelete);
-        this.deleteMappingsForDragItem(dragItemToDelete);
+    deleteSolution(solutionToDelete: ShortAnswerSolution): void {
+        this.question.solutions = this.question.solutions.filter(solution => solution !== solutionToDelete);
+        this.deleteMappingsForSolution(solutionToDelete);
     }
 
     /**
      * @function onDragDrop
-     * @desc React to a drag item being dropped on a drop location
-     * @param dropLocation {object} the drop location involved
-     * @param dragEvent {object} the drag item involved (may be a copy at this point)
+     * @desc React to a solution being dropped on a spot
+     * @param spot {object} the spot involved
+     * @param dragEvent {object} the solution involved (may be a copy at this point)
      */
-    onDragDrop(dropLocation: DropLocation, dragEvent: any): void {
+    onDragDrop(spot: ShortAnswerSpot, dragEvent: any): void {
         let dragItem = dragEvent.dragData;
         // Replace dragItem with original (because it may be a copy)
-        dragItem = this.question.dragItems.find(
-            originalDragItem => (dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.tempID === dragItem.tempID)
+        dragItem = this.question.solutions.find(originalDragItem =>
+            dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.id === dragItem.tempID
         );
 
         if (!dragItem) {
@@ -453,15 +420,13 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         if (
             !this.question.correctMappings.some(
                 existingMapping =>
-                    this.dragAndDropQuestionUtil.isSameDropLocation(existingMapping.dropLocation, dropLocation) &&
-                    this.dragAndDropQuestionUtil.isSameDragItem(existingMapping.dragItem, dragItem)
+                    this.dragAndDropQuestionUtil.isSameDropLocationSA(existingMapping.spot, spot) &&
+                    this.dragAndDropQuestionUtil.isSameDragItemSA(existingMapping.solution, dragItem)
             )
         ) {
             // Mapping doesn't exit yet => add this mapping
-            const dndMapping = new DragAndDropMapping();
-            dndMapping.dropLocation = dropLocation;
-            dndMapping.dragItem = dragItem;
-            this.question.correctMappings.push(dndMapping);
+            const saMapping = new ShortAnswerMapping(spot, dragItem);
+            this.question.correctMappings.push(saMapping);
 
             // Notify parent of changes
             this.questionUpdated.emit();
@@ -474,23 +439,23 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @param mapping {object} the mapping we want to get an index for
      * @return {number} the index of the mapping (starting with 1), or 0 if unassigned
      */
-    getMappingIndex(mapping: DragAndDropMapping): number {
-        const visitedDropLocations: DropLocation[] = [];
+    getMappingIndex(mapping: ShortAnswerMapping): number {
+        const visitedSpots: ShortAnswerSpot[] = [];
         // Save reference to this due to nested some calls
         const that = this;
         if (
             this.question.correctMappings.some(function(correctMapping) {
                 if (
-                    !visitedDropLocations.some((dropLocation: DropLocation) => {
-                        return that.dragAndDropQuestionUtil.isSameDropLocation(dropLocation, correctMapping.dropLocation);
+                    !visitedSpots.some((spot: ShortAnswerSpot) => {
+                        return that.dragAndDropQuestionUtil.isSameDropLocationSA(spot, correctMapping.spot);
                     })
                 ) {
-                    visitedDropLocations.push(correctMapping.dropLocation);
+                    visitedSpots.push(correctMapping.spot);
                 }
-                return that.dragAndDropQuestionUtil.isSameDropLocation(correctMapping.dropLocation, mapping.dropLocation);
+                return that.dragAndDropQuestionUtil.isSameDropLocationSA(correctMapping.spot, mapping.spot);
             })
         ) {
-            return visitedDropLocations.length;
+            return visitedSpots.length;
         } else {
             return 0;
         }
@@ -502,13 +467,13 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @param dropLocation {object} the drop location for which we want to get all mappings
      * @return {Array} all mappings that belong to the given drop location
      */
-    getMappingsForDropLocation(dropLocation: DropLocation): DragAndDropMapping[] {
+    getMappingsForDropLocation(dropLocation: ShortAnswerSpot): ShortAnswerMapping[] {
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
-        return this.question.correctMappings.filter(mapping =>
-            this.dragAndDropQuestionUtil.isSameDropLocation(mapping.dropLocation, dropLocation)
-        );
+        return; /*this.question.correctMappings.filter(mapping =>
+            this.dragAndDropQuestionUtil.isSameDropLocation(mapping.dropLocation, dropLocation))*/
+        null;
     }
 
     /**
@@ -517,15 +482,19 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @param dragItem {object} the drag item for which we want to get all mappings
      * @return {Array} all mappings that belong to the given drag item
      */
-    getMappingsForDragItem(dragItem: DragItem): DragAndDropMapping[] {
+    getMappingsForDragItem(dragItem: ShortAnswerSolution): ShortAnswerMapping[] {
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
+
         return (
-            this.question.correctMappings
-                .filter(mapping => this.dragAndDropQuestionUtil.isSameDragItem(mapping.dragItem, dragItem))
-                /** Moved the sorting from the template to the function call **/
-                .sort((m1, m2) => this.getMappingIndex(m1) - this.getMappingIndex(m2))
+            /*
+          this.question.correctMappings
+              .filter(mapping => this.dragAndDropQuestionUtil.isSameDragItem(mapping.dragItem, dragItem))
+              /** Moved the sorting from the template to the function call
+              .sort((m1, m2) => this.getMappingIndex(m1) - this.getMappingIndex(m2))
+              */
+            null
         );
     }
 
@@ -534,13 +503,16 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @desc Delete all mappings for the given drop location
      * @param dropLocation {object} the drop location for which we want to delete all mappings
      */
-    deleteMappingsForDropLocation(dropLocation: DropLocation): void {
+    deleteMappingsForSpot(dropLocation: ShortAnswerSpot): void {
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
+        //TODO: adjust for SA
+        /*
         this.question.correctMappings = this.question.correctMappings.filter(
             mapping => !this.dragAndDropQuestionUtil.isSameDropLocation(mapping.dropLocation, dropLocation)
         );
+        */
     }
 
     /**
@@ -548,13 +520,15 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @desc Delete all mappings for the given drag item
      * @param dragItem {object} the drag item for which we want to delete all mappings
      */
-    deleteMappingsForDragItem(dragItem: DragItem): void {
+    deleteMappingsForSolution(solution: ShortAnswerSolution): void {
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
-        this.question.correctMappings = this.question.correctMappings.filter(
-            mapping => !this.dragAndDropQuestionUtil.isSameDragItem(mapping.dragItem, dragItem)
+        //TODO: adjust for SA
+        /*this.question.correctMappings = this.question.correctMappings.filter(
+            mapping => !this.dragAndDropQuestionUtil.isSameDragItem(mapping.solution, solution)
         );
+        */
     }
 
     /**
@@ -562,7 +536,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @desc Delete the given mapping from the question
      * @param mappingToDelete {object} the mapping to delete
      */
-    deleteMapping(mappingToDelete: DragAndDropMapping): void {
+    deleteMapping(mappingToDelete: ShortAnswerMapping): void {
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
@@ -594,16 +568,6 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * @function changeToTextDragItem
-     * @desc Change Picture-Drag-Item to Text-Drag-Item with text: 'Text'
-     * @param dragItem {dragItem} the dragItem, which will be changed
-     */
-    changeToTextDragItem(dragItem: DragItem): void {
-        dragItem.pictureFilePath = null;
-        dragItem.text = 'Text';
-    }
-
-    /**
      * @function resetQuestionTitle
      * @desc Resets the question title
      */
@@ -631,40 +595,10 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         this.question.invalid = this.backupQuestion.invalid;
         this.question.randomizeOrder = this.backupQuestion.randomizeOrder;
         this.question.scoringType = this.backupQuestion.scoringType;
-        this.question.dropLocations = JSON.parse(JSON.stringify(this.backupQuestion.dropLocations));
-        this.question.dragItems = JSON.parse(JSON.stringify(this.backupQuestion.dragItems));
+        this.question.spots = JSON.parse(JSON.stringify(this.backupQuestion.spots));
+        this.question.solutions = JSON.parse(JSON.stringify(this.backupQuestion.solutions));
         this.question.correctMappings = JSON.parse(JSON.stringify(this.backupQuestion.correctMappings));
         this.resetQuestionText();
-    }
-
-    /**
-     * @function resetDropLocation
-     * @desc Resets the dropLocation
-     * @param dropLocation {dropLocation} the dropLocation, which will be reset
-     */
-    resetDropLocation(dropLocation: DropLocation): void {
-        // Find matching DropLocation in backupQuestion
-        const backupDropLocation = this.backupQuestion.dropLocations.find(currentDL => currentDL.id === dropLocation.id);
-        // Find current index of our DropLocation
-        const dropLocationIndex = this.question.dropLocations.indexOf(dropLocation);
-        // Remove current DropLocation at given index and insert the backup at the same position
-        this.question.dropLocations.splice(dropLocationIndex, 1);
-        this.question.dropLocations.splice(dropLocationIndex, 0, backupDropLocation);
-    }
-
-    /**
-     * @function resetDragItem
-     * @desc Resets the dragItem
-     * @param dragItem {dragItem} the dragItem, which will be reset
-     */
-    resetDragItem(dragItem: DragItem): void {
-        // Find matching DragItem in backupQuestion
-        const backupDragItem = this.backupQuestion.dragItems.find(currentDI => currentDI.id === dragItem.id);
-        // Find current index of our DragItem
-        const dragItemIndex = this.question.dragItems.indexOf(dragItem);
-        // Remove current DragItem at given index and insert the backup at the same position
-        this.question.dragItems.splice(dragItemIndex, 1);
-        this.question.dragItems.splice(dragItemIndex, 0, backupDragItem);
     }
 
     /**

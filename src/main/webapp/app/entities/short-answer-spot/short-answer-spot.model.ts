@@ -7,5 +7,10 @@ export class ShortAnswerSpot implements BaseEntity {
     public invalid = false; // default
     public question: ShortAnswerQuestion;
 
+    //additionally added after database changes with Stephan
+    public posX: number;
+    public posY: number;
+    public tempID: number;
+
     constructor() {}
 }

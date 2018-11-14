@@ -3,6 +3,8 @@ import { DragAndDropQuestion } from '../../entities/drag-and-drop-question';
 import { DragAndDropMapping } from '../../entities/drag-and-drop-mapping';
 import { DropLocation } from '../../entities/drop-location';
 import { DragItem } from '../../entities/drag-item';
+import { ShortAnswerSolution } from 'app/entities/short-answer-solution';
+import { ShortAnswerSpot } from 'app/entities/short-answer-spot';
 
 @Injectable({ providedIn: 'root' })
 export class DragAndDropQuestionUtil {
@@ -217,6 +219,20 @@ export class DragAndDropQuestionUtil {
         return a === b || (a && b && ((a.id && b.id && a.id === b.id) || (a.tempID && b.tempID && a.tempID === b.tempID)));
     }
 
+    //Added by FDe
+    //Test for SA
+
+    /**
+     * compare if the two objects are drop location
+     *
+     * @param a {object} a drop location
+     * @param b {object} another drop location
+     * @return {boolean}
+     */
+    isSameDropLocationSA(a: ShortAnswerSpot, b: ShortAnswerSpot): boolean {
+        return a === b || (a && b && ((a.id && b.id && a.id === b.id) || (a.tempID && b.tempID && a.tempID === b.tempID)));
+    }
+
     /**
      * compare if the two objects are the same drag item
      *
@@ -225,6 +241,20 @@ export class DragAndDropQuestionUtil {
      * @return {boolean}
      */
     isSameDragItem(a: DragItem, b: DragItem): boolean {
+        return a === b || (a && b && ((a.id && b.id && a.id === b.id) || (a.tempID && b.tempID && a.tempID === b.tempID)));
+    }
+
+    //Added by FDE
+    //TEst for SA
+
+    /**
+     * compare if the two objects are the same drag item
+     *
+     * @param a {object} a drag item
+     * @param b {object} another drag item
+     * @return {boolean}
+     */
+    isSameDragItemSA(a: ShortAnswerSolution, b: ShortAnswerSolution): boolean {
         return a === b || (a && b && ((a.id && b.id && a.id === b.id) || (a.tempID && b.tempID && a.tempID === b.tempID)));
     }
 }
