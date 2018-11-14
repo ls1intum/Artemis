@@ -8,6 +8,7 @@ import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.JsonAssessmentRepository;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -50,6 +52,7 @@ public class ModelingExerciseResource {
     private final AuthorizationCheckService authCheckService;
     private final ParticipationService participationService;
     private final ModelingSubmissionService modelingSubmissionService;
+    private final ModelingSubmissionRepository modelingSubmissionRepository;
     private final ResultRepository resultRepository;
     private final ObjectMapper objectMapper;
     private final JsonAssessmentRepository jsonAssessmentRepository;
@@ -63,6 +66,7 @@ public class ModelingExerciseResource {
                                     CourseService courseService,
                                     ParticipationService participationService,
                                     ModelingSubmissionService modelingSubmissionService,
+                                    ModelingSubmissionRepository modelingSubmissionRepository,
                                     ResultRepository resultRepository,
                                     MappingJackson2HttpMessageConverter springMvcJacksonConverter,
                                     JsonAssessmentRepository jsonAssessmentRepository,
@@ -76,6 +80,7 @@ public class ModelingExerciseResource {
         this.authCheckService = authCheckService;
         this.participationService = participationService;
         this.modelingSubmissionService = modelingSubmissionService;
+        this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.resultRepository = resultRepository;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.jsonAssessmentRepository = jsonAssessmentRepository;
@@ -247,8 +252,8 @@ public class ModelingExerciseResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional(readOnly = true)
     @Timed
-    public ResponseEntity<JsonNode> getDataForModelingEditor(@PathVariable Long participationId) {
-        Participation participation = participationService.findOne(participationId);
+    public ResponseEntity<ModelingSubmission> getDataForModelingEditor(@PathVariable Long participationId) {
+        Participation participation = participationService.findOneWithEagerSubmissions(participationId);
         if (participation == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "participationNotFound", "No participation was found for the given ID.")).body(null);
         }
@@ -270,39 +275,37 @@ public class ModelingExerciseResource {
         }
 
         // if no results, check if there are really no results or the relation to results was not updated yet
-        if (participation.getResults().size() <= 0) {
+        if (participation.getResults().size() == 0) {
             List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId());
             participation.setResults(new HashSet<>(results));
         }
 
-        ObjectNode data = objectMapper.createObjectNode();
-
         ModelingSubmission modelingSubmission = participation.findLatestModelingSubmission();
-        // NOTE: avoid infinite recursion by setting submissions to null
-        participation.setSubmissions(null);
-        data.set("participation", objectMapper.valueToTree(participation));
-        if (modelingSubmission != null) {
-            // set reference to participation if null
-            if (modelingSubmission.getParticipation() == null) {
-                modelingSubmission.setParticipation(participation);
-            }
-            modelingSubmission = modelingSubmissionService.getAndSetModel(modelingSubmission);
-            Result result = modelingSubmission.getResult();
-            if (modelingSubmission.isSubmitted() && result != null && result.isRated()) {
-                // find assessments if modelingSubmission is submitted and result is rated
-                String assessment = modelingAssessmentService.findLatestAssessment(modelingExercise.getId(), participation.getStudent().getId(), modelingSubmission.getId());
-                if (assessment != null && assessment != "") {
-                    try {
-                        data.set("assessments", objectMapper.readTree(assessment));
-                    } catch (IOException e) {
-                        log.error("Error while reading assessment JSON: {}", e.getMessage());
-                    }
-                }
-            }
-
-            data.set("modelingSubmission", objectMapper.valueToTree(modelingSubmission));
+        if (modelingSubmission == null) {
+            modelingSubmission = new ModelingSubmission();  //NOTE: this object is not yet persisted
+            modelingSubmission.setParticipation(participation);
         }
-        return ResponseEntity.ok(data);
+        else {
+            //only try to get and set the model if the modelingSubmission existed before
+            modelingSubmission = modelingSubmissionService.getAndSetModel(modelingSubmission);
+        }
+
+        //make sure only the latest submission and latest result is sent to the client
+        participation.setSubmissions(null);
+        participation.setResults(null);
+
+        if (modelingSubmission.getResult() instanceof HibernateProxy) {
+            modelingSubmission.setResult((Result) Hibernate.unproxy(modelingSubmission.getResult()));
+        }
+        Result result = modelingSubmission.getResult();
+        if (modelingSubmission.isSubmitted() && result != null && result.getCompletionDate() != null) {
+            // find assessments if modelingSubmission is submitted and assessment has been submitted
+            String assessments = modelingAssessmentService.findLatestAssessment(modelingExercise.getId(), participation.getStudent().getId(), modelingSubmission.getId());
+            if (assessments != null && assessments != "") {
+                result.setAssessments(assessments);
+            }
+        }
+        return ResponseEntity.ok(modelingSubmission);
     }
 
     /**
@@ -317,6 +320,7 @@ public class ModelingExerciseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional
     @Timed
+    //TODO: return a proper object here, e.g. modelingSubmission
     public ResponseEntity<JsonNode> getDataForAssessmentEditor(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
         Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findById(exerciseId);
         if (!modelingExercise.isPresent()) {
@@ -331,47 +335,49 @@ public class ModelingExerciseResource {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        Optional<Result> result = resultRepository.findDistinctBySubmissionId(submissionId);
-        // TODO DB logic update: generate new result for submission if not found to save assessor for lock
-        if (result.isPresent()) {
-            Result relevantResult = result.get();
-            ModelingSubmission modelingSubmission;
-            if (relevantResult.getSubmission() instanceof HibernateProxy) {
-                modelingSubmission = (ModelingSubmission) Hibernate.unproxy(relevantResult.getSubmission());
-            } else if (relevantResult.getSubmission() instanceof ModelingSubmission) {
-                modelingSubmission = (ModelingSubmission) relevantResult.getSubmission();
-            } else {
-                modelingSubmission = relevantResult.getParticipation().findLatestModelingSubmission();
-            }
-            if (relevantResult.getAssessor() == null) {
-                compassService.removeModelWaitingForAssessment(exerciseId, submissionId);
-                relevantResult.setAssessor(user);
-                Result savedResult = resultRepository.save(relevantResult);
-                log.debug("Assessment locked with result id: " + savedResult.getId() + " for assessor: " + savedResult.getAssessor().getFirstName());
-            }
-            if (relevantResult.getAssessor() instanceof HibernateProxy) {
-                relevantResult.setAssessor((User) Hibernate.unproxy(relevantResult.getAssessor()));
-            }
-            JsonObject model = modelingSubmissionService.getModel(modelingExercise.get().getId(), relevantResult.getParticipation().getStudent().getId(), submissionId);
-            if (model != null) {
-                modelingSubmission.setModel(model.toString());
-            }
-            ObjectNode data = objectMapper.createObjectNode();
-            data.set("modelingExercise", objectMapper.valueToTree(modelingExercise));
-            data.set("result", objectMapper.valueToTree(relevantResult));
-            data.set("modelingSubmission", objectMapper.valueToTree(modelingSubmission));
-            if (modelingSubmission.isSubmitted()) {
-                String assessment = modelingAssessmentService.findLatestAssessment(modelingExercise.get().getId(), relevantResult.getParticipation().getStudent().getId(), modelingSubmission.getId());
-                if (assessment != null && assessment != "") {
-                    try {
-                        data.set("assessments", objectMapper.readTree(assessment));
-                    } catch (IOException e) {
-                        log.error("Error while reading assessment JSON: {}", e.getMessage());
-                    }
+        Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionRepository.findById(submissionId);
+        if (!optionalModelingSubmission.isPresent()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        ModelingSubmission modelingSubmission = optionalModelingSubmission.get();
+        Result result = resultRepository.findDistinctBySubmissionId(submissionId).orElse(null);
+        if (result == null) {
+            result = new Result();
+            result.setSubmission(modelingSubmission);
+            modelingSubmission.setResult(result);
+            modelingSubmission.getParticipation().addResult(result);
+            result = resultRepository.save(result);
+            modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
+//            participationService.save(modelingSubmission.getParticipation());
+        }
+
+        if (result.getAssessor() == null) {
+            compassService.removeModelWaitingForAssessment(exerciseId, submissionId);
+            result.setAssessor(user);
+            Result savedResult = resultRepository.save(result);
+            log.debug("Assessment locked with result id: " + savedResult.getId() + " for assessor: " + savedResult.getAssessor().getFirstName());
+        }
+        if (result.getAssessor() instanceof HibernateProxy) {
+            result.setAssessor((User) Hibernate.unproxy(result.getAssessor()));
+        }
+        JsonObject model = modelingSubmissionService.getModel(modelingExercise.get().getId(), modelingSubmission.getParticipation().getStudent().getId(), submissionId);
+        if (model != null) {
+            modelingSubmission.setModel(model.toString());
+        }
+        ObjectNode data = objectMapper.createObjectNode();
+        data.set("modelingExercise", objectMapper.valueToTree(modelingExercise));
+        data.set("result", objectMapper.valueToTree(result));
+        data.set("modelingSubmission", objectMapper.valueToTree(modelingSubmission));
+        if (modelingSubmission.isSubmitted()) {
+            String assessment = modelingAssessmentService.findLatestAssessment(modelingExercise.get().getId(), result.getParticipation().getStudent().getId(), modelingSubmission.getId());
+            if (assessment != null && assessment != "") {
+                try {
+                    data.set("assessments", objectMapper.readTree(assessment));
+                } catch (IOException e) {
+                    log.error("Error while reading assessment JSON: {}", e.getMessage());
                 }
             }
-            return ResponseEntity.ok(data);
         }
-        return ResponseEntity.ok(null);
+        return ResponseEntity.ok(data);
     }
 }

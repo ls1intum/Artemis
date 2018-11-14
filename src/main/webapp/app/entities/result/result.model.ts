@@ -7,8 +7,7 @@ import { Moment } from 'moment';
 
 export const enum AssessmentType {
     AUTOMATIC = 'AUTOMATIC',
-    MANUAL = 'MANUAL',
-    SEMIAUTOMATIC = 'SEMIAUTOMATIC'
+    MANUAL = 'MANUAL'
 }
 
 export class Result implements BaseEntity {
@@ -25,7 +24,8 @@ export class Result implements BaseEntity {
     public feedbacks: Feedback[];
     public participation: Participation;
     public rated: boolean;
-    public optimal: boolean; // only used for modeling exercises so far
+
+    public assessments: string; // only used for results of modeling exercises so far
 
     constructor() {}
 }

@@ -442,7 +442,7 @@ public class QuizExercise extends Exercise implements Serializable {
     }
 
     @Override
-    public Result findLatestRelevantResult(Participation participation) {
+    public Result findLatestRatedResultWithCompletionDate(Participation participation) {
         if (shouldFilterForStudents()) {
             // results are never relevant before quiz has ended => return null
             return null;

@@ -97,6 +97,10 @@ public class Result implements Serializable {
     @JsonView(QuizView.After.class)
     private AssessmentType assessmentType;
 
+    @Transient
+    @JsonProperty
+    private String assessments;
+
     /**
      * This property stores the total number of results in the participation this result belongs to.
      * Not stored in the database, computed dynamically and used in showing statistics to the user
@@ -361,5 +365,13 @@ public class Result implements Serializable {
             ", rated='" + isRated() + "'" +
             ", hasFeedback='" + getHasFeedback() + "'" +
             "}";
+    }
+
+    public String getAssessments() {
+        return assessments;
+    }
+
+    public void setAssessments(String assessments) {
+        this.assessments = assessments;
     }
 }

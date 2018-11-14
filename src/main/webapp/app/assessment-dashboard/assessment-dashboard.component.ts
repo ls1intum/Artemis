@@ -14,6 +14,7 @@ import { ModelingAssessmentService } from '../entities/modeling-assessment/model
 import { HttpResponse } from '@angular/common/http';
 import { Principal } from '../core';
 import { Submission } from '../entities/submission';
+import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/modeling-submission';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
@@ -32,15 +33,19 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
     predicate: string;
     reverse: boolean;
     nextOptimalSubmissionIds: number[] = [];
-    results: Result[];
-    allResults: Result[];
-    optimalResults: Result[];
+
+    // all available submissions
+    submissions: ModelingSubmission[];
+    optimalSubmissions: ModelingSubmission[];
+    // non optimal submissions
+    otherSubmissions: ModelingSubmission[];
+
     eventSubscriber: Subscription;
-    assessedResults: number;
+    assessedSubmissions: number;
     allSubmissionsVisible: boolean;
     busy: boolean;
     accountId: number;
-    isAuthorized: boolean;
+    canOverrideAssessments: boolean;
 
     constructor(
         private route: ActivatedRoute,
@@ -50,6 +55,7 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
         private courseService: CourseService,
         private exerciseService: ExerciseService,
         private resultService: ResultService,
+        private modelingSubmissionService: ModelingSubmissionService,
         private modelingAssessmentService: ModelingAssessmentService,
         private modalService: NgbModal,
         private eventManager: JhiEventManager,
@@ -57,10 +63,10 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
     ) {
         this.reverse = false;
         this.predicate = 'id';
-        this.results = [];
-        this.allResults = [];
-        this.optimalResults = [];
-        this.isAuthorized = this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
+        this.submissions = [];
+        this.optimalSubmissions = [];
+        this.otherSubmissions = [];
+        this.canOverrideAssessments = this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
     }
 
     ngOnInit() {
@@ -73,37 +79,39 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
             });
             this.exerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<Exercise>) => {
                 this.exercise = res.body;
-                this.getResults(true);
+                this.getSubmissions(true);
             });
         });
         this.registerChangeInResults();
     }
 
     registerChangeInResults() {
-        this.eventSubscriber = this.eventManager.subscribe('resultListModification', () => this.getResults(true));
+        this.eventSubscriber = this.eventManager.subscribe('resultListModification', () => this.getSubmissions(true));
     }
 
-    getResults(forceReload: boolean) {
-        this.resultService
-            .getResultsForExercise(this.exercise.course.id, this.exercise.id, {
-                showAllResults: 'all',
-                ratedOnly: false,
-                withSubmissions: true,
-                withAssessors: true
-            })
-            .subscribe((res: HttpResponse<Result[]>) => {
-                const tempResults: Result[] = res.body;
-                tempResults.forEach(function(result: Result) {
-                    result.participation.results = [result];
+    getSubmissions(forceReload: boolean) {
+        this.modelingSubmissionService
+            .getModelingSubmissionsForExercise(this.exercise.course.id, this.exercise.id, { submittedOnly: true })
+            .subscribe((res: HttpResponse<ModelingSubmission[]>) => {
+                // only use submissions that have already been submitted (this makes sure that unsubmitted submissions are not shown
+                // the server should have filtered these submissions alreadyart
+                this.submissions = res.body.filter(submission => submission.submitted);
+                this.submissions.forEach(submission => {
+                    if (submission.result) {
+                        //reconnect some associations
+                        submission.result.submission = submission;
+                        submission.result.participation = submission.participation;
+                        submission.participation.results = [submission.result];
+                    }
                 });
-                this.allResults = tempResults;
-                this.filterResults(forceReload);
-                this.assessedResults = this.allResults.filter(result => result.rated).length;
+                this.filterSubmissions(forceReload);
+                this.assessedSubmissions = this.submissions.filter(
+                    submission => submission.result && submission.result.completionDate
+                ).length;
             });
     }
 
-    filterResults(forceReload: boolean) {
-        this.results = [];
+    filterSubmissions(forceReload: boolean) {
         if (this.nextOptimalSubmissionIds.length < 3 || forceReload) {
             this.modelingAssessmentService.getOptimalSubmissions(this.exercise.id).subscribe(optimal => {
                 this.nextOptimalSubmissionIds = optimal.body.map((submission: Submission) => submission.id);
@@ -115,18 +123,18 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
     }
 
     applyFilter() {
-        // A result is optimal if it is part of nextOptimalSubmissionIds and nobody is currently assessing it or you are currently assessing it
-        this.allResults.forEach(result => {
-            result.optimal =
-                result.submission &&
-                ((this.nextOptimalSubmissionIds.includes(result.submission.id) && !result.assessor) ||
-                    (result.assessor != null && !result.rated));
+        // A submission is optimal if it is part of nextOptimalSubmissionIds and (nobody is currently assessing it or you are currently assessing it)
+        this.submissions.forEach(submission => {
+            submission.optimal =
+                this.nextOptimalSubmissionIds.includes(submission.id) &&
+                (!(submission.result && submission.result.assessor) ||
+                    (submission.result && submission.result.assessor && submission.result.assessor.id === this.accountId));
         });
-        this.optimalResults = this.allResults.filter(result => {
-            return result.optimal;
+        this.optimalSubmissions = this.submissions.filter(submission => {
+            return submission.optimal;
         });
-        this.results = this.allResults.filter(result => {
-            return !result.optimal;
+        this.otherSubmissions = this.submissions.filter(submission => {
+            return !submission.optimal;
         });
     }
 
@@ -140,12 +148,12 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
     }
 
     refresh() {
-        this.getResults(true);
+        this.getSubmissions(true);
     }
 
     resetOptimality() {
         this.modelingAssessmentService.resetOptimality(this.exercise.id).subscribe(() => {
-            this.filterResults(true);
+            this.filterSubmissions(true);
         });
     }
 
