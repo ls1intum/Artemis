@@ -88,9 +88,8 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
 
     constructor(
         private artemisMarkdown: ArtemisMarkdown,
-        private dragAndDropQuestionUtil: DragAndDropQuestionUtil
-    ) //TODO: Check if saQuestionUtil is needed
-    {}
+        private dragAndDropQuestionUtil: DragAndDropQuestionUtil //TODO: Check if saQuestionUtil is needed
+    ) {}
 
     ngOnInit(): void {
         /** Create question backup for resets **/
@@ -462,73 +461,62 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * @function getMappingsForDropLocation
-     * @desc Get all mappings that involve the given drop location
-     * @param dropLocation {object} the drop location for which we want to get all mappings
-     * @return {Array} all mappings that belong to the given drop location
+     * @function getMappingsForSpot
+     * @desc Get all mappings that involve the given spot
+     * @param spot {object} the spot for which we want to get all mappings
+     * @return {Array} all mappings that belong to the given spot
      */
-    getMappingsForDropLocation(dropLocation: ShortAnswerSpot): ShortAnswerMapping[] {
+    getMappingsForSpot(spot: ShortAnswerSpot): ShortAnswerMapping[] {
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
-        return; /*this.question.correctMappings.filter(mapping =>
-            this.dragAndDropQuestionUtil.isSameDropLocation(mapping.dropLocation, dropLocation))*/
-        null;
+        return this.question.correctMappings.filter(mapping => this.dragAndDropQuestionUtil.isSameDropLocationSA(mapping.spot, spot));
     }
 
     /**
-     * @function getMappingsForDragItem
-     * @desc Get all mappings that involve the given drag item
-     * @param dragItem {object} the drag item for which we want to get all mappings
-     * @return {Array} all mappings that belong to the given drag item
+     * @function getMappingsForSolution
+     * @desc Get all mappings that involve the given solution
+     * @param solution {object} the solution for which we want to get all mappings
+     * @return {Array} all mappings that belong to the given solution
      */
-    getMappingsForDragItem(dragItem: ShortAnswerSolution): ShortAnswerMapping[] {
+    getMappingsForSolution(solution: ShortAnswerSolution): ShortAnswerMapping[] {
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
-
         return (
-            /*
-          this.question.correctMappings
-              .filter(mapping => this.dragAndDropQuestionUtil.isSameDragItem(mapping.dragItem, dragItem))
-              /** Moved the sorting from the template to the function call
-              .sort((m1, m2) => this.getMappingIndex(m1) - this.getMappingIndex(m2))
-              */
-            null
+            this.question.correctMappings
+                .filter(mapping => this.dragAndDropQuestionUtil.isSameDragItemSA(mapping.solution, solution))
+                /** Moved the sorting from the template to the function call*/
+                .sort((m1, m2) => this.getMappingIndex(m1) - this.getMappingIndex(m2))
         );
     }
 
     /**
-     * @function deleteMappingsForDropLocation
-     * @desc Delete all mappings for the given drop location
-     * @param dropLocation {object} the drop location for which we want to delete all mappings
+     * @function deleteMappingsForSpot
+     * @desc Delete all mappings for the given spot
+     * @param spot {object} the spot for which we want to delete all mappings
      */
-    deleteMappingsForSpot(dropLocation: ShortAnswerSpot): void {
+    deleteMappingsForSpot(spot: ShortAnswerSpot): void {
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
-        //TODO: adjust for SA
-        /*
         this.question.correctMappings = this.question.correctMappings.filter(
-            mapping => !this.dragAndDropQuestionUtil.isSameDropLocation(mapping.dropLocation, dropLocation)
+            mapping => !this.dragAndDropQuestionUtil.isSameDropLocationSA(mapping.spot, spot)
         );
-        */
     }
 
     /**
-     * @function deleteMappingsForDragItem
-     * @desc Delete all mappings for the given drag item
-     * @param dragItem {object} the drag item for which we want to delete all mappings
+     * @function deleteMappingsForSolution
+     * @desc Delete all mappings for the given solution
+     * @param solution {object} the solution for which we want to delete all mappings
      */
     deleteMappingsForSolution(solution: ShortAnswerSolution): void {
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
-        //TODO: adjust for SA
-        /*this.question.correctMappings = this.question.correctMappings.filter(
-            mapping => !this.dragAndDropQuestionUtil.isSameDragItem(mapping.solution, solution)
+        this.question.correctMappings = this.question.correctMappings.filter(
+            mapping => !this.dragAndDropQuestionUtil.isSameDragItemSA(mapping.solution, solution)
         );
-        */
     }
 
     /**
