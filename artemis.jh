@@ -347,8 +347,9 @@ relationship OneToOne {
     Submission{result} to ExerciseResult{submission},
     LtiUserId{user} to User,
     ExerciseResult{assessor} to User,
-    Feedback{complaint} to Complaint{feedback},
-    Complaint{complaintResponse} to ComplaintResponse{complaint}
+    ExerciseResult{complaint} to Complaint{result},
+    Complaint{complaintResponse} to ComplaintResponse{complaint},
+    ComplaintResponse{tutor} to User
 }
 
 relationship ManyToOne {
