@@ -6,6 +6,7 @@ import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { NgbDatepickerConfig } from '@ng-bootstrap/ng-bootstrap';
 import { NgxWebstorageModule } from 'ngx-webstorage';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { NgJhipsterModule } from 'ng-jhipster';
 
 import { AuthInterceptor } from './blocks/interceptor/auth.interceptor';
 import { AuthExpiredInterceptor } from './blocks/interceptor/auth-expired.interceptor';
@@ -54,7 +55,14 @@ import { ParticipationDataProvider } from './courses/exercises/participation-dat
          * @external Moment is a date library for parsing, validating, manipulating, and formatting dates.
          */
         MomentModule,
-        ArTEMiSSharedModule,
+        NgJhipsterModule.forRoot({
+            // set below to true to make alerts look like toast
+            alertAsToast: false,
+            alertTimeout: 8000,
+            i18nEnabled: true,
+            defaultI18nLang: 'en'
+        }),
+        ArTEMiSSharedModule.forRoot(),
         ArTEMiSCoreModule,
         ArTEMiSHomeModule,
         ArTEMiSAccountModule,
