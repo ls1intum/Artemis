@@ -57,11 +57,10 @@ public class RepositoryResource {
      * @param participationId Participation ID
      * @return
      * @throws IOException
-     * @throws GitAPIException
      */
     @GetMapping(value = "/repository/{participationId}/files", produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public ResponseEntity<Collection<String>> getFiles(@PathVariable Long participationId) throws IOException, GitAPIException, InterruptedException {
+    public ResponseEntity<Collection<String>> getFiles(@PathVariable Long participationId) throws IOException, InterruptedException {
         log.debug("REST request to files for Participation : {}", participationId);
         Participation participation = participationService.findOne(participationId);
 
@@ -91,11 +90,10 @@ public class RepositoryResource {
      * @param filename
      * @return
      * @throws IOException
-     * @throws GitAPIException
      */
     @GetMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     @Timed
-    public ResponseEntity<String> getFile(@PathVariable Long participationId, @RequestParam("file")  String filename) throws IOException, GitAPIException, InterruptedException {
+    public ResponseEntity<String> getFile(@PathVariable Long participationId, @RequestParam("file")  String filename) throws IOException, InterruptedException {
         log.debug("REST request to file {} for Participation : {}", filename, participationId);
         Participation participation = participationService.findOne(participationId);
 
@@ -130,11 +128,10 @@ public class RepositoryResource {
      * @param request
      * @return
      * @throws IOException
-     * @throws GitAPIException
      */
     @PostMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public ResponseEntity<Void> createFile(@PathVariable Long participationId, @RequestParam("file")  String filename, HttpServletRequest request) throws IOException, GitAPIException, InterruptedException {
+    public ResponseEntity<Void> createFile(@PathVariable Long participationId, @RequestParam("file")  String filename, HttpServletRequest request) throws IOException, InterruptedException {
         log.debug("REST request to create file {} for Participation : {}", filename, participationId);
         Participation participation = participationService.findOne(participationId);
 
@@ -175,11 +172,10 @@ public class RepositoryResource {
      * @param request
      * @return
      * @throws IOException
-     * @throws GitAPIException
      */
     @PutMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public ResponseEntity<Void> updateFile(@PathVariable Long participationId, @RequestParam("file")  String filename, HttpServletRequest request) throws IOException, GitAPIException, InterruptedException {
+    public ResponseEntity<Void> updateFile(@PathVariable Long participationId, @RequestParam("file")  String filename, HttpServletRequest request) throws IOException, InterruptedException {
         log.debug("REST request to update file {} for Participation : {}", filename, participationId);
         Participation participation = participationService.findOne(participationId);
 
@@ -213,11 +209,10 @@ public class RepositoryResource {
      * @param request
      * @return
      * @throws IOException
-     * @throws GitAPIException
      */
     @DeleteMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public ResponseEntity<Void> deleteFile(@PathVariable Long participationId, @RequestParam("file")  String filename, HttpServletRequest request) throws IOException, GitAPIException, InterruptedException {
+    public ResponseEntity<Void> deleteFile(@PathVariable Long participationId, @RequestParam("file")  String filename, HttpServletRequest request) throws IOException, InterruptedException {
         log.debug("REST request to delete file {} for Participation : {}", filename, participationId);
         Participation participation = participationService.findOne(participationId);
 
@@ -248,11 +243,10 @@ public class RepositoryResource {
      * @param request
      * @return
      * @throws IOException
-     * @throws GitAPIException
      */
     @GetMapping(value = "/repository/{participationId}/pull", produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public ResponseEntity<Void> pullChanges(@PathVariable Long participationId, HttpServletRequest request) throws IOException, GitAPIException, InterruptedException {
+    public ResponseEntity<Void> pullChanges(@PathVariable Long participationId, HttpServletRequest request) throws IOException, InterruptedException {
         log.debug("REST request to commit Repository for Participation : {}", participationId);
         Participation participation = participationService.findOne(participationId);
 
@@ -361,11 +355,9 @@ public class RepositoryResource {
             //a teaching assistant or an instructor of the course, or in case he is admin
             User user = userService.getUserWithGroupsAndAuthorities();
             Course course = participation.getExercise().getCourse();
-            if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-                !authCheckService.isInstructorInCourse(course, user) &&
-                !authCheckService.isAdmin()) {
-                return false;
-            }
+            return authCheckService.isTeachingAssistantInCourse(course, user) ||
+                authCheckService.isInstructorInCourse(course, user) ||
+                authCheckService.isAdmin();
         }
         return true;
     }

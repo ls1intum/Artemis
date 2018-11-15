@@ -368,9 +368,6 @@ public class GitService {
      */
     public boolean repositoryAlreadyExists(URL repoUrl) {
         Path localPath = new java.io.File(REPO_CLONE_PATH + folderNameForRepositoryUrl(repoUrl)).toPath();
-        if (Files.exists(localPath)) {
-            return true;
-        }
-        return false;
+        return Files.exists(localPath);
     }
 }

@@ -394,12 +394,11 @@ public class QuizExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the re-evaluated quizExercise,
      * or with status 400 (Bad Request) if the quizExercise is not valid,
      * or with status 500 (Internal Server Error) if the quizExercise couldn't be re-evaluated
-     * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/quiz-exercises-re-evaluate")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @Timed
-    public ResponseEntity<QuizExercise> reEvaluateQuizExercise(@RequestBody QuizExercise quizExercise) throws URISyntaxException {
+    public ResponseEntity<QuizExercise> reEvaluateQuizExercise(@RequestBody QuizExercise quizExercise) {
         log.debug("REST request to re-evaluate QuizExercise : {}", quizExercise);
         if (quizExercise.getId() == null) {
             return ResponseEntity.notFound().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "quizExerciseWithoutId", "The quiz exercise doesn't have an ID.")).build();

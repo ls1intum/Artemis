@@ -283,24 +283,16 @@ public class FileService {
             throw new RuntimeException("Files in directory " + startPath + " should be replaced but the directory does not exist.");
         }
 
-        String[] files = directory.list(new FilenameFilter() { // Get all files in directory
-            @Override
-            public boolean accept(File current, String name) {
-                return new File(current, name).isFile();
-            }
-        });
+        // Get all files in directory
+        String[] files = directory.list((current, name) -> new File(current, name).isFile());
 
         for (String file : files) {
             replaceVariablesInFile(directory.getAbsolutePath() + File.separator + file, targetStrings, replacementStrings);
         }
 
         // Recursive call
-        String[] subdirectories = directory.list(new FilenameFilter() { // Get all subdirectories
-            @Override
-            public boolean accept(File current, String name) {
-                return new File(current, name).isDirectory();
-            }
-        });
+        // Get all subdirectories
+        String[] subdirectories = directory.list((current, name) -> new File(current, name).isDirectory());
 
         for (String subdirectory : subdirectories) {
             replaceVariablesInFileRecursive(directory.getAbsolutePath() + File.separator + subdirectory, targetStrings, replacementStrings);

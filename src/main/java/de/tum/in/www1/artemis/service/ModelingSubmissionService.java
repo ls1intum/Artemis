@@ -25,7 +25,6 @@ public class ModelingSubmissionService {
     private final JsonModelRepository jsonModelRepository;
     private final JsonAssessmentRepository jsonAssessmentRepository;
     private final CompassService compassService;
-    private final ParticipationService participationService;
     private final ParticipationRepository participationRepository;
 
     public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository,
@@ -33,14 +32,12 @@ public class ModelingSubmissionService {
                                      JsonModelRepository jsonModelRepository,
                                      JsonAssessmentRepository jsonAssessmentRepository,
                                      CompassService compassService,
-                                     ParticipationService participationService,
                                      ParticipationRepository participationRepository) {
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.resultRepository = resultRepository;
         this.jsonModelRepository = jsonModelRepository;
         this.jsonAssessmentRepository = jsonAssessmentRepository;
         this.compassService = compassService;
-        this.participationService = participationService;
         this.participationRepository = participationRepository;
     }
 
@@ -74,6 +71,7 @@ public class ModelingSubmissionService {
         if (model != null && !model.isEmpty()) {
             jsonModelRepository.writeModel(modelingExercise.getId(), user.getId(), modelingSubmission.getId(), model);
         } else {
+            log.warn("Empty model was submitted in submission " + modelingSubmission.getId() + " for user " + participation.getStudent().getLogin());
             //TODO: we should reject this call, in case modelingSubmission.getModel() is null
         }
 
@@ -129,7 +127,7 @@ public class ModelingSubmissionService {
      * @return the modelingSubmission with the model if the model could be read
      */
     public ModelingSubmission getAndSetModel(ModelingSubmission modelingSubmission) {
-        if (modelingSubmission.getModel() == null || modelingSubmission.getModel() == "") {
+        if (modelingSubmission.getModel() == null || modelingSubmission.getModel().equals("")) {
             Participation participation = modelingSubmission.getParticipation();
             if (participation == null) {
                 log.error("The modeling submission {} does not have a participation.", modelingSubmission);
@@ -151,11 +149,10 @@ public class ModelingSubmissionService {
      * Check if automatic assessment is available and set the result if found.
      *
      * @param modelingSubmission    the modeling submission, which contains the model and the submission status
-     * @return the modelingSubmission with the result if applicable
      */
     public void checkAutomaticResult(ModelingSubmission modelingSubmission) {
         Participation participation = modelingSubmission.getParticipation();
-        Boolean automaticAssessmentAvailable = jsonAssessmentRepository.exists(participation.getExercise().getId(), participation.getStudent().getId(), modelingSubmission.getId(), false);
+        boolean automaticAssessmentAvailable = jsonAssessmentRepository.exists(participation.getExercise().getId(), participation.getStudent().getId(), modelingSubmission.getId(), false);
         // create empty result in case submission couldn't be assessed automatically
         if (modelingSubmission.getResult() == null && automaticAssessmentAvailable) {
             //use the automatic result if available

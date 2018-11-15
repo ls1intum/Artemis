@@ -101,10 +101,8 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
 
         if (authenticationResponse != null) {
             Map content = authenticationResponse.getBody();
-            User user = userRepository.findOneByLogin((String) content.get("name")).orElseGet(() -> {
-                return userService.createUser((String) content.get("name"), "",
-                    (String) content.get("displayName"), "", (String) content.get("emailAddress"), null, "en");
-            });
+            User user = userRepository.findOneByLogin((String) content.get("name")).orElseGet(() ->
+                userService.createUser((String) content.get("name"), "", (String) content.get("displayName"), "", (String) content.get("emailAddress"), null, "en"));
             user.setGroups(getGroupStrings((ArrayList) ((Map) content.get("groups")).get("items")));
             user.setAuthorities(buildAuthoritiesFromGroups(getGroupStrings((ArrayList) ((Map) content.get("groups")).get("items"))));
             userRepository.save(user);
@@ -160,14 +158,14 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
         List<String> teachingAssistantGroups = courses.stream().map(Course::getTeachingAssistantGroupName).collect(Collectors.toList());
 
         // Check if user is an instructor in any course
-        if (groups.stream().anyMatch(group -> instructorGroups.contains(group))) {
+        if (groups.stream().anyMatch(instructorGroups::contains)) {
             Authority instructorAuthority = new Authority();
             instructorAuthority.setName(AuthoritiesConstants.INSTRUCTOR);
             authorities.add(instructorAuthority);
         }
 
         // Check if user is a tutor in any course
-        if (groups.stream().anyMatch(group -> teachingAssistantGroups.contains(group))) {
+        if (groups.stream().anyMatch(teachingAssistantGroups::contains)) {
             Authority taAuthority = new Authority();
             taAuthority.setName(AuthoritiesConstants.TEACHING_ASSISTANT);
             authorities.add(taAuthority);

@@ -298,7 +298,7 @@ public class Participation implements Serializable {
             return null;
         }
         List<Result> sortedResults = results.stream().collect(Collectors.toList());
-        Collections.sort(sortedResults, (r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate()));
+        sortedResults.sort((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate()));
         return sortedResults.get(0);
     }
 
@@ -321,7 +321,7 @@ public class Participation implements Serializable {
         }
         List<Submission> sortedSubmissions = submissions.stream().collect(Collectors.toList());
         //TODO: what happens if the submissionDate is null?
-        Collections.sort(sortedSubmissions, (r1, r2) -> r2.getSubmissionDate().compareTo(r1.getSubmissionDate()));
+        sortedSubmissions.sort((r1, r2) -> r2.getSubmissionDate().compareTo(r1.getSubmissionDate()));
         return sortedSubmissions.get(0);
     }
 

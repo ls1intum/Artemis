@@ -629,13 +629,13 @@ public class QuizExercise extends Exercise implements Serializable {
 
         //add new PointCounter
         for(double i = 0.0 ; i <= quizScore; i++) {  // for variable ScoreSteps change: i++ into: i= i + scoreStep
-            quizPointStatistic.addScore(new Double(i));
+            quizPointStatistic.addScore(i);
         }
         //delete old PointCounter
         Set<PointCounter> pointCounterToDelete = new HashSet<>();
         for (PointCounter pointCounter : quizPointStatistic.getPointCounters()) {
             if (pointCounter.getId() != null) {                                                                                        // for variable ScoreSteps add:
-                if(pointCounter.getPoints() > quizScore || pointCounter.getPoints() < 0 || questions == null  || questions.isEmpty()/*|| (pointCounter.getPoints()% scoreStep) != 0*/) { ;
+                if(pointCounter.getPoints() > quizScore || pointCounter.getPoints() < 0 || questions == null  || questions.isEmpty()/*|| (pointCounter.getPoints()% scoreStep) != 0*/) {
                     pointCounterToDelete.add(pointCounter);
                     pointCounter.setQuizPointStatistic(null);
                 }

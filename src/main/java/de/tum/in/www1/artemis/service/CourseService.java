@@ -122,7 +122,7 @@ public class CourseService {
         if (authCheckService.isAdmin()) {
             // admin => fetch all courses with all exercises immediately
             List<Course> allCourses = findAllWithExercises();
-            Set<Course> userCourses = new HashSet<Course>();
+            Set<Course> userCourses = new HashSet<>();
             // filter old courses and unnecessary information anyway
             for (Course course : allCourses) {
                 if (course.getEndDate() != null && course.getEndDate().isBefore(ZonedDateTime.now())) {
@@ -142,7 +142,7 @@ public class CourseService {
         } else {
             // not admin => fetch visible courses first
             List<Course> allCourses = findAll();
-            Set<Course> userCourses = new HashSet<Course>();
+            Set<Course> userCourses = new HashSet<>();
             // filter old courses and courses the user should not be able to see
             for (Course course : allCourses) {
                 if (course.getEndDate() != null && course.getEndDate().isBefore(ZonedDateTime.now())) {
