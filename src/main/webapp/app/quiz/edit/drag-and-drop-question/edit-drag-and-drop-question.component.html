@@ -53,6 +53,30 @@
                     <option value="ALL_OR_NOTHING">{{'arTeMiSApp.quizExercise.scoringType.all_or_nothing' | translate}}</option>
                     <option value="PROPORTIONAL_WITH_PENALTY">{{'arTeMiSApp.quizExercise.scoringType.proportional_with_penalty' | translate}}</option>
                 </select>
+
+                <ng-template #info let-c="close" let-d="dismiss">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Scoring Types </h4>
+                        <button type="button" class="close" aria-label="Close" (click)="d()"><span aria-hidden="true">&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <table class="table">
+                            <tr>
+                                <th>All or Nothing</th>
+                                <td>All right choices must be chosen to achieve the full score. If one mistake is made the participant achieves no point at all.</td>
+                            </tr>
+                            <tr>
+                                <th>Proportional with Penalty</th>
+                                <td>Each right answer provides the participant with a fraction of the total score. If one mistake is made, the fraction is distracted from the achieved points.
+                                    For example the total score is 2 and there are 4 options. Each right answers brings the participant 0,5 points </td>
+                        </table>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline" (click)="c()">Close</button>
+                    </div>
+                </ng-template>
+                <div><button class="btn btn-info" (click)="open(info)"><i class="fa fa-question-circle-o"></i>&nbsp;Info</button></div>
+
             </div>
             <div class="form-group">
                 <div class="form-check custom-control custom-checkbox">

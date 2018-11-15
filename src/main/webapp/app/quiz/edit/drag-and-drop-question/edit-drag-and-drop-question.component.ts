@@ -23,6 +23,7 @@ import { AceEditorComponent } from 'ng2-ace-editor';
 import * as $ from 'jquery';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-edit-drag-and-drop-question',
@@ -95,6 +96,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
     constructor(
         private artemisMarkdown: ArtemisMarkdown,
         private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
+        private modalService: NgbModal,
         private fileUploaderService: FileUploaderService
     ) {}
 
@@ -166,6 +168,13 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
             },
             this
         );
+    }
+
+    /**
+     * This function opens the modal for the help dialog.
+     */
+    open(content: any) {
+        this.modalService.open(content, { size: 'lg' });
     }
 
     /**
@@ -565,8 +574,8 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
     onDragDrop(dropLocation: DropLocation, dragEvent: any): void {
         let dragItem = dragEvent.dragData;
         // Replace dragItem with original (because it may be a copy)
-        dragItem = this.question.dragItems.find(
-            originalDragItem => (dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.tempID === dragItem.tempID)
+        dragItem = this.question.dragItems.find(originalDragItem =>
+            dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.tempID === dragItem.tempID
         );
 
         if (!dragItem) {
