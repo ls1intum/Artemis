@@ -310,7 +310,7 @@ public class ResultResource {
                 continue;
             }
 
-            relevantResult.setSubmissionCount(new Long(participation.getResults().size()));
+            relevantResult.setSubmissionCount((long) participation.getResults().size());
             results.add(relevantResult);
         }
 

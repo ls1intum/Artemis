@@ -1,5 +1,5 @@
 import { User } from './../../core';
-import { BaseEntity } from './../../shared';
+import { BaseEntity } from 'app/shared';
 import { Feedback } from '../feedback';
 import { Submission } from '../submission';
 import { Participation } from '../participation';

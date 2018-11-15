@@ -641,7 +641,7 @@ public class BitbucketService implements VersionControlService {
     }
 
     @Override
-    public void createRepository(String entityName, String topLevelEntity, String parentEntity) throws Exception {
+    public void createRepository(String entityName, String topLevelEntity, String parentEntity) {
         createRepository(entityName, topLevelEntity);
     }
 

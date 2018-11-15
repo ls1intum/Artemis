@@ -248,12 +248,9 @@ public class CourseResource {
 
     private boolean userHasPermission(Course course) {
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-            !authCheckService.isInstructorInCourse(course, user) &&
-            !authCheckService.isAdmin()) {
-            return false;
-        }
-        return true;
+        return authCheckService.isTeachingAssistantInCourse(course, user) ||
+            authCheckService.isInstructorInCourse(course, user) ||
+            authCheckService.isAdmin();
     }
 
     /**

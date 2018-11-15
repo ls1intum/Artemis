@@ -128,7 +128,7 @@ public class ParticipationResource {
     @PutMapping(value = "/courses/{courseId}/exercises/{exerciseId}/resume-participation")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
-    public ResponseEntity<Participation> resumeParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) throws URISyntaxException {
+    public ResponseEntity<Participation> resumeParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to resume Exercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
         Participation participation = participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName());
@@ -229,7 +229,7 @@ public class ParticipationResource {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
         Result result = participation.getExercise().findLatestRatedResultWithCompletionDate(participation);
-        Set<Result> results = new HashSet<Result>();
+        Set<Result> results = new HashSet<>();
         if (result != null) {
             results.add(result);
         }
