@@ -130,12 +130,9 @@ public class CourseService {
                     continue;
                 }
                 userCourses.add(course);
-                //fetch all exercises
+                //filter sensitive information
                 for (Exercise exercise : course.getExercises()) {
-                    if (exercise instanceof QuizExercise) {
-                        QuizExercise quizExercise = (QuizExercise) exercise;
-                        quizExercise.filterSensitiveInformation();
-                    }
+                    exercise.filterSensitiveInformation();
                 }
             }
             return new ArrayList<>(userCourses);

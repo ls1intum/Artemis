@@ -273,6 +273,13 @@ public abstract class Exercise implements Serializable {
     }
 
     /**
+     * can be invoked to make sure that sensitive information is not sent to the client
+     */
+    public void filterSensitiveInformation() {
+        setGradingInstructions(null);
+    }
+
+    /**
      * find a relevant participation for this exercise
      * (relevancy depends on InitializationState)
      *
@@ -311,7 +318,7 @@ public abstract class Exercise implements Serializable {
         Result latestResult = null;
         for (Result result : participation.getResults()) {
             //NOTE: for the dashboard we only use rated results with completion date
-            //NOTE: isRatedNull is a compatibility mechanism that we should deactivate soon
+            //TODO: isRatedNull is a compatibility mechanism that we should deactivate soon
             if (result.getCompletionDate() != null && (result.isRatedNull() || result.isRated())) {
                 //take the first found result that fulfills the above requirements
                 if (latestResult == null) {

@@ -77,7 +77,7 @@ public class Result implements Serializable {
     @JsonIgnoreProperties({"result", "participation"})
     private Submission submission;
 
-    @OneToMany(mappedBy = "result", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderColumn
     @JsonIgnoreProperties("result")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)

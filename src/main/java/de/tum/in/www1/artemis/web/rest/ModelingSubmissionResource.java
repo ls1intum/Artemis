@@ -104,13 +104,24 @@ public class ModelingSubmissionResource {
 
         // update and save submission
         modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, participation);
+        hideDetails(modelingSubmission);
 
+        return ResponseEntity.ok(modelingSubmission);
+    }
+
+    private void hideDetails(@RequestBody ModelingSubmission modelingSubmission) {
         //do not send old submissions or old results to the client
         if (modelingSubmission.getParticipation() != null) {
             modelingSubmission.getParticipation().setSubmissions(null);
             modelingSubmission.getParticipation().setResults(null);
+
+            if (modelingSubmission.getParticipation().getExercise() != null && modelingSubmission.getParticipation().getExercise() instanceof ModelingExercise) {
+                //make sure the solution is not sent to the client
+                ModelingExercise modelingExerciseForClient = (ModelingExercise) modelingSubmission.getParticipation().getExercise();
+                modelingExerciseForClient.setSampleSolutionExplanation(null);
+                modelingExerciseForClient.setSampleSolutionModel(null);
+            }
         }
-        return ResponseEntity.ok(modelingSubmission);
     }
 
     @Nullable
@@ -161,12 +172,8 @@ public class ModelingSubmissionResource {
 
         // update and save submission
         modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, participation);
+        hideDetails(modelingSubmission);
 
-        //do not send old submissions or old results to the client
-        if (modelingSubmission.getParticipation() != null) {
-            modelingSubmission.getParticipation().setSubmissions(null);
-            modelingSubmission.getParticipation().setResults(null);
-        }
         return ResponseEntity.ok(modelingSubmission);
     }
 
@@ -268,6 +275,7 @@ public class ModelingSubmissionResource {
             if (model != null) {
                 modelingSubmission.get().setModel(model.toString());
             }
+            hideDetails(modelingSubmission.get());
         }
         return ResponseUtil.wrapOrNotFound(modelingSubmission);
     }
