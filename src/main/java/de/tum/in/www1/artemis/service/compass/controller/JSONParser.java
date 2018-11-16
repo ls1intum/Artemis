@@ -37,7 +37,7 @@ public class JSONParser {
         JsonObject relationshipsById = relationships.getAsJsonObject(JSONMapping.byId);
 
         Map<String, UMLClass> umlClassMap = new HashMap<>();
-        List<UMLRelation> umlRelationList = new ArrayList<>();
+        List<UMLAssociation> umlAssociationList = new ArrayList<>();
 
         // <editor-fold desc="iterate over every class">
         for (JsonElement elementId : allElementIds) {
@@ -130,14 +130,14 @@ public class JSONParser {
                 relationshipTarget.get(JSONMapping.relationshipMultiplicity) : JsonNull.INSTANCE;
 
             if (source != null && target != null) {
-                UMLRelation newRelation = new UMLRelation(source, target,
+                UMLAssociation newRelation = new UMLAssociation(source, target,
                     relationship.get(JSONMapping.relationshipType).getAsString(),
                     relationship.get(JSONMapping.elementID).getAsString(),
                     relationshipSourceRole.isJsonNull() ? "" : relationshipSourceRole.getAsString(),
                     relationshipTargetRole.isJsonNull() ? "" : relationshipTargetRole.getAsString(),
                     relationshipSourceMultiplicity.isJsonNull() ? "" : relationshipSourceMultiplicity.getAsString(),
                     relationshipTargetMultiplicity.isJsonNull() ? "" : relationshipTargetMultiplicity.getAsString());
-                umlRelationList.add(newRelation);
+                umlAssociationList.add(newRelation);
             } else {
                 throw new IOException("Relationship source or target not part of model!");
             }
@@ -145,7 +145,7 @@ public class JSONParser {
 
         // </editor-fold>
 
-        return new UMLModel(new ArrayList<>(umlClassMap.values()), umlRelationList, modelId);
+        return new UMLModel(new ArrayList<>(umlClassMap.values()), umlAssociationList, modelId);
     }
 
 
@@ -181,7 +181,7 @@ public class JSONParser {
 
             switch (elementType) {
                 case JSONMapping.assessmentElementTypeClass:
-                    for (UMLClass umlClass : model.getConnectableList()) {
+                    for (UMLClass umlClass : model.getClassList()) {
                         if (umlClass.getJSONElementID().equals(jsonElementID)) {
                             found = true;
                             break;
@@ -189,7 +189,7 @@ public class JSONParser {
                     }
                     break;
                 case JSONMapping.assessmentElementTypeAttribute:
-                    for (UMLClass umlClass : model.getConnectableList()) {
+                    for (UMLClass umlClass : model.getClassList()) {
                         for (UMLAttribute umlAttribute : umlClass.getAttributeList()) {
                             if (umlAttribute.getJSONElementID().equals(jsonElementID)) {
                                 found = true;
@@ -199,7 +199,7 @@ public class JSONParser {
                     }
                     break;
                 case JSONMapping.assessmentElementTypeMethod:
-                    for (UMLClass umlClass : model.getConnectableList()) {
+                    for (UMLClass umlClass : model.getClassList()) {
                         for (UMLMethod umlMethod : umlClass.getMethodList()) {
                             if (umlMethod.getJSONElementID().equals(jsonElementID)) {
                                 found = true;
@@ -209,8 +209,8 @@ public class JSONParser {
                     }
                     break;
                 case JSONMapping.assessmentElementTypeRelationship:
-                    for (UMLRelation umlRelation : model.getRelationList()) {
-                        if (umlRelation.getJSONElementID().equals(jsonElementID)) {
+                    for (UMLAssociation umlAssociation : model.getAssociationList()) {
+                        if (umlAssociation.getJSONElementID().equals(jsonElementID)) {
                             found = true;
                             break;
                         }
@@ -276,7 +276,7 @@ public class JSONParser {
                 case "UMLAttribute":
                     type = JSONMapping.assessmentElementTypeAttribute;
                     break;
-                case "UMLRelation":
+                case "UMLAssociation":
                     type = JSONMapping.assessmentElementTypeRelationship;
                     break;
                 case "UMLMethod":

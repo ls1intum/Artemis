@@ -8,16 +8,16 @@ import java.util.List;
 
 public class UMLModel {
 
-    private List<UMLClass> connectableList;
-    private List<UMLRelation> relationList;
+    private List<UMLClass> classList;
+    private List<UMLAssociation> associationList;
 
     private long modelID;
 
     private CompassResult lastAssessmentCompassResult = null;
 
-    public UMLModel(List<UMLClass> connectableList, List<UMLRelation> relationList, long modelID) {
-        this.connectableList = connectableList;
-        this.relationList = relationList;
+    public UMLModel(List<UMLClass> classList, List<UMLAssociation> associationList, long modelID) {
+        this.classList = classList;
+        this.associationList = associationList;
         this.modelID = modelID;
     }
 
@@ -37,7 +37,7 @@ public class UMLModel {
     private double similarityScore(UMLModel reference) {
         double similarity = 0;
 
-        int elementCount = connectableList.size() + relationList.size();
+        int elementCount = classList.size() + associationList.size();
 
         if (elementCount == 0) {
             return 0;
@@ -47,7 +47,7 @@ public class UMLModel {
 
         int missingCount = 0;
 
-        for (UMLClass UMLConnectableElement : connectableList) {
+        for (UMLClass UMLConnectableElement : classList) {
             double similarityValue = reference.similarConnectableElementScore(UMLConnectableElement);
             similarity += weight * similarityValue;
 
@@ -57,8 +57,8 @@ public class UMLModel {
             }
         }
 
-        for (UMLRelation umlRelation :relationList) {
-            double similarityValue = reference.similarUMLRelationScore(umlRelation);
+        for (UMLAssociation umlAssociation : associationList) {
+            double similarityValue = reference.similarUMLRelationScore(umlAssociation);
             similarity += weight * similarityValue;
 
             // = no match found
@@ -68,8 +68,8 @@ public class UMLModel {
         }
 
         // Punish missing classes (on either side)
-        int referenceMissingCount = Math.max(reference.connectableList.size() - connectableList.size(), 0);
-        referenceMissingCount += Math.max(reference.relationList.size() - relationList.size(), 0);
+        int referenceMissingCount = Math.max(reference.classList.size() - classList.size(), 0);
+        referenceMissingCount += Math.max(reference.associationList.size() - associationList.size(), 0);
 
         missingCount += referenceMissingCount;
 
@@ -89,12 +89,12 @@ public class UMLModel {
     }
 
     private double similarConnectableElementScore(UMLClass referenceConnectable) {
-        return connectableList.stream().mapToDouble(connectableElement ->
+        return classList.stream().mapToDouble(connectableElement ->
             connectableElement.overallSimilarity(referenceConnectable)).max().orElse(0);
     }
 
-    private double similarUMLRelationScore(UMLRelation referenceRelation) {
-        return relationList.stream().mapToDouble(umlRelation ->
+    private double similarUMLRelationScore(UMLAssociation referenceRelation) {
+        return associationList.stream().mapToDouble(umlRelation ->
             umlRelation.similarity(referenceRelation)).max().orElse(0);
     }
 
@@ -125,7 +125,7 @@ public class UMLModel {
             return true;
         }
 
-        for (UMLClass umlClass : connectableList) {
+        for (UMLClass umlClass : classList) {
             if (!lastAssessmentCompassResult.getJsonIdPointsMapping().containsKey(umlClass.jsonElementID)) {
                 return false;
             }
@@ -143,7 +143,7 @@ public class UMLModel {
             }
         }
 
-        for (UMLRelation relation : relationList) {
+        for (UMLAssociation relation : associationList) {
             if (!lastAssessmentCompassResult.getJsonIdPointsMapping().containsKey(relation.jsonElementID)) {
                 return false;
             }
@@ -154,7 +154,7 @@ public class UMLModel {
 
 
     private int getModelElementCount() {
-        return connectableList.stream().mapToInt(UMLClass::getElementCount).sum() + relationList.size();
+        return classList.stream().mapToInt(UMLClass::getElementCount).sum() + associationList.size();
     }
 
     @SuppressWarnings("unused")
@@ -182,7 +182,7 @@ public class UMLModel {
     public UMLElement getElementByJSONID (String jsonID) {
         UMLElement element;
 
-        for (UMLClass UMLConnectableElement : connectableList) {
+        for (UMLClass UMLConnectableElement : classList) {
             element = UMLConnectableElement.getElementByJSONID(jsonID);
 
             if (element != null) {
@@ -190,9 +190,9 @@ public class UMLModel {
             }
         }
 
-        for (UMLRelation umlRelation : relationList) {
-            if (umlRelation.getJSONElementID().equals(jsonID)) {
-                return umlRelation;
+        for (UMLAssociation umlAssociation : associationList) {
+            if (umlAssociation.getJSONElementID().equals(jsonID)) {
+                return umlAssociation;
             }
         }
 
@@ -209,12 +209,12 @@ public class UMLModel {
         return lastAssessmentCompassResult;
     }
 
-    public List<UMLClass> getConnectableList() {
-        return connectableList;
+    public List<UMLClass> getClassList() {
+        return classList;
     }
 
-    public List<UMLRelation> getRelationList() {
-        return relationList;
+    public List<UMLAssociation> getAssociationList() {
+        return associationList;
     }
 
     // </editor-fold>

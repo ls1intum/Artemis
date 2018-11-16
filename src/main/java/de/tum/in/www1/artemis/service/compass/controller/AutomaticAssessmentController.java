@@ -88,7 +88,7 @@ public class AutomaticAssessmentController {
         double totalCount = 0;
         double missingCount = 0;
 
-        for (UMLClass element : model.getConnectableList()) {
+        for (UMLClass element : model.getClassList()) {
             CompassResult compassResult = assessConnectable(element, assessmentIndex);
             compassResultList.add(compassResult);
 
@@ -99,7 +99,7 @@ public class AutomaticAssessmentController {
 
         Map<UMLElement, Score> scoreHashMap = new HashMap<>();
 
-        for (UMLRelation relation : model.getRelationList()) {
+        for (UMLAssociation relation : model.getAssociationList()) {
             Assessment assessment = assessmentIndex.getAssessment(relation);
             totalCount++;
 

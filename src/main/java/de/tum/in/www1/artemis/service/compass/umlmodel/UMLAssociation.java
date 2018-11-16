@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.service.compass.umlmodel;
 
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
-public class UMLRelation extends UMLElement {
+public class UMLAssociation extends UMLElement {
 
     // PLAIN is legacy
     // TODO move activity diagram types into its own class
@@ -75,8 +75,8 @@ public class UMLRelation extends UMLElement {
 
     private UMLRelationType type;
 
-    public UMLRelation(UMLClass source, UMLClass target, String type, String jsonElementID, String sourceRole, String targetRole,
-                       String sourceMultiplicity, String targetMultiplicity) {
+    public UMLAssociation(UMLClass source, UMLClass target, String type, String jsonElementID, String sourceRole, String targetRole,
+                          String sourceMultiplicity, String targetMultiplicity) {
         this.source = source;
         this.target = target;
         this.sourceMultiplicity = sourceMultiplicity;
@@ -97,11 +97,11 @@ public class UMLRelation extends UMLElement {
      */
     @Override
     public double similarity(UMLElement element) {
-        if (element.getClass() != UMLRelation.class) {
+        if (element.getClass() != UMLAssociation.class) {
             return 0;
         }
 
-        UMLRelation reference = (UMLRelation) element;
+        UMLAssociation reference = (UMLAssociation) element;
 
         double similarity = 0;
         double weight = 1;

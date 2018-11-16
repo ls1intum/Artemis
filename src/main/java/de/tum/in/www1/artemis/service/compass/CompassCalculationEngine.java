@@ -241,9 +241,9 @@ public class CompassCalculationEngine implements CalculationEngine {
             model.addProperty("confidence", modelEntry.getValue().getLastAssessmentCoverage());
             int modelConflicts = 0;
             List<UMLElement> elements = new ArrayList<>();
-            elements.addAll(modelEntry.getValue().getConnectableList());
-            elements.addAll(modelEntry.getValue().getRelationList());
-            for (UMLClass umlClass: modelEntry.getValue().getConnectableList()) {
+            elements.addAll(modelEntry.getValue().getClassList());
+            elements.addAll(modelEntry.getValue().getAssociationList());
+            for (UMLClass umlClass: modelEntry.getValue().getClassList()) {
                 elements.addAll(umlClass.getAttributeList());
                 elements.addAll(umlClass.getMethodList());
             }
@@ -288,8 +288,8 @@ public class CompassCalculationEngine implements CalculationEngine {
 
         int totalModelElements = 0;
         for (UMLModel umlModel: this.getUmlModelCollection()) {
-            totalModelElements += umlModel.getConnectableList().size() + umlModel.getRelationList().size();
-            for (UMLClass umlClass: umlModel.getConnectableList()) {
+            totalModelElements += umlModel.getClassList().size() + umlModel.getAssociationList().size();
+            for (UMLClass umlClass: umlModel.getClassList()) {
                 totalModelElements += umlClass.getMethodList().size() + umlClass.getAttributeList().size();
             }
         }
