@@ -6,6 +6,7 @@ import { SERVER_API_URL } from '../../app.constants';
 import { ModelingExercise } from './modeling-exercise.model';
 import { createRequestOption } from '../../shared';
 import { EntityArrayResponseType, ExerciseService } from 'app/entities/exercise';
+import { ModelingStatistic } from 'app/entities/modeling-statistic';
 
 export type EntityResponseType = HttpResponse<ModelingExercise>;
 export type EntityArrayResponseType = HttpResponse<ModelingExercise[]>;
@@ -38,8 +39,8 @@ export class ModelingExerciseService {
             .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
-    getStatistics(id: number): Observable<HttpResponse<string>> {
-        return this.http.get<string>(`${this.resourceUrl}/${id}/statistics`, { observe: 'response' });
+    getStatistics(id: number): Observable<HttpResponse<ModelingStatistic>> {
+        return this.http.get<ModelingStatistic>(`${this.resourceUrl}/${id}/statistics`, { observe: 'response' });
     }
 
     query(req?: any): Observable<EntityArrayResponseType> {

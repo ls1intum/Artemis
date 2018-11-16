@@ -4,6 +4,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { ModelingExerciseService } from 'app/entities/modeling-exercise';
+import { ModelingStatistic } from 'app/entities/modeling-statistic';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
@@ -11,8 +12,10 @@ import { ModelingExerciseService } from 'app/entities/modeling-exercise';
     providers: [JhiAlertService, ModelingExerciseService]
 })
 export class ModelingStatisticsComponent implements OnInit, OnDestroy {
-    statistics: String;
+    statistics: ModelingStatistic;
     paramSub: Subscription;
+    modelIds: string[] = [];
+    elementIds: string[] = [];
 
     constructor(
         private route: ActivatedRoute,
@@ -23,8 +26,14 @@ export class ModelingStatisticsComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.paramSub = this.route.params.subscribe(params => {
-            this.modelingExerciseService.getStatistics(params['exerciseId']).subscribe((res: HttpResponse<String>) => {
-                this.statistics = JSON.stringify(res.body);
+            this.modelingExerciseService.getStatistics(params['exerciseId']).subscribe((res: HttpResponse<ModelingStatistic>) => {
+                this.statistics = res.body;
+                for (const key of Object.keys(this.statistics.models)) {
+                    this.modelIds.push(key);
+                }
+                for (const key of Object.keys(this.statistics.uniqueElements)) {
+                    this.elementIds.push(key);
+                }
             });
         });
     }
