@@ -147,6 +147,11 @@ public class UMLClass extends UMLElement {
         return "Class " + name;
     }
 
+    @Override
+    public String getValue() {
+        return name;
+    }
+
     UMLElement getElementByJSONID(String jsonID) {
         if (this.jsonElementID.equals(jsonID)) {
             return this;

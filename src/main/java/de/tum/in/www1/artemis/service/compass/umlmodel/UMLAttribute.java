@@ -41,4 +41,9 @@ public class UMLAttribute extends UMLElement {
     public String getName () {
         return "Attribute " + name;
     }
+
+    @Override
+    public String getValue() {
+        return name;
+    }
 }

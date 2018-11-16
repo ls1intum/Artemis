@@ -7,8 +7,61 @@ public class UMLRelation extends UMLElement {
     // PLAIN is legacy
     // TODO move activity diagram types into its own class
     public enum UMLRelationType {
-        PLAIN, DEPENDENCY, AGGREGATION, INHERITANCE, REALIZATION, COMPOSITION, ASSOCIATION_UNIDIRECTIONAL, ASSOCIATION_BIDIRECTIONAL,
-        ACTIVITY_CONTROL_FLOW
+        PLAIN,
+        DEPENDENCY,
+        AGGREGATION,
+        INHERITANCE,
+        REALIZATION,
+        COMPOSITION,
+        ASSOCIATION_UNIDIRECTIONAL,
+        ASSOCIATION_BIDIRECTIONAL,
+        ACTIVITY_CONTROL_FLOW;
+
+        public String toReadableString() {
+            switch (this) {
+                case DEPENDENCY:
+                    return "Dependency";
+                case AGGREGATION:
+                    return "Aggregation";
+                case INHERITANCE:
+                    return "Inheritance";
+                case REALIZATION:
+                    return "Realization";
+                case COMPOSITION:
+                    return "Composition";
+                case ASSOCIATION_UNIDIRECTIONAL:
+                    return "Unidirectional";
+                case ASSOCIATION_BIDIRECTIONAL:
+                    return "Bidirectional";
+                case ACTIVITY_CONTROL_FLOW:
+                    return "Control Flow";
+                default:
+                    return "Other";
+            }
+        }
+
+        public String toSymbol() {
+            switch (this) {
+                case DEPENDENCY:
+                    return " ╌╌> ";
+                case AGGREGATION:
+                    return " --◇ ";
+                case INHERITANCE:
+                    return " --▷ ";
+                case REALIZATION:
+                    return " ╌╌▷ ";
+                case COMPOSITION:
+                    return " --◆ ";
+                case ASSOCIATION_UNIDIRECTIONAL:
+                    return " --> ";
+                case ASSOCIATION_BIDIRECTIONAL:
+                    return " <-> ";
+                case ACTIVITY_CONTROL_FLOW:
+                    return " --> ";
+                default:
+                    return " --- ";
+            }
+        }
     }
 
     private UMLClass source;
@@ -113,7 +166,12 @@ public class UMLRelation extends UMLElement {
 
     @Override
     public String getName() {
-        return type.toString() + " Relation from " + elementID;
+        return "Association " + getSource().getValue() + type.toSymbol() + getTarget().getValue() + "( " + type.toReadableString() + ")";
+    }
+
+    @Override
+    public String getValue() {
+        return type.toReadableString();
     }
 
     public UMLClass getSource() {

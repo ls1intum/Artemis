@@ -283,7 +283,7 @@ public class CompassCalculationEngine implements CalculationEngine {
     // Used for internal analysis of metrics
     void printStatistic() {
         // Variability of solutions
-        System.out.println("Number of unique elements (without context) == similarity sets: " +
+        log.debug("Number of unique elements (without context) == similarity sets: " +
             this.modelIndex.getNumberOfUniqueElements() + "\n");
 
         int totalModelElements = 0;
@@ -294,16 +294,16 @@ public class CompassCalculationEngine implements CalculationEngine {
             }
         }
 
-        System.out.println("Number of total model elements: " + totalModelElements + "\n");
+        log.debug("Number of total model elements: " + totalModelElements + "\n");
         double optimalEqu = (totalModelElements * 1.0) / this.getModelMap().size();
-        System.out.println("Number of optimal similarity sets: " + optimalEqu + "\n");
-        System.out.println("Variance: " +
+        log.debug("Number of optimal similarity sets: " + optimalEqu + "\n");
+        log.debug("Variance: " +
                 (this.modelIndex.getNumberOfUniqueElements() - optimalEqu) / (totalModelElements - optimalEqu) + "\n");
 
         // Total coverage and confidence
         this.automaticAssessmentController.assessModelsAutomatically(modelIndex, assessmentIndex);
-        System.out.println("Total confidence: " + this.automaticAssessmentController.getTotalConfidence() + "\n");
-        System.out.println("Total coverage: " + this.automaticAssessmentController.getTotalCoverage() + "\n");
+        log.debug("Total confidence: " + this.automaticAssessmentController.getTotalConfidence() + "\n");
+        log.debug("Total coverage: " + this.automaticAssessmentController.getTotalCoverage() + "\n");
 
         // Conflicts
         int conflicts = 0;
@@ -321,7 +321,7 @@ public class CompassCalculationEngine implements CalculationEngine {
                 }
             }
         }
-        System.out.println("Total conflicts (with context): " + conflicts + "\n");
-        System.out.println("Relative conflicts (with context): " + (conflicts / uniqueElementsContext) + "\n");
+        log.debug("Total conflicts (with context): " + conflicts + "\n");
+        log.debug("Relative conflicts (with context): " + (conflicts / uniqueElementsContext) + "\n");
     }
 }

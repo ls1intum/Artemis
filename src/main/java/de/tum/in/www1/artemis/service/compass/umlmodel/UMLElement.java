@@ -20,6 +20,8 @@ public abstract class UMLElement {
 
     public abstract String getName();
 
+    public abstract String getValue();
+
     public int getElementID() {
         return elementID;
     }
