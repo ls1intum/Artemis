@@ -344,15 +344,17 @@ public class QuizExercise extends Exercise implements Serializable {
     }
 
     /**
-     * set all sensitive information to null, so no info gets leaked to students through json
+     * set all sensitive information to null, so no info with respect to the solution gets leaked to students through json
      */
+    @Override
     public void filterSensitiveInformation() {
         setQuizPointStatistic(null);
         setQuestions(new ArrayList<>());
+        super.filterSensitiveInformation();
     }
 
     /**
-     * filter out information about correct answers
+     * filter out information about correct answers, so no info with respect to the solution gets leaked to students through json
      */
     public void filterForStudentsDuringQuiz() {
         // filter out statistics
@@ -442,7 +444,7 @@ public class QuizExercise extends Exercise implements Serializable {
     }
 
     @Override
-    public Result findLatestRelevantResult(Participation participation) {
+    public Result findLatestRatedResultWithCompletionDate(Participation participation) {
         if (shouldFilterForStudents()) {
             // results are never relevant before quiz has ended => return null
             return null;
@@ -629,13 +631,13 @@ public class QuizExercise extends Exercise implements Serializable {
 
         //add new PointCounter
         for(double i = 0.0 ; i <= quizScore; i++) {  // for variable ScoreSteps change: i++ into: i= i + scoreStep
-            quizPointStatistic.addScore(new Double(i));
+            quizPointStatistic.addScore(i);
         }
         //delete old PointCounter
         Set<PointCounter> pointCounterToDelete = new HashSet<>();
         for (PointCounter pointCounter : quizPointStatistic.getPointCounters()) {
             if (pointCounter.getId() != null) {                                                                                        // for variable ScoreSteps add:
-                if(pointCounter.getPoints() > quizScore || pointCounter.getPoints() < 0 || questions == null  || questions.isEmpty()/*|| (pointCounter.getPoints()% scoreStep) != 0*/) { ;
+                if(pointCounter.getPoints() > quizScore || pointCounter.getPoints() < 0 || questions == null  || questions.isEmpty()/*|| (pointCounter.getPoints()% scoreStep) != 0*/) {
                     pointCounterToDelete.add(pointCounter);
                     pointCounter.setQuizPointStatistic(null);
                 }

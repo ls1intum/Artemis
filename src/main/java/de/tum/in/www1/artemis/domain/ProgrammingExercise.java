@@ -220,6 +220,19 @@ public class ProgrammingExercise extends Exercise implements Serializable {
         return getPackageName().replace(".", "/");
     }
 
+    /**
+     * set all sensitive information to null, so no info with respect to the solution gets leaked to students through json
+     */
+    @Override
+    public void filterSensitiveInformation() {
+        setBaseRepositoryUrl(null);
+        setSolutionRepositoryUrl(null);
+        setTestRepositoryUrl(null);
+        setBaseBuildPlanId(null);
+        setSolutionBuildPlanId(null);
+        super.filterSensitiveInformation();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

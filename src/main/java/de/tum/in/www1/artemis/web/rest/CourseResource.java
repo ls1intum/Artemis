@@ -19,7 +19,6 @@ import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -30,8 +29,12 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
 import java.util.*;
+import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static de.tum.in.www1.artemis.config.Constants.shortNamePattern;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 /**
  * REST controller for managing Course.
@@ -91,11 +94,12 @@ public class CourseResource {
             throw new BadRequestAlertException("A new course cannot already have an ID", ENTITY_NAME, "idexists");
         }
         try {
-            Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
-            if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_PRODUCTION)) {
-                //only execute this method in the production environment because normal developers might not have the right to call this method on the authentication server
-                checkIfGroupsExists(course);
+            // Check if course shortname matches regex
+            Matcher shortNameMatcher = shortNamePattern.matcher(course.getShortName());
+            if (!shortNameMatcher.matches()) {
+                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The shortname is invalid", "shortnameInvalid")).body(null);
             }
+            checkIfGroupsExists(course);
             Course result = courseService.save(course);
             return ResponseEntity.created(new URI("/api/courses/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getTitle()))
@@ -135,6 +139,11 @@ public class CourseResource {
         //this is important, otherwise someone could put himself into the instructor group of the updated Course
         if (user.getGroups().contains(existingCourse.getInstructorGroupName()) || authCheckService.isAdmin()) {
             try {
+                // Check if course shortname matches regex
+                Matcher shortNameMatcher = shortNamePattern.matcher(updatedCourse.getShortName());
+                if (!shortNameMatcher.matches()) {
+                    return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The shortname is invalid", "shortnameInvalid")).body(null);
+                }
                 checkIfGroupsExists(updatedCourse);
                 Course result = courseService.save(updatedCourse);
                 return ResponseEntity.ok()
@@ -147,11 +156,16 @@ public class CourseResource {
             }
         }
         else {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
     }
 
     private void checkIfGroupsExists(Course course) {
+        Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
+        if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_PRODUCTION)) {
+            return;
+        }
+        //only execute this method in the production environment because normal developers might not have the right to call this method on the authentication server
         if (course.getInstructorGroupName() != null) {
             if(!artemisAuthenticationProvider.get().checkIfGroupExists(course.getInstructorGroupName())) {
                 throw new ArtemisAuthenticationException("Cannot save! The group " + course.getInstructorGroupName() + " for instructors does not exist. Please double check the instructor group name!");
@@ -242,18 +256,15 @@ public class CourseResource {
     public ResponseEntity<Course> getCourse(@PathVariable Long id) {
         log.debug("REST request to get Course : {}", id);
         Course course = courseService.findOne(id);
-        if (!userHasPermission(course)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        if (!userHasPermission(course)) return forbidden();
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(course));
     }
 
     private boolean userHasPermission(Course course) {
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-            !authCheckService.isInstructorInCourse(course, user) &&
-            !authCheckService.isAdmin()) {
-            return false;
-        }
-        return true;
+        return authCheckService.isTeachingAssistantInCourse(course, user) ||
+            authCheckService.isInstructorInCourse(course, user) ||
+            authCheckService.isAdmin();
     }
 
     /**
@@ -294,7 +305,7 @@ public class CourseResource {
     public ResponseEntity<Collection<Result>> getAllSummedScoresOfCourseUsers(@PathVariable("courseId") Long courseId) {
         log.debug("REST request to get courseScores from course : {}", courseId);
         Course course = courseService.findOne(courseId);
-        if (!userHasPermission(course)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        if (!userHasPermission(course)) return forbidden();
         return ResponseEntity.ok(courseService.getAllOverallScoresOfCourse(courseId));
     }
 
@@ -331,7 +342,7 @@ public class CourseResource {
             ObjectNode participationJson = objectMapper.valueToTree(participation);
 
             // only transmit the relevant result
-            Result result = exercise.findLatestRelevantResult(participation);
+            Result result = exercise.findLatestRatedResultWithCompletionDate(participation);
             List<Result> results = Optional.ofNullable(result).map(Arrays::asList).orElse(new ArrayList<>());
 
             // add results to json

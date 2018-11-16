@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel;
 
-import de.tum.in.www1.artemis.service.compass.assessment.Result;
+import de.tum.in.www1.artemis.service.compass.assessment.CompassResult;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 import java.util.List;
@@ -13,7 +13,7 @@ public class UMLModel {
 
     private long modelID;
 
-    private Result lastAssessmentResult = null;
+    private CompassResult lastAssessmentCompassResult = null;
 
     public UMLModel(List<UMLClass> connectableList, List<UMLRelation> relationList, long modelID) {
         this.connectableList = connectableList;
@@ -101,39 +101,39 @@ public class UMLModel {
     }
 
     public boolean isUnassessed () {
-        return lastAssessmentResult == null;
+        return lastAssessmentCompassResult == null;
     }
 
     public boolean isEntirelyAssessed () {
-        if (isUnassessed() || lastAssessmentResult.getCoverage() != 1) {
+        if (isUnassessed() || lastAssessmentCompassResult.getCoverage() != 1) {
             return false;
         }
 
         // this model only contains unique elements
-        if (lastAssessmentResult.entitiesCovered() == getModelElementCount()) {
+        if (lastAssessmentCompassResult.entitiesCovered() == getModelElementCount()) {
             return true;
         }
 
         for (UMLClass umlClass : connectableList) {
-            if (!lastAssessmentResult.getJsonIdPointsMapping().containsKey(umlClass.jsonElementID)) {
+            if (!lastAssessmentCompassResult.getJsonIdPointsMapping().containsKey(umlClass.jsonElementID)) {
                 return false;
             }
 
             for (UMLAttribute attribute : umlClass.attributeList) {
-                if (!lastAssessmentResult.getJsonIdPointsMapping().containsKey(attribute.jsonElementID)) {
+                if (!lastAssessmentCompassResult.getJsonIdPointsMapping().containsKey(attribute.jsonElementID)) {
                     return false;
                 }
             }
 
             for (UMLMethod method : umlClass.methodList) {
-                if (!lastAssessmentResult.getJsonIdPointsMapping().containsKey(method.jsonElementID)) {
+                if (!lastAssessmentCompassResult.getJsonIdPointsMapping().containsKey(method.jsonElementID)) {
                     return false;
                 }
             }
         }
 
         for (UMLRelation relation : relationList) {
-            if (!lastAssessmentResult.getJsonIdPointsMapping().containsKey(relation.jsonElementID)) {
+            if (!lastAssessmentCompassResult.getJsonIdPointsMapping().containsKey(relation.jsonElementID)) {
                 return false;
             }
         }
@@ -151,7 +151,7 @@ public class UMLModel {
             return -1;
         }
 
-        return lastAssessmentResult.getConfidence();
+        return lastAssessmentCompassResult.getConfidence();
     }
 
     public double getLastAssessmentCoverage () {
@@ -159,7 +159,7 @@ public class UMLModel {
             return -1;
         }
 
-        return lastAssessmentResult.getCoverage();
+        return lastAssessmentCompassResult.getCoverage();
     }
 
     public UMLElement getElementByJSONID (String jsonID) {
@@ -184,12 +184,12 @@ public class UMLModel {
 
     public long getModelID () {return modelID;}
 
-    public void setLastAssessmentResult(Result result) {
-        lastAssessmentResult = result;
+    public void setLastAssessmentCompassResult(CompassResult compassResult) {
+        lastAssessmentCompassResult = compassResult;
     }
 
-    public Result getLastAssessmentResult() {
-        return lastAssessmentResult;
+    public CompassResult getLastAssessmentCompassResult() {
+        return lastAssessmentCompassResult;
     }
 
     public List<UMLClass> getConnectableList() {

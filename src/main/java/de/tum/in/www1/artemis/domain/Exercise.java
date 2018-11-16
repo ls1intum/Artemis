@@ -273,6 +273,13 @@ public abstract class Exercise implements Serializable {
     }
 
     /**
+     * can be invoked to make sure that sensitive information is not sent to the client
+     */
+    public void filterSensitiveInformation() {
+        setGradingInstructions(null);
+    }
+
+    /**
      * find a relevant participation for this exercise
      * (relevancy depends on InitializationState)
      *
@@ -306,16 +313,41 @@ public abstract class Exercise implements Serializable {
      * @param participation the participation whose results we are considering
      * @return the latest relevant result in the given participation, or null, if none exist
      */
-    public Result findLatestRelevantResult(Participation participation) {
+    public Result findLatestRatedResultWithCompletionDate(Participation participation) {
         // for most types of exercises => return latest result (all results are relevant)
         Result latestResult = null;
         for (Result result : participation.getResults()) {
-            //NOTE: for the dashboard we only use rated results
+            //NOTE: for the dashboard we only use rated results with completion date
+            //TODO: isRatedNull is a compatibility mechanism that we should deactivate soon
+            if (result.getCompletionDate() != null && (result.isRatedNull() || result.isRated())) {
+                //take the first found result that fulfills the above requirements
+                if (latestResult == null) {
+                    latestResult = result;
+                }
+                //take newer results and thus disregard older ones
+                else if (latestResult.getCompletionDate().isBefore(result.getCompletionDate())) {
+                    latestResult = result;
+                }
+            }
+        }
+        return latestResult;
+    }
+
+    /**
+     * Get the latest relevant result from the given participation (independent of rated and completion date)
+     *
+     * @param participation the participation whose results we are considering
+     * @return the latest relevant result in the given participation, or null, if none exist
+     */
+    public Result findLatestResult(Participation participation) {
+        Result latestResult = null;
+        for (Result result : participation.getResults()) {
+            //take the first found result
             if (latestResult == null) {
                 latestResult = result;
             }
-            //NOTE: isRatedNull is a compatibility mechanism that we should deactivate soon
-            else if (latestResult.getCompletionDate().isBefore(result.getCompletionDate()) && (result.isRatedNull() || result.isRated())) {
+            //take newer results
+            else if (latestResult.getCompletionDate().isBefore(result.getCompletionDate())) {
                 latestResult = result;
             }
         }

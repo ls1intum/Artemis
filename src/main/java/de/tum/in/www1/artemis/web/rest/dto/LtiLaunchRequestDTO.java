@@ -5,12 +5,6 @@ package de.tum.in.www1.artemis.web.rest.dto;
  */
 public class LtiLaunchRequestDTO {
 
-
-    public LtiLaunchRequestDTO() {
-    }
-
-
-
     private String lis_person_sourcedid;
     private String lis_person_contact_email_primary;
     private String lis_outcome_service_url;
@@ -19,7 +13,7 @@ public class LtiLaunchRequestDTO {
     private String context_id;
     private String oauth_version;
     private String oauth_signature_method;
-    private Long oauth_timestamp;
+    private Long   oauth_timestamp;
     private String roles;
     private String launch_presentation_locale;
     private String custom_component_display_name;
@@ -33,6 +27,9 @@ public class LtiLaunchRequestDTO {
 
     private Boolean custom_require_existing_user = false;
     private Boolean custom_lookup_user_by_email = false;
+
+    public LtiLaunchRequestDTO() {
+    }
 
     public Boolean getCustom_require_existing_user() {
         return custom_require_existing_user;

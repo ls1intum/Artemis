@@ -12,7 +12,6 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +25,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static de.tum.in.www1.artemis.config.Constants.shortNamePattern;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 /**
  * REST controller for managing ProgrammingExercise.
@@ -109,7 +111,7 @@ public class ProgrammingExerciseResource {
         if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
             !authCheckService.isInstructorInCourse(course, user) &&
             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
         ResponseEntity<ProgrammingExercise> errorResponse = checkProgrammingExerciseForError(programmingExercise);
         if(errorResponse != null) {
@@ -126,12 +128,11 @@ public class ProgrammingExerciseResource {
      *
      * @param programmingExercise the programmingExercise to setup
      * @return the ResponseEntity with status 201 (Created) and with body the new programmingExercise, or with status 400 (Bad Request) if the parameters are invalid
-     * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/programming-exercises/setup")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
-    public ResponseEntity<ProgrammingExercise> setupProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise) throws URISyntaxException {
+    public ResponseEntity<ProgrammingExercise> setupProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise) {
         log.debug("REST request to setup ProgrammingExercise : {}", programmingExercise);
         if (programmingExercise.getId() != null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("A new programmingExercise cannot already have an ID", "idexists")).body(null);
@@ -154,7 +155,7 @@ public class ProgrammingExerciseResource {
         if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
             !authCheckService.isInstructorInCourse(course, user) &&
             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
         //make sure that we use the values from the database and not the once which might have been altered in the client
         programmingExercise.setCourse(course);
@@ -169,8 +170,14 @@ public class ProgrammingExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The shortname of the programming exercise is not set or too short", "programmingExerciseShortnameInvalid")).body(null);
         }
 
+        // Check if exercise shortname matches regex
+        Matcher shortNameMatcher = shortNamePattern.matcher(programmingExercise.getShortName());
+        if (!shortNameMatcher.matches()) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The shortname is invalid", "shortnameInvalid")).body(null);
+        }
+
         // Check if course shortname is set
-        if (course.getShortName() == null || course.getShortName().length() < 2) {
+        if (course.getShortName() == null || course.getShortName().length() < 3) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The shortname of the course is not set or too short", "courseShortnameInvalid")).body(null);
         }
 
@@ -189,6 +196,8 @@ public class ProgrammingExerciseResource {
         if (!packageNameMatcher.matches()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The packagename is invalid", "packagenameInvalid")).body(null);
         }
+
+
 
         // Check if max score is set
         if (programmingExercise.getMaxScore() == null) {
@@ -249,7 +258,7 @@ public class ProgrammingExerciseResource {
         if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
             !authCheckService.isInstructorInCourse(course, user) &&
             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
         ResponseEntity<ProgrammingExercise> errorResponse = checkProgrammingExerciseForError(programmingExercise);
         if(errorResponse != null) {
@@ -300,7 +309,7 @@ public class ProgrammingExerciseResource {
         if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
              !authCheckService.isInstructorInCourse(course, user) &&
              !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
         List<ProgrammingExercise> exercises = programmingExerciseRepository.findByCourseId(courseId);
 
@@ -325,7 +334,7 @@ public class ProgrammingExerciseResource {
             if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
                 !authCheckService.isInstructorInCourse(course, user) &&
                 !authCheckService.isAdmin()) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                return forbidden();
             }
         }
         return ResponseUtil.wrapOrNotFound(programmingExercise);
@@ -348,7 +357,7 @@ public class ProgrammingExerciseResource {
             User user = userService.getUserWithGroupsAndAuthorities();
             if (!authCheckService.isInstructorInCourse(course, user) &&
                 !authCheckService.isAdmin()) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                return forbidden();
             }
             String title = programmingExercise.get().getTitle();
             exerciseService.delete(programmingExercise.get(), deleteStudentReposBuildPlans, deleteBaseReposBuildPlans);

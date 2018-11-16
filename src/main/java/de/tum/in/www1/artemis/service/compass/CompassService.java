@@ -90,9 +90,7 @@ public class CompassService {
         Thread optimalModelThread = optimalModelThreads.get(exerciseId);
         if (optimalModels.size() < NUMBER_OF_OPTIMAL_MODELS && (optimalModelThread == null || !optimalModelThread.isAlive())) {
             // Spawn a new thread for populating optimalModels
-            optimalModelThread = new Thread(
-                () -> this.getNextOptimalModel(exerciseId)
-            );
+            optimalModelThread = new Thread(() -> this.getNextOptimalModel(exerciseId));
             optimalModelThreads.put(exerciseId, optimalModelThread);
             optimalModelThread.start();
         }

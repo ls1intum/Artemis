@@ -5,9 +5,10 @@ package de.tum.in.www1.artemis.web.rest.dto;
  */
 public class RepositoryStatusDTO {
 
-    public RepositoryStatusDTO() {    }
-
     public Boolean isClean;
+
+    public RepositoryStatusDTO() {
+    }
 
     public Boolean getClean() {
         return isClean;

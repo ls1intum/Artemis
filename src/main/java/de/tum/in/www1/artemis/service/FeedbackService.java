@@ -57,9 +57,9 @@ public class FeedbackService {
      * @param feedback the entity to save
      * @return the persisted entity
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public Feedback save(Feedback feedback) {
         log.debug("Request to save Feedback : {}", feedback);
-        return feedbackRepository.saveAndFlush(feedback);
+        return feedbackRepository.save(feedback);
     }
 }

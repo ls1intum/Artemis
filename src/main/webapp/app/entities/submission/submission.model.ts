@@ -1,4 +1,4 @@
-import { BaseEntity } from './../../shared';
+import { BaseEntity } from 'app/shared';
 import { Result } from '../result';
 import { Participation } from '../participation';
 import { Moment } from 'moment';
@@ -26,7 +26,7 @@ export abstract class Submission implements BaseEntity {
     public participation: Participation;
     public submissionExerciseType: SubmissionExerciseType;
 
-    constructor(submissionExerciseType: SubmissionExerciseType) {
+    protected constructor(submissionExerciseType: SubmissionExerciseType) {
         this.submissionExerciseType = submissionExerciseType;
     }
 }

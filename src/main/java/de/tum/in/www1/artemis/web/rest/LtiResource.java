@@ -4,10 +4,11 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
-import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseLtiConfigurationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
+import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -138,7 +139,7 @@ public class LtiResource {
                 String ltiPassport = LTI_ID + ":" + LTI_OAUTH_KEY + ":" + LTI_OAUTH_SECRET;
                 return new ResponseEntity<>(new ExerciseLtiConfigurationDTO(launchUrl, ltiId, ltiPassport), HttpStatus.OK);
             })
-            .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+            .orElse(ResponseUtil.notFound());
     }
 
 

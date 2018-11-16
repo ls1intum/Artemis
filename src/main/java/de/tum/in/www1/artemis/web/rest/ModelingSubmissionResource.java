@@ -2,10 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import com.google.gson.JsonObject;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.ModelingExercise;
-import de.tum.in.www1.artemis.domain.ModelingSubmission;
-import de.tum.in.www1.artemis.domain.Participation;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.JsonAssessmentRepository;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -14,9 +11,10 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
+import org.hibernate.Hibernate;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Propagation;
@@ -25,8 +23,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URISyntaxException;
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 /**
  * REST controller for managing ModelingSubmission.
@@ -45,6 +46,7 @@ public class ModelingSubmissionResource {
     private final ModelingExerciseService modelingExerciseService;
     private final ParticipationService participationService;
     private final ResultRepository resultRepository;
+    private final ExerciseService exerciseService;
     private final UserRepository userRepository;
     private final UserService userService;
     private final CourseService courseService;
@@ -56,6 +58,7 @@ public class ModelingSubmissionResource {
                                       ModelingExerciseService modelingExerciseService,
                                       ParticipationService participationService,
                                       ResultRepository resultRepository,
+                                      ExerciseService exerciseService,
                                       UserRepository userRepository,
                                       UserService userService,
                                       CourseService courseService,
@@ -66,6 +69,7 @@ public class ModelingSubmissionResource {
         this.modelingExerciseService = modelingExerciseService;
         this.participationService = participationService;
         this.resultRepository = resultRepository;
+        this.exerciseService = exerciseService;
         this.userRepository = userRepository;
         this.userService = userService;
         this.courseService = courseService;
@@ -87,30 +91,53 @@ public class ModelingSubmissionResource {
     @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRED)
     @Timed
     public ResponseEntity<ModelingSubmission> createModelingSubmission(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
-        log.debug("REST request to save ModelingSubmission : {}", modelingSubmission);
+        log.debug("REST request to create ModelingSubmission : {}", modelingSubmission.getModel());
         if (modelingSubmission.getId() != null) {
             throw new BadRequestAlertException("A new modelingSubmission cannot already have an ID", ENTITY_NAME, "idexists");
         }
 
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        if (modelingExercise == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
-        }
-
-        // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(modelingExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this modeling exercise does not exist")).body(null);
-        }
-        if (!courseService.userHasAtLeastStudentPermissions(course)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+        ResponseEntity<ModelingSubmission> responseFailure = checkModelingExercise(modelingExercise);
+        if (responseFailure != null) return responseFailure;
 
         Participation participation = participationService.startExercise(modelingExercise, principal.getName());
 
         // update and save submission
         modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, participation);
+        hideDetails(modelingSubmission);
+
         return ResponseEntity.ok(modelingSubmission);
+    }
+
+    private void hideDetails(@RequestBody ModelingSubmission modelingSubmission) {
+        //do not send old submissions or old results to the client
+        if (modelingSubmission.getParticipation() != null) {
+            modelingSubmission.getParticipation().setSubmissions(null);
+            modelingSubmission.getParticipation().setResults(null);
+
+            if (modelingSubmission.getParticipation().getExercise() != null && modelingSubmission.getParticipation().getExercise() instanceof ModelingExercise) {
+                //make sure the solution is not sent to the client
+                ModelingExercise modelingExerciseForClient = (ModelingExercise) modelingSubmission.getParticipation().getExercise();
+                modelingExerciseForClient.setSampleSolutionExplanation(null);
+                modelingExerciseForClient.setSampleSolutionModel(null);
+            }
+        }
+    }
+
+    @Nullable
+    private ResponseEntity<ModelingSubmission> checkModelingExercise(ModelingExercise modelingExercise) {
+        if (modelingExercise == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
+        }
+
+        Course course = modelingExercise.getCourse();
+        if (course == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this modeling exercise does not exist")).body(null);
+        }
+        if (!courseService.userHasAtLeastStudentPermissions(course)) {
+            return forbidden();
+        }
+        return null;
     }
 
     /**
@@ -132,28 +159,20 @@ public class ModelingSubmissionResource {
     @Transactional
     @Timed
     public ResponseEntity<ModelingSubmission> updateModelingSubmission(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
-        log.debug("REST request to update ModelingSubmission : {}", modelingSubmission);
+        log.debug("REST request to update ModelingSubmission : {}", modelingSubmission.getModel());
         if (modelingSubmission.getId() == null) {
             return createModelingSubmission(courseId, exerciseId, principal, modelingSubmission);
         }
 
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        if (modelingExercise == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("modelingExercise", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
-        }
-
-        // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(modelingExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this modeling exercise does not exist")).body(null);
-        }
-        if (!courseService.userHasAtLeastStudentPermissions(course)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+        ResponseEntity<ModelingSubmission> responseFailure = checkModelingExercise(modelingExercise);
+        if (responseFailure != null) return responseFailure;
 
         Participation participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
 
+        // update and save submission
         modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, participation);
+        hideDetails(modelingSubmission);
 
         return ResponseEntity.ok(modelingSubmission);
     }
@@ -163,12 +182,43 @@ public class ModelingSubmissionResource {
      *
      * @return the ResponseEntity with status 200 (OK) and the list of modelingSubmissions in body
      */
-    @GetMapping("/modeling-submissions")
+    @GetMapping(value = "/courses/{courseId}/exercises/{exerciseId}/modeling-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
-    public List<ModelingSubmission> getAllModelingSubmissions() {
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<ModelingSubmission>> getAllModelingSubmissions(@PathVariable Long courseId,
+                                                                              @PathVariable Long exerciseId,
+                                                                              @RequestParam(defaultValue = "false") boolean submittedOnly) {
         log.debug("REST request to get all ModelingSubmissions");
-        return modelingSubmissionRepository.findAll();
+        Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
+        Course course = exercise.getCourse();
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
+            !authCheckService.isInstructorInCourse(course, user) &&
+            !authCheckService.isAdmin()) {
+            return forbidden();
+        }
+        List<Participation> participations = participationService.findByExerciseIdWithEagerSubmissions(exerciseId);
+        List<ModelingSubmission> submissions = new ArrayList<>();
+        for (Participation participation : participations) {
+            ModelingSubmission submission = participation.findLatestModelingSubmission();
+            if (submission != null) {
+                if (submittedOnly && !submission.isSubmitted()) {
+                    //filter out non submitted submissions if the flag is set to true
+                    continue;
+                }
+                submissions.add(submission);
+            }
+        }
+
+        submissions.forEach(submission -> {
+            Hibernate.initialize(submission.getResult()); // eagerly load the association
+            if (submission.getResult() != null) {
+                Hibernate.initialize(submission.getResult().getAssessor());
+            }
+        });
+
+        return ResponseEntity.ok().body(submissions);
     }
 
     /**
@@ -225,6 +275,7 @@ public class ModelingSubmissionResource {
             if (model != null) {
                 modelingSubmission.get().setModel(model.toString());
             }
+            hideDetails(modelingSubmission.get());
         }
         return ResponseUtil.wrapOrNotFound(modelingSubmission);
     }
