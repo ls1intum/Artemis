@@ -4,6 +4,9 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -212,7 +215,7 @@ public class ExerciseService {
      * @param id id of the exercise for which build plans in respective participations are deleted
      */
     @Transactional(noRollbackFor={Throwable.class})
-    public void cleanup(Long id, boolean deleteRepositories) throws IOException {
+    public void cleanup(Long id, boolean deleteRepositories) {
         Exercise exercise = findOneLoadParticipations(id);
         log.info("Request to cleanup all participations for Exercise : {}", exercise.getTitle());
 

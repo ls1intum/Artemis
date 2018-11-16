@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.compass.assessment;
 import java.util.*;
 
 public class Assessment {
+
     private Map <Context, List <Score>> contextScoreList;
     private Map <Context, Score> contextScoreMapping;
 

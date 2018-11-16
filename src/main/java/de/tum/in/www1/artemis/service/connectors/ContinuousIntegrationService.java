@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.connectors;
 
 import de.tum.in.www1.artemis.domain.*;
 import org.springframework.http.ResponseEntity;
@@ -14,12 +14,12 @@ public interface ContinuousIntegrationService {
 
     /**
      * Creates the base build plan for the given programming exercise
-     *
-     * @param exercise a programming exercise with the required information to create the base build plan
+     *  @param exercise a programming exercise with the required information to create the base build plan
      * @param planKey the key of the plan
-     * @param vcsRepositorySlug the slug of the repository (used to seperate between exercise and solution)
+     * @param assignmentVcsRepositorySlug the slug of the assignment repository (used to separate between exercise and solution), i.e. the unique identifier
+     * @param testVcsRepositorySlug the slug of the test repository, i.e. the unique identifier
      */
-    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, String vcsRepositorySlug);
+    public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, String assignmentVcsRepositorySlug, String testVcsRepositorySlug);
 
     /**
      * Copy the base build plan for the given user on the CI system.
@@ -39,6 +39,13 @@ public interface ContinuousIntegrationService {
      * @param participation contains the unique identifier for build plan on CI system and the url of user's personal repository copy
      */
     public void configureBuildPlan(Participation participation);
+
+    /**
+     * triggers a build for the build plan in the given participation
+     * @param participation the participation with the id of the build plan that should be triggered
+     */
+    public void triggerBuild(Participation participation);
+
 
     /**
      * Delete project with given identifier from CI system.

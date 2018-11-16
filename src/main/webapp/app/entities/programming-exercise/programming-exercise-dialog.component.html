@@ -38,7 +38,12 @@
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.programmingExercise.baseRepositoryUrl" for="field_baseRepositoryUrl">Template Repository Url</label>
             <input type="text" class="form-control" name="baseRepositoryUrl" id="field_baseRepositoryUrl"
-                [(ngModel)]="programmingExercise.baseRepositoryUrl" />
+                   [(ngModel)]="programmingExercise.baseRepositoryUrl" />
+        </div>
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="arTeMiSApp.programmingExercise.testRepositoryUrl" for="field_testRepositoryUrl">Test Repository Url (optional)</label>
+            <input type="text" class="form-control" name="testRepositoryUrl" id="field_testRepositoryUrl"
+                   [(ngModel)]="programmingExercise.testRepositoryUrl" />
         </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.programmingExercise.solutionRepositoryUrl" for="field_solutionRepositoryUrl">Solution Repository Url (optional)</label>
@@ -48,7 +53,7 @@
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.programmingExercise.baseBuildPlanId" for="field_baseBuildPlanId">Template Build Plan Id</label>
             <input type="text" class="form-control" name="baseBuildPlanId" id="field_baseBuildPlanId"
-                [(ngModel)]="programmingExercise.baseBuildPlanId" />
+                   [(ngModel)]="programmingExercise.baseBuildPlanId" />
         </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.programmingExercise.solutionBuildPlanId" for="field_solutionBuildPlanId">Solution Build Plan Id (optional)</label>
@@ -58,12 +63,12 @@
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.programmingExercise.publishBuildPlanUrl" for="field_publishBuildPlanUrl">Publish Build Plan Url</label>
             <input type="checkbox" class="form-control" name="publishBuildPlanUrl" id="field_publishBuildPlanUrl"
-                [(ngModel)]="programmingExercise.publishBuildPlanUrl" />
+                   [(ngModel)]="programmingExercise.publishBuildPlanUrl" />
         </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.programmingExercise.allowOnlineEditor" for="field_allowOnlineEditor">Allow Online Editor</label>
             <input type="checkbox" class="form-control" name="allowOnlineEditor" id="field_allowOnlineEditor"
-                [(ngModel)]="programmingExercise.allowOnlineEditor" />
+                   [(ngModel)]="programmingExercise.allowOnlineEditor" />
         </div>
     </div>
     <div class="modal-footer">

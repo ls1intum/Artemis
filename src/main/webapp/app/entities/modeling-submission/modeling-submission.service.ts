@@ -5,11 +5,13 @@ import { SERVER_API_URL } from '../../app.constants';
 
 import { ModelingSubmission } from './modeling-submission.model';
 import { createRequestOption } from '../../shared';
+import { EntityArrayResponseType, Result } from 'app/entities/result';
 
 export type EntityResponseType = HttpResponse<ModelingSubmission>;
 
 @Injectable({ providedIn: 'root' })
 export class ModelingSubmissionService {
+    private courseResourceUrl = SERVER_API_URL + 'api/courses';
     private resourceUrl = SERVER_API_URL + 'api/modeling-submissions';
 
     constructor(private http: HttpClient) {}
@@ -37,9 +39,6 @@ export class ModelingSubmissionService {
                 })
                 .map((res: EntityResponseType) => this.convertResponse(res));
         }
-        return this.http
-            .put<ModelingSubmission>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
     find(id: number): Observable<EntityResponseType> {
@@ -57,6 +56,17 @@ export class ModelingSubmissionService {
 
     delete(id: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/${id}`, { observe: 'response' });
+    }
+
+    // TODO: move this into a separate submission service
+    getModelingSubmissionsForExercise(courseId: number, exerciseId: number, req?: any): Observable<HttpResponse<ModelingSubmission[]>> {
+        const options = createRequestOption(req);
+        return this.http
+            .get<ModelingSubmission[]>(`${this.courseResourceUrl}/${courseId}/exercises/${exerciseId}/modeling-submissions`, {
+                params: options,
+                observe: 'response'
+            })
+            .map((res: HttpResponse<ModelingSubmission[]>) => this.convertArrayResponse(res));
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {

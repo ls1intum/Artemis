@@ -36,6 +36,15 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
     @Query("select distinct participation from Participation participation left join fetch participation.results where participation.exercise.id = :#{#exerciseId}")
     List<Participation> findByExerciseIdWithEagerResults(@Param("exerciseId") Long exerciseId);
 
+    @Query("select distinct participation from Participation participation left join fetch participation.submissions where participation.exercise.id = :#{#exerciseId}")
+    List<Participation> findByExerciseIdWithEagerSubmissions(@Param("exerciseId") Long exerciseId);
+
     @Query("select distinct participation from Participation participation left join fetch participation.results where participation.id = :#{#participationId}")
     Participation findByIdWithEagerResults(@Param("participationId") Long participationId);
+
+    @Query("select distinct participation from Participation participation left join fetch participation.submissions where participation.id = :#{#participationId}")
+    Participation findByIdWithEagerSubmissions(@Param("participationId") Long participationId);
+
+    @Query("select distinct participation from Participation participation left join fetch participation.results where participation.buildPlanId is not null and participation.exercise.dueDate is not null and participation.exercise.dueDate < current_date")
+    List<Participation> findAllExpiredWithBuildPlanId();
 }

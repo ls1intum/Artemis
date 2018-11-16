@@ -15,6 +15,8 @@ export class CourseUpdateComponent implements OnInit {
     course: Course;
     isSaving: boolean;
 
+    shortNamePattern = '^[a-zA-Z][a-zA-Z0-9]*'; // must start with a letter and cannot contain special characters
+
     constructor(private courseService: CourseService, private activatedRoute: ActivatedRoute, private jhiAlertService: JhiAlertService) {}
 
     ngOnInit() {

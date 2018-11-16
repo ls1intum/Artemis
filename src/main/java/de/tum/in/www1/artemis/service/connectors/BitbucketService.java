@@ -1,9 +1,10 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.connectors;
 
 import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.BitbucketException;
+import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,8 +64,6 @@ public class BitbucketService implements VersionControlService {
 
     @Override
     public void configureRepository(URL repositoryUrl, String username) {
-
-
         if(username.startsWith(USER_PREFIX)) {
             // It is an automatically created user
 
@@ -447,7 +446,7 @@ public class BitbucketService implements VersionControlService {
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
 
         Map<String, Object> body = new HashMap<>();
-        body.put("name", repoName);
+        body.put("name", repoName.toLowerCase());
         HttpEntity<?> entity = new HttpEntity<>(body, headers);
 
         RestTemplate restTemplate = new RestTemplate();
@@ -625,16 +624,15 @@ public class BitbucketService implements VersionControlService {
 
     @Override
     public String getLastCommitHash(Object requestBody) throws BitbucketException {
-        // https://confluence.atlassian.com/bitbucket/event-payloads-740262817.html
+
+        //NOTE the requestBody should look like this:
+        //{"eventKey":"...","date":"...","actor":{...},"repository":{...},"changes":[{"ref":{...},"refId":"refs/heads/master","fromHash":"5626436a443eb898a5c5f74b6352f26ea2b7c84e","toHash":"662868d5e16406d1dd4dcfa8ac6c46ee3d677924","type":"UPDATE"}]}
+        // we are interested in the toHash
         try {
             Map<String, Object> requestBodyMap = (Map<String, Object>) requestBody;
-            Map<String, Object> push = (Map<String, Object>) requestBodyMap.get("push");
-            List<Object> changes = (List<Object>) push.get("changes");
+            List<Object> changes = (List<Object>) requestBodyMap.get("changes");
             Map<String, Object> lastChange = (Map<String, Object>) changes.get(0);
-            List<Object> commits = (List<Object>) lastChange.get("commits");
-            Map<String, Object> lastCommit = (Map<String, Object>) commits.get(0);
-            String hash = (String) lastCommit.get("hash");
-
+            String hash = (String) lastChange.get("toHash");
             return hash;
         } catch (Exception e) {
             log.error("Error when getting hash of last commit");
@@ -643,7 +641,7 @@ public class BitbucketService implements VersionControlService {
     }
 
     @Override
-    public void createRepository(String entityName, String topLevelEntity, String parentEntity) throws Exception {
+    public void createRepository(String entityName, String topLevelEntity, String parentEntity) {
         createRepository(entityName, topLevelEntity);
     }
 

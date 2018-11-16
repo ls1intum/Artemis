@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.connectors;
 
 import de.tum.in.www1.artemis.domain.File;
 import de.tum.in.www1.artemis.domain.Participation;
@@ -137,7 +137,6 @@ public class GitService {
             }
             finally {
                 //make sure that cloneInProgress is released
-                log.info("Remove " + localPath + " from cloneInProgressMap: ");
                 cloneInProgressOperations.remove(localPath);
             }
         }
@@ -369,9 +368,6 @@ public class GitService {
      */
     public boolean repositoryAlreadyExists(URL repoUrl) {
         Path localPath = new java.io.File(REPO_CLONE_PATH + folderNameForRepositoryUrl(repoUrl)).toPath();
-        if (Files.exists(localPath)) {
-            return true;
-        }
-        return false;
+        return Files.exists(localPath);
     }
 }

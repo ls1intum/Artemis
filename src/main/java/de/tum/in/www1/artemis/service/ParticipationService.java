@@ -8,6 +8,10 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,6 +27,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
+import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
+import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.FINISHED;
 import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.INITIALIZED;
 
 /**
@@ -87,7 +93,7 @@ public class ParticipationService {
      * @return
      */
     @Transactional
-    public Participation init(Exercise exercise, String username) {
+    public Participation startExercise(Exercise exercise, String username) {
 
         // common for all exercises
         // Check if participation already exists
@@ -118,13 +124,16 @@ public class ParticipationService {
             ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
             participation.setInitializationState(InitializationState.UNINITIALIZED);
             participation = copyRepository(participation, programmingExercise);
-            participation = configureRepository(participation, programmingExercise);
+            participation = configureRepository(participation);
             participation = copyBuildPlan(participation, programmingExercise);
-            participation = configureBuildPlan(participation, programmingExercise);
+            participation = configureBuildPlan(participation);
+            participation = configureRepositoryWebHook(participation);
+            //we configure the repository webhook after the build plan, because we might have to push an empty commit due to the bamboo workaround (see empty-commit-necessary)
             participation.setInitializationState(INITIALIZED);
             participation.setInitializationDate(ZonedDateTime.now());
         } else if (exercise instanceof QuizExercise || exercise instanceof ModelingExercise) {
-            if (participation.getInitializationState() == null) {
+            if (participation.getInitializationState() == null || participation.getInitializationState() == FINISHED) {
+                // in case the participation was finished before, we set it to initialized again so that the user sees the correct button "Open modeling editor" on the client side
                 participation.setInitializationState(INITIALIZED);
             }
             if (!Optional.ofNullable(participation.getInitializationDate()).isPresent()) {
@@ -223,7 +232,7 @@ public class ParticipationService {
     public Participation resume(Exercise exercise, Participation participation) {
         ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
         participation = copyBuildPlan(participation, programmingExercise);
-        participation = configureBuildPlan(participation, programmingExercise);
+        participation = configureBuildPlan(participation);
         participation.setInitializationState(INITIALIZED);
         if (participation.getInitializationDate() == null) {
             //only set the date if it was not set before (which should NOT be the case)
@@ -246,10 +255,9 @@ public class ParticipationService {
         }
     }
 
-    private Participation configureRepository(Participation participation, ProgrammingExercise exercise) {
+    private Participation configureRepository(Participation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
             versionControlService.get().configureRepository(participation.getRepositoryUrlAsUrl(), participation.getStudent().getLogin());
-            versionControlService.get().addWebHook(participation.getRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + "/api/programmingSubmissions/" + participation.getId(), "ArTEMiS WebHook");
             participation.setInitializationState(InitializationState.REPO_CONFIGURED);
             return save(participation);
         } else {
@@ -268,10 +276,19 @@ public class ParticipationService {
         }
     }
 
-    private Participation configureBuildPlan(Participation participation, ProgrammingExercise exercise) {
+    private Participation configureBuildPlan(Participation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.BUILD_PLAN_CONFIGURED)) {
             continuousIntegrationService.get().configureBuildPlan(participation);
             participation.setInitializationState(InitializationState.BUILD_PLAN_CONFIGURED);
+            return save(participation);
+        } else {
+            return participation;
+        }
+    }
+
+    private Participation configureRepositoryWebHook(Participation participation) {
+        if (!participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
+            versionControlService.get().addWebHook(participation.getRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participation.getId(), "ArTEMiS WebHook");
             return save(participation);
         } else {
             return participation;
@@ -314,15 +331,27 @@ public class ParticipationService {
     }
 
     /**
-     * Get one participation by id.
+     * Get one participation by id including all results
      *
-     * @param id the id of the entity
-     * @return the entity
+     * @param id the id of the participation
+     * @return the participation with all its results
      */
     @Transactional(readOnly = true)
     public Participation findOneWithEagerResults(Long id) {
         log.debug("Request to get Participation : {}", id);
         return participationRepository.findByIdWithEagerResults(id);
+    }
+
+    /**
+     * Get one participation by id including all submissions.
+     *
+     * @param id the id of the entity
+     * @return the participation with all its submissions
+     */
+    @Transactional(readOnly = true)
+    public Participation findOneWithEagerSubmissions(Long id) {
+        log.debug("Request to get Participation : {}", id);
+        return participationRepository.findByIdWithEagerSubmissions(id);
     }
 
 
@@ -384,6 +413,11 @@ public class ParticipationService {
     @Transactional(readOnly = true)
     public List<Participation> findByExerciseIdWithEagerResults(Long exerciseId) {
         return participationRepository.findByExerciseIdWithEagerResults(exerciseId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Participation> findByExerciseIdWithEagerSubmissions(Long exerciseId) {
+        return participationRepository.findByExerciseIdWithEagerSubmissions(exerciseId);
     }
 
     @Transactional(readOnly = true)

@@ -13,7 +13,10 @@ import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -298,9 +301,11 @@ public class Participation implements Serializable {
             return null;
         }
         List<Result> sortedResults = results.stream().collect(Collectors.toList());
-        Collections.sort(sortedResults, (r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate()));
+        sortedResults.sort((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate()));
         return sortedResults.get(0);
     }
+
+    //TODO: implement a method Result findLatestResultBeforeDueDate(ZonedDateTime dueDate)
 
     /**
      * Finds the latest submission for the participation. Checks if the participation has any submissions. If there are no submissions,
@@ -318,7 +323,8 @@ public class Participation implements Serializable {
             return null;
         }
         List<Submission> sortedSubmissions = submissions.stream().collect(Collectors.toList());
-        Collections.sort(sortedSubmissions, (r1, r2) -> r2.getSubmissionDate().compareTo(r1.getSubmissionDate()));
+        //TODO: what happens if the submissionDate is null?
+        sortedSubmissions.sort((r1, r2) -> r2.getSubmissionDate().compareTo(r1.getSubmissionDate()));
         return sortedSubmissions.get(0);
     }
 

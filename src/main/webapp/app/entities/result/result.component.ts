@@ -25,12 +25,9 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
 
-    @Input()
-    participation: Participation;
-    @Input()
-    isBuilding: boolean;
-    @Output()
-    newResult = new EventEmitter<object>();
+    @Input() participation: Participation;
+    @Input() isBuilding: boolean;
+    @Output() newResult = new EventEmitter<object>();
 
     result: Result;
     websocketChannel: string;
@@ -117,27 +114,15 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
         this.init();
     }
 
-    /*
-     * fetch results from server, this method should only be invoked if there is no other possibility so that we avoid high server costs
-     * TODO: in any case we should ask the server for the latest 'rated' result
-     */
-    refreshResult() {
-        this.resultService
-            .findResultsForParticipation(this.participation.exercise.course.id, this.participation.exercise.id, this.participation.id, {
-                showAllResults: false,
-                ratedOnly: this.participation.exercise.type === 'quiz'
-            })
-            .subscribe(results => {
-                this.handleNewResult(results.body[0]);
-            });
-    }
-
     init() {
-        if (this.result && (this.result.score || this.result.score === 0)) {
+        if (this.result && (this.result.score || this.result.score === 0) && (this.result.rated === true || this.result.rated === null)) {
             this.textColorClass = this.getTextColorClass();
             this.hasFeedback = this.getHasFeedback();
             this.resultIconClass = this.getResultIconClass();
             this.resultString = this.buildResultString();
+        } else {
+            // make sure that we do not display results that are 'rated=false' or that do not have a score
+            this.result = null;
         }
     }
 

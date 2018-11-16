@@ -8,6 +8,10 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationUpdateService;
+import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,13 +22,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+
+import static de.tum.in.www1.artemis.config.Constants.TEST_CASE_CHANGED_API_PATH;
 
 @Service
 @Transactional
@@ -57,38 +61,6 @@ public class ProgrammingExerciseService {
         this.resourceLoader = resourceLoader;
         this.participationRepository = participationRepository;
         this.submissionRepository = submissionRepository;
-
-
-        try {
-            String templatePath = "classpath:templates/java";
-            log.info("templatePath: " + templatePath);
-            String exercisePath = templatePath + "/exercise/**/*.*";
-            log.info("exercisePath: " + exercisePath);
-            String testPath = templatePath + "/test/**/*.*";
-            log.info("testPath: " + testPath);
-
-            String exercisePath2ndAlternative = templatePath + "/exercise/**/.*";
-
-            Resource[] exerciseResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(exercisePath);
-            log.info("exerciseResources: ");
-            for (Resource resource : exerciseResources) {
-                String fileUrl = resource.getURI().toString();
-                String prefix = "java" + File.separator + "exercise";
-                int index = fileUrl.indexOf(prefix);
-                log.info(" - " + fileUrl.substring(index + prefix.length()));
-            }
-
-            Resource[] testResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(testPath);
-            log.info("testResources: ");
-            for (Resource resource : testResources) {
-                String fileUrl = resource.getURI().toString();
-                String prefix = "java" + File.separator + "test";
-                int index = fileUrl.indexOf(prefix);
-                log.info(" - " + fileUrl.substring(index + prefix.length()));
-            }
-        } catch (IOException ex) {
-            log.error(ex.getMessage(), ex);
-        }
     }
 
     /**
@@ -102,7 +74,8 @@ public class ProgrammingExerciseService {
             ProgrammingSubmission submission = new ProgrammingSubmission();
             submission.setType(SubmissionType.TEST);
             submission.setSubmissionDate(ZonedDateTime.now());
-            participation.addSubmissions(submission);
+            submission.setSubmitted(true);
+            submission.setParticipation(participation);
             try {
                 String lastCommitHash = versionControlService.get().getLastCommitHash(requestBody);
                 log.info("create new programmingSubmission with commitHash: " + lastCommitHash);
@@ -125,9 +98,9 @@ public class ProgrammingExerciseService {
      */
     public ProgrammingExercise setupProgrammingExercise(ProgrammingExercise programmingExercise) throws Exception {
         String projectKey = programmingExercise.getProjectKey();
-        String exerciseRepoName = programmingExercise.getShortName() + "-exercise";
-        String testRepoName = programmingExercise.getShortName() + "-tests";
-        String solutionRepoName = programmingExercise.getShortName() + "-solution";
+        String exerciseRepoName = programmingExercise.getShortName().toLowerCase() + "-exercise";
+        String testRepoName = programmingExercise.getShortName().toLowerCase() + "-tests";
+        String solutionRepoName = programmingExercise.getShortName().toLowerCase() + "-solution";
 
         // Create VCS repositories
         versionControlService.get().createProjectForExercise(programmingExercise); // Create project
@@ -142,28 +115,11 @@ public class ProgrammingExerciseService {
         String programmingLanguage = programmingExercise.getProgrammingLanguage().toString().toLowerCase();
 
         String templatePath = "classpath:templates/java";
-        log.info("templatePath: " + templatePath);
         String exercisePath = templatePath + "/exercise/**/*.*";
-        log.info("exercisePath: " + exercisePath);
         String testPath = templatePath + "/test/**/*.*";
-        log.info("testPath: " + testPath);
 
         Resource[] exerciseResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(exercisePath);
-        log.info("exerciseResources: ");
-        for (Resource resource : exerciseResources) {
-            String fileUrl = resource.getURI().toString();
-            String prefix = "java" + File.separator + "exercise";
-            int index = fileUrl.indexOf(prefix);
-            log.info(" - " + fileUrl.substring(index + prefix.length()));
-        }
         Resource[] testResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(testPath);
-        log.info("testResources: ");
-        for (Resource resource : testResources) {
-            String fileUrl = resource.getURI().toString();
-            String prefix = "java" + File.separator + "test";
-            int index = fileUrl.indexOf(prefix);
-            log.info(" - " + fileUrl.substring(index + prefix.length()));
-        }
 
         Repository exerciseRepo = gitService.getOrCheckoutRepository(exerciseRepoUrl);
         Repository testRepo = gitService.getOrCheckoutRepository(testsRepoUrl);
@@ -183,8 +139,8 @@ public class ProgrammingExerciseService {
             gitService.commitAndPush(solutionRepo, "Setup");
         }
         // We have to wait to have pushed one commit to each repository as we can only create the buildPlans then (https://confluence.atlassian.com/bamkb/cannot-create-linked-repository-or-plan-repository-942840872.html)
-        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, "BASE", exerciseRepoName); // plan for the exercise (students)
-        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, "SOLUTION", solutionRepoName); // plan for the solution (instructors) with solution repository
+        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, "BASE", exerciseRepoName, testRepoName); // plan for the exercise (students)
+        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, "SOLUTION", solutionRepoName, testRepoName); // plan for the solution (instructors) with solution repository
 
         programmingExercise.setBaseBuildPlanId(projectKey + "-BASE"); // Set build plan id to newly created BaseBuild plan
         programmingExercise.setBaseRepositoryUrl(versionControlService.get().getCloneURL(projectKey, exerciseRepoName).toString());
@@ -194,7 +150,7 @@ public class ProgrammingExerciseService {
 
         //save to get the id required for the webhook
         ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
-        versionControlService.get().addWebHook(testsRepoUrl, ARTEMIS_BASE_URL + "/api/programming-exercises/test-cases-changed/" + programmingExercise.getId(), "ArTEMiS Tests WebHook");
+        versionControlService.get().addWebHook(testsRepoUrl, ARTEMIS_BASE_URL + TEST_CASE_CHANGED_API_PATH + programmingExercise.getId(), "ArTEMiS Tests WebHook");
         return result;
     }
 

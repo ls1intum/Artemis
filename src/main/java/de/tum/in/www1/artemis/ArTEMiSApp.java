@@ -2,8 +2,9 @@ package de.tum.in.www1.artemis;
 
 import de.tum.in.www1.artemis.config.ApplicationProperties;
 import de.tum.in.www1.artemis.config.DefaultProfileUtil;
-import de.tum.in.www1.artemis.service.AutomaticSubmissionService;
-import de.tum.in.www1.artemis.service.QuizScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.AutomaticBuildPlanCleanupService;
+import de.tum.in.www1.artemis.service.scheduled.AutomaticSubmissionService;
+import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import io.github.jhipster.config.JHipsterConstants;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -29,11 +30,13 @@ public class ArTEMiSApp {
     private final Environment env;
     private final QuizScheduleService quizScheduleService;
     private final AutomaticSubmissionService automaticSubmissionService;
+    private final AutomaticBuildPlanCleanupService automaticBuildPlanCleanupService;
 
-    public ArTEMiSApp(Environment env, QuizScheduleService quizScheduleService, AutomaticSubmissionService automaticSubmissionService) {
+    public ArTEMiSApp(Environment env, QuizScheduleService quizScheduleService, AutomaticSubmissionService automaticSubmissionService, AutomaticBuildPlanCleanupService automaticBuildPlanCleanupService) {
         this.env = env;
         this.quizScheduleService = quizScheduleService;
         this.automaticSubmissionService = automaticSubmissionService;
+        this.automaticBuildPlanCleanupService = automaticBuildPlanCleanupService;
     }
 
     /**
@@ -56,9 +59,13 @@ public class ArTEMiSApp {
         }
 
         // activate Quiz Schedule Service
-        quizScheduleService.startSchedule(3000);
+        quizScheduleService.startSchedule(3 * 1000);                    //every 3 seconds
+
         // activate Automatic Submission Service
-        automaticSubmissionService.startSchedule(10000);
+        automaticSubmissionService.startSchedule(10 * 1000);            //every 10 seconds
+
+        // activate Automatic Submission Service
+        automaticBuildPlanCleanupService.startSchedule(60 * 60 * 1000);       //every 60 minutes
     }
 
     /**

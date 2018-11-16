@@ -10,13 +10,14 @@ import de.tum.in.www1.artemis.service.QuizSubmissionService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.time.ZonedDateTime;
+
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 /**
  * REST controller for managing QuizSubmission.
@@ -74,7 +75,7 @@ public class QuizSubmissionResource {
             return ResponseEntity.status(403).headers(HeaderUtil.createFailureAlert("submission", "Forbidden", "You are not allowed to participate in this exercise.")).body(null);
         }
 
-        Participation participation = participationService.init(quizExercise, principal.getName());
+        Participation participation = participationService.startExercise(quizExercise, principal.getName());
         participation.setExercise(quizExercise);
         if (!quizExercise.isEnded() || !quizExercise.isIsOpenForPractice()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("submission", "exerciseNotOpenForPractice", "The exercise is not open for practice or hasn't ended yet.")).body(null);
@@ -113,7 +114,7 @@ public class QuizSubmissionResource {
         }
 
         if (!quizExerciseService.userHasTAPermissions(quizExercise)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
 
         // update submission

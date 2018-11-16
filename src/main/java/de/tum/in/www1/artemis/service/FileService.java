@@ -10,15 +10,12 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -216,8 +213,6 @@ public class FileService {
                 Files.createDirectories(parentFolder.toPath());
             }
 
-            log.info("resource: " + resource.getURL().toString());
-            log.info("copyPath: " + copyPath);
             Files.copy(resource.getInputStream(), copyPath);
         }
     }
@@ -287,24 +282,16 @@ public class FileService {
             throw new RuntimeException("Files in directory " + startPath + " should be replaced but the directory does not exist.");
         }
 
-        String[] files = directory.list(new FilenameFilter() { // Get all files in directory
-            @Override
-            public boolean accept(File current, String name) {
-                return new File(current, name).isFile();
-            }
-        });
+        // Get all files in directory
+        String[] files = directory.list((current, name) -> new File(current, name).isFile());
 
         for (String file : files) {
             replaceVariablesInFile(directory.getAbsolutePath() + File.separator + file, targetStrings, replacementStrings);
         }
 
         // Recursive call
-        String[] subdirectories = directory.list(new FilenameFilter() { // Get all subdirectories
-            @Override
-            public boolean accept(File current, String name) {
-                return new File(current, name).isDirectory();
-            }
-        });
+        // Get all subdirectories
+        String[] subdirectories = directory.list((current, name) -> new File(current, name).isDirectory());
 
         for (String subdirectory : subdirectories) {
             replaceVariablesInFileRecursive(directory.getAbsolutePath() + File.separator + subdirectory, targetStrings, replacementStrings);

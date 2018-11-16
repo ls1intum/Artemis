@@ -1,0 +1,19 @@
+os: linux
+sudo: false
+language: node_js
+node_js:
+  - 10.12.0
+  - lts/*
+  - node
+jdk:
+  - oraclejdk8
+  - openjdk8
+  - openjdk10
+
+cache:
+  yarn: true
+  directories:
+    - $HOME/.m2
+    - $HOME/.gradle
+
+script: ./gradlew -Pprod bootWar

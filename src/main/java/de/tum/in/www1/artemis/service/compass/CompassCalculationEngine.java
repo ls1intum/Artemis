@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.service.compass;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import de.tum.in.www1.artemis.service.compass.assessment.Assessment;
-import de.tum.in.www1.artemis.service.compass.assessment.Result;
+import de.tum.in.www1.artemis.service.compass.assessment.CompassResult;
 import de.tum.in.www1.artemis.service.compass.assessment.Score;
 import de.tum.in.www1.artemis.service.compass.controller.*;
 import de.tum.in.www1.artemis.service.compass.grade.CompassGrade;
@@ -126,12 +126,12 @@ public class CompassCalculationEngine implements CalculationEngine {
         }
 
         UMLModel model = modelIndex.getModelMap().get(modelId);
-        Result result = model.getLastAssessmentResult();
+        CompassResult compassResult = model.getLastAssessmentCompassResult();
 
-        if (result == null) {
+        if (compassResult == null) {
             return automaticAssessmentController.assessModelAutomatically(model, assessmentIndex);
         }
-        return result;
+        return compassResult;
     }
 
     @Override
