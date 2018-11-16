@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
+import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.FINISHED;
 import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.INITIALIZED;
 
 /**
@@ -131,7 +132,8 @@ public class ParticipationService {
             participation.setInitializationState(INITIALIZED);
             participation.setInitializationDate(ZonedDateTime.now());
         } else if (exercise instanceof QuizExercise || exercise instanceof ModelingExercise) {
-            if (participation.getInitializationState() == null) {
+            if (participation.getInitializationState() == null || participation.getInitializationState() == FINISHED) {
+                // in case the participation was finished before, we set it to initialized again so that the user sees the correct button "Open modeling editor" on the client side
                 participation.setInitializationState(INITIALIZED);
             }
             if (!Optional.ofNullable(participation.getInitializationDate()).isPresent()) {
