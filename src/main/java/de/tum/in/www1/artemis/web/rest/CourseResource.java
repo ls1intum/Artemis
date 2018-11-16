@@ -19,7 +19,6 @@ import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -32,6 +31,8 @@ import java.security.Principal;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 /**
  * REST controller for managing Course.
@@ -147,7 +148,7 @@ public class CourseResource {
             }
         }
         else {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
     }
 
@@ -242,7 +243,7 @@ public class CourseResource {
     public ResponseEntity<Course> getCourse(@PathVariable Long id) {
         log.debug("REST request to get Course : {}", id);
         Course course = courseService.findOne(id);
-        if (!userHasPermission(course)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        if (!userHasPermission(course)) return forbidden();
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(course));
     }
 
@@ -291,7 +292,7 @@ public class CourseResource {
     public ResponseEntity<Collection<Result>> getAllSummedScoresOfCourseUsers(@PathVariable("courseId") Long courseId) {
         log.debug("REST request to get courseScores from course : {}", courseId);
         Course course = courseService.findOne(courseId);
-        if (!userHasPermission(course)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        if (!userHasPermission(course)) return forbidden();
         return ResponseEntity.ok(courseService.getAllOverallScoresOfCourse(courseId));
     }
 

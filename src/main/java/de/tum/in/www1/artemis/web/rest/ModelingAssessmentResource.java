@@ -10,6 +10,7 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +21,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
 import java.util.Set;
+
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 /**
  * REST controller for managing ModelingAssessment.
@@ -61,19 +64,12 @@ public class ModelingAssessmentResource {
     public ResponseEntity<String> resetOptimalModels(@PathVariable Long exerciseId) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         if (modelingExercise == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            return ResponseUtil.notFound();
         }
-        // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(modelingExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this modeling exercise does not exist")).body(null);
-        }
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-            !authCheckService.isInstructorInCourse(course, user) &&
-            !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+
+        ResponseEntity responseFailure = checkModelingExercise(modelingExercise);
+        if (responseFailure != null) return responseFailure;
+
         compassService.resetModelsWaitingForAssessment(exerciseId);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
@@ -83,17 +79,9 @@ public class ModelingAssessmentResource {
     @Timed
     public ResponseEntity<String> getNextOptimalModelSubmissions(@PathVariable Long exerciseId) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(modelingExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this modeling exercise does not exist")).body(null);
-        }
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-            !authCheckService.isInstructorInCourse(course, user) &&
-            !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+
+        ResponseEntity responseFailure = checkModelingExercise(modelingExercise);
+        if (responseFailure != null) return responseFailure;
 
         //TODO: we need to make sure that per participation there is only one optimalModel
         Set<Long> optimalModelSubmissions = compassService.getModelsWaitingForAssessment(exerciseId);
@@ -111,17 +99,9 @@ public class ModelingAssessmentResource {
     @Timed
     public ResponseEntity<String> getPartialAssessment(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(modelingExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this modeling exercise does not exist")).body(null);
-        }
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-            !authCheckService.isInstructorInCourse(course, user) &&
-            !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+
+        ResponseEntity responseFailure = checkModelingExercise(modelingExercise);
+        if (responseFailure != null) return responseFailure;
 
         JsonObject partialAssessment = compassService.getPartialAssessment(exerciseId, submissionId);
         return ResponseEntity.ok(partialAssessment.get("assessments").toString());
@@ -146,7 +126,7 @@ public class ModelingAssessmentResource {
         Participation participation = optionalParticipation.get();
 
         if (!courseService.userHasAtLeastStudentPermissions(participation.getExercise().getCourse()) || !authCheckService.isOwnerOfParticipation(participation)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
 
         Long exerciseId = participation.getExercise().getId();
@@ -178,7 +158,7 @@ public class ModelingAssessmentResource {
         if (modelingExercise == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("modelingExercise", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
         }
-        ResponseEntity<Result> responseFailure = checkModelingExercise(modelingExercise);
+        ResponseEntity responseFailure = checkModelingExercise(modelingExercise);
         if (responseFailure != null) return responseFailure;
 
         Result result = modelingAssessmentService.saveManualAssessment(resultId, exerciseId, modelingAssessment);
@@ -200,7 +180,7 @@ public class ModelingAssessmentResource {
     public ResponseEntity<Result> submitModelingAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody String modelingAssessment) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
 
-        ResponseEntity<Result> responseFailure = checkModelingExercise(modelingExercise);
+        ResponseEntity responseFailure = checkModelingExercise(modelingExercise);
         if (responseFailure != null) return responseFailure;
 
         Result result = modelingAssessmentService.submitManualAssessment(resultId, exerciseId, modelingAssessment);
@@ -212,7 +192,7 @@ public class ModelingAssessmentResource {
     }
 
     @Nullable
-    private ResponseEntity<Result> checkModelingExercise(ModelingExercise modelingExercise) {
+    private <X> ResponseEntity<X> checkModelingExercise(ModelingExercise modelingExercise) {
         Course course = modelingExercise.getCourse();
         if (course == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this modeling exercise does not exist")).body(null);
@@ -221,7 +201,7 @@ public class ModelingAssessmentResource {
         if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
             !authCheckService.isInstructorInCourse(course, user) &&
             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
         return null;
     }

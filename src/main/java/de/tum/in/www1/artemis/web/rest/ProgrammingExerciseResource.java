@@ -12,7 +12,6 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +25,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 /**
  * REST controller for managing ProgrammingExercise.
@@ -109,7 +110,7 @@ public class ProgrammingExerciseResource {
         if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
             !authCheckService.isInstructorInCourse(course, user) &&
             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
         ResponseEntity<ProgrammingExercise> errorResponse = checkProgrammingExerciseForError(programmingExercise);
         if(errorResponse != null) {
@@ -153,7 +154,7 @@ public class ProgrammingExerciseResource {
         if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
             !authCheckService.isInstructorInCourse(course, user) &&
             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
         //make sure that we use the values from the database and not the once which might have been altered in the client
         programmingExercise.setCourse(course);
@@ -248,7 +249,7 @@ public class ProgrammingExerciseResource {
         if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
             !authCheckService.isInstructorInCourse(course, user) &&
             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
         ResponseEntity<ProgrammingExercise> errorResponse = checkProgrammingExerciseForError(programmingExercise);
         if(errorResponse != null) {
@@ -299,7 +300,7 @@ public class ProgrammingExerciseResource {
         if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
              !authCheckService.isInstructorInCourse(course, user) &&
              !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
         List<ProgrammingExercise> exercises = programmingExerciseRepository.findByCourseId(courseId);
 
@@ -324,7 +325,7 @@ public class ProgrammingExerciseResource {
             if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
                 !authCheckService.isInstructorInCourse(course, user) &&
                 !authCheckService.isAdmin()) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                return forbidden();
             }
         }
         return ResponseUtil.wrapOrNotFound(programmingExercise);
@@ -347,7 +348,7 @@ public class ProgrammingExerciseResource {
             User user = userService.getUserWithGroupsAndAuthorities();
             if (!authCheckService.isInstructorInCourse(course, user) &&
                 !authCheckService.isAdmin()) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                return forbidden();
             }
             String title = programmingExercise.get().getTitle();
             exerciseService.delete(programmingExercise.get(), deleteStudentReposBuildPlans, deleteBaseReposBuildPlans);
