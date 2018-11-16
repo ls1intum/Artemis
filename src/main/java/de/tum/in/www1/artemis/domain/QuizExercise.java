@@ -344,15 +344,17 @@ public class QuizExercise extends Exercise implements Serializable {
     }
 
     /**
-     * set all sensitive information to null, so no info gets leaked to students through json
+     * set all sensitive information to null, so no info with respect to the solution gets leaked to students through json
      */
+    @Override
     public void filterSensitiveInformation() {
         setQuizPointStatistic(null);
         setQuestions(new ArrayList<>());
+        super.filterSensitiveInformation();
     }
 
     /**
-     * filter out information about correct answers
+     * filter out information about correct answers, so no info with respect to the solution gets leaked to students through json
      */
     public void filterForStudentsDuringQuiz() {
         // filter out statistics

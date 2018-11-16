@@ -31,6 +31,15 @@ public class TextExercise extends Exercise implements Serializable {
         this.sampleSolution = sampleSolution;
     }
 
+    /**
+     * set all sensitive information to null, so no info with respect to the solution gets leaked to students through json
+     */
+    @Override
+    public void filterSensitiveInformation() {
+        setSampleSolution(null);
+        super.filterSensitiveInformation();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

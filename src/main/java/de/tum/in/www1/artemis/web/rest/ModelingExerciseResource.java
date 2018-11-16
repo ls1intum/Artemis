@@ -200,21 +200,6 @@ public class ModelingExerciseResource {
     }
 
     /**
-     * GET  /modeling-exercises/:id : get the "id" modelingExercise.
-     *
-     * @param id the id of the modelingExercise to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the modelingExercise, or with status 404 (Not Found)
-     */
-    @GetMapping("/modeling-exercises/{id}")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
-    public ResponseEntity<ModelingExercise> getModelingExercise(@PathVariable Long id) {
-        log.debug("REST request to get ModelingExercise : {}", id);
-        Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findById(id);
-        return ResponseUtil.wrapOrNotFound(modelingExercise);
-    }
-
-    /**
      * DELETE  /modeling-exercises/:id : delete the "id" modelingExercise.
      *
      * @param id the id of the modelingExercise to delete
@@ -258,6 +243,11 @@ public class ModelingExerciseResource {
             if (modelingExercise == null) {
                 return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("modelingExercise", "exerciseEmpty", "The exercise belonging to the participation is null.")).body(null);
             }
+
+            //make sure the solution is not sent to the client
+            modelingExercise.setSampleSolutionExplanation(null);
+            modelingExercise.setSampleSolutionModel(null);
+
         } else {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("modelingExercise", "wrongExerciseType", "The exercise of the participation is not a modeling exercise.")).body(null);
         }
