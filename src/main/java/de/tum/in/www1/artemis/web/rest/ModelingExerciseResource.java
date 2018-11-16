@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.JsonAssessmentRepository;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -16,9 +15,9 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 import org.hibernate.Hibernate;
 import org.hibernate.proxy.HibernateProxy;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,12 +27,14 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 /**
  * REST controller for managing ModelingExercise.
@@ -55,7 +56,6 @@ public class ModelingExerciseResource {
     private final ModelingSubmissionRepository modelingSubmissionRepository;
     private final ResultRepository resultRepository;
     private final ObjectMapper objectMapper;
-    private final JsonAssessmentRepository jsonAssessmentRepository;
     private final ModelingExerciseService modelingExerciseService;
     private final CompassService compassService;
     private final ModelingAssessmentService modelingAssessmentService;
@@ -69,7 +69,6 @@ public class ModelingExerciseResource {
                                     ModelingSubmissionRepository modelingSubmissionRepository,
                                     ResultRepository resultRepository,
                                     MappingJackson2HttpMessageConverter springMvcJacksonConverter,
-                                    JsonAssessmentRepository jsonAssessmentRepository,
                                     ModelingExerciseService modelingExerciseService,
                                     CompassService compassService,
                                     ModelingAssessmentService modelingAssessmentService) {
@@ -83,7 +82,6 @@ public class ModelingExerciseResource {
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.resultRepository = resultRepository;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
-        this.jsonAssessmentRepository = jsonAssessmentRepository;
         this.compassService = compassService;
         this.modelingAssessmentService = modelingAssessmentService;
     }
@@ -103,7 +101,17 @@ public class ModelingExerciseResource {
         if (modelingExercise.getId() != null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new modelingExercise cannot already have an ID")).body(null);
         }
+        ResponseEntity<ModelingExercise> responseFailure = checkModelingExercise(modelingExercise);
+        if (responseFailure != null) return responseFailure;
 
+        ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
+        return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId()))
+            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
+            .body(result);
+    }
+
+    @Nullable
+    private ResponseEntity<ModelingExercise> checkModelingExercise(@RequestBody ModelingExercise modelingExercise) {
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(modelingExercise.getCourse().getId());
         if (course == null) {
@@ -113,13 +121,9 @@ public class ModelingExerciseResource {
         if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
             !authCheckService.isInstructorInCourse(course, user) &&
             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
-
-        ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
-        return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
-            .body(result);
+        return null;
     }
 
     /**
@@ -140,17 +144,8 @@ public class ModelingExerciseResource {
             return createModelingExercise(modelingExercise);
         }
 
-        // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(modelingExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this modeling exercise does not exist")).body(null);
-        }
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-            !authCheckService.isInstructorInCourse(course, user) &&
-            !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+        ResponseEntity<ModelingExercise> responseFailure = checkModelingExercise(modelingExercise);
+        if (responseFailure != null) return responseFailure;
 
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
         return ResponseEntity.ok()
@@ -197,7 +192,7 @@ public class ModelingExerciseResource {
         if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
             !authCheckService.isInstructorInCourse(course, user) &&
             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
         List<ModelingExercise> exercises = modelingExerciseRepository.findByCourseId(courseId);
 
@@ -235,7 +230,7 @@ public class ModelingExerciseResource {
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(course, user) &&
             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
         modelingExerciseService.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
@@ -271,7 +266,7 @@ public class ModelingExerciseResource {
         if (authCheckService.isOwnerOfParticipation(participation) || courseService.userHasAtLeastTAPermissions(modelingExercise.getCourse())) {
             //continue
         } else {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
 
         // if no results, check if there are really no results or the relation to results was not updated yet
@@ -301,7 +296,7 @@ public class ModelingExerciseResource {
         if (modelingSubmission.isSubmitted() && result != null && result.getCompletionDate() != null) {
             // find assessments if modelingSubmission is submitted and assessment has been submitted
             String assessments = modelingAssessmentService.findLatestAssessment(modelingExercise.getId(), participation.getStudent().getId(), modelingSubmission.getId());
-            if (assessments != null && assessments != "") {
+            if (assessments != null && !assessments.equals("")) {
                 result.setAssessments(assessments);
             }
         }
@@ -332,12 +327,12 @@ public class ModelingExerciseResource {
         if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
             !authCheckService.isInstructorInCourse(course, user) &&
             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
 
         Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionRepository.findById(submissionId);
         if (!optionalModelingSubmission.isPresent()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return notFound();
         }
         ModelingSubmission modelingSubmission = optionalModelingSubmission.get();
         Result result = resultRepository.findDistinctBySubmissionId(submissionId).orElse(null);
@@ -348,7 +343,6 @@ public class ModelingExerciseResource {
             modelingSubmission.getParticipation().addResult(result);
             result = resultRepository.save(result);
             modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
-//            participationService.save(modelingSubmission.getParticipation());
         }
 
         if (result.getAssessor() == null) {
@@ -370,7 +364,7 @@ public class ModelingExerciseResource {
         data.set("modelingSubmission", objectMapper.valueToTree(modelingSubmission));
         if (modelingSubmission.isSubmitted()) {
             String assessment = modelingAssessmentService.findLatestAssessment(modelingExercise.get().getId(), result.getParticipation().getStudent().getId(), modelingSubmission.getId());
-            if (assessment != null && assessment != "") {
+            if (assessment != null && !assessment.equals("")) {
                 try {
                     data.set("assessments", objectMapper.readTree(assessment));
                 } catch (IOException e) {

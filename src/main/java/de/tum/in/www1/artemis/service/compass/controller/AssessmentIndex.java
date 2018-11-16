@@ -14,11 +14,11 @@ public class AssessmentIndex {
         modelElementAssessmentMapping = new HashMap<>();
     }
 
-    Assessment getAssessment (UMLElement element) {
+    protected Assessment getAssessment (UMLElement element) {
         return modelElementAssessmentMapping.get(element.getElementID());
     }
 
-    void addAssessment (int elementID, Assessment assessment) {
+    protected void addAssessment (int elementID, Assessment assessment) {
         modelElementAssessmentMapping.putIfAbsent(elementID, assessment);
     }
 
