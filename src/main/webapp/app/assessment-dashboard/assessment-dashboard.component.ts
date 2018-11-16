@@ -89,6 +89,11 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
         this.eventSubscriber = this.eventManager.subscribe('resultListModification', () => this.getSubmissions(true));
     }
 
+    /**
+     * Get all results for the current exercise, this includes information about all submitted models ( = submissions)
+     *
+     * @param {boolean} forceReload force REST call to update nextOptimalSubmissionIds
+     */
     getSubmissions(forceReload: boolean) {
         this.modelingSubmissionService
             .getModelingSubmissionsForExercise(this.exercise.course.id, this.exercise.id, { submittedOnly: true })
@@ -98,7 +103,7 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
                 this.submissions = res.body.filter(submission => submission.submitted);
                 this.submissions.forEach(submission => {
                     if (submission.result) {
-                        //reconnect some associations
+                        // reconnect some associations
                         submission.result.submission = submission;
                         submission.result.participation = submission.participation;
                         submission.participation.results = [submission.result];
@@ -111,6 +116,11 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
             });
     }
 
+    /**
+     * Check if nextOptimalSubmissionIds are needed then applyFilter
+     *
+     * @param {boolean} forceReload force REST call to update nextOptimalSubmissionIds
+     */
     filterSubmissions(forceReload: boolean) {
         if (this.nextOptimalSubmissionIds.length < 3 || forceReload) {
             this.modelingAssessmentService.getOptimalSubmissions(this.exercise.id).subscribe(optimal => {
@@ -122,6 +132,9 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Mark results as optimal and split them up in all, optimal and not optimal sets
+     */
     applyFilter() {
         // A submission is optimal if it is part of nextOptimalSubmissionIds and (nobody is currently assessing it or you are currently assessing it)
         this.submissions.forEach(submission => {
@@ -151,6 +164,9 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
         this.getSubmissions(true);
     }
 
+    /**
+     * Reset optimality attribute of models
+     */
     resetOptimality() {
         this.modelingAssessmentService.resetOptimality(this.exercise.id).subscribe(() => {
             this.filterSubmissions(true);
@@ -163,6 +179,11 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Select the next optimal submission to assess or otherwise trigger the REST call
+     *
+     * @param {number} attempts Count the attempts to reduce frequency on repeated failure (network errors)
+     */
     assessNextOptimal(attempts: number) {
         if (attempts > 3) {
             this.busy = false;

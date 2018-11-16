@@ -26,6 +26,11 @@ public class Assessment {
         return contextScoreMapping.get(context);
     }
 
+    /**
+     * Add score for a specific context to the contextScoreList, recalculate metrics for the contextScoreMapping
+     * @param score The score to add
+     * @param context The context connected to the score
+     */
     public void addScore(Score score, Context context) {
         HashSet<String> comments = new HashSet<>();
         List<Score> scoreList = contextScoreList.computeIfAbsent(context, k -> new ArrayList<>());

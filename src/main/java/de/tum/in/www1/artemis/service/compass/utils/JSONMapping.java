@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.service.compass.utils;
 
+/**
+ * JSON keywords
+ */
 public class JSONMapping {
     // general
     public static final String elementID = "id";
