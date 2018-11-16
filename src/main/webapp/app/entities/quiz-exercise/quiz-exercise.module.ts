@@ -21,7 +21,12 @@ const ENTITY_STATES = [...quizExerciseRoute, ...quizExercisePopupRoute];
 @NgModule({
     imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, ArTEMiSQuizEditModule, ArTEMiSQuizReEvaluateModule],
     declarations: [QuizExerciseComponent, QuizExerciseDeleteDialogComponent, QuizExerciseDeletePopupComponent, QuizExerciseDetailComponent],
-    entryComponents: [QuizExerciseComponent, QuizExerciseDeleteDialogComponent, QuizExerciseDeletePopupComponent],
+    entryComponents: [
+        QuizExerciseComponent,
+        QuizExerciseDeleteDialogComponent,
+        QuizExerciseDeletePopupComponent,
+        QuizExerciseDetailComponent
+    ],
     providers: [QuizExerciseService, QuizExercisePopupService],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
