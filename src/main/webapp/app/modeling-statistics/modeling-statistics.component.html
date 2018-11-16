@@ -1,0 +1,94 @@
+<h1>Statistics:</h1>
+<div *ngIf="statistics && statistics.numberModels">
+    <h5 style="padding-top: 5px">Exercise statistics:</h5>
+    <div class="table-responsive">
+        <table class="table table-striped exercise-table">
+            <thead>
+            <tr>
+                <th>
+                    <a class="th-link">Metric name</a> <span class="fa fa-sort"></span>
+                </th>
+                <th>
+                    <a class="th-link">Value</a> <span class="fa fa-sort"></span>
+                </th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>Number of models</td>
+                <td>{{statistics.numberModels}}</td>
+            </tr>
+            <tr>
+                <td>Number of conflicts</td>
+                <td>{{statistics.numberConflicts}}</td>
+            </tr>
+            <tr>
+                <td>Total confidence</td>
+                <td>{{statistics.totalConfidence}}</td>
+            </tr>
+            <tr>
+                <td>Total coverage</td>
+                <td>{{statistics.totalCoverage}}</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <h5 style="padding-top: 5px">Model statistics:</h5>
+    <div class="table-responsive">
+        <table class="table table-striped exercise-table">
+            <thead>
+            <tr>
+                <th>
+                    <a class="th-link">ID</a> <span class="fa fa-sort"></span>
+                </th>
+                <th>
+                    <a class="th-link">Number of conflicts</a> <span class="fa fa-sort"></span>
+                </th>
+                <th>
+                    <a class="th-link">Confidence</a> <span class="fa fa-sort"></span>
+                </th>
+                <th>
+                    <a class="th-link">Coverage</a> <span class="fa fa-sort"></span>
+                </th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr *ngFor="let modelId of modelIds">
+                <td>{{modelId}}</td>
+                <td>{{statistics.models[modelId].conflicts}}</td>
+                <td>{{statistics.models[modelId].confidence}}</td>
+                <td>{{statistics.models[modelId].coverage}}</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <h5 style="padding-top: 5px">Unique Element statistics:</h5>
+    <div class="table-responsive">
+        <table class="table table-striped exercise-table">
+            <thead>
+            <tr>
+                <th>
+                    <a class="th-link">ID</a> <span class="fa fa-sort"></span>
+                </th>
+                <th>
+                    <a class="th-link">Name</a> <span class="fa fa-sort"></span>
+                </th>
+                <th>
+                    <a class="th-link">ApollonId</a> <span class="fa fa-sort"></span>
+                </th>
+                <th>
+                    <a class="th-link">Conflict</a> <span class="fa fa-sort"></span>
+                </th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr *ngFor="let elementId of elementIds">
+                <td>{{elementId}}</td>
+                <td>{{statistics.uniqueElements[elementId].name}}</td>
+                <td>{{statistics.uniqueElements[elementId].apollonId}}</td>
+                <td>{{statistics.uniqueElements[elementId].conflict}}</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
