@@ -12,17 +12,11 @@ import { TextExerciseService } from './text-exercise.service';
     templateUrl: './text-exercise-detail.component.html'
 })
 export class TextExerciseDetailComponent implements OnInit, OnDestroy {
-
     textExercise: TextExercise;
     private subscription: Subscription;
     private eventSubscriber: Subscription;
 
-    constructor(
-        private eventManager: JhiEventManager,
-        private textExerciseService: TextExerciseService,
-        private route: ActivatedRoute
-    ) {
-    }
+    constructor(private eventManager: JhiEventManager, private textExerciseService: TextExerciseService, private route: ActivatedRoute) {}
 
     ngOnInit() {
         this.subscription = this.route.params.subscribe(params => {
@@ -31,11 +25,10 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
         this.registerChangeInTextExercises();
     }
 
-    load(id) {
-        this.textExerciseService.find(id)
-            .subscribe((textExerciseResponse: HttpResponse<TextExercise>) => {
-                this.textExercise = textExerciseResponse.body;
-            });
+    load(id: number) {
+        this.textExerciseService.find(id).subscribe((textExerciseResponse: HttpResponse<TextExercise>) => {
+            this.textExercise = textExerciseResponse.body;
+        });
     }
     previousState() {
         window.history.back();
@@ -47,9 +40,6 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     registerChangeInTextExercises() {
-        this.eventSubscriber = this.eventManager.subscribe(
-            'textExerciseListModification',
-            response => this.load(this.textExercise.id)
-        );
+        this.eventSubscriber = this.eventManager.subscribe('textExerciseListModification', () => this.load(this.textExercise.id));
     }
 }

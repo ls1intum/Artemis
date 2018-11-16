@@ -1,13 +1,20 @@
 package de.tum.in.www1.artemis.service;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -20,6 +27,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
+import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
+import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.FINISHED;
 import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.INITIALIZED;
 
 /**
@@ -31,9 +40,13 @@ public class ParticipationService {
 
     private final Logger log = LoggerFactory.getLogger(ParticipationService.class);
 
+    @Value("${server.url}")
+    private String ARTEMIS_BASE_URL;
+
     private final ParticipationRepository participationRepository;
     private final ExerciseRepository exerciseRepository;
     private final ResultRepository resultRepository;
+    private final SubmissionRepository submissionRepository;
     private final QuizSubmissionService quizSubmissionService;
     private final UserService userService;
     private final Optional<GitService> gitService;
@@ -43,6 +56,7 @@ public class ParticipationService {
     public ParticipationService(ParticipationRepository participationRepository,
                                 ExerciseRepository exerciseRepository,
                                 ResultRepository resultRepository,
+                                SubmissionRepository submissionRepository,
                                 QuizSubmissionService quizSubmissionService,
                                 UserService userService,
                                 Optional<GitService> gitService,
@@ -51,6 +65,7 @@ public class ParticipationService {
         this.participationRepository = participationRepository;
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
+        this.submissionRepository = submissionRepository;
         this.quizSubmissionService = quizSubmissionService;
         this.userService = userService;
         this.gitService = gitService;
@@ -78,12 +93,14 @@ public class ParticipationService {
      * @return
      */
     @Transactional
-    public Participation init(Exercise exercise, String username) {
+    public Participation startExercise(Exercise exercise, String username) {
 
         // common for all exercises
         // Check if participation already exists
         Participation participation = participationRepository.findOneByExerciseIdAndStudentLogin(exercise.getId(), username);
-        if (!Optional.ofNullable(participation).isPresent() || (!(exercise instanceof QuizExercise) && participation.getInitializationState() == InitializationState.FINISHED)) { //create a new participation only if it was finished before (not for quiz exercise)
+        if (!Optional.ofNullable(participation).isPresent() ||
+            (exercise instanceof ProgrammingExercise && participation.getInitializationState() == InitializationState.FINISHED)) {
+            // create a new participation only if it was finished before (only for programming exercises)
             participation = new Participation();
             participation.setExercise(exercise);
 
@@ -92,6 +109,10 @@ public class ParticipationService {
                 participation.setStudent(user.get());
             }
             participation = save(participation);
+        }
+        else {
+            //make sure participation and exercise are connected
+            participation.setExercise(exercise);
         }
 
 
@@ -103,13 +124,16 @@ public class ParticipationService {
             ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
             participation.setInitializationState(InitializationState.UNINITIALIZED);
             participation = copyRepository(participation, programmingExercise);
-            participation = configureRepository(participation, programmingExercise);
+            participation = configureRepository(participation);
             participation = copyBuildPlan(participation, programmingExercise);
-            participation = configureBuildPlan(participation, programmingExercise);
+            participation = configureBuildPlan(participation);
+            participation = configureRepositoryWebHook(participation);
+            //we configure the repository webhook after the build plan, because we might have to push an empty commit due to the bamboo workaround (see empty-commit-necessary)
             participation.setInitializationState(INITIALIZED);
             participation.setInitializationDate(ZonedDateTime.now());
         } else if (exercise instanceof QuizExercise || exercise instanceof ModelingExercise) {
-            if (participation.getInitializationState() == null) {
+            if (participation.getInitializationState() == null || participation.getInitializationState() == FINISHED) {
+                // in case the participation was finished before, we set it to initialized again so that the user sees the correct button "Open modeling editor" on the client side
                 participation.setInitializationState(INITIALIZED);
             }
             if (!Optional.ofNullable(participation.getInitializationDate()).isPresent()) {
@@ -117,7 +141,7 @@ public class ParticipationService {
             }
         }
 
-        save(participation);
+        participation = save(participation);
         return participation;
     }
 
@@ -133,6 +157,8 @@ public class ParticipationService {
      * @param username the username of the user that the participation belongs to
      * @return the found or created participation
      */
+
+    //TODO The method name is misleading. It sounds that data is only read, but it is also changed, see e.g. below setRated(true)
     public Participation getParticipationForQuiz(QuizExercise quizExercise, String username) {
         if (quizExercise.isEnded()) {
             // try getting participation from database first
@@ -180,14 +206,12 @@ public class ParticipationService {
         Result result = new Result().submission(quizSubmission);
 
         // construct participation
-        participation = new Participation()
-            .initializationState(INITIALIZED)
-            .exercise(quizExercise)
-            .addResult(result);
+        participation = new Participation().initializationState(INITIALIZED).exercise(quizExercise).addResult(result);
 
         if (quizExercise.isEnded() && quizSubmission.getSubmissionDate() != null) {
             // update result and participation state
             result.setRated(true);
+            result.setAssessmentType(AssessmentType.AUTOMATIC);
             result.setCompletionDate(ZonedDateTime.now());
             participation.setInitializationState(InitializationState.FINISHED);
 
@@ -208,7 +232,7 @@ public class ParticipationService {
     public Participation resume(Exercise exercise, Participation participation) {
         ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
         participation = copyBuildPlan(participation, programmingExercise);
-        participation = configureBuildPlan(participation, programmingExercise);
+        participation = configureBuildPlan(participation);
         participation.setInitializationState(INITIALIZED);
         if (participation.getInitializationDate() == null) {
             //only set the date if it was not set before (which should NOT be the case)
@@ -231,7 +255,7 @@ public class ParticipationService {
         }
     }
 
-    private Participation configureRepository(Participation participation, ProgrammingExercise exercise) {
+    private Participation configureRepository(Participation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
             versionControlService.get().configureRepository(participation.getRepositoryUrlAsUrl(), participation.getStudent().getLogin());
             participation.setInitializationState(InitializationState.REPO_CONFIGURED);
@@ -252,13 +276,19 @@ public class ParticipationService {
         }
     }
 
-    private Participation configureBuildPlan(Participation participation, ProgrammingExercise exercise) {
+    private Participation configureBuildPlan(Participation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.BUILD_PLAN_CONFIGURED)) {
-            continuousIntegrationService.get().configureBuildPlan(
-                participation.getBuildPlanId(),
-                participation.getRepositoryUrlAsUrl(),
-                participation.getStudent().getLogin());
+            continuousIntegrationService.get().configureBuildPlan(participation);
             participation.setInitializationState(InitializationState.BUILD_PLAN_CONFIGURED);
+            return save(participation);
+        } else {
+            return participation;
+        }
+    }
+
+    private Participation configureRepositoryWebHook(Participation participation) {
+        if (!participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
+            versionControlService.get().addWebHook(participation.getRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participation.getId(), "ArTEMiS WebHook");
             return save(participation);
         } else {
             return participation;
@@ -297,8 +327,33 @@ public class ParticipationService {
     @Transactional(readOnly = true)
     public Participation findOne(Long id) {
         log.debug("Request to get Participation : {}", id);
-        return participationRepository.findOne(id);
+        return participationRepository.findById(id).get();
     }
+
+    /**
+     * Get one participation by id including all results
+     *
+     * @param id the id of the participation
+     * @return the participation with all its results
+     */
+    @Transactional(readOnly = true)
+    public Participation findOneWithEagerResults(Long id) {
+        log.debug("Request to get Participation : {}", id);
+        return participationRepository.findByIdWithEagerResults(id);
+    }
+
+    /**
+     * Get one participation by id including all submissions.
+     *
+     * @param id the id of the entity
+     * @return the participation with all its submissions
+     */
+    @Transactional(readOnly = true)
+    public Participation findOneWithEagerSubmissions(Long id) {
+        log.debug("Request to get Participation : {}", id);
+        return participationRepository.findByIdWithEagerSubmissions(id);
+    }
+
 
     /**
      * Get one initialized/inactive participation by its student and exercise.
@@ -361,6 +416,11 @@ public class ParticipationService {
     }
 
     @Transactional(readOnly = true)
+    public List<Participation> findByExerciseIdWithEagerSubmissions(Long exerciseId) {
+        return participationRepository.findByExerciseIdWithEagerSubmissions(exerciseId);
+    }
+
+    @Transactional(readOnly = true)
     public List<Participation> findByCourseId(Long courseId) {
         return participationRepository.findByCourseId(courseId);
     }
@@ -373,15 +433,10 @@ public class ParticipationService {
     @Transactional(noRollbackFor={Throwable.class})
     public void delete(Long id, boolean deleteBuildPlan, boolean deleteRepository) {
         log.debug("Request to delete Participation : {}", id);
-        Participation participation = participationRepository.findOne(id);
+        Participation participation = participationRepository.findById(id).get();
         if (participation != null && participation.getExercise() instanceof ProgrammingExercise) {
             if (deleteBuildPlan && participation.getBuildPlanId() != null) {
-                try {
-                    continuousIntegrationService.get().deleteBuildPlan(participation.getBuildPlanId());
-                }
-                catch(Exception ex) {
-                    log.error("Could not delete build plan: " + ex.getMessage());
-                }
+                continuousIntegrationService.get().deleteBuildPlan(participation.getBuildPlanId());
             }
             if (deleteRepository && participation.getRepositoryUrl() != null) {
                 try {
@@ -400,9 +455,22 @@ public class ParticipationService {
             }
         }
         if (participation.getResults() != null && participation.getResults().size() > 0) {
-            log.info("Will delete " + participation.getResults().size() + " results");
             for (Result result : participation.getResults()) {
-                resultRepository.delete(result.getId());
+                resultRepository.deleteById(result.getId());
+                //The following code is necessary, because we might have submissions in results which are not properly connected to a participation and CASCASE_REMOVE is not active in this case
+                if (result.getSubmission() != null) {
+                    Submission submissionToDelete = result.getSubmission();
+                    submissionRepository.deleteById(submissionToDelete.getId());
+                    result.setSubmission(null);
+                    //make sure submissions don't get deleted twice (see below)
+                    participation.removeSubmissions(submissionToDelete);
+                }
+            }
+        }
+        //The following case is necessary, because we might have submissions without result
+        if (participation.getSubmissions() != null && participation.getSubmissions().size() > 0) {
+            for (Submission submission : participation.getSubmissions()) {
+                submissionRepository.deleteById(submission.getId());
             }
         }
 

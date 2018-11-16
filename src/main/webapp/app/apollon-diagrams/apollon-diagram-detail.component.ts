@@ -1,7 +1,7 @@
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import ApollonEditor from '@ls1intum/apollon';
+import ApollonEditor, { State } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
 import * as ApollonDiagramTitleFormatter from './apollonDiagramTitleFormatter';
 import { ApollonQuizExerciseGenerationComponent } from './exercise-generation/apollon-quiz-exercise-generation.component';
@@ -53,14 +53,15 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         }
     }
 
-    initializeApollonEditor(initialState) {
+    initializeApollonEditor(initialState: State) {
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();
         }
 
         this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
             mode: 'FULL',
-            initialState
+            initialState,
+            diagramType: 'CLASS'
         });
     }
 

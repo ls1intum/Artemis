@@ -25,7 +25,7 @@
                 <td><a routerLink="/participation/{{participation.id}}">{{participation.id}}</a></td>
                 <td>{{participation.repositoryUrl}}</td>
                 <td>{{participation.buildPlanId}}</td>
-                <td jhiTranslate="{{'arTeMiSApp.InitializationState.' + participation.initializationState}}">{{participation.initializationState}}</td>
+                <td>{{participation.initializationState}}</td>
                 <td>{{participation.initializationDate | date:'medium'}}</td>
                 <td>
                     <a routerLink="/user-management/{{participation.student?.login}}">{{participation.student?.firstName}} {{participation.student?.lastName}}</a>
@@ -34,7 +34,7 @@
                     <div class="btn-group flex-btn-group-container">
                         <button type="submit"
                                 routerLink="/participation/{{participation.id}}"
-                                class="btn btn-info btn-sm">
+                                class="btn btn-info btn-sm mr-1">
                             <span class="fa fa-eye"></span>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                         </button>
@@ -42,14 +42,14 @@
                                 [routerLink]="['/', { outlets: { popup: 'participation/'+ participation.id + '/delete'} }]"
                                 replaceUrl="true"
                                 queryParamsHandling="merge"
-                                class="btn btn-danger btn-sm">
+                                class="btn btn-danger btn-sm mr-1">
                             <span class="fa fa-remove"></span>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
                         </button>
-                        <div *ngIf="exercise.type !== MODELING">
+                        <div *ngIf="exercise.type === PROGRAMMING">
                             <button type="submit"
                                     [routerLink]="['/', { outlets: { popup: ['participation', participation.id, 'result', 'new']} }]"
-                                    class="btn btn-primary btn-sm">
+                                    class="btn btn-warning btn-sm mr-1">
                                 <span class="fa fa-asterisk"></span>
                                 <span class="d-none d-md-inline">New Result</span>
                             </button>

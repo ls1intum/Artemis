@@ -29,7 +29,8 @@ import java.util.Objects;
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({
     @JsonSubTypes.Type(value = MultipleChoiceQuestion.class, name = "multiple-choice"),
-    @JsonSubTypes.Type(value = DragAndDropQuestion.class, name = "drag-and-drop")
+    @JsonSubTypes.Type(value = DragAndDropQuestion.class, name = "drag-and-drop"),
+    @JsonSubTypes.Type(value = ShortAnswerQuestion.class, name = "short-answer")
 })
 public abstract class Question implements Serializable {
 
@@ -44,7 +45,7 @@ public abstract class Question implements Serializable {
     @JsonView(QuizView.Before.class)
     private String title;
 
-    @Column(name = "text")
+    @Column(name = "text", length = 1000)
     @JsonView(QuizView.Before.class)
     private String text;
 

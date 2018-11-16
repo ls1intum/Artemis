@@ -2,72 +2,65 @@ import { Participation } from '../../entities/participation';
 import { JhiAlertService } from 'ng-jhipster';
 import { TranslateService } from '@ngx-translate/core';
 import { AfterViewInit, Component, ElementRef, Input, OnChanges, OnDestroy, OnInit, Renderer2, SimpleChanges } from '@angular/core';
-import { WindowRef } from '../../shared/websocket/window.service';
+import { WindowRef } from '../../core/websocket/window.service';
 import { RepositoryFileService, RepositoryService } from '../../entities/repository/repository.service';
 import { EditorComponent } from '../editor.component';
 import { EditorService } from '../editor.service';
-import { JhiWebsocketService } from '../../shared';
+import { JhiWebsocketService } from '../../core';
 import { Result, ResultService } from '../../entities/result';
 import { Feedback } from '../../entities/feedback';
 import { EditorInstructionsResultDetailComponent } from './editor-instructions-result-detail';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import * as interact from 'interactjs';
+import { Interactable } from 'interactjs';
 import * as Remarkable from 'remarkable';
+
+interface Step {
+    title: string;
+    done: boolean;
+}
 
 @Component({
     selector: 'jhi-editor-instructions',
     templateUrl: './editor-instructions.component.html',
-    providers: [
-        JhiAlertService,
-        WindowRef,
-        RepositoryService,
-        ResultService,
-        EditorService
-    ]
+    providers: [JhiAlertService, WindowRef, RepositoryService, ResultService, EditorService]
 })
-
-export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnChanges, OnDestroy {
-
-    isLoading = false;
+export class EditorInstructionsComponent implements AfterViewInit, OnChanges, OnDestroy {
+    isLoadingResults = false;
     haveDetailsBeenLoaded = false;
     markDown: Remarkable;
     readMeFileRawContent: string;
     readMeFileRenderedContent: string;
     resultDetails: Feedback[];
-    steps = [];
+    steps = new Array<Step>();
+    doneOnce = false;
 
-    /** Resizable sizing constants **/
+    /** Resizable constants **/
     initialInstructionsWidth: number;
     minInstructionsWidth: number;
+    interactResizable: Interactable;
 
     // Can be used to remove the click listeners for result details
     listenerRemoveFunctions: Function[];
 
-    @Input() participation: Participation;
-    @Input() latestResult: Result;
+    @Input()
+    participation: Participation;
+    @Input()
+    latestResult: Result;
 
-    constructor(private parent: EditorComponent,
-                private $window: WindowRef,
-                private jhiWebsocketService: JhiWebsocketService,
-                private translateService: TranslateService,
-                private repositoryService: RepositoryService,
-                private repositoryFileService: RepositoryFileService,
-                private resultService: ResultService,
-                private editorService: EditorService,
-                private modalService: NgbModal,
-                private elementRef: ElementRef,
-                private renderer: Renderer2) {}
-
-    /**
-     * @function ngOnInit
-     * @desc Initializes the Remarkable object and loads the repository README.md file
-     */
-    ngOnInit(): void {
-        // Initialize array for listener remove functions
-        this.listenerRemoveFunctions = [];
-        this.setupMarkDown();
-        this.loadReadme();
-    }
+    constructor(
+        private parent: EditorComponent,
+        private $window: WindowRef,
+        private jhiWebsocketService: JhiWebsocketService,
+        private translateService: TranslateService,
+        private repositoryService: RepositoryService,
+        private repositoryFileService: RepositoryFileService,
+        private resultService: ResultService,
+        private editorService: EditorService,
+        private modalService: NgbModal,
+        private elementRef: ElementRef,
+        private renderer: Renderer2
+    ) {}
 
     /**
      * @function ngAfterViewInit
@@ -77,8 +70,8 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
      */
     ngAfterViewInit(): void {
         this.initialInstructionsWidth = this.$window.nativeWindow.screen.width - 300 / 2;
-        this.minInstructionsWidth = 300;
-        interact('.resizable-instructions')
+        this.minInstructionsWidth = this.$window.nativeWindow.screen.width / 4 - 50;
+        this.interactResizable = interact('.resizable-instructions')
             .resizable({
                 // Enable resize from left edge; triggered by class rg-left
                 edges: { left: '.rg-left', right: false, bottom: false, top: false },
@@ -87,13 +80,13 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
                     min: { width: this.minInstructionsWidth },
                     max: { width: this.initialInstructionsWidth }
                 },
-                inertia: true,
-            }).on('resizemove', function(event) {
-            const target = event.target;
-            // Update element size
-            target.style.width  = event.rect.width + 'px';
-            target.style.height = event.rect.height + 'px';
-        });
+                inertia: true
+            })
+            .on('resizemove', function(event) {
+                const target = event.target;
+                // Update element width
+                target.style.width = event.rect.width + 'px';
+            });
     }
 
     /**
@@ -105,14 +98,14 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.participation && this.participation) {
             // Initialize array for listener remove functions
-            this.listenerRemoveFunctions = [];
-            this.setupMarkDown();
             this.loadReadme();
         }
 
-        if (changes.latestResult && changes.latestResult.currentValue && !this.isLoading) {
-            // New result available
-            this.loadResultsDetails();
+        if (changes.latestResult && changes.latestResult.currentValue && !this.isLoadingResults) {
+            // New result available, only render it if the readme was alredy downloaded
+            if (this.readMeFileRawContent) {
+                this.loadResultsDetails();
+            }
         }
     }
 
@@ -123,12 +116,16 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
     loadReadme() {
         // Only do this if we already received a participation object from parent
         if (this.participation) {
-            this.repositoryFileService.get(this.participation.id, 'README.md').subscribe( fileObj => {
-                this.readMeFileRawContent = fileObj.fileContent;
-                this.renderReadme();
-            }, err => {
-                console.log('Error while getting README.md file!', err);
-            });
+            this.repositoryFileService.get(this.participation.id, 'README.md').subscribe(
+                fileObj => {
+                    this.readMeFileRawContent = fileObj.fileContent;
+                    this.renderReadme();
+                },
+                err => {
+                    // TODO: handle the case that there is no README.md file
+                    console.log('Error while getting README.md file!', err);
+                }
+            );
         }
     }
 
@@ -137,19 +134,32 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
      * @desc Fetches details for the result (if we received one) => Input latestResult
      */
     loadResultsDetails() {
-        if (!this.latestResult) {
+        if (!this.latestResult || this.isLoadingResults) {
             return;
         }
-        this.isLoading = true;
+        this.isLoadingResults = true;
 
-        this.resultService.getFeedbackDetailsForResult(this.latestResult.id).subscribe(resultDetails => {
-            this.resultDetails = resultDetails.body;
-            this.haveDetailsBeenLoaded = true;
-            this.renderReadme();
-            this.isLoading = false;
-        }, err => {
-            console.log('Error while loading result details!', err);
-        });
+        this.resultService.getFeedbackDetailsForResult(this.latestResult.id).subscribe(
+            resultDetails => {
+                this.resultDetails = resultDetails.body;
+                this.haveDetailsBeenLoaded = true;
+                this.isLoadingResults = false;
+                if (this.readMeFileRawContent) {
+                    this.renderReadme();
+                    // TODO this is an ugly workaround, because otherwise the functionality to click on the test case feedback does not work ==> Find a better solution
+                    if (this.doneOnce === false) {
+                        setTimeout(() => {
+                            this.doneOnce = true;
+                            this.renderReadme();
+                        }, 10);
+                    }
+                }
+            },
+            err => {
+                console.log('Error while loading result details!', err);
+                this.isLoadingResults = false;
+            }
+        );
     }
 
     /**
@@ -158,11 +168,13 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
      * Information regarding the syntax for the parser and stateBlock: https://github.com/jonschlinkert/remarkable/tree/master/docs
      */
     setupMarkDown() {
-        this.markDown = new Remarkable();
-        this.markDown.inline.ruler.before('text', 'testsStatus', this.remarkableTestsStatusParser.bind(this), {});
-        this.markDown.block.ruler.before('paragraph', 'plantUml', this.remarkablePlantUmlParser.bind(this), {});
-        this.markDown.renderer.rules['testsStatus'] = this.remarkableTestsStatusRenderer.bind(this);
-        this.markDown.renderer.rules['plantUml'] = this.remarkablePlantUmlRenderer.bind(this);
+        if (!this.markDown) {
+            this.markDown = new Remarkable();
+            this.markDown.inline.ruler.before('text', 'testsStatus', this.remarkableTestsStatusParser.bind(this), {});
+            this.markDown.block.ruler.before('paragraph', 'plantUml', this.remarkablePlantUmlParser.bind(this), {});
+            this.markDown.renderer.rules['testsStatus'] = this.remarkableTestsStatusRenderer.bind(this);
+            this.markDown.renderer.rules['plantUml'] = this.remarkablePlantUmlRenderer.bind(this);
+        }
     }
 
     /**
@@ -170,12 +182,11 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
      * @desc Prepares and starts the rendering process of the README.md file
      */
     renderReadme() {
-        this.isLoading = true;
+        this.setupMarkDown();
         // Reset steps array
         this.steps = [];
         // Render README.md file via Remarkable
         this.readMeFileRenderedContent = this.markDown.render(this.readMeFileRawContent);
-        this.isLoading = false;
 
         // Detach test status click listeners if already initialized; if not, set it empty
         if (this.listenerRemoveFunctions && this.listenerRemoveFunctions.length) {
@@ -187,7 +198,7 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
 
         // Since our rendered markdown file gets inserted into the DOM after compile time, we need to register click events for test cases manually
         const testStatusDOMElements = this.elementRef.nativeElement.querySelectorAll('.test-status');
-        testStatusDOMElements.forEach( element => {
+        testStatusDOMElements.forEach((element: any) => {
             const listenerRemoveFunction = this.renderer.listen(element, 'click', event => {
                 // Extract the data attribute for tests and open the details popup with it
                 const tests = event.target.parentElement.getAttribute('data-tests');
@@ -196,7 +207,7 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
             this.listenerRemoveFunctions.push(listenerRemoveFunction);
         });
 
-        if (!this.haveDetailsBeenLoaded) {
+        if (!this.isLoadingResults && !this.haveDetailsBeenLoaded) {
             this.loadResultsDetails();
         }
     }
@@ -222,8 +233,7 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
      * @param endLine
      * @param silent
      */
-    remarkablePlantUmlParser = function(state, startLine, endLine, silent) {
-
+    remarkablePlantUmlParser = function(state: any, startLine: number, endLine: number, silent: boolean) {
         /**
          * Excerpt from the remarkable documentation regarding the stateBlock (param state):
          * src: the complete string the parser is currently working on
@@ -241,20 +251,28 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
         let pos = state.bMarks[startLine];
         pos += shift;
 
-        if (shift > 3 || pos + 2 >= max) { return false; }
-        if (state.src.charCodeAt(pos) !== 0x40/* @ */) { return false; }
+        if (shift > 3 || pos + 2 >= max) {
+            return false;
+        }
+        if (state.src.charCodeAt(pos) !== 0x40 /* @ */) {
+            return false;
+        }
 
         const char = state.src.charCodeAt(pos + 1);
 
         // Is the current char a 's'?
         if (char === 0x73) {
             // Probably start or end of tag
-            if (char === 0x73/* \ */) {
+            if (char === 0x73 /* \ */) {
                 // opening tag
                 const match = state.src.slice(pos, max).match(/^@startuml/);
-                if (!match) { return false; }
+                if (!match) {
+                    return false;
+                }
             }
-            if (silent) { return true; }
+            if (silent) {
+                return true;
+            }
         } else {
             return false;
         }
@@ -271,7 +289,7 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
         state.tokens.push({
             type: 'plantUml',
             level: state.level,
-            lines: [ startLine, state.line ],
+            lines: [startLine, state.line],
             content: state.getLines(startLine, state.line, 0, true)
         });
 
@@ -284,29 +302,34 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
      * @param tokens the tokens generated by the parser up to now
      * @param id
      */
-    remarkablePlantUmlRenderer(tokens, id) {
+    remarkablePlantUmlRenderer(tokens: any[], id: number) {
         let plantUml = tokens[id].content;
 
-        plantUml = plantUml.replace('@startuml', '@startuml\nskinparam shadowing false\nskinparam classBorderColor black\nskinparam classArrowColor black\nskinparam DefaultFontSize 14\nskinparam ClassFontStyle bold\nskinparam classAttributeIconSize 0\nhide empty members\n');
+        // tslint:disable-next-line:max-line-length
+        plantUml = plantUml.replace(
+            '@startuml',
+            '@startuml\nskinparam shadowing false\nskinparam classBorderColor black\nskinparam classArrowColor black\nskinparam DefaultFontSize 14\nskinparam ClassFontStyle bold\nskinparam classAttributeIconSize 0\nhide empty members\n'
+        );
 
-        // Provide this reference inside replace callback function
-        const that = this;
-        plantUml = plantUml.replace(/testsColor\(([^)]+)\)/g, function(match, capture) {
+        plantUml = plantUml.replace(/testsColor\(([^)]+)\)/g, (match: any, capture: string) => {
             const tests = capture.split(',');
-            const status = that.statusForTests(tests);
-            return status['done'] ? 'green' : 'red';
+            const [done] = this.statusForTests(tests);
+            return done ? 'green' : 'red';
         });
 
         /**
          * Explanation: This call fetches the plantUml png as base64 string; the function returns and inserts an empty img tag with a placeholder
          * When the promise is fulfilled, the src-attribute of the img element is being set with the returned value
          */
-        this.editorService.getPlantUmlImage(plantUml).subscribe( plantUmlSrcAttribute => {
-            // Assign plantUmlSrcAttribute as src attribute to our img element
-            document.getElementById('plantUml' + id).setAttribute('src', 'data:image/jpeg;base64,' + plantUmlSrcAttribute);
-        }, err => {
-            console.log('Error getting plantUmlImage', err);
-        });
+        this.editorService.getPlantUmlImage(plantUml).subscribe(
+            plantUmlSrcAttribute => {
+                // Assign plantUmlSrcAttribute as src attribute to our img element
+                document.getElementById('plantUml' + id).setAttribute('src', 'data:image/jpeg;base64,' + plantUmlSrcAttribute);
+            },
+            err => {
+                console.log('Error getting plantUmlImage', err);
+            }
+        );
 
         return "<img id='plantUml" + id + "' alt='plantUml'" + id + " '/>";
     }
@@ -317,15 +340,18 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
      * @param state
      * @param silent
      */
-    remarkableTestsStatusParser(state, silent: boolean) {
-
+    remarkableTestsStatusParser(state: any, silent: boolean) {
         const regex = /^✅\[([^\]]*)\]\s*\(([^)]+)\)/;
 
         // It is surely not our rule, so we can stop early
-        if (state.src[state.pos] !== '✅') { return false; }
+        if (state.src[state.pos] !== '✅') {
+            return false;
+        }
 
         const match = regex.exec(state.src.slice(state.pos));
-        if (!match) { return false; }
+        if (!match) {
+            return false;
+        }
 
         // In silent mode it shouldn't output any tokens or modify pending
         if (!silent) {
@@ -334,7 +360,7 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
                 type: 'testsStatus',
                 title: match[1],
                 tests: match[2].split(','),
-                level: state.level,
+                level: state.level
             });
         }
 
@@ -353,26 +379,34 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
      * @param options
      * @param env
      */
-    remarkableTestsStatusRenderer(tokens, id: number, options, env) {
+    remarkableTestsStatusRenderer(tokens: any[], id: number, options: any, env: any) {
         const tests = tokens[0].tests;
-        const status = this.statusForTests(tests);
+        const [done, label] = this.statusForTests(tests);
 
         let text = '<strong>';
 
-        text += status['done'] ?
-            '<i class="fa fa-lg fa-check-circle-o text-success" style="font-size: 1.7em;"></i>' :
-            '<i class="fa fa-lg fa-times-circle-o text-danger" style="font-size: 1.7em;"></i>';
+        text += done
+            ? '<i class="fa fa-lg fa-check-circle-o text-success" style="font-size: 1.7em;"></i>'
+            : '<i class="fa fa-lg fa-times-circle-o text-danger" style="font-size: 1.7em;"></i>';
         text += ' ' + tokens[0].title;
         text += '</strong>: ';
         // If the test is not done, we set the 'data-tests' attribute to the a-element, which we later use for the details dialog
-        text += status['done'] ?
-            ' <span class="text-success">' + status['label'] + '</span>' :
-            '<a data-tests="' + tests.toString() + '" class="test-status"><span class="text-danger">' + status['label'] + '</span></a>';
+        if (done) {
+            text += '<span class="text-success">' + label + '</span>';
+        } else {
+            // bugfix: do not let the user click on 'No Results'
+            if (label === this.translateService.instant('arTeMiSApp.editor.testStatusLabels.noResult')) {
+                text += '<span class="text-danger no-result">' + label + '</span>'; // this should be bold
+            } else {
+                text +=
+                    '<a data-tests="\' + tests.toString() + \'" class="test-status"><span class="text-danger">\' + label + \'</span></a>';
+            }
+        }
         text += '<br />';
 
         this.steps.push({
             title: tokens[0].title,
-            done: status['done']
+            done
         });
 
         return text;
@@ -383,7 +417,7 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
      * @desc Callback function for renderers to set the appropiate test status
      * @param tests
      */
-    statusForTests(tests): object {
+    statusForTests(tests: string[]): [boolean, string] {
         const translationBasePath = 'arTeMiSApp.editor.testStatusLabels.';
         let done = false;
         let label = this.translateService.instant('arTeMiSApp.editor.testStatusLabels.noResult');
@@ -409,21 +443,17 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
                 }
             } else {
                 if (done) {
-                    label = this.translateService.instant(translationBasePath + 'totalTestsPassing', {totalTests});
+                    label = this.translateService.instant(translationBasePath + 'totalTestsPassing', { totalTests });
                 } else {
-                    label = this.translateService.instant(translationBasePath + 'totalTestsFailing', {totalTests, failedTests});
+                    label = this.translateService.instant(translationBasePath + 'totalTestsFailing', { totalTests, failedTests });
                 }
             }
-
         } else if (this.latestResult && this.latestResult.successful) {
             done = true;
             label = this.translateService.instant(translationBasePath + 'testPassing');
         }
 
-        return {
-            done,
-            label
-        };
+        return [done, label];
     }
 
     /**
@@ -436,7 +466,7 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
         if (!result) {
             return;
         }
-        const modalRef = this.modalService.open(EditorInstructionsResultDetailComponent, {keyboard: true, size: 'lg'});
+        const modalRef = this.modalService.open(EditorInstructionsResultDetailComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.result = result;
         modalRef.componentInstance.tests = tests;
     }
@@ -448,7 +478,7 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
      * @param {boolean} horizontal
      */
     toggleEditorCollapse($event: any, horizontal: boolean) {
-        this.parent.toggleCollapse($event, horizontal);
+        this.parent.toggleCollapse($event, horizontal, this.interactResizable, this.minInstructionsWidth);
     }
 
     /**

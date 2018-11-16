@@ -1,96 +1,116 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
-import { SERVER_API_URL } from '../../app.constants';
+import { SERVER_API_URL } from 'app/app.constants';
 
-import { JhiDateUtils } from 'ng-jhipster';
+import * as moment from 'moment';
 
 import { Result } from './result.model';
-import { createRequestOption } from '../../shared';
-import { Feedback } from '../feedback';
+import { createRequestOption } from 'app/shared';
+import { Feedback } from 'app/entities/feedback';
+import { Participation } from 'app/entities/participation';
+import { ExerciseService } from 'app/entities/exercise';
 
 export type EntityResponseType = HttpResponse<Result>;
+export type EntityArrayResponseType = HttpResponse<Result[]>;
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class ResultService {
-
     private courseResourceUrl = SERVER_API_URL + 'api/courses';
     private resultResourceUrl = SERVER_API_URL + 'api/results';
 
-    constructor(private http: HttpClient, private dateUtils: JhiDateUtils) {
-    }
+    constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
 
     create(result: Result): Observable<EntityResponseType> {
-        const copy = this.convert(result);
-        return this.http.post<Result>(this.resultResourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+        const copy = this.convertDateFromClient(result);
+        // NOTE: we deviate from the standard URL scheme to avoid conflicts with a different POST request on results
+        return this.http
+            .post<Result>(SERVER_API_URL + 'api/manual-results', copy, { observe: 'response' })
+            .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
     update(result: Result): Observable<EntityResponseType> {
-        const copy = this.convert(result);
-        return this.http.put<Result>(this.resultResourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+        const copy = this.convertDateFromClient(result);
+        return this.http
+            .put<Result>(SERVER_API_URL + 'api/manual-results', copy, { observe: 'response' })
+            .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
     find(id: number): Observable<EntityResponseType> {
-        return this.http.get<Result>(`${this.resultResourceUrl}/${id}`, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+        return this.http
+            .get<Result>(`${this.resultResourceUrl}/${id}`, { observe: 'response' })
+            .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
     findBySubmissionId(submissionId: number): Observable<EntityResponseType> {
-        return this.http.get<Result>(`${this.resultResourceUrl}/submission/${submissionId}`, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+        return this.http
+            .get<Result>(`${this.resultResourceUrl}/submission/${submissionId}`, { observe: 'response' })
+            .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
-    findResultsForParticipation(courseId: number, exerciseId: number, participationId: number, req?: any): Observable<HttpResponse<Result[]>> {
+    findResultsForParticipation(
+        courseId: number,
+        exerciseId: number,
+        participationId: number,
+        req?: any
+    ): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
-        return this.http.get(`${this.courseResourceUrl}/${courseId}/exercises/${exerciseId}/participations/${participationId}/results`, { params: options, observe: 'response' })
-            .map((res: HttpResponse<Result[]>) => this.convertArrayResponse(res));
+        return this.http
+            .get(`${this.courseResourceUrl}/${courseId}/exercises/${exerciseId}/participations/${participationId}/results`, {
+                params: options,
+                observe: 'response'
+            })
+            .map((res: EntityArrayResponseType) => this.convertArrayResponse(res));
     }
 
-    getResultsForExercise(courseId: number, exerciseId: number, req?: any): Observable<HttpResponse<Result[]>> {
+    getResultsForExercise(courseId: number, exerciseId: number, req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
-        return this.http.get<Result[]>(`${this.courseResourceUrl}/${courseId}/exercises/${exerciseId}/results`, { params: options, observe: 'response' });
+        return this.http
+            .get<Result[]>(`${this.courseResourceUrl}/${courseId}/exercises/${exerciseId}/results`, {
+                params: options,
+                observe: 'response'
+            })
+            .map((res: EntityArrayResponseType) => this.convertArrayResponse(res));
     }
 
     getFeedbackDetailsForResult(resultId: number): Observable<HttpResponse<Feedback[]>> {
         return this.http.get<Feedback[]>(`${this.resultResourceUrl}/${resultId}/details`, { observe: 'response' });
     }
 
-    delete(id: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resultResourceUrl}/${id}`, { observe: 'response' });
+    delete(id: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resultResourceUrl}/${id}`, { observe: 'response' });
     }
 
-    private convertArrayResponse(res: HttpResponse<Result[]>): HttpResponse<Result[]> {
-        const jsonResponse: Result[] = res.body;
-        const body: Result[] = [];
-        for (let i = 0; i < jsonResponse.length; i++) {
-            body.push(this.convertItemFromServer(jsonResponse[i]));
+    protected convertDateFromClient(result: Result): Result {
+        const copy: Result = Object.assign({}, result, {
+            completionDate: result.completionDate != null && moment(result.completionDate).isValid() ? result.completionDate.toJSON() : null
+        });
+        return copy;
+    }
+
+    protected convertArrayResponse(res: EntityArrayResponseType): EntityArrayResponseType {
+        if (res.body) {
+            res.body.forEach((result: Result) => {
+                result.completionDate = result.completionDate != null ? moment(result.completionDate) : null;
+                result.participation = this.convertParticipationDateFromServer(result.participation);
+            });
         }
-        return res.clone({ body });
+        return res;
     }
 
-    private convertResponse(res: EntityResponseType): EntityResponseType {
-        const body: Result = this.convertItemFromServer(res.body);
-        return res.clone({ body });
+    protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
+        if (res.body) {
+            res.body.completionDate = res.body.completionDate != null ? moment(res.body.completionDate) : null;
+            res.body.participation = this.convertParticipationDateFromServer(res.body.participation);
+        }
+        return res;
     }
 
-    /**
-     * Convert a returned JSON object to Result.
-     */
-    private convertItemFromServer(result: Result): Result {
-        const copy: Result = Object.assign({}, result);
-        copy.completionDate = this.dateUtils.convertDateTimeFromServer(result.completionDate);
-        return copy;
+    convertParticipationDateFromServer(participation: Participation) {
+        if (participation) {
+            participation.initializationDate = participation.initializationDate != null ? moment(participation.initializationDate) : null;
+            participation.exercise = this.exerciseService.convertExerciseDateFromServer(participation.exercise);
+        }
+        return participation;
     }
-
-    /**
-     * Convert a Result to a JSON which can be sent to the server.
-     */
-    private convert(result: Result): Result {
-        const copy: Result = Object.assign({}, result);
-        copy.completionDate = this.dateUtils.toDate(result.completionDate);
-        return copy;
-    }
-
 }

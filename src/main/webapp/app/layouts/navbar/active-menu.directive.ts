@@ -10,17 +10,17 @@ export class ActiveMenuDirective implements OnInit {
     constructor(private el: ElementRef, private renderer: Renderer, private translateService: TranslateService) {}
 
     ngOnInit() {
-      this.translateService.onLangChange.subscribe((event: LangChangeEvent) => {
-         this.updateActiveFlag(event.lang);
-      });
-      this.updateActiveFlag(this.translateService.currentLang);
+        this.translateService.onLangChange.subscribe((event: LangChangeEvent) => {
+            this.updateActiveFlag(event.lang);
+        });
+        this.updateActiveFlag(this.translateService.currentLang);
     }
 
-    updateActiveFlag(selectedLanguage) {
-      if (this.jhiActiveMenu === selectedLanguage) {
-          this.renderer.setElementClass(this.el.nativeElement, 'active', true);
-      } else {
-          this.renderer.setElementClass(this.el.nativeElement, 'active', false);
-      }
+    updateActiveFlag(selectedLanguage: string) {
+        if (this.jhiActiveMenu === selectedLanguage) {
+            this.renderer.setElementClass(this.el.nativeElement, 'active', true);
+        } else {
+            this.renderer.setElementClass(this.el.nativeElement, 'active', false);
+        }
     }
 }

@@ -1,7 +1,6 @@
-
 {
     "arTeMiSApp": {
-        "dropLocation" : {
+        "dropLocation": {
             "home": {
                 "title": "Drop Locations",
                 "createLabel": "Create a new Drop Location",
@@ -20,6 +19,7 @@
             "posY": "Pos Y",
             "width": "Width",
             "height": "Height",
+            "invalid": "Invalid",
             "question": "Question"
         }
     }

@@ -1,0 +1,46 @@
+{
+    "name": "ShortAnswerMapping",
+    "fields": [
+        {
+            "fieldName": "shortAnswerSpotIndex",
+            "fieldType": "Integer"
+        },
+        {
+            "fieldName": "shortAnswerSolutionIndex",
+            "fieldType": "Integer"
+        },
+        {
+            "fieldName": "invalid",
+            "fieldType": "Boolean"
+        }
+    ],
+    "relationships": [
+        {
+            "relationshipType": "many-to-one",
+            "relationshipName": "solution",
+            "otherEntityName": "shortAnswerSolution",
+            "otherEntityField": "id"
+        },
+        {
+            "relationshipType": "many-to-one",
+            "relationshipName": "spot",
+            "otherEntityName": "shortAnswerSpot",
+            "otherEntityField": "id"
+        },
+        {
+            "relationshipType": "many-to-one",
+            "relationshipName": "question",
+            "otherEntityName": "shortAnswerQuestion",
+            "otherEntityField": "id"
+        }
+    ],
+    "changelogDate": "20181107093827",
+    "entityTableName": "short_answer_mapping",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no",
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
+}

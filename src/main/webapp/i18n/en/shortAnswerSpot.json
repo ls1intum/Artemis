@@ -1,0 +1,23 @@
+{
+    "arTeMiSApp": {
+        "shortAnswerSpot": {
+            "home": {
+                "title": "Short Answer Spots",
+                "createLabel": "Create a new Short Answer Spot",
+                "createOrEditLabel": "Create or edit a Short Answer Spot"
+            },
+            "created": "A new Short Answer Spot is created with identifier {{ param }}",
+            "updated": "A Short Answer Spot is updated with identifier {{ param }}",
+            "deleted": "A Short Answer Spot is deleted with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete Short Answer Spot {{ id }}?"
+            },
+            "detail": {
+                "title": "Short Answer Spot"
+            },
+            "width": "Width",
+            "invalid": "Invalid",
+            "question": "Question"
+        }
+    }
+}

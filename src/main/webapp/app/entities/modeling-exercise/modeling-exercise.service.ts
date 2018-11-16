@@ -5,75 +5,45 @@ import { SERVER_API_URL } from '../../app.constants';
 
 import { ModelingExercise } from './modeling-exercise.model';
 import { createRequestOption } from '../../shared';
-import { JhiDateUtils } from 'ng-jhipster';
+import { EntityArrayResponseType, ExerciseService } from 'app/entities/exercise';
+import { ModelingStatistic } from 'app/entities/modeling-statistic';
 
 export type EntityResponseType = HttpResponse<ModelingExercise>;
+export type EntityArrayResponseType = HttpResponse<ModelingExercise[]>;
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class ModelingExerciseService {
+    public resourceUrl = SERVER_API_URL + 'api/modeling-exercises';
 
-    private resourceUrl =  SERVER_API_URL + 'api/modeling-exercises';
-
-    constructor(private http: HttpClient, private dateUtils: JhiDateUtils) { }
+    constructor(private http: HttpClient, private exerciseService: ExerciseService) {
+        this.exerciseService = exerciseService;
+    }
 
     create(modelingExercise: ModelingExercise): Observable<EntityResponseType> {
-        const copy = this.convert(modelingExercise);
-        return this.http.post<ModelingExercise>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+        const copy = this.exerciseService.convertDateFromClient(modelingExercise);
+        return this.http
+            .post<ModelingExercise>(this.resourceUrl, copy, { observe: 'response' })
+            .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
     update(modelingExercise: ModelingExercise): Observable<EntityResponseType> {
-        const copy = this.convert(modelingExercise);
-        return this.http.put<ModelingExercise>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+        const copy = this.exerciseService.convertDateFromClient(modelingExercise);
+        return this.http
+            .put<ModelingExercise>(this.resourceUrl, copy, { observe: 'response' })
+            .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
     find(id: number): Observable<EntityResponseType> {
-        return this.http.get<ModelingExercise>(`${this.resourceUrl}/${id}`, { observe: 'response'})
-            .map((res: EntityResponseType) => this.convertResponse(res));
+        return this.http
+            .get<ModelingExercise>(`${this.resourceUrl}/${id}`, { observe: 'response' })
+            .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
-    query(req?: any): Observable<HttpResponse<ModelingExercise[]>> {
-        const options = createRequestOption(req);
-        return this.http.get<ModelingExercise[]>(this.resourceUrl, { params: options, observe: 'response' })
-            .map((res: HttpResponse<ModelingExercise[]>) => this.convertArrayResponse(res));
+    getStatistics(id: number): Observable<HttpResponse<ModelingStatistic>> {
+        return this.http.get<ModelingStatistic>(`${this.resourceUrl}/${id}/statistics`, { observe: 'response' });
     }
 
-    delete(id: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response'});
-    }
-
-    private convertResponse(res: EntityResponseType): EntityResponseType {
-        const body: ModelingExercise = this.convertItemFromServer(res.body);
-        return res.clone({body});
-    }
-
-    private convertArrayResponse(res: HttpResponse<ModelingExercise[]>): HttpResponse<ModelingExercise[]> {
-        const jsonResponse: ModelingExercise[] = res.body;
-        const body: ModelingExercise[] = [];
-        for (let i = 0; i < jsonResponse.length; i++) {
-            body.push(this.convertItemFromServer(jsonResponse[i]));
-        }
-        return res.clone({body});
-    }
-
-    /**
-     * Convert a returned JSON object to ModelingExercise.
-     */
-    private convertItemFromServer(modelingExercise: ModelingExercise): ModelingExercise {
-        const copy: ModelingExercise = Object.assign({}, modelingExercise);
-        copy.releaseDate = this.dateUtils.convertDateTimeFromServer(copy.releaseDate);
-        copy.dueDate = this.dateUtils.convertDateTimeFromServer(copy.dueDate);
-        return copy;
-    }
-
-    /**
-     * Convert a ModelingExercise to a JSON which can be sent to the server.
-     */
-    private convert(modelingExercise: ModelingExercise): ModelingExercise {
-        const copy: ModelingExercise = Object.assign({}, modelingExercise);
-        copy.releaseDate = this.dateUtils.toDate(modelingExercise.releaseDate);
-        copy.dueDate = this.dateUtils.toDate(modelingExercise.dueDate);
-        return copy;
+    delete(id: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }
 }

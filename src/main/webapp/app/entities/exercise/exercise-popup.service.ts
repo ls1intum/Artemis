@@ -6,7 +6,7 @@ import { Exercise } from './exercise.model';
 import { ExerciseLtiConfigurationService, ExerciseService } from './exercise.service';
 import { LtiConfiguration } from 'app/entities/lti-configuration';
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class ExercisePopupService {
     private ngbModalRef: NgbModalRef;
 
@@ -27,36 +27,38 @@ export class ExercisePopupService {
             }
 
             if (id) {
-                this.exerciseService.find(id)
-                    .subscribe((exerciseResponse: HttpResponse<Exercise>) => {
-                        if (lti) {
-                            this.exerciseLtiConfigurationService.find(id).subscribe((ltiConfigurationResponse: HttpResponse<any>) => {
-                                const exercise: Exercise = exerciseResponse.body;
-                                const ltiConfiguration: LtiConfiguration = ltiConfigurationResponse.body;
-                                this.ngbModalRef = this.exerciseModalRef(component, exercise, ltiConfiguration);
-                                resolve(this.ngbModalRef);
-                            });
-                        } else {
+                this.exerciseService.find(id).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
+                    if (lti) {
+                        this.exerciseLtiConfigurationService.find(id).subscribe((ltiConfigurationResponse: HttpResponse<any>) => {
                             const exercise: Exercise = exerciseResponse.body;
-                            this.ngbModalRef = this.exerciseModalRef(component, exercise, null);
+                            const ltiConfiguration: LtiConfiguration = ltiConfigurationResponse.body;
+                            this.ngbModalRef = this.exerciseModalRef(component, exercise, ltiConfiguration);
                             resolve(this.ngbModalRef);
-                        }
-                    });
+                        });
+                    } else {
+                        const exercise: Exercise = exerciseResponse.body;
+                        this.ngbModalRef = this.exerciseModalRef(component, exercise, null);
+                        resolve(this.ngbModalRef);
+                    }
+                });
             }
         });
     }
 
     exerciseModalRef(component: Component, exercise: Exercise, ltiConfiguration: LtiConfiguration): NgbModalRef {
-        const modalRef = this.modalService.open(component, { size: 'lg', backdrop: 'static'});
+        const modalRef = this.modalService.open(component, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.exercise = exercise;
         modalRef.componentInstance.ltiConfiguration = ltiConfiguration;
-        modalRef.result.then(result => {
-            this.router.navigate([{ outlets: { popup: null }}], { replaceUrl: true, queryParamsHandling: 'merge' });
-            this.ngbModalRef = null;
-        }, reason => {
-            this.router.navigate([{ outlets: { popup: null }}], { replaceUrl: true, queryParamsHandling: 'merge' });
-            this.ngbModalRef = null;
-        });
+        modalRef.result.then(
+            result => {
+                this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
+                this.ngbModalRef = null;
+            },
+            reason => {
+                this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
+                this.ngbModalRef = null;
+            }
+        );
         return modalRef;
     }
 }

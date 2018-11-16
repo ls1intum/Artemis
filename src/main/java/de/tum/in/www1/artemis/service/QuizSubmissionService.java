@@ -4,9 +4,11 @@ import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.QuizExercise;
 import de.tum.in.www1.artemis.domain.QuizSubmission;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,7 +30,7 @@ public class QuizSubmissionService {
 
     @Transactional(readOnly = true)
     public QuizSubmission findOne(Long id) {
-        return quizSubmissionRepository.findOne(id);
+        return quizSubmissionRepository.findById(id).get();
     }
 
     @Transactional(readOnly = true)
@@ -38,7 +40,7 @@ public class QuizSubmissionService {
 
     @Transactional
     public void delete(Long id) {
-        quizSubmissionRepository.delete(id);
+        quizSubmissionRepository.deleteById(id);
     }
 
     /**
@@ -61,11 +63,13 @@ public class QuizSubmissionService {
         // create and save result
         Result result = new Result().participation(participation).submission(quizSubmission);
         result.setRated(false);
+        result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setCompletionDate(ZonedDateTime.now());
         // calculate score and update result accordingly
         result.evaluateSubmission();
         // save result
-        resultRepository.save(result);
+        quizSubmission.setResult(result);
+        quizSubmissionRepository.save(quizSubmission);
         // replace proxy with submission, because of Lazy-fetching
         result.setSubmission(quizSubmission);
 

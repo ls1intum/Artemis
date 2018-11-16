@@ -102,7 +102,7 @@ public class ApollonDiagramResource {
     @Timed
     public ResponseEntity<ApollonDiagram> getApollonDiagram(@PathVariable Long id) {
         log.debug("REST request to get ApollonDiagram : {}", id);
-        ApollonDiagram apollonDiagram = apollonDiagramRepository.findOne(id);
+        ApollonDiagram apollonDiagram = apollonDiagramRepository.findById(id).get();
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(apollonDiagram));
     }
 
@@ -117,7 +117,7 @@ public class ApollonDiagramResource {
     @Timed
     public ResponseEntity<Void> deleteApollonDiagram(@PathVariable Long id) {
         log.debug("REST request to delete ApollonDiagram : {}", id);
-        apollonDiagramRepository.delete(id);
+        apollonDiagramRepository.deleteById(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 }

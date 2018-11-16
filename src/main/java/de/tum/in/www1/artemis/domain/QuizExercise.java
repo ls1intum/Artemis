@@ -31,16 +31,6 @@ public class QuizExercise extends Exercise implements Serializable {
         INACTIVE, STARTED, FINISHED
     }
 
-    public static Status statusForQuiz(QuizExercise quiz) {
-        if (!quiz.isPlannedToStart || quiz.getReleaseDate().isAfter(ZonedDateTime.now())) {
-            return Status.INACTIVE;
-        } else if (quiz.getDueDate().isBefore(ZonedDateTime.now())) {
-            return Status.FINISHED;
-        } else {
-            return Status.STARTED;
-        }
-    }
-
     private static final long serialVersionUID = 1L;
 
     @Column(name = "randomize_question_order")
@@ -228,6 +218,7 @@ public class QuizExercise extends Exercise implements Serializable {
      * @return true if quiz has ended, false otherwise
      */
     @JsonView(QuizView.Before.class)
+    @Override
     public Boolean isEnded() {
         return isStarted() && getRemainingTime() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS <= 0;
     }
@@ -353,15 +344,17 @@ public class QuizExercise extends Exercise implements Serializable {
     }
 
     /**
-     * set all sensitive information to null, so no info gets leaked to students through json
+     * set all sensitive information to null, so no info with respect to the solution gets leaked to students through json
      */
+    @Override
     public void filterSensitiveInformation() {
         setQuizPointStatistic(null);
         setQuestions(new ArrayList<>());
+        super.filterSensitiveInformation();
     }
 
     /**
-     * filter out information about correct answers
+     * filter out information about correct answers, so no info with respect to the solution gets leaked to students through json
      */
     public void filterForStudentsDuringQuiz() {
         // filter out statistics
@@ -451,7 +444,7 @@ public class QuizExercise extends Exercise implements Serializable {
     }
 
     @Override
-    public Result findLatestRelevantResult(Participation participation) {
+    public Result findLatestRatedResultWithCompletionDate(Participation participation) {
         if (shouldFilterForStudents()) {
             // results are never relevant before quiz has ended => return null
             return null;
@@ -638,18 +631,101 @@ public class QuizExercise extends Exercise implements Serializable {
 
         //add new PointCounter
         for(double i = 0.0 ; i <= quizScore; i++) {  // for variable ScoreSteps change: i++ into: i= i + scoreStep
-            quizPointStatistic.addScore(new Double(i));
+            quizPointStatistic.addScore(i);
         }
         //delete old PointCounter
         Set<PointCounter> pointCounterToDelete = new HashSet<>();
         for (PointCounter pointCounter : quizPointStatistic.getPointCounters()) {
             if (pointCounter.getId() != null) {                                                                                        // for variable ScoreSteps add:
-                if(pointCounter.getPoints() > quizScore || pointCounter.getPoints() < 0 || questions == null  || questions.isEmpty()/*|| (pointCounter.getPoints()% scoreStep) != 0*/) { ;
+                if(pointCounter.getPoints() > quizScore || pointCounter.getPoints() < 0 || questions == null  || questions.isEmpty()/*|| (pointCounter.getPoints()% scoreStep) != 0*/) {
                     pointCounterToDelete.add(pointCounter);
                     pointCounter.setQuizPointStatistic(null);
                 }
             }
         }
         quizPointStatistic.getPointCounters().removeAll(pointCounterToDelete);
+    }
+
+    /**
+     * Recreate missing pointers from children to parents that were removed by @JSONIgnore
+     *
+     */
+    public void reconnectJSONIgnoreAttributes() {
+        // iterate through questions to add missing pointer back to quizExercise
+        // Note: This is necessary because of the @IgnoreJSON in question and answerOption
+        //       that prevents infinite recursive JSON serialization.
+        for (Question question : getQuestions()) {
+            if (question.getId() != null) {
+                question.setExercise(this);
+                //reconnect QuestionStatistics
+                if (question.getQuestionStatistic() != null) {
+                    question.getQuestionStatistic().setQuestion(question);
+                }
+                // do the same for answerOptions (if question is multiple choice)
+                if (question instanceof MultipleChoiceQuestion) {
+                    MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) question;
+                    MultipleChoiceQuestionStatistic mcStatistic = (MultipleChoiceQuestionStatistic) mcQuestion.getQuestionStatistic();
+                    //reconnect answerCounters
+                    for (AnswerCounter answerCounter : mcStatistic.getAnswerCounters()) {
+                        if (answerCounter.getId() != null) {
+                            answerCounter.setMultipleChoiceQuestionStatistic(mcStatistic);
+                        }
+                    }
+                    // reconnect answerOptions
+                    for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {
+                        if (answerOption.getId() != null) {
+                            answerOption.setQuestion(mcQuestion);
+                        }
+                    }
+                }
+                if (question instanceof DragAndDropQuestion) {
+                    DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
+                    DragAndDropQuestionStatistic dragAndDropStatistic = (DragAndDropQuestionStatistic) dragAndDropQuestion.getQuestionStatistic();
+                    // reconnect dropLocations
+                    for (DropLocation dropLocation : dragAndDropQuestion.getDropLocations()) {
+                        if (dropLocation.getId() != null) {
+                            dropLocation.setQuestion(dragAndDropQuestion);
+                        }
+                    }
+                    // reconnect dragItems
+                    for (DragItem dragItem : dragAndDropQuestion.getDragItems()) {
+                        if (dragItem.getId() != null) {
+                            dragItem.setQuestion(dragAndDropQuestion);
+                        }
+                    }
+                    // reconnect correctMappings
+                    for (DragAndDropMapping mapping : dragAndDropQuestion.getCorrectMappings()) {
+                        if (mapping.getId() != null) {
+                            mapping.setQuestion(dragAndDropQuestion);
+                        }
+                    }
+                    //reconnect dropLocationCounters
+                    for (DropLocationCounter dropLocationCounter : dragAndDropStatistic.getDropLocationCounters()) {
+                        if (dropLocationCounter.getId() != null) {
+                            dropLocationCounter.setDragAndDropQuestionStatistic(dragAndDropStatistic);
+                            dropLocationCounter.getDropLocation().setQuestion(dragAndDropQuestion);
+                        }
+                    }
+                }
+            }
+        }
+        //reconnect quizPointStatistic
+        getQuizPointStatistic().setQuiz(this);
+        //reconnect pointCounters
+        for (PointCounter pointCounter : getQuizPointStatistic().getPointCounters()) {
+            if (pointCounter.getId() != null) {
+                pointCounter.setQuizPointStatistic(getQuizPointStatistic());
+            }
+        }
+    }
+
+    public static Status statusForQuiz(QuizExercise quiz) {
+        if (!quiz.isPlannedToStart || quiz.getReleaseDate().isAfter(ZonedDateTime.now())) {
+            return Status.INACTIVE;
+        } else if (quiz.getDueDate().isBefore(ZonedDateTime.now())) {
+            return Status.FINISHED;
+        } else {
+            return Status.STARTED;
+        }
     }
 }

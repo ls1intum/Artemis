@@ -6,7 +6,7 @@ import { DatePipe } from '@angular/common';
 import { Participation } from './participation.model';
 import { ParticipationService } from './participation.service';
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class ParticipationPopupService {
     private ngbModalRef: NgbModalRef;
 
@@ -15,7 +15,6 @@ export class ParticipationPopupService {
         private modalService: NgbModal,
         private router: Router,
         private participationService: ParticipationService
-
     ) {
         this.ngbModalRef = null;
     }
@@ -28,14 +27,11 @@ export class ParticipationPopupService {
             }
 
             if (id) {
-                this.participationService.find(id)
-                    .subscribe((participationResponse: HttpResponse<Participation>) => {
-                        const participation: Participation = participationResponse.body;
-                        participation.initializationDate = this.datePipe
-                            .transform(participation.initializationDate, 'yyyy-MM-ddTHH:mm:ss');
-                        this.ngbModalRef = this.participationModalRef(component, participation);
-                        resolve(this.ngbModalRef);
-                    });
+                this.participationService.find(id).subscribe((participationResponse: HttpResponse<Participation>) => {
+                    const participation: Participation = participationResponse.body;
+                    this.ngbModalRef = this.participationModalRef(component, participation);
+                    resolve(this.ngbModalRef);
+                });
             } else {
                 // setTimeout used as a workaround for getting ExpressionChangedAfterItHasBeenCheckedError
                 setTimeout(() => {
@@ -47,15 +43,18 @@ export class ParticipationPopupService {
     }
 
     participationModalRef(component: Component, participation: Participation): NgbModalRef {
-        const modalRef = this.modalService.open(component, { size: 'lg', backdrop: 'static'});
+        const modalRef = this.modalService.open(component, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.participation = participation;
-        modalRef.result.then(result => {
-            this.router.navigate([{ outlets: { popup: null }}], { replaceUrl: true, queryParamsHandling: 'merge' });
-            this.ngbModalRef = null;
-        }, reason => {
-            this.router.navigate([{ outlets: { popup: null }}], { replaceUrl: true, queryParamsHandling: 'merge' });
-            this.ngbModalRef = null;
-        });
+        modalRef.result.then(
+            result => {
+                this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
+                this.ngbModalRef = null;
+            },
+            reason => {
+                this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
+                this.ngbModalRef = null;
+            }
+        );
         return modalRef;
     }
 }

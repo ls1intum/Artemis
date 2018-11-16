@@ -6,14 +6,14 @@
                 <h4 class="card-header">
                     <strong>{{course.title}}</strong>
                     &nbsp;
-                    <a class="text-primary card-link" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_TA']" routerLink="/course/{{course.id}}/dashboard" routerLinkActive="active">
+                    <a class="text-primary card-link" *ngIf="course.isAtLeastTutor" routerLink="/course/{{course.id}}/dashboard" routerLinkActive="active">
                         <i class="fa fa-info-circle fa-fw" style="color:white;"></i>
                     </a>
                 </h4>
                 <div class="total-score-wrapper">
                     <span class="span-total-score">Total Score: {{displayTotalRelativeScoreForCourse(course)}} %</span>
-                    <button  class="btn-total-score btn-sm" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_TA', 'ROLE_USER']" routerLink="/course/{{course.id}}/score-calculation">
-                        See more details
+                    <button class="btn-total-score btn-sm" routerLink="/course/{{course.id}}/score-calculation">
+                        Details
                     </button>
                 </div>
             </div>

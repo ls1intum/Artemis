@@ -1,13 +1,5 @@
 {
-    "fluentMethods": true,
-    "relationships": [
-        {
-            "relationshipType": "many-to-one",
-            "relationshipName": "question",
-            "otherEntityName": "dragAndDropQuestion",
-            "otherEntityField": "id"
-        }
-    ],
+    "name": "DropLocation",
     "fields": [
         {
             "fieldName": "posX",
@@ -30,10 +22,21 @@
             "fieldType": "Boolean"
         }
     ],
-    "changelogDate": "20171130173548",
+    "relationships": [
+        {
+            "relationshipType": "many-to-one",
+            "relationshipName": "question",
+            "otherEntityName": "dragAndDropQuestion",
+            "otherEntityField": "id"
+        }
+    ],
+    "changelogDate": "20180927081405",
     "entityTableName": "drop_location",
     "dto": "no",
     "pagination": "no",
     "service": "no",
-    "jpaMetamodelFiltering": false
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
 }

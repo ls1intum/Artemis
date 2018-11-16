@@ -97,8 +97,8 @@ public class FileUploadSubmissionResource {
     @Timed
     public ResponseEntity<FileUploadSubmission> getFileUploadSubmission(@PathVariable Long id) {
         log.debug("REST request to get FileUploadSubmission : {}", id);
-        FileUploadSubmission fileUploadSubmission = fileUploadSubmissionRepository.findOne(id);
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(fileUploadSubmission));
+        Optional<FileUploadSubmission> fileUploadSubmission = fileUploadSubmissionRepository.findById(id);
+        return ResponseUtil.wrapOrNotFound(fileUploadSubmission);
     }
 
     /**
@@ -111,7 +111,7 @@ public class FileUploadSubmissionResource {
     @Timed
     public ResponseEntity<Void> deleteFileUploadSubmission(@PathVariable Long id) {
         log.debug("REST request to delete FileUploadSubmission : {}", id);
-        fileUploadSubmissionRepository.delete(id);
+        fileUploadSubmissionRepository.deleteById(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 }

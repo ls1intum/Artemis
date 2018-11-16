@@ -13,7 +13,6 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +24,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 /**
  * REST controller for managing FileUploadExercise.
@@ -74,7 +75,7 @@ public class FileUploadExerciseResource {
         if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
             !authCheckService.isInstructorInCourse(course, user) &&
             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
         return ResponseEntity.created(new URI("/api/file-upload-exercises/" + result.getId()))
@@ -107,7 +108,7 @@ public class FileUploadExerciseResource {
         if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
             !authCheckService.isInstructorInCourse(course, user) &&
             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
         return ResponseEntity.ok()
@@ -153,7 +154,7 @@ public class FileUploadExerciseResource {
         if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
             !authCheckService.isInstructorInCourse(course, user) &&
             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
         List<FileUploadExercise> exercises = fileUploadExerciseRepository.findByCourseId(courseId);
 
@@ -172,15 +173,15 @@ public class FileUploadExerciseResource {
     @Transactional(readOnly = true)
     public ResponseEntity<FileUploadExercise> getFileUploadExercise(@PathVariable Long id) {
         log.debug("REST request to get FileUploadExercise : {}", id);
-        FileUploadExercise fileUploadExercise = fileUploadExerciseRepository.findOne(id);
-        Course course = fileUploadExercise.getCourse();
+        Optional<FileUploadExercise> fileUploadExercise = fileUploadExerciseRepository.findById(id);
+        Course course = fileUploadExercise.get().getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
             !authCheckService.isInstructorInCourse(course, user) &&
             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(fileUploadExercise));
+        return ResponseUtil.wrapOrNotFound(fileUploadExercise);
     }
 
     /**
@@ -194,14 +195,14 @@ public class FileUploadExerciseResource {
     @Timed
     public ResponseEntity<Void> deleteFileUploadExercise(@PathVariable Long id) {
         log.debug("REST request to delete FileUploadExercise : {}", id);
-        FileUploadExercise fileUploadExercise= fileUploadExerciseRepository.findOne(id);
-        Course course = fileUploadExercise.getCourse();
+        Optional<FileUploadExercise> fileUploadExercise = fileUploadExerciseRepository.findById(id);
+        Course course = fileUploadExercise.get().getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(course, user) &&
             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
-        fileUploadExerciseRepository.delete(id);
+        fileUploadExerciseRepository.deleteById(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 }

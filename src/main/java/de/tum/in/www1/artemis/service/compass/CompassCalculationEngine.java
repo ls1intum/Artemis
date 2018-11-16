@@ -2,21 +2,21 @@ package de.tum.in.www1.artemis.service.compass;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import de.tum.in.www1.artemis.service.compass.assessment.Result;
+import de.tum.in.www1.artemis.service.compass.assessment.Assessment;
+import de.tum.in.www1.artemis.service.compass.assessment.CompassResult;
 import de.tum.in.www1.artemis.service.compass.assessment.Score;
 import de.tum.in.www1.artemis.service.compass.controller.*;
 import de.tum.in.www1.artemis.service.compass.grade.CompassGrade;
 import de.tum.in.www1.artemis.service.compass.grade.Grade;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLClass;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.AbstractMap;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 
 public class CompassCalculationEngine implements CalculationEngine {
@@ -73,15 +73,21 @@ public class CompassCalculationEngine implements CalculationEngine {
         return modelIndex.getModelCollection();
     }
 
+    Map<Long, UMLModel> getModelMap() {
+        return modelIndex.getModelMap();
+    }
+
+    @SuppressWarnings("unused")
     double getTotalCoverage() {
         return automaticAssessmentController.getTotalCoverage();
     }
 
+    @SuppressWarnings("unused")
     double getTotalConfidence() {
         return automaticAssessmentController.getTotalConfidence();
     }
 
-    void assessModelsAutomatically() {
+    private void assessModelsAutomatically() {
         automaticAssessmentController.assessModelsAutomatically(modelIndex, assessmentIndex);
     }
 
@@ -120,12 +126,12 @@ public class CompassCalculationEngine implements CalculationEngine {
         }
 
         UMLModel model = modelIndex.getModelMap().get(modelId);
-        Result result = model.getLastAssessmentResult();
+        CompassResult compassResult = model.getLastAssessmentCompassResult();
 
-        if (result == null) {
+        if (compassResult == null) {
             return automaticAssessmentController.assessModelAutomatically(model, assessmentIndex);
         }
-        return result;
+        return compassResult;
     }
 
     @Override
@@ -183,5 +189,139 @@ public class CompassCalculationEngine implements CalculationEngine {
             return null;
         }
         return JSONParser.exportToJSON(grade, model);
+    }
+
+    /**
+     * format:
+     *  uniqueElements
+     *      [{id}
+     *          name
+     *          apollonId
+     *          conflict]
+     *  numberModels
+     *  numberConflicts
+     *  totalConfidence
+     *  totalCoverage
+     *  models
+     *      [{id}
+     *          confidence
+     *          coverage
+     *          conflicts]
+     *
+     * @return statistics about the UML model
+     */
+    @Override
+    public JsonObject getStatistics() {
+        JsonObject jsonObject = new JsonObject();
+
+        JsonObject uniqueElements = new JsonObject();
+        int conflicts = 0;
+        for (UMLElement umlElement : this.modelIndex.getUniqueElements()) {
+            JsonObject uniqueElement = new JsonObject();
+            uniqueElement.addProperty("name", umlElement.getName());
+            uniqueElement.addProperty("apollonId", umlElement.getJSONElementID());
+            boolean conflict = this.hasConflict(umlElement.getElementID());
+            if (conflict) {
+                conflicts ++;
+            }
+            uniqueElement.addProperty("conflict", conflict);
+            uniqueElements.add(umlElement.getElementID() + "", uniqueElement);
+        }
+        jsonObject.add("uniqueElements", uniqueElements);
+
+        jsonObject.addProperty("numberModels", this.modelIndex.getModelCollection().size());
+        jsonObject.addProperty("numberConflicts", conflicts);
+        jsonObject.addProperty("totalConfidence", this.getTotalConfidence());
+        jsonObject.addProperty("totalCoverage", this.getTotalCoverage());
+
+        JsonObject models = new JsonObject();
+        for (Map.Entry<Long, UMLModel> modelEntry: this.getModelMap().entrySet()) {
+            JsonObject model = new JsonObject();
+            model.addProperty("coverage", modelEntry.getValue().getLastAssessmentCoverage());
+            model.addProperty("confidence", modelEntry.getValue().getLastAssessmentCoverage());
+            int modelConflicts = 0;
+            List<UMLElement> elements = new ArrayList<>();
+            elements.addAll(modelEntry.getValue().getClassList());
+            elements.addAll(modelEntry.getValue().getAssociationList());
+            for (UMLClass umlClass: modelEntry.getValue().getClassList()) {
+                elements.addAll(umlClass.getAttributeList());
+                elements.addAll(umlClass.getMethodList());
+            }
+            for (UMLElement element: elements) {
+                boolean modelConflict = this.hasConflict(element.getElementID());
+                if (modelConflict) {
+                    modelConflicts++;
+                }
+            }
+            model.addProperty("conflicts", modelConflicts);
+            models.add(modelEntry.getKey().toString(), model);
+        }
+        jsonObject.add("models", models);
+
+        return jsonObject;
+    }
+
+    private boolean hasConflict(int elementId) {
+        boolean conflict = false;
+        Assessment assessment = this.assessmentIndex.getAssessmentsMap().get(elementId);
+        if (assessment == null) {
+            return false;
+        }
+        for (List<Score> scores: this.assessmentIndex.getAssessmentsMap().get(elementId).getContextScoreList().values()) {
+            double uniqueScore = -1;
+            for (Score score: scores) {
+                if (uniqueScore != -1 && uniqueScore != score.getPoints()) {
+                    conflict = true;
+                    break;
+                }
+                uniqueScore = score.getPoints();
+            }
+        }
+        return conflict;
+    }
+
+    // Used for internal analysis of metrics
+    void printStatistic() {
+        // Variability of solutions
+        log.debug("Number of unique elements (without context) == similarity sets: " +
+            this.modelIndex.getNumberOfUniqueElements() + "\n");
+
+        int totalModelElements = 0;
+        for (UMLModel umlModel: this.getUmlModelCollection()) {
+            totalModelElements += umlModel.getClassList().size() + umlModel.getAssociationList().size();
+            for (UMLClass umlClass: umlModel.getClassList()) {
+                totalModelElements += umlClass.getMethodList().size() + umlClass.getAttributeList().size();
+            }
+        }
+
+        log.debug("Number of total model elements: " + totalModelElements + "\n");
+        double optimalEqu = (totalModelElements * 1.0) / this.getModelMap().size();
+        log.debug("Number of optimal similarity sets: " + optimalEqu + "\n");
+        log.debug("Variance: " +
+                (this.modelIndex.getNumberOfUniqueElements() - optimalEqu) / (totalModelElements - optimalEqu) + "\n");
+
+        // Total coverage and confidence
+        this.automaticAssessmentController.assessModelsAutomatically(modelIndex, assessmentIndex);
+        log.debug("Total confidence: " + this.automaticAssessmentController.getTotalConfidence() + "\n");
+        log.debug("Total coverage: " + this.automaticAssessmentController.getTotalCoverage() + "\n");
+
+        // Conflicts
+        int conflicts = 0;
+        double uniqueElementsContext = 0;
+        for(Assessment assessment: this.assessmentIndex.getAssessmentsMap().values()) {
+            for(List<Score> scores: assessment.getContextScoreList().values()) {
+                uniqueElementsContext ++;
+                double uniqueScore = -1;
+                for (Score score: scores) {
+                    if (uniqueScore != -1 && uniqueScore != score.getPoints()) {
+                        conflicts ++;
+                        break;
+                    }
+                    uniqueScore = score.getPoints();
+                }
+            }
+        }
+        log.debug("Total conflicts (with context): " + conflicts + "\n");
+        log.debug("Relative conflicts (with context): " + (conflicts / uniqueElementsContext) + "\n");
     }
 }

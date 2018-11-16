@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
@@ -51,6 +52,18 @@ public class Result implements Serializable {
     @JsonView(QuizView.After.class)
     private Long score;
 
+    /**
+     * Describes whether a result counts against the total score of a student.
+     * It determines whether the result is shown in the course dashboard or not.
+     * For quiz exercises:
+     *  - results are rated=true when students participate in the live quiz mode (there can only be one such result)
+     *  - results are rated=false when students participate in the practice mode
+     *
+     * For all other exercises (modeling, programming, etc.)
+     *  - results are rated=true when students submit before the due date (or when the due date is null),
+     *    multiple results can be rated=true, then the result with the last completionDate counts towards the total score of a student
+     *  - results are rated=false when students submit after the due date
+     */
     @Column(name = "rated")
     @JsonView(QuizView.Before.class)
     private Boolean rated;
@@ -58,12 +71,13 @@ public class Result implements Serializable {
     @Column(name = "hasFeedback")
     private Boolean hasFeedback;
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(unique = true)
     @JsonView(QuizView.Before.class)
+    @JsonIgnoreProperties({"result", "participation"})
     private Submission submission;
 
-    @OneToMany(mappedBy = "result", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderColumn
     @JsonIgnoreProperties("result")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -82,6 +96,10 @@ public class Result implements Serializable {
     @Column(name = "assessment_type")
     @JsonView(QuizView.After.class)
     private AssessmentType assessmentType;
+
+    @Transient
+    @JsonProperty
+    private String assessments;
 
     /**
      * This property stores the total number of results in the participation this result belongs to.
@@ -193,13 +211,22 @@ public class Result implements Serializable {
      */
     public void setScore(Long score) {
         this.score = score;
-
-        //if score is 100 set successful true, if not set it false
-        successful = score == 100;
+        if (score == null) {
+            this.successful = false;
+        }
+        else {
+            //if score is 100 set successful true, if not, set it false
+            successful = score == 100;
+        }
     }
 
     public Boolean isRated() {
         return rated != null ? rated : false;
+    }
+
+    @JsonIgnore
+    public Boolean isRatedNull() {
+        return rated == null;
     }
 
     public Result rated(Boolean rated) {
@@ -339,5 +366,13 @@ public class Result implements Serializable {
             ", rated='" + isRated() + "'" +
             ", hasFeedback='" + getHasFeedback() + "'" +
             "}";
+    }
+
+    public String getAssessments() {
+        return assessments;
+    }
+
+    public void setAssessments(String assessments) {
+        this.assessments = assessments;
     }
 }

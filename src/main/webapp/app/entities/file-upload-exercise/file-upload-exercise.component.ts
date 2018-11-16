@@ -21,9 +21,9 @@ export class FileUploadExerciseComponent implements OnInit, OnDestroy {
     courseId: number;
     itemsPerPage: number;
     links: any;
-    page: any;
-    predicate: any;
-    reverse: any;
+    page: number;
+    predicate: string;
+    reverse: boolean;
 
     constructor(
         private fileUploadExerciseService: FileUploadExerciseService,
@@ -59,7 +59,7 @@ export class FileUploadExerciseComponent implements OnInit, OnDestroy {
             (res: HttpResponse<FileUploadExercise[]>) => {
                 this.fileUploadExercises = res.body;
             },
-            (res: HttpErrorResponse) => this.onError(res.message)
+            (res: HttpErrorResponse) => this.onError(res)
         );
     }
 
@@ -75,21 +75,23 @@ export class FileUploadExerciseComponent implements OnInit, OnDestroy {
     }
 
     loadAllForCourse() {
-        this.courseExerciseService.findAllFileUploadExercises(this.courseId, {
-            page: this.page,
-            size: this.itemsPerPage
-        }).subscribe(
-            (res: HttpResponse<FileUploadExercise[]>) => {
-                this.fileUploadExercises = res.body;
-            },
-            (res: HttpResponse<FileUploadExercise>[]) => this.onError(res)
-        );
+        this.courseExerciseService
+            .findAllFileUploadExercises(this.courseId, {
+                page: this.page,
+                size: this.itemsPerPage
+            })
+            .subscribe(
+                (res: HttpResponse<FileUploadExercise[]>) => {
+                    this.fileUploadExercises = res.body;
+                },
+                (res: HttpErrorResponse) => this.onError(res)
+            );
         this.courseService.find(this.courseId).subscribe(res => {
             this.course = res.body;
         });
     }
 
-    loadPage(page) {
+    loadPage(page: number) {
         this.page = page;
         this.loadAll();
     }
@@ -98,12 +100,12 @@ export class FileUploadExerciseComponent implements OnInit, OnDestroy {
         return item.id;
     }
     registerChangeInFileUploadExercises() {
-        this.eventSubscriber = this.eventManager.subscribe('fileUploadExerciseListModification', response => this.load());
+        this.eventSubscriber = this.eventManager.subscribe('fileUploadExerciseListModification', () => this.load());
     }
 
-    private onError(error) {
-        this.jhiAlertService.error(error.message, null, null);
+    private onError(error: HttpErrorResponse) {
+        this.jhiAlertService.error(error.message);
     }
 
-    callback() { }
+    callback() {}
 }

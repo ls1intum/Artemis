@@ -27,6 +27,7 @@ public class CourseService {
     private final ExerciseService exerciseService;
     private final AuthorizationCheckService authCheckService;
 
+
     public CourseService(CourseRepository courseRepository,
                          UserService userService,
                          ExerciseService exerciseService,
@@ -121,7 +122,7 @@ public class CourseService {
         if (authCheckService.isAdmin()) {
             // admin => fetch all courses with all exercises immediately
             List<Course> allCourses = findAllWithExercises();
-            Set<Course> userCourses = new HashSet<Course>();
+            Set<Course> userCourses = new HashSet<>();
             // filter old courses and unnecessary information anyway
             for (Course course : allCourses) {
                 if (course.getEndDate() != null && course.getEndDate().isBefore(ZonedDateTime.now())) {
@@ -129,19 +130,16 @@ public class CourseService {
                     continue;
                 }
                 userCourses.add(course);
-                //fetch all exercises
+                //filter sensitive information
                 for (Exercise exercise : course.getExercises()) {
-                    if (exercise instanceof QuizExercise) {
-                        QuizExercise quizExercise = (QuizExercise) exercise;
-                        quizExercise.filterSensitiveInformation();
-                    }
+                    exercise.filterSensitiveInformation();
                 }
             }
             return new ArrayList<>(userCourses);
         } else {
             // not admin => fetch visible courses first
             List<Course> allCourses = findAll();
-            Set<Course> userCourses = new HashSet<Course>();
+            Set<Course> userCourses = new HashSet<>();
             // filter old courses and courses the user should not be able to see
             for (Course course : allCourses) {
                 if (course.getEndDate() != null && course.getEndDate().isBefore(ZonedDateTime.now())) {
@@ -179,7 +177,7 @@ public class CourseService {
     @Transactional(readOnly = true)
     public Course findOne(Long id) {
         log.debug("Request to get Course : {}", id);
-        return courseRepository.findOne(id);
+        return courseRepository.findById(id).get();
     }
 
     /**
@@ -189,7 +187,7 @@ public class CourseService {
      */
     public void delete(Long id) {
         log.debug("Request to delete Course : {}", id);
-        courseRepository.delete(id);
+        courseRepository.deleteById(id);
     }
 
     public List<String> getAllTeachingAssistantGroupNames() {
@@ -257,6 +255,8 @@ public class CourseService {
     @Transactional(readOnly = true)
     public Result choseResultInParticipation(Participation participation, boolean hasDueDate) {
         List<Result> results = new ArrayList<>(participation.getResults());
+
+        //TODO take the field result.isRated into account
 
         Result chosenResult;
         //edge case of no result submitted to a participation

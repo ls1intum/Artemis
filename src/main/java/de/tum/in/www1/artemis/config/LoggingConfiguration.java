@@ -39,7 +39,8 @@ public class LoggingConfiguration {
 
     private final JHipsterProperties jHipsterProperties;
 
-    public LoggingConfiguration(@Value("${spring.application.name}") String appName, @Value("${server.port}") String serverPort, JHipsterProperties jHipsterProperties) {
+    public LoggingConfiguration(@Value("${spring.application.name}") String appName, @Value("${server.port}") String serverPort,
+                                JHipsterProperties jHipsterProperties) {
         this.appName = appName;
         this.serverPort = serverPort;
         this.jHipsterProperties = jHipsterProperties;
@@ -67,11 +68,11 @@ public class LoggingConfiguration {
         String customFields = "{\"app_name\":\"" + appName + "\",\"app_port\":\"" + serverPort + "\"}";
 
         // More documentation is available at: https://github.com/logstash/logstash-logback-encoder
-        LogstashEncoder logstashEncoder=new LogstashEncoder();
+        LogstashEncoder logstashEncoder = new LogstashEncoder();
         // Set the Logstash appender config from JHipster properties
         logstashEncoder.setCustomFields(customFields);
         // Set the Logstash appender config from JHipster properties
-        logstashAppender.addDestinations(new InetSocketAddress(jHipsterProperties.getLogging().getLogstash().getHost(),jHipsterProperties.getLogging().getLogstash().getPort()));
+        logstashAppender.addDestinations(new InetSocketAddress(jHipsterProperties.getLogging().getLogstash().getHost(), jHipsterProperties.getLogging().getLogstash().getPort()));
 
         ShortenedThrowableConverter throwableConverter = new ShortenedThrowableConverter();
         throwableConverter.setRootCauseFirst(true);

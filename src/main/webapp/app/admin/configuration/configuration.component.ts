@@ -14,21 +14,19 @@ export class JhiConfigurationComponent implements OnInit {
     orderProp: string;
     reverse: boolean;
 
-    constructor(
-        private configurationService: JhiConfigurationService
-    ) {
+    constructor(private configurationService: JhiConfigurationService) {
         this.configKeys = [];
         this.filter = '';
         this.orderProp = 'prefix';
         this.reverse = false;
     }
 
-    keys(dict): Array<string> {
-        return (dict === undefined) ? [] : Object.keys(dict);
+    keys(dict: any): Array<string> {
+        return dict === undefined ? [] : Object.keys(dict);
     }
 
     ngOnInit() {
-        this.configurationService.get().subscribe((configuration) => {
+        this.configurationService.get().subscribe((configuration: any) => {
             this.configuration = configuration;
 
             for (const config of configuration) {
@@ -38,7 +36,7 @@ export class JhiConfigurationComponent implements OnInit {
             }
         });
 
-        this.configurationService.getEnv().subscribe((configuration) => {
+        this.configurationService.getEnv().subscribe((configuration: any) => {
             this.allConfiguration = configuration;
         });
     }

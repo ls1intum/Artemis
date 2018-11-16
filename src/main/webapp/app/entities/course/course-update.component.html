@@ -1,0 +1,62 @@
+<div class="row justify-content-center">
+    <div class="col-8">
+        <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
+            <h4 *ngIf="!course.id" id="jhi-course-heading-create" jhiTranslate="arTeMiSApp.course.home.createLabel">Create new Course</h4>
+            <h4 *ngIf="course.id" id="jhi-course-heading-edit" jhiTranslate="arTeMiSApp.course.home.editLabel">Edit Course</h4>
+            <div>
+                <jhi-alert></jhi-alert>
+                <jhi-alert-error></jhi-alert-error>
+                <div class="form-group" [hidden]="!course.id">
+                    <label for="id" jhiTranslate="global.field.id">ID</label>
+                    <input type="text" class="form-control" id="id" name="id"
+                        [(ngModel)]="course.id" readonly />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.course.title" for="field_title">Title</label>
+                    <input required type="text" class="form-control" name="title" id="field_title"
+                        [(ngModel)]="course.title" />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.course.shortName" for="field_shortName">Short Name</label>
+                    <input required type="text" class="form-control" name="shortName" id="field_shortName" minlength="3" [pattern]="shortNamePattern"
+                        [(ngModel)]="course.shortName" />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.course.studentGroupName" for="field_studentGroupName">Student Group Name</label>
+                    <input required type="text" class="form-control" name="studentGroupName" id="field_studentGroupName"
+                        [(ngModel)]="course.studentGroupName" />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.course.teachingAssistantGroupName" for="field_teachingAssistantGroupName">Teaching Assistant Group Name</label>
+                    <input type="text" class="form-control" name="teachingAssistantGroupName" id="field_teachingAssistantGroupName"
+                        [(ngModel)]="course.teachingAssistantGroupName" />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.course.instructorGroupName" for="field_instructorGroupName">Instructor Group Name</label>
+                    <input required type="text" class="form-control" name="instructorGroupName" id="field_instructorGroupName"
+                        [(ngModel)]="course.instructorGroupName" />
+                </div>
+                <div class="form-group">
+                    <jhi-date-time-picker labelName="Start Date" [entity]="course" field="startDate"></jhi-date-time-picker>
+                </div>
+                <div class="form-group">
+                    <jhi-date-time-picker labelName="End Date" [entity]="course" field="endDate"></jhi-date-time-picker>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.course.onlineCourse" for="field_onlineCourse">Online Course</label>
+                    <input type="checkbox" class="form-control" name="onlineCourse" id="field_onlineCourse"
+                        [(ngModel)]="course.onlineCourse" />
+                </div>
+
+            </div>
+            <div>
+                <button type="button" id="cancel-save" class="btn btn-secondary"  (click)="previousState()">
+                    <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                </button>
+                <button type="submit" id="save-entity" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
+                    <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

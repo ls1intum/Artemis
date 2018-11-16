@@ -1,8 +1,14 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Question;
+import de.tum.in.www1.artemis.domain.QuizExercise;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.CourseService;
+import de.tum.in.www1.artemis.service.QuizExerciseService;
+import de.tum.in.www1.artemis.service.StatisticService;
+import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
@@ -18,6 +24,9 @@ import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 /**
  * REST controller for managing QuizExercise.
@@ -70,7 +79,7 @@ public class QuizExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this quiz exercise does not exist")).body(null);
         }
         if (!courseService.userHasAtLeastTAPermissions(course)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
 
         // check if quiz is valid
@@ -111,7 +120,7 @@ public class QuizExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this quiz exercise does not exist")).body(null);
         }
         if (!courseService.userHasAtLeastTAPermissions(course)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
 
         // check if quiz is valid
@@ -129,7 +138,7 @@ public class QuizExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "quizHasStarted", "The quiz has already started. Use the re-evaluate endpoint to make retroactive corrections.")).body(null);
         }
 
-        reconnectJSONIgnoreAttributes(quizExercise);
+        quizExercise.reconnectJSONIgnoreAttributes();
 
         // reset Released-Flag in all statistics if they are released but the quiz hasn't ended yet
         if (!quizExercise.isStarted() || quizExercise.getRemainingTime() > 0) {
@@ -197,7 +206,7 @@ public class QuizExerciseResource {
         log.debug("REST request to get QuizExercise : {}", quizExerciseId);
         QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
         if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(quizExercise));
     }
@@ -215,7 +224,7 @@ public class QuizExerciseResource {
         log.debug("REST request to get QuizExercise : {}", quizExerciseId);
         QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
         if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
         statisticService.recalculateStatistics(quizExercise);
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(quizExercise));
@@ -237,10 +246,10 @@ public class QuizExerciseResource {
 
         QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(id);
         if (quizExercise == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            return notFound();
         }
         if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
 
         log.debug("    checked permissions after {} ms", System.currentTimeMillis() - start);
@@ -278,7 +287,7 @@ public class QuizExerciseResource {
         // check permissions
         Course course = quizExercise.getCourse();
         if (!courseService.userHasAtLeastTAPermissions(course)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
 
         switch (action) {
@@ -369,7 +378,7 @@ public class QuizExerciseResource {
 
         Course course = quizExercise.getCourse();
         if (!courseService.userHasAtLeastInstructorPermissions(course)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
 
         quizExerciseService.delete(id);
@@ -391,12 +400,11 @@ public class QuizExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the re-evaluated quizExercise,
      * or with status 400 (Bad Request) if the quizExercise is not valid,
      * or with status 500 (Internal Server Error) if the quizExercise couldn't be re-evaluated
-     * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/quiz-exercises-re-evaluate")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @Timed
-    public ResponseEntity<QuizExercise> reEvaluateQuizExercise(@RequestBody QuizExercise quizExercise) throws URISyntaxException {
+    public ResponseEntity<QuizExercise> reEvaluateQuizExercise(@RequestBody QuizExercise quizExercise) {
         log.debug("REST request to re-evaluate QuizExercise : {}", quizExercise);
         if (quizExercise.getId() == null) {
             return ResponseEntity.notFound().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "quizExerciseWithoutId", "The quiz exercise doesn't have an ID.")).build();
@@ -415,14 +423,14 @@ public class QuizExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this quiz exercise does not exist")).body(null);
         }
         if (!courseService.userHasAtLeastInstructorPermissions(course)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
 
         quizExercise.undoUnallowedChanges(originalQuizExercise);
         boolean updateOfResultsAndStatisticsNecessary = quizExercise.checkIfRecalculationIsNecessary(originalQuizExercise);
 
         //update QuizExercise
-        reconnectJSONIgnoreAttributes(quizExercise);
+        quizExercise.reconnectJSONIgnoreAttributes();
 
         //adjust existing results if an answer or and question was deleted and recalculate them
         quizExerciseService.adjustResultsOnQuizChanges(quizExercise);
@@ -438,80 +446,6 @@ public class QuizExerciseResource {
         return ResponseEntity.ok()
             .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, quizExercise.getId().toString()))
             .body(result);
-    }
-
-    /**
-     * Recreate missing pointers from children to parents that were removed by @JSONIgnore
-     *
-     * @param quizExercise the quiz exercise for which the pointers should be recreated
-     */
-    private void reconnectJSONIgnoreAttributes(QuizExercise quizExercise) {
-        // iterate through questions to add missing pointer back to quizExercise
-        // Note: This is necessary because of the @IgnoreJSON in question and answerOption
-        //       that prevents infinite recursive JSON serialization.
-        for (Question question : quizExercise.getQuestions()) {
-            if (question.getId() != null) {
-                question.setExercise(quizExercise);
-                //reconnect QuestionStatistics
-                if (question.getQuestionStatistic() != null) {
-                    question.getQuestionStatistic().setQuestion(question);
-                }
-                // do the same for answerOptions (if question is multiple choice)
-                if (question instanceof MultipleChoiceQuestion) {
-                    MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) question;
-                    MultipleChoiceQuestionStatistic mcStatistic = (MultipleChoiceQuestionStatistic) mcQuestion.getQuestionStatistic();
-                    //reconnect answerCounters
-                    for (AnswerCounter answerCounter : mcStatistic.getAnswerCounters()) {
-                        if (answerCounter.getId() != null) {
-                            answerCounter.setMultipleChoiceQuestionStatistic(mcStatistic);
-                        }
-                    }
-                    // reconnect answerOptions
-                    for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {
-                        if (answerOption.getId() != null) {
-                            answerOption.setQuestion(mcQuestion);
-                        }
-                    }
-                }
-                if (question instanceof DragAndDropQuestion) {
-                    DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
-                    DragAndDropQuestionStatistic dragAndDropStatistic = (DragAndDropQuestionStatistic) dragAndDropQuestion.getQuestionStatistic();
-                    // reconnect dropLocations
-                    for (DropLocation dropLocation : dragAndDropQuestion.getDropLocations()) {
-                        if (dropLocation.getId() != null) {
-                            dropLocation.setQuestion(dragAndDropQuestion);
-                        }
-                    }
-                    // reconnect dragItems
-                    for (DragItem dragItem : dragAndDropQuestion.getDragItems()) {
-                        if (dragItem.getId() != null) {
-                            dragItem.setQuestion(dragAndDropQuestion);
-                        }
-                    }
-                    // reconnect correctMappings
-                    for (DragAndDropMapping mapping : dragAndDropQuestion.getCorrectMappings()) {
-                        if (mapping.getId() != null) {
-                            mapping.setQuestion(dragAndDropQuestion);
-                        }
-                    }
-                    //reconnect dropLocationCounters
-                    for (DropLocationCounter dropLocationCounter : dragAndDropStatistic.getDropLocationCounters()) {
-                        if (dropLocationCounter.getId() != null) {
-                            dropLocationCounter.setDragAndDropQuestionStatistic(dragAndDropStatistic);
-                            dropLocationCounter.getDropLocation().setQuestion(dragAndDropQuestion);
-                        }
-                    }
-                }
-            }
-        }
-        //reconnect quizPointStatistic
-        quizExercise.getQuizPointStatistic().setQuiz(quizExercise);
-        //reconnect pointCounters
-        for (PointCounter pointCounter : quizExercise.getQuizPointStatistic().getPointCounters()) {
-            if (pointCounter.getId() != null) {
-                pointCounter.setQuizPointStatistic(quizExercise.getQuizPointStatistic());
-            }
-        }
     }
 
 }

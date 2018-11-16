@@ -1,7 +1,6 @@
-
 {
     "arTeMiSApp": {
-        "answerOption" : {
+        "answerOption": {
             "home": {
                 "title": "Answer Options",
                 "createLabel": "Create a new Answer Option",
@@ -20,6 +19,7 @@
             "hint": "Hint",
             "explanation": "Explanation",
             "isCorrect": "Is Correct",
+            "invalid": "Invalid",
             "question": "Question"
         }
     }

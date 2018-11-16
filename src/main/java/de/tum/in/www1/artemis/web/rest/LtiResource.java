@@ -4,10 +4,11 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
-import de.tum.in.www1.artemis.service.LtiService;
 import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseLtiConfigurationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
+import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -78,12 +79,13 @@ public class LtiResource {
         }
 
         // Check if exercise ID is valid
-        Exercise exercise = exerciseRepository.findOne(exerciseId);
-        if (exercise == null) {
+        Optional<Exercise> optionalExercise = exerciseRepository.findById(exerciseId);
+        if (!optionalExercise.isPresent()) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "Exercise not found");
             return;
         }
 
+        Exercise exercise = optionalExercise.get();
         // Handle the launch request using LtiService
         try {
             ltiService.handleLaunchRequest(launchRequest, exercise);
@@ -121,24 +123,23 @@ public class LtiResource {
      * @return the ResponseEntity with status 200 (OK) and with body the LTI configuration, or with status 404 (Not Found)
      */
     @GetMapping(value = "/lti/configuration/{exerciseId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ExerciseLtiConfigurationDTO> exerciseLtiConfiguration(@PathVariable("exerciseId") Long exerciseId, HttpServletRequest request) {
-        Exercise exercise = exerciseRepository.findOne(exerciseId);
+        Optional<Exercise> exercise = exerciseRepository.findById(exerciseId);
 
-
-        return Optional.ofNullable(exercise)
+        return exercise
             .map(result -> {
                 String launchUrl = request.getScheme() + // "http"
                     "://" +                                // "://"
                     request.getServerName() +              // "myhost"                     // ":"
                     (request.getServerPort() != 80 && request.getServerPort() != 443 ? ":" + request.getServerPort() : "" ) +
-                    "/api/lti/launch/" + exercise.getId();
+                    "/api/lti/launch/" + exercise.get().getId();
 
                 String ltiId = LTI_ID;
                 String ltiPassport = LTI_ID + ":" + LTI_OAUTH_KEY + ":" + LTI_OAUTH_SECRET;
                 return new ResponseEntity<>(new ExerciseLtiConfigurationDTO(launchUrl, ltiId, ltiPassport), HttpStatus.OK);
             })
-            .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+            .orElse(ResponseUtil.notFound());
     }
 
 

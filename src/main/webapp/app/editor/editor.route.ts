@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { UserRouteAccessService } from '../shared';
+import { UserRouteAccessService } from '../core';
 import { EditorComponent } from './editor.component';
 
 export const editorRoute: Routes = [

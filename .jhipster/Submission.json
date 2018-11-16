@@ -1,21 +1,5 @@
 {
-    "fluentMethods": true,
-    "relationships": [
-        {
-            "relationshipType": "one-to-one",
-            "relationshipName": "result",
-            "otherEntityName": "result",
-            "otherEntityField": "id",
-            "ownerSide": true,
-            "otherEntityRelationshipName": "submission"
-        },
-        {
-            "relationshipType": "many-to-one",
-            "relationshipName": "participation",
-            "otherEntityName": "participation",
-            "otherEntityField": "id"
-        }
-    ],
+    "name": "Submission",
     "fields": [
         {
             "fieldName": "submitted",
@@ -28,13 +12,32 @@
         {
             "fieldName": "type",
             "fieldType": "SubmissionType",
-            "fieldValues": "MANUAL,TIMEOUT"
+            "fieldValues": "MANUAL,TIMEOUT,TEST,OTHER"
         }
     ],
-    "changelogDate": "20170831094159",
+    "relationships": [
+        {
+            "relationshipType": "one-to-one",
+            "relationshipName": "result",
+            "otherEntityName": "exerciseResult",
+            "otherEntityField": "id",
+            "ownerSide": true,
+            "otherEntityRelationshipName": "submission"
+        },
+        {
+            "relationshipType": "many-to-one",
+            "relationshipName": "participation",
+            "otherEntityName": "participation",
+            "otherEntityField": "id"
+        }
+    ],
+    "changelogDate": "20180927081411",
     "entityTableName": "submission",
     "dto": "no",
     "pagination": "no",
     "service": "no",
-    "jpaMetamodelFiltering": false
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
 }

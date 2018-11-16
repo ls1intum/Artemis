@@ -3,9 +3,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 
-import { NG1TRANSLATEPARTIALLOADER_SERVICE } from '../../shared/language/ng1-translate-partial-loader.service';
-import { NG1TRANSLATE_SERVICE } from '../../shared/language/ng1-translate.service';
-
 import { QuizExerciseService } from './quiz-exercise.service';
 import { QuizExercise } from './quiz-exercise.model';
 import { JhiAlertService } from 'ng-jhipster';
@@ -25,14 +22,14 @@ export class QuizExerciseExportComponent implements OnInit {
     translateService: TranslateService;
     router: Router;
 
-    constructor(private route: ActivatedRoute,
+    constructor(
+        private route: ActivatedRoute,
         private quizExerciseService: QuizExerciseService,
         private courseService: CourseService,
         private jhiAlertService: JhiAlertService,
         router: Router,
-        translateService: TranslateService,
-        @Inject(NG1TRANSLATE_SERVICE) private $translate: any,
-        @Inject(NG1TRANSLATEPARTIALLOADER_SERVICE) private $translatePartialLoader: any) {
+        translateService: TranslateService
+    ) {
         this.router = router;
         this.translateService = translateService;
     }
@@ -48,7 +45,7 @@ export class QuizExerciseExportComponent implements OnInit {
      * Loads course for the given id and populates quiz exercises for the given course id
      * @param courseId Id of the course
      */
-    private loadForCourse(courseId) {
+    private loadForCourse(courseId: number) {
         this.courseService.find(this.courseId).subscribe(res => {
             this.course = res.body;
         });
@@ -66,7 +63,7 @@ export class QuizExerciseExportComponent implements OnInit {
                     });
                 }
             },
-            (res: HttpErrorResponse) => this.onError(res.message)
+            (res: HttpErrorResponse) => this.onError(res)
         );
     }
 
@@ -74,8 +71,8 @@ export class QuizExerciseExportComponent implements OnInit {
      * Handles when error is received
      * @param error Error
      */
-    private onError(error) {
-        this.jhiAlertService.error(error.message, null, null);
+    private onError(error: HttpErrorResponse) {
+        this.jhiAlertService.error(error.message);
     }
 
     /**

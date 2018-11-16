@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.security;
 
-import de.tum.in.www1.artemis.service.LtiService;
+import de.tum.in.www1.artemis.service.connectors.LtiService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationListener;

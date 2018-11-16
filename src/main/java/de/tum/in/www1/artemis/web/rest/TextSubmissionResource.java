@@ -97,8 +97,8 @@ public class TextSubmissionResource {
     @Timed
     public ResponseEntity<TextSubmission> getTextSubmission(@PathVariable Long id) {
         log.debug("REST request to get TextSubmission : {}", id);
-        TextSubmission textSubmission = textSubmissionRepository.findOne(id);
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(textSubmission));
+        Optional<TextSubmission> textSubmission = textSubmissionRepository.findById(id);
+        return ResponseUtil.wrapOrNotFound(textSubmission);
     }
 
     /**
@@ -111,7 +111,7 @@ public class TextSubmissionResource {
     @Timed
     public ResponseEntity<Void> deleteTextSubmission(@PathVariable Long id) {
         log.debug("REST request to delete TextSubmission : {}", id);
-        textSubmissionRepository.delete(id);
+        textSubmissionRepository.deleteById(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 }

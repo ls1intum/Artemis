@@ -1,20 +1,7 @@
 import { Routes } from '@angular/router';
-import { UserRouteAccessService } from '../../shared';
-import { ExerciseComponent } from './exercise.component';
+import { UserRouteAccessService } from '../../core';
 import { ExerciseLtiConfigurationPopupComponent } from './exercise-lti-configuration-dialog.component';
 import { ExerciseResetPopupComponent } from './exercise-reset-dialog.component';
-
-export const exerciseRoute: Routes = [
-    {
-        path: 'exercise',
-        component: ExerciseComponent,
-        data: {
-            authorities: ['ROLE_USER'],
-            pageTitle: 'arTeMiSApp.exercise.home.title'
-        },
-        canActivate: [UserRouteAccessService]
-    }
-];
 
 export const exercisePopupRoute: Routes = [
     {

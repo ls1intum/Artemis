@@ -1,5 +1,11 @@
 {
-    "fluentMethods": true,
+    "name": "DragAndDropQuestion",
+    "fields": [
+        {
+            "fieldName": "backgroundFilePath",
+            "fieldType": "String"
+        }
+    ],
     "relationships": [
         {
             "relationshipType": "one-to-many",
@@ -20,16 +26,13 @@
             "otherEntityRelationshipName": "question"
         }
     ],
-    "fields": [
-        {
-            "fieldName": "backgroundFilePath",
-            "fieldType": "String"
-        }
-    ],
-    "changelogDate": "20171130173547",
+    "changelogDate": "20180927081404",
     "entityTableName": "drag_and_drop_question",
     "dto": "no",
     "pagination": "no",
     "service": "no",
-    "jpaMetamodelFiltering": false
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
 }

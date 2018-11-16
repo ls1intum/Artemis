@@ -1,16 +1,12 @@
 {
-    "fluentMethods": true,
-    "relationships": [
-        {
-            "relationshipType": "one-to-many",
-            "relationshipName": "exercises",
-            "otherEntityName": "exercise",
-            "otherEntityRelationshipName": "course"
-        }
-    ],
+    "name": "Course",
     "fields": [
         {
             "fieldName": "title",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "shortName",
             "fieldType": "String"
         },
         {
@@ -38,10 +34,21 @@
             "fieldType": "Boolean"
         }
     ],
-    "changelogDate": "20171130173536",
+    "relationships": [
+        {
+            "relationshipType": "one-to-many",
+            "relationshipName": "exercises",
+            "otherEntityName": "exercise",
+            "otherEntityRelationshipName": "course"
+        }
+    ],
+    "changelogDate": "20180927081351",
     "entityTableName": "course",
     "dto": "no",
     "pagination": "no",
     "service": "serviceClass",
-    "jpaMetamodelFiltering": false
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
 }

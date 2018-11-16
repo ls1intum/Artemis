@@ -6,7 +6,7 @@ import { BaseEntity } from '../../shared';
     name: 'sortBy'
 })
 export class SortByPipe implements PipeTransform {
-    constructor(private momentDiff: DifferencePipe) { }
+    constructor(private momentDiff: DifferencePipe) {}
 
     transform<T extends BaseEntity>(array: Array<T>, predicate: string, reverse: boolean): Array<T> {
         array.sort((a: T, b: T) => {
@@ -35,15 +35,26 @@ export class SortByPipe implements PipeTransform {
                     tempB = tempB[tempKey];
                 }
             }
-            const result = (tempA < tempB) ? -1 : (tempA > tempB) ? 1 : (tempA == null && tempB !== null ? -1 : (tempA !== null && tempB == null ? 1 : (
-                (a.id < b.id) ? -1 : (a.id > b.id) ? 1 : 0
-            )));
+            const result =
+                tempA < tempB
+                    ? -1
+                    : tempA > tempB
+                    ? 1
+                    : tempA == null && tempB !== null
+                    ? -1
+                    : tempA !== null && tempB == null
+                    ? 1
+                    : a.id < b.id
+                    ? -1
+                    : a.id > b.id
+                    ? 1
+                    : 0;
             return result * (reverse ? 1 : -1);
         });
         return array;
     }
 
-    statusForQuiz(quizExercise) {
+    statusForQuiz(quizExercise: any) {
         if (quizExercise.isPlannedToStart && quizExercise.remainingTime != null) {
             if (quizExercise.remainingTime <= 0) {
                 return quizExercise.isOpenForPractice ? 1 : 0;
@@ -54,7 +65,7 @@ export class SortByPipe implements PipeTransform {
         return quizExercise.isVisibleBeforeStart ? 3 : 4;
     }
 
-    durationForExercise(exercise) {
+    durationForExercise(exercise: any) {
         return this.momentDiff.transform(exercise.completionDate, exercise.participations[0].initializationDate, 'minutes');
     }
 }

@@ -137,7 +137,7 @@ public class QuizExerciseService {
     @Transactional(readOnly = true)
     public QuizExercise findOne(Long id) {
         log.debug("Request to get Quiz Exercise : {}", id);
-        return quizExerciseRepository.findOne(id);
+        return quizExerciseRepository.findById(id).get();
     }
 
     /**
@@ -150,13 +150,14 @@ public class QuizExerciseService {
     public QuizExercise findOneWithQuestions(Long id) {
         log.debug("Request to get Quiz Exercise : {}", id);
         long start = System.currentTimeMillis();
-        QuizExercise quizExercise = quizExerciseRepository.findOne(id);
-        log.info("    loaded quiz after {} ms", System.currentTimeMillis() - start);
-        if (quizExercise != null) {
-            quizExercise.getQuestions().size();
-            log.info("    loaded questions after {} ms", System.currentTimeMillis() - start);
+        Optional<QuizExercise> quizExercise = quizExerciseRepository.findById(id);
+        log.debug("    loaded quiz after {} ms", System.currentTimeMillis() - start);
+        if (quizExercise.isPresent()) {
+            quizExercise.get().getQuestions().size();
+            log.debug("    loaded questions after {} ms", System.currentTimeMillis() - start);
+            return quizExercise.get();
         }
-        return quizExercise;
+        return null;
     }
 
     /**
@@ -169,9 +170,9 @@ public class QuizExerciseService {
     public QuizExercise findOneWithQuestionsAndStatistics(Long id) {
         log.debug("Request to get Quiz Exercise : {}", id);
         long start = System.currentTimeMillis();
-        QuizExercise quizExercise = quizExerciseRepository.findOne(id);
-        log.debug("    loaded quiz after {} ms", System.currentTimeMillis() - start);
-        if (quizExercise != null) {
+        Optional<QuizExercise> optionalQuizExercise = quizExerciseRepository.findById(id);
+        if (optionalQuizExercise.isPresent()) {
+            QuizExercise quizExercise = optionalQuizExercise.get();
             quizExercise.getQuestions().size();
             log.debug("    loaded questions after {} ms", System.currentTimeMillis() - start);
             quizExercise.getQuizPointStatistic().getPointCounters().size();
@@ -180,8 +181,9 @@ public class QuizExerciseService {
                 question.getQuestionStatistic().getRatedCorrectCounter();
             }
             log.debug("    loaded question statistics after {} ms", System.currentTimeMillis() - start);
+            return quizExercise;
         }
-        return quizExercise;
+        return null;
     }
 
     /**
@@ -230,7 +232,8 @@ public class QuizExerciseService {
         log.debug("Request to delete Exercise : {}", id);
         // delete all participations belonging to this quiz
         participationService.deleteAllByExerciseId(id, false, false);
-        quizExerciseRepository.delete(id);
+
+        quizExerciseRepository.deleteById(id);
     }
 
     /**
@@ -245,7 +248,7 @@ public class QuizExerciseService {
         for (Result result : resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId())) {
 
             Set<SubmittedAnswer> submittedAnswersToDelete = new HashSet<>();
-            QuizSubmission quizSubmission = quizSubmissionRepository.findOne(result.getSubmission().getId());
+            QuizSubmission quizSubmission = quizSubmissionRepository.findById(result.getSubmission().getId()).get();
 
             for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
                 // Delete all references to question and question-elements if the question was changed

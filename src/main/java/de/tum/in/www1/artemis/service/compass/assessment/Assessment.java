@@ -3,8 +3,9 @@ package de.tum.in.www1.artemis.service.compass.assessment;
 import java.util.*;
 
 public class Assessment {
-    private HashMap <Context, List <Score>> contextScoreList;
-    private HashMap <Context, Score> contextScoreMapping;
+
+    private Map <Context, List <Score>> contextScoreList;
+    private Map <Context, Score> contextScoreMapping;
 
     public Assessment(Context context, Score score) {
         contextScoreList = new HashMap<>();
@@ -17,8 +18,6 @@ public class Assessment {
         contextScoreMapping.put(context, score);
     }
 
-    // <editor-fold desc="getter" >
-
     public boolean hasContext (Context context) {
         return contextScoreMapping.containsKey(context);
     }
@@ -27,6 +26,11 @@ public class Assessment {
         return contextScoreMapping.get(context);
     }
 
+    /**
+     * Add score for a specific context to the contextScoreList, recalculate metrics for the contextScoreMapping
+     * @param score The score to add
+     * @param context The context connected to the score
+     */
     public void addScore(Score score, Context context) {
         HashSet<String> comments = new HashSet<>();
         List<Score> scoreList = contextScoreList.computeIfAbsent(context, k -> new ArrayList<>());
@@ -56,5 +60,10 @@ public class Assessment {
         contextScoreMapping.put(context, new Score(credits, new ArrayList<>(comments), confidence));
     }
 
-    // </editor-fold>
+    /**
+     * Used for statistic
+     */
+    public Map<Context, List<Score>> getContextScoreList() {
+        return this.contextScoreList;
+    }
 }

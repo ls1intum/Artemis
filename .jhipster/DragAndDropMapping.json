@@ -1,5 +1,19 @@
 {
-    "fluentMethods": true,
+    "name": "DragAndDropMapping",
+    "fields": [
+        {
+            "fieldName": "dragItemIndex",
+            "fieldType": "Integer"
+        },
+        {
+            "fieldName": "dropLocationIndex",
+            "fieldType": "Integer"
+        },
+        {
+            "fieldName": "invalid",
+            "fieldType": "Boolean"
+        }
+    ],
     "relationships": [
         {
             "relationshipType": "many-to-one",
@@ -26,24 +40,13 @@
             "otherEntityField": "id"
         }
     ],
-    "fields": [
-        {
-            "fieldName": "dragItemIndex",
-            "fieldType": "Integer"
-        },
-        {
-            "fieldName": "dropLocationIndex",
-            "fieldType": "Integer"
-        },
-        {
-            "fieldName": "invalid",
-            "fieldType": "Boolean"
-        }
-    ],
-    "changelogDate": "20180811194844",
+    "changelogDate": "20180927081418",
     "entityTableName": "drag_and_drop_mapping",
     "dto": "no",
     "pagination": "no",
     "service": "no",
-    "jpaMetamodelFiltering": false
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
 }

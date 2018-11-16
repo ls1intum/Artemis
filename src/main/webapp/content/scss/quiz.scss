@@ -1,4 +1,3 @@
-
 .edit-quiz {
     display: flex;
     flex-direction: column;
@@ -24,8 +23,11 @@
         width: auto;
     }
 
-    .checkbox,
-    .input-group {
+    .datepicker-input {
+        max-width: 140px;
+    }
+
+    .checkbox {
         display: inline-block;
     }
 
@@ -41,6 +43,16 @@
         > * {
             margin: 0 4px;
         }
+    }
+
+    .background-file,
+    drag-item-file {
+        display: flex;
+    }
+
+    .drag-item-file {
+        margin-bottom: 0.5rem;
+        margin-top: 0.5rem;
     }
 }
 
@@ -117,7 +129,6 @@
 
     .form-control,
     .input-group-btn {
-        display: inline-block;
         width: auto;
     }
 
@@ -155,7 +166,6 @@
     box-sizing: border-box;
     border: 1px solid lightgrey;
     margin-bottom: 18px;
-    padding: 20px;
     background: #fefefe;
 
     .mc-question,
@@ -165,6 +175,21 @@
         border: none;
         margin-bottom: 0;
         padding: 0;
+    }
+
+    .question-card-header {
+        padding: 15px 5px 5px 5px;
+    }
+
+    .question-card-body,
+    .preview-mc-question,
+    .preview-dnd-question {
+        padding: 20px;
+    }
+
+    .question-collapse {
+        margin-top: -15px;
+        width: 3.25rem;
     }
 
     .delete-button,
@@ -180,7 +205,7 @@
     }
 
     .duplicate-button:hover {
-        color: #0F6AB4;
+        color: #0f6ab4;
     }
 
     .question-title {
@@ -237,10 +262,15 @@
         }
     }
 
+    .question-title-display {
+        max-width: 80%;
+    }
+
     .question-score {
         position: absolute;
         top: 20px;
         right: 20px;
+        max-width: 15%;
 
         &.result {
             font-weight: bold;
@@ -361,6 +391,13 @@
         flex-direction: row;
         flex-wrap: wrap;
         justify-content: space-evenly;
+    }
+
+    .ellipsis {
+        text-overflow: ellipsis;
+        /* Required for text-overflow to do anything */
+        white-space: nowrap;
+        overflow: hidden;
     }
 }
 
@@ -541,11 +578,12 @@
     }
 
     .drop-allowed {
-        background: rgba(173, 216, 230, 0.8) !important;
+        background: rgba(173, 216, 230, 0.8) !important; //light blue
     }
 
-    .drop-hover, .dnd-drag-over {
-        background: rgba(144, 238, 144, 0.8) !important;
+    .drop-hover,
+    .dnd-drag-over {
+        background: rgba(144, 238, 144, 0.8) !important; //light green
     }
 
     .drag-item {
@@ -624,7 +662,8 @@
                 }
 
                 &.drop-allowed > *,
-                &.drop-hover, .dnd-drag-over > * {
+                &.drop-hover,
+                .dnd-drag-over > * {
                     opacity: 0.5;
                 }
 
@@ -680,7 +719,8 @@
         background: rgb(173, 216, 230) !important;
     }
 
-    .drop-hover, .dnd-drag-over {
+    .drop-hover,
+    .dnd-drag-over {
         background: rgb(144, 238, 144) !important;
     }
 
@@ -868,7 +908,8 @@ table.answer-options-result {
         color: dimgray;
     }
 
-    th, td {
+    th,
+    td {
         padding: 6px 10px;
     }
 
@@ -897,15 +938,15 @@ table.answer-options-result {
 }
 
 .colon-suffix:after {
-    content: ":";
+    content: ':';
 }
 
 .in-parentheses:before {
-    content: "(";
+    content: '(';
 }
 
 .in-parentheses:after {
-    content: ")";
+    content: ')';
 }
 
 .no-flex-shrink {
@@ -933,7 +974,7 @@ table.answer-options-result {
 
 .answer-border {
     padding: 10px;
-    border-radius: .1em;
+    border-radius: 0.1em;
     border-width: 1px;
     border-style: solid;
     border-color: lightgrey;

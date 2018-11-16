@@ -1,10 +1,10 @@
 import { Routes } from '@angular/router';
 
-import { UserRouteAccessService } from '../../shared';
+import { UserRouteAccessService } from '../../core';
 import { ParticipationComponent } from './participation.component';
 import { ParticipationDetailComponent } from './participation-detail.component';
 import { ParticipationDeletePopupComponent } from './participation-delete-dialog.component';
-import { InstructorDashboardResultPopupComponent } from '../../instructor-dashboard/instructor-dashboard-result-dialog.component';
+import { InstructorDashboardResultPopupComponent } from '../../dashboard/exercise-dashboard-result-dialog.component';
 
 export const participationRoute: Routes = [
     {
@@ -56,5 +56,5 @@ export const participationPopupRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
         outlet: 'popup'
-    },
+    }
 ];

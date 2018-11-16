@@ -1,157 +1,60 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
 import { ActivatedRoute, Router } from '@angular/router';
-import { JhiWebsocketService, Principal } from '../../shared';
+import { JhiWebsocketService, Principal } from '../../core';
 import { TranslateService } from '@ngx-translate/core';
-
-import * as Chart from 'chart.js';
 import { QuizPointStatistic } from '../../entities/quiz-point-statistic';
+import { ChartOptions } from 'chart.js';
 import { QuizStatisticUtil } from '../../components/util/quiz-statistic-util.service';
 import { QuestionType } from '../../entities/question';
+import { createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
+import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     selector: 'jhi-quiz-point-statistic',
     templateUrl: './quiz-point-statistic.component.html',
     providers: [QuizStatisticUtil]
 })
-export class QuizPointStatisticComponent implements OnInit, OnDestroy {
-
+export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
     // make constants available to html for comparison
     readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
 
     quizExercise: QuizExercise;
     quizPointStatistic: QuizPointStatistic;
-    private sub: any;
+    private sub: Subscription;
 
-    labels = [];
-    data = [];
-    colors = [];
+    labels: string[] = [];
+    data: number[] = [];
+    colors: string[] = [];
     chartType = 'bar';
-    datasets = [];
+    datasets: DataSet[] = [];
 
-    label;
-    ratedData;
-    unratedData;
-    backgroundColor;
+    label: string[] = [];
+    ratedData: number[] = [];
+    unratedData: number[] = [];
+    backgroundColor: string[] = [];
 
-    maxScore;
-
+    maxScore: number;
     rated = true;
+    participants: number;
+    websocketChannelForData: string;
+    websocketChannelForReleaseState: string;
 
-    participants;
+    // options for chart.js style
+    options: ChartOptions;
 
-    websocketChannelForData;
-    websocketChannelForReleaseState;
-
-    // options for chart in chart.js style
-    options = {
-        layout: {
-            padding: {
-                left: 0,
-                right: 0,
-                top: 0,
-                bottom: 30
-            }
-        },
-        legend: {
-            display: false
-        },
-        title: {
-            display: false,
-            text: '',
-            position: 'top',
-            fontSize: '16',
-            padding: 20
-        },
-        tooltips: {
-            enabled: false
-        },
-        scales: {
-            yAxes: [{
-                scaleLabel: {
-                    labelString: '',
-                    display: true
-                },
-                ticks: {
-                    beginAtZero: true
-                }
-            }],
-            xAxes: [{
-                scaleLabel: {
-                    labelString: '',
-                    display: true
-                }
-            }]
-        },
-        hover: {animationDuration: 0},
-        // add numbers on top of the bars
-        animation: {
-            duration: 500,
-            onComplete: chart => {
-                const chartInstance = chart.chart,
-                    ctx = chartInstance.ctx;
-                const fontSize = 12;
-                const fontStyle = 'normal';
-                const fontFamily = 'Calibri';
-                ctx.font = Chart.helpers.fontString(fontSize, fontStyle, fontFamily);
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-
-                this.datasets.forEach((dataset, i) => {
-                    const meta = chartInstance.controller.getDatasetMeta(i);
-                    meta.data.forEach((bar, index) => {
-                        const data = (Math.round(dataset.data[index] * 100) / 100);
-                        const dataPercentage = (Math.round(
-                            (dataset.data[index] / this.participants) * 1000) / 10);
-
-                        const position = bar.tooltipPosition();
-
-                        // if the bar is high enough -> write the percentageValue inside the bar
-                        if (dataPercentage > 6) {
-                            // if the bar is low enough -> write the amountValue above the bar
-                            if (position.y > 15) {
-                                ctx.fillStyle = 'black';
-                                ctx.fillText(data, position.x, position.y - 10);
-
-                                if (this.participants !== 0) {
-                                    ctx.fillStyle = 'white';
-                                    ctx.fillText(dataPercentage.toString()
-                                        + '%', position.x, position.y + 10);
-                                }
-                            } else {
-                                // if the bar is too high -> write the amountValue inside the bar
-                                ctx.fillStyle = 'white';
-                                if (this.participants !== 0) {
-                                    ctx.fillText(data + ' / ' + dataPercentage.toString()
-                                        + '%', position.x, position.y + 10);
-                                } else {
-                                    ctx.fillText(data, position.x, position.y + 10);
-                                }
-                            }
-                        } else {
-                            // if the bar is to low -> write the percentageValue above the bar
-                            ctx.fillStyle = 'black';
-                            if (this.participants !== 0) {
-                                ctx.fillText(data + ' / ' + dataPercentage.toString()
-                                    + '%', position.x, position.y - 10);
-                            } else {
-                                ctx.fillText(data, position.x, position.y - 10);
-                            }
-                        }
-                    });
-                });
-            }
-        }
-    };
-
-    constructor(private route: ActivatedRoute,
-                private router: Router,
-                private principal: Principal,
-                private translateService: TranslateService,
-                private quizExerciseService: QuizExerciseService,
-                private jhiWebsocketService: JhiWebsocketService,
-                private quizStatisticUtil: QuizStatisticUtil) {}
+    constructor(
+        private route: ActivatedRoute,
+        private router: Router,
+        private principal: Principal,
+        private translateService: TranslateService,
+        private quizExerciseService: QuizExerciseService,
+        private jhiWebsocketService: JhiWebsocketService,
+        private quizStatisticUtil: QuizStatisticUtil
+    ) {
+        this.options = createOptions(this);
+    }
 
     ngOnInit() {
         this.sub = this.route.params.subscribe(params => {
@@ -202,16 +105,24 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy {
         this.jhiWebsocketService.unsubscribe(this.websocketChannelForReleaseState);
     }
 
+    getDataSets() {
+        return this.datasets;
+    }
+
+    getParticipants() {
+        return this.participants;
+    }
+
     /**
      * load the new quizPointStatistic from the server if the Websocket has been notified
      *
      * @param {QuizPointStatistic} statistic: the new quizPointStatistic
      *                                          from the server with the new Data.
      */
-    loadNewData(statistic) {
+    loadNewData(statistic: QuizPointStatistic) {
         // if the Student finds a way to the Website, while the Statistic is not released
         //      -> the Student will be send back to Courses
-        if ((!this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) && !statistic.released) {
+        if (!this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']) && !statistic.released) {
             this.router.navigate(['courses']);
         }
         this.quizPointStatistic = statistic;
@@ -224,10 +135,13 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy {
      * @param {QuizExercise} quiz: the quizExercise,
      *                              which the this quiz-point-statistic presents.
      */
-    loadQuizSuccess(quiz) {
+    loadQuizSuccess(quiz: QuizExercise) {
         // if the Student finds a way to the Website, while the Statistic is not released
         //      -> the Student will be send back to Courses
-        if ((!this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) && quiz.quizPointStatistic.released === false) {
+        if (
+            !this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']) &&
+            quiz.quizPointStatistic.released === false
+        ) {
             this.router.navigate(['courses']);
         }
         this.quizExercise = quiz;
@@ -255,7 +169,6 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy {
      * load the Data from the Json-entity to the chart: myChart
      */
     loadData() {
-
         // reset old data
         this.label = [];
         this.backgroundColor = [];
@@ -264,7 +177,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy {
 
         // set data based on the pointCounters
         this.quizPointStatistic.pointCounters.forEach(pointCounter => {
-            this.label.push(pointCounter.points);
+            this.label.push(pointCounter.points.toString());
             this.ratedData.push(pointCounter.ratedCounter);
             this.unratedData.push(pointCounter.unRatedCounter);
             this.backgroundColor.push('#428bca');
@@ -292,11 +205,12 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy {
             this.participants = this.quizPointStatistic.participantsUnrated;
             this.data = this.unratedData;
         }
-        this.datasets = [{
-            data: this.data,
-            backgroundColor: this.colors
-        }];
-        console.log(this.datasets);
+        this.datasets = [
+            {
+                data: this.data,
+                backgroundColor: this.colors
+            }
+        ];
     }
 
     /**
@@ -324,23 +238,23 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy {
      * order the data and the associated Labels, so that they are ascending (BubbleSort)
      */
     order() {
-        let old = [];
+        let old: string[] = [];
         while (old.toString() !== this.label.toString()) {
             old = this.label.slice();
             for (let i = 0; i < this.label.length - 1; i++) {
                 if (this.label[i] > this.label[i + 1]) {
                     // switch Labels
-                    let temp = this.label[i];
+                    const tempLabel = this.label[i];
                     this.label[i] = this.label[i + 1];
-                    this.label[i + 1] = temp;
+                    this.label[i + 1] = tempLabel;
                     // switch rated Data
-                    temp = this.ratedData[i];
+                    const tempRatedData = this.ratedData[i];
                     this.ratedData[i] = this.ratedData[i + 1];
-                    this.ratedData[i + 1] = temp;
+                    this.ratedData[i + 1] = tempRatedData;
                     // switch unrated Data
-                    temp = this.unratedData[i];
+                    const tempUnratedData = this.unratedData[i];
                     this.unratedData[i] = this.unratedData[i + 1];
-                    this.unratedData[i + 1] = temp;
+                    this.unratedData[i + 1] = tempUnratedData;
                 }
             }
         }
@@ -351,8 +265,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy {
      * if there is no QuestionStatistic -> go to QuizStatistic
      */
     previousStatistic() {
-        if (this.quizExercise.questions === null
-            || this.quizExercise.questions.length === 0) {
+        if (this.quizExercise.questions === null || this.quizExercise.questions.length === 0) {
             this.router.navigateByUrl('/quiz/' + this.quizExercise.id + '/quiz-statistic');
         } else {
             const previousQuestion = this.quizExercise.questions[this.quizExercise.questions.length - 1];
@@ -369,7 +282,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy {
      *
      * @param {boolean} released: true to release, false to revoke
      */
-    releaseStatistics(released) {
+    releaseStatistics(released: boolean) {
         if (released) {
             this.quizExerciseService.releaseStatistics(this.quizExercise.id);
         } else {

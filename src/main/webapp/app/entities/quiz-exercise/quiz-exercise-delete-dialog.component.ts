@@ -8,20 +8,20 @@ import { QuizExercise } from './quiz-exercise.model';
 import { QuizExercisePopupService } from './quiz-exercise-popup.service';
 import { QuizExerciseService } from './quiz-exercise.service';
 
+import { Subscription } from 'rxjs/Subscription';
+
 @Component({
     selector: 'jhi-quiz-exercise-delete-dialog',
     templateUrl: './quiz-exercise-delete-dialog.component.html'
 })
 export class QuizExerciseDeleteDialogComponent {
-
     quizExercise: QuizExercise;
 
     constructor(
         private quizExerciseService: QuizExerciseService,
         public activeModal: NgbActiveModal,
         private eventManager: JhiEventManager
-    ) {
-    }
+    ) {}
 
     clear() {
         this.activeModal.dismiss('cancel');
@@ -43,18 +43,13 @@ export class QuizExerciseDeleteDialogComponent {
     template: ''
 })
 export class QuizExerciseDeletePopupComponent implements OnInit, OnDestroy {
+    routeSub: Subscription;
 
-    routeSub: any;
-
-    constructor(
-        private route: ActivatedRoute,
-        private quizExercisePopupService: QuizExercisePopupService
-    ) {}
+    constructor(private route: ActivatedRoute, private quizExercisePopupService: QuizExercisePopupService) {}
 
     ngOnInit() {
         this.routeSub = this.route.params.subscribe(params => {
-            this.quizExercisePopupService
-                .open(QuizExerciseDeleteDialogComponent as Component, params['id']);
+            this.quizExercisePopupService.open(QuizExerciseDeleteDialogComponent as Component, params['id']);
         });
     }
 

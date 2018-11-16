@@ -3,10 +3,9 @@ import { SERVER_API_URL } from '../app.constants';
 import { HttpClient, HttpParameterCodec, HttpParams } from '@angular/common/http';
 import { Cacheable } from 'ngx-cacheable';
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class EditorService {
-
-    private resourceUrl =  SERVER_API_URL + 'api/plantuml';
+    private resourceUrl = SERVER_API_URL + 'api/plantuml';
     private encoder: HttpParameterCodec;
 
     /**
@@ -32,11 +31,15 @@ export class EditorService {
         slidingExpiration: true
     })
     getPlantUmlImage(plantUml: string) {
-        return this.http.get(`${this.resourceUrl}/png`, { params: new HttpParams({encoder: this.encoder}).set('plantuml', plantUml), responseType: 'arraybuffer'})
+        return this.http
+            .get(`${this.resourceUrl}/png`, {
+                params: new HttpParams({ encoder: this.encoder }).set('plantuml', plantUml),
+                responseType: 'arraybuffer'
+            })
             .map(res => this.convertPlantUmlResponseToBase64(res));
     }
 
-    private convertPlantUmlResponseToBase64(res) {
+    private convertPlantUmlResponseToBase64(res: any) {
         return Buffer.from(res, 'binary').toString('base64');
     }
 }
@@ -46,11 +49,19 @@ export class EditorService {
  * @desc Custom HttpParamEncoder implementation which defaults to using encodeURIComponent to encode params
  */
 export class HttpUrlCustomEncoder implements HttpParameterCodec {
-    encodeKey(k: string): string { return encodeURIComponent(k); }
+    encodeKey(k: string): string {
+        return encodeURIComponent(k);
+    }
 
-    encodeValue(v: string): string { return encodeURIComponent(v); }
+    encodeValue(v: string): string {
+        return encodeURIComponent(v);
+    }
 
-    decodeKey(k: string): string { return decodeURIComponent(k); }
+    decodeKey(k: string): string {
+        return decodeURIComponent(k);
+    }
 
-    decodeValue(v: string) { return decodeURIComponent(v); }
+    decodeValue(v: string) {
+        return decodeURIComponent(v);
+    }
 }

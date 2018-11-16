@@ -1,44 +1,42 @@
-import { Component, HostListener, Input, OnInit, Pipe, PipeTransform } from '@angular/core';
+import { Component, HostListener, Input, OnInit, OnDestroy, Pipe, PipeTransform } from '@angular/core';
 import { Course, CourseExerciseService } from '../../entities/course';
 import { Exercise, ExerciseType, ParticipationStatus } from '../../entities/exercise';
-import { Principal } from '../../shared';
-import { WindowRef } from '../../shared/websocket/window.service';
+import { Principal } from '../../core';
+import { WindowRef } from '../../core/websocket/window.service';
 import { NgbModal, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService } from 'ng-jhipster';
-import { Router } from '@angular/router';
+import { Router, NavigationStart } from '@angular/router';
 import { InitializationState, Participation, ParticipationService } from '../../entities/participation';
-import * as moment from 'moment';
+import { ParticipationDataProvider } from '../../courses/exercises/participation-data-provider';
 import { HttpClient } from '@angular/common/http';
+import { Subscription } from 'rxjs';
 import { SERVER_API_URL } from '../../app.constants';
 import { QuizExercise } from '../../entities/quiz-exercise';
+import * as moment from 'moment';
 
 @Pipe({ name: 'showExercise' })
 export class ShowExercisePipe implements PipeTransform {
     transform(allExercises: Exercise[], showInactiveExercises: boolean) {
-        return allExercises.filter(exercise => showInactiveExercises === true || exercise.type === ExerciseType.QUIZ || !exercise.dueDate || Date.parse(exercise.dueDate) >= Date.now());
+        return allExercises.filter(
+            exercise =>
+                showInactiveExercises === true || exercise.type === ExerciseType.QUIZ || !exercise.dueDate || exercise.dueDate > moment()
+        );
     }
 }
 
 @Component({
     selector: 'jhi-exercise-list',
     templateUrl: './exercise-list.component.html',
-    providers: [
-                    JhiAlertService,
-                    WindowRef,
-                    ParticipationService,
-                    CourseExerciseService,
-                    NgbModal
-                ]
+    providers: [JhiAlertService, WindowRef, ParticipationService, CourseExerciseService, NgbModal]
 })
-
-export class ExerciseListComponent implements OnInit {
-
-    // make constants available to html for comparison
+export class ExerciseListComponent implements OnInit, OnDestroy {
+    // Make constants available to html for comparison
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
 
     _course: Course;
+    routerSubscription: Subscription;
 
     @Input()
     get course(): Course {
@@ -50,15 +48,18 @@ export class ExerciseListComponent implements OnInit {
             // exercises already included in data, no need to load them
             this.initExercises(course.exercises);
         } else {
-            this.courseExerciseService.findAllExercises(course.id, {
-                courseId: course.id,
-                withLtiOutcomeUrlExisting: true
-            }).subscribe(exercises => {
-                this.initExercises(exercises.body);
-            });
+            this.courseExerciseService
+                .findAllExercises(course.id, {
+                    courseId: course.id,
+                    withLtiOutcomeUrlExisting: true
+                })
+                .subscribe(exercises => {
+                    this.initExercises(exercises.body);
+                });
         }
     }
-    @Input() filterByExerciseId;
+    @Input()
+    filterByExerciseId: number;
 
     /*
      * IMPORTANT NOTICE:
@@ -67,32 +68,60 @@ export class ExerciseListComponent implements OnInit {
      * the app can be written in a filtering/sorting service and injected into the component.
      */
 
-    // exercises are sorted by dueDate
+    // Exercises are sorted by dueDate
     exercises: Exercise[];
     now = Date.now();
     numOfInactiveExercises = 0;
     showInactiveExercises = false;
-    private repositoryPassword: string;
-    lastPopoverRef: NgbPopover;
+    repositoryPassword: string;
+    wasCopied = false;
 
-    constructor(private jhiAlertService: JhiAlertService,
-                private $window: WindowRef,
-                private participationService: ParticipationService,
-                private principal: Principal,
-                private httpClient: HttpClient,
-                private courseExerciseService: CourseExerciseService,
-                private router: Router) {
+    constructor(
+        private jhiAlertService: JhiAlertService,
+        private $window: WindowRef,
+        private participationService: ParticipationService,
+        private principal: Principal,
+        private httpClient: HttpClient,
+        private courseExerciseService: CourseExerciseService,
+        private router: Router,
+        private participationDataProvider: ParticipationDataProvider
+    ) {
         // Initialize array to avoid undefined errors
         this.exercises = [];
     }
 
     ngOnInit(): void {
         this.principal.identity().then(account => {
-            // only load password if current user login starts with 'edx'
+            // Only load password if current user login starts with 'edx'
             if (account && account.login && account.login.startsWith('edx')) {
                 this.getRepositoryPassword();
             }
         });
+        // Listen to NavigationStart events; if we are routing to the online editor, we pass the participation (if we find one)
+        this.routerSubscription = this.router.events
+            .filter(event => event instanceof NavigationStart)
+            .subscribe((event: NavigationStart) => {
+                if (event.url.startsWith('/editor')) {
+                    // Extract participation id from event url and cast to number
+                    const participationId = Number(event.url.split('/').slice(-1));
+                    // Search through all exercises and the participations within each of them to obtain the target participation
+                    const filteredExercise = this.course.exercises.find(
+                        exercise =>
+                            exercise.participations != null &&
+                            exercise.participations.find(exerciseParticipation => exerciseParticipation.id === participationId) !==
+                                undefined
+                    );
+                    if (filteredExercise) {
+                        const participation: Participation = filteredExercise.participations.find(
+                            currentParticipation => currentParticipation.id === participationId
+                        );
+                        // Just make sure we have indeed found the desired participation
+                        if (participation && participation.id === participationId) {
+                            this.participationDataProvider.participationStorage = participation;
+                        }
+                    }
+                }
+            });
     }
 
     initExercises(exercises: Exercise[]) {
@@ -103,42 +132,52 @@ export class ExerciseListComponent implements OnInit {
         this.numOfInactiveExercises = exercises.filter(exercise => !this.showExercise(exercise)).length;
 
         for (const exercise of exercises) {
-            // we assume that exercise has a participation and a result if available because of the explicit courses dashboard call
+            // We assume that exercise has a participation and a result if available because of the explicit courses dashboard call
             exercise.course = this._course;
             exercise.participationStatus = this.participationStatus(exercise);
 
             if (this.hasParticipations(exercise)) {
-                // reconnect 'participation --> exercise' in case it is needed
+                // Reconnect 'participation --> exercise' in case it is needed
                 exercise.participations[0].exercise = exercise;
             }
 
-            // if the User is a student: subscribe the release Websocket of every quizExercise
+            // If the User is a student: subscribe the release Websocket of every quizExercise
             if (exercise.type === ExerciseType.QUIZ) {
                 const quizExercise = exercise as QuizExercise;
                 quizExercise.isActiveQuiz = this.isActiveQuiz(exercise);
 
-                quizExercise.isPracticeModeAvailable = quizExercise.isPlannedToStart && quizExercise.isOpenForPractice &&
-                    moment(exercise.dueDate).isBefore(moment());
-
-                exercise.isAtLeastTutor = this.principal.hasGroup(this.course.instructorGroupName) ||
-                    this.principal.hasGroup(this.course.teachingAssistantGroupName) ||
-                    this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN']);
+                quizExercise.isPracticeModeAvailable =
+                    quizExercise.isPlannedToStart && quizExercise.isOpenForPractice && moment(exercise.dueDate).isBefore(moment());
             }
+
+            exercise.isAtLeastTutor = this.principal.isAtLeastTutorInCourse(exercise.course);
         }
         exercises.sort((a: Exercise, b: Exercise) => {
-            return +new Date(a.dueDate) - +new Date(b.dueDate);
+            if (a.dueDate === null && b.dueDate === null) {
+                return 0;
+            } else if (a.dueDate === null) {
+                return +1;
+            } else if (b.dueDate === null) {
+                return -1;
+            } else {
+                return +a.dueDate.toDate() - +b.dueDate.toDate();
+            }
         });
         this.exercises = exercises;
     }
 
     isActiveQuiz(exercise: Exercise) {
-        return exercise.participationStatus === ParticipationStatus.QUIZ_UNINITIALIZED ||
+        return (
+            exercise.participationStatus === ParticipationStatus.QUIZ_UNINITIALIZED ||
             exercise.participationStatus === ParticipationStatus.QUIZ_ACTIVE ||
-            exercise.participationStatus === ParticipationStatus.QUIZ_SUBMITTED;
+            exercise.participationStatus === ParticipationStatus.QUIZ_SUBMITTED
+        );
     }
 
     showExercise(exercise: Exercise) {
-        return this.showInactiveExercises === true || exercise.type === ExerciseType.QUIZ || !exercise.dueDate || Date.parse(exercise.dueDate) >= Date.now();
+        return (
+            this.showInactiveExercises === true || exercise.type === ExerciseType.QUIZ || !exercise.dueDate || exercise.dueDate > moment()
+        );
     }
 
     getRepositoryPassword() {
@@ -154,31 +193,41 @@ export class ExerciseListComponent implements OnInit {
         exercise.loading = true;
 
         if (exercise.type === ExerciseType.QUIZ) {
-            // start the quiz
+            // Start the quiz
             return this.router.navigate(['/quiz', exercise.id]);
         }
 
-        this.courseExerciseService.startExercise(this.course.id, exercise.id).finally(() => exercise.loading = false).subscribe(participation => {
-            if (participation) {
-                exercise.participations = [participation];
-                exercise.participationStatus = this.participationStatus(exercise);
-            }
-            if (exercise.type === ExerciseType.PROGRAMMING) {
-                this.jhiAlertService.success('arTeMiSApp.exercise.personalRepository');
-            }
-        }, error => {
-            console.log(error);
-            this.jhiAlertService.warning('arTeMiSApp.exercise.startError');
-        });
+        this.courseExerciseService
+            .startExercise(this.course.id, exercise.id)
+            .finally(() => (exercise.loading = false))
+            .subscribe(
+                participation => {
+                    if (participation) {
+                        exercise.participations = [participation];
+                        exercise.participationStatus = this.participationStatus(exercise);
+                    }
+                    if (exercise.type === ExerciseType.PROGRAMMING) {
+                        this.jhiAlertService.success('arTeMiSApp.exercise.personalRepository');
+                    }
+                },
+                error => {
+                    console.log('Error: ' + error);
+                    this.jhiAlertService.warning('arTeMiSApp.exercise.startError');
+                }
+            );
     }
 
     resumeExercise(exercise: Exercise) {
         exercise.loading = true;
-        this.courseExerciseService.resumeExercise(this.course.id, exercise.id).finally(() => exercise.loading = false)
+        this.courseExerciseService
+            .resumeExercise(this.course.id, exercise.id)
+            .finally(() => (exercise.loading = false))
             .subscribe(
-                () => true, error => {
-                    console.log(error.status + ' ' + error.message);
-                });
+                () => true,
+                error => {
+                    console.log('Error: ' + error.status + ' ' + error.message);
+                }
+            );
     }
 
     startPractice(exercise: Exercise) {
@@ -189,7 +238,7 @@ export class ExerciseListComponent implements OnInit {
         this.showInactiveExercises = !this.showInactiveExercises;
     }
 
-    buildSourceTreeUrl(cloneUrl): string {
+    buildSourceTreeUrl(cloneUrl: string): string {
         return 'sourcetree://cloneRepo?type=stash&cloneUrl=' + encodeURI(cloneUrl) + '&baseWebUrl=https://repobruegge.in.tum.de';
     }
 
@@ -199,16 +248,15 @@ export class ExerciseListComponent implements OnInit {
         });
     }
 
-    getClonePopoverTemplate(exercise: Exercise) {
-        const html = [
-            '<p>Clone your personal repository for this exercise:</p>',
-            '<pre style="max-width: 550px;">', exercise.participations[0].repositoryUrl, '</pre>',
-            this.repositoryPassword ? '<p>Your password is: <code class="password">' + this.repositoryPassword + '</code> (hover to show)<p>' : '',
-            '<a class="btn btn-primary btn-sm" href="', this.buildSourceTreeUrl(exercise.participations[0].repositoryUrl), '">Clone in SourceTree</a>',
-            ' <a href="http://www.sourcetreeapp.com" target="_blank">Atlassian SourceTree</a> is the free Git client for Windows or Mac. '
-        ].join('');
+    onCopyFailure() {
+        console.log('copy fail!');
+    }
 
-        return html;
+    onCopySuccess() {
+        this.wasCopied = true;
+        setTimeout(() => {
+            this.wasCopied = false;
+        }, 3000);
     }
 
     participationStatus(exercise: Exercise): ParticipationStatus {
@@ -216,14 +264,23 @@ export class ExerciseListComponent implements OnInit {
             const quizExercise = exercise as QuizExercise;
             if ((!quizExercise.isPlannedToStart || moment(quizExercise.releaseDate).isAfter(moment())) && quizExercise.visibleToStudents) {
                 return ParticipationStatus.QUIZ_NOT_STARTED;
-            } else if (!this.hasParticipations(exercise) &&
-                (!quizExercise.isPlannedToStart || moment(quizExercise.dueDate).isAfter(moment())) && quizExercise.visibleToStudents) {
+            } else if (
+                !this.hasParticipations(exercise) &&
+                (!quizExercise.isPlannedToStart || moment(quizExercise.dueDate).isAfter(moment())) &&
+                quizExercise.visibleToStudents
+            ) {
                 return ParticipationStatus.QUIZ_UNINITIALIZED;
             } else if (!this.hasParticipations(exercise)) {
                 return ParticipationStatus.QUIZ_NOT_PARTICIPATED;
-            } else if (exercise.participations[0].initializationState === InitializationState.INITIALIZED && moment(exercise.dueDate).isAfter(moment())) {
+            } else if (
+                exercise.participations[0].initializationState === InitializationState.INITIALIZED &&
+                moment(exercise.dueDate).isAfter(moment())
+            ) {
                 return ParticipationStatus.QUIZ_ACTIVE;
-            } else if (exercise.participations[0].initializationState === InitializationState.FINISHED && moment(exercise.dueDate).isAfter(moment())) {
+            } else if (
+                exercise.participations[0].initializationState === InitializationState.FINISHED &&
+                moment(exercise.dueDate).isAfter(moment())
+            ) {
                 return ParticipationStatus.QUIZ_SUBMITTED;
             } else {
                 if (!this.hasResults(exercise.participations[0])) {
@@ -233,7 +290,10 @@ export class ExerciseListComponent implements OnInit {
             }
         } else if (exercise.type === ExerciseType.MODELING && this.hasParticipations(exercise)) {
             const participation = exercise.participations[0];
-            if (participation.initializationState === InitializationState.INITIALIZED || participation.initializationState === InitializationState.FINISHED) {
+            if (
+                participation.initializationState === InitializationState.INITIALIZED ||
+                participation.initializationState === InitializationState.FINISHED
+            ) {
                 return ParticipationStatus.MODELING_EXERCISE;
             }
         }
@@ -253,23 +313,8 @@ export class ExerciseListComponent implements OnInit {
         return participation.results && participation.results.length > 0;
     }
 
-    @HostListener('document:click', ['$event'])
-    clickOutside(event) {
-        // If there's a last element-reference AND the click-event target is outside this element
-        if (this.lastPopoverRef && (this.lastPopoverRef as any)._elementRef.nativeElement.contains(event.target) &&
-            !(this.lastPopoverRef as any)._windowRef &&
-            !(this.lastPopoverRef as any)._windowRef.location.nativeElement.contains(event.target)) {
-            this.lastPopoverRef.close();
-            this.lastPopoverRef = null;
-        }
-    }
-
-    setCurrentPopoverOpen(popReference) {
-        // If there's a last element-reference AND the new reference is different
-        if (this.lastPopoverRef && this.lastPopoverRef !== popReference) {
-            this.lastPopoverRef.close();
-        }
-        // Registering new popover ref
-        this.lastPopoverRef = popReference;
+    ngOnDestroy(): void {
+        // Remove router event subscription
+        this.routerSubscription.unsubscribe();
     }
 }

@@ -1,31 +1,31 @@
 <div *ngIf="exercise">
-    <h2>Assessment dashboard for exercise "{{exercise.title}}"</h2>
+    <h4>Assessment dashboard for exercise "{{exercise.title}}"</h4>
     <div>
         <div class="button-toolbar pull-right">
-            <button [disabled]="busy || (optimalResults && optimalResults.length === 0 && assessedResults === results.length)" class="btn btn-success btn-sm" (click)="assessNextOptimal(0)">
+            <button [disabled]="busy || (optimalSubmissions && optimalSubmissions.length === 0 && assessedSubmissions === submissions.length)" class="btn btn-success btn-sm mr-1" (click)="assessNextOptimal(0)">
                 <i class="fa fa-folder-open fa-fw"></i>&nbsp;Assess next submission
             </button>
-            <button [disabled]="busy" class="btn btn-primary btn-sm" (click)="refresh()">
+            <button [disabled]="busy" class="btn btn-primary btn-sm mr-1" (click)="refresh()">
                 <i class="fa fa-refresh fa-fw"></i>&nbsp;Refresh
             </button>
-            <button *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" class="btn btn-primary btn-sm"
+            <button *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" class="btn btn-primary btn-sm mr-1"
                     [disabled]="busy"
                     (click)="resetOptimality()">
                 <i class="fa fa-refresh fa-fw"></i>&nbsp;Reset assessment order
             </button>
         </div>
     </div>
-     <h2>
-        <small [ngStyle]="assessedResults === allResults.length && allResults.length > 0 && {'color': '#5cb85c'}">
-            <strong>Progress ({{assessedResults / allResults.length * 100 | number: '0.0-0'}}%) </strong>{{assessedResults}} out of {{allResults.length}} models assessed
+     <h4>
+        <small [ngStyle]="assessedSubmissions === submissions.length && submissions.length > 0 && {'color': '#5cb85c'}">
+            <strong>Progress ({{assessedSubmissions / submissions.length * 100 | number: '0.0-0'}}%) </strong>{{assessedSubmissions}} out of {{submissions.length}} submitted models assessed
         </small>
-    </h2>
+    </h4>
     <jhi-alert></jhi-alert>
-    <h2>
+    <h4>
         <span *ngIf="busy" style="color:grey"><span class="fa fa-spinner fa-spin"></span>&nbsp;<span>Please wait while finding the next submission!</span></span>
-    </h2>
-    <h5>ArTEMiS optimized the assessment order to minimize your correction effort. Please assess the following submissions first:</h5>
-    <div class="table-responsive" *ngIf="optimalResults && optimalResults.length > 0">
+    </h4>
+    <p>ArTEMiS optimized the assessment order to minimize your correction effort. Please assess the following submissions first:</p>
+    <div class="table-responsive" *ngIf="optimalSubmissions && optimalSubmissions.length > 0">
         <table class="table table-striped exercise-table">
             <thead>
             <tr>
@@ -45,16 +45,16 @@
             </tr>
             </thead>
             <tbody>
-            <tr [ngStyle]="result.optimal && {'font-weight': 'bold'}"
-                *ngFor="let result of optimalResults; let i = index">
+            <tr [ngStyle]="submission.optimal && {'font-weight': 'bold'}"
+                *ngFor="let submission of optimalSubmissions; let i = index">
                 <td>{{ i + 1 }}</td>
-                <td>{{ result.participation.student.firstName }} {{ result.participation.student.lastName}}</td>
+                <td>{{ submission.participation.student.firstName }} {{ submission.participation.student.lastName}}</td>
                 <td>
-                    <span *ngIf="result.assessor">{{ result.assessor.firstName }} {{ result.assessor.lastName }} (lock)</span>
+                    <span *ngIf="submission.result && submission.result.assessor">{{ submission.result.assessor.firstName }} {{ submission.result.assessor.lastName }} (lock)</span>
                 </td>
                 <td>
-                    <button *ngIf="(result.optimal && !result.assessor) || (result.assessor && result.assessor.id === accountId) || isAuthorized"
-                            routerLink="/apollon-diagrams/exercise/{{exercise.id}}/{{result.submission.id}}/tutor"
+                    <button *ngIf="(submission.optimal && !(submission.result && submission.result.assessor)) || (submission.result && submission.result.assessor && submission.result.assessor.id === accountId) || canOverrideAssessments"
+                            routerLink="/apollon-diagrams/exercise/{{exercise.id}}/{{submission.id}}/tutor"
                             [queryParams]="{optimal: false}"
                             class="btn btn-outline-success btn-sm">
                         <i class="fa fa-folder-open fa-fw"></i>&nbsp;Assess model
@@ -64,17 +64,17 @@
             </tbody>
         </table>
     </div>
-    <div *ngIf="optimalResults && optimalResults.length === 0">
-        <div *ngIf="assessedResults === results.length">
+    <div *ngIf="optimalSubmissions && optimalSubmissions.length === 0">
+        <div *ngIf="assessedSubmissions === submissions.length">
             <p style="color: #5cb85c"><strong>Congratulation all models have been assessed</strong></p>
         </div>
-        <div *ngIf="assessedResults !== results.length">
+        <div *ngIf="assessedSubmissions !== submissions.length">
             <p><strong>Currently there are no models to assess. Try pushing the refresh button</strong></p>
         </div>
     </div>
-    <h5 style="padding-top: 5px">Other submissions:</h5>
-    <p *ngIf="!allSubmissionsVisible"><strong><a (click)="makeAllSubmissionsVisible()">Show {{results.length}} other submissions</a></strong></p>
-    <div class="table-responsive" *ngIf="results && allSubmissionsVisible">
+    <h5 *ngIf="otherSubmissions.length > 0" style="padding-top: 5px">Other submissions:</h5>
+    <p *ngIf="!allSubmissionsVisible && otherSubmissions.length > 0"><strong><a (click)="makeAllSubmissionsVisible()">Show {{otherSubmissions.length}} other submissions</a></strong></p>
+    <div class="table-responsive" *ngIf="otherSubmissions.length > 0 && allSubmissionsVisible">
         <table class="table table-striped exercise-table">
             <thead>
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
@@ -84,8 +84,8 @@
                 <th jhiSortBy="participation.student.firstName">
                     <a class="th-link">Student name</a> <span class="fa fa-sort"></span>
                 </th>
-                <th jhiSortBy="completionDate">
-                    <a class="th-link">Completion date</a> <span class="fa fa-sort"></span>
+                <th jhiSortBy="submissionDate">
+                    <a class="th-link">Submission date</a> <span class="fa fa-sort"></span>
                 </th>
                 <th jhiSortBy="successful">
                     <a class="th-link">Result</a> <span class="fa fa-sort"></span>
@@ -112,37 +112,37 @@
             </tr>
             </thead>
             <tbody>
-            <tr [ngStyle]="result.optimal && {'font-weight': 'bold'}"
-                *ngFor="let result of results | sortBy: predicate: reverse; let i = index">
+            <tr [ngStyle]="submission.optimal && {'font-weight': 'bold'}"
+                *ngFor="let submission of otherSubmissions | sortBy: predicate: reverse; let i = index">
                 <td>{{ i + 1 }}</td>
-                <td>{{ result.participation.student.firstName }} {{ result.participation.student.lastName}}</td>
-                <td>{{ result.completionDate | date:'MMM d, y HH:mm:ss' }}</td>
+                <td>{{ submission.participation.student.firstName }} {{ submission.participation.student.lastName}}</td>
+                <td>{{ submission.submissionDate | date:'MMM d, y HH:mm:ss' }}</td>
                 <td>
-                    <jhi-result [participation]="result.participation"></jhi-result>
+                    <jhi-result [participation]="submission.participation"></jhi-result>
                 </td>
-                <td>{{ result.submissionCount }}</td>
+                <td>{{ submission.participation.submissions.length }}</td>
                 <td>
-                    <span *ngIf="result.score != null">{{result.score}}%</span>
+                    <span *ngIf="submission.result && submission.result.score != null">{{submission.result.score}}%</span>
                 </td>
-                <td>{{durationString(result.completionDate, (result.participation.initializationDate ?
-                    result.participation.initializationDate: exercise.releaseDate))}} minutes
+                <td>{{durationString(submission.submissionDate, (submission.participation.initializationDate ?
+                    submission.participation.initializationDate : exercise.releaseDate))}} minutes
                 </td>
-                <td>{{ result.assessmentType }}</td>
+                <td>{{ submission.result && submission.result.assessmentType }}</td>
                 <td>
-                    <span *ngIf="result.assessor">{{ result.assessor.firstName }} {{ result.assessor.lastName }}</span>
+                    <span *ngIf="submission.result && submission.result.assessor">{{ submission.result.assessor.firstName }} {{ submission.result.assessor.lastName }}</span>
                 </td>
                 <td>
                     <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                    <button *ngIf="exercise.type === MODELING && result.submission && !result.rated"
-                            routerLink="/apollon-diagrams/exercise/{{exercise.id}}/{{result.submission.id}}/tutor"
+                    <button *ngIf="exercise.type === MODELING && submission && !submission.result"
+                            routerLink="/apollon-diagrams/exercise/{{exercise.id}}/{{submission.id}}/tutor"
                             [disabled]="busy"
                             [queryParams]="{optimal: false}"
                             class="btn btn-outline-secondary btn-sm">
                         <i class="fa fa-folder-open fa-fw"></i>&nbsp;Assess model
                     </button>
                     </span>
-                    <button *ngIf="exercise.type === MODELING && result.submission && result.rated"
-                            routerLink="/apollon-diagrams/exercise/{{exercise.id}}/{{result.submission.id}}/tutor"
+                    <button *ngIf="exercise.type === MODELING && submission && submission.result"
+                            routerLink="/apollon-diagrams/exercise/{{exercise.id}}/{{submission.id}}/tutor"
                             [disabled]="busy"
                             [queryParams]="{optimal: false}"
                             class="btn btn-outline-secondary btn-sm">

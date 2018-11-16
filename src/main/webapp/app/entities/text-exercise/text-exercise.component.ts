@@ -21,9 +21,9 @@ export class TextExerciseComponent implements OnInit, OnDestroy {
     courseId: number;
     itemsPerPage: number;
     links: any;
-    page: any;
-    predicate: any;
-    reverse: any;
+    page: number;
+    predicate: string;
+    reverse: boolean;
 
     constructor(
         private textExerciseService: TextExerciseService,
@@ -59,7 +59,7 @@ export class TextExerciseComponent implements OnInit, OnDestroy {
             (res: HttpResponse<TextExercise[]>) => {
                 this.textExercises = res.body;
             },
-            (res: HttpErrorResponse) => this.onError(res.message)
+            (res: HttpErrorResponse) => this.onError(res)
         );
     }
 
@@ -75,21 +75,23 @@ export class TextExerciseComponent implements OnInit, OnDestroy {
     }
 
     loadAllForCourse() {
-        this.courseExerciseService.findAllTextExercises(this.courseId, {
-            page: this.page,
-            size: this.itemsPerPage
-        }).subscribe(
-            (res: HttpResponse<TextExercise[]>) => {
-                this.textExercises = res.body;
-            },
-            (res: HttpResponse<TextExercise>[]) => this.onError(res)
-        );
+        this.courseExerciseService
+            .findAllTextExercises(this.courseId, {
+                page: this.page,
+                size: this.itemsPerPage
+            })
+            .subscribe(
+                (res: HttpResponse<TextExercise[]>) => {
+                    this.textExercises = res.body;
+                },
+                (res: HttpErrorResponse) => this.onError(res)
+            );
         this.courseService.find(this.courseId).subscribe(res => {
             this.course = res.body;
         });
     }
 
-    loadPage(page) {
+    loadPage(page: number) {
         this.page = page;
         this.loadAll();
     }
@@ -98,12 +100,12 @@ export class TextExerciseComponent implements OnInit, OnDestroy {
         return item.id;
     }
     registerChangeInTextExercises() {
-        this.eventSubscriber = this.eventManager.subscribe('textExerciseListModification', response => this.load());
+        this.eventSubscriber = this.eventManager.subscribe('textExerciseListModification', () => this.load());
     }
 
-    private onError(error) {
-        this.jhiAlertService.error(error.message, null, null);
+    private onError(error: HttpErrorResponse) {
+        this.jhiAlertService.error(error.message);
     }
 
-    callback() { }
+    callback() {}
 }

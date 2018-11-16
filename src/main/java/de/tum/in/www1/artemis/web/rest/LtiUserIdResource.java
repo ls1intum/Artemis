@@ -25,7 +25,7 @@ public class LtiUserIdResource {
 
     private static final String ENTITY_NAME = "ltiUserId";
 
-    private final LtiUserIdRepository ltiUserIdRepository;
+    private LtiUserIdRepository ltiUserIdRepository;
 
     public LtiUserIdResource(LtiUserIdRepository ltiUserIdRepository) {
         this.ltiUserIdRepository = ltiUserIdRepository;
@@ -83,8 +83,8 @@ public class LtiUserIdResource {
     @Timed
     public ResponseEntity<LtiUserId> getLtiUserId(@PathVariable Long id) {
         log.debug("REST request to get LtiUserId : {}", id);
-        LtiUserId ltiUserId = ltiUserIdRepository.findOne(id);
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(ltiUserId));
+        Optional<LtiUserId> ltiUserId = ltiUserIdRepository.findById(id);
+        return ResponseUtil.wrapOrNotFound(ltiUserId);
     }
 
     /**
@@ -97,7 +97,7 @@ public class LtiUserIdResource {
     @Timed
     public ResponseEntity<Void> deleteLtiUserId(@PathVariable Long id) {
         log.debug("REST request to delete LtiUserId : {}", id);
-        ltiUserIdRepository.delete(id);
+        ltiUserIdRepository.deleteById(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 }

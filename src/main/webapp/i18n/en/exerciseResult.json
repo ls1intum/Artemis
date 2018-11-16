@@ -1,0 +1,32 @@
+{
+    "arTeMiSApp": {
+        "exerciseResult": {
+            "home": {
+                "title": "Exercise Results",
+                "createLabel": "Create a new Exercise Result",
+                "createOrEditLabel": "Create or edit a Exercise Result"
+            },
+            "created": "A new Exercise Result is created with identifier {{ param }}",
+            "updated": "A Exercise Result is updated with identifier {{ param }}",
+            "deleted": "A Exercise Result is deleted with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete Exercise Result {{ id }}?"
+            },
+            "detail": {
+                "title": "Exercise Result"
+            },
+            "resultString": "Result String",
+            "completionDate": "Completion Date",
+            "successful": "Successful",
+            "buildArtifact": "Build Artifact",
+            "score": "Score",
+            "rated": "Rated",
+            "hasFeedback": "Has Feedback",
+            "assessmentType": "Assessment Type",
+            "assessor": "Assessor",
+            "feedbacks": "Feedbacks",
+            "submission": "Submission",
+            "participation": "Participation"
+        }
+    }
+}

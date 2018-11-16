@@ -1,54 +1,40 @@
 /* tslint:disable max-line-length */
-import { ComponentFixture, TestBed, async } from '@angular/core/testing';
-import { HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute } from '@angular/router';
+import { of } from 'rxjs';
 
 import { ArTEMiSTestModule } from '../../../test.module';
-import { ModelingSubmissionDetailComponent } from '../../../../../../main/webapp/app/entities/modeling-submission/modeling-submission-detail.component';
-import { ModelingSubmissionService } from '../../../../../../main/webapp/app/entities/modeling-submission/modeling-submission.service';
-import { ModelingSubmission } from '../../../../../../main/webapp/app/entities/modeling-submission/modeling-submission.model';
+import { ModelingSubmissionDetailComponent } from 'app/entities/modeling-submission/modeling-submission-detail.component';
+import { ModelingSubmission } from 'app/shared/model/modeling-submission.model';
 
 describe('Component Tests', () => {
-
     describe('ModelingSubmission Management Detail Component', () => {
         let comp: ModelingSubmissionDetailComponent;
         let fixture: ComponentFixture<ModelingSubmissionDetailComponent>;
-        let service: ModelingSubmissionService;
+        const route = ({ data: of({ modelingSubmission: new ModelingSubmission(123) }) } as any) as ActivatedRoute;
 
-        beforeEach(async(() => {
+        beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [ArTEMiSTestModule],
                 declarations: [ModelingSubmissionDetailComponent],
-                providers: [
-                    ModelingSubmissionService
-                ]
+                providers: [{ provide: ActivatedRoute, useValue: route }]
             })
-            .overrideTemplate(ModelingSubmissionDetailComponent, '')
-            .compileComponents();
-        }));
-
-        beforeEach(() => {
+                .overrideTemplate(ModelingSubmissionDetailComponent, '')
+                .compileComponents();
             fixture = TestBed.createComponent(ModelingSubmissionDetailComponent);
             comp = fixture.componentInstance;
-            service = fixture.debugElement.injector.get(ModelingSubmissionService);
         });
 
         describe('OnInit', () => {
             it('Should call load all on init', () => {
                 // GIVEN
 
-                spyOn(service, 'find').and.returnValue(Observable.of(new HttpResponse({
-                    body: new ModelingSubmission(123)
-                })));
-
                 // WHEN
                 comp.ngOnInit();
 
                 // THEN
-                expect(service.find).toHaveBeenCalledWith(123);
-                expect(comp.modelingSubmission).toEqual(jasmine.objectContaining({id: 123}));
+                expect(comp.modelingSubmission).toEqual(jasmine.objectContaining({ id: 123 }));
             });
         });
     });
-
 });

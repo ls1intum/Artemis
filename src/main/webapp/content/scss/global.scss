@@ -1,12 +1,17 @@
 @import 'bootstrap-variables';
 @import 'editor';
 @import 'quiz';
+@import '~ng-pick-datetime/assets/style/picker.min.css';
 
 /* ==============================================================
 Bootstrap tweaks
 ===============================================================*/
 
-body, h1, h2, h3, h4 {
+body,
+h1,
+h2,
+h3,
+h4 {
     font-weight: 300;
 }
 
@@ -18,9 +23,11 @@ a {
 a:not(.btn):hover {
     color: #533f03;
     font-weight: bold;
+    /* make sure browsers use the pointer cursor for anchors, even with no href */
+    cursor: pointer;
 }
 
-.popover{
+.popover {
     max-width: 100%;
 }
 
@@ -39,12 +46,13 @@ Generic styles
 ========================================================================== */
 
 /* Error highlight on input fields */
-.ng-valid[required], .ng-valid.required  {
-  border-left: 5px solid green;
+.ng-valid[required],
+.ng-valid.required {
+    border-left: 5px solid green;
 }
 
-.ng-invalid:not(form)  {
-  border-left: 5px solid red;
+.ng-invalid:not(form) {
+    border-left: 5px solid red;
 }
 
 /* other generic styles */
@@ -74,7 +82,7 @@ Generic styles
 
 .break {
     white-space: normal;
-    word-break:break-all;
+    word-break: break-all;
 }
 
 .readonly {
@@ -83,17 +91,18 @@ Generic styles
 }
 
 .footer {
-    border-top: 1px solid rgba(0,0,0,.125);
+    border-top: 1px solid rgba(0, 0, 0, 0.125);
 }
 
 /* ==========================================================================
 make sure browsers use the pointer cursor for anchors, even with no href
 ========================================================================== */
 a:hover {
-  cursor: pointer;
+    cursor: pointer;
 }
 
-.hand, [jhisortby] {
+.hand,
+[jhisortby] {
     cursor: pointer;
 }
 
@@ -103,7 +112,7 @@ Custom alerts for notification
 .alerts {
     .alert {
         text-overflow: ellipsis;
-        pre{
+        pre {
             background: none;
             border: none;
             font: inherit;
@@ -156,25 +165,27 @@ entity tables helpers
         }
     }
 }
-@include no-padding("left");
-@include no-padding("right");
-@include no-padding("top");
-@include no-padding("bottom");
-@include no-padding("all");
+@include no-padding('left');
+@include no-padding('right');
+@include no-padding('top');
+@include no-padding('bottom');
+@include no-padding('all');
 
 /* bootstrap 3 input-group 100% width
    http://stackoverflow.com/questions/23436430/bootstrap-3-input-group-100-width */
-.width-min { width: 1% !important; }
+.width-min {
+    width: 1% !important;
+}
 
 /* Makes toolbar not wrap on smaller screens
    http://www.sketchingwithcss.com/samplechapter/cheatsheet.html#right */
 .flex-btn-group-container {
-   display: -webkit-flex;
-   display: flex !important;
-   -webkit-flex-direction: row;
-   flex-direction: row;
-   -webkit-justify-content: flex-end;
-   justify-content: flex-end;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: row;
+    flex-direction: row;
+    -webkit-justify-content: flex-end;
+    justify-content: flex-end;
 }
 
 /* ==========================================================================
@@ -202,17 +213,20 @@ entity detail page css
 /* ==========================================================================
 ui bootstrap tweaks
 ========================================================================== */
-.nav, .pagination, .carousel, .card-title a {
+.nav,
+.pagination,
+.carousel,
+.card-title a {
     cursor: pointer;
 }
 
 .datetime-picker-dropdown > li.date-picker-menu div > table .btn-default,
-.uib-datepicker-popup  > li > div.uib-datepicker > table .btn-default {
+.uib-datepicker-popup > li > div.uib-datepicker > table .btn-default {
     border: 0;
 }
 
 .datetime-picker-dropdown > li.date-picker-menu div > table:focus,
-.uib-datepicker-popup  > li > div.uib-datepicker > table:focus {
+.uib-datepicker-popup > li > div.uib-datepicker > table:focus {
     outline: none;
 }
 
@@ -221,27 +235,31 @@ ui bootstrap tweaks
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
- }
+}
 
 .card-header {
     padding: 10px 15px;
     border-bottom: 1px solid transparent;
     border-top-right-radius: 3px;
-    border-top-left-radius: 3px; }
+    border-top-left-radius: 3px;
+}
 .card-header > .dropdown .dropdown-toggle {
-    color: inherit; }
+    color: inherit;
+}
 
 .card-title {
     margin-top: 0;
     margin-bottom: 0;
     font-size: 16px;
-    color: inherit; }
+    color: inherit;
+}
 .card-title > a,
 .card-title > small,
 .card-title > .small,
 .card-title > small > a,
 .card-title > .small > a {
-    color: inherit; }
+    color: inherit;
+}
 
 .card-body {
     input {
@@ -271,6 +289,7 @@ ui bootstrap tweaks
 
 .span-total-score {
     margin-right: 5px;
+    font-weight: bold;
 }
 
 /* jhipster-needle-scss-add-main JHipster will add new css style */
@@ -283,7 +302,27 @@ a.result-orange:hover {
     color: orange;
 }
 
-.negative, .positive {
+span.result {
+    text-decoration: underline;
+    font-weight: normal;
+}
+
+span.result:hover {
+    text-decoration: underline;
+    font-weight: normal;
+    cursor: pointer;
+}
+
+span.score {
+    font-weight: bold;
+}
+
+span.no-result {
+    font-weight: bold;
+}
+
+.negative,
+.positive {
     padding: 2px 4px;
     border-radius: 4px;
     font-family: Menlo, Monaco, Consolas, Courier New, monospace;
@@ -320,7 +359,8 @@ pre {
     margin: 0 0 10px;
     font-size: 13px;
     line-height: 1.42857;
-    word-break: break-all;
+    white-space: pre-wrap;
+    word-break: break-word;
     word-wrap: break-word;
     color: #333;
     background-color: #f5f5f5;
@@ -328,7 +368,8 @@ pre {
     border-radius: 4px;
 }
 
-code-error, code-success {
+code-error,
+code-success {
     padding: 2px 4px;
     font-size: 90%;
     border-radius: 4px;
@@ -341,7 +382,7 @@ code-success {
     color: green;
     background-color: #f2f9f2;
     border-radius: 4px;
-    font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+    font-family: Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
 code-error {
@@ -414,7 +455,7 @@ code.password:hover {
                 color: $success;
                 &.half {
                     &:after {
-                        content: "\F00C";
+                        content: '\F00C';
                     }
                 }
                 ~ i {
@@ -425,7 +466,7 @@ code.password:hover {
                 color: $danger;
                 &.half {
                     &:after {
-                        content: "\f00d";
+                        content: '\f00d';
                     }
                 }
                 ~ i {

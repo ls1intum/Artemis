@@ -24,6 +24,13 @@ abstract class JsonFileSystemRepository {
 
     private final Logger log = LoggerFactory.getLogger(JsonFileSystemRepository.class);
 
+    /**
+     * Write a new or update an existing file
+     *
+     * @param path the path to the new or existing file
+     * @param json the file content
+     * @return success or failure
+     */
     boolean write(Path path, String json) {
         try {
             if (Files.notExists(path.getParent())) {
@@ -46,6 +53,12 @@ abstract class JsonFileSystemRepository {
         return path.toFile().delete();
     }
 
+    /**
+     * Read a file
+     *
+     * @param path the file path
+     * @return the JSON content of the file
+     */
     JsonObject read(Path path) {
         if (Files.notExists(path)) {
             return null;
@@ -62,6 +75,13 @@ abstract class JsonFileSystemRepository {
         }
     }
 
+    /**
+     * Read all files as json in the given folder
+     *
+     * @param path the path to the folder
+     * @param filenameContains read only files which contains this substring
+     * @return a map of ids (model / assessment id) to the corresponding JSON file content
+     */
     Map<Long, JsonObject> readInFolder(Path path, String filenameContains) {
         if (Files.notExists(path)) {
             return new HashMap<>();
@@ -73,6 +93,7 @@ abstract class JsonFileSystemRepository {
                 .forEach(p -> {
                     try {
                         FileReader fileReader = new FileReader(p.toFile());
+                        // The id of the model / assessment is part of its filename
                         jsons.put(Long.valueOf(p.getFileName().toString().split("\\.")[1]),(JsonObject) parser.parse(fileReader));
                         fileReader.close();
                     } catch (IOException | NumberFormatException e) {

@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { UserRouteAccessService } from '../../shared';
+import { UserRouteAccessService } from '../../core';
 import { QuizComponent } from './quiz.component';
 
 export const quizRoute: Routes = [
@@ -13,7 +13,8 @@ export const quizRoute: Routes = [
             mode: 'default'
         },
         canActivate: [UserRouteAccessService]
-    }, {
+    },
+    {
         path: 'quiz/:id/practice',
         component: QuizComponent,
         data: {
@@ -22,7 +23,8 @@ export const quizRoute: Routes = [
             mode: 'practice'
         },
         canActivate: [UserRouteAccessService]
-    }, {
+    },
+    {
         path: 'quiz/:id/preview',
         component: QuizComponent,
         data: {
@@ -31,7 +33,8 @@ export const quizRoute: Routes = [
             mode: 'preview'
         },
         canActivate: [UserRouteAccessService]
-    }, {
+    },
+    {
         path: 'quiz/:id/solution',
         component: QuizComponent,
         data: {

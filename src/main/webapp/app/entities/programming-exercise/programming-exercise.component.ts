@@ -21,9 +21,9 @@ export class ProgrammingExerciseComponent implements OnInit, OnDestroy {
     courseId: number;
     itemsPerPage: number;
     links: any;
-    page: any;
-    predicate: any;
-    reverse: any;
+    page: number;
+    predicate: string;
+    reverse: boolean;
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
@@ -59,7 +59,7 @@ export class ProgrammingExerciseComponent implements OnInit, OnDestroy {
             (res: HttpResponse<ProgrammingExercise[]>) => {
                 this.programmingExercises = res.body;
             },
-            (res: HttpErrorResponse) => this.onError(res.message)
+            (res: HttpErrorResponse) => this.onError(res)
         );
     }
 
@@ -75,21 +75,23 @@ export class ProgrammingExerciseComponent implements OnInit, OnDestroy {
     }
 
     loadAllForCourse() {
-        this.courseExerciseService.findAllProgrammingExercises(this.courseId, {
-            page: this.page,
-            size: this.itemsPerPage
-        }).subscribe(
-            (res: HttpResponse<ProgrammingExercise[]>) => {
-                this.programmingExercises = res.body;
-            },
-            (res: HttpResponse<ProgrammingExercise>[]) => this.onError(res)
-        );
+        this.courseExerciseService
+            .findAllProgrammingExercises(this.courseId, {
+                page: this.page,
+                size: this.itemsPerPage
+            })
+            .subscribe(
+                (res: HttpResponse<ProgrammingExercise[]>) => {
+                    this.programmingExercises = res.body;
+                },
+                (res: HttpErrorResponse) => this.onError(res)
+            );
         this.courseService.find(this.courseId).subscribe(res => {
             this.course = res.body;
         });
     }
 
-    loadPage(page) {
+    loadPage(page: number) {
         this.page = page;
         this.loadAll();
     }
@@ -97,13 +99,14 @@ export class ProgrammingExerciseComponent implements OnInit, OnDestroy {
     trackId(index: number, item: ProgrammingExercise) {
         return item.id;
     }
+
     registerChangeInProgrammingExercises() {
-        this.eventSubscriber = this.eventManager.subscribe('programmingExerciseListModification', response => this.load());
+        this.eventSubscriber = this.eventManager.subscribe('programmingExerciseListModification', () => this.load());
     }
 
-    private onError(error) {
-        this.jhiAlertService.error(error.message, null, null);
+    private onError(error: HttpErrorResponse) {
+        this.jhiAlertService.error(error.message);
     }
 
-    callback() { }
+    callback() {}
 }

@@ -5,7 +5,12 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.CourseService;
+import de.tum.in.www1.artemis.service.ExerciseService;
+import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import de.tum.in.www1.artemis.web.rest.util.PaginationUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -32,6 +37,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 /**
  * REST controller for managing Exercise.
@@ -108,7 +115,7 @@ public class ExerciseResource {
             !authCheckService.isTeachingAssistantInCourse(course, user) &&
             !authCheckService.isInstructorInCourse(course, user) &&
             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
 
         List<Exercise> result = exerciseService.findAllForCourse(course, withLtiOutcomeUrlExisting, principal, user);
@@ -160,7 +167,7 @@ public class ExerciseResource {
         if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
              !authCheckService.isInstructorInCourse(course, user) &&
              !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(exercise));
     }
@@ -181,11 +188,10 @@ public class ExerciseResource {
             Course course = exercise.getCourse();
             User user = userService.getUserWithGroupsAndAuthorities();
             if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                return forbidden();
             }
-            exerciseService.reset(exercise);
+            exerciseService.delete(exercise, true, false);
         }
-        exerciseService.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 
@@ -204,7 +210,7 @@ public class ExerciseResource {
         Course course = exercise.getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
         exerciseService.reset(exercise);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert("exercise", id.toString())).build();
@@ -226,7 +232,7 @@ public class ExerciseResource {
         Course course = exercise.getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
-             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+             return forbidden();
         }
         exerciseService.cleanup(id, deleteRepositories);
         log.info("Cleanup build plans was successful for Exercise : {}", id);
@@ -249,7 +255,7 @@ public class ExerciseResource {
         Course course = exercise.getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
         File zipFile = exerciseService.archive(id);
         if (zipFile == null) {
@@ -283,7 +289,7 @@ public class ExerciseResource {
         if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
             !authCheckService.isInstructorInCourse(course, user) &&
             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
         List<String> studentList = Arrays.asList(studentIds.split("\\s*,\\s*"));
         if(studentList.isEmpty() || studentList == null){

@@ -16,10 +16,10 @@ if (OperatingSystem.current().isWindows()) {
         doFirst {
             manifest {
                 attributes 'Class-Path':
-                    sourceSets.main.runtimeClasspath.plus(configurations.liquibase)
+                sourceSets.main.runtimeClasspath.plus(configurations.liquibase)
                     .collect {
-                        it.toURI().toURL().toString().replaceFirst(/file:\/+/, '/')
-                    }.join(' ')
+                    it.toURI().toURL().toString().replaceFirst(/file:\/+/, '/')
+                }.join(' ')
             }
         }
     }
@@ -29,7 +29,7 @@ task initPaths(dependsOn: compileJava) {
     group = "liquibase"
     if (OperatingSystem.current().isWindows()) {
         dependsOn pathingLiquibaseJar
-	}
+    }
 }
 
 def liquibaseCommand(command) {

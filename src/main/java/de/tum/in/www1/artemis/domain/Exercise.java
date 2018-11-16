@@ -51,6 +51,10 @@ public abstract class Exercise implements Serializable {
     @JsonView(QuizView.Before.class)
     private String title;
 
+    @Column(name = "short_name")
+    @JsonView(QuizView.Before.class)
+    private String shortName;
+
     @Column(name = "release_date")
     @JsonView(QuizView.Before.class)
     private ZonedDateTime releaseDate;
@@ -86,9 +90,6 @@ public abstract class Exercise implements Serializable {
     @JsonView(QuizView.Before.class)
     private Course course;
 
-    @Transient
-    private boolean isOpenForSubmission;
-
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
         return id;
@@ -109,6 +110,19 @@ public abstract class Exercise implements Serializable {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public String getShortName() {
+        return shortName;
+    }
+
+    public Exercise shortName(String shortName) {
+        this.shortName = shortName;
+        return this;
+    }
+
+    public void setShortName(String shortName) {
+        this.shortName = shortName;
     }
 
     public ZonedDateTime getReleaseDate() {
@@ -236,15 +250,11 @@ public abstract class Exercise implements Serializable {
         this.course = course;
     }
 
-    public boolean isOpenForSubmission() {
-        if (dueDate != null) {
-            return ZonedDateTime.now().isBefore(dueDate);
+    public Boolean isEnded() {
+        if (getDueDate() == null) {
+            return false;
         }
-        return true;
-    }
-
-    public void setOpenForSubmission(boolean openForSubmission) {
-        isOpenForSubmission = openForSubmission;
+        return ZonedDateTime.now().isAfter(getDueDate());
     }
 
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
@@ -260,6 +270,13 @@ public abstract class Exercise implements Serializable {
             return true;
         }
         return releaseDate.isBefore(ZonedDateTime.now());
+    }
+
+    /**
+     * can be invoked to make sure that sensitive information is not sent to the client
+     */
+    public void filterSensitiveInformation() {
+        setGradingInstructions(null);
     }
 
     /**
@@ -290,17 +307,47 @@ public abstract class Exercise implements Serializable {
     }
 
     /**
-     * Get the latest relevant result from the given participation
+     * Get the latest relevant result from the given participation (rated == true or rated == null)
      * (relevancy depends on Exercise type => this should be overridden by subclasses if necessary)
      *
      * @param participation the participation whose results we are considering
      * @return the latest relevant result in the given participation, or null, if none exist
      */
-    public Result findLatestRelevantResult(Participation participation) {
+    public Result findLatestRatedResultWithCompletionDate(Participation participation) {
         // for most types of exercises => return latest result (all results are relevant)
         Result latestResult = null;
         for (Result result : participation.getResults()) {
-            if (latestResult == null || latestResult.getCompletionDate().isBefore(result.getCompletionDate())) {
+            //NOTE: for the dashboard we only use rated results with completion date
+            //TODO: isRatedNull is a compatibility mechanism that we should deactivate soon
+            if (result.getCompletionDate() != null && (result.isRatedNull() || result.isRated())) {
+                //take the first found result that fulfills the above requirements
+                if (latestResult == null) {
+                    latestResult = result;
+                }
+                //take newer results and thus disregard older ones
+                else if (latestResult.getCompletionDate().isBefore(result.getCompletionDate())) {
+                    latestResult = result;
+                }
+            }
+        }
+        return latestResult;
+    }
+
+    /**
+     * Get the latest relevant result from the given participation (independent of rated and completion date)
+     *
+     * @param participation the participation whose results we are considering
+     * @return the latest relevant result in the given participation, or null, if none exist
+     */
+    public Result findLatestResult(Participation participation) {
+        Result latestResult = null;
+        for (Result result : participation.getResults()) {
+            //take the first found result
+            if (latestResult == null) {
+                latestResult = result;
+            }
+            //take newer results
+            else if (latestResult.getCompletionDate().isBefore(result.getCompletionDate())) {
                 latestResult = result;
             }
         }
@@ -335,6 +382,7 @@ public abstract class Exercise implements Serializable {
             ", problemStatement='" + getProblemStatement() + "'" +
             ", gradingInstructions='" + getGradingInstructions() + "'" +
             ", title='" + getTitle() + "'" +
+            ", shortName='" + getShortName() + "'" +
             ", releaseDate='" + getReleaseDate() + "'" +
             ", dueDate='" + getDueDate() + "'" +
             ", maxScore=" + getMaxScore() +

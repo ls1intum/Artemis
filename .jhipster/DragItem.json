@@ -1,13 +1,5 @@
 {
-    "fluentMethods": true,
-    "relationships": [
-        {
-            "relationshipType": "many-to-one",
-            "relationshipName": "question",
-            "otherEntityName": "dragAndDropQuestion",
-            "otherEntityField": "id"
-        }
-    ],
+    "name": "DragItem",
     "fields": [
         {
             "fieldName": "pictureFilePath",
@@ -22,10 +14,21 @@
             "fieldType": "Boolean"
         }
     ],
-    "changelogDate": "20171130173549",
+    "relationships": [
+        {
+            "relationshipType": "many-to-one",
+            "relationshipName": "question",
+            "otherEntityName": "dragAndDropQuestion",
+            "otherEntityField": "id"
+        }
+    ],
+    "changelogDate": "20180927081406",
     "entityTableName": "drag_item",
     "dto": "no",
     "pagination": "no",
     "service": "no",
-    "jpaMetamodelFiltering": false
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
 }

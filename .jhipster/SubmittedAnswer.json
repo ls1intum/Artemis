@@ -1,5 +1,11 @@
 {
-    "fluentMethods": true,
+    "name": "SubmittedAnswer",
+    "fields": [
+        {
+            "fieldName": "scoreInPoints",
+            "fieldType": "Double"
+        }
+    ],
     "relationships": [
         {
             "relationshipType": "many-to-one",
@@ -14,16 +20,13 @@
             "otherEntityField": "id"
         }
     ],
-    "fields": [
-        {
-            "fieldName": "scoreInPoints",
-            "fieldType": "Double"
-        }
-    ],
-    "changelogDate": "20171130173542",
+    "changelogDate": "20180927081359",
     "entityTableName": "submitted_answer",
     "dto": "no",
     "pagination": "no",
     "service": "no",
-    "jpaMetamodelFiltering": false
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
 }

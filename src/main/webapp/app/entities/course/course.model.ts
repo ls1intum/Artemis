@@ -1,18 +1,21 @@
-import { BaseEntity } from './../../shared';
+import { BaseEntity } from 'app/shared';
 import { Exercise } from '../exercise';
+import { Moment } from 'moment';
 
 export class Course implements BaseEntity {
-
     public id: number;
     public title: string;
+    public shortName: string;
     public studentGroupName: string;
     public teachingAssistantGroupName: string;
     public instructorGroupName: string;
-    public startDate: any;
-    public endDate: any;
-    public onlineCourse = false;       // default value
+    public startDate: Moment;
+    public endDate: Moment;
+    public onlineCourse = false; // default value
     public exercises: Exercise[];
 
-    constructor() {
-    }
+    // helper attributes
+    public isAtLeastTutor: boolean;
+
+    constructor() {}
 }

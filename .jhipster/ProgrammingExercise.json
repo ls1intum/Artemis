@@ -1,6 +1,5 @@
 {
-    "fluentMethods": true,
-    "relationships": [],
+    "name": "ProgrammingExercise",
     "fields": [
         {
             "fieldName": "baseRepositoryUrl",
@@ -15,18 +14,35 @@
             "fieldType": "String"
         },
         {
+            "fieldName": "solutionBuildPlanId",
+            "fieldType": "String"
+        },
+        {
             "fieldName": "publishBuildPlanUrl",
             "fieldType": "Boolean"
         },
         {
             "fieldName": "allowOnlineEditor",
             "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "programmingLanguage",
+            "fieldType": "ProgrammingLanguage",
+            "fieldValues": "JAVA,PYTHON"
+        },
+        {
+            "fieldName": "packageName",
+            "fieldType": "String"
         }
     ],
-    "changelogDate": "20171130173538",
+    "relationships": [],
+    "changelogDate": "20180927081355",
     "entityTableName": "programming_exercise",
     "dto": "no",
     "pagination": "no",
     "service": "no",
-    "jpaMetamodelFiltering": false
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
 }
