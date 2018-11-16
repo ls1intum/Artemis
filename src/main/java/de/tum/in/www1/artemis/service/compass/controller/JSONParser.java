@@ -64,7 +64,9 @@ public class JSONParser {
             for (JsonElement methodElement : connectable.getAsJsonArray(JSONMapping.elementMethods)) {
                 JsonObject method = methodElement.getAsJsonObject();
 
-                String[] methodEntryArray = method.get(JSONMapping.elementName).getAsString().replaceAll(" ", "").split(":");
+                String completeMethodName = method.get(JSONMapping.elementName).getAsString();
+
+                String[] methodEntryArray = completeMethodName.replaceAll(" ", "").split(":");
                 String[] methodParts = methodEntryArray[0].split("[()]");
 
                 if (methodParts.length < 1) {
@@ -84,12 +86,22 @@ public class JSONParser {
                     methodReturnType = methodEntryArray[1];
                 }
 
-                UMLMethod newMethod = new UMLMethod(methodName, methodReturnType, Arrays.asList(methodParams), method.get(JSONMapping.elementID).getAsString());
+                UMLMethod newMethod = new UMLMethod(completeMethodName, methodName, methodReturnType, Arrays.asList(methodParams), method.get(JSONMapping.elementID).getAsString());
                 umlMethodList.add(newMethod);
             }
 
             UMLClass newClass = new UMLClass(className, umlAttributesList, umlMethodList, connectable.get(JSONMapping.elementID).getAsString(),
                 connectable.get(JSONMapping.relationshipType).getAsString());
+
+            //set parent class in attributes and methods
+            for (UMLAttribute attribute : umlAttributesList) {
+                attribute.setParentClass(newClass);
+            }
+
+            for (UMLMethod method: umlMethodList) {
+                method.setParentClass(newClass);
+            }
+
             umlClassMap.put(newClass.getJSONElementID(), newClass);
         }
 

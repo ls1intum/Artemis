@@ -166,7 +166,7 @@ public class UMLRelation extends UMLElement {
 
     @Override
     public String getName() {
-        return "Association " + getSource().getValue() + type.toSymbol() + getTarget().getValue() + "( " + type.toReadableString() + ")";
+        return "Association " + getSource().getValue() + type.toSymbol() + getTarget().getValue() + " (" + type.toReadableString() + ")";
     }
 
     @Override

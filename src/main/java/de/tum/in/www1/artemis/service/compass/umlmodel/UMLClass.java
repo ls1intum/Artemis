@@ -9,8 +9,20 @@ public class UMLClass extends UMLElement {
 
     // TODO move activity diagram types into its own class
     public enum UMLClassType {
-        CLASS, ABSTRACT_CLASS, ENUMERATION, INTERFACE,
-        ACTIVITY_CONTROL_INITIAL_NODE, ACTIVITY_CONTROL_FINAL_NODE, ACTIVITY_ACTION_NODE, ACTIVITY_OBJECT, ACTIVITY_MERGE_NODE, ACTIVITY_FORK_NODE, ACTIVITY_FORK_NODE_HORIZONTAL
+        //Class Diagram
+        CLASS,
+        ABSTRACT_CLASS,
+        ENUMERATION,
+        INTERFACE,
+
+        //Activity Diagram
+        ACTIVITY_CONTROL_INITIAL_NODE,
+        ACTIVITY_CONTROL_FINAL_NODE,
+        ACTIVITY_ACTION_NODE,
+        ACTIVITY_OBJECT,
+        ACTIVITY_MERGE_NODE,
+        ACTIVITY_FORK_NODE,
+        ACTIVITY_FORK_NODE_HORIZONTAL
     }
 
     private String name;

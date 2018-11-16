@@ -116,7 +116,12 @@ public class AutomaticAssessmentController {
             }
         }
 
-        double coverage = (totalCount - missingCount) / totalCount;
+        double coverage = 1;
+        if (totalCount != 0) {
+            coverage = (totalCount - missingCount) / totalCount;
+        } else {
+            log.warn("'totalCount' was 0. Set coverage to 1 for a CompassResult");
+        }
 
         compassResultList.add(new CompassResult(scoreHashMap, coverage));
 
@@ -181,7 +186,13 @@ public class AutomaticAssessmentController {
         }
 
         double totalCount = umlClass.getElementCount();
-        double coverage = (totalCount - missing) / totalCount;
+        double coverage = 1;
+        if (totalCount != 0) {
+            coverage = (totalCount - missing) / totalCount;
+        }
+        else {
+            log.warn("'totalCount' was 0. Set coverage to 1 for a CompassResult");
+        }
 
         return new CompassResult(scoreHashMap, coverage);
     }

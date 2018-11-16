@@ -5,6 +5,7 @@ import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 public class UMLAttribute extends UMLElement {
 
+    private UMLClass parentClass;
     private String name;
     private String type;
 
@@ -12,6 +13,10 @@ public class UMLAttribute extends UMLElement {
         this.name = name;
         this.type = type;
         this.jsonElementID = jsonElementID;
+    }
+
+    public void setParentClass(UMLClass parentClass) {
+        this.parentClass = parentClass;
     }
 
     /**
@@ -39,7 +44,7 @@ public class UMLAttribute extends UMLElement {
 
     @Override
     public String getName () {
-        return "Attribute " + name;
+        return "Attribute " + name + (type != null && !type.equals("") ? ": " + type : "") + " in class " + parentClass.getValue();
     }
 
     @Override

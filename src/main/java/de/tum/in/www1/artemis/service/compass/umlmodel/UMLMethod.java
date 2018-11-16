@@ -6,16 +6,23 @@ import java.util.List;
 
 public class UMLMethod extends UMLElement {
 
+    private UMLClass parentClass;
+    private String completeName;
     private String name;
     private String returnType;
     private List<String> parameters;
 
-    public UMLMethod(String name, String returnType, List<String> parameter, String jsonElementID) {
+    public UMLMethod(String completeName, String name, String returnType, List<String> parameter, String jsonElementID) {
+        this.completeName = completeName;
         this.name = name;
         this.returnType = returnType;
         this.parameters = parameter;
 
         this.jsonElementID = jsonElementID;
+    }
+
+    public void setParentClass(UMLClass parentClass) {
+        this.parentClass = parentClass;
     }
 
     /**
@@ -53,7 +60,7 @@ public class UMLMethod extends UMLElement {
 
     @Override
     public String getName() {
-        return "Method " + name;
+        return "Method " + completeName + " in class " + parentClass.getValue();
     }
 
     @Override
