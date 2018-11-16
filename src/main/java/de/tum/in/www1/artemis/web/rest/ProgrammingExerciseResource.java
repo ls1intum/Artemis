@@ -26,6 +26,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static de.tum.in.www1.artemis.config.Constants.shortNamePattern;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 /**
@@ -169,8 +170,14 @@ public class ProgrammingExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The shortname of the programming exercise is not set or too short", "programmingExerciseShortnameInvalid")).body(null);
         }
 
+        // Check if exercise shortname matches regex
+        Matcher shortNameMatcher = shortNamePattern.matcher(programmingExercise.getShortName());
+        if (!shortNameMatcher.matches()) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The shortname is invalid", "shortnameInvalid")).body(null);
+        }
+
         // Check if course shortname is set
-        if (course.getShortName() == null || course.getShortName().length() < 2) {
+        if (course.getShortName() == null || course.getShortName().length() < 3) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The shortname of the course is not set or too short", "courseShortnameInvalid")).body(null);
         }
 
@@ -189,6 +196,8 @@ public class ProgrammingExerciseResource {
         if (!packageNameMatcher.matches()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The packagename is invalid", "packagenameInvalid")).body(null);
         }
+
+
 
         // Check if max score is set
         if (programmingExercise.getMaxScore() == null) {
