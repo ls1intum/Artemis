@@ -103,7 +103,7 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
                 this.submissions = res.body.filter(submission => submission.submitted);
                 this.submissions.forEach(submission => {
                     if (submission.result) {
-                        //reconnect some associations
+                        // reconnect some associations
                         submission.result.submission = submission;
                         submission.result.participation = submission.participation;
                         submission.participation.results = [submission.result];
