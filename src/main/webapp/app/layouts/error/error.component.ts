@@ -9,7 +9,10 @@ export class ErrorComponent implements OnInit {
     errorMessage: string;
     error403: boolean;
 
-    constructor(private route: ActivatedRoute) {}
+    constructor(
+        private route: ActivatedRoute
+    ) {
+    }
 
     ngOnInit() {
         this.route.data.subscribe(routeData => {

@@ -15,13 +15,15 @@ import { Subscription } from 'rxjs/Subscription';
     templateUrl: './quiz-exercise-delete-dialog.component.html'
 })
 export class QuizExerciseDeleteDialogComponent {
+
     quizExercise: QuizExercise;
 
     constructor(
         private quizExerciseService: QuizExerciseService,
         public activeModal: NgbActiveModal,
         private eventManager: JhiEventManager
-    ) {}
+    ) {
+    }
 
     clear() {
         this.activeModal.dismiss('cancel');
@@ -43,13 +45,18 @@ export class QuizExerciseDeleteDialogComponent {
     template: ''
 })
 export class QuizExerciseDeletePopupComponent implements OnInit, OnDestroy {
+
     routeSub: Subscription;
 
-    constructor(private route: ActivatedRoute, private quizExercisePopupService: QuizExercisePopupService) {}
+    constructor(
+        private route: ActivatedRoute,
+        private quizExercisePopupService: QuizExercisePopupService
+    ) {}
 
     ngOnInit() {
         this.routeSub = this.route.params.subscribe(params => {
-            this.quizExercisePopupService.open(QuizExerciseDeleteDialogComponent as Component, params['id']);
+            this.quizExercisePopupService
+                .open(QuizExerciseDeleteDialogComponent as Component, params['id']);
         });
     }
 

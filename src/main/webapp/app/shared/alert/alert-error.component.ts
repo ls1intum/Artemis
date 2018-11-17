@@ -12,8 +12,7 @@ import { Subscription } from 'rxjs/Subscription';
                     <pre [innerHTML]="alert.msg"></pre>
                 </ngb-alert>
             </div>
-        </div>
-    `
+        </div>`
 })
 export class JhiAlertErrorComponent implements OnDestroy {
     alerts: any[];

@@ -16,7 +16,9 @@ export class ResultDetailComponent implements OnInit {
     feedbackList: Feedback[];
     buildLogs: BuildLogEntry[];
 
-    constructor(public activeModal: NgbActiveModal, private resultService: ResultService, private repositoryService: RepositoryService) {}
+    constructor(public activeModal: NgbActiveModal,
+                private resultService: ResultService,
+                private repositoryService: RepositoryService) {}
 
     ngOnInit(): void {
         this.isLoading = true;

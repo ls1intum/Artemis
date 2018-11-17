@@ -4,17 +4,12 @@ import { isMoment, Moment } from 'moment';
 @Component({
     selector: 'jhi-date-time-picker',
     template: `
-        <label class="form-control-label">{{ labelName }}</label>
-        <div class="d-flex">
-            <label class="form-control" (click)="toggled = !toggled">{{ entity[field] | formatDate }}</label>
-        </div>
-        <owl-date-time-inline
-            *ngIf="toggled"
-            startAt="{{entity[field]}}"
-            [(ngModel)]="entity[field]"
-            name="datePicker"
-        ></owl-date-time-inline>
-    `
+      <label class="form-control-label">{{labelName}}</label>
+      <div class="d-flex" >
+        <label class="form-control" (click)="toggled = !toggled">{{ entity[field] | formatDate}}</label>
+      </div>
+      <owl-date-time-inline *ngIf=toggled startAt="{{entity[field]}}"[(ngModel)]="entity[field]" name="datePicker"></owl-date-time-inline>
+  `
 })
 
 // TODO support setting a date to null
