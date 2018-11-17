@@ -39,13 +39,6 @@ export class ExerciseService {
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
-    query(req?: any): Observable<HttpResponse<Exercise[]>> {
-        const options = createRequestOption(req);
-        return this.http
-            .get<Exercise[]>(this.resourceUrl, { params: options, observe: 'response' })
-            .map((res: HttpResponse<Exercise[]>) => this.convertDateArrayFromServer(res));
-    }
-
     delete(id: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }
@@ -65,11 +58,6 @@ export class ExerciseService {
 
     exportRepos(id: number, students: string[]): Observable<HttpResponse<Blob>> {
         return this.http.get(`${this.resourceUrl}/${id}/participations/${students}`, { observe: 'response', responseType: 'blob' });
-    }
-
-    //changes by tom wenzel
-    findAllExercisesByCourseId(courseId: number): Observable<any> {
-        return this.http.get(`${SERVER_API_URL}api/courses/${courseId}/exercises2`, { observe: 'response' });
     }
 
     convertExerciseDateFromServer(exercise: Exercise): Exercise {

@@ -2,8 +2,10 @@ import { JhiAlertService } from 'ng-jhipster';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
-import { Course, CourseService } from '../entities/course';
-import { ExerciseType, ExerciseService } from '../entities/exercise';
+import { Course, CourseExerciseService, CourseService } from '../entities/course';
+import { Exercise, ExerciseType } from '../entities/exercise';
+import { Result } from 'app/entities/result';
+import { Moment } from 'moment';
 
 @Component({
     selector: 'jhi-instructor-course-dashboard',
@@ -15,15 +17,15 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     paramSub: Subscription;
     predicate: string;
     reverse: boolean;
-    results = new Array<Result>();
-    exerciseTitles: Map<string, string> = new Map<string, string>();
-    exerciseMaxScores: Map<string, number> = new Map<string, number>();
-    allExercises: Map<string, Array<Exercise>> = new Map<string, Array<Exercise>>();
-    exerciseCall = [];
+    results: Result[] = [];
+    exercises: Exercise[] = [];
+    exerciseTitles = new Map<string, string>();
+    exerciseMaxScores = new Map<string, number>();
+    allExercises = new Map<string, Exercise[]>();
     studentArray: Array<Student> = [];
     exportReady: Boolean = false;
 
-    constructor(private route: ActivatedRoute, private courseService: CourseService, private exerciseService: ExerciseService) {
+    constructor(private route: ActivatedRoute, private courseService: CourseService, private courseExerciseService: CourseExerciseService) {
         this.reverse = false;
         this.predicate = 'id';
     }
@@ -38,94 +40,31 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     }
 
     getResults(courseId: number) {
-        /*  this.courseService.findAllResults(courseId).subscribe(res => { // TODO Change call - currently this call gets all results of the course - change to call with already build native query
+        this.courseService.findAllResults(courseId).subscribe(res => {
             // this.results = res;
-            console.log(this.results);
-            this.groupResults();
-        });*/
-        //temporary call to mock real data in the future
-        this.results = [
-            {
-                completionDate: '2018-04-01T10:17:11+02:00',
-                participation: {
-                    exercise: { id: 169, title: 'Quiz 01', maxScore: 2, type: 'quiz' },
-                    student: {
-                        email: 'friederike.dollinger@tum.de',
-                        firstName: 'Friederike Dollinger',
-                        id: 4457,
-                        lastName: '',
-                        login: 'ge29wub'
-                    }
-                },
-                rated: true,
-                score: 100,
-                successful: true
-            },
-            {
-                completionDate: '2018-04-01T10:17:11+02:00',
-                participation: {
-                    exercise: { id: 215, title: 'Distributed version control', maxScore: 10, type: 'programming' },
-                    student: { email: 'jakob.haar@tum.de', firstName: 'Jakob von der Haar', id: 792, lastName: '', login: 'ga63mek' }
-                },
-                rated: true,
-                score: 100,
-                successful: true
-            },
-            {
-                completionDate: '2018-04-01T10:17:11+02:00',
-                participation: {
-                    exercise: { id: 192, title: 'Quiz 03b', maxScore: 3, type: 'quiz' },
-                    student: {
-                        email: 'friederike.dollinger@tum.de',
-                        firstName: 'Friederike Dollinger',
-                        id: 4457,
-                        lastName: '',
-                        login: 'ge29wub'
-                    }
-                },
-                rated: true,
-                score: 100,
-                successful: true
-            }
-        ];
+            this.groupResultsAfterExerciseTypes();
+        });
 
-        this.exerciseService.findAllExercisesByCourseId(courseId).subscribe(res => {
+        this.courseExerciseService.findAllExercises(courseId).subscribe(res => {
             // this call gets all exercise information for the course
-            this.exerciseCall = res.body;
-            this.groupResults();
+            this.exercises = res.body;
+            this.groupResultsAfterExerciseTypes();
         });
     }
 
-    groupResults() {
-        if (!this.results || this.results.length === 0 || !this.exerciseCall || this.exerciseCall.length === 0) {
+    groupResultsAfterExerciseTypes() {
+        if (!this.results || this.results.length === 0 || !this.exercises || this.exercises.length === 0) {
             return;
         }
 
         for (const exerciseType in ExerciseType) {
-            this.allExercises.set(ExerciseType[exerciseType], []);
-            this.exerciseTitles.set(ExerciseType[exerciseType], '');
-            this.exerciseMaxScores.set(ExerciseType[exerciseType], 0);
-            console.log(exerciseType);
+            const exercisesWithType = this.exercises.filter(exercise => exercise.type === exerciseType);
+            this.allExercises[exerciseType] = exercisesWithType;
+            this.exerciseTitles[exerciseType] = exercisesWithType.map(exercise => exercise.title).join(', ');
+            this.exerciseMaxScores[exerciseType] = exercisesWithType
+                .map(exercise => exercise.maxScore)
+                .reduce((total, num) => total + num, 0);
         }
-
-        // iterating through the exercises result of the course
-        this.exerciseCall.forEach(ex => {
-            // create exercise object
-            const exercise: Exercise = new Exercise(ex.id, ex.title, ex.maxScore, ex.type, ex.dueDate);
-
-            // console.log(this.allExercises);
-            // console.log(exercise.type);
-            // console.log(this.allExercises.get(exercise.type));
-            // console.log(this.allExercises.has(exercise.type));
-            // create a list of all exercises
-            const temp = this.allExercises.get(exercise.type);
-            if (!temp.some(exc => exc.id === exercise.id)) {
-                // make sure the exercise does not exist yet
-                this.extractExerciseInformation(exercise);
-            }
-        });
-
-        console.log(this.allExercises);
 
         this.createStudents();
     }
@@ -133,7 +72,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     createStudents() {
         // creates students and initializes the result processing
 
-        if (!this.results || this.results.length === 0 || !this.exerciseCall || this.exerciseCall.length === 0) {
+        if (!this.results || this.results.length === 0 || !this.exercises || this.exercises.length === 0) {
             return;
         } // filtering
 
@@ -147,10 +86,10 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                     result.participation.student.id,
                     result.participation.student.login,
                     result.participation.student.email,
-                    new Map<ExerciseType, Array<Score>>([]),
+                    new Map<ExerciseType, Score[]>([]),
                     new Map<ExerciseType, number>(),
                     new Map<ExerciseType, { successful: number; participated: number }>(),
-                    new Map<ExerciseType, Array<Score>>([]),
+                    new Map<ExerciseType, Score[]>([]),
                     new Map<ExerciseType, string>(),
                     0,
                     0,
@@ -158,13 +97,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                     0
                 );
 
-                const exercise: Exercise = new Exercise(
-                    result.participation.exercise.id,
-                    result.participation.exercise.title,
-                    result.participation.exercise.maxScore,
-                    result.participation.exercise.type,
-                    result.participation.exercise.dueDate
-                );
+                const exercise = result.participation.exercise;
 
                 if (!this.studentArray.some(stud => stud.id === student.id)) {
                     this.studentArray.push(student);
@@ -243,27 +176,9 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
         this.exportReady = true;
     }
 
-    extractExerciseInformation(exercise: Exercise) {
-        // extracting max score and title for each exercise in the course
-        let excArr: Exercise[] = this.allExercises.get(exercise.type);
-        excArr.push(exercise);
-        this.allExercises.set(exercise.type, excArr);
-
-        let excTitle: string = this.exerciseTitles.get(exercise.type);
-        excTitle += exercise.title + ',';
-        this.exerciseTitles.set(exercise.type, excTitle);
-
-        let excScore: number = this.exerciseMaxScores.get(exercise.type);
-        excScore += exercise.maxScore;
-        this.exerciseMaxScores.set(exercise.type, excScore);
-    }
-
-    getScoresForExercises(student: Student, exercise: Exercise, result) {
-        const resultCompletionDate: Date = new Date(result.completionDate);
-        const dueDate: Date = new Date(exercise.dueDate);
-
+    getScoresForExercises(student: Student, exercise: Exercise, result: Result) {
         // filter if exercise result is relevant (quiz filter || programming-exercise filter || modelling-exercise filer)
-        if (result.rated === true || (result.rated == null && resultCompletionDate.getTime() <= dueDate.getTime())) {
+        if (result.rated === true || (result.rated == null && result.completionDate <= exercise.dueDate)) {
             const indexStudent: number = this.studentArray.findIndex(stud => stud.id === student.id);
 
             if (indexStudent >= 0) {
@@ -285,10 +200,10 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                     let excAll: Score[] = this.studentArray[indexStudent].allExercises.get(exercise.type);
                     excAll.push(
                         new Score(
-                            resultCompletionDate,
+                            result.completionDate,
                             exercise.id,
                             exercise.title,
-                            this.roundLikeMozilla((result.score * exercise.maxScore) / 100, -2)
+                            CourseDashboardComponent.roundLikeMozilla((result.score * exercise.maxScore) / 100, -2)
                         )
                     );
                     this.studentArray[indexStudent].allExercises.set(exercise.type, excAll);
@@ -317,13 +232,13 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                         const existingScore = excAll[indexExc];
 
                         // we want to have the last result withing the due date (see above)
-                        if (resultCompletionDate.getTime() > existingScore.resCompletionDate.getTime()) {
+                        if (result.completionDate > existingScore.resCompletionDate) {
                             // update entry with the data of the latest known exercise
                             excAll[indexExc] = {
-                                resCompletionDate: resultCompletionDate,
+                                resCompletionDate: result.completionDate,
                                 exerciseID: exercise.id,
                                 exerciseTitle: exercise.title,
-                                absoluteScore: this.roundLikeMozilla((result.score * exercise.maxScore) / 100, -2)
+                                absoluteScore: CourseDashboardComponent.roundLikeMozilla((result.score * exercise.maxScore) / 100, -2)
                             };
                             this.studentArray[indexStudent].allExercises.set(exercise.type, excAll);
                         }
@@ -331,10 +246,10 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                         // if the exercise score does not exist in the array yet we add it as a new Score
                         excAll.push(
                             new Score(
-                                resultCompletionDate,
+                                result.completionDate,
                                 exercise.id,
                                 exercise.title,
-                                this.roundLikeMozilla((result.score * exercise.maxScore) / 100, -2)
+                                CourseDashboardComponent.roundLikeMozilla((result.score * exercise.maxScore) / 100, -2)
                             )
                         );
                         this.studentArray[indexStudent].allExercises.set(exercise.type, excAll);
@@ -367,7 +282,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
         // method for exporting the csv with the needed data
 
         if (this.exportReady && this.studentArray.length > 0) {
-            const rows = [];
+            const rows: string[] = [];
             this.studentArray.forEach((student, index) => {
                 const firstName = student.firstName.trim();
                 const lastName = student.lastName.trim();
@@ -391,54 +306,30 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                             this.exerciseTitles.get('modeling') +
                             'OverallScore'
                     );
-                    rows.push(
-                        firstName +
-                            ',' +
-                            lastName +
-                            ',' +
-                            studentId +
-                            ',' +
-                            email +
-                            ',' +
-                            quizTotal +
-                            ',' +
-                            quizString +
-                            '' +
-                            programmingTotal +
-                            ',' +
-                            programmingString +
-                            '' +
-                            modelingTotal +
-                            ',' +
-                            modelingString +
-                            '' +
-                            score
-                    );
-                } else {
-                    rows.push(
-                        firstName +
-                            ',' +
-                            lastName +
-                            ',' +
-                            studentId +
-                            ',' +
-                            email +
-                            ',' +
-                            quizTotal +
-                            ',' +
-                            quizString +
-                            '' +
-                            programmingTotal +
-                            ',' +
-                            programmingString +
-                            '' +
-                            modelingTotal +
-                            ',' +
-                            modelingString +
-                            '' +
-                            score
-                    );
                 }
+                rows.push(
+                    firstName +
+                        ',' +
+                        lastName +
+                        ',' +
+                        studentId +
+                        ',' +
+                        email +
+                        ',' +
+                        quizTotal +
+                        ',' +
+                        quizString +
+                        '' +
+                        programmingTotal +
+                        ',' +
+                        programmingString +
+                        '' +
+                        modelingTotal +
+                        ',' +
+                        modelingString +
+                        '' +
+                        score
+                );
             });
             const csvContent = rows.join('\n');
             const encodedUri = encodeURI(csvContent);
@@ -451,19 +342,14 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
         }
     }
 
-    round(value, decimals): Number {
-        // TODO find better one
-        return Number(Math.round(Number(value + 'e' + decimals)) + 'e-' + decimals);
-    }
-
     /**
      * Better rounding function
      *
-     * @param   {Number}    value   The number.
-     * @param   {Integer}   exp     The exponent (the 10 logarithm of the adjustment base).
-     * @returns {Number}            The adjusted value.
+     * @param value   The number.
+     * @param exp     The exponent (the 10 logarithm of the adjustment base).
+     * @returns       The adjusted value.
      */
-    roundLikeMozilla(value, exp) {
+    static roundLikeMozilla(value: any, exp: number) {
         // If the exp is undefined or zero...
         if (typeof exp === 'undefined' || +exp === 0) {
             return Math['round'](value);
@@ -489,30 +375,13 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     }
 }
 
-class Exercise {
-    // creating a class for exercises
-    id: number;
-    title: string;
-    maxScore: number;
-    type: string;
-    dueDate: Date;
-
-    constructor(exerciseID: number, exerciseTitle: string, exerciseMaxScore: number, exerciseType: string, exerciseDueDate: Date) {
-        this.id = exerciseID;
-        this.title = exerciseTitle;
-        this.maxScore = exerciseMaxScore;
-        this.type = exerciseType;
-        this.dueDate = exerciseDueDate;
-    }
-}
-
 class Score {
-    resCompletionDate: Date;
+    resCompletionDate: Moment;
     exerciseID: number;
     exerciseTitle: string;
     absoluteScore: Number;
 
-    constructor(resultCompletionDate: Date, exerciseID: number, exerciseTitle: string, absolutScore: Number) {
+    constructor(resultCompletionDate: Moment, exerciseID: number, exerciseTitle: string, absolutScore: Number) {
         this.resCompletionDate = resultCompletionDate;
         this.exerciseID = exerciseID;
         this.exerciseTitle = exerciseTitle;
@@ -521,51 +390,20 @@ class Score {
 }
 
 class Student {
-    // creating a class for students for better code quality
-    firstName: string;
-    lastName: string;
-    id: string;
-    login: string;
-    email: string;
-    allExercises: Map<string, Array<Score>>;
-    totalScores: Map<string, number>;
-    successAndParticipationExercises: Map<string, { successful: number; participated: number }>;
-    everyScore: Map<string, Array<Score>>;
-    everyScoreString: Map<string, string>;
-    participated: number;
-    successful: number;
-    exerciseNotCounted: boolean;
-    overallScore: number;
-
     constructor(
-        firstName: string,
-        lastName: string,
-        id: string,
-        login: string,
-        email: string,
-        allExercises: Map<string, Array<Score>>,
-        totalScores: Map<string, number>,
-        successAndParticipationExercises: Map<string, { successful: number; participated: number }>,
-        everyScore: Map<string, Array<Score>>,
-        everyScoreString: Map<string, string>,
-        participated: number,
-        successful: number,
-        exerciseNotCounted: boolean,
-        overallScore: number
-    ) {
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.id = id;
-        this.login = login;
-        this.email = email;
-        this.allExercises = allExercises;
-        this.totalScores = totalScores;
-        this.successAndParticipationExercises = successAndParticipationExercises;
-        this.everyScore = everyScore;
-        this.everyScoreString = everyScoreString;
-        this.participated = participated;
-        this.successful = successful;
-        this.exerciseNotCounted = exerciseNotCounted;
-        this.overallScore = overallScore;
-    }
+        public firstName: string,
+        public lastName: string,
+        public id: number,
+        public login: string,
+        public email: string,
+        public allExercises: Map<string, Array<Score>>,
+        public totalScores: Map<string, number>,
+        public successAndParticipationExercises: Map<string, { successful: number; participated: number }>,
+        public everyScore: Map<string, Array<Score>>,
+        public everyScoreString: Map<string, string>,
+        public participated: number,
+        public successful: number,
+        public exerciseNotCounted: boolean,
+        public overallScore: number
+    ) {}
 }
