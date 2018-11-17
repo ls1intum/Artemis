@@ -218,9 +218,13 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
         }
     }
 
+    /**
+     * @function triggerTestStatusClick
+     * @desc Clicks the corresponding testStatus DOM element to trigger the dialog
+     * @param index {number} The index indicates which test status link should be clicked
+     */
     triggerTestStatusClick(index: number): void {
         const testStatusDOMElements = this.elementRef.nativeElement.querySelectorAll('.test-status');
-        console.log('triggerTestStatusClick', index);
         if (testStatusDOMElements.length) {
             testStatusDOMElements[index].click();
         }
