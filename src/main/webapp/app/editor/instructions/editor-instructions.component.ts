@@ -200,7 +200,7 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
 
         // Since our rendered markdown file gets inserted into the DOM after compile time, we need to register click events for test cases manually
         const testStatusDOMElements = this.elementRef.nativeElement.querySelectorAll('.test-status');
-        const testStatusCircleElements = this.elementRef.nativeElement.querySelectorAll('.stepwizard-step');
+        const testStatusCircleElements = this.elementRef.nativeElement.querySelectorAll('.stepwizard-circle');
 
         console.log('testStatusCircleElements', testStatusCircleElements);
 
@@ -208,7 +208,12 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
             const listenerRemoveFunction = this.renderer.listen(element, 'click', event => {
                 console.log('Status Link Event', event);
                 // Extract the data attribute for tests and open the details popup with it
-                const tests = event.target.parentElement.getAttribute('data-tests');
+                let tests = '';
+                if (event.target.getAttribute('data-tests')) {
+                    tests = event.target.getAttribute('data-tests');
+                } else {
+                    event.target.parentElement.getAttribute('data-tests');
+                }
                 this.showDetailsForTests(this.latestResult, tests);
             });
             this.listenerRemoveFunctions.push(listenerRemoveFunction);
