@@ -41,8 +41,8 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     }
 
     getResults(courseId: number) {
-        this.courseService.findAllResultsForCourse(courseId).subscribe(res => {
-            // this.results = res;
+        this.courseService.findAllResultsForCourse(courseId).subscribe(results => {
+            this.results = results;
             this.groupResultsAfterExerciseTypes();
         });
 

@@ -14,6 +14,7 @@ import { TextExercise } from '../text-exercise/text-exercise.model';
 import { FileUploadExercise } from '../file-upload-exercise/file-upload-exercise.model';
 import { Exercise } from '../exercise/exercise.model';
 import { ExerciseService } from '../exercise/exercise.service';
+import { Result } from 'app/entities/result';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -69,8 +70,8 @@ export class CourseService {
         return this.http.get(`${this.resourceUrl}/${courseId}/getAllCourseScoresOfCourseUsers`);
     }
 
-    findAllResultsForCourse(courseId: number): Observable<any> {
-        return this.http.get(`${this.resourceUrl}/${courseId}/results`);
+    findAllResultsForCourse(courseId: number): Observable<Result[]> {
+        return this.http.get<Result[]>(`${this.resourceUrl}/${courseId}/results`);
     }
 
     protected convertDateFromClient(course: Course): Course {
