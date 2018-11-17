@@ -42,6 +42,7 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
 
     // Can be used to remove the click listeners for result details
     listenerRemoveFunctions: Function[];
+    stepWizardListenerRemoveFunctions: Function[];
 
     @Input()
     participation: Participation;
@@ -194,10 +195,13 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
         } else {
             // Making sure the array is initialized and empty
             this.listenerRemoveFunctions = [];
+            this.stepWizardListenerRemoveFunctions = [];
         }
 
         // Since our rendered markdown file gets inserted into the DOM after compile time, we need to register click events for test cases manually
         const testStatusDOMElements = this.elementRef.nativeElement.querySelectorAll('.test-status');
+        const testStatusCircleElements = this.elementRef.nativeElement.querySelectorAll('.stepwizard-circle');
+
         testStatusDOMElements.forEach((element: any) => {
             const listenerRemoveFunction = this.renderer.listen(element, 'click', event => {
                 // Extract the data attribute for tests and open the details popup with it
@@ -205,6 +209,15 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
                 this.showDetailsForTests(this.latestResult, tests);
             });
             this.listenerRemoveFunctions.push(listenerRemoveFunction);
+        });
+
+        // Register chain click from Status circle to the corresponding test status link to open the dialog
+        testStatusCircleElements.forEach((element: any, index: number) => {
+            const listenerRemoveFunction = this.renderer.listen(element, 'click', event => {
+                console.log('Event', event);
+                testStatusDOMElements[index].click();
+            });
+            this.stepWizardListenerRemoveFunctions.push(listenerRemoveFunction);
         });
 
         if (!this.isLoadingResults && !this.haveDetailsBeenLoaded) {
@@ -221,8 +234,13 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
             // Call each removal function to detach the click listener from DOM
             listenerRemoveFunction();
         }
+        for (const listenerRemoveFunction of this.stepWizardListenerRemoveFunctions) {
+            // Call each removal function to detach the click listener from DOM
+            listenerRemoveFunction();
+        }
         // Set function array to empty
         this.listenerRemoveFunctions = [];
+        this.stepWizardListenerRemoveFunctions = [];
     }
 
     /**
