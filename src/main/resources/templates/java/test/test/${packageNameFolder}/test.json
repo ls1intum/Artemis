@@ -4,8 +4,11 @@
         "class": "ImageSubject",
         "methods": {
             "request": {
-                "modifiers": ["public", "abstract"],
-                "parameters": ["URL"],
+                "modifiers": [
+                    "public",
+                    "abstract"
+                ],
+                "parameters": [ "URL" ],
                 "returnType": "ImageSubject"
             }
         }
@@ -16,7 +19,7 @@
         "superclass": "ImageSubject",
         "methods": {
             "request": {
-                "parameters": ["URL"],
+                "parameters": [ "URL" ],
                 "returnType": "ImageSubject"
             }
         }
@@ -27,7 +30,7 @@
         "superclass": "ImageSubject",
         "methods": {
             "request": {
-                "parameters": ["URL"],
+                "parameters": [ "URL" ],
                 "returnType": "ImageSubject"
             }
         }
