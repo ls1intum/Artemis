@@ -1,6 +1,7 @@
+
 {
     "arTeMiSApp": {
-        "modelingSubmission": {
+        "modelingSubmission" : {
             "home": {
                 "title": "Modeling Submissions",
                 "createLabel": "Create a new Modeling Submission",

@@ -1,6 +1,7 @@
+
 {
     "arTeMiSApp": {
-        "dropLocation": {
+        "dropLocation" : {
             "home": {
                 "title": "Drop Locations",
                 "createLabel": "Create a new Drop Location",

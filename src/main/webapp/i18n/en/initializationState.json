@@ -1,6 +1,6 @@
 {
     "arTeMiSApp": {
-        "InitializationState": {
+        "InitializationState" : {
             "null": "",
             "UNINITIALIZED": "UNINITIALIZED",
             "REPO_COPIED": "REPO_COPIED",
