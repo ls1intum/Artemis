@@ -212,7 +212,7 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
                 if (event.target.getAttribute('data-tests')) {
                     tests = event.target.getAttribute('data-tests');
                 } else {
-                    event.target.parentElement.getAttribute('data-tests');
+                    tests = event.target.parentElement.getAttribute('data-tests');
                 }
                 this.showDetailsForTests(this.latestResult, tests);
             });
