@@ -13,9 +13,7 @@ import { DomSanitizer } from '@angular/platform-browser';
  */
 @Component({
     selector: 'jhi-secured-image',
-    template: `
-        <img [attr.src]="dataUrl$ | async" />
-    `
+    template: `<img [attr.src]="dataUrl$ | async"/>`
 })
 export class SecuredImageComponent implements OnChanges {
     // This part just creates an rxjs stream from the src

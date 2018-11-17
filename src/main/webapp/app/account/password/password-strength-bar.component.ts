@@ -12,8 +12,7 @@ import { Component, ElementRef, Input, Renderer } from '@angular/core';
                 <li class="point"></li>
                 <li class="point"></li>
             </ul>
-        </div>
-    `,
+        </div>`,
     styleUrls: ['password-strength-bar.scss']
 })
 export class PasswordStrengthBarComponent {

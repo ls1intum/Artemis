@@ -222,15 +222,13 @@ function getEntityMemberDragItemsAndDropLocations(
     entityMembers: LayoutedEntityMember[],
     interactiveElementIds: Set<string>
 ): [DragItem[], DropLocation[]] {
-    const interactiveMembers = entityMembers
-        .filter(member => interactiveElementIds.has(member.id))
-        .map(member => ({
-            ...member,
-            position: {
-                x: entity.position.x + member.position.x,
-                y: entity.position.y + member.position.y
-            }
-        }));
+    const interactiveMembers = entityMembers.filter(member => interactiveElementIds.has(member.id)).map(member => ({
+        ...member,
+        position: {
+            x: entity.position.x + member.position.x,
+            y: entity.position.y + member.position.y
+        }
+    }));
 
     const textDragItems: DragItem[] = interactiveMembers.map(member => {
         const dragItem = new DragItem();

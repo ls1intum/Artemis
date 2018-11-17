@@ -114,7 +114,6 @@ public class Result implements Serializable {
         return submissionCount;
     }
 
-
     public void setSubmissionCount(Long submissionCount) {
         this.submissionCount = submissionCount;
     }

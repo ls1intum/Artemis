@@ -14,7 +14,9 @@ export class JhiConfigurationComponent implements OnInit {
     orderProp: string;
     reverse: boolean;
 
-    constructor(private configurationService: JhiConfigurationService) {
+    constructor(
+        private configurationService: JhiConfigurationService
+    ) {
         this.configKeys = [];
         this.filter = '';
         this.orderProp = 'prefix';
@@ -22,7 +24,7 @@ export class JhiConfigurationComponent implements OnInit {
     }
 
     keys(dict: any): Array<string> {
-        return dict === undefined ? [] : Object.keys(dict);
+        return (dict === undefined) ? [] : Object.keys(dict);
     }
 
     ngOnInit() {
