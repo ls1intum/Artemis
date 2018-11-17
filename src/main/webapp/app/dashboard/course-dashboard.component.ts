@@ -23,7 +23,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     exerciseTitlesForType = new Map<string, string>();
     exerciseMaxScoresForType = new Map<string, number>();
     exercisesForType = new Map<string, Exercise[]>();
-    studentArray: Array<Student> = [];
+    students: Array<Student> = [];
     exportReady: Boolean = false;
 
     constructor(private route: ActivatedRoute, private courseService: CourseService, private courseExerciseService: CourseExerciseService) {
@@ -96,19 +96,19 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
 
                 const exercise = result.participation.exercise;
 
-                if (!this.studentArray.some(stud => stud.user.id === student.user.id)) {
-                    this.studentArray.push(student);
-                    const indexStudent: number = this.studentArray.findIndex(stud => stud.user.id === student.user.id);
+                if (!this.students.some(stud => stud.user.id === student.user.id)) {
+                    this.students.push(student);
+                    const indexStudent: number = this.students.findIndex(stud => stud.user.id === student.user.id);
                     // generate empty maps for each student
                     for (const exType of Object.values(ExerciseType)) {
-                        this.studentArray[indexStudent].everyScoreString.set(exType, '');
-                        this.studentArray[indexStudent].everyScore.set(exType, []);
-                        this.studentArray[indexStudent].successAndParticipationExercises.set(exType, {
+                        this.students[indexStudent].everyScoreString.set(exType, '');
+                        this.students[indexStudent].everyScore.set(exType, []);
+                        this.students[indexStudent].successAndParticipationExercises.set(exType, {
                             successful: 0,
                             participated: 0
                         });
-                        this.studentArray[indexStudent].allExercises.set(exType, []);
-                        this.studentArray[indexStudent].totalScores.set(exType, 0);
+                        this.students[indexStudent].allExercises.set(exType, []);
+                        this.students[indexStudent].totalScores.set(exType, 0);
                     }
                 }
 
@@ -124,7 +124,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     createScoreString() {
         // create a score string for each student and add the exercise (even if 0 points) to the everyScore Map
 
-        this.studentArray.forEach((student, indexStudent) => {
+        this.students.forEach((student, indexStudent) => {
             // check for all exercise types if we have exercises in the course
             for (const exType of Object.values(ExerciseType)) {
                 // check if the student participated in the exercises of the course and get the scores
@@ -138,25 +138,25 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                         if (exercise.id === score.exerciseID) {
                             bool = false; // ensure to only enter the loop later once
 
-                            let scoreStr: string = this.studentArray[indexStudent].everyScoreString.get(exercise.type);
+                            let scoreStr: string = this.students[indexStudent].everyScoreString.get(exercise.type);
                             scoreStr += score.absoluteScore + ',';
-                            this.studentArray[indexStudent].everyScoreString.set(exercise.type, scoreStr);
+                            this.students[indexStudent].everyScoreString.set(exercise.type, scoreStr);
 
-                            const scoreArr: Score[] = this.studentArray[indexStudent].everyScore.get(exercise.type);
+                            const scoreArr: Score[] = this.students[indexStudent].everyScore.get(exercise.type);
                             scoreArr.push(score);
-                            this.studentArray[indexStudent].everyScore.set(exercise.type, scoreArr);
+                            this.students[indexStudent].everyScore.set(exercise.type, scoreArr);
                         }
                     });
 
                     // if the student did not participate in the exercise, a zero points score is generated
                     if (bool) {
-                        let scoreStr: string = this.studentArray[indexStudent].everyScoreString.get(exercise.type);
+                        let scoreStr: string = this.students[indexStudent].everyScoreString.get(exercise.type);
                         scoreStr += '0,';
-                        this.studentArray[indexStudent].everyScoreString.set(exercise.type, scoreStr);
+                        this.students[indexStudent].everyScoreString.set(exercise.type, scoreStr);
 
-                        const scoreArr: Score[] = this.studentArray[indexStudent].everyScore.get(exercise.type);
+                        const scoreArr: Score[] = this.students[indexStudent].everyScore.get(exercise.type);
                         scoreArr.push(new Score(null, exercise.id, exercise.title, 0));
-                        this.studentArray[indexStudent].everyScore.set(exercise.type, scoreArr);
+                        this.students[indexStudent].everyScore.set(exercise.type, scoreArr);
                     }
                 });
             }
@@ -168,25 +168,25 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     getScoresForExercises(student: Student, exercise: Exercise, result: Result) {
         // filter if exercise result is relevant (quiz filter || programming-exercise filter || modelling-exercise filer)
         if (result.rated === true || (result.rated == null && result.completionDate <= exercise.dueDate)) {
-            const indexStudent: number = this.studentArray.findIndex(stud => stud.user.id === student.user.id);
+            const indexStudent: number = this.students.findIndex(stud => stud.user.id === student.user.id);
 
             if (indexStudent >= 0) {
                 // check if the student exists in our array
                 // quiz exercises only have one rated result
                 if (exercise.type === 'quiz') {
-                    this.studentArray[indexStudent].participated++;
+                    this.students[indexStudent].participated++;
 
-                    const excSP: { successful: number; participated: number } = this.studentArray[
+                    const excSP: { successful: number; participated: number } = this.students[
                         indexStudent
                     ].successAndParticipationExercises.get(exercise.type);
                     excSP.participated++;
                     if (result.successful) {
-                        this.studentArray[indexStudent].successful++;
+                        this.students[indexStudent].successful++;
                         excSP.successful++;
                     }
-                    this.studentArray[indexStudent].successAndParticipationExercises.set(exercise.type, excSP);
+                    this.students[indexStudent].successAndParticipationExercises.set(exercise.type, excSP);
 
-                    const excAll: Score[] = this.studentArray[indexStudent].allExercises.get(exercise.type);
+                    const excAll: Score[] = this.students[indexStudent].allExercises.get(exercise.type);
                     excAll.push(
                         new Score(
                             result.completionDate,
@@ -195,25 +195,25 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                             this.roundLikeMozilla((result.score * exercise.maxScore) / 100, -2)
                         )
                     );
-                    this.studentArray[indexStudent].allExercises.set(exercise.type, excAll);
+                    this.students[indexStudent].allExercises.set(exercise.type, excAll);
                 } else {
-                    const excAll: Score[] = this.studentArray[indexStudent].allExercises.get(exercise.type);
+                    const excAll: Score[] = this.students[indexStudent].allExercises.get(exercise.type);
                     const indexExc: number = excAll.findIndex(exc => exc.exerciseID === exercise.id);
-                    const excSP: { successful: number; participated: number } = this.studentArray[
+                    const excSP: { successful: number; participated: number } = this.students[
                         indexStudent
                     ].successAndParticipationExercises.get(exercise.type);
 
-                    if (this.studentArray[indexStudent].exerciseNotCounted) {
-                        this.studentArray[indexStudent].participated++;
+                    if (this.students[indexStudent].exerciseNotCounted) {
+                        this.students[indexStudent].participated++;
                         excSP.participated++;
-                        this.studentArray[indexStudent].exerciseNotCounted = false;
+                        this.students[indexStudent].exerciseNotCounted = false;
                     }
                     if (result.successful) {
-                        this.studentArray[indexStudent].successful++;
+                        this.students[indexStudent].successful++;
                         excSP.successful++;
                     }
 
-                    this.studentArray[indexStudent].successAndParticipationExercises.set(exercise.type, excSP);
+                    this.students[indexStudent].successAndParticipationExercises.set(exercise.type, excSP);
 
                     if (indexExc >= 0) {
                         // if the exercise score exist in the array
@@ -229,7 +229,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                                 exerciseTitle: exercise.title,
                                 absoluteScore: this.roundLikeMozilla((result.score * exercise.maxScore) / 100, -2)
                             };
-                            this.studentArray[indexStudent].allExercises.set(exercise.type, excAll);
+                            this.students[indexStudent].allExercises.set(exercise.type, excAll);
                         }
                     } else {
                         // if the exercise score does not exist in the array yet we add it as a new Score
@@ -241,7 +241,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                                 this.roundLikeMozilla((result.score * exercise.maxScore) / 100, -2)
                             )
                         );
-                        this.studentArray[indexStudent].allExercises.set(exercise.type, excAll);
+                        this.students[indexStudent].allExercises.set(exercise.type, excAll);
                     }
                 }
             }
@@ -251,7 +251,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     // TODO: use reduce
     getTotalScores() {
         // calculate the total scores for each student
-        this.studentArray.forEach(student => {
+        this.students.forEach(student => {
             for (const exType of Object.values(ExerciseType)) {
                 const excAll: Score[] = student.allExercises.get(exType);
                 let totS: number = student.totalScores.get(exType);
@@ -269,9 +269,9 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     exportResults() {
         // method for exporting the csv with the needed data
 
-        if (this.exportReady && this.studentArray.length > 0) {
+        if (this.exportReady && this.students.length > 0) {
             const rows: string[] = [];
-            this.studentArray.forEach((student, index) => {
+            this.students.forEach((student, index) => {
                 const firstName = student.user.firstName.trim();
                 const lastName = student.user.lastName.trim();
                 const studentId = student.user.login.trim();

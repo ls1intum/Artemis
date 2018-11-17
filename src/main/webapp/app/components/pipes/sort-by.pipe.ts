@@ -8,8 +8,8 @@ import { BaseEntity } from '../../shared';
 export class SortByPipe implements PipeTransform {
     constructor(private momentDiff: DifferencePipe) { }
 
-    transform<T extends BaseEntity>(array: Array<T>, predicate: string, reverse: boolean): Array<T> {
-        array.sort((a: T, b: T) => {
+    transform(array: any[], predicate: string, reverse: boolean): any[] {
+        array.sort((a: any, b: any) => {
             let tempA = a;
             let tempB = b;
             if (predicate === 'releaseDate') {
