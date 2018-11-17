@@ -200,12 +200,13 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
 
         // Since our rendered markdown file gets inserted into the DOM after compile time, we need to register click events for test cases manually
         const testStatusDOMElements = this.elementRef.nativeElement.querySelectorAll('.test-status');
-        const testStatusCircleElements = this.elementRef.nativeElement.querySelectorAll('.stepwizard-circle');
+        const testStatusCircleElements = this.elementRef.nativeElement.querySelectorAll('.stepwizard-step');
 
         console.log('testStatusCircleElements', testStatusCircleElements);
 
         testStatusDOMElements.forEach((element: any) => {
             const listenerRemoveFunction = this.renderer.listen(element, 'click', event => {
+                console.log('Status Link Event', event);
                 // Extract the data attribute for tests and open the details popup with it
                 const tests = event.target.parentElement.getAttribute('data-tests');
                 this.showDetailsForTests(this.latestResult, tests);
@@ -216,7 +217,7 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
         // Register chain click from Status circle to the corresponding test status link to open the dialog
         testStatusCircleElements.forEach((element: any, index: number) => {
             const listenerRemoveFunction = this.renderer.listen(element, 'click', event => {
-                console.log('Event', event);
+                console.log('Circle Event', event);
                 testStatusDOMElements[index].click();
             });
             this.stepWizardListenerRemoveFunctions.push(listenerRemoveFunction);
