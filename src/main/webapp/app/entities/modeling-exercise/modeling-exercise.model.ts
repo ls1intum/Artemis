@@ -9,6 +9,7 @@ export const enum DiagramType {
 }
 
 export class ModelingExercise extends Exercise {
+
     public diagramType: DiagramType;
     public sampleSolutionModel: String;
     public sampleSolutionExplanation: String;

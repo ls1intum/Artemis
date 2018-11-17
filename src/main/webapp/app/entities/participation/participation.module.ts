@@ -15,18 +15,33 @@ import {
 } from './';
 import { SortByModule } from '../../components/pipes';
 
-const ENTITY_STATES = [...participationRoute, ...participationPopupRoute];
+const ENTITY_STATES = [
+    ...participationRoute,
+    ...participationPopupRoute,
+];
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, ArTEMiSAdminModule, RouterModule.forChild(ENTITY_STATES), SortByModule],
+    imports: [
+        ArTEMiSSharedModule,
+        ArTEMiSAdminModule,
+        RouterModule.forChild(ENTITY_STATES),
+        SortByModule
+    ],
     declarations: [
         ParticipationComponent,
         ParticipationDetailComponent,
         ParticipationDeleteDialogComponent,
-        ParticipationDeletePopupComponent
+        ParticipationDeletePopupComponent,
     ],
-    entryComponents: [ParticipationComponent, ParticipationDeleteDialogComponent, ParticipationDeletePopupComponent],
-    providers: [ParticipationService, ParticipationPopupService],
+    entryComponents: [
+        ParticipationComponent,
+        ParticipationDeleteDialogComponent,
+        ParticipationDeletePopupComponent,
+    ],
+    providers: [
+        ParticipationService,
+        ParticipationPopupService,
+    ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArTEMiSParticipationModule {}

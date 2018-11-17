@@ -14,6 +14,7 @@ import { Subscription } from 'rxjs/Subscription';
     templateUrl: './participation-delete-dialog.component.html'
 })
 export class ParticipationDeleteDialogComponent implements OnInit {
+
     // make constants available to html for comparison
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
@@ -27,14 +28,15 @@ export class ParticipationDeleteDialogComponent implements OnInit {
         private participationService: ParticipationService,
         public activeModal: NgbActiveModal,
         private eventManager: JhiEventManager
-    ) {}
+    ) {
+    }
 
     clear() {
         this.activeModal.dismiss('cancel');
     }
 
     confirmDelete(id: number, deleteBuildPlan: boolean, deleteRepository: boolean) {
-        this.participationService.delete(id, { deleteBuildPlan, deleteRepository }).subscribe(() => {
+        this.participationService.delete(id, {deleteBuildPlan, deleteRepository}).subscribe(() => {
             this.eventManager.broadcast({
                 name: 'participationListModification',
                 content: 'Deleted an participation'
@@ -54,13 +56,18 @@ export class ParticipationDeleteDialogComponent implements OnInit {
     template: ''
 })
 export class ParticipationDeletePopupComponent implements OnInit, OnDestroy {
+
     routeSub: Subscription;
 
-    constructor(private route: ActivatedRoute, private participationPopupService: ParticipationPopupService) {}
+    constructor(
+        private route: ActivatedRoute,
+        private participationPopupService: ParticipationPopupService
+    ) {}
 
     ngOnInit() {
         this.routeSub = this.route.params.subscribe(params => {
-            this.participationPopupService.open(ParticipationDeleteDialogComponent as Component, params['id']);
+            this.participationPopupService
+                .open(ParticipationDeleteDialogComponent as Component, params['id']);
         });
     }
 
