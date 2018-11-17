@@ -314,8 +314,9 @@ public class ResultResource {
         log.debug("REST request to get Results for Course : {}", courseId);
         Course course = courseService.findOne(courseId);
         if (!userHasPermissions(course)) return forbidden();
-        //List<Result> results = resultRepository.findEarliestSuccessfulResultsForCourse(courseId);
         List<Result> results = resultRepository.findAllResultsForCourse(courseId);
+        // TODO: what we actually want is only results with rated == true or rated == null (for compatibility)
+        // ideally it should be the last result in case of multiple participations
         //remove unnecessary elements in the json response
         results.forEach(result -> {
             result.getParticipation().setExercise(null);
