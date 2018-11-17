@@ -202,6 +202,7 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
         const testStatusDOMElements = this.elementRef.nativeElement.querySelectorAll('.test-status');
         const testStatusCircleElements = this.elementRef.nativeElement.querySelectorAll('.stepwizard-circle');
 
+        console.log('testStatusDOMElements', testStatusDOMElements);
         console.log('testStatusCircleElements', testStatusCircleElements);
 
         testStatusDOMElements.forEach((element: any) => {
