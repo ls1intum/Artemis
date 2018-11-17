@@ -81,7 +81,7 @@ public class ExerciseResource {
     @GetMapping(value = "/courses/{courseId}/exercises")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
-    public ResponseEntity<Collection<Exercise>> getExerciseOverviewForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Collection<Exercise>> getExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get Exercises for Course : {}", courseId);
 
         Course course = courseService.findOne(courseId);
@@ -90,7 +90,7 @@ public class ExerciseResource {
             !authCheckService.isTeachingAssistantInCourse(course, user) &&
             !authCheckService.isInstructorInCourse(course, user) &&
             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
 
         List<Exercise> result = exerciseService.findAllExercisesByCourseId(course, user);

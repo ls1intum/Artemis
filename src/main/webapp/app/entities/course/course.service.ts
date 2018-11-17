@@ -69,7 +69,7 @@ export class CourseService {
         return this.http.get(`${this.resourceUrl}/${courseId}/getAllCourseScoresOfCourseUsers`);
     }
 
-    findAllResults(courseId: number): Observable<any> {
+    findAllResultsForCourse(courseId: number): Observable<any> {
         return this.http.get(`${this.resourceUrl}/${courseId}/results`);
     }
 
