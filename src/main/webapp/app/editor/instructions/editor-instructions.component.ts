@@ -392,14 +392,15 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
         text += '</strong>: ';
         // If the test is not done, we set the 'data-tests' attribute to the a-element, which we later use for the details dialog
         if (done) {
-            text += '<span class="text-success">' + label + '</span>';
+            text += '<span class="text-success bold">' + label + '</span>';
         } else {
             // bugfix: do not let the user click on 'No Results'
             if (label === this.translateService.instant('arTeMiSApp.editor.testStatusLabels.noResult')) {
-                text += '<span class="text-danger no-result">' + label + '</span>'; // this should be bold
+                text += '<span class="text-danger bold">' + label + '</span>'; // this should be bold
             } else {
                 text +=
-                    '<a data-tests="\' + tests.toString() + \'" class="test-status"><span class="text-danger">\' + label + \'</span></a>';
+                    '<a data-tests="\' + tests.toString() + \'" class="test-status result"><span class="text-danger">\' + label + \'</span></a>';
+                // TODO: test if underlining the link works as in the result component
             }
         }
         text += '<br />';

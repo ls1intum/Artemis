@@ -129,10 +129,14 @@ export class CourseExerciseService {
             .map((res: ProgrammingExercise) => this.convertDateFromServer(res));
     }
 
-    findAllProgrammingExercises(courseId: number, req?: any): Observable<HttpResponse<ProgrammingExercise[]>> {
-        const options = createRequestOption(req);
+    /**
+     * Note: the exercises in the response do not contain participations and do not contain the course to save network bandwidth
+     *
+     * @param courseId
+     */
+    findAllProgrammingExercisesForCourse(courseId: number): Observable<HttpResponse<ProgrammingExercise[]>> {
         return this.http
-            .get<ProgrammingExercise[]>(`${this.resourceUrl}/${courseId}/programming-exercises/`, { params: options, observe: 'response' })
+            .get<ProgrammingExercise[]>(`${this.resourceUrl}/${courseId}/programming-exercises/`, { observe: 'response' })
             .map((res: HttpResponse<ProgrammingExercise[]>) => this.convertDateArrayFromServer(res));
     }
 
@@ -142,10 +146,14 @@ export class CourseExerciseService {
             .map((res: ModelingExercise) => this.convertDateFromServer(res));
     }
 
-    findAllModelingExercises(courseId: number, req?: any): Observable<HttpResponse<ModelingExercise[]>> {
-        const options = createRequestOption(req);
+    /**
+     * Note: the exercises in the response do not contain participations and do not contain the course to save network bandwidth
+     *
+     * @param courseId
+     */
+    findAllModelingExercisesForCourse(courseId: number): Observable<HttpResponse<ModelingExercise[]>> {
         return this.http
-            .get<ModelingExercise[]>(`${this.resourceUrl}/${courseId}/modeling-exercises/`, { params: options, observe: 'response' })
+            .get<ModelingExercise[]>(`${this.resourceUrl}/${courseId}/modeling-exercises/`, { observe: 'response' })
             .map((res: HttpResponse<ModelingExercise[]>) => this.convertDateArrayFromServer(res));
     }
 
@@ -155,10 +163,14 @@ export class CourseExerciseService {
             .map((res: TextExercise) => this.convertDateFromServer(res));
     }
 
-    findAllTextExercises(courseId: number, req?: any): Observable<HttpResponse<TextExercise[]>> {
-        const options = createRequestOption(req);
+    /**
+     * Note: the exercises in the response do not contain participations and do not contain the course to save network bandwidth
+     *
+     * @param courseId
+     */
+    findAllTextExercisesForCourse(courseId: number): Observable<HttpResponse<TextExercise[]>> {
         return this.http
-            .get<TextExercise[]>(`${this.resourceUrl}/${courseId}/text-exercises/`, { params: options, observe: 'response' })
+            .get<TextExercise[]>(`${this.resourceUrl}/${courseId}/text-exercises/`, { observe: 'response' })
             .map((res: HttpResponse<TextExercise[]>) => this.convertDateArrayFromServer(res));
     }
 
@@ -168,10 +180,14 @@ export class CourseExerciseService {
             .map((res: FileUploadExercise) => this.convertDateFromServer(res));
     }
 
-    findAllFileUploadExercises(courseId: number, req?: any): Observable<HttpResponse<FileUploadExercise[]>> {
-        const options = createRequestOption(req);
+    /**
+     * Note: the exercises in the response do not contain participations and do not contain the course to save network bandwidth
+     *
+     * @param courseId
+     */
+    findAllFileUploadExercisesForCourse(courseId: number): Observable<HttpResponse<FileUploadExercise[]>> {
         return this.http
-            .get<FileUploadExercise[]>(`${this.resourceUrl}/${courseId}/file-upload-exercises/`, { params: options, observe: 'response' })
+            .get<FileUploadExercise[]>(`${this.resourceUrl}/${courseId}/file-upload-exercises/`, { observe: 'response' })
             .map((res: HttpResponse<FileUploadExercise[]>) => this.convertDateArrayFromServer(res));
     }
 

@@ -30,8 +30,6 @@ import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
@@ -85,6 +83,8 @@ public class ModelingExerciseResource {
         this.compassService = compassService;
         this.modelingAssessmentService = modelingAssessmentService;
     }
+
+    //TODO: most of these calls should be done in the context of a course
 
     /**
      * POST  /modeling-exercises : Create a new modelingExercise.
@@ -154,29 +154,6 @@ public class ModelingExerciseResource {
     }
 
     /**
-     * GET  /modeling-exercises : get all the modelingExercises.
-     *
-     * @return the ResponseEntity with status 200 (OK) and the list of modelingExercises in body
-     */
-    @GetMapping("/modeling-exercises")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
-    public List<ModelingExercise> getAllModelingExercises() {
-        log.debug("REST request to get all ModelingExercises");
-        List<ModelingExercise> exercises = modelingExerciseRepository.findAll();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        Stream<ModelingExercise> authorizedExercises = exercises.stream().filter(
-            exercise -> {
-                Course course = exercise.getCourse();
-                return authCheckService.isTeachingAssistantInCourse(course, user) ||
-                    authCheckService.isInstructorInCourse(course, user) ||
-                    authCheckService.isAdmin();
-            }
-        );
-        return authorizedExercises.collect(Collectors.toList());
-    }
-
-    /**
      * GET  /courses/:courseId/exercises : get all the exercises.
      *
      * @return the ResponseEntity with status 200 (OK) and the list of modelingExercises in body
@@ -195,30 +172,84 @@ public class ModelingExerciseResource {
             return forbidden();
         }
         List<ModelingExercise> exercises = modelingExerciseRepository.findByCourseId(courseId);
-
+        for (Exercise exercise : exercises) {
+            //not required in the returned json body
+            exercise.setParticipations(null);
+            exercise.setCourse(null);
+        }
         return ResponseEntity.ok().body(exercises);
+    }
+
+    /**
+     * GET  /modeling-exercises/:id/statistics : get the "id" modelingExercise statistics.
+     *
+     * @param exerciseId the id of the modelingExercise for which the statistics should be retrieved
+     * @return the json encoded modelingExercise statistics
+     */
+    @GetMapping(value = "/modeling-exercises/{exerciseId}/statistics")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @Timed
+    public ResponseEntity<String> getModelingExerciseStatistics(@PathVariable Long exerciseId) {
+        log.debug("REST request to get ModelingExercise Statistics for Exercise: {}", exerciseId);
+        Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findById(exerciseId);
+        if (!modelingExercise.isPresent()) {
+            return notFound();
+        }
+        Course course = modelingExercise.get().getCourse();
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
+            !authCheckService.isInstructorInCourse(course, user) &&
+            !authCheckService.isAdmin()) {
+            return forbidden();
+        }
+        return ResponseEntity.ok(compassService.getStatistics(exerciseId).toString());
+    }
+
+
+    /**
+     * GET  /modeling-exercises/:id : get the "id" modelingExercise.
+     *
+     * @param id the id of the modelingExercise to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the modelingExercise, or with status 404 (Not Found)
+     */
+    @GetMapping("/modeling-exercises/{id}")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @Timed
+    public ResponseEntity<ModelingExercise> getProgrammingExercise(@PathVariable Long id) {
+        log.debug("REST request to get ModelingExercise : {}", id);
+        Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findById(id);
+        if (modelingExercise.isPresent()) {
+            Course course = modelingExercise.get().getCourse();
+            User user = userService.getUserWithGroupsAndAuthorities();
+            if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
+                !authCheckService.isInstructorInCourse(course, user) &&
+                !authCheckService.isAdmin()) {
+                return forbidden();
+            }
+        }
+        return ResponseUtil.wrapOrNotFound(modelingExercise);
     }
 
     /**
      * DELETE  /modeling-exercises/:id : delete the "id" modelingExercise.
      *
-     * @param id the id of the modelingExercise to delete
+     * @param exerciseId the id of the modelingExercise to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/modeling-exercises/{id}")
+    @DeleteMapping("/modeling-exercises/{exerciseId}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @Timed
-    public ResponseEntity<Void> deleteModelingExercise(@PathVariable Long id) {
-        log.debug("REST request to delete ModelingExercise : {}", id);
-        ModelingExercise modelingExercise = modelingExerciseRepository.findById(id).get();
+    public ResponseEntity<Void> deleteModelingExercise(@PathVariable Long exerciseId) {
+        log.debug("REST request to delete ModelingExercise : {}", exerciseId);
+        ModelingExercise modelingExercise = modelingExerciseRepository.findById(exerciseId).get();
         Course course = modelingExercise.getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(course, user) &&
             !authCheckService.isAdmin()) {
             return forbidden();
         }
-        modelingExerciseService.delete(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+        modelingExerciseService.delete(exerciseId);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, exerciseId.toString())).build();
     }
 
     /**
@@ -305,7 +336,7 @@ public class ModelingExerciseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional
     @Timed
-    //TODO: return a proper object here, e.g. modelingSubmission
+    //TODO: return a proper object here, e.g. modelingSubmission and fix the REST URL
     public ResponseEntity<JsonNode> getDataForAssessmentEditor(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
         Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findById(exerciseId);
         if (!modelingExercise.isPresent()) {

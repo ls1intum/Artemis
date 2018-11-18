@@ -4,6 +4,7 @@ import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
@@ -26,8 +27,6 @@ import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
@@ -133,29 +132,6 @@ public class TextExerciseResource {
     }
 
     /**
-     * GET  /text-exercises : get all the textExercises.
-     *
-     * @return the ResponseEntity with status 200 (OK) and the list of textExercises in body
-     */
-    @GetMapping("/text-exercises")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
-    public List<TextExercise> getAllTextExercises() {
-        log.debug("REST request to get all TextExercises");
-        List<TextExercise> exercises = textExerciseRepository.findAll();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        Stream<TextExercise> authorizedExercises = exercises.stream().filter(
-            exercise -> {
-                Course course = exercise.getCourse();
-                return authCheckService.isTeachingAssistantInCourse(course, user) ||
-                    authCheckService.isInstructorInCourse(course, user) ||
-                    authCheckService.isAdmin();
-            }
-        );
-        return authorizedExercises.collect(Collectors.toList());
-    }
-
-    /**
      * GET  /courses/:courseId/exercises : get all the exercises.
      *
      * @return the ResponseEntity with status 200 (OK) and the list of textExercises in body
@@ -170,6 +146,11 @@ public class TextExerciseResource {
             return forbidden();
         }
         List<TextExercise> exercises = textExerciseRepository.findByCourseId(courseId);
+        for (Exercise exercise : exercises) {
+            //not required in the returned json body
+            exercise.setParticipations(null);
+            exercise.setCourse(null);
+        }
 
         return ResponseEntity.ok().body(exercises);
     }

@@ -2,12 +2,66 @@ package de.tum.in.www1.artemis.service.compass.umlmodel;
 
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
-public class UMLRelation extends UMLElement {
+public class UMLAssociation extends UMLElement {
 
     // PLAIN is legacy
+    // TODO move activity diagram types into its own class
     public enum UMLRelationType {
-        PLAIN, DEPENDENCY, AGGREGATION, INHERITANCE, REALIZATION, COMPOSITION, ASSOCIATION_UNIDIRECTIONAL, ASSOCIATION_BIDIRECTIONAL,
-        ACTIVITY_CONTROL_FLOW
+        PLAIN,
+        DEPENDENCY,
+        AGGREGATION,
+        INHERITANCE,
+        REALIZATION,
+        COMPOSITION,
+        ASSOCIATION_UNIDIRECTIONAL,
+        ASSOCIATION_BIDIRECTIONAL,
+        ACTIVITY_CONTROL_FLOW;
+
+        public String toReadableString() {
+            switch (this) {
+                case DEPENDENCY:
+                    return "Dependency";
+                case AGGREGATION:
+                    return "Aggregation";
+                case INHERITANCE:
+                    return "Inheritance";
+                case REALIZATION:
+                    return "Realization";
+                case COMPOSITION:
+                    return "Composition";
+                case ASSOCIATION_UNIDIRECTIONAL:
+                    return "Unidirectional";
+                case ASSOCIATION_BIDIRECTIONAL:
+                    return "Bidirectional";
+                case ACTIVITY_CONTROL_FLOW:
+                    return "Control Flow";
+                default:
+                    return "Other";
+            }
+        }
+
+        public String toSymbol() {
+            switch (this) {
+                case DEPENDENCY:
+                    return " ╌╌> ";
+                case AGGREGATION:
+                    return " --◇ ";
+                case INHERITANCE:
+                    return " --▷ ";
+                case REALIZATION:
+                    return " ╌╌▷ ";
+                case COMPOSITION:
+                    return " --◆ ";
+                case ASSOCIATION_UNIDIRECTIONAL:
+                    return " --> ";
+                case ASSOCIATION_BIDIRECTIONAL:
+                    return " <-> ";
+                case ACTIVITY_CONTROL_FLOW:
+                    return " --> ";
+                default:
+                    return " --- ";
+            }
+        }
     }
 
     private UMLClass source;
@@ -21,8 +75,8 @@ public class UMLRelation extends UMLElement {
 
     private UMLRelationType type;
 
-    public UMLRelation(UMLClass source, UMLClass target, String type, String jsonElementID, String sourceRole, String targetRole,
-                       String sourceMultiplicity, String targetMultiplicity) {
+    public UMLAssociation(UMLClass source, UMLClass target, String type, String jsonElementID, String sourceRole, String targetRole,
+                          String sourceMultiplicity, String targetMultiplicity) {
         this.source = source;
         this.target = target;
         this.sourceMultiplicity = sourceMultiplicity;
@@ -35,13 +89,19 @@ public class UMLRelation extends UMLElement {
         this.type = UMLRelationType.valueOf(type.toUpperCase());
     }
 
+    /**
+     * Compare this with another element to calculate the similarity
+     *
+     * @param element the element to compare with
+     * @return the similarity as number [0-1]
+     */
     @Override
     public double similarity(UMLElement element) {
-        if (element.getClass() != UMLRelation.class) {
+        if (element.getClass() != UMLAssociation.class) {
             return 0;
         }
 
-        UMLRelation reference = (UMLRelation) element;
+        UMLAssociation reference = (UMLAssociation) element;
 
         double similarity = 0;
         double weight = 1;
@@ -74,6 +134,7 @@ public class UMLRelation extends UMLElement {
             weight += CompassConfiguration.RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
         }
 
+        // bidirectional associations can be swapped
         if (type == UMLRelationType.ASSOCIATION_BIDIRECTIONAL) {
             double similarityReverse = 0;
 
@@ -105,7 +166,12 @@ public class UMLRelation extends UMLElement {
 
     @Override
     public String getName() {
-        return type.toString() + " Relation from " + elementID;
+        return "Association " + getSource().getValue() + type.toSymbol() + getTarget().getValue() + " (" + type.toReadableString() + ")";
+    }
+
+    @Override
+    public String getValue() {
+        return type.toReadableString();
     }
 
     public UMLClass getSource() {

@@ -11,23 +11,23 @@
             "updated": "Kurs aktualisiert mit Titel {{ param }}",
             "deleted": "Kurs gelöscht mit Titel {{ param }}",
             "delete": {
-                "question": "Soll Kurs {{ title }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll der Kurs {{ param }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
                 "title": "Kurs"
             },
             "title": "Titel",
             "shortName": "Kurzname",
-            "studentGroupName": "Studenten Gruppen Name",
-            "teachingAssistantGroupName": "Tutor Gruppen Name",
-            "instructorGroupName": "Instructor Gruppen Name",
-            "startDate": "Start Datum",
-            "endDate": "End Datum",
+            "studentGroupName": "Studenten Gruppe",
+            "teachingAssistantGroupName": "Tutor Gruppe",
+            "instructorGroupName": "Instructor Gruppe",
+            "startDate": "Start",
+            "endDate": "End",
             "onlineCourse": "Online Kurs",
             "exercises": "Aufgaben",
             "programmingExercises": "Programmieraufgaben",
             "quizExercises": "Quizaufgaben",
-            "modelingExercises": "Modellierungsaufgaben (Beta)",
+            "modelingExercises": "Modellierungsaufgaben",
             "textExercises": "Textaufgabe (Beta)",
             "fileUploadExercises": "Datei Upload Aufgabe (Beta)"
         }

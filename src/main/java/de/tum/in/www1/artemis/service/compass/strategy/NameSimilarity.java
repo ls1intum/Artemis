@@ -5,12 +5,6 @@ import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 @SuppressWarnings("unused")
 public class NameSimilarity {
 
-    // Produces unpredictable behaviour
-    @Deprecated
-    public static double allNamesSimilar(String string1, String string2) {
-        return 1;
-    }
-
     /**
      *
      * @return 1 if both strings have any word in common (splitting on uppercase), 0 otherwise

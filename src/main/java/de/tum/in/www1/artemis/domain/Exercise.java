@@ -1,12 +1,13 @@
 package de.tum.in.www1.artemis.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonView;
+import com.google.common.collect.Sets;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -82,7 +83,6 @@ public abstract class Exercise implements Serializable {
     private DifficultyLevel difficulty;
 
     @OneToMany(mappedBy = "exercise")
-    @JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
     private Set<Participation> participations = new HashSet<>();
 
@@ -289,7 +289,7 @@ public abstract class Exercise implements Serializable {
     public Participation findRelevantParticipation(List<Participation> participations) {
         Participation relevantParticipation = null;
         for (Participation participation : participations) {
-            if (participation.getExercise().equals(this)) {
+            if (participation.getExercise() != null && participation.getExercise().equals(this)) {
                 if (participation.getInitializationState() == InitializationState.INITIALIZED) {
                     // InitializationState INITIALIZED is preferred
                     // => if we find one, we can return immediately
@@ -352,6 +352,52 @@ public abstract class Exercise implements Serializable {
             }
         }
         return latestResult;
+    }
+
+    /**
+     * Find the participation in participations that belongs to the given exercise
+     * that includes the exercise data, plus the found participation with its most recent relevant result.
+     * Filter everything else that is not relevant
+     *
+     * @param participations the set of participations, wherein to search for the relevant participation
+     * @param username
+     */
+    public void filterForCourseDashboard(List<Participation> participations, String username) {
+
+        // remove the unnecessary inner course attribute
+        setCourse(null);
+
+        // get user's participation for the exercise
+        Participation participation = findRelevantParticipation(participations);
+
+        // for quiz exercises also check SubmissionHashMap for submission by this user (active participation)
+        // if participation was not found in database
+        if (participation == null && this instanceof QuizExercise) {
+            QuizSubmission submission = QuizScheduleService.getQuizSubmission(getId(), username);
+            if (submission.getSubmissionDate() != null) {
+                participation = new Participation().exercise(this).initializationState(InitializationState.INITIALIZED);
+            }
+        }
+
+        // add results to participation
+        if (participation != null) {
+
+            // only transmit the relevant result
+            Result result = findLatestRatedResultWithCompletionDate(participation);
+            Set<Result> results = result != null ? Sets.newHashSet(result) : Sets.newHashSet();
+
+            // add results to json
+            if (result != null) {
+                // remove inner participation from result
+                result.setParticipation(null);
+            }
+            participation.setResults(results);
+            // remove inner exercise from participation
+            participation.setExercise(null);
+
+            // add participation into an array
+            setParticipations(Sets.newHashSet(participation));
+        }
     }
 
     @Override
