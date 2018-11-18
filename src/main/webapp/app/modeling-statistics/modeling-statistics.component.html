@@ -39,10 +39,16 @@
             <thead>
             <tr>
                 <th>
+                    <a class="th-link">#</a> <span class="fa fa-sort"></span>
+                </th>
+                <th>
                     <a class="th-link">ID</a> <span class="fa fa-sort"></span>
                 </th>
                 <th>
-                    <a class="th-link">Number of conflicts</a> <span class="fa fa-sort"></span>
+                    <a class="th-link"># Elements</a> <span class="fa fa-sort"></span>
+                </th>
+                <th>
+                    <a class="th-link"># Conflicts</a> <span class="fa fa-sort"></span>
                 </th>
                 <th>
                     <a class="th-link">Confidence</a> <span class="fa fa-sort"></span>
@@ -53,8 +59,10 @@
             </tr>
             </thead>
             <tbody>
-            <tr *ngFor="let modelId of modelIds">
+            <tr *ngFor="let modelId of modelIds; let i = index">
+                <td>{{i+1}}</td>
                 <td>{{modelId}}</td>
+                <td><strong>{{statistics.models[modelId].elements}}</strong> (Classes: {{statistics.models[modelId].classes}}, Attributes: {{statistics.models[modelId].attributes}}, Methods: {{statistics.models[modelId].methods}}, Associations: {{statistics.models[modelId].associations}})</td>
                 <td>{{statistics.models[modelId].conflicts}}</td>
                 <td>{{statistics.models[modelId].confidence}}</td>
                 <td>{{statistics.models[modelId].coverage}}</td>
