@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -23,8 +24,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static de.tum.in.www1.artemis.config.Constants.shortNamePattern;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
@@ -271,29 +270,6 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET  /programming-exercises : get all the programmingExercises.
-     *
-     * @return the ResponseEntity with status 200 (OK) and the list of programmingExercises in body
-     */
-    @GetMapping("/programming-exercises")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
-    public List<ProgrammingExercise> getAllProgrammingExercises() {
-        log.debug("REST request to get all ProgrammingExercises");
-        List<ProgrammingExercise> exercises = programmingExerciseRepository.findAll();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        Stream<ProgrammingExercise> authorizedExercises = exercises.stream().filter(
-            exercise -> {
-                Course course = exercise.getCourse();
-                return authCheckService.isTeachingAssistantInCourse(course, user) ||
-                    authCheckService.isInstructorInCourse(course, user) ||
-                    authCheckService.isAdmin();
-            }
-        );
-        return authorizedExercises.collect(Collectors.toList());
-    }
-
-    /**
      * GET  /courses/:courseId/exercises : get all the exercises.
      *
      * @return the ResponseEntity with status 200 (OK) and the list of programmingExercises in body
@@ -312,7 +288,11 @@ public class ProgrammingExerciseResource {
             return forbidden();
         }
         List<ProgrammingExercise> exercises = programmingExerciseRepository.findByCourseId(courseId);
-
+        for (Exercise exercise : exercises) {
+            //not required in the returned json body
+            exercise.setParticipations(null);
+            exercise.setCourse(null);
+        }
         return ResponseEntity.ok().body(exercises);
     }
 

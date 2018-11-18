@@ -19,9 +19,6 @@ export class TextExerciseComponent implements OnInit, OnDestroy {
     course: Course;
     eventSubscriber: Subscription;
     courseId: number;
-    itemsPerPage: number;
-    links: any;
-    page: number;
     predicate: string;
     reverse: boolean;
 
@@ -34,11 +31,6 @@ export class TextExerciseComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute
     ) {
         this.textExercises = [];
-        this.itemsPerPage = ITEMS_PER_PAGE;
-        this.page = 0;
-        this.links = {
-            last: 0
-        };
         this.predicate = 'id';
         this.reverse = true;
     }
@@ -50,50 +42,31 @@ export class TextExerciseComponent implements OnInit, OnDestroy {
         });
     }
 
-    ngOnDestroy() {
-        this.eventManager.destroy(this.eventSubscriber);
-    }
-
-    loadAll() {
-        this.textExerciseService.query().subscribe(
-            (res: HttpResponse<TextExercise[]>) => {
-                this.textExercises = res.body;
-            },
-            (res: HttpErrorResponse) => this.onError(res)
-        );
-    }
-
     load() {
         this.subscription = this.route.params.subscribe(params => {
             this.courseId = params['courseId'];
-            if (this.courseId) {
-                this.loadAllForCourse();
-            } else {
-                this.loadAll();
-            }
+            this.loadForCourse();
         });
     }
 
-    loadAllForCourse() {
-        this.courseExerciseService
-            .findAllTextExercises(this.courseId, {
-                page: this.page,
-                size: this.itemsPerPage
-            })
-            .subscribe(
+    loadForCourse() {
+        this.courseService.find(this.courseId).subscribe(courseResponse => {
+            this.course = courseResponse.body;
+            this.courseExerciseService.findAllTextExercisesForCourse(this.courseId).subscribe(
                 (res: HttpResponse<TextExercise[]>) => {
                     this.textExercises = res.body;
+                    // reconnect exercise with course
+                    this.textExercises.forEach(textExercise => {
+                        textExercise.course = this.course;
+                    });
                 },
                 (res: HttpErrorResponse) => this.onError(res)
             );
-        this.courseService.find(this.courseId).subscribe(res => {
-            this.course = res.body;
         });
     }
 
-    loadPage(page: number) {
-        this.page = page;
-        this.loadAll();
+    ngOnDestroy() {
+        this.eventManager.destroy(this.eventSubscriber);
     }
 
     trackId(index: number, item: TextExercise) {

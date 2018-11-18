@@ -434,7 +434,7 @@ public class QuizExercise extends Exercise implements Serializable {
     @Override
     public Participation findRelevantParticipation(List<Participation> participations) {
         for (Participation participation : participations) {
-            if (participation.getExercise().equals(this)) {
+            if (participation.getExercise() != null && participation.getExercise().equals(this)) {
                 // in quiz exercises we don't care about the InitializationState
                 // => return the first participation we find
                 return participation;
