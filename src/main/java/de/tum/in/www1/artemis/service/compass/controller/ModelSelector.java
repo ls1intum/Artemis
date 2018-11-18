@@ -14,6 +14,13 @@ public class ModelSelector {
     private HashSet<Long> modelsWaitingForAssessment = new HashSet<>();
     private HashSet<Long> alreadyAssessedModels = new HashSet<>();
 
+    /**
+     * Calculate the model which would mean the biggest knowledge gain to support the automatic assessment process
+     * The selected model is currently unassessed and not queued into assessment
+     *
+     * @param modelIndex manages the models
+     * @return the id of the model which should be assessed next by an assessor
+     */
     public Long selectNextModel(ModelIndex modelIndex) {
         double threshold = 0.15;
         int maxCandidateListSize = 10;

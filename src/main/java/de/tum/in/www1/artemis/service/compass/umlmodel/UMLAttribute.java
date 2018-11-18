@@ -5,6 +5,7 @@ import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 public class UMLAttribute extends UMLElement {
 
+    private UMLClass parentClass;
     private String name;
     private String type;
 
@@ -14,6 +15,17 @@ public class UMLAttribute extends UMLElement {
         this.jsonElementID = jsonElementID;
     }
 
+    public void setParentClass(UMLClass parentClass) {
+        this.parentClass = parentClass;
+    }
+
+    /**
+     * Compare this with another element to calculate the similarity
+     *
+     * @param element the element to compare with
+     * @return the similarity as number [0-1]
+     */
+    @Override
     public double similarity(UMLElement element) {
         double similarity = 0;
 
@@ -32,6 +44,11 @@ public class UMLAttribute extends UMLElement {
 
     @Override
     public String getName () {
-        return "Attribute " + name;
+        return "Attribute " + name + (type != null && !type.equals("") ? ": " + type : "") + " in class " + parentClass.getValue();
+    }
+
+    @Override
+    public String getValue() {
+        return name;
     }
 }

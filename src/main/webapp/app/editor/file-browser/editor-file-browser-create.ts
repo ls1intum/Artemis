@@ -1,14 +1,14 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { RepositoryFileService } from '../../entities/repository';
-import { Participation } from '../../entities/participation';
-import { EditorFileBrowserComponent } from './editor-file-browser.component';
+import { RepositoryFileService } from 'app/entities/repository';
+import { Participation } from 'app/entities/participation';
+import { EditorFileBrowserComponent } from 'app/editor';
 import { TranslateService } from '@ngx-translate/core';
 
 // Modal -> Create new repository file
 @Component({
     selector: 'jhi-editor-file-browser-create',
-    templateUrl: './create-file.html'
+    templateUrl: './editor-file-browser-create.html'
 })
 export class EditorFileBrowserCreateComponent implements OnInit {
     @Input() participation: Participation;
@@ -21,9 +21,11 @@ export class EditorFileBrowserCreateComponent implements OnInit {
     // Placeholder string for form field 'folder'
     folderPlaceholder: string;
 
-    constructor(public activeModal: NgbActiveModal,
-                private repositoryFileService: RepositoryFileService,
-                private translateService: TranslateService) {}
+    constructor(
+        public activeModal: NgbActiveModal,
+        private repositoryFileService: RepositoryFileService,
+        private translateService: TranslateService
+    ) {}
 
     /**
      * @function ngOnInit
@@ -47,13 +49,16 @@ export class EditorFileBrowserCreateComponent implements OnInit {
         // Make sure we have a filename
         if (this.newFileName) {
             const absoluteFilePath = (this.newFileFolder ? this.newFileFolder + '/' : '') + this.newFileName;
-            this.repositoryFileService.create(this.participation.id, absoluteFilePath).subscribe( res => {
-                this.isLoading = false;
-                this.closeModal();
-                this.parent.onCreatedFile({file: absoluteFilePath, mode: 'create'});
-            }, err => {
-                console.log('Error while creating file: ' + this.newFileName, err);
-            });
+            this.repositoryFileService.create(this.participation.id, absoluteFilePath).subscribe(
+                () => {
+                    this.isLoading = false;
+                    this.closeModal();
+                    this.parent.onCreatedFile({ file: absoluteFilePath, mode: 'create' });
+                },
+                err => {
+                    console.log('Error while creating file: ' + this.newFileName, err);
+                }
+            );
         }
         this.isLoading = false;
     }

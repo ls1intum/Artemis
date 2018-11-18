@@ -32,7 +32,7 @@ export class ResultService {
     update(result: Result): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(result);
         return this.http
-            .put<Result>(this.resultResourceUrl, copy, { observe: 'response' })
+            .put<Result>(SERVER_API_URL + 'api/manual-results', copy, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 

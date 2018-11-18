@@ -2,11 +2,9 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -43,7 +41,6 @@ public class ResultResource {
     private static final String ENTITY_NAME = "result";
 
     private final ResultRepository resultRepository;
-    private final Optional<LtiService> ltiService;
     private final CourseService courseService;
     private final ParticipationService participationService;
     private final ResultService resultService;
@@ -54,7 +51,6 @@ public class ResultResource {
 
     public ResultResource(UserService userService,
                           ResultRepository resultRepository,
-                          Optional<LtiService> ltiService,
                           ParticipationService participationService,
                           ResultService resultService,
                           AuthorizationCheckService authCheckService,
@@ -64,7 +60,6 @@ public class ResultResource {
 
         this.userService = userService;
         this.resultRepository = resultRepository;
-        this.ltiService = ltiService;
         this.participationService = participationService;
         this.resultService = resultService;
         this.courseService = courseService;
@@ -104,26 +99,8 @@ public class ResultResource {
             throw new BadRequestAlertException("In case feedback is present, feedback text and detail text are mandatory.", ENTITY_NAME, "feedbackTextOrDetailTextNull");
         }
 
-        if(!result.getFeedbacks().isEmpty()) {
-            result.setHasFeedback(true);
-        }
+        resultService.createNewResult(result);
 
-        result.setAssessmentType(AssessmentType.MANUAL);
-        result.setAssessor(user);
-
-        Result savedResult = resultRepository.save(result);
-        try {
-            participation.addResult(savedResult);
-            participationService.save(participation);
-        } catch (NullPointerException e) {
-            log.warn("Unable to load result list for participation");
-        }
-        result.getFeedbacks().forEach(feedback -> {
-            feedback.setResult(savedResult);
-            feedbackService.save(feedback);
-        });
-
-        ltiService.ifPresent(ltiService -> ltiService.onNewBuildResult(savedResult.getParticipation()));
         return ResponseEntity.created(new URI("/api/results/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
             .body(result);
@@ -173,7 +150,7 @@ public class ResultResource {
      * or with status 500 (Internal Server Error) if the result couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("/results")
+    @PutMapping("/manual-results")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Result> updateResult(@RequestBody Result result) throws URISyntaxException {
@@ -184,6 +161,8 @@ public class ResultResource {
         if (result.getId() == null) {
             return createResult(result);
         }
+        // TODO: test if this works by using CASCASE = ALL and orphanRemove= true, because we would need to save all child objects 'Feedback' and make sure old child objects 'Feedback' for the old result (which will be replaced) are deleted as well
+        // have a look how quiz-exercise handles this case with the contained questions
         resultRepository.save(result);
         return ResponseEntity.ok()
             .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, result.getId().toString()))

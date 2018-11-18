@@ -56,19 +56,8 @@ export class ModelingExerciseComponent implements OnInit, OnDestroy {
             this.courseId = params['courseId'];
             if (this.courseId) {
                 this.loadAllForCourse();
-            } else {
-                this.loadAll();
             }
         });
-    }
-
-    loadAll() {
-        this.modelingExerciseService.query().subscribe(
-            (res: HttpResponse<ModelingExercise[]>) => {
-                this.modelingExercises = res.body;
-            },
-            (res: HttpErrorResponse) => this.onError(res)
-        );
     }
 
     loadAllForCourse() {
@@ -94,7 +83,7 @@ export class ModelingExerciseComponent implements OnInit, OnDestroy {
 
     loadPage(page: number) {
         this.page = page;
-        this.loadAll();
+        this.loadAllForCourse();
     }
 
     trackId(index: number, item: ModelingExercise) {
