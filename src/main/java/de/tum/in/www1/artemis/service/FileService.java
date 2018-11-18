@@ -16,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -192,7 +193,7 @@ public class FileService {
      * This copies the directory at the old directory path to the new path, including all files and subfolders
      *
      * @param resources the resources that should be copied
-     * @param targetDirectoryPath the path of the folder where the copy should be lcoated
+     * @param targetDirectoryPath the path of the folder where the copy should be located
      * @throws IOException
      */
     public void copyResources(Resource[] resources, String prefix, String targetDirectoryPath) throws IOException {
@@ -200,6 +201,7 @@ public class FileService {
         for (Resource resource : resources) {
 
             String fileUrl = java.net.URLDecoder.decode(resource.getURL().toString(), "UTF-8");
+            //cut the prefix (e.g. 'exercise', 'solution', 'test') from the actual path
             int index = fileUrl.indexOf(prefix);
             String targetFilePath = fileUrl.substring(index + prefix.length());
             //special case for '.git.ignore.file' file which would not be included in build otherwise
@@ -213,7 +215,7 @@ public class FileService {
                 Files.createDirectories(parentFolder.toPath());
             }
 
-            Files.copy(resource.getInputStream(), copyPath);
+            Files.copy(resource.getInputStream(), copyPath, StandardCopyOption.REPLACE_EXISTING);
         }
     }
 
@@ -294,6 +296,10 @@ public class FileService {
         String[] subdirectories = directory.list((current, name) -> new File(current, name).isDirectory());
 
         for (String subdirectory : subdirectories) {
+            if (subdirectory.equalsIgnoreCase(".git")) {
+                //ignore files in the '.git' folder
+                continue;
+            }
             replaceVariablesInFileRecursive(directory.getAbsolutePath() + File.separator + subdirectory, targetStrings, replacementStrings);
         }
     }
