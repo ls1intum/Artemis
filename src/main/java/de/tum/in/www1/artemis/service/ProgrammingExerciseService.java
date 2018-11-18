@@ -98,9 +98,9 @@ public class ProgrammingExerciseService {
      */
     public ProgrammingExercise setupProgrammingExercise(ProgrammingExercise programmingExercise) throws Exception {
         String projectKey = programmingExercise.getProjectKey();
-        String exerciseRepoName = programmingExercise.getShortName().toLowerCase() + "-exercise";
-        String testRepoName = programmingExercise.getShortName().toLowerCase() + "-tests";
-        String solutionRepoName = programmingExercise.getShortName().toLowerCase() + "-solution";
+        String exerciseRepoName = projectKey.toLowerCase() + "-exercise";
+        String testRepoName = projectKey.toLowerCase() + "-tests";
+        String solutionRepoName = projectKey.toLowerCase() + "-solution";
 
         // Create VCS repositories
         versionControlService.get().createProjectForExercise(programmingExercise); // Create project
@@ -116,10 +116,12 @@ public class ProgrammingExerciseService {
 
         String templatePath = "classpath:templates/java";
         String exercisePath = templatePath + "/exercise/**/*.*";
+        String solutionPath = templatePath + "/solution/**/*.*";
         String testPath = templatePath + "/test/**/*.*";
 
         Resource[] exerciseResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(exercisePath);
         Resource[] testResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(testPath);
+        Resource[] solutionResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(solutionPath);
 
         Repository exerciseRepo = gitService.getOrCheckoutRepository(exerciseRepoUrl);
         Repository testRepo = gitService.getOrCheckoutRepository(testsRepoUrl);
@@ -128,12 +130,18 @@ public class ProgrammingExerciseService {
         try {
             String exercisePrefix = programmingLanguage + File.separator + "exercise";
             String testPrefix = programmingLanguage + File.separator + "test";
+            String solutionPrefix = programmingLanguage + File.separator + "solution";
             setupTemplateAndPush(exerciseRepo, exerciseResources, exercisePrefix,"Exercise", programmingExercise);
             setupTemplateAndPush(testRepo, testResources, testPrefix,"Test", programmingExercise);
-            setupTemplateAndPush(solutionRepo, exerciseResources, exercisePrefix,"Solution", programmingExercise); // Solution is based on the same template as exercise
+            // Solution is based on the same template as exercise, so use the same exerciseResources
+            setupTemplateAndPush(solutionRepo, exerciseResources, exercisePrefix,"Solution", programmingExercise);
+            // In addition push the actual solution in a second commit
+            //TODO: the following code does not yet work, because the repo is not empty, also replacing variables does not work because of exceptions in git folders
+            setupTemplateAndPush(solutionRepo, solutionResources, solutionPrefix,"Solution", programmingExercise);
 
         } catch (Exception ex) {
             //if any exception occurs, try to at least push an empty commit, so that the repositories can be used by the build plans
+            log.warn("An exception occurred while setting up the repositories", ex);
             gitService.commitAndPush(exerciseRepo, "Setup");
             gitService.commitAndPush(testRepo, "Setup");
             gitService.commitAndPush(solutionRepo, "Setup");
@@ -156,7 +164,7 @@ public class ProgrammingExerciseService {
 
     // Copy template and push, if no file is in the directory
     private void setupTemplateAndPush(Repository repository, Resource[] resources, String prefix, String templateName, ProgrammingExercise programmingExercise) throws Exception {
-        if (gitService.listFiles(repository).size() == 0) { // Only copy template if repo is empty
+//        if (gitService.listFiles(repository).size() == 0) { // Only copy template if repo is empty
             fileService.copyResources(resources, prefix, repository.getLocalPath().toAbsolutePath().toString());
             fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageFolderName());
 
@@ -178,6 +186,6 @@ public class ProgrammingExerciseService {
             gitService.stageAllChanges(repository);
             gitService.commitAndPush(repository, templateName + "-Template pushed by ArTEMiS");
             repository.setFiles(null); // Clear cache to avoid multiple commits when ArTEMiS server is not restarted between attempts
-        }
+//        }
     }
 }
