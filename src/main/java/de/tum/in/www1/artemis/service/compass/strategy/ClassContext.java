@@ -1,10 +1,10 @@
 package de.tum.in.www1.artemis.service.compass.strategy;
 
 import de.tum.in.www1.artemis.service.compass.assessment.Context;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLAssociation;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLClass;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLModel;
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLAssociation;
 
 import java.util.HashSet;
 

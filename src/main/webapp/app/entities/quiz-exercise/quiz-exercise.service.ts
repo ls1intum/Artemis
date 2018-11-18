@@ -6,6 +6,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 import { QuizExercise } from './quiz-exercise.model';
 import { createRequestOption } from 'app/shared';
 import { ExerciseService } from 'app/entities/exercise';
+import { Question } from 'app/entities/question';
 
 export type EntityResponseType = HttpResponse<QuizExercise>;
 export type EntityArrayResponseType = HttpResponse<QuizExercise[]>;
@@ -42,6 +43,12 @@ export class QuizExerciseService {
             .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
+    /**
+     * Note: the exercises in the response do not contain participations and do not contain the course to save network bandwidth
+     * They also do not contain questions
+     *
+     * @param courseId
+     */
     findForCourse(courseId: number): Observable<EntityArrayResponseType> {
         return this.http
             .get<QuizExercise[]>(`api/courses/${courseId}/quiz-exercises`, { observe: 'response' })
@@ -67,9 +74,8 @@ export class QuizExerciseService {
     }
 
     query(req?: any): Observable<EntityArrayResponseType> {
-        const options = createRequestOption(req);
         return this.http
-            .get<QuizExercise[]>(this.resourceUrl, { params: options, observe: 'response' })
+            .get<QuizExercise[]>(this.resourceUrl, { observe: 'response' })
             .map((res: EntityArrayResponseType) => this.exerciseService.convertDateArrayFromServer(res));
     }
 
@@ -83,5 +89,51 @@ export class QuizExerciseService {
 
     revokeStatistics(id: number): Observable<HttpResponse<string>> {
         return this.http.post<HttpResponse<string>>(`${this.resourceUrl}/${id}/revoke-statistics`, { observe: 'response' });
+    }
+
+    /**
+     * Exports given quiz questions into json file
+     * @param quizQuestions Quiz questions we want to export
+     * @param exportAll If true exports all questions, else exports only those whose export flag is true
+     */
+    exportQuiz(quizQuestions: Question[], exportAll: boolean) {
+        // Make list of questions which we need to export,
+        const questions: Question[] = [];
+        for (const question of quizQuestions) {
+            if (exportAll === true || question.exportQuiz === true) {
+                delete question.questionStatistic;
+                questions.push(question);
+            }
+        }
+        if (questions.length === 0) {
+            return;
+        }
+        // Make blob from the list of questions and download the file,
+        const quizJson = JSON.stringify(questions);
+        const blob = new Blob([quizJson], { type: 'application/json' });
+        this.downloadFile(blob);
+    }
+
+    /**
+     * Make a file of given blob and allows user to download it from the browser.
+     * @param blob data to be written in file.
+     */
+    downloadFile(blob: Blob) {
+        // Different browsers require different code to download file,
+        if (window.navigator.msSaveOrOpenBlob) {
+            // IE & Edge
+            window.navigator.msSaveBlob(blob, 'quiz.json');
+        } else {
+            // Chrome & FF
+            // Create a url and attach file to it,
+            const url = window.URL.createObjectURL(blob);
+            const anchor = document.createElement('a');
+            anchor.href = url;
+            anchor.download = 'quiz.json';
+            document.body.appendChild(anchor); // For FF
+            // Click the url so that browser shows save file dialog,
+            anchor.click();
+            document.body.removeChild(anchor);
+        }
     }
 }
