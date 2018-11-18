@@ -4,7 +4,7 @@ import de.tum.in.www1.artemis.service.compass.assessment.Context;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLClass;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLModel;
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLRelation;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLAssociation;
 
 import java.util.HashSet;
 
@@ -21,9 +21,9 @@ public class ClassContext {
      */
     public static Context getStrictContext(UMLClass umlClass, UMLModel model) {
         HashSet<Integer> relations = new HashSet<>();
-        for (UMLRelation umlRelation : model.getRelationList()) {
-            if (umlRelation.getSource().equals(umlClass) || umlRelation.getTarget().equals(umlClass)) {
-                relations.add(umlRelation.getElementID());
+        for (UMLAssociation umlAssociation : model.getAssociationList()) {
+            if (umlAssociation.getSource().equals(umlClass) || umlAssociation.getTarget().equals(umlClass)) {
+                relations.add(umlAssociation.getElementID());
             }
         }
         for (UMLElement element: umlClass.getAttributeList()) {
@@ -44,9 +44,9 @@ public class ClassContext {
      */
     public static Context getWeakContext(UMLClass umlClass, UMLModel model) {
         HashSet<Integer> relations = new HashSet<>();
-        for (UMLRelation umlRelation : model.getRelationList()) {
-            if (umlRelation.getSource().equals(umlClass) || umlRelation.getTarget().equals(umlClass)) {
-                relations.add(umlRelation.getElementID());
+        for (UMLAssociation umlAssociation : model.getAssociationList()) {
+            if (umlAssociation.getSource().equals(umlClass) || umlAssociation.getTarget().equals(umlClass)) {
+                relations.add(umlAssociation.getElementID());
             }
         }
         if (relations.isEmpty()) {

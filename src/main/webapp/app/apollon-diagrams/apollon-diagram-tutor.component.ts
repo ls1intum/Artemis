@@ -64,14 +64,14 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         });
         this.isAuthorized = this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
         this.route.params.subscribe(params => {
-            const id = Number(params['submissionId']);
+            const submissionId = Number(params['submissionId']);
             const exerciseId = Number(params['exerciseId']);
             let nextOptimal: boolean;
             this.route.queryParams.subscribe(query => {
                 nextOptimal = query['optimal'] === 'true';
             });
 
-            this.modelingAssessmentService.getDataForEditor(exerciseId, id).subscribe(data => {
+            this.modelingAssessmentService.getDataForEditor(exerciseId, submissionId).subscribe(data => {
                 this.modelingExercise = data.modelingExercise as ModelingExercise;
                 /**
                  * set diagramType to class diagram if exercise is null, use case or communication
@@ -96,7 +96,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
                     this.jhiAlertService.info('arTeMiSApp.apollonDiagram.lock');
                 }
                 if (nextOptimal) {
-                    this.modelingAssessmentService.getPartialAssessment(exerciseId, id).subscribe(assessments => {
+                    this.modelingAssessmentService.getPartialAssessment(exerciseId, submissionId).subscribe(assessments => {
                         this.assessments = assessments.body;
                         this.initializeAssessments();
                         this.checkScoreBoundaries();
@@ -326,20 +326,23 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
             return;
         }
         this.busy = true;
-        this.timeout = setTimeout(() => {
-            this.modelingAssessmentService.getOptimalSubmissions(this.modelingExercise.id).subscribe(optimal => {
-                const nextOptimalSubmissionIds = optimal.body.map((submission: Submission) => submission.id);
-                if (nextOptimalSubmissionIds.length === 0) {
-                    this.assessNextOptimal(attempts + 1);
-                } else {
-                    // TODO: Workaround We have to fake path change to make angular reload the component
-                    const addition = this.router.url.includes('apollon-diagrams2') ? '' : '2';
-                    this.router.navigateByUrl(
-                        `/apollon-diagrams${addition}/exercise/${this.modelingExercise.id}/${nextOptimalSubmissionIds.pop()}/tutor`
-                    );
-                }
-            });
-        }, attempts === 0 ? 0 : 500 + (attempts - 1) * 1000);
+        this.timeout = setTimeout(
+            () => {
+                this.modelingAssessmentService.getOptimalSubmissions(this.modelingExercise.id).subscribe(optimal => {
+                    const nextOptimalSubmissionIds = optimal.body.map((submission: Submission) => submission.id);
+                    if (nextOptimalSubmissionIds.length === 0) {
+                        this.assessNextOptimal(attempts + 1);
+                    } else {
+                        // TODO: Workaround We have to fake path change to make angular reload the component
+                        const addition = this.router.url.includes('apollon-diagrams2') ? '' : '2';
+                        this.router.navigateByUrl(
+                            `/apollon-diagrams${addition}/exercise/${this.modelingExercise.id}/${nextOptimalSubmissionIds.pop()}/tutor`
+                        );
+                    }
+                });
+            },
+            attempts === 0 ? 0 : 500 + (attempts - 1) * 1000
+        );
     }
 
     numberToArray(n: number, startFrom: number): number[] {

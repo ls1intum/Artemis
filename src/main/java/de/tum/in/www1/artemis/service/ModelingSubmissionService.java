@@ -25,7 +25,6 @@ public class ModelingSubmissionService {
     private final JsonModelRepository jsonModelRepository;
     private final JsonAssessmentRepository jsonAssessmentRepository;
     private final CompassService compassService;
-    private final ParticipationService participationService;
     private final ParticipationRepository participationRepository;
 
     public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository,
@@ -33,14 +32,12 @@ public class ModelingSubmissionService {
                                      JsonModelRepository jsonModelRepository,
                                      JsonAssessmentRepository jsonAssessmentRepository,
                                      CompassService compassService,
-                                     ParticipationService participationService,
                                      ParticipationRepository participationRepository) {
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.resultRepository = resultRepository;
         this.jsonModelRepository = jsonModelRepository;
         this.jsonAssessmentRepository = jsonAssessmentRepository;
         this.compassService = compassService;
-        this.participationService = participationService;
         this.participationRepository = participationRepository;
     }
 
@@ -59,20 +56,30 @@ public class ModelingSubmissionService {
     @Transactional(rollbackFor = Exception.class)
     public ModelingSubmission save(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise, Participation participation) {
         String model = modelingSubmission.getModel();
+        log.debug("save model: " + model);
+
         // update submission properties
         modelingSubmission.setSubmissionDate(ZonedDateTime.now());
         modelingSubmission.setType(SubmissionType.MANUAL);
         modelingSubmission.setParticipation(participation);
         modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
 
-        participation.addSubmissions(modelingSubmission);
+        //saving the modeling submission makes all transient objects null, so we have to set the model again
+        modelingSubmission.setModel(model);
 
         User user = participation.getStudent();
+        if (model != null && !model.isEmpty()) {
+            jsonModelRepository.writeModel(modelingExercise.getId(), user.getId(), modelingSubmission.getId(), model);
+        } else {
+            log.warn("Empty model was submitted in submission " + modelingSubmission.getId() + " for user " + participation.getStudent().getLogin());
+            //TODO: we should reject this call, in case modelingSubmission.getModel() is null
+        }
+
+        participation.addSubmissions(modelingSubmission);
 
         if (modelingSubmission.isSubmitted()) {
             notifyCompass(modelingSubmission, modelingExercise);
             checkAutomaticResult(modelingSubmission);
-            participation.addResult(modelingSubmission.getResult());
             participation.setInitializationState(InitializationState.FINISHED);
         } else if (modelingExercise.getDueDate() != null && !modelingExercise.isEnded()) {
             // save submission to HashMap if exercise not ended yet
@@ -83,10 +90,7 @@ public class ModelingSubmissionService {
             modelingSubmission = savedParticipation.findLatestModelingSubmission();
         }
 
-        if (model != null && !model.isEmpty()) {
-            jsonModelRepository.writeModel(modelingExercise.getId(), user.getId(), modelingSubmission.getId(), model);
-        }
-
+        log.debug("return model: " + modelingSubmission.getModel());
         return modelingSubmission;
     }
 
@@ -123,7 +127,7 @@ public class ModelingSubmissionService {
      * @return the modelingSubmission with the model if the model could be read
      */
     public ModelingSubmission getAndSetModel(ModelingSubmission modelingSubmission) {
-        if (modelingSubmission.getModel() == null || modelingSubmission.getModel() == "") {
+        if (modelingSubmission.getModel() == null || modelingSubmission.getModel().equals("")) {
             Participation participation = modelingSubmission.getParticipation();
             if (participation == null) {
                 log.error("The modeling submission {} does not have a participation.", modelingSubmission);
@@ -131,7 +135,9 @@ public class ModelingSubmissionService {
             Exercise exercise = participation.getExercise();
             try {
                 JsonObject model = getModel(exercise.getId(), participation.getStudent().getId(), modelingSubmission.getId());
-                modelingSubmission.setModel(model.toString());
+                if (model != null) {
+                    modelingSubmission.setModel(model.toString());
+                }
             } catch (Exception e) {
                 log.error("Exception while retrieving the model for modeling submission {}:\n{}", modelingSubmission.getId(), e.getMessage());
             }
@@ -143,26 +149,22 @@ public class ModelingSubmissionService {
      * Check if automatic assessment is available and set the result if found.
      *
      * @param modelingSubmission    the modeling submission, which contains the model and the submission status
-     * @return the modelingSubmission with the result if applicable
      */
-    public ModelingSubmission checkAutomaticResult(ModelingSubmission modelingSubmission) {
+    public void checkAutomaticResult(ModelingSubmission modelingSubmission) {
         Participation participation = modelingSubmission.getParticipation();
-        Boolean automaticAssessmentAvailable = jsonAssessmentRepository.exists(participation.getExercise().getId(), participation.getStudent().getId(), modelingSubmission.getId(), false);
+        boolean automaticAssessmentAvailable = jsonAssessmentRepository.exists(participation.getExercise().getId(), participation.getStudent().getId(), modelingSubmission.getId(), false);
         // create empty result in case submission couldn't be assessed automatically
-        Result result = new Result();
         if (modelingSubmission.getResult() == null && automaticAssessmentAvailable) {
             //use the automatic result if available
             Optional<Result> optionalAutomaticResult = resultRepository.findDistinctBySubmissionId(modelingSubmission.getId());
             if (optionalAutomaticResult.isPresent()) {
-                result = optionalAutomaticResult.get();
+                Result result = optionalAutomaticResult.get();
+                result.submission(modelingSubmission).participation(participation);
+                modelingSubmission.setResult(result);
+                participation.addResult(modelingSubmission.getResult());
+                resultRepository.save(result);
+                modelingSubmissionRepository.save(modelingSubmission);
             }
-        } else {
-            // the result is needed for manual assessment
         }
-        result.submission(modelingSubmission).participation(participation);
-        modelingSubmission.setResult(result);
-        resultRepository.save(result);
-        modelingSubmissionRepository.save(modelingSubmission);
-        return modelingSubmission;
     }
 }

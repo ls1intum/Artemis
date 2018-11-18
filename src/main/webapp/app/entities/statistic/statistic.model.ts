@@ -1,12 +1,10 @@
-import { BaseEntity } from './../../shared';
+import { BaseEntity } from 'app/shared';
 
 export abstract class Statistic implements BaseEntity {
-
     public id: number;
-    public released = false;        // default value
+    public released = false; // default value
     public participantsRated: number;
     public participantsUnrated: number;
 
-    constructor() {
-    }
+    protected constructor() {}
 }

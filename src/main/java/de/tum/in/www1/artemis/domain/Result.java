@@ -77,7 +77,7 @@ public class Result implements Serializable {
     @JsonIgnoreProperties({"result", "participation"})
     private Submission submission;
 
-    @OneToMany(mappedBy = "result", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderColumn
     @JsonIgnoreProperties("result")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -96,6 +96,10 @@ public class Result implements Serializable {
     @Column(name = "assessment_type")
     @JsonView(QuizView.After.class)
     private AssessmentType assessmentType;
+
+    @Transient
+    @JsonProperty
+    private String assessments;
 
     /**
      * This property stores the total number of results in the participation this result belongs to.
@@ -361,5 +365,13 @@ public class Result implements Serializable {
             ", rated='" + isRated() + "'" +
             ", hasFeedback='" + getHasFeedback() + "'" +
             "}";
+    }
+
+    public String getAssessments() {
+        return assessments;
+    }
+
+    public void setAssessments(String assessments) {
+        this.assessments = assessments;
     }
 }

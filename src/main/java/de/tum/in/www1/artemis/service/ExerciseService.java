@@ -215,7 +215,7 @@ public class ExerciseService {
      * @param id id of the exercise for which build plans in respective participations are deleted
      */
     @Transactional(noRollbackFor={Throwable.class})
-    public void cleanup(Long id, boolean deleteRepositories) throws IOException {
+    public void cleanup(Long id, boolean deleteRepositories) {
         Exercise exercise = findOneLoadParticipations(id);
         log.info("Request to cleanup all participations for Exercise : {}", exercise.getTitle());
 

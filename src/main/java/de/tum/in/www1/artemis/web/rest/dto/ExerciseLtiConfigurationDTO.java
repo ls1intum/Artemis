@@ -5,6 +5,9 @@ package de.tum.in.www1.artemis.web.rest.dto;
  */
 public class ExerciseLtiConfigurationDTO {
 
+    private String launchUrl;
+    private String ltiId;
+    private String ltiPassport;
 
     public ExerciseLtiConfigurationDTO() {
     }
@@ -14,11 +17,6 @@ public class ExerciseLtiConfigurationDTO {
         this.ltiId = ltiId;
         this.ltiPassport = ltiPassport;
     }
-
-
-    private String launchUrl;
-    private String ltiId;
-    private String ltiPassport;
 
     public String getLaunchUrl() {
         return launchUrl;
