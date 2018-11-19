@@ -40,43 +40,36 @@ Create and implement a `Policy` class following the below class diagram with a s
 
 @startuml
 
-together {
-    class Context
-    class Policy
+class Client {
 }
-interface SortStrategy
-class Client
-class BubbleSort
-class MergeSort
-
-MergeSort -up-|> SortStrategy #testsColor(testFields[MergeSort])
-BubbleSort -up-|> SortStrategy #testsColor(testFields[BubbleSort])
 
 class Policy {
-  +<color:testsColor(testMethods[Policy])>configure(): void</color>
+  +<color:testsColor(testMethods[Policy])>configure()</color>
 }
 
 class Context {
   -<color:testsColor(testAttributes[Context])>dates: List<Date></color>
-  +<color:testsColor(testMethods[Context])>sort(): void</color>
+  +<color:testsColor(testMethods[Context])>sort()</color>
 }
 
 interface SortStrategy {
-  +<color:testsColor(testMethods[SortStrategy])>performSort(List<Date>): void</color>
+  +<color:testsColor(testMethods[SortStrategy])>performSort(List<Date>)</color>
 }
 
 class BubbleSort {
-  +<color:testsColor(testMethods[BubbleSort])>performSort(List<Date>): void</color>
+  +<color:testsColor(testMethods[BubbleSort])>performSort(List<Date>)</color>
 }
 
 class MergeSort {
-  +<color:testsColor(testMethods[MergeSort])>performSort(List<Date>): void</color>
+  +<color:testsColor(testMethods[MergeSort])>performSort(List<Date>)</color>
 }
 
-Policy -left-> Context #testsColor(testFields[Policy]): context 
+MergeSort -up-|> SortStrategy #testsColor(testFields[MergeSort])
+BubbleSort -up-|> SortStrategy #testsColor(testFields[BubbleSort])
+Policy -right-> Context #testsColor(testFields[Policy]): context
 Context -right-> SortStrategy #testsColor(testFields[Context]): sortAlgorithm
-Client ..> Policy
-Client ..> Context 
+Client .down.> Policy
+Client .down.> Context
 
 @enduml
 
