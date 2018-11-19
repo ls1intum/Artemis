@@ -1,5 +1,5 @@
 <div class="submission-area p-3" (jhiTextSelect)="didSelectSolutionText( $event )">
-    <ng-content></ng-content>
+    <div [innerHtml]="displayedText"></div>
 
     <div
         *ngIf="hostRectangle"

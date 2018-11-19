@@ -1,5 +1,6 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { TextAssessment } from 'app/entities/text-assessments/text-assessments.model';
+import { Color } from 'app/text/tutor';
 
 @Component({
     selector: 'jhi-text-assessment-detail',
@@ -9,8 +10,19 @@ import { TextAssessment } from 'app/entities/text-assessments/text-assessments.m
 export class TextAssessmentDetailComponent implements OnInit {
     @Input()
     public assessment: TextAssessment;
+    @Input()
+    public highlightColor: Color;
+    @Output()
+    public deleteAssessment = new EventEmitter<TextAssessment>();
 
     constructor() {}
 
     ngOnInit() {}
+
+    delete() {
+        const confirmation = confirm(`Delete Assessment "${this.assessment.text}"?`);
+        if (confirmation) {
+            this.deleteAssessment.emit(this.assessment);
+        }
+    }
 }
