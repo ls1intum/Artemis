@@ -21,9 +21,6 @@ export class ModelingExerciseComponent implements OnInit, OnDestroy {
     course: Course;
     eventSubscriber: Subscription;
     courseId: number;
-    itemsPerPage: number;
-    links: any;
-    page: number;
     predicate: string;
     reverse: boolean;
 
@@ -37,11 +34,6 @@ export class ModelingExerciseComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute
     ) {
         this.modelingExercises = [];
-        this.itemsPerPage = ITEMS_PER_PAGE;
-        this.page = 0;
-        this.links = {
-            last: 0
-        };
         this.predicate = 'id';
         this.reverse = true;
     }
@@ -54,26 +46,23 @@ export class ModelingExerciseComponent implements OnInit, OnDestroy {
     load() {
         this.subscription = this.route.params.subscribe(params => {
             this.courseId = params['courseId'];
-            if (this.courseId) {
-                this.loadAllForCourse();
-            }
+            this.loadForCourse();
         });
     }
 
-    loadAllForCourse() {
-        this.courseExerciseService
-            .findAllModelingExercises(this.courseId, {
-                page: this.page,
-                size: this.itemsPerPage
-            })
-            .subscribe(
+    loadForCourse() {
+        this.courseService.find(this.courseId).subscribe(courseResponse => {
+            this.course = courseResponse.body;
+            this.courseExerciseService.findAllModelingExercisesForCourse(this.courseId).subscribe(
                 (res: HttpResponse<ModelingExercise[]>) => {
                     this.modelingExercises = res.body;
+                    // reconnect exercise with course
+                    this.modelingExercises.forEach(modelingExercise => {
+                        modelingExercise.course = this.course;
+                    });
                 },
                 (res: HttpErrorResponse) => this.onError(res)
             );
-        this.courseService.find(this.courseId).subscribe(res => {
-            this.course = res.body;
         });
     }
 
@@ -81,14 +70,10 @@ export class ModelingExerciseComponent implements OnInit, OnDestroy {
         this.eventManager.destroy(this.eventSubscriber);
     }
 
-    loadPage(page: number) {
-        this.page = page;
-        this.loadAllForCourse();
-    }
-
     trackId(index: number, item: ModelingExercise) {
         return item.id;
     }
+
     registerChangeInModelingExercises() {
         this.eventSubscriber = this.eventManager.subscribe('modelingExerciseListModification', () => this.load());
     }

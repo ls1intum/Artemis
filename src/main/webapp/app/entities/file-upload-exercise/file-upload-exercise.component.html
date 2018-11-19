@@ -27,7 +27,7 @@
                 <th></th>
             </tr>
             </thead>
-            <tbody infinite-scroll (scrolled)="loadPage(page + 1)" [infiniteScrollDisabled]="page >= links['last']" [infiniteScrollDistance]="0">
+            <tbody>
             <tr *ngFor="let fileUploadExercise of fileUploadExercises | sortBy: predicate: reverse ;trackBy: trackId">
                 <td><a [routerLink]="['../file-upload-exercise', fileUploadExercise.id ]">{{fileUploadExercise.id}}</a></td>
                 <td>{{fileUploadExercise.title}}</td>

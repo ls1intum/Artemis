@@ -36,7 +36,7 @@
             <th></th>
             </tr>
             </thead>
-            <tbody infinite-scroll (scrolled)="loadPage(page + 1)" [infiniteScrollDisabled]="page >= links['last']" [infiniteScrollDistance]="0">
+            <tbody>
             <tr *ngFor="let programmingExercise of programmingExercises | sortBy: predicate: reverse ;trackBy: trackId">
                 <td><a [routerLink]="['/course', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'view']">{{programmingExercise.id}}</a></td>
                 <td><a [routerLink]="['/course', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'view']">{{programmingExercise.title}}</a></td>

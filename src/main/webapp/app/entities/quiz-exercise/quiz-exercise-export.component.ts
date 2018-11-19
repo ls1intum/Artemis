@@ -46,25 +46,27 @@ export class QuizExerciseExportComponent implements OnInit {
      * @param courseId Id of the course
      */
     private loadForCourse(courseId: number) {
-        this.courseService.find(this.courseId).subscribe(res => {
-            this.course = res.body;
+        this.courseService.find(this.courseId).subscribe(courseResponse => {
+            this.course = courseResponse.body;
+            // For the given course, get list of all quiz exercises. And for all quiz exercises, get list of all questions in a quiz exercise,
+            this.quizExerciseService.findForCourse(courseId).subscribe(
+                (res: HttpResponse<QuizExercise[]>) => {
+                    const quizExercises = res.body;
+                    for (const quizExercise of quizExercises) {
+                        // reconnect course and exercise in case we need this information later
+                        quizExercise.course = this.course;
+                        this.quizExerciseService.find(quizExercise.id).subscribe((response: HttpResponse<QuizExercise>) => {
+                            const quizExerciseResponse = response.body;
+                            for (const question of quizExerciseResponse.questions) {
+                                question.exercise = quizExercise;
+                                this.questions.push(question);
+                            }
+                        });
+                    }
+                },
+                (res: HttpErrorResponse) => this.onError(res)
+            );
         });
-        // For the given course, get list of all quiz exercises. And for all quiz exercises, get list of all questions in a quiz exercise,
-        this.quizExerciseService.findForCourse(courseId).subscribe(
-            (res: HttpResponse<QuizExercise[]>) => {
-                const quizExercises = res.body;
-                for (const quizExercise of quizExercises) {
-                    this.quizExerciseService.find(quizExercise.id).subscribe((response: HttpResponse<QuizExercise>) => {
-                        const quizExerciseResponse = response.body;
-                        for (const question of quizExerciseResponse.questions) {
-                            question.exercise = quizExercise;
-                            this.questions.push(question);
-                        }
-                    });
-                }
-            },
-            (res: HttpErrorResponse) => this.onError(res)
-        );
     }
 
     /**
@@ -79,6 +81,6 @@ export class QuizExerciseExportComponent implements OnInit {
      * Exports selected questions into json file.
      */
     exportQuiz() {
-        QuizExerciseComponent.exportQuiz(this.questions, false);
+        this.quizExerciseService.exportQuiz(this.questions, false);
     }
 }
