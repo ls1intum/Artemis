@@ -64,11 +64,11 @@ public class CompassCalculationEngine implements CalculationEngine {
         modelSelector.removeModelWaitingForAssessment(model.getModelID());
     }
 
-    private Collection<UMLModel> getUmlModelCollection() {
+    protected Collection<UMLModel> getUmlModelCollection() {
         return modelIndex.getModelCollection();
     }
 
-    private Map<Long, UMLModel> getModelMap() {
+    protected Map<Long, UMLModel> getModelMap() {
         return modelIndex.getModelMap();
     }
 
