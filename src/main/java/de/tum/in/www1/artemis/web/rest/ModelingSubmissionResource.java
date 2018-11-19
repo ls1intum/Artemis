@@ -209,6 +209,8 @@ public class ModelingSubmissionResource {
                 }
                 submissions.add(submission);
             }
+            //avoid infinite recursion
+            participation.getExercise().setParticipations(null);
         }
 
         submissions.forEach(submission -> {
