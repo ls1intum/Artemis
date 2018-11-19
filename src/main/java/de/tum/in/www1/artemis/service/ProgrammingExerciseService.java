@@ -133,10 +133,6 @@ public class ProgrammingExerciseService {
             String solutionPrefix = programmingLanguage + File.separator + "solution";
             setupTemplateAndPush(exerciseRepo, exerciseResources, exercisePrefix,"Exercise", programmingExercise);
             setupTemplateAndPush(testRepo, testResources, testPrefix,"Test", programmingExercise);
-            // Solution is based on the same template as exercise, so use the same exerciseResources
-            setupTemplateAndPush(solutionRepo, exerciseResources, exercisePrefix,"Solution", programmingExercise);
-            // In addition push the actual solution in a second commit
-            //TODO: the following code does not yet work, because the repo is not empty, also replacing variables does not work because of exceptions in git folders
             setupTemplateAndPush(solutionRepo, solutionResources, solutionPrefix,"Solution", programmingExercise);
 
         } catch (Exception ex) {
@@ -164,7 +160,7 @@ public class ProgrammingExerciseService {
 
     // Copy template and push, if no file is in the directory
     private void setupTemplateAndPush(Repository repository, Resource[] resources, String prefix, String templateName, ProgrammingExercise programmingExercise) throws Exception {
-//        if (gitService.listFiles(repository).size() == 0) { // Only copy template if repo is empty
+        if (gitService.listFiles(repository).size() == 0) { // Only copy template if repo is empty
             fileService.copyResources(resources, prefix, repository.getLocalPath().toAbsolutePath().toString());
             fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageFolderName());
 
@@ -181,11 +177,13 @@ public class ProgrammingExerciseService {
             fileTargets.add("${exerciseName}");
             fileReplacements.add(programmingExercise.getTitle());
 
+            //TODO: for some reason, this code does not replace the elements in the file test.json
+
             fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), fileTargets, fileReplacements);
 
             gitService.stageAllChanges(repository);
             gitService.commitAndPush(repository, templateName + "-Template pushed by ArTEMiS");
             repository.setFiles(null); // Clear cache to avoid multiple commits when ArTEMiS server is not restarted between attempts
-//        }
+        }
     }
 }
