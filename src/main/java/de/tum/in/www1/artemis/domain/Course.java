@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import org.hibernate.annotations.Cache;
@@ -18,6 +20,7 @@ import java.util.Set;
 @Entity
 @Table(name = "course")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Course implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -61,6 +64,7 @@ public class Course implements Serializable {
 
     @OneToMany(mappedBy = "course")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonIgnoreProperties("course")
     private Set<Exercise> exercises = new HashSet<>();
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
