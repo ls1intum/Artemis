@@ -24,10 +24,10 @@ public class BehaviorTest {
     @Before
     public void setup() throws ParseException {
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
-        Date date1 =  dateFormat.parse("08.11.2018");
-        Date date2 =  dateFormat.parse("15.04.2017");
-        Date date3 =  dateFormat.parse("15.02.2016");
-        Date date4 =  dateFormat.parse("15.09.2017");
+        Date date1 = dateFormat.parse("08.11.2018");
+        Date date2 = dateFormat.parse("15.04.2017");
+        Date date3 = dateFormat.parse("15.02.2016");
+        Date date4 = dateFormat.parse("15.09.2017");
 
         this.dates = Arrays.asList(date1, date2, date3, date4);
         this.datesWithCorrectOrder = Arrays.asList(date3, date2, date4, date1);
