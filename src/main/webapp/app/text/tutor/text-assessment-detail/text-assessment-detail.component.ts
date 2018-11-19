@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { TextAssessment } from 'app/entities/text-assessments/text-assessments.model';
 import { Color } from 'app/text/tutor';
 
@@ -7,19 +7,17 @@ import { Color } from 'app/text/tutor';
     templateUrl: './text-assessment-detail.component.html',
     styleUrls: ['./text-assessment-detail.component.scss']
 })
-export class TextAssessmentDetailComponent implements OnInit {
-    @Input()
-    public assessment: TextAssessment;
-    @Input()
-    public highlightColor: Color;
-    @Output()
-    public deleteAssessment = new EventEmitter<TextAssessment>();
+export class TextAssessmentDetailComponent {
+    @Input() public assessment: TextAssessment;
+    @Output() public assessmentChange = new EventEmitter<TextAssessment>();
+    @Input() public highlightColor: Color;
+    @Output() public deleteAssessment = new EventEmitter<TextAssessment>();
 
-    constructor() {}
+    public emitChanges(): void {
+        this.assessmentChange.emit(this.assessment);
+    }
 
-    ngOnInit() {}
-
-    delete() {
+    public delete() {
         const confirmation = confirm(`Delete Assessment "${this.assessment.text}"?`);
         if (confirmation) {
             this.deleteAssessment.emit(this.assessment);

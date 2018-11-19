@@ -20,12 +20,9 @@ import { TextAssessment } from 'app/entities/text-assessments/text-assessments.m
 })
 export class TextAssessmentEditorComponent implements OnChanges, DoCheck {
     public hostRectangle: SelectionRectangle;
-    @Input()
-    public submissionText: string;
-    @Input()
-    public assessments: TextAssessment[];
-    @Output()
-    public assessedText = new EventEmitter<string>();
+    @Input() public submissionText: string;
+    @Input() public assessments: TextAssessment[];
+    @Output() public assessedText = new EventEmitter<string>();
     public displayedText: string;
     private selectedText: string;
     public readonly colors = colors;
