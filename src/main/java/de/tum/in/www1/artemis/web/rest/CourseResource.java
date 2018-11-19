@@ -1,17 +1,11 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.config.JHipsterConstants;
@@ -20,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -28,7 +21,10 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -53,7 +49,6 @@ public class CourseResource {
     private final CourseService courseService;
     private final ParticipationService participationService;
     private final AuthorizationCheckService authCheckService;
-    private final ObjectMapper objectMapper;
     private final CourseRepository courseRepository;
     private final ExerciseService exerciseService;
     private final Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider;
@@ -65,7 +60,6 @@ public class CourseResource {
                           CourseRepository courseRepository,
                           ExerciseService exerciseService,
                           AuthorizationCheckService authCheckService,
-                          MappingJackson2HttpMessageConverter springMvcJacksonConverter,
                           Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider) {
         this.env = env;
         this.userService = userService;
@@ -74,7 +68,6 @@ public class CourseResource {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
-        this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
     }
 
@@ -130,14 +123,14 @@ public class CourseResource {
         if (updatedCourse.getId() == null) {
             return createCourse(updatedCourse);
         }
-        Course existingCourse = courseRepository.getOne(updatedCourse.getId());
-        if (existingCourse == null) {
+        Optional<Course> existingCourse = courseRepository.findById(updatedCourse.getId());
+        if (!existingCourse.isPresent()) {
             return ResponseEntity.notFound().build();
         }
         User user = userService.getUserWithGroupsAndAuthorities();
         //only allow admins or instructors of the existing updatedCourse to change it
         //this is important, otherwise someone could put himself into the instructor group of the updated Course
-        if (user.getGroups().contains(existingCourse.getInstructorGroupName()) || authCheckService.isAdmin()) {
+        if (user.getGroups().contains(existingCourse.get().getInstructorGroupName()) || authCheckService.isAdmin()) {
             try {
                 // Check if course shortname matches regex
                 Matcher shortNameMatcher = shortNamePattern.matcher(updatedCourse.getShortName());
@@ -213,12 +206,9 @@ public class CourseResource {
     @GetMapping("/courses/for-dashboard")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
-    public JsonNode getAllCoursesForDashboard(Principal principal) {
+    public List<Course> getAllCoursesForDashboard(Principal principal) {
         log.debug("REST request to get all Courses the user has access to with exercises, participations and results");
         User user = userService.getUserWithGroupsAndAuthorities();
-
-        // create json array to hold all the data
-        ArrayNode coursesJson = objectMapper.createArrayNode();
 
         // get all courses with exercises for this user
         List<Course> courses = courseService.findAllWithExercisesForUser(principal, user);
@@ -227,21 +217,13 @@ public class CourseResource {
         List<Participation> participations = participationService.findWithResultsByStudentUsername(principal.getName());
 
         for (Course course : courses) {
-            ObjectNode courseJson = objectMapper.valueToTree(course);
-            ArrayNode exercisesJson = objectMapper.createArrayNode();
             for (Exercise exercise : course.getExercises()) {
                 // add participation with result to each exercise
-                ObjectNode exerciseJson = exerciseToJsonWithParticipation(exercise, participations, principal.getName());
-                exercisesJson.add(exerciseJson);
+                exercise.filterForCourseDashboard(participations, principal.getName());
             }
-
-            // add exercises to course
-            courseJson.set("exercises", exercisesJson);
-            coursesJson.add(courseJson);
         }
 
-        // return json array of courses
-        return coursesJson;
+        return courses;
     }
 
     /**
@@ -307,65 +289,6 @@ public class CourseResource {
         Course course = courseService.findOne(courseId);
         if (!userHasPermission(course)) return forbidden();
         return ResponseEntity.ok(courseService.getAllOverallScoresOfCourse(courseId));
-    }
-
-    /**
-     * Find the participation in participations that belongs to the given exercise
-     * and return a JSON ObjectNode that includes the exercise data, plus the found
-     * participation with its most recent relevant result
-     *
-     * @param exercise       the exercise to create a JSON ObjectNode for
-     * @param participations the set of participations, wherein to search for the relevant participation
-     * @return the JSON for the given exercise
-     */
-    private ObjectNode exerciseToJsonWithParticipation(Exercise exercise, List<Participation> participations, String username) {
-
-        ObjectNode exerciseJson = objectMapper.valueToTree(exercise);
-
-        // remove the unnecessary inner course attribute
-        exerciseJson.set("course", null);
-
-        // get user's participation for the exercise
-        Participation participation = exercise.findRelevantParticipation(participations);
-
-        // for quiz exercises also check SubmissionHashMap for submission by this user (active participation)
-        // if participation was not found in database
-        if (participation == null && exercise instanceof QuizExercise) {
-            QuizSubmission submission = QuizScheduleService.getQuizSubmission(exercise.getId(), username);
-            if (submission.getSubmissionDate() != null) {
-                participation = new Participation().exercise(exercise).initializationState(InitializationState.INITIALIZED);
-            }
-        }
-
-        // add results to participation
-        if (participation != null) {
-            ObjectNode participationJson = objectMapper.valueToTree(participation);
-
-            // only transmit the relevant result
-            Result result = exercise.findLatestRatedResultWithCompletionDate(participation);
-            List<Result> results = Optional.ofNullable(result).map(Arrays::asList).orElse(new ArrayList<>());
-
-            // add results to json
-            ArrayNode resultsJson = objectMapper.valueToTree(results);
-            if (result != null) {
-                // remove participation from inner result json
-                ObjectNode resultJson = (ObjectNode) resultsJson.get(0);
-                resultJson.set("participation", null);
-            }
-            participationJson.set("results", resultsJson);
-
-            // remove unnecessary elements for JSON
-            participationJson.set("exercise", null);
-
-            // add participation into an array
-            ArrayNode participationsArrayJson = objectMapper.createArrayNode();
-            participationsArrayJson.add(participationJson);
-
-            // add the participation array to exercise
-            exerciseJson.set("participations", participationsArrayJson);
-        }
-
-        return exerciseJson;
     }
 
 }
