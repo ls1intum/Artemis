@@ -44,7 +44,7 @@ public class PlantUmlResource {
         SourceStringReader reader = new SourceStringReader(plantuml);
 
         // Create PNG
-        String dest = reader.generateImage(png);
+        reader.generateImage(png);
 
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.setContentType(MediaType.IMAGE_PNG);

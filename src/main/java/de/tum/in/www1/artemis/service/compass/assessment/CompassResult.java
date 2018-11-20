@@ -10,7 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-public class Result implements Grade {
+public class CompassResult implements Grade {
 
     private final Logger log = LoggerFactory.getLogger(Grade.class);
 
@@ -22,7 +22,7 @@ public class Result implements Grade {
     private double confidence;
     private double coverage;
 
-    public Result(Map<UMLElement, Score> elementScoreMapping, double coverage) {
+    public CompassResult(Map<UMLElement, Score> elementScoreMapping, double coverage) {
         jsonIdCommentsMapping = new HashMap<>();
         jsonIdPointsMapping = new HashMap<>();
 
@@ -36,7 +36,7 @@ public class Result implements Grade {
         for (Score score : elementScoreMapping.values()) {
             if (score == null) {
                 confidence += 1;
-                log.error("This should never ever happen but for some reason score in Result buildValues is null");
+                log.error("This should never ever happen but for some reason score in CompassResult buildValues is null");
                 continue;
             }
             points += score.getPoints();
@@ -51,7 +51,7 @@ public class Result implements Grade {
     private void buildMapping() {
         for (Map.Entry<UMLElement, Score> entry: elementScoreMapping.entrySet()) {
             if (entry.getValue() == null) {
-                log.error("This should never ever happen but for some reason score in Result buildMapping is null");
+                log.error("This should never ever happen but for some reason score in CompassResult buildMapping is null");
                 continue;
             }
 
@@ -70,17 +70,27 @@ public class Result implements Grade {
         }
     }
 
-
-    public static Result buildResultFromResultList (List<Result> resultList, double coverage) {
+    /**
+     * Process a list of results to build a new result out of it
+     *
+     * @param compassResultList a list of results to be contained in the new result
+     * @param coverage the coverage is directly reused for the returned result
+     * @return the calculated result
+     */
+    public static CompassResult buildResultFromResultList (List<CompassResult> compassResultList, double coverage) {
         HashMap<UMLElement, Score> newScoreMapping = new HashMap<>();
 
-        for (Result result : resultList) {
-            newScoreMapping.putAll(result.elementScoreMapping);
+        for (CompassResult compassResult : compassResultList) {
+            newScoreMapping.putAll(compassResult.elementScoreMapping);
         }
 
-        return new Result(newScoreMapping, coverage);
+        return new CompassResult(newScoreMapping, coverage);
     }
 
+    /**
+     *
+     * @return number of elements for which a score exists
+     */
     public int entitiesCovered() {
         return elementScoreMapping.size();
     }

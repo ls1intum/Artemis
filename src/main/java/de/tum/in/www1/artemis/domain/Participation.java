@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.view.QuizView;
@@ -13,7 +14,10 @@ import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -22,6 +26,7 @@ import java.util.stream.Collectors;
 @Entity
 @Table(name = "participation", uniqueConstraints = @UniqueConstraint(columnNames = {"student_id", "exercise_id", "initialization_state"}))
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Participation implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -298,7 +303,7 @@ public class Participation implements Serializable {
             return null;
         }
         List<Result> sortedResults = results.stream().collect(Collectors.toList());
-        Collections.sort(sortedResults, (r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate()));
+        sortedResults.sort((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate()));
         return sortedResults.get(0);
     }
 
@@ -320,7 +325,8 @@ public class Participation implements Serializable {
             return null;
         }
         List<Submission> sortedSubmissions = submissions.stream().collect(Collectors.toList());
-        Collections.sort(sortedSubmissions, (r1, r2) -> r2.getSubmissionDate().compareTo(r1.getSubmissionDate()));
+        //TODO: what happens if the submissionDate is null?
+        sortedSubmissions.sort((r1, r2) -> r2.getSubmissionDate().compareTo(r1.getSubmissionDate()));
         return sortedSubmissions.get(0);
     }
 

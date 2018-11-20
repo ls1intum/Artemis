@@ -20,7 +20,7 @@
 
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.shortName" for="field_shortName">Short Name</label>
-                    <input required type="text" class="form-control" name="shortName" id="field_shortName"
+                    <input required type="text" class="form-control" name="shortName" id="field_shortName" minlength="3" [pattern]="shortNamePattern"
                            [(ngModel)]="programmingExercise.shortName" [readonly]="programmingExercise.id"/>
                 </div>
 

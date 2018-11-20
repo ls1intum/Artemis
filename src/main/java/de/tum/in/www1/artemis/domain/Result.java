@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.annotation.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import org.hibernate.annotations.Cache;
@@ -23,6 +20,7 @@ import java.util.Objects;
 @Entity
 @Table(name = "result")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Result implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -77,7 +75,7 @@ public class Result implements Serializable {
     @JsonIgnoreProperties({"result", "participation"})
     private Submission submission;
 
-    @OneToMany(mappedBy = "result", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderColumn
     @JsonIgnoreProperties("result")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -96,6 +94,10 @@ public class Result implements Serializable {
     @Column(name = "assessment_type")
     @JsonView(QuizView.After.class)
     private AssessmentType assessmentType;
+
+    @Transient
+    @JsonProperty
+    private String assessments;
 
     /**
      * This property stores the total number of results in the participation this result belongs to.
@@ -361,5 +363,13 @@ public class Result implements Serializable {
             ", rated='" + isRated() + "'" +
             ", hasFeedback='" + getHasFeedback() + "'" +
             "}";
+    }
+
+    public String getAssessments() {
+        return assessments;
+    }
+
+    public void setAssessments(String assessments) {
+        this.assessments = assessments;
     }
 }

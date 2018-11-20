@@ -123,15 +123,15 @@
             </div>
         </div>
         <div class="btn-group" role="group">
-            <button class="btn btn-outline-primary" (click)="addMultipleChoiceQuestion()"
+            <button class="btn  btn-info " (click)="addMultipleChoiceQuestion()"
                     jhiTranslate="arTeMiSApp.quizExercise.addMultipleChoiceQuestion">
             </button>
-            <button class="btn btn-outline-primary" (click)="addDragAndDropQuestion()"
+            <button class="btn btn-info " (click)="addDragAndDropQuestion()"
                     jhiTranslate="arTeMiSApp.quizExercise.addDragAndDropQuestion">
             </button>
             <button class="btn" (click)="showHideExistingQuestions()"
                     jhiTranslate="arTeMiSApp.quizExercise.addExistingQuestions"
-                    [ngClass]="{'btn-primary': showExistingQuestions, 'btn-outline-primary': !showExistingQuestions}">
+                    [ngClass]="{'btn-primary': showExistingQuestions, 'btn-info': !showExistingQuestions}">
             </button>
         </div>
 
@@ -311,7 +311,7 @@
                 <thead class="thead-dark">
                     <tr>
                         <th width="55%">
-                            <span jhiTranslate="arTeMiSApp.quizExercise.export.questionTitle">Question Title</span>
+                            <span jhiTranslate="arTeMiSApp.quizExercise.export.questionTitle">Short Question Title</span>
                         </th>
                         <th width="30%">
                             <span jhiTranslate="arTeMiSApp.quizExercise.export.quizExerciseTitle">Quiz Exercise Title</span>

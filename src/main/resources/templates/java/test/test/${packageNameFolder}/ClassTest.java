@@ -18,7 +18,7 @@ import org.junit.runners.Parameterized;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
- * @version 1.2 (26.10.2018)
+ * @version 1.3 (19.11.2018)
  *
  * This test evaluates the hierarchy of the class, i.e. if a specified superclass is
  * extended and if specified interfaces are implemented, based on the definitions
@@ -53,7 +53,7 @@ public class ClassTest extends StructuralTest {
 		return testData;
 	}
 
-	@Test//(timeout = 1000)
+	@Test(timeout = 1000)
 	public void testClass() {
 		Class<?> actualClass = findClassForTestType("hierarchy");
 

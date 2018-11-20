@@ -17,7 +17,7 @@ import * as Remarkable from 'remarkable';
 
 interface Step {
     title: string;
-    done: string;
+    done: boolean;
 }
 
 @Component({
@@ -198,10 +198,16 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
 
         // Since our rendered markdown file gets inserted into the DOM after compile time, we need to register click events for test cases manually
         const testStatusDOMElements = this.elementRef.nativeElement.querySelectorAll('.test-status');
+
         testStatusDOMElements.forEach((element: any) => {
             const listenerRemoveFunction = this.renderer.listen(element, 'click', event => {
                 // Extract the data attribute for tests and open the details popup with it
-                const tests = event.target.parentElement.getAttribute('data-tests');
+                let tests = '';
+                if (event.target.getAttribute('data-tests')) {
+                    tests = event.target.getAttribute('data-tests');
+                } else {
+                    tests = event.target.parentElement.getAttribute('data-tests');
+                }
                 this.showDetailsForTests(this.latestResult, tests);
             });
             this.listenerRemoveFunctions.push(listenerRemoveFunction);
@@ -209,6 +215,18 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
 
         if (!this.isLoadingResults && !this.haveDetailsBeenLoaded) {
             this.loadResultsDetails();
+        }
+    }
+
+    /**
+     * @function triggerTestStatusClick
+     * @desc Clicks the corresponding testStatus DOM element to trigger the dialog
+     * @param index {number} The index indicates which test status link should be clicked
+     */
+    triggerTestStatusClick(index: number): void {
+        const testStatusDOMElements = this.elementRef.nativeElement.querySelectorAll('.test-status');
+        if (testStatusDOMElements.length) {
+            testStatusDOMElements[index].click();
         }
     }
 
@@ -311,12 +329,10 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
             '@startuml\nskinparam shadowing false\nskinparam classBorderColor black\nskinparam classArrowColor black\nskinparam DefaultFontSize 14\nskinparam ClassFontStyle bold\nskinparam classAttributeIconSize 0\nhide empty members\n'
         );
 
-        // Provide this reference inside replace callback function
-        const that = this;
-        plantUml = plantUml.replace(/testsColor\(([^)]+)\)/g, function(match: any, capture: string) {
+        plantUml = plantUml.replace(/testsColor\(([^)]+)\)/g, (match: any, capture: string) => {
             const tests = capture.split(',');
-            const status = that.statusForTests(tests);
-            return status['done'] ? 'green' : 'red';
+            const [done] = this.statusForTests(tests);
+            return done ? 'green' : 'red';
         });
 
         /**
@@ -383,24 +399,33 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
      */
     remarkableTestsStatusRenderer(tokens: any[], id: number, options: any, env: any) {
         const tests = tokens[0].tests;
-        const status = this.statusForTests(tests);
+        const [done, label] = this.statusForTests(tests);
 
         let text = '<strong>';
 
-        text += status['done']
+        text += done
             ? '<i class="fa fa-lg fa-check-circle-o text-success" style="font-size: 1.7em;"></i>'
             : '<i class="fa fa-lg fa-times-circle-o text-danger" style="font-size: 1.7em;"></i>';
         text += ' ' + tokens[0].title;
         text += '</strong>: ';
         // If the test is not done, we set the 'data-tests' attribute to the a-element, which we later use for the details dialog
-        text += status['done']
-            ? ' <span class="text-success">' + status['label'] + '</span>'
-            : '<a data-tests="' + tests.toString() + '" class="test-status"><span class="text-danger">' + status['label'] + '</span></a>';
+        if (done) {
+            text += '<span class="text-success bold">' + label + '</span>';
+        } else {
+            // bugfix: do not let the user click on 'No Results'
+            if (label === this.translateService.instant('arTeMiSApp.editor.testStatusLabels.noResult')) {
+                text += '<span class="text-danger bold">' + label + '</span>'; // this should be bold
+            } else {
+                text +=
+                    '<a data-tests="\' + tests.toString() + \'" class="test-status result"><span class="text-danger">\' + label + \'</span></a>';
+                // TODO: test if underlining the link works as in the result component
+            }
+        }
         text += '<br />';
 
         this.steps.push({
             title: tokens[0].title,
-            done: status['done']
+            done
         });
 
         return text;
@@ -411,7 +436,7 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
      * @desc Callback function for renderers to set the appropiate test status
      * @param tests
      */
-    statusForTests(tests: string[]): object {
+    statusForTests(tests: string[]): [boolean, string] {
         const translationBasePath = 'arTeMiSApp.editor.testStatusLabels.';
         let done = false;
         let label = this.translateService.instant('arTeMiSApp.editor.testStatusLabels.noResult');
@@ -447,10 +472,7 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
             label = this.translateService.instant(translationBasePath + 'testPassing');
         }
 
-        return {
-            done,
-            label
-        };
+        return [done, label];
     }
 
     /**

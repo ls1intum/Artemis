@@ -8,7 +8,6 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -43,7 +42,8 @@ public class FeedbackService {
 
         // Please note: this is a migration for the old case when we did not store feedback in the database
         // Provide access to results with no feedback in the database
-        if(result.getFeedbacks() == null || result.getFeedbacks().size() == 0) {
+        // TODO: what happens if the build failed?
+        if(!result.isSuccessful() && result.getFeedbacks() == null || result.getFeedbacks().size() == 0) {
             // if the result does not contain any feedback, try to retrieve them from Bamboo and store them in the result and return these.
             return continuousIntegrationService.get().getLatestBuildResultDetails(result);
         }
@@ -56,9 +56,9 @@ public class FeedbackService {
      * @param feedback the entity to save
      * @return the persisted entity
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public Feedback save(Feedback feedback) {
         log.debug("Request to save Feedback : {}", feedback);
-        return feedbackRepository.saveAndFlush(feedback);
+        return feedbackRepository.save(feedback);
     }
 }

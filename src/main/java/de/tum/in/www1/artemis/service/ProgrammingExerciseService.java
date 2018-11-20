@@ -98,9 +98,9 @@ public class ProgrammingExerciseService {
      */
     public ProgrammingExercise setupProgrammingExercise(ProgrammingExercise programmingExercise) throws Exception {
         String projectKey = programmingExercise.getProjectKey();
-        String exerciseRepoName = programmingExercise.getShortName().toLowerCase() + "-exercise";
-        String testRepoName = programmingExercise.getShortName().toLowerCase() + "-tests";
-        String solutionRepoName = programmingExercise.getShortName().toLowerCase() + "-solution";
+        String exerciseRepoName = projectKey.toLowerCase() + "-exercise";
+        String testRepoName = projectKey.toLowerCase() + "-tests";
+        String solutionRepoName = projectKey.toLowerCase() + "-solution";
 
         // Create VCS repositories
         versionControlService.get().createProjectForExercise(programmingExercise); // Create project
@@ -115,28 +115,13 @@ public class ProgrammingExerciseService {
         String programmingLanguage = programmingExercise.getProgrammingLanguage().toString().toLowerCase();
 
         String templatePath = "classpath:templates/java";
-        log.info("templatePath: " + templatePath);
         String exercisePath = templatePath + "/exercise/**/*.*";
-        log.info("exercisePath: " + exercisePath);
+        String solutionPath = templatePath + "/solution/**/*.*";
         String testPath = templatePath + "/test/**/*.*";
-        log.info("testPath: " + testPath);
 
         Resource[] exerciseResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(exercisePath);
-        log.info("exerciseResources: ");
-        for (Resource resource : exerciseResources) {
-            String fileUrl = resource.getURI().toString();
-            String prefix = "java" + File.separator + "exercise";
-            int index = fileUrl.indexOf(prefix);
-            log.info(" - " + fileUrl.substring(index + prefix.length()));
-        }
         Resource[] testResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(testPath);
-        log.info("testResources: ");
-        for (Resource resource : testResources) {
-            String fileUrl = resource.getURI().toString();
-            String prefix = "java" + File.separator + "test";
-            int index = fileUrl.indexOf(prefix);
-            log.info(" - " + fileUrl.substring(index + prefix.length()));
-        }
+        Resource[] solutionResources = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResources(solutionPath);
 
         Repository exerciseRepo = gitService.getOrCheckoutRepository(exerciseRepoUrl);
         Repository testRepo = gitService.getOrCheckoutRepository(testsRepoUrl);
@@ -145,12 +130,14 @@ public class ProgrammingExerciseService {
         try {
             String exercisePrefix = programmingLanguage + File.separator + "exercise";
             String testPrefix = programmingLanguage + File.separator + "test";
+            String solutionPrefix = programmingLanguage + File.separator + "solution";
             setupTemplateAndPush(exerciseRepo, exerciseResources, exercisePrefix,"Exercise", programmingExercise);
             setupTemplateAndPush(testRepo, testResources, testPrefix,"Test", programmingExercise);
-            setupTemplateAndPush(solutionRepo, exerciseResources, exercisePrefix,"Solution", programmingExercise); // Solution is based on the same template as exercise
+            setupTemplateAndPush(solutionRepo, solutionResources, solutionPrefix,"Solution", programmingExercise);
 
         } catch (Exception ex) {
             //if any exception occurs, try to at least push an empty commit, so that the repositories can be used by the build plans
+            log.warn("An exception occurred while setting up the repositories", ex);
             gitService.commitAndPush(exerciseRepo, "Setup");
             gitService.commitAndPush(testRepo, "Setup");
             gitService.commitAndPush(solutionRepo, "Setup");
@@ -189,6 +176,8 @@ public class ProgrammingExerciseService {
 
             fileTargets.add("${exerciseName}");
             fileReplacements.add(programmingExercise.getTitle());
+
+            //TODO: for some reason, this code does not replace the elements in the file test.json
 
             fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), fileTargets, fileReplacements);
 

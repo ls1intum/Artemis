@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.service;
 
 import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
@@ -21,12 +23,17 @@ public class ResultService {
 
     private final Logger log = LoggerFactory.getLogger(ResultService.class);
 
+    private final UserService userService;
+    private final ParticipationService participationService;
     private final ResultRepository resultRepository;
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final LtiService ltiService;
     private final SimpMessageSendingOperations messagingTemplate;
 
-    public ResultService(ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService, SimpMessageSendingOperations messagingTemplate) {
+
+    public ResultService(UserService userService, ParticipationService participationService, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService, SimpMessageSendingOperations messagingTemplate) {
+        this.userService = userService;
+        this.participationService = participationService;
         this.resultRepository = resultRepository;
         this.continuousIntegrationService = continuousIntegrationService;
         this.ltiService = ltiService;
@@ -41,19 +48,52 @@ public class ResultService {
     @Async
     public void onResultNotified(Participation participation) {
         log.debug("Received new build result for participation " + participation.getId());
-        Long start = System.currentTimeMillis();
         // fetches the new build result
         Result result = continuousIntegrationService.get().onBuildCompleted(participation);
         if (result != null) {
             // notify user via websocket
             messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", result);
-            // handles new results and sends them to LTI consumers
+
             //TODO: can we avoid to invoke this code for non LTI students? (to improve performance)
 //            if (participation.isLti()) {
 //            }
+            // handles new results and sends them to LTI consumers
             ltiService.onNewBuildResult(participation);
-//            Long end = System.currentTimeMillis();
-//            log.info("It took " + (end-start) + "ms to receive " + result);
         }
+    }
+
+    /**
+     * Handle the manual creation of a new result potentially including feedback
+     * @param result
+     */
+    public void createNewResult(Result result) {
+        if(!result.getFeedbacks().isEmpty()) {
+            result.setHasFeedback(true);
+        }
+
+        //TODO: in this case we do not have a submission. However, it would be good to create one, even if it might be "empty"
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        result.setAssessmentType(AssessmentType.MANUAL);
+        result.setAssessor(user);
+
+        //manual feedback is always rated
+        result.setRated(true);
+
+        result.getFeedbacks().forEach(feedback -> {
+            feedback.setResult(result);
+        });
+
+        // this call should cascade all feedback relevant changed and save them accordingly
+        Result savedResult = resultRepository.save(result);
+        try {
+            result.getParticipation().addResult(savedResult);
+            participationService.save(result.getParticipation());
+        } catch (NullPointerException ex) {
+            log.warn("Unable to load result list for participation", ex);
+        }
+
+        messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
+        ltiService.onNewBuildResult(savedResult.getParticipation());
     }
 }

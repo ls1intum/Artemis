@@ -10,13 +10,13 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -193,7 +193,7 @@ public class FileService {
      * This copies the directory at the old directory path to the new path, including all files and subfolders
      *
      * @param resources the resources that should be copied
-     * @param targetDirectoryPath the path of the folder where the copy should be lcoated
+     * @param targetDirectoryPath the path of the folder where the copy should be located
      * @throws IOException
      */
     public void copyResources(Resource[] resources, String prefix, String targetDirectoryPath) throws IOException {
@@ -201,6 +201,7 @@ public class FileService {
         for (Resource resource : resources) {
 
             String fileUrl = java.net.URLDecoder.decode(resource.getURL().toString(), "UTF-8");
+            //cut the prefix (e.g. 'exercise', 'solution', 'test') from the actual path
             int index = fileUrl.indexOf(prefix);
             String targetFilePath = fileUrl.substring(index + prefix.length());
             //special case for '.git.ignore.file' file which would not be included in build otherwise
@@ -214,9 +215,7 @@ public class FileService {
                 Files.createDirectories(parentFolder.toPath());
             }
 
-            log.info("resource: " + resource.getURL().toString());
-            log.info("copyPath: " + copyPath);
-            Files.copy(resource.getInputStream(), copyPath);
+            Files.copy(resource.getInputStream(), copyPath, StandardCopyOption.REPLACE_EXISTING);
         }
     }
 
@@ -285,26 +284,22 @@ public class FileService {
             throw new RuntimeException("Files in directory " + startPath + " should be replaced but the directory does not exist.");
         }
 
-        String[] files = directory.list(new FilenameFilter() { // Get all files in directory
-            @Override
-            public boolean accept(File current, String name) {
-                return new File(current, name).isFile();
-            }
-        });
+        // Get all files in directory
+        String[] files = directory.list((current, name) -> new File(current, name).isFile());
 
         for (String file : files) {
             replaceVariablesInFile(directory.getAbsolutePath() + File.separator + file, targetStrings, replacementStrings);
         }
 
         // Recursive call
-        String[] subdirectories = directory.list(new FilenameFilter() { // Get all subdirectories
-            @Override
-            public boolean accept(File current, String name) {
-                return new File(current, name).isDirectory();
-            }
-        });
+        // Get all subdirectories
+        String[] subdirectories = directory.list((current, name) -> new File(current, name).isDirectory());
 
         for (String subdirectory : subdirectories) {
+            if (subdirectory.equalsIgnoreCase(".git")) {
+                //ignore files in the '.git' folder
+                continue;
+            }
             replaceVariablesInFileRecursive(directory.getAbsolutePath() + File.separator + subdirectory, targetStrings, replacementStrings);
         }
     }

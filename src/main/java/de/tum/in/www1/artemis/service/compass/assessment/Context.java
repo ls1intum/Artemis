@@ -6,6 +6,9 @@ import java.util.HashSet;
 public class Context {
     private HashSet<Integer> contextElementIDs;
 
+    /**
+     * Dummy context, placeholder if no context is available
+     */
     public static final Context NO_CONTEXT = new Context(-1);
 
     public Context(int contextElementID) {

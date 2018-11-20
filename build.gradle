@@ -55,7 +55,7 @@ dependencyManagement {
 defaultTasks 'bootRun'
 
 group = 'de.tum.in.www1.artemis'
-version = '2.2.2'
+version = '2.3.0'
 description = 'AuTomated assEssment Management System for Interactive Learning'
 
 bootWar {
@@ -178,7 +178,7 @@ dependencies {
     compile "org.hibernate:hibernate-core"
     compile "com.zaxxer:HikariCP"
     compile "org.apache.commons:commons-lang3"
-    compile group: 'org.apache.commons', name: 'commons-text', version: '1.4'
+    compile group: 'org.apache.commons', name: 'commons-text', version: '1.6'
     compile "commons-io:commons-io"
     compile "javax.transaction:javax.transaction-api"
     compile "org.ehcache:ehcache"

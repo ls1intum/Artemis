@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
@@ -13,7 +14,6 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -22,8 +22,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 /**
  * REST controller for managing TextExercise.
@@ -73,7 +73,7 @@ public class TextExerciseResource {
         if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
             !authCheckService.isInstructorInCourse(course, user) &&
             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
         TextExercise result = textExerciseRepository.save(textExercise);
         return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId()))
@@ -107,35 +107,12 @@ public class TextExerciseResource {
         if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
             !authCheckService.isInstructorInCourse(course, user) &&
             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
         TextExercise result = textExerciseRepository.save(textExercise);
         return ResponseEntity.ok()
             .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, textExercise.getId().toString()))
             .body(result);
-    }
-
-    /**
-     * GET  /text-exercises : get all the textExercises.
-     *
-     * @return the ResponseEntity with status 200 (OK) and the list of textExercises in body
-     */
-    @GetMapping("/text-exercises")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
-    public List<TextExercise> getAllTextExercises() {
-        log.debug("REST request to get all TextExercises");
-        List<TextExercise> exercises = textExerciseRepository.findAll();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        Stream<TextExercise> authorizedExercises = exercises.stream().filter(
-            exercise -> {
-                Course course = exercise.getCourse();
-                return authCheckService.isTeachingAssistantInCourse(course, user) ||
-                    authCheckService.isInstructorInCourse(course, user) ||
-                    authCheckService.isAdmin();
-            }
-        );
-        return authorizedExercises.collect(Collectors.toList());
     }
 
     /**
@@ -150,9 +127,14 @@ public class TextExerciseResource {
         log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
         Course course = courseService.findOne(courseId);
         if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
         List<TextExercise> exercises = textExerciseRepository.findByCourseId(courseId);
+        for (Exercise exercise : exercises) {
+            //not required in the returned json body
+            exercise.setParticipations(null);
+            exercise.setCourse(null);
+        }
 
         return ResponseEntity.ok().body(exercises);
     }
@@ -170,7 +152,7 @@ public class TextExerciseResource {
         log.debug("REST request to get TextExercise : {}", id);
         Optional<TextExercise> textExercise = textExerciseRepository.findById(id);
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
         return ResponseUtil.wrapOrNotFound(textExercise);
     }
@@ -192,7 +174,7 @@ public class TextExerciseResource {
             User user = userService.getUserWithGroupsAndAuthorities();
             if (!authCheckService.isInstructorInCourse(course, user) &&
                 !authCheckService.isAdmin()) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                return forbidden();
             }
             textExerciseRepository.deleteById(id);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();

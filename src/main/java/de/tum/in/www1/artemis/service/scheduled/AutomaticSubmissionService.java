@@ -176,8 +176,6 @@ public class AutomaticSubmissionService {
                     submission.setType(SubmissionType.TIMEOUT);
                     submission.setSubmissionDate(ZonedDateTime.now());
 
-                    // TODO: we should check if there is a result for the submission. If this is not the case, we should create one
-
                     // Update Participation and save to Database (DB Write)
                     // Remove processed Submissions from SubmissionHashMap
                     submission = updateParticipation(submission);
@@ -225,7 +223,7 @@ public class AutomaticSubmissionService {
                     // set participation state to finished and persist it
                     participation.setInitializationState(InitializationState.FINISHED);
                     participationService.save(participation);
-                    // return modeling submission with model and result
+                    // return modeling submission with model and optional result
                     return modelingSubmission;
                 } else {
                     log.error("The exercise {} belonging the modeling submission {} is not a ModelingExercise.", exercise.getId(), submission.getId());
