@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.annotation.*;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import org.hibernate.annotations.Cache;
@@ -36,6 +33,7 @@ import java.util.Objects;
     @JsonSubTypes.Type(value = TextSubmission.class, name = "text"),
     @JsonSubTypes.Type(value = FileUploadSubmission.class, name = "file-upload"),
 })
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class Submission implements Serializable {
 
     private static final long serialVersionUID = 1L;

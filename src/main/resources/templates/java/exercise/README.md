@@ -1,61 +1,86 @@
 # ${exerciseName}
 
-<Introduction Text>
+In this exercise, we want to implement sorting algorithms and choose them based on runtime specific variables.
 
-### Part 1: <Part 1>
+### Part 1: Sorting
 
-<Text>
+First, we need to implement two sorting algorithms, in this case `MergeSort` and `BubbleSort`.
 
 **You have the following tasks:**
 
-<Some Examples>
+1. ✅[Implement Bubble Sort](testBubbleSort)
+Implement the method `performSort(List<Date>)` in the class `BubbleSort`. Make sure to follow the Bubble Sort algorithm exactly.
 
-1. ✅[Course Object](testHierarchy[Checking class Course],testFields[Checking class Course])
-Create a **`Course`** class. A Course class should have the following attributes. For now, make all attributes **`public`**.
+2. ✅[Implement Merge Sort](testMergeSort)
+Implement the method `performSort(List<Date>)` in the class `MergeSort`. Make sure to follow the Merge Sort algorithm exactly.
 
-    1.  **`title`**: Course name of type String
-    2.  **`lecturer`**: Object of type Lecturer
+### Part 2: Strategy Pattern
+
+We want the application to apply different algorithms for sorting a `List` of `Date` objects. 
+Use the strategy pattern to select the right sorting algorithm at runtime.
+
+**You have the following tasks:**
+
+1. ✅[SortStrategy Interface](testClass[SortStrategy],testMethods[SortStrategy])
+Create a `SortStrategy` interface and adjust the sorting algorithms so that they implement this interface.
+
+2. ✅[Context Class](testClass[Context],testAttributes[Context],testMethods[Context])
+Create and implement a `Context` class following the below class diagram
+
+3. ✅[Context Policy](testClass[Policy],testConstructors[Policy],testAttributes[Policy],testMethods[Policy]) 
+Create and implement a `Policy` class following the below class diagram with a simple configuration mechanism:
+
+    1. ✅[Select MergeSort](testClass[MergeSort],testUseMergeSortForBigList)
+    Select `MergeSort` when the List has more than 10 dates.
+
+    2. ✅[Select BubbleSort](testClass[BubbleSort],testUseBubbleSortForSmallList)
+    Select `BubbleSort` when the List has less or equal 10 dates.
+
+4. Complete the `Client` class which demonstrates switching between two strategies at runtime.
 
 @startuml
 
-interface Person
-
-class Student
-class Lecturer
-
-Student -up-|> Person
-Lecturer -up-|> Person
-
-class Course {
-  +<color:testsColor(testFields[Checking class Course])>title: String</color>
-  +<color:testsColor(testFields[Checking class Course])>dates: List<Date></color>
-  +<color:testsColor(testMethods[Checking class Course],testPrintCourseTitle)>printCourseTitle(): void</color>
+class Client {
 }
 
-Student "*" -left-  Course #testsColor(testFields[Checking class Course]): attendees 
-Lecturer "1" -right-  Course #testsColor(testFields[Checking class Course]): lecturer 
+class Policy {
+  +<color:testsColor(testMethods[Policy])>configure()</color>
+}
+
+class Context {
+  -<color:testsColor(testAttributes[Context])>dates: List<Date></color>
+  +<color:testsColor(testMethods[Context])>sort()</color>
+}
+
+interface SortStrategy {
+  +<color:testsColor(testMethods[SortStrategy])>performSort(List<Date>)</color>
+}
+
+class BubbleSort {
+  +<color:testsColor(testMethods[BubbleSort])>performSort(List<Date>)</color>
+}
+
+class MergeSort {
+  +<color:testsColor(testMethods[MergeSort])>performSort(List<Date>)</color>
+}
+
+MergeSort -up-|> SortStrategy #testsColor(testFields[MergeSort])
+BubbleSort -up-|> SortStrategy #testsColor(testFields[BubbleSort])
+Policy -right-> Context #testsColor(testFields[Policy]): context
+Context -right-> SortStrategy #testsColor(testFields[Context]): sortAlgorithm
+Client .down.> Policy
+Client .down.> Context
 
 @enduml
 
 
-2. ✅[Course Constructor](testConstructors[Checking class Course])
-Create a constructor for Course with one argument **`title`** of type String,
-which initializes the title value of Course objects.
+### Part 3: Optional Challenges
 
-### Part 2: Inheritance
+(These are not tested)
 
-We want the University App to both support *Online Courses* and *Lecture
-Courses*.
+1. Create a new class `QuickSort` that implements `SortStrategy` and implement the Quick Sort algorithm.
 
-**You have the following tasks:**
+2. Make the method `performSort(List<Dates>)` generic, so that other objects can also be sorted by the same method.
+**Hint:** Have a look at Java Generics and the interface `Comparable`.  
 
-1. ✅[LectureCourse Subclass](testHierarchy[Checking class LectureCourse]) 
-Create the subclass **`LectureCourse`** which extends the Course class
-with:
-
-    1.  ✅[LectureCourse Attributes](testFields[Checking class LectureCourse])
-    Create an attribute **`location`** of the Java type Point. This will store
-    the location of the lecture hall as x and y coordinates.
-    2.  ✅[LectureCourse Constructor](testConstructors[Checking class LectureCourse])
-    Create a constructor with two arguments: **`title`** of
-    type String and **`location`** of type Point.
+3. Think about a useful decision in `Policy` when to use the new `QuickSort` algorithm.

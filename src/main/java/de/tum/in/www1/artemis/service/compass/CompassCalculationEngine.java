@@ -2,15 +2,10 @@ package de.tum.in.www1.artemis.service.compass;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import de.tum.in.www1.artemis.service.compass.assessment.Assessment;
-import de.tum.in.www1.artemis.service.compass.assessment.CompassResult;
-import de.tum.in.www1.artemis.service.compass.assessment.Score;
+import de.tum.in.www1.artemis.service.compass.assessment.*;
 import de.tum.in.www1.artemis.service.compass.controller.*;
-import de.tum.in.www1.artemis.service.compass.grade.CompassGrade;
-import de.tum.in.www1.artemis.service.compass.grade.Grade;
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLClass;
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLModel;
+import de.tum.in.www1.artemis.service.compass.grade.*;
+import de.tum.in.www1.artemis.service.compass.umlmodel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,21 +64,21 @@ public class CompassCalculationEngine implements CalculationEngine {
         modelSelector.removeModelWaitingForAssessment(model.getModelID());
     }
 
-    Collection<UMLModel> getUmlModelCollection() {
+    protected Collection<UMLModel> getUmlModelCollection() {
         return modelIndex.getModelCollection();
     }
 
-    Map<Long, UMLModel> getModelMap() {
+    protected Map<Long, UMLModel> getModelMap() {
         return modelIndex.getModelMap();
     }
 
     @SuppressWarnings("unused")
-    double getTotalCoverage() {
+    private double getTotalCoverage() {
         return automaticAssessmentController.getTotalCoverage();
     }
 
     @SuppressWarnings("unused")
-    double getTotalConfidence() {
+    private double getTotalConfidence() {
         return automaticAssessmentController.getTotalConfidence();
     }
 
@@ -210,6 +205,7 @@ public class CompassCalculationEngine implements CalculationEngine {
      *
      * @return statistics about the UML model
      */
+    //TODO: I don't think we should expose JSONObject to this internal server class. It would be better to return Java objects here
     @Override
     public JsonObject getStatistics() {
         JsonObject jsonObject = new JsonObject();
@@ -254,6 +250,11 @@ public class CompassCalculationEngine implements CalculationEngine {
                 }
             }
             model.addProperty("conflicts", modelConflicts);
+            model.addProperty("elements", elements.size());
+            model.addProperty("classes", elements.stream().filter(umlElement -> umlElement instanceof  UMLClass).count());
+            model.addProperty("attributes", elements.stream().filter(umlElement -> umlElement instanceof UMLAttribute).count());
+            model.addProperty("methods", elements.stream().filter(umlElement -> umlElement instanceof UMLMethod).count());
+            model.addProperty("associations", elements.stream().filter(umlElement -> umlElement instanceof UMLAssociation).count());
             models.add(modelEntry.getKey().toString(), model);
         }
         jsonObject.add("models", models);

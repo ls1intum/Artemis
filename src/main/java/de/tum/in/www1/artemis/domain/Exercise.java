@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.annotation.*;
 import com.google.common.collect.Sets;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
@@ -39,6 +37,7 @@ import java.util.*;
     @JsonSubTypes.Type(value = TextExercise.class, name = "text"),
     @JsonSubTypes.Type(value = FileUploadExercise.class, name = "file-upload"),
 })
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class Exercise implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -84,6 +83,7 @@ public abstract class Exercise implements Serializable {
 
     @OneToMany(mappedBy = "exercise")
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+    @JsonIgnoreProperties("exercise")
     private Set<Participation> participations = new HashSet<>();
 
     @ManyToOne
