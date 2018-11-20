@@ -30,7 +30,7 @@
             "export": {
                 "title": "Alle Quizfragen zum Kurs {{ param }}",
                 "export": "Ausfuhr",
-                "questionTitle": "Frage Titel",
+                "questionTitle": "Kurzer Frage Titel",
                 "quizExerciseTitle": "Quiz Übungstitel"
             },
             "filter": {
@@ -144,7 +144,7 @@
                 "all_or_nothing": "Alles-oder-Nichts",
                 "proportional_with_penalty": "Anteilig mit Abzügen"
             },
-            "importJSON" : "Fragen importieren (JSON)"
+            "importJSON": "Fragen importieren (JSON)"
         }
     }
 }
