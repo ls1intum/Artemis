@@ -198,10 +198,16 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
 
         // Since our rendered markdown file gets inserted into the DOM after compile time, we need to register click events for test cases manually
         const testStatusDOMElements = this.elementRef.nativeElement.querySelectorAll('.test-status');
+
         testStatusDOMElements.forEach((element: any) => {
             const listenerRemoveFunction = this.renderer.listen(element, 'click', event => {
                 // Extract the data attribute for tests and open the details popup with it
-                const tests = event.target.parentElement.getAttribute('data-tests');
+                let tests = '';
+                if (event.target.getAttribute('data-tests')) {
+                    tests = event.target.getAttribute('data-tests');
+                } else {
+                    tests = event.target.parentElement.getAttribute('data-tests');
+                }
                 this.showDetailsForTests(this.latestResult, tests);
             });
             this.listenerRemoveFunctions.push(listenerRemoveFunction);
@@ -209,6 +215,18 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
 
         if (!this.isLoadingResults && !this.haveDetailsBeenLoaded) {
             this.loadResultsDetails();
+        }
+    }
+
+    /**
+     * @function triggerTestStatusClick
+     * @desc Clicks the corresponding testStatus DOM element to trigger the dialog
+     * @param index {number} The index indicates which test status link should be clicked
+     */
+    triggerTestStatusClick(index: number): void {
+        const testStatusDOMElements = this.elementRef.nativeElement.querySelectorAll('.test-status');
+        if (testStatusDOMElements.length) {
+            testStatusDOMElements[index].click();
         }
     }
 
