@@ -16,7 +16,7 @@ import org.junit.runners.Parameterized;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
- * @version 1.2 (26.10.2018)
+ * @version 1.3 (19.11.2018)
  *
  * This StructuralTest evaluates if 4 specified elements of a given class in the test.json file are correctly implemented (in case they are specified):
  *
@@ -56,7 +56,7 @@ public class ConstructorTest extends StructuralTest {
 		return testData;
 	}
 
-	@Test//(timeout = 1000)
+	@Test(timeout = 1000)
 	public void testConstructors() {
 		Class<?> actualClass = findClassForTestType("constructor");
 		if (expectedClassJson.has("constructors")) {

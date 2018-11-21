@@ -3,31 +3,31 @@
         "course": {
             "home": {
                 "title": "Courses",
-                "createLabel": "Create new Course",
-                "editLabel": "Edit Course",
-                "createOrEditLabel": "Create or edit a Course"
+                "createLabel": "Create new course",
+                "editLabel": "Edit course",
+                "createOrEditLabel": "Create or edit a course"
             },
-            "created": "A new Course was created with title {{ param }}",
+            "created": "A new course was created with title {{ param }}",
             "updated": "A Course was updated with title {{ param }}",
             "deleted": "A Course was deleted with title {{ param }}",
             "delete": {
-                "question": "Are you sure you want to delete Course {{ title }}?"
+                "question": "Are you sure you want to delete the course <strong>{{ param }}</strong>?"
             },
             "detail": {
                 "title": "Course"
             },
             "title": "Title",
             "shortName": "Short Name",
-            "studentGroupName": "Student Group Name",
-            "teachingAssistantGroupName": "Teaching Assistant Group Name",
-            "instructorGroupName": "Instructor Group Name",
-            "startDate": "Start Date",
-            "endDate": "End Date",
+            "studentGroupName": "Student Group",
+            "teachingAssistantGroupName": "Tutor Group",
+            "instructorGroupName": "Instructor Group",
+            "startDate": "Start",
+            "endDate": "End",
             "onlineCourse": "Online Course",
             "exercises": "Exercises",
             "programmingExercises": "Programming Exercises",
             "quizExercises": "Quiz Exercises",
-            "modelingExercises": "Modeling Exercises (Beta)",
+            "modelingExercises": "Modeling Exercises",
             "textExercises": "Text Exercises (Beta)",
             "fileUploadExercises": "File Upload Exercises (Beta)"
         }

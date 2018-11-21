@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.view.QuizView;
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
 @Entity
 @Table(name = "participation", uniqueConstraints = @UniqueConstraint(columnNames = {"student_id", "exercise_id", "initialization_state"}))
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Participation implements Serializable {
 
     private static final long serialVersionUID = 1L;

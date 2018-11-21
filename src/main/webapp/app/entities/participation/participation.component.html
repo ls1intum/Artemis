@@ -23,8 +23,9 @@
             <tbody>
             <tr *ngFor="let participation of participations | sortBy: predicate: reverse ;trackBy: trackId">
                 <td><a routerLink="/participation/{{participation.id}}">{{participation.id}}</a></td>
-                <td>{{participation.repositoryUrl}}</td>
-                <td>{{participation.buildPlanId}}</td>
+                <!-- TODO get the correct URL from the server instead of hardcoding Bamboo here -->
+                <td><span *ngIf="participation.repositoryUrl !== null"><a href="{{participation.repositoryUrl}}" target="_blank">{{participation.repositoryUrl}}</a></span></td>
+                <td><span *ngIf="participation.buildPlanId !== null"><a href="https://bamboobruegge.in.tum.de/browse/{{participation.buildPlanId}}" target="_blank">{{participation.buildPlanId}}</a></span></td>
                 <td>{{participation.initializationState}}</td>
                 <td>{{participation.initializationDate | date:'medium'}}</td>
                 <td>

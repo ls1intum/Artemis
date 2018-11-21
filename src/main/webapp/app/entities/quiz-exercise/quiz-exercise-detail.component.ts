@@ -37,7 +37,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     course: Course;
     quizExercise: QuizExercise;
     paramSub: Subscription;
-    repository: QuizExerciseService;
     courseRepository: CourseService;
 
     entity: QuizExercise;
@@ -120,7 +119,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                 });
             }
         });
-        this.repository = this.quizExerciseService;
         this.courseRepository = this.courseService;
     }
 
@@ -199,7 +197,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
 
         const mcQuestion = new MultipleChoiceQuestion();
         mcQuestion.title = '';
-        mcQuestion.text = 'Enter your question text here';
+        mcQuestion.text = 'Enter your long question if needed';
         mcQuestion.scoringType = ScoringType.ALL_OR_NOTHING; // explicit default value for multiple questions
         mcQuestion.randomizeOrder = true;
         mcQuestion.score = 1;
@@ -227,7 +225,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
 
         const dndQuestion = new DragAndDropQuestion();
         dndQuestion.title = '';
-        dndQuestion.text = 'Enter your question text here';
+        dndQuestion.text = 'Enter your long question if needed';
         dndQuestion.scoringType = ScoringType.PROPORTIONAL_WITH_PENALTY; // explicit default value for drag and drop questions
         dndQuestion.randomizeOrder = true;
         dndQuestion.score = 1;
@@ -281,13 +279,14 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         /** Search the selected course by id in all available courses **/
         const selectedCourse = this.courses.find(course => course.id === Number(this.selectedCourseId));
 
+        // TODO: the following code seems duplicated (see quiz-exercise-export.component.ts in the method loadForCourse). Try to avoid duplication!
         // For the given course, get list of all quiz exercises. And for all quiz exercises, get list of all questions in a quiz exercise,
-        this.repository.findForCourse(selectedCourse.id).subscribe(
+        this.quizExerciseService.findForCourse(selectedCourse.id).subscribe(
             (quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
                 if (quizExercisesResponse.body) {
                     const quizExercises = quizExercisesResponse.body;
                     for (const quizExercise of quizExercises) {
-                        this.repository.find(quizExercise.id).subscribe((response: HttpResponse<QuizExercise>) => {
+                        this.quizExerciseService.find(quizExercise.id).subscribe((response: HttpResponse<QuizExercise>) => {
                             const quizExerciseResponse = response.body;
                             for (const question of quizExerciseResponse.questions) {
                                 question.exercise = quizExercise;
@@ -667,7 +666,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         }
         this.isSaving = true;
         if (this.quizExercise.id !== undefined) {
-            this.repository.update(this.quizExercise).subscribe(
+            this.quizExerciseService.update(this.quizExercise).subscribe(
                 (quizExerciseResponse: HttpResponse<QuizExercise>) => {
                     if (quizExerciseResponse.body) {
                         this.onSaveSuccess(quizExerciseResponse.body);
@@ -678,7 +677,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                 (res: HttpErrorResponse) => this.onSaveError(res)
             );
         } else {
-            this.repository.create(this.quizExercise).subscribe(
+            this.quizExerciseService.create(this.quizExercise).subscribe(
                 (quizExerciseResponse: HttpResponse<QuizExercise>) => {
                     if (quizExerciseResponse.body) {
                         this.onSaveSuccess(quizExerciseResponse.body);

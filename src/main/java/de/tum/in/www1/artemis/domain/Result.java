@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.annotation.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import org.hibernate.annotations.Cache;
@@ -23,6 +20,7 @@ import java.util.Objects;
 @Entity
 @Table(name = "result")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Result implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -48,6 +46,10 @@ public class Result implements Serializable {
     @JsonView(QuizView.Before.class)
     private Boolean buildArtifact;
 
+    /**
+     * Relative score in %
+     *
+     */
     @Column(name = "score")
     @JsonView(QuizView.After.class)
     private Long score;

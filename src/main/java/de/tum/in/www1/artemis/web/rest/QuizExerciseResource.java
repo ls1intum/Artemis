@@ -163,19 +163,6 @@ public class QuizExerciseResource {
     }
 
     /**
-     * GET  /quiz-exercises : get all the quizExercises.
-     *
-     * @return the ResponseEntity with status 200 (OK) and the list of quizExercises in body
-     */
-    @GetMapping("/quiz-exercises")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
-    public List<QuizExercise> getAllQuizExercises() {
-        log.debug("REST request to get all QuizExercises");
-        return quizExerciseService.findAll();
-    }
-
-    /**
      * GET  /courses/:courseId/quiz-exercises : get all the exercises.
      *
      * @return the ResponseEntity with status 200 (OK) and the list of programmingExercises in body
@@ -187,8 +174,12 @@ public class QuizExerciseResource {
     public List<QuizExercise> getQuizExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all QuizExercises for the course with id : {}", courseId);
         List<QuizExercise> result = quizExerciseService.findByCourseId(courseId);
+
         for (QuizExercise quizExercise : result) {
             quizExercise.setQuestions(null);
+            //not required in the returned json body
+            quizExercise.setParticipations(null);
+            quizExercise.setCourse(null);
         }
         return result;
     }
@@ -242,7 +233,6 @@ public class QuizExerciseResource {
     @Timed
     public ResponseEntity<QuizExercise> getQuizExerciseForStudent(@PathVariable Long id) {
         log.debug("REST request to get QuizExercise : {}", id);
-        long start = System.currentTimeMillis();
 
         QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(id);
         if (quizExercise == null) {
@@ -252,15 +242,11 @@ public class QuizExerciseResource {
             return forbidden();
         }
 
-        log.debug("    checked permissions after {} ms", System.currentTimeMillis() - start);
-
         // filter out information depending on quiz state
         quizExercise.applyAppropriateFilterForStudents();
 
         // filter out the statistic information
         quizExercise.setQuizPointStatistic(null);
-
-        log.debug("    filtered info after {} ms", System.currentTimeMillis() - start);
 
         return ResponseEntity.ok(quizExercise);
     }

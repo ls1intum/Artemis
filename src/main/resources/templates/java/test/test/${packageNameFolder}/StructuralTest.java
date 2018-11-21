@@ -14,7 +14,7 @@ import org.json.JSONObject;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
- * @version 1.2 (26.10.2018)
+ * @version 1.3 (19.11.2018)
  *
  * This StructuralTest evaluates if 4 specified elements of a given class in the test.json file are correctly implemented (in case they are specified):
  *
