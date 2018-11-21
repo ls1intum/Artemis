@@ -46,6 +46,10 @@ public class Result implements Serializable {
     @JsonView(QuizView.Before.class)
     private Boolean buildArtifact;
 
+    /**
+     * Relative score in %
+     *
+     */
     @Column(name = "score")
     @JsonView(QuizView.After.class)
     private Long score;
