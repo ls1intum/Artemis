@@ -76,20 +76,12 @@ public class TextSubmissionResource {
             throw new BadRequestAlertException("A new textSubmission cannot already have an ID", ENTITY_NAME, "idexists");
         }
 
+        ResponseEntity<TextSubmission> error = this.checkExerciseValidity(exerciseId);
+        if (error != null) {
+            return error;
+        }
+
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
-        if (textExercise == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
-        }
-
-        // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(textExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this text exercise does not exist")).body(null);
-        }
-        if (!courseService.userHasAtLeastStudentPermissions(course)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
         Participation participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
 
         // update and save submission
@@ -119,20 +111,12 @@ public class TextSubmissionResource {
             return createTextSubmission(exerciseId, principal, textSubmission);
         }
 
+        ResponseEntity<TextSubmission> error = this.checkExerciseValidity(exerciseId);
+        if (error != null) {
+            return error;
+        }
+
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
-        if (textExercise == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("textExercise", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
-        }
-
-        // fetch course from database to make sure client didn't change groups
-        Course course = courseService.findOne(textExercise.getCourse().getId());
-        if (course == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this text exercise does not exist")).body(null);
-        }
-        if (!courseService.userHasAtLeastStudentPermissions(course)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
         Participation participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
 
         textSubmission = textSubmissionService.save(textSubmission, textExercise, participation);
@@ -220,5 +204,23 @@ public class TextSubmissionResource {
         log.debug("REST request to delete TextSubmission : {}", id);
         textSubmissionRepository.deleteById(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+    }
+
+    private ResponseEntity<TextSubmission> checkExerciseValidity(Long exerciseId) {
+        TextExercise textExercise = textExerciseService.findOne(exerciseId);
+        if (textExercise == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
+        }
+
+        // fetch course from database to make sure client didn't change groups
+        Course course = courseService.findOne(textExercise.getCourse().getId());
+        if (course == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this text exercise does not exist")).body(null);
+        }
+        if (!courseService.userHasAtLeastStudentPermissions(course)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        return null;
     }
 }

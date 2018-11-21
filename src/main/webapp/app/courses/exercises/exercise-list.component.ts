@@ -289,23 +289,16 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
                 }
                 return ParticipationStatus.QUIZ_FINISHED;
             }
-        } else if (exercise.type === ExerciseType.MODELING && this.hasParticipations(exercise)) {
+        } else if ((exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT) && this.hasParticipations(exercise)) {
             const participation = exercise.participations[0];
             if (
                 participation.initializationState === InitializationState.INITIALIZED ||
                 participation.initializationState === InitializationState.FINISHED
             ) {
-                return ParticipationStatus.MODELING_EXERCISE;
-            }
-        } else if (exercise.type === ExerciseType.TEXT && this.hasParticipations(exercise)) {
-            const participation = exercise.participations[0];
-            if (
-                participation.initializationState === InitializationState.INITIALIZED ||
-                participation.initializationState === InitializationState.FINISHED
-            ) {
-                return ParticipationStatus.TEXT_EXERCISE;
+                return exercise.type === ExerciseType.MODELING ? ParticipationStatus.MODELING_EXERCISE : ParticipationStatus.TEXT_EXERCISE;
             }
         }
+
         if (!this.hasParticipations(exercise)) {
             return ParticipationStatus.UNINITIALIZED;
         } else if (exercise.participations[0].initializationState === InitializationState.INITIALIZED) {

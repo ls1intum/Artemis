@@ -41,11 +41,11 @@ export class TextComponent implements OnInit, OnDestroy {
         this.subscription = this.route.params.subscribe(params => {
             if (params['participationId']) {
                 this.textService.get(params['participationId']).subscribe(
-                    data => {
-                        this.participation = data.participation;
+                    (data: Participation) => {
+                        this.participation = data;
                         this.textExercise = this.participation.exercise as TextExercise;
 
-                        this.submission = data.textSubmission;
+                        this.submission = data.submissions[0] as TextSubmission;
 
                         if (this.submission && this.submission.result) {
                             this.result = this.submission.result;
@@ -78,20 +78,21 @@ export class TextComponent implements OnInit, OnDestroy {
         this.submission.text = this.answer;
         this.isSaving = true;
 
-        let submission: HttpResponse<TextSubmission>;
-
         this.textSubmissionService[this.submission.id ? 'update' : 'create'](this.submission, this.textExercise.id).subscribe(
-            response => (submission = response),
-            e => this.jhiAlertService.error('arTeMiSApp.textExercise.error')
+            response => {
+                if (response) {
+                    this.submission = response.body;
+                    this.result = this.submission.result;
+                    this.jhiAlertService.success('arTeMiSApp.textExercise.saveSuccessful');
+
+                    this.isSaving = false;
+                }
+            },
+            e => {
+                this.jhiAlertService.error('arTeMiSApp.textExercise.error');
+                this.isSaving = false;
+            }
         );
-
-        if (submission) {
-            this.submission = submission.body;
-            this.result = this.submission.result;
-            this.jhiAlertService.success('arTeMiSApp.textExercise.saveSuccessful');
-        }
-
-        this.isSaving = false;
     }
 
     submit() {

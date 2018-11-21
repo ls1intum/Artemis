@@ -1,10 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
@@ -48,22 +44,19 @@ public class TextExerciseResource {
     private final AuthorizationCheckService authCheckService;
     private final ParticipationService participationService;
     private final ResultRepository resultRepository;
-    private final ObjectMapper objectMapper;
 
     public TextExerciseResource(TextExerciseRepository textExerciseRepository,
                                 UserService userService,
                                 AuthorizationCheckService authCheckService,
                                 CourseService courseService,
                                 ParticipationService participationService,
-                                ResultRepository resultRepository,
-                                ObjectMapper objectMapper) {
+                                ResultRepository resultRepository) {
         this.textExerciseRepository = textExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.participationService = participationService;
         this.resultRepository = resultRepository;
-        this.objectMapper = objectMapper;
     }
 
     /**
@@ -200,7 +193,7 @@ public class TextExerciseResource {
     }
 
     /**
-     * Returns the data needed for the text editor, which includes the participation, textSubmission with model if existing
+     * Returns the data needed for the text editor, which includes the participation, textSubmission with answer if existing
      * and the assessments if the submission was already submitted.
      *
      * @param participationId the participationId for which to find the data for the text editor
@@ -210,7 +203,7 @@ public class TextExerciseResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional(readOnly = true)
     @Timed
-    public ResponseEntity<JsonNode> getDataForTextEditor(@PathVariable Long participationId) {
+    public ResponseEntity<Participation> getDataForTextEditor(@PathVariable Long participationId) {
         Participation participation = participationService.findOne(participationId);
         if (participation == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "participationNotFound", "No participation was found for the given ID.")).body(null);
@@ -225,11 +218,10 @@ public class TextExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("textExercise", "wrongExerciseType", "The exercise of the participation is not a modeling exercise.")).body(null);
         }
 
-        // users can only see their own submission (to prevent cheating), TAs, instructors and admins can see all models
+        // users can only see their own submission (to prevent cheating), TAs, instructors and admins can see all answers
         if (!authCheckService.isOwnerOfParticipation(participation) && !courseService.userHasAtLeastTAPermissions(textExercise.getCourse())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-
 
         // if no results, check if there are really no results or the relation to results was not updated yet
         if (participation.getResults().size() <= 0) {
@@ -237,18 +229,16 @@ public class TextExerciseResource {
             participation.setResults(new HashSet<>(results));
         }
 
-        ObjectNode data = objectMapper.createObjectNode();
-
         TextSubmission textSubmission = participation.findLatestTextSubmission();
-        // NOTE: avoid infinite recursion by setting submissions to null
-        participation.setSubmissions(null);
-        ((TextExercise) participation.getExercise()).setSampleSolution(null);
-        data.set("participation", objectMapper.valueToTree(participation));
+        participation.setSubmissions(new HashSet<>());
+
+        participation.getExercise().filterSensitiveInformation();
+
         if (textSubmission != null) {
-            // set reference to participation if null
-            if (textSubmission.getParticipation() == null) {
-                textSubmission.setParticipation(participation);
-            }
+            // set reference to participation to null, since we are already inside a participation
+            textSubmission.setParticipation(null);
+
+            // TODO: implement result
 //            Result result = textSubmission.getResult();
 //            if (textSubmission.isSubmitted() && result != null && result.isRated()) {
 //                // find assessments if textSubmission is submitted and result is rated
@@ -262,8 +252,10 @@ public class TextExerciseResource {
 //                }
 //            }
 
-            data.set("textSubmission", objectMapper.valueToTree(textSubmission));
+            participation.addSubmissions(textSubmission);
         }
-        return ResponseEntity.ok(data);
+
+
+        return ResponseEntity.ok(participation);
     }
 }
