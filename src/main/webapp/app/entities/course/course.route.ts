@@ -9,7 +9,7 @@ import { CourseService } from './course.service';
 import { CourseComponent } from './course.component';
 import { CourseDetailComponent } from './course-detail.component';
 import { CourseUpdateComponent } from './course-update.component';
-import { CourseOverviewComponent } from './course-overview.component';
+import { CourseExercisesOverviewComponent } from './course-exercises-overview.component';
 import { CourseDeletePopupComponent } from './course-delete-dialog.component';
 import { CourseScoreCalculationComponent } from './course-score-calculation.component';
 
@@ -53,7 +53,7 @@ export const courseRoute: Routes = [
     },
     {
         path: 'course/:courseId',
-        component: CourseOverviewComponent,
+        component: CourseExercisesOverviewComponent,
         resolve: {
             course: CourseResolve
         },

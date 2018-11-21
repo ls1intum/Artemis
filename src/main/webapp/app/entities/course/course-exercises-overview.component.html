@@ -7,6 +7,7 @@
 
     <div class="question card">
         <div class="question-options card-header question-card-header">
+            <h5><span jhiTranslate="arTeMiSApp.course.quizExercises">Quiz Exercises</span></h5>
             <button
                 class="btn btn-light question-collapse"
                 (click)="isQuizQuestionCollapsed = !isQuizQuestionCollapsed"
@@ -14,7 +15,6 @@
                 [attr.aria-controls]="'collapseQuestion'">
                 <span class="fa fa-2x" [ngClass]="isQuizQuestionCollapsed ? 'fa-angle-right' : 'fa-angle-down'" ></span>
             </button>
-            <h5><span jhiTranslate="arTeMiSApp.course.quizExercises">Quiz Exercises</span></h5>
         </div>
         <div class="card-body question-card-body"  [ngbCollapse]="isQuizQuestionCollapsed" >
             <div>
@@ -26,6 +26,7 @@
 
     <div class="question card">
         <div class="question-options card-header question-card-header">
+            <h5><span jhiTranslate="arTeMiSApp.course.programmingExercises">Programming Exercises</span> </h5>
             <button
                 class="btn btn-light question-collapse"
                 (click)="isProgrammingQuestionCollapsed = !isProgrammingQuestionCollapsed"
@@ -33,7 +34,6 @@
                 [attr.aria-controls]="'collapseQuestion'">
                 <span class="fa fa-2x" [ngClass]="isProgrammingQuestionCollapsed ? 'fa-angle-right' : 'fa-angle-down'" ></span>
             </button>
-            <h5><span jhiTranslate="arTeMiSApp.course.programmingExercises">Programming Exercises</span> </h5>
         </div>
         <div class="card-body question-card-body"  [ngbCollapse]="isProgrammingQuestionCollapsed">
             <div>
@@ -45,6 +45,7 @@
 
     <div class="question card">
         <div class="question-options card-header question-card-header">
+            <h5><span jhiTranslate="arTeMiSApp.course.modelingExercises">Modelling Exercises</span></h5>
             <button
                 class="btn btn-light question-collapse"
                 (click)="isModellingQuestionCollapsed = !isModellingQuestionCollapsed"
@@ -52,7 +53,6 @@
                 [attr.aria-controls]="'collapseQuestion' ">
                 <span class="fa fa-2x" [ngClass]="isModellingQuestionCollapsed ? 'fa-angle-right' : 'fa-angle-down'" ></span>
             </button>
-           <h5> <span jhiTranslate="arTeMiSApp.course.modelingExercises">Modelling Exercises</span></h5>
         </div>
         <div class="card-body question-card-body"  [ngbCollapse]="isModellingQuestionCollapsed" >
             <div>
@@ -64,6 +64,7 @@
 
     <div class="question card">
         <div class="question-options card-header question-card-header">
+            <h5><span jhiTranslate="arTeMiSApp.course.fileUploadExercises">File Upload Exercises</span></h5>
             <button
                 class="btn btn-light question-collapse"
                 (click)="isFileQuestionCollapsed = !isFileQuestionCollapsed"
@@ -71,7 +72,6 @@
                 [attr.aria-controls]="'collapseQuestion'">
                 <span class="fa fa-2x" [ngClass]="isFileQuestionCollapsed ? 'fa-angle-right' : 'fa-angle-down'" ></span>
             </button>
-            <h5><span jhiTranslate="arTeMiSApp.course.fileUploadExercises">File Upload Exercises</span></h5>
         </div>
         <div class="card-body question-card-body"  [ngbCollapse]="isFileQuestionCollapsed" >
             <div>
@@ -83,6 +83,7 @@
 
     <div class="question card">
         <div class="question-options card-header question-card-header">
+            <h5> <span  jhiTranslate="arTeMiSApp.course.textExercises">Text Exercises</span></h5>
             <button
                 class="btn btn-light question-collapse"
                 (click)="isTextQuestionCollapsed = !isTextQuestionCollapsed"
@@ -90,7 +91,6 @@
                 [attr.aria-controls]="'collapseQuestion'">
                 <span class="fa fa-2x" [ngClass]="isTextQuestionCollapsed ? 'fa-angle-right' : 'fa-angle-down'" ></span>
             </button>
-            <h5> <span  jhiTranslate="arTeMiSApp.course.textExercises">Text Exercises</span></h5>
         </div>
         <div class="card-body question-card-body"  [ngbCollapse]="isTextQuestionCollapsed" >
             <div>
@@ -99,6 +99,6 @@
             </div>
         </div>
     </div>
-    
+
 </div>
 

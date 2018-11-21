@@ -8,9 +8,9 @@ import { Course } from './course.model';
 
 @Component({
     selector: 'jhi-course-overview',
-    templateUrl: './course-overview.component.html'
+    templateUrl: './course-exercises-overview.component.html'
 })
-export class CourseOverviewComponent implements OnInit {
+export class CourseExercisesOverviewComponent implements OnInit {
     course: Course;
     private subscription: Subscription;
 

@@ -18,7 +18,7 @@ import {
     courseRoute,
     CourseScoreCalculationComponent,
     CourseService,
-    CourseOverviewComponent,
+    CourseExercisesOverviewComponent,
     CourseUpdateComponent
 } from './';
 import { CourseScoreCalculationService } from './course-score-calculation.service';
@@ -44,7 +44,7 @@ const ENTITY_STATES = [...courseRoute, ...coursePopupRoute];
         CourseUpdateComponent,
         CourseDeletePopupComponent,
         CourseScoreCalculationComponent,
-        CourseOverviewComponent
+        CourseExercisesOverviewComponent
     ],
     entryComponents: [
         CourseComponent,
@@ -52,7 +52,7 @@ const ENTITY_STATES = [...courseRoute, ...coursePopupRoute];
         CourseDeleteDialogComponent,
         CourseDeletePopupComponent,
         CourseScoreCalculationComponent,
-        CourseOverviewComponent
+        CourseExercisesOverviewComponent
     ],
     providers: [CourseService, CourseExerciseService, CourseScoreCalculationService],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]

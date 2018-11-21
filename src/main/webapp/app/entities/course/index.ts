@@ -7,4 +7,4 @@ export * from './course-score-calculation.component';
 export * from './course-detail.component';
 export * from './course.component';
 export * from './course.route';
-export * from './course-overview.component';
+export * from './course-exercises-overview.component';
