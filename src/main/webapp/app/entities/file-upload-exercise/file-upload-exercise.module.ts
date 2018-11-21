@@ -16,7 +16,6 @@ import {
     FileUploadExerciseUpdateComponent
 } from './';
 import { SortByModule } from '../../components/pipes';
-import { ProgrammingExerciseComponent } from 'app/entities/programming-exercise';
 
 const ENTITY_STATES = [...fileUploadExerciseRoute, ...fileUploadExercisePopupRoute];
 
