@@ -7,6 +7,7 @@ import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.web.rest.errors.CaptchaRequiredException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,9 +93,19 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
         try {
             authenticationResponse = restTemplate.exchange(JIRA_URL + "/rest/api/2/user?username=" + username + "&expand=groups", HttpMethod.GET, entity, Map.class);
         } catch (HttpStatusCodeException e) {
-            if (e.getStatusCode().value() == 401) {
+            if (e.getStatusCode().value() == 401 || e.getStatusCode().value() == 403) {
+                // If JIRA requires a CAPTCHA. Communicate this to the client
+                if (e.getResponseHeaders().containsKey("X-Authentication-Denied-Reason")) {
+                    String authenticationDeniedReason = e.getResponseHeaders().get("X-Authentication-Denied-Reason").get(0);
+                    if (authenticationDeniedReason.toLowerCase().contains("captcha")) {
+                        throw new CaptchaRequiredException("CAPTCHA required");
+                    }
+                }
+
+                // Otherwise, the user used the wrong credentials
                 throw new BadCredentialsException("Wrong credentials");
-            } else if (e.getStatusCode().is5xxServerError()) {
+            }
+            else if (e.getStatusCode().is5xxServerError()) {
                 throw new ProviderNotFoundException("Could not authenticate via JIRA");
             }
         }

@@ -88,8 +88,8 @@
             "language": "Language"
         },
         "form": {
-            "username": "TUM ID",
-            "username.placeholder": "Your TUM ID",
+            "username": "Username",
+            "username.placeholder": "Your Username",
             "currentpassword": "Current password",
             "currentpassword.placeholder": "Current password",
             "newpassword": "New password",
