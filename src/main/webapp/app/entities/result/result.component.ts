@@ -115,7 +115,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     init() {
-        if (this.result && (this.result.score || this.result.score === 0) && (this.result.rated === true || this.result.rated === null)) {
+        if (this.result && (this.result.score || this.result.score === 0) && (this.result.rated === true || this.result.rated == null)) {
             this.textColorClass = this.getTextColorClass();
             this.hasFeedback = this.getHasFeedback();
             this.resultIconClass = this.getResultIconClass();
