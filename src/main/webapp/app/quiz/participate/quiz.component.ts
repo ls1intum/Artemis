@@ -425,15 +425,15 @@ export class QuizComponent implements OnInit, OnDestroy {
         if (this.quizExercise.questions) {
             // iterate through all questions of this quiz
             this.quizExercise.questions.forEach(question => {
-                // find the submitted answer that belongs to this question
-                const submittedAnswer = this.submission.submittedAnswers.find(function(answer) {
+                // find the submitted answer that belongs to this question, only when submitted answers already exist
+                const submittedAnswer = this.submission.submittedAnswers ? this.submission.submittedAnswers.find(answer => {
                     return answer.question.id === question.id;
-                });
+                }) : null;
+
                 if (question.type === QuestionType.MULTIPLE_CHOICE) {
                     // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     this.selectedAnswerOptions[question.id] = submittedAnswer
-                        ? (submittedAnswer as MultipleChoiceSubmittedAnswer).selectedOptions
-                        : [];
+                        ? (submittedAnswer as MultipleChoiceSubmittedAnswer).selectedOptions : [];
                 } else if (question.type === QuestionType.DRAG_AND_DROP) {
                     // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     this.dragAndDropMappings[question.id] = submittedAnswer ? (submittedAnswer as DragAndDropSubmittedAnswer).mappings : [];
