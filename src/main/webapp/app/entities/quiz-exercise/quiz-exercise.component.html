@@ -72,17 +72,17 @@
                         </button>
                         <button type="submit"
                                 (click)="startQuiz(quizExercise.id)"
-                                class="btn btn-warning btn-sm"
+                                class="btn btn-warning btn-sm mr-1"
                                 *ngIf="quizExercise.status === QuizStatus.VISIBLE">
                             <span class="fa fa-play-circle"></span>
-                            <span class="hidden-sm-down" jhiTranslate="arTeMiSApp.quizExercise.startNow"></span>
+                            <span class="hidden-sm-down" jhiTranslate="arTeMiSApp.quizExercise.startNow">Start Now</span>
                         </button>
                         <button type="submit"
                                 (click)="showQuiz(quizExercise.id)"
                                 class="btn btn-warning btn-sm mr-1"
                                 *ngIf="quizExercise.status === QuizStatus.HIDDEN">
                             <span class="fa fa-eye"></span>
-                            <span class="hidden-sm-down" jhiTranslate="arTeMiSApp.quizExercise.showNow"></span>
+                            <span class="hidden-sm-down" jhiTranslate="arTeMiSApp.quizExercise.showNow">Set Visible</span>
                         </button>
                         <div class="d-inline-block" ngbDropdown>
                             <button class="btn btn-info btn-sm mr-1" ngbDropdownToggle>
@@ -103,12 +103,12 @@
                                 [routerLink]="['/quiz', quizExercise.id, 'quiz-point-statistic']"
                                 class="btn btn-success btn-sm mr-1">
                             <span class="fa fa-signal"></span>
-                            <span class="hidden-sm-down" jhiTranslate="global.menu.entities.statistic"></span>
+                            <span class="hidden-sm-down" jhiTranslate="global.menu.entities.statistic">Statistic</span>
                         </button>
                         <button type="submit"
                                 (click)="exportQuizById(quizExercise.id, true)"
                                 class="btn btn-primary btn-sm mr-1">
-                            <span class="hidden-sm-down" jhiTranslate="entity.action.export"></span>
+                            <span class="hidden-sm-down" jhiTranslate="entity.action.export">Export</span>
                         </button>
                         <button type="submit"
                                 [routerLink]="['/course', quizExercise.course.id, 'exercise', quizExercise.id, 'dashboard' ]"
@@ -122,14 +122,14 @@
                                 [routerLink]="['edit', quizExercise.id]"
                                 class="btn btn-primary btn-sm mr-1">
                             <span class="fa fa-pencil"></span>
-                            <span class="hidden-sm-down" jhiTranslate="entity.action.edit"></span>
+                            <span class="hidden-sm-down" jhiTranslate="entity.action.edit">Edit</span>
                         </button>
                         <button type="submit"
                                 [hidden]="!quizIsOver(quizExercise) || !userIsInstructor()"
                                 [routerLink]="['/course', quizExercise.course.id, 'quiz-exercise', 're-evaluate', quizExercise.id]"
                                 class="btn btn-primary btn-sm mr-1">
                             <span class="fa fa-pencil"></span>
-                            <span class="hidden-sm-down" jhiTranslate="entity.action.re-evaluate"></span>
+                            <span class="hidden-sm-down" jhiTranslate="entity.action.re-evaluate">Re-evaluate</span>
                         </button>
                         <button type="submit"
                                 [routerLink]="['/', { outlets: { popup: 'quiz-exercise/'+ quizExercise.id + '/delete'} }]"
