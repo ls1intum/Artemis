@@ -75,11 +75,11 @@ public class StatisticService {
             for (Result result : resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId())) {
 
                 // find latest rated Result
-                if (result.isRated() && (latestRatedResult == null || latestRatedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {
+                if (result.isRated() == Boolean.TRUE && (latestRatedResult == null || latestRatedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {
                     latestRatedResult = result;
                 }
                 // find latest unrated Result
-                if (!result.isRated() && (latestUnratedResult == null || latestUnratedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {
+                if (result.isRated() == Boolean.FALSE && (latestUnratedResult == null || latestUnratedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {
                     latestUnratedResult = result;
                 }
             }
@@ -113,7 +113,7 @@ public class StatisticService {
             for (Result result : results) {
                 // check if the result is rated
                 // NOTE: where is never an old Result if the new result is rated
-                if (!result.isRated()) {
+                if (result.isRated() == Boolean.FALSE) {
                     removeResultFromAllStatistics(quiz, getPreviousResult(result));
                 }
                 addResultToAllStatistics(quiz, result);
