@@ -318,8 +318,8 @@ public abstract class Exercise implements Serializable {
         Result latestResult = null;
         for (Result result : participation.getResults()) {
             //NOTE: for the dashboard we only use rated results with completion date
-            //TODO: isRatedNull is a compatibility mechanism that we should deactivate soon
-            if (result.getCompletionDate() != null && (result.isRatedNull() || result.isRated())) {
+            //TODO: result.isRated() == null is a compatibility mechanism that we should deactivate soon
+            if (result.getCompletionDate() != null && (result.isRated() == null || result.isRated() == Boolean.TRUE)) {
                 //take the first found result that fulfills the above requirements
                 if (latestResult == null) {
                     latestResult = result;

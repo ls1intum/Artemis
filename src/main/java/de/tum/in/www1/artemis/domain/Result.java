@@ -46,6 +46,10 @@ public class Result implements Serializable {
     @JsonView(QuizView.Before.class)
     private Boolean buildArtifact;
 
+    /**
+     * Relative score in %
+     *
+     */
     @Column(name = "score")
     @JsonView(QuizView.After.class)
     private Long score;
@@ -218,12 +222,7 @@ public class Result implements Serializable {
     }
 
     public Boolean isRated() {
-        return rated != null ? rated : false;
-    }
-
-    @JsonIgnore
-    public Boolean isRatedNull() {
-        return rated == null;
+        return rated;
     }
 
     public Result rated(Boolean rated) {

@@ -19,11 +19,11 @@
     <div class="container">
         <div class="quiz-footer-content">
             <div>
-                <div>
+                <div *ngIf="quizExercise.questions">
                     <span jhiTranslate="arTeMiSApp.quizExercise.questions" class="colon-suffix"></span>
-                    {{quizExercise.questions.length}}
+                    {{quizExercise.questions ? quizExercise.questions.length : 0}}
                 </div>
-                <div>
+                <div *ngIf="quizExercise.questions">
                     <span jhiTranslate="arTeMiSApp.quizExercise.totalPoints" class="colon-suffix"></span>
                     {{totalScore}}
                 </div>

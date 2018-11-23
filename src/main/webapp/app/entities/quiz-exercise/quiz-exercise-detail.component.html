@@ -123,15 +123,17 @@
             </div>
         </div>
         <div class="btn-group" role="group">
-            <button class="btn  btn-info " (click)="addMultipleChoiceQuestion()"
-                    jhiTranslate="arTeMiSApp.quizExercise.addMultipleChoiceQuestion">
+            <button class="btn btn-success mr-2" (click)="addMultipleChoiceQuestion()">
+                <span class="fa fa-plus"></span>
+                <span jhiTranslate="arTeMiSApp.quizExercise.addMultipleChoiceQuestion">Add Multiplce-Choice Question</span>
             </button>
-            <button class="btn btn-info " (click)="addDragAndDropQuestion()"
-                    jhiTranslate="arTeMiSApp.quizExercise.addDragAndDropQuestion">
+            <button class="btn btn-success mr-2" (click)="addDragAndDropQuestion()">
+                <span class="fa fa-plus"></span>
+                <span jhiTranslate="arTeMiSApp.quizExercise.addDragAndDropQuestion"></span>
             </button>
-            <button class="btn" (click)="showHideExistingQuestions()"
-                    jhiTranslate="arTeMiSApp.quizExercise.addExistingQuestions"
-                    [ngClass]="{'btn-primary': showExistingQuestions, 'btn-info': !showExistingQuestions}">
+            <button class="btn mr-2" (click)="showHideExistingQuestions()" [ngClass]="{'btn-primary': showExistingQuestions, 'btn-success': !showExistingQuestions}">
+                <span class="fa fa-plus"></span>
+                <span jhiTranslate="arTeMiSApp.quizExercise.addExistingQuestions"></span>
             </button>
         </div>
 
