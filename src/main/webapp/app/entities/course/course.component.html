@@ -28,7 +28,7 @@
             <tbody>
             <tr *ngFor="let course of courses ;trackBy: trackId">
                 <td><a [routerLink]="['/course', course.id, 'view' ]">{{course.id}}</a></td>
-                <td>{{course.title}}</br><span *ngIf="course.shortName"><span class="bold">Short Name:</span> {{course.shortName}}</span></td>
+                <td><span class="bold">{{course.title}}</span></br><span *ngIf="course.shortName"><span class="bold">Short Name:</span> {{course.shortName}}</span></td>
                 <td><span class="bold">Students:</span> {{course.studentGroupName}}</br>
                     <span class="bold">Tutors:</span> {{course.teachingAssistantGroupName}}</br>
                     <span class="bold">Instructors:</span> {{course.instructorGroupName}}</td>
