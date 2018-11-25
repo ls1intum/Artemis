@@ -13,6 +13,7 @@ import { FileUploaderService } from '../../shared/http/file-uploader.service';
 })
 export class ApollonQuizExerciseGenerationComponent implements OnInit {
     apollonEditor: ApollonEditor;
+    diagramTitle: string;
     courses: Course[];
     selectedCourse: Course;
 
@@ -44,6 +45,7 @@ export class ApollonQuizExerciseGenerationComponent implements OnInit {
         const fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif';
 
         await generateDragAndDropQuizExercise(
+            this.diagramTitle,
             layoutedDiagram,
             interactiveElementIds,
             fontFamily,
