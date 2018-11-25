@@ -1,4 +1,4 @@
-<div class="drag-item" ngClass="{'no-click': clickDisabled}">
+<div class="drag-item" ngClass="{'no-click': clickDisabled}" [ngStyle]="{'min-width': minWidth}">
     <div class="drag-item-picture" *ngIf="dragItem && dragItem.pictureFilePath"
          dnd-draggable [dragEnabled]="!clickDisabled" [dragData]="dragItem">
         <jhi-secured-image *ngIf="dragItem.pictureFilePath" [src]="dragItem.pictureFilePath"></jhi-secured-image>
