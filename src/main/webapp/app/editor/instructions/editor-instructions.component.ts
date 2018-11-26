@@ -226,6 +226,9 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
     triggerTestStatusClick(index: number): void {
         const testStatusDOMElements = this.elementRef.nativeElement.querySelectorAll('.test-status');
         if (testStatusDOMElements.length) {
+            // TODO: in case we have some "green" tasks, the index is wrong and has to be shifted
+            // this leads to a wrong display of failing tests for green tasks, the wrong failing
+            // tests for red tasks and the problem that the last tasks cannot be clicked.
             testStatusDOMElements[index].click();
         }
     }
@@ -416,8 +419,7 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
             if (label === this.translateService.instant('arTeMiSApp.editor.testStatusLabels.noResult')) {
                 text += '<span class="text-danger bold">' + label + '</span>'; // this should be bold
             } else {
-                text +=
-                    '<a data-tests="' + tests.toString() + '" class="test-status"><span class="text-danger result">' + label + '</span></a>';
+                text += '<a data-tests="' + tests.toString() + '" class="test-status"><span class="text-danger result">' + label + '</span></a>';
             }
         }
         text += '<br />';
