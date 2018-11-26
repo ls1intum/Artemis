@@ -1,24 +1,33 @@
 package de.tum.in.www1.artemis.service;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+
+import java.text.DecimalFormat;
+import java.time.ZonedDateTime;
 
 abstract class AssessmentService {
-    /**
-     * Helper function to calculate the total score of an assessment json. It loops through all assessed model elements
-     * and sums the credits up.
-     *
-     * @param assessmentJson    the assessments as JsonObject
-     * @return the total score
-     */
-    Double calculateTotalScore(JsonObject assessmentJson) {
-        double totalScore = 0.0;
-        JsonArray assessments = assessmentJson.get("assessments").getAsJsonArray();
-        for (JsonElement assessment : assessments) {
-            totalScore += assessment.getAsJsonObject().getAsJsonPrimitive("credits").getAsDouble();
-        }
-        //TODO round this value to max two numbers after the comma
-        return totalScore;
+    protected final ResultRepository resultRepository;
+
+    public AssessmentService(ResultRepository resultRepository) {
+        this.resultRepository = resultRepository;
+    }
+
+    Result prepareSubmission(Result result, Exercise exercise, Double calculatedScore) {
+        Boolean rated = exercise.getDueDate() == null || result.getSubmission().getSubmissionDate().isBefore(exercise.getDueDate());
+        result.setRated(rated);
+        result.setCompletionDate(ZonedDateTime.now());
+
+        Double maxScore = exercise.getMaxScore();
+        Double totalScore = Math.min(Math.max(0, calculatedScore), maxScore);
+        double percentageScore = totalScore/maxScore * 100;
+        result.setScore(Math.round(percentageScore));
+        DecimalFormat formatter = new DecimalFormat("#.##"); // limit decimal places to 2
+        result.setResultString(formatter.format(totalScore) + " of " + formatter.format(exercise.getMaxScore()) + " points");
+        result.setSuccessful(result.getScore() == 100L);
+
+        resultRepository.save(result);
+        return result;
     }
 }

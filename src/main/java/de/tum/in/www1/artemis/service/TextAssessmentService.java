@@ -17,13 +17,18 @@ import java.util.stream.Collectors;
 public class TextAssessmentService extends AssessmentService {
 
     private final FeedbackRepository feedbackRepository;
-    private final ResultRepository resultRepository;
+    private final TextExerciseService textExerciseService;
     private final TextSubmissionRepository textSubmissionRepository;
     private final UserService userService;
 
-    public  TextAssessmentService(FeedbackRepository feedbackRepository, ResultRepository resultRepository, TextSubmissionRepository textSubmissionRepository, UserService userService) {
+    public TextAssessmentService(FeedbackRepository feedbackRepository,
+                                 ResultRepository resultRepository,
+                                 TextExerciseService textExerciseService,
+                                 TextSubmissionRepository textSubmissionRepository,
+                                 UserService userService) {
+        super(resultRepository);
         this.feedbackRepository = feedbackRepository;
-        this.resultRepository = resultRepository;
+        this.textExerciseService = textExerciseService;
         this.textSubmissionRepository = textSubmissionRepository;
         this.userService = userService;
     }
@@ -32,13 +37,30 @@ public class TextAssessmentService extends AssessmentService {
      * This function is used for manually assessed results. It updates the completion date, sets the assessment type to MANUAL
      * and sets the assessor attribute. Furthermore, it saves the assessment in the file system the total score is calculated and set in the result.
      *
-     * @param resultId              the resultId the assessment belongs to
-     * @param exerciseId            the exerciseId the assessment belongs to
-     * @param textAssessment        the assessments as string
+     * @param resultId       the resultId the assessment belongs to
+     * @param exerciseId     the exerciseId the assessment belongs to
+     * @param textAssessment the assessments as a list
      * @return the ResponseEntity with result as body
      */
     @Transactional
-    public Result saveAssessment(Long resultId, Long exerciseId, List<Feedback> textAssessment) {
+    public Result submitAssessment(Long resultId, Long exerciseId, List<Feedback> textAssessment) {
+        Result result = saveAssessment(resultId, textAssessment);
+        TextExercise textExercise = textExerciseService.findOne(exerciseId);
+        Double calculatedScore = calculateTotalScore(textAssessment);
+
+        return prepareSubmission(result, textExercise, calculatedScore);
+    }
+
+    /**
+     * This function is used for manually assessed results. It updates the completion date, sets the assessment type to MANUAL
+     * and sets the assessor attribute. Furthermore, it saves the assessment in the file system the total score is calculated and set in the result.
+     *
+     * @param resultId       the resultId the assessment belongs to
+     * @param textAssessment the assessments as string
+     * @return the ResponseEntity with result as body
+     */
+    @Transactional
+    public Result saveAssessment(Long resultId, List<Feedback> textAssessment) {
         Optional<Result> desiredResult = resultRepository.findById(resultId);
         Result result = desiredResult.orElseGet(Result::new);
 
@@ -63,7 +85,7 @@ public class TextAssessmentService extends AssessmentService {
         feedbackRepository.deleteAll(deprecatedFeedback);
 
         // update existing and save new
-        for(Feedback feedback: textAssessment) {
+        for (Feedback feedback : textAssessment) {
             feedback.setResult(result);
             feedback.setType(FeedbackType.MANUAL);
         }
@@ -77,4 +99,16 @@ public class TextAssessmentService extends AssessmentService {
     public List<Feedback> getAssessmentsForResult(Result result) {
         return this.feedbackRepository.findByResult(result);
     }
+
+    /**
+     * Helper function to calculate the total score of a feedback list. It loops through all assessed model elements
+     * and sums the credits up.
+     *
+     * @param assessments    the List of Feedback
+     * @return the total score
+     */
+    private Double calculateTotalScore(List<Feedback> assessments) {
+        return assessments.stream().mapToDouble(Feedback::getCredits).sum();
+    }
+
 }

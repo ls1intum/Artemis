@@ -57,7 +57,7 @@ public class TextAssessmentResource extends AssessmentResource {
         ResponseEntity responseFailure = checkExercise(textExercise);
         if (responseFailure != null) return responseFailure;
 
-        Result result = textAssessmentService.saveAssessment(resultId, exerciseId, textAssessment.getAssessments());
+        Result result = textAssessmentService.saveAssessment(resultId, textAssessment.getAssessments());
         return ResponseEntity.ok(result);
     }
 
