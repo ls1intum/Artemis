@@ -32,6 +32,19 @@ public class Feedback implements Serializable {
     @Column(name = "detail_text")
     private String detailText;
 
+    /**
+     * Reference to the assessed element (e.g. model element id or text element string)
+     */
+    @Size(max = 500)
+    @Column(name = "reference")
+    private String reference;
+
+    /**
+     * Absolute score for the assessed element (e.g. +0.5, -1.0, +2.0, etc.)
+     */
+    @Column(name = "credits ")
+    private Double credits;
+
     @Column(name = "positive")
     private Boolean positive;
 
@@ -77,6 +90,24 @@ public class Feedback implements Serializable {
     public void setDetailText(String detailText) {
         this.detailText = detailText;
     }
+
+    public String getReference() { return reference; }
+
+    public Feedback reference(String reference) {
+        this.reference = reference;
+        return this;
+    }
+
+    public void setReference(String reference) { this.reference = reference; }
+
+    public Double getCredits() { return credits; }
+
+    public Feedback credits(Double credits) {
+        this.credits = credits;
+        return this;
+    }
+
+    public void setCredits(Double credits) { this.credits = credits; }
 
     public Boolean isPositive() {
         return positive;
@@ -131,6 +162,10 @@ public class Feedback implements Serializable {
             return false;
         }
         return Objects.equals(getId(), feedback.getId());
+    }
+
+    public boolean referenceEquals(Feedback otherFeedback) {
+        return reference.equals(otherFeedback.reference);
     }
 
     @Override

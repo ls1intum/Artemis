@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.domain.ModelingExercise;
 import de.tum.in.www1.artemis.domain.ModelingSubmission;
@@ -20,7 +18,7 @@ import java.text.DecimalFormat;
 import java.time.ZonedDateTime;
 
 @Service
-public class ModelingAssessmentService {
+public class ModelingAssessmentService extends AssessmentService {
     private final Logger log = LoggerFactory.getLogger(ModelingAssessmentService.class);
 
     private final JsonAssessmentRepository jsonAssessmentRepository;
@@ -133,20 +131,4 @@ public class ModelingAssessmentService {
     }
 
 
-    /**
-     * Helper function to calculate the total score of an assessment json. It loops through all assessed model elements
-     * and sums the credits up.
-     *
-     * @param assessmentJson    the assessments as JsonObject
-     * @return the total score
-     */
-    public Double calculateTotalScore(JsonObject assessmentJson) {
-        Double totalScore = 0.0;
-        JsonArray assessments = assessmentJson.get("assessments").getAsJsonArray();
-        for (JsonElement assessment : assessments) {
-            totalScore += assessment.getAsJsonObject().getAsJsonPrimitive("credits").getAsDouble();
-        }
-        //TODO round this value to max two numbers after the comma
-        return totalScore;
-    }
 }

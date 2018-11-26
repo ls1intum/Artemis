@@ -2,7 +2,7 @@
     <div class="card-header">
         <fa-icon [icon]="'trash-alt'" class="float-right" (click)="delete()"></fa-icon>
         <h4 class="card-title">
-            Score for "<span class="highlight" [ngClass]="highlightColor">{{assessment.text}}</span>"
+            Score for "<span class="highlight" [ngClass]="highlightColor">{{assessment.reference}}</span>"
         </h4>
     </div>
     <div class="card-body">
@@ -12,7 +12,7 @@
         </div>
         <div class="form-group row">
             <label class="col-3">Feedback</label>
-            <textarea class="col form-control" rows="2" [(ngModel)]="assessment.comment" (ngModelChange)="emitChanges()"></textarea>
+            <textarea class="col form-control" rows="2" [(ngModel)]="assessment.text" (ngModelChange)="emitChanges()"></textarea>
         </div>
     </div>
 </div>

@@ -41,7 +41,7 @@
 </div>
 
 <div>
-    <button type="submit" (click)="previous()" class="btn btn-info">
+    <button type="submit" (click)="previous()" class="btn btn-info mr-3">
         <span class="fa fa-arrow-left"></span>&nbsp;<span jhiTranslate="entity.action.back">Back</span>
     </button>
     <button *ngIf="(result?.rated && !done) || (result?.assessor && result.assessor.id !== accountId && !result?.rated)"
@@ -53,11 +53,11 @@
 <div class="p-4">
 
     <div class="row">
-        <div class="col-8 col-xl-9">
+        <div class="col-sm-12 col-md-7 col-xl-8 mb-sm-3">
             <jhi-text-assessment-editor [submissionText]="submission?.text" [assessments]="assessments"
                                         (assessedText)="addAssessment($event)"></jhi-text-assessment-editor>
         </div>
-        <div class="col-4 col-xl-3">
+        <div class="col-sm-12 col-md-5 col-xl-4">
             <ng-container *ngFor="let assessment of assessments; let i = index">
                 <jhi-text-assessment-detail [(assessment)]="assessments[i]" (assessmentChange)="checkScoreBoundaries()"
                                             [highlightColor]="getColorForIndex(i)"

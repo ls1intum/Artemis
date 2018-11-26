@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { TextAssessment } from 'app/entities/text-assessments/text-assessments.model';
-import { Color } from 'app/text/tutor';
+import { Color } from '../highlight-colors';
 
 @Component({
     selector: 'jhi-text-assessment-detail',
@@ -18,7 +18,7 @@ export class TextAssessmentDetailComponent {
     }
 
     public delete() {
-        const confirmation = confirm(`Delete Assessment "${this.assessment.text}"?`);
+        const confirmation = confirm(`Delete Assessment "${this.assessment.reference}"?`);
         if (confirmation) {
             this.deleteAssessment.emit(this.assessment);
         }

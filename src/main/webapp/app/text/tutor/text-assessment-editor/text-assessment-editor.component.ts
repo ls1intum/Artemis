@@ -1,16 +1,6 @@
-import {
-    Component,
-    DoCheck,
-    EventEmitter,
-    Input,
-    IterableDifferFactory,
-    IterableDiffers,
-    OnChanges,
-    Output,
-    SimpleChanges
-} from '@angular/core';
-import { SelectionRectangle, TextSelectEvent } from 'app/text/tutor/text-assessment-editor/text-select.directive';
-import { Color, colorForIndex, colors } from 'app/text/tutor';
+import { Component, DoCheck, EventEmitter, Input, IterableDiffers, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { SelectionRectangle, TextSelectEvent } from '../text-assessment-editor/text-select.directive';
+import { colorForIndex, colors } from '../highlight-colors';
 import { TextAssessment } from 'app/entities/text-assessments/text-assessments.model';
 
 @Component({
@@ -76,8 +66,8 @@ export class TextAssessmentEditorComponent implements OnChanges, DoCheck {
         return this.assessments.reduce(
             (content: string, assessment: TextAssessment, currentIndex: number) =>
                 content.replace(
-                    new RegExp(assessment.text, 'gi'),
-                    match => `<span class="highlight ${colorForIndex(currentIndex)}">${match}</span>`
+                    assessment.reference,
+                    `<span class="highlight ${colorForIndex(currentIndex)}">${assessment.reference}</span>`
                 ),
             this.submissionText
         );

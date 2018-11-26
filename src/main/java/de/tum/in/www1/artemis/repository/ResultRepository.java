@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -50,6 +51,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     Optional<Result> findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(Long participationId, boolean rated);
 
     Optional<Result> findDistinctBySubmissionId(Long submissionId);
+
+    Optional<Result> findDistinctBySubmission(Submission submission);
 
     /**
      * This SQL query is used for inserting results if only one unrated result should exist per participation.

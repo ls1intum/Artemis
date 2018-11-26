@@ -5,7 +5,7 @@ import { ArTEMiSTextTutorComponent } from 'app/text/tutor/tutor.component';
 
 const routes: Routes = [
     {
-        path: 'text/:id/tutor',
+        path: 'text/:exerciseId/:submissionId/tutor',
         component: ArTEMiSTextTutorComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],

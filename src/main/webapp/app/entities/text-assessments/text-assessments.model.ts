@@ -1,11 +1,16 @@
-export class TextAssessment {
-    public text: string;
-    public credits: number;
-    public comment: string;
+import { HttpResponse } from '@angular/common/http';
+import { Result } from 'app/entities/result';
 
-    constructor(text: string, credits: number, comment: string) {
-        this.text = text;
+export type EntityResponseType = HttpResponse<Result>;
+
+export class TextAssessment {
+    public reference: string;
+    public credits: number;
+    public text: string;
+
+    constructor(reference: string, credits: number, text: string) {
+        this.reference = reference;
         this.credits = credits;
-        this.comment = comment;
+        this.text = text;
     }
 }
