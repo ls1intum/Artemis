@@ -228,16 +228,10 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
         /** We analyze the tests up until our index to determine the number of green tests **/
         const testStatusCircleElements = this.elementRef.nativeElement.querySelectorAll('.stepwizard-circle');
         const testStatusCircleElementsUntilIndex = Array.from(testStatusCircleElements).slice(0, index + 1);
-        console.log(
-            'testStatusCircleElements',
-            testStatusCircleElements,
-            'testStatusCircleElementsUntilIndex',
-            testStatusCircleElementsUntilIndex
-        );
         const positiveTestsUntilIndex = testStatusCircleElementsUntilIndex.filter((testCircle: HTMLElement) =>
             testCircle.children[0].classList.contains('text-success')
         ).length;
-        console.log('positiveTestsUntilIndex', positiveTestsUntilIndex);
+        /** The click should only be executed if the clicked element is not a positive test **/
         if (testStatusDOMElements.length && !testStatusCircleElements[index].children[0].classList.contains('text-success')) {
             /** We subtract the number of positive tests from the index to match the correct test status link **/
             testStatusDOMElements[index - positiveTestsUntilIndex].click();
