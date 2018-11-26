@@ -11,7 +11,8 @@
         <div class="stepwizard">
             <div class="stepwizard-row">
                 <div *ngFor="let step of steps; index as i" class="stepwizard-step">
-                    <div data-toggle="tooltip" data-placement="bottom" title="{{step.title}}" class="btn btn-light btn-circle stepwizard-circle" (click)="triggerTestStatusClick(i)">
+                    <div data-toggle="tooltip" data-placement="bottom" title="{{step.title}}"
+                         class="btn btn-light btn-circle stepwizard-circle" [class.test-passing]="step.done" (click)="triggerTestStatusClick(i)">
                         <i class="fa fa-lg fa-check text-success" *ngIf="step.done"></i>
                         <i class="fa fa-lg fa-times text-danger"  *ngIf="!step.done"></i>
                     </div>
