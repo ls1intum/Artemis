@@ -226,6 +226,9 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
     triggerTestStatusClick(index: number): void {
         const testStatusDOMElements = this.elementRef.nativeElement.querySelectorAll('.test-status');
         if (testStatusDOMElements.length) {
+            // TODO: in case we have some "green" tasks, the index is wrong and has to be shifted
+            // this leads to a wrong display of failing tests for green tasks, the wrong failing
+            // tests for red tasks and the problem that the last tasks cannot be clicked.
             testStatusDOMElements[index].click();
         }
     }
@@ -401,13 +404,13 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
         const tests = tokens[0].tests;
         const [done, label] = this.statusForTests(tests);
 
-        let text = '<strong>';
+        let text = '<span class="bold">';
 
         text += done
             ? '<i class="fa fa-lg fa-check-circle-o text-success" style="font-size: 1.7em;"></i>'
             : '<i class="fa fa-lg fa-times-circle-o text-danger" style="font-size: 1.7em;"></i>';
         text += ' ' + tokens[0].title;
-        text += '</strong>: ';
+        text += '</span>: ';
         // If the test is not done, we set the 'data-tests' attribute to the a-element, which we later use for the details dialog
         if (done) {
             text += '<span class="text-success bold">' + label + '</span>';
@@ -416,9 +419,7 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
             if (label === this.translateService.instant('arTeMiSApp.editor.testStatusLabels.noResult')) {
                 text += '<span class="text-danger bold">' + label + '</span>'; // this should be bold
             } else {
-                text +=
-                    '<a data-tests="\' + tests.toString() + \'" class="test-status result"><span class="text-danger">\' + label + \'</span></a>';
-                // TODO: test if underlining the link works as in the result component
+                text += '<a data-tests="' + tests.toString() + '" class="test-status"><span class="text-danger result">' + label + '</span></a>';
             }
         }
         text += '<br />';

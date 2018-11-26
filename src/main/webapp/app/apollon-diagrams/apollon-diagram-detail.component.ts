@@ -3,7 +3,6 @@ import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import ApollonEditor, { State } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
-import * as ApollonDiagramTitleFormatter from './apollonDiagramTitleFormatter';
 import { ApollonQuizExerciseGenerationComponent } from './exercise-generation/apollon-quiz-exercise-generation.component';
 import { ApollonDiagram, ApollonDiagramService } from '../entities/apollon-diagram';
 
@@ -15,7 +14,6 @@ import { ApollonDiagram, ApollonDiagramService } from '../entities/apollon-diagr
 export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     @ViewChild('editorContainer') editorContainer: ElementRef;
 
-    diagramTitle = '';
     diagram: ApollonDiagram | null = null;
     apollonEditor: ApollonEditor | null = null;
 
@@ -35,7 +33,6 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
                     const diagram = response.body;
 
                     this.diagram = diagram;
-                    this.diagramTitle = ApollonDiagramTitleFormatter.getTitle(diagram);
 
                     const state = JSON.parse(diagram.jsonRepresentation);
                     this.initializeApollonEditor(state);
@@ -89,5 +86,6 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         const modalRef = this.modalService.open(ApollonQuizExerciseGenerationComponent, { backdrop: 'static' });
         const modalComponentInstance = modalRef.componentInstance as ApollonQuizExerciseGenerationComponent;
         modalComponentInstance.apollonEditor = this.apollonEditor;
+        modalComponentInstance.diagramTitle = this.diagram.title;
     }
 }
