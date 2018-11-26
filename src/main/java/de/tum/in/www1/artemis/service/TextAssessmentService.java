@@ -38,14 +38,13 @@ public class TextAssessmentService extends AssessmentService {
      * and sets the assessor attribute. Furthermore, it saves the assessment in the file system the total score is calculated and set in the result.
      *
      * @param resultId       the resultId the assessment belongs to
-     * @param exerciseId     the exerciseId the assessment belongs to
+     * @param textExercise     the text exercise the assessment belongs to
      * @param textAssessment the assessments as a list
      * @return the ResponseEntity with result as body
      */
     @Transactional
-    public Result submitAssessment(Long resultId, Long exerciseId, List<Feedback> textAssessment) {
+    public Result submitAssessment(Long resultId, TextExercise textExercise, List<Feedback> textAssessment) {
         Result result = saveAssessment(resultId, textAssessment);
-        TextExercise textExercise = textExerciseService.findOne(exerciseId);
         Double calculatedScore = calculateTotalScore(textAssessment);
 
         return prepareSubmission(result, textExercise, calculatedScore);

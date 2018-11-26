@@ -106,6 +106,7 @@ public class ResultService {
 
         Result result = new Result();
         result.setSubmission(submission);
+        result.setParticipation(submission.getParticipation());
 
         return resultRepository.save(result);
     }

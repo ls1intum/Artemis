@@ -7,6 +7,7 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.dto.FeedbackDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TextTutorAssessmentDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -51,13 +52,22 @@ public class TextAssessmentResource extends AssessmentResource {
     @Timed
     public ResponseEntity<Result> saveTextAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody FeedbackDTO textAssessment) {
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
-        if (textExercise == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("textExercise", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
-        }
-        ResponseEntity responseFailure = checkExercise(textExercise);
+        ResponseEntity<Result> responseFailure = checkTextExerciseForRequest(textExercise);
         if (responseFailure != null) return responseFailure;
 
         Result result = textAssessmentService.saveAssessment(resultId, textAssessment.getAssessments());
+        return ResponseEntity.ok(result);
+    }
+
+    @PutMapping("/exercise/{exerciseId}/result/{resultId}/submit")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @Timed
+    public ResponseEntity<Result> submitTextAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody FeedbackDTO textAssessment) {
+        TextExercise textExercise = textExerciseService.findOne(exerciseId);
+        ResponseEntity<Result> responseFailure = checkTextExerciseForRequest(textExercise);
+        if (responseFailure != null) return responseFailure;
+
+        Result result = textAssessmentService.submitAssessment(resultId, textExercise, textAssessment.getAssessments());
         return ResponseEntity.ok(result);
     }
 
@@ -65,11 +75,9 @@ public class TextAssessmentResource extends AssessmentResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<TextTutorAssessmentDTO> getDataForTutor(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
+        log.debug("REST request to get data for tutors text assessment: {}", exerciseId, submissionId);
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
-        if (textExercise == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("textExercise", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
-        }
-        ResponseEntity responseFailure = checkExercise(textExercise);
+        ResponseEntity<TextTutorAssessmentDTO> responseFailure = checkTextExerciseForRequest(textExercise);
         if (responseFailure != null) return responseFailure;
 
         Optional<TextSubmission> textSubmission = textSubmissionRepository.findById(submissionId);
@@ -93,6 +101,14 @@ public class TextAssessmentResource extends AssessmentResource {
     @Override
     String getEntityName() {
         return ENTITY_NAME;
+    }
+
+    @Nullable
+    private <X> ResponseEntity<X> checkTextExerciseForRequest(TextExercise textExercise) {
+        if (textExercise == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("textExercise", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
+        }
+        return checkExercise(textExercise);
     }
 
 }

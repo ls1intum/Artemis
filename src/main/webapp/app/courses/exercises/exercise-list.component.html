@@ -46,6 +46,7 @@
                 <span class="text-muted" *ngSwitchCase="'quiz-submitted'">You have already submitted. Wait for the quiz to end to see results.</span>
                 <span *ngSwitchCase="'quiz-finished'"><jhi-result [participation]="exercise.participations[0]"></jhi-result></span>
                 <span *ngSwitchCase="'modeling-exercise'"><jhi-result [participation]="exercise.participations[0]"></jhi-result></span>
+                <span *ngSwitchCase="'text-exercise'"><jhi-result [participation]="exercise.participations[0]"></jhi-result></span>
             </td>
             <td class="text-center" [ngSwitch]="exercise.participationStatus">
                 <button class="btn btn-primary btn-sm btn-block" id="btn-student-action"

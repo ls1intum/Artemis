@@ -76,6 +76,11 @@ export class ArTEMiSTextTutorComponent implements OnInit {
 
     public async submit(): Promise<void> {
         this.checkScoreBoundaries();
+        const response = await this.assessmentsService.submit(this.assessments, this.exercise.id, this.result.id).toPromise();
+        response.body.participation.results = [response.body];
+        this.result = response.body;
+        this.jhiAlertService.success('arTeMiSApp.textAssessment.submitSuccessful');
+        this.done = false;
     }
 
     public previous(): void {

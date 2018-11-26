@@ -22,6 +22,13 @@ export class TextAssessmentsService {
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
+    public submit(textAssessments: TextAssessment[], exerciseId: number, resultId: number): Observable<EntityResponseType> {
+        const requestBody = { assessments: textAssessments };
+        return this.http
+            .put<Result>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}/submit`, requestBody, { observe: 'response' })
+            .map((res: EntityResponseType) => this.convertResponse(res));
+    }
+
     public getFeedbackDataForExerciseSubmission(
         exerciseId: number,
         submissionId: number
