@@ -234,9 +234,9 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
             'testStatusCircleElementsUntilIndex',
             testStatusCircleElementsUntilIndex
         );
-        const positiveTestsUntilIndex = testStatusCircleElementsUntilIndex.filter((testCircle: HTMLElement) => {
-            testCircle.children[0].classList.contains('text-success');
-        }).length;
+        const positiveTestsUntilIndex = testStatusCircleElementsUntilIndex.filter((testCircle: HTMLElement) =>
+            testCircle.children[0].classList.contains('text-success')
+        ).length;
         console.log('positiveTestsUntilIndex', positiveTestsUntilIndex);
         if (testStatusDOMElements.length && !testStatusCircleElements[index].children[0].classList.contains('text-success')) {
             /** We subtract the number of positive tests from the index to match the correct test status link **/
