@@ -1,22 +1,22 @@
 <div>
     <div>
-        <h4>
-        <span>Exercise Overview</span>
-        </h4>
+        <h4><span>Exercise Overview</span></h4>
     </div>
-
-    <div class="question card">
+    <div class="question card" *ngFor="let isQuestionCollapsed of ExerciseType">
         <div class="question-options card-header question-card-header">
+            %if schleife abfrage vom exercise typ dann gen tittle
             <h5><span jhiTranslate="arTeMiSApp.course.quizExercises">Quiz Exercises</span></h5>
+            %if schleife abfrage vom exercse typ dann das iscollapsed vom typ
             <button
                 class="btn btn-light question-collapse"
-                (click)="isQuizQuestionCollapsed = !isQuizQuestionCollapsed"
-                [attr.aria-expanded]="!isQuizQuestionCollapsed"
+                (click)="isQuestionCollapsed = !isQuestionCollapsed"
+                [attr.aria-expanded]="!isQuestionCollapsed"
                 [attr.aria-controls]="'collapseQuestion'">
-                <span class="fa fa-2x" [ngClass]="isQuizQuestionCollapsed ? 'fa-angle-right' : 'fa-angle-down'" ></span>
+                <span class="fa fa-2x" [ngClass]="isQuestionCollapsed ? 'fa-angle-right' : 'fa-angle-down'" ></span>
             </button>
         </div>
-        <div class="card-body question-card-body"  [ngbCollapse]="isQuizQuestionCollapsed" >
+        <div class="card-body question-card-body"  [ngbCollapse]="isQuestionCollapsed" >
+            %if schleife mit den abfragen vom exercise typ und dann die richtige componente einbinden
             <div>
                <jhi-quiz-exercise>
                </jhi-quiz-exercise>
