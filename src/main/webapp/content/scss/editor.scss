@@ -409,11 +409,11 @@ Stepwizard styles (editor instructions)
 }
 
 .test-passing {
-    cursor: pointer !important;
+    cursor: default !important;
 }
 
 .test-passing:hover {
-    background-color: inherit;
+    background-color: #f8f9fa;
 }
 
 /* ==========================================================================
