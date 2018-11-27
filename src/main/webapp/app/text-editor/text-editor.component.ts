@@ -8,14 +8,14 @@ import { TextSubmission, TextSubmissionService } from 'app/entities/text-submiss
 import { TextExercise, TextExerciseService } from 'app/entities/text-exercise';
 import { Result } from 'app/entities/result';
 import { Participation, ParticipationService } from 'app/entities/participation';
-import { TextService } from 'app/text/text.service';
+import { TextEditorService } from 'app/text-editor/text-editor.service';
 import * as moment from 'moment';
 
 @Component({
-    templateUrl: './text.component.html',
+    templateUrl: './text-editor.component.html',
     providers: [ParticipationService]
 })
-export class TextComponent implements OnInit, OnDestroy {
+export class TextEditorComponent implements OnInit, OnDestroy {
     private subscription: Subscription;
 
     textExercise: TextExercise;
@@ -31,7 +31,7 @@ export class TextComponent implements OnInit, OnDestroy {
         private textExerciseService: TextExerciseService,
         private participationService: ParticipationService,
         private textSubmissionService: TextSubmissionService,
-        private textService: TextService,
+        private textService: TextEditorService,
         private jhiAlertService: JhiAlertService
     ) {
         this.isSaving = false;

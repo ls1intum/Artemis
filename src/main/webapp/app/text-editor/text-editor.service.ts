@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 
 @Injectable({ providedIn: 'root' })
-export class TextService {
+export class TextEditorService {
     constructor(private http: HttpClient) {}
 
     get(id: number): Observable<any> {

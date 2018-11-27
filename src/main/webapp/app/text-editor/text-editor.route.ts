@@ -1,12 +1,12 @@
 import { Routes } from '@angular/router';
 
 import { UserRouteAccessService } from 'app/core';
-import { TextComponent } from './text.component';
+import { TextEditorComponent } from './text-editor.component';
 
-export const textRoute: Routes = [
+export const textEditorRoute: Routes = [
     {
         path: 'text/:participationId',
-        component: TextComponent,
+        component: TextEditorComponent,
         data: {
             authorities: ['ROLE_USER'],
             pageTitle: 'arTeMiSApp.textExercise.home.title'
