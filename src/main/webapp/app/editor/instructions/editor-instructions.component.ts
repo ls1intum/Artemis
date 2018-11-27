@@ -424,12 +424,7 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
             if (label === this.translateService.instant('arTeMiSApp.editor.testStatusLabels.noResult')) {
                 text += '<span class="text-danger bold">' + label + '</span>'; // this should be bold
             } else {
-                text +=
-                    '<a data-tests="' +
-                    tests.toString() +
-                    '" class="test-status"><span class="text-danger result">' +
-                    label +
-                    '</span></a>';
+                text += '<a data-tests="' + tests.toString() + '" class="test-status"><span class="text-danger result">' + label + '</span></a>';
             }
         }
         text += '<br />';
