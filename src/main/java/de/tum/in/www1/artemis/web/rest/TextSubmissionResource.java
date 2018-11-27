@@ -13,6 +13,7 @@ import de.tum.in.www1.artemis.service.TextSubmissionService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -76,17 +77,7 @@ public class TextSubmissionResource {
             throw new BadRequestAlertException("A new textSubmission cannot already have an ID", ENTITY_NAME, "idexists");
         }
 
-        ResponseEntity<TextSubmission> error = this.checkExerciseValidity(exerciseId);
-        if (error != null) {
-            return error;
-        }
-
-        TextExercise textExercise = textExerciseService.findOne(exerciseId);
-        Participation participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
-
-        // update and save submission
-        textSubmission = textSubmissionService.save(textSubmission, textExercise, participation);
-        return ResponseEntity.ok(textSubmission);
+        return handleTextSubmission(exerciseId, principal, textSubmission);
     }
 
     /**
@@ -111,72 +102,38 @@ public class TextSubmissionResource {
             return createTextSubmission(exerciseId, principal, textSubmission);
         }
 
-        ResponseEntity<TextSubmission> error = this.checkExerciseValidity(exerciseId);
-        if (error != null) {
-            return error;
-        }
+        return handleTextSubmission(exerciseId, principal, textSubmission);
+    }
 
+    @NotNull
+    private ResponseEntity<TextSubmission> handleTextSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody TextSubmission textSubmission) {
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
+        ResponseEntity<TextSubmission> responseFailure = this.checkExerciseValidity(textExercise);
+        if (responseFailure != null) return responseFailure;
+
         Participation participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
 
+        // update and save submission
         textSubmission = textSubmissionService.save(textSubmission, textExercise, participation);
-
+        hideDetails(textSubmission);
         return ResponseEntity.ok(textSubmission);
     }
 
-    /**
-     * POST  /text-submissions : Create a new textSubmission.
-     *
-     * @param textSubmission the textSubmission to create
-     * @return the ResponseEntity with status 201 (Created) and with body the new textSubmission, or with status 400 (Bad Request) if the textSubmission has already an ID
-     * @throws URISyntaxException if the Location URI syntax is incorrect
-     */
-    @PostMapping("/text-submissions")
-    @Timed
-    public ResponseEntity<TextSubmission> createTextSubmission(@RequestBody TextSubmission textSubmission) throws URISyntaxException {
-        log.debug("REST request to save TextSubmission : {}", textSubmission);
-        if (textSubmission.getId() != null) {
-            throw new BadRequestAlertException("A new textSubmission cannot already have an ID", ENTITY_NAME, "idexists");
+    //TODO: move this code to textSubmission which invokes the general part with super.hideDetails()
+    private void hideDetails(@RequestBody TextSubmission textSubmission) {
+        //do not send old submissions or old results to the client
+        if (textSubmission.getParticipation() != null) {
+            textSubmission.getParticipation().setSubmissions(null);
+            textSubmission.getParticipation().setResults(null);
+
+            if (textSubmission.getParticipation().getExercise() != null && textSubmission.getParticipation().getExercise() instanceof TextExercise) {
+                //make sure the solution is not sent to the client
+                TextExercise textExerciseForClient = (TextExercise) textSubmission.getParticipation().getExercise();
+                textExerciseForClient.setSampleSolution(null);
+            }
         }
-        TextSubmission result = textSubmissionRepository.save(textSubmission);
-        return ResponseEntity.created(new URI("/api/text-submissions/" + result.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
-            .body(result);
     }
 
-    /**
-     * PUT  /text-submissions : Updates an existing textSubmission.
-     *
-     * @param textSubmission the textSubmission to update
-     * @return the ResponseEntity with status 200 (OK) and with body the updated textSubmission,
-     * or with status 400 (Bad Request) if the textSubmission is not valid,
-     * or with status 500 (Internal Server Error) if the textSubmission couldn't be updated
-     * @throws URISyntaxException if the Location URI syntax is incorrect
-     */
-    @PutMapping("/text-submissions")
-    @Timed
-    public ResponseEntity<TextSubmission> updateTextSubmission(@RequestBody TextSubmission textSubmission) throws URISyntaxException {
-        log.debug("REST request to update TextSubmission : {}", textSubmission);
-        if (textSubmission.getId() == null) {
-            return createTextSubmission(textSubmission);
-        }
-        TextSubmission result = textSubmissionRepository.save(textSubmission);
-        return ResponseEntity.ok()
-            .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, textSubmission.getId().toString()))
-            .body(result);
-    }
-
-    /**
-     * GET  /text-submissions : get all the textSubmissions.
-     *
-     * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
-     */
-    @GetMapping("/text-submissions")
-    @Timed
-    public List<TextSubmission> getAllTextSubmissions() {
-        log.debug("REST request to get all TextSubmissions");
-        return textSubmissionRepository.findAll();
-    }
 
     /**
      * GET  /text-submissions/:id : get the "id" textSubmission.
@@ -192,22 +149,7 @@ public class TextSubmissionResource {
         return ResponseUtil.wrapOrNotFound(textSubmission);
     }
 
-    /**
-     * DELETE  /text-submissions/:id : delete the "id" textSubmission.
-     *
-     * @param id the id of the textSubmission to delete
-     * @return the ResponseEntity with status 200 (OK)
-     */
-    @DeleteMapping("/text-submissions/{id}")
-    @Timed
-    public ResponseEntity<Void> deleteTextSubmission(@PathVariable Long id) {
-        log.debug("REST request to delete TextSubmission : {}", id);
-        textSubmissionRepository.deleteById(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
-    }
-
-    private ResponseEntity<TextSubmission> checkExerciseValidity(Long exerciseId) {
-        TextExercise textExercise = textExerciseService.findOne(exerciseId);
+    private ResponseEntity<TextSubmission> checkExerciseValidity(TextExercise textExercise) {
         if (textExercise == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
         }

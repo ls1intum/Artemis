@@ -10,53 +10,25 @@ export type EntityResponseType = HttpResponse<TextSubmission>;
 
 @Injectable({ providedIn: 'root' })
 export class TextSubmissionService {
-    private resourceUrl = SERVER_API_URL + 'api/text-submissions';
 
     constructor(private http: HttpClient) {}
 
-    create(textSubmission: TextSubmission, exerciseId?: number): Observable<EntityResponseType> {
+    create(textSubmission: TextSubmission, exerciseId: number): Observable<EntityResponseType> {
         const copy = this.convert(textSubmission);
-        if (exerciseId) {
-            return this.http
-                .post<TextSubmission>(`api/exercises/${exerciseId}/text-submissions`, copy, {
-                    observe: 'response'
-                })
-                .map((res: EntityResponseType) => this.convertResponse(res));
-        }
         return this.http
-            .post<TextSubmission>(this.resourceUrl, copy, { observe: 'response' })
+            .post<TextSubmission>(`api/exercises/${exerciseId}/text-submissions`, copy, {
+                observe: 'response'
+            })
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
-    update(textSubmission: TextSubmission, exerciseId?: number): Observable<EntityResponseType> {
+    update(textSubmission: TextSubmission, exerciseId: number): Observable<EntityResponseType> {
         const copy = this.convert(textSubmission);
-        if (exerciseId) {
-            return this.http
-                .put<TextSubmission>(`api/exercises/${exerciseId}/text-submissions`, copy, {
-                    observe: 'response'
-                })
-                .map((res: EntityResponseType) => this.convertResponse(res));
-        }
         return this.http
-            .put<TextSubmission>(this.resourceUrl, copy, { observe: 'response' })
+            .put<TextSubmission>(`api/exercises/${exerciseId}/text-submissions`, copy, {
+                observe: 'response'
+            })
             .map((res: EntityResponseType) => this.convertResponse(res));
-    }
-
-    find(id: number): Observable<EntityResponseType> {
-        return this.http
-            .get<TextSubmission>(`${this.resourceUrl}/${id}`, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
-    }
-
-    query(req?: any): Observable<HttpResponse<TextSubmission[]>> {
-        const options = createRequestOption(req);
-        return this.http
-            .get<TextSubmission[]>(this.resourceUrl, { params: options, observe: 'response' })
-            .map((res: HttpResponse<TextSubmission[]>) => this.convertArrayResponse(res));
-    }
-
-    delete(id: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {
