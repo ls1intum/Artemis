@@ -12,6 +12,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 import org.hibernate.Hibernate;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,49 +97,9 @@ public class ModelingSubmissionResource {
             throw new BadRequestAlertException("A new modelingSubmission cannot already have an ID", ENTITY_NAME, "idexists");
         }
 
-        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        ResponseEntity<ModelingSubmission> responseFailure = checkModelingExercise(modelingExercise);
-        if (responseFailure != null) return responseFailure;
-
-        Participation participation = participationService.startExercise(modelingExercise, principal.getName());
-
-        // update and save submission
-        modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, participation);
-        hideDetails(modelingSubmission);
-
-        return ResponseEntity.ok(modelingSubmission);
+        return handleModelingSubmission(exerciseId, principal, modelingSubmission);
     }
 
-    private void hideDetails(@RequestBody ModelingSubmission modelingSubmission) {
-        //do not send old submissions or old results to the client
-        if (modelingSubmission.getParticipation() != null) {
-            modelingSubmission.getParticipation().setSubmissions(null);
-            modelingSubmission.getParticipation().setResults(null);
-
-            if (modelingSubmission.getParticipation().getExercise() != null && modelingSubmission.getParticipation().getExercise() instanceof ModelingExercise) {
-                //make sure the solution is not sent to the client
-                ModelingExercise modelingExerciseForClient = (ModelingExercise) modelingSubmission.getParticipation().getExercise();
-                modelingExerciseForClient.setSampleSolutionExplanation(null);
-                modelingExerciseForClient.setSampleSolutionModel(null);
-            }
-        }
-    }
-
-    @Nullable
-    private ResponseEntity<ModelingSubmission> checkModelingExercise(ModelingExercise modelingExercise) {
-        if (modelingExercise == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
-        }
-
-        Course course = modelingExercise.getCourse();
-        if (course == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this modeling exercise does not exist")).body(null);
-        }
-        if (!courseService.userHasAtLeastStudentPermissions(course)) {
-            return forbidden();
-        }
-        return null;
-    }
 
     /**
      * PUT  /courses/{courseId}/exercises/{exerciseId}/modeling-submissions : Updates an existing modelingSubmission.
@@ -164,18 +125,54 @@ public class ModelingSubmissionResource {
             return createModelingSubmission(courseId, exerciseId, principal, modelingSubmission);
         }
 
+        return handleModelingSubmission(exerciseId, principal, modelingSubmission);
+    }
+
+    @NotNull
+    private ResponseEntity<ModelingSubmission> handleModelingSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        ResponseEntity<ModelingSubmission> responseFailure = checkModelingExercise(modelingExercise);
+        ResponseEntity<ModelingSubmission> responseFailure = checkExerciseValidity(modelingExercise);
         if (responseFailure != null) return responseFailure;
 
-        Participation participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
+        Participation participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(modelingExercise.getId(), principal.getName());
 
         // update and save submission
         modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, participation);
         hideDetails(modelingSubmission);
-
         return ResponseEntity.ok(modelingSubmission);
     }
+
+    private void hideDetails(@RequestBody ModelingSubmission modelingSubmission) {
+        //do not send old submissions or old results to the client
+        if (modelingSubmission.getParticipation() != null) {
+            modelingSubmission.getParticipation().setSubmissions(null);
+            modelingSubmission.getParticipation().setResults(null);
+
+            if (modelingSubmission.getParticipation().getExercise() != null && modelingSubmission.getParticipation().getExercise() instanceof ModelingExercise) {
+                //make sure the solution is not sent to the client
+                ModelingExercise modelingExerciseForClient = (ModelingExercise) modelingSubmission.getParticipation().getExercise();
+                modelingExerciseForClient.setSampleSolutionExplanation(null);
+                modelingExerciseForClient.setSampleSolutionModel(null);
+            }
+        }
+    }
+
+    @Nullable
+    private ResponseEntity<ModelingSubmission> checkExerciseValidity(ModelingExercise modelingExercise) {
+        if (modelingExercise == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
+        }
+
+        Course course = modelingExercise.getCourse();
+        if (course == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this modeling exercise does not exist")).body(null);
+        }
+        if (!courseService.userHasAtLeastStudentPermissions(course)) {
+            return forbidden();
+        }
+        return null;
+    }
+
 
     /**
      * GET  /modeling-submissions : get all the modelingSubmissions.
@@ -221,36 +218,6 @@ public class ModelingSubmissionResource {
         });
 
         return ResponseEntity.ok().body(submissions);
-    }
-
-    /**
-     * GET  /modeling-submissions/:id : get the "id" modelingSubmission.
-     *
-     * @param id the id of the modelingSubmission to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the modelingSubmission, or with status 404 (Not Found)
-     */
-    @GetMapping("/modeling-submissions/{id}")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
-    public ResponseEntity<ModelingSubmission> getModelingSubmission(@PathVariable Long id) {
-        log.debug("REST request to get ModelingSubmission : {}", id);
-        Optional<ModelingSubmission> modelingSubmission = modelingSubmissionRepository.findById(id);
-        return ResponseUtil.wrapOrNotFound(modelingSubmission);
-    }
-
-    /**
-     * DELETE  /modeling-submissions/:id : delete the "id" modelingSubmission.
-     *
-     * @param id the id of the modelingSubmission to delete
-     * @return the ResponseEntity with status 200 (OK)
-     */
-    @DeleteMapping("/modeling-submissions/{id}")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
-    public ResponseEntity<Void> deleteModelingSubmission(@PathVariable Long id) {
-        log.debug("REST request to delete ModelingSubmission : {}", id);
-        modelingSubmissionRepository.deleteById(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 
     /**

@@ -16,16 +16,10 @@
             <input type="text" class="form-control" name="title" id="field_title" [(ngModel)]="textExercise.title" />
         </div>
         <div class="form-group">
-            <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.releaseDate" for="field_releaseDate">Release Date</label>
-            <div class="d-flex">
-                <input id="field_releaseDate" type="datetime-local" class="form-control" name="releaseDate" [(ngModel)]="textExercise.releaseDate"/>
-            </div>
+            <jhi-date-time-picker labelName="Release Date" [entity]="textExercise" field="releaseDate"></jhi-date-time-picker>
         </div>
         <div class="form-group">
-            <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.dueDate" for="field_dueDate">Due Date</label>
-            <div class="d-flex">
-                <input id="field_dueDate" type="datetime-local" class="form-control" name="dueDate" [(ngModel)]="textExercise.dueDate"/>
-            </div>
+            <jhi-date-time-picker labelName="Due Date" [entity]="textExercise" field="dueDate"></jhi-date-time-picker>
         </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.maxScore" for="field_maxScore">Max Score</label>
@@ -40,7 +34,7 @@
         </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.problemStatement" for="field_problemStatement">Problem Statement</label>
-            <textarea required class="form-control" name="problemStatement" id="field_problemStatement" maxLength="1000" [(ngModel)]="textExercise.problemStatement"></textarea>
+            <textarea required class="form-control" name="problemStatement" id="field_problemStatement" maxLength="10000" [(ngModel)]="textExercise.problemStatement"></textarea>
         </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.sampleSolution" for="field_sampleSolution">Sample Solution</label>

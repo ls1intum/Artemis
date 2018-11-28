@@ -95,6 +95,15 @@
                         </a>
                     </div>
                 </div>
+                <div *ngSwitchCase="'text-exercise'">
+                    <div *ngIf="exercise.participations && exercise.participations.length > 0" class="btn-group flex-btn-group-container">
+                        <a routerLink="/text/{{exercise.participations[0].id}}" routerLinkActive="active"
+                           class="btn btn-primary btn-sm btn-block">
+                            <i class="fa fa-folder-open fa-fw"></i>&nbsp;<span class="d-none d-md-inline" *ngIf="exercise.participations[0].initializationState === 'INITIALIZED'">Open text editor</span>
+                            <span class="d-none d-md-inline" *ngIf="exercise.participations[0].initializationState === 'FINISHED'">Show submission</span>
+                        </a>
+                    </div>
+                </div>
                 <div class="btn-group flex-btn-group-container" *ngIf="exercise.type === QUIZ">
                     <button class="btn btn-warning btn-sm"
                             *ngIf="exercise.isPracticeModeAvailable"
