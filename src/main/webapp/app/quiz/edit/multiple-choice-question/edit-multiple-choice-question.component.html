@@ -49,6 +49,15 @@
                     <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addHint" (click)="addHintAtCursor()"></div>
                     <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addExplanation" (click)="addExplanationAtCursor()"></div>
                 </div>
+                <div>
+                    <jhi-markdown-editor
+                        [preRender]="preRenderFunc"
+                        [(ngModel)]="questionEditorMode"
+                        [autoUpdateContent]="questionEditorAutoUpdate"
+                        [mode]="editor"
+                        style="min-height: 200px; width:100%; overflow: auto;">
+                    </jhi-markdown-editor>
+                </div>
             </div>
             <div class="question-content">
                 <ace-editor #questionEditor

@@ -5,6 +5,7 @@ import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
+import { MarkdownEditorComponent } from 'app/markdown-editor';
 
 @Component({
     selector: 'jhi-edit-multiple-choice-question',
@@ -71,7 +72,6 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, A
         this.questionEditor.getEditor().setShowPrintMargin(false);
         this.questionEditorText = this.generateMarkdown();
         this.questionEditor.getEditor().clearSelection();
-
         this.questionEditor.getEditor().on(
             'blur',
             () => {

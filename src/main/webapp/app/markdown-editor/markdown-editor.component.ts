@@ -23,9 +23,7 @@ declare let hljs: any;
         }
     ]
 })
-
 export class MarkdownEditorComponent implements ControlValueAccessor, Validator {
-
     @ViewChild('aceEditor')
     aceEditorContainer: ElementRef;
 
@@ -33,7 +31,7 @@ export class MarkdownEditorComponent implements ControlValueAccessor, Validator 
     hideToolbar: boolean = false;
 
     @Input()
-    height: string = "300px";
+    height: string = '300px';
 
     @Input()
     preRender: Function;
@@ -49,7 +47,6 @@ export class MarkdownEditorComponent implements ControlValueAccessor, Validator 
         this._mode = value;
     }
     _mode: string;
-
 
     @Input()
     get options(): any {
@@ -99,16 +96,15 @@ export class MarkdownEditorComponent implements ControlValueAccessor, Validator 
     _markedOpt: any;
     _previewHtml: any;
 
-    _onChange = (_: any) => { };
-    _onTouched = () => { };
+    _onChange = (_: any) => {};
+    _onTouched = () => {};
 
     constructor(
         @Attribute('required') public required: boolean = false,
         @Attribute('maxlength') public maxlength: number = -1,
         private _renderer: Renderer,
-        private _domSanitizer: DomSanitizer) {
-
-    }
+        private _domSanitizer: DomSanitizer
+    ) {}
 
     ngOnInit() {
         let _markedRender = new marked.Renderer();
@@ -143,17 +139,16 @@ export class MarkdownEditorComponent implements ControlValueAccessor, Validator 
         this.editor = ace.edit(editorElement);
         this.editor.$blockScrolling = Infinity;
         this.editor.getSession().setUseWrapMode(true);
-        this.editor.getSession().setMode("ace/mode/markdown");
+        this.editor.getSession().setMode('ace/mode/markdown');
         this.editor.setValue(this.markdownValue || '');
 
-        this.editor.on("change", (e: any) => {
+        this.editor.on('change', (e: any) => {
             let val = this.editor.getValue();
             this.markdownValue = val;
         });
     }
 
-    ngOnDestroy() {
-    }
+    ngOnDestroy() {}
 
     writeValue(value: any | Array<any>): void {
         setTimeout(() => {
@@ -184,7 +179,6 @@ export class MarkdownEditorComponent implements ControlValueAccessor, Validator 
     }
 
     insertContent(type: string) {
-
         //TODO: if text is already formatted with the same type, then "unformat it", i.e. remove the type
         if (!this.editor) return;
         let selectedText = this.editor.getSelectedText();
@@ -218,15 +212,15 @@ export class MarkdownEditorComponent implements ControlValueAccessor, Validator 
                 selectedText = `![](http://)`;
                 break;
             case 'Ul':
-                selectedText = `- ${selectedText || initText}`
+                selectedText = `- ${selectedText || initText}`;
                 break;
             case 'Ol':
-                selectedText = `1. ${selectedText || initText}`
+                selectedText = `1. ${selectedText || initText}`;
                 startSize = 3;
                 break;
             case 'Code':
                 initText = 'Source Code';
-                selectedText = "```language\r\n" + (selectedText || initText) + "\r\n```";
+                selectedText = '```language\r\n' + (selectedText || initText) + '\r\n```';
                 startSize = 3;
                 break;
         }
@@ -247,6 +241,10 @@ export class MarkdownEditorComponent implements ControlValueAccessor, Validator 
     previewPanelClick(event: Event) {
         event.preventDefault();
         event.stopPropagation();
+    }
+
+    preRenderFunc(content: string) {
+        return content.replace(/something/g, 'new value'); // must return a string
     }
 
     fullScreen() {
