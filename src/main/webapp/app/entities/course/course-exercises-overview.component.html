@@ -2,103 +2,25 @@
     <div>
         <h4><span>Exercise Overview</span></h4>
     </div>
-    <div class="question card" *ngFor="let isQuestionCollapsed of ExerciseType">
-        <div class="question-options card-header question-card-header">
-            %if schleife abfrage vom exercise typ dann gen tittle
-            <h5><span jhiTranslate="arTeMiSApp.course.quizExercises">Quiz Exercises</span></h5>
-            %if schleife abfrage vom exercse typ dann das iscollapsed vom typ
-            <button
-                class="btn btn-light question-collapse"
-                (click)="isQuestionCollapsed = !isQuestionCollapsed"
-                [attr.aria-expanded]="!isQuestionCollapsed"
-                [attr.aria-controls]="'collapseQuestion'">
-                <span class="fa fa-2x" [ngClass]="isQuestionCollapsed ? 'fa-angle-right' : 'fa-angle-down'" ></span>
-            </button>
-        </div>
-        <div class="card-body question-card-body"  [ngbCollapse]="isQuestionCollapsed" >
-            %if schleife mit den abfragen vom exercise typ und dann die richtige componente einbinden
-            <div>
-               <jhi-quiz-exercise>
-               </jhi-quiz-exercise>
-            </div>
-        </div>
-    </div>
-
-    <div class="question card">
-        <div class="question-options card-header question-card-header">
-            <h5><span jhiTranslate="arTeMiSApp.course.programmingExercises">Programming Exercises</span> </h5>
-            <button
-                class="btn btn-light question-collapse"
-                (click)="isProgrammingQuestionCollapsed = !isProgrammingQuestionCollapsed"
-                [attr.aria-expanded]="!isProgrammingQuestionCollapsed"
-                [attr.aria-controls]="'collapseQuestion'">
-                <span class="fa fa-2x" [ngClass]="isProgrammingQuestionCollapsed ? 'fa-angle-right' : 'fa-angle-down'" ></span>
-            </button>
-        </div>
-        <div class="card-body question-card-body"  [ngbCollapse]="isProgrammingQuestionCollapsed">
-            <div>
-                <jhi-programming-exercise>
-                </jhi-programming-exercise>
-            </div>
-        </div>
-    </div>
-
-    <div class="question card">
-        <div class="question-options card-header question-card-header">
-            <h5><span jhiTranslate="arTeMiSApp.course.modelingExercises">Modelling Exercises</span></h5>
-            <button
-                class="btn btn-light question-collapse"
-                (click)="isModellingQuestionCollapsed = !isModellingQuestionCollapsed"
-                [attr.aria-expanded]="!isModellingQuestionCollapsed"
-                [attr.aria-controls]="'collapseQuestion' ">
-                <span class="fa fa-2x" [ngClass]="isModellingQuestionCollapsed ? 'fa-angle-right' : 'fa-angle-down'" ></span>
-            </button>
-        </div>
-        <div class="card-body question-card-body"  [ngbCollapse]="isModellingQuestionCollapsed" >
-            <div>
-                <jhi-modeling-exercise>
-                </jhi-modeling-exercise>
-            </div>
-        </div>
-    </div>
-
-    <div class="question card">
-        <div class="question-options card-header question-card-header">
-            <h5><span jhiTranslate="arTeMiSApp.course.fileUploadExercises">File Upload Exercises</span></h5>
-            <button
-                class="btn btn-light question-collapse"
-                (click)="isFileQuestionCollapsed = !isFileQuestionCollapsed"
-                [attr.aria-expanded]="!isFileQuestionCollapsed"
-                [attr.aria-controls]="'collapseQuestion'">
-                <span class="fa fa-2x" [ngClass]="isFileQuestionCollapsed ? 'fa-angle-right' : 'fa-angle-down'" ></span>
-            </button>
-        </div>
-        <div class="card-body question-card-body"  [ngbCollapse]="isFileQuestionCollapsed" >
-            <div>
-                <jhi-file-upload-exercise>
-                </jhi-file-upload-exercise>
-            </div>
-        </div>
-    </div>
-
-    <div class="question card">
-        <div class="question-options card-header question-card-header">
-            <h5> <span  jhiTranslate="arTeMiSApp.course.textExercises">Text Exercises</span></h5>
-            <button
-                class="btn btn-light question-collapse"
-                (click)="isTextQuestionCollapsed = !isTextQuestionCollapsed"
-                [attr.aria-expanded]="!isTextQuestionCollapsed"
-                [attr.aria-controls]="'collapseQuestion'">
-                <span class="fa fa-2x" [ngClass]="isTextQuestionCollapsed ? 'fa-angle-right' : 'fa-angle-down'" ></span>
-            </button>
-        </div>
-        <div class="card-body question-card-body"  [ngbCollapse]="isTextQuestionCollapsed" >
-            <div>
-                <jhi-text-exercise>
-                </jhi-text-exercise>
-            </div>
-        </div>
-    </div>
-
+    <jhi-exercise-overview-component>
+        <span jhiTranslate="arTeMiSApp.course.programmingExercises">Programming Exercises</span>
+        <jhi-programming-exercise></jhi-programming-exercise>
+    </jhi-exercise-overview-component>
+    <jhi-exercise-overview-component>
+        <span jhiTranslate="arTeMiSApp.course.quizExercises">Quiz Exercises</span>
+        <jhi-quiz-exercise></jhi-quiz-exercise>
+    </jhi-exercise-overview-component>
+    <jhi-exercise-overview-component>
+        <span jhiTranslate="arTeMiSApp.course.modelingExercises">Modelling Exercises</span>
+        <jhi-modeling-exercise></jhi-modeling-exercise>
+    </jhi-exercise-overview-component>
+    <jhi-exercise-overview-component>
+        <span jhiTranslate="arTeMiSApp.course.fileUploadExercises">File Upload Exercises</span>
+        <jhi-file-upload-exercise></jhi-file-upload-exercise>
+    </jhi-exercise-overview-component>
+    <jhi-exercise-overview-component>
+        <span jhiTranslate="arTeMiSApp.course.textExercises">Text Exercise</span>
+        <jhi-text-exercise></jhi-text-exercise>
+    </jhi-exercise-overview-component>
 </div>
 
