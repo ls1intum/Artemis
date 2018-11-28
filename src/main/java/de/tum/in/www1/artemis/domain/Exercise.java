@@ -298,7 +298,7 @@ public abstract class Exercise implements Serializable {
                     // InitializationState INACTIVE is also ok
                     // => if we can't find INITIALIZED, we return that one
                     relevantParticipation = participation;
-                } else if (participation.getExercise() instanceof ModelingExercise) {
+                } else if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise) {
                     return participation;
                 }
             }
