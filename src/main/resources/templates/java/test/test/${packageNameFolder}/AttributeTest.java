@@ -20,7 +20,7 @@ import org.junit.runners.Parameterized;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
- * @version 1.2 (26.10.2018)
+ * @version 1.3 (19.11.2018)
  *
  * This StructuralTest evaluates if 4 specified elements of a given class in the test.json file are correctly implemented (in case they are specified):
  *
@@ -50,7 +50,7 @@ public class AttributeTest extends StructuralTest {
 			for (int i = 0; i < classesArray.length(); i++) {
 				JSONObject expectedClassJson = (JSONObject) classesArray.get(i);
 				//only test the hierarchy if the it was specified
-				if (expectedClassJson.has("class") && expectedClassJson.has("fields")) {
+				if (expectedClassJson.has("class") && expectedClassJson.has("attributes")) {
 					String expectedClassName = expectedClassJson.getString("class");
 					String expectedPackageName = expectedClassJson.getString("package");
 					testData.add(new Object[] { expectedClassName, expectedPackageName, expectedClassJson });
@@ -60,68 +60,68 @@ public class AttributeTest extends StructuralTest {
 		return testData;
 	}
 
-	@Test//(timeout = 1000)
+	@Test(timeout = 1000)
 	public void testAttributes() {
 		Class<?> actualClass = findClassForTestType("attribute");
-		if (expectedClassJson.has("fields")) {
-			JSONObject jsonFields = expectedClassJson.getJSONObject("fields");
-			checkAttributes(actualClass, jsonFields);
+		if (expectedClassJson.has("attributes")) {
+			JSONObject jsonAttributes = expectedClassJson.getJSONObject("attributes");
+			checkAttributes(actualClass, jsonAttributes);
 		}
 	}
 
-	private void checkAttributes(Class<?> actualClass, JSONObject expectedFields) {
-		Iterator<?> expectedFieldsIterator = expectedFields.keys();
+	private void checkAttributes(Class<?> actualClass, JSONObject expectedAttributes) {
+		Iterator<?> expectedAttributesIterator = expectedAttributes.keys();
 
-		while (expectedFieldsIterator.hasNext()) {
-			String expectedFieldName = (String) expectedFieldsIterator.next();
-			Field actualField = null;
+		while (expectedAttributesIterator.hasNext()) {
+			String expectedAttributeName = (String) expectedAttributesIterator.next();
+			Field actualAttribute = null;
 			try {
-				actualField = actualClass.getDeclaredField(expectedFieldName);
+				actualAttribute = actualClass.getDeclaredField(expectedAttributeName);
 			} catch (NoSuchFieldException | SecurityException ex) {
-				fail("Problem: the class '" + expectedClassName + "' does NOT define the expected attribute '" + expectedFieldName + "'.");
+				fail("Problem: the class '" + expectedClassName + "' does NOT define the expected attribute '" + expectedAttributeName + "'.");
 			}
 
-			if (actualField == null) {
-				fail("Problem: the class '" + expectedClassName + "' does NOT define the expected attribute '" + expectedFieldName + "'.");
+			if (actualAttribute == null) {
+				fail("Problem: the class '" + expectedClassName + "' does NOT define the expected attribute '" + expectedAttributeName + "'.");
 			}
 
-			Object expectedField = expectedFields.get(expectedFieldName);
+			Object expectedAttribute = expectedAttributes.get(expectedAttributeName);
 			//this is the case that the type is specified directly after the name (without modifiers)
-			if(expectedField instanceof String) {
-				checkType((String)expectedField, actualField);
+			if(expectedAttribute instanceof String) {
+				checkType((String)expectedAttribute, actualAttribute);
 			}
-			else if(expectedField instanceof JSONObject) {
-				JSONObject expectedFieldJson = (JSONObject) expectedField;
+			else if(expectedAttribute instanceof JSONObject) {
+				JSONObject expectedAttributeJson = (JSONObject) expectedAttribute;
 
-				if(expectedFieldJson.has("modifiers")) {
-					JSONArray expectedModifiers = expectedFieldJson.getJSONArray("modifiers");
-					checkModifiers(actualField.getModifiers(), expectedModifiers, "attribute", expectedFieldName);
+				if(expectedAttributeJson.has("modifiers")) {
+					JSONArray expectedModifiers = expectedAttributeJson.getJSONArray("modifiers");
+					checkModifiers(actualAttribute.getModifiers(), expectedModifiers, "attribute", expectedAttributeName);
 				}
 
-				if (expectedFieldJson.has("type")) {
-					String expectedFieldType = expectedFieldJson.getString("type");
-					checkType(expectedFieldType, actualField);
+				if (expectedAttributeJson.has("type")) {
+					String expectedAttributeType = expectedAttributeJson.getString("type");
+					checkType(expectedAttributeType, actualAttribute);
 				}
 			}
 		}
 	}
 
-	private void checkType(String expectedType, Field actualField) {
+	private void checkType(String expectedType, Field actualAttribute) {
 		if (expectedType.contains("<")) {
 			String expectedMainType = expectedType.split("<")[0];
 			String expectedGenericType = expectedType.split("<")[1].replace(">", "");
 
-			assertTrue("Problem: the attribute '" + actualField.getName() + "' in the class '" + expectedClassName + "' does NOT have the expected type.", expectedMainType.equals(actualField.getType().getSimpleName()));
+			assertTrue("Problem: the attribute '" + actualAttribute.getName() + "' in the class '" + expectedClassName + "' does NOT have the expected type.", expectedMainType.equals(actualAttribute.getType().getSimpleName()));
 
-			Type genericType = actualField.getGenericType();
+			Type genericType = actualAttribute.getGenericType();
 			if (genericType instanceof ParameterizedType) {
-				Type actualType = ((ParameterizedType) actualField.getGenericType()).getActualTypeArguments()[0];
+				Type actualType = ((ParameterizedType) actualAttribute.getGenericType()).getActualTypeArguments()[0];
 				String actualTypeString = actualType.toString().substring(actualType.toString().lastIndexOf(".") + 1);
-				assertTrue("Problem: the attribute '" + actualField.getName() + "' in the class '" + expectedClassName + "' does NOT have the expected type.", expectedGenericType.equals(actualTypeString));
+				assertTrue("Problem: the attribute '" + actualAttribute.getName() + "' in the class '" + expectedClassName + "' does NOT have the expected type.", expectedGenericType.equals(actualTypeString));
 			}
 		}
 		else {
-			assertTrue("Problem: the attribute '" + actualField.getName() + "' in the class '" + expectedClassName + "' does NOT have the expected type.", expectedType.equals(actualField.getType().getSimpleName()));
+			assertTrue("Problem: the attribute '" + actualAttribute.getName() + "' in the class '" + expectedClassName + "' does NOT have the expected type.", expectedType.equals(actualAttribute.getType().getSimpleName()));
 		}
 	}
 }

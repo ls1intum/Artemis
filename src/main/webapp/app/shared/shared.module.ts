@@ -20,4 +20,10 @@ import { NgbDateMomentAdapter } from './util/datepicker-adapter';
     exports: [ArTEMiSSharedCommonModule, JhiLoginModalComponent, HasAnyAuthorityDirective, DatePipe, SafeHtmlPipe, SafeUrlPipe],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
-export class ArTEMiSSharedModule {}
+export class ArTEMiSSharedModule {
+    static forRoot() {
+        return {
+            ngModule: ArTEMiSSharedModule
+        };
+    }
+}

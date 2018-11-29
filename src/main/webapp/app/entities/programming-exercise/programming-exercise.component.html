@@ -36,7 +36,7 @@
             <th></th>
             </tr>
             </thead>
-            <tbody infinite-scroll (scrolled)="loadPage(page + 1)" [infiniteScrollDisabled]="page >= links['last']" [infiniteScrollDistance]="0">
+            <tbody>
             <tr *ngFor="let programmingExercise of programmingExercises | sortBy: predicate: reverse ;trackBy: trackId">
                 <td><a [routerLink]="['/course', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'view']">{{programmingExercise.id}}</a></td>
                 <td><a [routerLink]="['/course', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'view']">{{programmingExercise.title}}</a></td>
@@ -45,13 +45,13 @@
                 <td>{{programmingExercise.dueDate | date:'medium'}}</td>
                 <td>{{programmingExercise.maxScore}}</td>
                 <td>
-                    <span *ngIf="programmingExercise.baseRepositoryUrl !== null"><a href="{{programmingExercise.baseRepositoryUrl}}" target="_blank">Template</a></span><br/>
-                    <span *ngIf="programmingExercise.solutionRepositoryUrl !== null"><a href="{{programmingExercise.solutionRepositoryUrl}}" target="_blank">Solution</a></span><br/>
-                    <span *ngIf="programmingExercise.testRepositoryUrl !== null"><a href="{{programmingExercise.testRepositoryUrl}}" target="_blank">Test</a></span><br/>
+                    <span *ngIf="programmingExercise.baseRepositoryUrl != null"><a href="{{programmingExercise.baseRepositoryUrl}}" target="_blank">Template</a></span><br/>
+                    <span *ngIf="programmingExercise.solutionRepositoryUrl != null"><a href="{{programmingExercise.solutionRepositoryUrl}}" target="_blank">Solution</a></span><br/>
+                    <span *ngIf="programmingExercise.testRepositoryUrl != null"><a href="{{programmingExercise.testRepositoryUrl}}" target="_blank">Test</a></span><br/>
                 </td>
                 <td><!-- TODO get the correct URL from the server instead of hardcoding Bamboo here -->
-                    <span *ngIf="programmingExercise.baseBuildPlanId !== null"><a href="https://bamboobruegge.in.tum.de/browse/{{programmingExercise.baseBuildPlanId}}" target="_blank">Template</a></span><br/>
-                    <span *ngIf="programmingExercise.solutionBuildPlanId !== null"><a href="https://bamboobruegge.in.tum.de/browse/{{programmingExercise.solutionBuildPlanId}}" target="_blank">Solution</a></span><br/>
+                    <span *ngIf="programmingExercise.baseBuildPlanId != null"><a href="https://bamboobruegge.in.tum.de/browse/{{programmingExercise.baseBuildPlanId}}" target="_blank">Template</a></span><br/>
+                    <span *ngIf="programmingExercise.solutionBuildPlanId != null"><a href="https://bamboobruegge.in.tum.de/browse/{{programmingExercise.solutionBuildPlanId}}" target="_blank">Solution</a></span><br/>
                 <td>{{programmingExercise.publishBuildPlanUrl}}</td>
                 <td>{{programmingExercise.allowOnlineEditor}}</td>
                 <td class="text-right">
@@ -71,11 +71,11 @@
                                 <fa-icon [icon]="'eye'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                             </button>
-                            <button type="submit" *ngIf="programmingExercise.shortName !== null" [routerLink]="['/course', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'edit']" class="btn btn-primary btn-sm mr-1 mb-1">
+                            <button type="submit" *ngIf="programmingExercise.shortName != null" [routerLink]="['/course', programmingExercise.course.id, 'programming-exercise', programmingExercise.id, 'edit']" class="btn btn-primary btn-sm mr-1 mb-1">
                                 <fa-icon [icon]="'pencil-alt'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                             </button>
-                            <button type="submit" *ngIf="programmingExercise.shortName === null" [routerLink]="['/', { outlets: { popup: ['course', course.id, 'programming-exercise', programmingExercise.id, 'editlink'] } }]" class="btn btn-primary btn-sm mr-1 mb-1">
+                            <button type="submit" *ngIf="programmingExercise.shortName == null" [routerLink]="['/', { outlets: { popup: ['course', course.id, 'programming-exercise', programmingExercise.id, 'editlink'] } }]" class="btn btn-primary btn-sm mr-1 mb-1">
                                 <fa-icon [icon]="'pencil-alt'"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.editLink">Edit Link</span>
                             </button>

@@ -20,7 +20,8 @@
         <tr *ngFor="let diagram of apollonDiagrams">
             <td>{{ getTitleForApollonDiagram(diagram) }}</td>
             <td>
-                <button class="btn btn-primary" (click)="goToDetailsPage(diagram.id)">Open</button>
+                <button class="btn btn-primary mr-1" (click)="goToDetailsPage(diagram.id)">Open</button>
+                <button *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" class="btn btn-danger mr-1" (click)="delete(diagram)">Delete</button>
             </td>
         </tr>
     </tbody>

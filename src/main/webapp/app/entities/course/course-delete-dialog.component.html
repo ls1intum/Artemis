@@ -6,7 +6,7 @@
     </div>
     <div class="modal-body">
         <jhi-alert-error></jhi-alert-error>
-        <p jhiTranslate="arTeMiSApp.course.delete.question" translateValues="{id: '{{course.id}}'}">Are you sure you want to delete this Course?</p>
+        <strong jhiTranslate="arTeMiSApp.course.delete.question" translateValues="{param: '{{course.title}}'}">Are you sure you want to delete the course?</strong>
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">

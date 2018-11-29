@@ -26,7 +26,7 @@
                 <th></th>
             </tr>
             </thead>
-            <tbody infinite-scroll (scrolled)="loadPage(page + 1)" [infiniteScrollDisabled]="page >= links['last']" [infiniteScrollDistance]="0">
+            <tbody>
             <tr *ngFor="let modelingExercise of modelingExercises | sortBy: predicate: reverse ;trackBy: trackId">
                 <td><a [routerLink]="['../modeling-exercise', modelingExercise.id ]">{{modelingExercise.id}}</a></td>
                 <td>{{modelingExercise.title}}</td>

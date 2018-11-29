@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.service.compass.utils;
 
+/**
+ * All similarity related parameters
+ */
 public class CompassConfiguration {
 
     public final static double MISSING_ELEMENT_PENALTY = 0.05;

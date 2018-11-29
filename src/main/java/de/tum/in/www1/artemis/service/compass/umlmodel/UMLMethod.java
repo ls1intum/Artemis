@@ -6,11 +6,14 @@ import java.util.List;
 
 public class UMLMethod extends UMLElement {
 
+    private UMLClass parentClass;
+    private String completeName;
     private String name;
     private String returnType;
     private List<String> parameters;
 
-    public UMLMethod(String name, String returnType, List<String> parameter, String jsonElementID) {
+    public UMLMethod(String completeName, String name, String returnType, List<String> parameter, String jsonElementID) {
+        this.completeName = completeName;
         this.name = name;
         this.returnType = returnType;
         this.parameters = parameter;
@@ -18,6 +21,16 @@ public class UMLMethod extends UMLElement {
         this.jsonElementID = jsonElementID;
     }
 
+    public void setParentClass(UMLClass parentClass) {
+        this.parentClass = parentClass;
+    }
+
+    /**
+     * Compare this with another element to calculate the similarity
+     *
+     * @param element the element to compare with
+     * @return the similarity as number [0-1]
+     */
     @Override
     public double similarity(UMLElement element) {
         double similarity = 0;
@@ -47,6 +60,11 @@ public class UMLMethod extends UMLElement {
 
     @Override
     public String getName() {
-        return "Method " + name;
+        return "Method " + completeName + " in class " + parentClass.getValue();
+    }
+
+    @Override
+    public String getValue() {
+        return name;
     }
 }

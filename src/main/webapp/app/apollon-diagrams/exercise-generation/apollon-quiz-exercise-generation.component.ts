@@ -13,6 +13,7 @@ import { FileUploaderService } from '../../shared/http/file-uploader.service';
 })
 export class ApollonQuizExerciseGenerationComponent implements OnInit {
     apollonEditor: ApollonEditor;
+    diagramTitle: string;
     courses: Course[];
     selectedCourse: Course;
 
@@ -38,12 +39,13 @@ export class ApollonQuizExerciseGenerationComponent implements OnInit {
         }
 
         const diagramState = this.apollonEditor.getState();
-        const layoutedDiagram = layoutDiagram(diagramState, { outerPadding: 50 });
+        const layoutedDiagram = layoutDiagram(diagramState, { outerPadding: 20 });
         const interactiveElementIds = new Set(diagramState.interactiveElements.allIds);
 
         const fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif';
 
         await generateDragAndDropQuizExercise(
+            this.diagramTitle,
             layoutedDiagram,
             interactiveElementIds,
             fontFamily,

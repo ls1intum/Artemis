@@ -41,6 +41,20 @@ Browser Upgrade Prompt
     padding: 0.2em 0;
 }
 
+
+/* ==========================================================================
+Narrow styles
+========================================================================== */
+
+.form-group-narrow {
+    margin-bottom: 0.2rem;
+}
+
+.label-narrow {
+    display: inline-block;
+    margin-bottom: 0.1rem;
+}
+
 /* ==========================================================================
 Generic styles
 ========================================================================== */
@@ -289,6 +303,7 @@ ui bootstrap tweaks
 
 .span-total-score {
     margin-right: 5px;
+    font-weight: bold;
 }
 
 /* jhipster-needle-scss-add-main JHipster will add new css style */
@@ -299,6 +314,25 @@ ui bootstrap tweaks
 
 a.result-orange:hover {
     color: orange;
+}
+
+span.result {
+    text-decoration: underline;
+    font-weight: normal;
+}
+
+span.result:hover {
+    text-decoration: underline;
+    font-weight: normal;
+    cursor: pointer;
+}
+
+span.score {
+    font-weight: bold;
+}
+
+span.bold {
+    font-weight: bold;
 }
 
 .negative,

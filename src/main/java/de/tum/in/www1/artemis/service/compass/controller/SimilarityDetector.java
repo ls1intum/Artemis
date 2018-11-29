@@ -9,12 +9,13 @@ public class SimilarityDetector {
 
     /**
      * Determine elementId and context for each model element of a new model
+     *
      * @param model the new model which contains the model elements
      * @param index the modelIndex which keeps track of all elementIds
      */
     public static void analyzeSimilarity(UMLModel model, ModelIndex index) {
 
-        for (UMLClass umlClass : model.getConnectableList()) {
+        for (UMLClass umlClass : model.getClassList()) {
             umlClass.setElementID(index.getElementID(umlClass));
 
             for (UMLAttribute attribute : umlClass.getAttributeList()) {
@@ -26,7 +27,7 @@ public class SimilarityDetector {
             }
         }
 
-        for (UMLRelation relation : model.getRelationList()) {
+        for (UMLAssociation relation : model.getAssociationList()) {
             relation.setElementID(index.getElementID(relation));
         }
 
@@ -34,7 +35,7 @@ public class SimilarityDetector {
     }
 
     private static void setContext(UMLModel model) {
-        for (UMLClass umlClass : model.getConnectableList()) {
+        for (UMLClass umlClass : model.getClassList()) {
             umlClass.setContext(generateContextForElement(model, umlClass));
             for (UMLAttribute attribute : umlClass.getAttributeList()) {
                 attribute.setContext(generateContextForElement(model, attribute));
@@ -43,22 +44,24 @@ public class SimilarityDetector {
                 method.setContext(generateContextForElement(model, method));
             }
         }
-        for (UMLRelation relation : model.getRelationList()) {
+        for (UMLAssociation relation : model.getAssociationList()) {
             relation.setContext(generateContextForElement(model, relation));
         }
     }
 
+
+    //TODO: we need a very good documentation here
     private static Context generateContextForElement(UMLModel model, UMLElement element) {
 
         if (element.getClass() == UMLAttribute.class) {
-            for (UMLClass umlClass : model.getConnectableList()) {
+            for (UMLClass umlClass : model.getClassList()) {
                 if (umlClass.getAttributeList().contains(element)) {
                     return new Context(umlClass.getElementID());
                 }
             }
         }
         else if (element.getClass() == UMLMethod.class) {
-            for (UMLClass umlClass : model.getConnectableList()) {
+            for (UMLClass umlClass : model.getClassList()) {
                 if (umlClass.getMethodList().contains(element)) {
                     return new Context(umlClass.getElementID());
                 }
@@ -73,10 +76,10 @@ public class SimilarityDetector {
         /*else if (element.getClass() == UMLClass.class) {
             return ClassContext.getWeakContext((UMLClass) element, model);
         }
-        else if (element.getClass() == UMLRelation.class) {
-            UMLRelation relation = (UMLRelation) element;
+        else if (element.getClass() == UMLAssociation.class) {
+            UMLAssociation relation = (UMLAssociation) element;
             HashSet<Integer> edges = new HashSet<>();
-            for (UMLClass connectableElement : model.getConnectableList()) {
+            for (UMLClass connectableElement : model.getClassList()) {
                 if (relation.getSource().equals(connectableElement) || relation.getTarget().equals(connectableElement)) {
                     edges.add(connectableElement.getElementID());
                 }

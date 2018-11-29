@@ -25,6 +25,12 @@ public class ModelIndex {
         modelMap = new HashMap<>();
     }
 
+    /**
+     * Get the internal id for a model element, if the element is similar to an existing one the share the same id
+     *
+     * @param element an element of a model
+     * @return its elementId
+     */
     int getElementID(UMLElement element) {
         if (modelElementMapping.containsKey(element)) {
             return modelElementMapping.get(element);
@@ -65,5 +71,9 @@ public class ModelIndex {
      */
     public int getNumberOfUniqueElements() {
         return this.uniqueModelElementList.size();
+    }
+
+    public Collection<UMLElement> getUniqueElements() {
+        return uniqueModelElementList;
     }
 }

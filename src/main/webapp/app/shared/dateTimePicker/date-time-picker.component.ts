@@ -4,7 +4,7 @@ import { isMoment, Moment } from 'moment';
 @Component({
     selector: 'jhi-date-time-picker',
     template: `
-      <label class="form-control-label">{{labelName}}</label>
+      <label class="label-narrow">{{labelName}}</label>
       <div class="d-flex" >
         <label class="form-control" (click)="toggled = !toggled">{{ entity[field] | formatDate}}</label>
       </div>

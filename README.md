@@ -1,5 +1,5 @@
 # Artemis: AuTomated assEssment Management System 
-This application was generated using JHipster 5.6.1, you can find documentation and help at [http://www.jhipster.tech/documentation-archive/v5.6.1](http://www.jhipster.tech/documentation-archive/v5.6.1).
+This application was generated using JHipster 5.7.0, you can find documentation and help at [http://www.jhipster.tech/documentation-archive/v5.7.0](http://www.jhipster.tech/documentation-archive/v5.7.0).
 
 **Curent version:** 2.3.0
 

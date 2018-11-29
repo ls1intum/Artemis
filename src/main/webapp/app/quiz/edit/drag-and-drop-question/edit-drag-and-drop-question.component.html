@@ -8,7 +8,7 @@
             <span class="fa fa-3x" [ngClass]="isQuestionCollapsed ? 'fa-angle-right' : 'fa-angle-down'"></span>
         </button>
         <div class="form-group question-title col-lg-9 col-md-7 col-sm-12 col-xs-12">
-            <input class="form-control" [(ngModel)]="question.title" placeholder="Question Title"/>
+            <input class="form-control" [(ngModel)]="question.title" placeholder="Short Question Title"/>
         </div>
         <div class="form-group col-lg-2 col-md-3 col-sm-7 col-xs-8">
             <span jhiTranslate="arTeMiSApp.question.score" class="colon-suffix"></span>
@@ -124,6 +124,10 @@
                       class="colon-suffix no-flex-shrink" *ngIf="reEvaluationInProgress"></span>
             </div>
             <div class="input-group col-lg-6 col-md-8 col-sm-8 col-xs-10 background-file">
+                <div class="custom-file">
+                    <input id="backgroundFileInput" type="file" accept="image/*" class="custom-file-input" (change)="setBackgroundFile($event)"/>
+                    <label class="custom-file-label ellipsis" for="backgroundFileInput">{{backgroundFileName}}</label>
+                </div>
                 <div class="input-group-prepend">
                     <button
                         class="btn btn-outline-primary"
@@ -132,10 +136,6 @@
                         <span *ngIf="isUploadingBackgroundFile" jhiTranslate="arTeMiSApp.dragAndDropQuestion.uploading"></span>
                         <span *ngIf="!isUploadingBackgroundFile" jhiTranslate="arTeMiSApp.dragAndDropQuestion.upload"></span>
                     </button>
-                </div>
-                <div class="custom-file">
-                    <input id="backgroundFileInput" type="file" accept="image/*" class="custom-file-input" (change)="setBackgroundFile($event)"/>
-                    <label class="custom-file-label ellipsis" for="backgroundFileInput">{{backgroundFileName}}</label>
                 </div>
             </div>
             <button class="btn btn-outline-secondary btn-lg" type="button" (click)="resetBackground()" *ngIf="reEvaluationInProgress">

@@ -1,0 +1,46 @@
+<div class="p-4">
+    <jhi-alert></jhi-alert>
+
+    <div class="row" [ngClass]="{'align-items-center': submission?.submitted}">
+        <div class="col-12 col-lg-8">
+            <h2>
+                Text Editor <span *ngIf="textExercise">for Exercise: {{textExercise.title}}</span>
+            </h2>
+        </div>
+        <div class="col-12 col-lg-4 text-right">
+            <div *ngIf="participation"><jhi-result [participation]="participation"></jhi-result></div><br>
+            <button class="btn btn-primary" (click)="saveText()" [hidden]="submission?.submitted" [disabled]="isSaving">
+                <ng-container *ngIf="!isSaving">
+                    <span class="fa fa-save"></span>
+                    <span jhiTranslate="entity.action.save">Save</span>
+                </ng-container>
+                <ng-container *ngIf="isSaving">
+                    <span class="fa fa-refresh"></span>
+                    <span>Saving...</span>
+                </ng-container>
+            </button>
+            <button class="btn btn-success" (click)="submit()"
+                    [disabled]="!submission"
+                    [hidden]="submission?.submitted || !isActive">Submit</button>
+            <button class="btn btn-warning" (click)="submit()"
+                    [disabled]="!submission"
+                    [hidden]="submission?.submitted || isActive">Submit (deadline missed)</button>
+        </div>
+    </div><br>
+
+    <div class="row" *ngIf="textExercise">
+        <div class="col">
+            <p class="mb-3"><span><strong>Problem Statement:</strong></span> {{ textExercise.problemStatement }}</p>
+        </div>
+        <div class="col text-right" *ngIf="!submission?.submitted"><p><strong>Max. Score: {{ textExercise.maxScore }}</strong></p></div>
+    </div>
+
+    <div class="row">
+        <div [ngClass]="{'col-9': submission?.submitted, 'col-12': !submission?.submitted}">
+            <textarea title="Solution" [(ngModel)]="answer" style="width: 100%; height: 50vh;" [readonly]="submission?.submitted" [disabled]="submission?.submitted"></textarea>
+        </div>
+        <div class="col-3" *ngIf="submission?.submitted">
+            <h4>Assessment</h4>
+        </div>
+    </div>
+</div>

@@ -408,6 +408,14 @@ Stepwizard styles (editor instructions)
     }
 }
 
+.test-passing {
+    cursor: default !important;
+}
+
+.test-passing:hover {
+    background-color: #f8f9fa;
+}
+
 /* ==========================================================================
 Bootstrap 3.3.7 fix
 ========================================================================== */

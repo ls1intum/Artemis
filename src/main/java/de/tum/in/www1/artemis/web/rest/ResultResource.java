@@ -2,11 +2,9 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -28,6 +26,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
+
 /**
  * REST controller for managing Result.
  */
@@ -40,7 +41,6 @@ public class ResultResource {
     private static final String ENTITY_NAME = "result";
 
     private final ResultRepository resultRepository;
-    private final Optional<LtiService> ltiService;
     private final CourseService courseService;
     private final ParticipationService participationService;
     private final ResultService resultService;
@@ -51,7 +51,6 @@ public class ResultResource {
 
     public ResultResource(UserService userService,
                           ResultRepository resultRepository,
-                          Optional<LtiService> ltiService,
                           ParticipationService participationService,
                           ResultService resultService,
                           AuthorizationCheckService authCheckService,
@@ -61,7 +60,6 @@ public class ResultResource {
 
         this.userService = userService;
         this.resultRepository = resultRepository;
-        this.ltiService = ltiService;
         this.participationService = participationService;
         this.resultService = resultService;
         this.courseService = courseService;
@@ -86,11 +84,7 @@ public class ResultResource {
         Participation participation = result.getParticipation();
         Course course = participation.getExercise().getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-             !authCheckService.isInstructorInCourse(course, user) &&
-             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+        if (!userHasPermissions(course, user)) return forbidden();
 
         if (result.getId() != null) {
             throw new BadRequestAlertException("A new result cannot already have an ID.", ENTITY_NAME, "idexists");
@@ -105,26 +99,8 @@ public class ResultResource {
             throw new BadRequestAlertException("In case feedback is present, feedback text and detail text are mandatory.", ENTITY_NAME, "feedbackTextOrDetailTextNull");
         }
 
-        if(!result.getFeedbacks().isEmpty()) {
-            result.setHasFeedback(true);
-        }
+        resultService.createNewResult(result);
 
-        result.setAssessmentType(AssessmentType.MANUAL);
-        result.setAssessor(user);
-
-        Result savedResult = resultRepository.save(result);
-        try {
-            participation.addResult(savedResult);
-            participationService.save(participation);
-        } catch (NullPointerException e) {
-            log.warn("Unable to load result list for participation");
-        }
-        result.getFeedbacks().forEach(feedback -> {
-            feedback.setResult(savedResult);
-            feedbackService.save(feedback);
-        });
-
-        ltiService.ifPresent(ltiService -> ltiService.onNewBuildResult(savedResult.getParticipation()));
         return ResponseEntity.created(new URI("/api/results/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
             .body(result);
@@ -160,7 +136,7 @@ public class ResultResource {
             resultService.onResultNotified(participation);
             return ResponseEntity.ok().build();
         } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            return notFound();
         }
     }
 
@@ -174,22 +150,19 @@ public class ResultResource {
      * or with status 500 (Internal Server Error) if the result couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("/results")
+    @PutMapping("/manual-results")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Result> updateResult(@RequestBody Result result) throws URISyntaxException {
         log.debug("REST request to update Result : {}", result);
         Participation participation = result.getParticipation();
         Course course = participation.getExercise().getCourse();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-             !authCheckService.isInstructorInCourse(course, user) &&
-             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+        if (!userHasPermissions(course)) return forbidden();
         if (result.getId() == null) {
             return createResult(result);
         }
+        // TODO: test if this works by using CASCASE = ALL and orphanRemove= true, because we would need to save all child objects 'Feedback' and make sure old child objects 'Feedback' for the old result (which will be replaced) are deleted as well
+        // have a look how quiz-exercise handles this case with the contained questions
         resultRepository.save(result);
         return ResponseEntity.ok()
             .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, result.getId().toString()))
@@ -219,12 +192,7 @@ public class ResultResource {
 
         if (!authCheckService.isOwnerOfParticipation(participation)) {
             Course course = participation.getExercise().getCourse();
-            User user = userService.getUserWithGroupsAndAuthorities();
-             if(!authCheckService.isTeachingAssistantInCourse(course, user) &&
-                !authCheckService.isInstructorInCourse(course, user) &&
-                !authCheckService.isAdmin()) {
-                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-             }
+            if (!userHasPermissions(course)) return forbidden();
         }
         if (participation != null) {
             // if exercise is quiz => only give out results if quiz is over
@@ -284,12 +252,7 @@ public class ResultResource {
 
         Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
         Course course = exercise.getCourse();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-             !authCheckService.isInstructorInCourse(course, user) &&
-             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+        if (!userHasPermissions(course)) return forbidden();
 
         //TODO use rated only in case the given request param is true
 
@@ -299,13 +262,18 @@ public class ResultResource {
 
         for (Participation participation : participations) {
 
-            Result relevantResult = exercise.findLatestRelevantResult(participation);
-
+            Result relevantResult = null;
+            if (ratedOnly == true) {
+                relevantResult = exercise.findLatestRatedResultWithCompletionDate(participation);
+            }
+            else {
+                relevantResult = exercise.findLatestResult(participation);
+            }
             if (relevantResult == null) {
                 continue;
             }
 
-            relevantResult.setSubmissionCount(new Long(participation.getResults().size()));
+            relevantResult.setSubmissionCount((long) participation.getResults().size());
             results.add(relevantResult);
         }
 
@@ -345,12 +313,7 @@ public class ResultResource {
     public ResponseEntity<List<Result>> getResultsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get Results for Course : {}", courseId);
         Course course = courseService.findOne(courseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-             !authCheckService.isInstructorInCourse(course, user) &&
-             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+        if (!userHasPermissions(course)) return forbidden();
         List<Result> results = resultRepository.findEarliestSuccessfulResultsForCourse(courseId);
 
         //remove unnecessary elements in the json response
@@ -363,68 +326,57 @@ public class ResultResource {
         return ResponseEntity.ok().body(results);
     }
 
-
     /**
      * GET  /results/:id : get the "id" result.
      *
-     * @param id the id of the result to retrieve
+     * @param resultId the id of the result to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
      */
-    @GetMapping("/results/{id}")
+    @GetMapping("/results/{resultId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
-    public ResponseEntity<Result> getResult(@PathVariable Long id) {
-        log.debug("REST request to get Result : {}", id);
-        Optional<Result> result = resultRepository.findById(id);
+    public ResponseEntity<Result> getResult(@PathVariable Long resultId) {
+        log.debug("REST request to get Result : {}", resultId);
+        Optional<Result> result = resultRepository.findById(resultId);
         if (result.isPresent()) {
             Participation participation = result.get().getParticipation();
             Course course = participation.getExercise().getCourse();
-            User user = userService.getUserWithGroupsAndAuthorities();
-            if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-                !authCheckService.isInstructorInCourse(course, user) &&
-                !authCheckService.isAdmin()) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            }
+            if (!userHasPermissions(course)) return forbidden();
         }
         return result.map(foundResult -> new ResponseEntity<>(foundResult, HttpStatus.OK))
-            .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+            .orElse(notFound());
     }
 
     /**
      * GET  /results/:id/details : get the build result details from Bamboo for the "id" result.
      * This method is only invoked if the result actually includes details (e.g. feedback or build errors)
      *
-     * @param id the id of the result to retrieve
+     * @param resultId the id of the result to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
      */
-    @GetMapping(value = "/results/{id}/details")
+    @GetMapping(value = "/results/{resultId}/details")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     @Transactional
-    public ResponseEntity<List<Feedback>> getResultDetails(@PathVariable Long id, @RequestParam(required = false) String username, Authentication authentication) {
-        log.debug("REST request to get Result : {}", id);
-        Optional<Result> result = resultRepository.findById(id);
+    public ResponseEntity<List<Feedback>> getResultDetails(@PathVariable Long resultId, @RequestParam(required = false) String username, Authentication authentication) {
+        log.debug("REST request to get Result : {}", resultId);
+        Optional<Result> result = resultRepository.findById(resultId);
         if (!result.isPresent()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            return notFound();
         }
         Participation participation = result.get().getParticipation();
         Course course = participation.getExercise().getCourse();
         if (!authCheckService.isOwnerOfParticipation(participation)) {
 
-            User user = userService.getUserWithGroupsAndAuthorities();
-            if(!authCheckService.isTeachingAssistantInCourse(course, user) &&
-                !authCheckService.isInstructorInCourse(course, user) &&
-                !authCheckService.isAdmin()) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            }
+            if (!userHasPermissions(course)) return forbidden();
         }
         try {
             List<Feedback> feedbackItems = feedbackService.getFeedbackForBuildResult(result.get());
             return Optional.ofNullable(feedbackItems)
                 .map(resultDetails -> new ResponseEntity<>(feedbackItems, HttpStatus.OK))
-                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+                .orElse(notFound());
         } catch (Exception e) {
-            log.error("REST request to get Result failed : {}", id, e);
+            log.error("REST request to get Result failed : {}", resultId, e);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -432,26 +384,21 @@ public class ResultResource {
     /**
      * DELETE  /results/:id : delete the "id" result.
      *
-     * @param id the id of the result to delete
+     * @param resultId the id of the result to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/results/{id}")
+    @DeleteMapping("/results/{resultId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
-    public ResponseEntity<Void> deleteResult(@PathVariable Long id) {
-        log.debug("REST request to delete Result : {}", id);
-        Optional<Result> result = resultRepository.findById(id);
+    public ResponseEntity<Void> deleteResult(@PathVariable Long resultId) {
+        log.debug("REST request to delete Result : {}", resultId);
+        Optional<Result> result = resultRepository.findById(resultId);
         if (result.isPresent()) {
             Participation participation = result.get().getParticipation();
             Course course = participation.getExercise().getCourse();
-            User user = userService.getUserWithGroupsAndAuthorities();
-            if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-                !authCheckService.isInstructorInCourse(course, user) &&
-                !authCheckService.isAdmin()) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-            }
-            resultRepository.deleteById(id);
-            return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+            if (!userHasPermissions(course)) return forbidden();
+            resultRepository.deleteById(resultId);
+            return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, resultId.toString())).build();
         }
         return  ResponseEntity.notFound().build();
     }
@@ -469,5 +416,19 @@ public class ResultResource {
         log.debug("REST request to get Result for submission : {}", submissionId);
         Optional<Result> result = resultRepository.findDistinctBySubmissionId(submissionId);
         return ResponseUtil.wrapOrNotFound(result);
+    }
+
+    private boolean userHasPermissions(Course course, User user) {
+        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
+            !authCheckService.isInstructorInCourse(course, user) &&
+            !authCheckService.isAdmin()) {
+            return false;
+        }
+        return true;
+    }
+    
+    private boolean userHasPermissions(Course course) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        return userHasPermissions(course, user);
     }
 }

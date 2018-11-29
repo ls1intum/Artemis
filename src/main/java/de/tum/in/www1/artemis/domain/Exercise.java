@@ -1,12 +1,11 @@
 package de.tum.in.www1.artemis.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.annotation.*;
+import com.google.common.collect.Sets;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -38,6 +37,7 @@ import java.util.*;
     @JsonSubTypes.Type(value = TextExercise.class, name = "text"),
     @JsonSubTypes.Type(value = FileUploadExercise.class, name = "file-upload"),
 })
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class Exercise implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -82,8 +82,8 @@ public abstract class Exercise implements Serializable {
     private DifficultyLevel difficulty;
 
     @OneToMany(mappedBy = "exercise")
-    @JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+    @JsonIgnoreProperties("exercise")
     private Set<Participation> participations = new HashSet<>();
 
     @ManyToOne
@@ -273,6 +273,13 @@ public abstract class Exercise implements Serializable {
     }
 
     /**
+     * can be invoked to make sure that sensitive information is not sent to the client
+     */
+    public void filterSensitiveInformation() {
+        setGradingInstructions(null);
+    }
+
+    /**
      * find a relevant participation for this exercise
      * (relevancy depends on InitializationState)
      *
@@ -282,7 +289,7 @@ public abstract class Exercise implements Serializable {
     public Participation findRelevantParticipation(List<Participation> participations) {
         Participation relevantParticipation = null;
         for (Participation participation : participations) {
-            if (participation.getExercise().equals(this)) {
+            if (participation.getExercise() != null && participation.getExercise().equals(this)) {
                 if (participation.getInitializationState() == InitializationState.INITIALIZED) {
                     // InitializationState INITIALIZED is preferred
                     // => if we find one, we can return immediately
@@ -291,7 +298,7 @@ public abstract class Exercise implements Serializable {
                     // InitializationState INACTIVE is also ok
                     // => if we can't find INITIALIZED, we return that one
                     relevantParticipation = participation;
-                } else if (participation.getExercise() instanceof ModelingExercise) {
+                } else if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise) {
                     return participation;
                 }
             }
@@ -306,20 +313,91 @@ public abstract class Exercise implements Serializable {
      * @param participation the participation whose results we are considering
      * @return the latest relevant result in the given participation, or null, if none exist
      */
-    public Result findLatestRelevantResult(Participation participation) {
+    public Result findLatestRatedResultWithCompletionDate(Participation participation) {
         // for most types of exercises => return latest result (all results are relevant)
         Result latestResult = null;
         for (Result result : participation.getResults()) {
-            //NOTE: for the dashboard we only use rated results
+            //NOTE: for the dashboard we only use rated results with completion date
+            //TODO: result.isRated() == null is a compatibility mechanism that we should deactivate soon
+            if (result.getCompletionDate() != null && (result.isRated() == null || result.isRated() == Boolean.TRUE)) {
+                //take the first found result that fulfills the above requirements
+                if (latestResult == null) {
+                    latestResult = result;
+                }
+                //take newer results and thus disregard older ones
+                else if (latestResult.getCompletionDate().isBefore(result.getCompletionDate())) {
+                    latestResult = result;
+                }
+            }
+        }
+        return latestResult;
+    }
+
+    /**
+     * Get the latest relevant result from the given participation (independent of rated and completion date)
+     *
+     * @param participation the participation whose results we are considering
+     * @return the latest relevant result in the given participation, or null, if none exist
+     */
+    public Result findLatestResult(Participation participation) {
+        Result latestResult = null;
+        for (Result result : participation.getResults()) {
+            //take the first found result
             if (latestResult == null) {
                 latestResult = result;
             }
-            //NOTE: isRatedNull is a compatibility mechanism that we should deactivate soon
-            else if (latestResult.getCompletionDate().isBefore(result.getCompletionDate()) && (result.isRatedNull() || result.isRated())) {
+            //take newer results
+            else if (latestResult.getCompletionDate().isBefore(result.getCompletionDate())) {
                 latestResult = result;
             }
         }
         return latestResult;
+    }
+
+    /**
+     * Find the participation in participations that belongs to the given exercise
+     * that includes the exercise data, plus the found participation with its most recent relevant result.
+     * Filter everything else that is not relevant
+     *
+     * @param participations the set of participations, wherein to search for the relevant participation
+     * @param username
+     */
+    public void filterForCourseDashboard(List<Participation> participations, String username) {
+
+        // remove the unnecessary inner course attribute
+        setCourse(null);
+
+        // get user's participation for the exercise
+        Participation participation = findRelevantParticipation(participations);
+
+        // for quiz exercises also check SubmissionHashMap for submission by this user (active participation)
+        // if participation was not found in database
+        if (participation == null && this instanceof QuizExercise) {
+            QuizSubmission submission = QuizScheduleService.getQuizSubmission(getId(), username);
+            if (submission.getSubmissionDate() != null) {
+                participation = new Participation().exercise(this).initializationState(InitializationState.INITIALIZED);
+            }
+        }
+
+        // add results to participation
+        if (participation != null) {
+
+            // only transmit the relevant result
+            Result result = findLatestRatedResultWithCompletionDate(participation);
+            Set<Result> results = result != null ? Sets.newHashSet(result) : Sets.newHashSet();
+
+            // add results to json
+            if (result != null) {
+                // remove inner participation from result
+                result.setParticipation(null);
+            }
+            participation.setResults(results);
+            // remove inner exercise from participation
+            participation.setExercise(null);
+
+            // add participation into an array
+            setParticipations(Sets.newHashSet(participation));
+        }
     }
 
     @Override
