@@ -34,6 +34,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     // Make constants available to html for comparison
     readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
+    readonly SHORT_ANSWER = QuestionType.SHORT_ANSWER;
 
     course: Course;
     quizExercise: QuizExercise;
@@ -61,6 +62,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     searchQueryText: string;
     dndFilterEnabled: boolean;
     mcqFilterEnabled: boolean;
+    saFilterEnabled: boolean;
 
     /** Duration object **/
     duration = new Duration(0, 0);
@@ -97,6 +99,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         this.searchQueryText = '';
         this.dndFilterEnabled = true;
         this.mcqFilterEnabled = true;
+        this.saFilterEnabled = true;
 
         /** Set minDate for DatePicker to today **/
         const today = moment();
@@ -345,6 +348,9 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                 if (this.dndFilterEnabled === true && question.type === QuestionType.DRAG_AND_DROP) {
                     this.existingQuestions.push(question);
                 }
+                if (this.saFilterEnabled === true && question.type === QuestionType.SHORT_ANSWER) {
+                    this.existingQuestions.push(question);
+                }
             }
         }
     }
@@ -477,6 +483,15 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                     this.dragAndDropQuestionUtil.solve(dndQuestion).length &&
                     this.dragAndDropQuestionUtil.validateNoMisleadingCorrectMapping(dndQuestion)
                 );
+            } else if (question.type === QuestionType.SHORT_ANSWER) {
+                const saQuestion = question as ShortAnswerQuestion;
+                return (
+                    question.title && question.title !== '' && saQuestion.correctMappings && saQuestion.correctMappings.length > 0
+                    //TODO: FDE checks if needs to be adapted
+                    /*&&
+                    this.dragAndDropQuestionUtil.solve(saQuestion).length &&
+                    this.dragAndDropQuestionUtil.validateNoMisleadingCorrectMapping(saQuestion)*/
+                );
             } else {
                 console.log('Unknown question type: ' + question);
                 return question.title && question.title !== '';
@@ -567,6 +582,28 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                         translateValues: { index: index + 1 }
                     });
                 }
+            }
+            if (question.type === QuestionType.SHORT_ANSWER) {
+                const saQuestion = question as ShortAnswerQuestion;
+                if (!saQuestion.correctMappings || saQuestion.correctMappings.length === 0) {
+                    reasons.push({
+                        translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionCorrectMapping',
+                        translateValues: { index: index + 1 }
+                    });
+                }
+                //TODO: FDE checks if needs to be adapted
+                /* else if (this.dragAndDropQuestionUtil.solve(saQuestion, []).length === 0) {
+                    reasons.push({
+                        translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionUnsolvable',
+                        translateValues: { index: index + 1 }
+                    });
+                }
+                if (!this.dragAndDropQuestionUtil.validateNoMisleadingCorrectMapping(saQuestion)) {
+                    reasons.push({
+                        translateKey: 'arTeMiSApp.quizExercise.invalidReasons.misleadingCorrectMapping',
+                        translateValues: { index: index + 1 }
+                    });
+                } */
             }
         }, this);
         return reasons;
@@ -670,6 +707,32 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                     delete correctMapping.dragItem.id;
                     correctMapping.dropLocation.tempID = correctMapping.dropLocation.id;
                     delete correctMapping.dropLocation.id;
+                }
+                this.quizExercise.questions = this.quizExercise.questions.concat([question]);
+            } else if (question.type === QuestionType.SHORT_ANSWER) {
+                const saQuestion = question as ShortAnswerQuestion;
+
+                // For Spots, Solutions and CorrectMappings we need to provide tempID,
+                // This tempID is used for keep tracking of mappings by backend. Backend removes tempID and generated a new id,
+                for (const spot of saQuestion.spots) {
+                    spot.tempID = spot.id;
+                    delete spot.id;
+                }
+                for (const solution of saQuestion.solutions) {
+                    solution.tempID = solution.id;
+                    delete solution.id;
+                }
+                for (const correctMapping of saQuestion.correctMappings) {
+                    // Following fields are not required for sa question. They will be generated by the backend,
+                    delete correctMapping.id;
+                    delete correctMapping.shortAnswerSolutionIndex;
+                    delete correctMapping.shortAnswerSpotIndex;
+                    delete correctMapping.invalid;
+
+                    correctMapping.solution.tempID = correctMapping.solution.id;
+                    delete correctMapping.solution.id;
+                    correctMapping.spot.tempID = correctMapping.spot.id;
+                    delete correctMapping.spot.id;
                 }
                 this.quizExercise.questions = this.quizExercise.questions.concat([question]);
             }

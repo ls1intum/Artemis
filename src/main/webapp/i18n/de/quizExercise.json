@@ -34,8 +34,9 @@
                 "quizExerciseTitle": "Quiz Übungstitel"
             },
             "filter": {
-                "mcq": "Multiple-Choice Question",
-                "dnd": "Drag-And-Drop Question",
+                "mcq": "Multiple-Choice Frage",
+                "dnd": "Drag-And-Drop Frage",
+                "sa": "Short-Answer Frage",
                 "applyFilter": "Filter anwenden"
             },
             "description": "Beschreibung",

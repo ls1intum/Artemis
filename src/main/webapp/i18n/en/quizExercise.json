@@ -36,6 +36,7 @@
             "filter": {
                 "mcq": "Multiple-Choice Question",
                 "dnd": "Drag-And-Drop Question",
+                "sa": "Short-Answer Question",
                 "applyFilter": "Apply Filter"
             },
             "description": "Description",
