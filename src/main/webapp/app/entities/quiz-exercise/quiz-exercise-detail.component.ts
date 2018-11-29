@@ -18,6 +18,7 @@ import { NgbDateStruct, NgbDate, NgbTimeStruct } from '@ng-bootstrap/ng-bootstra
 import * as moment from 'moment';
 import { Moment } from 'moment';
 import { JhiAlertService } from 'ng-jhipster';
+import { ShortAnswerQuestion } from 'app/entities/short-answer-question';
 
 interface Reason {
     translateKey: string;
@@ -235,6 +236,26 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         this.quizExercise.questions.push(dndQuestion);
     }
 
+    /**
+     * @function addDShortAnswerQuestion
+     * @desc Add an empty short answer question to the quiz
+     */
+    addShortAnswerQuestion(): void {
+        if (typeof this.quizExercise === 'undefined') {
+            this.quizExercise = this.entity;
+        }
+
+        const saQuestion = new ShortAnswerQuestion();
+        saQuestion.title = '';
+        saQuestion.text = 'Enter your long question if needed';
+        saQuestion.scoringType = ScoringType.ALL_OR_NOTHING; // explicit default value for short answer questions
+        saQuestion.randomizeOrder = true;
+        saQuestion.score = 1;
+        saQuestion.spots = [];
+        saQuestion.solutions = [];
+        saQuestion.correctMappings = [];
+        this.quizExercise.questions.push(saQuestion);
+    }
     /**
      * @function calculateMaxExerciseScore
      * @desc Iterates over the questions of the quizExercise and calculates the sum of all question scores
