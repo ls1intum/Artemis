@@ -7,11 +7,11 @@ import { DragItem } from '../../../entities/drag-item';
 })
 export class DragItemComponent {
 
+    @Input() minWidth: string;
     @Input() dragItem: DragItem;
     @Input() clickDisabled: boolean;
     // Unused
     @Input() invalid: boolean;
 
     constructor() {}
-
 }

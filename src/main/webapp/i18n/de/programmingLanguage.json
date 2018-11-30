@@ -1,6 +1,7 @@
 {
     "arTeMiSApp": {
         "ProgrammingLanguage" : {
+            "undefined": "",
             "null": "",
             "JAVA": "Java",
             "PYTHON": "Python"

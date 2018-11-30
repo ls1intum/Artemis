@@ -123,7 +123,7 @@ public class QuizPointStatistic extends Statistic implements Serializable {
      * @param rated specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise)
      *              or unrated  ( participated after the dueDate of the quizExercise)
      */
-    public void addResult(Long score, boolean rated) {
+    public void addResult(Long score, Boolean rated) {
 
         changeStatisticBasedOnResult(score, rated, 1);
     }
@@ -135,7 +135,7 @@ public class QuizPointStatistic extends Statistic implements Serializable {
      * @param rated specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise)
      *              or unrated  ( participated after the dueDate of the quizExercise)
      */
-    public void removeOldResult(Long score, boolean rated) {
+    public void removeOldResult(Long score, Boolean rated) {
 
         changeStatisticBasedOnResult(score, rated, -1);
     }
@@ -149,7 +149,7 @@ public class QuizPointStatistic extends Statistic implements Serializable {
      *               or unrated  ( participated after the dueDate of the quizExercise)
      * @param change the int-value, which will be added to the Counter and participants
      */
-    private void changeStatisticBasedOnResult(Long score, boolean rated, int change) {
+    private void changeStatisticBasedOnResult(Long score, Boolean rated, int change) {
 
         if (score == null) {
             return;
@@ -157,7 +157,7 @@ public class QuizPointStatistic extends Statistic implements Serializable {
 
         Double points = (double) Math.round(((double) quiz.getMaxTotalScore()) * ((double) score / 100));
 
-        if (rated) {
+        if (rated == Boolean.TRUE) {
             //change rated participants
             setParticipantsRated(getParticipantsRated() + change);
 

@@ -113,7 +113,7 @@ public class ApollonDiagramResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/apollon-diagrams/{id}")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Void> deleteApollonDiagram(@PathVariable Long id) {
         log.debug("REST request to delete ApollonDiagram : {}", id);

@@ -75,7 +75,7 @@
                                 </div>
                                 <jhi-drag-item *ngIf="correctDragItemForDropLocation(dropLocation)"
                                            [dragItem]="correctDragItemForDropLocation(dropLocation)"
-                                           [clickDisabled]="true"></jhi-drag-item>
+                                           [clickDisabled]="true" [minWidth]="100 + '%'"></jhi-drag-item>
                             </div>
                         </div>
                     </div>
@@ -86,7 +86,8 @@
                         <jhi-drag-item *ngFor="let dragItem of question.dragItems"
                                    [dragItem]="dragItem"
                                    [invalid]="dragItem.invalid"
-                                   [clickDisabled]="true"></jhi-drag-item>
+                                   [clickDisabled]="true"
+                                   [minWidth]="100 + '%'"></jhi-drag-item>
 
                     </div>
 

@@ -452,7 +452,7 @@ public class QuizExercise extends Exercise implements Serializable {
             // only rated results are considered relevant
             Result latestRatedResult = null;
             for (Result result : participation.getResults()) {
-                if (result.isRated() && (latestRatedResult == null || latestRatedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {
+                if (result.isRated() == Boolean.TRUE && (latestRatedResult == null || latestRatedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {
                     latestRatedResult = result;
                 }
             }

@@ -222,12 +222,7 @@ public class Result implements Serializable {
     }
 
     public Boolean isRated() {
-        return rated != null ? rated : false;
-    }
-
-    @JsonIgnore
-    public Boolean isRatedNull() {
-        return rated == null;
+        return rated;
     }
 
     public Result rated(Boolean rated) {

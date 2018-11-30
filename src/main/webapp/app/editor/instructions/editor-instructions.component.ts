@@ -1,7 +1,7 @@
 import { Participation } from '../../entities/participation';
 import { JhiAlertService } from 'ng-jhipster';
 import { TranslateService } from '@ngx-translate/core';
-import { AfterViewInit, Component, ElementRef, Input, OnChanges, OnDestroy, OnInit, Renderer2, SimpleChanges } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Input, OnChanges, OnDestroy, Renderer2, SimpleChanges } from '@angular/core';
 import { WindowRef } from '../../core/websocket/window.service';
 import { RepositoryFileService, RepositoryService } from '../../entities/repository/repository.service';
 import { EditorComponent } from '../editor.component';
@@ -225,8 +225,16 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
      */
     triggerTestStatusClick(index: number): void {
         const testStatusDOMElements = this.elementRef.nativeElement.querySelectorAll('.test-status');
-        if (testStatusDOMElements.length) {
-            testStatusDOMElements[index].click();
+        /** We analyze the tests up until our index to determine the number of green tests **/
+        const testStatusCircleElements = this.elementRef.nativeElement.querySelectorAll('.stepwizard-circle');
+        const testStatusCircleElementsUntilIndex = Array.from(testStatusCircleElements).slice(0, index + 1);
+        const positiveTestsUntilIndex = testStatusCircleElementsUntilIndex.filter((testCircle: HTMLElement) =>
+            testCircle.children[0].classList.contains('text-success')
+        ).length;
+        /** The click should only be executed if the clicked element is not a positive test **/
+        if (testStatusDOMElements.length && !testStatusCircleElements[index].children[0].classList.contains('text-success')) {
+            /** We subtract the number of positive tests from the index to match the correct test status link **/
+            testStatusDOMElements[index - positiveTestsUntilIndex].click();
         }
     }
 
@@ -401,13 +409,13 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
         const tests = tokens[0].tests;
         const [done, label] = this.statusForTests(tests);
 
-        let text = '<strong>';
+        let text = '<span class="bold">';
 
         text += done
             ? '<i class="fa fa-lg fa-check-circle-o text-success" style="font-size: 1.7em;"></i>'
             : '<i class="fa fa-lg fa-times-circle-o text-danger" style="font-size: 1.7em;"></i>';
         text += ' ' + tokens[0].title;
-        text += '</strong>: ';
+        text += '</span>: ';
         // If the test is not done, we set the 'data-tests' attribute to the a-element, which we later use for the details dialog
         if (done) {
             text += '<span class="text-success bold">' + label + '</span>';
@@ -416,9 +424,7 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
             if (label === this.translateService.instant('arTeMiSApp.editor.testStatusLabels.noResult')) {
                 text += '<span class="text-danger bold">' + label + '</span>'; // this should be bold
             } else {
-                text +=
-                    '<a data-tests="\' + tests.toString() + \'" class="test-status result"><span class="text-danger">\' + label + \'</span></a>';
-                // TODO: test if underlining the link works as in the result component
+                text += '<a data-tests="' + tests.toString() + '" class="test-status"><span class="text-danger result">' + label + '</span></a>';
             }
         }
         text += '<br />';
