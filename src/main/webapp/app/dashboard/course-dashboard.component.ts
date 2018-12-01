@@ -4,9 +4,9 @@ import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
 import { Course, CourseExerciseService, CourseService } from '../entities/course';
 import { Exercise, ExerciseType } from '../entities/exercise';
-import { Result } from 'app/entities/result';
-import { Moment } from 'moment';
 import { User } from 'app/core';
+import { Participation } from 'app/entities/participation';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-instructor-course-dashboard',
@@ -14,17 +14,27 @@ import { User } from 'app/core';
     providers: [JhiAlertService]
 })
 export class CourseDashboardComponent implements OnInit, OnDestroy {
+
+    // make constants available to html for comparison
+    readonly QUIZ = ExerciseType.QUIZ;
+    readonly PROGRAMMING = ExerciseType.PROGRAMMING;
+    readonly MODELING = ExerciseType.MODELING;
+
     course: Course;
+    participations: Participation[] = [];
+    exercises: Exercise[] = [];
+    students: Student[] = [];
+
+    exerciseTitlesPerType = new Map<string, string>();
+    exerciseMaxPointsPerType = new Map<string, number>();
+    overallMaxPoints = 0;
+    exercisesPerType = new Map<string, Exercise[]>();
+
+    exportReady: Boolean = false;
+
     paramSub: Subscription;
     predicate: string;
     reverse: boolean;
-    results: Result[] = [];
-    exercises: Exercise[] = [];
-    exerciseTitlesForType = new Map<string, string>();
-    exerciseMaxScoresForType = new Map<string, number>();
-    exercisesForType = new Map<string, Exercise[]>();
-    students: Array<Student> = [];
-    exportReady: Boolean = false;
 
     constructor(private route: ActivatedRoute, private courseService: CourseService, private courseExerciseService: CourseExerciseService) {
         this.reverse = false;
@@ -33,237 +43,95 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.paramSub = this.route.params.subscribe(params => {
-            this.courseService.find(params['courseId']).subscribe(res => {
+            this.courseService.findWithExercises(params['courseId']).subscribe(res => {
                 this.course = res.body;
-                this.getResults(this.course.id);
+                this.exercises = this.course.exercises.filter(exercise => {
+                    return exercise.releaseDate == null || exercise.releaseDate.isBefore(moment());
+                });
+                this.getParticipationsWithResults(this.course.id);
             });
         });
     }
 
-    getResults(courseId: number) {
-        this.courseService.findAllResultsForCourse(courseId).subscribe(results => {
-            this.results = results;
-            this.groupResultsAfterExerciseTypes();
-        });
-
-        this.courseExerciseService.findAllExercises(courseId).subscribe(res => {
-            // this call gets all exercise information for the course
-            this.exercises = res.body;
-            this.groupResultsAfterExerciseTypes();
+    getParticipationsWithResults(courseId: number) {
+        this.courseService.findAllParticipationsWithResults(courseId).subscribe(participations => {
+            this.participations = participations;
+            this.groupExercises();
+            this.calculatePointsPerStudent();
         });
     }
 
-    groupResultsAfterExerciseTypes() {
-        if (!this.results || this.results.length === 0 || !this.exercises || this.exercises.length === 0) {
-            return;
-        }
+    groupExercises() {
 
         for (const exerciseType of Object.values(ExerciseType)) {
-            const exercisesWithType = this.exercises.filter(exercise => exercise.type === exerciseType);
-            this.exercisesForType[exerciseType] = exercisesWithType;
-            this.exerciseTitlesForType[exerciseType] = exercisesWithType.map(exercise => exercise.title).join(', ');
-            this.exerciseMaxScoresForType[exerciseType] = exercisesWithType
-                .map(exercise => exercise.maxScore)
+            const exercisesPerType = this.exercises.filter(exercise => exercise.type === exerciseType);
+            this.exercisesPerType[exerciseType] = exercisesPerType;
+            this.exerciseTitlesPerType[exerciseType] = exercisesPerType.map(exercise => exercise.title).join(',');
+            this.exerciseMaxPointsPerType[exerciseType] = exercisesPerType.map(exercise => exercise.maxScore ? exercise.maxScore : 0)
                 .reduce((total, num) => total + num, 0);
         }
-
-        this.createStudents();
+        this.overallMaxPoints = this.exercises.map(exercise => exercise.maxScore ? exercise.maxScore : 0).reduce((total, num) => total + num, 0);
     }
 
-    createStudents() {
-        // creates students and initializes the result processing
+    // creates students and calculates the points for each exercise and exercise type
+    calculatePointsPerStudent() {
 
-        if (!this.results || this.results.length === 0 || !this.exercises || this.exercises.length === 0) {
-            return;
-        } // filtering
+        const studentsMap = new Map<number, Student>();
 
-        // iterating through the students exercise results
-        this.results.forEach(result => {
-            if (result.participation && result.participation.student && result.participation.exercise) {
-                // create a new student object to save the information in
-                const student = new Student(
-                    result.participation.student,
-                    new Map<ExerciseType, Score[]>([]),
-                    new Map<ExerciseType, number>(),
-                    new Map<ExerciseType, { successful: number; participated: number }>(),
-                    new Map<ExerciseType, Score[]>([]),
-                    new Map<ExerciseType, string>(),
-                    0,
-                    0,
-                    true,
-                    0
-                );
-
-                const exercise = result.participation.exercise;
-
-                if (!this.students.some(stud => stud.user.id === student.user.id)) {
-                    this.students.push(student);
-                    const indexStudent: number = this.students.findIndex(stud => stud.user.id === student.user.id);
-                    // generate empty maps for each student
-                    for (const exType of Object.values(ExerciseType)) {
-                        this.students[indexStudent].everyScoreString.set(exType, '');
-                        this.students[indexStudent].everyScore.set(exType, []);
-                        this.students[indexStudent].successAndParticipationExercises.set(exType, {
-                            successful: 0,
-                            participated: 0
-                        });
-                        this.students[indexStudent].allExercises.set(exType, []);
-                        this.students[indexStudent].totalScores.set(exType, 0);
-                    }
+        for (const participation of this.participations) {
+            if (participation.results != null && participation.results.length > 0) {
+                for (const result of participation.results) {
+                    // reconnect
+                    result.participation = participation;
                 }
-
-                this.getScoresForExercises(student, exercise, result);
             }
-        });
 
-        this.getTotalScores();
+            // find all students by iterating through the participations
+            let student = studentsMap.get(participation.student.id);
+            if (student == null) {
+                student = new Student(participation.student);
+                studentsMap.set(participation.student.id, student);
+            }
+            student.participations.push(participation);
+        }
 
-        this.createScoreString();
-    }
+        studentsMap.forEach(student => {
 
-    createScoreString() {
-        // create a score string for each student and add the exercise (even if 0 points) to the everyScore Map
+            this.students.push(student);
 
-        this.students.forEach((student, indexStudent) => {
-            // check for all exercise types if we have exercises in the course
-            for (const exType of Object.values(ExerciseType)) {
-                // check if the student participated in the exercises of the course and get the scores
-                const excAll = this.exercisesForType[exType];
-                excAll.forEach((exercise: Exercise) => {
-                    let bool = true;
-
-                    // iterate through all the participated exercises by the student
-                    const excStAll = student.allExercises[exType];
-                    excStAll.forEach((score: Score) => {
-                        if (exercise.id === score.exerciseID) {
-                            bool = false; // ensure to only enter the loop later once
-
-                            let scoreStr: string = this.students[indexStudent].everyScoreString.get(exercise.type);
-                            scoreStr += score.absoluteScore + ',';
-                            this.students[indexStudent].everyScoreString.set(exercise.type, scoreStr);
-
-                            const scoreArr: Score[] = this.students[indexStudent].everyScore.get(exercise.type);
-                            scoreArr.push(score);
-                            this.students[indexStudent].everyScore.set(exercise.type, scoreArr);
-                        }
-                    });
-
-                    // if the student did not participate in the exercise, a zero points score is generated
-                    if (bool) {
-                        let scoreStr: string = this.students[indexStudent].everyScoreString.get(exercise.type);
-                        scoreStr += '0,';
-                        this.students[indexStudent].everyScoreString.set(exercise.type, scoreStr);
-
-                        const scoreArr: Score[] = this.students[indexStudent].everyScore.get(exercise.type);
-                        scoreArr.push(new Score(null, exercise.id, exercise.title, 0));
-                        this.students[indexStudent].everyScore.set(exercise.type, scoreArr);
+            for (const exercise of this.exercises) {
+                // TODO: do we need a specific order for the exercises here to get the export correct?
+                const participation = student.participations.find(part => part.exercise.id === exercise.id);
+                if (participation && participation.results && participation.results.length > 0) {
+                    // we found a result, there should only be one
+                    const result = participation.results[0];
+                    if (participation.results.length > 1) {
+                        console.warn('found more than one result for student ' + student.user.login + ' and exercise ' + exercise.title);
                     }
-                });
+
+                    const studentPoints = this.roundLikeMozilla(result.score * exercise.maxScore / 100, 0);
+
+                    student.overallPoints += studentPoints;
+
+                    student.pointsPerExerciseType[exercise.type] += studentPoints;
+                    student.numberOfParticipatedExercises += 1;
+                    if (result.score >= 100) {
+                        student.numberOfSuccessfulExercises += 1;
+                    }
+
+                    student.pointsStringPerExerciseType[exercise.type] += studentPoints + ',';
+                } else {
+                    student.pointsStringPerExerciseType[exercise.type] += 0 + ',';
+                }
+            }
+            for (const exerciseType of Object.values(ExerciseType)) {
+                if (this.exerciseMaxPointsPerType[exerciseType] > 0) {
+                    student.relativeScoresPerExerciseType[exerciseType] = student.pointsPerExerciseType[exerciseType] / this.exerciseMaxPointsPerType[exerciseType] * 100;
+                }
             }
         });
 
         this.exportReady = true;
-    }
-
-    getScoresForExercises(student: Student, exercise: Exercise, result: Result) {
-        // filter if exercise result is relevant (quiz filter || programming-exercise filter || modelling-exercise filer)
-        if (result.rated === true || (result.rated == null && result.completionDate <= exercise.dueDate)) {
-            const indexStudent: number = this.students.findIndex(stud => stud.user.id === student.user.id);
-
-            if (indexStudent >= 0) {
-                // check if the student exists in our array
-                // quiz exercises only have one rated result
-                if (exercise.type === 'quiz') {
-                    this.students[indexStudent].participated++;
-
-                    const excSP: { successful: number; participated: number } = this.students[
-                        indexStudent
-                    ].successAndParticipationExercises.get(exercise.type);
-                    excSP.participated++;
-                    if (result.successful) {
-                        this.students[indexStudent].successful++;
-                        excSP.successful++;
-                    }
-                    this.students[indexStudent].successAndParticipationExercises.set(exercise.type, excSP);
-
-                    const excAll: Score[] = this.students[indexStudent].allExercises.get(exercise.type);
-                    excAll.push(
-                        new Score(
-                            result.completionDate,
-                            exercise.id,
-                            exercise.title,
-                            this.roundLikeMozilla((result.score * exercise.maxScore) / 100, -2)
-                        )
-                    );
-                    this.students[indexStudent].allExercises.set(exercise.type, excAll);
-                } else {
-                    const excAll: Score[] = this.students[indexStudent].allExercises.get(exercise.type);
-                    const indexExc: number = excAll.findIndex(exc => exc.exerciseID === exercise.id);
-                    const excSP: { successful: number; participated: number } = this.students[
-                        indexStudent
-                    ].successAndParticipationExercises.get(exercise.type);
-
-                    if (this.students[indexStudent].exerciseNotCounted) {
-                        this.students[indexStudent].participated++;
-                        excSP.participated++;
-                        this.students[indexStudent].exerciseNotCounted = false;
-                    }
-                    if (result.successful) {
-                        this.students[indexStudent].successful++;
-                        excSP.successful++;
-                    }
-
-                    this.students[indexStudent].successAndParticipationExercises.set(exercise.type, excSP);
-
-                    if (indexExc >= 0) {
-                        // if the exercise score exist in the array
-
-                        const existingScore = excAll[indexExc];
-
-                        // we want to have the last result withing the due date (see above)
-                        if (result.completionDate > existingScore.resCompletionDate) {
-                            // update entry with the data of the latest known exercise
-                            excAll[indexExc] = {
-                                resCompletionDate: result.completionDate,
-                                exerciseID: exercise.id,
-                                exerciseTitle: exercise.title,
-                                absoluteScore: this.roundLikeMozilla((result.score * exercise.maxScore) / 100, -2)
-                            };
-                            this.students[indexStudent].allExercises.set(exercise.type, excAll);
-                        }
-                    } else {
-                        // if the exercise score does not exist in the array yet we add it as a new Score
-                        excAll.push(
-                            new Score(
-                                result.completionDate,
-                                exercise.id,
-                                exercise.title,
-                                this.roundLikeMozilla((result.score * exercise.maxScore) / 100, -2)
-                            )
-                        );
-                        this.students[indexStudent].allExercises.set(exercise.type, excAll);
-                    }
-                }
-            }
-        }
-    }
-
-    // TODO: use reduce
-    getTotalScores() {
-        // calculate the total scores for each student
-        this.students.forEach(student => {
-            for (const exType of Object.values(ExerciseType)) {
-                const excAll: Score[] = student.allExercises.get(exType);
-                let totS: number = student.totalScores.get(exType);
-                excAll.forEach(excercise => {
-                    totS += +excercise.absoluteScore;
-                });
-                student.totalScores[exType] = totS;
-            }
-            for (const exType of Object.values(ExerciseType)) {
-                student.overallScore += student.totalScores[exType];
-            }
-        });
     }
 
     exportResults() {
@@ -271,54 +139,27 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
 
         if (this.exportReady && this.students.length > 0) {
             const rows: string[] = [];
-            this.students.forEach((student, index) => {
-                const firstName = student.user.firstName.trim();
-                const lastName = student.user.lastName.trim();
+            // first row with headers
+            rows.push('data:text/csv;charset=utf-8,Name,TumId,Email,QuizTotalScore,' + this.exerciseTitlesPerType[ExerciseType.QUIZ] +
+                ',ProgrammingTotalScore,' + this.exerciseTitlesPerType[ExerciseType.PROGRAMMING] + ',ModelingTotalScore,' + this.exerciseTitlesPerType[ExerciseType.MODELING] + ',OverallScore');
+
+            for (const student of this.students.values()) {
+                let name = student.user.firstName.trim();
+                if (student.user.lastName && student.user.lastName != '') {
+                    name += ' ' + student.user.lastName;
+                }
                 const studentId = student.user.login.trim();
                 const email = student.user.email.trim();
-                const quizTotal = student.totalScores.get('quiz');
-                const programmingTotal = student.totalScores.get('programming');
-                const modelingTotal = student.totalScores.get('modeling');
-                const score = quizTotal + programmingTotal + modelingTotal;
-                const quizString = student.everyScoreString.get('quiz');
-                const modelingString = student.everyScoreString.get('modeling');
-                const programmingString = student.everyScoreString.get('programming');
-                if (index === 0) {
-                    const info = 'data:text/csv;charset=utf-8,FirstName,LastName,TumId,Email,QuizTotalScore,'; // shortening line length and complexity
-                    rows.push(
-                        info +
-                            this.exerciseTitlesForType.get('quiz') +
-                            'ProgrammingTotalScore,' +
-                            this.exerciseTitlesForType.get('programming') +
-                            'ModelingTotalScore,' +
-                            this.exerciseTitlesForType.get('modeling') +
-                            'OverallScore'
-                    );
-                }
-                rows.push(
-                    firstName +
-                        ',' +
-                        lastName +
-                        ',' +
-                        studentId +
-                        ',' +
-                        email +
-                        ',' +
-                        quizTotal +
-                        ',' +
-                        quizString +
-                        '' +
-                        programmingTotal +
-                        ',' +
-                        programmingString +
-                        '' +
-                        modelingTotal +
-                        ',' +
-                        modelingString +
-                        '' +
-                        score
-                );
-            });
+                const quizTotal = student.pointsPerExerciseType[ExerciseType.QUIZ];
+                const programmingTotal = student.pointsPerExerciseType[ExerciseType.PROGRAMMING];
+                const modelingTotal = student.pointsPerExerciseType[ExerciseType.MODELING];
+                const overallScore = student.overallPoints;
+                const quizString = student.pointsStringPerExerciseType[ExerciseType.QUIZ];
+                const modelingString = student.pointsStringPerExerciseType[ExerciseType.MODELING];
+                const programmingString = student.pointsStringPerExerciseType[ExerciseType.PROGRAMMING];
+                rows.push(name + ',' + studentId + ',' + email + ',' + quizTotal + ',' + quizString + '' + programmingTotal + ',' + programmingString
+                    + '' + modelingTotal + ',' + modelingString + '' + overallScore);
+            }
             const csvContent = rows.join('\n');
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement('a');
@@ -326,7 +167,6 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
             link.setAttribute('download', 'course_' + this.course.title + '-scores.csv');
             document.body.appendChild(link); // Required for FF
             link.click();
-            console.log(this.results);
         }
     }
 
@@ -363,31 +203,23 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     }
 }
 
-class Score {
-    resCompletionDate: Moment;
-    exerciseID: number;
-    exerciseTitle: string;
-    absoluteScore: Number;
-
-    constructor(resultCompletionDate: Moment, exerciseID: number, exerciseTitle: string, absolutScore: Number) {
-        this.resCompletionDate = resultCompletionDate;
-        this.exerciseID = exerciseID;
-        this.exerciseTitle = exerciseTitle;
-        this.absoluteScore = absolutScore;
-    }
-}
-
 class Student {
-    constructor(
-        public user: User,
-        public allExercises: Map<string, Array<Score>>,
-        public totalScores: Map<string, number>,
-        public successAndParticipationExercises: Map<string, { successful: number; participated: number }>,
-        public everyScore: Map<string, Array<Score>>,
-        public everyScoreString: Map<string, string>,
-        public participated: number,
-        public successful: number,
-        public exerciseNotCounted: boolean,
-        public overallScore: number
-    ) {}
+    user: User;
+    participations: Participation[] = [];
+    numberOfParticipatedExercises = 0;
+    numberOfSuccessfulExercises = 0;
+    overallPoints = 0;
+    pointsPerExerciseType = new Map<string, number>();
+    relativeScoresPerExerciseType = new Map<string, number>();
+    pointsStringPerExerciseType = new Map<string, string>();
+
+    constructor(user: User) {
+        this.user = user;
+        // initialize with 0 or empty string
+        for (const exerciseType of Object.values(ExerciseType)) {
+            this.pointsPerExerciseType[exerciseType] = 0;
+            this.relativeScoresPerExerciseType[exerciseType] = 0;
+            this.pointsStringPerExerciseType[exerciseType] = '';
+        }
+    }
 }

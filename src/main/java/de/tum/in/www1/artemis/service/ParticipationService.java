@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URL;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -421,8 +422,41 @@ public class ParticipationService {
     }
 
     @Transactional(readOnly = true)
-    public List<Participation> findByCourseId(Long courseId) {
-        return participationRepository.findByCourseId(courseId);
+    public List<Participation> findByCourseIdWithRelevantResults(Long courseId) {
+        List<Participation> participations = participationRepository.findByCourseIdWithEagerResults(courseId);
+        //filter all irrelevant results, i.e. rated = false or before exercise due date
+        for (Participation participation : participations) {
+            List<Result> relevantResults = new ArrayList<Result>();
+            for (Result result : participation.getResults()) {
+                if (result.isRated() == Boolean.FALSE) {
+                    //TODO: for compatibility reasons, we include rated == null, in the future we can remove this
+                    continue;
+                }
+                if (result.getCompletionDate() == null) {
+                    continue;
+                }
+                if (result.getScore() == null) {
+                    continue;
+                }
+                if (participation.getExercise().getDueDate() != null) {
+                    if (result.getCompletionDate().isAfter(participation.getExercise().getDueDate())) {
+                        continue;
+                    }
+                }
+                relevantResults.add(result);
+            }
+            if (!relevantResults.isEmpty()) {
+                //make sure to take the latest result
+                relevantResults.sort((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate()));
+                Result correctResult = relevantResults.get(0);
+                relevantResults.clear();
+                relevantResults.add(correctResult);
+            }
+            participation.setResults(new HashSet<>(relevantResults));
+            //remove unnecessary elements
+            participation.getExercise().setCourse(null);
+        }
+        return participations;
     }
 
     /**

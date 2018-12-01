@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
 import de.tum.in.www1.artemis.domain.Participation;
+import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -18,8 +19,8 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
 
     List<Participation> findByExerciseId(@Param("exerciseId") Long exerciseId);
 
-    @Query("select p from Participation p where p.exercise.course.id = :courseId")
-    List<Participation> findByCourseId(@Param("courseId") Long courseId);
+    @Query("select distinct participation from Participation participation left join fetch participation.results where participation.exercise.course.id = :courseId")
+    List<Participation> findByCourseIdWithEagerResults(@Param("courseId") Long courseId);
 
     Participation findOneByExerciseIdAndStudentLogin(Long exerciseId, String username);
 

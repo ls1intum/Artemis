@@ -93,7 +93,7 @@ public class ResultResource {
         } else if (result.getScore() == null) {
             throw new BadRequestAlertException("Score is required.", ENTITY_NAME, "scoreNull");
         } else if(result.getScore() != 100 && result.isSuccessful()) {
-            throw new BadRequestAlertException("Only result with score 100% can be successful.", ENTITY_NAME, "scoreAndSuccessfulNotMatching");
+            throw new BadRequestAlertException("Only result with score 100% can be numberOfSuccessfulExercises.", ENTITY_NAME, "scoreAndSuccessfulNotMatching");
         } else if(!result.getFeedbacks().isEmpty() && result.getFeedbacks().stream()
                 .filter(feedback -> feedback.getText() == null).count() != 0) {
             throw new BadRequestAlertException("In case feedback is present, feedback text and detail text are mandatory.", ENTITY_NAME, "feedbackTextOrDetailTextNull");
@@ -232,7 +232,7 @@ public class ResultResource {
     }
 
     /**
-     * GET  /courses/:courseId/exercises/:exerciseId/results : get the successful results for an exercise, ordered ascending by build completion date.
+     * GET  /courses/:courseId/exercises/:exerciseId/results : get the numberOfSuccessfulExercises results for an exercise, ordered ascending by build completion date.
      *
      * @param courseId   only included for API consistency, not actually used
      * @param exerciseId the id of the exercise for which to retrieve the results
@@ -262,12 +262,12 @@ public class ResultResource {
 
         for (Participation participation : participations) {
 
-            Result relevantResult = null;
+            Result relevantResult;
             if (ratedOnly == true) {
-                relevantResult = exercise.findLatestRatedResultWithCompletionDate(participation);
+                relevantResult = participation.getExercise().findLatestRatedResultWithCompletionDate(participation);
             }
             else {
-                relevantResult = exercise.findLatestResult(participation);
+                relevantResult = participation.findLatestResult();
             }
             if (relevantResult == null) {
                 continue;
@@ -294,32 +294,6 @@ public class ResultResource {
 
         //remove unnecessary elements in the json response
         results.forEach(result -> {
-            result.getParticipation().setResults(null);
-            result.getParticipation().setSubmissions(null);
-        });
-
-        return ResponseEntity.ok().body(results);
-    }
-
-    /**
-     * GET  /courses/:courseId/results : get the successful results for a course, ordered ascending by build completion date.
-     *
-     * @param courseId the id of the course for which to retrieve the results
-     * @return the ResponseEntity with status 200 (OK) and the list of results in body
-     */
-    @GetMapping(value = "/courses/{courseId}/results")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
-    public ResponseEntity<List<Result>> getResultsForCourse(@PathVariable Long courseId) {
-        log.debug("REST request to get Results for Course : {}", courseId);
-        Course course = courseService.findOne(courseId);
-        if (!userHasPermissions(course)) return forbidden();
-        List<Result> results = resultRepository.findAllResultsForCourse(courseId);
-        // TODO: what we actually want is only results with rated == true or rated == null (for compatibility)
-        // ideally it should be the last result in case of multiple participations
-        //remove unnecessary elements in the json response
-        results.forEach(result -> {
-            result.getParticipation().setExercise(null);
             result.getParticipation().setResults(null);
             result.getParticipation().setSubmissions(null);
         });

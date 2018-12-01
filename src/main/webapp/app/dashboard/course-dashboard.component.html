@@ -1,55 +1,32 @@
 <div *ngIf="course">
-    <h2>{{course.title}} <small>{{exercises.length}} <span jhiTranslate="arTeMiSApp.exercise.home.title"> exercises</span>, {{students.length}} <span jhiTranslate="instructorDashboard.students">students</span></small></h2>
-<jhi-alert></jhi-alert>
-    <button class="btn btn-primary btn-sm"  (click)="exportResults()"><i class="fa fa-download fa-fw"></i>&nbsp;Export Results as CSV</button>
-    <div class="table-responsive" *ngIf="exportReady">
+    <h4>{{course.title}} <small>{{exercises.length}} released exercises, {{students.length}} students with results</small>
+        <button *ngIf="exportReady" class="btn btn-primary btn-sm float-right" (click)="exportResults()"><i class="fa fa-download fa-fw"></i>&nbsp;Export Results as CSV</button>
+    </h4>
+    <jhi-alert></jhi-alert>
+    <div class="table-responsive" *ngIf="exercises.length > 0">
         <table class="table table-striped">
             <thead>
-            <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse"  [callback]="callback">
-                <th jhiSortBy="firstName">
-                    <span jhiTranslate="logs.table.name">Name</span> <span class="fa fa-sort"></span>
-                </th>
-
-                <th jhiSortBy="login">
-                    <span jhiTranslate="userManagement.login">Login</span> <span class="fa fa-sort"></span>
-                </th>
-
-                <th jhiSortBy="participated">
-                    <span jhiTranslate="instructorDashboard.participated">Participated in exercises </span>(%) <span class="fa fa-sort"></span>
-                </th>
-
-                <th jhiSortBy="successful">
-                    <span jhiTranslate="instructorDashboard.completedExercises">Successfully completed exercises </span>(%) <span class="fa fa-sort"></span>
-                </th>
-
-                <th jhiSortBy="totalScoreQuizzes">
-                    <span jhiTranslate="instructorDashboard.totalScoreQuizzes">Total Score Quizzes </span>(%)<span class="fa fa-sort"></span>
-                </th>
-
-                <th jhiSortBy="totalScoreProgramming">
-                    <span jhiTranslate="instructorDashboard.totalScoreProgramming">Total Score Programming </span>(%) <span class="fa fa-sort"></span>
-                </th>
-
-                <th jhiSortBy="totalScoreModeling">
-                    <span jhiTranslate="instructorDashboard.totalScoreModeling">Total Score Modeling </span>(%) <span class="fa fa-sort"></span>
-                </th>
-
-                <th jhiSortBy="overallScore">
-                    <span jhiTranslate="instructorDashboard.overallScore">Overall Score</span> <span class="fa fa-sort"></span>
-                </th>
-
+            <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
+                <th jhiSortBy="user.firstName"><span>Name</span> <span class="fa fa-sort"></span></th>
+                <th jhiSortBy="user.login"><span>Login</span> <span class="fa fa-sort"></span></th>
+                <th jhiSortBy="numberOfParticipatedExercises"><span>Participated in Exercises (%)</span> <span class="fa fa-sort"></span></th>
+                <th jhiSortBy="numberOfSuccessfulExercises"><span>Successful Exercises (%)</span> <span class="fa fa-sort"></span></th>
+                <th *ngIf="exerciseMaxPointsPerType[QUIZ] > 0" jhiSortBy="pointsPerExerciseType.quiz"><span>Quiz Points </span>(%)<span class="fa fa-sort"></span></th>
+                <th *ngIf="exerciseMaxPointsPerType[PROGRAMMING] > 0" jhiSortBy="pointsPerExerciseType.programming"><span>Programming Points (%)</span> <span class="fa fa-sort"></span></th>
+                <th *ngIf="exerciseMaxPointsPerType[MODELING] > 0" jhiSortBy="pointsPerExerciseType.modeling"><span>Modeling Points (%)</span> <span class="fa fa-sort"></span></th>
+                <th jhiSortBy="overallPoints"><span>Overall Points (%)</span> <span class="fa fa-sort"></span></th>
             </tr>
             </thead>
             <tbody>
-            <tr *ngFor="let student of students | sortBy: predicate: reverse">
+            <tr *ngFor="let student of students | sortBy: predicate: reverse; trackBy: trackId">
                 <td>{{ student.user.firstName }} {{ student.user.lastName }}</td>
                 <td>{{ student.user.login }}</td>
-                <td>{{ student.participated }} ({{ (student.participated/exercises.length)*100 | number: '0.0-0'}}%)</td>
-                <td>{{ student.successful }} ({{ (student.successful/exercises.length)*100 | number: '0.0-0'}}%)</td>
-                <td>{{ student.totalScores.get('quiz') }} ({{ (student.totalScores.get('quiz') / exerciseMaxScoresForType.get('quiz'))*100 | number: '0.0-0'}}%)</td>
-                <td>{{ student.totalScores.get('programming') }} ({{ (student.totalScores.get('programming') / exerciseMaxScoresForType.get('programming'))*100 | number: '0.0-0'}}%)</td>
-                <td>{{ student.totalScores.get('modeling') }} ({{ (student.totalScores.get('modeling') / exerciseMaxScoresForType.get('modeling'))*100 | number: '0.0-0'}}%)</td>
-                <td>{{ student.overallScore | number: '0.0-0'}}</td>
+                <td>{{ student.numberOfParticipatedExercises }} ({{ (student.numberOfParticipatedExercises / exercises.length) * 100 | number: '0.0-0'}}%)</td>
+                <td>{{ student.numberOfSuccessfulExercises }} ({{ (student.numberOfSuccessfulExercises / exercises.length) * 100 | number: '0.0-0'}}%)</td>
+                <td *ngIf="exerciseMaxPointsPerType[QUIZ] > 0">{{ student.pointsPerExerciseType[QUIZ] }} ({{ (student.pointsPerExerciseType[QUIZ] / exerciseMaxPointsPerType[QUIZ]) * 100 | number: '0.0-0'}}%)</td>
+                <td *ngIf="exerciseMaxPointsPerType[PROGRAMMING] > 0">{{ student.pointsPerExerciseType[PROGRAMMING] }} ({{ (student.pointsPerExerciseType[PROGRAMMING] / exerciseMaxPointsPerType[PROGRAMMING]) * 100 | number: '0.0-0'}}%)</td>
+                <td *ngIf="exerciseMaxPointsPerType[MODELING] > 0">{{ student.pointsPerExerciseType[MODELING] }} ({{ (student.pointsPerExerciseType[MODELING] / exerciseMaxPointsPerType[MODELING]) * 100 | number: '0.0-0'}}%)</td>
+                <td>{{ student.overallPoints | number: '0.0-0'}} ({{ student.overallPoints / overallMaxPoints * 100 | number: '0.0-0'}}%)</td>
             </tr>
             </tbody>
         </table>
