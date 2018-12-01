@@ -130,10 +130,6 @@ public class CourseService {
                     continue;
                 }
                 userCourses.add(course);
-                //filter sensitive information
-                for (Exercise exercise : course.getExercises()) {
-                    exercise.filterSensitiveInformation();
-                }
             }
             return new ArrayList<>(userCourses);
         } else {
