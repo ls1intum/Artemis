@@ -13,6 +13,7 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import javax.mail.Part;
 import java.util.Optional;
 
 /**
@@ -50,6 +51,22 @@ public class ResultService {
         log.debug("Received new build result for participation " + participation.getId());
         // fetches the new build result
         Result result = continuousIntegrationService.get().onBuildCompleted(participation);
+        notifyUser(participation, result);
+    }
+
+    /**
+     * Use the given requestBody to extract the relevant information from it
+     * @param participation Participation for which the build was finished
+     * @param requestBody RequestBody containing all relevant information
+     */
+    public void onResultNotifiedNew(Participation participation, Object requestBody) throws Exception {
+        log.debug("Received new build result (NEW) for participation " + participation.getId());
+
+        Result result = continuousIntegrationService.get().onBuildCompletedNew(participation, requestBody);
+        notifyUser(participation, result);
+    }
+
+    private void notifyUser(Participation participation, Result result) {
         if (result != null) {
             // notify user via websocket
             messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", result);

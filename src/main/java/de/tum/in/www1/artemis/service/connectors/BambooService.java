@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.exception.BambooException;
+import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
@@ -56,6 +57,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -530,6 +532,95 @@ public class BambooService implements ContinuousIntegrationService {
         return result;
     }
 
+    @Override
+    public String getPlanKey(Object requestBody) throws BambooException {
+        try {
+            Map<String, Object> requestBodyMap = (Map<String, Object>) requestBody;
+            Map<String, Object> planMap = (Map<String, Object>) requestBodyMap.get("plan");
+            String planKey = (String) planMap.get("key");
+
+            return planKey;
+
+        } catch (Exception e) {
+            log.error("Error when getting plan key");
+            throw new BitbucketException("Could not get plan key", e);
+        }
+    }
+
+    @Override
+    public Result onBuildCompletedNew(Participation participation, Object requestBody) throws Exception {
+        log.debug("Retrieving build result (NEW) ...");
+        try {
+            Map<String, Object> requestBodyMap = (Map<String, Object>) requestBody;
+            Map<String, Object> buildMap = (Map<String, Object>) requestBodyMap.get("build");
+            String buildReason = (String) buildMap.get("reason");
+            if (buildReason != null && buildReason.contains("First build for this plan")) {
+                //Filter the first build plan that was automatically executed when the build plan was created
+                return null;
+            }
+
+            Result result = new Result();
+            result.setRated(participation.getExercise().getDueDate() == null || ZonedDateTime.now().isBefore(participation.getExercise().getDueDate()));
+            result.setAssessmentType(AssessmentType.AUTOMATIC);
+            result.setSuccessful((Boolean) buildMap.get("successful"));
+
+            Map<String, Object> testSummary = (Map<String, Object>) buildMap.get("testSummary");
+            result.setResultString((String) testSummary.get("description"));
+
+            result.setCompletionDate(ZonedDateTime.parse((String) buildMap.get("buildCompletedDate")));
+            result.setScore(calculateScoreForResult(result));
+            result.setBuildArtifact((Boolean) buildMap.get("artifact"));
+            result.setParticipation(participation);
+
+            addFeedbackToResultNew(result, (List<Object>) buildMap.get("failedJobs"));
+
+            // save result, otherwise the next database access programmingSubmissionRepository.findByCommitHash will throw an exception
+            resultRepository.save(result);
+
+            List<Object> vcsList = (List<Object>) buildMap.get("vcs");
+
+            String commitHash = null;
+            for(Object changeSet : vcsList) {
+                Map<String, Object> changeSetMap = (Map<String, Object>) changeSet;
+                if (changeSetMap.get("repositoryName").equals(ASSIGNMENT_REPO_NAME)) { // We are only interested in the last commit hash of the assignment repo, not the test repo
+                    commitHash = (String) changeSetMap.get("id");
+                }
+            }
+
+            if (commitHash == null) {
+                log.warn("Could not find Commit-Hash (Participation {}, Build-Plan {})", participation.getId(), participation.getBuildPlanId());
+
+            } else {
+                ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHash(participation.getId(), commitHash);
+                if (programmingSubmission == null) { // no matching programming submission
+                    log.warn("Could not find ProgrammingSubmission for Commit-Hash {} (Participation {}, Build-Plan {}). Will create it subsequently...", commitHash, participation.getId(), participation.getBuildPlanId());
+                    // this might be a wrong build (what could be the reason), or this might be due to test changes
+                    // what happens if only the test has changes? should we then create a new submission?
+                    programmingSubmission = new ProgrammingSubmission();
+                    programmingSubmission.setParticipation(participation);
+                    programmingSubmission.setSubmitted(true);
+                    programmingSubmission.setType(SubmissionType.OTHER);
+                    programmingSubmission.setCommitHash(commitHash);
+                    programmingSubmission.setSubmissionDate(result.getCompletionDate());
+                } else {
+                    log.info("Found corresponding submission to build result with Commit-Hash {}", commitHash);
+                }
+
+                result.setSubmission(programmingSubmission);
+                programmingSubmission.setResult(result);
+                programmingSubmissionRepository.save(programmingSubmission); // result gets saved later, no need to save it now
+            }
+
+            resultRepository.save(result);
+
+            return result;
+
+        } catch (Exception e) {
+            log.error("Error when getting build result");
+            throw new BitbucketException("Could not get build result", e);
+        }
+    }
+
     /**
      * Converts build result details into feedback and stores it in the result object
      * @param
@@ -571,6 +662,54 @@ public class BambooService implements ContinuousIntegrationService {
             }
         } catch(Exception failedToParse) {
             log.error("Parsing from bamboo to feedback failed" + failedToParse);
+        }
+
+        return result.getFeedbacks();
+    }
+
+    /**
+     * Converts build result details into feedback and stores it in the result object
+     * @param result the result for which the feedback should be added
+     * @param failedJobs the failedJobs list of the requestBody
+     *
+     * @return a list of feedbacks itemsstored in a result
+     */
+    public List<Feedback> addFeedbackToResultNew(Result result, List<Object> failedJobs) {
+        if(failedJobs == null) {
+            return null;
+        }
+
+        try {
+            List<Map<String, Object>> castedfailedJobs = (List<Map<String, Object>>) (Object) failedJobs; // TODO: check if this works correctly
+
+            for (Map<String, Object> failedJob : castedfailedJobs) {
+                for (Map<String, Object> failedTest : (List<Map<String, Object>>) (Object) failedJob.get("failedTests")) {
+                    result.setHasFeedback(true); // TODO: check if setting this multiple times is a performance issue
+
+                    String className = (String) failedTest.get("className");
+                    String methodName = (String) failedTest.get("methodName");
+
+                    List<String> errors = (List<String>) failedTest.get("errors");
+                    String errorMessageString = "";
+                    for(String error : errors) {
+                        //Splitting string at the first linebreak to only get the first line of the Exception
+                        errorMessageString += error.split("\\n", 2)[0] + "\n";
+                    }
+
+                    log.debug("errorMSGString is {}", errorMessageString);
+
+                    Feedback feedback = new Feedback();
+                    feedback.setText(methodName);
+                    feedback.setDetailText(errorMessageString);
+                    feedback.setType(FeedbackType.AUTOMATIC);
+                    feedback.setPositive(false);
+                    feedback = feedbackRepository.save(feedback);
+                    result.addFeedback(feedback);
+                }
+            }
+
+        } catch (Exception e)  {
+            log.error("Could not get feedback from failedJobs " + e);
         }
 
         return result.getFeedbacks();

@@ -72,6 +72,25 @@ public interface ContinuousIntegrationService {
     public Result onBuildCompleted(Participation participation);
 
     /**
+     * Get the plan key of the finished build, the information of the build gets passed via the requestBody.
+     *
+     * @param requestBody The request Body received from the CI-Srever.
+     * @return the plan key of the build
+     * @throws Exception if the Body could not be parsed
+     */
+    public String getPlanKey(Object requestBody) throws Exception;
+
+    /**
+     * Get the result of the finished build, the information of the build gets passed via the requestBody.
+     *
+     * @param participation The participation for which the build finished
+     * @param requestBody The request Body received from the CI-Srever.
+     * @return the result of the build
+     * @throws Exception if the Body could not be parsed
+     */
+    public Result onBuildCompletedNew(Participation participation, Object requestBody) throws Exception;
+
+    /**
      * Get the current status of the build for the given participation, i.e. INACTIVE, QUEUED, or BUILDING.
      *
      * @param participation participation for which to get status
