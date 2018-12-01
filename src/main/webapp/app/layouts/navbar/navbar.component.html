@@ -19,6 +19,14 @@
                     </span>
                 </a>
             </li>
+            <li *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_TA', 'ROLE_INSTRUCTOR']" class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+                <a class="nav-link" routerLink="tutor-course-dashboard" (click)="collapseNavbar()">
+                    <span>
+                        <fa-icon [icon]="'th-list'"></fa-icon>
+                        <span jhiTranslate="global.menu.tutorCourseDashboard">Tutor Course Dashboard</span>
+                    </span>
+                </a>
+            </li>
             <li *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_TA', 'ROLE_INSTRUCTOR']" ngbDropdown class="nav-item dropdown pointer" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
                 <a class="nav-link" routerLink="course" (click)="collapseNavbar()">
                     <span>

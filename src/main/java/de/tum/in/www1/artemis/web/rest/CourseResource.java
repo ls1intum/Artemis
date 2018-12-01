@@ -227,6 +227,32 @@ public class CourseResource {
     }
 
     /**
+     * GET /courses/for-dashboard
+     *
+     * @param principal the current tutor principal
+     * @return the list of courses (the tutor has access to) including all exercises
+     * with tutor status for assessment
+     */
+    @GetMapping("/courses/for-tutor-dashboard")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @Timed
+    public List<Course> getAllCoursesForTutorDashboard(Principal principal) {
+        log.debug("REST request /courses/for-tutor-dashboard");
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        // get all courses with exercises for this user
+        List<Course> courses = courseService.findAllWithExercisesForUser(principal, user);
+
+        for (Course course : courses) {
+            for (Exercise exercise : course.getExercises()) {
+               // TODO: get number of assessments done, number of assessment to do, status of participation
+            }
+        }
+
+        return courses;
+    }
+
+    /**
      * GET  /courses/:id : get the "id" course.
      *
      * @param id the id of the course to retrieve

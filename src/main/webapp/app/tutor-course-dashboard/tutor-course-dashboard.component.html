@@ -1,0 +1,19 @@
+<div *ngIf="courses">
+    <jhi-alert></jhi-alert>
+    <div *ngFor="let course of courses;trackBy: trackId">
+        <div class="card card-primary card-inverse jh-card border-primary">
+            <div class="header-container  bg-primary text-white">
+                <h4 class="card-header">
+                    <strong>{{course.title}}</strong>
+                    &nbsp;
+                    <a class="text-primary card-link" *ngIf="course.isAtLeastTutor" routerLink="/course/{{course.id}}/dashboard" routerLinkActive="active">
+                        <i class="fa fa-info-circle fa-fw" style="color:white;"></i>
+                    </a>
+                </h4>
+            </div>
+            <div class="card-body card-block">
+                <jhi-exercise-list [course]="course" [filterByExerciseId]="filterByExerciseId"></jhi-exercise-list>
+            </div>
+        </div>
+    </div>
+</div>
