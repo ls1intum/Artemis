@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis.service.connectors;
 
+import com.atlassian.bamboo.specs.api.builders.AtlassianModule;
 import com.atlassian.bamboo.specs.api.builders.BambooKey;
 import com.atlassian.bamboo.specs.api.builders.applink.ApplicationLink;
+import com.atlassian.bamboo.specs.api.builders.notification.AnyNotificationRecipient;
+import com.atlassian.bamboo.specs.api.builders.notification.Notification;
 import com.atlassian.bamboo.specs.api.builders.permission.PermissionType;
 import com.atlassian.bamboo.specs.api.builders.permission.Permissions;
 import com.atlassian.bamboo.specs.api.builders.permission.PlanPermissions;
@@ -15,6 +18,7 @@ import com.atlassian.bamboo.specs.api.builders.plan.configuration.ConcurrentBuil
 import com.atlassian.bamboo.specs.api.builders.project.Project;
 import com.atlassian.bamboo.specs.api.builders.repository.VcsChangeDetection;
 import com.atlassian.bamboo.specs.api.builders.repository.VcsRepositoryIdentifier;
+import com.atlassian.bamboo.specs.builders.notification.PlanCompletedNotification;
 import com.atlassian.bamboo.specs.builders.repository.bitbucket.server.BitbucketServerRepository;
 import com.atlassian.bamboo.specs.builders.repository.viewer.BitbucketServerRepositoryViewer;
 import com.atlassian.bamboo.specs.builders.task.CheckoutItem;
@@ -63,6 +67,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_API_PATH;
 import static de.tum.in.www1.artemis.config.Constants.RESULT_RESOURCE_API_PATH;
 
 @Service
@@ -176,15 +181,15 @@ public class BambooService implements ContinuousIntegrationService {
                             .goal("clean test")
                             .jdk("JDK 1.8")
                             .executableLabel("Maven 3")
-                            .hasTests(true))
-                    .finalTasks(new ScriptTask()
-                        .description("Notify ArTEMiS")
-                        .interpreter(ScriptTaskProperties.Interpreter.BINSH_OR_CMDEXE)
-                        .inlineBody("curl -k -X POST " + SERVER_URL + RESULT_RESOURCE_API_PATH + "${bamboo.planKey}"))))
+                            .hasTests(true))))
             .triggers(new BitbucketServerTrigger())
             .planBranchManagement(new PlanBranchManagement()
                 .delete(new BranchCleanup())
-                .notificationForCommitters());
+                .notificationForCommitters())
+            .notifications(new Notification()
+                .type(new PlanCompletedNotification())
+                .recipients(new AnyNotificationRecipient(new AtlassianModule("de.tum.in.www1.bamboo-artemis:recipient.artemis"))
+                    .recipientString(SERVER_URL + NEW_RESULT_RESOURCE_API_PATH)));
         return plan;
     }
 
