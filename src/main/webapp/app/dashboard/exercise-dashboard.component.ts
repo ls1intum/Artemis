@@ -80,8 +80,9 @@ export class ExerciseDashboardComponent implements OnInit, OnDestroy {
             })
             .subscribe((res: HttpResponse<Result[]>) => {
                 const tempResults: Result[] = res.body;
-                tempResults.forEach(function(result: Result) {
+                tempResults.forEach(result => {
                     result.participation.results = [result];
+                    result.participation.exercise = this.exercise;
                 });
                 this.allResults = tempResults;
                 this.filterResults();
@@ -91,11 +92,11 @@ export class ExerciseDashboardComponent implements OnInit, OnDestroy {
     filterResults() {
         this.results = [];
         if (this.showAllResults === 'successful') {
-            this.results = this.allResults.filter(function(result) {
+            this.results = this.allResults.filter(result => {
                 return result.successful === true;
             });
         } else if (this.showAllResults === 'unsuccessful') {
-            this.results = this.allResults.filter(function(result) {
+            this.results = this.allResults.filter(result => {
                 return result.successful === false;
             });
         } else if (this.showAllResults === 'all') {
