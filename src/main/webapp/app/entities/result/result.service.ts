@@ -109,7 +109,9 @@ export class ResultService {
     convertParticipationDateFromServer(participation: Participation) {
         if (participation) {
             participation.initializationDate = participation.initializationDate != null ? moment(participation.initializationDate) : null;
-            participation.exercise = this.exerciseService.convertExerciseDateFromServer(participation.exercise);
+            if (participation.exercise) {
+                participation.exercise = this.exerciseService.convertExerciseDateFromServer(participation.exercise);
+            }
         }
         return participation;
     }
