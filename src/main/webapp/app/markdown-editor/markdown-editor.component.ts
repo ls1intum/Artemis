@@ -27,10 +27,8 @@ export class MarkdownEditorComponent implements ControlValueAccessor, Validator 
     @ViewChild('aceEditor')
     aceEditorContainer: ElementRef;
 
-    @Input()
     hideToolbar: boolean = false;
 
-    @Input()
     height: string = '300px';
 
     @Input()
