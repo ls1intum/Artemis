@@ -19,14 +19,11 @@ export const enum ExerciseType {
 }
 
 export const enum ParticipationStatus {
-    QUIZ_UNINITIALIZED = 'quiz-uninitialized',
-    QUIZ_ACTIVE = 'quiz-active',
-    QUIZ_SUBMITTED = 'quiz-submitted',
-    QUIZ_NOT_STARTED = 'quiz-not-started',
-    QUIZ_NOT_PARTICIPATED = 'quiz-not-participated',
-    QUIZ_FINISHED = 'quiz-finished',
-    MODELING_EXERCISE = 'modeling-exercise',
-    TEXT_EXERCISE = 'text-exercise',
+    ACTIVE = 'active',
+    SUBMITTED = 'submitted',
+    NOT_STARTED = 'not-started',
+    NOT_PARTICIPATED = 'not-participated',
+    FINISHED = 'finished',
     UNINITIALIZED = 'uninitialized',
     INITIALIZED = 'initialized',
     INACTIVE = 'inactive'

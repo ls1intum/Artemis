@@ -169,9 +169,10 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
 
     isActiveQuiz(exercise: Exercise) {
         return (
-            exercise.participationStatus === ParticipationStatus.QUIZ_UNINITIALIZED ||
-            exercise.participationStatus === ParticipationStatus.QUIZ_ACTIVE ||
-            exercise.participationStatus === ParticipationStatus.QUIZ_SUBMITTED
+            exercise.type === this.QUIZ &&
+            (exercise.participationStatus === ParticipationStatus.UNINITIALIZED ||
+                exercise.participationStatus === ParticipationStatus.ACTIVE ||
+                exercise.participationStatus === ParticipationStatus.SUBMITTED)
         );
     }
 
@@ -264,38 +265,30 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
         if (exercise.type === ExerciseType.QUIZ) {
             const quizExercise = exercise as QuizExercise;
             if ((!quizExercise.isPlannedToStart || moment(quizExercise.releaseDate).isAfter(moment())) && quizExercise.visibleToStudents) {
-                return ParticipationStatus.QUIZ_NOT_STARTED;
+                return ParticipationStatus.NOT_STARTED;
             } else if (
                 !this.hasParticipations(exercise) &&
                 (!quizExercise.isPlannedToStart || moment(quizExercise.dueDate).isAfter(moment())) &&
                 quizExercise.visibleToStudents
             ) {
-                return ParticipationStatus.QUIZ_UNINITIALIZED;
+                return ParticipationStatus.UNINITIALIZED;
             } else if (!this.hasParticipations(exercise)) {
-                return ParticipationStatus.QUIZ_NOT_PARTICIPATED;
+                return ParticipationStatus.NOT_PARTICIPATED;
             } else if (
                 exercise.participations[0].initializationState === InitializationState.INITIALIZED &&
                 moment(exercise.dueDate).isAfter(moment())
             ) {
-                return ParticipationStatus.QUIZ_ACTIVE;
+                return ParticipationStatus.ACTIVE;
             } else if (
                 exercise.participations[0].initializationState === InitializationState.FINISHED &&
                 moment(exercise.dueDate).isAfter(moment())
             ) {
-                return ParticipationStatus.QUIZ_SUBMITTED;
+                return ParticipationStatus.SUBMITTED;
             } else {
                 if (!this.hasResults(exercise.participations[0])) {
-                    return ParticipationStatus.QUIZ_NOT_PARTICIPATED;
+                    return ParticipationStatus.NOT_PARTICIPATED;
                 }
-                return ParticipationStatus.QUIZ_FINISHED;
-            }
-        } else if ((exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT) && this.hasParticipations(exercise)) {
-            const participation = exercise.participations[0];
-            if (
-                participation.initializationState === InitializationState.INITIALIZED ||
-                participation.initializationState === InitializationState.FINISHED
-            ) {
-                return exercise.type === ExerciseType.MODELING ? ParticipationStatus.MODELING_EXERCISE : ParticipationStatus.TEXT_EXERCISE;
+                return ParticipationStatus.FINISHED;
             }
         }
 
@@ -303,7 +296,10 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
             return ParticipationStatus.UNINITIALIZED;
         } else if (exercise.participations[0].initializationState === InitializationState.INITIALIZED) {
             return ParticipationStatus.INITIALIZED;
+        } else if (exercise.participations[0].initializationState === InitializationState.FINISHED) {
+            return ParticipationStatus.FINISHED;
         }
+
         return ParticipationStatus.INACTIVE;
     }
 
