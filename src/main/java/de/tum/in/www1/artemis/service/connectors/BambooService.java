@@ -188,7 +188,7 @@ public class BambooService implements ContinuousIntegrationService {
                 .notificationForCommitters())
             .notifications(new Notification()
                 .type(new PlanCompletedNotification())
-                .recipients(new AnyNotificationRecipient(new AtlassianModule("de.tum.in.www1.bamboo-artemis:recipient.artemis"))
+                .recipients(new AnyNotificationRecipient(new AtlassianModule("de.tum.in.www1.bamboo-server:recipient.server"))
                     .recipientString(SERVER_URL + NEW_RESULT_RESOURCE_API_PATH)));
         return plan;
     }
