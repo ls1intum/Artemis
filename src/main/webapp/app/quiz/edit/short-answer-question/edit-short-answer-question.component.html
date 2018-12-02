@@ -19,7 +19,7 @@
 
     <div class="card-body question-card-body" [ngbCollapse]="isQuestionCollapsed" id="collapseQuestion{{questionIndex}}">
 
-        //reevalute? siehe dnd
+        <!-- reevalute? siehe dnd -->
 
         <div class="question-options">
             <div class="form-group">
@@ -30,12 +30,7 @@
                 </select>
             </div>
             <div class="form-group">
-                <div class="form-check custom-control custom-checkbox">
-                    <input type="checkbox" id="{{'cbRandomizeOrderSA' + questionIndex}}" [(ngModel)]="question.randomizeOrder" class="form-check-input custom-control-input"/>
-                    <label class="form-check-label custom-control-label" for="{{'cbRandomizeOrderSA' + questionIndex}}"
-                           jhiTranslate="arTeMiSApp.shortAnswerQuestion.randomizeOrder">
-                    </label>
-                </div>
+                <div class="form-check custom-control custom-checkbox"></div>
             </div>
             <div class="form-group">
                 <div class="delete-button" (click)="deleteQuestion()">
@@ -43,14 +38,16 @@
                 </div>
             </div>
 
-            //reevaluate? siehe dnd
+            <!-- reevalute? siehe dnd -->
         </div>
 
         <div class="markupEditorArea">
             <div class="toolbar">
                 <div class="btn-group">
-                    <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addHint" (click)="addHintAtCursor()"></div>
-                    <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addExplanation" (click)="addExplanationAtCursor()"></div>
+                    <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.addHint" (click)="addHintAtCursor()"></div>
+                    <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.addExplanation" (click)="addExplanationAtCursor()"></div>
+                    <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.addSpot" (click)="addSpotAtCursor()"></div>
+                    <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.addOption" (click)="addOptionAtCursor()"></div>
                 </div>
             </div>
             <div class="question-content">
@@ -62,24 +59,23 @@
                             class="form-control">
                 </ace-editor>
             </div>
-            <hr/>
             <div class="toolbar">
-                <div class="btn btn-outline-secondary" (click)="togglePreview()">
-                    <i class="fa fa-eye"></i>
-                    <span jhiTranslate="entity.action.preview"></span>
+                <div class="btn-group">
+                    <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.visual" (click)="togglePreview()"></div>
+                    <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.text" (click)="togglePreview()"></div>
                 </div>
             </div>
         </div>
-
-
-
-
-
-
-
     </div>
+</div>
 
-
-
-
+<div class="preview-sa-question" *ngIf="!reEvaluationInProgress && showPreview">
+    <jhi-short-answer-question [question]="question"
+                               [questionIndex]="questionIndex">
+    </jhi-short-answer-question>
+    <hr/>
+    <div class="btn btn-outline-secondary" (click)="togglePreview()">
+        <i class="fa fa-pencil"></i>
+        <span jhiTranslate="entity.action.edit"></span>
+    </div>
 </div>

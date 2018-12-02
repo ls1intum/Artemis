@@ -88,7 +88,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
 
     constructor(
         private artemisMarkdown: ArtemisMarkdown,
-        private dragAndDropQuestionUtil: DragAndDropQuestionUtil //TODO: Check if saQuestionUtil is needed
+        private dragAndDropQuestionUtil: DragAndDropQuestionUtil //TODO: FDE Check if saQuestionUtil is needed
     ) {}
 
     ngOnInit(): void {
@@ -143,9 +143,8 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
 
         // Generate markdown from question and show result in editor
 
-        //TODO: adapt markdown for SA
+        //TODO: FDE adapt markdown for SA
         this.questionEditorText = this.artemisMarkdown.generateTextHintExplanation(this.question);
-
         this.questionEditor.getEditor().clearSelection();
 
         // Register the onBlur listener
@@ -187,6 +186,24 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @desc Add the markdown for an explanation at the current cursor location
      */
     addExplanationAtCursor(): void {
+        this.artemisMarkdown.addExplanationAtCursor(this.questionEditor.getEditor());
+    }
+
+    /**
+     * @function addSpotAtCursor
+     * @desc Add the markdown for a hint at the current cursor location
+     */
+    addSpotAtCursor(): void {
+        //TODO: FDE
+        this.artemisMarkdown.addHintAtCursor(this.questionEditor.getEditor());
+    }
+
+    /**
+     * @function addOptionAtCursor
+     * @desc Add the markdown for an explanation at the current cursor location
+     */
+    addOptionAtCursor(): void {
+        //TODO: FDE
         this.artemisMarkdown.addExplanationAtCursor(this.questionEditor.getEditor());
     }
 
