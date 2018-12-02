@@ -1,4 +1,4 @@
-# Artemis: AuTomated assEssment Management System 
+# Artemis: Automated Assessment Management System 
 This application was generated using JHipster 5.7.0, you can find documentation and help at [http://www.jhipster.tech/documentation-archive/v5.7.0](http://www.jhipster.tech/documentation-archive/v5.7.0).
 
 **Curent version:** 2.3.0
@@ -56,18 +56,18 @@ Artemis is based on [JHipster](https://jhipster.github.io), i.e. [Spring Boot](h
 You can find tutorials how to setup JHipster in an IDE ([IntelliJ](https://www.jetbrains.com/idea) is recommended, but it also runs in other IDEs as well) on [https://jhipster.github.io/configuring-ide](https://jhipster.github.io/configuring-ide).
 Before you can build Artemis, you must install and configure the following dependencies/tools on your machine:
 
-1. [Java 8 JDK](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html): Java is the main development language for the server application of Artemis.
-2. [MySQL Database Server 5.7.x](https://dev.mysql.com/downloads/mysql): Artemis uses Hibernate to store entities in a MySQL database. Download and install the MySQL Community Server (5.7.x) and configure the 'root' user with an empty password. (In case you want to use a different password, make sure to change the value in application-dev.yml and in liquibase.gradle). The required Artemis scheme will be created / updated automatically at startup time of the server application.
-3. [Node.js](https://nodejs.org): We use Node (>=6.9.0) to run a development web server and build the project. Depending on your system, you can install Node either from source or as a pre-packaged bundle.
+1. [Java 8 JDK](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html): Java is the main development language for the server application of Artemis. (Please note that newer versions of Java might work, but are not yet supported)
+2. [MySQL Database Server 5.7.x](https://dev.mysql.com/downloads/mysql): Artemis uses Hibernate to store entities in a MySQL database. Download and install the MySQL Community Server (5.7.x) and configure the 'root' user with an empty password. (In case you want to use a different password, make sure to change the value in application-dev.yml and in liquibase.gradle). The required Artemis scheme will be created / updated automatically at startup time of the server application. (Please note that MySQL 8 is not yet supported)
+3. [Node.js](https://nodejs.org): We use Node (>=6.9.0 and <= 10.x) to run a development web server and build the project. Depending on your system, you can install Node either from source or as a pre-packaged bundle. (Please note that Node 11 has an annoying bug, so it is recommended to use the latest version of Node 10.x)
 4. [Yarn 1.9.x](https://yarnpkg.com): We use Yarn to manage Node dependencies.
 Depending on your system, you can install Yarn either from source or as a pre-packaged bundle.
 
 ### Server Setup
 
-To start the Artemis application server from the development environment, first import the project into IntelliJ and then make sure to install the Spring Boot plugins to run the main class de.tum.in.www1.Artemis.ArtemisApp. Before the application runs, you have to configure the file `application-Artemis.yml` in the folder `src/main/resources/config`. 
+To start the Artemis application server from the development environment, first import the project into IntelliJ and then make sure to install the Spring Boot plugins to run the main class de.tum.in.www1.artemis.ArTEMiSApp. Before the application runs, you have to configure the file `application-artemis.yml` in the folder `src/main/resources/config`. 
 
 ```
-Artemis:
+artemis:
   repo-clone-path: ./repos/
   encryption-password: <encrypt-password>
   result-retrieval-delay: 5000
@@ -87,14 +87,14 @@ Artemis:
     password: <password>
     empty-commit-necessary: true
   lti:
-    id: Artemis_lti
-    oauth-key: Artemis_lti_key
+    id: artemis_lti
+    oauth-key: artemis_lti_key
     oauth-secret: <secret>
     user-prefix: edx_
     user-group-name: edx
   git:
-    name: Artemis
-    email: Artemis@in.tum.de
+    name: artemis
+    email: artemis@in.tum.de
 ```
 Change all entries with ```<...>``` with proper values, e.g. your TUM Online account credentials to connect to the given instances of JIRA, Bitbucket and Bamboo. Alternatively, you can connect to your local JIRA, Bitbucket and Bamboo instances.
 Be careful that you don't commit changes in this file. Best practice is to specify that your local git repository ignores this file or assumes that this file is unchanged. 
@@ -130,7 +130,7 @@ To start the client application in the browser, use the following command:
 yarn start
 ```
 
-This compiles TypeScript code to JavaScript code, starts the hot module replacement feature in Webpack (i.e. whenever you change a TypeScript file and save, the client is automatically reloaded with the new code) and will start the client application in your browser on `http://localhost:9000`. If you have activated the JIRA profile (see above in Server Setup) and if you have configured `application-Artemis.yml` correctly, then you should be able to login with your TUM Online account.
+This compiles TypeScript code to JavaScript code, starts the hot module replacement feature in Webpack (i.e. whenever you change a TypeScript file and save, the client is automatically reloaded with the new code) and will start the client application in your browser on `http://localhost:9000`. If you have activated the JIRA profile (see above in Server Setup) and if you have configured `application-artemis.yml` correctly, then you should be able to login with your TUM Online account.
 
 For more information, review [Working with Angular](https://www.jhipster.tech/development/#working-with-angular). For further instructions on how to develop with JHipster, have a look at [Using JHipster in development](http://www.jhipster.tech/development).
 
