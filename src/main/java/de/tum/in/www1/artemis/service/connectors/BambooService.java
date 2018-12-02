@@ -692,7 +692,7 @@ public class BambooService implements ContinuousIntegrationService {
                     result.setHasFeedback(true); // TODO: check if setting this multiple times is a performance issue
 
                     String className = (String) failedTest.get("className");
-                    String methodName = (String) failedTest.get("methodName");
+                    String methodName = (String) failedTest.get("name"); // in the attribute "methodName", bamboo seems to apply some unwanted logic
 
                     List<String> errors = (List<String>) failedTest.get("errors");
                     String errorMessageString = "";
