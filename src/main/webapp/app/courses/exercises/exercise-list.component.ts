@@ -36,6 +36,15 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
     readonly MODELING = ExerciseType.MODELING;
     readonly TEXT = ExerciseType.TEXT;
 
+    readonly INACTIVE = ParticipationStatus.INACTIVE;
+    readonly ACTIVE = ParticipationStatus.ACTIVE;
+    readonly UNINITIALIZED = ParticipationStatus.UNINITIALIZED;
+    readonly INITIALIZED = ParticipationStatus.INITIALIZED;
+    readonly NOT_STARTED = ParticipationStatus.NOT_STARTED;
+    readonly SUBMITTED = ParticipationStatus.SUBMITTED;
+    readonly NOT_PARTICIPATED = ParticipationStatus.NOT_PARTICIPATED;
+    readonly FINISHED = ParticipationStatus.FINISHED;
+
     _course: Course;
     routerSubscription: Subscription;
 

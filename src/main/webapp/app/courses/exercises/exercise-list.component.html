@@ -37,23 +37,23 @@
             </td>
             <td [ngSwitch]="exercise.participationStatus">
                 <div *ngIf="exercise.type === QUIZ">
-                    <span class="text-muted" *ngSwitchCase="'not-started'">The quiz hasn't started yet.</span>
-                    <span class="text-muted" *ngSwitchCase="'uninitialized'">You have not started this quiz yet.</span>
-                    <span class="text-muted" *ngSwitchCase="'not-participated'">You have not participated in this live quiz.</span>
-                    <span class="text-muted" *ngSwitchCase="'active'">You are currently participating in this quiz.</span>
-                    <span class="text-muted" *ngSwitchCase="'submitted'">You have already submitted. Wait for the quiz to end to see results.</span>
-                    <span *ngSwitchCase="'finished'"><jhi-result [participation]="exercise.participations[0]"></jhi-result></span>
+                    <span class="text-muted" *ngSwitchCase="NOT_STARTED">The quiz hasn't started yet.</span>
+                    <span class="text-muted" *ngSwitchCase="UNINITIALIZED">You have not started this quiz yet.</span>
+                    <span class="text-muted" *ngSwitchCase="NOT_PARTICIPATED">You have not participated in this live quiz.</span>
+                    <span class="text-muted" *ngSwitchCase="ACTIVE">You are currently participating in this quiz.</span>
+                    <span class="text-muted" *ngSwitchCase="SUBMITTED">You have already submitted. Wait for the quiz to end to see results.</span>
+                    <span *ngSwitchCase="FINISHED"><jhi-result [participation]="exercise.participations[0]"></jhi-result></span>
                 </div>
 
                 <div *ngIf="exercise.type !== QUIZ">
-                    <span class="text-muted" *ngSwitchCase="'uninitialized'">You have not started this exercise yet.</span>
+                    <span class="text-muted" *ngSwitchCase="UNINITIALIZED">You have not started this exercise yet.</span>
                     <span *ngSwitchDefault><jhi-result [participation]="exercise.participations[0]"></jhi-result></span>
                 </div>
             </td>
 
             <td class="text-center" [ngSwitch]="exercise.participationStatus">
                 <button class="btn btn-primary btn-sm btn-block" id="btn-student-action"
-                        *ngSwitchCase="'uninitialized'"
+                        *ngSwitchCase="UNINITIALIZED"
                         (click)="startExercise(exercise)"
                         [disabled]="exercise.loading">
                     <span [hidden]="exercise.loading"><i class="fa fa-play-circle fa-fw"></i>&nbsp;
@@ -64,7 +64,7 @@
                 </button>
 
                 <button class="btn btn-primary btn-sm btn-block"
-                        *ngSwitchCase="'inactive'"
+                        *ngSwitchCase="INACTIVE"
                         (click)="resumeExercise(exercise)"
                         [disabled]="exercise.loading">
                     <span [hidden]="exercise.loading"><i class="fa fa-play-circle fa-fw"></i>&nbsp;<span class="d-none d-md-inline">Resume exercise</span></span>
@@ -120,7 +120,7 @@
                 </button>
 
                 <button class="btn btn-primary btn-sm btn-block"
-                        *ngSwitchCase="'not-started'"
+                        *ngSwitchCase="NOT_STARTED"
                         (click)="startExercise(exercise)"
                         [disabled]="exercise.loading">
                     <span [hidden]="exercise.loading"><i class="fa fa-play-circle fa-fw"></i>&nbsp;<span class="d-none d-md-inline">Open Quiz</span></span>
@@ -128,7 +128,7 @@
                 </button>
 
                 <button class="btn btn-primary btn-sm btn-block"
-                        *ngSwitchCase="'active'"
+                        *ngSwitchCase="ACTIVE"
                         (click)="startExercise(exercise)"
                         [disabled]="exercise.loading">
                     <span [hidden]="exercise.loading"><i class="fa fa-play-circle fa-fw"></i>&nbsp;<span class="d-none d-md-inline">Resume Quiz</span></span>
@@ -136,14 +136,14 @@
                 </button>
 
                 <button class="btn btn-primary btn-sm btn-block"
-                        *ngSwitchCase="'submitted'"
+                        *ngSwitchCase="SUBMITTED"
                         (click)="startExercise(exercise)"
                         [disabled]="exercise.loading">
                     <span [hidden]="exercise.loading"><i class="fa fa-eye fa-fw"></i>&nbsp;<span class="d-none d-md-inline">View Submission</span></span>
                     <i class="fa fa-circle-o-notch fa-spin" [hidden]="!exercise.loading"></i>
                 </button>
 
-                <div *ngSwitchCase="'finished'">
+                <div *ngSwitchCase="FINISHED">
                     <div *ngIf="exercise.type !== QUIZ && exercise.participations && exercise.participations.length > 0" class="btn-group flex-btn-group-container">
                         <a routerLink="/text/{{exercise.participations[0].id}}" routerLinkActive="active"
                            class="btn btn-primary btn-sm btn-block">

@@ -19,14 +19,14 @@ export const enum ExerciseType {
 }
 
 export const enum ParticipationStatus {
+    INACTIVE = 'inactive',
     ACTIVE = 'active',
-    SUBMITTED = 'submitted',
-    NOT_STARTED = 'not-started',
-    NOT_PARTICIPATED = 'not-participated',
-    FINISHED = 'finished',
     UNINITIALIZED = 'uninitialized',
     INITIALIZED = 'initialized',
-    INACTIVE = 'inactive'
+    NOT_STARTED = 'not-started',
+    SUBMITTED = 'submitted',
+    NOT_PARTICIPATED = 'not-participated',
+    FINISHED = 'finished'
 }
 
 export abstract class Exercise implements BaseEntity {
