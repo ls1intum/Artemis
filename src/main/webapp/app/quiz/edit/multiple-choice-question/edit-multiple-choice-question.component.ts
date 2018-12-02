@@ -3,9 +3,10 @@ import { MultipleChoiceQuestion } from '../../../entities/multiple-choice-questi
 import { AnswerOption } from '../../../entities/answer-option';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { AceEditorComponent } from 'ng2-ace-editor';
-import { Search } from 'brace';
+import SearchOptions = Ace.SearchOptions;
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
+import { Ace } from 'ace-builds';
 
 @Component({
     selector: 'jhi-edit-multiple-choice-question',
@@ -208,14 +209,22 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, A
     }
 
     setFont(highlight: string, endtag?: string): void {
-        let chosenText = this.questionEditor.getEditor().getSelectedText();
-        this.questionEditor.getEditor().remove('left');
-        this.questionEditor.getEditor().clearSelection();
+        const chosenText = this.questionEditor.getEditor().getSelectedText();
         const textToAdd = endtag ? highlight + chosenText + endtag : highlight + chosenText + highlight;
-        this.questionEditor.getEditor().moveCursorTo(this.questionEditor.getEditor().getCursorPosition().row, Number.POSITIVE_INFINITY);
-        //const search = new Search();
-        //search.set({needle: chosenText});
-        //this.questionEditor.getEditor().replace(textToAdd, search);
-        this.questionEditor.getEditor().insert(textToAdd);
+        this.questionEditor.getEditor().clearSelection();
+        const search: SearchOptions = {
+            needle: chosenText,
+            preventScroll: true,
+            backwards: true,
+            start: null,
+            skipCurrent: false,
+            range: null,
+            preserveCase: false,
+            regExp: chosenText,
+            wholeWord: null,
+            caseSensitive: false,
+            wrap: false
+        };
+        this.questionEditor.getEditor().replace(textToAdd, search);
     }
 }

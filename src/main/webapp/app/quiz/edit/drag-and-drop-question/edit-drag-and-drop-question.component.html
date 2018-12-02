@@ -88,6 +88,11 @@
                     <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addHint" (click)="addHintAtCursor()"></div>
                     <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addExplanation" (click)="addExplanationAtCursor()"></div>
                 </div>
+                <div class="btn-group">
+                    <div class="btn btn-outline-secondary" (click)="setFont('**')">Bold</div>
+                    <div class="btn btn-outline-secondary" (click)="setFont('*')">Italic</div>
+                    <div class="btn btn-outline-secondary" (click)="setFont('<ins>', '</ins>')">Underline</div>
+                </div>
             </div>
             <div class="question-content" *ngIf="!reEvaluationInProgress">
                 <ace-editor #questionEditor

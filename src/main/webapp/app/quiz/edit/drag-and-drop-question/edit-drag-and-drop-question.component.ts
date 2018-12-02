@@ -23,6 +23,8 @@ import { AceEditorComponent } from 'ng2-ace-editor';
 import * as $ from 'jquery';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
+import { Ace } from 'ace-builds';
+import SearchOptions = Ace.SearchOptions;
 
 @Component({
     selector: 'jhi-edit-drag-and-drop-question',
@@ -565,8 +567,8 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
     onDragDrop(dropLocation: DropLocation, dragEvent: any): void {
         let dragItem = dragEvent.dragData;
         // Replace dragItem with original (because it may be a copy)
-        dragItem = this.question.dragItems.find(
-            originalDragItem => (dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.tempID === dragItem.tempID)
+        dragItem = this.question.dragItems.find(originalDragItem =>
+            dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.tempID === dragItem.tempID
         );
 
         if (!dragItem) {
@@ -849,5 +851,25 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
      */
     togglePreview(): void {
         this.showPreview = !this.showPreview;
+    }
+
+    setFont(highlight: string, endtag?: string): void {
+        const chosenText = this.questionEditor.getEditor().getSelectedText();
+        const textToAdd = endtag ? highlight + chosenText + endtag : highlight + chosenText + highlight;
+        this.questionEditor.getEditor().clearSelection();
+        const search: SearchOptions = {
+            needle: chosenText,
+            preventScroll: true,
+            backwards: true,
+            start: null,
+            skipCurrent: false,
+            range: null,
+            preserveCase: false,
+            regExp: chosenText,
+            wholeWord: null,
+            caseSensitive: false,
+            wrap: false
+        };
+        this.questionEditor.getEditor().replace(textToAdd, search);
     }
 }
