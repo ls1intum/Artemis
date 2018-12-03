@@ -15,6 +15,7 @@ import {
 import { SortByModule } from '../../components/pipes';
 import { ArTEMiSQuizEditModule } from '../../quiz/edit';
 import { ArTEMiSQuizReEvaluateModule } from '../../quiz/re-evaluate';
+import { PendingChangesGuard } from '../../shared';
 
 const ENTITY_STATES = [...quizExerciseRoute, ...quizExercisePopupRoute];
 
@@ -27,7 +28,7 @@ const ENTITY_STATES = [...quizExerciseRoute, ...quizExercisePopupRoute];
         QuizExerciseDeletePopupComponent,
         QuizExerciseDetailComponent
     ],
-    providers: [QuizExerciseService, QuizExercisePopupService],
+    providers: [QuizExerciseService, QuizExercisePopupService, PendingChangesGuard],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArTEMiSQuizExerciseModule {}
