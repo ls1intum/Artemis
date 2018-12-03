@@ -1,7 +1,7 @@
 # Artemis: Automated Assessment Management System 
 This application was generated using JHipster 5.7.0, you can find documentation and help at [http://www.jhipster.tech/documentation-archive/v5.7.0](http://www.jhipster.tech/documentation-archive/v5.7.0).
 
-**Curent version:** 2.3.0
+**Current version:** 2.3.0
 
 ## Main features
 Artemis supports the following exercises:
@@ -157,7 +157,7 @@ Refer to [Using JHipster in production](http://www.jhipster.tech/production) for
 
 The following UML deployment diagram shows a typical deployment of Artemis application server and application client. Student, Instructor and Teaching Assistant (TA) computers are all equipped equally with the Artemis application client being displayed in the browser.
 
-The Continuous Integration Server typically delegates the build jobs to local build agents within the university infrastructur or to remote build agents, e.g. hosted in the Amazon Cloud (AWS).
+The Continuous Integration Server typically delegates the build jobs to local build agents within the university infrastructure or to remote build agents, e.g. hosted in the Amazon Cloud (AWS).
 
 ![Deployment Overview](doc/DeploymentOverview.png "Deployment Overview")
 
