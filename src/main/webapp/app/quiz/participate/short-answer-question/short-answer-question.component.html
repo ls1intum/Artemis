@@ -1,0 +1,94 @@
+<div class="sa-question" [ngClass]="{disabled: clickDisabled && !showResult, result: showResult && !forceSampleSolution, incorrect: (score || 0) < question.score && !forceSampleSolution}">
+    <h4 class="question-title-display"><span>{{questionIndex}})</span> {{question.title}}</h4>
+    <p [innerHTML]="rendered.text"></p><span style="color:red;" *ngIf="question.invalid" jhiTranslate="arTeMiSApp.question.invalidText"></span>
+    <div class="hint" *ngIf="question.hint || (question.explanation && showResult)">
+        <ng-template #renderedHint>
+            <div [innerHTML]="rendered.hint"></div>
+        </ng-template>
+        <span class="label label-info" [ngbPopover]="renderedHint" placement="right" triggers="mouseenter:mouseleave" *ngIf="question.hint">
+            <i class="fa fa-question-circle-o"></i>
+            <span jhiTranslate="arTeMiSApp.question.hint"></span>
+        </span> </br>
+        <ng-template #renderedExplanation>
+            <div [innerHTML]="rendered.explanation"></div>
+        </ng-template>
+        <span class="label label-primary" [ngbPopover]="renderedExplanation" placement="right" triggers="mouseenter:mouseleave" *ngIf="question.explanation && showResult">
+            <i class="fa fa-exclamation-circle"></i>
+            <span jhiTranslate="arTeMiSApp.question.explanation"></span>
+        </span>
+    </div>
+    <div class="question-score" *ngIf="!showResult || forceSampleSolution">
+        <span jhiTranslate="arTeMiSApp.question.score" class="colon-suffix"></span>
+        <span>{{question.score}}</span>
+    </div>
+    <div class="question-score result" *ngIf="showResult && !forceSampleSolution" [ngClass]="{incorrect: (score || 0) < question.score}">
+        <span jhiTranslate="arTeMiSApp.question.yourScore" class="colon-suffix"></span>
+        <span>{{score || 0}}/{{question.score}}</span>
+    </div>
+    <div class="answer-options" *ngIf="!showResult">
+        <div *ngFor="let answerOption of question.answerOptions; let i = index" class="answer-option" [ngClass]="{'click-disabled': clickDisabled}" (click)="toggleSelection(answerOption)">
+            <div class="content">
+                <div class="text" [innerHTML]="rendered.answerOptions[i].text"></div>
+                <div class="hint">
+                    <ng-template #renderedAnswerOptionsHint>
+                        <div [innerHTML]="rendered.answerOptions[i].hint"></div>
+                    </ng-template>
+                    <span class="label label-info" [ngbPopover]="renderedAnswerOptionsHint" placement="top" triggers="mouseenter:mouseleave" *ngIf="answerOption.hint">
+                        <i class="fa fa-question-circle-o"></i>
+                        <span jhiTranslate="arTeMiSApp.question.hint"></span>
+                    </span>
+                </div>
+            </div>
+            <div class="selection">
+                <i class="fa fa-2x fa-check-square-o" *ngIf="isAnswerOptionSelected(answerOption)"></i>
+                <i class="fa fa-2x fa-square-o" *ngIf="!isAnswerOptionSelected(answerOption)"></i>
+            </div>
+        </div>
+    </div>
+    <table class="answer-options-result" *ngIf="showResult">
+        <tr>
+            <th class="content">Answer</th>
+            <th class="solution">Solution</th>
+            <th class="result-symbol" *ngIf="!forceSampleSolution"></th>
+            <th class="selection" *ngIf="!forceSampleSolution">You</th>
+        </tr>
+        <tr class="answer-option" *ngFor="let answerOption of question.answerOptions; let i = index">
+            <td class="content">
+                <div class="text" [innerHTML]="rendered.answerOptions[i].text"></div>
+                <div class="hint">
+                    <ng-template #renderedAnswerOptionsHint2>
+                        <div [innerHTML]="rendered.answerOptions[i].hint"></div>
+                    </ng-template>
+                    <span class="label label-info" [ngbPopover]="renderedAnswerOptionsHint2" placement="top" triggers="mouseenter:mouseleave" *ngIf="answerOption.hint">
+                        <i class="fa fa-question-circle-o"></i>
+                        <span jhiTranslate="arTeMiSApp.question.hint"></span>
+                    </span>
+                    <ng-template #renderedAnswerOptionsExplanation>
+                        <div [innerHTML]="rendered.answerOptions[i].explanation"></div>
+                    </ng-template>
+                    <span class="label label-primary" [ngbPopover]="renderedAnswerOptionsExplanation" placement="top" triggers="mouseenter:mouseleave" *ngIf="answerOption.explanation">
+                        <i class="fa fa-exclamation-circle"></i>
+                        <span jhiTranslate="arTeMiSApp.question.explanation"></span>
+                    </span>
+                </div>
+            </td>
+            <td class="solution">
+                <span *ngIf="!answerOption.invalid && !question.invalid && answerOption.isCorrect" class="correct">Correct</span>
+                <span *ngIf="!answerOption.invalid && !question.invalid && !answerOption.isCorrect" class="wrong">Wrong</span>
+                <span *ngIf="answerOption.invalid || question.invalid" class="wrong" jhiTranslate="arTeMiSApp.question.invalid"></span>
+                <span ngbTooltip="Invalid answers will be assessed as correct."
+                      placement="top"
+                      style="color:black;"
+                      class="fa fa-question-circle"
+                      *ngIf="answerOption.invalid || question.invalid"></span>
+            </td>
+            <td class="result-symbol" *ngIf="!forceSampleSolution">
+                <i class="fa fa-2x fa-exclamation-triangle warning" *ngIf=" !question.invalid && !answerOption.invalid && ((isAnswerOptionSelected(answerOption) && !answerOption.isCorrect) || (!isAnswerOptionSelected(answerOption) && answerOption.isCorrect )) "></i>
+            </td>
+            <td class="selection" *ngIf="!forceSampleSolution">
+                <i class="fa fa-2x fa-check-square-o" *ngIf="isAnswerOptionSelected(answerOption)"></i>
+                <i class="fa fa-2x fa-square-o" *ngIf="!isAnswerOptionSelected(answerOption)"></i>
+            </td>
+        </tr>
+    </table>
+</div>

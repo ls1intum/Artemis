@@ -169,7 +169,8 @@
     background: #fefefe;
 
     .mc-question,
-    .dnd-question {
+    .dnd-question,
+    .sa-question {
         width: 100%;
         box-sizing: border-box;
         border: none;
@@ -233,7 +234,8 @@
 }
 
 .mc-question,
-.dnd-question {
+.dnd-question,
+.sa-question {
     position: relative;
     width: 100%;
     box-sizing: border-box;

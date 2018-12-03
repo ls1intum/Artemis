@@ -86,6 +86,10 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      */
     mouse: DragAndDropMouseEvent;
 
+    numberOfSpot: number = 1;
+
+    firstPressed: number = 1;
+
     constructor(
         private artemisMarkdown: ArtemisMarkdown,
         private dragAndDropQuestionUtil: DragAndDropQuestionUtil //TODO: FDE Check if saQuestionUtil is needed
@@ -191,20 +195,22 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
 
     /**
      * @function addSpotAtCursor
-     * @desc Add the markdown for a hint at the current cursor location
+     * @desc Add the markdown for a spot at the current cursor location and
+     * an option connected to the spot below the last visible row
      */
     addSpotAtCursor(): void {
-        //TODO: FDE
-        this.artemisMarkdown.addHintAtCursor(this.questionEditor.getEditor());
+        this.artemisMarkdown.addSpotAtCursor(this.questionEditor.getEditor(), this.numberOfSpot, this.firstPressed);
+        this.numberOfSpot++;
+        this.firstPressed++;
     }
 
     /**
      * @function addOptionAtCursor
-     * @desc Add the markdown for an explanation at the current cursor location
+     * @desc Add the markdown for an option below the last visible row
      */
-    addOptionAtCursor(): void {
-        //TODO: FDE
-        this.artemisMarkdown.addExplanationAtCursor(this.questionEditor.getEditor());
+    addOption(): void {
+        this.artemisMarkdown.addOption(this.questionEditor.getEditor(), this.firstPressed);
+        this.firstPressed++;
     }
 
     /**

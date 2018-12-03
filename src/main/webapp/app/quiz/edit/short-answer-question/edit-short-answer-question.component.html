@@ -47,7 +47,7 @@
                     <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.addHint" (click)="addHintAtCursor()"></div>
                     <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.addExplanation" (click)="addExplanationAtCursor()"></div>
                     <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.addSpot" (click)="addSpotAtCursor()"></div>
-                    <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.addOption" (click)="addOptionAtCursor()"></div>
+                    <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.addOption" (click)="addOption()"></div>
                 </div>
             </div>
             <div class="question-content">
@@ -70,6 +70,7 @@
 </div>
 
 <div class="preview-sa-question" *ngIf="!reEvaluationInProgress && showPreview">
+    <!--Todo: FDE check why question is not forwarded to preview -->
     <jhi-short-answer-question [question]="question"
                                [questionIndex]="questionIndex">
     </jhi-short-answer-question>
