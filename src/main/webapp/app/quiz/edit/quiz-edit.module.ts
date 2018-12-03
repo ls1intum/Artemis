@@ -13,10 +13,11 @@ import { AngularFittextModule } from 'angular-fittext';
 import { AceEditorModule } from 'ng2-ace-editor';
 import { DndModule } from 'ng2-dnd';
 import { ArTEMiSQuizModule } from '../participate';
+import { QuizScoringInfoModalComponent } from './quiz-scoring-info-modal/quiz-scoring-info-modal.component';
 
 @NgModule({
     imports: [ArTEMiSSharedModule, DndModule.forRoot(), AngularFittextModule, AceEditorModule, ArTEMiSQuizModule],
-    declarations: [EditMultipleChoiceQuestionComponent, EditDragAndDropQuestionComponent],
+    declarations: [EditMultipleChoiceQuestionComponent, EditDragAndDropQuestionComponent, QuizScoringInfoModalComponent],
     entryComponents: [
         HomeComponent,
         QuizComponent,
