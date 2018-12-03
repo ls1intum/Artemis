@@ -199,9 +199,33 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * an option connected to the spot below the last visible row
      */
     addSpotAtCursor(): void {
-        this.artemisMarkdown.addSpotAtCursor(this.questionEditor.getEditor(), this.numberOfSpot, this.firstPressed);
+        let editor = this.questionEditor.getEditor();
+        let optionText = editor.getCopyText();
+        const addedText = '[-spot ' + this.numberOfSpot + ']';
+        editor.focus();
+        editor.insert(addedText);
+        editor.moveCursorTo(editor.getLastVisibleRow() + this.numberOfSpot, Number.POSITIVE_INFINITY);
+        this.addOptionToSpot(editor, this.numberOfSpot, optionText, this.firstPressed);
+
         this.numberOfSpot++;
         this.firstPressed++;
+    }
+
+    /**
+     * add the markdown for a option below the last visible row, which is connected to a spot in the given editor
+     *
+     * @param editor {object} the editor into which the option markdown will be inserted
+     */
+    addOptionToSpot(editor: any, numberOfSpot: number, optionText: string, firstPressed: number) {
+        let addedText: string;
+        if (numberOfSpot === 1 && firstPressed === 1) {
+            addedText = '\n\n\n\n[-option ' + numberOfSpot + '] ' + optionText;
+        } else {
+            addedText = '\n\n[-option ' + numberOfSpot + '] ' + optionText;
+        }
+        editor.focus();
+        editor.clearSelection();
+        editor.insert(addedText);
     }
 
     /**
@@ -209,7 +233,20 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @desc Add the markdown for an option below the last visible row
      */
     addOption(): void {
-        this.artemisMarkdown.addOption(this.questionEditor.getEditor(), this.firstPressed);
+        let editor = this.questionEditor.getEditor();
+        let addedText: string;
+        if (this.firstPressed === 1) {
+            addedText = '\n\n\n\n[-option #] Please enter here one answer option and do not forget to replace # with a number';
+        } else {
+            addedText = '\n\n[-option #] Please enter here one answer option and do not forget to replace # with a number';
+        }
+        editor.clearSelection();
+        editor.moveCursorTo(editor.getLastVisibleRow(), Number.POSITIVE_INFINITY);
+        editor.insert(addedText);
+        const range = editor.selection.getRange();
+        range.setStart(range.start.row, 12);
+        editor.selection.setRange(range);
+
         this.firstPressed++;
     }
 

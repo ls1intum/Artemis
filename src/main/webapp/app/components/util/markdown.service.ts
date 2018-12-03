@@ -97,57 +97,6 @@ export class ArtemisMarkdown {
     }
 
     /**
-     * add the markdown for a spot at the current highlighted text in the given editor
-     *
-     * @param editor {object} the editor into which the spot markdown will be inserted
-     */
-    addSpotAtCursor(editor: any, numberOfSpot: number, firstPressed: number) {
-        let optionText = editor.getCopyText();
-        const addedText = '[-spot ' + numberOfSpot + ']';
-        editor.focus();
-        editor.insert(addedText);
-        editor.moveCursorTo(editor.getLastVisibleRow() + numberOfSpot, Number.POSITIVE_INFINITY);
-        this.addOptionToSpot(editor, numberOfSpot, optionText, firstPressed);
-    }
-
-    /**
-     * add the markdown for a option below the last visible row, which is connected to a spot in the given editor
-     *
-     * @param editor {object} the editor into which the option markdown will be inserted
-     */
-    addOptionToSpot(editor: any, numberOfSpot: number, optionText: string, firstPressed: number) {
-        let addedText: string;
-        if (numberOfSpot === 1 && firstPressed === 1) {
-            addedText = '\n\n\n\n[-option ' + numberOfSpot + '] ' + optionText;
-        } else {
-            addedText = '\n\n[-option ' + numberOfSpot + '] ' + optionText;
-        }
-        editor.focus();
-        editor.clearSelection();
-        editor.insert(addedText);
-    }
-
-    /**
-     * add the markdown for a option below the last visible row in the given editor
-     *
-     * @param editor {object} the editor into which the option markdown will be inserted
-     */
-    addOption(editor: any, firstPressed: number) {
-        let addedText: string;
-        if (firstPressed === 1) {
-            addedText = '\n\n\n\n[-option #] Please enter here one answer option and do not forget to replace # with a number';
-        } else {
-            addedText = '\n\n[-option #] Please enter here one answer option and do not forget to replace # with a number';
-        }
-        editor.clearSelection();
-        editor.moveCursorTo(editor.getLastVisibleRow(), Number.POSITIVE_INFINITY);
-        editor.insert(addedText);
-        const range = editor.selection.getRange();
-        range.setStart(range.start.row, 12);
-        editor.selection.setRange(range);
-    }
-
-    /**
      * converts markdown into html
      * @param {string} markdownText the original markdown text
      * @returns {string} the resulting html as a string
