@@ -187,7 +187,8 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     // displays the alert for confirming refreshing or closing the page if there are unsaved changes
     @HostListener('window:beforeunload', ['$event'])
     unloadNotification($event: any) {
-        if (this.canDeactivate()) {
+        if (!this.canDeactivate()) {
+            console.log(this.canDeactivate());
             $event.returnValue = this.translateService.instant('pendingChanges');
         }
     }
