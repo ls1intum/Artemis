@@ -125,8 +125,8 @@
             </div>
             <div class="input-group col-lg-6 col-md-8 col-sm-8 col-xs-10 background-file">
                 <div class="custom-file">
-                    <input id="backgroundFileInput" type="file" accept="image/*" class="custom-file-input" (change)="setBackgroundFile($event)"/>
-                    <label class="custom-file-label ellipsis" for="backgroundFileInput">{{backgroundFileName}}</label>
+                    <input id="backgroundFileInput{{questionIndex}}" type="file" accept="image/*" class="custom-file-input" (change)="setBackgroundFile($event)"/>
+                    <label class="custom-file-label ellipsis" for="backgroundFileInput{{questionIndex}}">{{backgroundFileName}}</label>
                 </div>
                 <div class="input-group-prepend">
                     <button
@@ -272,8 +272,8 @@
                     </button>
                 </div>
                 <div class="custom-file">
-                    <input id="dragItemFileInput" type="file" accept="image/*"  class="custom-file-input" (change)="setDragItemFile($event)" placeholder="Upload file..."/>
-                    <label class="custom-file-label ellipsis" for="dragItemFileInput">{{dragItemFileName}}</label>
+                    <input id="dragItemFileInput{{questionIndex}}" type="file" accept="image/*"  class="custom-file-input" (change)="setDragItemFile($event)" placeholder="Upload file..."/>
+                    <label class="custom-file-label ellipsis" for="dragItemFileInput{{questionIndex}}">{{dragItemFileName}}</label>
                 </div>
             </div>
             <ng-container *ngIf="!reEvaluationInProgress">
