@@ -852,24 +852,4 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
     togglePreview(): void {
         this.showPreview = !this.showPreview;
     }
-
-    setFont(highlight: string, endtag?: string): void {
-        const chosenText = this.questionEditor.getEditor().getSelectedText();
-        const textToAdd = endtag ? highlight + chosenText + endtag : highlight + chosenText + highlight;
-        this.questionEditor.getEditor().clearSelection();
-        const search: SearchOptions = {
-            needle: chosenText,
-            preventScroll: true,
-            backwards: true,
-            start: null,
-            skipCurrent: false,
-            range: null,
-            preserveCase: false,
-            regExp: chosenText,
-            wholeWord: null,
-            caseSensitive: false,
-            wrap: false
-        };
-        this.questionEditor.getEditor().replace(textToAdd, search);
-    }
 }

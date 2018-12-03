@@ -49,20 +49,16 @@
                     <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addHint" (click)="addHintAtCursor()"></div>
                     <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addExplanation" (click)="addExplanationAtCursor()"></div>
                 </div>
-                <div class="btn-group">
-                    <div class="btn btn-outline-secondary" (click)="setFont('**')">Bold</div>
-                    <div class="btn btn-outline-secondary" (click)="setFont('*')">Italic</div>
-                    <div class="btn btn-outline-secondary" (click)="setFont('<ins>', '</ins>')">Underline</div>
-                </div>
             </div>
             <div class="question-content">
-                <ace-editor #questionEditor
-                            [(text)]="questionEditorText"
-                            [mode]="questionEditorMode"
-                            [autoUpdateContent]="questionEditorAutoUpdate"
-                            style="min-height: 200px; width:100%; overflow: auto;"
-                            class="form-control">
-                </ace-editor>
+            <jhi-markdown-editor name="Content"
+                       [preRender]="preRenderFunc"
+                       [(ngModel)]="questionEditorText"
+                       [height]="'200px'"
+                       [mode]="editor"
+                       [options]="options"
+                       required maxlength="500">
+            </jhi-markdown-editor>
             </div>
             <hr/>
             <div class="toolbar">

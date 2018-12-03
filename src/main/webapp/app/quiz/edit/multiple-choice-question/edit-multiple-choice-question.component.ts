@@ -208,23 +208,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, A
         this.questionDeleted.emit();
     }
 
-    setFont(highlight: string, endtag?: string): void {
-        const chosenText = this.questionEditor.getEditor().getSelectedText();
-        const textToAdd = endtag ? highlight + chosenText + endtag : highlight + chosenText + highlight;
-        this.questionEditor.getEditor().clearSelection();
-        const search: SearchOptions = {
-            needle: chosenText,
-            preventScroll: true,
-            backwards: true,
-            start: null,
-            skipCurrent: false,
-            range: null,
-            preserveCase: false,
-            regExp: chosenText,
-            wholeWord: null,
-            caseSensitive: false,
-            wrap: false
-        };
-        this.questionEditor.getEditor().replace(textToAdd, search);
+    preRenderFunc(content: string) {
+        return content.replace(/something/g, 'new value'); // must return a string
     }
 }
