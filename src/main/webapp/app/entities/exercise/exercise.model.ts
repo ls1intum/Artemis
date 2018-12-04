@@ -1,6 +1,6 @@
 import { BaseEntity } from 'app/shared';
 import { Course } from '../course';
-import { Participation } from '../participation';
+import { InitializationState, Participation } from '../participation';
 import { Moment } from 'moment';
 
 export const enum DifficultyLevel {
@@ -18,17 +18,6 @@ export const enum ExerciseType {
     FILE_UPLOAD = 'file-upload'
 }
 
-export const enum ParticipationStatus {
-    INACTIVE = 'inactive',
-    ACTIVE = 'active',
-    UNINITIALIZED = 'uninitialized',
-    INITIALIZED = 'initialized',
-    NOT_STARTED = 'not-started',
-    SUBMITTED = 'submitted',
-    NOT_PARTICIPATED = 'not-participated',
-    FINISHED = 'finished'
-}
-
 export abstract class Exercise implements BaseEntity {
     public id: number;
     public problemStatement: string;
@@ -42,7 +31,7 @@ export abstract class Exercise implements BaseEntity {
     public categories: string[];
     public participations: Participation[];
     public course: Course;
-    public participationStatus: ParticipationStatus;
+    public initialisationStatus: InitializationState;
     public type: ExerciseType;
 
     // helper attributes

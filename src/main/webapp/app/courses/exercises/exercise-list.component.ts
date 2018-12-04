@@ -1,11 +1,11 @@
-import { Component, HostListener, Input, OnInit, OnDestroy, Pipe, PipeTransform } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, Pipe, PipeTransform } from '@angular/core';
 import { Course, CourseExerciseService } from '../../entities/course';
-import { Exercise, ExerciseType, ParticipationStatus } from '../../entities/exercise';
+import { Exercise, ExerciseType } from '../../entities/exercise';
 import { Principal } from '../../core';
 import { WindowRef } from '../../core/websocket/window.service';
-import { NgbModal, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService } from 'ng-jhipster';
-import { Router, NavigationStart } from '@angular/router';
+import { NavigationStart, Router } from '@angular/router';
 import { InitializationState, Participation, ParticipationService } from '../../entities/participation';
 import { ParticipationDataProvider } from '../../courses/exercises/participation-data-provider';
 import { HttpClient } from '@angular/common/http';
@@ -36,14 +36,13 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
     readonly MODELING = ExerciseType.MODELING;
     readonly TEXT = ExerciseType.TEXT;
 
-    readonly INACTIVE = ParticipationStatus.INACTIVE;
-    readonly ACTIVE = ParticipationStatus.ACTIVE;
-    readonly UNINITIALIZED = ParticipationStatus.UNINITIALIZED;
-    readonly INITIALIZED = ParticipationStatus.INITIALIZED;
-    readonly NOT_STARTED = ParticipationStatus.NOT_STARTED;
-    readonly SUBMITTED = ParticipationStatus.SUBMITTED;
-    readonly NOT_PARTICIPATED = ParticipationStatus.NOT_PARTICIPATED;
-    readonly FINISHED = ParticipationStatus.FINISHED;
+    readonly INACTIVE = InitializationState.INACTIVE;
+    readonly UNINITIALIZED = InitializationState.UNINITIALIZED;
+    readonly INITIALIZED = InitializationState.INITIALIZED;
+    readonly NOT_STARTED = InitializationState.NOT_STARTED;
+    readonly SUBMITTED = InitializationState.SUBMITTED;
+    readonly NOT_PARTICIPATED = InitializationState.NOT_PARTICIPATED;
+    readonly FINISHED = InitializationState.FINISHED;
 
     _course: Course;
     routerSubscription: Subscription;
@@ -144,7 +143,7 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
         for (const exercise of exercises) {
             // We assume that exercise has a participation and a result if available because of the explicit courses dashboard call
             exercise.course = this._course;
-            exercise.participationStatus = this.participationStatus(exercise);
+            exercise.initialisationStatus = this.initializationStatus(exercise);
 
             if (this.hasParticipations(exercise)) {
                 // Reconnect 'participation --> exercise' in case it is needed
@@ -179,9 +178,9 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
     isActiveQuiz(exercise: Exercise) {
         return (
             exercise.type === this.QUIZ &&
-            (exercise.participationStatus === ParticipationStatus.UNINITIALIZED ||
-                exercise.participationStatus === ParticipationStatus.ACTIVE ||
-                exercise.participationStatus === ParticipationStatus.SUBMITTED)
+            (exercise.initialisationStatus === InitializationState.UNINITIALIZED ||
+                exercise.initialisationStatus === InitializationState.INITIALIZED ||
+                exercise.initialisationStatus === InitializationState.SUBMITTED)
         );
     }
 
@@ -215,7 +214,7 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
                 participation => {
                     if (participation) {
                         exercise.participations = [participation];
-                        exercise.participationStatus = this.participationStatus(exercise);
+                        exercise.initialisationStatus = this.initializationStatus(exercise);
                     }
                     if (exercise.type === ExerciseType.PROGRAMMING) {
                         this.jhiAlertService.success('arTeMiSApp.exercise.personalRepository');
@@ -270,46 +269,45 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
         }, 3000);
     }
 
-    participationStatus(exercise: Exercise): ParticipationStatus {
-        if (exercise.type === ExerciseType.QUIZ) {
-            const quizExercise = exercise as QuizExercise;
-            if ((!quizExercise.isPlannedToStart || moment(quizExercise.releaseDate).isAfter(moment())) && quizExercise.visibleToStudents) {
-                return ParticipationStatus.NOT_STARTED;
+    initializationStatus(exercise: Exercise): InitializationState {
+        if (exercise instanceof QuizExercise) {
+            if ((!exercise.isPlannedToStart || moment(exercise.releaseDate).isAfter(moment())) && exercise.visibleToStudents) {
+                return InitializationState.NOT_STARTED;
             } else if (
                 !this.hasParticipations(exercise) &&
-                (!quizExercise.isPlannedToStart || moment(quizExercise.dueDate).isAfter(moment())) &&
-                quizExercise.visibleToStudents
+                (!exercise.isPlannedToStart || moment(exercise.dueDate).isAfter(moment())) &&
+                exercise.visibleToStudents
             ) {
-                return ParticipationStatus.UNINITIALIZED;
+                return InitializationState.UNINITIALIZED;
             } else if (!this.hasParticipations(exercise)) {
-                return ParticipationStatus.NOT_PARTICIPATED;
+                return InitializationState.NOT_PARTICIPATED;
             } else if (
                 exercise.participations[0].initializationState === InitializationState.INITIALIZED &&
                 moment(exercise.dueDate).isAfter(moment())
             ) {
-                return ParticipationStatus.ACTIVE;
+                return InitializationState.INITIALIZED;
             } else if (
                 exercise.participations[0].initializationState === InitializationState.FINISHED &&
                 moment(exercise.dueDate).isAfter(moment())
             ) {
-                return ParticipationStatus.SUBMITTED;
+                return InitializationState.SUBMITTED;
             } else {
                 if (!this.hasResults(exercise.participations[0])) {
-                    return ParticipationStatus.NOT_PARTICIPATED;
+                    return InitializationState.NOT_PARTICIPATED;
                 }
-                return ParticipationStatus.FINISHED;
+                return InitializationState.FINISHED;
             }
         }
 
         if (!this.hasParticipations(exercise)) {
-            return ParticipationStatus.UNINITIALIZED;
+            return InitializationState.UNINITIALIZED;
         } else if (exercise.participations[0].initializationState === InitializationState.INITIALIZED) {
-            return ParticipationStatus.INITIALIZED;
+            return InitializationState.INITIALIZED;
         } else if (exercise.participations[0].initializationState === InitializationState.FINISHED) {
-            return ParticipationStatus.FINISHED;
+            return InitializationState.FINISHED;
         }
 
-        return ParticipationStatus.INACTIVE;
+        return InitializationState.INACTIVE;
     }
 
     hasParticipations(exercise: Exercise): boolean {
