@@ -6,7 +6,7 @@ import { TextAssessmentDashboardComponent } from './text-assessment-dashboard/te
 
 const routes: Routes = [
     {
-        path: 'text/:exerciseId/:submissionId/tutor',
+        path: 'text/:exerciseId/assessment/:submissionId',
         component: TextAssessmentComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
