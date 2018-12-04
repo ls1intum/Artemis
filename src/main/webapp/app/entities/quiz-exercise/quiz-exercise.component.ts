@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs/Subscription';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
@@ -32,6 +32,7 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
     predicate: string;
     reverse: boolean;
     courseId: number;
+    @Input() showHeading = true;
 
     /**
      * Exports given quiz questions into json file

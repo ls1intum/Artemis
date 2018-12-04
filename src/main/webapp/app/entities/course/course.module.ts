@@ -22,7 +22,8 @@ import {
     CourseUpdateComponent
 } from './';
 import { CourseScoreCalculationService } from './course-score-calculation.service';
-import { FormDateTimePickerModule } from '../../shared/dateTimePicker/date-time-picker.module';
+import { FormDateTimePickerModule } from 'app/shared/dateTimePicker/date-time-picker.module';
+import { CourseExerciseCardComponent } from 'app/entities/course/course-exercise-card.component';
 
 const ENTITY_STATES = [...courseRoute, ...coursePopupRoute];
 
@@ -44,6 +45,7 @@ const ENTITY_STATES = [...courseRoute, ...coursePopupRoute];
         CourseUpdateComponent,
         CourseDeletePopupComponent,
         CourseScoreCalculationComponent,
+        CourseExerciseCardComponent,
         CourseExercisesOverviewComponent
     ],
     entryComponents: [
@@ -52,7 +54,7 @@ const ENTITY_STATES = [...courseRoute, ...coursePopupRoute];
         CourseDeleteDialogComponent,
         CourseDeletePopupComponent,
         CourseScoreCalculationComponent,
-        CourseExercisesOverviewComponent
+        CourseExerciseCardComponent
     ],
     providers: [CourseService, CourseExerciseService, CourseScoreCalculationService],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]

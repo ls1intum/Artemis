@@ -1,7 +1,9 @@
 <div>
     <h4>
-        <span *ngIf="course">{{course.title}} - </span><span *ngIf="quizExercises">{{quizExercises.length}} </span>
-        <span jhiTranslate="arTeMiSApp.quizExercise.home.title">Quiz Exercises</span>
+        <ng-container *ngIf="showHeading">
+            <span *ngIf="course">{{course.title}} - </span><span *ngIf="quizExercises">{{quizExercises.length}} </span>
+            <span jhiTranslate="arTeMiSApp.quizExercise.home.title">Quiz Exercises</span>
+        </ng-container>
         <button *ngIf="courseId" class="btn mr-2 btn-primary float-right jh-create-entity create-quiz-exercise" [routerLink]="['quiz-exercise' , 'new']">
             <span class="fa fa-plus"></span>
             <span jhiTranslate="arTeMiSApp.quizExercise.home.createLabel">

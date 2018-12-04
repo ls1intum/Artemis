@@ -12,7 +12,6 @@ import {
     ExerciseResetPopupComponent,
     ExerciseService
 } from './';
-import { ExerciseOverviewComponent } from './exercise-overview.component';
 
 const ENTITY_STATES = [...exercisePopupRoute];
 
@@ -22,8 +21,7 @@ const ENTITY_STATES = [...exercisePopupRoute];
         ExerciseLtiConfigurationDialogComponent,
         ExerciseLtiConfigurationPopupComponent,
         ExerciseResetDialogComponent,
-        ExerciseResetPopupComponent,
-        ExerciseOverviewComponent
+        ExerciseResetPopupComponent
     ],
     entryComponents: [
         ExerciseLtiConfigurationDialogComponent,

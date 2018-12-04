@@ -1,26 +1,21 @@
-<div>
-    <div>
-        <h4><span>Exercise Overview</span></h4>
-    </div>
-    <jhi-exercise-overview-component>
-        <span jhiTranslate="arTeMiSApp.course.programmingExercises">Programming Exercises</span>
-        <jhi-programming-exercise></jhi-programming-exercise>
-    </jhi-exercise-overview-component>
-    <jhi-exercise-overview-component>
-        <span jhiTranslate="arTeMiSApp.course.quizExercises">Quiz Exercises</span>
-        <jhi-quiz-exercise></jhi-quiz-exercise>
-    </jhi-exercise-overview-component>
-    <jhi-exercise-overview-component>
-        <span jhiTranslate="arTeMiSApp.course.modelingExercises">Modelling Exercises</span>
-        <jhi-modeling-exercise></jhi-modeling-exercise>
-    </jhi-exercise-overview-component>
-    <jhi-exercise-overview-component>
-        <span jhiTranslate="arTeMiSApp.course.fileUploadExercises">File Upload Exercises</span>
-        <jhi-file-upload-exercise></jhi-file-upload-exercise>
-    </jhi-exercise-overview-component>
-    <jhi-exercise-overview-component>
-        <span jhiTranslate="arTeMiSApp.course.textExercises">Text Exercise</span>
-        <jhi-text-exercise></jhi-text-exercise>
-    </jhi-exercise-overview-component>
-</div>
+<h4><span>Exercise Overview</span></h4>
 
+<jhi-course-exercise-card headingJhiTranslate="arTeMiSApp.course.programmingExercises">
+    <jhi-programming-exercise [showHeading]="false"></jhi-programming-exercise>
+</jhi-course-exercise-card>
+
+<jhi-course-exercise-card headingJhiTranslate="arTeMiSApp.course.quizExercises">
+    <jhi-quiz-exercise [showHeading]="false"></jhi-quiz-exercise>
+</jhi-course-exercise-card>
+
+<jhi-course-exercise-card headingJhiTranslate="arTeMiSApp.course.modelingExercises">
+    <jhi-modeling-exercise [showHeading]="false"></jhi-modeling-exercise>
+</jhi-course-exercise-card>
+
+<jhi-course-exercise-card headingJhiTranslate="arTeMiSApp.course.fileUploadExercises">
+    <jhi-file-upload-exercise [showHeading]="false"></jhi-file-upload-exercise>
+</jhi-course-exercise-card>
+
+<jhi-course-exercise-card headingJhiTranslate="arTeMiSApp.course.textExercises">
+    <jhi-text-exercise [showHeading]="false"></jhi-text-exercise>
+</jhi-course-exercise-card>

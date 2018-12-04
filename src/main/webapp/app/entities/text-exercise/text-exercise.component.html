@@ -1,7 +1,9 @@
 <div>
     <h4>
-        <span *ngIf="course">{{course.title}} - </span><span *ngIf="textExercises">{{textExercises.length}} </span>
-        <span jhiTranslate="arTeMiSApp.textExercise.home.title">Text Exercises</span>
+        <ng-container *ngIf="showHeading">
+            <span *ngIf="course">{{course.title}} - </span><span *ngIf="textExercises">{{textExercises.length}} </span>
+            <span jhiTranslate="arTeMiSApp.textExercise.home.title">Text Exercises</span>
+        </ng-container>
         <button *ngIf="course" class="btn btn-primary float-right jh-create-entity create-text-exercise" [routerLink]="['/', { outlets: { popup: ['course', course.id, 'text-exercise-new'] } }]">
             <span class="fa fa-plus"></span>
             <span jhiTranslate="arTeMiSApp.textExercise.home.createLabel">
