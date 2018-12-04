@@ -12,10 +12,10 @@ import { Participation } from 'app/entities/participation';
 
 @Component({
     providers: [TextAssessmentsService],
-    templateUrl: './tutor.component.html',
+    templateUrl: './text-assessment.component.html',
     styles: []
 })
-export class ArTEMiSTextTutorComponent implements OnInit {
+export class TextAssessmentComponent implements OnInit {
     text: string;
     participation: Participation;
     submission: TextSubmission;
@@ -55,7 +55,9 @@ export class ArTEMiSTextTutorComponent implements OnInit {
         this.exercise = <TextExercise>this.participation.exercise;
         this.result = this.participation.results[0];
         this.assessments = this.result.feedbacks;
-        if (!this.assessments) { this.assessments = []; }
+        if (!this.assessments) {
+            this.assessments = [];
+        }
         this.busy = false;
     }
 

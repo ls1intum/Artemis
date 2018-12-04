@@ -1,8 +1,8 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-import { ArTEMiSTextTutorRoutingModule } from './tutor-routing.module';
-import { ArTEMiSTextTutorComponent } from './tutor.component';
+import { ArTEMiSTextAssessmentRoutingModule } from './text-assessment-routing.module';
+import { TextAssessmentComponent } from './text-assessment.component';
 import { TextSelectDirective } from './text-assessment-editor/text-select.directive';
 import { TextAssessmentEditorComponent } from './text-assessment-editor/text-assessment-editor.component';
 import { ArTEMiSSharedModule } from 'app/shared';
@@ -13,19 +13,12 @@ import { SortByModule } from 'app/components/pipes';
 
 @NgModule({
     declarations: [
-        ArTEMiSTextTutorComponent,
+        TextAssessmentComponent,
         TextSelectDirective,
         TextAssessmentEditorComponent,
         TextAssessmentDetailComponent,
-        TextAssessmentDashboardComponent,
+        TextAssessmentDashboardComponent
     ],
-    imports: [
-        CommonModule,
-        SortByModule,
-        ArTEMiSTextTutorRoutingModule,
-        ArTEMiSSharedModule,
-        ArTEMiSResultModule,
-    ]
+    imports: [CommonModule, SortByModule, ArTEMiSTextAssessmentRoutingModule, ArTEMiSSharedModule, ArTEMiSResultModule]
 })
-export class ArTEMiSTextTutorModule {
-}
+export class ArTEMiSTextAssessmentModule {}

@@ -1,13 +1,13 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { UserRouteAccessService } from 'app/core';
-import { ArTEMiSTextTutorComponent } from './tutor.component';
+import { TextAssessmentComponent } from './text-assessment.component';
 import { TextAssessmentDashboardComponent } from './text-assessment-dashboard/text-assessment-dashboard.component';
 
 const routes: Routes = [
     {
         path: 'text/:exerciseId/:submissionId/tutor',
-        component: ArTEMiSTextTutorComponent,
+        component: TextAssessmentComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
             pageTitle: 'arTeMiSApp.textExercise.home.title'
@@ -29,4 +29,4 @@ const routes: Routes = [
     imports: [RouterModule.forChild(routes)],
     exports: [RouterModule]
 })
-export class ArTEMiSTextTutorRoutingModule {}
+export class ArTEMiSTextAssessmentRoutingModule {}

@@ -1,5 +1,4 @@
 export module HighlightColors {
-
     export enum Color {
         yellow = 'yellow',
         lime = 'lime',
@@ -23,5 +22,4 @@ export module HighlightColors {
         const colors = Object.values(Color);
         return colors[index % colors.length];
     }
-
 }

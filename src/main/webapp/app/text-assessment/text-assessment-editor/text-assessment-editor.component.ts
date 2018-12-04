@@ -22,7 +22,9 @@ export class TextAssessmentEditorComponent implements OnChanges, DoCheck {
     }
 
     get submissionTextWithHtmlLinebreaks(): string {
-        if (!this.submissionText) { return ''; }
+        if (!this.submissionText) {
+            return '';
+        }
         return this.submissionText.replace('\n', '<br />');
     }
 
@@ -67,7 +69,9 @@ export class TextAssessmentEditorComponent implements OnChanges, DoCheck {
     }
 
     highlightText(): string {
-        if (!this.assessments) { return this.submissionTextWithHtmlLinebreaks; }
+        if (!this.assessments) {
+            return this.submissionTextWithHtmlLinebreaks;
+        }
 
         return this.assessments.reduce(
             (content: string, assessment: Feedback, currentIndex: number) =>

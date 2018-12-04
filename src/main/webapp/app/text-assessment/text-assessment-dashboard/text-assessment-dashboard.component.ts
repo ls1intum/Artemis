@@ -10,7 +10,6 @@ import { DifferencePipe } from 'angular2-moment';
     styleUrls: ['./text-assessment-dashboard.component.css']
 })
 export class TextAssessmentDashboardComponent implements OnInit {
-
     exercise: TextExercise;
     submissions: TextSubmission[] = [];
     busy = false;
@@ -21,8 +20,8 @@ export class TextAssessmentDashboardComponent implements OnInit {
         private route: ActivatedRoute,
         private exerciseService: ExerciseService,
         private textSubmissionService: TextSubmissionService,
-        private momentDiff: DifferencePipe,
-    ) { }
+        private momentDiff: DifferencePipe
+    ) {}
 
     async ngOnInit() {
         this.busy = true;
@@ -54,5 +53,4 @@ export class TextAssessmentDashboardComponent implements OnInit {
     durationString(completionDate: Date, initializationDate: Date) {
         return this.momentDiff.transform(completionDate, initializationDate, 'minutes');
     }
-
 }

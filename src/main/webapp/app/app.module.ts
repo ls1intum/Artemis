@@ -28,7 +28,7 @@ import { ArTEMiSEditorModule } from './editor';
 import { RepositoryInterceptor, RepositoryService } from './entities/repository';
 import { ArTEMiSQuizModule } from './quiz/participate';
 import { ArTEMiSTextModule } from './text-editor';
-import { ArTEMiSTextTutorModule } from './text-tutor';
+import { ArTEMiSTextAssessmentModule } from './text-assessment';
 import { ArTEMiSModelingStatisticsModule } from './modeling-statistics/';
 import * as moment from 'moment';
 // jhipster-needle-angular-add-module-import JHipster will add new module here
@@ -81,7 +81,7 @@ import { ParticipationDataProvider } from './courses/exercises/participation-dat
         ArTEMiSModelingEditorModule,
         ArTEMiSModelingStatisticsModule,
         ArTEMiSTextModule,
-        ArTEMiSTextTutorModule,
+        ArTEMiSTextAssessmentModule
         // jhipster-needle-angular-add-module JHipster will add new module here
     ],
     declarations: [
@@ -91,7 +91,7 @@ import { ParticipationDataProvider } from './courses/exercises/participation-dat
         PageRibbonComponent,
         ActiveMenuDirective,
         FooterComponent,
-        QuizExerciseExportComponent,
+        QuizExerciseExportComponent
     ],
     providers: [
         ProfileService,
