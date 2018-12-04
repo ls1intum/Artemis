@@ -16,7 +16,7 @@ import { JhiWebsocketService, Principal, UserRouteAccessService } from './core';
 import { ArTEMiSSharedModule } from './shared';
 import { ArTEMiSCoreModule } from 'app/core';
 import { ArTEMiSAppRoutingModule } from './app-routing.module';
-import { ArTEMiSHomeModule } from './home/home.module';
+import { ArTEMiSHomeModule } from './home';
 import { ArTEMiSAccountModule } from './account/account.module';
 import { ArTEMiSCoursesModule } from './courses';
 import { ArTEMiSEntityModule } from './entities/entity.module';
@@ -27,10 +27,10 @@ import { DifferencePipe, MomentModule } from 'angular2-moment';
 import { ArTEMiSEditorModule } from './editor';
 import { RepositoryInterceptor, RepositoryService } from './entities/repository';
 import { ArTEMiSQuizModule } from './quiz/participate';
-import { ArTEMiSTextModule } from './text-editor/index';
+import { ArTEMiSTextModule } from './text-editor';
+import { ArTEMiSTextTutorModule } from './text-tutor';
 import { ArTEMiSModelingStatisticsModule } from './modeling-statistics/';
 import * as moment from 'moment';
-import { ArTEMiSTextTutorModule } from './text/tutor';
 // jhipster-needle-angular-add-module-import JHipster will add new module here
 import {
     ActiveMenuDirective,
@@ -79,10 +79,9 @@ import { ParticipationDataProvider } from './courses/exercises/participation-dat
         ArTEMiSAssessmentDashboardModule,
         ArTEMiSStatisticModule,
         ArTEMiSModelingEditorModule,
-        ArTEMiSTextModule,
-        ArTEMiSModelingStatisticsModule
-        ArTEMiSTextTutorModule,
         ArTEMiSModelingStatisticsModule,
+        ArTEMiSTextModule,
+        ArTEMiSTextTutorModule,
         // jhipster-needle-angular-add-module JHipster will add new module here
     ],
     declarations: [
@@ -92,7 +91,7 @@ import { ParticipationDataProvider } from './courses/exercises/participation-dat
         PageRibbonComponent,
         ActiveMenuDirective,
         FooterComponent,
-        QuizExerciseExportComponent
+        QuizExerciseExportComponent,
     ],
     providers: [
         ProfileService,

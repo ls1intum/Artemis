@@ -1,7 +1,7 @@
 import { Component, DoCheck, EventEmitter, Input, IterableDiffers, OnChanges, Output, SimpleChanges } from '@angular/core';
-import { SelectionRectangle, TextSelectEvent } from '../text-assessment-editor/text-select.directive';
-import { colorForIndex, colors } from '../highlight-colors';
-import { TextAssessment } from 'app/entities/text-assessments/text-assessments.model';
+import { SelectionRectangle, TextSelectEvent } from './text-select.directive';
+import { HighlightColors } from '../highlight-colors';
+import { Feedback } from 'app/entities/feedback';
 
 @Component({
     selector: 'jhi-text-assessment-editor',
@@ -11,15 +11,19 @@ import { TextAssessment } from 'app/entities/text-assessments/text-assessments.m
 export class TextAssessmentEditorComponent implements OnChanges, DoCheck {
     public hostRectangle: SelectionRectangle;
     @Input() public submissionText: string;
-    @Input() public assessments: TextAssessment[];
+    @Input() public assessments: Feedback[];
     @Output() public assessedText = new EventEmitter<string>();
     public displayedText: string;
     private selectedText: string;
-    public readonly colors = colors;
     private differ: any;
 
     constructor(differs: IterableDiffers) {
         this.differ = differs.find([]).create(null);
+    }
+
+    get submissionTextWithHtmlLinebreaks(): string {
+        if (!this.submissionText) { return ''; }
+        return this.submissionText.replace('\n', '<br />');
     }
 
     ngOnChanges(changes: SimpleChanges): void {
@@ -63,13 +67,15 @@ export class TextAssessmentEditorComponent implements OnChanges, DoCheck {
     }
 
     highlightText(): string {
+        if (!this.assessments) { return this.submissionTextWithHtmlLinebreaks; }
+
         return this.assessments.reduce(
-            (content: string, assessment: TextAssessment, currentIndex: number) =>
+            (content: string, assessment: Feedback, currentIndex: number) =>
                 content.replace(
                     assessment.reference,
-                    `<span class="highlight ${colorForIndex(currentIndex)}">${assessment.reference}</span>`
+                    `<span class="highlight ${HighlightColors.forIndex(currentIndex)}">${assessment.reference}</span>`
                 ),
-            this.submissionText
+            this.submissionTextWithHtmlLinebreaks
         );
     }
 }

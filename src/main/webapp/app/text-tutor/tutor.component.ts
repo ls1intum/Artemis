@@ -1,14 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { TextExercise } from 'app/entities/text-exercise';
 import { TextSubmission } from 'app/entities/text-submission';
-import { TextAssessment } from 'app/entities/text-assessments/text-assessments.model';
-import { colorForIndex } from 'app/text/tutor/highlight-colors';
+import { HighlightColors } from './highlight-colors';
 import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Result, ResultService } from 'app/entities/result';
-import { Principal } from 'app/core';
 import { TextAssessmentsService } from 'app/entities/text-assessments/text-assessments.service';
+import { Feedback } from 'app/entities/feedback';
+import { Participation } from 'app/entities/participation';
 
 @Component({
     providers: [TextAssessmentsService],
@@ -17,9 +17,10 @@ import { TextAssessmentsService } from 'app/entities/text-assessments/text-asses
 })
 export class ArTEMiSTextTutorComponent implements OnInit {
     text: string;
+    participation: Participation;
     submission: TextSubmission;
     result: Result;
-    assessments: TextAssessment[] = [];
+    assessments: Feedback[] = [];
     exercise: TextExercise;
     totalScore = 0;
     assessmentsAreValid: boolean;
@@ -27,9 +28,9 @@ export class ArTEMiSTextTutorComponent implements OnInit {
     isAuthorized = true;
     accountId = 0;
     done = false;
-    busy = false;
+    busy = true;
 
-    public getColorForIndex = colorForIndex;
+    public getColorForIndex = HighlightColors.forIndex;
 
     constructor(
         private jhiAlertService: JhiAlertService,
@@ -37,8 +38,7 @@ export class ArTEMiSTextTutorComponent implements OnInit {
         private router: Router,
         private route: ActivatedRoute,
         private resultService: ResultService,
-        private assessmentsService: TextAssessmentsService,
-        private principal: Principal
+        private assessmentsService: TextAssessmentsService
     ) {
         this.assessments = [];
         this.assessmentsAreValid = false;
@@ -46,23 +46,28 @@ export class ArTEMiSTextTutorComponent implements OnInit {
     }
 
     public async ngOnInit() {
+        this.busy = true;
         const exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         const submissionId = Number(this.route.snapshot.paramMap.get('submissionId'));
 
-        const data = await this.assessmentsService.getFeedbackDataForExerciseSubmission(exerciseId, submissionId).toPromise();
-        this.submission = data.submission;
-        this.exercise = data.exercise;
-        this.assessments = data.assessments;
-        this.result = data.result;
+        this.participation = await this.assessmentsService.getFeedbackDataForExerciseSubmission(exerciseId, submissionId).toPromise();
+        this.submission = <TextSubmission>this.participation.submissions[0];
+        this.exercise = <TextExercise>this.participation.exercise;
+        this.result = this.participation.results[0];
+        this.assessments = this.result.feedbacks;
+        if (!this.assessments) { this.assessments = []; }
+        this.busy = false;
     }
 
     public addAssessment(assessmentText: string): void {
-        const assessment = new TextAssessment(assessmentText, 0, null);
+        const assessment = new Feedback();
+        assessment.reference = assessmentText;
+        assessment.credits = 0;
         this.assessments.push(assessment);
         this.checkScoreBoundaries();
     }
 
-    public deleteAssessment(assessmentToDelete: TextAssessment): void {
+    public deleteAssessment(assessmentToDelete: Feedback): void {
         this.assessments = this.assessments.filter(elem => elem !== assessmentToDelete);
         this.checkScoreBoundaries();
     }
@@ -84,7 +89,7 @@ export class ArTEMiSTextTutorComponent implements OnInit {
     }
 
     public previous(): void {
-        console.log('previousState');
+        this.router.navigate(['text', this.exercise.id, 'assessment']);
     }
 
     /**
@@ -110,9 +115,5 @@ export class ArTEMiSTextTutorComponent implements OnInit {
         this.totalScore = credits.reduce((a, b) => a + b, 0);
         this.assessmentsAreValid = true;
         this.invalidError = null;
-    }
-
-    public assessNextOptimal(): void {
-        console.log('assessNextOptimal()');
     }
 }

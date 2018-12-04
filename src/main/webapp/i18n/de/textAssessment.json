@@ -1,0 +1,11 @@
+
+{
+    "arTeMiSApp": {
+        "textAssessment" : {
+            "saveSuccessful": "Deine Bewertung wurde erfolgreich gespeichert!",
+            "submitSuccessful": "Deine Bewertung wurde erfolgreich abgesendet!",
+            "resultDismissed": "Deine Bewertung wurde nicht übernommen, da ein anderer Tutor bereits bewertet hat.",
+            "lock": "Diese Einrichung kann jetzt exklusiv nur noch von Ihnen bearbeitet werden. Bitte bewerten sie diese Einreichung bevor Sie eine neue öffnen."
+        }
+    }
+}

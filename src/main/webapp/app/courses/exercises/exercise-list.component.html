@@ -20,10 +20,12 @@
         <tr *ngFor="let exercise of exercises | showExercise:showInactiveExercises">
             <td>
                 <span>{{exercise.title}}</span>
-                <a class="text-primary" *ngIf="exercise.isAtLeastTutor"><i class="fa fa-info-circle fa-fw"
-                   routerLink="/course/{{exercise.course.id}}/exercise/{{exercise.id}}/dashboard" routerLinkActive="active"></i></a>
-                <a class="text-primary" *ngIf="exercise.isAtLeastTutor"><i *ngIf="exercise.type === MODELING"
-                   class="fa fa-graduation-cap fa-fw" routerLink="/course/{{exercise.course.id}}/exercise/{{exercise.id}}/assessment" routerLinkActive="active"></i></a>
+                <a class="text-primary" *ngIf="exercise.isAtLeastTutor">
+                    <i class="fa fa-info-circle fa-fw" routerLink="/course/{{exercise.course.id}}/exercise/{{exercise.id}}/dashboard" routerLinkActive="active"></i></a>
+                <a class="text-primary" *ngIf="exercise.isAtLeastTutor">
+                    <i *ngIf="exercise.type === MODELING" class="fa fa-graduation-cap fa-fw" routerLink="/course/{{exercise.course.id}}/exercise/{{exercise.id}}/assessment" routerLinkActive="active"></i></a>
+                <a class="text-primary" *ngIf="exercise.isAtLeastTutor">
+                    <i *ngIf="exercise.type === TEXT" class="fa fa-graduation-cap fa-fw" routerLink="/text/{{exercise.id}}/assessment" routerLinkActive="active"></i></a>
                 <a class="text-primary" *ngIf="exercise.isAtLeastTutor"><i *ngIf="exercise.type === MODELING"
                    class="fa fa-pie-chart fa-fw" routerLink="/course/{{exercise.course.id}}/exercise/{{exercise.id}}/statistics" routerLinkActive="active"></i></a>
 

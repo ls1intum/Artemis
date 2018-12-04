@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
 import { SERVER_API_URL } from 'app/app.constants';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Result } from 'src/main/webapp/app/entities/result';
-import { TextAssessment, EntityResponseType } from 'app/entities/text-assessments/text-assessments.model';
-import { TextSubmission } from 'app/entities/text-submission';
-import { TextExercise } from 'app/entities/text-exercise';
+import { Participation } from 'app/entities/participation';
+import { Feedback } from 'app/entities/feedback';
+
+type EntityResponseType = HttpResponse<Result>;
 
 @Injectable({
     providedIn: 'root'
@@ -15,27 +16,20 @@ export class TextAssessmentsService {
 
     constructor(private http: HttpClient) {}
 
-    public save(textAssessments: TextAssessment[], exerciseId: number, resultId: number): Observable<EntityResponseType> {
-        const requestBody = { assessments: textAssessments };
+    public save(textAssessments: Feedback[], exerciseId: number, resultId: number): Observable<EntityResponseType> {
         return this.http
-            .put<Result>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}`, requestBody, { observe: 'response' })
+            .put<Result>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}`, textAssessments, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
-    public submit(textAssessments: TextAssessment[], exerciseId: number, resultId: number): Observable<EntityResponseType> {
-        const requestBody = { assessments: textAssessments };
+    public submit(textAssessments: Feedback[], exerciseId: number, resultId: number): Observable<EntityResponseType> {
         return this.http
-            .put<Result>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}/submit`, requestBody, { observe: 'response' })
+            .put<Result>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}/submit`, textAssessments, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
-    public getFeedbackDataForExerciseSubmission(
-        exerciseId: number,
-        submissionId: number
-    ): Observable<{ assessments: TextAssessment[]; submission: TextSubmission; exercise: TextExercise; result: Result }> {
-        return this.http.get<{ assessments: any; submission: TextSubmission; exercise: TextExercise; result: Result }>(
-            `${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}`
-        );
+    public getFeedbackDataForExerciseSubmission(exerciseId: number, submissionId: number): Observable<Participation> {
+        return this.http.get<Participation>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}`);
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {

@@ -1,7 +1,8 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { UserRouteAccessService } from 'app/core';
-import { ArTEMiSTextTutorComponent } from 'app/text/tutor/tutor.component';
+import { ArTEMiSTextTutorComponent } from './tutor.component';
+import { TextAssessmentDashboardComponent } from './text-assessment-dashboard/text-assessment-dashboard.component';
 
 const routes: Routes = [
     {
@@ -10,6 +11,15 @@ const routes: Routes = [
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
             pageTitle: 'arTeMiSApp.textExercise.home.title'
+        },
+        canActivate: [UserRouteAccessService]
+    },
+    {
+        path: 'text/:exerciseId/assessment',
+        component: TextAssessmentDashboardComponent,
+        data: {
+            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
+            pageTitle: 'assessmentDashboard.title'
         },
         canActivate: [UserRouteAccessService]
     }

@@ -1,0 +1,97 @@
+<div *ngIf="exercise; else loading">
+    <h4>Assessment dashboard for text exercise "{{exercise.title}}"</h4>
+    <ng-container *ngIf="!busy; else loading"></ng-container>
+    <div class="table-responsive" *ngIf="submissions && submissions.length > 0; else emptyTable">
+        <table class="table table-striped exercise-table">
+            <thead>
+            <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
+                <th>
+                    <a class="th-link">#</a>
+                </th>
+                <th jhiSortBy="participation.student.firstName">
+                    <a class="th-link">Student name</a> <span class="fa fa-sort"></span>
+                </th>
+                <th jhiSortBy="submissionDate">
+                    <a class="th-link">Submission date</a> <span class="fa fa-sort"></span>
+                </th>
+                <th jhiSortBy="successful">
+                    <a class="th-link">Result</a> <span class="fa fa-sort"></span>
+                </th>
+                <th jhiSortBy="submissionCount">
+                    <a class="th-link">Submission count</a> <span class="fa fa-sort"></span>
+                </th>
+                <th jhiSortBy="score">
+                    <a class="th-link">Score</a> <span class="fa fa-sort"></span>
+                </th>
+                <th jhiSortBy="duration">
+                    <a class="th-link">Duration</a> <span class="fa fa-sort"></span>
+                </th>
+                <th jhiSortBy="assessmentType">
+                    <a class="th-link">Assessment Type</a> <span class="fa fa-sort"></span>
+                </th>
+                <th jhiSortBy="assessor.firstName">
+                    <a class="th-link">Reviewer</a> <span class="fa fa-sort"></span>
+                </th>
+                <th>
+                    <a class="th-link">Action</a>
+                </th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr [ngStyle]="submission.optimal && {'font-weight': 'bold'}"
+                *ngFor="let submission of submissions; let i = index">
+                <td>{{ i + 1 }}</td>
+                <td>{{ submission.participation.student.firstName }} {{ submission.participation.student.lastName}}</td>
+                <td>{{ submission.submissionDate | date:'MMM d, y HH:mm:ss' }}</td>
+                <td>
+                    <jhi-result [participation]="submission.participation"></jhi-result>
+                </td>
+                <td>
+                    <ng-container *ngIf="submission.participation.submissions">
+                        {{ submission.participation.submissions.length }}
+                    </ng-container>
+                </td>
+                <td>
+                    <span *ngIf="submission.result && submission.result.score != null">{{submission.result.score}}
+                        %</span>
+                </td>
+                <td>{{durationString(submission.submissionDate, (submission.participation.initializationDate ?
+                    submission.participation.initializationDate : exercise.releaseDate))}} minutes
+                </td>
+                <td>{{ submission.result && submission.result.assessmentType }}</td>
+                <td>
+                    <span
+                        *ngIf="submission.result && submission.result.assessor">{{ submission.result.assessor.firstName }} {{ submission.result.assessor.lastName }}</span>
+                </td>
+                <td>
+                    <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
+                    <button *ngIf="submission && !submission.result"
+                            routerLink="/text/{{exercise.id}}/{{submission.id}}/tutor"
+                            [disabled]="busy"
+                            class="btn btn-outline-secondary btn-sm">
+                        <i class="fa fa-folder-open fa-fw"></i>&nbsp;Assess Submission
+                    </button>
+                    </span>
+                    <button *ngIf="submission && submission.result"
+                            routerLink="/text/{{exercise.id}}/{{submission.id}}/tutor"
+                            [disabled]="busy"
+                            class="btn btn-outline-secondary btn-sm">
+                        <i class="fa fa-folder-open fa-fw"></i>&nbsp;Open assessment
+                    </button>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<ng-template #emptyTable>
+    <p>No Submissions for this exercise!</p>
+</ng-template>
+
+<ng-template #loading>
+    <h2>
+        <span style="color:grey"><span class="fa fa-spinner fa-spin"></span>&nbsp;<span>Loading..</span></span>
+    </h2>
+</ng-template>

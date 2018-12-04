@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -96,18 +95,5 @@ public class ResultService {
 
         messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
         ltiService.onNewBuildResult(savedResult.getParticipation());
-    }
-
-    public Result getOrCreateResultForSubmission(Submission submission) {
-        Optional<Result> optionalResult = resultRepository.findDistinctBySubmission(submission);
-        if (optionalResult.isPresent()) {
-            return optionalResult.get();
-        }
-
-        Result result = new Result();
-        result.setSubmission(submission);
-        result.setParticipation(submission.getParticipation());
-
-        return resultRepository.save(result);
     }
 }
