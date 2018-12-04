@@ -29,7 +29,7 @@
                 <td>{{participation.initializationState}}</td>
                 <td>{{participation.initializationDate | date:'medium'}}</td>
                 <td>
-                    <a routerLink="/user-management/{{participation.student?.login}}">{{participation.student?.firstName}} {{participation.student?.lastName}}</a>
+                    <a routerLink="/user-management/{{participation.student?.login}}/edit">{{participation.student?.firstName}} {{participation.student?.lastName}}</a>
                 </td>
                 <td class="text-right">
                     <div class="btn-group flex-btn-group-container">
