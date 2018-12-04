@@ -439,8 +439,18 @@ public class ParticipationService {
                     continue;
                 }
                 if (participation.getExercise().getDueDate() != null) {
-                    if (result.getCompletionDate().isAfter(participation.getExercise().getDueDate())) {
-                        continue;
+                    if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise) {
+                        if (result.getSubmission() != null && result.getSubmission().getSubmissionDate() != null
+                            && result.getSubmission().getSubmissionDate().isAfter(participation.getExercise().getDueDate())) {
+                            //Filter out late submissions
+                            continue;
+                        }
+                    }
+                    else {
+                        //For all other exercises the result completion date is the same as the submission date
+                        if (result.getCompletionDate().isAfter(participation.getExercise().getDueDate())) {
+                            continue;
+                        }
                     }
                 }
                 relevantResults.add(result);
