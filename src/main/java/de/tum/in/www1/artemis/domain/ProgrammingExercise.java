@@ -18,7 +18,7 @@ import java.util.Objects;
 @DiscriminatorValue(value="P")
 public class ProgrammingExercise extends Exercise implements Serializable {
 
-    private final Logger log = LoggerFactory.getLogger(ProgrammingExercise.class);
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExercise.class);
 
     private static final long serialVersionUID = 1L;
 
