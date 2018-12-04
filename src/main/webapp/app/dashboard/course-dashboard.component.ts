@@ -7,6 +7,7 @@ import { Exercise, ExerciseType } from '../entities/exercise';
 import { User } from 'app/core';
 import { Participation } from 'app/entities/participation';
 import * as moment from 'moment';
+import { DecimalPipe } from '@angular/common';
 
 @Component({
     selector: 'jhi-instructor-course-dashboard',
@@ -35,6 +36,8 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     paramSub: Subscription;
     predicate: string;
     reverse: boolean;
+
+    decimalPipe = new DecimalPipe('en');
 
     constructor(private route: ActivatedRoute, private courseService: CourseService, private courseExerciseService: CourseExerciseService) {
         this.reverse = false;
@@ -109,17 +112,19 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                         console.warn('found more than one result for student ' + student.user.login + ' and exercise ' + exercise.title);
                     }
 
-                    const studentPoints = this.roundLikeMozilla(result.score * exercise.maxScore / 100, 0);
+                    const points = result.score * exercise.maxScore / 100;
+                    // round to at most 1 decimal place
+                    const roundedPoints = this.decimalPipe.transform(points, '1.0-1');
 
-                    student.overallPoints += studentPoints;
+                    student.overallPoints += points;
 
-                    student.pointsPerExerciseType[exercise.type] += studentPoints;
+                    student.pointsPerExerciseType[exercise.type] += points;
                     student.numberOfParticipatedExercises += 1;
                     if (result.score >= 100) {
                         student.numberOfSuccessfulExercises += 1;
                     }
 
-                    student.pointsStringPerExerciseType[exercise.type] += studentPoints + ',';
+                    student.pointsStringPerExerciseType[exercise.type] += roundedPoints + ',';
                 } else {
                     student.pointsStringPerExerciseType[exercise.type] += 0 + ',';
                 }
@@ -150,15 +155,16 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                 }
                 const studentId = student.user.login.trim();
                 const email = student.user.email.trim();
-                const quizTotal = student.pointsPerExerciseType[ExerciseType.QUIZ];
-                const programmingTotal = student.pointsPerExerciseType[ExerciseType.PROGRAMMING];
-                const modelingTotal = student.pointsPerExerciseType[ExerciseType.MODELING];
-                const overallScore = student.overallPoints;
+                const quizTotal = this.decimalPipe.transform(student.pointsPerExerciseType[ExerciseType.QUIZ], '1.0-1');
+                const programmingTotal = this.decimalPipe.transform(student.pointsPerExerciseType[ExerciseType.PROGRAMMING], '1.0-1');
+                const modelingTotal = this.decimalPipe.transform(student.pointsPerExerciseType[ExerciseType.MODELING], '1.0-1');
+                const overallPoints = this.decimalPipe.transform(student.overallPoints, '1.0-1');
                 const quizString = student.pointsStringPerExerciseType[ExerciseType.QUIZ];
                 const modelingString = student.pointsStringPerExerciseType[ExerciseType.MODELING];
                 const programmingString = student.pointsStringPerExerciseType[ExerciseType.PROGRAMMING];
                 rows.push(name + ',' + studentId + ',' + email + ',' + quizTotal + ',' + quizString + '' + programmingTotal + ',' + programmingString
-                    + '' + modelingTotal + ',' + modelingString + '' + overallScore);
+                    + '' + modelingTotal + ',' + modelingString + '' + overallPoints);
+                //TODO also export student.relativeScoresPerExerciseType
             }
             const csvContent = rows.join('\n');
             const encodedUri = encodeURI(csvContent);
@@ -168,32 +174,6 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
             document.body.appendChild(link); // Required for FF
             link.click();
         }
-    }
-
-    /**
-     * Better rounding function
-     *
-     * @param value   The number.
-     * @param exp     The exponent (the 10 logarithm of the adjustment base).
-     * @returns       The adjusted value.
-     */
-    roundLikeMozilla(value: any, exp: number) {
-        // If the exp is undefined or zero...
-        if (typeof exp === 'undefined' || +exp === 0) {
-            return Math['round'](value);
-        }
-        value = +value;
-        exp = +exp;
-        // If the value is not a number or the exp is not an integer...
-        if (isNaN(value) || !(typeof exp === 'number' && exp % 1 === 0)) {
-            return NaN;
-        }
-        // Shift
-        value = value.toString().split('e');
-        value = Math['round'](+(value[0] + 'e' + (value[1] ? +value[1] - exp : -exp)));
-        // Shift back
-        value = value.toString().split('e');
-        return +(value[0] + 'e' + (value[1] ? +value[1] + exp : exp));
     }
 
     callback() {}

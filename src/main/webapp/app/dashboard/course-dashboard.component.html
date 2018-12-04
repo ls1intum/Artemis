@@ -21,12 +21,12 @@
             <tr *ngFor="let student of students | sortBy: predicate: reverse;">
                 <td>{{ student.user.firstName }} {{ student.user.lastName }}</td>
                 <td>{{ student.user.login }}</td>
-                <td>{{ student.numberOfParticipatedExercises }} ({{ (student.numberOfParticipatedExercises / exercises.length) * 100 | number: '0.0-0'}}%)</td>
-                <td>{{ student.numberOfSuccessfulExercises }} ({{ (student.numberOfSuccessfulExercises / exercises.length) * 100 | number: '0.0-0'}}%)</td>
-                <td *ngIf="exerciseMaxPointsPerType[QUIZ] > 0">{{ student.pointsPerExerciseType[QUIZ] }} ({{ (student.pointsPerExerciseType[QUIZ] / exerciseMaxPointsPerType[QUIZ]) * 100 | number: '0.0-0'}}%)</td>
-                <td *ngIf="exerciseMaxPointsPerType[PROGRAMMING] > 0">{{ student.pointsPerExerciseType[PROGRAMMING] }} ({{ (student.pointsPerExerciseType[PROGRAMMING] / exerciseMaxPointsPerType[PROGRAMMING]) * 100 | number: '0.0-0'}}%)</td>
-                <td *ngIf="exerciseMaxPointsPerType[MODELING] > 0">{{ student.pointsPerExerciseType[MODELING] }} ({{ (student.pointsPerExerciseType[MODELING] / exerciseMaxPointsPerType[MODELING]) * 100 | number: '0.0-0'}}%)</td>
-                <td>{{ student.overallPoints | number: '0.0-0'}} ({{ student.overallPoints / overallMaxPoints * 100 | number: '0.0-0'}}%)</td>
+                <td>{{ student.numberOfParticipatedExercises }} ({{ (student.numberOfParticipatedExercises / exercises.length) * 100 | number: '1.0-1'}}%)</td>
+                <td>{{ student.numberOfSuccessfulExercises }} ({{ (student.numberOfSuccessfulExercises / exercises.length) * 100 | number: '1.0-1'}}%)</td>
+                <td *ngIf="exerciseMaxPointsPerType[QUIZ] > 0">{{ student.pointsPerExerciseType[QUIZ] | number: '1.0-1'}} ({{ (student.pointsPerExerciseType[QUIZ] / exerciseMaxPointsPerType[QUIZ]) * 100 | number: '1.0-1'}}%)</td>
+                <td *ngIf="exerciseMaxPointsPerType[PROGRAMMING] > 0">{{ student.pointsPerExerciseType[PROGRAMMING] | number: '1.0-1'}} ({{ (student.pointsPerExerciseType[PROGRAMMING] / exerciseMaxPointsPerType[PROGRAMMING]) * 100 | number: '1.0-1'}}%)</td>
+                <td *ngIf="exerciseMaxPointsPerType[MODELING] > 0">{{ student.pointsPerExerciseType[MODELING] | number: '1.0-1'}} ({{ (student.pointsPerExerciseType[MODELING] / exerciseMaxPointsPerType[MODELING]) * 100 | number: '1.0-1'}}%)</td>
+                <td>{{ student.overallPoints | number: '1.0-1'}} ({{ student.overallPoints / overallMaxPoints * 100 | number: '1.0-1'}}%)</td>
             </tr>
             </tbody>
         </table>
