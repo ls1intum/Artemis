@@ -14,6 +14,8 @@ export class TextAssessmentDashboardComponent implements OnInit {
     exercise: TextExercise;
     submissions: TextSubmission[] = [];
     busy = false;
+    predicate = 'id';
+    reverse = false;
 
     constructor(
         private route: ActivatedRoute,

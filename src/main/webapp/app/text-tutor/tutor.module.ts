@@ -9,6 +9,7 @@ import { ArTEMiSSharedModule } from 'app/shared';
 import { ArTEMiSResultModule } from 'app/entities/result';
 import { TextAssessmentDetailComponent } from './text-assessment-detail/text-assessment-detail.component';
 import { TextAssessmentDashboardComponent } from './text-assessment-dashboard/text-assessment-dashboard.component';
+import { SortByModule } from 'app/components/pipes';
 
 @NgModule({
     declarations: [
@@ -20,6 +21,7 @@ import { TextAssessmentDashboardComponent } from './text-assessment-dashboard/te
     ],
     imports: [
         CommonModule,
+        SortByModule,
         ArTEMiSTextTutorRoutingModule,
         ArTEMiSSharedModule,
         ArTEMiSResultModule,

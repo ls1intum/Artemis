@@ -4,7 +4,7 @@
     <div class="table-responsive" *ngIf="submissions && submissions.length > 0; else emptyTable">
         <table class="table table-striped exercise-table">
             <thead>
-            <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
+            <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse">
                 <th>
                     <a class="th-link">#</a>
                 </th>
@@ -40,7 +40,7 @@
             </thead>
             <tbody>
             <tr [ngStyle]="submission.optimal && {'font-weight': 'bold'}"
-                *ngFor="let submission of submissions; let i = index">
+                *ngFor="let submission of submissions | sortBy: predicate: reverse; let i = index">
                 <td>{{ i + 1 }}</td>
                 <td>{{ submission.participation.student.firstName }} {{ submission.participation.student.lastName}}</td>
                 <td>{{ submission.submissionDate | date:'MMM d, y HH:mm:ss' }}</td>
