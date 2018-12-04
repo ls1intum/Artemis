@@ -27,7 +27,6 @@ export class TextAssessmentComponent implements OnInit {
     invalidError: string;
     isAuthorized = true;
     accountId = 0;
-    done = false;
     busy = true;
 
     public getColorForIndex = HighlightColors.forIndex;
@@ -42,23 +41,24 @@ export class TextAssessmentComponent implements OnInit {
     ) {
         this.assessments = [];
         this.assessmentsAreValid = false;
-        this.done = true;
     }
 
-    public async ngOnInit() {
+    public ngOnInit(): void {
         this.busy = true;
         const exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         const submissionId = Number(this.route.snapshot.paramMap.get('submissionId'));
 
-        this.participation = await this.assessmentsService.getFeedbackDataForExerciseSubmission(exerciseId, submissionId).toPromise();
-        this.submission = <TextSubmission>this.participation.submissions[0];
-        this.exercise = <TextExercise>this.participation.exercise;
-        this.result = this.participation.results[0];
-        this.assessments = this.result.feedbacks;
-        if (!this.assessments) {
-            this.assessments = [];
-        }
-        this.busy = false;
+        this.assessmentsService.getFeedbackDataForExerciseSubmission(exerciseId, submissionId).subscribe(participation => {
+            this.participation = participation;
+            this.submission = <TextSubmission>this.participation.submissions[0];
+            this.exercise = <TextExercise>this.participation.exercise;
+            this.result = this.participation.results[0];
+            this.assessments = this.result.feedbacks;
+            if (!this.assessments) {
+                this.assessments = [];
+            }
+            this.busy = false;
+        });
     }
 
     public addAssessment(assessmentText: string): void {
@@ -74,20 +74,31 @@ export class TextAssessmentComponent implements OnInit {
         this.checkScoreBoundaries();
     }
 
-    public async save(): Promise<void> {
+    public save(): void {
         this.checkScoreBoundaries();
-        const response = await this.assessmentsService.save(this.assessments, this.exercise.id, this.result.id).toPromise();
-        this.result = response.body;
-        this.jhiAlertService.success('arTeMiSApp.textAssessment.saveSuccessful');
+        if (!this.assessmentsAreValid) {
+            this.jhiAlertService.error('arTeMiSApp.textAssessment.invalidAssessments');
+            return;
+        }
+
+        this.assessmentsService.save(this.assessments, this.exercise.id, this.result.id).subscribe(response => {
+            this.result = response.body;
+            this.jhiAlertService.success('arTeMiSApp.textAssessment.saveSuccessful');
+        });
     }
 
-    public async submit(): Promise<void> {
+    public submit(): void {
         this.checkScoreBoundaries();
-        const response = await this.assessmentsService.submit(this.assessments, this.exercise.id, this.result.id).toPromise();
-        response.body.participation.results = [response.body];
-        this.result = response.body;
-        this.jhiAlertService.success('arTeMiSApp.textAssessment.submitSuccessful');
-        this.done = false;
+        if (!this.assessmentsAreValid) {
+            this.jhiAlertService.error('arTeMiSApp.textAssessment.invalidAssessments');
+            return;
+        }
+
+        this.assessmentsService.submit(this.assessments, this.exercise.id, this.result.id).subscribe(response => {
+            response.body.participation.results = [response.body];
+            this.result = response.body;
+            this.jhiAlertService.success('arTeMiSApp.textAssessment.submitSuccessful');
+        });
     }
 
     public previous(): void {
