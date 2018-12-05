@@ -34,7 +34,7 @@ spring:
         type: com.zaxxer.hikari.HikariDataSource
         url: jdbc:mysql://localhost:3306/ArTEMiS?useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
         username: root
-        password:
+        password: root
         hikari:
             auto-commit: false
             data-source-properties:
@@ -113,7 +113,7 @@ jhipster:
     metrics: # DropWizard Metrics configuration, used by MetricsConfiguration
         jmx:
             enabled: true
-        prometheus: 
+        prometheus:
             enabled: false #expose metrics via prometheus 
         logs: # Reports Dropwizard metrics in the logs
             enabled: false

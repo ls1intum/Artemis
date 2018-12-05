@@ -30,6 +30,10 @@ export class ProgrammingExerciseService {
             .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
+    generateTestDiff(id: number) {
+        return this.http.put<String>(`${this.resourceUrl}/${id}/generate-tests`, { observe: 'response' });
+    }
+
     update(programmingExercise: ProgrammingExercise): Observable<EntityResponseType> {
         const copy = this.exerciseService.convertDateFromClient(programmingExercise);
         return this.http

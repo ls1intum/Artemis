@@ -12,6 +12,8 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationUpdateService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.util.structurediffgenerator.StructureDiffGeneratorClient;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -185,5 +188,30 @@ public class ProgrammingExerciseService {
             gitService.commitAndPush(repository, templateName + "-Template pushed by ArTEMiS");
             repository.setFiles(null); // Clear cache to avoid multiple commits when ArTEMiS server is not restarted between attempts
         }
+    }
+
+    // Generates the structure diff aka the test.json file for the current programming exercise
+    public void generateStructureDiffFile(URL exerciseRepoURL, URL solutionRepoURL, URL testRepoURL, String testsPath) throws IOException, InterruptedException {
+        Repository solutionRepository = gitService.getOrCheckoutRepository(solutionRepoURL);
+        Repository exerciseRepository = gitService.getOrCheckoutRepository(exerciseRepoURL);
+        Repository testRepository = gitService.getOrCheckoutRepository(testRepoURL);
+
+        gitService.pull(solutionRepository);
+        gitService.pull(exerciseRepository);
+        gitService.pull(testRepository);
+
+        StructureDiffGeneratorClient.run(
+            solutionRepository.getLocalPath().toAbsolutePath().toString(),
+            exerciseRepository.getLocalPath().toAbsolutePath().toString(),
+            testRepository.getLocalPath().toAbsolutePath().toString() + testsPath,
+            "test.json"
+        );
+
+        try {
+            gitService.commitAndPush(testRepository, "Generated the structure diff file.");
+        } catch (GitAPIException e) {
+            log.error("An exception occurred while pushing the structure diff file to the test repository.", e);
+        }
+
     }
 }

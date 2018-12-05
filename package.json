@@ -42,6 +42,7 @@
     "ngx-clipboard": "11.1.9",
     "ngx-cookie": "4.1.2",
     "ngx-infinite-scroll": "6.0.1",
+    "ngx-spinner": "^6.1.2",
     "ngx-treeview": "6.0.2",
     "ngx-webstorage": "3.0.0-beta.14",
     "reflect-metadata": "0.1.12",

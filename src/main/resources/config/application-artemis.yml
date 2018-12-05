@@ -4,22 +4,22 @@
 
 artemis:
     repo-clone-path: ./repos/
-    encryption-password: <encrypt-password>     # arbitrary password for encrypting database values
+    encryption-password: artemisdev   # arbitrary password for encrypting database values
     result-retrieval-delay: 5000
     jira:
         url: https://jirabruegge.in.tum.de
-        user: <username>    # e.g. ga12abc
-        password: <password>
+        user: ga24yog   # e.g. ga12abc
+        password: GEPyXAE2W46h
         admin-group-name: tumuser
     version-control:
         url: https://repobruegge.in.tum.de
-        user: <username>    # e.g. ga12abc
-        secret: <password>
+        user: ga24yog   # e.g. ga12abc
+        secret: GEPyXAE2W46h
     bamboo:
         url: https://bamboobruegge.in.tum.de
         bitbucket-application-link-id: de1bf2e0-eb40-3a2d-9494-93cbe2e22d08
-        user: <username>    # e.g. ga12abc
-        password: <password>
+        user: ga24yog    # e.g. ga12abc
+        password: GEPyXAE2W46h
         empty-commit-necessary: true
     lti:
         id: artemis_lti

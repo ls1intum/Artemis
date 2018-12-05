@@ -46,6 +46,7 @@ import { ArTEMiSModelingEditorModule } from './modeling-editor/modeling-editor.m
 import { QuizExerciseExportComponent } from './entities/quiz-exercise/quiz-exercise-export.component';
 import { PendingChangesGuard } from './shared/guard/pending-changes.guard';
 import { ParticipationDataProvider } from './courses/exercises/participation-data-provider';
+import { NgxSpinnerModule } from 'ngx-spinner';
 
 @NgModule({
     imports: [
@@ -79,8 +80,9 @@ import { ParticipationDataProvider } from './courses/exercises/participation-dat
         ArTEMiSStatisticModule,
         ArTEMiSModelingEditorModule,
         ArTEMiSTextModule,
-        ArTEMiSModelingStatisticsModule
+        ArTEMiSModelingStatisticsModule,
         // jhipster-needle-angular-add-module JHipster will add new module here
+        NgxSpinnerModule
     ],
     declarations: [
         JhiMainComponent,
