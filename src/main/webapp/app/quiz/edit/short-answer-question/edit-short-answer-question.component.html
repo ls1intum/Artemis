@@ -62,7 +62,7 @@
             <div class="toolbar">
                 <div class="btn-group">
                     <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.visual" (click)="togglePreview()"></div>
-                    <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.text" (click)="togglePreview()"></div>
+                    <div *ngIf="showPreview === false" class="btn btn-outline-secondary active" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.text"></div>
                 </div>
             </div>
         </div>
@@ -75,8 +75,10 @@
                                [questionIndex]="questionIndex">
     </jhi-short-answer-question>
     <hr/>
-    <div class="btn btn-outline-secondary" (click)="togglePreview()">
-        <i class="fa fa-pencil"></i>
-        <span jhiTranslate="entity.action.edit"></span>
+    <div class="toolbar">
+        <div class="btn-group">
+            <div *ngIf="showPreview === true" class="btn btn-outline-secondary active" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.visual"></div>
+            <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.text" (click)="togglePreview()"></div>
+        </div>
     </div>
 </div>
