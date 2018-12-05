@@ -24,7 +24,6 @@ import 'brace/theme/chrome';
 import 'brace/mode/markdown';
 import { DragAndDropQuestionUtil } from 'app/components/util/drag-and-drop-question-util.service';
 import * as $ from 'jquery';
-import { DropLocation } from 'app/entities/drop-location';
 
 @Component({
     selector: 'jhi-edit-short-answer-question',
@@ -146,9 +145,8 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         this.questionEditor.getEditor().setShowPrintMargin(false);
 
         // Generate markdown from question and show result in editor
-
-        //TODO: FDE adapt markdown for SA
-        this.questionEditorText = this.artemisMarkdown.generateTextHintExplanation(this.question);
+        //this.questionEditorText = this.artemisMarkdown.generateTextHintExplanation(this.question);
+        this.questionEditorText = this.generateMarkdown();
         this.questionEditor.getEditor().clearSelection();
 
         // Register the onBlur listener
@@ -156,11 +154,72 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
             'blur',
             () => {
                 // Parse the markdown in the editor and update question accordingly
-                this.artemisMarkdown.parseTextHintExplanation(this.questionEditorText, this.question);
+                //this.artemisMarkdown.parseTextHintExplanation(this.questionEditorText, this.question);
+                this.parseMarkdown(this.questionEditorText);
                 this.questionUpdated.emit();
             },
             this
         );
+    }
+
+    /**
+     * @function generateMarkdown
+     * @desc Generate the markdown text for this question
+     * 1. First the question text, hint, and explanation are added using ArtemisMarkdown
+     * 2. After an empty line, the solutions are added
+     * 3. For each answer option: text, hint and explanation are added using ArtemisMarkdown
+     */
+    generateMarkdown(): string {
+        const markdownText =
+            this.artemisMarkdown.generateTextHintExplanation(this.question) +
+            '\n\n' +
+            this.question.solutions.map(solution => this.artemisMarkdown.generateTextHintExplanation(solution)).join('\n');
+        return markdownText;
+    }
+
+    /**
+     * @function parseMarkdown
+     * @param text {string} the markdown text to parse
+     * @desc Parse the markdown and apply the result to the question's data
+     * The markdown rules are as follows:
+     *
+     * 1. Text is split at [-option
+     *    => The first part (any text before the first [-option ) is the question text
+     * 2. The question text is split into text, hint, and explanation using ArtemisMarkdown
+     * 3. For every solution (Parts after each [-option  and ]:
+     *    3.a) Same treatment as the question text for text, hint, and explanation
+     *
+     * Note: Existing IDs for answer options are reused in the original order.
+     */
+    parseMarkdown(text: string): void {
+        // First split up by [-option tag and seperate first part of the split as text and second part as solutionParts
+        const questionParts = text.split(/\[-option /g);
+        const questionText = questionParts[0];
+        //Split new created Array by ] to generate this structure: {"1,2", " SolutionText"}
+        let solutionParts = questionParts.map(questionPart => questionPart.split(/\]/g)).slice(1);
+
+        // Split question into main text, hint and explanation
+        this.artemisMarkdown.parseTextHintExplanation(questionText, this.question);
+
+        // Extract existing solutions IDs
+        const existingSolutionIDs = this.question.solutions.filter(solution => solution.id != null).map(solution => solution.id);
+        this.question.solutions = [];
+
+        // Work on solution
+
+        for (const solutionText of solutionParts) {
+            // Find the box (text in-between the parts)
+            const solution = new ShortAnswerSolution();
+
+            // Parse this answerOption
+            this.artemisMarkdown.parseTextHintExplanation(solutionText[1], solution);
+
+            // Assign existing ID if available
+            if (this.question.solutions.length < existingSolutionIDs.length) {
+                solution.id = existingSolutionIDs[this.question.solutions.length];
+            }
+            this.question.solutions.push(solution);
+        }
     }
 
     /**
