@@ -36,11 +36,20 @@
     </div>
 
     <div class="row">
-        <div [ngClass]="{'col-9': submission?.submitted, 'col-12': !submission?.submitted}">
-            <textarea title="Solution" [(ngModel)]="answer" style="width: 100%; height: 50vh;" [readonly]="submission?.submitted" [disabled]="submission?.submitted"></textarea>
+        <div class="col-12" *ngIf="!result; else hasFeedback">
+            <textarea [(ngModel)]="answer" style="width: 100%; height: 50vh;" [readonly]="submission?.submitted" [disabled]="submission?.submitted"></textarea>
         </div>
-        <div class="col-3" *ngIf="submission?.submitted">
-            <h4>Assessment</h4>
-        </div>
+
+        <ng-template #hasFeedback>
+            <div class="col-sm-12 col-md-7 col-xl-8 mb-sm-3">
+                <jhi-highlighted-text-area [submissionText]="answer" [assessments]="result.feedbacks"></jhi-highlighted-text-area>
+            </div>
+            <div class="col-sm-12 col-md-5 col-xl-4" *ngIf="submission?.submitted && result && result.feedbacks">
+                <h4>Assessment</h4>
+                <ng-container *ngFor="let feedback of result.feedbacks; let i = index">
+                    <jhi-text-editor-score-card [feedback]="feedback" [highlightColor]="getColorForIndex(i)"></jhi-text-editor-score-card>
+                </ng-container>
+            </div>
+        </ng-template>
     </div>
 </div>

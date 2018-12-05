@@ -10,6 +10,7 @@ import { Result } from 'app/entities/result';
 import { Participation, ParticipationService } from 'app/entities/participation';
 import { TextEditorService } from 'app/text-editor/text-editor.service';
 import * as moment from 'moment';
+import { HighlightColors } from 'app/text-shared/highlight-colors';
 
 @Component({
     templateUrl: './text-editor.component.html',
@@ -25,6 +26,8 @@ export class TextEditorComponent implements OnInit, OnDestroy {
     isActive: boolean;
     isSaving: boolean;
     answer: string;
+
+    public getColorForIndex = HighlightColors.forIndex;
 
     constructor(
         private route: ActivatedRoute,
@@ -46,9 +49,8 @@ export class TextEditorComponent implements OnInit, OnDestroy {
                         this.textExercise = this.participation.exercise as TextExercise;
 
                         this.submission = data.submissions[0] as TextSubmission;
-
-                        if (this.submission && this.submission.result) {
-                            this.result = this.submission.result;
+                        if (this.submission && data.results) {
+                            this.result = data.results.find(r => r.submission.id === this.submission.id);
                         }
 
                         if (this.submission && this.submission.text) {

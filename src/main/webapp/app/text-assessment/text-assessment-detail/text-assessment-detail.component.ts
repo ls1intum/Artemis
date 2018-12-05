@@ -1,11 +1,11 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { HighlightColors } from '../highlight-colors';
+import { HighlightColors } from '../../text-shared/highlight-colors';
 import { Feedback } from 'app/entities/feedback';
 
 @Component({
     selector: 'jhi-text-assessment-detail',
     templateUrl: './text-assessment-detail.component.html',
-    styleUrls: ['./text-assessment-detail.component.scss']
+    styles: []
 })
 export class TextAssessmentDetailComponent {
     @Input() public assessment: Feedback;

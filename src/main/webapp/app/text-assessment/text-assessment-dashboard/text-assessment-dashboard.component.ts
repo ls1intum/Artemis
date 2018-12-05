@@ -8,7 +8,7 @@ import { HttpResponse } from '@angular/common/http';
 
 @Component({
     templateUrl: './text-assessment-dashboard.component.html',
-    styleUrls: ['./text-assessment-dashboard.component.css']
+    styles: []
 })
 export class TextAssessmentDashboardComponent implements OnInit {
     exercise: TextExercise;
