@@ -34,12 +34,12 @@
                             <span *ngIf="!showSolution"
                                   jhiTranslate="showStatistic.dragAndDropQuestionStatistic.showSampleSolution"></span>
                         </button>
-                        </button>
 
                         <button (click)="switchRated()" type="button" class="btn btn-primary">
                             <span class="fa fa-refresh"></span>&nbsp;
                             <span *ngIf="rated" jhiTranslate="showStatistic.switchToUnrated"></span>
-                            <span *ngIf="!rated" jhiTranslate="showStatistic.switchToRated"></span></button>
+                            <span *ngIf="!rated" jhiTranslate="showStatistic.switchToRated"></span>
+                        </button>
                     </div>
                     <p>&nbsp;</p>
                 </div>
@@ -65,7 +65,7 @@
                             <div
                                 class="drop-location"
                                 *ngFor="let dropLocation of question.dropLocations; let i = index"
-                                ng-style="{top: dropLocation.posY/2 + '%', left: dropLocation.posX/2 + '%', width: dropLocation.width/2 + '%', height: dropLocation.height/2 + '%'}"
+                                [ngStyle]="{top: dropLocation.posY/2 + '%', left: dropLocation.posX/2 + '%', width: dropLocation.width/2 + '%', height: dropLocation.height/2 + '%'}"
                             >
                                 <div class="letter-solution">
                                     <span>{{getLetter(i) + "."}}</span>
@@ -87,10 +87,9 @@
                                    [dragItem]="dragItem"
                                    [invalid]="dragItem.invalid"
                                    [clickDisabled]="true"
-                                   [minWidth]="100 + '%'"></jhi-drag-item>
-
+                                   [minWidth]="100">
+                        </jhi-drag-item>
                     </div>
-
                 </div>
                 <p>&nbsp;</p>
                 <p>&nbsp;</p>
