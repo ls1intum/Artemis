@@ -93,7 +93,7 @@ public class ResultResource {
         } else if (result.getScore() == null) {
             throw new BadRequestAlertException("Score is required.", ENTITY_NAME, "scoreNull");
         } else if(result.getScore() != 100 && result.isSuccessful()) {
-            throw new BadRequestAlertException("Only result with score 100% can be numberOfSuccessfulExercises.", ENTITY_NAME, "scoreAndSuccessfulNotMatching");
+            throw new BadRequestAlertException("Only result with score 100% can be successful.", ENTITY_NAME, "scoreAndSuccessfulNotMatching");
         } else if(!result.getFeedbacks().isEmpty() && result.getFeedbacks().stream()
                 .filter(feedback -> feedback.getText() == null).count() != 0) {
             throw new BadRequestAlertException("In case feedback is present, feedback text and detail text are mandatory.", ENTITY_NAME, "feedbackTextOrDetailTextNull");
@@ -232,7 +232,7 @@ public class ResultResource {
     }
 
     /**
-     * GET  /courses/:courseId/exercises/:exerciseId/results : get the numberOfSuccessfulExercises results for an exercise, ordered ascending by build completion date.
+     * GET  /courses/:courseId/exercises/:exerciseId/results : get the successful results for an exercise, ordered ascending by build completion date.
      *
      * @param courseId   only included for API consistency, not actually used
      * @param exerciseId the id of the exercise for which to retrieve the results
@@ -265,7 +265,7 @@ public class ResultResource {
 
             Result relevantResult;
             if (ratedOnly == true) {
-                relevantResult = participation.getExercise().findLatestRatedResultWithCompletionDate(participation);
+                relevantResult = exercise.findLatestRatedResultWithCompletionDate(participation);
             }
             else {
                 relevantResult = participation.findLatestResult();
