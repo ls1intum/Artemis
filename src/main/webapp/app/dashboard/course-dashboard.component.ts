@@ -37,6 +37,12 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     predicate: string;
     reverse: boolean;
 
+    // average values
+    averageNumberOfParticipatedExercises = 0;
+    averageNumberOfSuccessfulExercises = 0;
+    averageNumberOfPointsPerExerciseTypes = new Map<string, number>();
+    averageNumberOfOverallPoints = 0;
+
     decimalPipe = new DecimalPipe('en');
 
     constructor(private route: ActivatedRoute, private courseService: CourseService, private courseExerciseService: CourseExerciseService) {
@@ -136,6 +142,15 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
             }
         });
 
+        for (const exerciseType of Object.values(ExerciseType)) {
+            this.averageNumberOfPointsPerExerciseTypes[exerciseType] = this.students.map(student => student.pointsPerExerciseType[exerciseType])
+                .reduce((total, num) => total + num, 0) / this.students.length;
+        }
+
+        this.averageNumberOfOverallPoints = this.students.map(student => student.overallPoints).reduce((total, num) => total + num, 0) / this.students.length;
+        this.averageNumberOfSuccessfulExercises = this.students.map(student => student.numberOfSuccessfulExercises).reduce((total, num) => total + num, 0) / this.students.length;
+        this.averageNumberOfParticipatedExercises = this.students.map(student => student.numberOfParticipatedExercises).reduce((total, num) => total + num, 0) / this.students.length;
+
         this.exportReady = true;
     }
 
@@ -164,7 +179,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                 const programmingString = student.pointsStringPerExerciseType[ExerciseType.PROGRAMMING];
                 rows.push(name + ',' + studentId + ',' + email + ',' + quizTotal + ',' + quizString + '' + programmingTotal + ',' + programmingString
                     + '' + modelingTotal + ',' + modelingString + '' + overallPoints);
-                //TODO also export student.relativeScoresPerExerciseType
+                // TODO also export student.relativeScoresPerExerciseType
             }
             const csvContent = rows.join('\n');
             const encodedUri = encodeURI(csvContent);

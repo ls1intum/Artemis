@@ -16,6 +16,26 @@
                 <th *ngIf="exerciseMaxPointsPerType[MODELING] > 0" jhiSortBy="pointsPerExerciseType.modeling"><span>Modeling Points (%)</span> <span class="fa fa-sort"></span></th>
                 <th jhiSortBy="overallPoints"><span>Overall Points (%)</span> <span class="fa fa-sort"></span></th>
             </tr>
+            <tr>
+                <th>Max</th>
+                <th></th>
+                <th>{{ exercises.length }}</th>
+                <th>{{ exercises.length }}</th>
+                <th *ngIf="exerciseMaxPointsPerType[QUIZ] > 0">{{ exerciseMaxPointsPerType[QUIZ] }}</th>
+                <th *ngIf="exerciseMaxPointsPerType[PROGRAMMING] > 0">{{ exerciseMaxPointsPerType[PROGRAMMING] }}</th>
+                <th *ngIf="exerciseMaxPointsPerType[MODELING] > 0">{{ exerciseMaxPointsPerType[MODELING] }}</th>
+                <th>{{ overallMaxPoints }}</th>
+            </tr>
+            <tr>
+                <th>Average</th>
+                <th></th>
+                <th>{{ averageNumberOfParticipatedExercises | number: '1.0-1' }} ({{ averageNumberOfParticipatedExercises / exercises.length * 100 | number: '1.0-1'  }}%)</th>
+                <th>{{ averageNumberOfSuccessfulExercises | number: '1.0-1' }} ({{ averageNumberOfSuccessfulExercises / exercises.length * 100 | number: '1.0-1'  }}%)</th>
+                <th *ngIf="exerciseMaxPointsPerType[QUIZ] > 0">{{ averageNumberOfPointsPerExerciseTypes[QUIZ] | number: '1.0-1' }} ({{ (averageNumberOfPointsPerExerciseTypes[QUIZ] / exerciseMaxPointsPerType[QUIZ]) * 100 | number: '1.0-1'}}%)</th>
+                <th *ngIf="exerciseMaxPointsPerType[PROGRAMMING] > 0">{{ averageNumberOfPointsPerExerciseTypes[PROGRAMMING] | number: '1.0-1' }} ({{ (averageNumberOfPointsPerExerciseTypes[PROGRAMMING] / exerciseMaxPointsPerType[PROGRAMMING]) * 100 | number: '1.0-1'}}%)</th>
+                <th *ngIf="exerciseMaxPointsPerType[MODELING] > 0">{{ averageNumberOfPointsPerExerciseTypes[MODELING] | number: '1.0-1' }} ({{ (averageNumberOfPointsPerExerciseTypes[MODELING] / exerciseMaxPointsPerType[MODELING]) * 100 | number: '1.0-1'}}%)</th>
+                <th>{{ averageNumberOfOverallPoints | number: '1.0-1' }} ({{ averageNumberOfOverallPoints / overallMaxPoints * 100 | number: '1.0-1'}}%)</th>
+            </tr>
             </thead>
             <tbody>
             <tr *ngFor="let student of students | sortBy: predicate: reverse;">
