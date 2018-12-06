@@ -51,6 +51,9 @@ export abstract class Exercise implements BaseEntity {
     // helper attributes
     public isAtLeastTutor: boolean;
     public loading: boolean;
+    public numberOfParticipationsWithRatedResult: number;
+    public numberOfSuccessfulParticipations: number;
+    public averagePoints: number;
 
     protected constructor(type: ExerciseType) {
         this.type = type;

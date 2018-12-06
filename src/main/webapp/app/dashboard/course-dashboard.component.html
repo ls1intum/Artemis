@@ -3,7 +3,8 @@
         <button *ngIf="exportReady" class="btn btn-primary btn-sm float-right" (click)="exportResults()"><i class="fa fa-download fa-fw"></i>&nbsp;Export Results as CSV</button>
     </h4>
     <jhi-alert></jhi-alert>
-    <div class="table-responsive" *ngIf="exercises.length > 0">
+    <span *ngIf="!exportReady" style="color:grey"><span class="fa fa-spinner fa-spin"></span>&nbsp;<span>Loading the results of all students...</span></span>
+    <div class="table-responsive" *ngIf="exportReady">
         <table class="table table-striped">
             <thead>
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
@@ -11,9 +12,9 @@
                 <th jhiSortBy="user.login"><span>Login</span> <span class="fa fa-sort"></span></th>
                 <th jhiSortBy="numberOfParticipatedExercises"><span>Participated in Exercises (%)</span> <span class="fa fa-sort"></span></th>
                 <th jhiSortBy="numberOfSuccessfulExercises"><span>Successful Exercises (%)</span> <span class="fa fa-sort"></span></th>
-                <th *ngIf="exerciseMaxPointsPerType[QUIZ] > 0" jhiSortBy="pointsPerExerciseType.quiz"><span>Quiz Points </span>(%)<span class="fa fa-sort"></span></th>
-                <th *ngIf="exerciseMaxPointsPerType[PROGRAMMING] > 0" jhiSortBy="pointsPerExerciseType.programming"><span>Programming Points (%)</span> <span class="fa fa-sort"></span></th>
-                <th *ngIf="exerciseMaxPointsPerType[MODELING] > 0" jhiSortBy="pointsPerExerciseType.modeling"><span>Modeling Points (%)</span> <span class="fa fa-sort"></span></th>
+                <th *ngIf="maxNumberOfPointsPerExerciseType[QUIZ] > 0" jhiSortBy="pointsPerExerciseType.quiz"><span>Quiz Points </span>(%)<span class="fa fa-sort"></span></th>
+                <th *ngIf="maxNumberOfPointsPerExerciseType[PROGRAMMING] > 0" jhiSortBy="pointsPerExerciseType.programming"><span>Programming Points (%)</span> <span class="fa fa-sort"></span></th>
+                <th *ngIf="maxNumberOfPointsPerExerciseType[MODELING] > 0" jhiSortBy="pointsPerExerciseType.modeling"><span>Modeling Points (%)</span> <span class="fa fa-sort"></span></th>
                 <th jhiSortBy="overallPoints"><span>Overall Points (%)</span> <span class="fa fa-sort"></span></th>
             </tr>
             <tr>
@@ -21,20 +22,20 @@
                 <th></th>
                 <th>{{ exercises.length }}</th>
                 <th>{{ exercises.length }}</th>
-                <th *ngIf="exerciseMaxPointsPerType[QUIZ] > 0">{{ exerciseMaxPointsPerType[QUIZ] }}</th>
-                <th *ngIf="exerciseMaxPointsPerType[PROGRAMMING] > 0">{{ exerciseMaxPointsPerType[PROGRAMMING] }}</th>
-                <th *ngIf="exerciseMaxPointsPerType[MODELING] > 0">{{ exerciseMaxPointsPerType[MODELING] }}</th>
-                <th>{{ overallMaxPoints }}</th>
+                <th *ngIf="maxNumberOfPointsPerExerciseType[QUIZ] > 0">{{ maxNumberOfPointsPerExerciseType[QUIZ] }}</th>
+                <th *ngIf="maxNumberOfPointsPerExerciseType[PROGRAMMING] > 0">{{ maxNumberOfPointsPerExerciseType[PROGRAMMING] }}</th>
+                <th *ngIf="maxNumberOfPointsPerExerciseType[MODELING] > 0">{{ maxNumberOfPointsPerExerciseType[MODELING] }}</th>
+                <th>{{ maxNumberOfOverallPoints }}</th>
             </tr>
             <tr>
                 <th>Average</th>
                 <th></th>
                 <th>{{ averageNumberOfParticipatedExercises | number: '1.0-1' }} ({{ averageNumberOfParticipatedExercises / exercises.length * 100 | number: '1.0-1'  }}%)</th>
                 <th>{{ averageNumberOfSuccessfulExercises | number: '1.0-1' }} ({{ averageNumberOfSuccessfulExercises / exercises.length * 100 | number: '1.0-1'  }}%)</th>
-                <th *ngIf="exerciseMaxPointsPerType[QUIZ] > 0">{{ averageNumberOfPointsPerExerciseTypes[QUIZ] | number: '1.0-1' }} ({{ (averageNumberOfPointsPerExerciseTypes[QUIZ] / exerciseMaxPointsPerType[QUIZ]) * 100 | number: '1.0-1'}}%)</th>
-                <th *ngIf="exerciseMaxPointsPerType[PROGRAMMING] > 0">{{ averageNumberOfPointsPerExerciseTypes[PROGRAMMING] | number: '1.0-1' }} ({{ (averageNumberOfPointsPerExerciseTypes[PROGRAMMING] / exerciseMaxPointsPerType[PROGRAMMING]) * 100 | number: '1.0-1'}}%)</th>
-                <th *ngIf="exerciseMaxPointsPerType[MODELING] > 0">{{ averageNumberOfPointsPerExerciseTypes[MODELING] | number: '1.0-1' }} ({{ (averageNumberOfPointsPerExerciseTypes[MODELING] / exerciseMaxPointsPerType[MODELING]) * 100 | number: '1.0-1'}}%)</th>
-                <th>{{ averageNumberOfOverallPoints | number: '1.0-1' }} ({{ averageNumberOfOverallPoints / overallMaxPoints * 100 | number: '1.0-1'}}%)</th>
+                <th *ngIf="maxNumberOfPointsPerExerciseType[QUIZ] > 0">{{ averageNumberOfPointsPerExerciseTypes[QUIZ] | number: '1.0-1' }} ({{ (averageNumberOfPointsPerExerciseTypes[QUIZ] / maxNumberOfPointsPerExerciseType[QUIZ]) * 100 | number: '1.0-1'}}%)</th>
+                <th *ngIf="maxNumberOfPointsPerExerciseType[PROGRAMMING] > 0">{{ averageNumberOfPointsPerExerciseTypes[PROGRAMMING] | number: '1.0-1' }} ({{ (averageNumberOfPointsPerExerciseTypes[PROGRAMMING] / maxNumberOfPointsPerExerciseType[PROGRAMMING]) * 100 | number: '1.0-1'}}%)</th>
+                <th *ngIf="maxNumberOfPointsPerExerciseType[MODELING] > 0">{{ averageNumberOfPointsPerExerciseTypes[MODELING] | number: '1.0-1' }} ({{ (averageNumberOfPointsPerExerciseTypes[MODELING] / maxNumberOfPointsPerExerciseType[MODELING]) * 100 | number: '1.0-1'}}%)</th>
+                <th>{{ averageNumberOfOverallPoints | number: '1.0-1' }} ({{ averageNumberOfOverallPoints / maxNumberOfOverallPoints * 100 | number: '1.0-1'}}%)</th>
             </tr>
             </thead>
             <tbody>
@@ -43,10 +44,10 @@
                 <td>{{ student.user.login }}</td>
                 <td>{{ student.numberOfParticipatedExercises }} ({{ (student.numberOfParticipatedExercises / exercises.length) * 100 | number: '1.0-1'}}%)</td>
                 <td>{{ student.numberOfSuccessfulExercises }} ({{ (student.numberOfSuccessfulExercises / exercises.length) * 100 | number: '1.0-1'}}%)</td>
-                <td *ngIf="exerciseMaxPointsPerType[QUIZ] > 0">{{ student.pointsPerExerciseType[QUIZ] | number: '1.0-1'}} ({{ (student.pointsPerExerciseType[QUIZ] / exerciseMaxPointsPerType[QUIZ]) * 100 | number: '1.0-1'}}%)</td>
-                <td *ngIf="exerciseMaxPointsPerType[PROGRAMMING] > 0">{{ student.pointsPerExerciseType[PROGRAMMING] | number: '1.0-1'}} ({{ (student.pointsPerExerciseType[PROGRAMMING] / exerciseMaxPointsPerType[PROGRAMMING]) * 100 | number: '1.0-1'}}%)</td>
-                <td *ngIf="exerciseMaxPointsPerType[MODELING] > 0">{{ student.pointsPerExerciseType[MODELING] | number: '1.0-1'}} ({{ (student.pointsPerExerciseType[MODELING] / exerciseMaxPointsPerType[MODELING]) * 100 | number: '1.0-1'}}%)</td>
-                <td>{{ student.overallPoints | number: '1.0-1'}} ({{ student.overallPoints / overallMaxPoints * 100 | number: '1.0-1'}}%)</td>
+                <td *ngIf="maxNumberOfPointsPerExerciseType[QUIZ] > 0">{{ student.pointsPerExerciseType[QUIZ] | number: '1.0-1'}} ({{ (student.pointsPerExerciseType[QUIZ] / maxNumberOfPointsPerExerciseType[QUIZ]) * 100 | number: '1.0-1'}}%)</td>
+                <td *ngIf="maxNumberOfPointsPerExerciseType[PROGRAMMING] > 0">{{ student.pointsPerExerciseType[PROGRAMMING] | number: '1.0-1'}} ({{ (student.pointsPerExerciseType[PROGRAMMING] / maxNumberOfPointsPerExerciseType[PROGRAMMING]) * 100 | number: '1.0-1'}}%)</td>
+                <td *ngIf="maxNumberOfPointsPerExerciseType[MODELING] > 0">{{ student.pointsPerExerciseType[MODELING] | number: '1.0-1'}} ({{ (student.pointsPerExerciseType[MODELING] / maxNumberOfPointsPerExerciseType[MODELING]) * 100 | number: '1.0-1'}}%)</td>
+                <td>{{ student.overallPoints | number: '1.0-1'}} ({{ student.overallPoints / maxNumberOfOverallPoints * 100 | number: '1.0-1'}}%)</td>
             </tr>
             </tbody>
         </table>

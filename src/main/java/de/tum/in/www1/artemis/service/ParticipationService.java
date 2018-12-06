@@ -438,7 +438,10 @@ public class ParticipationService {
                 if (result.getScore() == null) {
                     continue;
                 }
-                if (participation.getExercise().getDueDate() != null) {
+                if (participation.getExercise() instanceof QuizExercise) {
+                    //in quizzes we take all rated results
+                }
+                else if (participation.getExercise().getDueDate() != null) {
                     if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise) {
                         if (result.getSubmission() != null && result.getSubmission().getSubmissionDate() != null
                             && result.getSubmission().getSubmissionDate().isAfter(participation.getExercise().getDueDate())) {
