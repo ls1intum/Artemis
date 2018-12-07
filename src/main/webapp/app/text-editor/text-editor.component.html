@@ -9,7 +9,7 @@
         </div>
         <div class="col-12 col-lg-4 text-right">
             <div *ngIf="participation"><jhi-result [participation]="participation"></jhi-result></div><br>
-            <button class="btn btn-primary" (click)="saveText()" [hidden]="submission?.submitted" [disabled]="isSaving">
+            <button class="btn btn-primary mr-2" (click)="saveText()" [hidden]="submission?.submitted" [disabled]="isSaving">
                 <ng-container *ngIf="!isSaving">
                     <span class="fa fa-save"></span>
                     <span jhiTranslate="entity.action.save">Save</span>
@@ -21,18 +21,18 @@
             </button>
             <button class="btn btn-success" (click)="submit()"
                     [disabled]="!submission"
-                    [hidden]="submission?.submitted || !isActive">Submit</button>
+                    *ngIf="!submission?.submitted  && isActive">Submit</button>
             <button class="btn btn-warning" (click)="submit()"
                     [disabled]="!submission"
-                    [hidden]="submission?.submitted || isActive">Submit (deadline missed)</button>
+                    *ngIf="!submission?.submitted && !isActive">Submit (deadline missed)</button>
         </div>
     </div><br>
 
     <div class="row" *ngIf="textExercise">
-        <div class="col">
+        <div class="col-9">
             <p class="mb-3"><span><strong>Problem Statement:</strong></span> {{ textExercise.problemStatement }}</p>
         </div>
-        <div class="col text-right" *ngIf="!submission?.submitted"><p><strong>Max. Score: {{ textExercise.maxScore }}</strong></p></div>
+        <div class="col-3 text-right" *ngIf="!submission?.submitted"><p><strong>Max. Score: {{ textExercise.maxScore }}</strong></p></div>
     </div>
 
     <div class="row">

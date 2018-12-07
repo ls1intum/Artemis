@@ -1,8 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-
+import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
 import { TextExercise, TextExerciseService } from 'app/entities/text-exercise';
@@ -17,8 +16,6 @@ import { HighlightColors } from 'app/text-shared/highlight-colors';
     providers: [ParticipationService]
 })
 export class TextEditorComponent implements OnInit, OnDestroy {
-    private subscription: Subscription;
-
     textExercise: TextExercise;
     participation: Participation;
     result: Result;
@@ -28,6 +25,7 @@ export class TextEditorComponent implements OnInit, OnDestroy {
     answer: string;
 
     public getColorForIndex = HighlightColors.forIndex;
+    private submissionConfirmationText: string;
 
     constructor(
         private route: ActivatedRoute,
@@ -35,34 +33,42 @@ export class TextEditorComponent implements OnInit, OnDestroy {
         private participationService: ParticipationService,
         private textSubmissionService: TextSubmissionService,
         private textService: TextEditorService,
-        private jhiAlertService: JhiAlertService
+        private jhiAlertService: JhiAlertService,
+        translateService: TranslateService
     ) {
         this.isSaving = false;
+        translateService.get('arTeMiSApp.textExercise.confirmSubmission').subscribe(text => (this.submissionConfirmationText = text));
     }
 
     ngOnInit() {
-        this.subscription = this.route.params.subscribe(params => {
-            if (params['participationId']) {
-                this.textService.get(params['participationId']).subscribe(
-                    (data: Participation) => {
-                        this.participation = data;
-                        this.textExercise = this.participation.exercise as TextExercise;
+        const participationId = Number(this.route.snapshot.paramMap.get('participationId'));
+        if (Number.isNaN(participationId)) {
+            return this.jhiAlertService.error('arTeMiSApp.textExercise.error', null, null);
+        }
 
-                        this.submission = data.submissions[0] as TextSubmission;
-                        if (this.submission && data.results) {
-                            this.result = data.results.find(r => r.submission.id === this.submission.id);
-                        }
+        this.textService.get(participationId).subscribe(
+            (data: Participation) => {
+                this.participation = data;
+                this.textExercise = this.participation.exercise as TextExercise;
 
-                        if (this.submission && this.submission.text) {
-                            this.answer = this.submission.text;
-                        }
+                if (data.submissions && data.submissions.length > 0) {
+                    this.submission = data.submissions[0] as TextSubmission;
+                    if (this.submission && data.results) {
+                        this.result = data.results.find(r => r.submission.id === this.submission.id);
+                    }
 
-                        this.isActive = this.textExercise.dueDate == null || new Date() <= moment(this.textExercise.dueDate).toDate();
-                    },
-                    (error: HttpErrorResponse) => this.onError(error)
-                );
-            }
-        });
+                    if (this.submission && this.submission.text) {
+                        this.answer = this.submission.text;
+                    }
+                }
+
+                this.isActive =
+                    this.textExercise.dueDate === undefined ||
+                    this.textExercise.dueDate === null ||
+                    new Date() <= moment(this.textExercise.dueDate).toDate();
+            },
+            (error: HttpErrorResponse) => this.onError(error)
+        );
     }
 
     ngOnDestroy() {}
@@ -104,7 +110,7 @@ export class TextEditorComponent implements OnInit, OnDestroy {
 
         this.submission.text = this.answer;
 
-        const confirmSubmit = window.confirm('arTeMiSApp.textExercise.confirmSubmission');
+        const confirmSubmit = window.confirm(this.submissionConfirmationText);
 
         if (confirmSubmit) {
             this.submission.submitted = true;

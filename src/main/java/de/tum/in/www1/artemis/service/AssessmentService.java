@@ -24,7 +24,7 @@ abstract class AssessmentService {
         double percentageScore = totalScore/maxScore * 100;
         result.setScore(Math.round(percentageScore));
         DecimalFormat formatter = new DecimalFormat("#.##"); // limit decimal places to 2
-        result.setResultString(formatter.format(totalScore) + " of " + formatter.format(exercise.getMaxScore()) + " points");
+        result.setResultString(formatter.format(totalScore) + " of " + formatter.format(maxScore) + " points");
         result.setSuccessful(result.getScore() == 100L);
 
         resultRepository.save(result);

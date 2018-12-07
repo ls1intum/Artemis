@@ -53,10 +53,7 @@ export class TextAssessmentComponent implements OnInit {
             this.submission = <TextSubmission>this.participation.submissions[0];
             this.exercise = <TextExercise>this.participation.exercise;
             this.result = this.participation.results[0];
-            this.assessments = this.result.feedbacks;
-            if (!this.assessments) {
-                this.assessments = [];
-            }
+            this.assessments = this.result.feedbacks || [];
             this.busy = false;
         });
     }
@@ -95,7 +92,6 @@ export class TextAssessmentComponent implements OnInit {
         }
 
         this.assessmentsService.submit(this.assessments, this.exercise.id, this.result.id).subscribe(response => {
-            response.body.participation.results = [response.body];
             this.result = response.body;
             this.jhiAlertService.success('arTeMiSApp.textAssessment.submitSuccessful');
         });
@@ -119,7 +115,7 @@ export class TextAssessmentComponent implements OnInit {
 
         const credits = this.assessments.map(assessment => assessment.credits);
 
-        if (!credits.every(credit => credit !== null)) {
+        if (!credits.every(credit => credit !== null && !isNaN(credit))) {
             this.invalidError = 'The score field must be a number and can not be empty!';
             this.assessmentsAreValid = false;
             return;

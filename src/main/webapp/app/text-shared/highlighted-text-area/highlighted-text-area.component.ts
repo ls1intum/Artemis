@@ -21,7 +21,7 @@ export class HighlightedTextAreaComponent implements OnChanges, DoCheck {
         if (!this.submissionText) {
             return '';
         }
-        return this.submissionText.replace('\n', '<br />');
+        return this.submissionText.replace(/(?:\r\n|\r|\n)/g, '<br />');
     }
 
     ngOnChanges(changes: SimpleChanges): void {

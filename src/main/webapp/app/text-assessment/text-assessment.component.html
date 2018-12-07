@@ -30,8 +30,11 @@
 <div class="row" *ngIf="exercise">
     <div class="col">
         <p class="mb-3">
-            <strong>Exercise:</strong> {{ exercise.title }}<br>
-            <strong>Problem Statement:</strong> {{ exercise.problemStatement }}
+            <strong>Exercise:</strong> {{ exercise.title }}<br />
+            <strong>Problem Statement:</strong> {{ exercise.problemStatement }}<br />
+            <ng-container *ngIf="exercise.sampleSolution">
+                <strong>Sample Solution:</strong> {{ exercise.sampleSolution }}
+            </ng-container>
         </p>
     </div>
     <div class="col text-right">
@@ -54,6 +57,7 @@
                                         (assessedText)="addAssessment($event)"></jhi-text-assessment-editor>
         </div>
         <div class="col-sm-12 col-md-5 col-xl-4">
+            <div *ngIf="invalidError" class="alert alert-danger" role="alert">{{invalidError}}</div>
             <ng-container *ngFor="let assessment of assessments; let i = index">
                 <jhi-text-assessment-detail [(assessment)]="assessments[i]" (assessmentChange)="checkScoreBoundaries()"
                                             [highlightColor]="getColorForIndex(i)"
