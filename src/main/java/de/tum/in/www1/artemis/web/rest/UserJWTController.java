@@ -6,6 +6,7 @@ import de.tum.in.www1.artemis.security.jwt.JWTFilter;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.web.rest.errors.CaptchaRequiredException;
 import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
+import javafx.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 import javax.validation.Valid;
 
@@ -42,11 +44,12 @@ public class UserJWTController {
 
     @PostMapping("/authenticate")
     @Timed
-    public ResponseEntity<JWTToken> authorize(@Valid @RequestBody LoginVM loginVM) {
+    public ResponseEntity<JWTToken> authorize(@Valid @RequestBody LoginVM loginVM, @RequestHeader("User-Agent") String userAgent) {
 
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(loginVM.getUsername(), loginVM.getPassword());
 
         try {
+            authenticationToken.setDetails(new Pair<>("userAgent", userAgent));
             Authentication authentication = this.authenticationManager.authenticate(authenticationToken);
             SecurityContextHolder.getContext().setAuthentication(authentication);
             boolean rememberMe = (loginVM.isRememberMe() == null) ? false : loginVM.isRememberMe();
