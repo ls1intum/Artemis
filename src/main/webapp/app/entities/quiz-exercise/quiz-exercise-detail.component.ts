@@ -177,7 +177,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     }
 
     canDeactivate(): Observable<boolean> | boolean {
-        if (this.pendingChanges()) {
+        if (this.pendingChanges() && this.validQuiz()) {
             return false;
         }
         return true;
