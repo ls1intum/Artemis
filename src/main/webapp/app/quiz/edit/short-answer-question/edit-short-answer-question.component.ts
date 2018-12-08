@@ -197,8 +197,16 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         // First split up by [-option tag and seperate first part of the split as text and second part as solutionParts
         const questionParts = text.split(/\[-option /g);
         const questionText = questionParts[0];
+
+        //Split into spots to generated this structure: {"1","2","3"}
+        const spotParts = questionText
+            .split(/\[-spot/g)
+            .map(questionText => questionText.split(/\]/g))
+            .slice(1)
+            .map(questionText => questionText[0]);
+
         //Split new created Array by ] to generate this structure: {"1,2", " SolutionText"}
-        let solutionParts = questionParts.map(questionPart => questionPart.split(/\]/g)).slice(1);
+        const solutionParts = questionParts.map(questionPart => questionPart.split(/\]/g)).slice(1);
 
         // Split question into main text, hint and explanation
         this.artemisMarkdown.parseTextHintExplanation(questionText, this.question);
@@ -207,8 +215,27 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         const existingSolutionIDs = this.question.solutions.filter(solution => solution.id != null).map(solution => solution.id);
         this.question.solutions = [];
 
-        // Work on solution
+        // Extract existing spot IDs
+        const existingSpotIDs = this.question.spots.filter(spot => spot.id != null).map(spot => spot.id);
+        this.question.spots = [];
 
+        //setup spots
+        for (const spotID of spotParts) {
+            const spot = new ShortAnswerSpot();
+            spot.id = +spotID;
+            spot.width = 15;
+
+            // Assign existing ID if available
+            if (this.question.spots.length < existingSpotIDs.length) {
+                spot.id = existingSpotIDs[this.question.spots.length];
+            } else {
+                spot.id = this.question.spots.length++;
+            }
+
+            this.question.spots.push(spot);
+        }
+
+        // Work on solution
         for (const solutionText of solutionParts) {
             // Find the box (text in-between the parts)
             const solution = new ShortAnswerSolution();
@@ -220,9 +247,37 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
             if (this.question.solutions.length < existingSolutionIDs.length) {
                 solution.id = existingSolutionIDs[this.question.solutions.length];
             } else {
-                solution.tempID = this.pseudoRandomLong();
+                solution.id = this.question.solutions.length++;
             }
             this.question.solutions.push(solution);
+
+            this.createMapping(solutionText, solution);
+        }
+    }
+
+    /**
+     * This function creates the mapping.
+     */
+    createMapping(solutionText: string[], solution: ShortAnswerSolution) {
+        switch (solutionText[0].trim().length) {
+            case 1: {
+                const mapping = new ShortAnswerMapping(this.question.spots.filter(spot => spot.id === +solutionText[0])[0], solution);
+                mapping.shortAnswerSpotIndex = +solutionText[0];
+                mapping.shortAnswerSolutionIndex = solution.id;
+                this.question.correctMappings.push(mapping);
+                break;
+            }
+            default: {
+                const spotsID = solutionText[0].split(',');
+
+                for (const spotID of spotsID) {
+                    const mapping = new ShortAnswerMapping(this.question.spots.filter(spot => spot.id === +spotID[0])[0], solution);
+                    mapping.shortAnswerSpotIndex = +spotID[0];
+                    mapping.shortAnswerSolutionIndex = solution.id;
+                    this.question.correctMappings.push(mapping);
+                    break;
+                }
+            }
         }
     }
 
