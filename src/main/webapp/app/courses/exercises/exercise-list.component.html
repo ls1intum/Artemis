@@ -19,6 +19,7 @@
 
         <tr *ngFor="let exercise of exercises | showExercise:showInactiveExercises">
             <td>
+                <span class="badge badge-success" [hidden]="!exercise.isActiveQuiz">Live</span>
                 <span>{{exercise.title}}</span>
                 <a class="text-primary" *ngIf="exercise.isAtLeastTutor"><i class="fa fa-info-circle fa-fw"
                    routerLink="/course/{{exercise.course.id}}/exercise/{{exercise.id}}/dashboard" routerLinkActive="active"></i></a>
@@ -30,7 +31,6 @@
                 <span class="badge badge-warning" *ngIf="!exercise.visibleToStudents" placement="right"
                       ngbTooltip="Only visible to teaching assistants and instructors. Release date: {{exercise.releaseDate | date:'MMM d, y H:mm'}}">
                     Not Released</span>
-                <span class="badge badge-success" [hidden]="!exercise.isActiveQuiz">Live</span>
             </td>
             <td>
                 <span placement="right" [hidden]="!exercise.dueDate" ngbTooltip="{{exercise.dueDate | date:'MMM d, y H:mm'}}">{{exercise.dueDate | amTimeAgo}}</span>
