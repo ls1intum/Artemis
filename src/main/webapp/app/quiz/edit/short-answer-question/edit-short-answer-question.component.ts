@@ -24,6 +24,7 @@ import 'brace/theme/chrome';
 import 'brace/mode/markdown';
 import { DragAndDropQuestionUtil } from 'app/components/util/drag-and-drop-question-util.service';
 import * as $ from 'jquery';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-edit-short-answer-question',
@@ -91,7 +92,8 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
 
     constructor(
         private artemisMarkdown: ArtemisMarkdown,
-        private dragAndDropQuestionUtil: DragAndDropQuestionUtil //TODO: FDE Check if saQuestionUtil is needed
+        private dragAndDropQuestionUtil: DragAndDropQuestionUtil, //TODO: FDE Check if saQuestionUtil is needed
+        private modalService: NgbModal
     ) {}
 
     ngOnInit(): void {
@@ -217,9 +219,18 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
             // Assign existing ID if available
             if (this.question.solutions.length < existingSolutionIDs.length) {
                 solution.id = existingSolutionIDs[this.question.solutions.length];
+            } else {
+                solution.tempID = this.pseudoRandomLong();
             }
             this.question.solutions.push(solution);
         }
+    }
+
+    /**
+     * This function opens the modal for the help dialog.
+     */
+    open(content: any) {
+        this.modalService.open(content, { size: 'lg' });
     }
 
     /**
