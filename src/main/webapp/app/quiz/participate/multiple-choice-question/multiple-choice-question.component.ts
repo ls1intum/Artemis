@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angu
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { MultipleChoiceQuestion } from '../../../entities/multiple-choice-question';
 import { AnswerOption } from '../../../entities/answer-option';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-multiple-choice-question',
@@ -39,7 +40,7 @@ export class MultipleChoiceQuestionComponent implements OnInit, OnDestroy {
 
     rendered: MultipleChoiceQuestion;
 
-    constructor(private artemisMarkdown: ArtemisMarkdown) {}
+    constructor(private artemisMarkdown: ArtemisMarkdown, private modalService: NgbModal) {}
 
     ngOnInit() {}
 
@@ -87,5 +88,9 @@ export class MultipleChoiceQuestionComponent implements OnInit, OnDestroy {
                 return selected.id === answerOption.id;
             }) !== -1
         );
+    }
+
+    open(content: any) {
+        this.modalService.open(content, { size: 'lg' });
     }
 }
