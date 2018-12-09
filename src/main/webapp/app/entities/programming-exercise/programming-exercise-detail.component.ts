@@ -38,7 +38,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
         }, 8000);
 
         // Call the structure diff generator
-        this.programmingExerciseService.generateTestDiff();
+        this.programmingExerciseService.generateTestDiff(this.programmingExercise.id);
 
         // Dismiss the popup
     }
