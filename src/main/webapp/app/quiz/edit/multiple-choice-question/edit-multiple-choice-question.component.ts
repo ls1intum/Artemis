@@ -3,10 +3,9 @@ import { MultipleChoiceQuestion } from '../../../entities/multiple-choice-questi
 import { AnswerOption } from '../../../entities/answer-option';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { AceEditorComponent } from 'ng2-ace-editor';
-import SearchOptions = Ace.SearchOptions;
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
-import { Ace } from 'ace-builds';
+import { MarkdownEditorComponent } from 'app/markdown-editor';
 
 @Component({
     selector: 'jhi-edit-multiple-choice-question',
@@ -16,6 +15,9 @@ import { Ace } from 'ace-builds';
 export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, AfterViewInit {
     @ViewChild('questionEditor')
     private questionEditor: AceEditorComponent;
+
+    @ViewChild('markdownEditor')
+    private markdownEditor: MarkdownEditorComponent;
 
     @Input()
     question: MultipleChoiceQuestion;
@@ -64,6 +66,26 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, A
      * @function setupQuestionEditor
      * @desc Initializes the ace editor for the mc question
      */
+
+    /*setupQuestionMarkdownEditor(): void {
+        this.markdownEditor.setTheme('chrome');
+        this.markdownEditor.getEditor().renderer.setShowGutter(false);
+        this.markdownEditor.getEditor().renderer.setPadding(10);
+        this.markdownEditor.getEditor().renderer.setScrollMargin(8, 8);
+        this.markdownEditor.getEditor().setHighlightActiveLine(false);
+        this.markdownEditor.getEditor().setShowPrintMargin(false);
+        this.questionEditorText = this.generateMarkdown();
+        this.markdownEditor.getEditor().clearSelection();
+        this.markdownEditor.getEditor().on(
+            'blur',
+            () => {
+                this.parseMarkdown(this.questionEditorText);
+                this.questionUpdated.emit();
+            },
+            this
+        );
+    } */
+
     setupQuestionEditor(): void {
         this.questionEditor.setTheme('chrome');
         this.questionEditor.getEditor().renderer.setShowGutter(false);

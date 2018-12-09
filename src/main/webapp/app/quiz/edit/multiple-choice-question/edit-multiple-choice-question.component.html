@@ -51,13 +51,14 @@
                 </div>
             </div>
             <div class="question-content">
-            <jhi-markdown-editor name="Content"
-                       [preRender]="preRenderFunc"
-                       [(ngModel)]="questionEditorText"
-                       [height]="'200px'"
-                       [mode]="editor"
-                       [options]="options"
-                       required maxlength="500">
+            <jhi-markdown-editor #markdownEditor
+                                 [input]=" text"
+                                 [preRender]="preRenderFunc"
+                                 [(text)]="questionEditorText"
+                                 [height]="'200px'"
+                                 [mode]="questionEditorMode"
+                                 [options]="options"
+                                 required maxlength="500">
             </jhi-markdown-editor>
             </div>
             <hr/>

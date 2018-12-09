@@ -24,7 +24,6 @@ import * as $ from 'jquery';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
 import { Ace } from 'ace-builds';
-import SearchOptions = Ace.SearchOptions;
 
 @Component({
     selector: 'jhi-edit-drag-and-drop-question',
