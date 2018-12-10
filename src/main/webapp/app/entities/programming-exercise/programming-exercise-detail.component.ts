@@ -30,16 +30,16 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
     }
 
     generateStructureDiff() {
-        // Show the popup "Generating structure diff..."
         this.spinner.show();
         setTimeout(() => {
             /** spinner ends after 8 seconds */
             this.spinner.hide();
         }, 8000);
 
-        // Call the structure diff generator
         this.programmingExerciseService.generateTestDiff(this.programmingExercise.id);
-
-        // Dismiss the popup
+        console.log(
+            'Programming Exercise Detail Component: Called generate test diff method on the programming exercise ' +
+                this.programmingExercise.id
+        );
     }
 }

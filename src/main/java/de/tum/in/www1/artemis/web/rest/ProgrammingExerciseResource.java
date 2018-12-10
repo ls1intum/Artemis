@@ -368,25 +368,15 @@ public class ProgrammingExerciseResource {
             !authCheckService.isAdmin()) {
             return forbidden();
         }
-//        ResponseEntity<ProgrammingExercise> errorResponse = checkProgrammingExerciseForError(programmingExercise);
-//        if (errorResponse != null) {
-//            return errorResponse;
-//        }
 
         URL solutionRepoURL = programmingExercise.getSolutionRepositoryUrlAsUrl();
         URL exerciseRepoURL = programmingExercise.getBaseRepositoryUrlAsUrl();
         URL testRepoURL = programmingExercise.getTestRepositoryUrlAsUrl();
 
-        // TODO: Can we get the folder where the tests are somewhere else?
         String testsPath = "tests" + File.separator + programmingExercise.getPackageFolderName();
 
         try {
             programmingExerciseService.generateStructureDiffFile(solutionRepoURL, exerciseRepoURL, testRepoURL, testsPath);
-
-//            Optional<ProgrammingExercise> result = programmingExerciseRepository.findById(programmingExercise.getId());
-//            return ResponseEntity.created(new URI("/api/programming-exercises/" + result.get().getId()))
-//                .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.get().getTitle()))
-  //              .body(result.get());
             return ResponseEntity.ok("Success.");
         } catch (Exception e) {
             log.error("Error while generating the structure diff.", e);
