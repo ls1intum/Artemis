@@ -31,6 +31,8 @@ export class ProgrammingExerciseService {
     }
 
     generateTestDiff(id: number) {
+        console.log('Programming Exercise Service: Called the generateTestDiff method.');
+        console.log(`A REST call was made: ${this.resourceUrl}/${id}/generate-tests)`);
         return this.http.put<String>(`${this.resourceUrl}/${id}/generate-tests`, { observe: 'response' });
     }
 
