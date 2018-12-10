@@ -50,10 +50,10 @@ export class CourseService {
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
     }
 
-    findAllForTutors(): Observable<EntityArrayResponseType> {
+    getForTutors(id: number): Observable<EntityResponseType> {
         return this.http
-            .get<Course[]>(`${this.resourceUrl}/for-tutor-dashboard`, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
+            .get<Course>(`${this.resourceUrl}/${id}/for-tutor-dashboard`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     // TODO: deprecated --> this method does not scale and should not be used in the future

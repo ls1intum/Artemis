@@ -21,10 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -227,29 +224,36 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/for-dashboard
+     * GET /courses/:id/for-dashboard
      *
-     * @param principal the current tutor principal
-     * @return the list of courses (the tutor has access to) including all exercises
-     * with tutor status for assessment
+     * @param id the id of the course to retrieve
+     * @return data about a course including all exercises, plus some data for the tutor
+     * as tutor status for assessment
      */
-    @GetMapping("/courses/for-tutor-dashboard")
+    @GetMapping("/courses/{id}/for-tutor-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
-    public List<Course> getAllCoursesForTutorDashboard(Principal principal) {
-        log.debug("REST request /courses/for-tutor-dashboard");
+    public ResponseEntity<Course> getCourseForTutorDashboard(Principal principal, @PathVariable Long id) {
+        log.debug("REST request /courses/{id}/for-tutor-dashboard");
+        Course course = courseService.findOne(id);
+        if (!userHasPermission(course)) return forbidden();
+
         User user = userService.getUserWithGroupsAndAuthorities();
+        List<Exercise> exercises = exerciseService.findAllForCourse(course, false, principal, user);
+        course.setExercises(new HashSet<>(exercises));
 
-        // get all courses with exercises for this user
-        List<Course> courses = courseService.findAllWithExercisesForUser(principal, user);
+        return ResponseUtil.wrapOrNotFound(Optional.of(course));
 
-        for (Course course : courses) {
-            for (Exercise exercise : course.getExercises()) {
-               // TODO: get number of assessments done, number of assessment to do, status of participation
-            }
-        }
-
-        return courses;
+//        // get all course with exercises for this user
+//        List<Course> courses = courseService.findAllWithExercisesForUser(principal, user);
+//
+//        for (Course course : courses) {
+//            for (Exercise exercise : course.getExercises()) {
+//               // TODO: get number of assessments done, number of assessment to do, status of participation
+//            }
+//        }
+//
+//        return courses;
     }
 
     /**

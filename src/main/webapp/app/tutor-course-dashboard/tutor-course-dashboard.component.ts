@@ -5,6 +5,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { Subscription } from 'rxjs';
 import { Principal } from '../core';
 import { HttpResponse } from '@angular/common/http';
+import { Exercise } from 'app/entities/exercise';
 
 @Component({
     selector: 'jhi-courses',
@@ -12,9 +13,9 @@ import { HttpResponse } from '@angular/common/http';
     providers: [JhiAlertService, CourseService]
 })
 export class TutorCourseDashboardComponent implements OnInit {
-    courses: Course[];
-    filterByCourseId: number;
-    filterByExerciseId: number;
+    course: Course;
+    courseId: number;
+    exercises: Exercise[] = [];
     private subscription: Subscription;
 
     constructor(
@@ -27,8 +28,7 @@ export class TutorCourseDashboardComponent implements OnInit {
     ngOnInit(): void {
         // (+) converts string 'id' to a number
         this.subscription = this.route.params.subscribe(params => {
-            this.filterByCourseId = +params['courseId'];
-            this.filterByExerciseId = +params['exerciseId'];
+            this.courseId = +params.courseId;
             this.loadAll();
         });
 
@@ -40,11 +40,12 @@ export class TutorCourseDashboardComponent implements OnInit {
     }
 
     loadAll() {
-        this.courseService.findAllForTutors().subscribe(
-            (res: HttpResponse<Course[]>) => {
-                this.courses = res.body;
-                if (this.filterByCourseId) {
-                    this.courses = this.courses.filter(course => course.id === this.filterByCourseId);
+        this.courseService.getForTutors(this.courseId).subscribe(
+            (res: HttpResponse<Course>) => {
+                this.course = res.body;
+
+                if (this.course.exercises && this.course.exercises.length > 0) {
+                    this.exercises = this.course.exercises;
                 }
             },
             (response: string) => this.onError(response)

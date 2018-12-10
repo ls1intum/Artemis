@@ -5,7 +5,7 @@ import { TutorCourseDashboardComponent } from './tutor-course-dashboard.componen
 
 export const tutorCourseDashboardRoute: Routes = [
     {
-        path: 'tutor-course-dashboard',
+        path: 'course/:courseId/tutor-dashboard',
         component: TutorCourseDashboardComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
