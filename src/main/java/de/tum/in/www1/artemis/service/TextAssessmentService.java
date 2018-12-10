@@ -90,7 +90,7 @@ public class TextAssessmentService extends AssessmentService {
         }
         this.feedbackRepository.saveAll(textAssessment);
 
-        result.setHasFeedback(!textAssessment.isEmpty());
+        result.setHasFeedback(false);
         resultRepository.save(result);
         return result;
     }
