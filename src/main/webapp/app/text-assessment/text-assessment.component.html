@@ -58,6 +58,7 @@
         </div>
         <div class="col-sm-12 col-md-5 col-xl-4">
             <div *ngIf="invalidError" class="alert alert-danger" role="alert">{{invalidError}}</div>
+            <div *ngIf="!assessments || assessments.length == 0" class="alert alert-secondary" role="alert" jhiTranslate="arTeMiSApp.textAssessment.assessInstruction"></div>
             <ng-container *ngFor="let assessment of assessments; let i = index">
                 <jhi-text-assessment-detail [(assessment)]="assessments[i]" (assessmentChange)="checkScoreBoundaries()"
                                             [highlightColor]="getColorForIndex(i)"
