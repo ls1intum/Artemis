@@ -57,6 +57,7 @@ entity Exercise (exercise) {        //abstract
     shortName String,
     releaseDate ZonedDateTime,
     dueDate ZonedDateTime,
+    assessmentDueDate ZonedDateTime,
     maxScore Double,
     difficulty DifficultyLevel
     categories String               //List<String>, similar to User --> groups
@@ -250,7 +251,8 @@ enum SubmissionType {
 entity Submission {                 //abstract
 	submitted Boolean
 	submissionDate ZonedDateTime,
-    type SubmissionType
+    type SubmissionType,
+    example_submission Boolean
 }
 
 entity ModelingSubmission {         //extends Submission
@@ -274,6 +276,9 @@ entity FileUploadSubmission {       //extends Submission
     filePath String
 }
 
+entity ExampleSubmission {
+    usedForTraining Boolean
+}
 
 entity DragAndDropSubmittedAnswer (dndSubmittedAnswer) {      //extends SubmittedAnswer
 
@@ -314,6 +319,18 @@ entity ComplaintResponse {
     submittedTime ZonedDateTime
 }
 
+entity TutorParticipation {
+    status TutorParticipationStatus,
+    points Integer
+}
+
+enum TutorParticipationStatus {
+    NOT_PARTICIPATED,
+    EXAMPLE_READ,
+    TRAINED,
+    COMPLETED
+}
+
 relationship OneToMany {
     QuizPointStatistic{PointCounters} to PointCounter{quizPointStatistic},
     MultipleChoiceQuestionStatistic{AnswerCounters} to AnswerCounter{MultipleChoiceQuestionStatistic},
@@ -349,7 +366,11 @@ relationship OneToOne {
     ExerciseResult{assessor} to User,
     ExerciseResult{complaint} to Complaint{result},
     Complaint{complaintResponse} to ComplaintResponse{complaint},
-    ComplaintResponse{tutor} to User
+    ComplaintResponse{tutor} to User,
+    TutorParticipation{exercise} to Exercise,
+    TutorParticipation{tutor} to User,
+    ExampleSubmission{exercise} to Exercise,
+    ExampleSubmission{submission} to Submission
 }
 
 relationship ManyToOne {
