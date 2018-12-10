@@ -11,14 +11,14 @@
             [participation]="participation"></jhi-result></span>
         <button class="btn btn-primary ml-3" (click)="save()"
                 [disabled]="!assessments || !assessmentsAreValid || (result?.assessor && result.assessor.id !== accountId && !isAuthorized)"
-                [hidden]="result && result.rated">Save Assessment
+                *ngIf="!result || !result.completionDate">Save Assessment
         </button>
         <button class="btn btn-success ml-3" (click)="submit()"
                 [disabled]="!assessments || !assessmentsAreValid || (result?.assessor && result.assessor.id !== accountId && !isAuthorized)"
-                [hidden]="result && result.rated">Submit Assessment
+                *ngIf="!result || !result.completionDate">Submit Assessment
         </button>
         <button class="btn btn-danger ml-3" (click)="submit()" [disabled]="!assessments || !assessmentsAreValid"
-                [hidden]="!result || !result.rated">Override Assessment
+                *ngIf="result && result.completionDate">Override Assessment
         </button>
     </div>
 </div>
