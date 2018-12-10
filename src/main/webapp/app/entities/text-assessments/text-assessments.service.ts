@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import { Result } from 'src/main/webapp/app/entities/result';
 import { Participation } from 'app/entities/participation';
 import { Feedback } from 'app/entities/feedback';
+import * as moment from 'moment';
 
 type EntityResponseType = HttpResponse<Result>;
 
@@ -34,6 +35,17 @@ export class TextAssessmentsService {
 
     private convertResponse(res: EntityResponseType): EntityResponseType {
         const body: Result = this.convertItemFromServer(res.body);
+
+        if (body.completionDate) {
+            body.completionDate = moment(body.completionDate);
+        }
+        if (body.submission && body.submission.submissionDate) {
+            body.submission.submissionDate = moment(body.submission.submissionDate);
+        }
+        if (body.participation && body.participation.initializationDate) {
+            body.participation.initializationDate = moment(body.participation.initializationDate);
+        }
+
         return res.clone({ body });
     }
 
