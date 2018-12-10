@@ -18,6 +18,15 @@ public class JSONParser {
 
     private final static Logger log = LoggerFactory.getLogger(JSONParser.class);
 
+    /**
+     * Process a json object retrieved from a json formatted file to retrieve an UML model
+     * TODO adapt the parser to support different UML diagrams
+     *
+     * @param root the json object of an UML diagram
+     * @param modelId the Id of the model
+     * @return the model as java object
+     * @throws IOException on unexpected json formats
+     */
     public static UMLModel buildModelFromJSON(JsonObject root, long modelId) throws IOException {
         JsonObject entities = root.getAsJsonObject(JSONMapping.elements);
         JsonArray allElementIds = entities.getAsJsonArray(JSONMapping.idArray);
@@ -28,7 +37,7 @@ public class JSONParser {
         JsonObject relationshipsById = relationships.getAsJsonObject(JSONMapping.byId);
 
         Map<String, UMLClass> umlClassMap = new HashMap<>();
-        List<UMLRelation> umlRelationList = new ArrayList<>();
+        List<UMLAssociation> umlAssociationList = new ArrayList<>();
 
         // <editor-fold desc="iterate over every class">
         for (JsonElement elementId : allElementIds) {
@@ -55,7 +64,9 @@ public class JSONParser {
             for (JsonElement methodElement : connectable.getAsJsonArray(JSONMapping.elementMethods)) {
                 JsonObject method = methodElement.getAsJsonObject();
 
-                String[] methodEntryArray = method.get(JSONMapping.elementName).getAsString().replaceAll(" ", "").split(":");
+                String completeMethodName = method.get(JSONMapping.elementName).getAsString();
+
+                String[] methodEntryArray = completeMethodName.replaceAll(" ", "").split(":");
                 String[] methodParts = methodEntryArray[0].split("[()]");
 
                 if (methodParts.length < 1) {
@@ -75,12 +86,22 @@ public class JSONParser {
                     methodReturnType = methodEntryArray[1];
                 }
 
-                UMLMethod newMethod = new UMLMethod(methodName, methodReturnType, Arrays.asList(methodParams), method.get(JSONMapping.elementID).getAsString());
+                UMLMethod newMethod = new UMLMethod(completeMethodName, methodName, methodReturnType, Arrays.asList(methodParams), method.get(JSONMapping.elementID).getAsString());
                 umlMethodList.add(newMethod);
             }
 
             UMLClass newClass = new UMLClass(className, umlAttributesList, umlMethodList, connectable.get(JSONMapping.elementID).getAsString(),
                 connectable.get(JSONMapping.relationshipType).getAsString());
+
+            //set parent class in attributes and methods
+            for (UMLAttribute attribute : umlAttributesList) {
+                attribute.setParentClass(newClass);
+            }
+
+            for (UMLMethod method: umlMethodList) {
+                method.setParentClass(newClass);
+            }
+
             umlClassMap.put(newClass.getJSONElementID(), newClass);
         }
 
@@ -109,14 +130,14 @@ public class JSONParser {
                 relationshipTarget.get(JSONMapping.relationshipMultiplicity) : JsonNull.INSTANCE;
 
             if (source != null && target != null) {
-                UMLRelation newRelation = new UMLRelation(source, target,
+                UMLAssociation newRelation = new UMLAssociation(source, target,
                     relationship.get(JSONMapping.relationshipType).getAsString(),
                     relationship.get(JSONMapping.elementID).getAsString(),
                     relationshipSourceRole.isJsonNull() ? "" : relationshipSourceRole.getAsString(),
                     relationshipTargetRole.isJsonNull() ? "" : relationshipTargetRole.getAsString(),
                     relationshipSourceMultiplicity.isJsonNull() ? "" : relationshipSourceMultiplicity.getAsString(),
                     relationshipTargetMultiplicity.isJsonNull() ? "" : relationshipTargetMultiplicity.getAsString());
-                umlRelationList.add(newRelation);
+                umlAssociationList.add(newRelation);
             } else {
                 throw new IOException("Relationship source or target not part of model!");
             }
@@ -124,10 +145,18 @@ public class JSONParser {
 
         // </editor-fold>
 
-        return new UMLModel(new ArrayList<>(umlClassMap.values()), umlRelationList, modelId);
+        return new UMLModel(new ArrayList<>(umlClassMap.values()), umlAssociationList, modelId);
     }
 
 
+    /**
+     * Process a json object retrieved from a json formatted file containing assessments
+     * TODO adapt the parser to support different UML diagrams
+     *
+     * @param root the json object of an assessment
+     * @param model the corresponding UML model
+     * @return a map of elementIds to scores
+     */
     public static Map<String, Score> getScoresFromJSON(JsonObject root, UMLModel model) {
         Map<String, Score> scoreHashMap = new HashMap<>();
 
@@ -152,7 +181,7 @@ public class JSONParser {
 
             switch (elementType) {
                 case JSONMapping.assessmentElementTypeClass:
-                    for (UMLClass umlClass : model.getConnectableList()) {
+                    for (UMLClass umlClass : model.getClassList()) {
                         if (umlClass.getJSONElementID().equals(jsonElementID)) {
                             found = true;
                             break;
@@ -160,7 +189,7 @@ public class JSONParser {
                     }
                     break;
                 case JSONMapping.assessmentElementTypeAttribute:
-                    for (UMLClass umlClass : model.getConnectableList()) {
+                    for (UMLClass umlClass : model.getClassList()) {
                         for (UMLAttribute umlAttribute : umlClass.getAttributeList()) {
                             if (umlAttribute.getJSONElementID().equals(jsonElementID)) {
                                 found = true;
@@ -170,7 +199,7 @@ public class JSONParser {
                     }
                     break;
                 case JSONMapping.assessmentElementTypeMethod:
-                    for (UMLClass umlClass : model.getConnectableList()) {
+                    for (UMLClass umlClass : model.getClassList()) {
                         for (UMLMethod umlMethod : umlClass.getMethodList()) {
                             if (umlMethod.getJSONElementID().equals(jsonElementID)) {
                                 found = true;
@@ -180,8 +209,8 @@ public class JSONParser {
                     }
                     break;
                 case JSONMapping.assessmentElementTypeRelationship:
-                    for (UMLRelation umlRelation : model.getRelationList()) {
-                        if (umlRelation.getJSONElementID().equals(jsonElementID)) {
+                    for (UMLAssociation umlAssociation : model.getAssociationList()) {
+                        if (umlAssociation.getJSONElementID().equals(jsonElementID)) {
                             found = true;
                             break;
                         }
@@ -215,6 +244,14 @@ public class JSONParser {
     }
 
 
+    /**
+     * Export the grade to a json object which can be written to the file system
+     * TODO adapt the parser to support different UML diagrams
+     *
+     * @param result the grade which should be exported
+     * @param model the corresponding UML model
+     * @return a json object representing
+     */
     public static JsonObject exportToJSON (Grade result, UMLModel model) {
         JsonObject jsonObject = new JsonObject();
         JsonArray assessments = new JsonArray();
@@ -239,7 +276,7 @@ public class JSONParser {
                 case "UMLAttribute":
                     type = JSONMapping.assessmentElementTypeAttribute;
                     break;
-                case "UMLRelation":
+                case "UMLAssociation":
                     type = JSONMapping.assessmentElementTypeRelationship;
                     break;
                 case "UMLMethod":

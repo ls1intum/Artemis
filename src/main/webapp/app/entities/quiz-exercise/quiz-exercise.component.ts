@@ -34,52 +34,6 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
     courseId: number;
     @Input() showHeading = true;
 
-    /**
-     * Exports given quiz questions into json file
-     * @param quizQuestions Quiz questions we want to export
-     * @param exportAll If true exports all questions, else exports only those whose export flag is true
-     */
-    static exportQuiz(quizQuestions: Question[], exportAll: boolean) {
-        // Make list of questions which we need to export,
-        const questions: Question[] = [];
-        for (const question of quizQuestions) {
-            if (exportAll === true || question.exportQuiz === true) {
-                delete question.questionStatistic;
-                questions.push(question);
-            }
-        }
-        if (questions.length === 0) {
-            return;
-        }
-        // Make blob from the list of questions and download the file,
-        const quizJson = JSON.stringify(questions);
-        const blob = new Blob([quizJson], { type: 'application/json' });
-        this.downloadFile(blob);
-    }
-
-    /**
-     * Make a file of given blob and allows user to download it from the browser.
-     * @param blob data to be written in file.
-     */
-    static downloadFile(blob: Blob) {
-        // Different browsers require different code to download file,
-        if (window.navigator.msSaveOrOpenBlob) {
-            // IE & Edge
-            window.navigator.msSaveBlob(blob, 'quiz.json');
-        } else {
-            // Chrome & FF
-            // Create a url and attach file to it,
-            const url = window.URL.createObjectURL(blob);
-            const anchor = document.createElement('a');
-            anchor.href = url;
-            anchor.download = 'quiz.json';
-            document.body.appendChild(anchor); // For FF
-            // Click the url so that browser shows save file dialog,
-            anchor.click();
-            document.body.removeChild(anchor);
-        }
-    }
-
     constructor(
         private courseService: CourseService,
         private quizExerciseService: QuizExerciseService,
@@ -92,21 +46,32 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
         this.reverse = true;
     }
 
-    private loadAll() {
-        this.quizExerciseService.query().subscribe(
-            (res: HttpResponse<QuizExercise[]>) => {
-                this.quizExercises = res.body;
-                this.setQuizExercisesStatus();
-            },
-            (res: HttpErrorResponse) => this.onError(res)
-        );
+    ngOnInit() {
+        this.load();
+        this.registerChangeInQuizExercises();
     }
 
-    ngOnInit() {
+    load() {
         this.subscription = this.route.params.subscribe(params => {
             this.courseId = params['courseId'];
-            this.load();
-            this.registerChangeInQuizExercises();
+            this.loadForCourse(this.courseId);
+        });
+    }
+
+    loadForCourse(courseId: number) {
+        this.courseService.find(this.courseId).subscribe(courseResponse => {
+            this.course = courseResponse.body;
+            this.quizExerciseService.findForCourse(courseId).subscribe(
+                (res: HttpResponse<QuizExercise[]>) => {
+                    this.quizExercises = res.body;
+                    // reconnect exercise with course
+                    this.quizExercises.forEach(quizExercise => {
+                        quizExercise.course = this.course;
+                    });
+                    this.setQuizExercisesStatus();
+                },
+                (res: HttpErrorResponse) => this.onError(res)
+            );
         });
     }
 
@@ -118,21 +83,9 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
     trackId(index: number, item: QuizExercise) {
         return item.id;
     }
+
     registerChangeInQuizExercises() {
         this.eventSubscriber = this.eventManager.subscribe('quizExerciseListModification', () => this.load());
-    }
-
-    private loadForCourse(courseId: number) {
-        this.quizExerciseService.findForCourse(courseId).subscribe(
-            (res: HttpResponse<QuizExercise[]>) => {
-                this.quizExercises = res.body;
-                this.setQuizExercisesStatus();
-            },
-            (res: HttpErrorResponse) => this.onError(res)
-        );
-        this.courseService.find(this.courseId).subscribe(res => {
-            this.course = res.body;
-        });
     }
 
     private onError(error: HttpErrorResponse) {
@@ -178,14 +131,6 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
                 this.loadOne(quizExerciseId);
             }
         );
-    }
-
-    private load() {
-        if (this.courseId) {
-            this.loadForCourse(this.courseId);
-        } else {
-            this.loadAll();
-        }
     }
 
     setQuizExercisesStatus() {
@@ -261,7 +206,7 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
     exportQuizById(quizExerciseId: number, exportAll: boolean) {
         this.quizExerciseService.find(quizExerciseId).subscribe((res: HttpResponse<QuizExercise>) => {
             const exercise = res.body;
-            QuizExerciseComponent.exportQuiz(exercise.questions, exportAll);
+            this.quizExerciseService.exportQuiz(exercise.questions, exportAll);
         });
     }
 

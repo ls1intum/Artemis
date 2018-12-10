@@ -8,7 +8,7 @@
             <span class="fa fa-3x" [ngClass]="isQuestionCollapsed ? 'fa-angle-right' : 'fa-angle-down'"></span>
         </button>
         <div class="form-group question-title col-lg-9 col-md-7 col-sm-12 col-xs-12">
-            <input class="form-control" [(ngModel)]="question.title" placeholder="Question Title"/>
+            <input class="form-control" [(ngModel)]="question.title" placeholder="Short Question Title"/>
         </div>
         <div class="form-group col-lg-2 col-md-3 col-sm-7 col-xs-8">
             <span jhiTranslate="arTeMiSApp.question.score" class="colon-suffix"></span>
@@ -24,6 +24,7 @@
                     <option value="ALL_OR_NOTHING">{{'arTeMiSApp.quizExercise.scoringType.all_or_nothing' | translate}}</option>
                     <option value="PROPORTIONAL_WITH_PENALTY">{{'arTeMiSApp.quizExercise.scoringType.proportional_with_penalty' | translate}}</option>
                 </select>
+                <jhi-quiz-scoring-info-modal></jhi-quiz-scoring-info-modal>
             </div>
             <div class="form-group">
                 <div class="form-check custom-control custom-checkbox">

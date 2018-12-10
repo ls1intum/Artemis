@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.config.audit;
 
 import de.tum.in.www1.artemis.domain.PersistentAuditEvent;
+import javafx.util.Pair;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.stereotype.Component;
@@ -77,6 +78,9 @@ public class AuditEventConverter {
                     WebAuthenticationDetails authenticationDetails = (WebAuthenticationDetails) object;
                     results.put("remoteAddress", authenticationDetails.getRemoteAddress());
                     results.put("sessionId", authenticationDetails.getSessionId());
+                } else if (object instanceof Pair) {
+                    Pair authenticationPair = (Pair) object;
+                    results.put(authenticationPair.getKey().toString(), authenticationPair.getValue().toString());
                 } else if (object != null) {
                     results.put(entry.getKey(), object.toString());
                 } else {

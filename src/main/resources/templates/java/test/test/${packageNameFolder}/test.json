@@ -1,38 +1,83 @@
 [
-  {
-    "package": "de.tum.in.www1.eist.proxy",
-    "class": "ImageSubject",
-    "methods": {
-      "request": {
-        "modifiers": [
-          "public",
-          "abstract"
+    {
+        "package": "${packageName}",
+        "class": "Policy",
+        "constructors": [ {
+                "modifiers": [ "public" ],
+                "parameters": [ "Context" ]
+            }
         ],
-        "parameters": [ "URL" ],
-        "returnType": "ImageSubject"
-      }
+        "attributes": {
+            "context": {
+                "type": "Context",
+                "modifiers": [ "private" ]
+            }
+        },
+        "methods": {
+            "configure": {
+                "modifiers": [ "public" ],
+                "returnType": "void"
+            }
+        }
+    },
+    {
+        "package": "${packageName}",
+        "class": "Context",
+        "attributes": {
+            "sortAlgorithm": {
+                "type": "SortStrategy",
+                "modifiers": [ "private" ]
+            },
+            "dates": {
+                "type": "List",
+                "modifiers": [ "private" ]
+            }
+        },
+        "methods": {
+            "setDates": {
+                "modifiers": [ "public" ],
+                "parameters": [ "List" ],
+                "returnType": "void"
+            },
+            "getDates": {
+                "modifiers": [ "public" ],
+                "returnType": "List"
+            },
+            "setSortAlgorithm": {
+                "modifiers": [ "public" ],
+                "parameters": [ "SortStrategy" ],
+                "returnType": "void"
+            },
+            "getSortAlgorithm": {
+                "modifiers": [ "public" ],
+                "returnType": "SortStrategy"
+            },
+            "sort": {
+                "modifiers": [ "public" ],
+                "returnType": "void"
+            }
+        }
+    },
+    {
+        "package": "${packageName}",
+        "class": "SortStrategy",
+        "methods": {
+            "performSort": {
+                "modifiers": [ "public" ],
+                "parameters": [ "List" ],
+                "returnType": "void"
+            }
+        },
+        "isInterface": "true"
+    },
+    {
+        "package": "${packageName}",
+        "class": "BubbleSort",
+        "interfaces": [ "SortStrategy" ]
+    },
+    {
+        "package": "${packageName}",
+        "class": "MergeSort",
+        "interfaces": [ "SortStrategy" ]
     }
-  }, 
-  {
-    "package": "de.tum.in.www1.eist.proxy",
-    "class": "ProxyImage",
-    "superclass": "ImageSubject",
-    "methods": {
-      "request": {
-        "parameters": [ "URL" ],
-        "returnType": "ImageSubject"
-      }
-    }
-  },
-  {
-    "package": "de.tum.in.www1.eist.proxy",
-    "class": "RemoteImage",
-    "superclass": "ImageSubject",
-    "methods": {
-      "request": {
-        "parameters": [ "URL" ],
-        "returnType": "ImageSubject"
-      }
-    }
-  }
 ]

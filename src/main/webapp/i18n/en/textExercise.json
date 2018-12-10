@@ -1,7 +1,6 @@
-
 {
     "arTeMiSApp": {
-        "textExercise" : {
+        "textExercise": {
             "home": {
                 "title": "Text Exercises",
                 "createLabel": "Create a new Text Exercise",
@@ -16,7 +15,12 @@
             "detail": {
                 "title": "Text Exercise"
             },
-            "sampleSolution": "Sample Solution"
+            "sampleSolution": "Sample Solution",
+            "saveSuccessful": "Your answer was saved successfully!",
+            "confirmSubmission": "Are you sure you want to submit? You cannot edit your answer anymore until you get an assessment!",
+            "submitSuccessful": "Your answer was submitted successfully! Now you can't edit your answer anymore. Please wait for your feedback.",
+            "submitDeadlineMissed": "Your answer was submitted successfully! Now you can't edit your answer anymore. Please wait for your feedback. As you missed the deadline the score will not be counted.",
+            "error": "An error occured. Please try again later."
         }
     }
 }

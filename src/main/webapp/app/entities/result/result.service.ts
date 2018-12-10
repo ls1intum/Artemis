@@ -32,7 +32,7 @@ export class ResultService {
     update(result: Result): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(result);
         return this.http
-            .put<Result>(this.resultResourceUrl, copy, { observe: 'response' })
+            .put<Result>(SERVER_API_URL + 'api/manual-results', copy, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
@@ -60,7 +60,7 @@ export class ResultService {
                 params: options,
                 observe: 'response'
             })
-            .map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res));
+            .map((res: EntityArrayResponseType) => this.convertArrayResponse(res));
     }
 
     getResultsForExercise(courseId: number, exerciseId: number, req?: any): Observable<EntityArrayResponseType> {
@@ -70,7 +70,7 @@ export class ResultService {
                 params: options,
                 observe: 'response'
             })
-            .map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res));
+            .map((res: EntityArrayResponseType) => this.convertArrayResponse(res));
     }
 
     getFeedbackDetailsForResult(resultId: number): Observable<HttpResponse<Feedback[]>> {
@@ -88,7 +88,7 @@ export class ResultService {
         return copy;
     }
 
-    protected convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
+    protected convertArrayResponse(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((result: Result) => {
                 result.completionDate = result.completionDate != null ? moment(result.completionDate) : null;
@@ -109,7 +109,9 @@ export class ResultService {
     convertParticipationDateFromServer(participation: Participation) {
         if (participation) {
             participation.initializationDate = participation.initializationDate != null ? moment(participation.initializationDate) : null;
-            participation.exercise = this.exerciseService.convertExerciseDateFromServer(participation.exercise);
+            if (participation.exercise) {
+                participation.exercise = this.exerciseService.convertExerciseDateFromServer(participation.exercise);
+            }
         }
         return participation;
     }

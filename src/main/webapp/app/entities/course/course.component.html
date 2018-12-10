@@ -18,12 +18,9 @@
             <tr>
             <th><span jhiTranslate="global.field.id">ID</span></th>
             <th><span jhiTranslate="arTeMiSApp.course.title">Title</span></th>
-            <th><span jhiTranslate="arTeMiSApp.course.shortName">Short Name</span></th>
-            <th><span jhiTranslate="arTeMiSApp.course.studentGroupName">Student Group Name</span></th>
-            <th><span jhiTranslate="arTeMiSApp.course.teachingAssistantGroupName">Teaching Assistant Group Name</span></th>
-            <th><span jhiTranslate="arTeMiSApp.course.instructorGroupName">Instructor Group Name</span></th>
-            <th><span jhiTranslate="arTeMiSApp.course.startDate">Start Date</span></th>
-            <th><span jhiTranslate="arTeMiSApp.course.endDate">End Date</span></th>
+            <th><span>Access Groups</span></th>
+            <th><span jhiTranslate="arTeMiSApp.course.startDate">Start</span></th>
+            <th><span jhiTranslate="arTeMiSApp.course.endDate">End</span></th>
             <th><span jhiTranslate="arTeMiSApp.course.onlineCourse">Online Course</span></th>
             <th></th>
             </tr>
@@ -31,11 +28,10 @@
             <tbody>
             <tr *ngFor="let course of courses ;trackBy: trackId">
                 <td><a [routerLink]="['/course', course.id, 'view' ]">{{course.id}}</a></td>
-                <td>{{course.title}}</td>
-                <td>{{course.shortName}}</td>
-                <td>{{course.studentGroupName}}</td>
-                <td>{{course.teachingAssistantGroupName}}</td>
-                <td>{{course.instructorGroupName}}</td>
+                <td><span class="bold">{{course.title}}</span></br><span *ngIf="course.shortName"><span class="bold">Short Name:</span> {{course.shortName}}</span></td>
+                <td><span class="bold">Students:</span> {{course.studentGroupName}}</br>
+                    <span class="bold">Tutors:</span> {{course.teachingAssistantGroupName}}</br>
+                    <span class="bold">Instructors:</span> {{course.instructorGroupName}}</td>
                 <td>{{course.startDate | date:'medium'}}</td>
                 <td>{{course.endDate | date:'medium'}}</td>
                 <td>{{course.onlineCourse}}</td>
@@ -52,11 +48,11 @@
                             <fa-icon [icon]="'eye'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                         </button>
-                        <button type="submit" [routerLink]="['/course', course.id, 'edit']" class="btn btn-primary btn-sm mr-1">
+                        <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [routerLink]="['/course', course.id, 'edit']" class="btn btn-primary btn-sm mr-1">
                             <fa-icon [icon]="'pencil-alt'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                         </button>
-                        <button type="submit" [routerLink]="['/', { outlets: { popup: 'course/'+ course.id + '/delete'} }]" replaceUrl="true" queryParamsHandling="merge" class="btn btn-danger btn-sm mr-1">
+                        <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN']" [routerLink]="['/', { outlets: { popup: 'course/'+ course.id + '/delete'} }]" replaceUrl="true" queryParamsHandling="merge" class="btn btn-danger btn-sm mr-1">
                             <fa-icon [icon]="'times'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
                         </button>

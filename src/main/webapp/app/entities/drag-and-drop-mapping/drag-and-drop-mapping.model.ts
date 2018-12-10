@@ -1,11 +1,10 @@
-import { BaseEntity } from './../../shared';
+import { BaseEntity } from 'app/shared';
 import { DragItem } from '../drag-item';
 import { DropLocation } from '../drop-location';
 import { DragAndDropSubmittedAnswer } from '../drag-and-drop-submitted-answer';
 import { DragAndDropQuestion } from '../drag-and-drop-question';
 
 export class DragAndDropMapping implements BaseEntity {
-
     public id: number;
     public tempID: number;
     public dragItemIndex: number;

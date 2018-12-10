@@ -1,4 +1,4 @@
-import { BaseEntity } from './../../shared';
+import { BaseEntity } from 'app/shared';
 import { QuestionStatistic } from '../question-statistic';
 import { Exercise } from '../exercise';
 
@@ -36,7 +36,7 @@ export abstract class Question implements BaseEntity, MarkDownElement {
     public exportQuiz = false; // default value
     public type: QuestionType;
 
-    constructor(type: QuestionType) {
+    protected constructor(type: QuestionType) {
         this.type = type;
     }
 }
