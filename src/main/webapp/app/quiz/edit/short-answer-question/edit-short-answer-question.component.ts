@@ -187,9 +187,11 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      *
      * 1. Text is split at [-option
      *    => The first part (any text before the first [-option ) is the question text
-     * 2. The question text is split into text, hint, and explanation using ArtemisMarkdown
-     * 3. For every solution (Parts after each [-option  and ]:
-     *    3.a) Same treatment as the question text for text, hint, and explanation
+     * 2. The questionText is split further at [-spot to determine all spots and IDs.
+     * 3. The question text is split into text, hint, and explanation using ArtemisMarkdown
+     * 4. For every solution (Parts after each [-option  and ]:
+     *    4.a) Same treatment as the question text for text, hint, and explanation
+     *    4.b) Is used to create the mappings
      *
      * Note: Existing IDs for answer options are reused in the original order.
      */
@@ -214,6 +216,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         // Extract existing solutions IDs
         const existingSolutionIDs = this.question.solutions.filter(solution => solution.id != null).map(solution => solution.id);
         this.question.solutions = [];
+        this.question.correctMappings = [];
 
         // Extract existing spot IDs
         const existingSpotIDs = this.question.spots.filter(spot => spot.id != null).map(spot => spot.id);
@@ -222,16 +225,15 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         //setup spots
         for (const spotID of spotParts) {
             const spot = new ShortAnswerSpot();
-            spot.id = +spotID;
+            spot.id = +spotID.trim();
             spot.width = 15;
 
             // Assign existing ID if available
             if (this.question.spots.length < existingSpotIDs.length) {
                 spot.id = existingSpotIDs[this.question.spots.length];
             } else {
-                spot.id = this.question.spots.length++;
+                spot.id = this.question.spots.length + 1;
             }
-
             this.question.spots.push(spot);
         }
 
@@ -247,21 +249,23 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
             if (this.question.solutions.length < existingSolutionIDs.length) {
                 solution.id = existingSolutionIDs[this.question.solutions.length];
             } else {
-                solution.id = this.question.solutions.length++;
+                solution.id = this.question.solutions.length + 1;
             }
             this.question.solutions.push(solution);
 
+            //create mapping according to this structure: {spot(s), solution} -> {"1,2", " SolutionText"}
             this.createMapping(solutionText, solution);
         }
     }
 
     /**
-     * This function creates the mapping.
+     * This function creates the mapping. It differentiates 2 cases oneToOne (case 1) and manyToOne mapping (default)
      */
     createMapping(solutionText: string[], solution: ShortAnswerSolution) {
         switch (solutionText[0].trim().length) {
             case 1: {
-                const mapping = new ShortAnswerMapping(this.question.spots.filter(spot => spot.id === +solutionText[0])[0], solution);
+                const spot = this.question.spots.filter(spot => spot.id === +solutionText[0])[0];
+                const mapping = new ShortAnswerMapping(spot, solution);
                 mapping.shortAnswerSpotIndex = +solutionText[0];
                 mapping.shortAnswerSolutionIndex = solution.id;
                 this.question.correctMappings.push(mapping);
@@ -269,14 +273,14 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
             }
             default: {
                 const spotsID = solutionText[0].split(',');
-
                 for (const spotID of spotsID) {
-                    const mapping = new ShortAnswerMapping(this.question.spots.filter(spot => spot.id === +spotID[0])[0], solution);
+                    const spot = this.question.spots.filter(spot => spot.id === +spotID[0])[0];
+                    const mapping = new ShortAnswerMapping(spot, solution);
                     mapping.shortAnswerSpotIndex = +spotID[0];
                     mapping.shortAnswerSolutionIndex = solution.id;
                     this.question.correctMappings.push(mapping);
-                    break;
                 }
+                break;
             }
         }
     }
