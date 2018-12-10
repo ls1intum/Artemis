@@ -2,7 +2,7 @@
     <div class="card-header">
         <fa-icon [icon]="'trash-alt'" class="float-right" (click)="delete()"></fa-icon>
         <h4 class="card-title">
-            Score for "<span class="highlight" [ngClass]="highlightColor">{{assessment.reference}}</span>"
+            Score for "<span class="highlight" [ngClass]="highlightColor" [innerHtml]="assessment.reference"></span>"
         </h4>
     </div>
     <div class="card-body">
