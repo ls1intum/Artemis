@@ -39,6 +39,25 @@ export class ApollonDiagramListComponent implements OnInit {
         });
     }
 
+    delete(apollonDiagram: ApollonDiagram) {
+        this.apollonDiagramsService.delete(apollonDiagram.id).subscribe(
+            response => {
+                const successMessage = 'Apollon diagram with title ' + apollonDiagram.title + ' was deleted successfully';
+                const jhiAlert = this.jhiAlertService.success(successMessage);
+                jhiAlert.msg = successMessage;
+                this.apollonDiagrams = this.apollonDiagrams.filter(diagram => {
+                    return diagram.id !== apollonDiagram.id;
+                });
+            },
+            response => {
+                const errorMessage = 'Error while deleting the apollon diagrams with title ' + apollonDiagram.title;
+                // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
+                const jhiAlert = this.jhiAlertService.error(errorMessage);
+                jhiAlert.msg = errorMessage;
+            }
+        );
+    }
+
     getTitleForApollonDiagram(diagram: ApollonDiagram) {
         return ApollonDiagramTitleFormatter.getTitle(diagram);
     }

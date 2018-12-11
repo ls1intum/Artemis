@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -15,6 +17,8 @@ import java.util.Objects;
 @Entity
 @DiscriminatorValue(value="P")
 public class ProgrammingExercise extends Exercise implements Serializable {
+
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExercise.class);
 
     private static final long serialVersionUID = 1L;
 
@@ -167,37 +171,37 @@ public class ProgrammingExercise extends Exercise implements Serializable {
     // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
     public URL getBaseRepositoryUrlAsUrl() {
-        if (baseRepositoryUrl == null) {
+        if (baseRepositoryUrl == null || baseRepositoryUrl.isEmpty()) {
             return null;
         }
         try {
             return new URL(baseRepositoryUrl);
         } catch (MalformedURLException e) {
-            e.printStackTrace();
+            log.warn("Cannot create URL for baseRepositoryUrl: " + baseRepositoryUrl + " due to the following error: " + e.getMessage());
         }
         return null;
     }
 
     public URL getSolutionRepositoryUrlAsUrl() {
-        if (solutionRepositoryUrl == null) {
+        if (solutionRepositoryUrl == null || solutionRepositoryUrl.isEmpty()) {
             return null;
         }
         try {
             return new URL(solutionRepositoryUrl);
         } catch (MalformedURLException e) {
-            e.printStackTrace();
+            log.warn("Cannot create URL for solutionRepositoryUrl: " + solutionRepositoryUrl + " due to the following error: " + e.getMessage());
         }
         return null;
     }
 
     public URL getTestRepositoryUrlAsUrl() {
-        if (testRepositoryUrl == null) {
+        if (testRepositoryUrl == null || testRepositoryUrl.isEmpty()) {
             return null;
         }
         try {
             return new URL(testRepositoryUrl);
         } catch (MalformedURLException e) {
-            e.printStackTrace();
+            log.warn("Cannot create URL for testRepositoryUrl: " + testRepositoryUrl + " due to the following error: " + e.getMessage());
         }
         return null;
     }
@@ -218,6 +222,19 @@ public class ProgrammingExercise extends Exercise implements Serializable {
     @JsonIgnore
     public String getPackageFolderName() {
         return getPackageName().replace(".", "/");
+    }
+
+    /**
+     * set all sensitive information to null, so no info with respect to the solution gets leaked to students through json
+     */
+    @Override
+    public void filterSensitiveInformation() {
+        setBaseRepositoryUrl(null);
+        setSolutionRepositoryUrl(null);
+        setTestRepositoryUrl(null);
+        setBaseBuildPlanId(null);
+        setSolutionBuildPlanId(null);
+        super.filterSensitiveInformation();
     }
 
     @Override

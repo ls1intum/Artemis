@@ -8,6 +8,7 @@ import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { ITEMS_PER_PAGE } from '../../shared';
 import { Course, CourseExerciseService, CourseService } from '../course';
 import { ActivatedRoute } from '@angular/router';
+import { fileUploadExerciseRoute } from 'app/entities/file-upload-exercise/file-upload-exercise.route';
 
 @Component({
     selector: 'jhi-file-upload-exercise',
@@ -19,9 +20,6 @@ export class FileUploadExerciseComponent implements OnInit, OnDestroy {
     course: Course;
     eventSubscriber: Subscription;
     courseId: number;
-    itemsPerPage: number;
-    links: any;
-    page: number;
     predicate: string;
     reverse: boolean;
 
@@ -34,11 +32,6 @@ export class FileUploadExerciseComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute
     ) {
         this.fileUploadExercises = [];
-        this.itemsPerPage = ITEMS_PER_PAGE;
-        this.page = 0;
-        this.links = {
-            last: 0
-        };
         this.predicate = 'id';
         this.reverse = true;
     }
@@ -50,50 +43,31 @@ export class FileUploadExerciseComponent implements OnInit, OnDestroy {
         });
     }
 
-    ngOnDestroy() {
-        this.eventManager.destroy(this.eventSubscriber);
-    }
-
-    loadAll() {
-        this.fileUploadExerciseService.query().subscribe(
-            (res: HttpResponse<FileUploadExercise[]>) => {
-                this.fileUploadExercises = res.body;
-            },
-            (res: HttpErrorResponse) => this.onError(res)
-        );
-    }
-
     load() {
         this.subscription = this.route.params.subscribe(params => {
             this.courseId = params['courseId'];
-            if (this.courseId) {
-                this.loadAllForCourse();
-            } else {
-                this.loadAll();
-            }
+            this.loadForCourse();
         });
     }
 
-    loadAllForCourse() {
-        this.courseExerciseService
-            .findAllFileUploadExercises(this.courseId, {
-                page: this.page,
-                size: this.itemsPerPage
-            })
-            .subscribe(
+    loadForCourse() {
+        this.courseService.find(this.courseId).subscribe(courseResponse => {
+            this.course = courseResponse.body;
+            this.courseExerciseService.findAllFileUploadExercisesForCourse(this.courseId).subscribe(
                 (res: HttpResponse<FileUploadExercise[]>) => {
                     this.fileUploadExercises = res.body;
+                    // reconnect exercise with course
+                    this.fileUploadExercises.forEach(fileUploadExercise => {
+                        fileUploadExercise.course = this.course;
+                    });
                 },
                 (res: HttpErrorResponse) => this.onError(res)
             );
-        this.courseService.find(this.courseId).subscribe(res => {
-            this.course = res.body;
         });
     }
 
-    loadPage(page: number) {
-        this.page = page;
-        this.loadAll();
+    ngOnDestroy() {
+        this.eventManager.destroy(this.eventSubscriber);
     }
 
     trackId(index: number, item: FileUploadExercise) {

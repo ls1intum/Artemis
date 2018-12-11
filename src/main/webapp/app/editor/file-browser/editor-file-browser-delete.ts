@@ -1,13 +1,13 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { RepositoryFileService } from '../../entities/repository';
-import { Participation } from '../../entities/participation';
-import { EditorFileBrowserComponent } from './editor-file-browser.component';
+import { RepositoryFileService } from 'app/entities/repository';
+import { Participation } from 'app/entities/participation';
+import { EditorFileBrowserComponent } from 'app/editor';
 
 // Modal -> Delete repository file
 @Component({
     selector: 'jhi-editor-file-browser-delete',
-    templateUrl: './delete-file.html'
+    templateUrl: './editor-file-browser-delete.html'
 })
 export class EditorFileBrowserDeleteComponent implements OnInit {
     @Input() participation: Participation;
@@ -16,8 +16,7 @@ export class EditorFileBrowserDeleteComponent implements OnInit {
 
     isLoading: boolean;
 
-    constructor(public activeModal: NgbActiveModal,
-                private repositoryFileService: RepositoryFileService) {}
+    constructor(public activeModal: NgbActiveModal, private repositoryFileService: RepositoryFileService) {}
 
     /**
      * @function ngOnInit
@@ -35,13 +34,16 @@ export class EditorFileBrowserDeleteComponent implements OnInit {
         this.isLoading = true;
         // Make sure we have a filename
         if (this.fileNameToDelete) {
-            this.repositoryFileService.delete(this.participation.id, this.fileNameToDelete).subscribe( res => {
-                this.closeModal();
-                this.parent.getRepositoryFiles();
-                this.parent.onDeletedFile({file: this.fileNameToDelete, mode: 'delete'});
-            }, err => {
-                console.log('Error deleting file: ' + this.fileNameToDelete, err);
-            });
+            this.repositoryFileService.delete(this.participation.id, this.fileNameToDelete).subscribe(
+                () => {
+                    this.closeModal();
+                    this.parent.getRepositoryFiles();
+                    this.parent.onDeletedFile({ file: this.fileNameToDelete, mode: 'delete' });
+                },
+                err => {
+                    console.log('Error deleting file: ' + this.fileNameToDelete, err);
+                }
+            );
         }
         this.isLoading = false;
     }

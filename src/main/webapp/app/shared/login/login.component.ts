@@ -3,17 +3,19 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Router } from '@angular/router';
 import { JhiEventManager } from 'ng-jhipster';
 
-import { LoginService } from '../../core/login/login.service';
-import { StateStorageService } from '../../core/auth/state-storage.service';
-import { Credentials } from '../../core';
+import { LoginService } from 'app/core/login/login.service';
+import { StateStorageService } from 'app/core/auth/state-storage.service';
+import { Credentials } from 'app/core';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-login-modal',
     templateUrl: './login.component.html'
 })
 export class JhiLoginModalComponent implements AfterViewInit {
-    authenticationError: boolean;
+    authenticationError = false;
     authenticationAttempts = 0;
+    captchaRequired = false;
     password: string;
     rememberMe: boolean;
     username: string;
@@ -45,6 +47,7 @@ export class JhiLoginModalComponent implements AfterViewInit {
             password: null,
             rememberMe: true
         };
+        this.captchaRequired = false;
         this.authenticationError = false;
         this.authenticationAttempts = 0;
         this.activeModal.dismiss('cancel');
@@ -59,6 +62,9 @@ export class JhiLoginModalComponent implements AfterViewInit {
             })
             .then(() => {
                 this.authenticationError = false;
+                this.authenticationAttempts = 0;
+                this.captchaRequired = false;
+
                 this.activeModal.dismiss('login success');
                 if (this.router.url === '/register' || /^\/activate\//.test(this.router.url) || /^\/reset\//.test(this.router.url)) {
                     this.router.navigate(['']);
@@ -77,7 +83,12 @@ export class JhiLoginModalComponent implements AfterViewInit {
                     this.router.navigate([redirect]);
                 }
             })
-            .catch(() => {
+            .catch((error: HttpErrorResponse) => {
+                if (error.headers.get('X-arTeMiSApp-error') === 'CAPTCHA required') {
+                    this.captchaRequired = true;
+                } else {
+                    this.captchaRequired = false;
+                }
                 this.authenticationError = true;
                 this.authenticationAttempts++;
             });

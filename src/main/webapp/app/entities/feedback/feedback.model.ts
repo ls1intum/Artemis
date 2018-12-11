@@ -1,4 +1,4 @@
-import { BaseEntity } from './../../shared';
+import { BaseEntity } from 'app/shared';
 import { Result } from '../result';
 
 export const enum FeedbackType {
@@ -7,7 +7,6 @@ export const enum FeedbackType {
 }
 
 export class Feedback implements BaseEntity {
-
     public id: number;
     public text: string;
     public detailText: string;
@@ -15,6 +14,5 @@ export class Feedback implements BaseEntity {
     public result: Result;
     public positive: boolean;
 
-    constructor() {
-    }
+    constructor() {}
 }

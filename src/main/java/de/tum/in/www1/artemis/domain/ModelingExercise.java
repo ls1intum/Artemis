@@ -71,6 +71,16 @@ public class ModelingExercise extends Exercise implements Serializable {
 
     // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
+    /**
+     * set all sensitive information to null, so no info with respect to the solution gets leaked to students through json
+     */
+    @Override
+    public void filterSensitiveInformation() {
+        setSampleSolutionModel(null);
+        setSampleSolutionExplanation(null);
+        super.filterSensitiveInformation();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

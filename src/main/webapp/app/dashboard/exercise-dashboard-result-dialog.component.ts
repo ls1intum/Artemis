@@ -34,7 +34,8 @@ export class ExerciseDashboardResultDialogComponent implements OnInit {
     ngOnInit() {
         if (this.participation) {
             this.result.participation = this.participation;
-            this.isOpenForSubmission = this.result.participation.exercise.dueDate.isAfter(moment());
+            this.isOpenForSubmission =
+                this.result.participation.exercise.dueDate === null || this.result.participation.exercise.dueDate.isAfter(moment());
         } else {
             this.clear();
         }
@@ -50,9 +51,10 @@ export class ExerciseDashboardResultDialogComponent implements OnInit {
         for (let i = 0; i < this.result.feedbacks.length; i++) {
             this.result.feedbacks[i].type = FeedbackType.MANUAL;
         }
-        if (this.result.id !== null) {
+        if (this.result.id != null) {
             this.subscribeToSaveResponse(this.resultService.update(this.result));
         } else {
+            // in case id is null or undefined
             this.subscribeToSaveResponse(this.resultService.create(this.result));
         }
     }

@@ -56,7 +56,10 @@ export class TextExerciseDialogComponent implements OnInit {
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<TextExercise>>) {
-        result.subscribe((res: HttpResponse<TextExercise>) => this.onSaveSuccess(res.body), (res: HttpErrorResponse) => this.onSaveError());
+        result.subscribe(
+            (res: HttpResponse<TextExercise>) => this.onSaveSuccess(res.body),
+            (res: HttpErrorResponse) => this.onSaveError(res)
+        );
     }
 
     private onSaveSuccess(result: TextExercise) {
@@ -65,7 +68,8 @@ export class TextExerciseDialogComponent implements OnInit {
         this.activeModal.dismiss(result);
     }
 
-    private onSaveError() {
+    private onSaveError(error: HttpErrorResponse) {
+        this.jhiAlertService.error(error.message, null, null);
         this.isSaving = false;
     }
 
@@ -91,12 +95,10 @@ export class TextExercisePopupComponent implements OnInit, OnDestroy {
         this.routeSub = this.route.params.subscribe(params => {
             if (params['id']) {
                 this.textExercisePopupService.open(TextExerciseDialogComponent as Component, params['id']);
+            } else if (params['courseId']) {
+                this.textExercisePopupService.open(TextExerciseDialogComponent as Component, undefined, params['courseId']);
             } else {
-                if (params['courseId']) {
-                    this.textExercisePopupService.open(TextExerciseDialogComponent as Component, undefined, params['courseId']);
-                } else {
-                    this.textExercisePopupService.open(TextExerciseDialogComponent as Component);
-                }
+                this.textExercisePopupService.open(TextExerciseDialogComponent as Component);
             }
         });
     }

@@ -21,10 +21,8 @@ public class CustomWebsocketSessionHandler {
 
 
     public CustomWebsocketSessionHandler() {
-        scheduler.scheduleAtFixedRate(new Runnable() {
-            @Override
-            public void run() {
-                //DEACTIVATED AT THE MOMENT because we don't receive the Heart Beats and it is not necessary because the websockets work reliably
+        scheduler.scheduleAtFixedRate(() -> {
+            //DEACTIVATED AT THE MOMENT because we don't receive the Heart Beats and it is not necessary because the websockets work reliably
 //                long currentTime = System.currentTimeMillis();
 ////                log.info("Try to close old websocket sessions");
 //                sessionMap.keySet().forEach(sessionId -> {
@@ -48,8 +46,7 @@ public class CustomWebsocketSessionHandler {
 ////                        log.error("Error while closing websocket session: {}", e.getMessage());
 ////                    }
 //                });
-                log.info("There are " + sessionMap.size() + " websocket sessions open!");
-            }
+            log.info("There are " + sessionMap.size() + " websocket sessions open!");
         }, 60, 60, TimeUnit.SECONDS);
     }
 

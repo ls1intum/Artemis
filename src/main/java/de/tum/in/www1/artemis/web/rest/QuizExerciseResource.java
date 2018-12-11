@@ -4,7 +4,10 @@ import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Question;
 import de.tum.in.www1.artemis.domain.QuizExercise;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.CourseService;
+import de.tum.in.www1.artemis.service.QuizExerciseService;
+import de.tum.in.www1.artemis.service.StatisticService;
 import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -21,6 +24,9 @@ import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 /**
  * REST controller for managing QuizExercise.
@@ -73,7 +79,7 @@ public class QuizExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this quiz exercise does not exist")).body(null);
         }
         if (!courseService.userHasAtLeastTAPermissions(course)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
 
         // check if quiz is valid
@@ -114,7 +120,7 @@ public class QuizExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this quiz exercise does not exist")).body(null);
         }
         if (!courseService.userHasAtLeastTAPermissions(course)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
 
         // check if quiz is valid
@@ -157,19 +163,6 @@ public class QuizExerciseResource {
     }
 
     /**
-     * GET  /quiz-exercises : get all the quizExercises.
-     *
-     * @return the ResponseEntity with status 200 (OK) and the list of quizExercises in body
-     */
-    @GetMapping("/quiz-exercises")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
-    public List<QuizExercise> getAllQuizExercises() {
-        log.debug("REST request to get all QuizExercises");
-        return quizExerciseService.findAll();
-    }
-
-    /**
      * GET  /courses/:courseId/quiz-exercises : get all the exercises.
      *
      * @return the ResponseEntity with status 200 (OK) and the list of programmingExercises in body
@@ -181,8 +174,12 @@ public class QuizExerciseResource {
     public List<QuizExercise> getQuizExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all QuizExercises for the course with id : {}", courseId);
         List<QuizExercise> result = quizExerciseService.findByCourseId(courseId);
+
         for (QuizExercise quizExercise : result) {
             quizExercise.setQuestions(null);
+            //not required in the returned json body
+            quizExercise.setParticipations(null);
+            quizExercise.setCourse(null);
         }
         return result;
     }
@@ -200,7 +197,7 @@ public class QuizExerciseResource {
         log.debug("REST request to get QuizExercise : {}", quizExerciseId);
         QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
         if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(quizExercise));
     }
@@ -218,7 +215,7 @@ public class QuizExerciseResource {
         log.debug("REST request to get QuizExercise : {}", quizExerciseId);
         QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
         if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
         statisticService.recalculateStatistics(quizExercise);
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(quizExercise));
@@ -236,25 +233,20 @@ public class QuizExerciseResource {
     @Timed
     public ResponseEntity<QuizExercise> getQuizExerciseForStudent(@PathVariable Long id) {
         log.debug("REST request to get QuizExercise : {}", id);
-        long start = System.currentTimeMillis();
 
         QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(id);
         if (quizExercise == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            return notFound();
         }
         if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
-
-        log.debug("    checked permissions after {} ms", System.currentTimeMillis() - start);
 
         // filter out information depending on quiz state
         quizExercise.applyAppropriateFilterForStudents();
 
         // filter out the statistic information
         quizExercise.setQuizPointStatistic(null);
-
-        log.debug("    filtered info after {} ms", System.currentTimeMillis() - start);
 
         return ResponseEntity.ok(quizExercise);
     }
@@ -281,7 +273,7 @@ public class QuizExerciseResource {
         // check permissions
         Course course = quizExercise.getCourse();
         if (!courseService.userHasAtLeastTAPermissions(course)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
 
         switch (action) {
@@ -372,7 +364,7 @@ public class QuizExerciseResource {
 
         Course course = quizExercise.getCourse();
         if (!courseService.userHasAtLeastInstructorPermissions(course)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
 
         quizExerciseService.delete(id);
@@ -394,12 +386,11 @@ public class QuizExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the re-evaluated quizExercise,
      * or with status 400 (Bad Request) if the quizExercise is not valid,
      * or with status 500 (Internal Server Error) if the quizExercise couldn't be re-evaluated
-     * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/quiz-exercises-re-evaluate")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @Timed
-    public ResponseEntity<QuizExercise> reEvaluateQuizExercise(@RequestBody QuizExercise quizExercise) throws URISyntaxException {
+    public ResponseEntity<QuizExercise> reEvaluateQuizExercise(@RequestBody QuizExercise quizExercise) {
         log.debug("REST request to re-evaluate QuizExercise : {}", quizExercise);
         if (quizExercise.getId() == null) {
             return ResponseEntity.notFound().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "quizExerciseWithoutId", "The quiz exercise doesn't have an ID.")).build();
@@ -418,7 +409,7 @@ public class QuizExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this quiz exercise does not exist")).body(null);
         }
         if (!courseService.userHasAtLeastInstructorPermissions(course)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            return forbidden();
         }
 
         quizExercise.undoUnallowedChanges(originalQuizExercise);

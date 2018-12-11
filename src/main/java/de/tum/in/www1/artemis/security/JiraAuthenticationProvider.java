@@ -7,6 +7,7 @@ import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.web.rest.errors.CaptchaRequiredException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,19 +93,27 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
         try {
             authenticationResponse = restTemplate.exchange(JIRA_URL + "/rest/api/2/user?username=" + username + "&expand=groups", HttpMethod.GET, entity, Map.class);
         } catch (HttpStatusCodeException e) {
-            if (e.getStatusCode().value() == 401) {
+            if (e.getStatusCode().value() == 401 || e.getStatusCode().value() == 403) {
+                // If JIRA requires a CAPTCHA. Communicate this to the client
+                if (e.getResponseHeaders().containsKey("X-Authentication-Denied-Reason")) {
+                    String authenticationDeniedReason = e.getResponseHeaders().get("X-Authentication-Denied-Reason").get(0);
+                    if (authenticationDeniedReason.toLowerCase().contains("captcha")) {
+                        throw new CaptchaRequiredException("CAPTCHA required");
+                    }
+                }
+
+                // Otherwise, the user used the wrong credentials
                 throw new BadCredentialsException("Wrong credentials");
-            } else if (e.getStatusCode().is5xxServerError()) {
+            }
+            else if (e.getStatusCode().is5xxServerError()) {
                 throw new ProviderNotFoundException("Could not authenticate via JIRA");
             }
         }
 
         if (authenticationResponse != null) {
             Map content = authenticationResponse.getBody();
-            User user = userRepository.findOneByLogin((String) content.get("name")).orElseGet(() -> {
-                return userService.createUser((String) content.get("name"), "",
-                    (String) content.get("displayName"), "", (String) content.get("emailAddress"), null, "en");
-            });
+            User user = userRepository.findOneByLogin((String) content.get("name")).orElseGet(() ->
+                userService.createUser((String) content.get("name"), "", (String) content.get("displayName"), "", (String) content.get("emailAddress"), null, "en"));
             user.setGroups(getGroupStrings((ArrayList) ((Map) content.get("groups")).get("items")));
             user.setAuthorities(buildAuthoritiesFromGroups(getGroupStrings((ArrayList) ((Map) content.get("groups")).get("items"))));
             userRepository.save(user);
@@ -160,14 +169,14 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
         List<String> teachingAssistantGroups = courses.stream().map(Course::getTeachingAssistantGroupName).collect(Collectors.toList());
 
         // Check if user is an instructor in any course
-        if (groups.stream().anyMatch(group -> instructorGroups.contains(group))) {
+        if (groups.stream().anyMatch(instructorGroups::contains)) {
             Authority instructorAuthority = new Authority();
             instructorAuthority.setName(AuthoritiesConstants.INSTRUCTOR);
             authorities.add(instructorAuthority);
         }
 
         // Check if user is a tutor in any course
-        if (groups.stream().anyMatch(group -> teachingAssistantGroups.contains(group))) {
+        if (groups.stream().anyMatch(teachingAssistantGroups::contains)) {
             Authority taAuthority = new Authority();
             taAuthority.setName(AuthoritiesConstants.TEACHING_ASSISTANT);
             authorities.add(taAuthority);
