@@ -211,8 +211,8 @@ entity ExerciseResult (result) {
     score Long,
     rated Boolean,
     hasFeedback Boolean,
-    hasComplaint Boolean,
     assessmentType AssessmentType,
+    hasComplaint Boolean,
     exampleResult Boolean
 }
 
@@ -367,8 +367,8 @@ relationship OneToOne {
     Submission{result} to ExerciseResult{submission},
     LtiUserId{user} to User,
     ExerciseResult{assessor} to User,
-    ExerciseResult{complaint} to Complaint{result},
-    Complaint{complaintResponse} to ComplaintResponse{complaint},
+    Complaint{result} to ExerciseResult,
+    ComplaintResponse{complaint} to Complaint,
     Complaint{student} to User,
     ComplaintResponse{reviewer} to User,
     TutorParticipation{assessedExercise} to Exercise,
