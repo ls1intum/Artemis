@@ -15,7 +15,6 @@ import { DecimalPipe } from '@angular/common';
     providers: [JhiAlertService]
 })
 export class CourseDashboardComponent implements OnInit, OnDestroy {
-
     // make constants available to html for comparison
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
@@ -59,23 +58,25 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
         this.paramSub = this.route.params.subscribe(params => {
             this.courseService.findWithExercises(params['courseId']).subscribe(res => {
                 this.course = res.body;
-                this.exercises = this.course.exercises.filter(exercise => {
-                    return exercise.releaseDate == null || exercise.releaseDate.isBefore(moment());
-                }).sort((e1: Exercise, e2: Exercise) => {
-                    if (e1.dueDate > e2.dueDate) {
-                        return 1;
-                    }
-                    if (e1.dueDate < e2.dueDate) {
-                        return -1;
-                    }
-                    if (e1.title > e2.title) {
-                        return 1;
-                    }
-                    if (e1.title < e2.title) {
-                        return -1;
-                    }
-                    return 0;
-                });
+                this.exercises = this.course.exercises
+                    .filter(exercise => {
+                        return exercise.releaseDate == null || exercise.releaseDate.isBefore(moment());
+                    })
+                    .sort((e1: Exercise, e2: Exercise) => {
+                        if (e1.dueDate > e2.dueDate) {
+                            return 1;
+                        }
+                        if (e1.dueDate < e2.dueDate) {
+                            return -1;
+                        }
+                        if (e1.title > e2.title) {
+                            return 1;
+                        }
+                        if (e1.title < e2.title) {
+                            return -1;
+                        }
+                        return 0;
+                    });
                 this.getParticipationsWithResults(this.course.id);
             });
         });
@@ -90,21 +91,21 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     }
 
     groupExercises() {
-
         for (const exerciseType of Object.values(ExerciseType)) {
             const exercisesPerType = this.exercises.filter(exercise => exercise.type === exerciseType);
-            this.exercisesPerType[exerciseType] = exercisesPerType;
-            this.exerciseTitlesPerType[exerciseType] = exercisesPerType.map(exercise => exercise.title).join(',');
-            this.exerciseMaxPointsPerType[exerciseType] = exercisesPerType.map(exercise => exercise.maxScore).join(',');
-            this.maxNumberOfPointsPerExerciseType[exerciseType] = exercisesPerType.map(exercise => exercise.maxScore ? exercise.maxScore : 0)
-                .reduce((total, num) => total + num, 0);
+            this.exercisesPerType.set(exerciseType, exercisesPerType);
+            this.exerciseTitlesPerType.set(exerciseType, exercisesPerType.map(exercise => exercise.title).join(','));
+            this.exerciseMaxPointsPerType.set(exerciseType, exercisesPerType.map(exercise => exercise.maxScore).join(','));
+            this.maxNumberOfPointsPerExerciseType.set(
+                exerciseType,
+                exercisesPerType.reduce((total, exercise) => (total + exercise.maxScore ? exercise.maxScore : 0), 0)
+            );
         }
-        this.maxNumberOfOverallPoints = this.exercises.map(exercise => exercise.maxScore ? exercise.maxScore : 0).reduce((total, num) => total + num, 0);
+        this.maxNumberOfOverallPoints = this.exercises.reduce((total, exercise) => (total + exercise.maxScore ? exercise.maxScore : 0), 0);
     }
 
     // creates students and calculates the points for each exercise and exercise type
     calculatePointsPerStudent() {
-
         const studentsMap = new Map<number, Student>();
 
         for (const participation of this.participations) {
@@ -131,11 +132,9 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
         }
 
         studentsMap.forEach(student => {
-
             this.students.push(student);
 
             for (const exercise of this.exercises) {
-
                 const participation = student.participations.find(part => part.exercise.id === exercise.id);
                 if (participation && participation.results && participation.results.length > 0) {
                     // we found a result, there should only be one
@@ -144,14 +143,17 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                         console.warn('found more than one result for student ' + student.user.login + ' and exercise ' + exercise.title);
                     }
 
-                    const studentExerciseResultPoints = result.score * exercise.maxScore / 100;
+                    const studentExerciseResultPoints = (result.score * exercise.maxScore) / 100;
                     // round to at most 1 decimal place
                     const roundedPoints = this.round(studentExerciseResultPoints);
 
                     student.overallPoints += studentExerciseResultPoints;
-                    student.pointsPerExercise[exercise.id] = studentExerciseResultPoints;
+                    student.pointsPerExercise.set(exercise.id, studentExerciseResultPoints);
 
-                    student.pointsPerExerciseType[exercise.type] += studentExerciseResultPoints;
+                    student.pointsPerExerciseType.set(
+                        exercise.type,
+                        student.pointsPerExerciseType.get(exercise.type) + studentExerciseResultPoints
+                    );
                     student.numberOfParticipatedExercises += 1;
                     exercise.numberOfParticipationsWithRatedResult += 1;
                     if (result.score >= 100) {
@@ -159,39 +161,60 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                         exercise.numberOfSuccessfulParticipations += 1;
                     }
 
-                    student.pointsStringPerExerciseType[exercise.type] += roundedPoints + ',';
+                    student.pointsStringPerExerciseType.set(
+                        exercise.type,
+                        student.pointsStringPerExerciseType.get(exercise.type) + roundedPoints + ','
+                    );
                 } else {
-                    student.pointsPerExercise[exercise.id] = 0;
-                    student.pointsStringPerExerciseType[exercise.type] += 0 + ',';
+                    student.pointsPerExercise.set(exercise.id, 0);
+                    student.pointsStringPerExerciseType.set(exercise.type, student.pointsStringPerExerciseType.get(exercise.type) + '0,');
                 }
             }
             for (const exerciseType of Object.values(ExerciseType)) {
-                if (this.maxNumberOfPointsPerExerciseType[exerciseType] > 0) {
-                    student.scoresPerExerciseType[exerciseType] = student.pointsPerExerciseType[exerciseType] / this.maxNumberOfPointsPerExerciseType[exerciseType] * 100;
+                if (this.maxNumberOfPointsPerExerciseType.get(exerciseType) > 0) {
+                    student.scoresPerExerciseType.set(
+                        exerciseType,
+                        (student.pointsPerExerciseType.get(exerciseType) / this.maxNumberOfPointsPerExerciseType.get(exerciseType)) * 100
+                    );
                 }
             }
         });
 
         for (const exerciseType of Object.values(ExerciseType)) {
-            this.averageNumberOfPointsPerExerciseTypes[exerciseType] = this.students.map(student => student.pointsPerExerciseType[exerciseType])
-                .reduce((total, num) => total + num, 0) / this.students.length;
+            this.averageNumberOfPointsPerExerciseTypes.set(
+                exerciseType,
+                this.students.reduce((total, student) => total + student.pointsPerExerciseType.get(exerciseType), 0) / this.students.length
+            );
         }
 
-        this.averageNumberOfOverallPoints = this.students.map(student => student.overallPoints).reduce((total, num) => total + num, 0) / this.students.length;
-        this.averageNumberOfSuccessfulExercises = this.students.map(student => student.numberOfSuccessfulExercises).reduce((total, num) => total + num, 0) / this.students.length;
-        this.averageNumberOfParticipatedExercises = this.students.map(student => student.numberOfParticipatedExercises).reduce((total, num) => total + num, 0) / this.students.length;
+        this.averageNumberOfOverallPoints =
+            this.students.reduce((total, student) => total + student.overallPoints, 0) / this.students.length;
+        this.averageNumberOfSuccessfulExercises =
+            this.students.reduce((total, student) => total + student.numberOfSuccessfulExercises, 0) / this.students.length;
+        this.averageNumberOfParticipatedExercises =
+            this.students.reduce((total, student) => total + student.numberOfParticipatedExercises, 0) / this.students.length;
 
         for (const exerciseType of Object.values(ExerciseType)) {
-            this.exerciseAveragePointsPerType[exerciseType] = ''; // initialize with empty string
-            this.exerciseParticipationsPerType[exerciseType] = ''; // initialize with empty string
-            this.exerciseSuccessfulPerType[exerciseType] = ''; // initialize with empty string
+            this.exerciseAveragePointsPerType.set(exerciseType, ''); // initialize with empty string
+            this.exerciseParticipationsPerType.set(exerciseType, ''); // initialize with empty string
+            this.exerciseSuccessfulPerType.set(exerciseType, ''); // initialize with empty string
 
-            for (const exercise of this.exercisesPerType[exerciseType]) {
-                exercise.averagePoints = this.students.map(student => student.pointsPerExercise[exercise.id]).reduce((total, num) => total + num, 0) / this.students.length;
+            for (const exercise of this.exercisesPerType.get(exerciseType)) {
+                exercise.averagePoints =
+                    this.students.reduce((total, student) => total + student.pointsPerExercise.get(exercise.id), 0) / this.students.length;
                 const roundedPoints = this.round(exercise.averagePoints);
-                this.exerciseAveragePointsPerType[exerciseType] += roundedPoints + ',';
-                this.exerciseParticipationsPerType[exerciseType] += exercise.numberOfParticipationsWithRatedResult + ',';
-                this.exerciseSuccessfulPerType[exerciseType] += exercise.numberOfSuccessfulParticipations + ',';
+                this.exerciseAveragePointsPerType.set(
+                    exerciseType,
+                    this.exerciseAveragePointsPerType.get(exerciseType) + roundedPoints + ','
+                );
+                this.exerciseParticipationsPerType.set(
+                    exerciseType,
+                    this.exerciseParticipationsPerType.get(exerciseType) + exercise.numberOfParticipationsWithRatedResult + ','
+                );
+                this.exerciseSuccessfulPerType.set(
+                    exerciseType,
+                    this.exerciseSuccessfulPerType.get(exerciseType) + exercise.numberOfSuccessfulParticipations + ','
+                );
             }
         }
 
@@ -209,8 +232,9 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
                 const exerciseTypeName = capitalizeFirstLetter(exerciseType);
 
                 // only add it if there are actually exercises in this type
-                if (this.exerciseTitlesPerType[exerciseType] && this.exerciseTitlesPerType[exerciseType] !== '') {
-                    firstRowString += this.exerciseTitlesPerType[exerciseType] + ',' + exerciseTypeName + ' Points,' + exerciseTypeName + ' Score,';
+                if (this.exerciseTitlesPerType.get(exerciseType) && this.exerciseTitlesPerType.get(exerciseType) !== '') {
+                    firstRowString +=
+                        this.exerciseTitlesPerType.get(exerciseType) + ',' + exerciseTypeName + ' Points,' + exerciseTypeName + ' Score,';
                 }
             }
             rows.push(firstRowString + 'Overall Points,Overall Score');
@@ -225,80 +249,83 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
 
                 let rowString = name + ',' + studentId + ',' + email + ',';
 
-                const exercisePointsPerType = new Map<ExerciseType, string>();
-                const exerciseScoresPerType = new Map<ExerciseType, string>();
-
                 for (const exerciseType of Object.values(ExerciseType)) {
                     // only add it if there are actually exercises in this type
-                    if (this.exerciseTitlesPerType[exerciseType] && this.exerciseTitlesPerType[exerciseType] !== '') {
-                        exercisePointsPerType[exerciseType] = this.round(student.pointsPerExerciseType[exerciseType]);
-                        exerciseScoresPerType[exerciseType] = '';
-                        if (this.maxNumberOfPointsPerExerciseType[exerciseType] > 0) {
-                            exerciseScoresPerType[exerciseType] = this.round(student.pointsPerExerciseType[exerciseType] / this.maxNumberOfPointsPerExerciseType[exerciseType] * 100) + '%';
+                    if (this.exerciseTitlesPerType.get(exerciseType) && this.exerciseTitlesPerType.get(exerciseType) !== '') {
+                        const exercisePointsPerType = this.round(student.pointsPerExerciseType.get(exerciseType));
+                        let exerciseScoresPerType = '';
+                        if (this.maxNumberOfPointsPerExerciseType.get(exerciseType) > 0) {
+                            exerciseScoresPerType =
+                                this.round(
+                                    (student.pointsPerExerciseType.get(exerciseType) /
+                                        this.maxNumberOfPointsPerExerciseType.get(exerciseType)) *
+                                        100
+                                ) + '%';
                         }
-                        rowString += student.pointsStringPerExerciseType[exerciseType] + '' + exercisePointsPerType[exerciseType] + ',' + exerciseScoresPerType[exerciseType] + ',';
+                        rowString +=
+                            student.pointsStringPerExerciseType.get(exerciseType) +
+                            '' +
+                            exercisePointsPerType +
+                            ',' +
+                            exerciseScoresPerType +
+                            ',';
                     }
                 }
 
                 const overallPoints = this.round(student.overallPoints);
-                const overallScore = this.round(student.overallPoints / this.maxNumberOfOverallPoints * 100) + '%';
+                const overallScore = this.round((student.overallPoints / this.maxNumberOfOverallPoints) * 100) + '%';
 
                 rows.push(rowString + overallPoints + ',' + overallScore);
             }
 
             // max values
             let rowStringMax = 'Max' + ',,,';
-
-            const maxPointsPerType = new Map<ExerciseType, string>();
-            const maxScore = '100%';
             for (const exerciseType of Object.values(ExerciseType)) {
                 // only add it if there are actually exercises in this type
-                if (this.exerciseTitlesPerType[exerciseType] && this.exerciseTitlesPerType[exerciseType] !== '') {
-                    maxPointsPerType[exerciseType] = this.round(this.maxNumberOfPointsPerExerciseType[exerciseType]);
-                    rowStringMax += this.exerciseMaxPointsPerType[exerciseType] + ',' + maxPointsPerType[exerciseType] + ',' + maxScore + ',';
+                if (this.exerciseTitlesPerType.get(exerciseType) && this.exerciseTitlesPerType.get(exerciseType) !== '') {
+                    const maxPoints = this.round(this.maxNumberOfPointsPerExerciseType.get(exerciseType));
+                    rowStringMax += this.exerciseMaxPointsPerType.get(exerciseType) + ',' + maxPoints + ',100%,';
                 }
             }
             const maxOverallPoints = this.round(this.maxNumberOfOverallPoints);
             const maxOverallScore = '100%';
-
             rows.push(rowStringMax + maxOverallPoints + ',' + maxOverallScore);
 
             // average values
             let rowStringAverage = 'Average' + ',,,';
-
-            const averagePointsPerType = new Map<ExerciseType, string>();
-            const averageScorePerType = new Map<ExerciseType, string>();
             for (const exerciseType of Object.values(ExerciseType)) {
                 // only add it if there are actually exercises in this type
-                if (this.exerciseTitlesPerType[exerciseType] && this.exerciseTitlesPerType[exerciseType] !== '') {
-                    averagePointsPerType[exerciseType] = this.round(this.averageNumberOfPointsPerExerciseTypes[exerciseType]);
-                    averageScorePerType[exerciseType] = this.round(this.averageNumberOfPointsPerExerciseTypes[exerciseType] / this.maxNumberOfPointsPerExerciseType[exerciseType] * 100) + '%';
-                    rowStringAverage += this.exerciseAveragePointsPerType[exerciseType] + '' + averagePointsPerType[exerciseType] + ',' + averageScorePerType[exerciseType] + ',';
+                if (this.exerciseTitlesPerType.get(exerciseType) && this.exerciseTitlesPerType.get(exerciseType) !== '') {
+                    const averagePoints = this.round(this.averageNumberOfPointsPerExerciseTypes.get(exerciseType));
+                    const averageScore =
+                        this.round(
+                            (this.averageNumberOfPointsPerExerciseTypes.get(exerciseType) /
+                                this.maxNumberOfPointsPerExerciseType.get(exerciseType)) *
+                                100
+                        ) + '%';
+                    rowStringAverage += this.exerciseAveragePointsPerType.get(exerciseType) + '' + averagePoints + ',' + averageScore + ',';
                 }
             }
             const averageOverallPoints = this.round(this.averageNumberOfOverallPoints);
-            const averageOverallScore = this.round(this.averageNumberOfOverallPoints / this.maxNumberOfOverallPoints * 100) + '%';
-
+            const averageOverallScore = this.round((this.averageNumberOfOverallPoints / this.maxNumberOfOverallPoints) * 100) + '%';
             rows.push(rowStringAverage + averageOverallPoints + ',' + averageOverallScore);
 
             // participation
             let rowStringParticipation = 'Number of participations' + ',,,';
-
             for (const exerciseType of Object.values(ExerciseType)) {
                 // only add it if there are actually exercises in this type
-                if (this.exerciseTitlesPerType[exerciseType] && this.exerciseTitlesPerType[exerciseType] !== '') {
-                    rowStringParticipation += this.exerciseParticipationsPerType[exerciseType] + ',,';
+                if (this.exerciseTitlesPerType.get(exerciseType) && this.exerciseTitlesPerType.get(exerciseType) !== '') {
+                    rowStringParticipation += this.exerciseParticipationsPerType.get(exerciseType) + ',,';
                 }
             }
             rows.push(rowStringParticipation + ',');
 
             // successful
             let rowStringSuccuessful = 'Number of successful participations' + ',,,';
-
             for (const exerciseType of Object.values(ExerciseType)) {
                 // only add it if there are actually exercises in this type
-                if (this.exerciseTitlesPerType[exerciseType] && this.exerciseTitlesPerType[exerciseType] !== '') {
-                    rowStringSuccuessful += this.exerciseSuccessfulPerType[exerciseType] + ',,';
+                if (this.exerciseTitlesPerType.get(exerciseType) && this.exerciseTitlesPerType.get(exerciseType) !== '') {
+                    rowStringSuccuessful += this.exerciseSuccessfulPerType.get(exerciseType) + ',,';
                 }
             }
             rows.push(rowStringSuccuessful + ',');
@@ -330,18 +357,18 @@ class Student {
     numberOfParticipatedExercises = 0;
     numberOfSuccessfulExercises = 0;
     overallPoints = 0;
-    pointsPerExercise = new Map<number, number>();  // the index is the exercise id
-    pointsPerExerciseType = new Map<ExerciseType, number>();  // the absolute number of points the students received per exercise type
-    scoresPerExerciseType = new Map<ExerciseType, number>();  // the relative number of points the students received per exercise type (i.e. divided by the max points per exercise type)
-    pointsStringPerExerciseType = new Map<ExerciseType, string>();  // a string containing the points for all exercises of a specific type
+    pointsPerExercise = new Map<number, number>(); // the index is the exercise id
+    pointsPerExerciseType = new Map<ExerciseType, number>(); // the absolute number of points the students received per exercise type
+    scoresPerExerciseType = new Map<ExerciseType, number>(); // the relative number of points the students received per exercise type (i.e. divided by the max points per exercise type)
+    pointsStringPerExerciseType = new Map<ExerciseType, string>(); // a string containing the points for all exercises of a specific type
 
     constructor(user: User) {
         this.user = user;
         // initialize with 0 or empty string
         for (const exerciseType of Object.values(ExerciseType)) {
-            this.pointsPerExerciseType[exerciseType] = 0;
-            this.scoresPerExerciseType[exerciseType] = 0;
-            this.pointsStringPerExerciseType[exerciseType] = '';
+            this.pointsPerExerciseType.set(exerciseType, 0);
+            this.scoresPerExerciseType.set(exerciseType, 0);
+            this.pointsStringPerExerciseType.set(exerciseType, '');
         }
     }
 }
