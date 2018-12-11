@@ -3,7 +3,8 @@
     <changeSet author="jpbernius" id="1543924264951-1">
         <addColumn tableName="feedback">
             <column name="credits" type="DOUBLE"/>
-            <column name="reference" type="varchar(500)"/>
+            <column name="reference" type="varchar(2000)"/>
         </addColumn>
+        <modifyDataType tableName="feedback" columnName="text" newDataType="varchar(500)"/>
     </changeSet>
 </databaseChangeLog>
