@@ -30,10 +30,8 @@ export class ProgrammingExerciseService {
             .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
-    generateTestDiff(id: number) {
-        console.log('Programming Exercise Service: Called the generateTestDiff method.');
-        console.log(`A REST call was made: ${this.resourceUrl}/${id}/generate-tests)`);
-        return this.http.put<String>(`${this.resourceUrl}/${id}/generate-tests`, { observe: 'response' });
+    generateStructureDiff(id: number) {
+        return this.http.put<string>(this.resourceUrl + '/' + id + '/generate-tests', { observe: 'response' });
     }
 
     update(programmingExercise: ProgrammingExercise): Observable<EntityResponseType> {
