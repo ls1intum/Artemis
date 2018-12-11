@@ -9,6 +9,7 @@ import { QuizStatisticUtil } from '../../components/util/quiz-statistic-util.ser
 import { QuestionType } from '../../entities/question';
 import { createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
 import { Subscription } from 'rxjs/Subscription';
+import { PointCounter } from 'app/entities/point-counter';
 
 @Component({
     selector: 'jhi-quiz-point-statistic',
@@ -174,16 +175,13 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
         this.backgroundColor = [];
         this.ratedData = [];
         this.unratedData = [];
-
         // set data based on the pointCounters
-        this.quizPointStatistic.pointCounters.forEach(pointCounter => {
+        this.order(this.quizPointStatistic.pointCounters).forEach(pointCounter => {
             this.label.push(pointCounter.points.toString());
             this.ratedData.push(pointCounter.ratedCounter);
             this.unratedData.push(pointCounter.unRatedCounter);
             this.backgroundColor.push('#428bca');
         });
-        // order the bars ascending on points
-        this.order();
 
         this.labels = this.label;
         this.colors = this.backgroundColor;
@@ -235,29 +233,19 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
     }
 
     /**
-     * order the data and the associated Labels, so that they are ascending (BubbleSort)
+     * order the point cursors ascending
      */
-    order() {
-        let old: string[] = [];
-        while (old.toString() !== this.label.toString()) {
-            old = this.label.slice();
-            for (let i = 0; i < this.label.length - 1; i++) {
-                if (this.label[i] > this.label[i + 1]) {
-                    // switch Labels
-                    const tempLabel = this.label[i];
-                    this.label[i] = this.label[i + 1];
-                    this.label[i + 1] = tempLabel;
-                    // switch rated Data
-                    const tempRatedData = this.ratedData[i];
-                    this.ratedData[i] = this.ratedData[i + 1];
-                    this.ratedData[i + 1] = tempRatedData;
-                    // switch unrated Data
-                    const tempUnratedData = this.unratedData[i];
-                    this.unratedData[i] = this.unratedData[i + 1];
-                    this.unratedData[i + 1] = tempUnratedData;
-                }
+    order(pointCursors: Array<PointCounter>) {
+        return pointCursors.sort((a: PointCounter, b: PointCounter) => {
+            if (a.points < b.points) {
+                return -1;
             }
-        }
+            if (a.points > b.points) {
+                return 1;
+            }
+            // a must be equal to b
+            return 0;
+        });
     }
 
     /**

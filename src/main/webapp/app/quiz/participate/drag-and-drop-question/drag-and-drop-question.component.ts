@@ -13,7 +13,8 @@ polyfill({
     dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride
 });
 
-// dragenter listener
+// Drag-enter listener for mobile devices
+// tslint:disable-next-line
 (event: any) => {
     event.preventDefault();
 };
