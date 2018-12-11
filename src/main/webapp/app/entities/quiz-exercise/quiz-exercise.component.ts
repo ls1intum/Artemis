@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs/Subscription';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
@@ -9,7 +9,6 @@ import { Principal } from '../../core';
 import { ActivatedRoute } from '@angular/router';
 import * as moment from 'moment';
 import { Course, CourseService } from '../course';
-import { Question } from '../question';
 
 @Component({
     selector: 'jhi-quiz-exercise',

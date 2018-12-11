@@ -58,7 +58,7 @@ export const courseRoute: Routes = [
             course: CourseResolve
         },
         data: {
-            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_TA', 'ROLE_ADMIN'],
             pageTitle: 'arTeMiSApp.course.home.title'
         },
         canActivate: [UserRouteAccessService]
@@ -76,7 +76,7 @@ export const courseRoute: Routes = [
         canActivate: [UserRouteAccessService]
     },
     {
-        path: 'course/:id/edit',
+        path: 'course/:course.id/edit',
         component: CourseUpdateComponent,
         resolve: {
             course: CourseResolve
