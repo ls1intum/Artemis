@@ -312,7 +312,8 @@ entity ApollonDiagram {
 entity Complaint {
     complaintText String,
     accepted Boolean,
-    submittedTime ZonedDateTime
+    submittedTime ZonedDateTime,
+    resultBeforeComplaint Text
 }
 
 entity ComplaintResponse {
