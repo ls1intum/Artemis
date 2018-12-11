@@ -212,7 +212,8 @@ entity ExerciseResult (result) {
     rated Boolean,
     hasFeedback Boolean,
     hasComplaint Boolean,
-    assessmentType AssessmentType
+    assessmentType AssessmentType,
+    exampleResult Boolean
 }
 
 enum AssessmentType {
@@ -277,7 +278,7 @@ entity FileUploadSubmission {       //extends Submission
 }
 
 entity ExampleSubmission {
-    usedForTraining Boolean
+    usedForTutorial Boolean
 }
 
 entity DragAndDropSubmittedAnswer (dndSubmittedAnswer) {      //extends SubmittedAnswer
@@ -326,7 +327,7 @@ entity TutorParticipation {
 
 enum TutorParticipationStatus {
     NOT_PARTICIPATED,
-    EXAMPLE_READ,
+    REVIEWED_INSTRUCTIONS,
     TRAINED,
     COMPLETED
 }
