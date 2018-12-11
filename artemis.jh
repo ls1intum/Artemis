@@ -252,7 +252,7 @@ entity Submission {                 //abstract
 	submitted Boolean
 	submissionDate ZonedDateTime,
     type SubmissionType,
-    example_submission Boolean
+    exampleSubmission Boolean
 }
 
 entity ModelingSubmission {         //extends Submission
@@ -309,13 +309,13 @@ entity ApollonDiagram {
 }
 
 entity Complaint {
-    text String,
+    complaintText String,
     accepted Boolean,
     submittedTime ZonedDateTime
 }
 
 entity ComplaintResponse {
-    text String
+    responseText String
     submittedTime ZonedDateTime
 }
 
@@ -351,7 +351,9 @@ relationship OneToMany {
     DragAndDropSubmittedAnswer{mappings} to DragAndDropMapping{submittedAnswer},
     DragAndDropQuestion{correctMappings} to DragAndDropMapping{question},
     ShortAnswerQuestion{correctMappings} to ShortAnswerMapping{question}
-    ShortAnswerSubmittedAnswer{submittedTexts} to ShortAnswerSubmittedText{submittedAnswer}
+    ShortAnswerSubmittedAnswer{submittedTexts} to ShortAnswerSubmittedText{submittedAnswer},
+    TutorParticipation{trainedExampleSubmissions} to ExampleSubmission,
+    ExampleSubmission{exercise} to Exercise{exampleSubmissions}
 }
 
 relationship OneToOne {
@@ -366,8 +368,9 @@ relationship OneToOne {
     ExerciseResult{assessor} to User,
     ExerciseResult{complaint} to Complaint{result},
     Complaint{complaintResponse} to ComplaintResponse{complaint},
-    ComplaintResponse{tutor} to User,
-    TutorParticipation{exercise} to Exercise,
+    Complaint{student} to User,
+    ComplaintResponse{reviewer} to User,
+    TutorParticipation{assessedExercise} to Exercise,
     TutorParticipation{tutor} to User,
     ExampleSubmission{exercise} to Exercise,
     ExampleSubmission{submission} to Submission
