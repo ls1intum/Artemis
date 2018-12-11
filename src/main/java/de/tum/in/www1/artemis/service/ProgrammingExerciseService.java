@@ -191,7 +191,7 @@ public class ProgrammingExerciseService {
     }
 
     // Generates the structure diff aka the test.json file for the current programming exercise
-    public void generateStructureDiffFile(URL exerciseRepoURL, URL solutionRepoURL, URL testRepoURL, String testsPath) throws IOException, InterruptedException {
+    public void generateStructureDiffFile(URL solutionRepoURL, URL exerciseRepoURL, URL testRepoURL, String testsPath) throws IOException, InterruptedException {
         Repository solutionRepository = gitService.getOrCheckoutRepository(solutionRepoURL);
         Repository exerciseRepository = gitService.getOrCheckoutRepository(exerciseRepoURL);
         Repository testRepository = gitService.getOrCheckoutRepository(testRepoURL);
@@ -200,14 +200,14 @@ public class ProgrammingExerciseService {
         gitService.pull(exerciseRepository);
         gitService.pull(testRepository);
 
-        StructureDiffGeneratorClient.run(
-            solutionRepository.getLocalPath().toAbsolutePath().toString(),
-            exerciseRepository.getLocalPath().toAbsolutePath().toString(),
-            testRepository.getLocalPath().toAbsolutePath().toString() + testsPath,
-            "test.json"
-        );
+        String solutionRepositoryPath = solutionRepository.getLocalPath().toAbsolutePath().toString() + File.separator;
+        String exerciseRepositoryPath = exerciseRepository.getLocalPath().toAbsolutePath().toString() + File.separator;
+        String testRepositoryPath = testRepository.getLocalPath().toAbsolutePath().toString() + File.separator + testsPath;
+
+        StructureDiffGeneratorClient.run(solutionRepositoryPath, exerciseRepositoryPath, testRepositoryPath, "test.json");
 
         try {
+            gitService.stageAllChanges(testRepository);
             gitService.commitAndPush(testRepository, "Generated the structure diff file.");
         } catch (GitAPIException e) {
             log.error("An exception occurred while pushing the structure diff file to the test repository.", e);

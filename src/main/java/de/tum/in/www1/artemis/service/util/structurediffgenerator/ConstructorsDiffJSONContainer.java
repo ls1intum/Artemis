@@ -49,8 +49,8 @@ public class ConstructorsDiffJSONContainer {
 	private JSONArray generateConstructorParametersJSONElement(CtConstructor<?> constructor) {
 		JSONArray constructorParametersJSONElement = new JSONArray();
 		
-		for(CtParameter<?> currentParamter : constructor.getParameters()) {
-			if(currentParamter.isImplicit()) {
+		for(CtParameter<?> currentParameter : constructor.getParameters()) {
+			if(currentParameter.isImplicit()) {
 				continue;
 			}
 			
@@ -58,7 +58,7 @@ public class ConstructorsDiffJSONContainer {
 				constructorParametersJSONElement.put("String");
 				constructorParametersJSONElement.put("int");
 			}
-			constructorParametersJSONElement.put(currentParamter.getType().getSimpleName());
+			constructorParametersJSONElement.put(currentParameter.getType().getSimpleName());
 		}
 		
 		return constructorParametersJSONElement;

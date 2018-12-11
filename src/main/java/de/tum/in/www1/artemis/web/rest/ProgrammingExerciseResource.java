@@ -350,15 +350,20 @@ public class ProgrammingExerciseResource {
      * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the parameters are invalid
      */
     @PutMapping("/programming-exercises/{id}/generate-tests")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN', 'STUDENT')")
     @Timed
-    public ResponseEntity<String> generateStructureDiffForExercise(@RequestBody ProgrammingExercise programmingExercise) {
-        log.debug("REST request to generate the structure diff file for ProgrammingExercise : {}", programmingExercise);
+    public ResponseEntity<String> generateStructureDiffForExercise(@PathVariable Long id) {
+        log.debug("REST request to generate the structure diff file for ProgrammingExercise with id: {}", id);
 
-        if (programmingExercise.getId() == null) {
+        if (id == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("programmingExerciseNotFound", "The programming exercise does not exist")).body(null);
         }
-        // fetch course from database to make sure client didn't change groups
+        Optional<ProgrammingExercise> programmingExerciseOptional = programmingExerciseRepository.findById(id);
+        if (!programmingExerciseOptional.isPresent()) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("programmingExerciseNotFound", "The programming exercise does not exist")).body(null);
+        }
+
+        ProgrammingExercise programmingExercise = programmingExerciseOptional.get();
         Course course = courseService.findOne(programmingExercise.getCourse().getId());
         if (course == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("courseNotFound", "The course belonging to this programming exercise does not exist")).body(null);
@@ -373,11 +378,17 @@ public class ProgrammingExerciseResource {
         URL exerciseRepoURL = programmingExercise.getBaseRepositoryUrlAsUrl();
         URL testRepoURL = programmingExercise.getTestRepositoryUrlAsUrl();
 
-        String testsPath = "tests" + File.separator + programmingExercise.getPackageFolderName();
+        // TODO: Uncomment the part under there, because linked exercises have a null package name
+        String testsPath = "test/de/tum/in/www1/";
+//        if(programmingExercise.getPackageName() != null) {
+//            testsPath += programmingExercise.getPackageName().replace(".", "/");
+//        }
 
         try {
             programmingExerciseService.generateStructureDiffFile(solutionRepoURL, exerciseRepoURL, testRepoURL, testsPath);
-            return ResponseEntity.ok("Success.");
+            return ResponseEntity.ok("Successfully generated the structure diff of "
+                + " solution project in repository: " + solutionRepoURL.toString() + " and template repository : " + exerciseRepoURL.toString()
+                + ". \n The structure diff file is in: " + testRepoURL.toString() + testsPath);
         } catch (Exception e) {
             log.error("Error while generating the structure diff.", e);
             return ResponseEntity

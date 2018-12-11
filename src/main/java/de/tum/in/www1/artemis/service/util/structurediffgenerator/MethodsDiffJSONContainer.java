@@ -51,12 +51,12 @@ public class MethodsDiffJSONContainer {
 	private JSONArray generateMethodParametersJSONElement(CtMethod<?> method) {
 		JSONArray methodParametersJSONElement = new JSONArray();
 		
-		for(CtParameter<?> currentParamter : method.getParameters()) {
-			if(currentParamter.isImplicit()) {
+		for(CtParameter<?> currentParameter : method.getParameters()) {
+			if(currentParameter.isImplicit()) {
 				continue;
 			}
 			
-			methodParametersJSONElement.put(currentParamter.getType().getSimpleName());
+			methodParametersJSONElement.put(currentParameter.getType().getSimpleName());
 		}
 		
 		return methodParametersJSONElement;

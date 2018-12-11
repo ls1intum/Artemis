@@ -27,10 +27,8 @@ public class TypesDiffJSONContainer {
 		
 		if(typesDiffPropertiesJSON.has("name") && typesDiffJSON.has("package")
 			&& typesDiffPropertiesJSON.length() > 2) {
-		}
-		
-		typesDiffJSON.put("class", typesDiffPropertiesJSON);
-
+            typesDiffJSON.put("class", typesDiffPropertiesJSON);
+        }
 
 		if(methodsDiffJSON.length() > 0) {
 			typesDiffJSON.put("methods", methodsDiffJSON);
