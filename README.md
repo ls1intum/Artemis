@@ -1,7 +1,7 @@
 # Artemis: Automated Assessment Management System 
 This application was generated using JHipster 5.7.0, you can find documentation and help at [http://www.jhipster.tech/documentation-archive/v5.7.0](http://www.jhipster.tech/documentation-archive/v5.7.0).
 
-**Current version:** 2.3.0
+**Current version:** 2.3.1
 
 ## Main features
 Artemis supports the following exercises:
