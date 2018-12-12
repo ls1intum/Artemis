@@ -78,6 +78,21 @@
                     class="btn btn-primary">
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
             </button>
+
+            <button type="button"
+                    (click)="generateStructureDiff()"
+                    class="btn btn-secondary">
+                <fa-icon [icon]="'clone'"></fa-icon>&nbsp;<span> Generate Structure Diff</span>
+            </button>
+
+            <ngx-spinner
+                bdColor="rgba(51,51,51,0.8)"
+                size="medium"
+                color="#fff"
+                type="ball-scale-multiple">
+                <p style="font-size: 20px; color: white">Loading...</p>
+            </ngx-spinner>
+
         </div>
     </div>
 </div>

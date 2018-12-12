@@ -1,10 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -20,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -66,21 +64,20 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     *
      * @param exercise the exercise object we want to check for errors
      * @return the error message as response or null if everything is fine
      */
     private ResponseEntity<ProgrammingExercise> checkProgrammingExerciseForError(ProgrammingExercise exercise) {
-        if(!continuousIntegrationService.get().buildPlanIdIsValid(exercise.getBaseBuildPlanId())) {
+        if (!continuousIntegrationService.get().buildPlanIdIsValid(exercise.getBaseBuildPlanId())) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("exercise", "invalid.template.build.plan.id", "The Template Build Plan ID seems to be invalid.")).body(null);
         }
-        if(exercise.getBaseRepositoryUrlAsUrl() == null || !versionControlService.get().repositoryUrlIsValid(exercise.getBaseRepositoryUrlAsUrl())) {
+        if (exercise.getBaseRepositoryUrlAsUrl() == null || !versionControlService.get().repositoryUrlIsValid(exercise.getBaseRepositoryUrlAsUrl())) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("exercise", "invalid.template.repository.url", "The Template Repository URL seems to be invalid.")).body(null);
         }
-        if(exercise.getSolutionBuildPlanId() != null && !continuousIntegrationService.get().buildPlanIdIsValid(exercise.getSolutionBuildPlanId())) {
+        if (exercise.getSolutionBuildPlanId() != null && !continuousIntegrationService.get().buildPlanIdIsValid(exercise.getSolutionBuildPlanId())) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("exercise", "invalid.solution.build.plan.id", "The Solution Build Plan ID seems to be invalid.")).body(null);
         }
-        if(exercise.getSolutionRepositoryUrl() != null && !versionControlService.get().repositoryUrlIsValid(exercise.getSolutionRepositoryUrlAsUrl())) {
+        if (exercise.getSolutionRepositoryUrl() != null && !versionControlService.get().repositoryUrlIsValid(exercise.getSolutionRepositoryUrlAsUrl())) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("exercise", "invalid.solution.repository.url", "The Solution Repository URL seems to be invalid.")).body(null);
         }
         return null;
@@ -113,7 +110,7 @@ public class ProgrammingExerciseResource {
             return forbidden();
         }
         ResponseEntity<ProgrammingExercise> errorResponse = checkProgrammingExerciseForError(programmingExercise);
-        if(errorResponse != null) {
+        if (errorResponse != null) {
             return errorResponse;
         }
         ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
@@ -197,7 +194,6 @@ public class ProgrammingExerciseResource {
         }
 
 
-
         // Check if max score is set
         if (programmingExercise.getMaxScore() == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The max score is invalid", "maxscoreInvalid")).body(null);
@@ -206,19 +202,19 @@ public class ProgrammingExerciseResource {
         String projectKey = programmingExercise.getProjectKey();
         String projectName = programmingExercise.getProjectName();
         String errorMessageVCS = versionControlService.get().checkIfProjectExists(projectKey, projectName);
-        if(errorMessageVCS != null) {
+        if (errorMessageVCS != null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(errorMessageVCS, "vcsProjectExists")).body(null);
         }
 
         String errorMessageCI = continuousIntegrationService.get().checkIfProjectExists(projectKey, projectName);
-        if(errorMessageCI != null) {
+        if (errorMessageCI != null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(errorMessageCI, "ciProjectExists")).body(null);
         }
 
         try {
             ProgrammingExercise result = programmingExerciseService.setupProgrammingExercise(programmingExercise); // Setup all repositories etc
             ResponseEntity<ProgrammingExercise> errorResponse = checkProgrammingExerciseForError(programmingExercise);
-            if(errorResponse != null) {
+            if (errorResponse != null) {
                 return errorResponse;
             }
 
@@ -260,7 +256,7 @@ public class ProgrammingExerciseResource {
             return forbidden();
         }
         ResponseEntity<ProgrammingExercise> errorResponse = checkProgrammingExerciseForError(programmingExercise);
-        if(errorResponse != null) {
+        if (errorResponse != null) {
             return errorResponse;
         }
         ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
@@ -283,8 +279,8 @@ public class ProgrammingExerciseResource {
         Course course = courseService.findOne(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-             !authCheckService.isInstructorInCourse(course, user) &&
-             !authCheckService.isAdmin()) {
+            !authCheckService.isInstructorInCourse(course, user) &&
+            !authCheckService.isAdmin()) {
             return forbidden();
         }
         List<ProgrammingExercise> exercises = programmingExerciseRepository.findByCourseId(courseId);
@@ -342,9 +338,63 @@ public class ProgrammingExerciseResource {
             String title = programmingExercise.get().getTitle();
             exerciseService.delete(programmingExercise.get(), deleteStudentReposBuildPlans, deleteBaseReposBuildPlans);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, title)).build();
-        }
-        else {
+        } else {
             return ResponseEntity.notFound().build();
         }
     }
+
+    /**
+     * PUT  /programming-exercises/{id}/generate-tests : Makes a call to the structure diff generator to generate the sd-file aka the test.json file
+     *
+     * @param programmingExercise the programming exercise for which the structure diff should get generated
+     * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the parameters are invalid
+     */
+    @PutMapping("/programming-exercises/{id}/generate-tests")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @Timed
+    public ResponseEntity<String> generateStructureDiffForExercise(@RequestBody ProgrammingExercise programmingExercise) {
+        log.debug("REST request to generate the structure diff file for ProgrammingExercise : {}", programmingExercise);
+
+        if (programmingExercise.getId() == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("programmingExerciseNotFound", "The programming exercise does not exist")).body(null);
+        }
+        // fetch course from database to make sure client didn't change groups
+        Course course = courseService.findOne(programmingExercise.getCourse().getId());
+        if (course == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("courseNotFound", "The course belonging to this programming exercise does not exist")).body(null);
+        }
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isInstructorInCourse(course, user) &&
+            !authCheckService.isAdmin()) {
+            return forbidden();
+        }
+//        ResponseEntity<ProgrammingExercise> errorResponse = checkProgrammingExerciseForError(programmingExercise);
+//        if (errorResponse != null) {
+//            return errorResponse;
+//        }
+
+        URL solutionRepoURL = programmingExercise.getSolutionRepositoryUrlAsUrl();
+        URL exerciseRepoURL = programmingExercise.getBaseRepositoryUrlAsUrl();
+        URL testRepoURL = programmingExercise.getTestRepositoryUrlAsUrl();
+
+        // TODO: Can we get the folder where the tests are somewhere else?
+        String testsPath = "tests" + File.separator + programmingExercise.getPackageFolderName();
+
+        try {
+            programmingExerciseService.generateStructureDiffFile(solutionRepoURL, exerciseRepoURL, testRepoURL, testsPath);
+
+//            Optional<ProgrammingExercise> result = programmingExerciseRepository.findById(programmingExercise.getId());
+//            return ResponseEntity.created(new URI("/api/programming-exercises/" + result.get().getId()))
+//                .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.get().getTitle()))
+  //              .body(result.get());
+            return ResponseEntity.ok("Success.");
+        } catch (Exception e) {
+            log.error("Error while generating the structure diff.", e);
+            return ResponseEntity
+                .badRequest()
+                .headers(HeaderUtil.createAlert("An error occurred while generating the structure diff for the exercise: " + e.getMessage(), "errorStructureDiffGeneration"))
+                .body(null);
+        }
+    }
+
 }
