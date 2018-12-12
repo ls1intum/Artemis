@@ -387,8 +387,8 @@ public class ProgrammingExerciseResource {
         try {
             programmingExerciseService.generateStructureDiffFile(solutionRepoURL, exerciseRepoURL, testRepoURL, testsPath);
             return ResponseEntity.ok("Successfully generated the structure diff of "
-                + " solution project in repository: " + solutionRepoURL.toString() + " and template repository : " + exerciseRepoURL.toString()
-                + ". \n The structure diff file is in: " + testRepoURL.toString() + testsPath);
+                + " solution project in repository: " + solutionRepoURL.getPath() + " and template repository : " + exerciseRepoURL.getPath()
+                + ". \n The structure diff file is in: " + testRepoURL.getPath() + testsPath);
         } catch (Exception e) {
             log.error("Error while generating the structure diff.", e);
             return ResponseEntity

@@ -130,7 +130,7 @@ public class TypesDiffContainer {
 	}
 	
 	protected boolean generateTypesAreEqual() {
-		return this.interfaceModifierDiff
+		return !this.interfaceModifierDiff
 				&& !this.enumModifierDiff
 				&& !this.abstractModifierDiff
 				&& this.superClassDiff == null
