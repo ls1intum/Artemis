@@ -225,15 +225,14 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         //setup spots
         for (const spotID of spotParts) {
             const spot = new ShortAnswerSpot();
-            spot.id = +spotID.trim();
+            spot.tempID = this.pseudoRandomLong();
             spot.width = 15;
 
             // Assign existing ID if available
             if (this.question.spots.length < existingSpotIDs.length) {
                 spot.id = existingSpotIDs[this.question.spots.length];
-            } else {
-                spot.id = this.question.spots.length + 1;
             }
+
             this.question.spots.push(spot);
         }
 
@@ -241,16 +240,15 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         for (const solutionText of solutionParts) {
             // Find the box (text in-between the parts)
             const solution = new ShortAnswerSolution();
-
+            solution.tempID = this.pseudoRandomLong();
             // Parse this answerOption
             this.artemisMarkdown.parseTextHintExplanation(solutionText[1], solution);
 
             // Assign existing ID if available
             if (this.question.solutions.length < existingSolutionIDs.length) {
                 solution.id = existingSolutionIDs[this.question.solutions.length];
-            } else {
-                solution.id = this.question.solutions.length + 1;
             }
+
             this.question.solutions.push(solution);
 
             //create mapping according to this structure: {spot(s), solution} -> {"1,2", " SolutionText"}
