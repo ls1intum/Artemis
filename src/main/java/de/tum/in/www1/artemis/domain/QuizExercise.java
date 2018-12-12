@@ -707,6 +707,35 @@ public class QuizExercise extends Exercise implements Serializable {
                         }
                     }
                 }
+                if (question instanceof ShortAnswerQuestion) {
+                    ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) question;
+                    ShortAnswerQuestionStatistic shortAnswerStatistic = (ShortAnswerQuestionStatistic) shortAnswerQuestion.getQuestionStatistic();
+                    // reconnect spots
+                    for (ShortAnswerSpot spot : shortAnswerQuestion.getSpots()) {
+                        if (spot.getId() != null) {
+                            spot.setQuestion(shortAnswerQuestion);
+                        }
+                    }
+                    // reconnect solutions
+                    for (ShortAnswerSolution solution : shortAnswerQuestion.getSolutions()) {
+                        if (solution.getId() != null) {
+                            solution.setQuestion(shortAnswerQuestion);
+                        }
+                    }
+                    // reconnect correctMappings
+                    for (ShortAnswerMapping mapping : shortAnswerQuestion.getCorrectMappings()) {
+                        if (mapping.getId() != null) {
+                            mapping.setQuestion(shortAnswerQuestion);
+                        }
+                    }
+                    //reconnect spotCounters
+                    for (ShortAnswerSpotCounter shortAnswerSpotCounter : shortAnswerStatistic.getShortAnswerSpotCounters()) {
+                        if (shortAnswerSpotCounter.getId() != null) {
+                            shortAnswerSpotCounter.setShortAnswerQuestionStatistic(shortAnswerStatistic);
+                            shortAnswerSpotCounter.getSpot().setQuestion(shortAnswerQuestion);
+                        }
+                    }
+                }
             }
         }
         //reconnect quizPointStatistic
