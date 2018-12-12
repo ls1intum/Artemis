@@ -1,7 +1,7 @@
 <div>
     <h4>
-        <ng-container *ngIf="showHeading">
-            <span *ngIf="course">{{course.title}} - </span><span *ngIf="fileUploadExercises">{{fileUploadExercises.length}} </span>
+        <ng-container>
+            <span *ngIf="course && !showHeading">{{course.title}} - </span><span *ngIf="fileUploadExercises && showHeading">{{fileUploadExercises.length}} </span>
             <span jhiTranslate="arTeMiSApp.fileUploadExercise.home.title">File Upload Exercises</span>
         </ng-container>
         <button *ngIf="course" class="btn btn-primary float-right jh-create-entity create-file-upload-exercise" [routerLink]="['/', { outlets: { popup: ['course', course.id, 'file-upload-exercise-new'] } }]">
