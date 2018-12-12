@@ -44,6 +44,7 @@ public final class HeaderUtil {
         HttpHeaders headers = new HttpHeaders();
         headers.add("X-arTeMiSApp-error", "error." + errorKey);
         headers.add("X-arTeMiSApp-params", entityName);
+        headers.add("X-arTeMiSApp-message", defaultMessage);
         return headers;
     }
 

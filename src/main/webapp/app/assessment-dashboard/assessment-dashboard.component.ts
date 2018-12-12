@@ -111,7 +111,7 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
                 });
                 this.filterSubmissions(forceReload);
                 this.assessedSubmissions = this.submissions.filter(
-                    submission => submission.result && submission.result.completionDate
+                    submission => submission.result && submission.result.completionDate && submission.result.score
                 ).length;
             });
     }

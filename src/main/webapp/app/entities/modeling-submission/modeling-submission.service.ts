@@ -12,50 +12,25 @@ export type EntityResponseType = HttpResponse<ModelingSubmission>;
 @Injectable({ providedIn: 'root' })
 export class ModelingSubmissionService {
     private courseResourceUrl = SERVER_API_URL + 'api/courses';
-    private resourceUrl = SERVER_API_URL + 'api/modeling-submissions';
 
     constructor(private http: HttpClient) {}
 
-    create(modelingSubmission: ModelingSubmission, courseId?: number, exerciseId?: number): Observable<EntityResponseType> {
+    create(modelingSubmission: ModelingSubmission, courseId: number, exerciseId: number): Observable<EntityResponseType> {
         const copy = this.convert(modelingSubmission);
-        if (courseId && exerciseId) {
-            return this.http
-                .post<ModelingSubmission>(`api/courses/${courseId}/exercises/${exerciseId}/modeling-submissions`, copy, {
-                    observe: 'response'
-                })
-                .map((res: EntityResponseType) => this.convertResponse(res));
-        }
         return this.http
-            .post<ModelingSubmission>(this.resourceUrl, copy, { observe: 'response' })
+            .post<ModelingSubmission>(`api/courses/${courseId}/exercises/${exerciseId}/modeling-submissions`, copy, {
+                observe: 'response'
+            })
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
-    update(modelingSubmission: ModelingSubmission, courseId?: number, exerciseId?: number): Observable<EntityResponseType> {
+    update(modelingSubmission: ModelingSubmission, courseId: number, exerciseId: number): Observable<EntityResponseType> {
         const copy = this.convert(modelingSubmission);
-        if (courseId && exerciseId) {
-            return this.http
-                .put<ModelingSubmission>(`api/courses/${courseId}/exercises/${exerciseId}/modeling-submissions`, copy, {
-                    observe: 'response'
-                })
-                .map((res: EntityResponseType) => this.convertResponse(res));
-        }
-    }
-
-    find(id: number): Observable<EntityResponseType> {
         return this.http
-            .get<ModelingSubmission>(`${this.resourceUrl}/${id}`, { observe: 'response' })
+            .put<ModelingSubmission>(`api/courses/${courseId}/exercises/${exerciseId}/modeling-submissions`, copy, {
+                observe: 'response'
+            })
             .map((res: EntityResponseType) => this.convertResponse(res));
-    }
-
-    query(req?: any): Observable<HttpResponse<ModelingSubmission[]>> {
-        const options = createRequestOption(req);
-        return this.http
-            .get<ModelingSubmission[]>(this.resourceUrl, { params: options, observe: 'response' })
-            .map((res: HttpResponse<ModelingSubmission[]>) => this.convertArrayResponse(res));
-    }
-
-    delete(id: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }
 
     // TODO: move this into a separate submission service

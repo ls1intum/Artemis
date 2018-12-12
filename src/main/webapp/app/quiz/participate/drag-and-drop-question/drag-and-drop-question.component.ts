@@ -13,7 +13,8 @@ polyfill({
     dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride
 });
 
-// dragenter listener
+// Drag-enter listener for mobile devices
+// tslint:disable-next-line
 (event: any) => {
     event.preventDefault();
 };
@@ -184,8 +185,8 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy {
      * @return {Array} an array of all unassigned drag items
      */
     getUnassignedDragItems() {
-        return this.question.dragItems.filter(function(dragItem) {
-            return !this.mappings.some(function(mapping: DragAndDropMapping) {
+        return this.question.dragItems.filter(dragItem => {
+            return !this.mappings.some(mapping => {
                 return this.dragAndDropQuestionUtil.isSameDragItem(mapping.dragItem, dragItem);
             }, this);
         }, this);

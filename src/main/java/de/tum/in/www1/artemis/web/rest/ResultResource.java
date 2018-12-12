@@ -250,6 +250,7 @@ public class ResultResource {
         long start = System.currentTimeMillis();
         log.debug("REST request to get Results for Exercise : {}", exerciseId);
 
+        //TODO: why do we even have this call, when we load all participations below anyway?
         Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
         Course course = exercise.getCourse();
         if (!userHasPermissions(course)) return forbidden();
@@ -296,6 +297,7 @@ public class ResultResource {
         results.forEach(result -> {
             result.getParticipation().setResults(null);
             result.getParticipation().setSubmissions(null);
+            result.getParticipation().setExercise(null);
         });
 
         return ResponseEntity.ok().body(results);
@@ -358,7 +360,7 @@ public class ResultResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     @Transactional
-    public ResponseEntity<List<Feedback>> getResultDetails(@PathVariable Long resultId, @RequestParam(required = false) String username, Authentication authentication) {
+    public ResponseEntity<List<Feedback>> getResultDetails(@PathVariable Long resultId) {
         log.debug("REST request to get Result : {}", resultId);
         Optional<Result> result = resultRepository.findById(resultId);
         if (!result.isPresent()) {
@@ -367,7 +369,6 @@ public class ResultResource {
         Participation participation = result.get().getParticipation();
         Course course = participation.getExercise().getCourse();
         if (!authCheckService.isOwnerOfParticipation(participation)) {
-
             if (!userHasPermissions(course)) return forbidden();
         }
         try {

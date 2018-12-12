@@ -17,7 +17,6 @@ export class ArtemisMarkdown {
      * @param targetObject {object} the object that the result will be saved in. Fields modified are 'text', 'hint' and 'explanation'.
      */
     parseTextHintExplanation(markdownText: string, targetObject: MarkDownElement) {
-        // TODO: what is the proper type?
         // split markdownText into main text, hint and explanation
         const markdownTextParts = markdownText.split(/\[-e]|\[-h]/g);
         targetObject.text = markdownTextParts[0].trim();

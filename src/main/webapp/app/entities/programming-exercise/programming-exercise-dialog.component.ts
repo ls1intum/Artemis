@@ -69,12 +69,12 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
     }
 
     private onSaveError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message);
+        this.jhiAlertService.error(error.headers.get('X-arTeMiSApp-error'));
         this.isSaving = false;
     }
 
     private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message);
+        this.jhiAlertService.error(error.headers.get('X-arTeMiSApp-error'));
     }
 
     trackCourseById(index: number, item: Course) {

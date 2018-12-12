@@ -29,6 +29,7 @@ import * as moment from 'moment';
 const MAX_SIZE_UNIT = 200;
 
 export async function generateDragAndDropQuizExercise(
+    diagramTitle: string,
     layoutedDiagram: LayoutedDiagram,
     interactiveElementIds: Set<string>,
     fontFamily: string,
@@ -50,6 +51,7 @@ export async function generateDragAndDropQuizExercise(
 
     // Generate a drag-and-drop question object
     const dragAndDropQuestion = await generateDragAndDropQuestion(
+        diagramTitle,
         layoutedDiagram,
         interactiveElementIds,
         backgroundImageUploadResponse.path,
@@ -59,7 +61,7 @@ export async function generateDragAndDropQuizExercise(
 
     // Generate a quiz exercise object
     const quizExercise = new QuizExercise();
-    quizExercise.title = '<INSERT QUIZ EXERCISE TITLE HERE>';
+    quizExercise.title = diagramTitle;
     quizExercise.duration = 600;
     quizExercise.isVisibleBeforeStart = false;
     quizExercise.isOpenForPractice = false;
@@ -74,6 +76,7 @@ export async function generateDragAndDropQuizExercise(
 }
 
 async function generateDragAndDropQuestion(
+    diagramTitle: string,
     layoutedDiagram: LayoutedDiagram,
     interactiveElementIds: Set<string>,
     backgroundFilePath: string,
@@ -88,8 +91,8 @@ async function generateDragAndDropQuestion(
     );
 
     const dragAndDropQuestion = new DragAndDropQuestion();
-    dragAndDropQuestion.title = '<INSERT QUESTION TITLE HERE>';
-    dragAndDropQuestion.text = '<INSERT QUESTION TEXT HERE>';
+    dragAndDropQuestion.title = diagramTitle;
+    dragAndDropQuestion.text = 'Fill the empty spaces in the UML diagram by dragging and dropping the elements below the diagram into the correct places.';
     dragAndDropQuestion.scoringType = ScoringType.PROPORTIONAL_WITH_PENALTY; // default value
     dragAndDropQuestion.randomizeOrder = true;
     dragAndDropQuestion.score = 1;
