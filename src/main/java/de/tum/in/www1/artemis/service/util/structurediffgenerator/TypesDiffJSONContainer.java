@@ -24,28 +24,25 @@ public class TypesDiffJSONContainer {
 		JSONArray methodsDiffJSON = generateMethodsDiffJSONElement();
 			
 		JSONObject typesDiffJSON = new JSONObject();
-		
-		if(typesDiffPropertiesJSON.has("name") && typesDiffJSON.has("package")
-			&& typesDiffPropertiesJSON.length() > 2) {
-            typesDiffJSON.put("class", typesDiffPropertiesJSON);
-        }
 
-		if(methodsDiffJSON.length() > 0) {
-			typesDiffJSON.put("methods", methodsDiffJSON);
-		}
+		typesDiffJSON.put("class", typesDiffPropertiesJSON);
+
+        if(methodsDiffJSON.length() > 0) {
+            typesDiffJSON.put("methods", methodsDiffJSON);
+        }
 		
 		return typesDiffJSON;
 	}
 	
 	private JSONObject generateTypesDiffPropertiesJSONElement() {
 		JSONObject typesDiffPropertiesJSONElement = new JSONObject();
-		
+
 		typesDiffPropertiesJSONElement.put("name", typesDiffContainer.getNameDiff());
-		
+
 		typesDiffPropertiesJSONElement.put("package", typesDiffContainer.getPackageNameDiff());
 		
 		String superClassDiffJSONElement = generateSuperClassDiffJSONElement();
-		if(!superClassDiffJSONElement.isEmpty()) {
+		if(superClassDiffJSONElement.length() > 0) {
 			typesDiffPropertiesJSONElement.put("superclass", superClassDiffJSONElement);
 		}
 		

@@ -100,9 +100,9 @@ public class StructureDiffJSONFactory {
 				ClassesDiffJSONContainer currentClassesDiffJSONContainer = new ClassesDiffJSONContainer(currentClassesDiffContainer);		
 				currentTypeDiffJSON = currentClassesDiffJSONContainer.getClassesDiffJSON();
 			}
-			
-			System.out.println("Creating JSON for: " + currentTypeDiffName);
-			structureDiffJSON.put(currentTypeDiffJSON);
+
+            System.out.println("Creating JSON for: " + currentTypeDiffName);
+            structureDiffJSON.put(currentTypeDiffJSON);
 		}
 		
 		return structureDiffJSON;
