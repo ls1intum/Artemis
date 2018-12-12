@@ -136,7 +136,7 @@ public class ShortAnswerQuestion extends Question implements Serializable {
      /**
       * Get all solution items that are mapped to the given spot
       *
-      * @param spot the spot n we want to find the correct solutions for
+      * @param spot the spot  we want to find the correct solutions for
       * @return all solutions that are defined as correct for this spot
       */
      public Set<ShortAnswerSolution> getCorrectSolutionForSpot(ShortAnswerSpot spot) {
@@ -393,4 +393,16 @@ public class ShortAnswerQuestion extends Question implements Serializable {
              "}";
      }
      //TODO Francisco Have a look at DndQuestion.java and MCQuestion.java and implement the required methods, constructors and annotations
+
+     /**
+      * Constructor.
+      *
+      * 1. generate associated ShortAnswerQuestionStatistic implicitly
+      */
+     public ShortAnswerQuestion() {
+         //create associated Statistic implicitly
+         ShortAnswerQuestionStatistic saStatistic = new ShortAnswerQuestionStatistic();
+         setQuestionStatistic(saStatistic);
+         saStatistic.setQuestion(this);
+     }
 }

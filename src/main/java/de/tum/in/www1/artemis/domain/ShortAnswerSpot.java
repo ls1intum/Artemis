@@ -8,7 +8,9 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * A ShortAnswerSpot.
@@ -36,6 +38,30 @@ public class ShortAnswerSpot implements Serializable {
     @ManyToOne
     @JsonIgnore
     private ShortAnswerQuestion question;
+
+    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "spot")
+    @JsonIgnore
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    private Set<ShortAnswerMapping> mappings = new HashSet<>();
+
+    /**
+     * tempID is needed to refer to spots that have not been persisted yet
+     * in the correctMappings of a question (so user can create mappings in the UI before saving new spots)
+     */
+    @Transient
+    // variable name must be different from Getter name,
+    // so that Jackson ignores the @Transient annotation,
+    // but Hibernate still respects it
+    private Long tempIDTransient;
+
+    public Long getTempID() {
+        return tempIDTransient;
+    }
+
+    public void setTempID(Long tempID) {
+        this.tempIDTransient = tempID;
+    }
+
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -85,6 +111,25 @@ public class ShortAnswerSpot implements Serializable {
         this.question = shortAnswerQuestion;
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
+
+
+    public ShortAnswerSpot mappings(Set<ShortAnswerMapping> mappings) {
+        this.mappings = mappings;
+        return this;
+    }
+
+    public ShortAnswerSpot addMappings(ShortAnswerMapping mapping) {
+        this.mappings.add(mapping);
+        mapping.setSpot(this);
+        return this;
+    }
+
+    public ShortAnswerSpot removeMappings(ShortAnswerMapping mapping) {
+        this.mappings.remove(mapping);
+        mapping.setSpot(null);
+        return this;
+    }
+
 
     @Override
     public boolean equals(Object o) {
