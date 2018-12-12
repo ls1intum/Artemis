@@ -258,7 +258,7 @@ entity Submission {                 //abstract
 
 entity ModelingSubmission {         //extends Submission
 	model String,                   //transient --> stored in the file system
-	explanationText String          //LONGTEXT --> clob
+	explanationText String          //LONGTEXT --> lob
 }
 
 entity QuizSubmission {             //extends Submission
@@ -270,7 +270,7 @@ entity ProgrammingSubmission {      //extends Submission
 }
 
 entity TextSubmission {             //extends Submission
-    text String                     //LONGTEXT --> clob
+    text String                     //LONGTEXT --> lob
 }
 
 entity FileUploadSubmission {       //extends Submission
@@ -306,14 +306,14 @@ entity ShortAnswerMapping {
 
 entity ApollonDiagram {
     title String
-    jsonRepresentation String       // LONGTEXT --> clob
+    jsonRepresentation String       // LONGTEXT --> lob
 }
 
 entity Complaint {
     complaintText String,
     accepted Boolean,
     submittedTime ZonedDateTime,
-    resultBeforeComplaint Text
+    resultBeforeComplaint String    // LONGTEXT --> lob
 }
 
 entity ComplaintResponse {
