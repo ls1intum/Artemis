@@ -29,10 +29,18 @@ export class SortByPipe implements PipeTransform {
             const keys = predicate.split('.');
             for (const tempKey of keys) {
                 if (tempA !== null) {
-                    tempA = tempA[tempKey];
+                    if (tempA instanceof Map) {
+                        tempA = tempA.get(tempKey);
+                    } else {
+                        tempA = tempA[tempKey];
+                    }
                 }
                 if (tempB !== null) {
-                    tempB = tempB[tempKey];
+                    if (tempB instanceof Map) {
+                        tempB = tempB.get(tempKey);
+                    } else {
+                        tempB = tempB[tempKey];
+                    }
                 }
             }
             const result = (tempA < tempB) ? -1 : (tempA > tempB) ? 1 : (tempA == null && tempB !== null ? -1 : (tempA !== null && tempB == null ? 1 : (
