@@ -29,4 +29,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      */
     @Query("SELECT e FROM Exercise e WHERE e.course.id =  :#{#courseId} AND ((NOT EXISTS(SELECT l from LtiOutcomeUrl l WHERE e = l.exercise)) OR EXISTS (SELECT l2 from LtiOutcomeUrl l2 WHERE e = l2.exercise AND l2.user.login = :#{#principal.name})) ")
     List<Exercise> findByCourseIdWhereLtiOutcomeUrlExists(@Param("courseId") Long courseId, @Param("principal") Principal principal);
+
+    @Query("select e FROM Exercise e WHERE e.course.id =  :#{#courseId}")
+    List<Exercise> findAllByCourseId(@Param("courseId") Long courseId);
 }

@@ -10,7 +10,7 @@ export const enum DifficultyLevel {
 }
 
 // IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Exercise.java
-export const enum ExerciseType {
+export enum ExerciseType {
     PROGRAMMING = 'programming',
     MODELING = 'modeling',
     QUIZ = 'quiz',
@@ -51,6 +51,9 @@ export abstract class Exercise implements BaseEntity {
     // helper attributes
     public isAtLeastTutor: boolean;
     public loading: boolean;
+    public numberOfParticipationsWithRatedResult: number;
+    public numberOfSuccessfulParticipations: number;
+    public averagePoints: number;
 
     protected constructor(type: ExerciseType) {
         this.type = type;
