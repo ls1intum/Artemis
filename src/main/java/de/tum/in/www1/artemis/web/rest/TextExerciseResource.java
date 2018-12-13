@@ -4,13 +4,11 @@ import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.CourseService;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -38,6 +36,7 @@ public class TextExerciseResource {
 
     private static final String ENTITY_NAME = "textExercise";
 
+    private final TextAssessmentService textAssessmentService;
     private final TextExerciseRepository textExerciseRepository;
     private final UserService userService;
     private final CourseService courseService;
@@ -46,11 +45,13 @@ public class TextExerciseResource {
     private final ResultRepository resultRepository;
 
     public TextExerciseResource(TextExerciseRepository textExerciseRepository,
+                                TextAssessmentService textAssessmentService,
                                 UserService userService,
                                 AuthorizationCheckService authCheckService,
                                 CourseService courseService,
                                 ParticipationService participationService,
                                 ResultRepository resultRepository) {
+        this.textAssessmentService = textAssessmentService;
         this.textExerciseRepository = textExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
@@ -238,19 +239,11 @@ public class TextExerciseResource {
             // set reference to participation to null, since we are already inside a participation
             textSubmission.setParticipation(null);
 
-            // TODO: implement result
-//            Result result = textSubmission.getResult();
-//            if (textSubmission.isSubmitted() && result != null && result.isRated()) {
-//                // find assessments if textSubmission is submitted and result is rated
-//                String assessment = textAssessmentService.findLatestAssessment(textExercise.getId(), participation.getStudent().getId(), textSubmission.getId());
-//                if (assessment != null && assessment != "") {
-//                    try {
-//                        data.set("assessments", objectMapper.readTree(assessment));
-//                    } catch (IOException e) {
-//                        log.error("Error while reading assessment JSON: {}", e.getMessage());
-//                    }
-//                }
-//            }
+            Result result = textSubmission.getResult();
+            if (textSubmission.isSubmitted() && result != null && result.getCompletionDate() != null) {
+                List<Feedback> assessments = textAssessmentService.getAssessmentsForResult(result);
+                result.setFeedbacks(assessments);
+            }
 
             participation.addSubmissions(textSubmission);
         }
