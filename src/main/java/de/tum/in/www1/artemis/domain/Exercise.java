@@ -334,27 +334,6 @@ public abstract class Exercise implements Serializable {
     }
 
     /**
-     * Get the latest relevant result from the given participation (independent of rated and completion date)
-     *
-     * @param participation the participation whose results we are considering
-     * @return the latest relevant result in the given participation, or null, if none exist
-     */
-    public Result findLatestResult(Participation participation) {
-        Result latestResult = null;
-        for (Result result : participation.getResults()) {
-            //take the first found result
-            if (latestResult == null) {
-                latestResult = result;
-            }
-            //take newer results
-            else if (latestResult.getCompletionDate().isBefore(result.getCompletionDate())) {
-                latestResult = result;
-            }
-        }
-        return latestResult;
-    }
-
-    /**
      * Find the participation in participations that belongs to the given exercise
      * that includes the exercise data, plus the found participation with its most recent relevant result.
      * Filter everything else that is not relevant
@@ -383,7 +362,7 @@ public abstract class Exercise implements Serializable {
         if (participation != null) {
 
             // only transmit the relevant result
-            Result result = findLatestRatedResultWithCompletionDate(participation);
+            Result result = participation.getExercise().findLatestRatedResultWithCompletionDate(participation);
             Set<Result> results = result != null ? Sets.newHashSet(result) : Sets.newHashSet();
 
             // add results to json
