@@ -90,6 +90,11 @@ public abstract class Exercise implements Serializable {
     @JsonView(QuizView.Before.class)
     private Course course;
 
+    @OneToMany(mappedBy = "exercise")
+    @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+    @JsonIgnoreProperties("exercise")
+    private Set<ExampleSubmission> exampleSubmissions = new HashSet<>();
+
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
         return id;
@@ -250,14 +255,39 @@ public abstract class Exercise implements Serializable {
         this.course = course;
     }
 
+    public Set<ExampleSubmission> getExampleSubmissions() {
+        return exampleSubmissions;
+    }
+
+    public Exercise exampleSubmissions(Set<ExampleSubmission> exampleSubmissions) {
+        this.exampleSubmissions = exampleSubmissions;
+        return this;
+    }
+
+    public Exercise addExampleSubmission(ExampleSubmission exampleSubmission) {
+        this.exampleSubmissions.add(exampleSubmission);
+        exampleSubmission.setExercise(this);
+        return this;
+    }
+
+    public Exercise removeExampleSubmission(ExampleSubmission exampleSubmission) {
+        this.exampleSubmissions.remove(exampleSubmission);
+        exampleSubmission.setExercise(null);
+        return this;
+    }
+
+    public void setExampleSubmissions(Set<ExampleSubmission> exampleSubmissions) {
+        this.exampleSubmissions = exampleSubmissions;
+    }
+
+    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
+
     public Boolean isEnded() {
         if (getDueDate() == null) {
             return false;
         }
         return ZonedDateTime.now().isAfter(getDueDate());
     }
-
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     /**
      * check if students are allowed to see this exercise

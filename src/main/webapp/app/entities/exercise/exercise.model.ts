@@ -2,6 +2,7 @@ import { BaseEntity } from 'app/shared';
 import { Course } from '../course';
 import { Participation } from '../participation';
 import { Moment } from 'moment';
+import { ExampleSubmission } from '../example-submission';
 
 export const enum DifficultyLevel {
     EASY = 'EASY',
@@ -43,10 +44,13 @@ export abstract class Exercise implements BaseEntity {
     public maxScore: number;
     public difficulty: DifficultyLevel;
     public categories: string[];
+    public type: ExerciseType;
+
     public participations: Participation[];
     public course: Course;
     public participationStatus: ParticipationStatus;
-    public type: ExerciseType;
+
+    public exampleSubmissions: ExampleSubmission[];
 
     // helper attributes
     public isAtLeastTutor: boolean;

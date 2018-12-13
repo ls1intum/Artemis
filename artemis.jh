@@ -47,7 +47,8 @@ entity Course (course) {
     instructorGroupName String,
     startDate ZonedDateTime,
     endDate ZonedDateTime,
-    onlineCourse Boolean
+    onlineCourse Boolean,
+    maxComplaints Integer
 }
 
 entity Exercise (exercise) {        //abstract
@@ -59,7 +60,7 @@ entity Exercise (exercise) {        //abstract
     dueDate ZonedDateTime,
     assessmentDueDate ZonedDateTime,
     maxScore Double,
-    difficulty DifficultyLevel
+    difficulty DifficultyLevel,
     categories String               //List<String>, similar to User --> groups
 }
 
@@ -355,7 +356,7 @@ relationship OneToMany {
     ShortAnswerQuestion{correctMappings} to ShortAnswerMapping{question}
     ShortAnswerSubmittedAnswer{submittedTexts} to ShortAnswerSubmittedText{submittedAnswer},
     TutorParticipation{trainedExampleSubmissions} to ExampleSubmission,
-    ExampleSubmission{exercise} to Exercise{exampleSubmissions}
+    Exercise{exampleSubmissions} to ExampleSubmission{exercise}
 }
 
 relationship OneToOne {
@@ -374,7 +375,6 @@ relationship OneToOne {
     ComplaintResponse{reviewer} to User,
     TutorParticipation{assessedExercise} to Exercise,
     TutorParticipation{tutor} to User,
-    ExampleSubmission{exercise} to Exercise,
     ExampleSubmission{submission} to Submission
 }
 
