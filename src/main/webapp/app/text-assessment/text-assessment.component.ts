@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { TextExercise } from 'app/entities/text-exercise';
 import { TextSubmission } from 'app/entities/text-submission';
 import { HighlightColors } from '../text-shared/highlight-colors';
@@ -15,7 +15,7 @@ import { Participation } from 'app/entities/participation';
     templateUrl: './text-assessment.component.html',
     styles: []
 })
-export class TextAssessmentComponent implements OnInit {
+export class TextAssessmentComponent implements OnInit, OnDestroy {
     text: string;
     participation: Participation;
     submission: TextSubmission;
@@ -28,10 +28,12 @@ export class TextAssessmentComponent implements OnInit {
     isAuthorized = true;
     accountId = 0;
     busy = true;
+    showResult = true;
 
     public getColorForIndex = HighlightColors.forIndex;
 
     constructor(
+        private changeDetectorRef: ChangeDetectorRef,
         private jhiAlertService: JhiAlertService,
         private modalService: NgbModal,
         private router: Router,
@@ -55,7 +57,12 @@ export class TextAssessmentComponent implements OnInit {
             this.result = this.participation.results[0];
             this.assessments = this.result.feedbacks || [];
             this.busy = false;
+            this.checkScoreBoundaries();
         });
+    }
+
+    public ngOnDestroy(): void {
+        this.changeDetectorRef.detach();
     }
 
     public addAssessment(assessmentText: string): void {
@@ -80,6 +87,7 @@ export class TextAssessmentComponent implements OnInit {
 
         this.assessmentsService.save(this.assessments, this.exercise.id, this.result.id).subscribe(response => {
             this.result = response.body;
+            this.updateParticipationWithResult();
             this.jhiAlertService.success('arTeMiSApp.textAssessment.saveSuccessful');
         });
     }
@@ -93,8 +101,17 @@ export class TextAssessmentComponent implements OnInit {
 
         this.assessmentsService.submit(this.assessments, this.exercise.id, this.result.id).subscribe(response => {
             this.result = response.body;
+            this.updateParticipationWithResult();
             this.jhiAlertService.success('arTeMiSApp.textAssessment.submitSuccessful');
         });
+    }
+
+    private updateParticipationWithResult(): void {
+        this.showResult = false;
+        this.changeDetectorRef.detectChanges();
+        this.participation.results[0] = this.result;
+        this.showResult = true;
+        this.changeDetectorRef.detectChanges();
     }
 
     public previous(): void {
