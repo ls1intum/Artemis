@@ -11,6 +11,7 @@ import { TextExercise } from 'app/entities/text-exercise/text-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise/modeling-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise/file-upload-exercise.model';
+import { Exercise } from 'app/entities/exercise';
 
 @Component({
     selector: 'jhi-course-overview',
@@ -49,57 +50,67 @@ export class CourseExercisesOverviewComponent {
     loadForCourse(courseId: number) {
         this.courseService.find(this.courseId).subscribe(courseResponse => {
             this.course = courseResponse.body;
-            this.quizExerciseService.findForCourse(courseId).subscribe(
-                (res: HttpResponse<QuizExercise[]>) => {
-                    this.quizExercises = res.body;
-                    // reconnect exercise with course
-                    this.quizExercises.forEach(quizExercise => {
-                        quizExercise.course = this.course;
-                    });
-                },
-                (res: HttpErrorResponse) => this.onError(res)
-            );
-            this.courseExerciseService.findAllTextExercisesForCourse(this.courseId).subscribe(
-                (res: HttpResponse<TextExercise[]>) => {
-                    this.textExercises = res.body;
-                    // reconnect exercise with course
-                    this.textExercises.forEach(textExercise => {
-                        textExercise.course = this.course;
-                    });
-                },
-                (res: HttpErrorResponse) => this.onError(res)
-            );
-            this.courseExerciseService.findAllProgrammingExercisesForCourse(this.courseId).subscribe(
-                (res: HttpResponse<ProgrammingExercise[]>) => {
-                    this.programmingExercises = res.body;
-                    // reconnect exercise with course
-                    this.programmingExercises.forEach(programmingExercise => {
-                        programmingExercise.course = this.course;
-                    });
-                },
-                (res: HttpErrorResponse) => this.onError(res)
-            );
-            this.courseExerciseService.findAllModelingExercisesForCourse(this.courseId).subscribe(
-                (res: HttpResponse<ModelingExercise[]>) => {
-                    this.modelingExercises = res.body;
-                    // reconnect exercise with course
-                    this.modelingExercises.forEach(modelingExercise => {
-                        modelingExercise.course = this.course;
-                    });
-                },
-                (res: HttpErrorResponse) => this.onError(res)
-            );
-            this.courseExerciseService.findAllFileUploadExercisesForCourse(this.courseId).subscribe(
-                (res: HttpResponse<FileUploadExercise[]>) => {
-                    this.fileUploadExercises = res.body;
-                    // reconnect exercise with course
-                    this.fileUploadExercises.forEach(fileUploadExercise => {
-                        fileUploadExercise.course = this.course;
-                    });
-                },
-                (res: HttpErrorResponse) => this.onError(res)
-            );
+            this.quizExerciseService
+                .findForCourse(courseId)
+                .map(this.setCourseOnExercises)
+                .subscribe(
+                    (res: HttpResponse<QuizExercise[]>) => (this.quizExercises = res.body),
+                    (res: HttpErrorResponse) => this.onError(res)
+                );
+            this.courseExerciseService
+                .findAllTextExercisesForCourse(this.courseId)
+                .map(this.setCourseOnExercises)
+                .subscribe(
+                    (res: HttpResponse<TextExercise[]>) => {
+                        this.textExercises = res.body;
+                        // reconnect exercise with course
+                        this.textExercises.forEach(textExercise => {
+                            textExercise.course = this.course;
+                        });
+                    },
+                    (res: HttpErrorResponse) => this.onError(res)
+                );
+            this.courseExerciseService
+                .findAllProgrammingExercisesForCourse(this.courseId)
+                .map(this.setCourseOnExercises)
+                .subscribe(
+                    (res: HttpResponse<ProgrammingExercise[]>) => {
+                        this.programmingExercises = res.body;
+                        // reconnect exercise with course
+                        this.programmingExercises.forEach(programmingExercise => {
+                            programmingExercise.course = this.course;
+                        });
+                    },
+                    (res: HttpErrorResponse) => this.onError(res)
+                );
+            this.courseExerciseService
+                .findAllModelingExercisesForCourse(this.courseId)
+                .map(this.setCourseOnExercises)
+                .subscribe(
+                    (res: HttpResponse<ModelingExercise[]>) => (this.modelingExercises = res.body),
+                    (res: HttpErrorResponse) => this.onError(res)
+                );
+            this.courseExerciseService
+                .findAllFileUploadExercisesForCourse(this.courseId)
+                .map(this.setCourseOnExercises)
+                .subscribe(
+                    (res: HttpResponse<FileUploadExercise[]>) => {
+                        this.fileUploadExercises = res.body;
+                        // reconnect exercise with course
+                        this.fileUploadExercises.forEach(fileUploadExercise => {
+                            fileUploadExercise.course = this.course;
+                        });
+                    },
+                    (res: HttpErrorResponse) => this.onError(res)
+                );
         });
+    }
+
+    private setCourseOnExercises(res: HttpResponse<Exercise[]>): HttpResponse<Exercise[]> {
+        res.body.forEach(exercise => {
+            exercise.course = this.course;
+        });
+        return res;
     }
 
     private onError(error: HttpErrorResponse) {

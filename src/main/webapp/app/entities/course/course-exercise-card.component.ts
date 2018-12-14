@@ -7,5 +7,6 @@ import { Component, Input } from '@angular/core';
 })
 export class CourseExerciseCardComponent {
     @Input() headingJhiTranslate: string;
+    @Input() exerciseRouterLink: string[];
     isCollapsed = false;
 }
