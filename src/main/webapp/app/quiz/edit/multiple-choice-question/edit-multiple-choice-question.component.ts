@@ -59,7 +59,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, A
 
     ngAfterViewInit(): void {
         /** Setup editor **/
-        requestAnimationFrame(this.setupQuestionEditor.bind(this));
+        // requestAnimationFrame(this.setupQuestionEditor.bind(this));
     }
 
     /**
