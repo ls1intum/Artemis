@@ -225,6 +225,8 @@ enum AssessmentType {
 entity Feedback(feedback) {
 	text String,
 	detailText String,
+	reference String,
+	credits Double,
 	positive Boolean,
 	type FeedbackType
 }

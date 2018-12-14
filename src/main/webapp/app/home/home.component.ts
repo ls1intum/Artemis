@@ -38,7 +38,9 @@ export class HomeComponent implements OnInit {
 
     currentUserCallback(account: User) {
         this.account = account;
-        this.router.navigate(['courses']);
+        if (account) {
+            this.router.navigate(['courses']);
+        }
     }
 
     isAuthenticated() {

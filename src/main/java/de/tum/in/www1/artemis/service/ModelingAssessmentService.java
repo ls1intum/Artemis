@@ -20,7 +20,7 @@ import java.text.DecimalFormat;
 import java.time.ZonedDateTime;
 
 @Service
-public class ModelingAssessmentService {
+public class ModelingAssessmentService extends AssessmentService {
     private final Logger log = LoggerFactory.getLogger(ModelingAssessmentService.class);
 
     private final JsonAssessmentRepository jsonAssessmentRepository;
@@ -34,6 +34,8 @@ public class ModelingAssessmentService {
                                      UserService userService,
                                      ModelingExerciseService modelingExerciseService,
                                      ModelingSubmissionRepository modelingSubmissionRepository) {
+        super(resultRepository);
+
         this.jsonAssessmentRepository = jsonAssessmentRepository;
         this.resultRepository = resultRepository;
         this.userService = userService;
@@ -79,26 +81,15 @@ public class ModelingAssessmentService {
     public Result submitManualAssessment(Long resultId, Long exerciseId, String modelingAssessment) {
         Result result = saveManualAssessment(resultId, exerciseId, modelingAssessment);
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        Boolean rated = modelingExercise.getDueDate() == null || result.getSubmission().getSubmissionDate().isBefore(modelingExercise.getDueDate());
-        result.setRated(rated);
-        result.setCompletionDate(ZonedDateTime.now());
 
         Long studentId = result.getParticipation().getStudent().getId();
         Long submissionId = result.getSubmission().getId();
-
         // set score, result string and successful if rated
         // TODO: is it really necessary to read the assessment? It should be the same as 'modelingAssessment'
         JsonObject assessmentJson = jsonAssessmentRepository.readAssessment(exerciseId, studentId, submissionId, true);
-        Double maxScore = modelingExercise.getMaxScore();
-        Double totalScore = Math.min(Math.max(0, calculateTotalScore(assessmentJson)), maxScore);
-        Double percentageScore = totalScore/maxScore * 100;
-        result.setScore(Math.round(percentageScore));
-        DecimalFormat formatter = new DecimalFormat("#.##"); // limit decimal places to 2
-        result.setResultString(formatter.format(totalScore) + " of " + formatter.format(modelingExercise.getMaxScore()) + " points");
-        result.setSuccessful(result.getScore() == 100L);
+        Double calculatedScore = calculateTotalScore(assessmentJson);
 
-        resultRepository.save(result);
-        return result;
+        return prepareSubmission(result, modelingExercise, calculatedScore);
     }
 
 
@@ -140,7 +131,7 @@ public class ModelingAssessmentService {
      * @param assessmentJson    the assessments as JsonObject
      * @return the total score
      */
-    public Double calculateTotalScore(JsonObject assessmentJson) {
+    private Double calculateTotalScore(JsonObject assessmentJson) {
         Double totalScore = 0.0;
         JsonArray assessments = assessmentJson.get("assessments").getAsJsonArray();
         for (JsonElement assessment : assessments) {

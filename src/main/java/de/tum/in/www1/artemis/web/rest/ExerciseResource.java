@@ -73,31 +73,6 @@ public class ExerciseResource {
     }
 
     /**
-     * GET  /exercises : get all the exercises.
-     *
-     * @param pageable the pagination information
-     * @return the ResponseEntity with status 200 (OK) and the list of exercises in body
-     */
-    @GetMapping("/exercises")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
-    public ResponseEntity<List<Exercise>> getAllExercises(Pageable pageable) {
-        log.debug("REST request to get a page of Exercises");
-        Page<Exercise> page = exerciseRepository.findAll(pageable);
-        User user = userService.getUserWithGroupsAndAuthorities();
-        Stream<Exercise> authorizedExercises = page.getContent().stream().filter(
-            exercise -> {
-                Course course = exercise.getCourse();
-                return authCheckService.isTeachingAssistantInCourse(course, user) ||
-                    authCheckService.isInstructorInCourse(course, user) ||
-                    authCheckService.isAdmin();
-            }
-        );
-        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/exercises");
-        return new ResponseEntity<>(authorizedExercises.collect(Collectors.toList()), headers, HttpStatus.OK);
-    }
-
-    /**
      * GET /courses/:courseId/exercises : get all exercises for the given course
      *
      * @param courseId the course for which to retrieve all exercises
@@ -106,7 +81,7 @@ public class ExerciseResource {
     @GetMapping(value = "/courses/{courseId}/exercises")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
-    public ResponseEntity<Collection<Exercise>> getExercisesForCourse(@PathVariable Long courseId, @RequestParam(defaultValue = "false") boolean withLtiOutcomeUrlExisting, Principal principal) {
+    public ResponseEntity<Collection<Exercise>> getExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get Exercises for Course : {}", courseId);
 
         Course course = courseService.findOne(courseId);
@@ -118,10 +93,11 @@ public class ExerciseResource {
             return forbidden();
         }
 
-        List<Exercise> result = exerciseService.findAllForCourse(course, withLtiOutcomeUrlExisting, principal, user);
+        List<Exercise> result = exerciseService.findAllExercisesByCourseId(course, user);
 
         return ResponseEntity.ok(result);
     }
+
 
     /**
      * GET  /exercises/:id : get the "id" exercise.
