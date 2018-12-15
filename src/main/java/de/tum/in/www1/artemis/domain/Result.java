@@ -99,6 +99,12 @@ public class Result implements Serializable {
     @JsonView(QuizView.After.class)
     private AssessmentType assessmentType;
 
+    @Column(name = "has_complaint")
+    private Boolean hasComplaint;
+
+    @Column(name = "example_result")
+    private Boolean exampleResult;
+
     @Transient
     @JsonProperty
     private String assessments;
@@ -310,6 +316,33 @@ public class Result implements Serializable {
     public void setAssessmentType(AssessmentType assessmentType) {
         this.assessmentType = assessmentType;
     }
+
+    public Boolean hasComplaint() {
+        return hasComplaint;
+    }
+
+    public Result hasComplaint(Boolean hasComplaint) {
+        this.hasComplaint = hasComplaint;
+        return this;
+    }
+
+    public void setHasComplaint(Boolean hasComplaint) {
+        this.hasComplaint = hasComplaint;
+    }
+
+    public Boolean isExampleResult() {
+        return exampleResult;
+    }
+
+    public Result exampleResult(Boolean exampleResult) {
+        this.exampleResult = exampleResult;
+        return this;
+    }
+
+    public void setExampleResult(Boolean exampleResult) {
+        this.exampleResult = exampleResult;
+    }
+
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     /**
