@@ -5,16 +5,15 @@ import { JhiWebsocketService, Principal } from '../../core';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizPointStatistic } from '../../entities/quiz-point-statistic';
 import { ChartOptions } from 'chart.js';
-import { QuizStatisticUtil } from '../../components/util/quiz-statistic-util.service';
 import { QuestionType } from '../../entities/question';
 import { createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
 import { Subscription } from 'rxjs/Subscription';
 import { PointCounter } from 'app/entities/point-counter';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-quiz-point-statistic',
-    templateUrl: './quiz-point-statistic.component.html',
-    providers: [QuizStatisticUtil]
+    templateUrl: './quiz-point-statistic.component.html'
 })
 export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
     // make constants available to html for comparison
@@ -40,10 +39,19 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
     rated = true;
     participants: number;
     websocketChannelForData: string;
-    websocketChannelForReleaseState: string;
+    quizExerciseChannel: string;
 
     // options for chart.js style
     options: ChartOptions;
+
+    // timer
+    waitingForQuizStart = false;
+    remainingTimeText = '?';
+    remainingTimeSeconds = 0;
+    interval: any;
+    disconnected = true;
+    onConnected: () => void;
+    onDisconnected: () => void;
 
     constructor(
         private route: ActivatedRoute,
@@ -52,7 +60,6 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
         private translateService: TranslateService,
         private quizExerciseService: QuizExerciseService,
         private jhiWebsocketService: JhiWebsocketService,
-        private quizStatisticUtil: QuizStatisticUtil
     ) {
         this.options = createOptions(this);
     }
@@ -74,21 +81,38 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
             this.websocketChannelForData = '/topic/statistic/' + params['quizId'];
             this.jhiWebsocketService.subscribe(this.websocketChannelForData);
 
-            // subscribe websocket which notifies the user if the release status was changed
-            this.websocketChannelForReleaseState = this.websocketChannelForData + '/release';
-            this.jhiWebsocketService.subscribe(this.websocketChannelForReleaseState);
+            if (!this.quizExerciseChannel) {
+                this.quizExerciseChannel = '/topic/quizExercise/' + params['quizId'];
+
+                // quizExercise channel => react to changes made to quizExercise (e.g. start date)
+                this.jhiWebsocketService.subscribe(this.quizExerciseChannel);
+                this.jhiWebsocketService.receive(this.quizExerciseChannel).subscribe(
+                    quiz => {
+                        if (this.waitingForQuizStart) {
+                            this.loadQuizSuccess(quiz);
+                        }
+                    },
+                    error => {}
+                );
+            }
 
             // ask for new Data if the websocket for new statistical data was notified
             this.jhiWebsocketService.receive(this.websocketChannelForData).subscribe(quiz => {
                 this.loadNewData(quiz.quizPointStatistic);
             });
-            // refresh release information
-            this.jhiWebsocketService.receive(this.websocketChannelForReleaseState).subscribe(payload => {
-                this.quizExercise.quizPointStatistic.released = payload;
-                // send students back to courses if the statistic was revoked
-                if (!this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']) && !payload) {
-                    this.router.navigate(['/courses']);
-                }
+
+            // listen to connect / disconnect events
+            this.onConnected = () => {
+                this.disconnected = false;
+            };
+            this.jhiWebsocketService.bind('connect', () => {
+                this.onConnected();
+            });
+            this.onDisconnected = () => {
+                this.disconnected = true;
+            };
+            this.jhiWebsocketService.bind('disconnect', () => {
+                this.onDisconnected();
             });
 
             // add Axes-labels based on selected language
@@ -99,11 +123,61 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
                 this.options.scales.yAxes[0].scaleLabel.labelString = yLabel;
             });
         });
+
+        // update displayed times in UI regularly
+        this.interval = setInterval(() => {
+            this.updateDisplayedTimes();
+        }, 200);
+    }
+
+    /**
+     * updates all displayed (relative) times in the UI
+     */
+    updateDisplayedTimes() {
+        // update remaining time
+        if (this.quizExercise && this.quizExercise.adjustedDueDate) {
+            const endDate = this.quizExercise.adjustedDueDate;
+            if (endDate.isAfter(moment())) {
+                // quiz is still running => calculate remaining seconds and generate text based on that
+                this.remainingTimeSeconds = endDate.diff(moment(), 'seconds');
+                this.remainingTimeText = this.relativeTimeText(this.remainingTimeSeconds);
+            } else {
+                // quiz is over => set remaining seconds to negative, to deactivate 'Submit' button
+                this.remainingTimeSeconds = -1;
+                this.remainingTimeText = 'Quiz has ended!';
+            }
+        } else {
+            // remaining time is unknown => Set remaining seconds to 0, to keep 'Submit' button enabled
+            this.remainingTimeSeconds = 0;
+            this.remainingTimeText = '?';
+        }
+    }
+
+    /**
+     * Express the given timespan as humanized text
+     *
+     * @param remainingTimeSeconds {number} the amount of seconds to display
+     * @return {string} humanized text for the given amount of seconds
+     */
+    relativeTimeText(remainingTimeSeconds: number) {
+        if (remainingTimeSeconds > 210) {
+            return Math.ceil(remainingTimeSeconds / 60) + ' min';
+        } else if (remainingTimeSeconds > 59) {
+            return Math.floor(remainingTimeSeconds / 60) + ' min ' + (remainingTimeSeconds % 60) + ' s';
+        } else {
+            return remainingTimeSeconds + ' s';
+        }
     }
 
     ngOnDestroy() {
+        clearInterval(this.interval);
         this.jhiWebsocketService.unsubscribe(this.websocketChannelForData);
-        this.jhiWebsocketService.unsubscribe(this.websocketChannelForReleaseState);
+        if (this.onConnected) {
+            this.jhiWebsocketService.unbind('connect', this.onConnected);
+        }
+        if (this.onDisconnected) {
+            this.jhiWebsocketService.unbind('disconnect', this.onDisconnected);
+        }
     }
 
     getDataSets() {
@@ -121,9 +195,9 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
      *                                          from the server with the new Data.
      */
     loadNewData(statistic: QuizPointStatistic) {
-        // if the Student finds a way to the Website, while the Statistic is not released
+        // if the Student finds a way to the Website
         //      -> the Student will be send back to Courses
-        if (!this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']) && !statistic.released) {
+        if (!this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
             this.router.navigate(['courses']);
         }
         this.quizPointStatistic = statistic;
@@ -133,19 +207,18 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
     /**
      * This functions loads the Quiz, which is necessary to build the Web-Template
      *
-     * @param {QuizExercise} quiz: the quizExercise,
+     * @param {QuizExercise} quizExercise: the quizExercise,
      *                              which the this quiz-point-statistic presents.
      */
-    loadQuizSuccess(quiz: QuizExercise) {
-        // if the Student finds a way to the Website, while the Statistic is not released
+    loadQuizSuccess(quizExercise: QuizExercise) {
+        // if the Student finds a way to the Website
         //      -> the Student will be send back to Courses
-        if (
-            !this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']) &&
-            quiz.quizPointStatistic.released === false
-        ) {
+        if (!this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
             this.router.navigate(['courses']);
         }
-        this.quizExercise = quiz;
+        this.quizExercise = quizExercise;
+        this.quizExercise.adjustedDueDate = moment().add(this.quizExercise.remainingTime, 'seconds');
+        this.waitingForQuizStart = !this.quizExercise.started;
         this.quizPointStatistic = this.quizExercise.quizPointStatistic;
         this.maxScore = this.calculateMaxScore();
 
@@ -263,26 +336,5 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
                 this.router.navigateByUrl('/quiz/' + this.quizExercise.id + 'drag-and-drop-question-statistic/' + previousQuestion.id);
             }
         }
-    }
-
-    /**
-     * release of revoke all statistics of the quizExercise
-     *
-     * @param {boolean} released: true to release, false to revoke
-     */
-    releaseStatistics(released: boolean) {
-        if (released) {
-            this.quizExerciseService.releaseStatistics(this.quizExercise.id);
-        } else {
-            this.quizExerciseService.revokeStatistics(this.quizExercise.id);
-        }
-    }
-
-    /**
-     * check if it's allowed to release the Statistic (allowed if the quiz is finished)
-     * @returns {boolean} true if it's allowed, false if not
-     */
-    releaseButtonDisabled() {
-        this.quizStatisticUtil.releaseButtonDisabled(this.quizExercise);
     }
 }

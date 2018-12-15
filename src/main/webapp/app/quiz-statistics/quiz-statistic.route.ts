@@ -6,7 +6,7 @@ import { QuizPointStatisticComponent } from './quiz-point-statistic/quiz-point-s
 import { MultipleChoiceQuestionStatisticComponent } from './multiple-choice-question-statistic/multiple-choice-question-statistic.component';
 import { DragAndDropQuestionStatisticComponent } from './drag-and-drop-question-statistic/drag-and-drop-question-statistic.component';
 
-export const statisticRoute: Routes = [
+export const quizStatisticRoute: Routes = [
     {
         path: 'quiz/:quizId/quiz-statistic',
         component: QuizStatisticComponent,

@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
 import { ArTEMiSSharedModule } from '../shared';
-import { statisticRoute } from './statistic.route';
+import { quizStatisticRoute } from './quiz-statistic.route';
 import { HomeComponent } from '../home';
 import { JhiMainComponent } from '../layouts';
 import { QuizStatisticComponent } from './quiz-statistic/quiz-statistic.component';
@@ -14,7 +14,7 @@ import { DragAndDropQuestionStatisticComponent } from './drag-and-drop-question-
 import { ArTEMiSQuizModule } from '../quiz/participate/quiz.module';
 
 const ENTITY_STATES = [
-    ...statisticRoute
+    ...quizStatisticRoute
 ];
 
 @NgModule({
