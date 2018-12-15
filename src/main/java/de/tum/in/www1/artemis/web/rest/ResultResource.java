@@ -116,6 +116,7 @@ public class ResultResource {
      */
     @PostMapping(value = "/results/{planKey}")
     @Transactional
+    @Timed
     public ResponseEntity<?> notifyResult(@PathVariable("planKey") String planKey) {
         if (planKey.toLowerCase().endsWith("base") || planKey.toLowerCase().endsWith("solution")) {
             //TODO: can we do this check more precise and compare it with the saved values from the exercises?
