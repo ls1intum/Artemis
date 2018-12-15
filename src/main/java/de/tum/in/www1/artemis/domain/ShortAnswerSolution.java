@@ -146,6 +146,9 @@ public class ShortAnswerSolution implements Serializable {
             return false;
         }
         ShortAnswerSolution shortAnswerSolution = (ShortAnswerSolution) o;
+        if (shortAnswerSolution.getTempID() != null && getTempID() != null && Objects.equals(getTempID(), shortAnswerSolution.getTempID())) {
+            return true;
+        }
         if (shortAnswerSolution.getId() == null || getId() == null) {
             return false;
         }

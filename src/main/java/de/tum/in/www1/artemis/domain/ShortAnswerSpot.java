@@ -140,6 +140,9 @@ public class ShortAnswerSpot implements Serializable {
             return false;
         }
         ShortAnswerSpot shortAnswerSpot = (ShortAnswerSpot) o;
+        if (shortAnswerSpot.getTempID() != null && getTempID() != null && Objects.equals(getTempID(), shortAnswerSpot.getTempID())) {
+            return true;
+        }
         if (shortAnswerSpot.getId() == null || getId() == null) {
             return false;
         }

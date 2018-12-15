@@ -138,6 +138,8 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @desc Set up Question text editor
      */
     setupQuestionEditor(): void {
+        this.numberOfSpot = this.question.spots.length + 1;
+
         // Default editor settings for inline markup editor
         this.questionEditor.setTheme('chrome');
         this.questionEditor.getEditor().renderer.setShowGutter(false);
@@ -174,8 +176,10 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     generateMarkdown(): string {
         const markdownText =
             this.artemisMarkdown.generateTextHintExplanation(this.question) +
-            '\n\n' +
-            this.question.solutions.map(solution => this.artemisMarkdown.generateTextHintExplanation(solution)).join('\n');
+            '\n\n\n' +
+            this.question.solutions
+                .map((solution, index) => '[-option ' + (+index + 1) + '] ' + this.artemisMarkdown.generateTextHintExplanation(solution))
+                .join('\n');
         return markdownText;
     }
 
@@ -225,12 +229,15 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         //setup spots
         for (const spotID of spotParts) {
             const spot = new ShortAnswerSpot();
+            spot.id = +spotID.trim();
             spot.tempID = this.pseudoRandomLong();
             spot.width = 15;
 
             // Assign existing ID if available
             if (this.question.spots.length < existingSpotIDs.length) {
                 spot.id = existingSpotIDs[this.question.spots.length];
+            } else {
+                spot.id = this.question.spots.length + 1;
             }
 
             this.question.spots.push(spot);
@@ -264,8 +271,9 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
             case 1: {
                 const spot = this.question.spots.filter(spot => spot.id === +solutionText[0])[0];
                 const mapping = new ShortAnswerMapping(spot, solution);
-                mapping.shortAnswerSpotIndex = +solutionText[0];
-                mapping.shortAnswerSolutionIndex = solution.id;
+                mapping.shortAnswerSpotIndex = null;
+                mapping.shortAnswerSolutionIndex = null;
+                this.question.spots.forEach(spot => (spot.id = null));
                 this.question.correctMappings.push(mapping);
                 break;
             }
@@ -274,8 +282,9 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
                 for (const spotID of spotsID) {
                     const spot = this.question.spots.filter(spot => spot.id === +spotID[0])[0];
                     const mapping = new ShortAnswerMapping(spot, solution);
-                    mapping.shortAnswerSpotIndex = +spotID[0];
-                    mapping.shortAnswerSolutionIndex = solution.id;
+                    mapping.shortAnswerSpotIndex = null;
+                    mapping.shortAnswerSolutionIndex = null;
+                    this.question.spots.forEach(spot => (spot.id = null));
                     this.question.correctMappings.push(mapping);
                 }
                 break;
