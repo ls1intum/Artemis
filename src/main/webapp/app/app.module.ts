@@ -42,7 +42,7 @@ import {
     ProfileService
 } from './layouts';
 import { ArTEMiSApollonDiagramsModule } from './apollon-diagrams';
-import { ArTEMiSStatisticModule } from './statistics/statistic.module';
+import { ArTEMiSStatisticModule } from './quiz-statistics/quiz-statistic.module';
 import { ArTEMiSModelingEditorModule } from './modeling-editor/modeling-editor.module';
 import { QuizExerciseExportComponent } from './entities/quiz-exercise/quiz-exercise-export.component';
 import { PendingChangesGuard } from './shared/guard/pending-changes.guard';

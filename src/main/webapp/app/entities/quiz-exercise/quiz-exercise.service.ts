@@ -83,14 +83,6 @@ export class QuizExerciseService {
         return this.http.delete<void>(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }
 
-    releaseStatistics(id: number): Observable<HttpResponse<string>> {
-        return this.http.post<HttpResponse<string>>(`${this.resourceUrl}/${id}/release-statistics`, { observe: 'response' });
-    }
-
-    revokeStatistics(id: number): Observable<HttpResponse<string>> {
-        return this.http.post<HttpResponse<string>>(`${this.resourceUrl}/${id}/revoke-statistics`, { observe: 'response' });
-    }
-
     /**
      * Exports given quiz questions into json file
      * @param quizQuestions Quiz questions we want to export

@@ -1,5 +1,4 @@
 entity Statistic (statistic) {      //abstract
-    released Boolean,
     participantsRated Integer,
     participantsUnrated Integer
 }

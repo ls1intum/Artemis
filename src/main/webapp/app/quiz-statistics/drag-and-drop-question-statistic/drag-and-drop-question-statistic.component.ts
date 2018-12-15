@@ -57,7 +57,6 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
     showSolution = false;
     participants: number;
     websocketChannelForData: string;
-    websocketChannelForReleaseState: string;
 
     questionTextRendered: string;
 
@@ -74,7 +73,6 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
         private quizStatisticUtil: QuizStatisticUtil,
         private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
         private artemisMarkdown: ArtemisMarkdown,
-        private http: HttpClient
     ) {
         this.options = createOptions(this);
     }
@@ -97,22 +95,9 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
             this.websocketChannelForData = '/topic/statistic/' + params['quizId'];
             this.jhiWebsocketService.subscribe(this.websocketChannelForData);
 
-            // subscribe websocket which notifies the user if the release status was changed
-            this.websocketChannelForReleaseState = this.websocketChannelForData + '/release';
-            this.jhiWebsocketService.subscribe(this.websocketChannelForReleaseState);
-
             // ask for new Data if the websocket for new statistical data was notified
             this.jhiWebsocketService.receive(this.websocketChannelForData).subscribe(quiz => {
                 this.loadQuiz(quiz, true);
-            });
-            // refresh release information
-            this.jhiWebsocketService.receive(this.websocketChannelForReleaseState).subscribe(payload => {
-                this.quizExercise.quizPointStatistic.released = payload;
-                this.questionStatistic.released = payload;
-                // send students back to courses if the statistic was revoked
-                if (!this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']) && !payload) {
-                    this.router.navigate(['/courses']);
-                }
             });
 
             // add Axes-labels based on selected language
@@ -127,7 +112,6 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
 
     ngOnDestroy() {
         this.jhiWebsocketService.unsubscribe(this.websocketChannelForData);
-        this.jhiWebsocketService.unsubscribe(this.websocketChannelForReleaseState);
     }
 
     getDataSets() {
@@ -145,9 +129,9 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
      * @param {boolean} refresh: true if method is called from Websocket
      */
     loadQuiz(quiz: QuizExercise, refresh: boolean) {
-        // if the Student finds a way to the Website, while the Statistic is not released
+        // if the Student finds a way to the Website
         //      -> the Student will be send back to Courses
-        if (!this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']) && !quiz.quizPointStatistic.released) {
+        if (!this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
             this.router.navigateByUrl('courses');
         }
         // search selected question in quizExercise based on questionId
@@ -401,22 +385,5 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
      */
     nextStatistic() {
         this.quizStatisticUtil.nextStatistic(this.quizExercise, this.question);
-    }
-
-    /**
-     * release of revoke all statistics of the quizExercise
-     *
-     * @param {boolean} released: true to release, false to revoke
-     */
-    releaseStatistics(released: boolean) {
-        this.quizStatisticUtil.releaseStatistics(released, this.quizExercise);
-    }
-
-    /**
-     * check if it's allowed to release the Statistic (allowed if the quiz is finished)
-     * @returns {boolean} true if it's allowed, false if not
-     */
-    releaseButtonDisabled() {
-        this.quizStatisticUtil.releaseButtonDisabled(this.quizExercise);
     }
 }
