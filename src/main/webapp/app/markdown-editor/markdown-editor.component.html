@@ -1,3 +1,4 @@
+<div>
 <div class="tool-bar">
     <div class="btn-group">
         <ng-container *ngFor="let command of commands">
@@ -7,5 +8,5 @@
         </ng-container>
     </div>
 </div>
-
-<ace-editor #aceEditor [text]="text" (textChanged)="" [mode]="'markdown'" [autoUpdateContent]="true"></ace-editor>
+<ace-editor #aceEditor [mode]="'markdown'" [autoUpdateContent]="true"> </ace-editor>
+</div>

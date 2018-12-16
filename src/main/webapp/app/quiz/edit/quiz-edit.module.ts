@@ -11,11 +11,19 @@ import { EditMultipleChoiceQuestionComponent } from './multiple-choice-question/
 import { EditDragAndDropQuestionComponent } from './drag-and-drop-question/edit-drag-and-drop-question.component';
 import { AngularFittextModule } from 'angular-fittext';
 import { AceEditorModule } from 'ng2-ace-editor';
+import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor/markdown-editor.module';
 import { DndModule } from 'ng2-dnd';
 import { ArTEMiSQuizModule } from '../participate';
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, DndModule.forRoot(), AngularFittextModule, AceEditorModule, ArTEMiSQuizModule],
+    imports: [
+        ArTEMiSSharedModule,
+        DndModule.forRoot(),
+        AngularFittextModule,
+        AceEditorModule,
+        ArTEMiSQuizModule,
+        ArTEMiSMarkdownEditorModule
+    ],
     declarations: [EditMultipleChoiceQuestionComponent, EditDragAndDropQuestionComponent],
     entryComponents: [
         HomeComponent,
