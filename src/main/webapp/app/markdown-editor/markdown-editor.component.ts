@@ -14,6 +14,9 @@ export class MarkdownEditorComponent implements AfterViewInit {
     @ViewChild('aceEditor')
     aceEditorContainer: AceEditorComponent;
 
+    height: string = '300px';
+    text: string = 'hallo';
+
     commands: Command[] = [new BoldCommand()];
 
     ngAfterViewInit(): void {

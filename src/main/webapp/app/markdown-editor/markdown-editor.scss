@@ -23,7 +23,7 @@
 }
 
 .md-editor-container .ace-editor {
-    height: 100%;
+    height: 30px;
 }
 
 .md-editor-container .tool-bar {
@@ -61,7 +61,7 @@
     display: flex;
 }
 
-.md-editor-container .editor-container>div {
+.md-editor-container .editor-container > div {
     flex: 1;
 }
 
