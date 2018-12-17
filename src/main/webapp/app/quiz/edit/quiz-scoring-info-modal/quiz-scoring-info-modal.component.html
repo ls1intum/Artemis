@@ -1,0 +1,23 @@
+<ng-template #info let-c="close" let-d="dismiss">
+    <div class="modal-header">
+        <h4 class="modal-title">Scoring Types </h4>
+        <button type="button" class="close" aria-label="Close" (click)="d()"><span aria-hidden="true">&times;</span></button>
+    </div>
+    <div class="modal-body">
+        <table class="table">
+            <tr>
+                <th>All or Nothing</th>
+                <td>All correct choices must be chosen and all wrong choice must be empty to achieve the full score. If a mistake is made the participant achieves 0 points. There is no score in between.</td>
+            </tr>
+            <tr>
+                <th>Proportional with Penalty</th>
+                <td>Each correct answer results in a fraction of the total score. To avoid guesswork, the same fraction is subtracted from the achieved points for each mistake.
+                    Example: if the score of the question is 3 and there are 5 options. Each correct answer option results in 0.6 points. Each wrong answer option subtracts 0.6 points.
+                    A student with 4 correct and 1 wrong choice would then receive 1.8 points.</td>
+        </table>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-outline" (click)="c()">Close</button>
+    </div>
+</ng-template>
+<div><button class="btn" (click)="open(info)"><i class="fa fa-question-circle-o"></i></button></div>

@@ -1,0 +1,12 @@
+{
+    "arTeMiSApp": {
+        "textAssessment": {
+            "saveSuccessful": "Your assessment was saved successfully!",
+            "submitSuccessful": "Your assessment was submitted successfully!",
+            "resultDismissed": "Your assessment was dismissed because another tutor already rated this submission.",
+            "invalidAssessments": "Your assessments are not valid!",
+            "assessInstruction": "Please highlight the text segment you want to assess and click the \"Assess\" button.",
+            "lock": "You do now have the lock on this submission. Only you can assess this submission. Please assess this submission before opening other submissions."
+        }
+    }
+}

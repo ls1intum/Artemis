@@ -16,7 +16,7 @@ import { JhiWebsocketService, Principal, UserRouteAccessService } from './core';
 import { ArTEMiSSharedModule } from './shared';
 import { ArTEMiSCoreModule } from 'app/core';
 import { ArTEMiSAppRoutingModule } from './app-routing.module';
-import { ArTEMiSHomeModule } from './home/home.module';
+import { ArTEMiSHomeModule } from './home';
 import { ArTEMiSAccountModule } from './account/account.module';
 import { ArTEMiSCoursesModule } from './courses';
 import { ArTEMiSEntityModule } from './entities/entity.module';
@@ -27,7 +27,8 @@ import { DifferencePipe, MomentModule } from 'angular2-moment';
 import { ArTEMiSEditorModule } from './editor';
 import { RepositoryInterceptor, RepositoryService } from './entities/repository';
 import { ArTEMiSQuizModule } from './quiz/participate';
-import { ArTEMiSTextModule } from './text-editor/index';
+import { ArTEMiSTextModule } from './text-editor';
+import { ArTEMiSTextAssessmentModule } from './text-assessment';
 import { ArTEMiSModelingStatisticsModule } from './modeling-statistics/';
 import * as moment from 'moment';
 // jhipster-needle-angular-add-module-import JHipster will add new module here
@@ -41,7 +42,7 @@ import {
     ProfileService
 } from './layouts';
 import { ArTEMiSApollonDiagramsModule } from './apollon-diagrams';
-import { ArTEMiSStatisticModule } from './statistics/statistic.module';
+import { ArTEMiSStatisticModule } from './quiz-statistics/quiz-statistic.module';
 import { ArTEMiSModelingEditorModule } from './modeling-editor/modeling-editor.module';
 import { QuizExerciseExportComponent } from './entities/quiz-exercise/quiz-exercise-export.component';
 import { PendingChangesGuard } from './shared/guard/pending-changes.guard';
@@ -79,8 +80,9 @@ import { ArTEMiSTutorCourseDashboardModule } from 'app/tutor-course-dashboard';
         ArTEMiSAssessmentDashboardModule,
         ArTEMiSStatisticModule,
         ArTEMiSModelingEditorModule,
-        ArTEMiSTextModule,
         ArTEMiSModelingStatisticsModule,
+        ArTEMiSTextModule,
+        ArTEMiSTextAssessmentModule,
         ArTEMiSTutorCourseDashboardModule
         // jhipster-needle-angular-add-module JHipster will add new module here
     ],

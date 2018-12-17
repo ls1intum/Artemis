@@ -97,7 +97,7 @@ public class UserService {
         return userRepository.findOneByResetKey(key)
             .filter(user -> user.getResetDate().isAfter(Instant.now().minusSeconds(86400)))
             .map(user -> {
-                user.setPassword(passwordEncoder.encode(newPassword));
+                user.setPassword(passwordEncoder().encode(newPassword));
                 user.setResetKey(null);
                 user.setResetDate(null);
                 this.clearUserCaches(user);
@@ -130,7 +130,7 @@ public class UserService {
             }
         });
         User newUser = new User();
-        String encryptedPassword = passwordEncoder.encode(password);
+        String encryptedPassword = passwordEncoder().encode(password);
         newUser.setLogin(userDTO.getLogin().toLowerCase());
         // new user gets initially a generated password
         newUser.setPassword(encryptedPassword);
@@ -287,10 +287,10 @@ public class UserService {
             .flatMap(userRepository::findOneByLogin)
             .ifPresent(user -> {
                 String currentEncryptedPassword = user.getPassword();
-                if (!passwordEncoder.matches(currentClearTextPassword, currentEncryptedPassword)) {
+                if (!passwordEncoder().matches(currentClearTextPassword, currentEncryptedPassword)) {
                     throw new InvalidPasswordException();
                 }
-                String encryptedPassword = passwordEncoder.encode(newPassword);
+                String encryptedPassword = passwordEncoder().encode(newPassword);
                 user.setPassword(encryptedPassword);
                 this.clearUserCaches(user);
                 log.debug("Changed password for User: {}", user);

@@ -62,6 +62,10 @@ public class Course implements Serializable {
     @JsonView(QuizView.Before.class)
     private Boolean onlineCourse;
 
+    @Column(name = "max_complaints")
+    @JsonView(QuizView.Before.class)
+    private Integer maxComplaints;
+
     @OneToMany(mappedBy = "course")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("course")
@@ -178,6 +182,19 @@ public class Course implements Serializable {
 
     public void setOnlineCourse(Boolean onlineCourse) {
         this.onlineCourse = onlineCourse;
+    }
+
+    public Integer getMaxComplaints() {
+        return maxComplaints;
+    }
+
+    public Course maxComplaints(Integer maxComplaints) {
+        this.maxComplaints = maxComplaints;
+        return this;
+    }
+
+    public void setMaxComplaints(Integer maxComplaints) {
+        this.maxComplaints = maxComplaints;
     }
 
     public Set<Exercise> getExercises() {

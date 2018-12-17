@@ -1,0 +1,28 @@
+<div (jhiTextSelect)="didSelectSolutionText( $event )">
+    <jhi-highlighted-text-area [submissionText]="submissionText" [assessments]="assessments"></jhi-highlighted-text-area>
+
+    <div
+        *ngIf="hostRectangle"
+        class="indicator"
+        [style.left.px]="hostRectangle.left"
+        [style.top.px]="hostRectangle.top"
+        [style.width.px]="hostRectangle.width"
+        [style.height.px]="0">
+        <div class="indicator__cta">
+            <!--
+                NOTE: Because we DON'T WANT the selected text to get deselected
+                when we click on the call-to-action, we have to PREVENT THE
+                DEFAULT BEHAVIOR and STOP PROPAGATION on some of the events. The
+                byproduct of this is that the (click) event won't fire. As such,
+                we then have to consume the click-intent by way of the (mouseup)
+                event.
+            -->
+            <a
+                (mousedown)="$event.preventDefault()"
+                (mouseup)="$event.stopPropagation(); assessSelection()"
+                class="indicator__cta-link">
+                Assess
+            </a>
+        </div>
+    </div>
+</div>

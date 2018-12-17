@@ -130,10 +130,6 @@ public class CourseService {
                     continue;
                 }
                 userCourses.add(course);
-                //filter sensitive information
-                for (Exercise exercise : course.getExercises()) {
-                    exercise.filterSensitiveInformation();
-                }
             }
             return new ArrayList<>(userCourses);
         } else {
@@ -171,13 +167,25 @@ public class CourseService {
     /**
      * Get one course by id.
      *
-     * @param id the id of the entity
+     * @param courseId the id of the entity
      * @return the entity
      */
     @Transactional(readOnly = true)
-    public Course findOne(Long id) {
-        log.debug("Request to get Course : {}", id);
-        return courseRepository.findById(id).get();
+    public Course findOne(Long courseId) {
+        log.debug("Request to get Course : {}", courseId);
+        return courseRepository.findById(courseId).get();
+    }
+
+    /**
+     * Get one course by id with all its exercises.
+     *
+     * @param courseId the id of the entity
+     * @return the entity
+     */
+    @Transactional(readOnly = true)
+    public Course findOneWithExercises(Long courseId) {
+        log.debug("Request to get Course : {}", courseId);
+        return courseRepository.findOneWithEagerExercises(courseId);
     }
 
     /**

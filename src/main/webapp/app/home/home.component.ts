@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { JhiEventManager } from 'ng-jhipster';
+import { Router } from '@angular/router';
 
 import { LoginModalService, Principal, User } from '../core';
 
@@ -13,11 +14,16 @@ export class HomeComponent implements OnInit {
     account: User;
     modalRef: NgbModalRef;
 
-    constructor(private principal: Principal, private loginModalService: LoginModalService, private eventManager: JhiEventManager) {}
+    constructor(
+        private router: Router,
+        private principal: Principal,
+        private loginModalService: LoginModalService,
+        private eventManager: JhiEventManager
+    ) {}
 
     ngOnInit() {
         this.principal.identity().then(account => {
-            this.account = account;
+            this.currentUserCallback(account);
         });
         this.registerAuthenticationSuccess();
     }
@@ -25,9 +31,16 @@ export class HomeComponent implements OnInit {
     registerAuthenticationSuccess() {
         this.eventManager.subscribe('authenticationSuccess', (message: string) => {
             this.principal.identity().then(account => {
-                this.account = account;
+                this.currentUserCallback(account);
             });
         });
+    }
+
+    currentUserCallback(account: User) {
+        this.account = account;
+        if (account) {
+            this.router.navigate(['courses']);
+        }
     }
 
     isAuthenticated() {

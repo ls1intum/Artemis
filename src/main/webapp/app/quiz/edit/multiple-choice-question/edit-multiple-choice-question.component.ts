@@ -5,6 +5,7 @@ import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-edit-multiple-choice-question',
@@ -35,7 +36,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, A
 
     showPreview: boolean;
 
-    constructor(private artemisMarkdown: ArtemisMarkdown) {}
+    constructor(private artemisMarkdown: ArtemisMarkdown, private modalService: NgbModal) {}
 
     ngOnInit(): void {
         this.showPreview = false;
@@ -181,6 +182,13 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, A
      */
     addHintAtCursor(): void {
         this.artemisMarkdown.addHintAtCursor(this.questionEditor.getEditor());
+    }
+
+    /**
+     * This function opens the modal for the help dialog.
+     */
+    open(content: any) {
+        this.modalService.open(content, { size: 'lg' });
     }
 
     /**

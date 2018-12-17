@@ -14,6 +14,7 @@ import { TextExercise } from '../text-exercise/text-exercise.model';
 import { FileUploadExercise } from '../file-upload-exercise/file-upload-exercise.model';
 import { Exercise } from '../exercise/exercise.model';
 import { ExerciseService } from '../exercise/exercise.service';
+import { Result } from 'app/entities/result';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -38,9 +39,15 @@ export class CourseService {
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
-    find(id: number): Observable<EntityResponseType> {
+    find(courseId: number): Observable<EntityResponseType> {
         return this.http
-            .get<Course>(`${this.resourceUrl}/${id}`, { observe: 'response' })
+            .get<Course>(`${this.resourceUrl}/${courseId}`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+    }
+
+    findWithExercises(courseId: number): Observable<EntityResponseType> {
+        return this.http
+            .get<Course>(`${this.resourceUrl}/${courseId}/with-exercises`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
@@ -50,15 +57,14 @@ export class CourseService {
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
     }
 
+    findAllParticipationsWithResults(courseId: number): Observable<Participation[]> {
+        return this.http.get<Participation[]>(`${this.resourceUrl}/${courseId}/participations`);
+    }
+
     getForTutors(id: number): Observable<EntityResponseType> {
         return this.http
             .get<Course>(`${this.resourceUrl}/${id}/for-tutor-dashboard`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
-    }
-
-    // TODO: deprecated --> this method does not scale and should not be used in the future
-    findAllParticipations(courseId: number): Observable<Participation[]> {
-        return this.http.get<Participation[]>(`${this.resourceUrl}/${courseId}/participations`);
     }
 
     query(): Observable<EntityArrayResponseType> {
@@ -69,14 +75,6 @@ export class CourseService {
 
     delete(id: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/${id}`, { observe: 'response' });
-    }
-
-    getAllCourseScoresOfCourseUsers(courseId: number): Observable<any> {
-        return this.http.get(`${this.resourceUrl}/${courseId}/getAllCourseScoresOfCourseUsers`);
-    }
-
-    findAllResults(courseId: number): Observable<any> {
-        return this.http.get(`${this.resourceUrl}/${courseId}/results`);
     }
 
     protected convertDateFromClient(course: Course): Course {
