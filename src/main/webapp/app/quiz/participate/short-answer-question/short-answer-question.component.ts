@@ -6,6 +6,7 @@ import { ShortAnswerSolution } from '../../../entities/short-answer-solution';
 import { ShortAnswerMapping } from '../../../entities/short-answer-mapping';
 
 import { AnswerOption } from '../../../entities/answer-option';
+import { ShortAnswerSubmittedText } from 'app/entities/short-answer-submitted-text';
 
 @Component({
     selector: 'jhi-short-answer-question',
@@ -44,7 +45,14 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
     @Output()
     mappingssChange = new EventEmitter();
 
+    submittedTexts: ShortAnswerSubmittedText[];
+
     rendered: ShortAnswerQuestion;
+    questionText: String;
+    textWithoutSpots: String[];
+    textWithOutSpotsFirstParts: String[];
+    textWithOutSpotsLastPart: String[];
+    input: String = '';
 
     constructor(private artemisMarkdown: ArtemisMarkdown) {}
 
@@ -56,8 +64,29 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
         // update html for text, hint and explanation for the question and every answer option
         const artemisMarkdown = this.artemisMarkdown;
         this.rendered = new ShortAnswerQuestion();
+        this.questionText = this.question.text.split(/\n/g)[0];
+        let questionTextSplitAtNewLine = this.question.text
+            .split(/\n/g)
+            .slice(3)
+            .join();
+        this.textWithoutSpots = questionTextSplitAtNewLine.split(/\[-spot\s\d\]/g);
+        this.textWithOutSpotsFirstParts = this.textWithoutSpots.slice(0, this.textWithoutSpots.length - 1);
+        this.textWithOutSpotsLastPart = this.textWithoutSpots.slice(this.textWithoutSpots.length - 1);
+
         this.rendered.text = artemisMarkdown.htmlForMarkdown(this.question.text);
         this.rendered.hint = artemisMarkdown.htmlForMarkdown(this.question.hint);
         this.rendered.explanation = artemisMarkdown.htmlForMarkdown(this.question.explanation);
+    }
+
+    setSubmittedText(id: number, text: string) {
+        let submittedText = new ShortAnswerSubmittedText();
+        submittedText.text = text;
+        submittedText.spot = this.question.spots[id];
+
+        console.log('test');
+        console.log(text);
+        console.log(id);
+
+        this.submittedTexts.push(submittedText);
     }
 }
