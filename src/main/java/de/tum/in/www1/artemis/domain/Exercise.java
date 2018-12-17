@@ -90,6 +90,11 @@ public abstract class Exercise implements Serializable {
     @JsonView(QuizView.Before.class)
     private Course course;
 
+    @OneToMany(mappedBy = "exercise")
+    @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+    @JsonIgnoreProperties("exercise")
+    private Set<ExampleSubmission> exampleSubmissions = new HashSet<>();
+
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
         return id;
@@ -250,14 +255,39 @@ public abstract class Exercise implements Serializable {
         this.course = course;
     }
 
+    public Set<ExampleSubmission> getExampleSubmissions() {
+        return exampleSubmissions;
+    }
+
+    public Exercise exampleSubmissions(Set<ExampleSubmission> exampleSubmissions) {
+        this.exampleSubmissions = exampleSubmissions;
+        return this;
+    }
+
+    public Exercise addExampleSubmission(ExampleSubmission exampleSubmission) {
+        this.exampleSubmissions.add(exampleSubmission);
+        exampleSubmission.setExercise(this);
+        return this;
+    }
+
+    public Exercise removeExampleSubmission(ExampleSubmission exampleSubmission) {
+        this.exampleSubmissions.remove(exampleSubmission);
+        exampleSubmission.setExercise(null);
+        return this;
+    }
+
+    public void setExampleSubmissions(Set<ExampleSubmission> exampleSubmissions) {
+        this.exampleSubmissions = exampleSubmissions;
+    }
+
+    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
+
     public Boolean isEnded() {
         if (getDueDate() == null) {
             return false;
         }
         return ZonedDateTime.now().isAfter(getDueDate());
     }
-
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     /**
      * check if students are allowed to see this exercise
@@ -298,7 +328,7 @@ public abstract class Exercise implements Serializable {
                     // InitializationState INACTIVE is also ok
                     // => if we can't find INITIALIZED, we return that one
                     relevantParticipation = participation;
-                } else if (participation.getExercise() instanceof ModelingExercise) {
+                } else if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise) {
                     return participation;
                 }
             }
@@ -334,27 +364,6 @@ public abstract class Exercise implements Serializable {
     }
 
     /**
-     * Get the latest relevant result from the given participation (independent of rated and completion date)
-     *
-     * @param participation the participation whose results we are considering
-     * @return the latest relevant result in the given participation, or null, if none exist
-     */
-    public Result findLatestResult(Participation participation) {
-        Result latestResult = null;
-        for (Result result : participation.getResults()) {
-            //take the first found result
-            if (latestResult == null) {
-                latestResult = result;
-            }
-            //take newer results
-            else if (latestResult.getCompletionDate().isBefore(result.getCompletionDate())) {
-                latestResult = result;
-            }
-        }
-        return latestResult;
-    }
-
-    /**
      * Find the participation in participations that belongs to the given exercise
      * that includes the exercise data, plus the found participation with its most recent relevant result.
      * Filter everything else that is not relevant
@@ -383,7 +392,7 @@ public abstract class Exercise implements Serializable {
         if (participation != null) {
 
             // only transmit the relevant result
-            Result result = findLatestRatedResultWithCompletionDate(participation);
+            Result result = participation.getExercise().findLatestRatedResultWithCompletionDate(participation);
             Set<Result> results = result != null ? Sets.newHashSet(result) : Sets.newHashSet();
 
             // add results to json

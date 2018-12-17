@@ -1,7 +1,6 @@
-
 {
     "arTeMiSApp": {
-        "textExercise" : {
+        "textExercise": {
             "home": {
                 "title": "Text Exercises",
                 "createLabel": "Text Exercise erstellen",
@@ -16,7 +15,12 @@
             "detail": {
                 "title": "Text Exercise"
             },
-            "sampleSolution": "Sample Solution"
+            "sampleSolution": "Sample Solution",
+            "saveSuccessful": "Dein Antwort wurde erfolgreich gespeichert!",
+            "confirmSubmission": "Bist du sicher, dass du abgeben möchtest? Du kannst deine Antwort nicht mehr bearbeiten, bis du eine Bewertung erhältst!",
+            "submitSuccessful": "Dein Antwort wurde erfolgreich abgesendet! Du kannst dein Antwort nun nicht mehr bearbeiten. Bitte warte auf dein Feedback.",
+            "submitDeadlineMissed": "Dein Antwort wurde erfolgreich abgesendet! Du kannst dein Antwort nun nicht mehr bearbeiten. Bitte warte auf dein Feedback. Da du die Deadline verpasst hast wird deine Bewertung nicht gezählt.",
+            "error": "Ein Fehler ist aufgetreten. Bitte versuche es später noch einmal."
         }
     }
 }

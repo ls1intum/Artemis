@@ -1,25 +1,25 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.CourseService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,17 +36,28 @@ public class TextExerciseResource {
 
     private static final String ENTITY_NAME = "textExercise";
 
+    private final TextAssessmentService textAssessmentService;
     private final TextExerciseRepository textExerciseRepository;
     private final UserService userService;
     private final CourseService courseService;
     private final AuthorizationCheckService authCheckService;
+    private final ParticipationService participationService;
+    private final ResultRepository resultRepository;
 
-    public TextExerciseResource(TextExerciseRepository textExerciseRepository, UserService userService,
-                                AuthorizationCheckService authCheckService, CourseService courseService) {
+    public TextExerciseResource(TextExerciseRepository textExerciseRepository,
+                                TextAssessmentService textAssessmentService,
+                                UserService userService,
+                                AuthorizationCheckService authCheckService,
+                                CourseService courseService,
+                                ParticipationService participationService,
+                                ResultRepository resultRepository) {
+        this.textAssessmentService = textAssessmentService;
         this.textExerciseRepository = textExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
+        this.participationService = participationService;
+        this.resultRepository = resultRepository;
     }
 
     /**
@@ -180,5 +191,64 @@ public class TextExerciseResource {
             return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
         }
         return ResponseEntity.notFound().build();
+    }
+
+    /**
+     * Returns the data needed for the text editor, which includes the participation, textSubmission with answer if existing
+     * and the assessments if the submission was already submitted.
+     *
+     * @param participationId the participationId for which to find the data for the text editor
+     * @return the ResponseEntity with json as body
+     */
+    @GetMapping("/text-editor/{participationId}")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @Transactional(readOnly = true)
+    @Timed
+    public ResponseEntity<Participation> getDataForTextEditor(@PathVariable Long participationId) {
+        Participation participation = participationService.findOne(participationId);
+        if (participation == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "participationNotFound", "No participation was found for the given ID.")).body(null);
+        }
+        TextExercise textExercise;
+        if (participation.getExercise() instanceof TextExercise) {
+            textExercise = (TextExercise) participation.getExercise();
+            if (textExercise == null) {
+                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("textExercise", "exerciseEmpty", "The exercise belonging to the participation is null.")).body(null);
+            }
+        } else {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("textExercise", "wrongExerciseType", "The exercise of the participation is not a modeling exercise.")).body(null);
+        }
+
+        // users can only see their own submission (to prevent cheating), TAs, instructors and admins can see all answers
+        if (!authCheckService.isOwnerOfParticipation(participation) && !courseService.userHasAtLeastTAPermissions(textExercise.getCourse())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        // if no results, check if there are really no results or the relation to results was not updated yet
+        if (participation.getResults().size() <= 0) {
+            List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId());
+            participation.setResults(new HashSet<>(results));
+        }
+
+        TextSubmission textSubmission = participation.findLatestTextSubmission();
+        participation.setSubmissions(new HashSet<>());
+
+        participation.getExercise().filterSensitiveInformation();
+
+        if (textSubmission != null) {
+            // set reference to participation to null, since we are already inside a participation
+            textSubmission.setParticipation(null);
+
+            Result result = textSubmission.getResult();
+            if (textSubmission.isSubmitted() && result != null && result.getCompletionDate() != null) {
+                List<Feedback> assessments = textAssessmentService.getAssessmentsForResult(result);
+                result.setFeedbacks(assessments);
+            }
+
+            participation.addSubmissions(textSubmission);
+        }
+
+
+        return ResponseEntity.ok(participation);
     }
 }

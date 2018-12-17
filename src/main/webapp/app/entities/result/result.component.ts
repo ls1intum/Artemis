@@ -55,17 +55,15 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
                     // sort results by completionDate descending to ensure the newest result is shown
                     // this is important for modeling exercises since students can have multiple tries
                     // think about if this should be used for all types of exercises
-                    this.participation.results.sort(
-                        (r1: Result, r2: Result): number => {
-                            if (r1.completionDate > r2.completionDate) {
-                                return -1;
-                            }
-                            if (r1.completionDate < r2.completionDate) {
-                                return 1;
-                            }
-                            return 0;
+                    this.participation.results.sort((r1: Result, r2: Result) => {
+                        if (r1.completionDate > r2.completionDate) {
+                            return -1;
                         }
-                    );
+                        if (r1.completionDate < r2.completionDate) {
+                            return 1;
+                        }
+                        return 0;
+                    });
                 }
                 // Make sure result and participation are connected
                 this.result = this.participation.results[0];

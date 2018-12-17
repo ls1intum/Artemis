@@ -59,49 +59,4 @@ export class QuizStatisticUtil {
             }
         }
     }
-
-    /**
-     * release of revoke all statistics of the quizExercise
-     *
-     * @param quizExercise: the quiz, which statistics should be revoked or released
-     * @param {boolean} released: true to release, false to revoke
-     */
-    releaseStatistics(released: boolean, quizExercise: QuizExercise) {
-        if (released === quizExercise.quizPointStatistic.released) {
-            return;
-        }
-        // check if it's allowed to release the statistics, if not send alert and do nothing
-        if (released && this.releaseButtonDisabled(quizExercise)) {
-            alert("Quiz hasn't ended yet!");
-            return;
-        }
-        if (quizExercise.id) {
-            quizExercise.quizPointStatistic.released = released;
-            if (released) {
-                this.quizExerciseService.releaseStatistics(quizExercise.id).subscribe(
-                    () => {},
-                    () => {
-                        alert('Error!');
-                    }
-                );
-            } else {
-                this.quizExerciseService.revokeStatistics(quizExercise.id).subscribe();
-            }
-        }
-    }
-
-    /**
-     * check if it's allowed to release the Statistic (allowed if the quiz is finished)
-     *
-     * @param quizExercise the quizExercise,
-     *                      which will be checked if the release of the statistic is allowed
-     * @returns {boolean} true if it's allowed, false if not
-     */
-    releaseButtonDisabled(quizExercise: QuizExercise) {
-        if (quizExercise) {
-            return !quizExercise.isPlannedToStart || moment().isBefore(quizExercise.dueDate);
-        } else {
-            return true;
-        }
-    }
 }

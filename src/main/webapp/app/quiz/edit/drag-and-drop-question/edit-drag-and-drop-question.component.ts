@@ -24,6 +24,7 @@ import * as $ from 'jquery';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
 import { Ace } from 'ace-builds';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-edit-drag-and-drop-question',
@@ -96,6 +97,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
     constructor(
         private artemisMarkdown: ArtemisMarkdown,
         private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
+        private modalService: NgbModal,
         private fileUploaderService: FileUploaderService
     ) {}
 
@@ -167,6 +169,13 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
             },
             this
         );
+    }
+
+    /**
+     * This function opens the modal for the help dialog.
+     */
+    open(content: any) {
+        this.modalService.open(content, { size: 'lg' });
     }
 
     /**

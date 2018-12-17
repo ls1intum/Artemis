@@ -6,10 +6,10 @@ import { BaseEntity } from '../../shared';
     name: 'sortBy'
 })
 export class SortByPipe implements PipeTransform {
-    constructor(private momentDiff: DifferencePipe) { }
+    constructor(private momentDiff: DifferencePipe) {}
 
-    transform<T extends BaseEntity>(array: Array<T>, predicate: string, reverse: boolean): Array<T> {
-        array.sort((a: T, b: T) => {
+    transform(array: any[], predicate: string, reverse: boolean): any[] {
+        array.sort((a: any, b: any) => {
             let tempA = a;
             let tempB = b;
             if (predicate === 'releaseDate') {
@@ -29,15 +29,34 @@ export class SortByPipe implements PipeTransform {
             const keys = predicate.split('.');
             for (const tempKey of keys) {
                 if (tempA !== null) {
-                    tempA = tempA[tempKey];
+                    if (tempA instanceof Map) {
+                        tempA = tempA.get(tempKey);
+                    } else {
+                        tempA = tempA[tempKey];
+                    }
                 }
                 if (tempB !== null) {
-                    tempB = tempB[tempKey];
+                    if (tempB instanceof Map) {
+                        tempB = tempB.get(tempKey);
+                    } else {
+                        tempB = tempB[tempKey];
+                    }
                 }
             }
-            const result = (tempA < tempB) ? -1 : (tempA > tempB) ? 1 : (tempA == null && tempB !== null ? -1 : (tempA !== null && tempB == null ? 1 : (
-                (a.id < b.id) ? -1 : (a.id > b.id) ? 1 : 0
-            )));
+            const result =
+                tempA < tempB
+                    ? -1
+                    : tempA > tempB
+                    ? 1
+                    : tempA == null && tempB !== null
+                    ? -1
+                    : tempA !== null && tempB == null
+                    ? 1
+                    : a.id < b.id
+                    ? -1
+                    : a.id > b.id
+                    ? 1
+                    : 0;
             return result * (reverse ? 1 : -1);
         });
         return array;

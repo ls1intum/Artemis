@@ -1,10 +1,18 @@
 {
     "instructorDashboard": {
+        "name": "Name",
+        "username": "Username",
         "title": "Course Dashboard",
-        "participated": "Participated in exercises",
-        "completed": "Successfully completed",
-        "completedExercises": "Successfully completed exercises",
-        "overallScore": "Overall score",
+        "participated": "Participated in Exercises (%)",
+        "successful": "Successfully Exercises (%)",
+        "quizPoints": "Quiz Points (%)",
+        "programmingPoints": "Programming Points (%)",
+        "modelingPoints": "Modeling Points (%)",
+        "textPoints": "Text Points (%)",
+        "file-uploadPoints": "File Upload Points (%)",
+        "overallPoints": "Overall Points (%)",
+        "max": "Max",
+        "average": "Average",
         "students": "Students",
         "cleanup": {
             "title": "Cleanup",

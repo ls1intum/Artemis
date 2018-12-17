@@ -1,7 +1,7 @@
 import { Participation } from '../../entities/participation';
 import { JhiAlertService } from 'ng-jhipster';
 import { TranslateService } from '@ngx-translate/core';
-import { AfterViewInit, Component, ElementRef, Input, OnChanges, OnDestroy, OnInit, Renderer2, SimpleChanges } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Input, OnChanges, OnDestroy, Renderer2, SimpleChanges } from '@angular/core';
 import { WindowRef } from '../../core/websocket/window.service';
 import { RepositoryFileService, RepositoryService } from '../../entities/repository/repository.service';
 import { EditorComponent } from '../editor.component';
@@ -225,11 +225,16 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
      */
     triggerTestStatusClick(index: number): void {
         const testStatusDOMElements = this.elementRef.nativeElement.querySelectorAll('.test-status');
-        if (testStatusDOMElements.length) {
-            // TODO: in case we have some "green" tasks, the index is wrong and has to be shifted
-            // this leads to a wrong display of failing tests for green tasks, the wrong failing
-            // tests for red tasks and the problem that the last tasks cannot be clicked.
-            testStatusDOMElements[index].click();
+        /** We analyze the tests up until our index to determine the number of green tests **/
+        const testStatusCircleElements = this.elementRef.nativeElement.querySelectorAll('.stepwizard-circle');
+        const testStatusCircleElementsUntilIndex = Array.from(testStatusCircleElements).slice(0, index + 1);
+        const positiveTestsUntilIndex = testStatusCircleElementsUntilIndex.filter((testCircle: HTMLElement) =>
+            testCircle.children[0].classList.contains('text-success')
+        ).length;
+        /** The click should only be executed if the clicked element is not a positive test **/
+        if (testStatusDOMElements.length && !testStatusCircleElements[index].children[0].classList.contains('text-success')) {
+            /** We subtract the number of positive tests from the index to match the correct test status link **/
+            testStatusDOMElements[index - positiveTestsUntilIndex].click();
         }
     }
 
@@ -419,7 +424,12 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
             if (label === this.translateService.instant('arTeMiSApp.editor.testStatusLabels.noResult')) {
                 text += '<span class="text-danger bold">' + label + '</span>'; // this should be bold
             } else {
-                text += '<a data-tests="' + tests.toString() + '" class="test-status"><span class="text-danger result">' + label + '</span></a>';
+                text +=
+                    '<a data-tests="' +
+                    tests.toString() +
+                    '" class="test-status"><span class="text-danger result">' +
+                    label +
+                    '</span></a>';
             }
         }
         text += '<br />';

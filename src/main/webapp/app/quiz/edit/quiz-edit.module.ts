@@ -14,6 +14,7 @@ import { AceEditorModule } from 'ng2-ace-editor';
 import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor/markdown-editor.module';
 import { DndModule } from 'ng2-dnd';
 import { ArTEMiSQuizModule } from '../participate';
+import { QuizScoringInfoModalComponent } from './quiz-scoring-info-modal/quiz-scoring-info-modal.component';
 
 @NgModule({
     imports: [
@@ -24,7 +25,7 @@ import { ArTEMiSQuizModule } from '../participate';
         ArTEMiSQuizModule,
         ArTEMiSMarkdownEditorModule
     ],
-    declarations: [EditMultipleChoiceQuestionComponent, EditDragAndDropQuestionComponent],
+    declarations: [EditMultipleChoiceQuestionComponent, EditDragAndDropQuestionComponent, QuizScoringInfoModalComponent],
     entryComponents: [
         HomeComponent,
         QuizComponent,

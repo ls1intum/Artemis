@@ -12,40 +12,7 @@ export type ResultResponseType = HttpResponse<Result>;
 
 @Injectable({ providedIn: 'root' })
 export class QuizSubmissionService {
-    private resourceUrl = SERVER_API_URL + 'api/quiz-submissions';
-
     constructor(private http: HttpClient) {}
-
-    create(quizSubmission: QuizSubmission): Observable<EntityResponseType> {
-        const copy = this.convert(quizSubmission);
-        return this.http
-            .post<QuizSubmission>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
-    }
-
-    update(quizSubmission: QuizSubmission): Observable<EntityResponseType> {
-        const copy = this.convert(quizSubmission);
-        return this.http
-            .put<QuizSubmission>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
-    }
-
-    find(id: number): Observable<EntityResponseType> {
-        return this.http
-            .get<QuizSubmission>(`${this.resourceUrl}/${id}`, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
-    }
-
-    query(req?: any): Observable<HttpResponse<QuizSubmission[]>> {
-        const options = createRequestOption(req);
-        return this.http
-            .get<QuizSubmission[]>(this.resourceUrl, { params: options, observe: 'response' })
-            .map((res: HttpResponse<QuizSubmission[]>) => this.convertArrayResponse(res));
-    }
-
-    delete(id: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${id}`, { observe: 'response' });
-    }
 
     submitForPractice(quizSubmission: QuizSubmission, courseId: number, exerciseId: number): Observable<ResultResponseType> {
         const copy = this.convert(quizSubmission);
