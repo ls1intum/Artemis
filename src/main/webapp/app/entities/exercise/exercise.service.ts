@@ -63,6 +63,7 @@ export class ExerciseService {
     convertExerciseDateFromServer(exercise: Exercise): Exercise {
         exercise.releaseDate = exercise.releaseDate != null ? moment(exercise.releaseDate) : null;
         exercise.dueDate = exercise.dueDate != null ? moment(exercise.dueDate) : null;
+        exercise.assessmentDueDate = exercise.assessmentDueDate != null ? moment(exercise.assessmentDueDate) : null;
         exercise.participations = this.participationService.convertParticipationsDateFromServer(exercise.participations);
         return exercise;
     }

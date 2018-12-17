@@ -86,6 +86,11 @@ public class TextExerciseResource {
             !authCheckService.isAdmin()) {
             return forbidden();
         }
+
+        if (textExercise.getAssessmentDueDate() == null) {
+            textExercise.setAssessmentDueDate(textExercise.getDueDate().plusWeeks(1));
+        }
+
         TextExercise result = textExerciseRepository.save(textExercise);
         return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))

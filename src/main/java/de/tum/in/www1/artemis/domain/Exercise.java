@@ -63,6 +63,10 @@ public abstract class Exercise implements Serializable {
     @JsonView(QuizView.Before.class)
     private ZonedDateTime dueDate;
 
+    @Column(name = "assessment_due_date")
+    @JsonView(QuizView.Before.class)
+    private ZonedDateTime assessmentDueDate;
+
     @Column(name = "max_score")
     private Double maxScore;
 
@@ -154,6 +158,19 @@ public abstract class Exercise implements Serializable {
 
     public void setDueDate(ZonedDateTime dueDate) {
         this.dueDate = dueDate;
+    }
+
+    public ZonedDateTime getAssessmentDueDate() {
+        return assessmentDueDate;
+    }
+
+    public Exercise assessmentDueDate(ZonedDateTime assessmentDueDate) {
+        this.assessmentDueDate = assessmentDueDate;
+        return this;
+    }
+
+    public void setAssessmentDueDate(ZonedDateTime assessmentDueDate) {
+        this.assessmentDueDate = assessmentDueDate;
     }
 
     public Double getMaxScore() {

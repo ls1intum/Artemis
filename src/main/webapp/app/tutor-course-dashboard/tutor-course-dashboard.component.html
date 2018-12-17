@@ -15,22 +15,22 @@
     <div class="row mt-3 justify-content-around">
         <div class="col-4 text-center">
             <p class="h3">Your assessments:</p>
-            <p class="font-weight-bold">TODO</p>
+            <p class="font-weight-bold">{{numberOfTutorAssessments}} / 5 </p>
         </div>
         <div class="col-4 text-center">
             <p class="h3">Total assessments:</p>
-            <p class="font-weight-bold">TODO</p>
+            <p class="font-weight-bold">{{numberOfAssessments}} / {{numberOfSubmissions}} ({{numberOfAssessments/numberOfSubmissions * 100}}%</p>
         </div>
     </div>
 
     <div class="row justify-content-around">
         <div class="col-4 text-center">
             <p class="h3">Complaints about your assessments:</p>
-            <p class="font-weight-bold">TODO</p>
+            <p class="font-weight-bold">{{numberOfTutorComplaints}}</p>
         </div>
         <div class="col-4 text-center">
             <p class="h3">Total complaints:</p>
-            <p class="font-weight-bold">TODO</p>
+            <p class="font-weight-bold">{{numberOfComplaints}}</p>
         </div>
     </div>
 
@@ -58,11 +58,16 @@
                     Your status: 100% - TODO: implement progress bar
                 </td>
                 <td>
-                        <span placement="right" [hidden]="!exercise.dueDate"
-                              ngbTooltip="{{exercise.dueDate | date:'MMM d, y H:mm'}}">{{exercise.dueDate | amTimeAgo}}</span>
+                    <span placement="right" [hidden]="!exercise.dueDate"
+                          ngbTooltip="{{exercise.dueDate | date:'MMM d, y H:mm'}}">
+                        {{exercise.dueDate | amTimeAgo}}
+                    </span>
                 </td>
                 <td>
-                    TODO: assessments due date
+                    <span placement="right" [hidden]="!exercise.assessmentDueDate"
+                          ngbTooltip="{{exercise.assessmentDueDate | date:'MMM d, y H:mm'}}">
+                        {{exercise.assessmentDueDate | amTimeAgo}}
+                    </span>
                 </td>
 
                 <td class="text-center">
