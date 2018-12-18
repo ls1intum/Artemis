@@ -1,11 +1,9 @@
 <div class="sa-question" [ngClass]="{disabled: clickDisabled && !showResult, result: showResult && !forceSampleSolution, incorrect: (score || 0) < question.score && !forceSampleSolution}">
     <h4 class="question-title-display"><span>{{questionIndex}})</span> {{question.title}}</h4>
     <p>{{questionText}}</p>
-
     <div>
-        <div class="testFDE" *ngFor="let textPart of textWithOutSpotsFirstParts; let i =index">
-            {{textPart}} <input [(ngModel)]="input" >
-
+        <div class="testFDE" *ngFor="let textPart of textWithOutSpotsFirstParts; let i = index">
+            {{textPart}} <input type="text" id="solution-{{i}}">
         </div>
         <div class="testFDE">
             {{textWithOutSpotsLastPart}}
@@ -36,5 +34,6 @@
         <span jhiTranslate="arTeMiSApp.question.yourScore" class="colon-suffix"></span>
         <span>{{score || 0}}/{{question.score}}</span>
     </div>
-
+    <br>
+    <button (click)="setSubmittedText()">ready to go? click here</button>
 </div>

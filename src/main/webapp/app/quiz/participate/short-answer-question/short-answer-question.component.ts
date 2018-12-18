@@ -4,9 +4,8 @@ import { ShortAnswerQuestion } from '../../../entities/short-answer-question';
 import { ShortAnswerSpot } from '../../../entities/short-answer-spot';
 import { ShortAnswerSolution } from '../../../entities/short-answer-solution';
 import { ShortAnswerMapping } from '../../../entities/short-answer-mapping';
-
-import { AnswerOption } from '../../../entities/answer-option';
 import { ShortAnswerSubmittedText } from 'app/entities/short-answer-submitted-text';
+import { ShortAnswerSubmittedAnswer } from 'app/entities/short-answer-submitted-answer';
 
 @Component({
     selector: 'jhi-short-answer-question',
@@ -15,6 +14,7 @@ import { ShortAnswerSubmittedText } from 'app/entities/short-answer-submitted-te
 })
 export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
     _question: ShortAnswerQuestion;
+    _forceSampleSolution: boolean;
 
     @Input()
     set question(question: ShortAnswerQuestion) {
@@ -27,7 +27,7 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
     }
 
     @Input()
-    mappings: ShortAnswerMapping[];
+    submittedTexts: ShortAnswerSubmittedText[];
     @Input()
     clickDisabled: boolean;
     @Input()
@@ -37,22 +37,30 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
     @Input()
     score: number;
     @Input()
-    forceSampleSolution: boolean;
+    set forceSampleSolution(forceSampleSolution) {
+        this._forceSampleSolution = forceSampleSolution;
+        if (this.forceSampleSolution) {
+            console.log('ForceSampleSolution activated');
+            //TODO:FDE
+            // this.showSampleSolution();
+        }
+    }
+    get forceSampleSolution() {
+        return this._forceSampleSolution;
+    }
     @Input()
-    fnOnSelection: any;
+    fnOnSubmittedTextUpdate: any;
 
     //TODO: FDE Check if ok so
     @Output()
-    mappingssChange = new EventEmitter();
+    submittedTextsChange = new EventEmitter();
 
-    submittedTexts: ShortAnswerSubmittedText[];
-
+    showingSampleSolution = false;
     rendered: ShortAnswerQuestion;
-    questionText: String;
-    textWithoutSpots: String[];
-    textWithOutSpotsFirstParts: String[];
-    textWithOutSpotsLastPart: String[];
-    input: String = '';
+    questionText: string;
+    textWithoutSpots: string[];
+    textWithOutSpotsFirstParts: string[];
+    textWithOutSpotsLastPart: string[];
 
     constructor(private artemisMarkdown: ArtemisMarkdown) {}
 
@@ -64,6 +72,7 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
         // update html for text, hint and explanation for the question and every answer option
         const artemisMarkdown = this.artemisMarkdown;
         this.rendered = new ShortAnswerQuestion();
+
         this.questionText = this.question.text.split(/\n/g)[0];
         let questionTextSplitAtNewLine = this.question.text
             .split(/\n/g)
@@ -78,15 +87,24 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
         this.rendered.explanation = artemisMarkdown.htmlForMarkdown(this.question.explanation);
     }
 
-    setSubmittedText(id: number, text: string) {
-        let submittedText = new ShortAnswerSubmittedText();
-        submittedText.text = text;
-        submittedText.spot = this.question.spots[id];
+    setSubmittedText() {
+        console.log('test1');
+        for (let id in this.textWithOutSpotsFirstParts) {
+            let submittedText = new ShortAnswerSubmittedText();
+            submittedText.text = (<HTMLInputElement>document.getElementById('solution-' + id)).value;
+            submittedText.spot = this.question.spots[id];
+            console.log('test2');
+            console.log(id);
+            console.log(submittedText.text);
+            console.log(submittedText.spot);
+            this.submittedTexts.push(submittedText);
+        }
+        console.log(this.submittedTexts);
 
-        console.log('test');
-        console.log(text);
-        console.log(id);
-
-        this.submittedTexts.push(submittedText);
+        this.submittedTextsChange.emit(this.submittedTexts);
+        /** Only execute the onMappingUpdate function if we received such input **/
+        if (this.fnOnSubmittedTextUpdate) {
+            this.fnOnSubmittedTextUpdate();
+        }
     }
 }
