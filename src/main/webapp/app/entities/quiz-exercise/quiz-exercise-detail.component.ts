@@ -177,9 +177,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     }
 
     canDeactivate(): Observable<boolean> | boolean {
-        if (this.pendingChanges()) {
-            return !this.pendingChanges();
-        }
+        return !this.pendingChanges();
     }
 
     // displays the alert for confirming refreshing or closing the page if there are unsaved changes
