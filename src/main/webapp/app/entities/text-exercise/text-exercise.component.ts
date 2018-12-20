@@ -15,8 +15,8 @@ import { ActivatedRoute } from '@angular/router';
 })
 export class TextExerciseComponent implements OnInit, OnDestroy {
     private subscription: Subscription;
-    textExercises: TextExercise[];
-    course: Course;
+    @Input() textExercises: TextExercise[];
+    @Input() course: Course;
     eventSubscriber: Subscription;
     courseId: number;
     predicate: string;
@@ -37,10 +37,12 @@ export class TextExerciseComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        this.subscription = this.route.params.subscribe(params => {
-            this.load();
-            this.registerChangeInTextExercises();
-        });
+        if (this.course == null) {
+            this.subscription = this.route.params.subscribe(params => {
+                this.load();
+                this.registerChangeInTextExercises();
+            });
+        }
     }
 
     load() {

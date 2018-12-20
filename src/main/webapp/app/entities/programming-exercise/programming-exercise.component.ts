@@ -9,6 +9,7 @@ import { ITEMS_PER_PAGE } from '../../shared';
 import { Course, CourseExerciseService, CourseService } from '../course';
 import { ActivatedRoute } from '@angular/router';
 import { programmingExerciseRoute } from 'app/entities/programming-exercise/programming-exercise.route';
+import { EMPTY } from 'rxjs';
 
 @Component({
     selector: 'jhi-programming-exercise',
@@ -16,8 +17,8 @@ import { programmingExerciseRoute } from 'app/entities/programming-exercise/prog
 })
 export class ProgrammingExerciseComponent implements OnInit, OnDestroy {
     private subscription: Subscription;
-    programmingExercises: ProgrammingExercise[];
-    course: Course;
+    @Input() programmingExercises: ProgrammingExercise[];
+    @Input() course: Course;
     eventSubscriber: Subscription;
     courseId: number;
     predicate: string;
@@ -45,10 +46,12 @@ export class ProgrammingExerciseComponent implements OnInit, OnDestroy {
     }
 
     load() {
-        this.subscription = this.route.params.subscribe(params => {
-            this.courseId = params['courseId'];
-            this.loadForCourse();
-        });
+        if (this.course == null) {
+            this.subscription = this.route.params.subscribe(params => {
+                this.courseId = params['courseId'];
+                this.loadForCourse();
+            });
+        }
     }
 
     loadForCourse() {

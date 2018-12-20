@@ -26,8 +26,8 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
         OPEN_FOR_PRACTICE: 'Open for Practice'
     };
 
-    quizExercises: QuizExercise[];
-    course: Course;
+    @Input() quizExercises: QuizExercise[];
+    @Input() course: Course;
     predicate: string;
     reverse: boolean;
     courseId: number;
@@ -51,10 +51,12 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
     }
 
     load() {
-        this.subscription = this.route.params.subscribe(params => {
-            this.courseId = params['courseId'];
-            this.loadForCourse(this.courseId);
-        });
+        if (this.course == null) {
+            this.subscription = this.route.params.subscribe(params => {
+                this.courseId = params['courseId'];
+                this.loadForCourse(this.courseId);
+            });
+        }
     }
 
     loadForCourse(courseId: number) {
