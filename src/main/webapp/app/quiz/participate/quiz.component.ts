@@ -787,9 +787,11 @@ export class QuizComponent implements OnInit, OnDestroy {
         this.isSubmitting = true;
 
         let confirmSubmit = true;
-        if (this.remainingTimeSeconds < 1) {
+
+        if (this.remainingTimeSeconds > 0) {
             confirmSubmit = window.confirm('Are you sure you want to submit? You still have some time left!');
         }
+
         if (confirmSubmit) {
             switch (this.mode) {
                 case 'practice':
