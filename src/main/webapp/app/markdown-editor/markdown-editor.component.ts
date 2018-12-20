@@ -4,6 +4,8 @@ import 'brace/theme/chrome';
 import 'brace/mode/markdown';
 import { Command } from 'app/markdown-editor/commands/command';
 import { BoldCommand } from 'app/markdown-editor/commands/bold.command';
+import { ItalicCommand } from 'app/markdown-editor/commands/italic.command';
+import { UnderlineCommand } from 'app/markdown-editor/commands/underline';
 
 @Component({
     selector: 'jhi-markdown-editor',
@@ -17,7 +19,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     height: string = '300px';
     text: string = 'hallo';
 
-    commands: Command[] = [new BoldCommand()];
+    commands: Command[] = [new BoldCommand(), new ItalicCommand(), new UnderlineCommand()];
 
     ngAfterViewInit(): void {
         this.aceEditorContainer.setTheme('chrome');
