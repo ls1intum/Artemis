@@ -1,21 +1,29 @@
-<h3><span>{{course.title}}-{{quizExercises.length+programmingExercises.length+modelingExercises.length+fileUploadExercises.length+textExercises.length}} Exercises </span></h3>
+<ng-container *ngIf="exercisesReady; else loading">
+    <h3><span>{{course.title}}-{{quizExercises.length+programmingExercises.length+modelingExercises.length+fileUploadExercises.length+textExercises.length}} Exercises </span></h3>
 
-<jhi-course-exercise-card headingJhiTranslate="arTeMiSApp.course.programmingExercises">
-    <jhi-programming-exercise [showHeading]="true" [course]="course" [programmingExercises]="programmingExercises" ></jhi-programming-exercise>
-</jhi-course-exercise-card>
+    <jhi-course-exercise-card headingJhiTranslate="arTeMiSApp.course.programmingExercises">
+        <jhi-programming-exercise [showHeading]="true" [course]="course" [programmingExercises]="programmingExercises" ></jhi-programming-exercise>
+    </jhi-course-exercise-card>
 
-<jhi-course-exercise-card headingJhiTranslate="arTeMiSApp.course.quizExercises">
-    <jhi-quiz-exercise [showHeading]="true" [course]="course" [quizExercises]="quizExercises" ></jhi-quiz-exercise>
-</jhi-course-exercise-card>
+    <jhi-course-exercise-card headingJhiTranslate="arTeMiSApp.course.quizExercises">
+        <jhi-quiz-exercise [showHeading]="true" [course]="course" [quizExercises]="quizExercises" ></jhi-quiz-exercise>
+    </jhi-course-exercise-card>
 
-<jhi-course-exercise-card headingJhiTranslate="arTeMiSApp.course.modelingExercises">
-    <jhi-modeling-exercise [showHeading]="true" [course]="course" [modelingExercises]="modelingExercises"></jhi-modeling-exercise>
-</jhi-course-exercise-card>
+    <jhi-course-exercise-card headingJhiTranslate="arTeMiSApp.course.modelingExercises">
+        <jhi-modeling-exercise [showHeading]="true" [course]="course" [modelingExercises]="modelingExercises"></jhi-modeling-exercise>
+    </jhi-course-exercise-card>
 
-<jhi-course-exercise-card headingJhiTranslate="arTeMiSApp.course.fileUploadExercises">
-    <jhi-file-upload-exercise [showHeading]="true" [course]="course" [fileUploadExercises]="fileUploadExercises"></jhi-file-upload-exercise>
-</jhi-course-exercise-card>
+    <jhi-course-exercise-card headingJhiTranslate="arTeMiSApp.course.fileUploadExercises">
+        <jhi-file-upload-exercise [showHeading]="true" [course]="course" [fileUploadExercises]="fileUploadExercises"></jhi-file-upload-exercise>
+    </jhi-course-exercise-card>
 
-<jhi-course-exercise-card headingJhiTranslate="arTeMiSApp.course.textExercises">
-    <jhi-text-exercise [showHeading]="true" [course]="course" [textExercises]="textExercises" ></jhi-text-exercise>
-</jhi-course-exercise-card>
+    <jhi-course-exercise-card headingJhiTranslate="arTeMiSApp.course.textExercises">
+        <jhi-text-exercise [showHeading]="true" [course]="course" [textExercises]="textExercises" ></jhi-text-exercise>
+    </jhi-course-exercise-card>
+</ng-container>
+
+<ng-template #loading>
+    <h2>
+        <span style="color:grey"><span class="fa fa-spinner fa-spin"></span>&nbsp;<span>Please wait while ArTEMiS is finding the course and exercises!</span></span>
+    </h2>
+</ng-template>
