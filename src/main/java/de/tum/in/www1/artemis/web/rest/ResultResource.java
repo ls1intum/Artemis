@@ -12,6 +12,7 @@ import io.github.jhipster.web.util.ResponseUtil;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -41,6 +42,9 @@ public class ResultResource {
     private final Logger log = LoggerFactory.getLogger(ResultResource.class);
 
     private static final String ENTITY_NAME = "result";
+
+    @Value("${artemis.bamboo.authentication-token}")
+    private String CI_AUTHENTICATION_TOKEN = "";
 
     private final ResultRepository resultRepository;
     private final CourseService courseService;
@@ -139,7 +143,11 @@ public class ResultResource {
 
     @PostMapping(value = "/resultsnew")
     @Transactional
-    public ResponseEntity<?> notifyResultNew(@RequestBody Object requestBody) {
+    public ResponseEntity<?> notifyResultNew(@RequestHeader("Authorization") String token, @RequestBody Object requestBody) {
+        if (token == null || !token.equals(CI_AUTHENTICATION_TOKEN)) {
+            return forbidden(); // Only allow endpoint when using correct token
+        }
+
         try {
             String planKey = continuousIntegrationService.getPlanKey(requestBody);
             Optional<Participation> participation = getParticipation(planKey);
