@@ -56,7 +56,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
                     // this is important for modeling exercises since students can have multiple tries
                     // think about if this should be used for all types of exercises
                     this.participation.results.sort(
-                        (r1: Result, r2: Result): number => {
+                        (r1: Result, r2: Result) => {
                             if (r1.completionDate > r2.completionDate) {
                                 return -1;
                             }

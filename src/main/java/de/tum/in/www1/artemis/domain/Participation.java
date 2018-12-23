@@ -285,8 +285,6 @@ public class Participation implements Serializable {
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
-
-
     /**
      * Finds the latest result for the participation. Checks if the participation has any results. If there are no results,
      * return null. Otherwise sort the results by completion date and return the first.
@@ -324,10 +322,22 @@ public class Participation implements Serializable {
         if (submissions == null || submissions.size() == 0) {
             return null;
         }
-        List<Submission> sortedSubmissions = submissions.stream().collect(Collectors.toList());
+
         //TODO: what happens if the submissionDate is null?
-        sortedSubmissions.sort((r1, r2) -> r2.getSubmissionDate().compareTo(r1.getSubmissionDate()));
-        return sortedSubmissions.get(0);
+        return submissions.stream()
+            .min((r1, r2) -> r2.getSubmissionDate().compareTo(r1.getSubmissionDate()))
+            .orElse(null);
+    }
+
+    private <T extends Submission> T findLatestSubmissionOfType(Class<T> submissionType) {
+        Submission submission = findLatestSubmission();
+        submission = (Submission) Hibernate.unproxy(submission);
+
+        if (submissionType.isInstance(submission)) {
+            return submissionType.cast(submission);
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -337,13 +347,7 @@ public class Participation implements Serializable {
      * @return the latest modeling submission or null
      */
     public ModelingSubmission findLatestModelingSubmission() {
-        Submission submission = findLatestSubmission();
-        submission = (Submission) Hibernate.unproxy(submission);
-        if (submission != null && submission instanceof ModelingSubmission) {
-            return (ModelingSubmission) submission;
-        } else {
-            return null;
-        }
+        return findLatestSubmissionOfType(ModelingSubmission.class);
     }
 
     /**
@@ -353,13 +357,7 @@ public class Participation implements Serializable {
      * @return the latest text submission or null
      */
     public TextSubmission findLatestTextSubmission() {
-        Submission submission = findLatestSubmission();
-        submission = (Submission) Hibernate.unproxy(submission);
-        if (submission instanceof TextSubmission) {
-            return (TextSubmission) submission;
-        } else {
-            return null;
-        }
+        return findLatestSubmissionOfType(TextSubmission.class);
     }
 
     @Override

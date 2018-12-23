@@ -242,6 +242,22 @@ public class CourseResource {
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(course));
     }
 
+    /**
+     * GET  /courses/:id : get the "id" course.
+     *
+     * @param id the id of the course to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
+     */
+    @GetMapping("/courses/{id}/with-exercises")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @Timed
+    public ResponseEntity<Course> getCourseWithExercises(@PathVariable Long id) {
+        log.debug("REST request to get Course : {}", id);
+        Course course = courseService.findOneWithExercises(id);
+        if (!userHasPermission(course)) return forbidden();
+        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(course));
+    }
+
     private boolean userHasPermission(Course course) {
         User user = userService.getUserWithGroupsAndAuthorities();
         return authCheckService.isTeachingAssistantInCourse(course, user) ||
@@ -272,23 +288,4 @@ public class CourseResource {
         courseService.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, title)).build();
     }
-
-
-    /**
-     * GET /courses/:courseId/getAllCourseScoresOfCourseUsers
-     *
-     * @param courseId the Id of the course
-     * @return collection of Results where the sum of the best result per exercise, for each student in a course is cointained:
-     * ResultId refers in this case to the studentId, the score still needs to be divided by the amount of exercises (done in the webapp)
-     */
-    @GetMapping("/courses/{courseId}/getAllCourseScoresOfCourseUsers")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
-    public ResponseEntity<Collection<Result>> getAllSummedScoresOfCourseUsers(@PathVariable("courseId") Long courseId) {
-        log.debug("REST request to get courseScores from course : {}", courseId);
-        Course course = courseService.findOne(courseId);
-        if (!userHasPermission(course)) return forbidden();
-        return ResponseEntity.ok(courseService.getAllOverallScoresOfCourse(courseId));
-    }
-
 }

@@ -125,6 +125,7 @@ public class ResultResource {
      */
     @PostMapping(value = "/results/{planKey}")
     @Transactional
+    @Timed
     public ResponseEntity<?> notifyResult(@PathVariable("planKey") String planKey) {
         if (planKey.toLowerCase().endsWith("base") || planKey.toLowerCase().endsWith("solution")) {
             //TODO: can we do this check more precise and compare it with the saved values from the exercises?
@@ -305,12 +306,12 @@ public class ResultResource {
 
         for (Participation participation : participations) {
 
-            Result relevantResult = null;
+            Result relevantResult;
             if (ratedOnly == true) {
                 relevantResult = exercise.findLatestRatedResultWithCompletionDate(participation);
             }
             else {
-                relevantResult = exercise.findLatestResult(participation);
+                relevantResult = participation.findLatestResult();
             }
             if (relevantResult == null) {
                 continue;
@@ -340,31 +341,6 @@ public class ResultResource {
             result.getParticipation().setResults(null);
             result.getParticipation().setSubmissions(null);
             result.getParticipation().setExercise(null);
-        });
-
-        return ResponseEntity.ok().body(results);
-    }
-
-    /**
-     * GET  /courses/:courseId/results : get the successful results for a course, ordered ascending by build completion date.
-     *
-     * @param courseId the id of the course for which to retrieve the results
-     * @return the ResponseEntity with status 200 (OK) and the list of results in body
-     */
-    @GetMapping(value = "/courses/{courseId}/results")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
-    public ResponseEntity<List<Result>> getResultsForCourse(@PathVariable Long courseId) {
-        log.debug("REST request to get Results for Course : {}", courseId);
-        Course course = courseService.findOne(courseId);
-        if (!userHasPermissions(course)) return forbidden();
-        List<Result> results = resultRepository.findEarliestSuccessfulResultsForCourse(courseId);
-
-        //remove unnecessary elements in the json response
-        results.forEach(result -> {
-            result.getParticipation().setExercise(null);
-            result.getParticipation().setResults(null);
-            result.getParticipation().setSubmissions(null);
         });
 
         return ResponseEntity.ok().body(results);

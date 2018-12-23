@@ -46,7 +46,7 @@ export class JhiMetricsMonitoringComponent implements OnInit {
                     // Keep the name of the domain
                     this.cachesStats[newKey] = {
                         name: this.JCACHE_KEY.length,
-                        value: value
+                        value
                     };
                 }
             });

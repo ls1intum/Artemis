@@ -19,11 +19,14 @@ export class Result implements BaseEntity {
     public hasFeedback: boolean;
     public score: number;
     public assessmentType: AssessmentType;
+    public rated: boolean;
+    public hasComplaint: boolean;
+    public exampleResult: boolean;
+
     public submission: Submission;
     public assessor: User;
     public feedbacks: Feedback[];
     public participation: Participation;
-    public rated: boolean;
 
     public assessments: string; // only used for results of modeling exercises so far
 
