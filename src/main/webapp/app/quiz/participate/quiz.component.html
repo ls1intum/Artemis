@@ -11,7 +11,7 @@
 </div>
 <div class="quiz-content container" *ngIf="quizExercise">
     <div *ngFor="let question of quizExercise.questions; let i = index">
-        <jhi-multiple-choice-question *ngIf="question.type === MULTIPLE_CHOICE" [question]="question" [(selectedAnswerOptions)]="selectedAnswerOptions[question.id]" [fnOnSelection]="onSelectionChanged.bind(this)" [clickDisabled]="submission.submitted || remainingTimeSeconds < 0" [showResult]="showingResult" [forceSampleSolution]="mode === 'solution'" [questionIndex]="i + 1" [score]="questionScores[question.id]"></jhi-multiple-choice-question>
+        <jhi-multiple-choice-question  *ngIf="question.type === MULTIPLE_CHOICE" [question]="question" [(selectedAnswerOptions)]="selectedAnswerOptions[question.id]" [fnOnSelection]="onSelectionChanged.bind(this)" [clickDisabled]="submission.submitted || remainingTimeSeconds < 0" [showResult]="showingResult" [forceSampleSolution]="mode === 'solution'" [questionIndex]="i + 1" [score]="questionScores[question.id]"></jhi-multiple-choice-question>
         <jhi-drag-and-drop-question *ngIf="question.type === DRAG_AND_DROP" [question]="question" [(mappings)]="dragAndDropMappings[question.id]" [fnOnMappingUpdate]="onSelectionChanged.bind(this)" [clickDisabled]="submission.submitted || remainingTimeSeconds < 0" [showResult]="showingResult" [forceSampleSolution]="mode === 'solution'" [questionIndex]="i + 1" [score]="questionScores[question.id]"></jhi-drag-and-drop-question>
     </div>
 </div>
@@ -19,16 +19,16 @@
     <div class="container">
         <div class="quiz-footer-content">
             <div>
-                <div[hidden]=" quizExercise.questions == null">
+                <div [hidden]=" quizExercise.questions == null">
                     <div class="stepwizardquiz">
                             <div *ngFor="let question of quizExercise.questions; let i = index" class="stepwizardquiz-step">
-                                <div *ngIf="question.selectedAnswerOptions" data-toggle="tooltip" data-placement="bottom" class="btn btn-light btn-circle stepwizardquiz-circle" style="background-color: #45a2b4" [class.test-passing]="question.done" (click)="triggerTestStatusClick(i)">
+                                <div *ngIf="!question.selectedAnswerOptions || !question.dragAndDropMappings"  data-toggle="tooltip" data-placement="bottom" class="btn btn-light btn-circle stepwizardquiz-circle" style="background-color: #e67e22" (click)="navigateToQuestion()">
                                     <i class="fa fa-lg" *ngIf="question.type === DRAG_AND_DROP" >DAD</i>
                                     <i class="fa fa-lg" *ngIf="question.type === MULTIPLE_CHOICE" >MC</i>
                                 </div>
-                                <div *ngIf="!question.selectedAnswerOptions" data-toggle="tooltip" data-placement="bottom" class="btn btn-light btn-circle stepwizardquiz-circle" style="background-color: #e67e22" [class.test-passing]="question.done" (click)="triggerTestStatusClick(i)">
-                                    <i class="fa fa-lg" *ngIf="question.type === DRAG_AND_DROP" >DAD</i>
-                                    <i class="fa fa-lg" *ngIf="question.type === MULTIPLE_CHOICE" >MC</i>
+                                <div *ngIf="question.selectedAnswerOptions || question.dragAndDropMappings" data-toggle="tooltip" data-placement="bottom" class="btn btn-light btn-circle stepwizardquiz-circle" style="background-color: #45a2b4" (click)="navigateToQuestion()">
+                                    <i class="fa fa-lg" *ngIf="question.type === DRAG_AND_DROP"  >DAD</i>
+                                    <i class="fa fa-lg" *ngIf="question.type === MULTIPLE_CHOICE"  >MC</i>
                                 </div>
                             </div>
                     </div>
