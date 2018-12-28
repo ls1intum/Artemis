@@ -24,7 +24,7 @@
     <div class="question-score result" *ngIf="showResult && !forceSampleSolution" [ngClass]="{incorrect: (score || 0) < question.score}">
         <span jhiTranslate="arTeMiSApp.question.yourScore" class="colon-suffix"></span>
         <span>{{score || 0}}/{{question.score}}</span>
-        <jhi-quiz-scoring-infostudent-modal></jhi-quiz-scoring-infostudent-modal>
+        <jhi-quiz-scoring-infostudent-modal [score]="score" [question]="question.score" [scoringType]="question.scoringType" ></jhi-quiz-scoring-infostudent-modal>
     </div>
     <div class="drag-and-drop-area">
         <div class="instructions" *ngIf="showResult">
