@@ -1190,3 +1190,70 @@ table.answer-options-result {
     visibility: visible;
     opacity: 1;
 }
+
+/* StepwizardQuiz for the progress bar*/
+
+.stepwizardquiz-step p {
+    margin-top: 10px;
+}
+
+.stepwizardquiz-step .fa {
+    vertical-align: initial;
+}
+
+.stepwizardquiz-row {
+    display: table-row;
+}
+
+.stepwizardquiz {
+    display: table;
+    width: 100%;
+    position: relative;
+}
+
+.stepwizardquiz-step button[disabled] {
+    opacity: 1 !important;
+    filter: alpha(opacity=0) !important;
+    cursor: default;
+}
+
+.stepwizardquiz-step .btn {
+    cursor: default;
+}
+
+.stepwizardquiz-row:before {
+    top: 14px;
+    bottom: 0;
+    position: absolute;
+    content: ' ';
+    width: 100%;
+    height: 1px;
+    z-order: 0;
+}
+
+.stepwizardquiz-step {
+    display: table-cell;
+    text-align: center;
+    position: relative;
+}
+
+.btn-circle.btn-circle {
+    width: 23px;
+    height: 23px;
+    text-align: center;
+    padding: 6px 0;
+    font-size: 9px;
+    line-height: 1.428571429;
+    border-radius: 15px;
+    &.btn-light {
+        border-color: #ccc;
+    }
+}
+
+.test-passing {
+    cursor: default !important;
+}
+
+.test-passing:hover {
+    background-color: #f8f9fa;
+}
