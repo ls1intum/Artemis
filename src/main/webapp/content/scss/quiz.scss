@@ -1250,10 +1250,10 @@ table.answer-options-result {
     }
 }
 
-.test-passing {
-    cursor: default !important;
+.default-question{
+    background-color: #e67e22
 }
 
-.test-passing:hover {
-    background-color: #f8f9fa;
+.changed-question{
+    background-color: #45a2b4;
 }
