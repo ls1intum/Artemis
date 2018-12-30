@@ -68,25 +68,6 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, A
      * @desc Initializes the ace editor for the mc question
      */
 
-    /*setupQuestionMarkdownEditor(): void {
-        this.markdownEditor.setTheme('chrome');
-        this.markdownEditor.getEditor().renderer.setShowGutter(false);
-        this.markdownEditor.getEditor().renderer.setPadding(10);
-        this.markdownEditor.getEditor().renderer.setScrollMargin(8, 8);
-        this.markdownEditor.getEditor().setHighlightActiveLine(false);
-        this.markdownEditor.getEditor().setShowPrintMargin(false);
-        this.questionEditorText = this.generateMarkdown();
-        this.markdownEditor.getEditor().clearSelection();
-        this.markdownEditor.getEditor().on(
-            'blur',
-            () => {
-                this.parseMarkdown(this.questionEditorText);
-                this.questionUpdated.emit();
-            },
-            this
-        );
-    } */
-
     setupQuestionEditor(): void {
         this.questionEditor.setTheme('chrome');
         this.questionEditor.getEditor().renderer.setShowGutter(false);

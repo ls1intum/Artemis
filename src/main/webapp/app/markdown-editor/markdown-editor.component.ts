@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, ViewChild } from '@angular/core';
+import { Component, AfterViewInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
@@ -12,27 +12,23 @@ import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 @Component({
     selector: 'jhi-markdown-editor',
     styleUrls: ['./markdown-editor.scss'],
+    providers: [ArtemisMarkdown],
     templateUrl: './markdown-editor.component.html'
 })
 export class MarkdownEditorComponent implements AfterViewInit {
     @ViewChild('aceEditor')
     aceEditorContainer: AceEditorComponent;
 
-    text: string = 'hallo';
+    @Input() text: string;
 
-    questionEditorText = '';
+    @Output() changedText = new EventEmitter();
+
     questionEditorMode = 'markdown';
     questionEditorAutoUpdate = true;
 
-    constructor(private artemisMarkdown: ArtemisMarkdown) {}
-
-    showPreview: boolean;
-
     commands: Command[] = [new BoldCommand(), new ItalicCommand(), new UnderlineCommand()];
 
-    ngOnInit(): void {
-        this.showPreview = false;
-    }
+    constructor(private artemisMarkdown: ArtemisMarkdown) {}
 
     ngAfterViewInit(): void {
         requestAnimationFrame(this.setupQuestionMarkdownEditor.bind(this));
@@ -54,7 +50,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
         this.aceEditorContainer.getEditor().on(
             'blur',
             () => {
-                this.parseMarkdown(this.questionEditorText);
+                this.parseMarkdown(this.text);
             },
             this
         );
