@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
+import { Component, AfterViewInit, ViewChild, Input, Output, EventEmitter, SimpleChanges } from '@angular/core';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
@@ -8,6 +8,7 @@ import { ItalicCommand } from 'app/markdown-editor/commands/italic.command';
 import { UnderlineCommand } from 'app/markdown-editor/commands/underline.command';
 import { AnswerOption } from 'app/entities/answer-option';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
+import { MultipleChoiceQuestion } from 'app/entities/multiple-choice-question';
 
 @Component({
     selector: 'jhi-markdown-editor',
@@ -20,6 +21,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     aceEditorContainer: AceEditorComponent;
 
     @Input() text: string;
+    @Input() question: MultipleChoiceQuestion;
 
     @Output() changedText = new EventEmitter();
 
@@ -32,6 +34,13 @@ export class MarkdownEditorComponent implements AfterViewInit {
 
     ngAfterViewInit(): void {
         requestAnimationFrame(this.setupQuestionMarkdownEditor.bind(this));
+    }
+
+    ngOnChanges(changes: SimpleChanges): void {
+        /** Check if previousValue wasn't null to avoid firing at component initialization **/
+        if (changes.question && changes.question.previousValue != null) {
+            this.changedText.emit();
+        }
     }
 
     /**
@@ -47,13 +56,28 @@ export class MarkdownEditorComponent implements AfterViewInit {
         this.aceEditorContainer.getEditor().setHighlightActiveLine(false);
         this.aceEditorContainer.getEditor().setShowPrintMargin(false);
         this.aceEditorContainer.getEditor().clearSelection();
+        this.text = this.generateMarkdown();
         this.aceEditorContainer.getEditor().on(
             'blur',
             () => {
                 this.parseMarkdown(this.text);
+                this.changedText.emit();
             },
             this
         );
+    }
+
+    generateMarkdown(): string {
+        const markdownText =
+            this.artemisMarkdown.generateTextHintExplanation(this.question) +
+            '\n\n' +
+            this.question.answerOptions
+                .map(
+                    answerOption =>
+                        (answerOption.isCorrect ? '[x]' : '[ ]') + ' ' + this.artemisMarkdown.generateTextHintExplanation(answerOption)
+                )
+                .join('\n');
+        return markdownText;
     }
 
     parseMarkdown(text: string): void {
