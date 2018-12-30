@@ -1,12 +1,14 @@
 <div>
-<div class="tool-bar">
-    <div class="btn-group">
-        <ng-container *ngFor="let command of commands">
-            <button class="btn btn-sm btn-default" type="button" [title]="command.buttonTitle" (click)="command.execute(aceEditorContainer.getEditor())">
-                <i [ngClass]="command.buttonIcon"></i>
-            </button>
-        </ng-container>
+    <div class="tool-bar">
+        <div class="btn-group">
+            <ng-container *ngFor="let command of commands">
+                <button class="btn btn-sm btn-default" type="button" [title]="command.buttonTitle"
+                        (click)="command.execute(aceEditorContainer.getEditor())">
+                    <i [ngClass]="command.buttonIcon"></i>
+                </button>
+            </ng-container>
+        </div>
     </div>
-</div>
-<ace-editor #aceEditor [mode]="'markdown'"  [autoUpdateContent]="true"  style="width:900px;height:300px;" > </ace-editor>
+    <ace-editor #aceEditor [mode]="'markdown'" [autoUpdateContent]="true"
+                style="min-height: 200px; width:100%; overflow: auto;" class="form-control"></ace-editor>
 </div>
