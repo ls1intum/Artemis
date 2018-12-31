@@ -41,8 +41,8 @@
                     <div class="stepwizardquiz">
                         <div *ngFor="let question of quizExercise.questions; let i = index" class="stepwizardquiz-step">
                             <div data-toggle="tooltip" data-placement="bottom"
-                                 class="btn btn-light btn-circle stepwizardquiz-circle"
-                                 [ngClass]="{'default-question': !question.selectedAnswerOptions || !question.dragAndDropMappings, 'changed-question': question.selectedAnswerOptions|| question.dragAndDropMappings}"
+                                 class="btn btn-light btn-circle stepwizardquiz-circle default-question"
+                                 [ngClass]="{'changed-question': selectedAnswerOptions[question.id]?.length || dragAndDropMappings[question.id]?.length }"
                                  (click)="navigateToQuestion(i)">
                                 <i class="fa fa-lg" *ngIf="question.type === DRAG_AND_DROP">DAD</i>
                                 <i class="fa fa-lg" *ngIf="question.type === MULTIPLE_CHOICE">MC</i>
