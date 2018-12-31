@@ -13,7 +13,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
     templateUrl: './edit-multiple-choice-question.component.html',
     providers: [ArtemisMarkdown]
 })
-export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, AfterViewInit {
+export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges {
     @ViewChild('questionEditor')
     private questionEditor: AceEditorComponent;
 
@@ -44,6 +44,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, A
 
     ngOnInit(): void {
         this.showPreview = false;
+        this.setupQuestionEditor();
     }
 
     /**
@@ -58,33 +59,13 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, A
         }
     }
 
-    ngAfterViewInit(): void {
-        /** Setup editor **/
-        // requestAnimationFrame(this.setupQuestionEditor.bind(this));
-    }
-
     /**
      * @function setupQuestionEditor
      * @desc Initializes the ace editor for the mc question
      */
 
     setupQuestionEditor(): void {
-        this.questionEditor.setTheme('chrome');
-        this.questionEditor.getEditor().renderer.setShowGutter(false);
-        this.questionEditor.getEditor().renderer.setPadding(10);
-        this.questionEditor.getEditor().renderer.setScrollMargin(8, 8);
-        this.questionEditor.getEditor().setHighlightActiveLine(false);
-        this.questionEditor.getEditor().setShowPrintMargin(false);
         this.questionEditorText = this.generateMarkdown();
-        this.questionEditor.getEditor().clearSelection();
-        this.questionEditor.getEditor().on(
-            'blur',
-            () => {
-                this.parseMarkdown(this.questionEditorText);
-                this.questionUpdated.emit();
-            },
-            this
-        );
     }
 
     /**

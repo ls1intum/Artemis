@@ -20,11 +20,12 @@ export class MarkdownEditorComponent implements AfterViewInit {
     @ViewChild('aceEditor')
     aceEditorContainer: AceEditorComponent;
 
-    @Input() text: string;
+    @Input() defaultText: string;
     @Input() question: MultipleChoiceQuestion;
 
     @Output() changedText = new EventEmitter();
 
+    questionEditorText = '';
     questionEditorMode = 'markdown';
     questionEditorAutoUpdate = true;
 
@@ -48,6 +49,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
      * @desc Initializes the ace editor for the mc question
      */
 
+    /** Currently responsible for making the editor appear nicely**/
     setupQuestionMarkdownEditor(): void {
         this.aceEditorContainer.setTheme('chrome');
         this.aceEditorContainer.getEditor().renderer.setShowGutter(false);
@@ -56,16 +58,20 @@ export class MarkdownEditorComponent implements AfterViewInit {
         this.aceEditorContainer.getEditor().setHighlightActiveLine(false);
         this.aceEditorContainer.getEditor().setShowPrintMargin(false);
         this.aceEditorContainer.getEditor().clearSelection();
-        this.text = this.generateMarkdown();
+        this.defaultText;
         this.aceEditorContainer.getEditor().on(
             'blur',
             () => {
-                this.parseMarkdown(this.text);
+                this.parseMarkdown(this.defaultText);
                 this.changedText.emit();
             },
             this
         );
+        console.log(this.defaultText);
     }
+
+    /** Currently responsible for the default text in the Multiple Choice question **/
+    /** TODO change the dependancy between this class and the MultipleChoiceQuestion **/
 
     generateMarkdown(): string {
         const markdownText =
