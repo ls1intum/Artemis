@@ -844,7 +844,7 @@ export class QuizComponent implements OnInit, OnDestroy {
     }
 
     navigateToQuestion(questionIndex: number): void {
-        document.getElementById('question'+ questionIndex).scrollIntoView({
+        document.getElementById('question' + questionIndex).scrollIntoView({
             behavior: 'smooth'
         });
     }
