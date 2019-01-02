@@ -151,7 +151,7 @@ dependencies {
     compile "org.imsglobal:basiclti-util:1.2.0"
     compile "org.jasypt:jasypt:1.9.2"
 
-    compile group: 'com.atlassian.bamboo', name: 'bamboo-specs', version: '6.6.2'
+    compile group: 'com.atlassian.bamboo', name: 'bamboo-specs', version: '6.7.2'
 
     // Use ", version: jhipster_dependencies_version, changing: true" if you want
     // to use a SNAPSHOT release instead of a stable release
