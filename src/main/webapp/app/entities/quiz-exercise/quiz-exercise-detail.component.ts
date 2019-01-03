@@ -465,6 +465,13 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         return isGenerallyValid && areAllQuestionsValid;
     }
 
+    containExplanation(): boolean {
+        if (this.pendingChanges() && this.validQuiz()) {
+            return true;
+        }
+
+    }
+
     /**
      * @function invalidReasons
      * @desc Get the reasons, why the quiz is invalid
