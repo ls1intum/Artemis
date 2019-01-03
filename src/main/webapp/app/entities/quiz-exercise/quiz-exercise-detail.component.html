@@ -225,6 +225,14 @@
                         <span>Warning</span>
                     </span>
                     <span
+                        *ngIf="validQuestionTitle()"
+                        class="badge badge-danger"
+                        ngbTooltip="Please shorten you question title. Currently it contains more than 250 signs."
+                        placement="top">
+                        <i class="fa fa-exclamation-circle"></i>
+                        <span>Warning</span>
+                    </span>
+                    <span
                         *ngIf="!validQuiz()"
                         class="badge badge-danger"
                         [ngbTooltip]="tooltipTranslate"

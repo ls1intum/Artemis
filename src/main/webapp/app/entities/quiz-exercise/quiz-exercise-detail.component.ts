@@ -465,6 +465,10 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         return isGenerallyValid && areAllQuestionsValid;
     }
 
+    /**
+     * @function containExplanation
+     * @desc Shows the explanation warning
+     */
     containExplanation(): boolean {
         if (this.pendingChanges() && this.validQuiz()) {
             return true;
@@ -472,6 +476,18 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
 
     }
 
+    /**
+     * @function validQuestionTitle
+     * @desc Checks the validity of the question title
+     */
+    validQuestionTitle(): boolean {
+        for(const question of this.quizExercise.questions)
+        if(question.title.length > 250) {
+            console.log(question.title);
+            return true;
+        }
+    }
+    
     /**
      * @function invalidReasons
      * @desc Get the reasons, why the quiz is invalid
