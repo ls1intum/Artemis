@@ -485,7 +485,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      * @function validQuestionTitle
      * @desc Checks the validity of the question title
      */
-    validQuestionTitle(): boolean {
+    warningCheck(): boolean {
         for(const question of this.quizExercise.questions)
         if(question.title.length > 250) {
             return true;
@@ -584,17 +584,18 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      * @desc Get the reasons, why the quiz has warnings
      * @returns {Array} array of objects with fields 'translateKey' and 'translateValues'
      */
-
     warningReasons(): Warning[] {
         const warning = new Array<Warning>();
-
-        if(this.validQuestionTitle()) {
+        this.quizExercise.questions.forEach(function(question: Question, index: number) {
+        if(this.warningCheck()) {
             warning.push({
                 translateKey: 'arTeMiSApp.quizExercise.warnings.questionTitleLength',
-                translateValues: {}
+                translateValues: { index: index + 1 }
             });
+          }
+        }, this);
+
         return warning;
-        }
     }
 
 
@@ -607,6 +608,22 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         const translate = this.translateService;
         let reasonString = '';
         for (const reason of this.invalidReasons()) {
+            translate.get(reason['translateKey'], reason['translateValues']).subscribe((res: string) => {
+                reasonString += res + '   -   ';
+            });
+        }
+        return reasonString.substr(0, reasonString.length - 5);
+    }
+
+    /**
+     * @function warningReasonsHTML
+     * @desc Get the reasons, why the quiz is invalid as an HTML string
+     * @return {string} the reasons in HTML
+     */
+    warningReasonsHTML(): string {
+        const translate = this.translateService;
+        let reasonString = '';
+        for (const reason of this.warningReasons()) {
             translate.get(reason['translateKey'], reason['translateValues']).subscribe((res: string) => {
                 reasonString += res + '   -   ';
             });
