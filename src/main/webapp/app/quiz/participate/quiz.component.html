@@ -1,36 +1,18 @@
 <div class="quiz-header container" *ngIf="quizExercise">
     <h2 [ngSwitch]="mode">
         {{quizExercise.course.title}} - {{quizExercise.title}}
-        <span *ngSwitchCase="'practice'" class="in-parentheses"
-              jhiTranslate="arTeMiSApp.quizExercise.practiceMode"></span>
-        <span *ngSwitchCase="'preview'" class="in-parentheses"
-              jhiTranslate="arTeMiSApp.quizExercise.previewMode"></span>
+        <span *ngSwitchCase="'practice'" class="in-parentheses" jhiTranslate="arTeMiSApp.quizExercise.practiceMode"></span>
+        <span *ngSwitchCase="'preview'" class="in-parentheses" jhiTranslate="arTeMiSApp.quizExercise.previewMode"></span>
         <span *ngSwitchCase="'solution'" class="in-parentheses" jhiTranslate="arTeMiSApp.quizExercise.solution"></span>
     </h2>
-    <p *ngIf="!waitingForQuizStart && !submission.submitted && !showingResult"
-       jhiTranslate="arTeMiSApp.quizExercise.quizInstructions.default"></p>
-    <p *ngIf="!waitingForQuizStart && submission.submitted && !showingResult"
-       jhiTranslate="arTeMiSApp.quizExercise.quizInstructions.wait"></p>
-    <p *ngIf="!waitingForQuizStart && showingResult && mode !== 'solution'"
-       jhiTranslate="arTeMiSApp.quizExercise.quizInstructions.result"
-       translateValues="{userScore: '{{userScore}}', maxScore: '{{totalScore}}', percentage: '{{result.score}}'}"></p>
+    <p *ngIf="!waitingForQuizStart && !submission.submitted && !showingResult" jhiTranslate="arTeMiSApp.quizExercise.quizInstructions.default"></p>
+    <p *ngIf="!waitingForQuizStart && submission.submitted && !showingResult" jhiTranslate="arTeMiSApp.quizExercise.quizInstructions.wait"></p>
+    <p *ngIf="!waitingForQuizStart && showingResult && mode !== 'solution'" jhiTranslate="arTeMiSApp.quizExercise.quizInstructions.result" translateValues="{userScore: '{{userScore}}', maxScore: '{{totalScore}}', percentage: '{{result.score}}'}"></p>
 </div>
 <div class="quiz-content container" *ngIf="quizExercise">
     <div *ngFor="let question of quizExercise.questions; let i = index">
-        <jhi-multiple-choice-question id="question{{i}}" *ngIf="question.type === MULTIPLE_CHOICE" [question]="question"
-                                      [(selectedAnswerOptions)]="selectedAnswerOptions[question.id]"
-                                      [fnOnSelection]="onSelectionChanged.bind(this)"
-                                      [clickDisabled]="submission.submitted || remainingTimeSeconds < 0"
-                                      [showResult]="showingResult" [forceSampleSolution]="mode === 'solution'"
-                                      [questionIndex]="i + 1"
-                                      [score]="questionScores[question.id]"></jhi-multiple-choice-question>
-        <jhi-drag-and-drop-question id="question{{i}}" *ngIf="question.type === DRAG_AND_DROP" [question]="question"
-                                    [(mappings)]="dragAndDropMappings[question.id]"
-                                    [fnOnMappingUpdate]="onSelectionChanged.bind(this)"
-                                    [clickDisabled]="submission.submitted || remainingTimeSeconds < 0"
-                                    [showResult]="showingResult" [forceSampleSolution]="mode === 'solution'"
-                                    [questionIndex]="i + 1"
-                                    [score]="questionScores[question.id]"></jhi-drag-and-drop-question>
+        <jhi-multiple-choice-question *ngIf="question.type === MULTIPLE_CHOICE" [question]="question" [(selectedAnswerOptions)]="selectedAnswerOptions[question.id]" [fnOnSelection]="onSelectionChanged.bind(this)" [clickDisabled]="submission.submitted || remainingTimeSeconds < 0" [showResult]="showingResult" [forceSampleSolution]="mode === 'solution'" [questionIndex]="i + 1" [score]="questionScores[question.id]"></jhi-multiple-choice-question>
+        <jhi-drag-and-drop-question *ngIf="question.type === DRAG_AND_DROP" [question]="question" [(mappings)]="dragAndDropMappings[question.id]" [fnOnMappingUpdate]="onSelectionChanged.bind(this)" [clickDisabled]="submission.submitted || remainingTimeSeconds < 0" [showResult]="showingResult" [forceSampleSolution]="mode === 'solution'" [questionIndex]="i + 1" [score]="questionScores[question.id]"></jhi-drag-and-drop-question>
     </div>
 </div>
 <div class="quiz-footer" *ngIf="quizExercise">
@@ -62,8 +44,7 @@
             <div *ngIf="!showingResult" id="remaining-time">
                 <div *ngIf="!waitingForQuizStart">
                     <span jhiTranslate="arTeMiSApp.quizExercise.remainingTime" class="colon-suffix"></span>
-                    <span id="remaining-time-value"
-                          [ngClass]="{'time-critical': remainingTimeSeconds < 60 || remainingTimeSeconds < quizExercise.duration / 4, 'time-warning': remainingTimeSeconds < 120 || remainingTimeSeconds < quizExercise.duration / 2}">
+                    <span id="remaining-time-value" [ngClass]="{'time-critical': remainingTimeSeconds < 60 || remainingTimeSeconds < quizExercise.duration / 4, 'time-warning': remainingTimeSeconds < 120 || remainingTimeSeconds < quizExercise.duration / 2}">
                         {{remainingTimeText}}
                     </span>
                 </div>
@@ -72,13 +53,9 @@
                 </div>
                 <div *ngIf="mode ==='default' && !waitingForQuizStart">
                     <span *ngIf="isSaving">Saving Answers...</span>
-                    <span *ngIf="!isSaving"
-                          ngbTooltip="{{submission.adjustedSubmissionDate | date:'MMM d, y HH:mm:ss'}}"
-                          placement="right">
-                        <span *ngIf="!submission.submitted" jhiTranslate="arTeMiSApp.quizExercise.lastSaved"
-                              class="colon-suffix"></span>
-                        <span *ngIf="submission.submitted" jhiTranslate="arTeMiSApp.quizExercise.submitted"
-                              class="colon-suffix"></span>
+                    <span *ngIf="!isSaving" ngbTooltip="{{submission.adjustedSubmissionDate | date:'MMM d, y HH:mm:ss'}}" placement="right">
+                        <span *ngIf="!submission.submitted" jhiTranslate="arTeMiSApp.quizExercise.lastSaved" class="colon-suffix"></span>
+                        <span *ngIf="submission.submitted" jhiTranslate="arTeMiSApp.quizExercise.submitted" class="colon-suffix"></span>
                         <span *ngIf="justSaved" jhiTranslate="justNow"></span>
                         <span *ngIf="!justSaved">{{lastSavedTimeText}}</span>
                     </span>
@@ -87,8 +64,7 @@
                     <i class="fa fa-sm fa-circle"></i>
                     <span *ngIf="!disconnected" jhiTranslate="arTeMiSApp.quizExercise.connected"></span>
                     <span *ngIf="disconnected" jhiTranslate="arTeMiSApp.quizExercise.disconnected"></span>
-                    <span *ngIf="unsavedChanges" jhiTranslate="arTeMiSApp.quizExercise.unsavedChanges"
-                          class="in-parentheses"></span>
+                    <span *ngIf="unsavedChanges" jhiTranslate="arTeMiSApp.quizExercise.unsavedChanges" class="in-parentheses"></span>
                 </div>
                 <div *ngIf="mode ==='practice'">
                     <span jhiTranslate="arTeMiSApp.quizExercise.practiceMode"></span>
@@ -112,21 +88,16 @@
             <div *ngIf="mode === 'solution'">
                 <span jhiTranslate="arTeMiSApp.quizExercise.solution"></span>
             </div>
-            <button *ngIf="!submission.submitted && !showingResult"
-                    [disabled]="isSubmitting || waitingForQuizStart || remainingTimeSeconds < 0"
-                    class="btn btn-success btn-lg" jhiTranslate="entity.action.submit" (click)="onSubmit()"></button>
-            <button *ngIf="submission.submitted && !showingResult" disabled class="btn btn-success btn-lg"
-                    jhiTranslate="arTeMiSApp.quizExercise.submitted"></button>
+            <button *ngIf="!submission.submitted && !showingResult" [disabled]="isSubmitting || waitingForQuizStart || remainingTimeSeconds < 0" class="btn btn-success btn-lg" jhiTranslate="entity.action.submit" (click)="onSubmit()"></button>
+            <button *ngIf="submission.submitted && !showingResult" disabled class="btn btn-success btn-lg" jhiTranslate="arTeMiSApp.quizExercise.submitted"></button>
         </div>
     </div>
 </div>
-<div class="quiz-is-over-overlay alert alert-info"
-     *ngIf="!waitingForQuizStart && !showingResult && !submission.submitted && remainingTimeSeconds < 0">
+<div class="quiz-is-over-overlay alert alert-info" *ngIf="!waitingForQuizStart && !showingResult && !submission.submitted && remainingTimeSeconds < 0">
     <span *ngIf="submission.adjustedSubmissionDate" jhiTranslate="arTeMiSApp.quizExercise.quizIsOverText"></span>
     <span *ngIf="!submission.adjustedSubmissionDate" jhiTranslate="arTeMiSApp.quizExercise.notParticipatedText"></span>
 </div>
-<div class="quiz-submitted-overlay alert alert-success"
-     *ngIf="!waitingForQuizStart && submission.submitted && !showingResult">
+<div class="quiz-submitted-overlay alert alert-success" *ngIf="!waitingForQuizStart && submission.submitted && !showingResult">
     <span jhiTranslate="arTeMiSApp.quizExercise.successfullySubmittedText"></span>
 </div>
 <div class="quiz-waiting-for-start-overlay alert alert-info" *ngIf="waitingForQuizStart">
