@@ -5,7 +5,10 @@
     </div>
     <div class="modal-body">
                 <h6>The scoring type was {{this.scoringType}}</h6>
-                <span> You have achieved {{this.score}} of the {{this.question}} possible points. </span>
+                <span> You have achieved {{this.score}} of the {{this.question}} possible points.{{this.correctAnswers}}
+  {{this.wrongAnswers}}
+   {{this.chosenCorrectAnswerOption}}
+     {{this.chosenWrongAnswerOption}} </span>
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-outline" (click)="c()">Close</button>

@@ -35,6 +35,11 @@ export class MultipleChoiceQuestionComponent implements OnInit, OnDestroy {
     @Input()
     fnOnSelection: any;
 
+    correctAnswers: number;
+    wrongAnswers: number;
+    chosenCorrectAnswerOption: number;
+    chosenWrongAnswerOption: number;
+
     @Output()
     selectedAnswerOptionsChange = new EventEmitter();
 
@@ -42,7 +47,9 @@ export class MultipleChoiceQuestionComponent implements OnInit, OnDestroy {
 
     constructor(private artemisMarkdown: ArtemisMarkdown, private modalService: NgbModal) {}
 
-    ngOnInit() {}
+    ngOnInit() {
+        this.count();
+    }
 
     ngOnDestroy() {}
 
@@ -92,5 +99,21 @@ export class MultipleChoiceQuestionComponent implements OnInit, OnDestroy {
 
     open(content: any) {
         this.modalService.open(content, { size: 'lg' });
+    }
+
+    count(): number {
+        for (let answerOption of this.question.answerOptions) {
+            if (!answerOption.invalid && !this.question.invalid && answerOption.isCorrect) {
+                if (this.isAnswerOptionSelected(answerOption)) {
+                    return this.correctAnswers + 1;
+                } else return this.chosenCorrectAnswerOption + 1;
+            }
+
+            if (!answerOption.invalid && !this.question.invalid && !answerOption.isCorrect) {
+                if (this.isAnswerOptionSelected(answerOption)) {
+                    return this.wrongAnswers + 1;
+                } else return this.chosenWrongAnswerOption + 1;
+            }
+        }
     }
 }

@@ -14,6 +14,11 @@ export class QuizScoringInfostudentModalComponent implements OnInit {
     @Input() scoringType: string;
     @Input() selectedOption: boolean;
 
+    @Input() correctAnswers: number;
+    @Input() wrongAnswers: number;
+    @Input() chosenCorrectAnswerOption: number;
+    @Input() chosenWrongAnswerOption: number;
+
     ngOnInit() {}
 
     open(content: any) {
