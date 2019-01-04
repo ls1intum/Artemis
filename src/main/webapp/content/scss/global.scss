@@ -21,6 +21,14 @@ a {
     font-weight: bold;
 }
 
+/*
+ The following line makes sure the behavior of the buttons is consistent with a previous Bootstrap version 4.1.x
+ TODO: In the future, we should find a better solution to displays buttons with wraps
+ */
+.btn {
+    white-space: nowrap
+}
+
 a:not(.btn):hover {
     color: #533f03;
     font-weight: bold;
