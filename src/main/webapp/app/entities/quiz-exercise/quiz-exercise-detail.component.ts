@@ -24,6 +24,11 @@ interface Reason {
     translateValues: {};
 }
 
+interface Warning {
+    translateKey: string;
+    translateValues: {};
+}
+
 @Component({
     selector: 'jhi-quiz-exercise-detail',
     templateUrl: './quiz-exercise-detail.component.html',
@@ -483,7 +488,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     validQuestionTitle(): boolean {
         for(const question of this.quizExercise.questions)
         if(question.title.length > 250) {
-            console.log(question.title);
             return true;
         }
     }
@@ -573,6 +577,26 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         }, this);
         return reasons;
     }
+
+
+    /**
+     * @function warningReasons
+     * @desc Get the reasons, why the quiz has warnings
+     * @returns {Array} array of objects with fields 'translateKey' and 'translateValues'
+     */
+
+    warningReasons(): Warning[] {
+        const warning = new Array<Warning>();
+
+        if(this.validQuestionTitle()) {
+            warning.push({
+                translateKey: 'arTeMiSApp.quizExercise.warnings.questionTitleLength',
+                translateValues: {}
+            });
+        return warning;
+        }
+    }
+
 
     /**
      * @function invalidReasonsHTML

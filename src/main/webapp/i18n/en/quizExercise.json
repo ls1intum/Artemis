@@ -142,6 +142,9 @@
                 "questionUnsolvable": "Question {{index}}: The question cannot be answered correctly without using a drag item twice.",
                 "misleadingCorrectMapping": "Question {{index}}: You have defined at least one correct mapping (or group of correct mappings), that when used, makes it impossible to answer the question correctly."
             },
+            "warnings": {
+                "questionTitleLength": "Question {{index}}: Please shorten your question title. Currently it contains more than 250 signs."
+            },
             "scoringType": {
                 "all_or_nothing": "All or Nothing",
                 "proportional_with_penalty": "Proportional with Penalty"
