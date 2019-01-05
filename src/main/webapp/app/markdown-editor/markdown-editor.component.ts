@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, ViewChild, Input, Output, EventEmitter, SimpleChanges } from '@angular/core';
+import { Component, AfterViewInit, ViewChild, Input, Output, EventEmitter, SimpleChanges, OnChanges } from '@angular/core';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
@@ -16,7 +16,7 @@ import { MultipleChoiceQuestion } from 'app/entities/multiple-choice-question';
     providers: [ArtemisMarkdown],
     templateUrl: './markdown-editor.component.html'
 })
-export class MarkdownEditorComponent implements AfterViewInit {
+export class MarkdownEditorComponent implements AfterViewInit, OnChanges {
     @ViewChild('aceEditor')
     aceEditorContainer: AceEditorComponent;
 
@@ -26,7 +26,6 @@ export class MarkdownEditorComponent implements AfterViewInit {
     @Output() changedText = new EventEmitter();
 
     questionEditorText = '';
-    questionEditorMode = 'markdown';
     questionEditorAutoUpdate = true;
 
     commands: Command[] = [new BoldCommand(), new ItalicCommand(), new UnderlineCommand()];
@@ -64,25 +63,10 @@ export class MarkdownEditorComponent implements AfterViewInit {
             () => {
                 this.parseMarkdown(this.defaultText);
                 this.changedText.emit();
+                console.log(this.changedText);
             },
             this
         );
-    }
-
-    /** Currently responsible for the default text in the Multiple Choice question **/
-    /** TODO change the dependancy between this class and the MultipleChoiceQuestion **/
-
-    generateMarkdown(): string {
-        const markdownText =
-            this.artemisMarkdown.generateTextHintExplanation(this.question) +
-            '\n\n' +
-            this.question.answerOptions
-                .map(
-                    answerOption =>
-                        (answerOption.isCorrect ? '[x]' : '[ ]') + ' ' + this.artemisMarkdown.generateTextHintExplanation(answerOption)
-                )
-                .join('\n');
-        return markdownText;
     }
 
     parseMarkdown(text: string): void {
