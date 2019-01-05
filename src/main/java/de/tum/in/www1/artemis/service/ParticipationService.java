@@ -24,10 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URL;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
 import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.FINISHED;
@@ -558,5 +555,16 @@ public class ParticipationService {
         for (Participation participation : participationsToDelete) {
             delete(participation.getId(), deleteBuildPlan, deleteRepository);
         }
+    }
+
+    public List<Participation> findByExerciseIdForTutorDashboard(Long id) {
+        List<Participation> participations = this.findByExerciseId(id);
+
+        for (Participation participation : participations) {
+            participation.setStudent(null); // Hide the student from the tutor
+            participation.setSubmissions(new HashSet<>(Collections.singleton(participation.findLatestSubmission())));
+        }
+
+        return participations;
     }
 }

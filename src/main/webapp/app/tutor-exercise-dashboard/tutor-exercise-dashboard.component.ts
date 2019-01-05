@@ -6,14 +6,13 @@ import { Subscription } from 'rxjs';
 import { Principal, User } from '../core';
 import { HttpResponse } from '@angular/common/http';
 import { Exercise } from 'app/entities/exercise';
-import { SubmissionExerciseType } from 'app/entities/submission';
 
 @Component({
     selector: 'jhi-courses',
-    templateUrl: './tutor-course-dashboard.component.html',
+    templateUrl: './tutor-exercise-dashboard.component.html',
     providers: [JhiAlertService, CourseService]
 })
-export class TutorCourseDashboardComponent implements OnInit {
+export class TutorExerciseDashboardComponent implements OnInit {
     course: Course;
     courseId: number;
     exercises: Exercise[] = [];
@@ -58,10 +57,10 @@ export class TutorCourseDashboardComponent implements OnInit {
                     this.exercises = this.course.exercises;
 
                     for (const exercise of this.exercises) {
-                        this.numberOfSubmissions += exercise.participations.filter(participation => participation.submissions.filter(submission => submission.submissionExerciseType === SubmissionExerciseType.TEXT).length > 0).length;
+                        this.numberOfSubmissions += exercise.participations.filter(participation => participation.submissions.length > 0).length;
                         this.numberOfAssessments += exercise.participations.filter(participation => participation.results.length > 0).length;
-                        this.numberOfTutorAssessments += exercise.participations.filter(participation => participation.results.filter(result => result.assessor.id === this.tutor.id).length > 0).length;
-                        this.numberOfComplaints += exercise.participations.filter(participation => participation.results.filter(result => result.hasComplaint === true).length > 0).length;
+                        this.numberOfTutorAssessments += exercise.participations.filter(participation => participation.results.filter(result => result.assessor.id === this.tutor.id)).length;
+                        this.numberOfComplaints += exercise.participations.filter(participation => participation.results.filter(result => result.hasComplaint)).length;
                     }
                 }
             },

@@ -49,6 +49,7 @@ public class CourseResource {
     private final CourseRepository courseRepository;
     private final ExerciseService exerciseService;
     private final Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider;
+    private final TutorParticipationService tutorParticipationService;
 
     public CourseResource(Environment env,
                           UserService userService,
@@ -57,6 +58,7 @@ public class CourseResource {
                           CourseRepository courseRepository,
                           ExerciseService exerciseService,
                           AuthorizationCheckService authCheckService,
+                          TutorParticipationService tutorParticipationService,
                           Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider) {
         this.env = env;
         this.userService = userService;
@@ -65,6 +67,7 @@ public class CourseResource {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
+        this.tutorParticipationService = tutorParticipationService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
     }
 
@@ -240,6 +243,13 @@ public class CourseResource {
 
         User user = userService.getUserWithGroupsAndAuthorities();
         List<Exercise> exercises = exerciseService.findAllForCourse(course, false, principal, user);
+
+        for (Exercise exercise: exercises) {
+            List<Participation> participations = participationService.findByExerciseIdForTutorDashboard(exercise.getId());
+            exercise.setParticipations(new HashSet<>(participations));
+            exercise.setTutorParticipation(tutorParticipationService.findByExerciseAndTutor(exercise, user));
+        }
+
         course.setExercises(new HashSet<>(exercises));
 
         return ResponseUtil.wrapOrNotFound(Optional.of(course));
