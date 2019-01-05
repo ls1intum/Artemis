@@ -64,6 +64,7 @@ export class MarkdownEditorComponent implements AfterViewInit, OnChanges {
                 this.parseMarkdown(this.defaultText);
                 this.changedText.emit();
                 console.log(this.changedText);
+                console.log(this.defaultText);
             },
             this
         );
