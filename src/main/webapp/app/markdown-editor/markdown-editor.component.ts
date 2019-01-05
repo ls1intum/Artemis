@@ -67,7 +67,6 @@ export class MarkdownEditorComponent implements AfterViewInit {
             },
             this
         );
-        console.log(this.defaultText);
     }
 
     /** Currently responsible for the default text in the Multiple Choice question **/
