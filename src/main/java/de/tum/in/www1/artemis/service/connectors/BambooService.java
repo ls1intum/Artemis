@@ -688,9 +688,12 @@ public class BambooService implements ContinuousIntegrationService {
             List<Map<String, Object>> castedfailedJobs = (List<Map<String, Object>>) (Object) failedJobs; // TODO: check if this works correctly
 
             for (Map<String, Object> failedJob : castedfailedJobs) {
-                for (Map<String, Object> failedTest : (List<Map<String, Object>>) (Object) failedJob.get("failedTests")) {
-                    result.setHasFeedback(true); // TODO: check if setting this multiple times is a performance issue
+                List<Map<String, Object>> failedTests = (List<Map<String, Object>>) (Object) failedJob.get("failedTests");
+                if (!failedTests.isEmpty()) {
+                    result.setHasFeedback(true);
+                }
 
+                for (Map<String, Object> failedTest : failedTests) {
                     String className = (String) failedTest.get("className");
                     String methodName = (String) failedTest.get("name"); // in the attribute "methodName", bamboo seems to apply some unwanted logic
 
