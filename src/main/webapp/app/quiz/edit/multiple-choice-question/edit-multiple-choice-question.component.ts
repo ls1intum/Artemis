@@ -88,10 +88,6 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges {
         return markdownText;
     }
 
-    textMethod(text: string): void {
-        this.artemisMarkdown.htmlForMarkdown(text);
-    }
-
     /**
      * @function parseMarkdown
      * @param text {string} the markdown text to parse
