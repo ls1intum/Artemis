@@ -45,6 +45,7 @@ public class CacheConfiguration {
             cm.createCache(de.tum.in.www1.artemis.domain.Course.class.getName() + ".exercises", jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.Exercise.class.getName(), jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.Exercise.class.getName() + ".participations", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.Exercise.class.getName() + ".exampleSubmissions", jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.LtiOutcomeUrl.class.getName(), jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.LtiUserId.class.getName(), jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.Participation.class.getName(), jcacheConfiguration);
@@ -119,6 +120,13 @@ public class CacheConfiguration {
             cm.createCache(de.tum.in.www1.artemis.domain.ShortAnswerMapping.class.getName(), jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.ShortAnswerSpot.class.getName() + ".mappings", jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.ShortAnswerSolution.class.getName() + ".mappings", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.Complaint.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.ComplaintResponse.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.TutorParticipation.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.TutorParticipation.class.getName() + ".trainedExampleSubmissions", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.ExampleSubmission.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.ExampleSubmission.class.getName() + ".exercises", jcacheConfiguration);
+
             // jhipster-needle-ehcache-add-entry
             cm.createCache("files", jcacheConfiguration);
         };

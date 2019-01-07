@@ -20,10 +20,12 @@
         <tr *ngFor="let exercise of exercises | showExercise:showInactiveExercises">
             <td>
                 <span>{{exercise.title}}</span>
-                <a class="text-primary" *ngIf="exercise.isAtLeastTutor"><i class="fa fa-info-circle fa-fw"
-                   routerLink="/course/{{exercise.course.id}}/exercise/{{exercise.id}}/dashboard" routerLinkActive="active"></i></a>
-                <a class="text-primary" *ngIf="exercise.isAtLeastTutor"><i *ngIf="exercise.type === MODELING"
-                   class="fa fa-graduation-cap fa-fw" routerLink="/course/{{exercise.course.id}}/exercise/{{exercise.id}}/assessment" routerLinkActive="active"></i></a>
+                <a class="text-primary" *ngIf="exercise.isAtLeastTutor">
+                    <i class="fa fa-info-circle fa-fw" routerLink="/course/{{exercise.course.id}}/exercise/{{exercise.id}}/dashboard" routerLinkActive="active"></i></a>
+                <a class="text-primary" *ngIf="exercise.isAtLeastTutor">
+                    <i *ngIf="exercise.type === MODELING" class="fa fa-graduation-cap fa-fw" routerLink="/course/{{exercise.course.id}}/exercise/{{exercise.id}}/assessment" routerLinkActive="active"></i></a>
+                <a class="text-primary" *ngIf="exercise.isAtLeastTutor">
+                    <i *ngIf="exercise.type === TEXT" class="fa fa-graduation-cap fa-fw" routerLink="/text/{{exercise.id}}/assessment" routerLinkActive="active"></i></a>
                 <a class="text-primary" *ngIf="exercise.isAtLeastTutor"><i *ngIf="exercise.type === MODELING"
                    class="fa fa-pie-chart fa-fw" routerLink="/course/{{exercise.course.id}}/exercise/{{exercise.id}}/statistics" routerLinkActive="active"></i></a>
 
@@ -46,6 +48,7 @@
                 <span class="text-muted" *ngSwitchCase="'quiz-submitted'">You have already submitted. Wait for the quiz to end to see results.</span>
                 <span *ngSwitchCase="'quiz-finished'"><jhi-result [participation]="exercise.participations[0]"></jhi-result></span>
                 <span *ngSwitchCase="'modeling-exercise'"><jhi-result [participation]="exercise.participations[0]"></jhi-result></span>
+                <span *ngSwitchCase="'text-exercise'"><jhi-result [participation]="exercise.participations[0]"></jhi-result></span>
             </td>
             <td class="text-center" [ngSwitch]="exercise.participationStatus">
                 <button class="btn btn-primary btn-sm btn-block" id="btn-student-action"

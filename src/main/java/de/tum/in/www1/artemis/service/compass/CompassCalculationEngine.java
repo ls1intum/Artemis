@@ -234,7 +234,7 @@ public class CompassCalculationEngine implements CalculationEngine {
         for (Map.Entry<Long, UMLModel> modelEntry: this.getModelMap().entrySet()) {
             JsonObject model = new JsonObject();
             model.addProperty("coverage", modelEntry.getValue().getLastAssessmentCoverage());
-            model.addProperty("confidence", modelEntry.getValue().getLastAssessmentCoverage());
+            model.addProperty("confidence", modelEntry.getValue().getLastAssessmentConfidence());
             int modelConflicts = 0;
             List<UMLElement> elements = new ArrayList<>();
             elements.addAll(modelEntry.getValue().getClassList());

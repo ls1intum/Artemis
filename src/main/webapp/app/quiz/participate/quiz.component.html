@@ -78,9 +78,6 @@
             </div>
             <button *ngIf="!submission.submitted && !showingResult" [disabled]="isSubmitting || waitingForQuizStart || remainingTimeSeconds < 0" class="btn btn-success btn-lg" jhiTranslate="entity.action.submit" (click)="onSubmit()"></button>
             <button *ngIf="submission.submitted && !showingResult" disabled class="btn btn-success btn-lg" jhiTranslate="arTeMiSApp.quizExercise.submitted"></button>
-<!-- The statistics button is disabled at the moment, because this functionality is not implemented yet
-            <ng-template #popContent><div jhiTranslate="arTeMiSApp.quizExercise.statisticsNotPublished"></div></ng-template>
-            <button *ngIf="showingResult" class="btn btn-default btn-lg disabled" jhiTranslate="arTeMiSApp.quizExercise.statistics" [ngbPopover]="popContent" placement="top" triggers="mouseenter:mouseleave"></button>-->
         </div>
     </div>
 </div>

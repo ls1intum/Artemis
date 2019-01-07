@@ -35,20 +35,6 @@ public class StatisticService {
         this.questionStatisticRepository = questionStatisticRepository;
     }
 
-
-    /**
-     * Perform async operations if the release state of an statistic is changed
-     *
-     * @param quizExercise contains the object of the quiz, for which statistics has been released or revoked;
-     * @param payload: release = true , revoke = false.
-     */
-    @Async
-    public void releaseStatistic(QuizExercise quizExercise, boolean payload) {
-        // notify user via websocket
-        // release: payload = true , revoke: payload = false.
-        messagingTemplate.convertAndSend("/topic/statistic/" + quizExercise.getId() +"/release", payload);
-    }
-
     /**
      * 1. Go through all Results in the Participation and recalculate the score
      * 2. recalculate the statistics of the given quizExercise

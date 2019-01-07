@@ -2,6 +2,7 @@ import { BaseEntity } from 'app/shared';
 import { Course } from '../course';
 import { Participation } from '../participation';
 import { Moment } from 'moment';
+import { ExampleSubmission } from '../example-submission';
 
 export const enum DifficultyLevel {
     EASY = 'EASY',
@@ -10,7 +11,7 @@ export const enum DifficultyLevel {
 }
 
 // IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Exercise.java
-export const enum ExerciseType {
+export enum ExerciseType {
     PROGRAMMING = 'programming',
     MODELING = 'modeling',
     QUIZ = 'quiz',
@@ -43,14 +44,20 @@ export abstract class Exercise implements BaseEntity {
     public maxScore: number;
     public difficulty: DifficultyLevel;
     public categories: string[];
+    public type: ExerciseType;
+
     public participations: Participation[];
     public course: Course;
     public participationStatus: ParticipationStatus;
-    public type: ExerciseType;
+
+    public exampleSubmissions: ExampleSubmission[];
 
     // helper attributes
     public isAtLeastTutor: boolean;
     public loading: boolean;
+    public numberOfParticipationsWithRatedResult: number;
+    public numberOfSuccessfulParticipations: number;
+    public averagePoints: number;
 
     protected constructor(type: ExerciseType) {
         this.type = type;

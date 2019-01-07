@@ -546,7 +546,7 @@ public class QuizExercise extends Exercise implements Serializable {
      *
      * @return the sum of all the questions' maximum scores
      */
-    @JsonView(QuizView.During.class)
+    @JsonIgnore
     public Integer getMaxTotalScore() {
         int maxScore = 0;
         // iterate through all questions of this quiz and add up the score
