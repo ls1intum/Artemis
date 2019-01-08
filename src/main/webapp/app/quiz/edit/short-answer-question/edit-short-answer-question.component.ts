@@ -261,6 +261,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
             //create mapping according to this structure: {spot(s), solution} -> {"1,2", " SolutionText"}
             this.createMapping(solutionText, solution);
         }
+        this.question.spots.forEach(spot => spot.id = null);
     }
 
     /**
@@ -273,7 +274,6 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
                 const mapping = new ShortAnswerMapping(spot, solution);
                 mapping.shortAnswerSpotIndex = null;
                 mapping.shortAnswerSolutionIndex = null;
-                this.question.spots.forEach(spot => (spot.id = null));
                 this.question.correctMappings.push(mapping);
                 break;
             }
@@ -284,7 +284,6 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
                     const mapping = new ShortAnswerMapping(spot, solution);
                     mapping.shortAnswerSpotIndex = null;
                     mapping.shortAnswerSolutionIndex = null;
-                    this.question.spots.forEach(spot => (spot.id = null));
                     this.question.correctMappings.push(mapping);
                 }
                 break;
