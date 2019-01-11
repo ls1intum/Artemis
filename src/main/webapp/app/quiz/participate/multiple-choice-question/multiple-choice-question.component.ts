@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { MultipleChoiceQuestion } from '../../../entities/multiple-choice-question';
 import { AnswerOption } from '../../../entities/answer-option';
@@ -9,7 +9,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
     templateUrl: './multiple-choice-question.component.html',
     providers: [ArtemisMarkdown]
 })
-export class MultipleChoiceQuestionComponent implements OnInit, OnDestroy {
+export class MultipleChoiceQuestionComponent implements OnChanges {
     _question: MultipleChoiceQuestion;
 
     @Input()
@@ -47,11 +47,9 @@ export class MultipleChoiceQuestionComponent implements OnInit, OnDestroy {
 
     constructor(private artemisMarkdown: ArtemisMarkdown, private modalService: NgbModal) {}
 
-    ngOnInit() {
+    ngOnChanges(changes: SimpleChanges): void {
         this.count();
     }
-
-    ngOnDestroy() {}
 
     watchCollection() {
         // update html for text, hint and explanation for the question and every answer option
@@ -101,19 +99,15 @@ export class MultipleChoiceQuestionComponent implements OnInit, OnDestroy {
         this.modalService.open(content, { size: 'lg' });
     }
 
-    count(): number {
-        for (let answerOption of this.question.answerOptions) {
-            if (!answerOption.invalid && !this.question.invalid && answerOption.isCorrect) {
-                if (this.isAnswerOptionSelected(answerOption)) {
-                    return this.correctAnswers + 1;
-                } else return this.chosenCorrectAnswerOption + 1;
-            }
+    count(): void {
+        const answerOptions = this.question.answerOptions;
+        const selectedOptions = this.selectedAnswerOptions;
 
-            if (!answerOption.invalid && !this.question.invalid && !answerOption.isCorrect) {
-                if (this.isAnswerOptionSelected(answerOption)) {
-                    return this.wrongAnswers + 1;
-                } else return this.chosenWrongAnswerOption + 1;
-            }
-        }
+        this.correctAnswers = answerOptions.filter(option => option.isCorrect).length;
+        this.wrongAnswers = answerOptions.filter(option => !option.isCorrect).length;
+
+        this.chosenCorrectAnswerOption = selectedOptions.filter(option => option.isCorrect).length;
+        this.chosenWrongAnswerOption = selectedOptions.filter(option => !option.isCorrect).length;
+        console.log(this);
     }
 }
