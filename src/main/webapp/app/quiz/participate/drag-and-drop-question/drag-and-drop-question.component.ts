@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { DragAndDropQuestionUtil } from '../../../components/util/drag-and-drop-question-util.service';
 import { DragAndDropQuestion } from '../../../entities/drag-and-drop-question';
@@ -26,7 +26,7 @@ window.addEventListener('touchmove', function() {});
     templateUrl: './drag-and-drop-question.component.html',
     providers: [ArtemisMarkdown, DragAndDropQuestionUtil]
 })
-export class DragAndDropQuestionComponent implements OnInit, OnDestroy {
+export class DragAndDropQuestionComponent implements OnInit, OnDestroy, OnChanges {
     _question: DragAndDropQuestion;
     _forceSampleSolution: boolean;
 
@@ -69,9 +69,17 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy {
     sampleSolutionMappings = new Array<DragAndDropMapping>();
     dropAllowed = false;
 
+    chosenCorrectAnswerOption: number;
+    chosenWrongAnswerOption: number;
+    amountOfAnswerOptions: number;
+
     constructor(private artemisMarkdown: ArtemisMarkdown, private dragAndDropQuestionUtil: DragAndDropQuestionUtil) {}
 
     ngOnInit() {}
+
+    ngOnChanges() {
+        this.count();
+    }
 
     ngOnDestroy() {}
 
@@ -252,5 +260,11 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy {
         } else {
             return null;
         }
+    }
+
+    count(): void {
+        this.amountOfAnswerOptions = this.question.dragItems.length;
+        this.chosenWrongAnswerOption = this.question.correctMappings.length;
+        this.chosenCorrectAnswerOption = this.amountOfAnswerOptions - this.chosenWrongAnswerOption;
     }
 }
