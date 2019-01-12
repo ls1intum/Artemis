@@ -40,6 +40,8 @@ export class MultipleChoiceQuestionComponent implements OnChanges {
     chosenCorrectAnswerOption: number;
     chosenWrongAnswerOption: number;
 
+    amountOfAnswerOptions: number;
+
     @Output()
     selectedAnswerOptionsChange = new EventEmitter();
 
@@ -103,11 +105,12 @@ export class MultipleChoiceQuestionComponent implements OnChanges {
         const answerOptions = this.question.answerOptions;
         const selectedOptions = this.selectedAnswerOptions;
 
+        this.amountOfAnswerOptions = this.question.answerOptions.length;
+
         this.correctAnswers = answerOptions.filter(option => option.isCorrect).length;
         this.wrongAnswers = answerOptions.filter(option => !option.isCorrect).length;
 
         this.chosenCorrectAnswerOption = selectedOptions.filter(option => option.isCorrect).length;
         this.chosenWrongAnswerOption = selectedOptions.filter(option => !option.isCorrect).length;
-        console.log(this);
     }
 }

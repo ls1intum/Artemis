@@ -1,17 +1,29 @@
 <ng-template #info let-c="close" let-d="dismiss">
     <div class="modal-header">
         <h5 class="modal-title">Scoring type explanation</h5>
-        <button type="button" class="close" aria-label="Close" (click)="d()"><span aria-hidden="true">&times;</span></button>
+        <button type="button" class="close" aria-label="Close" (click)="d()"><span aria-hidden="true">&times;</span>
+        </button>
     </div>
-    <div class="modal-body">
-                <h6>The scoring type was {{this.scoringType}}</h6>
-                <span> You have achieved {{this.score}} of the {{this.question}} possible points.{{this.correctAnswers}}
-  {{this.wrongAnswers}}
-   {{this.chosenCorrectAnswerOption}}
-     {{this.chosenWrongAnswerOption}} </span>
+    <div class="modal-body" *ngIf="this.scoringType === 'ALL_OR_NOTHING'">
+        <h6>The scoring type was <span jhiTranslate="arTeMiSApp.quizExercise.scoringType.all_or_nothing"></span></h6>
+        <span *ngIf="this.wrongAnswers == 0"> You have achieved {{this.score}} of the {{this.question}} possible points. Since you have {{this.wrongAnswers}}
+            wrong answers you have achieved all points in this exercise.
+   </span>
+        <span *ngIf="!(this.wrongAnswers == 0)"> You have achieved {{this.score}} of the {{this.question}} possible points. Since you have {{this.wrongAnswers}}
+            wrong answers you have achieved 0 points in this exercise.
+   </span>
+    </div>
+    <div class="modal-body" *ngIf="this.scoringType === 'PROPORTIONAL_WITH_PENALTY'">
+        <h6>The scoring type was <span jhiTranslate="arTeMiSApp.quizExercise.scoringType.proportional_with_penalty"></span> </h6>
+        <span> You have achieved {{this.score}} of the {{this.question}}.
+            possible points. Each of the {{this.amountOfAnswerOptions}} options grants you {{this.question}}/{{this.amountOfAnswerOptions}} points if you choose correctly. If you choose wrongly the same amount will be subtracted.
+            You have {{this.wrongAnswers}} wrong answers and {{this.correctAnswers}} correct answers. You can not achieve less than 0 points in total.
+   </span>
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-outline" (click)="c()">Close</button>
     </div>
 </ng-template>
-<div><button class="btn" (click)="open(info)"><i class="fa fa-question-circle-o"></i></button></div>
+<div>
+    <button class="btn" (click)="open(info)"><i class="fa fa-question-circle-o"></i></button>
+</div>

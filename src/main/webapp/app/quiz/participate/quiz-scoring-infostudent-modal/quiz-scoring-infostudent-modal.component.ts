@@ -16,8 +16,8 @@ export class QuizScoringInfostudentModalComponent implements OnInit {
 
     @Input() correctAnswers: number;
     @Input() wrongAnswers: number;
-    @Input() chosenCorrectAnswerOption: number;
-    @Input() chosenWrongAnswerOption: number;
+
+    @Input() amountOfAnswerOptions: number;
 
     ngOnInit() {}
 
