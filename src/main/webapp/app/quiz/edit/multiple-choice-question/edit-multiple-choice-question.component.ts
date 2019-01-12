@@ -63,7 +63,6 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges {
      * @function setupQuestionEditor
      * @desc Initializes the ace editor for the mc question
      */
-
     setupQuestionEditor(): void {
         this.questionEditorText = this.generateMarkdown();
     }

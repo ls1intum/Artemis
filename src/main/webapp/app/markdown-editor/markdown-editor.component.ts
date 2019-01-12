@@ -16,14 +16,13 @@ import { MultipleChoiceQuestion } from 'app/entities/multiple-choice-question';
     providers: [ArtemisMarkdown],
     templateUrl: './markdown-editor.component.html'
 })
-export class MarkdownEditorComponent implements AfterViewInit, OnChanges {
+export class MarkdownEditorComponent implements AfterViewInit {
     @ViewChild('aceEditor')
     aceEditorContainer: AceEditorComponent;
 
     @Input() defaultText: string;
-    @Input() question: MultipleChoiceQuestion;
 
-    @Output() changedText = new EventEmitter();
+    @Output() defaultTextChanged = new EventEmitter();
 
     questionEditorText = '';
     questionEditorAutoUpdate = true;
@@ -34,13 +33,6 @@ export class MarkdownEditorComponent implements AfterViewInit, OnChanges {
 
     ngAfterViewInit(): void {
         requestAnimationFrame(this.setupQuestionMarkdownEditor.bind(this));
-    }
-
-    ngOnChanges(changes: SimpleChanges): void {
-        /** Check if previousValue wasn't null to avoid firing at component initialization **/
-        if (changes.question && changes.question.previousValue != null) {
-            this.changedText.emit();
-        }
     }
 
     /**
@@ -62,8 +54,8 @@ export class MarkdownEditorComponent implements AfterViewInit, OnChanges {
             'blur',
             () => {
                 this.parseMarkdown(this.defaultText);
-                this.changedText.emit();
-                console.log(this.changedText);
+                this.defaultTextChanged.emit(this.defaultText);
+                console.log(this.defaultTextChanged);
                 console.log(this.defaultText);
             },
             this
