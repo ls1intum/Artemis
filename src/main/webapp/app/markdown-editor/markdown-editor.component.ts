@@ -32,7 +32,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     constructor(private artemisMarkdown: ArtemisMarkdown) {}
 
     ngAfterViewInit(): void {
-        requestAnimationFrame(this.setupQuestionMarkdownEditor.bind(this));
+        requestAnimationFrame(this.setupMarkdownEditor.bind(this));
     }
 
     /**
@@ -41,7 +41,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
      */
 
     /** Currently responsible for making the editor appear nicely**/
-    setupQuestionMarkdownEditor(): void {
+    setupMarkdownEditor(): void {
         this.aceEditorContainer.setTheme('chrome');
         this.aceEditorContainer.getEditor().renderer.setShowGutter(false);
         this.aceEditorContainer.getEditor().renderer.setPadding(10);
@@ -53,37 +53,9 @@ export class MarkdownEditorComponent implements AfterViewInit {
         this.aceEditorContainer.getEditor().on(
             'blur',
             () => {
-                this.parseMarkdown(this.defaultText);
                 this.defaultTextChanged.emit(this.defaultText);
-                console.log(this.defaultTextChanged);
-                console.log(this.defaultText);
             },
             this
         );
-    }
-
-    parseMarkdown(text: string): void {
-        // First split by [], [ ], [x] and [X]
-        const questionParts = text.split(/\[\]|\[ \]|\[x\]|\[X\]/g);
-        const questionText = questionParts[0];
-
-        let endOfPreviousPart = text.indexOf(questionText) + questionText.length;
-        /**
-         * Work on answer options
-         * We slice the first questionPart since that's our question text and no real answer option
-         */
-        for (const answerOptionText of questionParts.slice(1)) {
-            // Find the box (text in-between the parts)
-            const answerOption = new AnswerOption();
-            const startOfThisPart = text.indexOf(answerOptionText, endOfPreviousPart);
-            const box = text.substring(endOfPreviousPart, startOfThisPart);
-            // Check if box says this answer option is correct or not
-            answerOption.isCorrect = box === '[x]' || box === '[X]';
-            // Update endOfPreviousPart for next loop
-            endOfPreviousPart = startOfThisPart + answerOptionText.length;
-
-            // Parse this answerOption
-            this.artemisMarkdown.parseTextHintExplanation(answerOptionText, answerOption);
-        }
     }
 }
