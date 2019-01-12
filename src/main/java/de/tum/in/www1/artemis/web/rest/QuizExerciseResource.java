@@ -140,16 +140,6 @@ public class QuizExerciseResource {
 
         quizExercise.reconnectJSONIgnoreAttributes();
 
-        // reset Released-Flag in all statistics if they are released but the quiz hasn't ended yet
-        if (!quizExercise.isStarted() || quizExercise.getRemainingTime() > 0) {
-            quizExercise.getQuizPointStatistic().setReleased(false);
-            for (Question question : quizExercise.getQuestions()) {
-                if (question.getQuestionStatistic() != null) {
-                    question.getQuestionStatistic().setReleased(false);
-                }
-            }
-        }
-
         quizExercise.setMaxScore(quizExercise.getMaxTotalScore().doubleValue());
         QuizExercise result = quizExerciseService.save(quizExercise);
         quizScheduleService.scheduleQuizStart(result);
@@ -308,28 +298,6 @@ public class QuizExerciseResource {
 
                 // set quiz to open for practice
                 quizExercise.setIsOpenForPractice(true);
-                break;
-            case "release-statistics":
-                // release statistics
-                if (quizExercise.isEnded()) {
-                    quizExercise.getQuizPointStatistic().setReleased(true);
-                    for ( Question question : quizExercise.getQuestions()){
-                        question.getQuestionStatistic().setReleased(true);
-                    }
-                    //notify clients via websocket about the release state of the statistics.
-                    statisticService.releaseStatistic(quizExercise, quizExercise.getQuizPointStatistic().isReleased());
-                } else {
-                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"message\": \"Quiz hasn't ended yet.\"}");
-                }
-                break;
-            case "revoke-statistics":
-                // revoke statistics
-                quizExercise.getQuizPointStatistic().setReleased(false);
-                for (Question question : quizExercise.getQuestions()) {
-                    question.getQuestionStatistic().setReleased(false);
-                }
-                //notify clients via websocket about the release state of the statistics.
-                statisticService.releaseStatistic(quizExercise, quizExercise.getQuizPointStatistic().isReleased());
                 break;
             default:
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"message\": \"Unknown action: " + action + "\"}");

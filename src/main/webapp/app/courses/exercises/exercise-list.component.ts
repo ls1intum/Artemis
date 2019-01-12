@@ -1,9 +1,9 @@
-import { Component, HostListener, Input, OnInit, OnDestroy, Pipe, PipeTransform } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, Pipe, PipeTransform } from '@angular/core';
 import { Course, CourseExerciseService } from '../../entities/course';
 import { Exercise, ExerciseType, ParticipationStatus } from '../../entities/exercise';
 import { Principal } from '../../core';
 import { WindowRef } from '../../core/websocket/window.service';
-import { NgbModal, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService } from 'ng-jhipster';
 import { Router, NavigationStart } from '@angular/router';
 import { InitializationState, Participation, ParticipationService } from '../../entities/participation';
@@ -45,19 +45,8 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
     }
     set course(course: Course) {
         this._course = course;
-        if (course.exercises) {
-            // exercises already included in data, no need to load them
-            this.initExercises(course.exercises);
-        } else {
-            this.courseExerciseService
-                .findAllExercises(course.id, {
-                    courseId: course.id,
-                    withLtiOutcomeUrlExisting: true
-                })
-                .subscribe(exercises => {
-                    this.initExercises(exercises.body);
-                });
-        }
+        // exercises already included in data, no need to load them
+        this.initExercises(course.exercises);
     }
     @Input()
     filterByExerciseId: number;
