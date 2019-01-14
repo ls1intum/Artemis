@@ -97,10 +97,6 @@ export class MultipleChoiceQuestionComponent implements OnChanges {
         );
     }
 
-    open(content: any) {
-        this.modalService.open(content, { size: 'lg' });
-    }
-
     count(): void {
         const answerOptions = this.question.answerOptions;
         const selectedOptions = this.selectedAnswerOptions;

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChildren, QueryList } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChildren, QueryList} from '@angular/core';
 import { JhiWebsocketService } from '../../core';
 import * as moment from 'moment';
 import * as _ from 'lodash';
@@ -781,42 +781,52 @@ export class QuizComponent implements OnInit, OnDestroy {
     onSubmit() {
         this.applySelection();
         this.isSubmitting = true;
-        switch (this.mode) {
-            case 'practice':
-                if (!this.submission.id) {
-                    this.quizSubmissionService.submitForPractice(this.submission, 1, this.quizId).subscribe(
-                        (response: HttpResponse<Result>) => {
-                            this.onSubmitPracticeOrPreviewSuccess(response.body);
-                        },
-                        (response: HttpErrorResponse) => this.onSubmitError(response.message)
-                    );
-                }
-                break;
-            case 'preview':
-                if (!this.submission.id) {
-                    this.quizSubmissionService.submitForPreview(this.submission, 1, this.quizId).subscribe(
-                        (response: HttpResponse<Result>) => {
-                            this.onSubmitPracticeOrPreviewSuccess(response.body);
-                        },
-                        (response: HttpErrorResponse) => this.onSubmitError(response.message)
-                    );
-                }
-                break;
-            case 'default':
-                if (this.disconnected || !this.submissionChannel) {
-                    alert(
-                        "Cannot Submit while disconnected. Don't worry, answers that were saved" +
+
+        let confirmSubmit = true;
+
+        if (this.remainingTimeSeconds > 1) {
+            confirmSubmit = window.confirm('Are you sure you want to submit? You still have some time left!');
+        }
+
+        if(confirmSubmit) {
+            this.isSubmitting = true;
+            switch (this.mode) {
+                case 'practice':
+                    if (!this.submission.id) {
+                        this.quizSubmissionService.submitForPractice(this.submission, 1, this.quizId).subscribe(
+                            (response: HttpResponse<Result>) => {
+                                this.onSubmitPracticeOrPreviewSuccess(response.body);
+                            },
+                            (response: HttpErrorResponse) => this.onSubmitError(response.message)
+                        );
+                    }
+                    break;
+                case 'preview':
+                    if (!this.submission.id) {
+                        this.quizSubmissionService.submitForPreview(this.submission, 1, this.quizId).subscribe(
+                            (response: HttpResponse<Result>) => {
+                                this.onSubmitPracticeOrPreviewSuccess(response.body);
+                            },
+                            (response: HttpErrorResponse) => this.onSubmitError(response.message)
+                        );
+                    }
+                    break;
+                case 'default':
+                    if (this.disconnected || !this.submissionChannel) {
+                        alert(
+                            "Cannot Submit while disconnected. Don't worry, answers that were saved" +
                             'while you were still connected will be submitted automatically when the quiz ends.'
-                    );
-                    this.isSubmitting = false;
-                    return;
-                }
-                // copy submission and send it through websocket with 'submitted = true'
-                const quizSubmission = new QuizSubmission();
-                quizSubmission.submittedAnswers = this.submission.submittedAnswers;
-                quizSubmission.submitted = true;
-                this.jhiWebsocketService.send(this.submissionChannel, quizSubmission);
-                break;
+                        );
+                        this.isSubmitting = false;
+                        return;
+                    }
+                    // copy submission and send it through websocket with 'submitted = true'
+                    const quizSubmission = new QuizSubmission();
+                    quizSubmission.submittedAnswers = this.submission.submittedAnswers;
+                    quizSubmission.submitted = true;
+                    this.jhiWebsocketService.send(this.submissionChannel, quizSubmission);
+                    break;
+            }
         }
     }
 
