@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChildren, QueryList, HostListener } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChildren, QueryList } from '@angular/core';
 import { JhiWebsocketService } from '../../core';
 import * as moment from 'moment';
 import * as _ from 'lodash';
@@ -19,7 +19,6 @@ import { MultipleChoiceQuestionComponent } from 'app/quiz/participate/multiple-c
 import { DragAndDropQuestionComponent } from 'app/quiz/participate/drag-and-drop-question/drag-and-drop-question.component';
 import { DragAndDropMapping } from 'app/entities/drag-and-drop-mapping';
 import { AnswerOption } from 'app/entities/answer-option';
-import { ComponentCanDeactivate } from 'app/shared';
 
 @Component({
     selector: 'jhi-quiz',
@@ -427,17 +426,14 @@ export class QuizComponent implements OnInit, OnDestroy {
             // iterate through all questions of this quiz
             this.quizExercise.questions.forEach(question => {
                 // find the submitted answer that belongs to this question, only when submitted answers already exist
-                const submittedAnswer = this.submission.submittedAnswers
-                    ? this.submission.submittedAnswers.find(answer => {
-                          return answer.question.id === question.id;
-                      })
-                    : null;
+                const submittedAnswer = this.submission.submittedAnswers ? this.submission.submittedAnswers.find(answer => {
+                    return answer.question.id === question.id;
+                }) : null;
 
                 if (question.type === QuestionType.MULTIPLE_CHOICE) {
                     // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     this.selectedAnswerOptions[question.id] = submittedAnswer
-                        ? (submittedAnswer as MultipleChoiceSubmittedAnswer).selectedOptions
-                        : [];
+                        ? (submittedAnswer as MultipleChoiceSubmittedAnswer).selectedOptions : [];
                 } else if (question.type === QuestionType.DRAG_AND_DROP) {
                     // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     this.dragAndDropMappings[question.id] = submittedAnswer ? (submittedAnswer as DragAndDropSubmittedAnswer).mappings : [];
@@ -785,7 +781,6 @@ export class QuizComponent implements OnInit, OnDestroy {
     onSubmit() {
         this.applySelection();
         this.isSubmitting = true;
-
         switch (this.mode) {
             case 'practice':
                 if (!this.submission.id) {
