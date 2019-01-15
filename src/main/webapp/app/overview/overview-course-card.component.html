@@ -1,0 +1,21 @@
+<div class="card">
+    <div class="card-header bg-{{randomColor}} text-white" routerLink="/overview/{{course.id}}">
+        <h5 class="card-title text-center">
+            {{course.title}}
+        </h5>
+    </div>
+    <div class="card-body" routerLink="/overview/{{course.id}}">
+        <h4>Your current score:</h4>
+        <h2>{{displayTotalRelativeScore()}}%</h2>
+    </div>
+
+    <div class="card-footer text-muted" *ngFor="let nextExercise of nextRelevantExercises()"
+         (click)="startExercise(nexExercise)">
+        <h6>Next exercise:</h6>
+        <h5>{{nextExercise.title}}</h5>
+        <h6>{{nextExercise.dueDate | date:'dd/MM/yy'}}</h6>
+    </div>
+    <div class="card-footer text-muted" *ngIf="nextRelevantExercises().length === 0">
+        <h6>No Exercise planned</h6>
+    </div>
+</div>

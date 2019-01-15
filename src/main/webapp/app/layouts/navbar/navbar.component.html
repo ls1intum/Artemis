@@ -12,6 +12,14 @@
     <div class="navbar-collapse collapse" id="navbarResponsive" [ngbCollapse]="isNavbarCollapsed" [ngSwitch]="isAuthenticated()">
         <ul class="navbar-nav ml-auto">
             <li *ngIf="currAccount" class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+                <a class="nav-link" routerLink="overview" (click)="collapseNavbar()">
+                    <span>
+                        <fa-icon [icon]="'th-large'"></fa-icon>
+                        <span jhiTranslate="global.menu.overview">Overview</span>
+                    </span>
+                </a>
+            </li>
+            <li *ngIf="currAccount" class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
                 <a class="nav-link" routerLink="courses" (click)="collapseNavbar()">
                     <span>
                         <fa-icon [icon]="'home'"></fa-icon>

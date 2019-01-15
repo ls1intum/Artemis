@@ -1,0 +1,13 @@
+<div *ngIf="course">
+    <div class="course-info-bar">
+        <h3>{{course.title}}</h3>
+        <h4>Beschreibung für Einführung in die Softwaretechnik. Lorem ipsum dolor sit amet, consetetur sadipscing elitr,
+            sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At</h4>
+    </div>
+    <div class="tab-bar">
+        <div class="tab-item" routerLink="exercises" routerLinkActive="active"><b>Exercise</b></div>
+        <div class="tab-item" routerLink="statistics" routerLinkActive="active"><b>Statistics</b></div>
+        <div class="tab-item" routerLink="results" routerLinkActive="active"><b>Results</b></div>
+    </div>
+    <router-outlet></router-outlet>
+</div>

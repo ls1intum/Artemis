@@ -17,6 +17,7 @@ import { ArTEMiSSharedModule } from './shared';
 import { ArTEMiSCoreModule } from 'app/core';
 import { ArTEMiSAppRoutingModule } from './app-routing.module';
 import { ArTEMiSHomeModule } from './home';
+import { ArTEMiSOverviewModule } from './overview';
 import { ArTEMiSAccountModule } from './account/account.module';
 import { ArTEMiSCoursesModule } from './courses';
 import { ArTEMiSEntityModule } from './entities/entity.module';
@@ -68,6 +69,7 @@ import { ParticipationDataProvider } from './courses/exercises/participation-dat
         ArTEMiSSharedModule.forRoot(),
         ArTEMiSCoreModule,
         ArTEMiSHomeModule,
+        ArTEMiSOverviewModule,
         ArTEMiSAccountModule,
         ArTEMiSEntityModule,
         ArTEMiSApollonDiagramsModule,

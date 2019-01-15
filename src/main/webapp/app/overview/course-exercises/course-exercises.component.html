@@ -1,0 +1,13 @@
+<div class="mt-3" *ngIf="course">
+    <div class="exercise-row mb-3" *ngFor="let weeklyExercises of weeklyExercisesGrouped">
+        <span class="control-label" *ngIf="weeklyExercises">Week {{weeklyExercises[0].dueDate.week()}}</span>
+        <jhi-course-exercise-row class="pb-1" [exercise]="exercise" [course]="course" *ngFor="let exercise of weeklyExercises"></jhi-course-exercise-row>
+    </div>
+    <div *ngIf="course.exercises.length === 0">
+        <div class="row">
+            <div class="col">
+                No exercises available for the course.
+            </div>
+        </div>
+    </div>
+</div>

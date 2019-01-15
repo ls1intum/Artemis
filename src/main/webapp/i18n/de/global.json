@@ -4,6 +4,7 @@
         "browsehappy": "Sie benutzen einen <strong>veralteten</strong> Browser. Bitte <a href=\"http://browsehappy.com/?locale=de/\">aktualisieren Sie Ihren Browser</a>, um die Benutzerfreundlichkeit zu erhöhen.",
         "menu": {
             "home": "Startseite",
+            "overview": "Übersicht",
             "courses": "Kurse",
             "course": "Kursadministration",
             "jhipster-needle-menu-add-element": "JHipster will add additional menu entries here (do not translate!)",
@@ -210,5 +211,10 @@
     },
     "footer": "Du hast einen Fehler gefunden oder Feedback zu ArTEMiS? <a href=\"mailto:artemis.ase@in.tum.de\">Lass es uns bitte wissen!</a>!",
     "justNow": "gerade eben",
-    "pendingChanges": "WARNUNG: Du hast nicht gespeicherte Änderungen. Klicke Abbrechen, um zurück zu gehen und deine Änderungen zu speichern oder klicke OK, um die Änderungen zu verwerfen."
+    "pendingChanges": "WARNUNG: Du hast nicht gespeicherte Änderungen. Klicke Abbrechen, um zurück zu gehen und deine Änderungen zu speichern oder klicke OK, um die Änderungen zu verwerfen.",
+    "overview": {
+        "title": "Kursübersicht",
+        "course": "Kursdetails",
+        "statistics": "Kursstatistiken"
+    }
 }

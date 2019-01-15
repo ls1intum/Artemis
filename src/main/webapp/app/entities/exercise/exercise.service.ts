@@ -13,51 +13,61 @@ import { ParticipationService } from '../participation/participation.service';
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
 
-@Injectable({ providedIn: 'root' })
+@Injectable({providedIn: 'root'})
 export class ExerciseService {
     public resourceUrl = SERVER_API_URL + 'api/exercises';
 
-    constructor(private http: HttpClient, private participationService: ParticipationService) {}
+    constructor(private http: HttpClient, private participationService: ParticipationService) {
+    }
 
     create(exercise: Exercise): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(exercise);
         return this.http
-            .post<Exercise>(this.resourceUrl, copy, { observe: 'response' })
+            .post<Exercise>(this.resourceUrl, copy, {observe: 'response'})
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
     update(exercise: Exercise): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(exercise);
         return this.http
-            .put<Exercise>(this.resourceUrl, copy, { observe: 'response' })
+            .put<Exercise>(this.resourceUrl, copy, {observe: 'response'})
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
     find(id: number): Observable<EntityResponseType> {
         return this.http
-            .get<Exercise>(`${this.resourceUrl}/${id}`, { observe: 'response' })
+            .get<Exercise>(`${this.resourceUrl}/${id}`, {observe: 'response'})
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
     delete(id: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${id}`, { observe: 'response' });
+        return this.http.delete<void>(`${this.resourceUrl}/${id}`, {observe: 'response'});
     }
 
     archive(id: number): Observable<HttpResponse<Blob>> {
-        return this.http.get(`${this.resourceUrl}/${id}/archive`, { observe: 'response', responseType: 'blob' });
+        return this.http.get(`${this.resourceUrl}/${id}/archive`, {observe: 'response', responseType: 'blob'});
     }
 
     cleanup(id: number, deleteRepositories: boolean): Observable<HttpResponse<void>> {
         const params = new HttpParams().set('deleteRepositories', deleteRepositories.toString());
-        return this.http.delete<void>(`${this.resourceUrl}/${id}/cleanup`, { params, observe: 'response' });
+        return this.http.delete<void>(`${this.resourceUrl}/${id}/cleanup`, {params, observe: 'response'});
     }
 
     reset(id: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${id}/participations`, { observe: 'response' });
+        return this.http.delete<void>(`${this.resourceUrl}/${id}/participations`, {observe: 'response'});
     }
 
     exportRepos(id: number, students: string[]): Observable<HttpResponse<Blob>> {
-        return this.http.get(`${this.resourceUrl}/${id}/participations/${students}`, { observe: 'response', responseType: 'blob' });
+        return this.http.get(`${this.resourceUrl}/${id}/participations/${students}`, {
+            observe: 'response',
+            responseType: 'blob'
+        });
+    }
+
+    getNextExercisesForDays(exercises: Exercise[], delay: number = 7): Exercise[] {
+        return exercises.filter(exercise => {
+            return moment().isBefore(exercise.dueDate) && moment().add(delay, 'day').isSameOrAfter(exercise.dueDate);
+        });
     }
 
     convertExerciseDateFromServer(exercise: Exercise): Exercise {
@@ -103,13 +113,14 @@ export class ExerciseService {
     }
 }
 
-@Injectable({ providedIn: 'root' })
+@Injectable({providedIn: 'root'})
 export class ExerciseLtiConfigurationService {
     private resourceUrl = SERVER_API_URL + 'api/lti/configuration';
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient) {
+    }
 
     find(id: number): Observable<HttpResponse<LtiConfiguration>> {
-        return this.http.get<LtiConfiguration>(`${this.resourceUrl}/${id}`, { observe: 'response' });
+        return this.http.get<LtiConfiguration>(`${this.resourceUrl}/${id}`, {observe: 'response'});
     }
 }
