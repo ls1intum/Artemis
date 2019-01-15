@@ -1,6 +1,6 @@
 import { browser, element, by, ExpectedConditions as ec } from 'protractor';
 
-import { NavBarPage, SignInPage, PasswordPage, SettingsPage } from '../page-objects/jhi-page-objects';
+import { NavBarPage, SignInPage, SettingsPage } from '../page-objects/jhi-page-objects';
 
 const expect = chai.expect;
 

@@ -3,6 +3,8 @@ import { element, by, ElementFinder } from 'protractor';
 export class NavBarPage {
     entityMenu = element(by.id('entity-menu'));
     accountMenu = element(by.id('account-menu'));
+    coursesMenu = element(by.id('courses-menu'));
+    courseAdminMenu: ElementFinder;
     adminMenu: ElementFinder;
     signIn = element(by.id('login'));
     register = element(by.css('[routerLink="register"]'));
@@ -13,6 +15,7 @@ export class NavBarPage {
     constructor(asAdmin?: Boolean) {
         if (asAdmin) {
             this.adminMenu = element(by.id('admin-menu'));
+            this.courseAdminMenu = element(by.id('course-admin-menu'));
         }
     }
 
@@ -24,8 +27,16 @@ export class NavBarPage {
         await this.accountMenu.click();
     }
 
+    async clickOnCoursesMenu() {
+        await this.coursesMenu.click();
+    }
+
     async clickOnAdminMenu() {
         await this.adminMenu.click();
+    }
+
+    async clickOnCourseAdminMenu() {
+        await this.courseAdminMenu.click();
     }
 
     async clickOnSignIn() {
