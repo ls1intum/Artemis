@@ -98,6 +98,7 @@ export class SignInPage {
     username = element(by.id('username'));
     password = element(by.id('password'));
     loginButton = element(by.css('button[type=submit]'));
+    closeButton = element(by.className('close'));
 
     async setUserName(username: string) {
         await this.username.sendKeys(username);
@@ -131,6 +132,10 @@ export class SignInPage {
 
     async login() {
         await this.loginButton.click();
+    }
+
+    async dismiss() {
+        await this.closeButton.click();
     }
 }
 export class PasswordPage {

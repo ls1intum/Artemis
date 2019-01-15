@@ -13,8 +13,8 @@ exports.config = {
         browserName: 'chrome',
         chromeOptions: {
             args: process.env.JHI_E2E_HEADLESS
-                ? [ "--headless", "--disable-gpu", "--window-size=800,600", "incognito" ]
-                : [ "--disable-gpu", "--window-size=800,600", "incognito" ]
+                ? [ "--headless", "--disable-gpu", "--window-size=800,600", "--disable-extensions", "incognito" ]
+                : [ "--disable-gpu", "--window-size=800,600", "--disable-extensions", "incognito" ]
         }
     },
 

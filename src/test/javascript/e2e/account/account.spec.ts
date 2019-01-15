@@ -9,7 +9,7 @@ describe('account', () => {
     let signInPage: SignInPage;
     let settingsPage: SettingsPage;
 
-    before(async () => {
+    beforeEach(async () => {
         await browser.get('/');
         navBarPage = new NavBarPage(true);
     });
@@ -24,6 +24,8 @@ describe('account', () => {
         const expect2 = 'Failed to sign in! Please check your username and password and try again.';
         const value2 = await element(by.className('alert-danger')).getText();
         expect(value2).to.eq(expect2);
+
+        await signInPage.dismiss();
     });
 
     it('should login successfully with admin account', async () => {
@@ -34,7 +36,33 @@ describe('account', () => {
         browser.wait(ec.urlContains('/courses'), 5000).then((result) => expect(result).to.be.true);
     });
 
-    after(async () => {
-        await navBarPage.autoSignOut();
+    it('should login successfully with instructor account', async () => {
+        await browser.get('/');
+        signInPage = await navBarPage.getSignInPage();
+        await signInPage.autoSignInUsing(process.env.bamboo_instructor_user, process.env.bamboo_instructor_password);
+
+        browser.wait(ec.urlContains('/courses'), 5000).then((result) => expect(result).to.be.true);
+    });
+
+    it('should login successfully with tutor account', async () => {
+        await browser.get('/');
+        signInPage = await navBarPage.getSignInPage();
+        await signInPage.autoSignInUsing(process.env.bamboo_tutor_user, process.env.bamboo_tutor_password);
+
+        browser.wait(ec.urlContains('/courses'), 5000).then((result) => expect(result).to.be.true);
+    });
+
+    it('should login successfully with student account', async () => {
+        await browser.get('/');
+        signInPage = await navBarPage.getSignInPage();
+        await signInPage.autoSignInUsing(process.env.bamboo_student_user, process.env.bamboo_student_password);
+
+        browser.wait(ec.urlContains('/courses'), 5000).then((result) => expect(result).to.be.true);
+    });
+
+    afterEach(async () => {
+        if (await navBarPage.signOut.isPresent()) {
+            await navBarPage.autoSignOut();
+        }
     });
 });
