@@ -99,7 +99,7 @@ export class SignInPage {
     password = element(by.id('password'));
     loginButton = element(by.css('button[type=submit]'));
 
-    async setUserName(username) {
+    async setUserName(username: string) {
         await this.username.sendKeys(username);
     }
 
@@ -111,7 +111,7 @@ export class SignInPage {
         await this.username.clear();
     }
 
-    async setPassword(password) {
+    async setPassword(password: string) {
         await this.password.sendKeys(password);
     }
 
@@ -140,11 +140,11 @@ export class PasswordPage {
     saveButton = element(by.css('button[type=submit]'));
     title = element.all(by.css('h2')).first();
 
-    async setCurrentPassword(password) {
+    async setCurrentPassword(password: string) {
         await this.currentPassword.sendKeys(password);
     }
 
-    async setPassword(password) {
+    async setPassword(password: string) {
         await this.password.sendKeys(password);
     }
 
@@ -156,7 +156,7 @@ export class PasswordPage {
         await this.password.clear();
     }
 
-    async setConfirmPassword(confirmPassword) {
+    async setConfirmPassword(confirmPassword: string) {
         await this.confirmPassword.sendKeys(confirmPassword);
     }
 
@@ -184,7 +184,7 @@ export class SettingsPage {
     saveButton = element(by.css('button[type=submit]'));
     title = element.all(by.css('h2')).first();
 
-    async setFirstName(firstName) {
+    async setFirstName(firstName: string) {
         await this.firstName.sendKeys(firstName);
     }
 
@@ -196,7 +196,7 @@ export class SettingsPage {
         await this.firstName.clear();
     }
 
-    async setLastName(lastName) {
+    async setLastName(lastName: string) {
         await this.lastName.sendKeys(lastName);
     }
 
@@ -208,7 +208,7 @@ export class SettingsPage {
         await this.lastName.clear();
     }
 
-    async setEmail(email) {
+    async setEmail(email: string) {
         await this.email.sendKeys(email);
     }
 
