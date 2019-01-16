@@ -1,7 +1,7 @@
 language: java
 jdk: openjdk8
 
-env: NODE_VERSION=10.14.2
+env: NODE_VERSION=10.15.0
 
 
 cache:
