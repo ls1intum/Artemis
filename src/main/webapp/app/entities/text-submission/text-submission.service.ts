@@ -41,6 +41,22 @@ export class TextSubmissionService {
             .map((res: HttpResponse<TextSubmission[]>) => this.convertArrayResponse(res));
     }
 
+    getTextSubmissionsForExerciseAssessedByTutor(exerciseId: number): Observable<HttpResponse<TextSubmission[]>> {
+        return this.http
+            .get<TextSubmission[]>(`api/exercises/${exerciseId}/text-submissions-assessed-by-tutor`, {
+                observe: 'response'
+            })
+            .map((res: HttpResponse<TextSubmission[]>) => this.convertArrayResponse(res));
+    }
+
+    getTextSubmissionForExerciseWithoutAssessment(exerciseId: number): Observable<HttpResponse<TextSubmission>> {
+        return this.http
+            .get<TextSubmission>(`api/exercises/${exerciseId}/text-submission-without-assessment`, {
+                observe: 'response'
+            })
+            .map((res: HttpResponse<TextSubmission>) => this.convertResponse(res));
+    }
+
     private convertResponse(res: EntityResponseType): EntityResponseType {
         const body: TextSubmission = this.convertItemFromServer(res.body);
         return res.clone({ body });

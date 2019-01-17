@@ -1,0 +1,66 @@
+<style type="text/css">
+    ul {
+        padding-left: 0;
+        z-index: 1;
+        position: relative;
+    }
+
+    li {
+        width: 2em;
+        height: 2em;
+        text-align: center;
+        line-height: 2em;
+        border-radius: 1em;
+        background: green;
+        margin: 0 1em;
+        display: inline-block;
+        color: white;
+        position: relative;
+        /*z-index: 1;*/
+    }
+
+    li::before{
+        content: '';
+        position: absolute;
+        top: .9em;
+        left: -4em;
+        width: 4em;
+        height: .2em;
+        background: green;
+        z-index: -1;
+    }
+
+    li:first-child::before {
+        display: none;
+    }
+
+    .active {
+        background: green;
+    }
+
+    .active ~ li {
+        background: red;
+    }
+
+    .active ~ li::before {
+        background: red;
+    }
+
+    .not_participated {
+        display: none;
+    }
+
+    .not_participated + li::before {
+        display: none !important;
+    }
+</style>
+
+<div>
+    <ul>
+        <li class="not_participated" [ngClass]="{'active': tutorParticipationStatus === NOT_PARTICIPATED}" >0</li>
+        <li [ngClass]="{'active': tutorParticipationStatus === REVIEWED_INSTRUCTIONS}" >1</li>
+        <li [ngClass]="{'active': tutorParticipationStatus === TRAINED}">2</li>
+        <li [ngClass]="{'active': tutorParticipationStatus === COMPLETED}">3</li>
+    </ul>
+</div>
+

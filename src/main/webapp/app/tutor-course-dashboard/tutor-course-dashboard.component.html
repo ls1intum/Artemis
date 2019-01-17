@@ -19,7 +19,8 @@
         </div>
         <div class="col-4 text-center">
             <p class="h3">Total assessments:</p>
-            <p class="font-weight-bold">{{numberOfAssessments}} / {{numberOfSubmissions}} ({{numberOfAssessments/numberOfSubmissions * 100}}%)</p>
+            <p class="font-weight-bold">{{numberOfAssessments}} / {{numberOfSubmissions}}
+                ({{numberOfAssessments / numberOfSubmissions * 100}}%)</p>
         </div>
     </div>
 
@@ -55,7 +56,9 @@
                     <span class="badge badge-success" [hidden]="!exercise.isActiveQuiz">Live</span>
                 </td>
                 <td>
-                    Your status: 100% - TODO: implement progress bar
+                    <jhi-tutor-participation-graph [tutorParticipation]="exercise.tutorParticipations[0]">
+
+                    </jhi-tutor-participation-graph>
                 </td>
                 <td>
                     <span placement="right" [hidden]="!exercise.dueDate"
@@ -71,7 +74,8 @@
                 </td>
 
                 <td class="text-center">
-                    <button type="submit" [routerLink]="['/course', course.id, '/exercise', exercise.id, '/tutor-dashboard' ]" class="btn btn-info btn-sm mr-1">
+                    <button routerLink="/course/{{course.id}}/exercise/{{exercise.id}}/tutor-dashboard"
+                            class="btn btn-info btn-sm mr-1">
                         <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
                     </button>
                 </td>

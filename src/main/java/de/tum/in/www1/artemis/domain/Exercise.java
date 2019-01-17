@@ -98,7 +98,10 @@ public abstract class Exercise implements Serializable {
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
     @JsonIgnoreProperties("exercise")
     private Set<ExampleSubmission> exampleSubmissions = new HashSet<>();
-    private TutorParticipation tutorParticipation;
+
+    @OneToMany(mappedBy = "assessedExercise")
+    @JsonIgnoreProperties("exercise")
+    private Set<TutorParticipation> tutorParticipations = new HashSet<>();
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -258,10 +261,6 @@ public abstract class Exercise implements Serializable {
 
     public void setParticipations(Set<Participation> participations) {
         this.participations = participations;
-    }
-
-    public void setTutorParticipation(TutorParticipation tutorParticipation) {
-        this.tutorParticipation = tutorParticipation;
     }
 
     public Course getCourse() {
@@ -466,5 +465,13 @@ public abstract class Exercise implements Serializable {
             ", difficulty='" + getDifficulty() + "'" +
             ", categories='" + getCategories() + "'" +
             "}";
+    }
+
+    public Set<TutorParticipation> getTutorParticipations() {
+        return tutorParticipations;
+    }
+
+    public void setTutorParticipations(Set<TutorParticipation> tutorParticipations) {
+        this.tutorParticipations = tutorParticipations;
     }
 }

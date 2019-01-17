@@ -22,6 +22,9 @@
             <jhi-date-time-picker labelName="Due Date" [entity]="textExercise" field="dueDate"></jhi-date-time-picker>
         </div>
         <div class="form-group">
+            <jhi-date-time-picker labelName="Assessment Due Date" [entity]="textExercise" field="assessmentDueDate"></jhi-date-time-picker>
+        </div>
+        <div class="form-group">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.maxScore" for="field_maxScore">Max Score</label>
             <input type="number" class="form-control" [pattern]="maxScorePattern" min="0" max="9999" name="maxScore" id="field_maxScore" [(ngModel)]="textExercise.maxScore" />
         </div>
@@ -40,7 +43,10 @@
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.sampleSolution" for="field_sampleSolution">Sample Solution</label>
             <textarea class="form-control" name="sampleSolution" id="field_sampleSolution" maxLength="1000" [(ngModel)]="textExercise.sampleSolution"></textarea>
         </div>
-    </div>
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.gradingInstructions" for="field_gradingInstructions">Grading instructions</label>
+            <textarea class="form-control" name="sampleSolution" id="field_gradingInstructions" maxLength="1000" [(ngModel)]="textExercise.gradingInstructions"></textarea>
+        </div>
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">

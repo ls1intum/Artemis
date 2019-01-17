@@ -1,14 +1,9 @@
-<div *ngIf="course">
+<div *ngIf="exercise">
     <jhi-alert></jhi-alert>
 
     <div class="header-container  bg-primary text-white">
         <h4 class="card-header">
-            <strong>{{course.title}}</strong>
-            &nbsp;
-            <a class="text-primary card-link" *ngIf="course.isAtLeastTutor"
-               routerLink="/course/{{course.id}}/dashboard" routerLinkActive="active">
-                <i class="fa fa-info-circle fa-fw" style="color:white;"></i>
-            </a>
+            <strong>{{exercise.id}} - {{exercise.title}}</strong>
         </h4>
     </div>
 
@@ -17,62 +12,95 @@
             <p class="h3">Your assessments:</p>
             <p class="font-weight-bold">{{numberOfTutorAssessments}} / 5 </p>
         </div>
-        <div class="col-4 text-center">
-            <p class="h3">Total assessments:</p>
-            <p class="font-weight-bold">{{numberOfAssessments}} / {{numberOfSubmissions}} ({{numberOfAssessments/numberOfSubmissions * 100}}%</p>
-        </div>
     </div>
 
-    <div class="row justify-content-around">
-        <div class="col-4 text-center">
-            <p class="h3">Complaints about your assessments:</p>
-            <p class="font-weight-bold">{{numberOfTutorComplaints}}</p>
-        </div>
-        <div class="col-4 text-center">
-            <p class="h3">Total complaints:</p>
-            <p class="font-weight-bold">{{numberOfComplaints}}</p>
-        </div>
+    <div *ngIf="tutorParticipationStatus === NOT_PARTICIPATED">
+        You need to read the grading instructions before starting assessing
     </div>
+
+    <button (click)="open(gradingInstructions)">
+        Read grading instructions
+    </button>
+
+    <ng-template #gradingInstructions let-c="close" let-d="dismiss">
+        <div class="modal-header">
+            <h4 class="modal-title">Grading instructions</h4>
+            <button type="button" class="close" aria-label="Close" (click)="d()"><span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        <div class="modal-body">
+            {{exercise.gradingInstructions}}
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline" (click)="c()">Close</button>
+            <button type="button" *ngIf="tutorParticipationStatus === NOT_PARTICIPATED"
+                    (click)="readInstruction() && c()">I read and understood the instructions
+            </button>
+        </div>
+    </ng-template>
 
     <div class="table-responsive">
-        <table class="table exercise-table" [hidden]="exercises.length === 0">
+        <table class="table table-striped exercise-table">
             <thead>
             <tr>
-                <th class="col-xs-3">Exercise</th>
-                <th class="col-xs-4">Your status</th>
-                <th class="col-xs-2">Exercise due date</th>
-                <th class="col-xs-2">Assessments due date</th>
-                <th class="col-xs-1">Actions</th>
+                <th>#</th>
+                <th>Submission date</th>
+                <th>Result</th>
+                <th>Submission count</th>
+                <th>Score</th>
+                <th>Assessment Type</th>
+                <th>Reviewer</th>
+                <th>Action</th>
             </tr>
             </thead>
             <tbody>
-            <tr *ngFor="let exercise of exercises">
+            <tr [ngStyle]="submission.optimal && {'font-weight': 'bold'}"
+                *ngFor="let submission of submissions; let i = index">
+                <td>{{ i + 1 }}</td>
+                <td>{{ submission.submissionDate | date:'MMM d, y HH:mm:ss' }}</td>
                 <td>
-                    <span>{{exercise.title}}</span>
-                    <span class="badge badge-warning" *ngIf="!exercise.visibleToStudents" placement="right"
-                          ngbTooltip="Only visible to teaching assistants and instructors. Release date: {{exercise.releaseDate | date:'MMM d, y H:mm'}}">
-                    Not Released</span>
-                    <span class="badge badge-success" [hidden]="!exercise.isActiveQuiz">Live</span>
+                    <jhi-result [participation]="submission.participation"></jhi-result>
                 </td>
                 <td>
-                    Your status: 100% - TODO: implement progress bar
+                    <ng-container *ngIf="submission.participation.submissions">
+                        {{ submission.participation.submissions.length }}
+                    </ng-container>
                 </td>
                 <td>
-                    <span placement="right" [hidden]="!exercise.dueDate"
-                          ngbTooltip="{{exercise.dueDate | date:'MMM d, y H:mm'}}">
-                        {{exercise.dueDate | amTimeAgo}}
+                    <span *ngIf="submission.result && submission.result.score != null">{{submission.result.score}}
+                        %</span>
+                </td>
+                <td>{{ submission.result && submission.result.assessmentType }}</td>
+                <td>
+                    <span
+                        *ngIf="submission.result && submission.result.assessor">{{ submission.result.assessor.firstName }} {{ submission.result.assessor.lastName }}</span>
+                </td>
+                <td>
+                    <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
+                    <button *ngIf="submission && !submission.result"
+                            routerLink="/text/{{exercise.id}}/assessment/{{submission.id}}"
+                            class="btn btn-outline-secondary btn-sm">
+                        <i class="fa fa-folder-open fa-fw"></i>&nbsp;Assess Submission
+                    </button>
                     </span>
+                    <button *ngIf="submission && submission.result"
+                            routerLink="/text/{{exercise.id}}/assessment/{{submission.id}}"
+                            class="btn btn-outline-secondary btn-sm">
+                        <i class="fa fa-folder-open fa-fw"></i>&nbsp;Open assessment
+                    </button>
                 </td>
+            </tr>
+            <tr *ngIf="unassessedSubmission != null">
+                <td></td>
+                <td>{{ unassessedSubmission.submissionDate }}</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
                 <td>
-                    <span placement="right" [hidden]="!exercise.assessmentDueDate"
-                          ngbTooltip="{{exercise.assessmentDueDate | date:'MMM d, y H:mm'}}">
-                        {{exercise.assessmentDueDate | amTimeAgo}}
-                    </span>
-                </td>
-
-                <td class="text-center">
-                    <button type="submit" [routerLink]="['/course', course.id, '/exercise', exercise.id, '/tutor-dashboard' ]" class="btn btn-info btn-sm mr-1">
-                        <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
+                    <button routerLink="/text/{{exercise.id}}/assessment/{{unassessedSubmission.id}}">
+                        <i class="fa fa-folder-open fa-fw"></i>Start new assessment
                     </button>
                 </td>
             </tr>

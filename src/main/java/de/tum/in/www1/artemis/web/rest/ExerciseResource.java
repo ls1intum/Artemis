@@ -1,26 +1,17 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.CourseService;
-import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import de.tum.in.www1.artemis.web.rest.util.PaginationUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -30,13 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.security.Principal;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.*;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
@@ -59,10 +44,13 @@ public class ExerciseResource {
     private final AuthorizationCheckService authCheckService;
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final Optional<VersionControlService> versionControlService;
+    private final ParticipationService participationService;
+    private final TutorParticipationService tutorParticipationService;
 
     public ExerciseResource(ExerciseRepository exerciseRepository, ExerciseService exerciseService,
                             UserService userService, CourseService courseService, AuthorizationCheckService authCheckService,
-                            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService) {
+                            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
+                            ParticipationService participationService, TutorParticipationService tutorParticipationService) {
         this.exerciseRepository = exerciseRepository;
         this.exerciseService = exerciseService;
         this.userService = userService;
@@ -70,6 +58,8 @@ public class ExerciseResource {
         this.authCheckService = authCheckService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
+        this.participationService = participationService;
+        this.tutorParticipationService = tutorParticipationService;
     }
 
     /**
@@ -111,13 +101,9 @@ public class ExerciseResource {
     public ResponseEntity<Exercise> getExercise(@PathVariable Long id) {
         log.debug("REST request to get Exercise : {}", id);
         Exercise exercise = exerciseService.findOne(id);
-        Course course = exercise.getCourse();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-             !authCheckService.isInstructorInCourse(course, user) &&
-             !authCheckService.isAdmin()) {
-            return forbidden();
-        }
+
+        if (hasNotAtLeastTAPermissions(exercise)) return forbidden();
+
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(exercise));
     }
 
@@ -134,11 +120,7 @@ public class ExerciseResource {
         log.debug("REST request to delete Exercise : {}", id);
         Exercise exercise = exerciseService.findOneLoadParticipations(id);
         if (Optional.ofNullable(exercise).isPresent()) {
-            Course course = exercise.getCourse();
-            User user = userService.getUserWithGroupsAndAuthorities();
-            if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
-                return forbidden();
-            }
+            if (hastNotAtLeastInstructorPermissions(exercise)) return forbidden();
             exerciseService.delete(exercise, true, false);
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
@@ -156,11 +138,7 @@ public class ExerciseResource {
     public ResponseEntity<Void> reset(@PathVariable Long id) {
         log.debug("REST request to reset Exercise : {}", id);
         Exercise exercise = exerciseService.findOneLoadParticipations(id);
-        Course course = exercise.getCourse();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
-            return forbidden();
-        }
+        if (hastNotAtLeastInstructorPermissions(exercise)) return forbidden();
         exerciseService.reset(exercise);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert("exercise", id.toString())).build();
     }
@@ -178,11 +156,7 @@ public class ExerciseResource {
     public ResponseEntity<Resource> cleanup(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean deleteRepositories) throws IOException {
         log.info("Start to cleanup build plans for Exercise: {}, delete repositories: {}", id, deleteRepositories);
         Exercise exercise = exerciseService.findOne(id);
-        Course course = exercise.getCourse();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
-             return forbidden();
-        }
+        if (hastNotAtLeastInstructorPermissions(exercise)) return forbidden();
         exerciseService.cleanup(id, deleteRepositories);
         log.info("Cleanup build plans was successful for Exercise : {}", id);
         return ResponseEntity.ok().headers(HeaderUtil.createAlert("Cleanup was successful. Repositories have been deleted: " + deleteRepositories, "")).build();
@@ -201,11 +175,7 @@ public class ExerciseResource {
     public ResponseEntity<Resource> archiveRepositories(@PathVariable Long id) throws IOException {
         log.info("Start to archive repositories for Exercise : {}", id);
         Exercise exercise = exerciseService.findOne(id);
-        Course course = exercise.getCourse();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
-            return forbidden();
-        }
+        if (hastNotAtLeastInstructorPermissions(exercise)) return forbidden();
         File zipFile = exerciseService.archive(id);
         if (zipFile == null) {
             return ResponseEntity.noContent()
@@ -233,13 +203,9 @@ public class ExerciseResource {
     public ResponseEntity<Resource> exportSubmissions(@PathVariable Long exerciseId, @PathVariable String studentIds) throws IOException {
         studentIds = studentIds.replaceAll(" ","");
         Exercise exercise = exerciseService.findOne(exerciseId);
-        Course course = exercise.getCourse();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-            !authCheckService.isInstructorInCourse(course, user) &&
-            !authCheckService.isAdmin()) {
-            return forbidden();
-        }
+
+        if (hasNotAtLeastTAPermissions(exercise)) return forbidden();
+
         List<String> studentList = Arrays.asList(studentIds.split("\\s*,\\s*"));
         if(studentList.isEmpty() || studentList == null){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).headers(HeaderUtil.createAlert("Given studentlist for export was empty or malformed","")).build();
@@ -258,6 +224,44 @@ public class ExerciseResource {
             .contentType(MediaType.APPLICATION_OCTET_STREAM)
             .header("filename", zipFile.getName())
             .body(resource);
+    }
+
+    /**
+     * GET  /exercises/:id : get the "id" exercise with data useful for tutors.
+     *
+     * @param id the id of the exercise to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
+     */
+    @GetMapping("/exercises/{id}/for-tutor-dashboard")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @Timed
+    public ResponseEntity<Exercise> getExerciseForTutorDashboard(@PathVariable Long id) {
+        log.debug("REST request to get Exercise for tutor dashboard : {}", id);
+        Exercise exercise = exerciseService.findOne(id);
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        if (hasNotAtLeastTAPermissions(exercise)) return forbidden();
+
+        TutorParticipation tutorParticipation = tutorParticipationService.findByExerciseAndTutor(exercise, user);
+        exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
+
+        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(exercise));
+    }
+
+    private boolean hasNotAtLeastTAPermissions(Exercise exercise) {
+        Course course = exercise.getCourse();
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        return !authCheckService.isTeachingAssistantInCourse(course, user) &&
+            !authCheckService.isInstructorInCourse(course, user) &&
+            !authCheckService.isAdmin();
+    }
+
+    private boolean hastNotAtLeastInstructorPermissions(Exercise exercise) {
+        Course course = exercise.getCourse();
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        return !authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin();
     }
 
 }

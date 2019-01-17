@@ -247,7 +247,8 @@ public class CourseResource {
         for (Exercise exercise: exercises) {
             List<Participation> participations = participationService.findByExerciseIdForTutorDashboard(exercise.getId());
             exercise.setParticipations(new HashSet<>(participations));
-            exercise.setTutorParticipation(tutorParticipationService.findByExerciseAndTutor(exercise, user));
+            TutorParticipation tutorParticipation = tutorParticipationService.findByExerciseAndTutor(exercise, user);
+            exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
         }
 
         course.setExercises(new HashSet<>(exercises));

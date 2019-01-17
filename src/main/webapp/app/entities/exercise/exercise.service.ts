@@ -6,9 +6,9 @@ import { SERVER_API_URL } from '../../app.constants';
 import * as moment from 'moment';
 
 import { Exercise } from './exercise.model';
-import { createRequestOption } from '../../shared';
 import { LtiConfiguration } from '../lti-configuration';
 import { ParticipationService } from '../participation/participation.service';
+import { map } from 'rxjs/operators';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
@@ -101,6 +101,12 @@ export class ExerciseService {
             });
         }
         return res;
+    }
+
+    getForTutors(exerciseId: number): Observable<HttpResponse<Exercise>> {
+        return this.http
+            .get<Exercise>(`${this.resourceUrl}/${exerciseId}/for-tutor-dashboard`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 }
 

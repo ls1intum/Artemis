@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -37,6 +38,7 @@ public class TextSubmissionResource {
     private static final String ENTITY_NAME = "textSubmission";
     private final Logger log = LoggerFactory.getLogger(TextSubmissionResource.class);
     private final TextSubmissionRepository textSubmissionRepository;
+    private final ResultRepository resultRepository;
     private TextExerciseService textExerciseService;
     private CourseService courseService;
     private ParticipationService participationService;
@@ -50,6 +52,7 @@ public class TextSubmissionResource {
                                   ParticipationService participationService,
                                   TextSubmissionService textSubmissionService,
                                   UserService userService,
+                                  ResultRepository resultRepository,
                                   AuthorizationCheckService authCheckService) {
         this.textSubmissionRepository = textSubmissionRepository;
         this.textExerciseService = textExerciseService;
@@ -58,6 +61,7 @@ public class TextSubmissionResource {
         this.textSubmissionService = textSubmissionService;
         this.userService = userService;
         this.authCheckService = authCheckService;
+        this.resultRepository = resultRepository;
     }
 
     /**
@@ -181,13 +185,8 @@ public class TextSubmissionResource {
                                                                       @RequestParam(defaultValue = "false") boolean submittedOnly) {
         log.debug("REST request to get all TextSubmissions");
         Exercise exercise = textExerciseService.findOneLoadParticipations(exerciseId);
-        Course course = exercise.getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-            !authCheckService.isInstructorInCourse(course, user) &&
-            !authCheckService.isAdmin()) {
-            return forbidden();
-        }
+        if (!hasAtLeastTAPermissions(exercise, user)) return forbidden();
 
         return ResponseEntity.ok().body(
 
@@ -215,5 +214,111 @@ public class TextSubmissionResource {
                 // Convert Stream to List to Match Return Type
                 .collect(Collectors.toList())
         );
+    }
+
+    /**
+     * GET  /text-submissions-assessed-by-tutor : get all the textSubmissions assessed by the current tutor.
+     *
+     * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
+     */
+    @GetMapping(value = "/exercises/{exerciseId}/text-submissions-assessed-by-tutor")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @Timed
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<TextSubmission>> getAllTextSubmissionsByTutor(@PathVariable Long exerciseId) {
+        log.debug("REST request to get all TextSubmissions filtered by assessed by tutor");
+        Exercise exercise = textExerciseService.findOneLoadParticipations(exerciseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        if (!hasAtLeastTAPermissions(exercise, user)) return forbidden();
+
+        return ResponseEntity.ok().body(
+
+            // Participations for Exercise
+            participationService.findByExerciseIdWithEagerSubmissions(exerciseId)
+                .stream()
+                .peek(participation -> {
+                    participation.getExercise().setParticipations(null);
+                })
+
+                // Map to Latest Submission
+                .map(Participation::findLatestTextSubmission)
+                .filter(Objects::nonNull)
+
+                // It needs to be submitted to have an assessment
+                .filter(Submission::isSubmitted)
+
+                .filter(textSubmission -> {
+                    Result result = resultRepository.findDistinctBySubmissionId(textSubmission.getId()).orElse(null);
+                    if (result == null) {
+                        return false;
+                    }
+
+                    return result.getAssessor() == user;
+                })
+
+                // Load Result for Submission
+                .peek(textSubmission -> {
+                    Hibernate.initialize(textSubmission.getResult()); // eagerly load the association
+                    if (textSubmission.getResult() != null) {
+                        Hibernate.initialize(textSubmission.getResult().getAssessor());
+                        textSubmission.getResult().getAssessor().setGroups(null);
+                    }
+                })
+
+                // Convert Stream to List to Match Return Type
+                .collect(Collectors.toList())
+        );
+    }
+
+    /**
+     * GET  /text-submission-without-assessment : get one textSubmission without assessment.
+     *
+     * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
+     */
+    @GetMapping(value = "/exercises/{exerciseId}/text-submission-without-assessment")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @Timed
+    @Transactional(readOnly = true)
+    public ResponseEntity<Optional<TextSubmission>> getTextSubmissionWithoutAssessment(@PathVariable Long exerciseId) {
+        log.debug("REST request to get a text submission without assessment");
+        Exercise exercise = textExerciseService.findOneLoadParticipations(exerciseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        if (!hasAtLeastTAPermissions(exercise, user)) return forbidden();
+
+        return ResponseEntity.ok().body(
+
+            // Participations for Exercise
+            participationService.findByExerciseIdWithEagerSubmissions(exerciseId)
+                .stream()
+                .peek(participation -> {
+                    participation.getExercise().setParticipations(null);
+                })
+
+                // Map to Latest Submission
+                .map(Participation::findLatestTextSubmission)
+                .filter(Objects::nonNull)
+
+                // It needs to be submitted to be ready for assessment
+                .filter(Submission::isSubmitted)
+
+                .filter(textSubmission -> {
+                    Result result = resultRepository.findDistinctBySubmissionId(textSubmission.getId()).orElse(null);
+                    return result == null;
+
+                })
+
+                // TODO: more randomic way to choose the submission to return?
+                .findAny()
+        );
+    }
+
+    private boolean hasAtLeastTAPermissions(Exercise exercise, User user) {
+        Course course = exercise.getCourse();
+
+        return authCheckService.isTeachingAssistantInCourse(course, user) ||
+            authCheckService.isInstructorInCourse(course, user) ||
+            authCheckService.isAdmin();
     }
 }

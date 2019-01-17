@@ -15,12 +15,13 @@ import { ParticipationService } from '../entities/participation';
 import { MomentModule } from 'angular2-moment';
 import { JhiMainComponent } from '../layouts';
 import { ClipboardModule } from 'ngx-clipboard';
+import { TutorParticipationGraphComponent } from 'app/tutor-course-dashboard/tutor-participation-graph/tutor-participation-graph.component';
 
 const ENTITY_STATES = [...tutorCourseDashboardRoute];
 
 @NgModule({
     imports: [BrowserModule, ArTEMiSSharedModule, ArTEMiSResultModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES)],
-    declarations: [TutorCourseDashboardComponent],
+    declarations: [TutorCourseDashboardComponent, TutorParticipationGraphComponent],
     exports: [ResultComponent],
     entryComponents: [HomeComponent, CourseComponent, JhiMainComponent, ResultComponent],
     providers: [

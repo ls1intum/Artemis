@@ -5,7 +5,11 @@ import { JhiAlertService } from 'ng-jhipster';
 import { Subscription } from 'rxjs';
 import { Principal, User } from '../core';
 import { HttpResponse } from '@angular/common/http';
-import { Exercise } from 'app/entities/exercise';
+import { Exercise, ExerciseService } from 'app/entities/exercise';
+import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor-participation';
+import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
 
 @Component({
     selector: 'jhi-courses',
@@ -13,28 +17,35 @@ import { Exercise } from 'app/entities/exercise';
     providers: [JhiAlertService, CourseService]
 })
 export class TutorExerciseDashboardComponent implements OnInit {
-    course: Course;
+    exercise: Exercise;
     courseId: number;
-    exercises: Exercise[] = [];
-    numberOfSubmissions = 0;
-    numberOfAssessments = 0;
+    exerciseId: number;
     numberOfTutorAssessments = 0;
-    numberOfComplaints = 0;
-    numberOfTutorComplaints = 0;
+    tutorParticipationStatus: TutorParticipationStatus;
+    submissions: TextSubmission[];
+    unassessedSubmission: TextSubmission;
+
+    NOT_PARTICIPATED = TutorParticipationStatus.NOT_PARTICIPATED;
+
     private subscription: Subscription;
     private tutor: User;
+    private tutorParticipation: TutorParticipation;
 
     constructor(
-        private courseService: CourseService,
+        private exerciseService: ExerciseService,
         private jhiAlertService: JhiAlertService,
         private principal: Principal,
-        private route: ActivatedRoute
+        private route: ActivatedRoute,
+        private tutorParticipationService: TutorParticipationService,
+        private textSubmissionService: TextSubmissionService,
+        private modalService: NgbModal,
     ) {}
 
     ngOnInit(): void {
         // (+) converts string 'id' to a number
         this.subscription = this.route.params.subscribe(params => {
             this.courseId = +params.courseId;
+            this.exerciseId = +params.exerciseId;
             this.loadAll();
         });
 
@@ -49,22 +60,58 @@ export class TutorExerciseDashboardComponent implements OnInit {
     }
 
     loadAll() {
-        this.courseService.getForTutors(this.courseId).subscribe(
-            (res: HttpResponse<Course>) => {
-                this.course = res.body;
-
-                if (this.course.exercises && this.course.exercises.length > 0) {
-                    this.exercises = this.course.exercises;
-
-                    for (const exercise of this.exercises) {
-                        this.numberOfSubmissions += exercise.participations.filter(participation => participation.submissions.length > 0).length;
-                        this.numberOfAssessments += exercise.participations.filter(participation => participation.results.length > 0).length;
-                        this.numberOfTutorAssessments += exercise.participations.filter(participation => participation.results.filter(result => result.assessor.id === this.tutor.id)).length;
-                        this.numberOfComplaints += exercise.participations.filter(participation => participation.results.filter(result => result.hasComplaint)).length;
-                    }
-                }
+        this.exerciseService.getForTutors(this.exerciseId).subscribe(
+            (res: HttpResponse<Exercise>) => {
+                this.exercise = res.body;
+                this.tutorParticipation = this.exercise.tutorParticipations[0];
+                this.tutorParticipationStatus = this.tutorParticipation.status;
             },
             (response: string) => this.onError(response)
+        );
+
+        this.getSubmissions();
+        this.getSubmissionWithoutAssessment();
+    }
+
+    private getSubmissions(): void {
+        this.textSubmissionService
+            .getTextSubmissionsForExerciseAssessedByTutor(this.exerciseId)
+            .map((response: HttpResponse<TextSubmission[]>) =>
+                response.body.map((submission: TextSubmission) => {
+                    if (submission.result) {
+                        // reconnect some associations
+                        submission.result.submission = submission;
+                        submission.result.participation = submission.participation;
+                        submission.participation.results = [submission.result];
+                    }
+
+                    return submission;
+                })
+            )
+            .subscribe((submissions: TextSubmission[]) => {
+                this.submissions = submissions;
+                this.numberOfTutorAssessments = submissions.length;
+            });
+    }
+
+    private getSubmissionWithoutAssessment(): void {
+        this.textSubmissionService.
+            getTextSubmissionForExerciseWithoutAssessment(this.exerciseId)
+            .subscribe((response: HttpResponse<TextSubmission>) => {
+                this.unassessedSubmission = response.body;
+            });
+    }
+
+    open(content: any) {
+        this.modalService.open(content, { size: 'lg' });
+    }
+
+    readInstruction() {
+        this.tutorParticipationService.create(this.tutorParticipation, this.exerciseId).subscribe(
+            (res: HttpResponse<TutorParticipation>) => {
+                this.tutorParticipation = res.body;
+            },
+            error => console.error(error)
         );
     }
 

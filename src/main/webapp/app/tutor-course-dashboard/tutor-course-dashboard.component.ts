@@ -7,6 +7,7 @@ import { Principal, User } from '../core';
 import { HttpResponse } from '@angular/common/http';
 import { Exercise } from 'app/entities/exercise';
 import { SubmissionExerciseType } from 'app/entities/submission';
+import { TutorParticipation } from 'app/entities/tutor-participation';
 
 @Component({
     selector: 'jhi-courses',
@@ -58,6 +59,7 @@ export class TutorCourseDashboardComponent implements OnInit {
                     this.exercises = this.course.exercises;
 
                     for (const exercise of this.exercises) {
+                        console.log(exercise)
                         this.numberOfSubmissions += exercise.participations.filter(participation => participation.submissions.filter(submission => submission.submissionExerciseType === SubmissionExerciseType.TEXT).length > 0).length;
                         this.numberOfAssessments += exercise.participations.filter(participation => participation.results.length > 0).length;
                         this.numberOfTutorAssessments += exercise.participations.filter(participation => participation.results.filter(result => result.assessor.id === this.tutor.id).length > 0).length;
@@ -74,6 +76,7 @@ export class TutorCourseDashboardComponent implements OnInit {
     }
 
     private onError(error: string) {
+        console.error(error);
         this.jhiAlertService.error(error, null, null);
     }
 
