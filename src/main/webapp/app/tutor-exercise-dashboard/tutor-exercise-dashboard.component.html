@@ -39,7 +39,24 @@
         </div>
     </ng-template>
 
-    <div class="table-responsive">
+    <div *ngIf="tutorParticipationStatus === REVIEWED_INSTRUCTIONS">
+        You need to test the example submissions before continuing. There are <b>{{exampleSubmissions.length}}</b>
+        example submissions to review.
+    </div>
+
+    <ul *ngIf="exampleSubmissions.length > 0">
+        <li *ngFor="let exampleSubmission of exampleSubmissions">
+            Review example submission {{exampleSubmission.id}}
+
+            <!-- TODO: make a real assessment of the example submission -->
+            <button type="button"
+                    (click)="assessExampleSubmission(exampleSubmission)">Do example submission!
+            </button>
+        </li>
+    </ul>
+
+    <div class="table-responsive"
+         *ngIf="tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED">
         <table class="table table-striped exercise-table">
             <thead>
             <tr>

@@ -10,6 +10,7 @@ import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor
 import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
+import { ExampleSubmission } from 'app/entities/example-submission';
 
 @Component({
     selector: 'jhi-courses',
@@ -24,8 +25,12 @@ export class TutorExerciseDashboardComponent implements OnInit {
     tutorParticipationStatus: TutorParticipationStatus;
     submissions: TextSubmission[];
     unassessedSubmission: TextSubmission;
+    exampleSubmissions: ExampleSubmission[] = [];
 
     NOT_PARTICIPATED = TutorParticipationStatus.NOT_PARTICIPATED;
+    REVIEWED_INSTRUCTIONS = TutorParticipationStatus.REVIEWED_INSTRUCTIONS;
+    TRAINED = TutorParticipationStatus.TRAINED;
+    COMPLETED = TutorParticipationStatus.COMPLETED;
 
     private subscription: Subscription;
     private tutor: User;
@@ -65,6 +70,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 this.exercise = res.body;
                 this.tutorParticipation = this.exercise.tutorParticipations[0];
                 this.tutorParticipationStatus = this.tutorParticipation.status;
+                this.exampleSubmissions = this.exercise.exampleSubmissions;
             },
             (response: string) => this.onError(response)
         );
@@ -128,5 +134,13 @@ export class TutorExerciseDashboardComponent implements OnInit {
         setTimeout(() => {
             this.jhiAlertService.info('arTeMiSApp.exercise.welcome');
         }, 500);
+    }
+
+    assessExampleSubmission(exampleSubmission: ExampleSubmission) {
+        this.tutorParticipationService.assessExampleSubmission(exampleSubmission, this.exerciseId, this.tutorParticipation.id).subscribe(
+            (res: HttpResponse<TutorParticipation>) => {
+                this.tutorParticipation = res.body;
+            },
+            error => console.error(error));
     }
 }

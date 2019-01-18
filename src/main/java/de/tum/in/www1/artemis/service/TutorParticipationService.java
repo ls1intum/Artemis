@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Service Implementation for managing TutorParticipation.
@@ -78,7 +79,10 @@ public class TutorParticipationService {
     @Transactional(readOnly = true)
     public TutorParticipation findOne(Long id) {
         log.debug("Request to get TutorParticipation : {}", id);
-        return tutorParticipationRepository.findById(id).get();
+
+        Optional<TutorParticipation> tutorParticipation = tutorParticipationRepository.findById(id);
+
+        return tutorParticipation.orElse(null);
     }
 
     public TutorParticipation findByExerciseAndTutor(Exercise exercise, User tutor) {

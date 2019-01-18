@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -22,6 +23,7 @@ import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
@@ -43,6 +45,7 @@ public class TextExerciseResource {
     private final AuthorizationCheckService authCheckService;
     private final ParticipationService participationService;
     private final ResultRepository resultRepository;
+    private final ExampleSubmissionRepository exampleSubmissionRepository;
 
     public TextExerciseResource(TextExerciseRepository textExerciseRepository,
                                 TextAssessmentService textAssessmentService,
@@ -50,7 +53,8 @@ public class TextExerciseResource {
                                 AuthorizationCheckService authCheckService,
                                 CourseService courseService,
                                 ParticipationService participationService,
-                                ResultRepository resultRepository) {
+                                ResultRepository resultRepository,
+                                ExampleSubmissionRepository exampleSubmissionRepository) {
         this.textAssessmentService = textAssessmentService;
         this.textExerciseRepository = textExerciseRepository;
         this.userService = userService;
@@ -58,6 +62,7 @@ public class TextExerciseResource {
         this.authCheckService = authCheckService;
         this.participationService = participationService;
         this.resultRepository = resultRepository;
+        this.exampleSubmissionRepository = exampleSubmissionRepository;
     }
 
     /**
@@ -170,6 +175,10 @@ public class TextExerciseResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise)) {
             return forbidden();
         }
+
+        Set<ExampleSubmission> exampleSubmissions = new HashSet<>(this.exampleSubmissionRepository.findAllByExerciseId(id));
+        textExercise.ifPresent(textExercise1 -> textExercise1.setExampleSubmissions(exampleSubmissions));
+
         return ResponseUtil.wrapOrNotFound(textExercise);
     }
 

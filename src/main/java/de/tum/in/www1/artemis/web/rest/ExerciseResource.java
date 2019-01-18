@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -46,11 +47,12 @@ public class ExerciseResource {
     private final Optional<VersionControlService> versionControlService;
     private final ParticipationService participationService;
     private final TutorParticipationService tutorParticipationService;
+    private final ExampleSubmissionRepository exampleSubmissionRepository;
 
     public ExerciseResource(ExerciseRepository exerciseRepository, ExerciseService exerciseService,
                             UserService userService, CourseService courseService, AuthorizationCheckService authCheckService,
                             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-                            ParticipationService participationService, TutorParticipationService tutorParticipationService) {
+                            ParticipationService participationService, TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository) {
         this.exerciseRepository = exerciseRepository;
         this.exerciseService = exerciseService;
         this.userService = userService;
@@ -60,6 +62,7 @@ public class ExerciseResource {
         this.versionControlService = versionControlService;
         this.participationService = participationService;
         this.tutorParticipationService = tutorParticipationService;
+        this.exampleSubmissionRepository = exampleSubmissionRepository;
     }
 
     /**
@@ -245,7 +248,10 @@ public class ExerciseResource {
         TutorParticipation tutorParticipation = tutorParticipationService.findByExerciseAndTutor(exercise, user);
         exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
 
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(exercise));
+        List<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllByExerciseId(id);
+        exercise.setExampleSubmissions(new HashSet<>(exampleSubmissions));
+
+        return ResponseUtil.wrapOrNotFound(Optional.of(exercise));
     }
 
     private boolean hasNotAtLeastTAPermissions(Exercise exercise) {

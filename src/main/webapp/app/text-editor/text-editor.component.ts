@@ -23,6 +23,7 @@ export class TextEditorComponent implements OnInit, OnDestroy {
     isActive: boolean;
     isSaving: boolean;
     answer: string;
+    isExampleSubmission = false;
 
     public getColorForIndex = HighlightColors.forIndex;
     private submissionConfirmationText: string;
