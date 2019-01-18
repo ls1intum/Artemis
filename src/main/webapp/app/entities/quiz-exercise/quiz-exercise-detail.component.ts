@@ -19,7 +19,7 @@ import * as moment from 'moment';
 import { ComponentCanDeactivate } from 'app/shared';
 import { Moment } from 'moment';
 import { JhiAlertService } from 'ng-jhipster';
-import { Observable } from 'rxjs';
+import { Observable } from 'rxjs/Observable';
 
 interface Reason {
     translateKey: string;
