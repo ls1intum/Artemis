@@ -3,7 +3,7 @@ import { Course, CourseScoreCalculationService, CourseService } from 'app/entiti
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { HttpResponse } from '@angular/common/http';
-import { Exercise } from 'app/entities/exercise';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-course-exercises',
@@ -11,10 +11,13 @@ import { Exercise } from 'app/entities/exercise';
     styleUrls: ['../course-overview.scss']
 })
 export class CourseExercisesComponent implements OnInit {
+    private readonly DUE_DATE_ASC = 1;
+    private readonly DUE_DATE_DESC = -1;
     private courseId: number;
     private subscription: Subscription;
-    course: Course;
-    weeklyExercisesGrouped: Exercise[];
+    private course: Course;
+    private weeklyIndexKeys: string[];
+    private weeklyExercisesGrouped: object;
 
     constructor(
         private courseService: CourseService,
@@ -35,19 +38,28 @@ export class CourseExercisesComponent implements OnInit {
                 this.course = this.courseCalculationService.getCourse(this.courseId);
             });
         }
-        this.groupExercises();
+        this.groupExercises(this.DUE_DATE_ASC);
     }
 
-    private groupExercises(): void {
-        let groupedExercises: Exercise[] = [];
-        this.course.exercises.forEach(exercise => {
-            let weekIndex = exercise.dueDate.week().toString();
-            if (typeof groupedExercises[weekIndex] !== 'object') groupedExercises[weekIndex] = [];
-            groupedExercises[weekIndex].push(exercise);
+    private groupExercises(selectedOrder: number): void {
+        this.weeklyExercisesGrouped = {};
+        this.weeklyIndexKeys = [];
+        const groupedExercises = {};
+        const indexKeys: string[] = [];
+        this.course.exercises.sort((a, b) => selectedOrder * (a.dueDate.valueOf() - b.dueDate.valueOf())).forEach(exercise => {
+            const dateIndex = exercise.dueDate.startOf('week').format('YYYY-MM-DD');
+            if (!groupedExercises[dateIndex]) {
+                indexKeys.push(dateIndex);
+                groupedExercises[dateIndex] = {
+                    label: `<b>${exercise.dueDate.startOf('week').format('DD/MM/YYYY')}</b> - <b>${exercise.dueDate.endOf('week').format('DD/MM/YYYY')}</b>`,
+                    isCollapsed: exercise.dueDate.isBefore(moment(), 'week'),
+                    exercises: []
+                };
+            }
+            groupedExercises[dateIndex].exercises.push(exercise);
         });
-        // removing empty array elements
-        groupedExercises = groupedExercises.filter(el => !!el);
         this.weeklyExercisesGrouped = groupedExercises;
+        this.weeklyIndexKeys = indexKeys;
     }
 
 }

@@ -1,12 +1,31 @@
-<div class="mt-3" *ngIf="course">
-    <div class="exercise-row mb-3" *ngFor="let weeklyExercises of weeklyExercisesGrouped">
-        <span class="control-label" *ngIf="weeklyExercises">Week {{weeklyExercises[0].dueDate.week()}}</span>
-        <jhi-course-exercise-row class="pb-1" [exercise]="exercise" [course]="course" *ngFor="let exercise of weeklyExercises"></jhi-course-exercise-row>
+<div class="mt-3 position-relative" *ngIf="course">
+    <div class="exercise-row-container mb-3" *ngFor="let weekKey of weeklyIndexKeys">
+        <span class="control-label"
+             (click)="weeklyExercisesGrouped[weekKey].isCollapsed = !weeklyExercisesGrouped[weekKey].isCollapsed">
+            <fa-icon *ngIf="weeklyExercisesGrouped[weekKey].isCollapsed" class="pr-3" [icon]="'angle-down'"></fa-icon>
+            <fa-icon *ngIf="!weeklyExercisesGrouped[weekKey].isCollapsed" class="pr-3" [icon]="'angle-up'"></fa-icon>
+            <span [innerHtml]="weeklyExercisesGrouped[weekKey].label"></span>
+            <span class="ml-2">Exercises in this week: {{weeklyExercisesGrouped[weekKey].exercises.length}}</span>
+        </span>
+        <div *ngIf="!weeklyExercisesGrouped[weekKey].isCollapsed">
+            <jhi-course-exercise-row class="pb-1" [exercise]="exercise" [course]="course"
+                                     *ngFor="let exercise of weeklyExercisesGrouped[weekKey].exercises"></jhi-course-exercise-row>
+        </div>
+        <div class="collapsed"></div>
     </div>
     <div *ngIf="course.exercises.length === 0">
         <div class="row">
             <div class="col">
                 No exercises available for the course.
+            </div>
+        </div>
+    </div>
+    <div class="exercise-controls" *ngIf="course.exercises.length > 0">
+        <div ngbDropdown class="d-inline-block">
+            <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>Sort Exercises By</button>
+            <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+                <button class="dropdown-item" (click)="groupExercises(DUE_DATE_ASC)">Due Date Asc</button>
+                <button class="dropdown-item" (click)="groupExercises(DUE_DATE_DESC)">Due Date Desc</button>
             </div>
         </div>
     </div>

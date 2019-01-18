@@ -64,7 +64,7 @@ export class ExerciseService {
         });
     }
 
-    getNextExercisesForDays(exercises: Exercise[], delay: number = 7): Exercise[] {
+    getNextExercisesForDays(exercises: Exercise[], delay = 7): Exercise[] {
         return exercises.filter(exercise => {
             return moment().isBefore(exercise.dueDate) && moment().add(delay, 'day').isSameOrAfter(exercise.dueDate);
         });

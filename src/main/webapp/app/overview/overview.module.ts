@@ -2,6 +2,7 @@ import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { ChartsModule } from 'ng2-charts';
 import { ClipboardModule } from 'ngx-clipboard';
+import { MomentModule } from 'angular2-moment';
 
 import { ArTEMiSSharedModule } from '../shared';
 
@@ -26,6 +27,7 @@ const ENTITY_STATES = [
         ArTEMiSSharedModule,
         ChartsModule,
         ClipboardModule,
+        MomentModule,
         ArTEMiSResultModule,
         RouterModule.forChild(ENTITY_STATES)
     ],

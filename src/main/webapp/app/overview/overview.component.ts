@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Course, CourseScoreCalculationService, CourseService } from "app/entities/course";
+import { Course, CourseScoreCalculationService, CourseService } from 'app/entities/course';
 import { HttpResponse } from '@angular/common/http';
 
 @Component({
@@ -8,7 +8,7 @@ import { HttpResponse } from '@angular/common/http';
     styles: []
 })
 export class OverviewComponent implements OnInit {
-    courses: Course[];
+    private courses: Course[];
 
     constructor(private courseService: CourseService, private  courseScoreCalculationService: CourseScoreCalculationService) {
         this.courseService.findAll().subscribe(

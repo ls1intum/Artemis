@@ -53,7 +53,9 @@ import {
     faProjectDiagram,
     faFileUpload,
     faThLarge,
-    faFont
+    faFont,
+    faAngleUp,
+    faAngleDown
 } from '@fortawesome/free-solid-svg-icons';
 
 // Adds the SVG icon to the library so you can use it in your page
@@ -101,6 +103,8 @@ library.add(faProjectDiagram);
 library.add(faFileUpload);
 library.add(faFont);
 library.add(faThLarge);
+library.add(faAngleUp);
+library.add(faAngleDown);
 
 
 // jhipster-needle-add-element-to-vendor - JHipster will add new menu items here

@@ -1,47 +1,46 @@
 <div class="row align-items-center">
-    <div class="col-1" [ngSwitch]="exercise.type">
-        <fa-icon [icon]="'keyboard'" *ngSwitchCase="'programming'" placement="right"
-                 ngbTooltip="This is a programming quiz"></fa-icon>
-        <fa-icon [icon]="'project-diagram'" *ngSwitchCase="'modeling'" placement="right"
-                 ngbTooltip="This is a modeling quiz"></fa-icon>
-        <fa-icon [icon]="'check-double'" *ngSwitchCase="'quiz'" placement="right"
-                 ngbTooltip="This is a multiple choice quiz"></fa-icon>
-        <fa-icon [icon]="'font'" *ngSwitchCase="'text'" placement="right"
-                 ngbTooltip="This is a text quiz"></fa-icon>
-        <fa-icon [icon]="'file-upload'" *ngSwitchCase="'file-upload'" placement="right"
-                 ngbTooltip="This is a file upload"></fa-icon>
+    <div class="col-1">
+        <fa-icon [icon]="exerciseIcon.faIcon" placement="right"
+                 ngbTooltip="{{exerciseIcon.tooltip}}"></fa-icon>
     </div>
     <div class="col-3">
         <span>{{exercise.title}}</span>
-        <a class="text-primary" *ngIf="exercise.isAtLeastTutor">
-            <i class="fa fa-info-circle fa-fw" routerLink="/course/{{course.id}}/exercise/{{exercise.id}}/dashboard" routerLinkActive="active"></i></a>
-        <a class="text-primary" *ngIf="exercise.isAtLeastTutor">
-            <i *ngIf="exercise.type === MODELING" class="fa fa-graduation-cap fa-fw" routerLink="/course/{{course.id}}/exercise/{{exercise.id}}/assessment" routerLinkActive="active"></i></a>
-        <a class="text-primary" *ngIf="exercise.isAtLeastTutor">
-            <i *ngIf="exercise.type === TEXT" class="fa fa-graduation-cap fa-fw" routerLink="/text/{{exercise.id}}/assessment" routerLinkActive="active"></i></a>
-        <a class="text-primary" *ngIf="exercise.isAtLeastTutor"><i *ngIf="exercise.type === MODELING"
-                                                                   class="fa fa-pie-chart fa-fw" routerLink="/course/{{course.id}}/exercise/{{exercise.id}}/statistics" routerLinkActive="active"></i></a>
+        <span *ngIf="exercise.isAtLeastTutor">
+            <a class="text-primary" routerLink="/course/{{course.id}}/exercise/{{exercise.id}}/dashboard"
+               routerLinkActive="active">
+                <i class="fa fa-info-circle fa-fw"></i>
+            </a>
+            <a class="text-primary" routerLink="{{exerciseRouterLink}}" routerLinkActive="active"
+               *ngIf="exerciseRouterLink">
+                <i class="fa fa-graduation-cap fa-fw"></i>
+            </a>
+            <a class="text-primary" routerLink="/course/{{course.id}}/exercise/{{exercise.id}}/statistics"
+               routerLinkActive="active" *ngIf="exercise.type === MODELING">
+                <i class="fa fa-pie-chart fa-fw"></i></a>
+        </span>
 
         <span class="badge badge-warning" *ngIf="!exercise.visibleToStudents" placement="right"
               ngbTooltip="Only visible to teaching assistants and instructors. Release date: {{exercise.releaseDate | date:'MMM d, y H:mm'}}">
                     Not Released</span>
         <span class="badge badge-success" [hidden]="!exercise.isActiveQuiz">Live</span>
     </div>
-    <div class="col-2">{{exercise.dueDate | date:'dd/MM/yy'}}</div>
+    <div class="col-2" [ngClass]="getUrgentClass(exercise.dueDate)">{{exercise.dueDate | date:'dd/MM/yy'}} ({{exercise.dueDate |
+        amTimeAgo}})
+    </div>
     <div class="col-3" [ngSwitch]="exercise.participationStatus">
         <span class="text-muted" *ngSwitchCase="'uninitialized'">You have not started this exercise yet.</span>
-        <span *ngSwitchCase="'initialized'">
-            <jhi-result [participation]="exercise.participations[0]"></jhi-result>
-        </span>
-        <span *ngSwitchCase="'inactive'">
-            <jhi-result [participation]="exercise.participations[0]"></jhi-result>
-        </span>
         <span class="text-muted" *ngSwitchCase="'quiz-not-started'">The quiz hasn't started yet.</span>
         <span class="text-muted" *ngSwitchCase="'quiz-uninitialized'">You have not started this quiz yet.</span>
         <span class="text-muted"
               *ngSwitchCase="'quiz-not-participated'">You have not participated in this live quiz.</span>
         <span class="text-muted" *ngSwitchCase="'quiz-active'">You are currently participating in this quiz.</span>
         <span class="text-muted" *ngSwitchCase="'quiz-submitted'">You have already submitted. Wait for the quiz to end to see results.</span>
+        <span *ngSwitchCase="'initialized'">
+            <jhi-result [participation]="exercise.participations[0]"></jhi-result>
+        </span>
+        <span *ngSwitchCase="'inactive'">
+            <jhi-result [participation]="exercise.participations[0]"></jhi-result>
+        </span>
         <span *ngSwitchCase="'quiz-finished'">
             <jhi-result [participation]="exercise.participations[0]"></jhi-result>
         </span>

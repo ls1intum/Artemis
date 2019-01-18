@@ -4,8 +4,9 @@ import { BaseEntity } from 'app/shared';
 export class ShortAnswerSolution implements BaseEntity {
     public id: number;
     public text: string;
-    public invalid = false; //default value
+    public invalid = false; // default value
     public question: ShortAnswerQuestion;
 
-    constructor() {}
+    constructor() {
+    }
 }

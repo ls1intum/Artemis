@@ -1,10 +1,16 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, HostBinding, Input, OnInit } from '@angular/core';
 import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise';
 import { QuizExercise } from 'app/entities/quiz-exercise';
 import { InitializationState, Participation } from 'app/entities/participation';
 import * as moment from 'moment';
+import { Moment } from 'moment';
 import { Principal } from 'app/core';
 import { Course } from 'app/entities/course';
+
+export interface ExerciseIcon {
+    faIcon: string;
+    tooltip: string;
+}
 
 @Component({
     selector: 'jhi-course-exercise-row',
@@ -16,10 +22,12 @@ export class CourseExerciseRowComponent implements OnInit {
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
     readonly TEXT = ExerciseType.TEXT;
+    readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
+    @HostBinding('class') classes = 'exercise-row';
     @Input() exercise: Exercise;
     @Input() course: Course;
 
-    constructor(private principal: Principal,) {
+    constructor(private principal: Principal) {
     }
 
     ngOnInit() {
@@ -35,6 +43,56 @@ export class CourseExerciseRowComponent implements OnInit {
             quizExercise.isPracticeModeAvailable =
                 quizExercise.isPlannedToStart && quizExercise.isOpenForPractice && moment(this.exercise.dueDate).isBefore(moment());
             this.exercise = quizExercise;
+        }
+    }
+
+    get exerciseRouterLink(): string {
+        if (this.exercise.type === ExerciseType.MODELING) {
+            return `/course/${this.course.id}/exercise/${this.exercise.id}/assessment`;
+        } else if (this.exercise.type === ExerciseType.TEXT) {
+            return `/text/${this.exercise.id}/assessment`;
+
+        } else {
+            return;
+        }
+    }
+
+    getUrgentClass(dueDate: Moment): string {
+        if (Math.abs(dueDate.diff(moment(), 'days')) < 7) {
+            return 'text-danger';
+        } else {
+            return;
+        }
+    }
+
+    get exerciseIcon(): ExerciseIcon {
+        if (this.exercise.type === this.PROGRAMMING) {
+            return {
+                faIcon: 'keyboard',
+                tooltip: 'This is a programming quiz'
+            };
+        } else if (this.exercise.type === ExerciseType.MODELING) {
+            return {
+                faIcon: 'project-diagram',
+                tooltip: 'This is a modeling quiz'
+            };
+        } else if (this.exercise.type === ExerciseType.QUIZ) {
+            return {
+                faIcon: 'check-double',
+                tooltip: 'This is a multiple choice quiz'
+            };
+        } else if (this.exercise.type === ExerciseType.TEXT) {
+            return {
+                faIcon: 'font',
+                tooltip: 'This is a text quiz'
+            };
+        } else if (this.exercise.type === ExerciseType.FILE_UPLOAD) {
+            return {
+                faIcon: 'file-upload',
+                tooltip: 'This is a file upload'
+            };
+        } else {
+            return;
         }
     }
 

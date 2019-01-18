@@ -1,5 +1,8 @@
 @import '../../content/scss/artemis-variables';
 
+$border-color: #979797;
+$light-border-color: lighten($border-color, 30%);
+
 /* ==========================================================================
 Course Info Bar
 ========================================================================== */
@@ -22,7 +25,7 @@ Course Info Bar
     height: 60px;
     align-items: center;
     margin: 0 -1.25rem;
-    border-bottom: 1px solid #979797;
+    border-bottom: 1px solid $border-color;
     .tab-item {
         cursor: pointer;
         margin: 0 1em;
@@ -33,7 +36,43 @@ Course Info Bar
 }
 
 .exercise-row {
-    border-bottom: 1px solid #CCCCCC;
+    ::ng-deep {
+        > div {
+            padding: 5px 0;
+            border-left: 1px solid $light-border-color;
+            border-right: 1px solid $light-border-color;
+            background-color: rgba($light-border-color, 0.3);
+        }
+    }
+    &:last-of-type {
+        ::ng-deep {
+            > div {
+                margin-bottom: 10px;
+                border-bottom: 1px solid $light-border-color;
+                border-radius: 0 0 3px 3px;
+            }
+        }
+    }
+    &:first-of-type {
+        ::ng-deep {
+            > div {
+                margin-top: 10px;
+                border-top: 1px solid $light-border-color;
+                border-radius: 3px 3px 0 0;
+            }
+        }
+    }
+    &:only-of-type {
+        ::ng-deep {
+            > div {
+                margin-top: 10px;
+                margin-bottom: 10px;
+                border-top: 1px solid $light-border-color;
+                border-bottom: 1px solid $light-border-color;
+                border-radius: 3px;
+            }
+        }
+    }
 }
 
 .statistic-summary {
@@ -47,6 +86,24 @@ Course Info Bar
             right: 0;
         }
     }
+}
+
+.exercise-row-container {
+    .control-label {
+        cursor: pointer;
+    }
+    .collapsed {
+        margin-top: 16px;
+        margin-left: -12px;
+        margin-right: -12px;
+        border-bottom: 1px solid $light-border-color;
+    }
+}
+
+.exercise-controls {
+    position: absolute;
+    top: -64px;
+    right: -14px;
 }
 
 .color-indicator {

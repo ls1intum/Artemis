@@ -3,7 +3,6 @@ import { Course, CourseScoreCalculationService, CourseService } from 'app/entiti
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { HttpResponse } from '@angular/common/http';
-import { Exercise } from 'app/entities/exercise';
 
 @Component({
     selector: 'jhi-course-overview',
@@ -13,7 +12,7 @@ import { Exercise } from 'app/entities/exercise';
 export class CourseOverviewComponent implements OnInit {
     private courseId: number;
     private subscription: Subscription;
-    course: Course;
+    private course: Course;
 
     constructor(
         private courseService: CourseService,
