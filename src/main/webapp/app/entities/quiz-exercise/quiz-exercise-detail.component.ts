@@ -184,7 +184,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     @HostListener('window:beforeunload', ['$event'])
     unloadNotification($event: any) {
         if (!this.canDeactivate()) {
-            console.log(this.canDeactivate());
             $event.returnValue = this.translateService.instant('pendingChanges');
         }
     }
