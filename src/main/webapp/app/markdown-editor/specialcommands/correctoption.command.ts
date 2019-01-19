@@ -1,4 +1,3 @@
-import { Ace } from 'ace-builds';
 import { Specialcommand } from 'app/markdown-editor/specialcommands/specialcommand';
 
 export class CorrectoptionCommand extends Specialcommand {

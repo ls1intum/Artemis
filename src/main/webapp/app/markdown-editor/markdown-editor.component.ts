@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, ViewChild, Input, Output, EventEmitter, SimpleChanges, OnChanges } from '@angular/core';
+import { Component, AfterViewInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
@@ -6,14 +6,11 @@ import { Command } from 'app/markdown-editor/commands/command';
 import { BoldCommand } from 'app/markdown-editor/commands/bold.command';
 import { ItalicCommand } from 'app/markdown-editor/commands/italic.command';
 import { UnderlineCommand } from 'app/markdown-editor/commands/underline.command';
-import { AnswerOption } from 'app/entities/answer-option';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-import { MultipleChoiceQuestion } from 'app/entities/multiple-choice-question';
 import { HintCommand } from 'app/markdown-editor/specialcommands/hint.command';
 import { CorrectoptionCommand } from 'app/markdown-editor/specialcommands/correctoption.command';
 import { IncorrectoptionCommand } from 'app/markdown-editor/specialcommands/incorrectoption.command';
 import { ExplanationCommand } from 'app/markdown-editor/specialcommands/explanation.command';
-import { Specialcommand } from 'app/markdown-editor/specialcommands/specialcommand';
 
 @Component({
     selector: 'jhi-markdown-editor',
@@ -38,8 +35,6 @@ export class MarkdownEditorComponent implements AfterViewInit {
     explanationCommand = new ExplanationCommand();
 
     commands: Command[] = [new BoldCommand(), new ItalicCommand(), new UnderlineCommand()];
-
-    constructor(private artemisMarkdown: ArtemisMarkdown) {}
 
     ngAfterViewInit(): void {
         requestAnimationFrame(this.setupMarkdownEditor.bind(this));

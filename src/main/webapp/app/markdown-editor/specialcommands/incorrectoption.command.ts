@@ -1,5 +1,3 @@
-import { Ace } from 'ace-builds';
-import SearchOptions = Ace.SearchOptions;
 import { Specialcommand } from 'app/markdown-editor/specialcommands/specialcommand';
 
 export class IncorrectoptionCommand extends Specialcommand {
