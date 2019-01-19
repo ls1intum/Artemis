@@ -143,32 +143,6 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges {
     }
 
     /**
-     * @function addAnswerOptionTextToEditor
-     * @desc Adds the markdown for a correct or incorrect answerOption at the end of the current markdown text
-     * @param mode {boolean} mode true sets the text for an correct answerOption, false for an incorrect one
-     */
-    addAnswerOptionTextToEditor(mode: boolean): void {
-        const textToAdd = mode ? '\n[x] Enter a correct answer option here' : '\n[ ] Enter an incorrect answer option here';
-        this.questionEditor.getEditor().focus();
-        this.questionEditor.getEditor().clearSelection();
-        const lines = this.questionEditorText.split('\n').length;
-        const range = this.questionEditor.getEditor().selection.getRange();
-        this.questionEditor.getEditor().moveCursorTo(this.questionEditor.getEditor().getCursorPosition().row, Number.POSITIVE_INFINITY);
-        this.questionEditor.getEditor().insert(textToAdd);
-        range.setStart(lines, 4);
-        range.setEnd(lines, textToAdd.length - 1);
-        this.questionEditor.getEditor().selection.setRange(range, false);
-    }
-
-    /**
-     * @function addHintAtCursor
-     * @desc Adds the markdown for a hint at the current cursor location
-     */
-    addHintAtCursor(): void {
-        this.artemisMarkdown.addHintAtCursor(this.questionEditor.getEditor());
-    }
-
-    /**
      * This function opens the modal for the help dialog.
      */
     open(content: any) {

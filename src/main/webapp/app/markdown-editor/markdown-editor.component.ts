@@ -9,6 +9,11 @@ import { UnderlineCommand } from 'app/markdown-editor/commands/underline.command
 import { AnswerOption } from 'app/entities/answer-option';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { MultipleChoiceQuestion } from 'app/entities/multiple-choice-question';
+import { HintCommand } from 'app/markdown-editor/specialcommands/hint.command';
+import { CorrectoptionCommand } from 'app/markdown-editor/specialcommands/correctoption.command';
+import { IncorrectoptionCommand } from 'app/markdown-editor/specialcommands/incorrectoption.command';
+import { ExplanationCommand } from 'app/markdown-editor/specialcommands/explanation.command';
+import { Specialcommand } from 'app/markdown-editor/specialcommands/specialcommand';
 
 @Component({
     selector: 'jhi-markdown-editor',
@@ -26,6 +31,11 @@ export class MarkdownEditorComponent implements AfterViewInit {
 
     questionEditorText = '';
     questionEditorAutoUpdate = true;
+
+    hintCommand = new HintCommand();
+    correctCommand = new CorrectoptionCommand();
+    incorrectCommand = new IncorrectoptionCommand();
+    explanationCommand = new ExplanationCommand();
 
     commands: Command[] = [new BoldCommand(), new ItalicCommand(), new UnderlineCommand()];
 

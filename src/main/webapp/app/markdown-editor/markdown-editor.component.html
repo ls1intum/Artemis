@@ -7,6 +7,18 @@
                     <i [ngClass]="command.buttonIcon"></i>
                 </button>
             </ng-container>
+                <div class="btn btn-outline-secondary"
+                     jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addCorrectAnswerOption"
+                     (click)="correctCommand.execute(aceEditorContainer.getEditor())"></div>
+                <div class="btn btn-outline-secondary"
+                     jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addIncorrectAnswerOption"
+                     (click)="incorrectCommand.execute(aceEditorContainer.getEditor())"></div>
+                <div class="btn btn-outline-secondary"
+                     jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addHint"
+                     (click)="hintCommand.execute(aceEditorContainer.getEditor())"></div>
+                <div class="btn btn-outline-secondary"
+                     jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addExplanation"
+                     (click)="explanationCommand.execute(aceEditorContainer.getEditor())"></div>
         </div>
     </div>
     <ace-editor #aceEditor [mode]="'markdown'" [autoUpdateContent]="questionEditorAutoUpdate" [(text)]="defaultText"
