@@ -7,7 +7,6 @@ import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor
     styles: []
 })
 export class TutorParticipationGraphComponent implements OnInit {
-
     @Input() public tutorParticipation: TutorParticipation;
 
     tutorParticipationStatus: TutorParticipationStatus = TutorParticipationStatus.NOT_PARTICIPATED;
@@ -16,12 +15,9 @@ export class TutorParticipationGraphComponent implements OnInit {
     TRAINED = TutorParticipationStatus.TRAINED;
     COMPLETED = TutorParticipationStatus.COMPLETED;
 
-    constructor() {
-
-    }
+    constructor() {}
 
     ngOnInit() {
         this.tutorParticipationStatus = this.tutorParticipation.status;
     }
-
 }

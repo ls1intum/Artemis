@@ -19,7 +19,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 

@@ -43,7 +43,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         private route: ActivatedRoute,
         private tutorParticipationService: TutorParticipationService,
         private textSubmissionService: TextSubmissionService,
-        private modalService: NgbModal,
+        private modalService: NgbModal
     ) {}
 
     ngOnInit(): void {
@@ -60,8 +60,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
             }
         });
 
-        this.principal.identity()
-            .then(user => this.tutor = user);
+        this.principal.identity().then(user => (this.tutor = user));
     }
 
     loadAll() {
@@ -101,8 +100,8 @@ export class TutorExerciseDashboardComponent implements OnInit {
     }
 
     private getSubmissionWithoutAssessment(): void {
-        this.textSubmissionService.
-            getTextSubmissionForExerciseWithoutAssessment(this.exerciseId)
+        this.textSubmissionService
+            .getTextSubmissionForExerciseWithoutAssessment(this.exerciseId)
             .subscribe((response: HttpResponse<TextSubmission>) => {
                 this.unassessedSubmission = response.body;
             });
@@ -141,6 +140,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
             (res: HttpResponse<TutorParticipation>) => {
                 this.tutorParticipation = res.body;
             },
-            error => console.error(error));
+            error => console.error(error)
+        );
     }
 }

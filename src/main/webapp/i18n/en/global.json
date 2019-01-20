@@ -166,7 +166,9 @@
             "re-evaluate": "Re-evaluate",
             "close": "Close",
             "import": "Import",
-            "export": "Export"
+            "export": "Export",
+            "tutorCourseDashboard": "Tutor Course Dashboard",
+            "exerciseDashboard": "Exercise Dashboard"
         },
         "detail": {
             "field": "Field",

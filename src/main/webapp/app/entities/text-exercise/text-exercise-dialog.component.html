@@ -48,15 +48,15 @@
             <textarea class="form-control" name="sampleSolution" id="field_gradingInstructions" maxLength="1000" [(ngModel)]="textExercise.gradingInstructions"></textarea>
         </div>
         <div class="form-group">
-            <h2>Example submissions</h2>
+            <span>Example submissions</span>
 
             <ul>
                 <li *ngFor="let exampleSubmission of textExercise.exampleSubmissions">
-                    {{exampleSubmission.id}} - <a routerLink="/text/{{textExercise.id}}/assessment/{{exampleSubmission.id}}" (click)="clear()"><span *ngIf="exampleSubmission.submission.participation == null">Create </span>Example Assessment</a>
+                    {{exampleSubmission.id}} - <a routerLink="/text/{{textExercise.id}}/assessment/{{exampleSubmission.id}}"><span *ngIf="exampleSubmission.submission.participation == null">Create </span>Example Assessment</a>
                 </li>
             </ul>
 
-            <button routerLink="text/exampleSubmission">Create example submission</button>
+            <button class="btn" routerLink="text/exampleSubmission">Create example submission</button>
         </div>
     </div>
     <div class="modal-footer">

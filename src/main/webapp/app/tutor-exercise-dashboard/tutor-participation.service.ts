@@ -9,20 +9,23 @@ import { ExampleSubmission } from 'app/entities/example-submission';
 export type EntityResponseType = HttpResponse<TutorParticipation>;
 export type EntityArrayResponseType = HttpResponse<TutorParticipation[]>;
 
-@Injectable({providedIn: 'root'})
+@Injectable({ providedIn: 'root' })
 export class TutorParticipationService {
     public resourceUrl = SERVER_API_URL + 'api/exercises';
 
-    constructor(private http: HttpClient) {
-    }
+    constructor(private http: HttpClient) {}
 
     create(tutorParticipation: TutorParticipation, exerciseId: number): Observable<HttpResponse<TutorParticipation>> {
-        return this.http
-            .post<TutorParticipation>(`${this.resourceUrl}/${exerciseId}/tutorParticipations`, tutorParticipation, {observe: 'response'});
+        return this.http.post<TutorParticipation>(`${this.resourceUrl}/${exerciseId}/tutorParticipations`, tutorParticipation, {
+            observe: 'response'
+        });
     }
 
     assessExampleSubmission(exampleSubmission: ExampleSubmission, exerciseId: number, tutorParticipationId: number) {
-        return this.http
-            .post<TutorParticipation>(`${this.resourceUrl}/${exerciseId}/tutorParticipations/${tutorParticipationId}/exampleSubmission`, exampleSubmission, {observe: 'response'});
+        return this.http.post<TutorParticipation>(
+            `${this.resourceUrl}/${exerciseId}/tutorParticipations/${tutorParticipationId}/exampleSubmission`,
+            exampleSubmission,
+            { observe: 'response' }
+        );
     }
 }
