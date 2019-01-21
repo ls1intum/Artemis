@@ -6,8 +6,6 @@ export class DragItem implements BaseEntity {
     public tempID: number;
     public pictureFilePath: string;
     public text: string;
-    public correctScore: number;
-    public incorrectScore: number;
     public question: DragAndDropQuestion;
     public invalid = false; // default value
 
