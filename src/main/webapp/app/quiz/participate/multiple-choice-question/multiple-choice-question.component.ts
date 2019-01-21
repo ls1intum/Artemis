@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { MultipleChoiceQuestion } from '../../../entities/multiple-choice-question';
 import { AnswerOption } from '../../../entities/answer-option';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+
 
 @Component({
     selector: 'jhi-multiple-choice-question',
@@ -47,7 +47,7 @@ export class MultipleChoiceQuestionComponent implements OnChanges {
 
     rendered: MultipleChoiceQuestion;
 
-    constructor(private artemisMarkdown: ArtemisMarkdown, private modalService: NgbModal) {}
+    constructor(private artemisMarkdown: ArtemisMarkdown) {}
 
     ngOnChanges(changes: SimpleChanges): void {
         this.count();

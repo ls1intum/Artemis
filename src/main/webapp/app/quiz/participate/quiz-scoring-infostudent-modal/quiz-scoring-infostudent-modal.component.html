@@ -5,7 +5,7 @@
         </button>
     </div>
     <div class="modal-body" *ngIf="this.scoringType === 'ALL_OR_NOTHING'">
-        <h6>The scoring type was <span jhiTranslate="arTeMiSApp.quizExercise.scoringType.all_or_nothing"></span></h6>
+        <h6>The scoring type was <span jhiTranslate="arTeMiSApp.quizExercise.scoringType.all_or_nothing"></span> This means you either get all the points for the question or non at all.</h6>
         <span *ngIf="this.wrongAnswers == 0"> You have achieved {{this.score}} of the {{this.question}} possible points. Since you have {{this.wrongAnswers}}
             wrong answers you have achieved all points in this exercise.
    </span>
@@ -14,7 +14,7 @@
    </span>
     </div>
     <div class="modal-body" *ngIf="this.scoringType === 'PROPORTIONAL_WITH_PENALTY'">
-        <h6>The scoring type was <span jhiTranslate="arTeMiSApp.quizExercise.scoringType.proportional_with_penalty"></span> </h6>
+        <h6>The scoring type was <span jhiTranslate="arTeMiSApp.quizExercise.scoringType.proportional_with_penalty"></span> Meaning each correct answer results in a fraction of the total score. To avoid guesswork, the same fraction is subtracted from the achieved points for each mistake.</h6>
         <span> You have achieved {{this.score}} of the {{this.question}}.
             possible points. Each of the {{this.amountOfAnswerOptions}} options grants you {{this.question}}/{{this.amountOfAnswerOptions}} points if you choose correctly. If you choose wrongly the same amount will be subtracted.
             You have {{this.wrongAnswers}} wrong answers and {{this.correctAnswers}} correct answers. You can not achieve less than 0 points in total.
