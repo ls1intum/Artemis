@@ -1,42 +1,53 @@
 <div *ngIf="course">
-    <h4>{{course.title}} <small>{{numberOfExercises}} <span jhiTranslate="arTeMiSApp.exercise.home.title"> exercises</span>, {{numberOfStudents}} <span *ngIf="rows" jhiTranslate="instructorDashboard.students">students</span></small></h4>
-<jhi-alert></jhi-alert>
-    <div class="table-responsive" *ngIf="rows">
+    <h4>{{course.title}} <small>{{exercises.length}} released exercises, {{students.length}} students with results</small>
+        <button *ngIf="exportReady" class="btn btn-primary btn-sm float-right" (click)="exportResults()"><i class="fa fa-download fa-fw"></i>&nbsp;Export Results as CSV</button>
+    </h4>
+    <jhi-alert></jhi-alert>
+    <span *ngIf="!exportReady" style="color:grey"><span class="fa fa-spinner fa-spin"></span>&nbsp;<span>Loading the results of all students...</span></span>
+    <div class="table-responsive" *ngIf="exportReady">
         <table class="table table-striped">
             <thead>
-            <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse"  [callback]="callback">
-                <th jhiSortBy="firstName">
-                    <span jhiTranslate="logs.table.name">Name</span> <span class="fa fa-sort"></span>
-                </th>
-                <th jhiSortBy="login">
-                    <span jhiTranslate="userManagement.login">Login</span> <span class="fa fa-sort"></span>
-                </th>
-                <th jhiSortBy="participated">
-                    <span jhiTranslate="instructorDashboard.participated">Participated in exercises</span> <span class="fa fa-sort"></span>
-                </th>
-                <th jhiSortBy="participationInPercent">
-                    <span jhiTranslate="instructorDashboard.participated">Participated in exercises %</span> <span class="fa fa-sort"></span>
-                </th>
-                <th jhiSortBy="successful">
-                    <span jhiTranslate="instructorDashboard.completedExercises">Successfully completed exercises</span> <span class="fa fa-sort"></span>
-                </th>
-                <th jhiSortBy="successfullyCompletedInPercent">
-                    <span jhiTranslate="instructorDashboard.completed">Successfully completed %</span> <span class="fa fa-sort"></span>
-                </th>
-                <th jhiSortBy="overallScore">
-                    <span jhiTranslate="instructorDashboard.overallScore">Overall Score</span> <span class="fa fa-sort"></span>
-                </th>
+            <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
+                <th jhiSortBy="user.firstName"><span jhiTranslate="instructorDashboard.name">Name</span> <span class="fa fa-sort"></span></th>
+                <th jhiSortBy="user.login"><span jhiTranslate="instructorDashboard.username">Username</span> <span class="fa fa-sort"></span></th>
+                <th jhiSortBy="numberOfParticipatedExercises"><span jhiTranslate="instructorDashboard.participated">Participated in Exercises (%)</span> <span class="fa fa-sort"></span></th>
+                <th jhiSortBy="numberOfSuccessfulExercises"><span jhiTranslate="instructorDashboard.successful">Successful Exercises (%)</span> <span class="fa fa-sort"></span></th>
+                <ng-container *ngFor="let exerciseType of exerciseTypes">
+                    <th *ngIf="maxNumberOfPointsPerExerciseType.get(exerciseType) > 0" jhiSortBy="pointsPerExerciseType.{{exerciseType}}"><span jhiTranslate="instructorDashboard.{{exerciseType}}Points"></span><span class="fa fa-sort"></span></th>
+                </ng-container>
+                <th jhiSortBy="overallPoints"><span jhiTranslate="instructorDashboard.overallPoints">Overall Points (%)</span> <span class="fa fa-sort"></span></th>
+            </tr>
+            <tr>
+                <th><span jhiTranslate="instructorDashboard.max">Max</span></th>
+                <th></th>
+                <th>{{ exercises.length }}</th>
+                <th>{{ exercises.length }}</th>
+                <ng-container *ngFor="let exerciseType of exerciseTypes">
+                    <th *ngIf="maxNumberOfPointsPerExerciseType.get(exerciseType) > 0">{{ maxNumberOfPointsPerExerciseType.get(exerciseType) }}</th>
+                </ng-container>
+                <th>{{ maxNumberOfOverallPoints }}</th>
+            </tr>
+            <tr>
+                <th><span jhiTranslate="instructorDashboard.average">Average</span></th>
+                <th></th>
+                <th>{{ averageNumberOfParticipatedExercises | number: '1.0-1' }} ({{ averageNumberOfParticipatedExercises / exercises.length * 100 | number: '1.0-1'  }}%)</th>
+                <th>{{ averageNumberOfSuccessfulExercises | number: '1.0-1' }} ({{ averageNumberOfSuccessfulExercises / exercises.length * 100 | number: '1.0-1'  }}%)</th>
+                <ng-container *ngFor="let exerciseType of exerciseTypes">
+                    <th *ngIf="maxNumberOfPointsPerExerciseType.get(exerciseType) > 0">{{ averageNumberOfPointsPerExerciseTypes.get(exerciseType) | number: '1.0-1' }} ({{ (averageNumberOfPointsPerExerciseTypes.get(exerciseType) / maxNumberOfPointsPerExerciseType.get(exerciseType)) * 100 | number: '1.0-1'}}%)</th>
+                </ng-container>
+                <th>{{ averageNumberOfOverallPoints | number: '1.0-1' }} ({{ averageNumberOfOverallPoints / maxNumberOfOverallPoints * 100 | number: '1.0-1'}}%)</th>
             </tr>
             </thead>
-            <tbody *ngIf="rows && rows.length > 0">
-            <tr *ngFor="let row of rows | sortBy: predicate: reverse">
-                <td>{{ row.firstName }} {{ row.lastName }}</td>
-                <td>{{ row.login }}</td>
-                <td>{{ row.participated }}</td>
-                <td>{{ row.participationInPercent | number: '0.0-0'}}%</td>
-                <td>{{ row.successful }}</td>
-                <td>{{ row.successfullyCompletedInPercent | number: '0.0-0'}}%</td>
-                <td>{{ row.overallScore | number: '0.0-0'}}%</td>
+            <tbody>
+            <tr *ngFor="let student of students | sortBy: predicate: reverse;">
+                <td>{{ student.user.firstName }} {{ student.user.lastName }}</td>
+                <td>{{ student.user.login }}</td>
+                <td>{{ student.numberOfParticipatedExercises }} ({{ (student.numberOfParticipatedExercises / exercises.length) * 100 | number: '1.0-1'}}%)</td>
+                <td>{{ student.numberOfSuccessfulExercises }} ({{ (student.numberOfSuccessfulExercises / exercises.length) * 100 | number: '1.0-1'}}%)</td>
+                <ng-container *ngFor="let exerciseType of exerciseTypes">
+                    <td *ngIf="maxNumberOfPointsPerExerciseType.get(exerciseType) > 0">{{ student.pointsPerExerciseType.get(exerciseType) | number: '1.0-1'}} ({{ (student.pointsPerExerciseType.get(exerciseType) / maxNumberOfPointsPerExerciseType.get(exerciseType)) * 100 | number: '1.0-1'}}%)</td>
+                </ng-container>
+                <td>{{ student.overallPoints | number: '1.0-1'}} ({{ student.overallPoints / maxNumberOfOverallPoints * 100 | number: '1.0-1'}}%)</td>
             </tr>
             </tbody>
         </table>

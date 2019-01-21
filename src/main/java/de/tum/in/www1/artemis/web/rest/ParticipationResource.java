@@ -207,12 +207,15 @@ public class ParticipationResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<List<Participation>> getAllParticipationsForCourse(@PathVariable Long courseId) {
+        long start = System.currentTimeMillis();
         log.debug("REST request to get all Participations for Course {}", courseId);
         Course course = courseService.findOne(courseId);
         if (!courseService.userHasAtLeastTAPermissions(course)) {
             return forbidden();
         }
-        List<Participation> participations = participationService.findByCourseId(courseId);
+        List<Participation> participations = participationService.findByCourseIdWithRelevantResults(courseId);
+        long end = System.currentTimeMillis();
+        log.info("Found " + participations.size() + " particpations with results in " + (end - start) + " ms");
         return ResponseEntity.ok().body(participations);
     }
 
@@ -225,7 +228,7 @@ public class ParticipationResource {
     @GetMapping("/participations/{id}/withLatestResult")
     @Timed
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Participation> getParticipation(@PathVariable Long id) {
+    public ResponseEntity<Participation> getParticipationWithLatestResult(@PathVariable Long id) {
         log.debug("REST request to get Participation : {}", id);
         Participation participation = participationService.findOneWithEagerResults(id);
         if (participation == null) {
@@ -255,7 +258,7 @@ public class ParticipationResource {
     @GetMapping("/participations/{id}")
     @Timed
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Participation> getParticipationWithLatestResult(@PathVariable Long id) {
+    public ResponseEntity<Participation> getParticipation(@PathVariable Long id) {
         log.debug("REST request to get Participation : {}", id);
         Participation participation = participationService.findOne(id);
         Course course = participation.getExercise().getCourse();
