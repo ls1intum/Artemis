@@ -150,14 +150,6 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges {
     }
 
     /**
-     * @function addExplanationAtCursor
-     * @desc Adds the markdown for an explanation at the current cursor location
-     */
-    addExplanationAtCursor(): void {
-        this.artemisMarkdown.addExplanationAtCursor(this.questionEditor.getEditor());
-    }
-
-    /**
      * @function togglePreview
      * @desc Toggles the preview in the template
      */
@@ -171,9 +163,5 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges {
      */
     deleteQuestion(): void {
         this.questionDeleted.emit();
-    }
-
-    preRenderFunc(content: string) {
-        return content.replace(/something/g, 'new value'); // must return a string
     }
 }
