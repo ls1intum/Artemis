@@ -6,12 +6,10 @@ import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.JsonAssessmentRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -29,28 +27,26 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
  */
 @RestController
 @RequestMapping("/api")
-public class ModelingAssessmentResource {
+public class ModelingAssessmentResource extends AssessmentResource {
     private final Logger log = LoggerFactory.getLogger(ModelingAssessmentResource.class);
 
     private static final String ENTITY_NAME = "modelingAssessment";
 
     private final JsonAssessmentRepository jsonAssessmentRepository;
-    private final ResultRepository resultRepository;
     private final ParticipationRepository participationRepository;
     private final CompassService compassService;
     private final ModelingExerciseService modelingExerciseService;
-    private final UserService userService;
     private final AuthorizationCheckService authCheckService;
     private final CourseService courseService;
     private final ModelingAssessmentService modelingAssessmentService;
 
-    public ModelingAssessmentResource(JsonAssessmentRepository jsonAssessmentRepository, ResultRepository resultRepository, ParticipationRepository participationRepository, CompassService compassService, ModelingExerciseService modelingExerciseService, UserService userService, AuthorizationCheckService authCheckService, CourseService courseService, ModelingAssessmentService modelingAssessmentService) {
+    public ModelingAssessmentResource(JsonAssessmentRepository jsonAssessmentRepository, ParticipationRepository participationRepository, CompassService compassService, ModelingExerciseService modelingExerciseService, UserService userService, AuthorizationCheckService authCheckService, CourseService courseService, ModelingAssessmentService modelingAssessmentService) {
+        super(authCheckService, userService);
+
         this.jsonAssessmentRepository = jsonAssessmentRepository;
-        this.resultRepository = resultRepository;
         this.participationRepository = participationRepository;
         this.compassService = compassService;
         this.modelingExerciseService = modelingExerciseService;
-        this.userService = userService;
         this.authCheckService = authCheckService;
         this.courseService = courseService;
         this.modelingAssessmentService = modelingAssessmentService;
@@ -67,7 +63,7 @@ public class ModelingAssessmentResource {
             return ResponseUtil.notFound();
         }
 
-        ResponseEntity responseFailure = checkModelingExercise(modelingExercise);
+        ResponseEntity responseFailure = checkExercise(modelingExercise);
         if (responseFailure != null) return responseFailure;
 
         compassService.resetModelsWaitingForAssessment(exerciseId);
@@ -80,7 +76,7 @@ public class ModelingAssessmentResource {
     public ResponseEntity<String> getNextOptimalModelSubmissions(@PathVariable Long exerciseId) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
 
-        ResponseEntity responseFailure = checkModelingExercise(modelingExercise);
+        ResponseEntity responseFailure = checkExercise(modelingExercise);
         if (responseFailure != null) return responseFailure;
 
         //TODO: we need to make sure that per participation there is only one optimalModel
@@ -100,7 +96,7 @@ public class ModelingAssessmentResource {
     public ResponseEntity<String> getPartialAssessment(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
 
-        ResponseEntity responseFailure = checkModelingExercise(modelingExercise);
+        ResponseEntity responseFailure = checkExercise(modelingExercise);
         if (responseFailure != null) return responseFailure;
 
         JsonObject partialAssessment = compassService.getPartialAssessment(exerciseId, submissionId);
@@ -158,7 +154,7 @@ public class ModelingAssessmentResource {
         if (modelingExercise == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("modelingExercise", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
         }
-        ResponseEntity responseFailure = checkModelingExercise(modelingExercise);
+        ResponseEntity responseFailure = checkExercise(modelingExercise);
         if (responseFailure != null) return responseFailure;
 
         Result result = modelingAssessmentService.saveManualAssessment(resultId, exerciseId, modelingAssessment);
@@ -180,7 +176,7 @@ public class ModelingAssessmentResource {
     public ResponseEntity<Result> submitModelingAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody String modelingAssessment) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
 
-        ResponseEntity responseFailure = checkModelingExercise(modelingExercise);
+        ResponseEntity responseFailure = checkExercise(modelingExercise);
         if (responseFailure != null) return responseFailure;
 
         Result result = modelingAssessmentService.submitManualAssessment(resultId, exerciseId, modelingAssessment);
@@ -191,18 +187,8 @@ public class ModelingAssessmentResource {
         return ResponseEntity.ok(result);
     }
 
-    @Nullable
-    private <X> ResponseEntity<X> checkModelingExercise(ModelingExercise modelingExercise) {
-        Course course = modelingExercise.getCourse();
-        if (course == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this modeling exercise does not exist")).body(null);
-        }
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-            !authCheckService.isInstructorInCourse(course, user) &&
-            !authCheckService.isAdmin()) {
-            return forbidden();
-        }
-        return null;
+    @Override
+    String getEntityName() {
+        return ENTITY_NAME;
     }
 }

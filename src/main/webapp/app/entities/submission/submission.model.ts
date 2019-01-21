@@ -22,9 +22,11 @@ export abstract class Submission implements BaseEntity {
     public submitted = false; // default value
     public submissionDate: Moment;
     public type: SubmissionType;
+    public exampleSubmission: boolean;
+    public submissionExerciseType: SubmissionExerciseType;
+
     public result: Result;
     public participation: Participation;
-    public submissionExerciseType: SubmissionExerciseType;
 
     protected constructor(submissionExerciseType: SubmissionExerciseType) {
         this.submissionExerciseType = submissionExerciseType;

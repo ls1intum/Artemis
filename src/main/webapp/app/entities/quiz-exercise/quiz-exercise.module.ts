@@ -15,15 +15,20 @@ import {
 import { SortByModule } from '../../components/pipes';
 import { ArTEMiSQuizEditModule } from '../../quiz/edit';
 import { ArTEMiSQuizReEvaluateModule } from '../../quiz/re-evaluate';
+import { PendingChangesGuard } from '../../shared';
 
 const ENTITY_STATES = [...quizExerciseRoute, ...quizExercisePopupRoute];
 
 @NgModule({
     imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, ArTEMiSQuizEditModule, ArTEMiSQuizReEvaluateModule],
     declarations: [QuizExerciseComponent, QuizExerciseDeleteDialogComponent, QuizExerciseDeletePopupComponent, QuizExerciseDetailComponent],
-    exports: [QuizExerciseComponent],
-    entryComponents: [QuizExerciseComponent, QuizExerciseDeleteDialogComponent, QuizExerciseDeletePopupComponent],
-    providers: [QuizExerciseService, QuizExercisePopupService],
+    entryComponents: [
+        QuizExerciseComponent,
+        QuizExerciseDeleteDialogComponent,
+        QuizExerciseDeletePopupComponent,
+        QuizExerciseDetailComponent
+    ],
+    providers: [QuizExerciseService, QuizExercisePopupService, PendingChangesGuard],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArTEMiSQuizExerciseModule {}

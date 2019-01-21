@@ -20,9 +20,9 @@ buildscript {
 
 plugins {
     id "org.sonarqube" version "2.6.2"
-    id "net.ltgt.apt-eclipse" version "0.19"
-    id "net.ltgt.apt-idea" version "0.19"
-    id "net.ltgt.apt" version "0.19"
+    id "net.ltgt.apt-eclipse" version "0.20"
+    id "net.ltgt.apt-idea" version "0.20"
+    id "net.ltgt.apt" version "0.20"
     id "io.spring.dependency-management" version "1.0.6.RELEASE"
     id "com.moowork.node" version "1.2.0"
 //    id 'org.liquibase.gradle' version "2.0.1"
@@ -55,7 +55,7 @@ dependencyManagement {
 defaultTasks 'bootRun'
 
 group = 'de.tum.in.www1.artemis'
-version = '2.3.1'
+version = '2.3.2'
 description = 'AuTomated assEssment Management System for Interactive Learning'
 
 bootWar {
@@ -151,7 +151,7 @@ dependencies {
     compile "org.imsglobal:basiclti-util:1.2.0"
     compile "org.jasypt:jasypt:1.9.2"
 
-    compile group: 'com.atlassian.bamboo', name: 'bamboo-specs', version: '6.6.2'
+    compile group: 'com.atlassian.bamboo', name: 'bamboo-specs', version: '6.7.2'
 
     // Use ", version: jhipster_dependencies_version, changing: true" if you want
     // to use a SNAPSHOT release instead of a stable release
@@ -245,7 +245,7 @@ task cleanResources(type: Delete) {
 }
 
 wrapper {
-    gradleVersion = '4.10.2'
+    gradleVersion = '5.1'
 }
 
 task stage(dependsOn: 'bootWar') {

@@ -52,6 +52,9 @@ public abstract class Submission implements Serializable {
     @JsonView(QuizView.Before.class)
     private SubmissionType type;
 
+    @Column(name = "example_submission")
+    private Boolean exampleSubmission;
+
     @ManyToOne
     private Participation participation;
 
@@ -129,6 +132,20 @@ public abstract class Submission implements Serializable {
     public void setType(SubmissionType type) {
         this.type = type;
     }
+
+    public Boolean isExampleSubmission() {
+        return exampleSubmission;
+    }
+
+    public Submission exampleSubmission(Boolean exampleSubmission) {
+        this.exampleSubmission = exampleSubmission;
+        return this;
+    }
+
+    public void setExampleSubmission(Boolean exampleSubmission) {
+        this.exampleSubmission = exampleSubmission;
+    }
+
 
     @Override
     public boolean equals(Object o) {
