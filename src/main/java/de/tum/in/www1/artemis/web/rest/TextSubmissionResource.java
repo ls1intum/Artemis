@@ -37,14 +37,16 @@ public class TextSubmissionResource {
     private static final String ENTITY_NAME = "textSubmission";
     private final Logger log = LoggerFactory.getLogger(TextSubmissionResource.class);
     private final TextSubmissionRepository textSubmissionRepository;
-    private TextExerciseService textExerciseService;
-    private CourseService courseService;
-    private ParticipationService participationService;
-    private TextSubmissionService textSubmissionService;
-    private UserService userService;
-    private AuthorizationCheckService authCheckService;
+    private final ExerciseService exerciseService;
+    private final TextExerciseService textExerciseService;
+    private final CourseService courseService;
+    private final ParticipationService participationService;
+    private final TextSubmissionService textSubmissionService;
+    private final UserService userService;
+    private final AuthorizationCheckService authCheckService;
 
     public TextSubmissionResource(TextSubmissionRepository textSubmissionRepository,
+                                  ExerciseService exerciseService,
                                   TextExerciseService textExerciseService,
                                   CourseService courseService,
                                   ParticipationService participationService,
@@ -52,6 +54,7 @@ public class TextSubmissionResource {
                                   UserService userService,
                                   AuthorizationCheckService authCheckService) {
         this.textSubmissionRepository = textSubmissionRepository;
+        this.exerciseService = exerciseService;
         this.textExerciseService = textExerciseService;
         this.courseService = courseService;
         this.participationService = participationService;
@@ -180,7 +183,7 @@ public class TextSubmissionResource {
     public ResponseEntity<List<TextSubmission>> getAllTextSubmissions(@PathVariable Long exerciseId,
                                                                       @RequestParam(defaultValue = "false") boolean submittedOnly) {
         log.debug("REST request to get all TextSubmissions");
-        Exercise exercise = textExerciseService.findOneLoadParticipations(exerciseId);
+        Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
         Course course = exercise.getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isTeachingAssistantInCourse(course, user) &&

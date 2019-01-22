@@ -4,7 +4,6 @@ import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from 'app/app.constants';
 
 import { QuizExercise } from './quiz-exercise.model';
-import { createRequestOption } from 'app/shared';
 import { ExerciseService } from 'app/entities/exercise';
 import { Question } from 'app/entities/question';
 
@@ -81,6 +80,10 @@ export class QuizExerciseService {
 
     delete(id: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/${id}`, { observe: 'response' });
+    }
+
+    reset(id: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${SERVER_API_URL + 'api/exercises'}/${id}/reset`, { observe: 'response' });
     }
 
     /**

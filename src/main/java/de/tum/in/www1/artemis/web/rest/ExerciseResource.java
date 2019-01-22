@@ -145,12 +145,15 @@ public class ExerciseResource {
     }
 
     /**
-     * DELETE  /exercises/:id/participations : delete all participations of "id" exercise (reset).
+     * Reset the exercise by deleting all its partcipations
+     * /exercises/:id/reset
+     *
+     * This can be used by all exercise types, however they can also provide custom implementations
      *
      * @param id the id of the exercise to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping(value = "/exercises/{id}/participations")
+    @DeleteMapping(value = "/exercises/{id}/reset")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Void> reset(@PathVariable Long id) {

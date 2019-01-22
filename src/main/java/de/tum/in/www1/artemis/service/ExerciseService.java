@@ -46,6 +46,7 @@ public class ExerciseService {
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final Optional<VersionControlService> versionControlService;
     private final Optional<GitService> gitService;
+    private final StatisticService statisticService;
 
     public ExerciseService(ExerciseRepository exerciseRepository,
                            UserService userService,
@@ -53,7 +54,8 @@ public class ExerciseService {
                            AuthorizationCheckService authCheckService,
                            Optional<ContinuousIntegrationService> continuousIntegrationService,
                            Optional<VersionControlService> versionControlService,
-                           Optional<GitService> gitService) {
+                           Optional<GitService> gitService,
+                           StatisticService statisticService) {
         this.exerciseRepository = exerciseRepository;
         this.userService = userService;
         this.participationService = participationService;
@@ -61,6 +63,7 @@ public class ExerciseService {
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.gitService = gitService;
+        this.statisticService = statisticService;
     }
 
     /**
@@ -184,6 +187,20 @@ public class ExerciseService {
         // delete all participations for this exercise
         for (Participation participation : exercise.getParticipations()) {
             participationService.delete(participation.getId(), true, true);
+        }
+
+        if (exercise instanceof QuizExercise) {
+
+            // refetch exercise to make sure we have an updated version
+            exercise = findOneLoadParticipations(exercise.getId());
+
+            //for quizzes we need to delete the statistics and we need to reset the quiz to its original state
+            QuizExercise quizExercise = (QuizExercise) exercise;
+            quizExercise.setIsVisibleBeforeStart(Boolean.FALSE);
+            quizExercise.setIsPlannedToStart(Boolean.FALSE);
+            quizExercise.setIsOpenForPractice(Boolean.FALSE);
+
+            statisticService.recalculateStatistics(quizExercise);
         }
     }
 
