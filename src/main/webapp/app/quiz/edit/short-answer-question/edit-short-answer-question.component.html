@@ -155,6 +155,32 @@
                     </div>
                 </div>
 
+                <div #clickLayer class="click-layer click-layer-question-{{questionIndex}}">
+                    <div
+                        class="drop-location"
+                        *ngFor="let dropLocation of dropLocationsForSpots"
+                        [ngClass]="dropAllowed ? 'drop-allowed' : ''"
+                        [ngStyle]="{'top': dropLocation.posY/2 + '%', 'left': dropLocation.posX/2 + '%', 'width': dropLocation.width/2 + '%', 'height': dropLocation.height/2 + '%'}"
+                        (onDropSuccess)="onDragDrop(dropLocation, $event)" dnd-droppable>
+                        <div class="dimensions">
+                            {{dropLocation.width}}x{{dropLocation.height}}
+                        </div>
+                        <div class="re-evaluate-button" title="Set invalid"
+                             *ngIf="reEvaluationInProgress && !dropLocation.invalid" (click)="dropLocation.invalid = true">
+                            <i class="fa fa-ban fa-lg"></i>
+                        </div>
+                        <div class="resize middle left" (mousedown)="resizeMouseDown(dropLocation, 'middle', 'left')"></div>
+                        <div class="resize middle right" (mousedown)="resizeMouseDown(dropLocation, 'middle', 'right')"></div>
+                        <div [ngClass]="'mapping-number mapping-color-' + (getMappingIndex(question.correctMappings[0]) % 8)" *ngIf="getMappingsForDropLocation(dropLocation).length">
+                            {{getMappingIndex(getMappingsForDropLocation(dropLocation)[0])}}
+
+                        </div>
+                    </div>
+                </div>
+
+
+
+
                 <div class="question-options row d-flex justify-content-start">
                     <div class="input-group col-lg-7 col-md-8 col-sm-8 col-xs-10 drag-item-file">
                         <div class="input-group-prepend"></div>
@@ -174,7 +200,7 @@
             <hr/>
             <div *ngIf="!showPreview" class="toolbar">
                 <div class="btn-group">
-                    <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.visual" (click)="togglePreview()"></div>
+                    <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.visual" (click)="togglePreview() && backgroundMouseDown()"></div>
                     <div class="btn btn-outline-secondary active" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.text"></div>
                 </div>
             </div>

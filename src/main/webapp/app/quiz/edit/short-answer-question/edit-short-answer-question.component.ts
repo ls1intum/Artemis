@@ -26,6 +26,10 @@ import { DragAndDropQuestionUtil } from 'app/components/util/drag-and-drop-quest
 import * as $ from 'jquery';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
+
+import { DropLocation } from '../../../entities/drop-location';
+import {DragAndDropMapping} from "app/entities/drag-and-drop-mapping";
+
 @Component({
     selector: 'jhi-edit-short-answer-question',
     templateUrl: './edit-short-answer-question.component.html',
@@ -90,6 +94,13 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
 
     firstPressed: number = 1;
 
+    optionsWithID: string [] = [];
+    solutionWithOption: {[solutionID: string]: string} = {};
+
+
+
+    dropLocationsForSpots: [DropLocation];
+
     constructor(
         private artemisMarkdown: ArtemisMarkdown,
         private dragAndDropQuestionUtil: DragAndDropQuestionUtil, //TODO: FDE Check if saQuestionUtil is needed
@@ -139,6 +150,8 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      */
     setupQuestionEditor(): void {
         this.numberOfSpot = this.question.spots.length + 1;
+        this.setOptionsWithID();
+
 
         // Default editor settings for inline markup editor
         this.questionEditor.setTheme('chrome');
@@ -166,6 +179,41 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         );
     }
 
+    setOptionsWithID(){
+
+        let spotsWithID = [];
+        let optionID = 1;
+
+        for(let spot of this.question.spots){
+            spot.tempID = optionID;
+            spotsWithID.push(spot);
+            optionID++;
+        }
+
+        for(let solution of this.question.solutions){
+            let spotsForSolution: ShortAnswerSpot [] =[];
+            let option = "[-option ";
+            let firstSolution = true;
+
+            for(let mapping of this.question.correctMappings){
+                if(solution.text === mapping.solution.text){
+                    spotsForSolution.push(mapping.spot);
+                }
+            }
+
+            for(let spotForSolution of spotsForSolution){
+                if(firstSolution){
+                    option += spotsWithID.filter(spot => spot.id === spotForSolution.id)[0].tempID;
+                    firstSolution = false;
+                } else {
+                    option += ","+spotsWithID.filter(spot => spot.id === spotForSolution.id)[0].tempID;
+                }
+            }
+            option += "]";
+            this.optionsWithID.push(option);
+        }
+    }
+
     /**
      * @function generateMarkdown
      * @desc Generate the markdown text for this question
@@ -176,10 +224,10 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     generateMarkdown(): string {
         const markdownText =
             this.artemisMarkdown.generateTextHintExplanation(this.question) +
-            '\n\n\n' +
+            '\n\n\n\n' +
             this.question.solutions
-                .map((solution, index) => '[-option ' + (+index + 1) + '] ' + this.artemisMarkdown.generateTextHintExplanation(solution))
-                .join('\n');
+                .map((solution, index) => this.optionsWithID[index] +" "+this.artemisMarkdown.generateTextHintExplanation(solution))
+                .join('\n\n');
         return markdownText;
     }
 
@@ -262,6 +310,13 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
             this.createMapping(solutionText, solution);
         }
         this.question.spots.forEach(spot => spot.id = null);
+
+        console.log("Solutions:");
+        console.log(this.question.solutions);
+        console.log("Mappings:");
+        console.log(this.question.correctMappings);
+        console.log("-option ID");
+        console.log(this.optionsWithID);
     }
 
     /**
@@ -466,33 +521,25 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         this.currentSpot = null;
     }
 
+
+    //FDE: Maybe create DropLocation and and afterwards create Spot
     /**
      * @function backgroundMouseDown
      * @desc React to mouse down events on the background to start dragging
      */
     backgroundMouseDown(): void {
-        if (this.draggingState === DragState.NONE) {
-            // Save current mouse position as starting position
-            this.mouse.startX = this.mouse.x;
-            this.mouse.startY = this.mouse.y;
-
-            // Create new drop location
-            this.currentSpot = new ShortAnswerSpot();
-            this.currentSpot.tempID = this.pseudoRandomLong();
-            this.currentSpot.posX = this.mouse.x;
-            this.currentSpot.posY = this.mouse.y;
-            this.currentSpot.width = 0;
-
-            // Add drop location to question
-            //TODO: adapt it for SA
-            if (!this.question.spots) {
-                this.question.spots = [];
-            }
-            this.question.spots.push(this.currentSpot);
-
-            // Update state
-            this.draggingState = DragState.CREATE;
+        let number = 0;
+        for(let spot of this.question.spots){
+            let dropLocation = new DropLocation();
+            dropLocation.height = 50;
+            dropLocation.posX = 125;
+            dropLocation.posY = 125;
+            dropLocation.width = 50;
+            dropLocation.id = number;
+            this.dropLocationsForSpots.push(dropLocation);
+            number++;
         }
+
     }
 
     /**
