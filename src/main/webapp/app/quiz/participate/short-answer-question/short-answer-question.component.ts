@@ -41,8 +41,7 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
         this._forceSampleSolution = forceSampleSolution;
         if (this.forceSampleSolution) {
             console.log('ForceSampleSolution activated');
-            //TODO:FDE
-            // this.showSampleSolution();
+            this.showSampleSolution();
         }
     }
     get forceSampleSolution() {
@@ -61,6 +60,8 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
     textWithoutSpots: string[];
     textWithOutSpotsFirstParts: string[];
     textWithOutSpotsLastPart: string[];
+
+    sampleSolutions: ShortAnswerSolution[] =  [];
 
     constructor(private artemisMarkdown: ArtemisMarkdown) {}
 
@@ -88,23 +89,43 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
     }
 
     setSubmittedText() {
-        console.log('test1');
+        this.submittedTexts = [];
         for (let id in this.textWithOutSpotsFirstParts) {
             let submittedText = new ShortAnswerSubmittedText();
             submittedText.text = (<HTMLInputElement>document.getElementById('solution-' + id)).value;
             submittedText.spot = this.question.spots[id];
-            console.log('test2');
-            console.log(id);
-            console.log(submittedText.text);
-            console.log(submittedText.spot);
+            //this.submittedTexts.forEach(submittedText => submittedText.submittedAnswer = this.submittedAnswer);
             this.submittedTexts.push(submittedText);
         }
-        console.log(this.submittedTexts);
-
         this.submittedTextsChange.emit(this.submittedTexts);
         /** Only execute the onMappingUpdate function if we received such input **/
         if (this.fnOnSubmittedTextUpdate) {
             this.fnOnSubmittedTextUpdate();
         }
+    }
+
+    /**
+     * Display a sample solution instead of the student's answer
+     */
+    showSampleSolution() {
+        this.sampleSolutions = [];
+        for(let spot of this.question.spots){
+            for(let mapping of this.question.correctMappings){
+                if(mapping.spot.id  === spot.id
+                    && !this.sampleSolutions.some(sampleSolution =>
+                        sampleSolution.text  === mapping.solution.text )){
+                    this.sampleSolutions.push(mapping.solution);
+                    break;
+                }
+            }
+        }
+        this.showingSampleSolution = true;
+    }
+
+    /**
+     * Display the student's answer again
+     */
+    hideSampleSolution() {
+        this.showingSampleSolution = false;
     }
 }

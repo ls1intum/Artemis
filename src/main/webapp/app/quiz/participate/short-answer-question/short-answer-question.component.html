@@ -1,14 +1,44 @@
 <div class="sa-question" [ngClass]="{disabled: clickDisabled && !showResult, result: showResult && !forceSampleSolution, incorrect: (score || 0) < question.score && !forceSampleSolution}">
     <h4 class="question-title-display"><span>{{questionIndex}})</span> {{question.title}}</h4>
     <p>{{questionText}}</p>
-    <div>
+
+    <div *ngIf="!showResult && !clickDisabled">
         <div class="testFDE" *ngFor="let textPart of textWithOutSpotsFirstParts; let i = index">
-            {{textPart}} <input type="text" id="solution-{{i}}">
+            {{textPart}} <input type="text" id="solution-{{i}}" (blur)="setSubmittedText()">
         </div>
         <div class="testFDE">
             {{textWithOutSpotsLastPart}}
         </div>
     </div>
+    <div *ngIf="!showResult && clickDisabled">
+        <div class="testFDE" *ngFor="let textPart of textWithOutSpotsFirstParts; let i = index">
+            {{textPart}} <input disabled value="{{submittedTexts[i].text}}">
+        </div>
+        <div class="testFDE">
+            {{textWithOutSpotsLastPart}}
+        </div>
+    </div>
+    <div class="testFDE" *ngIf="showResult && !showingSampleSolution">
+        <div class="testFDE" *ngFor="let textPart of textWithOutSpotsFirstParts; let i = index">
+            {{textPart}}
+            <input *ngIf="submittedTexts[i].isCorrect" style="background: lightgreen" disabled value="{{submittedTexts[i].text}}" size="{{submittedTexts[i].text.length}}">
+            <input *ngIf="!submittedTexts[i].isCorrect" style="background: red" disabled value="{{submittedTexts[i].text}}" size="{{submittedTexts[i].text.length}}">
+        </div>
+        <div class="testFDE">
+            {{textWithOutSpotsLastPart}}
+        </div>
+    </div>
+
+    <div class="testFDE" *ngIf="showResult && showingSampleSolution">
+        <div class="testFDE" *ngFor="let textPart of textWithOutSpotsFirstParts; let i = index">
+            {{textPart}}
+            <input style="background: lightgreen" disabled value="{{sampleSolutions[i].text}}" size="{{sampleSolutions[i].text.length}}">
+        </div>
+        <div class="testFDE">
+            {{textWithOutSpotsLastPart}}
+        </div>
+    </div>
+
     <span style="color:red;" *ngIf="question.invalid" jhiTranslate="arTeMiSApp.question.invalidText"></span>
     <div class="hint" *ngIf="question.hint || (question.explanation && showResult)">
         <ng-template #renderedHint>
@@ -34,6 +64,13 @@
         <span jhiTranslate="arTeMiSApp.question.yourScore" class="colon-suffix"></span>
         <span>{{score || 0}}/{{question.score}}</span>
     </div>
-    <br>
-    <button (click)="setSubmittedText()">ready to go? click here</button>
+
+    <div *ngIf="showResult && !forceSampleSolution">
+        <div class="btn btn-outline-primary" *ngIf="!showingSampleSolution" (click)="showSampleSolution()">
+            Show Sample Solution
+        </div>
+        <div class="btn btn-outline-primary" *ngIf="showingSampleSolution" (click)="hideSampleSolution()">
+            Hide Sample Solution
+        </div>
+    </div>
 </div>
