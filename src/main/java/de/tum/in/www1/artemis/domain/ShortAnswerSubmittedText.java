@@ -38,6 +38,12 @@ public class ShortAnswerSubmittedText implements Serializable {
     @JsonIgnore
     private ShortAnswerSubmittedAnswer submittedAnswer;
 
+
+    //FDE added afterwards
+    @Column(name = "is_correct")
+    @JsonView(QuizView.After.class)
+    private Boolean isCorrect;
+
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
         return id;
@@ -87,6 +93,42 @@ public class ShortAnswerSubmittedText implements Serializable {
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
+
+
+    //FDE added afterwards
+    public Boolean isIsCorrect() {
+        return isCorrect;
+    }
+
+    public ShortAnswerSubmittedText isCorrect(Boolean isCorrect) {
+        this.isCorrect = isCorrect;
+        return this;
+    }
+
+    public void setIsCorrect(Boolean isCorrect) {
+        this.isCorrect = isCorrect;
+    }
+
+    /*public boolean moreThanOnceInSubmittedAnswer(ShortAnswerSubmittedText submittedText){
+        int numberOfSubmittedText = 0;
+        for(ShortAnswerSubmittedText submittedTextFromSubmittedAnswer : this.submittedAnswer.getSubmittedTexts()){
+            if(submittedTextFromSubmittedAnswer.getText().equals(submittedText.getText())){
+                numberOfSubmittedText++;
+            }
+        }
+        if(numberOfSubmittedText == 1){
+            return false;
+        } else {
+            return true;
+        }
+    }*/
+
+    //TODO FDE: check if text input is correct needs to improve
+    public boolean isSubmittedTextCorrect(String submittedText, String solution){
+        return submittedText.equalsIgnoreCase(solution);
+    }
+
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -112,6 +154,7 @@ public class ShortAnswerSubmittedText implements Serializable {
         return "ShortAnswerSubmittedText{" +
             "id=" + getId() +
             ", text='" + getText() + "'" +
+           ", isCorrect='" + isIsCorrect() + "'"+
             "}";
     }
 }
