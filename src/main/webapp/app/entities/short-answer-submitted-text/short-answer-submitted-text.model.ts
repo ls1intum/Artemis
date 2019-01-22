@@ -7,4 +7,8 @@ export class ShortAnswerSubmittedText implements BaseEntity {
     public text: string;
     public spot: ShortAnswerSpot;
     public submittedAnswer: ShortAnswerSubmittedAnswer;
+
+
+    //FDE added afterwards
+    public isCorrect = false;
 }
