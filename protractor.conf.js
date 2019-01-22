@@ -44,10 +44,10 @@ exports.config = {
         // Disable animations
         // @ts-ignore
         browser.executeScript('document.body.className += " notransition";');
-        const chai = require('chai');
-        const chaiAsPromised = require('chai-as-promised');
+        var chai = require('chai');
+        var chaiAsPromised = require('chai-as-promised');
         chai.use(chaiAsPromised);
-        const chaiString = require('chai-string');
+        var chaiString = require('chai-string');
         chai.use(chaiString);
         // @ts-ignore
         global.chai = chai;

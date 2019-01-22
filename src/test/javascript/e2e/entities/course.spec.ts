@@ -1,5 +1,5 @@
 import { NavBarPage, SignInPage } from '../page-objects/jhi-page-objects';
-import {browser, by, element} from "protractor";
+import {browser, by, element, ExpectedConditions as ec} from "protractor";
 import {CoursePage, NewCoursePage} from "../page-objects/entities/course-page-object";
 
 const expect = chai.expect;
@@ -70,15 +70,7 @@ describe('course', () => {
         expect(await newCoursePage.save.getAttribute('disabled')).to.be.null;
         await newCoursePage.clickSave();
 
-        /*const alert = await element(by.className('alert-success'));
-        browser.driver.wait(element)
-        await browser.driver.wait(elementIsVisible(alert));
-
-        const alertText = await alert.element(by.tagName('pre')).getText();
-        expect(alertText).to.equal(`A new course was created with title ${courseName}`);
-
-        // Dismiss alert
-        await alert.element(by.css('button.close')).click();*/
+        browser.wait(ec.urlContains('/course'), 5000).then((result) => expect(result).to.be.true);
     });
 
     it('should show the created course in the list', async () => {
