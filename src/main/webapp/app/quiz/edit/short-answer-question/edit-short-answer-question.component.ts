@@ -95,7 +95,8 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     firstPressed: number = 1;
 
     optionsWithID: string [] = [];
-    solutionWithOption: {[solutionID: string]: string} = {};
+
+    spotsWithID = new Map<string,ShortAnswerSpot>();
 
 
 
@@ -241,7 +242,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      *    => The first part (any text before the first [-option ) is the question text
      * 2. The questionText is split further at [-spot to determine all spots and IDs.
      * 3. The question text is split into text, hint, and explanation using ArtemisMarkdown
-     * 4. For every solution (Parts after each [-option  and ]:
+     * 4. For every solution (Parts after each "[-option " and "]":
      *    4.a) Same treatment as the question text for text, hint, and explanation
      *    4.b) Is used to create the mappings
      *
@@ -275,19 +276,18 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         this.question.spots = [];
 
         //setup spots
+
         for (const spotID of spotParts) {
             const spot = new ShortAnswerSpot();
-            spot.id = +spotID.trim();
             spot.tempID = this.pseudoRandomLong();
             spot.width = 15;
 
             // Assign existing ID if available
             if (this.question.spots.length < existingSpotIDs.length) {
                 spot.id = existingSpotIDs[this.question.spots.length];
-            } else {
-                spot.id = this.question.spots.length + 1;
             }
 
+            this.spotsWithID.set(spotID.trim(), spot);
             this.question.spots.push(spot);
         }
 
@@ -309,37 +309,34 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
             //create mapping according to this structure: {spot(s), solution} -> {"1,2", " SolutionText"}
             this.createMapping(solutionText, solution);
         }
-        this.question.spots.forEach(spot => spot.id = null);
-
+        console.log("Spots:");
+        console.log(this.question.spots);
+        console.log(this.spotsWithID);
         console.log("Solutions:");
         console.log(this.question.solutions);
         console.log("Mappings:");
         console.log(this.question.correctMappings);
         console.log("-option ID");
         console.log(this.optionsWithID);
+
     }
 
     /**
-     * This function creates the mapping. It differentiates 2 cases oneToOne (case 1) and manyToOne mapping (default)
+     * This function creates the mapping. It differentiates 2 cases one solution To one spot (case 1) and
+     * one solution to many spots (default)
      */
     createMapping(solutionText: string[], solution: ShortAnswerSolution) {
         switch (solutionText[0].trim().length) {
             case 1: {
-                const spot = this.question.spots.filter(spot => spot.id === +solutionText[0])[0];
-                const mapping = new ShortAnswerMapping(spot, solution);
-                mapping.shortAnswerSpotIndex = null;
-                mapping.shortAnswerSolutionIndex = null;
-                this.question.correctMappings.push(mapping);
+                const spot = this.spotsWithID.get(solutionText[0]);
+                this.question.correctMappings.push(new ShortAnswerMapping(spot, solution));
                 break;
             }
             default: {
                 const spotsID = solutionText[0].split(',');
                 for (const spotID of spotsID) {
-                    const spot = this.question.spots.filter(spot => spot.id === +spotID[0])[0];
-                    const mapping = new ShortAnswerMapping(spot, solution);
-                    mapping.shortAnswerSpotIndex = null;
-                    mapping.shortAnswerSolutionIndex = null;
-                    this.question.correctMappings.push(mapping);
+                    const spot = this.spotsWithID.get(spotID[0]);
+                    this.question.correctMappings.push(new ShortAnswerMapping(spot, solution));
                 }
                 break;
             }
