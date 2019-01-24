@@ -13,11 +13,12 @@ import { JhiMainComponent } from '../layouts';
 import { ClipboardModule } from 'ngx-clipboard';
 import {exampleTextSubmissionRoute} from 'app/example-text-submission/example-text-submission.route';
 import {ExampleTextSubmissionComponent} from 'app/example-text-submission/example-text-submission.component';
+import { ArTEMiSTextAssessmentModule } from 'app/text-assessment';
 
 const ENTITY_STATES = [...exampleTextSubmissionRoute];
 
 @NgModule({
-    imports: [BrowserModule, ArTEMiSSharedModule, ArTEMiSResultModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES)],
+    imports: [BrowserModule, ArTEMiSSharedModule, ArTEMiSResultModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES), ArTEMiSTextAssessmentModule],
     declarations: [ExampleTextSubmissionComponent],
     exports: [],
     entryComponents: [HomeComponent, CourseComponent, JhiMainComponent],

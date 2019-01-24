@@ -33,6 +33,10 @@ export class TextAssessmentsService {
         return this.http.get<Participation>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}`);
     }
 
+    public getExampleAssessment(submissionId: number): Observable<Result> {
+        return this.http.get<Result>(`${this.resourceUrl}/submission/${submissionId}/exampleAssessment`);
+    }
+
     private convertResponse(res: EntityResponseType): EntityResponseType {
         const body: Result = this.convertItemFromServer(res.body);
 

@@ -86,14 +86,18 @@ public class ResultService {
 
         // this call should cascade all feedback relevant changed and save them accordingly
         Result savedResult = resultRepository.save(result);
-        try {
-            result.getParticipation().addResult(savedResult);
-            participationService.save(result.getParticipation());
-        } catch (NullPointerException ex) {
-            log.warn("Unable to load result list for participation", ex);
-        }
 
-        messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
-        ltiService.onNewBuildResult(savedResult.getParticipation());
+        // if it is an example result we do not have any participation
+        if (!result.isExampleResult()) {
+            try {
+                result.getParticipation().addResult(savedResult);
+                participationService.save(result.getParticipation());
+            } catch (NullPointerException ex) {
+                log.warn("Unable to load result list for participation", ex);
+            }
+
+            messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
+            ltiService.onNewBuildResult(savedResult.getParticipation());
+        }
     }
 }

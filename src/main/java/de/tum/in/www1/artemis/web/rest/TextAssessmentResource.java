@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -31,6 +32,7 @@ public class TextAssessmentResource extends AssessmentResource {
     private final TextAssessmentService textAssessmentService;
     private final TextExerciseService textExerciseService;
     private final TextSubmissionRepository textSubmissionRepository;
+    private final ResultRepository resultRepository;
 
     public TextAssessmentResource(AuthorizationCheckService authCheckService,
                                   ParticipationService participationService,
@@ -38,6 +40,7 @@ public class TextAssessmentResource extends AssessmentResource {
                                   TextAssessmentService textAssessmentService,
                                   TextExerciseService textExerciseService,
                                   TextSubmissionRepository textSubmissionRepository,
+                                  ResultRepository resultRepository,
                                   UserService userService) {
         super(authCheckService, userService);
 
@@ -46,6 +49,7 @@ public class TextAssessmentResource extends AssessmentResource {
         this.textAssessmentService = textAssessmentService;
         this.textExerciseService = textExerciseService;
         this.textSubmissionRepository = textSubmissionRepository;
+        this.resultRepository = resultRepository;
     }
 
     @PutMapping("/exercise/{exerciseId}/result/{resultId}")
@@ -102,6 +106,34 @@ public class TextAssessmentResource extends AssessmentResource {
         }
 
         return ResponseEntity.ok(participation);
+    }
+
+    @GetMapping("/submission/{submissionId}/exampleAssessment")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @Timed
+    public ResponseEntity<Result> getExampleAssessmentForTutor(@PathVariable Long submissionId) {
+        log.debug("REST request to get example assessment for tutors text assessment: {}", submissionId);
+        Optional<TextSubmission> textSubmission = textSubmissionRepository.findById(submissionId);
+        if (!textSubmission.isPresent()) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("textSubmission", "textSubmissionNotFound", "No Submission was found for the given ID.")).body(null);
+        }
+
+        // TODO: If the user is not an instructor, and this is not an example submission used for tutorial
+        //       do not provide the results
+
+        Optional<Result> databaseResult = this.resultRepository.findDistinctBySubmissionId(submissionId);
+        Result result = databaseResult.orElseGet(() -> {
+            Result newResult = new Result();
+            newResult.setSubmission(textSubmission.get());
+            newResult.setExampleResult(true);
+            resultService.createNewResult(newResult);
+            return newResult;
+        });
+
+        List<Feedback> assessments = textAssessmentService.getAssessmentsForResult(result);
+        result.setFeedbacks(assessments);
+
+        return ResponseEntity.ok(result);
     }
 
     @Override

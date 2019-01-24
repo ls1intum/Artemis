@@ -3,7 +3,8 @@
     <div class="row">
         <div class="col-12 col-lg-8">
             <h2>
-                <span *ngIf="isNewSubmission">Create New </span>Example Text Submission <span *ngIf="!isNewSubmission">#{{textSubmission.id}} </span>For Exercise {{exerciseId}}
+                <span *ngIf="isNewSubmission">Create New </span>Example Text Submission <span
+                *ngIf="!isNewSubmission">#{{textSubmission?.id}} </span>For Exercise {{exercise?.title}}
             </h2>
         </div>
 
@@ -23,7 +24,57 @@
             </div>
         </div>
 
-    <div class="col-12">
-        <textarea [(ngModel)]="textSubmission.text" style="width: 100%; height: 50vh;"></textarea>
+        <div class="col-12">
+            <textarea [(ngModel)]="textSubmission.text" style="width: 100%; height: 50vh;"></textarea>
+        </div>
+
+    </div>
+
+    <div class="row">
+        <div class="col">
+            <h2>Example Assessment</h2>
+        </div>
+
+        <div class="col text-right">
+            <button class="btn btn-primary ml-3" (click)="save()"
+                    [disabled]="!assessments || !assessmentsAreValid"
+                    *ngIf="!isNewSubmission ">Save Assessment
+            </button>
+        </div>
+    </div>
+
+    <div class="alert alert-info" *ngIf="isNewSubmission">
+        You need to create the example text submission before creating the example assessment
+    </div>
+
+    <div class="row" *ngIf="exercise && !isNewSubmission">
+        <div class="col">
+            <p class="mb-3">
+                <strong>Problem Statement:</strong> {{ exercise.problemStatement }}<br />
+                <ng-container *ngIf="exercise.sampleSolution">
+                    <strong>Sample Solution:</strong> {{ exercise.sampleSolution }}
+                </ng-container>
+            </p>
+        </div>
+        <div class="col text-right">
+            <h5><strong>Score:</strong> {{ totalScore | number : '1.0-2' }} / {{ exercise.maxScore }}</h5>
+        </div>
+    </div>
+
+    <div class="row" *ngIf="!isNewSubmission">
+        <div class="col-sm-12 col-md-7 col-xl-8 mb-sm-3">
+            <jhi-text-assessment-editor [submissionText]="textSubmission?.text" [assessments]="assessments"
+                                        (assessedText)="addAssessment($event)"></jhi-text-assessment-editor>
+        </div>
+        <div class="col-sm-12 col-md-5 col-xl-4">
+            <div *ngIf="invalidError" class="alert alert-danger" role="alert">{{invalidError}}</div>
+            <div *ngIf="!assessments || assessments.length == 0" class="alert alert-secondary" role="alert"
+                 jhiTranslate="arTeMiSApp.textAssessment.assessInstruction"></div>
+            <ng-container *ngFor="let assessment of assessments; let i = index">
+                <jhi-text-assessment-detail [(assessment)]="assessment" (assessmentChange)="checkScoreBoundaries()"
+                                            [highlightColor]="getColorForIndex(i)"
+                                            (deleteAssessment)="deleteAssessment($event)"></jhi-text-assessment-detail>
+            </ng-container>
+        </div>
     </div>
 </div>
