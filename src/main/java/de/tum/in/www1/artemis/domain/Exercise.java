@@ -461,6 +461,7 @@ public abstract class Exercise implements Serializable {
             ", shortName='" + getShortName() + "'" +
             ", releaseDate='" + getReleaseDate() + "'" +
             ", dueDate='" + getDueDate() + "'" +
+            ", assessmentDueDate='" + getAssessmentDueDate() + "'" +
             ", maxScore=" + getMaxScore() +
             ", difficulty='" + getDifficulty() + "'" +
             ", categories='" + getCategories() + "'" +
