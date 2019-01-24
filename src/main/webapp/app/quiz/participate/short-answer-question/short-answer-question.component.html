@@ -3,15 +3,16 @@
     <p>{{questionText}}</p>
 
     <div *ngIf="!showResult && !clickDisabled">
-        <div class="testFDE" *ngFor="let textPart of textWithOutSpotsFirstParts; let i = index">
-            {{textPart}} <input type="text" id="solution-{{i}}" (blur)="setSubmittedText()">
+        <div class="testFDE" [ngClass]="{'testFDE2': isList}" *ngFor="let textPart of textWithOutSpotsFirstParts; let i = index">
+        {{textPart}} <input type="text" id="solution-{{i}}" (blur)="setSubmittedText()">
         </div>
         <div class="testFDE">
             {{textWithOutSpotsLastPart}}
         </div>
     </div>
+
     <div *ngIf="!showResult && clickDisabled">
-        <div class="testFDE" *ngFor="let textPart of textWithOutSpotsFirstParts; let i = index">
+        <div class="testFDE" [ngClass]="{'testFDE2': isList}" *ngFor="let textPart of textWithOutSpotsFirstParts; let i = index">
             {{textPart}} <input disabled value="{{submittedTexts[i].text}}">
         </div>
         <div class="testFDE">
@@ -19,7 +20,7 @@
         </div>
     </div>
     <div class="testFDE" *ngIf="showResult && !showingSampleSolution">
-        <div class="testFDE" *ngFor="let textPart of textWithOutSpotsFirstParts; let i = index">
+        <div class="testFDE" [ngClass]="{'testFDE2': isList}" *ngFor="let textPart of textWithOutSpotsFirstParts; let i = index">
             {{textPart}}
             <input *ngIf="submittedTexts[i].isCorrect" style="background: lightgreen" disabled value="{{submittedTexts[i].text}}" size="{{submittedTexts[i].text.length}}">
             <input *ngIf="!submittedTexts[i].isCorrect" style="background: red" disabled value="{{submittedTexts[i].text}}" size="{{submittedTexts[i].text.length}}">
@@ -30,7 +31,7 @@
     </div>
 
     <div class="testFDE" *ngIf="showResult && showingSampleSolution">
-        <div class="testFDE" *ngFor="let textPart of textWithOutSpotsFirstParts; let i = index">
+        <div class="testFDE" [ngClass]="{'testFDE2': isList}" *ngFor="let textPart of textWithOutSpotsFirstParts; let i = index">
             {{textPart}}
             <input style="background: lightgreen" disabled value="{{sampleSolutions[i].text}}" size="{{sampleSolutions[i].text.length}}">
         </div>
@@ -64,7 +65,8 @@
         <span jhiTranslate="arTeMiSApp.question.yourScore" class="colon-suffix"></span>
         <span>{{score || 0}}/{{question.score}}</span>
     </div>
-
+    <br>
+    <br>
     <div *ngIf="showResult && !forceSampleSolution">
         <div class="btn btn-outline-primary" *ngIf="!showingSampleSolution" (click)="showSampleSolution()">
             Show Sample Solution

@@ -62,6 +62,7 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
     textWithOutSpotsLastPart: string[];
 
     sampleSolutions: ShortAnswerSolution[] =  [];
+    isList = false;
 
     constructor(private artemisMarkdown: ArtemisMarkdown) {}
 
@@ -76,9 +77,16 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
 
         this.questionText = this.question.text.split(/\n/g)[0];
         let questionTextSplitAtNewLine = this.question.text
-            .split(/\n/g)
-            .slice(3)
+            .split(/\n+/g)
+            .slice(1)
             .join();
+
+
+        if(questionTextSplitAtNewLine.includes(",")){
+            questionTextSplitAtNewLine = questionTextSplitAtNewLine.replace(/\,/g, "\n");
+            this.isList = true;
+        }
+
         this.textWithoutSpots = questionTextSplitAtNewLine.split(/\[-spot\s\d\]/g);
         this.textWithOutSpotsFirstParts = this.textWithoutSpots.slice(0, this.textWithoutSpots.length - 1);
         this.textWithOutSpotsLastPart = this.textWithoutSpots.slice(this.textWithoutSpots.length - 1);

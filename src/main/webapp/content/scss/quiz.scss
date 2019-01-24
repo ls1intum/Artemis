@@ -10,8 +10,12 @@
 }
 
 .testFDE {
-    display: inline-block;
-}
+     display: inline-block;
+
+    .testFDE2 {
+        display: block;
+    }
+ }
 
 .edit-quiz .quiz-options,
 .question-options {
