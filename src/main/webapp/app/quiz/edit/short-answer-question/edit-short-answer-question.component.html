@@ -120,7 +120,7 @@
                 <div *ngIf="question.solutions && question.solutions.length" class="instructions">
                     <span jhiTranslate="arTeMiSApp.dragAndDropQuestion.addMappingsInstructions"></span>
                 </div>
-
+                <!--
                 <div class="drag-items" *ngIf="question.solutions && question.solutions.length">
                     <div class="drag-item" *ngFor="let solution of question.solutions" dnd-draggable [dragEnabled]="true" [dragData]="solution">
                         <div>
@@ -154,7 +154,9 @@
                         </div>
                     </div>
                 </div>
+                -->
 
+                <!--
                 <div #clickLayer class="click-layer click-layer-question-{{questionIndex}}">
                     <div
                         class="drop-location"
@@ -177,7 +179,7 @@
                         </div>
                     </div>
                 </div>
-
+                -->
 
 
 
@@ -200,7 +202,7 @@
             <hr/>
             <div *ngIf="!showPreview" class="toolbar">
                 <div class="btn-group">
-                    <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.visual" (click)="togglePreview() && backgroundMouseDown()"></div>
+                    <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.visual" (click)="togglePreview()"></div>
                     <div class="btn btn-outline-secondary active" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.text"></div>
                 </div>
             </div>
