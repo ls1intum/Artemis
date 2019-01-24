@@ -49,6 +49,7 @@ import { PendingChangesGuard } from './shared/guard/pending-changes.guard';
 import { ParticipationDataProvider } from './courses/exercises/participation-data-provider';
 import { ArTEMiSTutorCourseDashboardModule } from 'app/tutor-course-dashboard';
 import { ArTEMiSTutorExerciseDashboardModule } from 'app/tutor-exercise-dashboard';
+import {ArTEMiSExampleSubmissionModule} from 'app/example-text-submission';
 
 @NgModule({
     imports: [
@@ -85,7 +86,8 @@ import { ArTEMiSTutorExerciseDashboardModule } from 'app/tutor-exercise-dashboar
         ArTEMiSTextModule,
         ArTEMiSTextAssessmentModule,
         ArTEMiSTutorCourseDashboardModule,
-        ArTEMiSTutorExerciseDashboardModule
+        ArTEMiSTutorExerciseDashboardModule,
+        ArTEMiSExampleSubmissionModule
         // jhipster-needle-angular-add-module JHipster will add new module here
     ],
     declarations: [

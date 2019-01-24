@@ -44,22 +44,29 @@ public class TextSubmissionService {
         // update submission properties
         textSubmission.setSubmissionDate(ZonedDateTime.now());
         textSubmission.setType(SubmissionType.MANUAL);
-        textSubmission.setParticipation(participation);
+
+        // Example submissions do not have a participation
+        if (!textSubmission.isExampleSubmission()) {
+            textSubmission.setParticipation(participation);
+        }
         textSubmission = textSubmissionRepository.save(textSubmission);
 
-        participation.addSubmissions(textSubmission);
+        // All the following are useful only for real submissions
+        if (!textSubmission.isExampleSubmission()) {
+            participation.addSubmissions(textSubmission);
 
-        User user = participation.getStudent();
+            User user = participation.getStudent();
 
-        if (textSubmission.isSubmitted()) {
-            participation.setInitializationState(InitializationState.FINISHED);
-        } else if (textExercise.getDueDate() != null && !textExercise.isEnded()) {
-            // save submission to HashMap if exercise not ended yet
-            AutomaticSubmissionService.updateSubmission(textExercise.getId(), user.getLogin(), textSubmission);
-        }
-        Participation savedParticipation = participationRepository.save(participation);
-        if (textSubmission.getId() == null) {
-            textSubmission = savedParticipation.findLatestTextSubmission();
+            if (textSubmission.isSubmitted()) {
+                participation.setInitializationState(InitializationState.FINISHED);
+            } else if (textExercise.getDueDate() != null && !textExercise.isEnded()) {
+                // save submission to HashMap if exercise not ended yet
+                AutomaticSubmissionService.updateSubmission(textExercise.getId(), user.getLogin(), textSubmission);
+            }
+            Participation savedParticipation = participationRepository.save(participation);
+            if (textSubmission.getId() == null) {
+                textSubmission = savedParticipation.findLatestTextSubmission();
+            }
         }
 
         return textSubmission;

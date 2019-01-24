@@ -50,13 +50,15 @@
         <div class="form-group">
             <span>Example submissions</span>
 
-            <ul>
+            <ul *ngIf="textExercise.id">
                 <li *ngFor="let exampleSubmission of textExercise.exampleSubmissions">
-                    {{exampleSubmission.id}} - <a routerLink="/text/{{textExercise.id}}/assessment/{{exampleSubmission.id}}"><span *ngIf="exampleSubmission.submission.participation == null">Create </span>Example Assessment</a>
+                    <button routerLink="text/{{textExercise.id}}/exampleSubmission/{{exampleSubmission.id}}" class="btn btn-link">Edit example submission {{exampleSubmission.id}}</button>
                 </li>
             </ul>
 
-            <button class="btn" routerLink="text/exampleSubmission">Create example submission</button>
+            <button *ngIf="textExercise.id" class="btn btn-primary" routerLink="text/{{textExercise.id}}/exampleSubmission/-1">Create example submission</button>
+
+            <div class="alert alert-info" *ngIf="!textExercise.id">To create an example submission, you first need to finish creating the text exercise</div>
         </div>
     </div>
     <div class="modal-footer">
