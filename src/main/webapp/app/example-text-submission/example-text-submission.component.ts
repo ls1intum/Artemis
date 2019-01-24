@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
 import { JhiAlertService } from 'ng-jhipster';
 import { Subscription } from 'rxjs';
@@ -30,12 +30,12 @@ export class ExampleTextSubmissionComponent implements OnInit {
     result: Result;
     totalScore: number;
     invalidError: string;
+    exercise: TextExercise;
 
     public getColorForIndex = HighlightColors.forIndex;
 
     private exampleSubmissionId: number;
     private subscription: Subscription;
-    private exercise: TextExercise;
 
     constructor(
         private exerciseService: ExerciseService,

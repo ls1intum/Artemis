@@ -1,5 +1,5 @@
 <jhi-alert></jhi-alert>
-<div class="p-4">
+<div class="p-4" *ngIf="exercise !== null">
     <div class="row">
         <div class="col-12 col-lg-8">
             <h2>
@@ -71,7 +71,7 @@
             <div *ngIf="!assessments || assessments.length == 0" class="alert alert-secondary" role="alert"
                  jhiTranslate="arTeMiSApp.textAssessment.assessInstruction"></div>
             <ng-container *ngFor="let assessment of assessments; let i = index">
-                <jhi-text-assessment-detail [(assessment)]="assessment" (assessmentChange)="checkScoreBoundaries()"
+                <jhi-text-assessment-detail [(assessment)]="assessments[i]" (assessmentChange)="checkScoreBoundaries()"
                                             [highlightColor]="getColorForIndex(i)"
                                             (deleteAssessment)="deleteAssessment($event)"></jhi-text-assessment-detail>
             </ng-container>
