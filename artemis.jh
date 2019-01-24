@@ -374,8 +374,6 @@ relationship OneToOne {
     ComplaintResponse{complaint} to Complaint,
     Complaint{student} to User,
     ComplaintResponse{reviewer} to User,
-    TutorParticipation{assessedExercise} to Exercise,
-    TutorParticipation{tutor} to User,
     ExampleSubmission{submission} to Submission
 }
 
@@ -387,7 +385,9 @@ relationship ManyToOne {
     DragAndDropMapping{dragItem} to DragItem,
     DragAndDropMapping{dropLocation} to DropLocation,
     ShortAnswerMapping{solution} to ShortAnswerSolution,
-    ShortAnswerMapping{spot} to ShortAnswerSpot
+    ShortAnswerMapping{spot} to ShortAnswerSpot,
+    TutorParticipation{tutor} to User,
+    TutorParticipation{assessedExercise} to Exercise
 }
 
 relationship ManyToMany {
