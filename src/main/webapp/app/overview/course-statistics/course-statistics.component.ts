@@ -88,7 +88,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     ];
     public barChartOptions: any = {
         scaleShowVerticalLines: false,
-        responsive: false,
+        maintainAspectRatio: false,
+        responsive: true,
         scales: {
             xAxes: [{
                 stacked: true
@@ -112,6 +113,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     public doughnutChartType = 'doughnut';
     public totalScoreOptions: object = {
         cutoutPercentage: 75,
+        scaleShowVerticalLines: false,
+        responsive: false,
         tooltips: {
             backgroundColor: 'rgba(0, 0, 0, 1)',
         }

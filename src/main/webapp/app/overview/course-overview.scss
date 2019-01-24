@@ -51,6 +51,9 @@ Course Info Bar
                 border-bottom: 1px solid $light-border-color;
                 border-radius: 0 0 3px 3px;
             }
+            .exercise-divider {
+                display: none;
+            }
         }
     }
     &:first-of-type {
@@ -71,6 +74,9 @@ Course Info Bar
                 border-bottom: 1px solid $light-border-color;
                 border-radius: 3px;
             }
+            .exercise-divider {
+                display: none;
+            }
         }
     }
 }
@@ -79,11 +85,11 @@ Course Info Bar
     margin-top: 25px;
     .chart-container {
         position: relative;
+        display: flex;
+        justify-content: center;
         .chart-text {
             position: absolute;
             top: calc(50% - 35px);
-            left: 0;
-            right: 0;
         }
     }
 }
@@ -104,6 +110,13 @@ Course Info Bar
     position: absolute;
     top: -64px;
     right: -14px;
+}
+
+.exercise-divider {
+    height: 0;
+    width: 100%;
+    margin: 1rem 0 0.5rem 0;
+    border-top: 1px solid $light-border-color;
 }
 
 .color-indicator {

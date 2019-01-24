@@ -1,29 +1,29 @@
 <div *ngIf="course">
     <div class="row">
 
-        <div class="col-4 statistic-summary">
+        <div class="co-12 col-md-4 statistic-summary">
             <h2 class="text-center">Your total score</h2>
             <div class="chart-container">
-                <canvas baseChart
+                <div class="chart-text">
+                    <h2 class="text-center">{{totalRelativeScore}} %</h2>
+                    <h4 class="text-center">{{totalScore}} Pts</h4>
+                </div>
+                <canvas baseChart height="200" width="200"
                         [legend]="false"
                         [datasets]="doughnutChartData"
                         [options]="totalScoreOptions"
                         [colors]="doughnutChartColors"
                         [labels]="doughnutChartLabels"
                         [chartType]="doughnutChartType"></canvas>
-                <div class="chart-text">
-                    <h2 class="text-center">{{totalRelativeScore}} %</h2>
-                    <h4 class="text-center">{{totalScore}} Pts</h4>
-                </div>
             </div>
         </div>
-        <div class="col-8">
+        <div class="col-12 col-md-8">
             <div class="row mt-3" *ngFor="let exerciseGroup of groupedExercises">
                 <div class="col-12 mb-1 d-flex align-items-center">
                     <div class="color-indicator"[style.background]="exerciseTitles[exerciseGroup.type].color"></div> <h2>{{exerciseTitles[exerciseGroup.type].name}}</h2>
                 </div>
-                <div class="col-auto">
-                    <canvas baseChart height="250" width="500"
+                <div class="col-12 col-md-8">
+                    <canvas baseChart height="250"
                             [datasets]="exerciseGroup.values"
                             [labels]="exerciseGroup.names"
                             [colors]="chartColors"
@@ -33,7 +33,7 @@
 
                     ></canvas>
                 </div>
-                <div class="col-4 align-self-center" *ngIf="exerciseGroup && exerciseGroup.absoluteScore && exerciseGroup.totalMaxScore && exerciseGroup.relativeScore">
+                <div class="col-12 col-md-4 align-self-center" *ngIf="exerciseGroup && exerciseGroup.absoluteScore && exerciseGroup.totalMaxScore && exerciseGroup.relativeScore">
                     <h4>Number of Exercises: {{exerciseGroup.names.length}}</h4>
                     <h4>Absolute Score: {{exerciseGroup.absoluteScore}} Pts</h4>
                     <h4>Total Max Score: {{exerciseGroup.totalMaxScore}} Pts</h4>

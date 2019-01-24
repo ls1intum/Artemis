@@ -38,7 +38,7 @@ export class CourseExercisesComponent implements OnInit {
                 this.course = this.courseCalculationService.getCourse(this.courseId);
             });
         }
-        this.groupExercises(this.DUE_DATE_ASC);
+        this.groupExercises(this.DUE_DATE_DESC);
     }
 
     private groupExercises(selectedOrder: number): void {
@@ -46,7 +46,9 @@ export class CourseExercisesComponent implements OnInit {
         this.weeklyIndexKeys = [];
         const groupedExercises = {};
         const indexKeys: string[] = [];
-        this.course.exercises.sort((a, b) => selectedOrder * (a.dueDate.valueOf() - b.dueDate.valueOf())).forEach(exercise => {
+        const courseExercises = [...this.course.exercises];
+        const sortedExercises = courseExercises.sort((a, b) => selectedOrder * (a.dueDate.valueOf() - b.dueDate.valueOf()));
+        sortedExercises.forEach(exercise => {
             const dateIndex = exercise.dueDate.startOf('week').format('YYYY-MM-DD');
             if (!groupedExercises[dateIndex]) {
                 indexKeys.push(dateIndex);
