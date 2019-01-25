@@ -83,8 +83,10 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
 
 
         if(questionTextSplitAtNewLine.includes(",")){
-            questionTextSplitAtNewLine = questionTextSplitAtNewLine.replace(/\,/g, "\n");
-            this.isList = true;
+            questionTextSplitAtNewLine = questionTextSplitAtNewLine.replace(/\,/g, " ");
+            if(questionTextSplitAtNewLine.includes("1.")){
+                this.isList = true;
+            }
         }
 
         this.textWithoutSpots = questionTextSplitAtNewLine.split(/\[-spot\s\d\]/g);
