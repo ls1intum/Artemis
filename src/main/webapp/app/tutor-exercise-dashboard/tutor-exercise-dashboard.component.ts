@@ -25,7 +25,10 @@ export class TutorExerciseDashboardComponent implements OnInit {
     tutorParticipationStatus: TutorParticipationStatus;
     submissions: TextSubmission[];
     unassessedSubmission: TextSubmission;
-    exampleSubmissions: ExampleSubmission[] = [];
+    exampleSubmissionsForTutorial: ExampleSubmission[] = [];
+    exampleSubmissionsToComplete: ExampleSubmission[] = [];
+    tutorParticipation: TutorParticipation;
+    numberOfNeededSubmissions: number;
 
     NOT_PARTICIPATED = TutorParticipationStatus.NOT_PARTICIPATED;
     REVIEWED_INSTRUCTIONS = TutorParticipationStatus.REVIEWED_INSTRUCTIONS;
@@ -34,7 +37,6 @@ export class TutorExerciseDashboardComponent implements OnInit {
 
     private subscription: Subscription;
     private tutor: User;
-    private tutorParticipation: TutorParticipation;
 
     constructor(
         private exerciseService: ExerciseService,
@@ -54,12 +56,6 @@ export class TutorExerciseDashboardComponent implements OnInit {
             this.loadAll();
         });
 
-        this.route.queryParams.subscribe(queryParams => {
-            if (queryParams['welcome'] === '') {
-                this.showWelcomeAlert();
-            }
-        });
-
         this.principal.identity().then(user => (this.tutor = user));
     }
 
@@ -69,7 +65,9 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 this.exercise = res.body;
                 this.tutorParticipation = this.exercise.tutorParticipations[0];
                 this.tutorParticipationStatus = this.tutorParticipation.status;
-                this.exampleSubmissions = this.exercise.exampleSubmissions;
+                this.exampleSubmissionsForTutorial = this.exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => exampleSubmission.usedForTutorial);
+                this.exampleSubmissionsToComplete = this.exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => !exampleSubmission.usedForTutorial);
+                this.numberOfNeededSubmissions = Math.max(3, this.exampleSubmissionsToComplete.length);
             },
             (response: string) => this.onError(response)
         );
@@ -111,12 +109,15 @@ export class TutorExerciseDashboardComponent implements OnInit {
         this.modalService.open(content, { size: 'lg' });
     }
 
-    readInstruction() {
+    readInstruction(onComplete: () => void) {
         this.tutorParticipationService.create(this.tutorParticipation, this.exerciseId).subscribe(
             (res: HttpResponse<TutorParticipation>) => {
                 this.tutorParticipation = res.body;
+                this.tutorParticipationStatus = this.tutorParticipation.status;
+                this.jhiAlertService.success('You reviewed the instructions, you can now read the example submissions');
             },
-            error => console.error(error)
+            this.onError,
+            onComplete
         );
     }
 
@@ -125,14 +126,8 @@ export class TutorExerciseDashboardComponent implements OnInit {
     }
 
     private onError(error: string) {
+        console.error(error);
         this.jhiAlertService.error(error, null, null);
-    }
-
-    showWelcomeAlert() {
-        // show alert after timeout to fix translation not loaded
-        setTimeout(() => {
-            this.jhiAlertService.info('arTeMiSApp.exercise.welcome');
-        }, 500);
     }
 
     assessExampleSubmission(exampleSubmission: ExampleSubmission) {

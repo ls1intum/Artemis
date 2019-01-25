@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
 
@@ -108,18 +109,23 @@ public class TextAssessmentResource extends AssessmentResource {
         return ResponseEntity.ok(participation);
     }
 
-    @GetMapping("/submission/{submissionId}/exampleAssessment")
+    @GetMapping("/exercise/{exerciseId}/submission/{submissionId}/exampleAssessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
-    public ResponseEntity<Result> getExampleAssessmentForTutor(@PathVariable Long submissionId) {
+    public ResponseEntity<Result> getExampleAssessmentForTutor(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
         log.debug("REST request to get example assessment for tutors text assessment: {}", submissionId);
         Optional<TextSubmission> textSubmission = textSubmissionRepository.findById(submissionId);
+        TextExercise textExercise = textExerciseService.findOne(exerciseId);
         if (!textSubmission.isPresent()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("textSubmission", "textSubmissionNotFound", "No Submission was found for the given ID.")).body(null);
         }
 
-        // TODO: If the user is not an instructor, and this is not an example submission used for tutorial
-        //       do not provide the results
+        // If the user is not an instructor, and this is not an example submission used for tutorial,
+        // do not provide the results
+        boolean isAtLeastTeachingAssistant = authCheckService.isAtLeastTeachingAssistantForExercise(textExercise);
+        if (!textSubmission.get().isExampleSubmission() && !isAtLeastTeachingAssistant) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("textSubmission", "notAuthorized", "You cannot see results")).body(null);
+        }
 
         Optional<Result> databaseResult = this.resultRepository.findDistinctBySubmissionId(submissionId);
         Result result = databaseResult.orElseGet(() -> {

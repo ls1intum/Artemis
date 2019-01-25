@@ -119,6 +119,13 @@ export class Principal {
         );
     }
 
+    isAtLeastInstructorInCourse(course: Course): boolean {
+        return (
+            this.hasGroup(course.teachingAssistantGroupName) ||
+            this.hasAnyAuthorityDirect(['ROLE_ADMIN'])
+        );
+    }
+
     isAuthenticated(): boolean {
         return this.authenticated;
     }

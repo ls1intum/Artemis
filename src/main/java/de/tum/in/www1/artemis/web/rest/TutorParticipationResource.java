@@ -9,6 +9,7 @@ import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.TutorParticipationService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import io.swagger.annotations.Example;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
@@ -107,8 +109,33 @@ public class TutorParticipationResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("tutorParticipations", "tutorParticipationInWrongStatus", "You cannot assess an example submission if you haven't read the grading instructions yet.")).body(null);
         }
 
-        // TODO: check it is a valid example submission
+        // Retrieve the example submission created by the instructor
+        Optional<ExampleSubmission> existingExampleSubmission = this.exampleSubmissionRepository.findById(exampleSubmission.getId());
+
+        // Check if the example submission really exists
+        if (!existingExampleSubmission.isPresent()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // Check if the result is the same
+        // TODO: at the moment we check only the score +/10%, maybe we want to do something smarter?
+        long instructorScore = existingExampleSubmission.get().getSubmission().getResult().getScore();
+        float lowerInstructorScore = (float) instructorScore - (float) instructorScore / 10;
+        float higherInstructorScore = (float) instructorScore + (float) instructorScore / 10;
+
+        float tutorInstructor = (float) exampleSubmission.getSubmission().getResult().getScore();
+
+        if (lowerInstructorScore > tutorInstructor || tutorInstructor > higherInstructorScore) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("result", "wrongScore", "Your score is too different from the instructor's one")).body(null);
+        }
+
         List<ExampleSubmission> alreadyAssessedSubmissions = this.exampleSubmissionRepository.findAllByExerciseIdAndTutorParticipation(exercise.getId(), existingTutorParticipation);
+
+        // If the example submission was already assessed, we do not assess it again
+        if (alreadyAssessedSubmissions.contains(exampleSubmission)) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("tutorParticipation", "alreadyAssessed", "You have already assesed this example submission")).body(null);
+        }
+
         alreadyAssessedSubmissions.add(exampleSubmission);
         existingTutorParticipation.setTrainedExampleSubmissions(new HashSet<>(alreadyAssessedSubmissions));
 
@@ -119,7 +146,7 @@ public class TutorParticipationResource {
           all exercises (maybe there are less example exercises than 3) the tutor status goes to the next step.
           TODO: make 3 a configuration option
          */
-        if (alreadyAssessedSubmissions.size() == 3 || alreadyAssessedSubmissions.size() == numberOfExampleSubmissions) {
+        if (alreadyAssessedSubmissions.size() == 3 || alreadyAssessedSubmissions.size() >= numberOfExampleSubmissions) {
             existingTutorParticipation.setStatus(TutorParticipationStatus.TRAINED);
         }
 

@@ -22,7 +22,7 @@ const ENTITY_STATES = [...tutorCourseDashboardRoute];
 @NgModule({
     imports: [BrowserModule, ArTEMiSSharedModule, ArTEMiSResultModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES)],
     declarations: [TutorCourseDashboardComponent, TutorParticipationGraphComponent],
-    exports: [ResultComponent],
+    exports: [TutorParticipationGraphComponent],
     entryComponents: [HomeComponent, CourseComponent, JhiMainComponent, ResultComponent],
     providers: [
         CourseService,

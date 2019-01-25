@@ -14,6 +14,8 @@ import { TextAssessmentsService } from 'app/entities/text-assessments/text-asses
 import { Result } from 'app/entities/result';
 import { HighlightColors } from 'app/text-shared/highlight-colors';
 import { TextExercise } from 'app/entities/text-exercise';
+import { TutorParticipation } from 'app/entities/tutor-participation';
+import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
 
 @Component({
     selector: 'jhi-example-text-submission',
@@ -31,6 +33,9 @@ export class ExampleTextSubmissionComponent implements OnInit {
     totalScore: number;
     invalidError: string;
     exercise: TextExercise;
+    isAtLeastInstructor = false;
+    readOnly: boolean;
+    toComplete: boolean;
 
     public getColorForIndex = HighlightColors.forIndex;
 
@@ -42,6 +47,7 @@ export class ExampleTextSubmissionComponent implements OnInit {
         private textSubmissionService: TextSubmissionService,
         private exampleSubmissionService: ExampleSubmissionService,
         private assessmentsService: TextAssessmentsService,
+        private tutorParticipationService: TutorParticipationService,
         private jhiAlertService: JhiAlertService,
         private principal: Principal,
         private route: ActivatedRoute,
@@ -58,11 +64,17 @@ export class ExampleTextSubmissionComponent implements OnInit {
 
             this.loadAll();
         });
+
+        this.route.queryParams.subscribe(params => {
+            this.readOnly = params['readOnly'];
+            this.toComplete = params['toComplete'];
+        });
     }
 
     loadAll() {
         this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<TextExercise>) => {
             this.exercise = exerciseResponse.body;
+            this.isAtLeastInstructor = this.principal.isAtLeastInstructorInCourse(this.exercise.course);
         });
 
         if (!this.isNewSubmission) {
@@ -70,11 +82,15 @@ export class ExampleTextSubmissionComponent implements OnInit {
                 this.exampleSubmission = exampleSubmissionResponse.body;
                 this.textSubmission = this.exampleSubmission.submission as TextSubmission;
 
-                this.assessmentsService.getExampleAssessment(this.textSubmission.id).subscribe(result => {
-                    this.result = result;
-                    this.assessments = this.result.feedbacks || [];
-                    this.checkScoreBoundaries();
-                });
+                // Do not load the results when we have to assess the submission. The API will not provide it anyway
+                // if we are not instructors
+                if (!this.toComplete) {
+                    this.assessmentsService.getExampleAssessment(this.exerciseId, this.textSubmission.id).subscribe(result => {
+                        this.result = result;
+                        this.assessments = this.result.feedbacks || [];
+                        this.checkScoreBoundaries();
+                    });
+                }
             });
         }
     }
@@ -100,7 +116,7 @@ export class ExampleTextSubmissionComponent implements OnInit {
 
             let bothCompleted = false;
 
-            this.assessmentsService.getExampleAssessment(this.textSubmission.id).subscribe(result => {
+            this.assessmentsService.getExampleAssessment(this.exerciseId, this.textSubmission.id).subscribe(result => {
                 this.result = result;
                 this.assessments = this.result.feedbacks || [];
                 this.checkScoreBoundaries();
@@ -204,6 +220,19 @@ export class ExampleTextSubmissionComponent implements OnInit {
             this.jhiAlertService.success('arTeMiSApp.textAssessment.saveSuccessful');
         });
     }
+
+    public back(): void {
+        this.location.back();
+    }
+
+    // public assessExampleSubmission(exampleSubmission: ExampleSubmission) {
+    //     this.tutorParticipationService.assessExampleSubmission(exampleSubmission, this.exerciseId, this.tutorParticipation.id).subscribe(
+    //         (res: HttpResponse<TutorParticipation>) => {
+    //             this.tutorParticipation = res.body;
+    //         },
+    //         error => console.error(error)
+    //     );
+    // }
 
     private onError(error: string) {
         console.error(error);

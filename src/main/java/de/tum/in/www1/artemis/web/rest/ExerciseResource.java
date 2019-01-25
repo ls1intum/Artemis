@@ -249,6 +249,8 @@ public class ExerciseResource {
         exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
 
         List<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllByExerciseId(id);
+        // Do not provide example submissions without any assessment
+        exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission().getResult() == null);
         exercise.setExampleSubmissions(new HashSet<>(exampleSubmissions));
 
         return ResponseUtil.wrapOrNotFound(Optional.of(exercise));

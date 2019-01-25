@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor-participation';
 
 @Component({
@@ -6,7 +6,7 @@ import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor
     templateUrl: './tutor-participation-graph.component.html',
     styles: []
 })
-export class TutorParticipationGraphComponent implements OnInit {
+export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     @Input() public tutorParticipation: TutorParticipation;
 
     tutorParticipationStatus: TutorParticipationStatus = TutorParticipationStatus.NOT_PARTICIPATED;
@@ -19,5 +19,12 @@ export class TutorParticipationGraphComponent implements OnInit {
 
     ngOnInit() {
         this.tutorParticipationStatus = this.tutorParticipation.status;
+    }
+
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes.tutorParticipation) {
+            this.tutorParticipation = changes.tutorParticipation.currentValue;
+            this.tutorParticipationStatus = this.tutorParticipation.status;
+        }
     }
 }

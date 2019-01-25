@@ -33,8 +33,8 @@ export class TextAssessmentsService {
         return this.http.get<Participation>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}`);
     }
 
-    public getExampleAssessment(submissionId: number): Observable<Result> {
-        return this.http.get<Result>(`${this.resourceUrl}/submission/${submissionId}/exampleAssessment`);
+    public getExampleAssessment(exerciseId: number, submissionId: number): Observable<Result> {
+        return this.http.get<Result>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}/exampleAssessment`);
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {
@@ -54,7 +54,6 @@ export class TextAssessmentsService {
     }
 
     private convertItemFromServer(result: Result): Result {
-        const copy: Result = Object.assign({}, result);
-        return copy;
+        return Object.assign({}, result);
     }
 }
