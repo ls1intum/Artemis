@@ -9,6 +9,6 @@ export class ShortAnswerSubmittedText implements BaseEntity {
     public submittedAnswer: ShortAnswerSubmittedAnswer;
 
 
-    //FDE added afterwards
+    //added after database changes with Stephan
     public isCorrect = false;
 }

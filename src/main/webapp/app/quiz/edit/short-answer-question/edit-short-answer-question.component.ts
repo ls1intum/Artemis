@@ -22,7 +22,7 @@ import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
-import { DragAndDropQuestionUtil } from 'app/components/util/drag-and-drop-question-util.service';
+import { ShortAnswerQuestionUtil } from 'app/components/util/short-answer-question-util.service';
 import * as $ from 'jquery';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
@@ -104,7 +104,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
 
     constructor(
         private artemisMarkdown: ArtemisMarkdown,
-        private dragAndDropQuestionUtil: DragAndDropQuestionUtil, //TODO: FDE Check if saQuestionUtil is needed
+        private shortAnswerQuestionUtil: ShortAnswerQuestionUtil, //TODO: FDE Check if saQuestionUtil is needed
         private modalService: NgbModal
     ) {}
 
@@ -181,15 +181,15 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     }
 
     setOptionsWithID(){
-
+        /*
         let spotsWithID = [];
         let optionID = 1;
 
         for(let spot of this.question.spots){
-            spot.tempID = optionID;
+            //spot.tempID = optionID;
             spotsWithID.push(spot);
             optionID++;
-        }
+        } */
 
         for(let solution of this.question.solutions){
             let spotsForSolution: ShortAnswerSpot [] =[];
@@ -204,10 +204,12 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
 
             for(let spotForSolution of spotsForSolution){
                 if(firstSolution){
-                    option += spotsWithID.filter(spot => spot.id === spotForSolution.id)[0].tempID;
+                    //option += spotsWithID.filter(spot => spot.id === spotForSolution.id)[0].tempID;
+                    option += this.question.spots.filter(spot => spot.id === spotForSolution.id)[0].spotNr;
                     firstSolution = false;
                 } else {
-                    option += ","+spotsWithID.filter(spot => spot.id === spotForSolution.id)[0].tempID;
+                    //option += ","+spotsWithID.filter(spot => spot.id === spotForSolution.id)[0].tempID;
+                    option += ","+this.question.spots.filter(spot => spot.id === spotForSolution.id)[0].spotNr;
                 }
             }
             option += "]";
@@ -276,7 +278,6 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         this.question.spots = [];
 
         //setup spots
-
         for (const spotID of spotParts) {
             const spot = new ShortAnswerSpot();
             spot.tempID = this.pseudoRandomLong();
@@ -286,7 +287,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
             if (this.question.spots.length < existingSpotIDs.length) {
                 spot.id = existingSpotIDs[this.question.spots.length];
             }
-
+            spot.spotNr = +spotID.trim();
             this.spotsWithID.set(spotID.trim(), spot);
             this.question.spots.push(spot);
         }
@@ -658,8 +659,8 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         if (
             !this.question.correctMappings.some(
                 existingMapping =>
-                    this.dragAndDropQuestionUtil.isSameDropLocationSA(existingMapping.spot, spot) &&
-                    this.dragAndDropQuestionUtil.isSameDragItemSA(existingMapping.solution, dragItem)
+                    this.shortAnswerQuestionUtil.isSameSpot(existingMapping.spot, spot) &&
+                    this.shortAnswerQuestionUtil.isSameSolution(existingMapping.solution, dragItem)
             )
         ) {
             // Mapping doesn't exit yet => add this mapping
@@ -685,12 +686,12 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
             this.question.correctMappings.some(function(correctMapping) {
                 if (
                     !visitedSpots.some((spot: ShortAnswerSpot) => {
-                        return that.dragAndDropQuestionUtil.isSameDropLocationSA(spot, correctMapping.spot);
+                        return that.shortAnswerQuestionUtil.isSameSpot(spot, correctMapping.spot);
                     })
                 ) {
                     visitedSpots.push(correctMapping.spot);
                 }
-                return that.dragAndDropQuestionUtil.isSameDropLocationSA(correctMapping.spot, mapping.spot);
+                return that.shortAnswerQuestionUtil.isSameSpot(correctMapping.spot, mapping.spot);
             })
         ) {
             return visitedSpots.length;
@@ -709,7 +710,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
-        return this.question.correctMappings.filter(mapping => this.dragAndDropQuestionUtil.isSameDropLocationSA(mapping.spot, spot));
+        return this.question.correctMappings.filter(mapping => this.shortAnswerQuestionUtil.isSameSpot(mapping.spot, spot));
     }
 
     /**
@@ -724,7 +725,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         }
         return (
             this.question.correctMappings
-                .filter(mapping => this.dragAndDropQuestionUtil.isSameDragItemSA(mapping.solution, solution))
+                .filter(mapping => this.shortAnswerQuestionUtil.isSameSolution(mapping.solution, solution))
                 /** Moved the sorting from the template to the function call*/
                 .sort((m1, m2) => this.getMappingIndex(m1) - this.getMappingIndex(m2))
         );
@@ -740,7 +741,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
             this.question.correctMappings = [];
         }
         this.question.correctMappings = this.question.correctMappings.filter(
-            mapping => !this.dragAndDropQuestionUtil.isSameDropLocationSA(mapping.spot, spot)
+            mapping => !this.shortAnswerQuestionUtil.isSameSpot(mapping.spot, spot)
         );
     }
 
@@ -754,7 +755,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
             this.question.correctMappings = [];
         }
         this.question.correctMappings = this.question.correctMappings.filter(
-            mapping => !this.dragAndDropQuestionUtil.isSameDragItemSA(mapping.solution, solution)
+            mapping => !this.shortAnswerQuestionUtil.isSameSolution(mapping.solution, solution)
         );
     }
 

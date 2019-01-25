@@ -27,6 +27,10 @@ public class ShortAnswerSpot implements Serializable {
     @JsonView(QuizView.Before.class)
     private Long id;
 
+    @Column(name = "spot_nr")
+    @JsonView(QuizView.Before.class)
+    private Integer spotNr;
+
     @Column(name = "width")
     @JsonView(QuizView.Before.class)
     private Integer width;
@@ -70,6 +74,19 @@ public class ShortAnswerSpot implements Serializable {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Integer getspotNr() {
+        return spotNr;
+    }
+
+    public void setspotNr(Integer spotNr) {
+        this.spotNr = spotNr;
+    }
+
+    public ShortAnswerSpot spotNr(Integer spotNr) {
+        this.spotNr = spotNr;
+        return this;
     }
 
     public Integer getWidth() {
@@ -160,6 +177,7 @@ public class ShortAnswerSpot implements Serializable {
             "id=" + getId() +
             ", width=" + getWidth() +
             ", invalid='" + isInvalid() + "'" +
+            ", spotNr="+ getspotNr()+
             "}";
     }
 }
