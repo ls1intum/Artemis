@@ -2,7 +2,6 @@ import { Injectable, SecurityContext } from '@angular/core';
 import * as showdown from 'showdown';
 import { DomSanitizer } from '@angular/platform-browser';
 import { MarkDownElement } from '../../entities/question';
-import { number } from 'prop-types';
 
 @Injectable({ providedIn: 'root' })
 export class ArtemisMarkdown {
