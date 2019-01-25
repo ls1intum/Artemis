@@ -143,7 +143,10 @@
                 "questionCorrectAnswerOption": "Question {{index}}: No answer option is correct.",
                 "questionCorrectMapping": "Question {{index}}: No correct mapping.",
                 "questionUnsolvable": "Question {{index}}: The question cannot be answered correctly without using a drag item twice.",
-                "misleadingCorrectMapping": "Question {{index}}: You have defined at least one correct mapping (or group of correct mappings), that when used, makes it impossible to answer the question correctly."
+                "misleadingCorrectMapping": "Question {{index}}: You have defined at least one correct mapping (or group of correct mappings), that when used, makes it impossible to answer the question correctly.",
+                "saQuestionEverySpotHasASolution": "Question {{index}}: At least one spot is missing a solution.",
+                "saQuestionEveryMappedSolutionHasASpot": "Question {{index}}: At least one spot is missing for a correct mapping.",
+                "saQuestionUnsolvable": "Question {{index}}: The question cannot be answered correctly."
             },
             "scoringType": {
                 "all_or_nothing": "All or Nothing",

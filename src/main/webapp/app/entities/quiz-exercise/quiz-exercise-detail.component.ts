@@ -7,6 +7,7 @@ import { Course } from '../course/course.model';
 import { CourseService } from '../course/course.service';
 import { QuizExercise } from './quiz-exercise.model';
 import { DragAndDropQuestionUtil } from '../../components/util/drag-and-drop-question-util.service';
+import { ShortAnswerQuestionUtil } from '../../components/util/short-answer-question-util.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploaderService } from '../../shared/http/file-uploader.service';
 import { Question, QuestionType, ScoringType } from '../../entities/question';
@@ -28,7 +29,7 @@ interface Reason {
 @Component({
     selector: 'jhi-quiz-exercise-detail',
     templateUrl: './quiz-exercise-detail.component.html',
-    providers: [DragAndDropQuestionUtil]
+    providers: [DragAndDropQuestionUtil, ShortAnswerQuestionUtil]
 })
 export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy {
     // Make constants available to html for comparison
@@ -81,6 +82,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         private courseService: CourseService,
         private quizExerciseService: QuizExerciseService,
         private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
+        private shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
         private router: Router,
         private translateService: TranslateService,
         private fileUploaderService: FileUploaderService,
@@ -487,10 +489,10 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                 const saQuestion = question as ShortAnswerQuestion;
                 return (
                     question.title && question.title !== '' && saQuestion.correctMappings && saQuestion.correctMappings.length > 0
-                    //TODO: FDE checks if needs to be adapted
-                    /*&&
-                    this.dragAndDropQuestionUtil.solve(saQuestion).length &&
-                    this.dragAndDropQuestionUtil.validateNoMisleadingCorrectMapping(saQuestion)*/
+                    //&& this.shortAnswerQuestionUtil.solveSA(saQuestion).length
+                    && this.shortAnswerQuestionUtil.everySpotHasASolution(saQuestion.correctMappings, saQuestion.spots)
+                    && this.shortAnswerQuestionUtil.everyMappedSolutionHasASpot(saQuestion.correctMappings)
+                    //&& this.shortAnswerQuestionUtil.validateNoMisleadingCorrectSAMapping(saQuestion)
                 );
             } else {
                 console.log('Unknown question type: ' + question);
@@ -590,15 +592,33 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionCorrectMapping',
                         translateValues: { index: index + 1 }
                     });
+
+
                 }
-                //TODO: FDE checks if needs to be adapted
-                /* else if (this.dragAndDropQuestionUtil.solve(saQuestion, []).length === 0) {
+
+                /*
+                 else if (this.dragAndDropQuestionUtil.solveSA(saQuestion, []).length === 0) {
                     reasons.push({
-                        translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionUnsolvable',
+                        translateKey: 'arTeMiSApp.quizExercise.invalidReasons.saQuestionUnsolvable',
+                        translateValues: { index: index + 1 }
+                    });
+                } */
+
+                if(!this.shortAnswerQuestionUtil.everySpotHasASolution(saQuestion.correctMappings, saQuestion.spots)){
+                    reasons.push({
+                        translateKey: 'arTeMiSApp.quizExercise.invalidReasons.saQuestionEverySpotHasASolution',
                         translateValues: { index: index + 1 }
                     });
                 }
-                if (!this.dragAndDropQuestionUtil.validateNoMisleadingCorrectMapping(saQuestion)) {
+
+                if(!this.shortAnswerQuestionUtil.everyMappedSolutionHasASpot(saQuestion.correctMappings)){
+                    reasons.push({
+                        translateKey: 'arTeMiSApp.quizExercise.invalidReasons.saQuestionEveryMappedSolutionHasASpot',
+                        translateValues: { index: index + 1 }
+                    });
+                }
+                /*
+                if (!this.dragAndDropQuestionUtil.validateNoMisleadingCorrectSAMapping(saQuestion)) {
                     reasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.misleadingCorrectMapping',
                         translateValues: { index: index + 1 }
