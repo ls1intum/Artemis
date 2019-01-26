@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 
+import { PendingChangesGuard } from '../../shared';
 import { UserRouteAccessService } from '../../core';
 import { QuizExerciseComponent } from './quiz-exercise.component';
 import { QuizExerciseDetailComponent } from './quiz-exercise-detail.component';
@@ -24,7 +25,8 @@ export const quizExerciseRoute: Routes = [
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'arTeMiSApp.quizExercise.home.title'
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
+        canDeactivate: [PendingChangesGuard]
     },
     {
         path: 'course/:courseId/quiz-exercise',
@@ -51,7 +53,8 @@ export const quizExerciseRoute: Routes = [
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'arTeMiSApp.quizExercise.home.title'
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
+        canDeactivate: [PendingChangesGuard]
     },
     {
         path: 'course/:courseId/quiz-exercise/new',
@@ -60,7 +63,8 @@ export const quizExerciseRoute: Routes = [
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'arTeMiSApp.quizExercise.home.title'
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
+        canDeactivate: [PendingChangesGuard]
     },
     {
         path: 'course/:courseId/quiz-exercise/export',
