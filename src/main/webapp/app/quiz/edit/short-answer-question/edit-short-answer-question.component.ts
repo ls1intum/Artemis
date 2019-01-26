@@ -90,17 +90,20 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      */
     mouse: DragAndDropMouseEvent;
 
+    //equals the highest spotNr
     numberOfSpot: number = 1;
-
+    //defines the first gap between text and solutions when
     firstPressed: number = 1;
-
+    //has all solution options with their mapping (each spotNr)
     optionsWithID: string [] = [];
-
+    //contains all spots with their spotNr
     spotsWithID = new Map<string,ShortAnswerSpot>();
 
-
-
+    /*
+    For visual mode
+     */
     dropLocationsForSpots: [DropLocation];
+
 
     constructor(
         private artemisMarkdown: ArtemisMarkdown,
@@ -150,9 +153,9 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @desc Set up Question text editor
      */
     setupQuestionEditor(): void {
+        //Sets the counter to the highest spotNr and generates solution options with their mapping (each spotNr)
         this.numberOfSpot = this.question.spots.length + 1;
         this.setOptionsWithID();
-
 
         // Default editor settings for inline markup editor
         this.questionEditor.setTheme('chrome');
@@ -163,7 +166,6 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         this.questionEditor.getEditor().setShowPrintMargin(false);
 
         // Generate markdown from question and show result in editor
-        //this.questionEditorText = this.artemisMarkdown.generateTextHintExplanation(this.question);
         this.questionEditorText = this.generateMarkdown();
         this.questionEditor.getEditor().clearSelection();
 
@@ -172,7 +174,6 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
             'blur',
             () => {
                 // Parse the markdown in the editor and update question accordingly
-                //this.artemisMarkdown.parseTextHintExplanation(this.questionEditorText, this.question);
                 this.parseMarkdown(this.questionEditorText);
                 this.questionUpdated.emit();
             },
@@ -180,17 +181,11 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         );
     }
 
+    /**
+     * @function setOptionsWithID
+     * @desc Set up of all solution option with their mapping (spotNr)
+     */
     setOptionsWithID(){
-        /*
-        let spotsWithID = [];
-        let optionID = 1;
-
-        for(let spot of this.question.spots){
-            //spot.tempID = optionID;
-            spotsWithID.push(spot);
-            optionID++;
-        } */
-
         for(let solution of this.question.solutions){
             let spotsForSolution: ShortAnswerSpot [] =[];
             let option = "[-option ";
@@ -204,11 +199,9 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
 
             for(let spotForSolution of spotsForSolution){
                 if(firstSolution){
-                    //option += spotsWithID.filter(spot => spot.id === spotForSolution.id)[0].tempID;
                     option += this.question.spots.filter(spot => spot.id === spotForSolution.id)[0].spotNr;
                     firstSolution = false;
                 } else {
-                    //option += ","+spotsWithID.filter(spot => spot.id === spotForSolution.id)[0].tempID;
                     option += ","+this.question.spots.filter(spot => spot.id === spotForSolution.id)[0].spotNr;
                 }
             }
@@ -222,14 +215,14 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @desc Generate the markdown text for this question
      * 1. First the question text, hint, and explanation are added using ArtemisMarkdown
      * 2. After an empty line, the solutions are added
-     * 3. For each answer option: text, hint and explanation are added using ArtemisMarkdown
+     * 3. For each solution: text is added using ArtemisMarkdown
      */
     generateMarkdown(): string {
         const markdownText =
             this.artemisMarkdown.generateTextHintExplanation(this.question) +
             '\n\n\n\n' +
             this.question.solutions
-                .map((solution, index) => this.optionsWithID[index] +" "+this.artemisMarkdown.generateTextHintExplanation(solution))
+                .map((solution, index) => this.optionsWithID[index] +" "+solution.text.trim())
                 .join('\n\n');
         return markdownText;
     }
@@ -242,16 +235,16 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      *
      * 1. Text is split at [-option
      *    => The first part (any text before the first [-option ) is the question text
-     * 2. The questionText is split further at [-spot to determine all spots and IDs.
+     * 2. The questionText is split further at [-spot to determine all spots and spotNr.
      * 3. The question text is split into text, hint, and explanation using ArtemisMarkdown
      * 4. For every solution (Parts after each "[-option " and "]":
      *    4.a) Same treatment as the question text for text, hint, and explanation
      *    4.b) Is used to create the mappings
      *
-     * Note: Existing IDs for answer options are reused in the original order.
+     * Note: Existing IDs for solutions and spots are reused in the original order.
      */
     parseMarkdown(text: string): void {
-        // First split up by [-option tag and seperate first part of the split as text and second part as solutionParts
+        // First split up by "[-option " tag and seperate first part of the split as text and second part as solutionParts
         const questionParts = text.split(/\[-option /g);
         const questionText = questionParts[0];
 
@@ -262,7 +255,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
             .slice(1)
             .map(questionText => questionText[0]);
 
-        //Split new created Array by ] to generate this structure: {"1,2", " SolutionText"}
+        //Split new created Array by "]" to generate this structure: {"1,2", " SolutionText"}
         const solutionParts = questionParts.map(questionPart => questionPart.split(/\]/g)).slice(1);
 
         // Split question into main text, hint and explanation
@@ -297,29 +290,17 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
             // Find the box (text in-between the parts)
             const solution = new ShortAnswerSolution();
             solution.tempID = this.pseudoRandomLong();
-            // Parse this answerOption
-            this.artemisMarkdown.parseTextHintExplanation(solutionText[1], solution);
+            solution.text = solutionText[1];
 
             // Assign existing ID if available
             if (this.question.solutions.length < existingSolutionIDs.length) {
                 solution.id = existingSolutionIDs[this.question.solutions.length];
             }
-
             this.question.solutions.push(solution);
 
             //create mapping according to this structure: {spot(s), solution} -> {"1,2", " SolutionText"}
             this.createMapping(solutionText, solution);
         }
-        console.log("Spots:");
-        console.log(this.question.spots);
-        console.log(this.spotsWithID);
-        console.log("Solutions:");
-        console.log(this.question.solutions);
-        console.log("Mappings:");
-        console.log(this.question.correctMappings);
-        console.log("-option ID");
-        console.log(this.optionsWithID);
-
     }
 
     /**
@@ -329,7 +310,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     createMapping(solutionText: string[], solution: ShortAnswerSolution) {
         switch (solutionText[0].trim().length) {
             case 1: {
-                const spot = this.spotsWithID.get(solutionText[0]);
+                const spot = this.spotsWithID.get(solutionText[0]);;
                 this.question.correctMappings.push(new ShortAnswerMapping(spot, solution));
                 break;
             }
@@ -349,20 +330,6 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      */
     open(content: any) {
         this.modalService.open(content, { size: 'lg' });
-    }
-
-    /**
-     * Handles drag-available UI
-     */
-    drag(): void {
-        this.dropAllowed = true;
-    }
-
-    /**
-     * Handles drag-available UI
-     */
-    drop(): void {
-        this.dropAllowed = false;
     }
 
     /**
@@ -400,9 +367,9 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * add the markdown for a option below the last visible row, which is connected to a spot in the given editor
+     * add the markdown for a solution option below the last visible row, which is connected to a spot in the given editor
      *
-     * @param editor {object} the editor into which the option markdown will be inserted
+     * @param editor {object} the editor into which the solution option markdown will be inserted
      */
     addOptionToSpot(editor: any, numberOfSpot: number, optionText: string, firstPressed: number) {
         let addedText: string;
@@ -417,8 +384,8 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * @function addOptionAtCursor
-     * @desc Add the markdown for an option below the last visible row
+     * @function addOption
+     * @desc Add the markdown for a solution option below the last visible row
      */
     addOption(): void {
         let editor = this.questionEditor.getEditor();
@@ -436,6 +403,26 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         editor.selection.setRange(range);
 
         this.firstPressed++;
+    }
+
+
+    /*
+    * For visual mode
+    * TODO FDE: visual mode
+    * */
+
+    /**
+     * Handles drag-available UI
+     */
+    drag(): void {
+        this.dropAllowed = true;
+    }
+
+    /**
+     * Handles drag-available UI
+     */
+    drop(): void {
+        this.dropAllowed = false;
     }
 
     /**

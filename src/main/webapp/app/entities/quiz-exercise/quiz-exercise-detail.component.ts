@@ -13,6 +13,7 @@ import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { Question, QuestionType, ScoringType } from '../../entities/question';
 import { MultipleChoiceQuestion } from 'app/entities/multiple-choice-question';
 import { DragAndDropQuestion } from 'app/entities/drag-and-drop-question';
+import { ShortAnswerQuestion } from 'app/entities/short-answer-question';
 import { AnswerOption } from 'app/entities/answer-option';
 import { Option, Duration } from './quiz-exercise-interfaces';
 import { NgbDateStruct, NgbDate, NgbTimeStruct } from '@ng-bootstrap/ng-bootstrap';
@@ -20,7 +21,6 @@ import * as moment from 'moment';
 import { ComponentCanDeactivate } from 'app/shared';
 import { Moment } from 'moment';
 import { JhiAlertService } from 'ng-jhipster';
-import { ShortAnswerQuestion } from 'app/entities/short-answer-question';
 import { Observable } from 'rxjs/Observable';
 
 interface Reason {
@@ -504,9 +504,9 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                 return (
                     question.title && question.title !== '' && saQuestion.correctMappings && saQuestion.correctMappings.length > 0
                     //&& this.shortAnswerQuestionUtil.solveSA(saQuestion).length
+                    //&& this.shortAnswerQuestionUtil.validateNoMisleadingCorrectSAMapping(saQuestion)
                     && this.shortAnswerQuestionUtil.everySpotHasASolution(saQuestion.correctMappings, saQuestion.spots)
                     && this.shortAnswerQuestionUtil.everyMappedSolutionHasASpot(saQuestion.correctMappings)
-                    //&& this.shortAnswerQuestionUtil.validateNoMisleadingCorrectSAMapping(saQuestion)
                 );
             } else {
                 console.log('Unknown question type: ' + question);
@@ -606,38 +606,31 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionCorrectMapping',
                         translateValues: { index: index + 1 }
                     });
-
-
-                }
-
-                /*
-                 else if (this.dragAndDropQuestionUtil.solveSA(saQuestion, []).length === 0) {
+                } /*else if (this.shortAnswerQuestionUtil.solveSA(saQuestion, []).length === 0) {
                     reasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.saQuestionUnsolvable',
                         translateValues: { index: index + 1 }
                     });
                 } */
-
+                /*
+                if (!this.shortAnswerQuestionUtil.validateNoMisleadingCorrectSAMapping(saQuestion)) {
+                    reasons.push({
+                        translateKey: 'arTeMiSApp.quizExercise.invalidReasons.misleadingCorrectMapping',
+                        translateValues: { index: index + 1 }
+                    });
+                } */
                 if(!this.shortAnswerQuestionUtil.everySpotHasASolution(saQuestion.correctMappings, saQuestion.spots)){
                     reasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.saQuestionEverySpotHasASolution',
                         translateValues: { index: index + 1 }
                     });
                 }
-
                 if(!this.shortAnswerQuestionUtil.everyMappedSolutionHasASpot(saQuestion.correctMappings)){
                     reasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.saQuestionEveryMappedSolutionHasASpot',
                         translateValues: { index: index + 1 }
                     });
                 }
-                /*
-                if (!this.dragAndDropQuestionUtil.validateNoMisleadingCorrectSAMapping(saQuestion)) {
-                    reasons.push({
-                        translateKey: 'arTeMiSApp.quizExercise.invalidReasons.misleadingCorrectMapping',
-                        translateValues: { index: index + 1 }
-                    });
-                } */
             }
         }, this);
         return reasons;

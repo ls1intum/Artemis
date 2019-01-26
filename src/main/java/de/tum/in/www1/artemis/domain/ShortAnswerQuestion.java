@@ -422,7 +422,6 @@ public class ShortAnswerQuestion extends Question implements Serializable {
              "id=" + getId() +
              "}";
      }
-     //TODO Francisco Have a look at DndQuestion.java and MCQuestion.java and implement the required methods, constructors and annotations
 
      /**
       * Constructor.

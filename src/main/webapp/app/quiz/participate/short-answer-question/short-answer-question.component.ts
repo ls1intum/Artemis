@@ -1,11 +1,8 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { ShortAnswerQuestion } from '../../../entities/short-answer-question';
-import { ShortAnswerSpot } from '../../../entities/short-answer-spot';
 import { ShortAnswerSolution } from '../../../entities/short-answer-solution';
-import { ShortAnswerMapping } from '../../../entities/short-answer-mapping';
 import { ShortAnswerSubmittedText } from 'app/entities/short-answer-submitted-text';
-import { ShortAnswerSubmittedAnswer } from 'app/entities/short-answer-submitted-answer';
 
 @Component({
     selector: 'jhi-short-answer-question',
@@ -44,23 +41,21 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
             this.showSampleSolution();
         }
     }
+
     get forceSampleSolution() {
         return this._forceSampleSolution;
     }
     @Input()
     fnOnSubmittedTextUpdate: any;
 
-    //TODO: FDE Check if ok so
     @Output()
     submittedTextsChange = new EventEmitter();
-
     showingSampleSolution = false;
     rendered: ShortAnswerQuestion;
     questionText: string;
     textWithoutSpots: string[];
     textWithOutSpotsFirstParts: string[];
     textWithOutSpotsLastPart: string[];
-
     sampleSolutions: ShortAnswerSolution[] =  [];
     isList = false;
 
@@ -75,13 +70,16 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
         const artemisMarkdown = this.artemisMarkdown;
         this.rendered = new ShortAnswerQuestion();
 
+        //first line is the question
         this.questionText = this.question.text.split(/\n/g)[0];
+
+        //seperates the the rest of the text from the question
         let questionTextSplitAtNewLine = this.question.text
             .split(/\n+/g)
             .slice(1)
             .join();
 
-
+        //checks if a line break is in the text (marked by "," and replaces it) and check if text is a list
         if(questionTextSplitAtNewLine.includes(",")){
             questionTextSplitAtNewLine = questionTextSplitAtNewLine.replace(/\,/g, " ");
             if(questionTextSplitAtNewLine.includes("1.")){
@@ -89,8 +87,11 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
             }
         }
 
+        //splits the text at the "[-spot " tag to have the parts of the text without spot tag
         this.textWithoutSpots = questionTextSplitAtNewLine.split(/\[-spot\s\d\]/g);
+        //separates the text into parts that come before the spot tag
         this.textWithOutSpotsFirstParts = this.textWithoutSpots.slice(0, this.textWithoutSpots.length - 1);
+        //the last part that comes after the last spot tag
         this.textWithOutSpotsLastPart = this.textWithoutSpots.slice(this.textWithoutSpots.length - 1);
 
         this.rendered.text = artemisMarkdown.htmlForMarkdown(this.question.text);
@@ -98,13 +99,17 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
         this.rendered.explanation = artemisMarkdown.htmlForMarkdown(this.question.explanation);
     }
 
+
+    /**
+     * When students type in their answers and the focus gets away from the input spot, the answers are
+     * set as submitted texts
+     */
     setSubmittedText() {
         this.submittedTexts = [];
         for (let id in this.textWithOutSpotsFirstParts) {
             let submittedText = new ShortAnswerSubmittedText();
             submittedText.text = (<HTMLInputElement>document.getElementById('solution-' + id)).value;
             submittedText.spot = this.question.spots[id];
-            //this.submittedTexts.forEach(submittedText => submittedText.submittedAnswer = this.submittedAnswer);
             this.submittedTexts.push(submittedText);
         }
         this.submittedTextsChange.emit(this.submittedTexts);

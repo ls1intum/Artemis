@@ -64,7 +64,6 @@ public class ShortAnswerSubmittedAnswer extends SubmittedAnswer implements Seria
      */
     @Override
     public void checkAndDeleteReferences(QuizExercise quizExercise) {
-        //TODO Francisco implement
         // Delete all references to question, spots and solutions if the question was deleted
         if (!quizExercise.getQuestions().contains(getQuestion())) {
             setQuestion(null);

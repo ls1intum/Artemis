@@ -22,7 +22,6 @@ import { DragAndDropQuestionComponent } from 'app/quiz/participate/drag-and-drop
 import { ShortAnswerQuestionComponent } from 'app/quiz/participate/short-answer-question/short-answer-question.component';
 import { DragAndDropMapping } from 'app/entities/drag-and-drop-mapping';
 import { AnswerOption } from 'app/entities/answer-option';
-import { ShortAnswerMapping } from 'app/entities/short-answer-mapping';
 import { ShortAnswerSubmittedText } from 'app/entities/short-answer-submitted-text';
 
 @Component({
@@ -75,9 +74,6 @@ export class QuizComponent implements OnInit, OnDestroy {
     totalScore: number;
     selectedAnswerOptions = new Map<number, AnswerOption[]>();
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
-
-    //TODO FDE Check if it is correct like this
-    shortAnswerMappings = new Map<number, ShortAnswerMapping[]>();
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
     result: Result;
@@ -419,7 +415,7 @@ export class QuizComponent implements OnInit, OnDestroy {
                     // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     this.dragAndDropMappings[question.id] = [];
                 } else if (question.type === QuestionType.SHORT_ANSWER) {
-                    //TODO: FDE check if correct
+
                     // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     this.shortAnswerSubmittedTexts[question.id] = [];
                 } else {
@@ -461,7 +457,6 @@ export class QuizComponent implements OnInit, OnDestroy {
                     // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     this.dragAndDropMappings[question.id] = submittedAnswer ? (submittedAnswer as DragAndDropSubmittedAnswer).mappings : [];
                 } else if (question.type === QuestionType.SHORT_ANSWER) {
-                    //TODO: FDE check if correct
                     // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     this.shortAnswerSubmittedTexts[question.id] = submittedAnswer
                         ? (submittedAnswer as ShortAnswerSubmittedAnswer).submittedTexts
@@ -520,7 +515,6 @@ export class QuizComponent implements OnInit, OnDestroy {
             this.submission.submittedAnswers.push(dndSubmittedAnswer);
         }, this);
 
-        //TODO: FDE check if correct
         // for short-answer questions
         Object.keys(this.shortAnswerSubmittedTexts).forEach(questionID => {
             // find the question object for the given question id

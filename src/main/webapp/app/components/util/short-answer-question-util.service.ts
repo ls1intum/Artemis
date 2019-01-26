@@ -262,9 +262,6 @@ export class ShortAnswerQuestionUtil {
     }
 
     everyMappedSolutionHasASpot(mapping: ShortAnswerMapping[]): boolean {
-        let test = mapping.filter(mapping => mapping.spot === undefined);
-        console.log("fehlermeldung everySolutionMappedHasSPot");
-        console.log(test);
         return !(mapping.filter(mapping => mapping.spot === undefined).length > 0);
     }
 }
