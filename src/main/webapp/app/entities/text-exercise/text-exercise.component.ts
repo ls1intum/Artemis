@@ -13,7 +13,7 @@ import { ActivatedRoute } from '@angular/router';
     selector: 'jhi-text-exercise',
     templateUrl: './text-exercise.component.html'
 })
-export class TextExerciseComponent implements OnInit, OnDestroy {
+export class TextExerciseComponent implements OnInit {
     private subscription: Subscription;
     @Input() textExercises: TextExercise[];
     @Input() course: Course;
@@ -68,9 +68,7 @@ export class TextExerciseComponent implements OnInit, OnDestroy {
         });
     }
 
-    ngOnDestroy() {
-        this.eventManager.destroy(this.eventSubscriber);
-    }
+
 
     trackId(index: number, item: TextExercise) {
         return item.id;

@@ -77,7 +77,7 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
-        this.subscription.unsubscribe();
+
         this.eventManager.destroy(this.eventSubscriber);
     }
 
