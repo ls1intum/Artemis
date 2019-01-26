@@ -38,7 +38,6 @@ public class ShortAnswerSubmittedText implements Serializable {
     @JsonIgnore
     private ShortAnswerSubmittedAnswer submittedAnswer;
 
-
     //FDE added afterwards
     @Column(name = "is_correct")
     @JsonView(QuizView.After.class)
@@ -93,8 +92,6 @@ public class ShortAnswerSubmittedText implements Serializable {
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
-
-
     //FDE added afterwards
     public Boolean isIsCorrect() {
         return isCorrect;
@@ -127,7 +124,6 @@ public class ShortAnswerSubmittedText implements Serializable {
     public boolean isSubmittedTextCorrect(String submittedText, String solution){
         return submittedText.equalsIgnoreCase(solution);
     }
-
 
     @Override
     public boolean equals(Object o) {

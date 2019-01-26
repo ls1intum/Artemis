@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.domain.scoring;
 
 import de.tum.in.www1.artemis.domain.*;
-
 import java.util.HashSet;
 import java.util.Set;
 
@@ -29,7 +28,6 @@ public class ScoringStrategyShortAnswerProportionalWithPenalty implements Scorin
             double correctSolutions = 0;
             double incorrectSolutions = 0;
             Set<ShortAnswerSolution> solutionsAlreadyUsed = new HashSet<>();
-
 
             // iterate through each spot and compare its correct solutions with the submitted texts
             for (ShortAnswerSpot spot : saQuestion.getSpots()) {
@@ -64,7 +62,6 @@ public class ScoringStrategyShortAnswerProportionalWithPenalty implements Scorin
                         }
                         if(!foundCorrectSolution){
                             incorrectSolutions++;
-
                         }
                     }
                 }
@@ -82,5 +79,4 @@ public class ScoringStrategyShortAnswerProportionalWithPenalty implements Scorin
             return 0.0;
         }
     }
-
 }

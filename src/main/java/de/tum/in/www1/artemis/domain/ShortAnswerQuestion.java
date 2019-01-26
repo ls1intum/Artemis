@@ -119,7 +119,6 @@ public class ShortAnswerQuestion extends Question implements Serializable {
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
-
     @Override
     public Boolean isValid() {
         // check general validity (using superclass)

@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.domain.scoring;
 
 import de.tum.in.www1.artemis.domain.*;
-
 import java.util.HashSet;
 import java.util.Set;
 
@@ -22,7 +21,6 @@ public class ScoringStrategyShortAnswerAllOrNothing implements ScoringStrategy {
             for(ShortAnswerSubmittedText submittedText : saAnswer.getSubmittedTexts()){
                 submittedText.setSubmittedAnswer(saAnswer);
             } */
-
             ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) question;
             int correctSolutions = 0;
             Set<ShortAnswerSolution> solutionsAlreadyUsed = new HashSet<>();

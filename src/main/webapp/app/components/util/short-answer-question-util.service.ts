@@ -24,8 +24,8 @@ export class ShortAnswerQuestionUtil {
         let availableSolutions = question.solutions;
 
         // filter out dropLocations that do not need to be mapped
-        let remainingSpots: ShortAnswerSpot [] = question.spots.filter(function (spot) {
-            return question.correctMappings.some(function (mapping) {
+        let remainingSpots: ShortAnswerSpot [] = question.spots.filter(function(spot) {
+            return question.correctMappings.some(function(mapping) {
                 return this.isSameSpot(mapping.spot, spot);
             }, this);
         }, this);
@@ -36,14 +36,14 @@ export class ShortAnswerQuestionUtil {
 
         if (mappings) {
             // add mappings that are already correct
-            mappings.forEach(function (mapping) {
+            mappings.forEach(function(mapping) {
                 const correctMapping = this.getSAMapping(question.correctMappings, mapping.solution, mapping.spot);
                 if (correctMapping) {
                     sampleMappings.push(correctMapping);
-                    remainingSpots = remainingSpots.filter(function (spot) {
+                    remainingSpots = remainingSpots.filter(function(spot) {
                         return !this.isSameSpot(spot, mapping.spot);
                     }, this);
-                    availableSolutions = availableSolutions.filter(function (solution) {
+                    availableSolutions = availableSolutions.filter(function(solution) {
                         return !this.isSameSolution(solution, mapping.solution);
                     }, this);
                 }
@@ -80,7 +80,7 @@ export class ShortAnswerQuestionUtil {
         }
 
         const spot = remainingSpots[0];
-        return availableSolutions.some(function (solution, index) {
+        return availableSolutions.some(function(solution, index) {
             const correctMapping = this.getSAMapping(correctMappings, solution, spot);
             if (correctMapping) {
                 sampleMappings.push(correctMapping); // add new mapping
@@ -120,7 +120,7 @@ export class ShortAnswerQuestionUtil {
                 // if these two drag items have one common drop location, they must share all drop locations
                 const solution1 = question.solutions[i];
                 const solution2 = question.solutions[j];
-                const shareOneSpot = question.spots.some(function (spot) {
+                const shareOneSpot = question.spots.some(function(spot) {
                     const isMappedWithSolution1 = this.isSAMappedTogether(question.correctMappings, solution1, spot);
                     const isMappedWithSolution2 = this.isSAMappedTogether(question.correctMappings, solution2, spot);
                     return isMappedWithSolution1 && isMappedWithSolution2;
@@ -160,10 +160,10 @@ export class ShortAnswerQuestionUtil {
      */
     getAllSpotsForSolutions(mappings: ShortAnswerMapping[], solution: ShortAnswerSolution): ShortAnswerSpot[] {
         return mappings
-            .filter(function (mapping) {
+            .filter(function(mapping) {
                 return this.isSameSolution(mapping.solution, solution);
             }, this)
-            .map(function (mapping) {
+            .map(function(mapping) {
                 return mapping.spot;
             });
     }
@@ -177,10 +177,10 @@ export class ShortAnswerQuestionUtil {
      */
     getAllSolutionsForSpot(mappings: ShortAnswerMapping[], spot: ShortAnswerSpot): ShortAnswerSolution[] {
         return mappings
-            .filter(function (mapping) {
+            .filter(function(mapping) {
                 return this.isSameSpot(mapping.spot, spot);
             }, this)
-            .map(function (mapping) {
+            .map(function(mapping) {
                 return mapping.solution;
             });
     }
@@ -200,19 +200,18 @@ export class ShortAnswerQuestionUtil {
         }
         return (
             // for every element in set1 there has to be an identical element in set2 and vice versa
-            set1.every(function (element1: ShortAnswerSpot) {
-                return set2.some(function (element2: ShortAnswerSpot) {
+            set1.every(function(element1: ShortAnswerSpot) {
+                return set2.some(function(element2: ShortAnswerSpot) {
                     return service.isSameSpot(element1, element2);
                 });
             }) &&
-            set2.every(function (element2: ShortAnswerSpot) {
-                return set1.some(function (element1: ShortAnswerSpot) {
+            set2.every(function(element2: ShortAnswerSpot) {
+                return set1.some(function(element1: ShortAnswerSpot) {
                     return service.isSameSpot(element1, element2);
                 });
             })
         );
     }
-
 
     /**
      * Get the mapping that maps the given dragItem and dropLocation together
@@ -224,7 +223,7 @@ export class ShortAnswerQuestionUtil {
      */
     getSAMapping(mappings: ShortAnswerMapping[], solution: ShortAnswerSolution, spot: ShortAnswerSpot) {
         const that = this;
-        return mappings.find(function (mapping: ShortAnswerMapping) {
+        return mappings.find(function(mapping: ShortAnswerMapping) {
             return that.isSameSpot(spot, mapping.spot) && that.isSameSolution(solution, mapping.solution);
         }, this);
     }
@@ -251,17 +250,17 @@ export class ShortAnswerQuestionUtil {
         return a === b || (a && b && ((a.id && b.id && a.id === b.id) || (a.tempID && b.tempID && a.tempID === b.tempID)));
     }
 
-    everySpotHasASolution(mapping: ShortAnswerMapping[], spots: ShortAnswerSpot[]): boolean {
+    everySpotHasASolution(mappings: ShortAnswerMapping[], spots: ShortAnswerSpot[]): boolean {
         let i = 0;
-        for (let spot of spots) {
-            if (this.getAllSolutionsForSpot(mapping, spot).length > 0) {
+        for (const spot of spots) {
+            if (this.getAllSolutionsForSpot(mappings, spot).length > 0) {
                 i++;
             }
         }
         return i === spots.length;
     }
 
-    everyMappedSolutionHasASpot(mapping: ShortAnswerMapping[]): boolean {
-        return !(mapping.filter(mapping => mapping.spot === undefined).length > 0);
+    everyMappedSolutionHasASpot(mappings: ShortAnswerMapping[]): boolean {
+        return !(mappings.filter(mapping => mapping.spot === undefined).length > 0);
     }
 }

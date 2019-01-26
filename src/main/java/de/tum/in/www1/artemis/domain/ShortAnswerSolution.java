@@ -136,7 +136,6 @@ public class ShortAnswerSolution implements Serializable {
         return this;
     }
 
-
     @Override
     public boolean equals(Object o) {
         if (this == o) {

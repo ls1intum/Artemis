@@ -432,7 +432,6 @@ public class QuizExerciseService {
         }
     }
 
-
     /**
      * restore dragItem and dropLocation for correct mappings using dragItemIndex and dropLocationIndex
      *
@@ -468,6 +467,4 @@ public class QuizExerciseService {
             shortAnswerMappingRepository.save(mapping);
         }
     }
-
-
 }

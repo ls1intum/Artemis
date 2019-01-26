@@ -75,7 +75,6 @@ export class QuizComponent implements OnInit, OnDestroy {
     selectedAnswerOptions = new Map<number, AnswerOption[]>();
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
-
     result: Result;
     questionScores = {};
     quizId: number;
@@ -415,7 +414,6 @@ export class QuizComponent implements OnInit, OnDestroy {
                     // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     this.dragAndDropMappings[question.id] = [];
                 } else if (question.type === QuestionType.SHORT_ANSWER) {
-
                     // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     this.shortAnswerSubmittedTexts[question.id] = [];
                 } else {
@@ -514,7 +512,6 @@ export class QuizComponent implements OnInit, OnDestroy {
             dndSubmittedAnswer.mappings = this.dragAndDropMappings[questionID];
             this.submission.submittedAnswers.push(dndSubmittedAnswer);
         }, this);
-
         // for short-answer questions
         Object.keys(this.shortAnswerSubmittedTexts).forEach(questionID => {
             // find the question object for the given question id
@@ -663,7 +660,6 @@ export class QuizComponent implements OnInit, OnDestroy {
                 } else if (clientQuestion.type === QuestionType.SHORT_ANSWER) {
                     const saClientQuestion = clientQuestion as ShortAnswerQuestion;
                     const saFullQuestionFromServer = fullQuestionFromServer as ShortAnswerQuestion;
-
                     saClientQuestion.correctMappings = saFullQuestionFromServer.correctMappings;
                 } else {
                     console.log('Unknown question type ' + clientQuestion);

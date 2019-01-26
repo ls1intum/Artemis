@@ -12,6 +12,5 @@ export class ShortAnswerSolution implements BaseEntity {
     public posY: number;
     public tempID: number;
 
-
     constructor() {}
 }

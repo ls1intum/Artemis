@@ -66,7 +66,6 @@ public class ShortAnswerSpot implements Serializable {
         this.tempIDTransient = tempID;
     }
 
-
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
         return id;
@@ -146,7 +145,6 @@ public class ShortAnswerSpot implements Serializable {
         mapping.setSpot(null);
         return this;
     }
-
 
     @Override
     public boolean equals(Object o) {

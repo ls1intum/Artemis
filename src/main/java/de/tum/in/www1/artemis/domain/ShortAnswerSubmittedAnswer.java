@@ -56,7 +56,6 @@ public class ShortAnswerSubmittedAnswer extends SubmittedAnswer implements Seria
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
-
     /**
      * Delete all references to question, solutions and spots if the question was changed
      *
@@ -110,7 +109,6 @@ public class ShortAnswerSubmittedAnswer extends SubmittedAnswer implements Seria
             return true;
         }
     }
-
 
     @Override
     public boolean equals(Object o) {

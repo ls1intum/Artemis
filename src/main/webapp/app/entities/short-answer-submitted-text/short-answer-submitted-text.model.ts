@@ -8,7 +8,6 @@ export class ShortAnswerSubmittedText implements BaseEntity {
     public spot: ShortAnswerSpot;
     public submittedAnswer: ShortAnswerSubmittedAnswer;
 
-
     //added after database changes with Stephan
     public isCorrect = false;
 }

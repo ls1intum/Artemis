@@ -14,10 +14,6 @@ import { ShortAnswerQuestion } from '../../../entities/short-answer-question';
 import { ShortAnswerSpot } from '../../../entities/short-answer-spot';
 import { ShortAnswerSolution } from '../../../entities/short-answer-solution';
 import { ShortAnswerMapping } from '../../../entities/short-answer-mapping';
-
-import { DragAndDropMouseEvent } from '../../../entities/drag-item/drag-and-drop-mouse-event.class';
-import { DragState } from '../../../entities/drag-item/drag-state.enum';
-
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import 'brace/theme/chrome';
@@ -26,9 +22,10 @@ import { ShortAnswerQuestionUtil } from 'app/components/util/short-answer-questi
 import * as $ from 'jquery';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
-
+//for visual mode
 import { DropLocation } from '../../../entities/drop-location';
-import {DragAndDropMapping} from "app/entities/drag-and-drop-mapping";
+import { DragAndDropMouseEvent } from '../../../entities/drag-item/drag-and-drop-mouse-event.class';
+import { DragState } from '../../../entities/drag-item/drag-state.enum';
 
 @Component({
     selector: 'jhi-edit-short-answer-question',
@@ -62,16 +59,24 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     questionEditorText = '';
     questionEditorMode = 'markdown';
     questionEditorAutoUpdate = true;
-
     backupQuestion: ShortAnswerQuestion;
-
-    dropAllowed = false;
-
     showPreview: boolean;
 
     /** Status boolean for collapse status **/
     isQuestionCollapsed: boolean;
 
+    //equals the highest spotNr
+    numberOfSpot: number = 1;
+    //defines the first gap between text and solutions when
+    firstPressed: number = 1;
+    //has all solution options with their mapping (each spotNr)
+    optionsWithID: string [] = [];
+    //contains all spots with their spotNr
+    spotsWithID = new Map<string,ShortAnswerSpot>();
+
+    /*
+    For visual mode
+     */
     /**
      * Keep track of what the current drag action is doing
      * @type {number}
@@ -90,20 +95,9 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      */
     mouse: DragAndDropMouseEvent;
 
-    //equals the highest spotNr
-    numberOfSpot: number = 1;
-    //defines the first gap between text and solutions when
-    firstPressed: number = 1;
-    //has all solution options with their mapping (each spotNr)
-    optionsWithID: string [] = [];
-    //contains all spots with their spotNr
-    spotsWithID = new Map<string,ShortAnswerSpot>();
+    dropAllowed = false;
 
-    /*
-    For visual mode
-     */
     dropLocationsForSpots: [DropLocation];
-
 
     constructor(
         private artemisMarkdown: ArtemisMarkdown,
@@ -290,7 +284,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
             // Find the box (text in-between the parts)
             const solution = new ShortAnswerSolution();
             solution.tempID = this.pseudoRandomLong();
-            solution.text = solutionText[1];
+            solution.text = solutionText[1].trim();
 
             // Assign existing ID if available
             if (this.question.solutions.length < existingSolutionIDs.length) {
@@ -405,7 +399,6 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         this.firstPressed++;
     }
 
-
     /*
     * For visual mode
     * TODO FDE: visual mode
@@ -506,7 +499,6 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         this.currentSpot = null;
     }
 
-
     //FDE: Maybe create DropLocation and and afterwards create Spot
     /**
      * @function backgroundMouseDown
@@ -524,7 +516,6 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
             this.dropLocationsForSpots.push(dropLocation);
             number++;
         }
-
     }
 
     /**
