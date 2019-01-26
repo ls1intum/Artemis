@@ -5,5 +5,13 @@
             <column name="assessment_due_date" type="datetime"/>
         </addColumn>
         <dropColumn columnName="released" tableName="statistic"/>
+        <!-- added by francisco-->
+        <addColumn tableName="short_answer_submitted_text">
+            <column name="is_correct" type="bit"/>
+        </addColumn>
+        <!-- added by francisco-->
+        <addColumn tableName="short_answer_spot">
+            <column name="spot_nr" type="int"/>
+        </addColumn>
     </changeSet>
 </databaseChangeLog>
