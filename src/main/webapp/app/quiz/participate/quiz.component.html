@@ -41,7 +41,7 @@
                     {{totalScore}}
                 </div>
             </div>
-            <div *ngIf="!showingResult" id="remaining-time" style="text-align: center; position: absolute; left: 42%">
+            <div *ngIf="!showingResult" id="remaining-time">
                 <div *ngIf="!waitingForQuizStart">
                     <span jhiTranslate="arTeMiSApp.quizExercise.remainingTime" class="colon-suffix"></span>
                     <span id="remaining-time-value" [ngClass]="{'time-critical': remainingTimeSeconds < 60 || remainingTimeSeconds < quizExercise.duration / 4, 'time-warning': remainingTimeSeconds < 120 || remainingTimeSeconds < quizExercise.duration / 2}">

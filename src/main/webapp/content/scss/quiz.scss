@@ -1196,7 +1196,6 @@ table.answer-options-result {
 .stepwizardquiz-step p {
     margin-top: 10px;
     font-family: Arial, Helvetica, sans-serif;
-    text-align: center;
 
 }
 
@@ -1225,7 +1224,6 @@ table.answer-options-result {
 
 .stepwizardquiz-step .btn {
     cursor: default;
-    text-align: center;
 }
 
 
@@ -1239,7 +1237,7 @@ table.answer-options-result {
     width: 23px;
     height: 23px;
     text-align: center;
-    font-size: 7px;
+    font-size: 6px;
     font-family: Arial, Helvetica, sans-serif;
     border-radius: 15px;
     &.btn-light {
@@ -1249,4 +1247,8 @@ table.answer-options-result {
 
 .default-question{
     background-color: #e67e22
+}
+
+.changed-question{
+    background-color: #45a2b4
 }
