@@ -64,13 +64,14 @@
         </div>
 
         <div class="col-6" *ngIf="exampleSubmissionsToComplete.length > 0">
-            <p class="h3">Submissions to complete (/{{numberOfNeededSubmissions}})</p>
+            <p class="h3">Submissions to complete ({{exampleSubmissionsCompletedByTutor.length}}/{{numberOfNeededSubmissions}})</p>
             <div class="alert alert-info" role="alert">You can use these examples as an exercise</div>
 
             <ul>
                 <li *ngFor="let exampleSubmission of exampleSubmissionsToComplete">
                     <button routerLink="/text/{{exercise.id}}/exampleSubmission/{{exampleSubmission.id}}" [queryParams]="{toComplete: true}"
                             class="btn btn-link">Example submission {{exampleSubmission.id}}</button>
+                    <fa-icon icon="check-circle" *ngIf="hasBeenCompletedByTutor(exampleSubmission.id)"></fa-icon>
                 </li>
             </ul>
         </div>

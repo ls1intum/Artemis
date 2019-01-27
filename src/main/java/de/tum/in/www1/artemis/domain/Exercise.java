@@ -431,6 +431,14 @@ public abstract class Exercise implements Serializable {
         }
     }
 
+    public TutorParticipation getTutorParticipationForExercise(User tutor) {
+        Optional<TutorParticipation> tutorParticipation = this.tutorParticipations.stream()
+            .filter(object -> object.getTutor().equals(tutor))
+            .findFirst();
+
+        return tutorParticipation.orElse(null);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

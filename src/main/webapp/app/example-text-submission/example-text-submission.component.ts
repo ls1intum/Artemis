@@ -6,7 +6,7 @@ import { Subscription } from 'rxjs';
 import { AccountService } from '../core';
 import { ExampleSubmission } from 'app/entities/example-submission';
 import { ExerciseService } from 'app/entities/exercise';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
 import { ExampleSubmissionService } from 'app/entities/example-submission/example-submission.service';
 import { Feedback } from 'app/entities/feedback';
@@ -15,6 +15,7 @@ import { Result } from 'app/entities/result';
 import { HighlightColors } from 'app/text-shared/highlight-colors';
 import { TextExercise } from 'app/entities/text-exercise';
 import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
+import { TutorParticipation } from 'app/entities/tutor-participation';
 
 @Component({
     selector: 'jhi-example-text-submission',
@@ -232,6 +233,35 @@ export class ExampleTextSubmissionComponent implements OnInit {
     //         error => console.error(error)
     //     );
     // }
+
+    checkAssessment() {
+        this.checkScoreBoundaries();
+        if (!this.assessmentsAreValid) {
+            this.jhiAlertService.error('arTeMiSApp.textAssessment.invalidAssessments');
+            return;
+        }
+
+        const exampleSubmission = Object.assign({}, this.exampleSubmission);
+        exampleSubmission.submission.result = new Result();
+        exampleSubmission.submission.result.feedbacks = this.assessments;
+
+        this.tutorParticipationService.assessExampleSubmission(exampleSubmission, this.exerciseId).subscribe(
+                (res: HttpResponse<TutorParticipation>) => {
+                    // TODO: proper message
+                    this.jhiAlertService.success('Great result');
+                },
+            (error: HttpErrorResponse) => {
+                    const errorType = error.headers.get('x-artemisapp-error');
+
+                    if (errorType === 'error.wrongScore') {
+                        // TODO error messags
+                        this.jhiAlertService.error('Your score is wrong');
+                    } else {
+                        this.onError(error.message);
+                    }
+                }
+            );
+    }
 
     private onError(error: string) {
         console.error(error);

@@ -21,9 +21,9 @@ export class TutorParticipationService {
         });
     }
 
-    assessExampleSubmission(exampleSubmission: ExampleSubmission, exerciseId: number, tutorParticipationId: number) {
+    assessExampleSubmission(exampleSubmission: ExampleSubmission, exerciseId: number) {
         return this.http.post<TutorParticipation>(
-            `${this.resourceUrl}/${exerciseId}/tutorParticipations/${tutorParticipationId}/exampleSubmission`,
+            `${this.resourceUrl}/${exerciseId}/exampleSubmission`,
             exampleSubmission,
             { observe: 'response' }
         );

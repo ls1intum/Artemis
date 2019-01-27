@@ -85,12 +85,15 @@ public class TutorParticipationService {
         return tutorParticipation.orElse(null);
     }
 
+    @Transactional
     public TutorParticipation findByExerciseAndTutor(Exercise exercise, User tutor) {
         TutorParticipation participation = tutorParticipationRepository.findByAssessedExerciseAndTutor(exercise, tutor);
 
         if (participation == null) {
             participation = new TutorParticipation();
             participation.setStatus(TutorParticipationStatus.NOT_PARTICIPATED);
+        } else {
+            participation.getTrainedExampleSubmissions().size();    // Load trained example submissions
         }
 
         return participation;

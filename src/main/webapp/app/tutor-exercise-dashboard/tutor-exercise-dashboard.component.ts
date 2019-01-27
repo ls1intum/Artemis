@@ -27,6 +27,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
     unassessedSubmission: TextSubmission;
     exampleSubmissionsForTutorial: ExampleSubmission[] = [];
     exampleSubmissionsToComplete: ExampleSubmission[] = [];
+    exampleSubmissionsCompletedByTutor: ExampleSubmission[] = [];
     tutorParticipation: TutorParticipation;
     numberOfNeededSubmissions: number;
 
@@ -68,6 +69,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 this.exampleSubmissionsForTutorial = this.exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => exampleSubmission.usedForTutorial);
                 this.exampleSubmissionsToComplete = this.exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => !exampleSubmission.usedForTutorial);
                 this.numberOfNeededSubmissions = Math.min(3, this.exampleSubmissionsToComplete.length);
+                this.exampleSubmissionsCompletedByTutor = this.tutorParticipation.trainedExampleSubmissions;
             },
             (response: string) => this.onError(response)
         );
@@ -121,21 +123,12 @@ export class TutorExerciseDashboardComponent implements OnInit {
         );
     }
 
-    trackId(index: number, item: Course) {
-        return item.id;
+    hasBeenCompletedByTutor(id: number) {
+        return this.exampleSubmissionsCompletedByTutor.filter(e => e.id === id).length > 0;
     }
 
     private onError(error: string) {
         console.error(error);
         this.jhiAlertService.error(error, null, null);
-    }
-
-    assessExampleSubmission(exampleSubmission: ExampleSubmission) {
-        this.tutorParticipationService.assessExampleSubmission(exampleSubmission, this.exerciseId, this.tutorParticipation.id).subscribe(
-            (res: HttpResponse<TutorParticipation>) => {
-                this.tutorParticipation = res.body;
-            },
-            error => console.error(error)
-        );
     }
 }

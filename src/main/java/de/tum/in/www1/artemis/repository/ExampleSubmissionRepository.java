@@ -9,11 +9,12 @@ import java.util.List;
 
 
 /**
- * Spring Data JPA repository for the Course entity.
+ * Spring Data JPA repository for the ExampleSubmission entity.
  */
 @SuppressWarnings("unused")
 @Repository
 public interface ExampleSubmissionRepository extends JpaRepository<ExampleSubmission, Long> {
     List<ExampleSubmission> findAllByExerciseId(long exerciseId);
     List<ExampleSubmission> findAllByExerciseIdAndTutorParticipation(Long exercise_id, TutorParticipation tutorParticipation);
+    List<ExampleSubmission> findAllByExerciseIdAndUsedForTutorial(Long exercise_id, Boolean usedForTutorial);
 }

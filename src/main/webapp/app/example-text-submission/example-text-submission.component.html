@@ -56,6 +56,13 @@
                     *ngIf="!isNewSubmission && isAtLeastInstructor && !readOnly && !toComplete">Save Assessment
             </button>
         </div>
+
+        <div class="col text-right">
+            <button class="btn btn-primary ml-3" (click)="checkAssessment()"
+                    [disabled]="!assessments || !assessmentsAreValid"
+                    *ngIf="toComplete">Check Assessment
+            </button>
+        </div>
     </div>
 
     <div class="alert alert-info" *ngIf="isNewSubmission">

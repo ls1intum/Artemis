@@ -176,6 +176,26 @@ public class ExerciseService {
     }
 
     /**
+     * Find exercise by id and load tutorParticipations in this exercise.
+     *
+     * @param id the id of the exercise entity
+     * @return the exercise entity
+     */
+    @Transactional(readOnly = true)
+    public Exercise findOneLoadTutorParticipations(Long id) {
+        log.debug("Request to find Exercise with tutorParticipations loaded: {}", id);
+        Exercise exercise = findOne(id);
+        if(Optional.ofNullable(exercise).isPresent()) {
+            Set<TutorParticipation> tutorParticipations = exercise.getTutorParticipations();
+
+            // Load also the trained example submissions
+            tutorParticipations.forEach(t -> t.getTrainedExampleSubmissions().size());
+        }
+        return exercise;
+    }
+
+
+    /**
      * Resets an Exercise by deleting all its Participations
      *
      * @param exercise
