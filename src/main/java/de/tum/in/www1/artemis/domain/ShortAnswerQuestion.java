@@ -55,17 +55,57 @@ public class ShortAnswerQuestion extends Question implements Serializable {
     public ShortAnswerQuestion addSpots(ShortAnswerSpot shortAnswerSpot) {
         this.spots.add(shortAnswerSpot);
         shortAnswerSpot.setQuestion(this);
+        //if a spot was added then add the associated AnswerCounter implicitly
+        ((ShortAnswerQuestionStatistic)getQuestionStatistic()).addSpot(shortAnswerSpot);
+
         return this;
     }
 
     public ShortAnswerQuestion removeSpots(ShortAnswerSpot shortAnswerSpot) {
+        //if an spot was removed then remove the associated SpotCounter implicitly
+        if (getQuestionStatistic() instanceof ShortAnswerQuestionStatistic) {
+            ShortAnswerQuestionStatistic saStatistic = (ShortAnswerQuestionStatistic) getQuestionStatistic();
+            ShortAnswerSpotCounter spotCounterToDelete = null;
+            for (ShortAnswerSpotCounter spotCounter : saStatistic.getShortAnswerSpotCounters()) {
+                if (shortAnswerSpot.equals(spotCounter.getSpot())) {
+                    spotCounter.setSpot(null);
+                    spotCounterToDelete = spotCounter;
+                }
+            }
+            saStatistic.getShortAnswerSpotCounters().remove(spotCounterToDelete);
+        }
         this.spots.remove(shortAnswerSpot);
         shortAnswerSpot.setQuestion(null);
         return this;
     }
 
     public void setSpots(List<ShortAnswerSpot> shortAnswerSpots) {
+        ShortAnswerQuestionStatistic saStatistic;
+        if (getQuestionStatistic() instanceof ShortAnswerQuestionStatistic) {
+            saStatistic = (ShortAnswerQuestionStatistic)getQuestionStatistic();
+        }
+        else{
+            saStatistic = new ShortAnswerQuestionStatistic();
+            setQuestionStatistic(saStatistic);
+        }
         this.spots = shortAnswerSpots;
+
+        //if a spot was added then add the associated spotCounter implicitly
+        for (ShortAnswerSpot spot : getSpots()) {
+            saStatistic.addSpot(spot);
+        }
+
+        //if an spot was removed then remove the associated spotCounters implicitly
+        Set<ShortAnswerSpotCounter> spotCounterToDelete = new HashSet<>();
+        for (ShortAnswerSpotCounter spotCounter : saStatistic.getShortAnswerSpotCounters()) {
+            if (spotCounter.getId() != null) {
+                if(!(shortAnswerSpots.contains(spotCounter.getSpot()))) {
+                    spotCounter.setSpot(null);
+                    spotCounterToDelete.add(spotCounter);
+                }
+            }
+        }
+        saStatistic.getShortAnswerSpotCounters().removeAll(spotCounterToDelete);
     }
 
     public List<ShortAnswerSolution> getSolutions() {

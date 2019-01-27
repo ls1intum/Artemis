@@ -78,18 +78,132 @@ public class ShortAnswerQuestionStatistic extends QuestionStatistic implements S
             "}";
     }
 
+
+    /**
+     * 1. creates the ShortAnswerSpotCounter for the new spot
+     *          if where is already an ShortAnswerSpotCounter with the given spot -> nothing happens
+     *
+     * @param spot the spot-object which will be added to the ShortAnswerQuestionStatistic
+     */
+    public void addSpot(ShortAnswerSpot spot) {
+
+        if(spot == null) {
+            return;
+        }
+
+        for(ShortAnswerSpotCounter counter: shortAnswerSpotCounters) {
+            if(spot.equals(counter.getSpot())) {
+                return;
+            }
+        }
+        ShortAnswerSpotCounter spotCounter = new ShortAnswerSpotCounter();
+        spotCounter.setSpot(spot);
+        addShortAnswerSpotCounters(spotCounter);
+
+    }
+
+
     @Override
     public void addResult(SubmittedAnswer submittedAnswer, boolean rated) {
-        //TODO Francisco implement
+        changeStatisticBasedOnResult(submittedAnswer, rated, 1);
     }
 
     @Override
     public void removeOldResult(SubmittedAnswer submittedAnswer, boolean rated) {
-        //TODO Francisco implement
+        changeStatisticBasedOnResult(submittedAnswer, rated, -1);
     }
 
     @Override
     public void resetStatistic() {
-        //TODO Francisco implement
+        setParticipantsRated(0);
+        setParticipantsUnrated(0);
+        setRatedCorrectCounter(0);
+        setUnRatedCorrectCounter(0);
+        for (ShortAnswerSpotCounter spotCounter: shortAnswerSpotCounters) {
+            spotCounter.setRatedCounter(0);
+            spotCounter.setUnRatedCounter(0);
+        }
+    }
+
+    /**
+     * 1. check if the Result is rated or unrated
+     * 2. change participants, all the ShortAnswerSpotCounter if the ShortAnswerAssignment is correct and if the complete question is correct, than change the correctCounter
+     *
+     * @param submittedAnswer the submittedAnswer object which contains all selected answers
+     * @param rated specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise)
+     *                                  or unrated  ( participated after the dueDate of the quizExercise)
+     * @param change the int-value, which will be added to the Counter and participants
+     */
+    private void changeStatisticBasedOnResult(SubmittedAnswer submittedAnswer, boolean rated, int change) {
+
+        if(submittedAnswer == null) {
+            return;
+        }
+
+        ShortAnswerSubmittedAnswer saSubmittedAnswer = (ShortAnswerSubmittedAnswer)submittedAnswer;
+
+        if(rated) {
+            //change the rated participants
+            setParticipantsRated(getParticipantsRated() + change);
+
+            if(saSubmittedAnswer.getSubmittedTexts() != null) {
+                ShortAnswerSubmittedText saSubmittedText = null;
+                Set <ShortAnswerSolution> saSolutions;
+
+                // change rated spotCounter if spot is correct
+                for (ShortAnswerSpotCounter spotCounter: shortAnswerSpotCounters) {
+                    //FDE Check again Idee: spotCounter hat submitted text und dann wird validiert
+
+                    for(ShortAnswerSubmittedText submittedText : saSubmittedAnswer.getSubmittedTexts()){
+                        if(submittedText.getSpot().equals(spotCounter.getSpot())){
+                            saSubmittedText = submittedText;
+                        }
+                    }
+                    String saSubmittedTextJustText = saSubmittedText != null ? saSubmittedText.getText() : "";
+                    saSolutions = spotCounter.getSpot().getQuestion().getCorrectSolutionForSpot(spotCounter.getSpot());
+                    String saSolution = ""+saSolutions.stream().filter(solution -> solution.getText().equalsIgnoreCase(saSubmittedTextJustText));
+
+                    if(saSubmittedText.isSubmittedTextCorrect(saSubmittedText.getText(), saSolution)){
+                    //if(spotCounter.getSpot().isDropLocationCorrect(saSubmittedAnswer)) {
+                        spotCounter.setRatedCounter(spotCounter.getRatedCounter() + change);
+                    }
+                }
+            }
+            // change rated correctCounter if answer is complete correct
+            if(getQuestion().isAnswerCorrect(saSubmittedAnswer)) {
+                setRatedCorrectCounter(getRatedCorrectCounter() + change);
+            }
+        }
+        // Result is unrated
+        else{
+            //change the unrated participants
+            setParticipantsUnrated(getParticipantsUnrated() + change);
+
+            if(saSubmittedAnswer.getSubmittedTexts() != null) {
+                ShortAnswerSubmittedText saSubmittedText = null;
+                Set <ShortAnswerSolution> saSolutions;
+                // change unrated dropLocationCounter if dropLocation is correct
+                for (ShortAnswerSpotCounter spotCounter: shortAnswerSpotCounters) {
+                    //FDE Check again Idee: spotCounter hat submitted text und dann wird validiert
+
+                    for(ShortAnswerSubmittedText submittedText : saSubmittedAnswer.getSubmittedTexts()){
+                        if(submittedText.getSpot().equals(spotCounter.getSpot())){
+                            saSubmittedText = submittedText;
+                        }
+                    }
+                    String saSubmittedTextJustText = saSubmittedText != null ? saSubmittedText.getText() : "";
+                    saSolutions = spotCounter.getSpot().getQuestion().getCorrectSolutionForSpot(spotCounter.getSpot());
+                    String saSolution = ""+saSolutions.stream().filter(solution -> solution.getText().equalsIgnoreCase(saSubmittedTextJustText));
+                    
+                    if(saSubmittedText.isSubmittedTextCorrect(saSubmittedText.getText(), saSolution)) {
+                        spotCounter.setUnRatedCounter(spotCounter.getUnRatedCounter() + change);
+                    }
+                }
+            }
+            // change unrated correctCounter if answer is complete correct
+            if(getQuestion().isAnswerCorrect(saSubmittedAnswer)) {
+                setUnRatedCorrectCounter(getUnRatedCorrectCounter() + change);
+            }
+        }
     }
 }
