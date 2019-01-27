@@ -7,7 +7,7 @@ import { JhiAlertService, JhiEventManager, JhiParseLinks } from 'ng-jhipster';
 import { Subscription } from 'rxjs/Subscription';
 
 import { ITEMS_PER_PAGE } from '../../shared';
-import { Principal, User, UserService } from '../../core';
+import { AccountService, User, UserService } from '../../core';
 import { UserMgmtDeleteDialogComponent } from 'app/admin';
 
 @Component({
@@ -22,7 +22,6 @@ export class UserMgmtComponent implements OnInit, OnDestroy {
     routeData: Subscription;
     links: any;
     totalItems: string;
-    queryCount: string;
     itemsPerPage: number;
     page: number;
     predicate: string;
@@ -32,7 +31,7 @@ export class UserMgmtComponent implements OnInit, OnDestroy {
     constructor(
         private userService: UserService,
         private alertService: JhiAlertService,
-        private principal: Principal,
+        private accountService: AccountService,
         private parseLinks: JhiParseLinks,
         private activatedRoute: ActivatedRoute,
         private router: Router,
@@ -49,8 +48,8 @@ export class UserMgmtComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        this.principal.identity().then(account => {
-            this.currentAccount = account;
+        this.accountService.identity().then(user => {
+            this.currentAccount = user;
             this.loadAll();
             this.registerChangeInUsers();
         });
@@ -134,7 +133,6 @@ export class UserMgmtComponent implements OnInit, OnDestroy {
     private onSuccess(data: User[], headers: HttpHeaders) {
         this.links = this.parseLinks.parse(headers.get('link'));
         this.totalItems = headers.get('X-Total-Count');
-        this.queryCount = this.totalItems;
         this.users = data;
     }
 

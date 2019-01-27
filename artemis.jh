@@ -40,6 +40,7 @@ entity ShortAnswerSpotCounter(shortAnswerSpotCounter) {    //extends StatisticCo
 
 entity Course (course) {
     title String,
+    description String,        //LONGTEXT --> lob
     shortName String,
     studentGroupName String,
     teachingAssistantGroupName String,
@@ -183,7 +184,8 @@ entity ShortAnswerQuestion {          //extends Question
 
 entity ShortAnswerSpot {
 	width Integer,
-    invalid Boolean
+	spotNr Integer,
+    invalid Boolean,
 }
 
 entity ShortAnswerSolution {
@@ -297,7 +299,8 @@ entity ShortAnswerSubmittedAnswer (saSubmittedAnswer) {      //extends Submitted
 }
 
 entity ShortAnswerSubmittedText (shortAnswerSubmittedText) {
-    text String
+    text String,
+    isCorrect Boolean
 }
 
 entity ShortAnswerMapping {
@@ -340,8 +343,9 @@ relationship OneToMany {
     MultipleChoiceQuestionStatistic{AnswerCounters} to AnswerCounter{MultipleChoiceQuestionStatistic},
     DragAndDropQuestionStatistic{DropLocationCounters} to DropLocationCounter{DragAndDropQuestionStatistic},
     ShortAnswerQuestionStatistic{ShortAnswerSpotCounters} to ShortAnswerSpotCounter{ShortAnswerQuestionStatistic},
-    Course{exercises} to Exercise{course(title)},
-    Exercise{participations} to Participation{exercise(title)},
+    Course{exercises} to Exercise{course},
+    Exercise{participations} to Participation{exercise},
+    Exercise{tutorParticipations} to TutorParticipation{assessedExercise},
     Participation{results} to ExerciseResult{participation},
     Participation{submissions} to Submission{participation},
     ExerciseResult{feedbacks} to Feedback{result},
@@ -374,20 +378,19 @@ relationship OneToOne {
     ComplaintResponse{complaint} to Complaint,
     Complaint{student} to User,
     ComplaintResponse{reviewer} to User,
-    TutorParticipation{assessedExercise} to Exercise,
-    TutorParticipation{tutor} to User,
     ExampleSubmission{submission} to Submission
 }
 
 relationship ManyToOne {
-    Participation{student(login)} to User,
+    Participation{student} to User,
     LtiOutcomeUrl{user} to User,
     LtiOutcomeUrl{exercise} to Exercise,
     SubmittedAnswer{question} to Question
     DragAndDropMapping{dragItem} to DragItem,
     DragAndDropMapping{dropLocation} to DropLocation,
     ShortAnswerMapping{solution} to ShortAnswerSolution,
-    ShortAnswerMapping{spot} to ShortAnswerSpot
+    ShortAnswerMapping{spot} to ShortAnswerSpot,
+    TutorParticipation{tutor} to User,
 }
 
 relationship ManyToMany {

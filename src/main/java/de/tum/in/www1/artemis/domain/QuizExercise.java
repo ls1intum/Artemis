@@ -37,6 +37,7 @@ public class QuizExercise extends Exercise implements Serializable {
     @JsonView(QuizView.Before.class)
     private Boolean randomizeQuestionOrder;
 
+    //not used at the moment
     @Column(name = "allowed_number_of_attempts")
     @JsonView(QuizView.Before.class)
     private Integer allowedNumberOfAttempts;

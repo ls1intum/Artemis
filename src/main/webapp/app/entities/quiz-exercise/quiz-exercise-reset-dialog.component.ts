@@ -10,14 +10,14 @@ import { QuizExerciseService } from './quiz-exercise.service';
 import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
-    selector: 'jhi-quiz-exercise-delete-dialog',
-    templateUrl: './quiz-exercise-delete-dialog.component.html'
+    selector: 'jhi-quiz-exercise-reset-dialog',
+    templateUrl: './quiz-exercise-reset-dialog.component.html'
 })
-export class QuizExerciseDeleteDialogComponent {
+export class QuizExerciseResetDialogComponent {
 
     quizExercise: QuizExercise;
     confirmExerciseName: string;
-    deleteInProgress = false;
+    resetInProgress = false;
 
     constructor(
         private quizExerciseService: QuizExerciseService,
@@ -31,29 +31,29 @@ export class QuizExerciseDeleteDialogComponent {
         this.activeModal.dismiss('cancel');
     }
 
-    confirmDelete(id: number) {
-        this.deleteInProgress = true;
-        this.quizExerciseService.delete(id).subscribe(
+    confirmReset(id: number) {
+        this.resetInProgress = true;
+        this.quizExerciseService.reset(id).subscribe(
         response => {
-            this.deleteInProgress = false;
+            this.resetInProgress = false;
             this.eventManager.broadcast({
                 name: 'quizExerciseListModification',
-                content: 'Deleted an quizExercise'
+                content: 'Reset an quizExercise'
             });
             this.activeModal.dismiss(true);
         },
         (error: HttpErrorResponse) => {
             this.jhiAlertService.error(error.message);
-            this.deleteInProgress = false;
+            this.resetInProgress = false;
         });
     }
 }
 
 @Component({
-    selector: 'jhi-quiz-exercise-delete-popup',
+    selector: 'jhi-quiz-exercise-reset-popup',
     template: ''
 })
-export class QuizExerciseDeletePopupComponent implements OnInit, OnDestroy {
+export class QuizExerciseResetPopupComponent implements OnInit, OnDestroy {
     protected ngbModalRef: NgbModalRef;
 
     constructor(protected activatedRoute: ActivatedRoute, protected router: Router, protected modalService: NgbModal) {}
@@ -61,7 +61,7 @@ export class QuizExerciseDeletePopupComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.activatedRoute.data.subscribe(({ quizExercise }) => {
             setTimeout(() => {
-                this.ngbModalRef = this.modalService.open(QuizExerciseDeleteDialogComponent as Component, {
+                this.ngbModalRef = this.modalService.open(QuizExerciseResetDialogComponent as Component, {
                     size: 'lg',
                     backdrop: 'static'
                 });

@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import de.tum.in.www1.artemis.repository.FileUploadSubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -41,7 +40,6 @@ public class FileUploadSubmissionResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/file-upload-submissions")
-    @Timed
     public ResponseEntity<FileUploadSubmission> createFileUploadSubmission(@RequestBody FileUploadSubmission fileUploadSubmission) throws URISyntaxException {
         log.debug("REST request to save FileUploadSubmission : {}", fileUploadSubmission);
         if (fileUploadSubmission.getId() != null) {
@@ -63,7 +61,6 @@ public class FileUploadSubmissionResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/file-upload-submissions")
-    @Timed
     public ResponseEntity<FileUploadSubmission> updateFileUploadSubmission(@RequestBody FileUploadSubmission fileUploadSubmission) throws URISyntaxException {
         log.debug("REST request to update FileUploadSubmission : {}", fileUploadSubmission);
         if (fileUploadSubmission.getId() == null) {
@@ -81,7 +78,6 @@ public class FileUploadSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and the list of fileUploadSubmissions in body
      */
     @GetMapping("/file-upload-submissions")
-    @Timed
     public List<FileUploadSubmission> getAllFileUploadSubmissions() {
         log.debug("REST request to get all FileUploadSubmissions");
         return fileUploadSubmissionRepository.findAll();
@@ -94,7 +90,6 @@ public class FileUploadSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and with body the fileUploadSubmission, or with status 404 (Not Found)
      */
     @GetMapping("/file-upload-submissions/{id}")
-    @Timed
     public ResponseEntity<FileUploadSubmission> getFileUploadSubmission(@PathVariable Long id) {
         log.debug("REST request to get FileUploadSubmission : {}", id);
         Optional<FileUploadSubmission> fileUploadSubmission = fileUploadSubmissionRepository.findById(id);
@@ -108,7 +103,6 @@ public class FileUploadSubmissionResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/file-upload-submissions/{id}")
-    @Timed
     public ResponseEntity<Void> deleteFileUploadSubmission(@PathVariable Long id) {
         log.debug("REST request to delete FileUploadSubmission : {}", id);
         fileUploadSubmissionRepository.deleteById(id);

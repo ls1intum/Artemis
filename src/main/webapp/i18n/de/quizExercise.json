@@ -12,7 +12,10 @@
             "updated": "Quiz aktualisiert mit ID {{ param }}",
             "deleted": "Quiz gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Quiz {{ title }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll das Quiz {{ title }} wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!"
+            },
+            "reset": {
+                "question": "Soll das Quiz {{ title }} wirklich zurückgesetzt werden? Diese Aktion kann NICHT rückgängig gemacht werden!"
             },
             "edit": {
                 "title": "Quiz für {{ param }} bearbeiten",

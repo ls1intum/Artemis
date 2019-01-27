@@ -3,7 +3,7 @@ import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { JhiEventManager } from 'ng-jhipster';
 import { Router } from '@angular/router';
 
-import { LoginModalService, Principal, User } from '../core';
+import { LoginModalService, AccountService, User } from '../core';
 
 @Component({
     selector: 'jhi-home',
@@ -16,22 +16,22 @@ export class HomeComponent implements OnInit {
 
     constructor(
         private router: Router,
-        private principal: Principal,
+        private accountService: AccountService,
         private loginModalService: LoginModalService,
         private eventManager: JhiEventManager
     ) {}
 
     ngOnInit() {
-        this.principal.identity().then(account => {
-            this.currentUserCallback(account);
+        this.accountService.identity().then(user => {
+            this.currentUserCallback(user);
         });
         this.registerAuthenticationSuccess();
     }
 
     registerAuthenticationSuccess() {
         this.eventManager.subscribe('authenticationSuccess', (message: string) => {
-            this.principal.identity().then(account => {
-                this.currentUserCallback(account);
+            this.accountService.identity().then(user => {
+                this.currentUserCallback(user);
             });
         });
     }
@@ -44,7 +44,7 @@ export class HomeComponent implements OnInit {
     }
 
     isAuthenticated() {
-        return this.principal.isAuthenticated();
+        return this.accountService.isAuthenticated();
     }
 
     login() {

@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.LtiOutcomeUrl;
 import de.tum.in.www1.artemis.repository.LtiOutcomeUrlRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -41,7 +40,6 @@ public class LtiOutcomeUrlResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/lti-outcome-urls")
-    @Timed
     public ResponseEntity<LtiOutcomeUrl> createLtiOutcomeUrl(@RequestBody LtiOutcomeUrl ltiOutcomeUrl) throws URISyntaxException {
         log.debug("REST request to save LtiOutcomeUrl : {}", ltiOutcomeUrl);
         if (ltiOutcomeUrl.getId() != null) {
@@ -63,7 +61,6 @@ public class LtiOutcomeUrlResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/lti-outcome-urls")
-    @Timed
     public ResponseEntity<LtiOutcomeUrl> updateLtiOutcomeUrl(@RequestBody LtiOutcomeUrl ltiOutcomeUrl) throws URISyntaxException {
         log.debug("REST request to update LtiOutcomeUrl : {}", ltiOutcomeUrl);
         if (ltiOutcomeUrl.getId() == null) {
@@ -81,7 +78,6 @@ public class LtiOutcomeUrlResource {
      * @return the ResponseEntity with status 200 (OK) and the list of ltiOutcomeUrls in body
      */
     @GetMapping("/lti-outcome-urls")
-    @Timed
     public List<LtiOutcomeUrl> getAllLtiOutcomeUrls() {
         log.debug("REST request to get all LtiOutcomeUrls");
         return ltiOutcomeUrlRepository.findAll();
@@ -94,7 +90,6 @@ public class LtiOutcomeUrlResource {
      * @return the ResponseEntity with status 200 (OK) and with body the ltiOutcomeUrl, or with status 404 (Not Found)
      */
     @GetMapping("/lti-outcome-urls/{id}")
-    @Timed
     public ResponseEntity<LtiOutcomeUrl> getLtiOutcomeUrl(@PathVariable Long id) {
         log.debug("REST request to get LtiOutcomeUrl : {}", id);
         Optional<LtiOutcomeUrl> ltiOutcomeUrl = ltiOutcomeUrlRepository.findById(id);
@@ -108,7 +103,6 @@ public class LtiOutcomeUrlResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/lti-outcome-urls/{id}")
-    @Timed
     public ResponseEntity<Void> deleteLtiOutcomeUrl(@PathVariable Long id) {
         log.debug("REST request to delete LtiOutcomeUrl : {}", id);
         ltiOutcomeUrlRepository.deleteById(id);
