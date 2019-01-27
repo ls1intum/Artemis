@@ -12,7 +12,7 @@ import { Result } from '../entities/result';
 import { ResultDetailComponent } from '../entities/result/result-detail.component';
 import { ModelingAssessmentService } from '../entities/modeling-assessment/modeling-assessment.service';
 import { HttpResponse } from '@angular/common/http';
-import { Principal } from '../core';
+import { AccountService } from '../core';
 import { Submission } from '../entities/submission';
 import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/modeling-submission';
 
@@ -44,7 +44,7 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
     assessedSubmissions: number;
     allSubmissionsVisible: boolean;
     busy: boolean;
-    accountId: number;
+    userId: number;
     canOverrideAssessments: boolean;
 
     constructor(
@@ -59,19 +59,19 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
         private modelingAssessmentService: ModelingAssessmentService,
         private modalService: NgbModal,
         private eventManager: JhiEventManager,
-        private principal: Principal
+        private accountService: AccountService
     ) {
         this.reverse = false;
         this.predicate = 'id';
         this.submissions = [];
         this.optimalSubmissions = [];
         this.otherSubmissions = [];
-        this.canOverrideAssessments = this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
+        this.canOverrideAssessments = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
     }
 
     ngOnInit() {
-        this.principal.identity().then(account => {
-            this.accountId = account.id;
+        this.accountService.identity().then(user => {
+            this.userId = user.id;
         });
         this.paramSub = this.route.params.subscribe(params => {
             this.courseService.find(params['courseId']).subscribe((res: HttpResponse<Course>) => {
@@ -141,7 +141,7 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
             submission.optimal =
                 this.nextOptimalSubmissionIds.includes(submission.id) &&
                 (!(submission.result && submission.result.assessor) ||
-                    (submission.result && submission.result.assessor && submission.result.assessor.id === this.accountId));
+                    (submission.result && submission.result.assessor && submission.result.assessor.id === this.userId));
         });
         this.optimalSubmissions = this.submissions.filter(submission => {
             return submission.optimal;

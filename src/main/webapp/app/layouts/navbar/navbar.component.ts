@@ -5,7 +5,7 @@ import { JhiLanguageService } from 'ng-jhipster';
 import { SessionStorageService } from 'ngx-webstorage';
 
 import { ProfileService } from '../profiles/profile.service';
-import { JhiLanguageHelper, LoginModalService, LoginService, Principal, User } from '../../core';
+import { JhiLanguageHelper, LoginModalService, LoginService, AccountService, User } from '../../core';
 
 import { VERSION } from '../../app.constants';
 
@@ -27,7 +27,7 @@ export class NavbarComponent implements OnInit {
         private languageService: JhiLanguageService,
         private languageHelper: JhiLanguageHelper,
         private sessionStorage: SessionStorageService,
-        private principal: Principal,
+        private accountService: AccountService,
         private loginModalService: LoginModalService,
         private profileService: ProfileService,
         private router: Router
@@ -60,8 +60,8 @@ export class NavbarComponent implements OnInit {
     }
 
     getCurrentAccount() {
-        if (!this.currAccount && this.principal.isAuthenticated()) {
-            this.principal.identity().then(acc => {
+        if (!this.currAccount && this.accountService.isAuthenticated()) {
+            this.accountService.identity().then(acc => {
                 this.currAccount = acc;
             });
         }
@@ -69,7 +69,7 @@ export class NavbarComponent implements OnInit {
     }
 
     isAuthenticated() {
-        return this.principal.isAuthenticated();
+        return this.accountService.isAuthenticated();
     }
 
     login() {
@@ -88,6 +88,6 @@ export class NavbarComponent implements OnInit {
     }
 
     getImageUrl() {
-        return this.isAuthenticated() ? this.principal.getImageUrl() : null;
+        return this.isAuthenticated() ? this.accountService.getImageUrl() : null;
     }
 }
