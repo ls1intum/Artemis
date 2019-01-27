@@ -8,9 +8,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
 import java.io.Serializable;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 /**
  * A ShortAnswerSpot.
@@ -27,7 +25,7 @@ public class ShortAnswerSpot implements Serializable {
     @JsonView(QuizView.Before.class)
     private Long id;
 
-    @Column(name = "spot_nr")
+    @Column(name = "spotNr")
     @JsonView(QuizView.Before.class)
     private Integer spotNr;
 
@@ -75,17 +73,17 @@ public class ShortAnswerSpot implements Serializable {
         this.id = id;
     }
 
-    public Integer getspotNr() {
+    public Integer getSpotNr() {
         return spotNr;
-    }
-
-    public void setspotNr(Integer spotNr) {
-        this.spotNr = spotNr;
     }
 
     public ShortAnswerSpot spotNr(Integer spotNr) {
         this.spotNr = spotNr;
         return this;
+    }
+
+    public void setSpotNr(Integer spotNr) {
+        this.spotNr = spotNr;
     }
 
     public Integer getWidth() {
@@ -128,7 +126,6 @@ public class ShortAnswerSpot implements Serializable {
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
-
     public ShortAnswerSpot mappings(Set<ShortAnswerMapping> mappings) {
         this.mappings = mappings;
         return this;
@@ -161,6 +158,7 @@ public class ShortAnswerSpot implements Serializable {
         if (shortAnswerSpot.getId() == null || getId() == null) {
             return false;
         }
+
         return Objects.equals(getId(), shortAnswerSpot.getId());
     }
 
@@ -174,8 +172,8 @@ public class ShortAnswerSpot implements Serializable {
         return "ShortAnswerSpot{" +
             "id=" + getId() +
             ", width=" + getWidth() +
+            ", spotNr=" + getSpotNr() +
             ", invalid='" + isInvalid() + "'" +
-            ", spotNr="+ getspotNr()+
             "}";
     }
 }

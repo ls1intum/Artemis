@@ -1,13 +1,13 @@
 import { Injectable } from '@angular/core';
 
-import { Principal } from '../auth/principal.service';
-import { AuthServerProvider, Credentials } from '../auth/auth-jwt.service';
-import { JhiWebsocketService } from '../websocket/websocket.service';
+import { AuthServerProvider, Credentials } from 'app/core/auth/auth-jwt.service';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Injectable({ providedIn: 'root' })
 export class LoginService {
     constructor(
-        private principal: Principal,
+        private accountService: AccountService,
         private websocketService: JhiWebsocketService,
         private authServerProvider: AuthServerProvider
     ) {}
@@ -18,7 +18,7 @@ export class LoginService {
         return new Promise((resolve, reject) => {
             this.authServerProvider.login(credentials).subscribe(
                 data => {
-                    this.principal.identity(true).then(account => {
+                    this.accountService.identity(true).then(user => {
                         this.websocketService.sendActivity();
                         resolve(data);
                     });
@@ -39,6 +39,6 @@ export class LoginService {
 
     logout() {
         this.authServerProvider.logout().subscribe();
-        this.principal.authenticate(null);
+        this.accountService.authenticate(null);
     }
 }

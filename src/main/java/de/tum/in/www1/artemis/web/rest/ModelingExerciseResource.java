@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -95,7 +94,6 @@ public class ModelingExerciseResource {
      */
     @PostMapping("/modeling-exercises")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<ModelingExercise> createModelingExercise(@RequestBody ModelingExercise modelingExercise) throws URISyntaxException {
         log.debug("REST request to save ModelingExercise : {}", modelingExercise);
         if (modelingExercise.getId() != null) {
@@ -137,7 +135,6 @@ public class ModelingExerciseResource {
      */
     @PutMapping("/modeling-exercises")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<ModelingExercise> updateModelingExercise(@RequestBody ModelingExercise modelingExercise) throws URISyntaxException {
         log.debug("REST request to update ModelingExercise : {}", modelingExercise);
         if (modelingExercise.getId() == null) {
@@ -160,7 +157,6 @@ public class ModelingExerciseResource {
      */
     @GetMapping(value = "/courses/{courseId}/modeling-exercises")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     @Transactional(readOnly = true)
     public ResponseEntity<List<ModelingExercise>> getModelingExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ModelingExercises for the course with id : {}", courseId);
@@ -188,7 +184,6 @@ public class ModelingExerciseResource {
      */
     @GetMapping(value = "/modeling-exercises/{exerciseId}/statistics")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<String> getModelingExerciseStatistics(@PathVariable Long exerciseId) {
         log.debug("REST request to get ModelingExercise Statistics for Exercise: {}", exerciseId);
         Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findById(exerciseId);
@@ -214,7 +209,6 @@ public class ModelingExerciseResource {
      */
     @GetMapping("/modeling-exercises/{id}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<ModelingExercise> getProgrammingExercise(@PathVariable Long id) {
         log.debug("REST request to get ModelingExercise : {}", id);
         Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findById(id);
@@ -238,7 +232,6 @@ public class ModelingExerciseResource {
      */
     @DeleteMapping("/modeling-exercises/{exerciseId}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Void> deleteModelingExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to delete ModelingExercise : {}", exerciseId);
         ModelingExercise modelingExercise = modelingExerciseRepository.findById(exerciseId).get();
@@ -262,7 +255,6 @@ public class ModelingExerciseResource {
     @GetMapping("/modeling-editor/{participationId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional(readOnly = true)
-    @Timed
     public ResponseEntity<ModelingSubmission> getDataForModelingEditor(@PathVariable Long participationId) {
         Participation participation = participationService.findOneWithEagerSubmissions(participationId);
         if (participation == null) {
@@ -335,7 +327,6 @@ public class ModelingExerciseResource {
     @GetMapping("/assessment-editor/{exerciseId}/{submissionId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional
-    @Timed
     //TODO: return a proper object here, e.g. modelingSubmission and fix the REST URL
     public ResponseEntity<JsonNode> getDataForAssessmentEditor(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
         Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findById(exerciseId);

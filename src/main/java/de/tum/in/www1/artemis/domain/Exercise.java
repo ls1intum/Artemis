@@ -90,6 +90,11 @@ public abstract class Exercise implements Serializable {
     @JsonIgnoreProperties("exercise")
     private Set<Participation> participations = new HashSet<>();
 
+    @OneToMany(mappedBy = "assessedExercise")
+    @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+    @JsonIgnoreProperties("assessedExercise")
+    private Set<TutorParticipation> tutorParticipations = new HashSet<>();
+
     @ManyToOne
     @JsonView(QuizView.Before.class)
     private Course course;
