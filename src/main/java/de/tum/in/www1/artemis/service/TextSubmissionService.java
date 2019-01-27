@@ -45,14 +45,16 @@ public class TextSubmissionService {
         textSubmission.setSubmissionDate(ZonedDateTime.now());
         textSubmission.setType(SubmissionType.MANUAL);
 
+        boolean isExampleSubmission = textSubmission.isExampleSubmission() != null && textSubmission.isExampleSubmission();
+
         // Example submissions do not have a participation
-        if (!textSubmission.isExampleSubmission()) {
+        if (!isExampleSubmission) {
             textSubmission.setParticipation(participation);
         }
         textSubmission = textSubmissionRepository.save(textSubmission);
 
         // All the following are useful only for real submissions
-        if (!textSubmission.isExampleSubmission()) {
+        if (!isExampleSubmission) {
             participation.addSubmissions(textSubmission);
 
             User user = participation.getStudent();
