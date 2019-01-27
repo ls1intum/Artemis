@@ -22,7 +22,6 @@ export class UserMgmtComponent implements OnInit, OnDestroy {
     routeData: Subscription;
     links: any;
     totalItems: string;
-    queryCount: string;
     itemsPerPage: number;
     page: number;
     predicate: string;
@@ -134,7 +133,6 @@ export class UserMgmtComponent implements OnInit, OnDestroy {
     private onSuccess(data: User[], headers: HttpHeaders) {
         this.links = this.parseLinks.parse(headers.get('link'));
         this.totalItems = headers.get('X-Total-Count');
-        this.queryCount = this.totalItems;
         this.users = data;
     }
 

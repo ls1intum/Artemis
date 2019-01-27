@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.service.FileService;
 import org.apache.commons.io.FilenameUtils;
@@ -43,7 +42,6 @@ public class FileUploadResource {
      */
     @PostMapping("/fileUpload")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR', 'TA')")
-    @Timed
     public ResponseEntity<String> saveFile(@RequestParam(value = "file") MultipartFile file) throws URISyntaxException {
         log.debug("REST request to upload file : {}", file.getOriginalFilename());
 
@@ -102,7 +100,6 @@ public class FileUploadResource {
      */
     @GetMapping("/files/temp/{filename:.+}")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR', 'TA')")
-    @Timed
     public ResponseEntity<byte[]> getTempFile(@PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
         return responseEntityForFilePath(Constants.TEMP_FILEPATH + filename);
@@ -117,7 +114,6 @@ public class FileUploadResource {
      */
     @GetMapping("/files/drag-and-drop/backgrounds/{questionId}/{filename:.+}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<byte[]> getDragAndDropBackgroundFile(@PathVariable Long questionId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
         return responseEntityForFilePath(Constants.DRAG_AND_DROP_BACKGROUND_FILEPATH + filename);
@@ -132,7 +128,6 @@ public class FileUploadResource {
      */
     @GetMapping("/files/drag-and-drop/drag-items/{dragItemId}/{filename:.+}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<byte[]> getDragItemFile(@PathVariable Long dragItemId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
         return responseEntityForFilePath(Constants.DRAG_ITEM_FILEPATH + filename);

@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import com.codahale.metrics.annotation.Timed;
 import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.JsonAssessmentRepository;
@@ -90,7 +89,6 @@ public class ModelingSubmissionResource {
     @PostMapping("/courses/{courseId}/exercises/{exerciseId}/modeling-submissions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRED)
-    @Timed
     public ResponseEntity<ModelingSubmission> createModelingSubmission(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
         log.debug("REST request to create ModelingSubmission : {}", modelingSubmission.getModel());
         if (modelingSubmission.getId() != null) {
@@ -118,7 +116,6 @@ public class ModelingSubmissionResource {
     @PutMapping("/courses/{courseId}/exercises/{exerciseId}/modeling-submissions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional
-    @Timed
     public ResponseEntity<ModelingSubmission> updateModelingSubmission(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
         log.debug("REST request to update ModelingSubmission : {}", modelingSubmission.getModel());
         if (modelingSubmission.getId() == null) {
@@ -181,7 +178,6 @@ public class ModelingSubmissionResource {
      */
     @GetMapping(value = "/courses/{courseId}/exercises/{exerciseId}/modeling-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     @Transactional(readOnly = true)
     public ResponseEntity<List<ModelingSubmission>> getAllModelingSubmissions(@PathVariable Long courseId,
                                                                               @PathVariable Long exerciseId,
@@ -234,7 +230,6 @@ public class ModelingSubmissionResource {
      */
     @GetMapping("/courses/{courseId}/exercises/{exerciseId}/modeling-submissions/{id}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<ModelingSubmission> getModelingSubmissionWithModel(@PathVariable Long courseId, @PathVariable Long exerciseId, @PathVariable Long id, Principal principal) {
         log.debug("REST request to get ModelingSubmission with model : {}", id);
         Optional<ModelingSubmission> modelingSubmission = modelingSubmissionRepository.findById(id);
