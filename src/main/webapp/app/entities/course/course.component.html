@@ -1,6 +1,6 @@
 <div>
     <h4>
-        <span jhiTranslate="arTeMiSApp.course.home.title">Courses</span>
+        <span id="course-page-heading" jhiTranslate="arTeMiSApp.course.home.title">Courses</span>
         <button *jhiHasAnyAuthority="'ROLE_ADMIN'" class="btn btn-primary float-right jh-create-entity create-course" [routerLink]="['/course/new']">
             <fa-icon [icon]="'plus'"></fa-icon>
             <span class="hidden-sm-down"  jhiTranslate="arTeMiSApp.course.home.createLabel">
@@ -28,9 +28,9 @@
             <tbody>
             <tr *ngFor="let course of courses ;trackBy: trackId">
                 <td><a [routerLink]="['/course', course.id, 'view' ]">{{course.id}}</a></td>
-                <td><span class="bold">{{course.title}}</span></br><span *ngIf="course.shortName"><span class="bold">Short Name:</span> {{course.shortName}}</span></td>
-                <td><span class="bold">Students:</span> {{course.studentGroupName}}</br>
-                    <span class="bold">Tutors:</span> {{course.teachingAssistantGroupName}}</br>
+                <td><span class="bold">{{course.title}}</span><br /><span *ngIf="course.shortName"><span class="bold">Short Name:</span> {{course.shortName}}</span></td>
+                <td><span class="bold">Students:</span> {{course.studentGroupName}}<br />
+                    <span class="bold">Tutors:</span> {{course.teachingAssistantGroupName}}<br />
                     <span class="bold">Instructors:</span> {{course.instructorGroupName}}</td>
                 <td>{{course.startDate | date:'medium'}}</td>
                 <td>{{course.endDate | date:'medium'}}</td>

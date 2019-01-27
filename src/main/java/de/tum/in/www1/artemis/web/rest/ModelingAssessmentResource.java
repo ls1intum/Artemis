@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import com.codahale.metrics.annotation.Timed;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.domain.*;
@@ -56,7 +55,6 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     @DeleteMapping("/modeling-assessments/exercise/{exerciseId}/optimal-model-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<String> resetOptimalModels(@PathVariable Long exerciseId) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         if (modelingExercise == null) {
@@ -72,7 +70,6 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     @GetMapping("/modeling-assessments/exercise/{exerciseId}/optimal-model-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<String> getNextOptimalModelSubmissions(@PathVariable Long exerciseId) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
 
@@ -92,7 +89,6 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     @GetMapping("/modeling-assessments/exercise/{exerciseId}/submission/{submissionId}/partial-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<String> getPartialAssessment(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
 
@@ -112,7 +108,6 @@ public class ModelingAssessmentResource extends AssessmentResource {
      */
     @GetMapping("/modeling-assessments/participation/{participationId}/submission/{submissionId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<String> getAssessmentBySubmissionId(@PathVariable Long participationId, @PathVariable Long submissionId) {
         Optional<Participation> optionalParticipation = participationRepository.findById(participationId);
         if (!optionalParticipation.isPresent()) {
@@ -148,7 +143,6 @@ public class ModelingAssessmentResource extends AssessmentResource {
      */
     @PutMapping("/modeling-assessments/exercise/{exerciseId}/result/{resultId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Result> saveModelingAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody String modelingAssessment) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         if (modelingExercise == null) {
@@ -172,7 +166,6 @@ public class ModelingAssessmentResource extends AssessmentResource {
      */
     @PutMapping("/modeling-assessments/exercise/{exerciseId}/result/{resultId}/submit")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Result> submitModelingAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody String modelingAssessment) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
 

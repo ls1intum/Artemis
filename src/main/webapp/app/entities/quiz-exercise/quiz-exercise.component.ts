@@ -5,7 +5,7 @@ import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { QuizExercise } from './quiz-exercise.model';
 import { QuizExerciseService } from './quiz-exercise.service';
-import { Principal } from '../../core';
+import { AccountService } from '../../core';
 import { ActivatedRoute } from '@angular/router';
 import * as moment from 'moment';
 import { Course, CourseService } from '../course';
@@ -38,7 +38,7 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
         private quizExerciseService: QuizExerciseService,
         private jhiAlertService: JhiAlertService,
         private eventManager: JhiEventManager,
-        private principal: Principal,
+        private accountService: AccountService,
         private route: ActivatedRoute
     ) {
         this.predicate = 'id';
@@ -143,7 +143,7 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
      * @returns {boolean} true if the User is an Admin/Instructor, false if not.
      */
     userIsInstructor() {
-        return this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
+        return this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
     }
 
     /**

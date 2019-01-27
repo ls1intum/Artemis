@@ -6,7 +6,7 @@ import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { ModelingExercise } from './modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { ITEMS_PER_PAGE } from '../../shared';
-import { Principal } from '../../core';
+import { AccountService } from '../../core';
 import { CourseExerciseService } from '../course/course.service';
 import { ActivatedRoute } from '@angular/router';
 import { Course, CourseService } from '../course';
@@ -31,7 +31,7 @@ export class ModelingExerciseComponent implements OnInit, OnDestroy {
         private courseService: CourseService,
         private jhiAlertService: JhiAlertService,
         private eventManager: JhiEventManager,
-        private principal: Principal,
+        private accountService: AccountService,
         private route: ActivatedRoute
     ) {
         this.modelingExercises = [];

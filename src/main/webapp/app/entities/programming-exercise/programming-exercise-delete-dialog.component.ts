@@ -1,14 +1,12 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { JhiEventManager, JhiAlertService } from 'ng-jhipster';
 
 import { ProgrammingExercise } from './programming-exercise.model';
-import { ProgrammingExercisePopupService } from './programming-exercise-popup.service';
 import { ProgrammingExerciseService } from './programming-exercise.service';
 
-import { Subscription } from 'rxjs/Subscription';
 import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
@@ -16,6 +14,7 @@ import { HttpErrorResponse } from '@angular/common/http';
     templateUrl: './programming-exercise-delete-dialog.component.html'
 })
 export class ProgrammingExerciseDeleteDialogComponent {
+
     programmingExercise: ProgrammingExercise;
     confirmExerciseName: string;
     deleteBaseReposBuildPlans = false;
@@ -58,17 +57,33 @@ export class ProgrammingExerciseDeleteDialogComponent {
     template: ''
 })
 export class ProgrammingExerciseDeletePopupComponent implements OnInit, OnDestroy {
-    routeSub: Subscription;
+    protected ngbModalRef: NgbModalRef;
 
-    constructor(private route: ActivatedRoute, private programmingExercisePopupService: ProgrammingExercisePopupService) {}
+    constructor(protected activatedRoute: ActivatedRoute, protected router: Router, protected modalService: NgbModal) {}
 
     ngOnInit() {
-        this.routeSub = this.route.params.subscribe(params => {
-            this.programmingExercisePopupService.open(ProgrammingExerciseDeleteDialogComponent as Component, params['id']);
+        this.activatedRoute.data.subscribe(({ programmingExercise }) => {
+            setTimeout(() => {
+                this.ngbModalRef = this.modalService.open(ProgrammingExerciseDeleteDialogComponent as Component, {
+                    size: 'lg',
+                    backdrop: 'static'
+                });
+                this.ngbModalRef.componentInstance.programmingExercise = programmingExercise;
+                this.ngbModalRef.result.then(
+                    result => {
+                        this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
+                        this.ngbModalRef = null;
+                    },
+                    reason => {
+                        this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
+                        this.ngbModalRef = null;
+                    }
+                );
+            }, 0);
         });
     }
 
     ngOnDestroy() {
-        this.routeSub.unsubscribe();
+        this.ngbModalRef = null;
     }
 }
