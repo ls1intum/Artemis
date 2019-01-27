@@ -67,7 +67,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 this.tutorParticipationStatus = this.tutorParticipation.status;
                 this.exampleSubmissionsForTutorial = this.exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => exampleSubmission.usedForTutorial);
                 this.exampleSubmissionsToComplete = this.exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => !exampleSubmission.usedForTutorial);
-                this.numberOfNeededSubmissions = Math.max(3, this.exampleSubmissionsToComplete.length);
+                this.numberOfNeededSubmissions = Math.min(3, this.exampleSubmissionsToComplete.length);
             },
             (response: string) => this.onError(response)
         );
