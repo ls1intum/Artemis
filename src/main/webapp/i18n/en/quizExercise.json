@@ -12,7 +12,10 @@
             "updated": "A Quiz Exercise is updated with identifier {{ param }}",
             "deleted": "A Quiz Exercise is deleted with identifier {{ param }}",
             "delete": {
-                "question": "Are you sure you want to delete Quiz Exercise {{ title }}?"
+                "question": "Are you sure you want to permanently delete the quiz {{ title }}? This action can NOT be undone!"
+            },
+            "reset": {
+                "question": "Are you sure you want to reset the quiz {{ title }}? This action can NOT be undone!"
             },
             "edit": {
                 "title": "Edit Quiz Exercise for {{ param }}",

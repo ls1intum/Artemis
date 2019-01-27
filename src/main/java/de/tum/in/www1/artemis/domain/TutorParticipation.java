@@ -32,12 +32,10 @@ public class TutorParticipation implements Serializable {
     @Column(name = "points")
     private Integer points;
 
-    @OneToOne
-    @JoinColumn(unique = true)
+    @ManyToOne
     private Exercise assessedExercise;
 
-    @OneToOne
-    @JoinColumn(unique = true)
+    @ManyToOne
     private User tutor;
 
     @OneToMany(mappedBy = "tutorParticipation")
