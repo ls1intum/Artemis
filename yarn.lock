@@ -237,7 +237,7 @@
     call-me-maybe "^1.0.1"
     glob-to-regexp "^0.3.0"
 
-"@ng-bootstrap/ng-bootstrap@4.0.1", "@ng-bootstrap/ng-bootstrap@^4.0.0":
+"@ng-bootstrap/ng-bootstrap@4.0.1":
   version "4.0.1"
   resolved "https://registry.yarnpkg.com/@ng-bootstrap/ng-bootstrap/-/ng-bootstrap-4.0.1.tgz#75a6b881b24d869624caa5b5f8a4070650ad5bc4"
   integrity sha512-COQ6MgZ+HD27pGz2sVPB2ttCZozrjHPs0sayuZkleMvzTllYX/eQEPAOiS+yRsXNkDApi5/XGlIFVWBjxTtwoA==
@@ -260,17 +260,17 @@
   resolved "https://registry.yarnpkg.com/@nguniversal/express-engine/-/express-engine-7.1.0.tgz#d48b1a821036382d62e4d4b122b5e44790c41c3f"
   integrity sha512-otOA3WTjb+XnEDiyhwkvP0hE1gC7PiJrDoDFs5Q77SQ0ZAjuGzAIIgpQrPE8B+v0zmVj2oucDNCSZlmYWb1P/Q==
 
-"@ngx-translate/core@^10.0.1":
-  version "10.0.2"
-  resolved "https://registry.yarnpkg.com/@ngx-translate/core/-/core-10.0.2.tgz#5eeb78f47845b476a1e892fb2fb153dbbaf72850"
-  integrity sha512-7nM3DrJaqKswwtJlbu2kuKNl+hE8Isr18sKsKvGGpSxQk+G0gO0reDlx2PhUNus7TJTkA1C59vU/JoN8hIvZ4g==
+"@ngx-translate/core@11.0.1":
+  version "11.0.1"
+  resolved "https://registry.yarnpkg.com/@ngx-translate/core/-/core-11.0.1.tgz#cecefad41f06368f5859dac48fec8fcc4485615f"
+  integrity sha512-nBCa1ZD9fAUY/3eskP3Lql2fNg8OMrYIej1/5GRsfcutx9tG/5fZLCv9m6UCw1aS+u4uK/vXjv1ctG/FdMvaWg==
   dependencies:
     tslib "^1.9.0"
 
-"@ngx-translate/http-loader@^3.0.1":
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/@ngx-translate/http-loader/-/http-loader-3.0.1.tgz#20b0f98bc6c25321129d3e3302ab3cc489c0a42a"
-  integrity sha1-ILD5i8bCUyESnT4zAqs8xInApCo=
+"@ngx-translate/http-loader@4.0.0":
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/@ngx-translate/http-loader/-/http-loader-4.0.0.tgz#8a555248ad4b7d513460fcec9da25b0447962f1d"
+  integrity sha512-x8LumqydWD7eX9yQTAVeoCM9gFUIGVTUjZqbxdAUavAA3qVnk9wCQux7iHLPXpydl8vyQmLoPQR+fFU+DUDOMA==
   dependencies:
     tslib "^1.9.0"
 
@@ -1862,10 +1862,10 @@ check-error@^1.0.2:
   resolved "https://registry.yarnpkg.com/check-error/-/check-error-1.0.2.tgz#574d312edd88bb5dd8912e9286dd6c0aed4aac82"
   integrity sha1-V00xLt2Iu13YkS6Sht1sCu1KrII=
 
-chevrotain@4.1.0:
-  version "4.1.0"
-  resolved "https://registry.yarnpkg.com/chevrotain/-/chevrotain-4.1.0.tgz#61b3cf734e182b3164eb12c2c2452f4f5282337f"
-  integrity sha512-iwuK4FOV+vZlvKonoXVw6G+rXJm4jWk17aJFkm6FloVYcVSrAaJLdCdQo+IIyX98jm0WJVcdK9cllRZQpNBnBg==
+chevrotain@4.1.1:
+  version "4.1.1"
+  resolved "https://registry.yarnpkg.com/chevrotain/-/chevrotain-4.1.1.tgz#e1e601bf099e96e6a3377671b7d5a40c631cf8ce"
+  integrity sha512-NQky1HQyiAzxsxpq4Ppt47SYO2U3JLtmfs85QPf3kYSzGBjjp5AA8kqjH8hCjGFRpaQ781QOk1ragQIOkBgUTA==
   dependencies:
     regexp-to-ast "0.3.5"
 
@@ -4252,10 +4252,10 @@ gaze@^1.0.0:
   dependencies:
     globule "^1.0.0"
 
-generator-jhipster@5.7.2:
-  version "5.7.2"
-  resolved "https://registry.yarnpkg.com/generator-jhipster/-/generator-jhipster-5.7.2.tgz#46e8238a4515acbe788ac6f6e96be12ec030fa5c"
-  integrity sha512-IHa/Jc7SMOHuxizoib42yhRLZdUWU5RcIuyFpUrkxLkjygbZaHlKw7EAcZeSSGKTd8n7g974sWKVLqDO9HbIXQ==
+generator-jhipster@5.8.0:
+  version "5.8.0"
+  resolved "https://registry.yarnpkg.com/generator-jhipster/-/generator-jhipster-5.8.0.tgz#1c6a922a49883aceda5e7324addb5e743d08f3e3"
+  integrity sha512-a62kA9KAeYBQehrTt9mo8KirFhRTK0xLO14YOutGGwYKEToNOsICaWc2tf15AFKvBoenRqAAj+1SiV6MF1/W/g==
   dependencies:
     axios "0.18.0"
     chalk "2.4.1"
@@ -4266,7 +4266,7 @@ generator-jhipster@5.7.2:
     glob "7.1.2"
     gulp-filter "5.1.0"
     insight "0.10.1"
-    jhipster-core "3.6.7"
+    jhipster-core "3.6.8"
     js-object-pretty-print "0.3.0"
     js-yaml "3.12.0"
     lodash "4.17.10"
@@ -5775,12 +5775,12 @@ jest-validate@^23.5.0:
     leven "^2.1.0"
     pretty-format "^23.6.0"
 
-jhipster-core@3.6.7:
-  version "3.6.7"
-  resolved "https://registry.yarnpkg.com/jhipster-core/-/jhipster-core-3.6.7.tgz#de7a7f6c41844673836dce466e6a251913f3c4ab"
-  integrity sha512-fLr62052D96jDomCIdGou7x3e2izdf3kcZ5ewfr4yrc/5ySRhbW/BnnEiAK8mxkq2bSKh614ZaQ2vDlDgtSPvA==
+jhipster-core@3.6.8:
+  version "3.6.8"
+  resolved "https://registry.yarnpkg.com/jhipster-core/-/jhipster-core-3.6.8.tgz#57a89ae022f03f843ff31661c0593c8456fd5750"
+  integrity sha512-XRrbWxPdmfVxDXMtVdetyupnHzwbJBaxs+gRA4mlheZnwu/2wDqnH/h9iJBCtxlIfVV/8HiZMNC0orb7h6E2Zw==
   dependencies:
-    chevrotain "4.1.0"
+    chevrotain "4.1.1"
     fs-extra "7.0.1"
     lodash "4.17.11"
     winston "3.1.0"
@@ -6987,14 +6987,12 @@ next-tick@1:
   resolved "https://registry.yarnpkg.com/next-tick/-/next-tick-1.0.0.tgz#ca86d1fe8828169b0120208e3dc8424b9db8342c"
   integrity sha1-yobR/ogoFpsBICCOPchCS524NCw=
 
-ng-jhipster@0.6.0:
-  version "0.6.0"
-  resolved "https://registry.yarnpkg.com/ng-jhipster/-/ng-jhipster-0.6.0.tgz#d731c10ae4eead16d6fcb08579597b96d2c7969d"
-  integrity sha512-2WdRhDNpQbGMW2xJXXaxdl+qQ+59miZ8umhaxcS5FT+wwgGFgU7FNVgQagSdTFk2NHSHep/8QNWmg7E0q/FrTA==
+ng-jhipster@0.9.0:
+  version "0.9.0"
+  resolved "https://registry.yarnpkg.com/ng-jhipster/-/ng-jhipster-0.9.0.tgz#970663a432014219463f0b28e2c237afdf70efbf"
+  integrity sha512-UVt4qfE4Dk8YkF93A85Btz0gvQ9vrIBqF7iQkwtvdUq+AjLa89HT9aMMVpkcJSkVqW7Q5T91sVWKPo8v2Hezqw==
   dependencies:
-    "@ng-bootstrap/ng-bootstrap" "^4.0.0"
-    "@ngx-translate/core" "^10.0.1"
-    "@ngx-translate/http-loader" "^3.0.1"
+    tslib "^1.9.0"
 
 ng-pick-datetime@7.0.0:
   version "7.0.0"

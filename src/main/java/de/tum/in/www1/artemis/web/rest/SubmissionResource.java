@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -41,7 +40,6 @@ public class SubmissionResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/submissions")
-    @Timed
     public ResponseEntity<Submission> createSubmission(@RequestBody Submission submission) throws URISyntaxException {
         log.debug("REST request to save Submission : {}", submission);
         if (submission.getId() != null) {
@@ -63,7 +61,6 @@ public class SubmissionResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/submissions")
-    @Timed
     public ResponseEntity<Submission> updateSubmission(@RequestBody Submission submission) throws URISyntaxException {
         log.debug("REST request to update Submission : {}", submission);
         if (submission.getId() == null) {
@@ -81,7 +78,6 @@ public class SubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and the list of submissions in body
      */
     @GetMapping("/submissions")
-    @Timed
     public List<Submission> getAllSubmissions() {
         log.debug("REST request to get all Submissions");
         return submissionRepository.findAll();
@@ -94,7 +90,6 @@ public class SubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and with body the submission, or with status 404 (Not Found)
      */
     @GetMapping("/submissions/{id}")
-    @Timed
     public ResponseEntity<Submission> getSubmission(@PathVariable Long id) {
         log.debug("REST request to get Submission : {}", id);
         Optional<Submission> submission = submissionRepository.findById(id);
@@ -108,7 +103,6 @@ public class SubmissionResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/submissions/{id}")
-    @Timed
     public ResponseEntity<Void> deleteSubmission(@PathVariable Long id) {
         log.debug("REST request to delete Submission : {}", id);
         submissionRepository.deleteById(id);
