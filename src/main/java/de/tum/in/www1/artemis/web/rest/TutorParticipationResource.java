@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
@@ -9,7 +8,6 @@ import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.TutorParticipationService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import io.swagger.annotations.Example;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -59,7 +57,6 @@ public class TutorParticipationResource {
      */
     @PostMapping(value = "/exercises/{exerciseId}/tutorParticipations")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<TutorParticipation> initTutorParticipation(@PathVariable Long exerciseId) throws URISyntaxException {
         log.debug("REST request to start tutor participation : {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
@@ -89,7 +86,6 @@ public class TutorParticipationResource {
      */
     @PostMapping(value = "/exercises/{exerciseId}/tutorParticipations/{participationId}/exampleSubmission")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<TutorParticipation> addExampleSubmission(@PathVariable Long exerciseId, @PathVariable Long participationId, @RequestBody ExampleSubmission exampleSubmission) throws URISyntaxException {
         log.debug("REST request to add example submission to participation id : {}", participationId);
         Exercise exercise = exerciseService.findOne(exerciseId);

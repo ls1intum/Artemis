@@ -232,7 +232,6 @@ public class ExerciseResource {
      */
     @GetMapping("/exercises/{id}/for-tutor-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Exercise> getExerciseForTutorDashboard(@PathVariable Long id) {
         log.debug("REST request to get Exercise for tutor dashboard : {}", id);
         Exercise exercise = exerciseService.findOne(id);

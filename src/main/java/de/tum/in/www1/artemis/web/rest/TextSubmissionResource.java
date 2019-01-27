@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
@@ -221,11 +220,10 @@ public class TextSubmissionResource {
      */
     @GetMapping(value = "/exercises/{exerciseId}/text-submissions-assessed-by-tutor")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     @Transactional(readOnly = true)
     public ResponseEntity<List<TextSubmission>> getAllTextSubmissionsByTutor(@PathVariable Long exerciseId) {
         log.debug("REST request to get all TextSubmissions filtered by assessed by tutor");
-        Exercise exercise = textExerciseService.findOneLoadParticipations(exerciseId);
+        Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
         User user = userService.getUserWithGroupsAndAuthorities();
 
         if (!hasAtLeastTAPermissions(exercise, user)) return forbidden();
@@ -276,11 +274,10 @@ public class TextSubmissionResource {
      */
     @GetMapping(value = "/exercises/{exerciseId}/text-submission-without-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     @Transactional(readOnly = true)
     public ResponseEntity<Optional<TextSubmission>> getTextSubmissionWithoutAssessment(@PathVariable Long exerciseId) {
         log.debug("REST request to get a text submission without assessment");
-        Exercise exercise = textExerciseService.findOneLoadParticipations(exerciseId);
+        Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
         User user = userService.getUserWithGroupsAndAuthorities();
 
         if (!hasAtLeastTAPermissions(exercise, user)) return forbidden();

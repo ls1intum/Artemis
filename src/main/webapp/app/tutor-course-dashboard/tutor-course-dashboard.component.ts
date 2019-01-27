@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Course, CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
 import { Subscription } from 'rxjs';
-import { Principal, User } from '../core';
+import { AccountService, User } from '../core';
 import { HttpResponse } from '@angular/common/http';
 import { Exercise } from 'app/entities/exercise';
 import { SubmissionExerciseType } from 'app/entities/submission';
@@ -28,7 +28,7 @@ export class TutorCourseDashboardComponent implements OnInit {
     constructor(
         private courseService: CourseService,
         private jhiAlertService: JhiAlertService,
-        private principal: Principal,
+        private accountService: AccountService,
         private route: ActivatedRoute
     ) {}
 
@@ -45,7 +45,7 @@ export class TutorCourseDashboardComponent implements OnInit {
             }
         });
 
-        this.principal.identity().then(user => (this.tutor = user));
+        this.accountService.identity().then(user => (this.tutor = user));
     }
 
     loadAll() {

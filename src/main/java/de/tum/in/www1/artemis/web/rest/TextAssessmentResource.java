@@ -107,7 +107,6 @@ public class TextAssessmentResource extends AssessmentResource {
 
     @GetMapping("/exercise/{exerciseId}/submission/{submissionId}/exampleAssessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Result> getExampleAssessmentForTutor(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
         log.debug("REST request to get example assessment for tutors text assessment: {}", submissionId);
         Optional<TextSubmission> textSubmission = textSubmissionRepository.findById(submissionId);

@@ -104,10 +104,6 @@ public abstract class Exercise implements Serializable {
     @JsonIgnoreProperties("exercise")
     private Set<ExampleSubmission> exampleSubmissions = new HashSet<>();
 
-    @OneToMany(mappedBy = "assessedExercise")
-    @JsonIgnoreProperties("exercise")
-    private Set<TutorParticipation> tutorParticipations = new HashSet<>();
-
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
         return id;

@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.ExampleSubmission;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.service.ExampleSubmissionService;
@@ -45,7 +44,6 @@ public class ExampleSubmissionResource {
     @PostMapping("/exercises/{exerciseId}/example-submissions")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRED)
-    @Timed
     public ResponseEntity<ExampleSubmission> createExampleSubmission(@PathVariable Long exerciseId, @RequestBody ExampleSubmission exampleSubmission) {
         log.debug("REST request to save ExampleSubmission : {}", exampleSubmission);
         if (exampleSubmission.getId() != null) {
@@ -69,7 +67,6 @@ public class ExampleSubmissionResource {
     @PutMapping("/exercises/{exerciseId}/example-submissions")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @Transactional
-    @Timed
     public ResponseEntity<ExampleSubmission> updateExampleSubmission(@PathVariable Long exerciseId, @RequestBody ExampleSubmission exampleSubmission) {
         log.debug("REST request to update ExampleSubmission : {}", exampleSubmission);
         if (exampleSubmission.getId() == null) {
@@ -94,7 +91,6 @@ public class ExampleSubmissionResource {
      */
     @GetMapping("/example-submissions/{id}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<ExampleSubmission> getExampleSubmission(@PathVariable Long id) {
         log.debug("REST request to get ExampleSubmission : {}", id);
         Optional<ExampleSubmission> exampleSubmission = exampleSubmissionRepository.findById(id);

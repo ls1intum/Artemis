@@ -230,7 +230,6 @@ public class CourseResource {
      */
     @GetMapping("/courses/{id}/for-tutor-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Course> getCourseForTutorDashboard(Principal principal, @PathVariable Long id) {
         log.debug("REST request /courses/{id}/for-tutor-dashboard");
         Course course = courseService.findOne(id);

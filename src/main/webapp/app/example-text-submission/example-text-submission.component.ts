@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Location } from '@angular/common';
 import { JhiAlertService } from 'ng-jhipster';
 import { Subscription } from 'rxjs';
-import { Principal } from '../core';
+import { AccountService } from '../core';
 import { ExampleSubmission } from 'app/entities/example-submission';
 import { ExerciseService } from 'app/entities/exercise';
 import { HttpResponse } from '@angular/common/http';
@@ -14,7 +14,6 @@ import { TextAssessmentsService } from 'app/entities/text-assessments/text-asses
 import { Result } from 'app/entities/result';
 import { HighlightColors } from 'app/text-shared/highlight-colors';
 import { TextExercise } from 'app/entities/text-exercise';
-import { TutorParticipation } from 'app/entities/tutor-participation';
 import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
 
 @Component({
@@ -49,7 +48,7 @@ export class ExampleTextSubmissionComponent implements OnInit {
         private assessmentsService: TextAssessmentsService,
         private tutorParticipationService: TutorParticipationService,
         private jhiAlertService: JhiAlertService,
-        private principal: Principal,
+        private accountService: AccountService,
         private route: ActivatedRoute,
         private location: Location
     ) {
@@ -74,7 +73,7 @@ export class ExampleTextSubmissionComponent implements OnInit {
     loadAll() {
         this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<TextExercise>) => {
             this.exercise = exerciseResponse.body;
-            this.isAtLeastInstructor = this.principal.isAtLeastInstructorInCourse(this.exercise.course);
+            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course);
         });
 
         if (!this.isNewSubmission) {
