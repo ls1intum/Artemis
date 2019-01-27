@@ -104,6 +104,11 @@ public class ShortAnswerSubmittedText implements Serializable {
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
+    //TODO FDE: check if text input is correct needs to improve
+    public boolean isSubmittedTextCorrect(String submittedText, String solution){
+        return submittedText.equalsIgnoreCase(solution);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
