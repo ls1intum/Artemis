@@ -6,6 +6,8 @@ import {
     QuizExerciseComponent,
     QuizExerciseDeleteDialogComponent,
     QuizExerciseDeletePopupComponent,
+    QuizExerciseResetDialogComponent,
+    QuizExerciseResetPopupComponent,
     QuizExerciseDetailComponent,
     quizExercisePopupRoute,
     QuizExercisePopupService,
@@ -21,11 +23,13 @@ const ENTITY_STATES = [...quizExerciseRoute, ...quizExercisePopupRoute];
 
 @NgModule({
     imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, ArTEMiSQuizEditModule, ArTEMiSQuizReEvaluateModule],
-    declarations: [QuizExerciseComponent, QuizExerciseDeleteDialogComponent, QuizExerciseDeletePopupComponent, QuizExerciseDetailComponent],
+    declarations: [QuizExerciseComponent, QuizExerciseDeleteDialogComponent, QuizExerciseDeletePopupComponent, QuizExerciseResetDialogComponent, QuizExerciseResetPopupComponent, QuizExerciseDetailComponent],
     entryComponents: [
         QuizExerciseComponent,
         QuizExerciseDeleteDialogComponent,
         QuizExerciseDeletePopupComponent,
+        QuizExerciseResetDialogComponent,
+        QuizExerciseResetPopupComponent,
         QuizExerciseDetailComponent
     ],
     providers: [QuizExerciseService, QuizExercisePopupService, PendingChangesGuard],

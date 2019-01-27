@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
 import { ActivatedRoute, Router } from '@angular/router';
-import { JhiWebsocketService, Principal } from '../../core';
+import { JhiWebsocketService, AccountService } from '../../core';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
 import { Chart, ChartAnimationOptions, ChartOptions } from 'chart.js';
@@ -169,7 +169,7 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
     constructor(
         private route: ActivatedRoute,
         private router: Router,
-        private principal: Principal,
+        private accountService: AccountService,
         private translateService: TranslateService,
         private quizExerciseService: QuizExerciseService,
         private jhiWebsocketService: JhiWebsocketService,
@@ -180,7 +180,7 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
     ngOnInit() {
         this.sub = this.route.params.subscribe(params => {
             // use different REST-call if the User is a Student
-            if (this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
+            if (this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
                 this.quizExerciseService.find(params['quizId']).subscribe((res: HttpResponse<QuizExercise>) => {
                     this.loadQuizSuccess(res.body);
                 });
@@ -196,7 +196,7 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
 
             // ask for new Data if the websocket for new statistical data was notified
             this.jhiWebsocketService.receive(this.websocketChannelForData).subscribe(() => {
-                if (this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
+                if (this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
                     this.quizExerciseService.find(params['quizId']).subscribe(res => {
                         this.loadQuizSuccess(res.body);
                     });
@@ -237,7 +237,7 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
      */
     loadQuizSuccess(quiz: QuizExercise) {
         // if the Student finds a way to the Website -> the Student will be send back to Courses
-        if (!this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
+        if (!this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
             this.router.navigate(['/courses']);
         }
         this.quizExercise = quiz;

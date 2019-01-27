@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -74,7 +73,6 @@ public class TextExerciseResource {
      */
     @PostMapping("/text-exercises")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<TextExercise> createTextExercise(@RequestBody TextExercise textExercise) throws URISyntaxException {
         log.debug("REST request to save TextExercise : {}", textExercise);
         if (textExercise.getId() != null) {
@@ -113,7 +111,6 @@ public class TextExerciseResource {
      */
     @PutMapping("/text-exercises")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<TextExercise> updateTextExercise(@RequestBody TextExercise textExercise) throws URISyntaxException {
         log.debug("REST request to update TextExercise : {}", textExercise);
         if (textExercise.getId() == null) {
@@ -143,7 +140,6 @@ public class TextExerciseResource {
      */
     @GetMapping(value = "/courses/{courseId}/text-exercises")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<List<TextExercise>> getTextExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
         Course course = courseService.findOne(courseId);
@@ -168,7 +164,6 @@ public class TextExerciseResource {
      */
     @GetMapping("/text-exercises/{id}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<TextExercise> getTextExercise(@PathVariable Long id) {
         log.debug("REST request to get TextExercise : {}", id);
         Optional<TextExercise> textExercise = textExerciseRepository.findById(id);
@@ -190,7 +185,6 @@ public class TextExerciseResource {
      */
     @DeleteMapping("/text-exercises/{id}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Void> deleteTextExercise(@PathVariable Long id) {
         log.debug("REST request to delete TextExercise : {}", id);
         Optional<TextExercise> textExercise = textExerciseRepository.findById(id);
@@ -217,7 +211,6 @@ public class TextExerciseResource {
     @GetMapping("/text-editor/{participationId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional(readOnly = true)
-    @Timed
     public ResponseEntity<Participation> getDataForTextEditor(@PathVariable Long participationId) {
         Participation participation = participationService.findOne(participationId);
         if (participation == null) {

@@ -53,7 +53,7 @@ export class ExerciseService {
     }
 
     reset(id: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${id}/participations`, { observe: 'response' });
+        return this.http.delete<void>(`${this.resourceUrl}/${id}/reset`, { observe: 'response' });
     }
 
     exportRepos(id: number, students: string[]): Observable<HttpResponse<Blob>> {

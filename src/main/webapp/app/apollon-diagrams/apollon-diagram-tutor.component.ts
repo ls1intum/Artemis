@@ -8,7 +8,7 @@ import { ModelingSubmission, ModelingSubmissionService } from '../entities/model
 import { DiagramType, ModelingExercise, ModelingExerciseService } from '../entities/modeling-exercise';
 import { Result, ResultService } from '../entities/result';
 import { ModelElementType, ModelingAssessment, ModelingAssessmentService } from '../entities/modeling-assessment';
-import { Principal } from '../core';
+import { AccountService } from '../core';
 import { Submission } from '../entities/submission';
 
 @Component({
@@ -38,7 +38,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
     busy: boolean;
     done: boolean;
     timeout: any;
-    accountId: number;
+    userId: number;
     isAuthorized: boolean;
 
     constructor(
@@ -50,7 +50,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         private modelingExerciseService: ModelingExerciseService,
         private resultService: ResultService,
         private modelingAssessmentService: ModelingAssessmentService,
-        private principal: Principal
+        private accountService: AccountService
     ) {
         this.assessments = [];
         this.assessmentsAreValid = false;
@@ -59,10 +59,10 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         // Used to check if the assessor is the current user
-        this.principal.identity().then(account => {
-            this.accountId = account.id;
+        this.accountService.identity().then(user => {
+            this.userId = user.id;
         });
-        this.isAuthorized = this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
+        this.isAuthorized = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
         this.route.params.subscribe(params => {
             const submissionId = Number(params['submissionId']);
             const exerciseId = Number(params['exerciseId']);
@@ -92,7 +92,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
                 }
                 data.result.participation.results = [data.result];
                 this.result = data.result as Result;
-                if ((this.result.assessor == null || this.result.assessor.id === this.accountId) && !this.result.rated) {
+                if ((this.result.assessor == null || this.result.assessor.id === this.userId) && !this.result.rated) {
                     this.jhiAlertService.info('arTeMiSApp.apollonDiagram.lock');
                 }
                 if (nextOptimal) {

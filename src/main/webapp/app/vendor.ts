@@ -48,6 +48,7 @@ import {
     faArchive,
     faEraser,
     faDownload,
+    faFileExport,
     faChalkboardTeacher,
     faCheckCircle
 } from '@fortawesome/free-solid-svg-icons';
@@ -93,5 +94,6 @@ library.add(faEraser);
 library.add(faDownload);
 library.add(faChalkboardTeacher);
 library.add(faCheckCircle);
+library.add(faFileExport);
 
 // jhipster-needle-add-element-to-vendor - JHipster will add new menu items here

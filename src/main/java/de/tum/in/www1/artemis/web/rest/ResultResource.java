@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -78,7 +77,6 @@ public class ResultResource {
      */
     @PostMapping("/manual-results")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Result> createResult(@RequestBody Result result) throws URISyntaxException {
         log.debug("REST request to save Result : {}", result);
         Participation participation = result.getParticipation();
@@ -116,7 +114,6 @@ public class ResultResource {
      */
     @PostMapping(value = "/results/{planKey}")
     @Transactional
-    @Timed
     public ResponseEntity<?> notifyResult(@PathVariable("planKey") String planKey) {
         if (planKey.toLowerCase().endsWith("base") || planKey.toLowerCase().endsWith("solution")) {
             //TODO: can we do this check more precise and compare it with the saved values from the exercises?
@@ -153,7 +150,6 @@ public class ResultResource {
      */
     @PutMapping("/manual-results")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Result> updateResult(@RequestBody Result result) throws URISyntaxException {
         log.debug("REST request to update Result : {}", result);
         Participation participation = result.getParticipation();
@@ -180,7 +176,6 @@ public class ResultResource {
      */
     @GetMapping(value = "/courses/{courseId}/exercises/{exerciseId}/participations/{participationId}/results")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<List<Result>> getResultsForParticipation(@PathVariable Long courseId,
                                                                    @PathVariable Long exerciseId,
                                                                    @PathVariable Long participationId,
@@ -241,7 +236,6 @@ public class ResultResource {
      */
     @GetMapping(value = "/courses/{courseId}/exercises/{exerciseId}/results")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     @Transactional(readOnly = true)
     public ResponseEntity<List<Result>> getResultsForExercise(@PathVariable Long courseId,
                                                               @PathVariable Long exerciseId,
@@ -312,7 +306,6 @@ public class ResultResource {
      */
     @GetMapping("/results/{resultId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Result> getResult(@PathVariable Long resultId) {
         log.debug("REST request to get Result : {}", resultId);
         Optional<Result> result = resultRepository.findById(resultId);
@@ -334,7 +327,6 @@ public class ResultResource {
      */
     @GetMapping(value = "/results/{resultId}/details")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     @Transactional
     public ResponseEntity<List<Feedback>> getResultDetails(@PathVariable Long resultId) {
         log.debug("REST request to get Result : {}", resultId);
@@ -366,7 +358,6 @@ public class ResultResource {
      */
     @DeleteMapping("/results/{resultId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Void> deleteResult(@PathVariable Long resultId) {
         log.debug("REST request to delete Result : {}", resultId);
         Optional<Result> result = resultRepository.findById(resultId);
@@ -388,7 +379,6 @@ public class ResultResource {
      */
     @GetMapping(value = "/results/submission/{submissionId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Result> getResultForSubmission(@PathVariable Long submissionId) {
         log.debug("REST request to get Result for submission : {}", submissionId);
         Optional<Result> result = resultRepository.findDistinctBySubmissionId(submissionId);

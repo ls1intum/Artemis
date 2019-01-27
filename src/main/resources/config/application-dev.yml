@@ -36,6 +36,7 @@ spring:
         username: root
         password:
         hikari:
+            poolName: Hikari
             auto-commit: false
             data-source-properties:
                 cachePrepStmts: true
@@ -45,7 +46,7 @@ spring:
     jpa:
         database-platform: org.hibernate.dialect.MySQL5InnoDBDialect
         database: MYSQL
-        show-sql: true
+        show-sql: false
         properties:
             hibernate.id.new_generator_mappings: true
             hibernate.connection.provider_disables_autocommit: true
@@ -110,12 +111,8 @@ jhipster:
     mail: # specific JHipster mail property, for standard properties see MailProperties
         from: ArTEMiS@localhost
         base-url: http://127.0.0.1:8080
-    metrics: # DropWizard Metrics configuration, used by MetricsConfiguration
-        jmx:
-            enabled: true
-        prometheus: 
-            enabled: false #expose metrics via prometheus 
-        logs: # Reports Dropwizard metrics in the logs
+    metrics:
+        logs: # Reports metrics in the logs
             enabled: false
             report-frequency: 60 # in seconds
     logging:

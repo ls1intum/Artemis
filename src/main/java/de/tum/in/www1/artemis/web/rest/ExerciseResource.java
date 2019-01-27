@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
@@ -73,7 +72,6 @@ public class ExerciseResource {
      */
     @GetMapping(value = "/courses/{courseId}/exercises")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Collection<Exercise>> getExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get Exercises for Course : {}", courseId);
 
@@ -100,7 +98,6 @@ public class ExerciseResource {
      */
     @GetMapping("/exercises/{id}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Exercise> getExercise(@PathVariable Long id) {
         log.debug("REST request to get Exercise : {}", id);
         Exercise exercise = exerciseService.findOne(id);
@@ -118,7 +115,6 @@ public class ExerciseResource {
      */
     @DeleteMapping("/exercises/{id}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         log.debug("REST request to delete Exercise : {}", id);
         Exercise exercise = exerciseService.findOneLoadParticipations(id);
@@ -130,14 +126,16 @@ public class ExerciseResource {
     }
 
     /**
-     * DELETE  /exercises/:id/participations : delete all participations of "id" exercise (reset).
+     * Reset the exercise by deleting all its partcipations
+     * /exercises/:id/reset
+     *
+     * This can be used by all exercise types, however they can also provide custom implementations
      *
      * @param id the id of the exercise to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping(value = "/exercises/{id}/participations")
+    @DeleteMapping(value = "/exercises/{id}/reset")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Void> reset(@PathVariable Long id) {
         log.debug("REST request to reset Exercise : {}", id);
         Exercise exercise = exerciseService.findOneLoadParticipations(id);
@@ -155,7 +153,6 @@ public class ExerciseResource {
      */
     @DeleteMapping(value = "/exercises/{id}/cleanup")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Resource> cleanup(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean deleteRepositories) throws IOException {
         log.info("Start to cleanup build plans for Exercise: {}, delete repositories: {}", id, deleteRepositories);
         Exercise exercise = exerciseService.findOne(id);
@@ -174,7 +171,6 @@ public class ExerciseResource {
      */
     @GetMapping(value = "/exercises/{id}/archive")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Resource> archiveRepositories(@PathVariable Long id) throws IOException {
         log.info("Start to archive repositories for Exercise : {}", id);
         Exercise exercise = exerciseService.findOne(id);
@@ -202,7 +198,6 @@ public class ExerciseResource {
      */
     @GetMapping(value = "/exercises/{exerciseId}/participations/{studentIds}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Resource> exportSubmissions(@PathVariable Long exerciseId, @PathVariable String studentIds) throws IOException {
         studentIds = studentIds.replaceAll(" ","");
         Exercise exercise = exerciseService.findOne(exerciseId);

@@ -46,7 +46,8 @@
                     "code": "Codierung",
                     "count": "Anzahl",
                     "mean": "Durchschnittswert",
-                    "average": "Mittelwert"
+                    "average": "Mittelwert",
+                    "max": "Maximum"
                 },
                 "code": {
                     "ok": "Ok",
