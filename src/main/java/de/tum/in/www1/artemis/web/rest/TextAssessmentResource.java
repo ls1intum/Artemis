@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.*;
@@ -50,7 +49,6 @@ public class TextAssessmentResource extends AssessmentResource {
 
     @PutMapping("/exercise/{exerciseId}/result/{resultId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Result> saveTextAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody List<Feedback> textAssessments) {
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
         ResponseEntity<Result> responseFailure = checkTextExerciseForRequest(textExercise);
@@ -62,7 +60,6 @@ public class TextAssessmentResource extends AssessmentResource {
 
     @PutMapping("/exercise/{exerciseId}/result/{resultId}/submit")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Result> submitTextAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody List<Feedback> textAssessments) {
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
         ResponseEntity<Result> responseFailure = checkTextExerciseForRequest(textExercise);
@@ -74,7 +71,6 @@ public class TextAssessmentResource extends AssessmentResource {
 
     @GetMapping("/exercise/{exerciseId}/submission/{submissionId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Participation> getDataForTutor(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
         log.debug("REST request to get data for tutors text assessment: {}", exerciseId, submissionId);
         TextExercise textExercise = textExerciseService.findOne(exerciseId);

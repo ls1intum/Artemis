@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -95,7 +94,6 @@ public class ProgrammingExerciseResource {
      */
     @PostMapping("/programming-exercises")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<ProgrammingExercise> createProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise) throws URISyntaxException {
         log.debug("REST request to save ProgrammingExercise : {}", programmingExercise);
         if (programmingExercise.getId() != null) {
@@ -130,7 +128,6 @@ public class ProgrammingExerciseResource {
      */
     @PostMapping("/programming-exercises/setup")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<ProgrammingExercise> setupProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise) {
         log.debug("REST request to setup ProgrammingExercise : {}", programmingExercise);
         if (programmingExercise.getId() != null) {
@@ -242,7 +239,6 @@ public class ProgrammingExerciseResource {
      */
     @PutMapping("/programming-exercises")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<ProgrammingExercise> updateProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise) throws URISyntaxException {
         log.debug("REST request to update ProgrammingExercise : {}", programmingExercise);
         if (programmingExercise.getId() == null) {
@@ -276,7 +272,6 @@ public class ProgrammingExerciseResource {
      */
     @GetMapping(value = "/courses/{courseId}/programming-exercises")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     @Transactional(readOnly = true)
     public ResponseEntity<List<ProgrammingExercise>> getProgrammingExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
@@ -304,7 +299,6 @@ public class ProgrammingExerciseResource {
      */
     @GetMapping("/programming-exercises/{id}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<ProgrammingExercise> getProgrammingExercise(@PathVariable Long id) {
         log.debug("REST request to get ProgrammingExercise : {}", id);
         Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(id);
@@ -328,7 +322,6 @@ public class ProgrammingExerciseResource {
      */
     @DeleteMapping("/programming-exercises/{id}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean deleteStudentReposBuildPlans, @RequestParam(defaultValue = "false") boolean deleteBaseReposBuildPlans) {
         log.debug("REST request to delete ProgrammingExercise : {}", id);
         Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(id);

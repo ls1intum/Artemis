@@ -15,7 +15,7 @@ import java.util.Optional;
 
 @Service
 @Transactional
-public class TextExerciseService extends ExerciseService {
+public class TextExerciseService {
 
     private final Logger log = LoggerFactory.getLogger(TextExerciseService.class);
 
@@ -26,12 +26,7 @@ public class TextExerciseService extends ExerciseService {
                                ExerciseRepository exerciseRepository,
                                UserService userService,
                                ParticipationService participationService,
-                               AuthorizationCheckService authCheckService,
-                               Optional<ContinuousIntegrationService> continuousIntegrationService,
-                               Optional<VersionControlService> versionControlService,
-                               Optional<GitService> gitService
-                               ) {
-        super(exerciseRepository, userService, participationService, authCheckService, continuousIntegrationService, versionControlService, gitService);
+                               AuthorizationCheckService authCheckService) {
 
         this.textExerciseRepository = textExerciseRepository;
         this.participationService = participationService;

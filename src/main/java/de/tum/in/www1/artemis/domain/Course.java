@@ -34,6 +34,11 @@ public class Course implements Serializable {
     @JsonView(QuizView.Before.class)
     private String title;
 
+    @Column(name = "description")
+    @JsonView(QuizView.Before.class)
+    @Lob
+    private String description;
+
     @Column(name = "short_name")
     @JsonView(QuizView.Before.class)
     private String shortName;
@@ -86,6 +91,19 @@ public class Course implements Serializable {
 
     public Course title(String title) {
         this.title = title;
+        return this;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public Course description(String description) {
+        this.description = description;
         return this;
     }
 
@@ -248,6 +266,7 @@ public class Course implements Serializable {
         return "Course{" +
             "id=" + getId() +
             ", title='" + getTitle() + "'" +
+            ", description='" + getDescription() + "'" +
             ", shortName='" + getShortName() + "'" +
             ", studentGroupName='" + getStudentGroupName() + "'" +
             ", teachingAssistantGroupName='" + getTeachingAssistantGroupName() + "'" +
