@@ -6,7 +6,7 @@
     </div>
     <div class="modal-body">
         <jhi-alert-error></jhi-alert-error>
-        <p jhiTranslate="instructorDashboard.cleanup.question" translateValues="{exerciseTitle: '{{exercise.title}}', courseTitle: '{{exercise.course.title}}'}">Confirm cleanup</p>
+        <p jhiTranslate="instructorDashboard.cleanup.question" [translateValues]="{exerciseTitle: exercise.title, courseTitle: exercise.course.title}">Confirm cleanup</p>
         <p></p>
         <div class="checkbox">
             <label class="control-label text-danger">

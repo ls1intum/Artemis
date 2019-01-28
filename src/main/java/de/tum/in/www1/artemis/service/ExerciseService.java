@@ -7,6 +7,7 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -47,6 +48,7 @@ public class ExerciseService {
     private final Optional<VersionControlService> versionControlService;
     private final Optional<GitService> gitService;
     private final StatisticService statisticService;
+    private final QuizScheduleService quizScheduleService;
 
     public ExerciseService(ExerciseRepository exerciseRepository,
                            UserService userService,
@@ -55,7 +57,8 @@ public class ExerciseService {
                            Optional<ContinuousIntegrationService> continuousIntegrationService,
                            Optional<VersionControlService> versionControlService,
                            Optional<GitService> gitService,
-                           StatisticService statisticService) {
+                           StatisticService statisticService,
+                           QuizScheduleService quizScheduleService) {
         this.exerciseRepository = exerciseRepository;
         this.userService = userService;
         this.participationService = participationService;
@@ -64,6 +67,7 @@ public class ExerciseService {
         this.versionControlService = versionControlService;
         this.gitService = gitService;
         this.statisticService = statisticService;
+        this.quizScheduleService = quizScheduleService;
     }
 
     /**
@@ -199,7 +203,17 @@ public class ExerciseService {
             quizExercise.setIsVisibleBeforeStart(Boolean.FALSE);
             quizExercise.setIsPlannedToStart(Boolean.FALSE);
             quizExercise.setIsOpenForPractice(Boolean.FALSE);
+            quizExercise.setReleaseDate(null);
 
+
+            //TODO: the dependencies to concrete exercise types here are not really nice. We should find a better way to structure this, e.g. having this call managed in the quiz exercise resource
+            // which delegates some functionality to the exercise service
+
+            //in case the quiz has not yet started or the quiz is currently running, we have to cleanup
+            quizScheduleService.cancelScheduledQuizStart(quizExercise.getId());
+            quizScheduleService.clearQuizData(quizExercise.getId());
+
+            // clean up the statistics
             statisticService.recalculateStatistics(quizExercise);
         }
     }
