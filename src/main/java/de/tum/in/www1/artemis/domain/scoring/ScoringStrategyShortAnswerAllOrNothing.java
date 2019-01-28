@@ -61,9 +61,8 @@ public class ScoringStrategyShortAnswerAllOrNothing implements ScoringStrategy {
             } else {
                 return 0.0;
             }
-        } else {
-            // the submitted answer's type doesn't fit the question's type => it cannot be correct
-            return 0.0;
         }
+        // the submitted answer's type doesn't fit the question's type => it cannot be correct
+        return 0.0;
     }
 }

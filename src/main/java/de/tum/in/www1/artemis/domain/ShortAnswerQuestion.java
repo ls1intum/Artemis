@@ -1,4 +1,4 @@
- package de.tum.in.www1.artemis.domain;
+package de.tum.in.www1.artemis.domain;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonView;
@@ -197,8 +197,7 @@ public class ShortAnswerQuestion extends Question implements Serializable {
       */
     @Override
     public void undoUnallowedChanges(Question originalQuestion) {
-        if (originalQuestion != null
-            && originalQuestion instanceof ShortAnswerQuestion) {
+        if (originalQuestion instanceof ShortAnswerQuestion) {
             ShortAnswerQuestion saOriginalQuestion = (ShortAnswerQuestion) originalQuestion;
             //undo unallowed solution changes
             undoUnallowedSolutionChanges(saOriginalQuestion);
@@ -275,7 +274,7 @@ public class ShortAnswerQuestion extends Question implements Serializable {
 
      @Override
     public boolean isUpdateOfResultsAndStatisticsNecessary(Question originalQuestion) {
-        if (originalQuestion != null && originalQuestion instanceof ShortAnswerQuestion){
+        if (originalQuestion instanceof ShortAnswerQuestion){
              ShortAnswerQuestion saOriginalQuestion = (ShortAnswerQuestion) originalQuestion;
              return checkSolutionsIfRecalculationIsNecessary(saOriginalQuestion) ||
                  checkSpotsIfRecalculationIsNecessary(saOriginalQuestion) ||

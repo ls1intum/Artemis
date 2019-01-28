@@ -74,9 +74,8 @@ public class ScoringStrategyShortAnswerProportionalWithPenalty implements Scorin
 
             // end result is maxScore * fraction, but at least 0
             return Math.max(0, question.getScore() * fraction);
-        } else {
-            // the submitted answer's type doesn't fit the question's type => it cannot be correct
-            return 0.0;
         }
+        // the submitted answer's type doesn't fit the question's type => it cannot be correct
+        return 0.0;
     }
 }
