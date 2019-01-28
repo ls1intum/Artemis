@@ -14,7 +14,7 @@ public class AssessmentIndex {
         modelElementAssessmentMapping = new HashMap<>();
     }
 
-    protected Assessment getAssessment (UMLElement element) {
+    public Assessment getAssessment (UMLElement element) {
         return modelElementAssessmentMapping.get(element.getElementID());
     }
 

@@ -7,6 +7,7 @@ import de.tum.in.www1.artemis.repository.JsonAssessmentRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
+import de.tum.in.www1.artemis.service.compass.conflict.Conflict;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 import org.slf4j.Logger;
@@ -102,8 +103,8 @@ public class ModelingAssessmentResource extends AssessmentResource {
     /**
      * Returns assessments (if found) for a given participationId and submissionId.
      *
-     * @param participationId   the participationId for which to find assessments for
-     * @param submissionId      the submissionId for which to find assessments for
+     * @param participationId the participationId for which to find assessments for
+     * @param submissionId    the submissionId for which to find assessments for
      * @return the ResponseEntity with assessments string as body
      */
     @GetMapping("/modeling-assessments/participation/{participationId}/submission/{submissionId}")
@@ -136,9 +137,9 @@ public class ModelingAssessmentResource extends AssessmentResource {
     /**
      * Saves assessments and updates result.
      *
-     * @param exerciseId            the exerciseId the assessment belongs to
-     * @param resultId              the resultId the assessment belongs to
-     * @param modelingAssessment    the assessments as string
+     * @param exerciseId         the exerciseId the assessment belongs to
+     * @param resultId           the resultId the assessment belongs to
+     * @param modelingAssessment the assessments as string
      * @return the ResponseEntity with result as body
      */
     @PutMapping("/modeling-assessments/exercise/{exerciseId}/result/{resultId}")
@@ -153,15 +154,18 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
         Result result = modelingAssessmentService.saveManualAssessment(resultId, exerciseId, modelingAssessment);
 
+
         return ResponseEntity.ok(result);
     }
+
+    //TODO change to POST and remove submision in path or merge with saveNodelingAssessment?
 
     /**
      * Saves assessments and updates result. Sets result to rated so the student can see the assessments.
      *
-     * @param exerciseId            the exerciseId the assessment belongs to
-     * @param resultId              the resultId the assessment belongs to
-     * @param modelingAssessment    the assessments as string
+     * @param exerciseId         the exerciseId the assessment belongs to
+     * @param resultId           the resultId the assessment belongs to
+     * @param modelingAssessment the assessments as string
      * @return the ResponseEntity with result as body
      */
     @PutMapping("/modeling-assessments/exercise/{exerciseId}/result/{resultId}/submit")
@@ -170,13 +174,18 @@ public class ModelingAssessmentResource extends AssessmentResource {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
 
         ResponseEntity responseFailure = checkExercise(modelingExercise);
-        if (responseFailure != null) return responseFailure;
+        if (responseFailure != null) {
+            return responseFailure;
+        }
 
         Result result = modelingAssessmentService.submitManualAssessment(resultId, exerciseId, modelingAssessment);
         Long submissionId = result.getSubmission().getId();
         // add assessment to compass to include it in the automatic grading process
         compassService.addAssessment(exerciseId, submissionId, modelingAssessment);
-
+        Optional<Conflict> conflict = compassService.checkForConflict(exerciseId, submissionId);
+        if (conflict.isPresent()) {
+            return ResponseEntity.status(HttpStatus.ACCEPTED).body(result);
+        }
         return ResponseEntity.ok(result);
     }
 

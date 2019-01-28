@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.compass;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import de.tum.in.www1.artemis.service.compass.assessment.*;
+import de.tum.in.www1.artemis.service.compass.conflict.Conflict;
 import de.tum.in.www1.artemis.service.compass.controller.*;
 import de.tum.in.www1.artemis.service.compass.grade.*;
 import de.tum.in.www1.artemis.service.compass.umlmodel.*;
@@ -33,15 +34,33 @@ public class CompassCalculationEngine implements CalculationEngine {
         automaticAssessmentController = new AutomaticAssessmentController();
         modelSelector = new ModelSelector();
 
-        for (Map.Entry<Long, JsonObject> entry: models.entrySet()) {
+        for (Map.Entry<Long, JsonObject> entry : models.entrySet()) {
             buildModel(entry.getKey(), entry.getValue());
         }
-        for (Map.Entry<Long, JsonObject> entry: assessments.entrySet()) {
+        for (Map.Entry<Long, JsonObject> entry : assessments.entrySet()) {
             buildAssessment(entry.getKey(), entry.getValue());
             modelSelector.addAlreadyAssessedModel(entry.getKey());
         }
 
         assessModelsAutomatically();
+    }
+
+    public Map<Integer, Assessment> getAssessmentsInConflict(long modelId) {
+        Map<Integer, Assessment> conflictingAssessments = new HashMap<>();
+        UMLModel model = modelIndex.getModel(modelId);
+        model.getClassList().forEach(element -> {
+            if (hasConflict(element.getElementID())) {
+                Assessment correspondingAssessment = assessmentIndex.getAssessment(element);
+                conflictingAssessments.put(element.getElementID(), correspondingAssessment);
+            }
+        });
+        model.getAssociationList().forEach(element -> {
+            if (hasConflict(element.getElementID())) {
+                Assessment correspondingAssessment = assessmentIndex.getAssessment(element);
+                conflictingAssessments.put(element.getElementID(), correspondingAssessment);
+            }
+        });
+        return conflictingAssessments;
     }
 
     private void buildModel(long id, JsonObject jsonModel) {
@@ -95,7 +114,6 @@ public class CompassCalculationEngine implements CalculationEngine {
     }
 
     /**
-     *
      * @return id of the next optimal model or null if all models are completely assessed
      */
     @Override
@@ -160,7 +178,7 @@ public class CompassCalculationEngine implements CalculationEngine {
     @Override
     public Map<Long, Grade> getModelsWaitingForAssessment() {
         Map<Long, Grade> optimalModels = new HashMap<>();
-        for(long modelId: modelSelector.getModelsWaitingForAssessment()) {
+        for (long modelId : modelSelector.getModelsWaitingForAssessment()) {
             optimalModels.put(modelId, getResultForModel(modelId));
         }
         return optimalModels;
@@ -188,20 +206,20 @@ public class CompassCalculationEngine implements CalculationEngine {
 
     /**
      * format:
-     *  uniqueElements
-     *      [{id}
-     *          name
-     *          apollonId
-     *          conflict]
-     *  numberModels
-     *  numberConflicts
-     *  totalConfidence
-     *  totalCoverage
-     *  models
-     *      [{id}
-     *          confidence
-     *          coverage
-     *          conflicts]
+     * uniqueElements
+     * [{id}
+     * name
+     * apollonId
+     * conflict]
+     * numberModels
+     * numberConflicts
+     * totalConfidence
+     * totalCoverage
+     * models
+     * [{id}
+     * confidence
+     * coverage
+     * conflicts]
      *
      * @return statistics about the UML model
      */
@@ -218,7 +236,7 @@ public class CompassCalculationEngine implements CalculationEngine {
             uniqueElement.addProperty("apollonId", umlElement.getJSONElementID());
             boolean conflict = this.hasConflict(umlElement.getElementID());
             if (conflict) {
-                conflicts ++;
+                conflicts++;
             }
             uniqueElement.addProperty("conflict", conflict);
             uniqueElements.add(umlElement.getElementID() + "", uniqueElement);
@@ -231,7 +249,7 @@ public class CompassCalculationEngine implements CalculationEngine {
         jsonObject.addProperty("totalCoverage", this.getTotalCoverage());
 
         JsonObject models = new JsonObject();
-        for (Map.Entry<Long, UMLModel> modelEntry: this.getModelMap().entrySet()) {
+        for (Map.Entry<Long, UMLModel> modelEntry : this.getModelMap().entrySet()) {
             JsonObject model = new JsonObject();
             model.addProperty("coverage", modelEntry.getValue().getLastAssessmentCoverage());
             model.addProperty("confidence", modelEntry.getValue().getLastAssessmentConfidence());
@@ -239,11 +257,11 @@ public class CompassCalculationEngine implements CalculationEngine {
             List<UMLElement> elements = new ArrayList<>();
             elements.addAll(modelEntry.getValue().getClassList());
             elements.addAll(modelEntry.getValue().getAssociationList());
-            for (UMLClass umlClass: modelEntry.getValue().getClassList()) {
+            for (UMLClass umlClass : modelEntry.getValue().getClassList()) {
                 elements.addAll(umlClass.getAttributeList());
                 elements.addAll(umlClass.getMethodList());
             }
-            for (UMLElement element: elements) {
+            for (UMLElement element : elements) {
                 boolean modelConflict = this.hasConflict(element.getElementID());
                 if (modelConflict) {
                     modelConflicts++;
@@ -251,7 +269,7 @@ public class CompassCalculationEngine implements CalculationEngine {
             }
             model.addProperty("conflicts", modelConflicts);
             model.addProperty("elements", elements.size());
-            model.addProperty("classes", elements.stream().filter(umlElement -> umlElement instanceof  UMLClass).count());
+            model.addProperty("classes", elements.stream().filter(umlElement -> umlElement instanceof UMLClass).count());
             model.addProperty("attributes", elements.stream().filter(umlElement -> umlElement instanceof UMLAttribute).count());
             model.addProperty("methods", elements.stream().filter(umlElement -> umlElement instanceof UMLMethod).count());
             model.addProperty("associations", elements.stream().filter(umlElement -> umlElement instanceof UMLAssociation).count());
@@ -262,15 +280,16 @@ public class CompassCalculationEngine implements CalculationEngine {
         return jsonObject;
     }
 
+
     private boolean hasConflict(int elementId) {
         boolean conflict = false;
         Assessment assessment = this.assessmentIndex.getAssessmentsMap().get(elementId);
         if (assessment == null) {
             return false;
         }
-        for (List<Score> scores: this.assessmentIndex.getAssessmentsMap().get(elementId).getContextScoreList().values()) {
+        for (List<Score> scores : this.assessmentIndex.getAssessmentsMap().get(elementId).getContextScoreList().values()) {
             double uniqueScore = -1;
-            for (Score score: scores) {
+            for (Score score : scores) {
                 if (uniqueScore != -1 && uniqueScore != score.getPoints()) {
                     conflict = true;
                     break;
@@ -288,9 +307,9 @@ public class CompassCalculationEngine implements CalculationEngine {
             this.modelIndex.getNumberOfUniqueElements() + "\n");
 
         int totalModelElements = 0;
-        for (UMLModel umlModel: this.getUmlModelCollection()) {
+        for (UMLModel umlModel : this.getUmlModelCollection()) {
             totalModelElements += umlModel.getClassList().size() + umlModel.getAssociationList().size();
-            for (UMLClass umlClass: umlModel.getClassList()) {
+            for (UMLClass umlClass : umlModel.getClassList()) {
                 totalModelElements += umlClass.getMethodList().size() + umlClass.getAttributeList().size();
             }
         }
@@ -299,7 +318,7 @@ public class CompassCalculationEngine implements CalculationEngine {
         double optimalEqu = (totalModelElements * 1.0) / this.getModelMap().size();
         log.debug("Number of optimal similarity sets: " + optimalEqu + "\n");
         log.debug("Variance: " +
-                (this.modelIndex.getNumberOfUniqueElements() - optimalEqu) / (totalModelElements - optimalEqu) + "\n");
+            (this.modelIndex.getNumberOfUniqueElements() - optimalEqu) / (totalModelElements - optimalEqu) + "\n");
 
         // Total coverage and confidence
         this.automaticAssessmentController.assessModelsAutomatically(modelIndex, assessmentIndex);
@@ -309,13 +328,13 @@ public class CompassCalculationEngine implements CalculationEngine {
         // Conflicts
         int conflicts = 0;
         double uniqueElementsContext = 0;
-        for(Assessment assessment: this.assessmentIndex.getAssessmentsMap().values()) {
-            for(List<Score> scores: assessment.getContextScoreList().values()) {
-                uniqueElementsContext ++;
+        for (Assessment assessment : this.assessmentIndex.getAssessmentsMap().values()) {
+            for (List<Score> scores : assessment.getContextScoreList().values()) {
+                uniqueElementsContext++;
                 double uniqueScore = -1;
-                for (Score score: scores) {
+                for (Score score : scores) {
                     if (uniqueScore != -1 && uniqueScore != score.getPoints()) {
-                        conflicts ++;
+                        conflicts++;
                         break;
                     }
                     uniqueScore = score.getPoints();
