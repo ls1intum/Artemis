@@ -58,6 +58,7 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
     textWithOutSpotsLastPart: string[];
     sampleSolutions: ShortAnswerSolution[] =  [];
     isList = false;
+    firstLineHasQuestion = false;
 
     constructor(private artemisMarkdown: ArtemisMarkdown) {}
 
@@ -70,14 +71,26 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
         const artemisMarkdown = this.artemisMarkdown;
         this.rendered = new ShortAnswerQuestion();
 
-        //first line is the question
-        this.questionText = this.question.text.split(/\n/g)[0];
+        //first line is the question if there is no [-spot #] tag in the string
+        if(this.question.text.split(/\n/g)[0].search(/\[-spot/g) == -1){
+            this.questionText = this.question.text.split(/\n/g)[0];
+            this.firstLineHasQuestion = true;
+        } else {
+            this.questionText = "";
+        }
 
+        let questionTextSplitAtNewLine = "";
         //seperates the the rest of the text from the question
-        let questionTextSplitAtNewLine = this.question.text
-            .split(/\n+/g)
-            .slice(1)
-            .join();
+        if(this.firstLineHasQuestion){
+            questionTextSplitAtNewLine = this.question.text
+                .split(/\n+/g)
+                .slice(1)
+                .join();
+        } else {
+            questionTextSplitAtNewLine = this.question.text
+                .split(/\n+/g)
+                .join();
+        }
 
         //checks if a line break is in the text (marked by "," and replaces it) and check if text is a list
         if(questionTextSplitAtNewLine.includes(",")){
