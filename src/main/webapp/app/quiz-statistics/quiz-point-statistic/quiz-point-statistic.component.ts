@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
 import { ActivatedRoute, Router } from '@angular/router';
-import { JhiWebsocketService, Principal } from '../../core';
+import { JhiWebsocketService, AccountService } from '../../core';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizPointStatistic } from '../../entities/quiz-point-statistic';
 import { ChartOptions } from 'chart.js';
@@ -56,7 +56,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
     constructor(
         private route: ActivatedRoute,
         private router: Router,
-        private principal: Principal,
+        private accountService: AccountService,
         private translateService: TranslateService,
         private quizExerciseService: QuizExerciseService,
         private jhiWebsocketService: JhiWebsocketService,
@@ -67,7 +67,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
     ngOnInit() {
         this.sub = this.route.params.subscribe(params => {
             // use different REST-call if the User is a Student
-            if (this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
+            if (this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
                 this.quizExerciseService.find(params['quizId']).subscribe(res => {
                     this.loadQuizSuccess(res.body);
                 });
@@ -197,7 +197,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
     loadNewData(statistic: QuizPointStatistic) {
         // if the Student finds a way to the Website
         //      -> the Student will be send back to Courses
-        if (!this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
+        if (!this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
             this.router.navigate(['courses']);
         }
         this.quizPointStatistic = statistic;
@@ -213,7 +213,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
     loadQuizSuccess(quizExercise: QuizExercise) {
         // if the Student finds a way to the Website
         //      -> the Student will be send back to Courses
-        if (!this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
+        if (!this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
             this.router.navigate(['courses']);
         }
         this.quizExercise = quizExercise;

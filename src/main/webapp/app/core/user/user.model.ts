@@ -1,13 +1,13 @@
 import { Account } from '../../core';
 
 export class User extends Account {
-    public id?: number;
-    public groups?: string[];
-    public createdBy?: string;
-    public createdDate?: Date;
-    public lastModifiedBy?: string;
-    public lastModifiedDate?: Date;
-    public password?: string;
+    public id: number;
+    public groups: string[];
+    public createdBy: string;
+    public createdDate: Date;
+    public lastModifiedBy: string;
+    public lastModifiedDate: Date;
+    public password: string;
 
     constructor(
         id?: number,

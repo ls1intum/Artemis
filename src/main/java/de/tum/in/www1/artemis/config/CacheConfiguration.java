@@ -124,6 +124,7 @@ public class CacheConfiguration {
             cm.createCache(de.tum.in.www1.artemis.domain.TutorParticipation.class.getName() + ".trainedExampleSubmissions", jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.ExampleSubmission.class.getName(), jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.ExampleSubmission.class.getName() + ".exercises", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.Exercise.class.getName() + ".tutorParticipations", jcacheConfiguration);
 
 
             // jhipster-needle-ehcache-add-entry

@@ -495,11 +495,14 @@ public class ParticipationService {
      * Delete the participation by id.
      *
      * @param id the id of the entity
+     * @param deleteBuildPlan determines whether the corresponding build plan should be deleted as well
+     * @param deleteRepository determines whether the corresponding repository should be deleted as well
      */
     @Transactional(noRollbackFor={Throwable.class})
     public void delete(Long id, boolean deleteBuildPlan, boolean deleteRepository) {
-        log.debug("Request to delete Participation : {}", id);
         Participation participation = participationRepository.findById(id).get();
+        log.debug("Request to delete Participation : {}", participation);
+
         if (participation != null && participation.getExercise() instanceof ProgrammingExercise) {
             if (deleteBuildPlan && participation.getBuildPlanId() != null) {
                 continuousIntegrationService.get().deleteBuildPlan(participation.getBuildPlanId());

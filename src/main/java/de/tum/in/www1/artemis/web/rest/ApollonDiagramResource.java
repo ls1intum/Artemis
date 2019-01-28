@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.ApollonDiagram;
 import de.tum.in.www1.artemis.repository.ApollonDiagramRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -43,7 +42,6 @@ public class ApollonDiagramResource {
      */
     @PostMapping("/apollon-diagrams")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<ApollonDiagram> createApollonDiagram(@RequestBody ApollonDiagram apollonDiagram) throws URISyntaxException {
         log.debug("REST request to save ApollonDiagram : {}", apollonDiagram);
         if (apollonDiagram.getId() != null) {
@@ -66,7 +64,6 @@ public class ApollonDiagramResource {
      */
     @PutMapping("/apollon-diagrams")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<ApollonDiagram> updateApollonDiagram(@RequestBody ApollonDiagram apollonDiagram) throws URISyntaxException {
         log.debug("REST request to update ApollonDiagram : {}", apollonDiagram);
         if (apollonDiagram.getId() == null) {
@@ -85,7 +82,6 @@ public class ApollonDiagramResource {
      */
     @GetMapping("/apollon-diagrams")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public List<ApollonDiagram> getAllApollonDiagrams() {
         log.debug("REST request to get all ApollonDiagrams");
         return apollonDiagramRepository.findAll();
@@ -99,7 +95,6 @@ public class ApollonDiagramResource {
      */
     @GetMapping("/apollon-diagrams/{id}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<ApollonDiagram> getApollonDiagram(@PathVariable Long id) {
         log.debug("REST request to get ApollonDiagram : {}", id);
         ApollonDiagram apollonDiagram = apollonDiagramRepository.findById(id).get();
@@ -114,7 +109,6 @@ public class ApollonDiagramResource {
      */
     @DeleteMapping("/apollon-diagrams/{id}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Void> deleteApollonDiagram(@PathVariable Long id) {
         log.debug("REST request to delete ApollonDiagram : {}", id);
         apollonDiagramRepository.deleteById(id);
