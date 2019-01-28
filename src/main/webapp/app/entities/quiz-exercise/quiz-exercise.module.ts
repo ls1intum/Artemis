@@ -6,6 +6,8 @@ import {
     QuizExerciseComponent,
     QuizExerciseDeleteDialogComponent,
     QuizExerciseDeletePopupComponent,
+    QuizExerciseResetDialogComponent,
+    QuizExerciseResetPopupComponent,
     QuizExerciseDetailComponent,
     quizExercisePopupRoute,
     QuizExercisePopupService,
@@ -15,14 +17,22 @@ import {
 import { SortByModule } from '../../components/pipes';
 import { ArTEMiSQuizEditModule } from '../../quiz/edit';
 import { ArTEMiSQuizReEvaluateModule } from '../../quiz/re-evaluate';
+import { PendingChangesGuard } from '../../shared';
 
 const ENTITY_STATES = [...quizExerciseRoute, ...quizExercisePopupRoute];
 
 @NgModule({
     imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, ArTEMiSQuizEditModule, ArTEMiSQuizReEvaluateModule],
-    declarations: [QuizExerciseComponent, QuizExerciseDeleteDialogComponent, QuizExerciseDeletePopupComponent, QuizExerciseDetailComponent],
-    entryComponents: [QuizExerciseComponent, QuizExerciseDeleteDialogComponent, QuizExerciseDeletePopupComponent],
-    providers: [QuizExerciseService, QuizExercisePopupService],
+    declarations: [QuizExerciseComponent, QuizExerciseDeleteDialogComponent, QuizExerciseDeletePopupComponent, QuizExerciseResetDialogComponent, QuizExerciseResetPopupComponent, QuizExerciseDetailComponent],
+    entryComponents: [
+        QuizExerciseComponent,
+        QuizExerciseDeleteDialogComponent,
+        QuizExerciseDeletePopupComponent,
+        QuizExerciseResetDialogComponent,
+        QuizExerciseResetPopupComponent,
+        QuizExerciseDetailComponent
+    ],
+    providers: [QuizExerciseService, QuizExercisePopupService, PendingChangesGuard],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArTEMiSQuizExerciseModule {}
