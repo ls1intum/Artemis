@@ -23,7 +23,7 @@ import { Observable } from 'rxjs/Observable';
 
 interface Reason {
     translateKey: string;
-    [translateValues]: {};
+    translateValues: {};
 }
 
 @Component({
@@ -482,7 +482,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     /**
      * @function invalidReasons
      * @desc Get the reasons, why the quiz is invalid
-     * @returns {Array} array of objects with fields 'translateKey' and '[translateValues]'
+     * @returns {Array} array of objects with fields 'translateKey' and 'translateValues'
      */
     invalidReasons(): Reason[] {
         const reasons = new Array<Reason>();
@@ -492,19 +492,19 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         if (!this.quizExercise.title || this.quizExercise.title === '') {
             reasons.push({
                 translateKey: 'arTeMiSApp.quizExercise.invalidReasons.quizTitle',
-                [translateValues]: {}
+                translateValues: {}
             });
         }
         if (!this.quizExercise.duration) {
             reasons.push({
                 translateKey: 'arTeMiSApp.quizExercise.invalidReasons.quizDuration',
-                [translateValues]: {}
+                translateValues: {}
             });
         }
         if (!this.quizExercise.questions || this.quizExercise.questions.length === 0) {
             reasons.push({
                 translateKey: 'arTeMiSApp.quizExercise.invalidReasons.noQuestion',
-                [translateValues]: {}
+                translateValues: {}
             });
         }
         /** We only verify the releaseDate if the checkbox is activated **/
@@ -512,7 +512,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
             if (this.quizExercise.releaseDate == null || !moment(this.quizExercise.releaseDate).isValid()) {
                 reasons.push({
                     translateKey: 'arTeMiSApp.quizExercise.invalidReasons.invalidStartTime',
-                    [translateValues]: {}
+                    translateValues: {}
                 });
             }
             // Release Date valid but lies in the past
@@ -520,7 +520,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                 if (moment(this.quizExercise.releaseDate).isBefore(moment())) {
                     reasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.startTimeInPast',
-                        [translateValues]: {}
+                        translateValues: {}
                     });
                 }
             }
@@ -529,7 +529,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
             if (!question.title || question.title === '') {
                 reasons.push({
                     translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionTitle',
-                    [translateValues]: { index: index + 1 }
+                    translateValues: { index: index + 1 }
                 });
             }
             if (question.type === QuestionType.MULTIPLE_CHOICE) {
@@ -537,7 +537,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                 if (!mcQuestion.answerOptions.some(answerOption => answerOption.isCorrect)) {
                     reasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionCorrectAnswerOption',
-                        [translateValues]: { index: index + 1 }
+                        translateValues: { index: index + 1 }
                     });
                 }
             }
@@ -546,18 +546,18 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                 if (!dndQuestion.correctMappings || dndQuestion.correctMappings.length === 0) {
                     reasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionCorrectMapping',
-                        [translateValues]: { index: index + 1 }
+                        translateValues: { index: index + 1 }
                     });
                 } else if (this.dragAndDropQuestionUtil.solve(dndQuestion, []).length === 0) {
                     reasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionUnsolvable',
-                        [translateValues]: { index: index + 1 }
+                        translateValues: { index: index + 1 }
                     });
                 }
                 if (!this.dragAndDropQuestionUtil.validateNoMisleadingCorrectMapping(dndQuestion)) {
                     reasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.misleadingCorrectMapping',
-                        [translateValues]: { index: index + 1 }
+                        translateValues: { index: index + 1 }
                     });
                 }
             }
@@ -574,7 +574,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         const translate = this.translateService;
         let reasonString = '';
         for (const reason of this.invalidReasons()) {
-            translate.get(reason['translateKey'], reason['[translateValues]']).subscribe((res: string) => {
+            translate.get(reason['translateKey'], reason['translateValues']).subscribe((res: string) => {
                 reasonString += res + '   -   ';
             });
         }
