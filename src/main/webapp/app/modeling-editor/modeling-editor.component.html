@@ -11,11 +11,11 @@
             <div *ngIf="participation"><jhi-result [participation]="participation"></jhi-result></div><br>
             <button class="btn btn-primary" (click)="saveDiagram()" [hidden]="submission?.submitted" [disabled]="isSaving">
                 <ng-container *ngIf="!isSaving">
-                    <span class="fa fa-save"></span>
+                    <fa-icon icon="save"></fa-icon>
                     <span jhiTranslate="entity.action.save">Save</span>
                 </ng-container>
                 <ng-container *ngIf="isSaving">
-                    <span class="fa fa-refresh"></span>
+                    <fa-icon icon="sync"></fa-icon>
                     <span>Saving...</span>
                 </ng-container>
             </button>
@@ -26,7 +26,7 @@
                     [disabled]="!submission || !diagramState || diagramState.entities.allIds.length === 0"
                     [hidden]="submission?.submitted || isActive">Submit (deadline missed)</button>
             <button class="btn btn-info" (click)="retry()"
-                    *ngIf="isActive && submission?.submitted && result?.rated && !retryStarted"><span class="fa fa-refresh"></span> Retry</button>
+                    *ngIf="isActive && submission?.submitted && result?.rated && !retryStarted"><fa-icon icon="sync"></fa-icon> Retry</button>
         </div>
     </div><br>
 
@@ -90,7 +90,7 @@
             <button type="button" class="btn btn-outline" (click)="c()">Close</button>
         </div>
     </ng-template>
-    <div *ngIf="!submission?.submitted"><button class="btn btn-warning" (click)="open(help)"><i class="fa fa-question-circle-o"></i>&nbsp;Help</button></div><br>
+    <div *ngIf="!submission?.submitted"><button class="btn btn-warning" (click)="open(help)"><fa-icon [icon]="['far', 'question-circle']"></fa-icon>&nbsp;Help</button></div><br>
 
     <div class="row">
         <div [ngClass]="{'col-9': submission?.submitted, 'col-12': !submission?.submitted}">

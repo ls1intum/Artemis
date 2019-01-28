@@ -18,6 +18,7 @@
         "@angular/router": "7.2.2",
         "@fortawesome/angular-fontawesome": "0.3.0",
         "@fortawesome/fontawesome-svg-core": "1.2.12",
+        "@fortawesome/free-regular-svg-icons": "^5.6.3",
         "@fortawesome/free-solid-svg-icons": "5.6.3",
         "@ls1intum/apollon": "1.1.7",
         "@ng-bootstrap/ng-bootstrap": "4.0.1",

@@ -40,10 +40,10 @@
 
     <div>
         <button type="submit" (click)="previousState()" class="btn btn-info">
-            <span class="fa fa-arrow-left"></span>&nbsp;<span jhiTranslate="entity.action.back">Back</span>
+            <fa-icon icon="arrow-left"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back">Back</span>
         </button>
         <button *ngIf="(result?.rated && !done) || (result?.assessor && result.assessor.id !== userId && !result?.rated)" [disabled]="busy" class="btn btn-success" (click)="assessNextOptimal(0)">
-            <i class="fa fa-folder-open fa-fw"></i>&nbsp;Assess next submission
+            <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;Assess next submission
         </button>
     </div><br>
 

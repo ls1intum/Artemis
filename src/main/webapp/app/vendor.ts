@@ -48,8 +48,23 @@ import {
     faArchive,
     faEraser,
     faDownload,
-    faFileExport
+    faFileExport,
+    faCircleNotch,
+    faCheckCircle,
+    faUndo,
+    faTrash,
+    faExclamationTriangle,
+    faUnlink,
+    faFont,
+    faFolderOpen,
+    faPlayCircle,
 } from '@fortawesome/free-solid-svg-icons';
+
+import {
+    faQuestionCircle as farQuestionCircle,
+    faCheckCircle as farCheckCircle,
+    faTimesCircle as farTimeCircle
+} from '@fortawesome/free-regular-svg-icons';
 
 // Adds the SVG icon to the library so you can use it in your page
 library.add(faUser);
@@ -86,10 +101,23 @@ library.add(faSignInAlt);
 library.add(faCalendarAlt);
 library.add(faSearch);
 library.add(faTrashAlt);
+library.add(faTrash);
 library.add(faAsterisk);
 library.add(faArchive);
 library.add(faEraser);
 library.add(faDownload);
 library.add(faFileExport);
+library.add(faCircleNotch);
+library.add(faCheckCircle);
+library.add(faUndo);
+library.add(faExclamationTriangle);
+library.add(faUnlink);
+library.add(faFont);
+library.add(faFolderOpen);
+library.add(faPlayCircle);
+
+library.add(farQuestionCircle);
+library.add(farCheckCircle);
+library.add(farTimeCircle);
 
 // jhipster-needle-add-element-to-vendor - JHipster will add new menu items here

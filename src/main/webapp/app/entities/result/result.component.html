@@ -8,7 +8,7 @@
 </span>
 <ng-container *ngIf="result && (result.score || result.score === 0)">
     <span [ngClass]="textColorClass">
-        <i class="fa fa-lg" [ngClass]="resultIconClass"></i>
+        <fa-icon [icon]="resultIconClass" size="lg"></fa-icon>
         <span class="score"> Score: {{result.score}}%, </span>
         <span *ngIf="hasFeedback">
             <span class="result" (click)="showDetails(result)">{{resultString}}</span>

@@ -6,7 +6,7 @@
             <div [innerHTML]="rendered.hint"></div>
         </ng-template>
         <span class="label label-info" [ngbPopover]="renderedHint" placement="right" triggers="mouseenter:mouseleave" *ngIf="question.hint">
-            <i class="fa fa-question-circle-o"></i>
+            <fa-icon [icon]="['far', 'question-circle']"></fa-icon>
             <span jhiTranslate="arTeMiSApp.question.hint"></span>
         </span></br>
         <ng-template #renderedExplanation>

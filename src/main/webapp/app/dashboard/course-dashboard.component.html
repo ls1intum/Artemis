@@ -8,14 +8,14 @@
         <table class="table table-striped">
             <thead>
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
-                <th jhiSortBy="user.firstName"><span jhiTranslate="instructorDashboard.name">Name</span> <span class="fa fa-sort"></span></th>
-                <th jhiSortBy="user.login"><span jhiTranslate="instructorDashboard.username">Username</span> <span class="fa fa-sort"></span></th>
-                <th jhiSortBy="numberOfParticipatedExercises"><span jhiTranslate="instructorDashboard.participated">Participated in Exercises (%)</span> <span class="fa fa-sort"></span></th>
-                <th jhiSortBy="numberOfSuccessfulExercises"><span jhiTranslate="instructorDashboard.successful">Successful Exercises (%)</span> <span class="fa fa-sort"></span></th>
+                <th jhiSortBy="user.firstName"><span jhiTranslate="instructorDashboard.name">Name</span> <fa-icon icon="sort"></fa-icon></th>
+                <th jhiSortBy="user.login"><span jhiTranslate="instructorDashboard.username">Username</span> <fa-icon icon="sort"></fa-icon></th>
+                <th jhiSortBy="numberOfParticipatedExercises"><span jhiTranslate="instructorDashboard.participated">Participated in Exercises (%)</span> <fa-icon icon="sort"></fa-icon></th>
+                <th jhiSortBy="numberOfSuccessfulExercises"><span jhiTranslate="instructorDashboard.successful">Successful Exercises (%)</span> <fa-icon icon="sort"></fa-icon></th>
                 <ng-container *ngFor="let exerciseType of exerciseTypes">
-                    <th *ngIf="maxNumberOfPointsPerExerciseType.get(exerciseType) > 0" jhiSortBy="pointsPerExerciseType.{{exerciseType}}"><span jhiTranslate="instructorDashboard.{{exerciseType}}Points"></span><span class="fa fa-sort"></span></th>
+                    <th *ngIf="maxNumberOfPointsPerExerciseType.get(exerciseType) > 0" jhiSortBy="pointsPerExerciseType.{{exerciseType}}"><span jhiTranslate="instructorDashboard.{{exerciseType}}Points"></span><fa-icon icon="sort"></fa-icon></th>
                 </ng-container>
-                <th jhiSortBy="overallPoints"><span jhiTranslate="instructorDashboard.overallPoints">Overall Points (%)</span> <span class="fa fa-sort"></span></th>
+                <th jhiSortBy="overallPoints"><span jhiTranslate="instructorDashboard.overallPoints">Overall Points (%)</span> <fa-icon icon="sort"></fa-icon></th>
             </tr>
             <tr>
                 <th><span jhiTranslate="instructorDashboard.max">Max</span></th>

@@ -8,7 +8,7 @@
     </div>
 
     <div class="card-second-header">
-        <a class="btn btn-small" (click)="openCreateFileModal()"><i class="fa fa-plus"></i> </a>
+        <a class="btn btn-small" (click)="openCreateFileModal()"><fa-icon icon="plus"></fa-icon> </a>
         <a class="btn btn-small" (click)="openDeleteFileModal()"><i class="fa fa-trash"></i> </a>
     </div>
 
@@ -23,10 +23,10 @@
         <span [innerHtml]="getSaveStatusLabel() | safeHtml"></span>
         <hr/>
         <span *ngIf="isExerciseCommitted()">
-            <i class="fa fa-check-circle text-success"></i> <span class="text-success"> All changes committed.</span>
+            <fa-icon icon="check-circle" class="text-success"></fa-icon> <span class="text-success"> All changes committed.</span>
         </span>
         <span *ngIf="!isExerciseCommitted()">
-            <i class="fa fa-warning text-warning"></i> <span class="text-warning"> There are uncommitted changes.</span>
+            <fa-icon icon="exclamation-triangle" class="text-warning"></fa-icon> <span class="text-warning"> There are uncommitted changes.</span>
         </span>
     </div>
 

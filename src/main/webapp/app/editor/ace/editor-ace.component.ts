@@ -102,14 +102,14 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
             this.onSaveStatusChange({
                 isSaved: false,
                 saveStatusLabel:
-                    '<i class="fa fa-circle-o-notch fa-spin text-info"></i> <span class="text-info">Unsaved changes in ' +
+                    '<fa-icon icon="circle-notch" [spin]="true" class="text-info"></fa-icon> <span class="text-info">Unsaved changes in ' +
                     unsavedFiles +
                     ' files.</span>'
             });
         } else {
             this.onSaveStatusChange({
                 isSaved: true,
-                saveStatusLabel: '<i class="fa fa-check-circle text-success"></i> <span class="text-success"> All changes saved.</span>'
+                saveStatusLabel: '<fa-icon icon="check-circle" class="text-success"></fa-icon> <span class="text-success"> All changes saved.</span>'
             });
         }
     }
