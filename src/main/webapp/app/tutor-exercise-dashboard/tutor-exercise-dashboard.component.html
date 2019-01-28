@@ -52,7 +52,7 @@
 
     <div class="row" *ngIf="tutorParticipationStatus !== NOT_PARTICIPATED">
         <div class="col-6" *ngIf="exampleSubmissionsForTutorial.length > 0">
-            <p class="h3">Tutorial submissions</p>
+            <p class="h3">Review submissions</p>
             <div class="alert alert-info" role="alert">You can use these examples as a tutorial</div>
 
             <ul>
@@ -64,7 +64,7 @@
         </div>
 
         <div class="col-6" *ngIf="exampleSubmissionsToComplete.length > 0">
-            <p class="h3">Submissions to complete ({{exampleSubmissionsCompletedByTutor.length}}/{{numberOfNeededSubmissions}})</p>
+            <p class="h3">Tutorial submissions ({{exampleSubmissionsCompletedByTutor.length}}/{{numberOfNeededSubmissions}})</p>
             <div class="alert alert-info" role="alert">You can use these examples as an exercise</div>
 
             <ul>
@@ -85,9 +85,8 @@
                 <th>#</th>
                 <th>Submission date</th>
                 <th>Result</th>
-                <th>Submission count</th>
+                <th>Status</th>
                 <th>Score</th>
-                <th>Assessment Type</th>
                 <th>Reviewer</th>
                 <th>Action</th>
             </tr>
@@ -101,16 +100,13 @@
                     <jhi-result [participation]="submission.participation"></jhi-result>
                 </td>
                 <td>
-                    <ng-container *ngIf="submission.participation.submissions !== null">
-                        {{ submission.participation.submissions.length }}
-                    </ng-container>
+
                 </td>
                 <td>
                     <span
                         *ngIf="submission.result !== null && submission.result.score !== null">{{submission.result.score}}
                         %</span>
                 </td>
-                <td>{{ submission.result && submission.result.assessmentType }}</td>
                 <td>
                     <span
                         *ngIf="submission.result !== null && submission.result.assessor !== null">{{ submission.result.assessor.firstName }} {{ submission.result.assessor.lastName }}</span>
@@ -134,12 +130,11 @@
                 <td></td>
                 <td>{{ unassessedSubmission.submissionDate | date:'MMM d, y HH:mm:ss' }}</td>
                 <td></td>
-                <td></td>
-                <td></td>
+                <td>NEW</td>
                 <td></td>
                 <td></td>
                 <td>
-                    <button routerLink="/text/{{exercise.id}}/assessment/{{unassessedSubmission.id}}">
+                    <button routerLink="/text/{{exercise.id}}/assessment/{{unassessedSubmission.id}}" class="btn btn-success">
                         <i class="fa fa-folder-open fa-fw"></i>Start new assessment
                     </button>
                 </td>

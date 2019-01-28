@@ -58,9 +58,15 @@
 <div>
     <ul>
         <li class="not_participated" [ngClass]="{'active': tutorParticipationStatus === NOT_PARTICIPATED}" >0</li>
-        <li [ngClass]="{'active': tutorParticipationStatus === REVIEWED_INSTRUCTIONS}" >1</li>
-        <li [ngClass]="{'active': tutorParticipationStatus === TRAINED}">2</li>
-        <li [ngClass]="{'active': tutorParticipationStatus === COMPLETED}">3</li>
+        <li [ngClass]="{'active': tutorParticipationStatus === REVIEWED_INSTRUCTIONS}" >
+            <fa-icon icon="book" title="Read grading instructions"></fa-icon>
+        </li>
+        <li [ngClass]="{'active': tutorParticipationStatus === TRAINED}">
+            <fa-icon icon="chalkboard-teacher" title="Train on example submissions"></fa-icon>
+        </li>
+        <li [ngClass]="{'active': tutorParticipationStatus === COMPLETED}">
+            <fa-icon icon="check-circle" title="Assess students' submissions"></fa-icon>
+        </li>
     </ul>
 </div>
 

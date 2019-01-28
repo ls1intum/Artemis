@@ -1,0 +1,16 @@
+{
+    "arTeMiSApp": {
+        "exampleSubmission": {
+            "home": {
+                "title": "Example Submission Editor"
+            },
+            "assessScore": {
+                "success": "Congratulations! This is a good assessment!",
+                "error": "Unfortunately this is not a proper assessment"
+            },
+            "submitSuccessful": "Your example submission has been properly submitted",
+            "saveSuccessful": "Your example submission has been saved"
+        }
+    }
+}
+

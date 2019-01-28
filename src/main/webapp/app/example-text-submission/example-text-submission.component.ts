@@ -225,15 +225,6 @@ export class ExampleTextSubmissionComponent implements OnInit {
         this.location.back();
     }
 
-    // public assessExampleSubmission(exampleSubmission: ExampleSubmission) {
-    //     this.tutorParticipationService.assessExampleSubmission(exampleSubmission, this.exerciseId, this.tutorParticipation.id).subscribe(
-    //         (res: HttpResponse<TutorParticipation>) => {
-    //             this.tutorParticipation = res.body;
-    //         },
-    //         error => console.error(error)
-    //     );
-    // }
-
     checkAssessment() {
         this.checkScoreBoundaries();
         if (!this.assessmentsAreValid) {
@@ -247,15 +238,13 @@ export class ExampleTextSubmissionComponent implements OnInit {
 
         this.tutorParticipationService.assessExampleSubmission(exampleSubmission, this.exerciseId).subscribe(
                 (res: HttpResponse<TutorParticipation>) => {
-                    // TODO: proper message
-                    this.jhiAlertService.success('Great result');
+                    this.jhiAlertService.success('arTeMiSApp.exampleSubmission.assessScore.success');
                 },
             (error: HttpErrorResponse) => {
                     const errorType = error.headers.get('x-artemisapp-error');
 
                     if (errorType === 'error.wrongScore') {
-                        // TODO error messags
-                        this.jhiAlertService.error('Your score is wrong');
+                        this.jhiAlertService.error('arTeMiSApp.exampleSubmission.assessScore.error');
                     } else {
                         this.onError(error.message);
                     }
