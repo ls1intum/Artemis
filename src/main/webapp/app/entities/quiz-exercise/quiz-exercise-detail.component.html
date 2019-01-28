@@ -3,12 +3,12 @@
         <span
             *ngIf="quizExercise.id && quizExercise.course"
             jhiTranslate="arTeMiSApp.quizExercise.edit.title"
-            translateValues="{param: '{{quizExercise.course.title}}'}">
+            [translateValues]="{param: quizExercise.course.title}">
         </span>
         <span
             *ngIf="!quizExercise.id && quizExercise.course"
             jhiTranslate="arTeMiSApp.quizExercise.new.title"
-            translateValues="{param: '{{quizExercise.course.title}}'}">
+            [translateValues]="{param: quizExercise.course.title}">
         </span>
         <span class="badge badge-info align-text-top pull-right">
             <span jhiTranslate="arTeMiSApp.quizExercise.maxScore"></span>&nbsp;
@@ -223,7 +223,7 @@
                     </span>
                     <ng-template #tooltipTranslate>
                         <div *ngFor="let reason of invalidReasons()">
-                            <p *ngIf="(reason.translateValues | json) != '{}'" jhiTranslate="{{reason.translateKey}}" translateValues="{index: '{{reason.translateValues.index}}'}"></p>
+                            <p *ngIf="(reason.translateValues | json) != '{}'" jhiTranslate="{{reason.translateKey}}" [translateValues]="{index: reason.translateValues.index}"></p>
                             <p *ngIf="(reason.translateValues | json) == '{}'" jhiTranslate="{{reason.translateKey}}"></p>
                         </div>
                     </ng-template>
