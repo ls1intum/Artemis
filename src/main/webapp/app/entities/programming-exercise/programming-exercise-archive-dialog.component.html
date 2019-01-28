@@ -7,7 +7,7 @@
     <div class="modal-body">
         <jhi-alert-error></jhi-alert-error>
         <p jhiTranslate="instructorDashboard.archive.question"
-           translateValues="{exerciseTitle: '{{exercise.title}}', courseTitle: '{{exercise.course.title}}'}">Confirm archive
+           [translateValues]="{exerciseTitle: exercise.title, courseTitle: exercise.course.title}">Confirm archive
         </p>
         <p>(This action can take several minutes depending on number and size of repositories.)</p>
     </div>
