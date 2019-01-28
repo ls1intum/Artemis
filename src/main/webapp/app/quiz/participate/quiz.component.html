@@ -7,7 +7,7 @@
     </h2>
     <p *ngIf="!waitingForQuizStart && !submission.submitted && !showingResult" jhiTranslate="arTeMiSApp.quizExercise.quizInstructions.default"></p>
     <p *ngIf="!waitingForQuizStart && submission.submitted && !showingResult" jhiTranslate="arTeMiSApp.quizExercise.quizInstructions.wait"></p>
-    <p *ngIf="!waitingForQuizStart && showingResult && mode !== 'solution'" jhiTranslate="arTeMiSApp.quizExercise.quizInstructions.result" translateValues="{userScore: '{{userScore}}', maxScore: '{{totalScore}}', percentage: '{{result.score}}'}"></p>
+    <p *ngIf="!waitingForQuizStart && showingResult && mode !== 'solution'" jhiTranslate="arTeMiSApp.quizExercise.quizInstructions.result" [translateValues]="{userScore: userScore, maxScore: totalScore, percentage: result.score}"></p>
 </div>
 <div class="quiz-content container" *ngIf="quizExercise">
     <div *ngFor="let question of quizExercise.questions; let i = index">
