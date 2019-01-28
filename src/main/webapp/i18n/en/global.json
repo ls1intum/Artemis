@@ -175,6 +175,9 @@
         "delete": {
             "title": "Confirm delete operation"
         },
+        "reset": {
+            "title": "Confirm reset operation"
+        },
         "cleanup": {
             "title": "Confirm cleanup operation"
         },
