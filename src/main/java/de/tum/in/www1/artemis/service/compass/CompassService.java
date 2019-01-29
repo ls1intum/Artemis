@@ -9,6 +9,7 @@ import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.compass.assessment.Assessment;
+import de.tum.in.www1.artemis.service.compass.assessment.ModelElementAssessment;
 import de.tum.in.www1.artemis.service.compass.conflict.Conflict;
 import de.tum.in.www1.artemis.service.compass.grade.CompassGrade;
 import de.tum.in.www1.artemis.service.compass.grade.Grade;
@@ -24,10 +25,7 @@ import java.text.DecimalFormat;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -187,17 +185,17 @@ public class CompassService {
     /**
      * Add an assessment to an engine
      *
-     * @param exerciseId the exerciseId
-     * @param modelId    the corresponding modelId
-     * @param assessment the new assessment as raw string
+     * @param exerciseId         the exerciseId
+     * @param submissionId            the corresponding modelId
+     * @param modelingAssessment the new assessment as raw string
      */
-    public void addAssessment(long exerciseId, long modelId, String assessment) {
-        log.info("Add assessment for exercise" + exerciseId + " and model " + modelId);
+    public void addAssessment(long exerciseId, long submissionId, List<ModelElementAssessment> modelingAssessment) {
+        log.info("Add assessment for exercise" + exerciseId + " and model " + submissionId);
         if (!loadExerciseIfSuspended(exerciseId)) {
             return;
         }
         CalculationEngine engine = compassCalculationEngines.get(exerciseId);
-        engine.notifyNewAssessment(assessment, modelId);
+        engine.notifyNewAssessment(modelingAssessment, submissionId);
         // Check all models for new assessments
         for (long id : engine.getModelIds()) {
             assessAutomatically(id, exerciseId);
@@ -205,15 +203,16 @@ public class CompassService {
     }
 
     public Optional<Conflict> checkForConflict(long exerciseId, long modelId) {
-        CompassCalculationEngine engine = (CompassCalculationEngine) compassCalculationEngines.get(exerciseId);
-        Map<Integer, Assessment> conflictingAssessments = engine.getAssessmentsInConflict(modelId);
-        if (conflictingAssessments.isEmpty()) {
-            return Optional.empty();
-        } else {
-            Conflict conflict = new Conflict(conflictingAssessments);
-            conflict.setInitiator(userService.getUser());
-            return Optional.of(conflict);
-        }
+//        CompassCalculationEngine engine = (CompassCalculationEngine) compassCalculationEngines.get(exerciseId);
+//        Map<Integer, Assessment> conflictingAssessments = engine.getAssessmentsInConflict(modelId);
+//        if (conflictingAssessments.isEmpty()) {
+//            return Optional.empty();
+//        } else {
+//            Conflict conflict = new Conflict(conflictingAssessments);
+//            conflict.setInitiator(userService.getUser());
+//            return Optional.of(conflict);
+//        }
+        return Optional.empty();
     }
 
     private void assessAutomatically(long modelId, long exerciseId) {

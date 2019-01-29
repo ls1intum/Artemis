@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import java.util.*;
+
+import de.tum.in.www1.artemis.service.compass.assessment.ModelElementAssessment;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.*;
 import org.springframework.http.*;
@@ -143,7 +145,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
      */
     @PutMapping("/modeling-assessments/exercise/{exerciseId}/result/{resultId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> saveModelingAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody String modelingAssessment) {
+    public ResponseEntity<Result> saveModelingAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody List<ModelElementAssessment> modelingAssessment) {
         Optional<ModelingExercise> modelingExercise = modelingExerciseService.findOne(exerciseId);
         ResponseEntity responseFailure = checkExercise(modelingExercise);
         if (responseFailure != null) {
@@ -171,7 +173,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
      */
     @PutMapping("/modeling-assessments/exercise/{exerciseId}/result/{resultId}/submit")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ConflictResultWrapper> submitModelingAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody String modelingAssessment) { //TODO parse assessment string by default spring parser ?
+    public ResponseEntity<ConflictResultWrapper> submitModelingAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody List<ModelElementAssessment> modelingAssessment) { //TODO parse assessment string by default spring parser ?
         Optional<ModelingExercise> modelingExercise = modelingExerciseService.findOne(exerciseId);
         ResponseEntity responseFailure = checkExercise(modelingExercise);
         if (responseFailure != null) {
@@ -187,7 +189,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
         modelingAssessmentService.submitManualAssessment(result.get(), modelingExercise.get(), modelingAssessment);
         // add assessment to compass to include it in the automatic grading process
         compassService.addAssessment(exerciseId, submissionId, modelingAssessment);
-        return ResponseEntity.ok(new ConflictResultWrapper(conflict.get(), result.get()));
+        return ResponseEntity.ok(new ConflictResultWrapper(null, result.get()));
     }
 
 

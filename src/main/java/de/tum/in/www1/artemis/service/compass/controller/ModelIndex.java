@@ -52,8 +52,8 @@ public class ModelIndex {
         modelMap.put(model.getModelID(), model);
     }
 
-    public UMLModel getModel(long modelId){
-       return modelMap.get(modelId);
+    public UMLModel getModel(long modelId) {
+        return modelMap.get(modelId); //TODO check if there? return Optional?
     }
 
     public Map<Long, UMLModel> getModelMap() {

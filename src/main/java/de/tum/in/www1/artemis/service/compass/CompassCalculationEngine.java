@@ -7,6 +7,7 @@ import de.tum.in.www1.artemis.service.compass.conflict.Conflict;
 import de.tum.in.www1.artemis.service.compass.controller.*;
 import de.tum.in.www1.artemis.service.compass.grade.*;
 import de.tum.in.www1.artemis.service.compass.umlmodel.*;
+import de.tum.in.www1.artemis.service.compass.utils.JSONMapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -153,10 +154,10 @@ public class CompassCalculationEngine implements CalculationEngine {
     }
 
     @Override
-    public void notifyNewAssessment(String assessment, long modelId) {
+    public void notifyNewAssessment(List<ModelElementAssessment> modelingAssessment, long submissionId) {
         lastUsed = LocalDateTime.now();
-        modelSelector.addAlreadyAssessedModel(modelId);
-        buildAssessment(modelId, new JsonParser().parse(assessment).getAsJsonObject());
+        modelSelector.addAlreadyAssessedModel(submissionId);
+        buildAssessment(submissionId, modelingAssessment);
         assessModelsAutomatically();
     }
 
@@ -278,6 +279,81 @@ public class CompassCalculationEngine implements CalculationEngine {
         jsonObject.add("models", models);
 
         return jsonObject;
+    }
+
+    private void buildAssessment(long submissionId, List<ModelElementAssessment> modelingAssessment) {
+        UMLModel model = modelIndex.getModel(submissionId);
+        Map<String, Score> scoreList = createScoreList(modelingAssessment, model);
+        this.addNewManualAssessment(scoreList, model);
+        modelSelector.removeModelWaitingForAssessment(model.getModelID());
+    }
+
+    private Map<String, Score> createScoreList(List<ModelElementAssessment> modelingAssessment, UMLModel model) {
+        Map<String, Score> scoreHashMap = new HashMap<>();
+        for (ModelElementAssessment assessment : modelingAssessment) {
+            String jsonElementID = assessment.getId();
+            boolean found = false;
+
+            switch (assessment.getType()) {
+                case JSONMapping.assessmentElementTypeClass:
+                    for (UMLClass umlClass : model.getClassList()) {
+                        if (umlClass.getJSONElementID().equals(jsonElementID)) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    break;
+                case JSONMapping.assessmentElementTypeAttribute:
+                    for (UMLClass umlClass : model.getClassList()) {
+                        for (UMLAttribute umlAttribute : umlClass.getAttributeList()) {
+                            if (umlAttribute.getJSONElementID().equals(jsonElementID)) {
+                                found = true;
+                                break;
+                            }
+                        }
+                    }
+                    break;
+                case JSONMapping.assessmentElementTypeMethod:
+                    for (UMLClass umlClass : model.getClassList()) {
+                        for (UMLMethod umlMethod : umlClass.getMethodList()) {
+                            if (umlMethod.getJSONElementID().equals(jsonElementID)) {
+                                found = true;
+                                break;
+                            }
+                        }
+                    }
+                    break;
+                case JSONMapping.assessmentElementTypeRelationship:
+                    for (UMLAssociation umlAssociation : model.getAssociationList()) {
+                        if (umlAssociation.getJSONElementID().equals(jsonElementID)) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    break;
+            }
+
+            if (!found) {
+                /*
+                 * This might happen if e.g. the user input was malformed and the compass model parser had to ignore the element
+                 */
+                log.warn("Element " + jsonElementID + " of type " + assessment.getType() + " not in model");
+                continue;
+            }
+            List<String> comment = new ArrayList<>();
+            if (assessment.getCommment() != null && !assessment.getCommment().equals("")) {
+                comment.add(assessment.getCommment());
+            }
+
+            // Ignore misformatted score
+            try {
+                Score score = new Score(assessment.getCredits(), comment, 1.0);
+                scoreHashMap.put(jsonElementID, score);
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
+        }
+        return scoreHashMap;
     }
 
 

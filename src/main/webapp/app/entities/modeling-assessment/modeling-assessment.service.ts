@@ -1,10 +1,10 @@
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
-import { SERVER_API_URL } from '../../app.constants';
+import {Injectable} from '@angular/core';
+import {HttpClient, HttpResponse} from '@angular/common/http';
+import {Observable} from 'rxjs/Observable';
+import {SERVER_API_URL} from '../../app.constants';
 
-import { ModelElementType, ModelingAssessment } from './modeling-assessment.model';
-import { Result } from '../result';
+import {ModelElementType, ModelingAssessment} from './modeling-assessment.model';
+import {Result} from '../result';
 import {
     ENTITY_KIND_HEIGHT,
     ENTITY_MEMBER_HEIGHT,
@@ -19,23 +19,22 @@ import {
 
 export type EntityResponseType = HttpResponse<Result>;
 
-@Injectable({ providedIn: 'root' })
+@Injectable({providedIn: 'root'})
 export class ModelingAssessmentService {
     private resourceUrl = SERVER_API_URL + 'api/modeling-assessments';
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient) {
+    }
 
     save(modelingAssessment: ModelingAssessment[], exerciseId: number, resultId: number): Observable<EntityResponseType> {
-        const copy = this.convert(modelingAssessment);
         return this.http
-            .put<Result>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}`, copy, { observe: 'response' })
+            .put<Result>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}`, modelingAssessment, {observe: 'response'})
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
     submit(modelingAssessment: ModelingAssessment[], exerciseId: number, resultId: number): Observable<EntityResponseType> {
-        const copy = this.convert(modelingAssessment);
         return this.http
-            .put<Result>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}/submit`, copy, { observe: 'response' })
+            .put<Result>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}/submit`, modelingAssessment, {observe: 'response'})
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
@@ -48,7 +47,7 @@ export class ModelingAssessmentService {
     }
 
     getOptimalSubmissions(exerciseId: number): Observable<HttpResponse<any>> {
-        return this.http.get(`${this.resourceUrl}/exercise/${exerciseId}/optimal-model-submissions`, { observe: 'response' });
+        return this.http.get(`${this.resourceUrl}/exercise/${exerciseId}/optimal-model-submissions`, {observe: 'response'});
     }
 
     getPartialAssessment(exerciseId: number, submissionId: number): Observable<HttpResponse<ModelingAssessment[]>> {
@@ -60,16 +59,16 @@ export class ModelingAssessmentService {
     }
 
     getDataForEditor(exerciseId: number, submissionId: number): Observable<any> {
-        return this.http.get(`api/assessment-editor/${exerciseId}/${submissionId}`, { responseType: 'json' });
+        return this.http.get(`api/assessment-editor/${exerciseId}/${submissionId}`, {responseType: 'json'});
     }
 
     resetOptimality(exerciseId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/exercise/${exerciseId}/optimal-model-submissions`, { observe: 'response' });
+        return this.http.delete<void>(`${this.resourceUrl}/exercise/${exerciseId}/optimal-model-submissions`, {observe: 'response'});
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {
         const body: Result = this.convertItemFromServer(res.body);
-        return res.clone({ body });
+        return res.clone({body});
     }
 
     /**
@@ -93,16 +92,9 @@ export class ModelingAssessmentService {
                 body.push(this.convertAssessmentFromServer(jsonResponse[i]));
             }
         }
-        return res.clone({ body });
+        return res.clone({body});
     }
 
-    /**
-     * Convert the assessment to a String which can be sent to the server.
-     */
-    private convert(modelingAssessment: ModelingAssessment[]): String {
-        const copy: String = JSON.stringify({ assessments: modelingAssessment });
-        return copy;
-    }
 
     /**
      * Creates the labels for the assessment elements for displaying them in the modeling and assessment editor.
@@ -138,12 +130,12 @@ export class ModelingAssessmentService {
                         type = assessment.type;
                         break;
                 }
-                assessmentsNames[assessment.id] = { type, name: className };
+                assessmentsNames[assessment.id] = {type, name: className};
             } else if (assessment.type === ModelElementType.ATTRIBUTE) {
                 for (const entityId of model.entities.allIds) {
                     for (const att of model.entities.byId[entityId].attributes) {
                         if (att.id === assessment.id) {
-                            assessmentsNames[assessment.id] = { type: assessment.type, name: att.name };
+                            assessmentsNames[assessment.id] = {type: assessment.type, name: att.name};
                         }
                     }
                 }
@@ -151,7 +143,7 @@ export class ModelingAssessmentService {
                 for (const entityId of model.entities.allIds) {
                     for (const method of model.entities.byId[entityId].methods) {
                         if (method.id === assessment.id) {
-                            assessmentsNames[assessment.id] = { type: assessment.type, name: method.name };
+                            assessmentsNames[assessment.id] = {type: assessment.type, name: method.name};
                         }
                     }
                 }
@@ -188,9 +180,9 @@ export class ModelingAssessmentService {
                     default:
                         relation = ' --- ';
                 }
-                assessmentsNames[assessment.id] = { type, name: source + relation + target };
+                assessmentsNames[assessment.id] = {type, name: source + relation + target};
             } else {
-                assessmentsNames[assessment.id] = { type: assessment.type, name: '' };
+                assessmentsNames[assessment.id] = {type: assessment.type, name: ''};
             }
         }
         return assessmentsNames;
@@ -205,7 +197,7 @@ export class ModelingAssessmentService {
         const SYMBOL_WIDTH = 65;
         const positions = new Map<string, Point>();
         for (const assessment of assessments) {
-            const elemPosition: Point = { x: 0, y: 0 };
+            const elemPosition: Point = {x: 0, y: 0};
             if (assessment.type === ModelElementType.CLASS) {
                 if (model.entities.byId[assessment.id]) {
                     const entity = model.entities.byId[assessment.id];
