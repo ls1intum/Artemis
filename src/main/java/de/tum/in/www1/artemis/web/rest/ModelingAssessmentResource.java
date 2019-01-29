@@ -150,8 +150,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
             return responseFailure;
         }
         Result result = modelingAssessmentService.saveManualAssessment(resultId, exerciseId, modelingAssessment);
-        Optional<Conflict> conflict = compassService.checkForConflict(exerciseId, result.getSubmission().getId());
-        return ResponseEntity.ok(new ConflictResultWrapper(conflict.get(), result));
+        return ResponseEntity.ok(result);
     }
 
     //TODO change to POST and remove submision in path or merge with saveNodelingAssessment?
