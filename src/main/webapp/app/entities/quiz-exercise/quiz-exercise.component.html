@@ -4,19 +4,19 @@
             <span *ngIf="course && !showHeading">{{course.title}} - </span><span *ngIf="quizExercises && showHeading">{{quizExercises.length}} </span>
             <span jhiTranslate="arTeMiSApp.quizExercise.home.title">Quiz Exercises</span>
         </ng-container>
-        <button *ngIf="courseId" class="btn mr-2 btn-primary float-right jh-create-entity create-quiz-exercise" [routerLink]="['quiz-exercise' , 'new']">
+        <button class="btn mr-2 btn-primary float-right jh-create-entity create-quiz-exercise" [routerLink]="['quiz-exercise' , 'new']">
             <span class="fa fa-plus"></span>
             <span jhiTranslate="arTeMiSApp.quizExercise.home.createLabel">
                 Create new Quiz
             </span>
         </button>
-        <button *ngIf="courseId" class="btn mr-2 btn-primary float-right jh-create-entity create-quiz-exercise" [routerLink]="['quiz-exercise', 'export']">
+        <button class="btn mr-2 btn-primary float-right jh-create-entity create-quiz-exercise" [routerLink]="['quiz-exercise', 'export']">
             <span class="fa fa-plus"></span>
             <span jhiTranslate="arTeMiSApp.quizExercise.home.exportLabel">
                 Export Quiz Exercises
             </span>
         </button>
-        <button *ngIf="courseId" class="btn mr-2 btn-primary float-right" [routerLink]="['/apollon-diagrams']">
+        <button class="btn mr-2 btn-primary float-right" [routerLink]="['/apollon-diagrams']">
             <span class="fa fa-plus"></span>
             <span jhiTranslate="arTeMiSApp.quizExercise.home.createModelDragAndDrop">
                 Create new Drag and Drop Model Quiz
