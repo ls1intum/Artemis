@@ -127,7 +127,7 @@ public class ModelingSubmissionResource {
 
     @NotNull
     private ResponseEntity<ModelingSubmission> handleModelingSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
-        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
+        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId).get();
         ResponseEntity<ModelingSubmission> responseFailure = checkExerciseValidity(modelingExercise);
         if (responseFailure != null) return responseFailure;
 
