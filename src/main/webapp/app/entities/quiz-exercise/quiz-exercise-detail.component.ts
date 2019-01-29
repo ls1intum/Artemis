@@ -534,7 +534,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                     });
                 }
             }
-            if(question.title.length > 250) {
+            if(question.title.length >= 250) {
                 reasons.push({
                     translateKey: 'arTeMiSApp.quizExercise.warnings.questionTitleLength',
                     translateValues: {index: index + 1}
