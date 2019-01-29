@@ -6,6 +6,45 @@
                 <h3>{{question.title}} <span style="color:red;" *ngIf="question.invalid"
                                              jhiTranslate="showStatistic.invalid"></span></h3>
                 <h4 [innerHTML]="questionTextRendered"></h4>
+
+                <div *ngIf="!showSolution">
+                    <div class="saQuestion-text" [ngClass]="{'saQuestion-list': isList}" *ngFor="let textPart of textWithOutSpotsFirstParts;let i = index">
+                        {{textPart}}
+                        <div style="position: relative">
+                            <input disabled>
+                            <div class="saQuestion-statistic-letter">
+                                <span>{{getLetter(i) + "."}}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <span>{{textWithOutSpotsLastPart}}</span>
+                </div>
+
+                <div *ngIf="showSolution">
+                    <div class="saQuestion-text" [ngClass]="{'saQuestion-list': isList}" *ngFor="let textPart of textWithOutSpotsFirstParts;let i = index">
+                        {{textPart}}
+                        <div style="position: relative">
+                            <input disabled>
+                            <div class="saQuestion-statistic-letter-solution">
+                                <span>{{getLetter(i) + "."}}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <span>{{textWithOutSpotsLastPart}}</span>
+                    <p>Solution: </p>
+                        <div>
+                            <div class="saQuestion-text" *ngFor="let mapping of question.correctMappings;let i = index">
+                                <div style="position: relative">
+                                    <input disabled value="{{mapping.solution.text}}" size="{{mapping.solution.text.length + 10}}" style="text-align: center">
+                                    <div class="saQuestion-statistic-letter-solution">
+                                        <span>{{getLetter(+lettersForSolutionsString[i]) + "."}}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                </div>
+
                 <div>
                     <p>&nbsp;</p>
                     <div class="row">
@@ -18,7 +57,7 @@
                         <div class="col-md-3 text-right">
                             <p style="font-size: large"><span>{{participants}} </span><span
                                 jhiTranslate="showStatistic.participants"></span></p>
-                        </div>-
+                        </div>
                     </div>
                     <canvas baseChart
                             [datasets]="datasets" [labels]="labels" [options]="options" [chartType]="chartType" [colors]="colors">
@@ -96,4 +135,5 @@
             </div>
         </div>
     </div>
+</div>
 </div>

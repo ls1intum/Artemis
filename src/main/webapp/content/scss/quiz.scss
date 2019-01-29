@@ -9,9 +9,49 @@
     margin-bottom: 8px;
 }
 
-.saQuestion-list {
-    display: block;
+.saQuestion-text {
+    display: inline-flex;
+
+    &.saQuestion-list {
+        margin-bottom: 10px;
+        display: flex;
+    }
 }
+
+.saQuestion-statistic-letter {
+    position: absolute;
+    right: -3px;
+    top: 12px;
+    z-index: 1;
+    opacity: 1;
+
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+    background-color: #428bca;
+    color: white;
+    border-radius: 50%;
+    text-align: center;
+}
+
+.saQuestion-statistic-letter-solution {
+    position: absolute;
+    right: -3px;
+    top: 12px;
+    z-index: 1;
+    opacity: 1;
+
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+    background-color: #5cb85c;
+    color: white;
+    border-radius: 50%;
+    text-align: center;
+}
+
+
+
 
 .edit-quiz .quiz-options,
 .question-options {

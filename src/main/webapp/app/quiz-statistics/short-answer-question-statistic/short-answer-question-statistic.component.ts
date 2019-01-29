@@ -14,6 +14,7 @@ import { ShortAnswerSpot } from '../../entities/short-answer-spot';
 import { ChartOptions } from 'chart.js';
 import { createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
 import { Subscription } from 'rxjs/Subscription';
+import {ShortAnswerSolution} from "app/entities/short-answer-solution";
 
 interface BackgroundColorConfig {
     backgroundColor: string;
@@ -63,6 +64,15 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
 
     // options for chart in chart.js style
     options: ChartOptions;
+
+    questionText: string;
+    textWithoutSpots: string[];
+    textWithOutSpotsFirstParts: string[];
+    textWithOutSpotsLastPart: string[];
+    isList = false;
+    firstLineHasQuestion = false;
+    lettersForSolutionsMap = new Array< { index: number; value: ShortAnswerSolution} >();
+    lettersForSolutionsString:string[] = [];
 
     constructor(
         private route: ActivatedRoute,
@@ -150,16 +160,69 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
         // load Layout only at the opening (not if the websocket refreshed the data)
         if (!refresh) {
             this.questionTextRendered = this.artemisMarkdown.htmlForMarkdown(this.question.text);
+            this.generateSaStructure();
+            this.generateLettersForSolutions();
+
             this.loadLayout();
         }
         this.loadData();
+    }
+
+    generateSaStructure() {
+        //first line is the question if there is no [-spot #] tag in the string
+        if(this.question.text.split(/\n/g)[0].search(/\[-spot/g) == -1){
+            this.questionText = this.question.text.split(/\n/g)[0];
+            this.firstLineHasQuestion = true;
+        } else {
+            this.questionText = "";
+        }
+
+        let questionTextSplitAtNewLine = "";
+        //seperates the the rest of the text from the question
+        if(this.firstLineHasQuestion){
+            questionTextSplitAtNewLine = this.question.text
+                .split(/\n+/g)
+                .slice(1)
+                .join();
+        } else {
+            questionTextSplitAtNewLine = this.question.text
+                .split(/\n+/g)
+                .join();
+        }
+
+        //checks if a line break is in the text (marked by "," and replaces it) and check if text is a list
+        if(questionTextSplitAtNewLine.includes(",")){
+            questionTextSplitAtNewLine = questionTextSplitAtNewLine.replace(/\,/g, " ");
+            if(questionTextSplitAtNewLine.includes("1.")){
+                this.isList = true;
+            }
+        }
+
+        //splits the text at the "[-spot " tag to have the parts of the text without spot tag
+        this.textWithoutSpots = questionTextSplitAtNewLine.split(/\[-spot\s\d\]/g);
+        //separates the text into parts that come before the spot tag
+        this.textWithOutSpotsFirstParts = this.textWithoutSpots.slice(0, this.textWithoutSpots.length - 1);
+        //the last part that comes after the last spot tag
+        this.textWithOutSpotsLastPart = this.textWithoutSpots.slice(this.textWithoutSpots.length - 1);
+    }
+
+    generateLettersForSolutions(){
+        for(const mapping of this.question.correctMappings){
+            for(const i in this.question.spots){
+                if(mapping.spot.id === this.question.spots[i].id){
+                    this.lettersForSolutionsMap.push({index: +i, value: mapping.solution});
+                    this.lettersForSolutionsString.push(i);
+                    break;
+                }
+            }
+        }
+        console.log(this.lettersForSolutionsMap);
     }
 
     /**
      * build the Chart-Layout based on the the Json-entity (questionStatistic)
      */
     loadLayout() {
-        this.orderSpotsByPos();
 
         // reset old data
         this.label = [];
@@ -333,25 +396,6 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
      */
     getLetter(index: number) {
         return String.fromCharCode(65 + index);
-    }
-
-    /**
-     * order DropLocations by Position
-     */
-    orderSpotsByPos() {
-        let change = true;
-        while (change) {
-            change = false;
-            for (let i = 0; i < this.question.spots.length - 1; i++) {
-                if (this.question.spots[i].posX > this.question.spots[i + 1].posX) {
-                    // switch spots
-                    const temp = this.question.spots[i];
-                    this.question.spots[i] = this.question.spots[i + 1];
-                    this.question.spots[i + 1] = temp;
-                    change = true;
-                }
-            }
-        }
     }
 
     /**
