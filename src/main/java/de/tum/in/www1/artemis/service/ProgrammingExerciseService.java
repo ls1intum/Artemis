@@ -13,6 +13,7 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationUpdateServ
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.util.structurediffgenerator.StructureDiffGeneratorClient;
+import de.tum.in.www1.artemis.service.util.structureoraclegenerator.OracleGeneratorClient;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -180,8 +181,6 @@ public class ProgrammingExerciseService {
             fileTargets.add("${exerciseName}");
             fileReplacements.add(programmingExercise.getTitle());
 
-            //TODO: for some reason, this code does not replace the elements in the file test.json
-
             fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), fileTargets, fileReplacements);
 
             gitService.stageAllChanges(repository);
@@ -204,13 +203,13 @@ public class ProgrammingExerciseService {
         String exerciseRepositoryPath = exerciseRepository.getLocalPath().toAbsolutePath().toString() + File.separator;
         String testRepositoryPath = testRepository.getLocalPath().toAbsolutePath().toString() + File.separator + testsPath;
 
-        StructureDiffGeneratorClient.run(solutionRepositoryPath, exerciseRepositoryPath, testRepositoryPath, "test.json");
+        OracleGeneratorClient.run(solutionRepositoryPath, exerciseRepositoryPath, testRepositoryPath, "test.json");
 
         try {
             gitService.stageAllChanges(testRepository);
-            gitService.commitAndPush(testRepository, "Generated the structure diff file.");
+            gitService.commitAndPush(testRepository, "Generated the structure oracle file.");
         } catch (GitAPIException e) {
-            log.error("An exception occurred while pushing the structure diff file to the test repository.", e);
+            log.error("An exception occurred while pushing the structure oracle file to the test repository.", e);
         }
 
     }
