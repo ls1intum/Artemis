@@ -34,7 +34,7 @@ public class ShortAnswerSubmittedText implements Serializable {
     private Boolean isCorrect;
 
     @OneToOne
-    @JoinColumn(unique = true)
+    @JoinColumn()
     @JsonView(QuizView.Before.class)
     private ShortAnswerSpot spot;
 
