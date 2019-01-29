@@ -40,6 +40,10 @@ public class ResultService {
         this.messagingTemplate = messagingTemplate;
     }
 
+    public Optional<Result> findOne(long id){
+        return resultRepository.findById(id);
+    }
+
     /**
      * Perform async operations after we were notified about new results.
      *
