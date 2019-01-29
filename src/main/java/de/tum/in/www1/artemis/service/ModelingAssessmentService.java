@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.text.DecimalFormat;
 import java.time.ZonedDateTime;
+import java.util.Optional;
 
 @Service
 public class ModelingAssessmentService extends AssessmentService {
@@ -73,23 +74,22 @@ public class ModelingAssessmentService extends AssessmentService {
      * and sets the assessor attribute. Furthermore, it saves the assessment in the file system the total score is calculated and set in the result.
      *
      * @param resultId              the resultId the assessment belongs to
-     * @param exerciseId            the exerciseId the assessment belongs to
+     * @param exercise            the exerciseId the assessment belongs to
      * @param modelingAssessment    the assessments as string
      * @return the ResponseEntity with result as body
      */
     @Transactional
-    public Result submitManualAssessment(Long resultId, Long exerciseId, String modelingAssessment) {
-        Result result = saveManualAssessment(resultId, exerciseId, modelingAssessment);
-        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
+    public Result submitManualAssessment(Long resultId, ModelingExercise exercise, String modelingAssessment) {
+        Result result = saveManualAssessment(resultId, exercise.getId(), modelingAssessment);
 
         Long studentId = result.getParticipation().getStudent().getId();
         Long submissionId = result.getSubmission().getId();
         // set score, result string and successful if rated
         // TODO: is it really necessary to read the assessment? It should be the same as 'modelingAssessment'
-        JsonObject assessmentJson = jsonAssessmentRepository.readAssessment(exerciseId, studentId, submissionId, true);
+        JsonObject assessmentJson = jsonAssessmentRepository.readAssessment(exercise.getId(), studentId, submissionId, true);
         Double calculatedScore = calculateTotalScore(assessmentJson);
 
-        return prepareSubmission(result, modelingExercise, calculatedScore);
+        return prepareSubmission(result, exercise, calculatedScore);
     }
 
 

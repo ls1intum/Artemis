@@ -173,7 +173,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
             return responseFailure;
         }
 
-        Result result = modelingAssessmentService.submitManualAssessment(resultId, exerciseId, modelingAssessment);
+        Result result = modelingAssessmentService.submitManualAssessment(resultId, modelingExercise.get(), modelingAssessment);
         Long submissionId = result.getSubmission().getId();
         // add assessment to compass to include it in the automatic grading process
         compassService.addAssessment(exerciseId, submissionId, modelingAssessment);
