@@ -16,7 +16,7 @@ import java.util.Date;
 import org.junit.Before;
 import org.junit.Test;
 
-public class BehaviorTest {
+public class MethodFunctionalTest extends FunctionalTest {
 
     private List<Date> dates;
     private List<Date> datesWithCorrectOrder;
@@ -35,14 +35,14 @@ public class BehaviorTest {
 
     @Test(timeout = 1000)
     public void testBubbleSort() {
-        BubbleSort bubbleSort = new BubbleSort();
+        BubbleSort bubbleSort = (BubbleSort) newInstance("${packageName}.BubbleSort");
         bubbleSort.performSort(dates);
         assertEquals("Problem: BubbleSort does not sort correctly", datesWithCorrectOrder, dates);
     }
 
     @Test(timeout = 1000)
     public void testMergeSort() {
-        MergeSort mergeSort = new MergeSort();
+        MergeSort mergeSort = (MergeSort) newInstance("${packageName}.MergeSort");
         mergeSort.performSort(dates);
         assertEquals("Problem: MergeSort does not sort correctly", datesWithCorrectOrder, dates);
     }
@@ -62,26 +62,19 @@ public class BehaviorTest {
     }
 
     private Object configurePolicyAndContext(List<Date> dates) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, InstantiationException, ClassNotFoundException {
-        Class contextClass = Class.forName("${packageName}.Context");
+        Class<?> contextClass = getClass("${packageName}.Context");
         assertNotNull("Problem: Context class is not created yet", contextClass);
-        Object sortingContext = contextClass.newInstance();
-        Method setDatesMethod = contextClass.getMethod("setDates", List.class);
-        assertNotNull("Problem: Context.setDates() not created yet", setDatesMethod);
-        setDatesMethod.invoke(sortingContext, dates);
+                
+        Object sortingContext = newInstance("${packageName}.Context");
+        invokeMethod(sortingContext, getMethod(contextClass, "setDates", List.class), dates);
 
-        Class policyClass = Class.forName("${packageName}.Policy");
+        Class<?> policyClass = getClass("${packageName}.Policy");
         assertNotNull("Problem: Policy class is not created yet", policyClass);
-        Constructor policyConstructor = policyClass.getConstructor(contextClass);
-        assertNotNull("Problem: Policy class has not the right constructor", policyConstructor);
-
-        Object policy = policyConstructor.newInstance(sortingContext);
-        Method configureMethod = policyClass.getMethod("configure");
-        assertNotNull("Problem: Policy.configure() not created yet", configureMethod);
-        configureMethod.invoke(policy);
-
-        Method getSortAlgorithmMethod = contextClass.getMethod("getSortAlgorithm");
-        assertNotNull("Problem: Context.getSortAlgorithm() not created yet", getSortAlgorithmMethod);
-        Object chosenSortStrategy = getSortAlgorithmMethod.invoke(sortingContext);
+        
+        Object policy = newInstance("${packageName}.Policy", sortingContext);
+        invokeMethod(policy, getMethod(policyClass, "configure"));
+        
+        Object chosenSortStrategy = invokeMethod(sortingContext, getMethod(contextClass, "getSortAlgorithm"));
 
         return chosenSortStrategy;
     }
