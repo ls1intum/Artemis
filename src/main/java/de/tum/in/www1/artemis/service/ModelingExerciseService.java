@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -37,9 +38,9 @@ public class ModelingExerciseService {
      * @return the entity
      */
     @Transactional(readOnly = true)
-    public ModelingExercise findOne(Long id) {
+    public Optional<ModelingExercise> findOne(Long id) {
         log.debug("Request to get Modeling Exercise : {}", id);
-        return modelingExerciseRepository.findById(id).get();
+        return modelingExerciseRepository.findById(id);
     }
 
     /**

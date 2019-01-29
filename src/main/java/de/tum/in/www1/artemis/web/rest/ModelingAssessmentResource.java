@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import java.util.*;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.*;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -51,11 +52,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @DeleteMapping("/modeling-assessments/exercise/{exerciseId}/optimal-model-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<String> resetOptimalModels(@PathVariable Long exerciseId) {
-        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        if (modelingExercise == null) {
-            return ResponseUtil.notFound();
-        }
-
+        Optional<ModelingExercise> modelingExercise = modelingExerciseService.findOne(exerciseId);
         ResponseEntity responseFailure = checkExercise(modelingExercise);
         if (responseFailure != null) {
             return responseFailure;
@@ -69,8 +66,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @GetMapping("/modeling-assessments/exercise/{exerciseId}/optimal-model-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<String> getNextOptimalModelSubmissions(@PathVariable Long exerciseId) {
-        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-
+        Optional<ModelingExercise> modelingExercise = modelingExerciseService.findOne(exerciseId);
         ResponseEntity responseFailure = checkExercise(modelingExercise);
         if (responseFailure != null) {
             return responseFailure;
@@ -91,8 +87,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @GetMapping("/modeling-assessments/exercise/{exerciseId}/submission/{submissionId}/partial-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<String> getPartialAssessment(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
-        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-
+        Optional<ModelingExercise> modelingExercise = modelingExerciseService.findOne(exerciseId);
         ResponseEntity responseFailure = checkExercise(modelingExercise);
         if (responseFailure != null) {
             return responseFailure;
@@ -148,16 +143,12 @@ public class ModelingAssessmentResource extends AssessmentResource {
      */
     @PutMapping("/modeling-assessments/exercise/{exerciseId}/result/{resultId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ConflictResultWrapper> saveModelingAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody String modelingAssessment) {
-        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        if (modelingExercise == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("modelingExercise", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
-        }
+    public ResponseEntity<Result> saveModelingAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody String modelingAssessment) {
+        Optional<ModelingExercise> modelingExercise = modelingExerciseService.findOne(exerciseId);
         ResponseEntity responseFailure = checkExercise(modelingExercise);
         if (responseFailure != null) {
             return responseFailure;
         }
-
         Result result = modelingAssessmentService.saveManualAssessment(resultId, exerciseId, modelingAssessment);
         Optional<Conflict> conflict = compassService.checkForConflict(exerciseId, result.getSubmission().getId());
         return ResponseEntity.ok(new ConflictResultWrapper(conflict.get(), result));
@@ -177,8 +168,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @PutMapping("/modeling-assessments/exercise/{exerciseId}/result/{resultId}/submit")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ConflictResultWrapper> submitModelingAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody String modelingAssessment) {
-        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-
+        Optional<ModelingExercise> modelingExercise = modelingExerciseService.findOne(exerciseId);
         ResponseEntity responseFailure = checkExercise(modelingExercise);
         if (responseFailure != null) {
             return responseFailure;
@@ -190,6 +180,21 @@ public class ModelingAssessmentResource extends AssessmentResource {
         compassService.addAssessment(exerciseId, submissionId, modelingAssessment);
         Optional<Conflict> conflict = compassService.checkForConflict(exerciseId, submissionId);
         return ResponseEntity.ok(new ConflictResultWrapper(conflict.get(), result));
+    }
+
+
+    //TODO find better name for one or both of the checkExercise()
+    @Nullable
+    private ResponseEntity<?> checkExercise(Optional<ModelingExercise> modelingExercise) {
+        if (!modelingExercise.isPresent()) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("modelingExercise", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
+        }
+        ResponseEntity responseFailure = checkExercise(modelingExercise.get());
+        if (responseFailure != null) {
+            return responseFailure;
+        } else {
+            return null;
+        }
     }
 
 
