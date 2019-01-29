@@ -3,13 +3,12 @@ import { Course, CourseScoreCalculationService, CourseService } from 'app/entiti
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { ResultService } from "app/entities/result";
-import { Exercise } from "app/entities/exercise";
+import { Exercise } from 'app/entities/exercise';
 
 @Component({
-    selector: 'jhi-course-gradebook',
-    templateUrl: './course-gradebook.component.html',
-    styleUrls: ['../course-overview.scss', './course-gradebook.scss']
+    selector: 'jhi-course-grade-book',
+    templateUrl: './course-grade-book.component.html',
+    styleUrls: ['../course-overview.scss', './course-grade-book.scss']
 })
 export class CourseGradeBookComponent implements OnInit {
     private courseId: number;
@@ -19,7 +18,6 @@ export class CourseGradeBookComponent implements OnInit {
 
     constructor(
         private courseService: CourseService,
-        private resultService: ResultService,
         private courseCalculationService: CourseScoreCalculationService,
         private courseServer: CourseService,
         private route: ActivatedRoute) {

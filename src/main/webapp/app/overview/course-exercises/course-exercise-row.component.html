@@ -4,7 +4,7 @@
                  ngbTooltip="{{exerciseIcon.tooltip}}"></fa-icon>
     </div>
     <div class="col-md col-6">
-        <span>{{exercise.title}}</span>
+        <a [routerLink]="[exercise.id]">{{exercise.title}}</a>
         <span class="d-none d-sm-inline" *ngIf="exercise.isAtLeastTutor">
             <a class="text-primary" routerLink="/course/{{course.id}}/exercise/{{exercise.id}}/dashboard"
                routerLinkActive="active">
