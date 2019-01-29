@@ -8,8 +8,6 @@ import { Question, QuestionType, ScoringType } from 'app/entities/question';
     styles: []
 })
 export class QuizScoringInfoStudentModalComponent implements OnInit {
-    constructor(private modalService: NgbModal) {}
-
     readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
 
@@ -26,10 +24,11 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
 
     @Input() question: Question;
 
-    questionPoints = this.question.score;
-    scoringType = this.question.scoringType;
+    constructor(private modalService: NgbModal) {
+    }
 
-    ngOnInit() {}
+    ngOnInit() {
+    }
 
     open(content: any) {
         this.modalService.open(content, { size: 'lg' });
