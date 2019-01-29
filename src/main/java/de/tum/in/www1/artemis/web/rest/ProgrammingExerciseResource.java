@@ -1,14 +1,9 @@
 package de.tum.in.www1.artemis.web.rest;
 
-<<<<<<< HEAD
-import com.codahale.metrics.annotation.Timed;
-import de.tum.in.www1.artemis.domain.*;
-=======
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
->>>>>>> origin/develop
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
