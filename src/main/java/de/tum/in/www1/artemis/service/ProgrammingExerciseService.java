@@ -12,7 +12,6 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationUpdateService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
-import de.tum.in.www1.artemis.service.util.structurediffgenerator.StructureDiffGeneratorClient;
 import de.tum.in.www1.artemis.service.util.structureoraclegenerator.OracleGeneratorClient;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
