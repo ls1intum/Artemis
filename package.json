@@ -19,7 +19,7 @@
         "@fortawesome/angular-fontawesome": "0.3.0",
         "@fortawesome/fontawesome-svg-core": "1.2.12",
         "@fortawesome/free-solid-svg-icons": "5.6.3",
-        "@ls1intum/apollon": "1.1.7",
+        "@ls1intum/apollon": "github:ls1intum/Apollon#feature/refactor-apollon",
         "@ng-bootstrap/ng-bootstrap": "4.0.1",
         "@nguniversal/express-engine": "7.1.0",
         "@ngx-translate/core": "11.0.1",
