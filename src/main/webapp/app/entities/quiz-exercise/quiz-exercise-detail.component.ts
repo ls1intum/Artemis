@@ -450,12 +450,13 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         const areAllQuestionsValid = this.quizExercise.questions.every(function(question) {
             if (question.type === QuestionType.MULTIPLE_CHOICE) {
                 const mcQuestion = question as MultipleChoiceQuestion;
-                return question.title && question.title !== '' && mcQuestion.answerOptions.some(answerOption => answerOption.isCorrect);
+                return question.title && question.title !== '' && question.title.length < 250 && mcQuestion.answerOptions.some(answerOption => answerOption.isCorrect);
             } else if (question.type === QuestionType.DRAG_AND_DROP) {
                 const dndQuestion = question as DragAndDropQuestion;
                 return (
                     question.title &&
                     question.title !== '' &&
+                    question.title.length < 250 &&
                     dndQuestion.correctMappings &&
                     dndQuestion.correctMappings.length > 0 &&
                     this.dragAndDropQuestionUtil.solve(dndQuestion).length &&
@@ -471,28 +472,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     }
 
     /**
-     * @function containExplanation
-     * @desc Shows the explanation warning
-     */
-    containExplanation(): boolean {
-        if (this.pendingChanges() && this.validQuiz()) {
-            return true;
-        }
-
-    }
-
-    /**
-     * @function validQuestionTitle
-     * @desc Checks the validity of the question title
-     */
-    warningCheck(): boolean {
-        for(const question of this.quizExercise.questions)
-        if(question.title.length > 250) {
-            return true;
-        }
-    }
-    
-    /**
      * @function invalidReasons
      * @desc Get the reasons, why the quiz is invalid
      * @returns {Array} array of objects with fields 'translateKey' and 'translateValues'
@@ -502,6 +481,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         if (!this.quizExercise) {
             return;
         }
+
         if (!this.quizExercise.title || this.quizExercise.title === '') {
             reasons.push({
                 translateKey: 'arTeMiSApp.quizExercise.invalidReasons.quizTitle',
@@ -554,6 +534,12 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                     });
                 }
             }
+            if(question.title.length > 250) {
+                reasons.push({
+                    translateKey: 'arTeMiSApp.quizExercise.warnings.questionTitleLength',
+                    translateValues: {index: index + 1}
+                });
+            }
             if (question.type === QuestionType.DRAG_AND_DROP) {
                 const dndQuestion = question as DragAndDropQuestion;
                 if (!dndQuestion.correctMappings || dndQuestion.correctMappings.length === 0) {
@@ -580,26 +566,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
 
 
     /**
-     * @function warningReasons
-     * @desc Get the reasons, why the quiz has warnings
-     * @returns {Array} array of objects with fields 'translateKey' and 'translateValues'
-     */
-    warningReasons(): Warning[] {
-        const warning = new Array<Warning>();
-        this.quizExercise.questions.forEach(function(question: Question, index: number) {
-        if(this.warningCheck()) {
-            warning.push({
-                translateKey: 'arTeMiSApp.quizExercise.warnings.questionTitleLength',
-                translateValues: { index: index + 1 }
-            });
-          }
-        }, this);
-
-        return warning;
-    }
-
-
-    /**
      * @function invalidReasonsHTML
      * @desc Get the reasons, why the quiz is invalid as an HTML string
      * @return {string} the reasons in HTML
@@ -608,22 +574,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         const translate = this.translateService;
         let reasonString = '';
         for (const reason of this.invalidReasons()) {
-            translate.get(reason['translateKey'], reason['translateValues']).subscribe((res: string) => {
-                reasonString += res + '   -   ';
-            });
-        }
-        return reasonString.substr(0, reasonString.length - 5);
-    }
-
-    /**
-     * @function warningReasonsHTML
-     * @desc Get the reasons, why the quiz is invalid as an HTML string
-     * @return {string} the reasons in HTML
-     */
-    warningReasonsHTML(): string {
-        const translate = this.translateService;
-        let reasonString = '';
-        for (const reason of this.warningReasons()) {
             translate.get(reason['translateKey'], reason['translateValues']).subscribe((res: string) => {
                 reasonString += res + '   -   ';
             });

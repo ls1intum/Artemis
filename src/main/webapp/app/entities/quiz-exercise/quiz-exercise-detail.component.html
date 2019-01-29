@@ -216,30 +216,6 @@
                         </div>
                     </ng-template>
                     <span
-                        *ngIf="containExplanation()"
-                        class="badge"
-                        style="background-color: #e6ae4c"
-                        ngbTooltip="You may want add an explanation so that students understand why this answer option is correct / wrong"
-                        placement="top">
-                        <i class="fa fa-exclamation-circle"></i>
-                        <span>Warning</span>
-                    </span>
-                    <ng-template #tooltipTranslateWarnings>
-                        <div *ngFor="let reason of warningReasons()">
-                            <p *ngIf="(reason.translateValues | json) != '{}'" jhiTranslate="{{reason.translateKey}}" translateValues="{index: '{{reason.translateValues.index}}'}"></p>
-                            <p *ngIf="(reason.translateValues | json) == '{}'" jhiTranslate="{{reason.translateKey}}"></p>
-                        </div>
-                    </ng-template>
-                    <span
-                        *ngIf="warningCheck()"
-                        class="badge badge-danger"
-                        [ngbTooltip]="tooltipTranslateWarnings"
-                        tooltip-placement="top-right"
-                        tooltip-class="invalid-reasons-tooltip">
-                        <i class="fa fa-exclamation-circle"></i>
-                        <span jhiTranslate="arTeMiSApp.quizExercise.warnings.warning"></span>
-                    </span>
-                    <span
                         *ngIf="!validQuiz()"
                         class="badge badge-danger"
                         [ngbTooltip]="tooltipTranslate"
