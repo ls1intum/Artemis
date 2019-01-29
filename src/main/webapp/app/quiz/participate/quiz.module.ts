@@ -15,7 +15,7 @@ import { DragItemComponent } from './drag-and-drop-question/drag-item.component'
 import { AngularFittextModule } from 'angular-fittext';
 import { SecuredImageComponent } from '../../components/util/secured-image.component';
 import { DndModule } from 'ng2-dnd';
-import { QuizScoringInfostudentModalComponent } from './quiz-scoring-infostudent-modal/quiz-scoring-infostudent-modal.component';
+import { QuizScoringInfoStudentModalComponent } from './quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
 
 const ENTITY_STATES = [...quizRoute];
 
@@ -27,7 +27,7 @@ const ENTITY_STATES = [...quizRoute];
         DragAndDropQuestionComponent,
         DragItemComponent,
         SecuredImageComponent,
-        QuizScoringInfostudentModalComponent
+        QuizScoringInfoStudentModalComponent
     ],
     entryComponents: [HomeComponent, QuizComponent, JhiMainComponent],
     providers: [RepositoryService, JhiWebsocketService, JhiAlertService],

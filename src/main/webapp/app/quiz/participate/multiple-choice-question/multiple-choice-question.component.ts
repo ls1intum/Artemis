@@ -42,8 +42,6 @@ export class MultipleChoiceQuestionComponent implements OnChanges {
 
     amountOfAnswerOptions: number;
 
-    questionType = 'mcq';
-
     @Output()
     selectedAnswerOptionsChange = new EventEmitter();
 
