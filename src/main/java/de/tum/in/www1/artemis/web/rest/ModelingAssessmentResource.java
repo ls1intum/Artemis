@@ -12,7 +12,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.service.compass.conflict.*;
-import de.tum.in.www1.artemis.web.rest.util.*;
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 /**
@@ -27,6 +27,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     private final JsonAssessmentRepository jsonAssessmentRepository;
     private final ParticipationRepository participationRepository;
+    private final ResultService resultService;
     private final CompassService compassService;
     private final ModelingExerciseService modelingExerciseService;
     private final AuthorizationCheckService authCheckService;
@@ -34,19 +35,18 @@ public class ModelingAssessmentResource extends AssessmentResource {
     private final ModelingAssessmentService modelingAssessmentService;
 
 
-    public ModelingAssessmentResource(JsonAssessmentRepository jsonAssessmentRepository, ParticipationRepository participationRepository, CompassService compassService, ModelingExerciseService modelingExerciseService, UserService userService, AuthorizationCheckService authCheckService, CourseService courseService, ModelingAssessmentService modelingAssessmentService) {
+    //TODO: all API path in this class do not really make sense, we should restructure them and potentially start with /exercise/
+    public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserService userService, JsonAssessmentRepository jsonAssessmentRepository, ParticipationRepository participationRepository, ResultService resultService, CompassService compassService, ModelingExerciseService modelingExerciseService, CourseService courseService, ModelingAssessmentService modelingAssessmentService) {
         super(authCheckService, userService);
-
         this.jsonAssessmentRepository = jsonAssessmentRepository;
         this.participationRepository = participationRepository;
+        this.resultService = resultService;
         this.compassService = compassService;
         this.modelingExerciseService = modelingExerciseService;
         this.authCheckService = authCheckService;
         this.courseService = courseService;
         this.modelingAssessmentService = modelingAssessmentService;
     }
-
-    //TODO: all API path in this class do not really make sense, we should restructure them and potentially start with /exercise/
 
 
     @DeleteMapping("/modeling-assessments/exercise/{exerciseId}/optimal-model-submissions")
@@ -149,12 +149,17 @@ public class ModelingAssessmentResource extends AssessmentResource {
         if (responseFailure != null) {
             return responseFailure;
         }
-        Result result = modelingAssessmentService.saveManualAssessment(resultId, exerciseId, modelingAssessment);
-        return ResponseEntity.ok(result);
+        Optional<Result> result = resultService.findOne(resultId);
+        if (!result.isPresent()) {
+            return ResponseEntity.notFound().build();
+        }
+        modelingAssessmentService.saveManualAssessment(result.get(), exerciseId, modelingAssessment);
+        return ResponseEntity.ok(result.get());
     }
 
     //TODO change to POST and remove submision in path or merge with saveNodelingAssessment?
-
+    //TODO use Exceptions on wrong path variables resultId exerciseId ?
+    //TODO check element ids
 
     /**
      * Saves assessments and updates result. Sets result to rated so the student can see the assessments.
@@ -166,19 +171,23 @@ public class ModelingAssessmentResource extends AssessmentResource {
      */
     @PutMapping("/modeling-assessments/exercise/{exerciseId}/result/{resultId}/submit")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ConflictResultWrapper> submitModelingAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody String modelingAssessment) {
+    public ResponseEntity<ConflictResultWrapper> submitModelingAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody String modelingAssessment) { //TODO parse assessment string by default spring parser ?
         Optional<ModelingExercise> modelingExercise = modelingExerciseService.findOne(exerciseId);
         ResponseEntity responseFailure = checkExercise(modelingExercise);
         if (responseFailure != null) {
             return responseFailure;
         }
+        Optional<Result> result = resultService.findOne(resultId);
+        if (!result.isPresent()) {
+            return ResponseEntity.notFound().build();
+        }
+        Long submissionId = result.get().getSubmission().getId();
+        Optional<Conflict> conflict = compassService.checkForConflict(exerciseId, submissionId);
 
-        Result result = modelingAssessmentService.submitManualAssessment(resultId, modelingExercise.get(), modelingAssessment);
-        Long submissionId = result.getSubmission().getId();
+        modelingAssessmentService.submitManualAssessment(result.get(), modelingExercise.get(), modelingAssessment);
         // add assessment to compass to include it in the automatic grading process
         compassService.addAssessment(exerciseId, submissionId, modelingAssessment);
-        Optional<Conflict> conflict = compassService.checkForConflict(exerciseId, submissionId);
-        return ResponseEntity.ok(new ConflictResultWrapper(conflict.get(), result));
+        return ResponseEntity.ok(new ConflictResultWrapper(conflict.get(), result.get()));
     }
 
 

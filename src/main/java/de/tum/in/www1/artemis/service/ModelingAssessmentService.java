@@ -79,8 +79,8 @@ public class ModelingAssessmentService extends AssessmentService {
      * @return the ResponseEntity with result as body
      */
     @Transactional
-    public Result submitManualAssessment(Long resultId, ModelingExercise exercise, String modelingAssessment) {
-        Result result = saveManualAssessment(resultId, exercise.getId(), modelingAssessment);
+    public Result submitManualAssessment(Result result, ModelingExercise exercise, String modelingAssessment) {
+        saveManualAssessment(result, exercise.getId(), modelingAssessment);
 
         Long studentId = result.getParticipation().getStudent().getId();
         Long submissionId = result.getSubmission().getId();
@@ -100,11 +100,9 @@ public class ModelingAssessmentService extends AssessmentService {
      * @param resultId              the resultId the assessment belongs to
      * @param exerciseId            the exerciseId the assessment belongs to
      * @param modelingAssessment    the assessments as string
-     * @return the ResponseEntity with result as body
      */
     @Transactional
-    public Result saveManualAssessment(Long resultId, Long exerciseId, String modelingAssessment) {
-        Result result = resultRepository.findById(resultId).get();
+    public void saveManualAssessment(Result result, Long exerciseId, String modelingAssessment) {
         result.setAssessmentType(AssessmentType.MANUAL);
         User user = userService.getUser();
         result.setAssessor(user);
@@ -120,7 +118,6 @@ public class ModelingAssessmentService extends AssessmentService {
         // write assessment to file system
         jsonAssessmentRepository.writeAssessment(exerciseId, studentId, submissionId, true, modelingAssessment);
         resultRepository.save(result);
-        return result;
     }
 
 
