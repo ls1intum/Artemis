@@ -190,7 +190,7 @@ public class ProgrammingExerciseService {
     }
 
     // Generates the structure diff aka the test.json file for the current programming exercise
-    public void generateStructureDiffFile(URL solutionRepoURL, URL exerciseRepoURL, URL testRepoURL, String testsPath) throws IOException, InterruptedException {
+    public void generateStructureOracleFile(URL solutionRepoURL, URL exerciseRepoURL, URL testRepoURL, String testsPath) throws IOException, InterruptedException {
         Repository solutionRepository = gitService.getOrCheckoutRepository(solutionRepoURL);
         Repository exerciseRepository = gitService.getOrCheckoutRepository(exerciseRepoURL);
         Repository testRepository = gitService.getOrCheckoutRepository(testRepoURL);

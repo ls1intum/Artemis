@@ -28,6 +28,7 @@ public class TypesDiffSerializer extends StdSerializer<TypesDiff> {
 
             jgen.writeStringField("name", typesDiff.name);
             jgen.writeStringField("package", typesDiff.packageName);
+
             if(typesDiff.isInterface) {
                 jgen.writeBooleanField("isInterface", true);
             }

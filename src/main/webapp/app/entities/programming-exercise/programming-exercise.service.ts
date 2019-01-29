@@ -30,7 +30,7 @@ export class ProgrammingExerciseService {
             .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
-    generateStructureDiff(id: number) {
+    generateStructureOracle(id: number) {
         return this.http.put<string>(this.resourceUrl + '/' + id + '/generate-tests', { observe: 'response' });
     }
 

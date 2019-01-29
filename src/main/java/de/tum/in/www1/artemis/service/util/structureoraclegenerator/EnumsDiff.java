@@ -10,20 +10,16 @@ import spoon.reflect.declaration.CtEnumValue;
 @JsonSerialize(using = EnumsDiffSerializer.class)
 public class EnumsDiff extends ClassesDiff {
 
-    private CtEnum<Enum<?>> solutionEnum;
-    private CtEnum<Enum<?>> templateEnum;
 	protected List<CtEnumValue<?>> enumValues;
 	protected boolean enumsEqual;
 	
 	public EnumsDiff(CtEnum<Enum<?>> solutionEnum, CtEnum<Enum<?>> templateEnum) {
 		super(solutionEnum, templateEnum);
-		this.solutionEnum = solutionEnum;
-		this.templateEnum = templateEnum;
-		this.enumValues = generateEnumValuesDiff();
+		this.enumValues = generateEnumValuesDiff(solutionEnum, templateEnum);
 		this.enumsEqual = areEnumsEqual();
 	}
 
-	private List<CtEnumValue<?>> generateEnumValuesDiff() {
+	private List<CtEnumValue<?>> generateEnumValuesDiff(CtEnum<Enum<?>> solutionEnum, CtEnum<Enum<?>> templateEnum) {
         Predicate<CtEnumValue<?>> enumValueIsImplicit = e -> e.isImplicit();
 
         List<CtEnumValue<?>> enumValuesDiff = solutionEnum.getEnumValues();

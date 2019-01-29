@@ -23,7 +23,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
         window.history.back();
     }
 
-    generateStructureDiff() {
-        this.programmingExerciseService.generateStructureDiff(this.programmingExercise.id).subscribe();
+    generateStructureOracle() {
+        this.programmingExerciseService.generateStructureOracle(this.programmingExercise.id).subscribe();
     }
 }

@@ -21,8 +21,6 @@ public class ClassesDiffSerializer extends StdSerializer<ClassesDiff> {
     @Override
     public void serialize(ClassesDiff classesDiff, JsonGenerator jgen, SerializerProvider provider) {
         try{
-            TypesDiffSerializer typesDiffSerializer = new TypesDiffSerializer();
-            typesDiffSerializer.serialize();
             // Serialize attributes.
             jgen.writeArrayFieldStart("attributes");
 

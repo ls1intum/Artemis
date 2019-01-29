@@ -2,14 +2,12 @@ package de.tum.in.www1.artemis.service.util.structureoraclegenerator;
 
 import spoon.reflect.declaration.*;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
 public class ClassesDiff extends TypesDiff {
-
-    private CtClass<?> solutionClass;
-    private CtClass<?> templateClass;
 	
     protected List<CtField<?>> attributes;
     protected Set<CtConstructor<?>> constructors;
@@ -18,14 +16,12 @@ public class ClassesDiff extends TypesDiff {
 	
 	public ClassesDiff(CtClass<?> solutionClass, CtClass<?> templateClass) {
 		super(solutionClass, templateClass);
-		this.solutionClass = solutionClass;
-		this.templateClass = templateClass;
-		this.attributes = generateAttributesDiff();
-		this.constructors = generateConstructorsDiff();
+		this.attributes = generateAttributesDiff(solutionClass, templateClass);
+		this.constructors = generateConstructorsDiff(solutionClass, templateClass);
 		this.classesEqual = areClassesEqual();
 	}
 
-    private List<CtField<?>> generateAttributesDiff() {
+    private List<CtField<?>> generateAttributesDiff(CtClass<?> solutionClass, CtClass<?> templateClass) {
         Predicate<CtField<?>> fieldIsImplicit = f -> f.isImplicit() ||
             f.getSimpleName().equals(solutionClass.getSimpleName());
 
@@ -38,30 +34,28 @@ public class ClassesDiff extends TypesDiff {
 
             for (CtField<?> templateAttribute : templateAttributes) {
                 attributesDiff.removeIf(solutionAttribute ->
-                    namesAreEqual(solutionAttribute, templateAttribute));
+                    solutionAttribute.getSimpleName().equals(templateAttribute.getSimpleName()));
             }
         }
 
         return attributesDiff;
     }
 
-    protected boolean namesAreEqual(CtTypeMember solutionMember, CtTypeMember templateMember) {
-        return solutionMember.getSimpleName().equals(templateMember.getSimpleName());
-    }
-
-    private Set<CtConstructor<?>> generateConstructorsDiff() {
+    private Set<CtConstructor<?>> generateConstructorsDiff(CtClass<?> solutionClass, CtClass<?> templateClass) {
         Predicate<CtConstructor<?>> constructorIsImplicit = c -> c.isImplicit();
 
-        Set<CtConstructor<?>> constructorsDiff = solutionClass.getConstructors();
+        Set<CtConstructor<?>> constructorsDiff = new HashSet<>();
+        constructorsDiff.addAll(solutionClass.getConstructors());
         constructorsDiff.removeIf(constructorIsImplicit);
 
         if(templateClass != null) {
-            Set<CtConstructor<?>> templateConstructors = templateClass.getConstructors();
+            Set<CtConstructor<?>> templateConstructors = new HashSet<>();
+            templateConstructors.addAll(templateClass.getConstructors());
             templateConstructors.removeIf(constructorIsImplicit);
 
             for(CtConstructor<?> templateConstructor : templateConstructors) {
                 constructorsDiff.removeIf(solutionConstructor ->
-                    parameterTypesAreEqual(solutionConstructor, templateConstructor);
+                    parameterTypesAreEqual(solutionConstructor, templateConstructor));
             }
 
         }

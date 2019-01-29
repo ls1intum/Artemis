@@ -17,6 +17,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -340,16 +341,16 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * PUT  /programming-exercises/{id}/generate-tests : Makes a call to the structure diff generator to generate the sd-file aka the test.json file
+     * PUT  /programming-exercises/{id}/generate-tests : Makes a call to StructureOracleGenerator to generate the
+     * structure oracle aka the test.json file
      *
-     * @param programmingExercise the programming exercise for which the structure diff should get generated
+     * @param programmingExercise the programming exercise for which the structure oracle should get generated
      * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the parameters are invalid
      */
     @PutMapping("/programming-exercises/{id}/generate-tests")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    @Timed
-    public ResponseEntity<String> generateStructureDiffForExercise(@PathVariable Long id) {
-        log.debug("REST request to generate the structure diff file for ProgrammingExercise with id: {}", id);
+    public ResponseEntity<String> generateStructureOracleForExercise(@PathVariable Long id) {
+        log.debug("REST request to generate the structure oracle for ProgrammingExercise with id: {}", id);
 
         if (id == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("programmingExerciseNotFound", "The programming exercise does not exist")).body(null);
@@ -374,22 +375,17 @@ public class ProgrammingExerciseResource {
         URL exerciseRepoURL = programmingExercise.getBaseRepositoryUrlAsUrl();
         URL testRepoURL = programmingExercise.getTestRepositoryUrlAsUrl();
 
-        // TODO: Uncomment the part under there, because linked exercises have a null package name
-        String testsPath = "test/de/tum/in/www1/";
-//        if(programmingExercise.getPackageName() != null) {
-//            testsPath += programmingExercise.getPackageName().replace(".", "/");
-//        }
-
         try {
-            programmingExerciseService.generateStructureDiffFile(solutionRepoURL, exerciseRepoURL, testRepoURL, testsPath);
-            return ResponseEntity.ok("Successfully generated the structure diff of "
-                + " solution project in repository: " + solutionRepoURL.getPath() + " and template repository : " + exerciseRepoURL.getPath()
-                + ". \n The structure diff file is in: " + testRepoURL.getPath() + File.separator + testsPath);
+            String testsPath = "test" + programmingExercise.getPackageName().replace(".", "/");
+            programmingExerciseService.generateStructureOracleFile(solutionRepoURL, exerciseRepoURL, testRepoURL, testsPath);
+            return ResponseEntity.ok("Successfully generated the structure oracle for the exercise " + programmingExercise.getProjectName() + " with "
+                + " the solution project in the repository: " + solutionRepoURL.getPath() + " and the template in the repository : " + exerciseRepoURL.getPath()
+                + ". \n The structure oracle file is in: " + testRepoURL.getPath() + File.separator + testsPath);
         } catch (Exception e) {
-            log.error("Error while generating the structure diff.", e);
+            log.error("Error while generating the structure oracle.", e);
             return ResponseEntity
                 .badRequest()
-                .headers(HeaderUtil.createAlert("An error occurred while generating the structure diff for the exercise: " + e.getMessage(), "errorStructureDiffGeneration"))
+                .headers(HeaderUtil.createAlert("An error occurred while generating the structure oracle for the exercise: " + e.getMessage(), "errorStructureDiffGeneration"))
                 .body(null);
         }
     }
