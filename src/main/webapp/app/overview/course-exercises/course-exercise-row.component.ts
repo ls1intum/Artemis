@@ -4,8 +4,8 @@ import { QuizExercise } from 'app/entities/quiz-exercise';
 import { InitializationState, Participation } from 'app/entities/participation';
 import * as moment from 'moment';
 import { Moment } from 'moment';
-import { Principal } from 'app/core';
 import { Course } from 'app/entities/course';
+import { AccountService } from 'app/core';
 
 export interface ExerciseIcon {
     faIcon: string;
@@ -27,7 +27,7 @@ export class CourseExerciseRowComponent implements OnInit {
     @Input() exercise: Exercise;
     @Input() course: Course;
 
-    constructor(private principal: Principal) {
+    constructor(private accountService: AccountService) {
     }
 
     ngOnInit() {
@@ -35,7 +35,7 @@ export class CourseExerciseRowComponent implements OnInit {
         if (this.exercise.participations.length > 0) {
             this.exercise.participations[0].exercise = this.exercise;
         }
-        this.exercise.isAtLeastTutor = this.principal.isAtLeastTutorInCourse(this.course);
+        this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course);
         if (this.exercise.type === ExerciseType.QUIZ) {
             const quizExercise = this.exercise as QuizExercise;
             quizExercise.isActiveQuiz = this.isActiveQuiz(this.exercise);

@@ -11,7 +11,7 @@ import { Exercise } from "app/entities/exercise";
     templateUrl: './course-gradebook.component.html',
     styleUrls: ['../course-overview.scss', './course-gradebook.scss']
 })
-export class CourseGradebookComponent implements OnInit {
+export class CourseGradeBookComponent implements OnInit {
     private courseId: number;
     private subscription: Subscription;
     private course: Course;

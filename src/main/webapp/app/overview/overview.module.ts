@@ -10,7 +10,7 @@ import {
     CourseExerciseRowComponent,
     CourseExercisesComponent,
     CourseOverviewComponent,
-    CourseGradebookComponent,
+    CourseGradeBookComponent,
     CourseStatisticsComponent,
     OVERVIEW_ROUTES,
     OverviewComponent,
@@ -40,7 +40,7 @@ const ENTITY_STATES = [
         CourseExerciseRowComponent,
         CourseExercisesComponent,
         CourseExerciseDetailsComponent,
-        CourseGradebookComponent
+        CourseGradeBookComponent
     ],
     entryComponents: [],
     providers: [],
