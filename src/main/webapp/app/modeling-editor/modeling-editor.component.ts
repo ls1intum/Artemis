@@ -202,7 +202,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                 this.selectedRelationships = selectedRelationships;
             });
 
-            const apollonDiv = $('.apollon-editor > div > div');
+            const apollonDiv = $('.apollon-editor > div');
             const assessmentsDiv = $('.assessments__container');
             assessmentsDiv.scrollTop(apollonDiv.scrollTop());
             assessmentsDiv.scrollLeft(apollonDiv.scrollLeft());
