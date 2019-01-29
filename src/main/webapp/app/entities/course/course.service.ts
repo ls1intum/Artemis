@@ -61,6 +61,10 @@ export class CourseService {
         return this.http.get<Participation[]>(`${this.resourceUrl}/${courseId}/participations`);
     }
 
+    findAllResultsOfCourseForExerciseAndCurrentUser(courseId: number): Observable<Course> {
+        return this.http.get<Course>(`${this.resourceUrl}/${courseId}/results`);
+    }
+
     query(): Observable<EntityArrayResponseType> {
         return this.http
             .get<Course[]>(this.resourceUrl, { observe: 'response' })

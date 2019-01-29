@@ -432,6 +432,11 @@ public class ParticipationService {
     }
 
     @Transactional(readOnly = true)
+    public List<Participation> findByExerciseIdAndStudentIdWithEagerResults(Long exerciseId, Long studentId) {
+        return participationRepository.findByExerciseIdAndStudentIdWithEagerResults(exerciseId, studentId);
+    }
+
+    @Transactional(readOnly = true)
     public List<Participation> findByExerciseIdWithEagerSubmissions(Long exerciseId) {
         return participationRepository.findByExerciseIdWithEagerSubmissions(exerciseId);
     }

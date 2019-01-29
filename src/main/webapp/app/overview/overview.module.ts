@@ -10,11 +10,12 @@ import {
     CourseExerciseRowComponent,
     CourseExercisesComponent,
     CourseOverviewComponent,
-    CourseResultsComponent,
+    CourseGradebookComponent,
     CourseStatisticsComponent,
     OVERVIEW_ROUTES,
     OverviewComponent,
-    OverviewCourseCardComponent
+    OverviewCourseCardComponent,
+    CourseExerciseDetailsComponent
 } from './';
 import { ArTEMiSResultModule } from 'app/entities/result';
 
@@ -38,7 +39,8 @@ const ENTITY_STATES = [
         CourseStatisticsComponent,
         CourseExerciseRowComponent,
         CourseExercisesComponent,
-        CourseResultsComponent
+        CourseExerciseDetailsComponent,
+        CourseGradebookComponent
     ],
     entryComponents: [],
     providers: [],

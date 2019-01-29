@@ -3,9 +3,9 @@ import { Routes } from '@angular/router';
 import {
     CourseExercisesComponent,
     CourseOverviewComponent,
-    CourseResultsComponent,
+    CourseGradebookComponent,
     CourseStatisticsComponent,
-    OverviewComponent
+    OverviewComponent, CourseExerciseDetailsComponent
 } from './';
 import { UserRouteAccessService } from 'app/core';
 
@@ -44,11 +44,11 @@ export const OVERVIEW_ROUTES: Routes = [
                 },
                 canActivate: [UserRouteAccessService],
             }, {
-                path: 'results',
-                component: CourseResultsComponent,
+                path: 'gradebook',
+                component: CourseGradebookComponent,
                 data: {
                     authorities: ['ROLE_USER'],
-                    pageTitle: 'overview.results'
+                    pageTitle: 'overview.gradebook'
                 },
                 canActivate: [UserRouteAccessService],
             }, {
@@ -57,5 +57,13 @@ export const OVERVIEW_ROUTES: Routes = [
                 pathMatch: 'full'
             }
         ]
+    }, {
+        path: 'overview/:courseId/exercises/:exerciseId',
+        component: CourseExerciseDetailsComponent,
+        data: {
+            authorities: ['ROLE_USER'],
+            pageTitle: 'overview.course'
+        },
+        canActivate: [UserRouteAccessService],
     }
 ];

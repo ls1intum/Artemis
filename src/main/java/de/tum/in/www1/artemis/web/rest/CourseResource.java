@@ -10,6 +10,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.config.JHipsterConstants;
 import io.github.jhipster.web.util.ResponseUtil;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
@@ -21,10 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -287,5 +285,51 @@ public class CourseResource {
         String title = course.getTitle();
         courseService.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, title)).build();
+    }
+
+    /**
+     * GET  /exercises/:exerciseId/participations/:studentIds : sends all submissions from studentlist as zip
+     *
+     * @param exerciseId the id of the exercise to get the repos from
+     * @param studentIds the studentIds seperated via semicolon to get their submissions
+     * @return ResponseEntity with status
+     */
+    @GetMapping(value = "/courses/{courseId}/results")
+    @PreAuthorize("hasAnyRole('User', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @Timed
+    @Transactional(readOnly = true)
+    public ResponseEntity<Course> getResultsForCurrentStudent(@PathVariable Long courseId) {
+        long start = System.currentTimeMillis();
+        log.debug("REST request to get Results for Course and current Studen : {}", courseId);
+
+        User student = userService.getUser();
+        Course course = courseService.findOne(courseId);
+
+        List<Exercise> exercises = exerciseService.findAllExercisesByCourseId(course, student);
+
+        for (Exercise exercise : exercises) {
+            List<Participation> participations = participationService.findByExerciseIdAndStudentIdWithEagerResults(exercise.getId(), student.getId());
+
+            Hibernate.initialize(exercise.getParticipations());
+
+            //Removing not needed properties
+            exercise.setParticipations(new HashSet<>());
+            exercise.setCourse(null);
+
+            for (Participation participation : participations) {
+                //Removing not needed properties
+                participation.setStudent(null);
+
+                participation.setResults(participation.getResults());
+                exercise.addParticipation(participation);
+            }
+            course.addExercises(exercise);
+
+        }
+
+
+        log.info("getResultsForCurrentStudent took " + (System.currentTimeMillis() - start) + "ms");
+
+        return ResponseEntity.ok().body(course);
     }
 }
