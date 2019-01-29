@@ -1,3 +1,5 @@
+@import "~bootstrap/scss/bootstrap-grid.scss";
+
 .edit-quiz {
     display: flex;
     flex-direction: column;
@@ -117,7 +119,7 @@
 }
 
 .quiz-footer {
-    height: 90px;
+    height: 95px;
 }
 
 .edit-quiz-footer-content,
@@ -469,6 +471,7 @@
             text-align: center;
 
             opacity: 0;
+
             &:hover {
                 opacity: 1;
             }
@@ -478,24 +481,31 @@
     .mapping-color-1 {
         background: #2980b9;
     }
+
     .mapping-color-2 {
         background: #c0392b;
     }
+
     .mapping-color-3 {
         background: #27ae60;
     }
+
     .mapping-color-4 {
         background: #f1c40f;
     }
+
     .mapping-color-5 {
         background: #e67e22;
     }
+
     .mapping-color-6 {
         background: #8e44ad;
     }
+
     .mapping-color-7 {
         background: #1abc9c;
     }
+
     .mapping-color-0 {
         background: #2c3e50;
     }
@@ -616,6 +626,7 @@
                 padding: 2px;
             }
         }
+
         .dimensions {
             position: absolute;
             left: 2px;
@@ -703,6 +714,7 @@
                     -o-transform: translate3d(-63%, -63%, 0);
                     transform: translate3d(-63%, -63%, 0);
                 }
+
                 .invalid {
                     color: red;
                     position: absolute;
@@ -818,6 +830,8 @@
 .quiz-footer-content {
     #remaining-time {
         text-align: center;
+        position: absolute;
+        left: 42%;
     }
 
     #remaining-time-value {
@@ -1024,6 +1038,7 @@ table.answer-options-result {
                 -o-transform: translate3d(-63%, -63%, 0);
                 transform: translate3d(-63%, -63%, 0);
             }
+
             .letter-solution {
                 color: white;
                 position: absolute;
@@ -1037,6 +1052,7 @@ table.answer-options-result {
                 -o-transform: translate3d(-63%, -63%, 0);
                 transform: translate3d(-63%, -63%, 0);
             }
+
             .invalid {
                 color: red;
                 position: absolute;
@@ -1047,6 +1063,7 @@ table.answer-options-result {
             }
         }
     }
+
     position: relative;
     width: 100%;
     box-sizing: border-box;
@@ -1102,11 +1119,13 @@ table.answer-options-result {
                 border: 1px solid transparent;
             }
         }
+
         div.invalid {
             span {
                 color: red;
                 padding: 0;
             }
+
             width: auto;
             height: auto;
 
@@ -1132,6 +1151,7 @@ table.answer-options-result {
         border-radius: 50%;
         text-align: center;
     }
+
     .letter-solution {
         position: absolute;
         z-index: 10;
@@ -1204,16 +1224,27 @@ table.answer-options-result {
     font-family: Arial, Helvetica, sans-serif;
 }
 
-.stepwizardquiz-row {
-    display: table-row;
-}
-
 .stepwizardquiz {
-    display: table;
-    max-width: 150px;
+    display: flex;
+    flex-wrap: wrap;
+    max-width: 300px;
     position: relative;
     font-family: Arial, Helvetica, sans-serif;
     text-align: center;
+
+    @media (max-width: 767px) {
+        .btn-circle.btn-circle {
+            width: 18px;
+            height: 18px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            .fa {
+                font-size: 6px;
+            }
+        }
+    }
+
 }
 
 .stepwizardquiz-step button[disabled] {
@@ -1233,22 +1264,21 @@ table.answer-options-result {
     position: relative;
 }
 
-.btn-circle.btn-circle {
-    width: 22px;
-    height: 22px;
+.btn-circle.btn-circle{
+    width: 23px;
+    height: 23px;
     text-align: center;
-    font-size: 6px;
+    font-size: 8px;
     font-family: Arial, Helvetica, sans-serif;
     border-radius: 15px;
-    &.btn-light {
-        border-color: #e6ae4c;
-    }
 }
 
-.default-question{
-    background-color: #e67e22
+.default-question {
+    background-color: #ee832c;
+    border-color: #ee832c;
 }
 
-.changed-question{
-    background-color: #45a2b4
+.changed-question {
+    background-color: #2751d7;
+    border-color: #2751d7;
 }
