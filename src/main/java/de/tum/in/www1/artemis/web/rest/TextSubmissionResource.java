@@ -1,18 +1,12 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import com.codahale.metrics.annotation.Timed;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Participation;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
-import de.tum.in.www1.artemis.service.CourseService;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.TextExerciseService;
-import de.tum.in.www1.artemis.service.TextSubmissionService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
+import org.hibernate.Hibernate;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,11 +17,14 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.security.Principal;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 /**
  * REST controller for managing TextSubmission.
@@ -36,26 +33,33 @@ import java.util.Optional;
 @RequestMapping("/api")
 public class TextSubmissionResource {
 
-    private final Logger log = LoggerFactory.getLogger(TextSubmissionResource.class);
-
     private static final String ENTITY_NAME = "textSubmission";
-
+    private final Logger log = LoggerFactory.getLogger(TextSubmissionResource.class);
     private final TextSubmissionRepository textSubmissionRepository;
-    private TextExerciseService textExerciseService;
-    private CourseService courseService;
-    private ParticipationService participationService;
-    private TextSubmissionService textSubmissionService;
+    private final ExerciseService exerciseService;
+    private final TextExerciseService textExerciseService;
+    private final CourseService courseService;
+    private final ParticipationService participationService;
+    private final TextSubmissionService textSubmissionService;
+    private final UserService userService;
+    private final AuthorizationCheckService authCheckService;
 
     public TextSubmissionResource(TextSubmissionRepository textSubmissionRepository,
+                                  ExerciseService exerciseService,
                                   TextExerciseService textExerciseService,
                                   CourseService courseService,
                                   ParticipationService participationService,
-                                  TextSubmissionService textSubmissionService) {
+                                  TextSubmissionService textSubmissionService,
+                                  UserService userService,
+                                  AuthorizationCheckService authCheckService) {
         this.textSubmissionRepository = textSubmissionRepository;
+        this.exerciseService = exerciseService;
         this.textExerciseService = textExerciseService;
         this.courseService = courseService;
         this.participationService = participationService;
         this.textSubmissionService = textSubmissionService;
+        this.userService = userService;
+        this.authCheckService = authCheckService;
     }
 
     /**
@@ -70,7 +74,6 @@ public class TextSubmissionResource {
     @PostMapping("/exercises/{exerciseId}/text-submissions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRED)
-    @Timed
     public ResponseEntity<TextSubmission> createTextSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody TextSubmission textSubmission) {
         log.debug("REST request to save TextSubmission : {}", textSubmission);
         if (textSubmission.getId() != null) {
@@ -95,7 +98,6 @@ public class TextSubmissionResource {
     @PutMapping("/exercises/{exerciseId}/text-submissions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional
-    @Timed
     public ResponseEntity<TextSubmission> updateTextSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody TextSubmission textSubmission) {
         log.debug("REST request to update TextSubmission : {}", textSubmission);
         if (textSubmission.getId() == null) {
@@ -142,7 +144,6 @@ public class TextSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and with body the textSubmission, or with status 404 (Not Found)
      */
     @GetMapping("/text-submissions/{id}")
-    @Timed
     public ResponseEntity<TextSubmission> getTextSubmission(@PathVariable Long id) {
         log.debug("REST request to get TextSubmission : {}", id);
         Optional<TextSubmission> textSubmission = textSubmissionRepository.findById(id);
@@ -164,5 +165,53 @@ public class TextSubmissionResource {
         }
 
         return null;
+    }
+
+    /**
+     * GET  /text-submissions : get all the textSubmissions.
+     *
+     * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
+     */
+    @GetMapping(value = "/exercises/{exerciseId}/text-submissions")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<TextSubmission>> getAllTextSubmissions(@PathVariable Long exerciseId,
+                                                                      @RequestParam(defaultValue = "false") boolean submittedOnly) {
+        log.debug("REST request to get all TextSubmissions");
+        Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
+        Course course = exercise.getCourse();
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
+            !authCheckService.isInstructorInCourse(course, user) &&
+            !authCheckService.isAdmin()) {
+            return forbidden();
+        }
+
+        return ResponseEntity.ok().body(
+
+            // Participations for Exercise
+            participationService.findByExerciseIdWithEagerSubmissions(exerciseId)
+                .stream()
+                .peek(participation -> participation.getExercise().setParticipations(null))
+
+                // Map to Latest Submission
+                .map(Participation::findLatestTextSubmission)
+                .filter(Objects::nonNull)
+
+                // if submittedOnly, need to check if submitted, else just continue (!submittedOnly == true)
+                .filter(submission -> !submittedOnly || submission.isSubmitted())
+
+                // Load Result for Submission
+                .peek(textSubmission -> {
+                    Hibernate.initialize(textSubmission.getResult()); // eagerly load the association
+                    if (textSubmission.getResult() != null) {
+                        Hibernate.initialize(textSubmission.getResult().getAssessor());
+                        textSubmission.getResult().getAssessor().setGroups(null);
+                    }
+                })
+
+                // Convert Stream to List to Match Return Type
+                .collect(Collectors.toList())
+        );
     }
 }

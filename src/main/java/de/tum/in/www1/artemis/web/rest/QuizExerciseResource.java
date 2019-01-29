@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Question;
 import de.tum.in.www1.artemis.domain.QuizExercise;
@@ -66,7 +65,6 @@ public class QuizExerciseResource {
      */
     @PostMapping("/quiz-exercises")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<QuizExercise> createQuizExercise(@RequestBody QuizExercise quizExercise) throws URISyntaxException {
         log.debug("REST request to save QuizExercise : {}", quizExercise);
         if (quizExercise.getId() != null) {
@@ -107,7 +105,6 @@ public class QuizExerciseResource {
      */
     @PutMapping("/quiz-exercises")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<QuizExercise> updateQuizExercise(@RequestBody QuizExercise quizExercise) throws URISyntaxException {
         log.debug("REST request to update QuizExercise : {}", quizExercise);
         if (quizExercise.getId() == null) {
@@ -140,16 +137,6 @@ public class QuizExerciseResource {
 
         quizExercise.reconnectJSONIgnoreAttributes();
 
-        // reset Released-Flag in all statistics if they are released but the quiz hasn't ended yet
-        if (!quizExercise.isStarted() || quizExercise.getRemainingTime() > 0) {
-            quizExercise.getQuizPointStatistic().setReleased(false);
-            for (Question question : quizExercise.getQuestions()) {
-                if (question.getQuestionStatistic() != null) {
-                    question.getQuestionStatistic().setReleased(false);
-                }
-            }
-        }
-
         quizExercise.setMaxScore(quizExercise.getMaxTotalScore().doubleValue());
         QuizExercise result = quizExerciseService.save(quizExercise);
         quizScheduleService.scheduleQuizStart(result);
@@ -169,7 +156,6 @@ public class QuizExerciseResource {
      */
     @GetMapping(value = "/courses/{courseId}/quiz-exercises")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     @Transactional(readOnly = true)
     public List<QuizExercise> getQuizExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all QuizExercises for the course with id : {}", courseId);
@@ -192,7 +178,6 @@ public class QuizExerciseResource {
      */
     @GetMapping("/quiz-exercises/{quizExerciseId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<QuizExercise> getQuizExercise(@PathVariable Long quizExerciseId) {
         log.debug("REST request to get QuizExercise : {}", quizExerciseId);
         QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
@@ -210,7 +195,6 @@ public class QuizExerciseResource {
      */
     @GetMapping("/quiz-exercises/{quizExerciseId}/recalculate-statistics")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<QuizExercise> recalculateStatistics(@PathVariable Long quizExerciseId) {
         log.debug("REST request to get QuizExercise : {}", quizExerciseId);
         QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
@@ -230,7 +214,6 @@ public class QuizExerciseResource {
      */
     @GetMapping("/quiz-exercises/{id}/for-student")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<QuizExercise> getQuizExerciseForStudent(@PathVariable Long id) {
         log.debug("REST request to get QuizExercise : {}", id);
 
@@ -260,7 +243,6 @@ public class QuizExerciseResource {
      */
     @PostMapping("/quiz-exercises/{id}/{action}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<String> performActionForQuizExercise(@PathVariable Long id, @PathVariable String action) {
         log.debug("REST request to immediately start QuizExercise : {}", id);
 
@@ -309,28 +291,6 @@ public class QuizExerciseResource {
                 // set quiz to open for practice
                 quizExercise.setIsOpenForPractice(true);
                 break;
-            case "release-statistics":
-                // release statistics
-                if (quizExercise.isEnded()) {
-                    quizExercise.getQuizPointStatistic().setReleased(true);
-                    for ( Question question : quizExercise.getQuestions()){
-                        question.getQuestionStatistic().setReleased(true);
-                    }
-                    //notify clients via websocket about the release state of the statistics.
-                    statisticService.releaseStatistic(quizExercise, quizExercise.getQuizPointStatistic().isReleased());
-                } else {
-                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"message\": \"Quiz hasn't ended yet.\"}");
-                }
-                break;
-            case "revoke-statistics":
-                // revoke statistics
-                quizExercise.getQuizPointStatistic().setReleased(false);
-                for (Question question : quizExercise.getQuestions()) {
-                    question.getQuestionStatistic().setReleased(false);
-                }
-                //notify clients via websocket about the release state of the statistics.
-                statisticService.releaseStatistic(quizExercise, quizExercise.getQuizPointStatistic().isReleased());
-                break;
             default:
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"message\": \"Unknown action: " + action + "\"}");
         }
@@ -353,7 +313,6 @@ public class QuizExerciseResource {
      */
     @DeleteMapping("/quiz-exercises/{id}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Void> deleteQuizExercise(@PathVariable Long id) {
         log.debug("REST request to delete QuizExercise : {}", id);
 
@@ -389,7 +348,6 @@ public class QuizExerciseResource {
      */
     @PutMapping("/quiz-exercises-re-evaluate")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<QuizExercise> reEvaluateQuizExercise(@RequestBody QuizExercise quizExercise) {
         log.debug("REST request to re-evaluate QuizExercise : {}", quizExercise);
         if (quizExercise.getId() == null) {

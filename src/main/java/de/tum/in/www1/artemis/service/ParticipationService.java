@@ -12,6 +12,7 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URL;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -331,7 +333,7 @@ public class ParticipationService {
     }
 
     /**
-     * Get one participation by id including all results
+     * Get one participation by id including all results.
      *
      * @param id the id of the participation
      * @return the participation with all its results
@@ -352,6 +354,20 @@ public class ParticipationService {
     public Participation findOneWithEagerSubmissions(Long id) {
         log.debug("Request to get Participation : {}", id);
         return participationRepository.findByIdWithEagerSubmissions(id);
+    }
+
+    /**
+     * Get one participation by id including all results and submissions.
+     *
+     * @param id the id of the participation
+     * @return the participation with all its results
+     */
+    @Transactional(readOnly = true)
+    public Participation findOneWithEagerResultsAndSubmissions(Long id) {
+        log.debug("Request to get Participation : {}", id);
+        Participation participation = findOneWithEagerResults(id);
+        Hibernate.initialize(participation.getSubmissions());
+        return participation;
     }
 
 
@@ -421,19 +437,72 @@ public class ParticipationService {
     }
 
     @Transactional(readOnly = true)
-    public List<Participation> findByCourseId(Long courseId) {
-        return participationRepository.findByCourseId(courseId);
+    public List<Participation> findByCourseIdWithRelevantResults(Long courseId) {
+        List<Participation> participations = participationRepository.findByCourseIdWithEagerResults(courseId);
+        //filter all irrelevant results, i.e. rated = false or before exercise due date
+        for (Participation participation : participations) {
+            List<Result> relevantResults = new ArrayList<Result>();
+
+            //search for the relevant result by filtering out irrelevant results using the continue keyword
+            //this for loop is optimized for performance and thus not very easy to understand ;)
+            for (Result result : participation.getResults()) {
+                if (result.isRated() == Boolean.FALSE) {
+                    // we are only interested in results with rated == null (for compatibility) and rated == Boolean.TRUE
+                    //TODO: for compatibility reasons, we include rated == null, in the future we can remove this
+                    continue;
+                }
+                if (result.getCompletionDate() == null || result.getScore() == null) {
+                    // we are only interested in results with completion date and with score
+                    continue;
+                }
+                if (participation.getExercise() instanceof QuizExercise) {
+                    //in quizzes we take all rated results, because we only have one! (independent of later checks)
+                }
+                else if (participation.getExercise().getDueDate() != null) {
+                    if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise) {
+                        if (result.getSubmission() != null && result.getSubmission().getSubmissionDate() != null
+                            && result.getSubmission().getSubmissionDate().isAfter(participation.getExercise().getDueDate())) {
+                            //Filter out late results using the submission date, because in this exercise types, the
+                            //difference between submissionDate and result.completionDate can be significant due to manual assessment
+                            continue;
+                        }
+                    }
+                    else {
+                        //For all other exercises the result completion date is the same as the submission date
+                        if (result.getCompletionDate().isAfter(participation.getExercise().getDueDate())) {
+                            //and we continue (i.e. dismiss the result) if the result completion date is after the exercise due date
+                            continue;
+                        }
+                    }
+                }
+                relevantResults.add(result);
+            }
+            if (!relevantResults.isEmpty()) {
+                //make sure to take the latest result
+                relevantResults.sort((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate()));
+                Result correctResult = relevantResults.get(0);
+                relevantResults.clear();
+                relevantResults.add(correctResult);
+            }
+            participation.setResults(new HashSet<>(relevantResults));
+            //remove unnecessary elements
+            participation.getExercise().setCourse(null);
+        }
+        return participations;
     }
 
     /**
      * Delete the participation by id.
      *
      * @param id the id of the entity
+     * @param deleteBuildPlan determines whether the corresponding build plan should be deleted as well
+     * @param deleteRepository determines whether the corresponding repository should be deleted as well
      */
     @Transactional(noRollbackFor={Throwable.class})
     public void delete(Long id, boolean deleteBuildPlan, boolean deleteRepository) {
-        log.debug("Request to delete Participation : {}", id);
         Participation participation = participationRepository.findById(id).get();
+        log.debug("Request to delete Participation : {}", participation);
+
         if (participation != null && participation.getExercise() instanceof ProgrammingExercise) {
             if (deleteBuildPlan && participation.getBuildPlanId() != null) {
                 continuousIntegrationService.get().deleteBuildPlan(participation.getBuildPlanId());

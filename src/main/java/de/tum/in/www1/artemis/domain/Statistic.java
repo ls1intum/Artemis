@@ -27,9 +27,6 @@ public abstract class Statistic implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "released")
-    private Boolean released = false;
-
     @Column(name = "participants_rated")
     private Integer participantsRated = 0;
 
@@ -42,19 +39,6 @@ public abstract class Statistic implements Serializable {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public Boolean isReleased() {
-        return released;
-    }
-
-    public Statistic released(Boolean released) {
-        this.released = released;
-        return this;
-    }
-
-    public void setReleased(Boolean released) {
-        this.released = released;
     }
 
     public Integer getParticipantsRated() {
@@ -107,7 +91,6 @@ public abstract class Statistic implements Serializable {
     public String toString() {
         return "Statistic{" +
             "id=" + getId() +
-            ", released='" + isReleased() + "'" +
             ", participantsRated='" + getParticipantsRated() + "'" +
             ", participantsUnrated='" + getParticipantsUnrated() + "'" +
             "}";

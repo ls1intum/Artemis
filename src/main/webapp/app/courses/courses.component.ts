@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Course, CourseScoreCalculationService, CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
 import { Subscription } from 'rxjs';
-import { Principal } from '../core';
+import { AccountService } from '../core';
 import { HttpResponse } from '@angular/common/http';
 
 @Component({
@@ -20,7 +20,7 @@ export class CoursesComponent implements OnInit {
     constructor(
         private courseService: CourseService,
         private jhiAlertService: JhiAlertService,
-        private principal: Principal,
+        private accountService: AccountService,
         private courseScoreCalculationService: CourseScoreCalculationService,
         private route: ActivatedRoute
     ) {}
@@ -45,7 +45,7 @@ export class CoursesComponent implements OnInit {
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body;
                 for (const course of this.courses) {
-                    course.isAtLeastTutor = this.principal.isAtLeastTutorInCourse(course);
+                    course.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(course);
                 }
                 this.courseScoreCalculationService.setCourses(this.courses);
                 if (this.filterByCourseId) {

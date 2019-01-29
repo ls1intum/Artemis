@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { Participation, ParticipationService } from '../participation';
 import { Result, ResultDetailComponent, ResultService } from '.';
-import { JhiWebsocketService, Principal } from '../../core';
+import { JhiWebsocketService, AccountService } from '../../core';
 import { RepositoryService } from '../repository/repository.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpClient } from '@angular/common/http';
@@ -41,7 +41,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
         private resultService: ResultService,
         private participationService: ParticipationService,
         private repositoryService: RepositoryService,
-        private principal: Principal,
+        private accountService: AccountService,
         private http: HttpClient,
         private modalService: NgbModal
     ) {}
@@ -56,7 +56,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
                     // this is important for modeling exercises since students can have multiple tries
                     // think about if this should be used for all types of exercises
                     this.participation.results.sort(
-                        (r1: Result, r2: Result): number => {
+                        (r1: Result, r2: Result) => {
                             if (r1.completionDate > r2.completionDate) {
                                 return -1;
                             }
@@ -75,9 +75,9 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             this.init();
 
             if (exercise && exercise.type === ExerciseType.PROGRAMMING) {
-                this.principal.identity().then(account => {
+                this.accountService.identity().then(user => {
                     // only subscribe for the currently logged in user
-                    if (account.id === this.participation.student.id && (exercise.dueDate == null || exercise.dueDate.isAfter(moment()))) {
+                    if (user.id === this.participation.student.id && (exercise.dueDate == null || exercise.dueDate.isAfter(moment()))) {
                         // subscribe for new results (e.g. when a programming exercise was automatically tested)
                         this.websocketChannel = `/topic/participation/${this.participation.id}/newResults`;
                         this.jhiWebsocketService.subscribe(this.websocketChannel);

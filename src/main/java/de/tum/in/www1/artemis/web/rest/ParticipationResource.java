@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -73,7 +72,6 @@ public class ParticipationResource {
      */
     @PostMapping("/participations")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Participation> createParticipation(@RequestBody Participation participation) throws URISyntaxException {
         log.debug("REST request to save Participation : {}", participation);
         Course course = participation.getExercise().getCourse();
@@ -99,7 +97,6 @@ public class ParticipationResource {
      */
     @PostMapping(value = "/courses/{courseId}/exercises/{exerciseId}/participations")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Participation> initParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) throws URISyntaxException {
         log.debug("REST request to start Exercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
@@ -130,7 +127,6 @@ public class ParticipationResource {
      */
     @PutMapping(value = "/courses/{courseId}/exercises/{exerciseId}/resume-participation")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Participation> resumeParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to resume Exercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
@@ -161,7 +157,6 @@ public class ParticipationResource {
      */
     @PutMapping("/participations")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Participation> updateParticipation(@RequestBody Participation participation) throws URISyntaxException {
         log.debug("REST request to update Participation : {}", participation);
         Course course = participation.getExercise().getCourse();
@@ -185,7 +180,6 @@ public class ParticipationResource {
      */
     @GetMapping(value = "/exercise/{exerciseId}/participations")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<List<Participation>> getAllParticipationsForExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get all Participations for Exercise {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
@@ -205,14 +199,16 @@ public class ParticipationResource {
      */
     @GetMapping(value = "/courses/{courseId}/participations")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<List<Participation>> getAllParticipationsForCourse(@PathVariable Long courseId) {
+        long start = System.currentTimeMillis();
         log.debug("REST request to get all Participations for Course {}", courseId);
         Course course = courseService.findOne(courseId);
         if (!courseService.userHasAtLeastTAPermissions(course)) {
             return forbidden();
         }
-        List<Participation> participations = participationService.findByCourseId(courseId);
+        List<Participation> participations = participationService.findByCourseIdWithRelevantResults(courseId);
+        long end = System.currentTimeMillis();
+        log.info("Found " + participations.size() + " particpations with results in " + (end - start) + " ms");
         return ResponseEntity.ok().body(participations);
     }
 
@@ -223,9 +219,8 @@ public class ParticipationResource {
      * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
      */
     @GetMapping("/participations/{id}/withLatestResult")
-    @Timed
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Participation> getParticipation(@PathVariable Long id) {
+    public ResponseEntity<Participation> getParticipationWithLatestResult(@PathVariable Long id) {
         log.debug("REST request to get Participation : {}", id);
         Participation participation = participationService.findOneWithEagerResults(id);
         if (participation == null) {
@@ -253,9 +248,8 @@ public class ParticipationResource {
      * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
      */
     @GetMapping("/participations/{id}")
-    @Timed
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Participation> getParticipationWithLatestResult(@PathVariable Long id) {
+    public ResponseEntity<Participation> getParticipation(@PathVariable Long id) {
         log.debug("REST request to get Participation : {}", id);
         Participation participation = participationService.findOne(id);
         Course course = participation.getExercise().getCourse();
@@ -270,7 +264,6 @@ public class ParticipationResource {
     }
 
     @GetMapping(value = "/participations/{id}/repositoryWebUrl")
-    @Timed
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<String> getParticipationRepositoryWebUrl(@PathVariable Long id, Authentication authentication) {
         log.debug("REST request to get Participation : {}", id);
@@ -290,7 +283,6 @@ public class ParticipationResource {
     }
 
     @GetMapping(value = "/participations/{id}/buildPlanWebUrl")
-    @Timed
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<String> getParticipationBuildPlanWebUrl(@PathVariable Long id) {
         log.debug("REST request to get Participation : {}", id);
@@ -323,7 +315,6 @@ public class ParticipationResource {
 
 
     @GetMapping(value = "/participations/{id}/buildArtifact")
-    @Timed
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity getParticipationBuildArtifact(@PathVariable Long id) {
         log.debug("REST request to get Participation build artifact: {}", id);
@@ -349,7 +340,6 @@ public class ParticipationResource {
      */
     @GetMapping(value = "/courses/{courseId}/exercises/{exerciseId}/participation")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     @Transactional(readOnly = true)
     public ResponseEntity<MappingJacksonValue> getParticipation(@PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to get Participation for Exercise : {}", exerciseId);
@@ -420,7 +410,6 @@ public class ParticipationResource {
      * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
      */
     @GetMapping(value = "/participations/{id}/status")
-    @Timed
     public ResponseEntity<?> getParticipationStatus(@PathVariable Long id) {
         Participation participation = participationService.findOne(id);
         // NOTE: Disable Authorization check for increased performance
@@ -447,7 +436,6 @@ public class ParticipationResource {
      */
     @DeleteMapping("/participations/{id}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Void> deleteParticipation(@PathVariable Long id,
                                                     @RequestParam(defaultValue = "false") boolean deleteBuildPlan,
                                                     @RequestParam(defaultValue = "false") boolean deleteRepository) {

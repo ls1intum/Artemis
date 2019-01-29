@@ -7,6 +7,7 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -46,6 +47,8 @@ public class ExerciseService {
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final Optional<VersionControlService> versionControlService;
     private final Optional<GitService> gitService;
+    private final StatisticService statisticService;
+    private final QuizScheduleService quizScheduleService;
 
     public ExerciseService(ExerciseRepository exerciseRepository,
                            UserService userService,
@@ -53,7 +56,9 @@ public class ExerciseService {
                            AuthorizationCheckService authCheckService,
                            Optional<ContinuousIntegrationService> continuousIntegrationService,
                            Optional<VersionControlService> versionControlService,
-                           Optional<GitService> gitService) {
+                           Optional<GitService> gitService,
+                           StatisticService statisticService,
+                           QuizScheduleService quizScheduleService) {
         this.exerciseRepository = exerciseRepository;
         this.userService = userService;
         this.participationService = participationService;
@@ -61,6 +66,8 @@ public class ExerciseService {
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.gitService = gitService;
+        this.statisticService = statisticService;
+        this.quizScheduleService = quizScheduleService;
     }
 
     /**
@@ -89,6 +96,23 @@ public class ExerciseService {
             exercise -> authCheckService.isAllowedToSeeExercise(exercise, user));
         List<Exercise> filteredExercises = userExercises.collect(Collectors.toList());
         return new PageImpl<>(userExercises.collect(Collectors.toList()), pageable, filteredExercises.size());
+    }
+
+    /**
+     * Get all exercises by courseID
+     *
+     * @param course  for return of exercises in course
+     * @return the list of entities
+     */
+    @Transactional(readOnly = true)
+    public List<Exercise> findAllExercisesByCourseId(Course course, User user) {
+        List<Exercise> exercises = null;
+        if (authCheckService.isAdmin() ||
+            authCheckService.isInstructorInCourse(course, user) ||
+            authCheckService.isTeachingAssistantInCourse(course, user)) {
+            // user can see this exercise
+            exercises = exerciseRepository.findAllByCourseId(course.getId());
+        }   return exercises;
     }
 
     @Transactional(readOnly = true)
@@ -167,6 +191,30 @@ public class ExerciseService {
         // delete all participations for this exercise
         for (Participation participation : exercise.getParticipations()) {
             participationService.delete(participation.getId(), true, true);
+        }
+
+        if (exercise instanceof QuizExercise) {
+
+            // refetch exercise to make sure we have an updated version
+            exercise = findOneLoadParticipations(exercise.getId());
+
+            //for quizzes we need to delete the statistics and we need to reset the quiz to its original state
+            QuizExercise quizExercise = (QuizExercise) exercise;
+            quizExercise.setIsVisibleBeforeStart(Boolean.FALSE);
+            quizExercise.setIsPlannedToStart(Boolean.FALSE);
+            quizExercise.setIsOpenForPractice(Boolean.FALSE);
+            quizExercise.setReleaseDate(null);
+
+
+            //TODO: the dependencies to concrete exercise types here are not really nice. We should find a better way to structure this, e.g. having this call managed in the quiz exercise resource
+            // which delegates some functionality to the exercise service
+
+            //in case the quiz has not yet started or the quiz is currently running, we have to cleanup
+            quizScheduleService.cancelScheduledQuizStart(quizExercise.getId());
+            quizScheduleService.clearQuizData(quizExercise.getId());
+
+            // clean up the statistics
+            statisticService.recalculateStatistics(quizExercise);
         }
     }
 

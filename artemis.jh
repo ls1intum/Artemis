@@ -1,5 +1,4 @@
 entity Statistic (statistic) {      //abstract
-    released Boolean,
     participantsRated Integer,
     participantsUnrated Integer
 }
@@ -41,13 +40,15 @@ entity ShortAnswerSpotCounter(shortAnswerSpotCounter) {    //extends StatisticCo
 
 entity Course (course) {
     title String,
+    description String,        //LONGTEXT --> lob
     shortName String,
     studentGroupName String,
     teachingAssistantGroupName String,
     instructorGroupName String,
     startDate ZonedDateTime,
     endDate ZonedDateTime,
-    onlineCourse Boolean
+    onlineCourse Boolean,
+    maxComplaints Integer
 }
 
 entity Exercise (exercise) {        //abstract
@@ -57,8 +58,9 @@ entity Exercise (exercise) {        //abstract
     shortName String,
     releaseDate ZonedDateTime,
     dueDate ZonedDateTime,
+    assessmentDueDate ZonedDateTime,
     maxScore Double,
-    difficulty DifficultyLevel
+    difficulty DifficultyLevel,
     categories String               //List<String>, similar to User --> groups
 }
 
@@ -182,7 +184,8 @@ entity ShortAnswerQuestion {          //extends Question
 
 entity ShortAnswerSpot {
 	width Integer,
-    invalid Boolean
+	spotNr Integer,
+    invalid Boolean,
 }
 
 entity ShortAnswerSolution {
@@ -210,7 +213,9 @@ entity ExerciseResult (result) {
     score Long,
     rated Boolean,
     hasFeedback Boolean,
-    assessmentType AssessmentType
+    assessmentType AssessmentType,
+    hasComplaint Boolean,
+    exampleResult Boolean
 }
 
 enum AssessmentType {
@@ -221,6 +226,8 @@ enum AssessmentType {
 entity Feedback(feedback) {
 	text String,
 	detailText String,
+	reference String,
+	credits Double,
 	positive Boolean,
 	type FeedbackType
 }
@@ -249,12 +256,13 @@ enum SubmissionType {
 entity Submission {                 //abstract
 	submitted Boolean
 	submissionDate ZonedDateTime,
-    type SubmissionType
+    type SubmissionType,
+    exampleSubmission Boolean
 }
 
 entity ModelingSubmission {         //extends Submission
 	model String,                   //transient --> stored in the file system
-	explanationText String          //LONGTEXT --> clob
+	explanationText String          //LONGTEXT --> lob
 }
 
 entity QuizSubmission {             //extends Submission
@@ -266,13 +274,16 @@ entity ProgrammingSubmission {      //extends Submission
 }
 
 entity TextSubmission {             //extends Submission
-    text String                     //LONGTEXT --> clob
+    text String                     //LONGTEXT --> lob
 }
 
 entity FileUploadSubmission {       //extends Submission
     filePath String
 }
 
+entity ExampleSubmission {
+    usedForTutorial Boolean
+}
 
 entity DragAndDropSubmittedAnswer (dndSubmittedAnswer) {      //extends SubmittedAnswer
 
@@ -288,7 +299,8 @@ entity ShortAnswerSubmittedAnswer (saSubmittedAnswer) {      //extends Submitted
 }
 
 entity ShortAnswerSubmittedText (shortAnswerSubmittedText) {
-    text String
+    text String,
+    isCorrect Boolean
 }
 
 entity ShortAnswerMapping {
@@ -299,7 +311,31 @@ entity ShortAnswerMapping {
 
 entity ApollonDiagram {
     title String
-    jsonRepresentation String       // LONGTEXT --> clob
+    jsonRepresentation String       // LONGTEXT --> lob
+}
+
+entity Complaint {
+    complaintText String,
+    accepted Boolean,
+    submittedTime ZonedDateTime,
+    resultBeforeComplaint String    // LONGTEXT --> lob
+}
+
+entity ComplaintResponse {
+    responseText String
+    submittedTime ZonedDateTime
+}
+
+entity TutorParticipation {
+    status TutorParticipationStatus,
+    points Integer
+}
+
+enum TutorParticipationStatus {
+    NOT_PARTICIPATED,
+    REVIEWED_INSTRUCTIONS,
+    TRAINED,
+    COMPLETED
 }
 
 relationship OneToMany {
@@ -307,8 +343,9 @@ relationship OneToMany {
     MultipleChoiceQuestionStatistic{AnswerCounters} to AnswerCounter{MultipleChoiceQuestionStatistic},
     DragAndDropQuestionStatistic{DropLocationCounters} to DropLocationCounter{DragAndDropQuestionStatistic},
     ShortAnswerQuestionStatistic{ShortAnswerSpotCounters} to ShortAnswerSpotCounter{ShortAnswerQuestionStatistic},
-    Course{exercises} to Exercise{course(title)},
-    Exercise{participations} to Participation{exercise(title)},
+    Course{exercises} to Exercise{course},
+    Exercise{participations} to Participation{exercise},
+    Exercise{tutorParticipations} to TutorParticipation{assessedExercise},
     Participation{results} to ExerciseResult{participation},
     Participation{submissions} to Submission{participation},
     ExerciseResult{feedbacks} to Feedback{result},
@@ -322,7 +359,9 @@ relationship OneToMany {
     DragAndDropSubmittedAnswer{mappings} to DragAndDropMapping{submittedAnswer},
     DragAndDropQuestion{correctMappings} to DragAndDropMapping{question},
     ShortAnswerQuestion{correctMappings} to ShortAnswerMapping{question}
-    ShortAnswerSubmittedAnswer{submittedTexts} to ShortAnswerSubmittedText{submittedAnswer}
+    ShortAnswerSubmittedAnswer{submittedTexts} to ShortAnswerSubmittedText{submittedAnswer},
+    TutorParticipation{trainedExampleSubmissions} to ExampleSubmission,
+    Exercise{exampleSubmissions} to ExampleSubmission{exercise}
 }
 
 relationship OneToOne {
@@ -334,18 +373,24 @@ relationship OneToOne {
     ShortAnswerSubmittedText{spot} to ShortAnswerSpot,
     Submission{result} to ExerciseResult{submission},
     LtiUserId{user} to User,
-    ExerciseResult{assessor} to User
+    ExerciseResult{assessor} to User,
+    Complaint{result} to ExerciseResult,
+    ComplaintResponse{complaint} to Complaint,
+    Complaint{student} to User,
+    ComplaintResponse{reviewer} to User,
+    ExampleSubmission{submission} to Submission
 }
 
 relationship ManyToOne {
-    Participation{student(login)} to User,
+    Participation{student} to User,
     LtiOutcomeUrl{user} to User,
     LtiOutcomeUrl{exercise} to Exercise,
     SubmittedAnswer{question} to Question
     DragAndDropMapping{dragItem} to DragItem,
     DragAndDropMapping{dropLocation} to DropLocation,
     ShortAnswerMapping{solution} to ShortAnswerSolution,
-    ShortAnswerMapping{spot} to ShortAnswerSpot
+    ShortAnswerMapping{spot} to ShortAnswerSpot,
+    TutorParticipation{tutor} to User,
 }
 
 relationship ManyToMany {

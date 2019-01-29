@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
@@ -73,31 +72,6 @@ public class ExerciseResource {
     }
 
     /**
-     * GET  /exercises : get all the exercises.
-     *
-     * @param pageable the pagination information
-     * @return the ResponseEntity with status 200 (OK) and the list of exercises in body
-     */
-    @GetMapping("/exercises")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
-    public ResponseEntity<List<Exercise>> getAllExercises(Pageable pageable) {
-        log.debug("REST request to get a page of Exercises");
-        Page<Exercise> page = exerciseRepository.findAll(pageable);
-        User user = userService.getUserWithGroupsAndAuthorities();
-        Stream<Exercise> authorizedExercises = page.getContent().stream().filter(
-            exercise -> {
-                Course course = exercise.getCourse();
-                return authCheckService.isTeachingAssistantInCourse(course, user) ||
-                    authCheckService.isInstructorInCourse(course, user) ||
-                    authCheckService.isAdmin();
-            }
-        );
-        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/exercises");
-        return new ResponseEntity<>(authorizedExercises.collect(Collectors.toList()), headers, HttpStatus.OK);
-    }
-
-    /**
      * GET /courses/:courseId/exercises : get all exercises for the given course
      *
      * @param courseId the course for which to retrieve all exercises
@@ -105,8 +79,7 @@ public class ExerciseResource {
      */
     @GetMapping(value = "/courses/{courseId}/exercises")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
-    public ResponseEntity<Collection<Exercise>> getExercisesForCourse(@PathVariable Long courseId, @RequestParam(defaultValue = "false") boolean withLtiOutcomeUrlExisting, Principal principal) {
+    public ResponseEntity<Collection<Exercise>> getExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get Exercises for Course : {}", courseId);
 
         Course course = courseService.findOne(courseId);
@@ -118,10 +91,11 @@ public class ExerciseResource {
             return forbidden();
         }
 
-        List<Exercise> result = exerciseService.findAllForCourse(course, withLtiOutcomeUrlExisting, principal, user);
+        List<Exercise> result = exerciseService.findAllExercisesByCourseId(course, user);
 
         return ResponseEntity.ok(result);
     }
+
 
     /**
      * GET  /exercises/:id : get the "id" exercise.
@@ -131,7 +105,6 @@ public class ExerciseResource {
      */
     @GetMapping("/exercises/{id}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Exercise> getExercise(@PathVariable Long id) {
         log.debug("REST request to get Exercise : {}", id);
         Exercise exercise = exerciseService.findOne(id);
@@ -153,7 +126,6 @@ public class ExerciseResource {
      */
     @DeleteMapping("/exercises/{id}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         log.debug("REST request to delete Exercise : {}", id);
         Exercise exercise = exerciseService.findOneLoadParticipations(id);
@@ -169,14 +141,16 @@ public class ExerciseResource {
     }
 
     /**
-     * DELETE  /exercises/:id/participations : delete all participations of "id" exercise (reset).
+     * Reset the exercise by deleting all its partcipations
+     * /exercises/:id/reset
+     *
+     * This can be used by all exercise types, however they can also provide custom implementations
      *
      * @param id the id of the exercise to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping(value = "/exercises/{id}/participations")
+    @DeleteMapping(value = "/exercises/{id}/reset")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Void> reset(@PathVariable Long id) {
         log.debug("REST request to reset Exercise : {}", id);
         Exercise exercise = exerciseService.findOneLoadParticipations(id);
@@ -198,7 +172,6 @@ public class ExerciseResource {
      */
     @DeleteMapping(value = "/exercises/{id}/cleanup")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Resource> cleanup(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean deleteRepositories) throws IOException {
         log.info("Start to cleanup build plans for Exercise: {}, delete repositories: {}", id, deleteRepositories);
         Exercise exercise = exerciseService.findOne(id);
@@ -221,7 +194,6 @@ public class ExerciseResource {
      */
     @GetMapping(value = "/exercises/{id}/archive")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Resource> archiveRepositories(@PathVariable Long id) throws IOException {
         log.info("Start to archive repositories for Exercise : {}", id);
         Exercise exercise = exerciseService.findOne(id);
@@ -253,7 +225,6 @@ public class ExerciseResource {
      */
     @GetMapping(value = "/exercises/{exerciseId}/participations/{studentIds}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Resource> exportSubmissions(@PathVariable Long exerciseId, @PathVariable String studentIds) throws IOException {
         studentIds = studentIds.replaceAll(" ","");
         Exercise exercise = exerciseService.findOne(exerciseId);

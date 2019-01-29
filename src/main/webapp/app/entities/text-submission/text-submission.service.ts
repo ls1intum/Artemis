@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
-import { SERVER_API_URL } from 'app/app.constants';
 
-import { createRequestOption } from 'app/shared';
 import { TextSubmission } from './text-submission.model';
+import { TextExercise } from 'app/entities/text-exercise';
+import { createRequestOption } from 'app/shared';
 
 export type EntityResponseType = HttpResponse<TextSubmission>;
 
@@ -29,6 +29,16 @@ export class TextSubmissionService {
                 observe: 'response'
             })
             .map((res: EntityResponseType) => this.convertResponse(res));
+    }
+
+    getTextSubmissionsForExercise(exercise: TextExercise, req: { submittedOnly: boolean }): Observable<HttpResponse<TextSubmission[]>> {
+        const options = createRequestOption(req);
+        return this.http
+            .get<TextSubmission[]>(`api/exercises/${exercise.id}/text-submissions`, {
+                params: options,
+                observe: 'response'
+            })
+            .map((res: HttpResponse<TextSubmission[]>) => this.convertArrayResponse(res));
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {

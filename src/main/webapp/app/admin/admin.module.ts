@@ -10,7 +10,6 @@ import {
     JhiHealthCheckComponent,
     JhiHealthModalComponent,
     JhiMetricsMonitoringComponent,
-    JhiMetricsMonitoringModalComponent,
     JhiTrackerComponent,
     LogsComponent,
     UserMgmtComponent,
@@ -39,10 +38,9 @@ import {
         JhiHealthModalComponent,
         JhiTrackerComponent,
         JhiMetricsMonitoringComponent,
-        JhiMetricsMonitoringModalComponent
     ],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
-    entryComponents: [UserMgmtDeleteDialogComponent, JhiHealthModalComponent, JhiMetricsMonitoringModalComponent],
+    entryComponents: [UserMgmtDeleteDialogComponent, JhiHealthModalComponent],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArTEMiSAdminModule {

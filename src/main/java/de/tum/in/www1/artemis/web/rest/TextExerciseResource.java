@@ -1,16 +1,13 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.CourseService;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -38,6 +35,7 @@ public class TextExerciseResource {
 
     private static final String ENTITY_NAME = "textExercise";
 
+    private final TextAssessmentService textAssessmentService;
     private final TextExerciseRepository textExerciseRepository;
     private final UserService userService;
     private final CourseService courseService;
@@ -46,11 +44,13 @@ public class TextExerciseResource {
     private final ResultRepository resultRepository;
 
     public TextExerciseResource(TextExerciseRepository textExerciseRepository,
+                                TextAssessmentService textAssessmentService,
                                 UserService userService,
                                 AuthorizationCheckService authCheckService,
                                 CourseService courseService,
                                 ParticipationService participationService,
                                 ResultRepository resultRepository) {
+        this.textAssessmentService = textAssessmentService;
         this.textExerciseRepository = textExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
@@ -68,7 +68,6 @@ public class TextExerciseResource {
      */
     @PostMapping("/text-exercises")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<TextExercise> createTextExercise(@RequestBody TextExercise textExercise) throws URISyntaxException {
         log.debug("REST request to save TextExercise : {}", textExercise);
         if (textExercise.getId() != null) {
@@ -102,7 +101,6 @@ public class TextExerciseResource {
      */
     @PutMapping("/text-exercises")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<TextExercise> updateTextExercise(@RequestBody TextExercise textExercise) throws URISyntaxException {
         log.debug("REST request to update TextExercise : {}", textExercise);
         if (textExercise.getId() == null) {
@@ -132,7 +130,6 @@ public class TextExerciseResource {
      */
     @GetMapping(value = "/courses/{courseId}/text-exercises")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<List<TextExercise>> getTextExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
         Course course = courseService.findOne(courseId);
@@ -157,7 +154,6 @@ public class TextExerciseResource {
      */
     @GetMapping("/text-exercises/{id}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<TextExercise> getTextExercise(@PathVariable Long id) {
         log.debug("REST request to get TextExercise : {}", id);
         Optional<TextExercise> textExercise = textExerciseRepository.findById(id);
@@ -175,7 +171,6 @@ public class TextExerciseResource {
      */
     @DeleteMapping("/text-exercises/{id}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Void> deleteTextExercise(@PathVariable Long id) {
         log.debug("REST request to delete TextExercise : {}", id);
         Optional<TextExercise> textExercise = textExerciseRepository.findById(id);
@@ -202,7 +197,6 @@ public class TextExerciseResource {
     @GetMapping("/text-editor/{participationId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional(readOnly = true)
-    @Timed
     public ResponseEntity<Participation> getDataForTextEditor(@PathVariable Long participationId) {
         Participation participation = participationService.findOne(participationId);
         if (participation == null) {
@@ -238,19 +232,11 @@ public class TextExerciseResource {
             // set reference to participation to null, since we are already inside a participation
             textSubmission.setParticipation(null);
 
-            // TODO: implement result
-//            Result result = textSubmission.getResult();
-//            if (textSubmission.isSubmitted() && result != null && result.isRated()) {
-//                // find assessments if textSubmission is submitted and result is rated
-//                String assessment = textAssessmentService.findLatestAssessment(textExercise.getId(), participation.getStudent().getId(), textSubmission.getId());
-//                if (assessment != null && assessment != "") {
-//                    try {
-//                        data.set("assessments", objectMapper.readTree(assessment));
-//                    } catch (IOException e) {
-//                        log.error("Error while reading assessment JSON: {}", e.getMessage());
-//                    }
-//                }
-//            }
+            Result result = textSubmission.getResult();
+            if (textSubmission.isSubmitted() && result != null && result.getCompletionDate() != null) {
+                List<Feedback> assessments = textAssessmentService.getAssessmentsForResult(result);
+                result.setFeedbacks(assessments);
+            }
 
             participation.addSubmissions(textSubmission);
         }

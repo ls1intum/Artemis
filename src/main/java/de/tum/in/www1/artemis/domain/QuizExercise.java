@@ -37,6 +37,7 @@ public class QuizExercise extends Exercise implements Serializable {
     @JsonView(QuizView.Before.class)
     private Boolean randomizeQuestionOrder;
 
+    //not used at the moment
     @Column(name = "allowed_number_of_attempts")
     @JsonView(QuizView.Before.class)
     private Integer allowedNumberOfAttempts;
@@ -546,7 +547,7 @@ public class QuizExercise extends Exercise implements Serializable {
      *
      * @return the sum of all the questions' maximum scores
      */
-    @JsonView(QuizView.During.class)
+    @JsonIgnore
     public Integer getMaxTotalScore() {
         int maxScore = 0;
         // iterate through all questions of this quiz and add up the score

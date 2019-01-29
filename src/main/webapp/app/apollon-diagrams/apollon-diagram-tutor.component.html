@@ -10,10 +10,10 @@
         <div class="col text-right">
             <span *ngIf="result && result.participation"><jhi-result [participation]="result.participation"></jhi-result></span>
             <button class="btn btn-primary" (click)="saveAssessment()"
-                    [disabled]="!assessments || !assessmentsAreValid || (result?.assessor && result.assessor.id !== accountId && !isAuthorized)"
+                    [disabled]="!assessments || !assessmentsAreValid || (result?.assessor && result.assessor.id !== userId && !isAuthorized)"
                     [hidden]="result && result.rated">Save Assessment</button>
             <button class="btn btn-success" (click)="submit()"
-                    [disabled]="!assessments || !assessmentsAreValid || (result?.assessor && result.assessor.id !== accountId && !isAuthorized)"
+                    [disabled]="!assessments || !assessmentsAreValid || (result?.assessor && result.assessor.id !== userId && !isAuthorized)"
                     [hidden]="result && result.rated">Submit Assessment</button>
             <button class="btn btn-danger" (click)="submit()"
                     [disabled]="!assessments || !assessmentsAreValid"
@@ -42,7 +42,7 @@
         <button type="submit" (click)="previousState()" class="btn btn-info">
             <span class="fa fa-arrow-left"></span>&nbsp;<span jhiTranslate="entity.action.back">Back</span>
         </button>
-        <button *ngIf="(result?.rated && !done) || (result?.assessor && result.assessor.id !== accountId && !result?.rated)" [disabled]="busy" class="btn btn-success" (click)="assessNextOptimal(0)">
+        <button *ngIf="(result?.rated && !done) || (result?.assessor && result.assessor.id !== userId && !result?.rated)" [disabled]="busy" class="btn btn-success" (click)="assessNextOptimal(0)">
             <i class="fa fa-folder-open fa-fw"></i>&nbsp;Assess next submission
         </button>
     </div><br>

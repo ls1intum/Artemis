@@ -1,9 +1,9 @@
-import { Component, HostListener, Input, OnInit, OnDestroy, Pipe, PipeTransform } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, Pipe, PipeTransform } from '@angular/core';
 import { Course, CourseExerciseService } from '../../entities/course';
 import { Exercise, ExerciseType, ParticipationStatus } from '../../entities/exercise';
-import { Principal } from '../../core';
+import { AccountService } from '../../core';
 import { WindowRef } from '../../core/websocket/window.service';
-import { NgbModal, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService } from 'ng-jhipster';
 import { Router, NavigationStart } from '@angular/router';
 import { InitializationState, Participation, ParticipationService } from '../../entities/participation';
@@ -45,19 +45,8 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
     }
     set course(course: Course) {
         this._course = course;
-        if (course.exercises) {
-            // exercises already included in data, no need to load them
-            this.initExercises(course.exercises);
-        } else {
-            this.courseExerciseService
-                .findAllExercises(course.id, {
-                    courseId: course.id,
-                    withLtiOutcomeUrlExisting: true
-                })
-                .subscribe(exercises => {
-                    this.initExercises(exercises.body);
-                });
-        }
+        // exercises already included in data, no need to load them
+        this.initExercises(course.exercises);
     }
     @Input()
     filterByExerciseId: number;
@@ -81,7 +70,7 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
         private jhiAlertService: JhiAlertService,
         private $window: WindowRef,
         private participationService: ParticipationService,
-        private principal: Principal,
+        private accountService: AccountService,
         private httpClient: HttpClient,
         private courseExerciseService: CourseExerciseService,
         private router: Router,
@@ -92,9 +81,9 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
-        this.principal.identity().then(account => {
+        this.accountService.identity().then(user => {
             // Only load password if current user login starts with 'edx'
-            if (account && account.login && account.login.startsWith('edx')) {
+            if (user && user.login && user.login.startsWith('edx')) {
                 this.getRepositoryPassword();
             }
         });
@@ -151,7 +140,7 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
                     quizExercise.isPlannedToStart && quizExercise.isOpenForPractice && moment(exercise.dueDate).isBefore(moment());
             }
 
-            exercise.isAtLeastTutor = this.principal.isAtLeastTutorInCourse(exercise.course);
+            exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(exercise.course);
         }
         exercises.sort((a: Exercise, b: Exercise) => {
             if (a.dueDate === null && b.dueDate === null) {

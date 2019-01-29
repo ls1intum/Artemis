@@ -34,6 +34,11 @@ public class Course implements Serializable {
     @JsonView(QuizView.Before.class)
     private String title;
 
+    @Column(name = "description")
+    @JsonView(QuizView.Before.class)
+    @Lob
+    private String description;
+
     @Column(name = "short_name")
     @JsonView(QuizView.Before.class)
     private String shortName;
@@ -62,6 +67,10 @@ public class Course implements Serializable {
     @JsonView(QuizView.Before.class)
     private Boolean onlineCourse;
 
+    @Column(name = "max_complaints")
+    @JsonView(QuizView.Before.class)
+    private Integer maxComplaints;
+
     @OneToMany(mappedBy = "course")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("course")
@@ -82,6 +91,19 @@ public class Course implements Serializable {
 
     public Course title(String title) {
         this.title = title;
+        return this;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public Course description(String description) {
+        this.description = description;
         return this;
     }
 
@@ -180,6 +202,19 @@ public class Course implements Serializable {
         this.onlineCourse = onlineCourse;
     }
 
+    public Integer getMaxComplaints() {
+        return maxComplaints;
+    }
+
+    public Course maxComplaints(Integer maxComplaints) {
+        this.maxComplaints = maxComplaints;
+        return this;
+    }
+
+    public void setMaxComplaints(Integer maxComplaints) {
+        this.maxComplaints = maxComplaints;
+    }
+
     public Set<Exercise> getExercises() {
         return exercises;
     }
@@ -231,6 +266,7 @@ public class Course implements Serializable {
         return "Course{" +
             "id=" + getId() +
             ", title='" + getTitle() + "'" +
+            ", description='" + getDescription() + "'" +
             ", shortName='" + getShortName() + "'" +
             ", studentGroupName='" + getStudentGroupName() + "'" +
             ", teachingAssistantGroupName='" + getTeachingAssistantGroupName() + "'" +

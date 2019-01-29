@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -78,7 +77,6 @@ public class ResultResource {
      */
     @PostMapping("/manual-results")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Result> createResult(@RequestBody Result result) throws URISyntaxException {
         log.debug("REST request to save Result : {}", result);
         Participation participation = result.getParticipation();
@@ -152,7 +150,6 @@ public class ResultResource {
      */
     @PutMapping("/manual-results")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Result> updateResult(@RequestBody Result result) throws URISyntaxException {
         log.debug("REST request to update Result : {}", result);
         Participation participation = result.getParticipation();
@@ -179,7 +176,6 @@ public class ResultResource {
      */
     @GetMapping(value = "/courses/{courseId}/exercises/{exerciseId}/participations/{participationId}/results")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<List<Result>> getResultsForParticipation(@PathVariable Long courseId,
                                                                    @PathVariable Long exerciseId,
                                                                    @PathVariable Long participationId,
@@ -240,7 +236,6 @@ public class ResultResource {
      */
     @GetMapping(value = "/courses/{courseId}/exercises/{exerciseId}/results")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     @Transactional(readOnly = true)
     public ResponseEntity<List<Result>> getResultsForExercise(@PathVariable Long courseId,
                                                               @PathVariable Long exerciseId,
@@ -263,12 +258,12 @@ public class ResultResource {
 
         for (Participation participation : participations) {
 
-            Result relevantResult = null;
+            Result relevantResult;
             if (ratedOnly == true) {
                 relevantResult = exercise.findLatestRatedResultWithCompletionDate(participation);
             }
             else {
-                relevantResult = exercise.findLatestResult(participation);
+                relevantResult = participation.findLatestResult();
             }
             if (relevantResult == null) {
                 continue;
@@ -304,31 +299,6 @@ public class ResultResource {
     }
 
     /**
-     * GET  /courses/:courseId/results : get the successful results for a course, ordered ascending by build completion date.
-     *
-     * @param courseId the id of the course for which to retrieve the results
-     * @return the ResponseEntity with status 200 (OK) and the list of results in body
-     */
-    @GetMapping(value = "/courses/{courseId}/results")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
-    public ResponseEntity<List<Result>> getResultsForCourse(@PathVariable Long courseId) {
-        log.debug("REST request to get Results for Course : {}", courseId);
-        Course course = courseService.findOne(courseId);
-        if (!userHasPermissions(course)) return forbidden();
-        List<Result> results = resultRepository.findEarliestSuccessfulResultsForCourse(courseId);
-
-        //remove unnecessary elements in the json response
-        results.forEach(result -> {
-            result.getParticipation().setExercise(null);
-            result.getParticipation().setResults(null);
-            result.getParticipation().setSubmissions(null);
-        });
-
-        return ResponseEntity.ok().body(results);
-    }
-
-    /**
      * GET  /results/:id : get the "id" result.
      *
      * @param resultId the id of the result to retrieve
@@ -336,7 +306,6 @@ public class ResultResource {
      */
     @GetMapping("/results/{resultId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Result> getResult(@PathVariable Long resultId) {
         log.debug("REST request to get Result : {}", resultId);
         Optional<Result> result = resultRepository.findById(resultId);
@@ -358,7 +327,6 @@ public class ResultResource {
      */
     @GetMapping(value = "/results/{resultId}/details")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     @Transactional
     public ResponseEntity<List<Feedback>> getResultDetails(@PathVariable Long resultId) {
         log.debug("REST request to get Result : {}", resultId);
@@ -390,7 +358,6 @@ public class ResultResource {
      */
     @DeleteMapping("/results/{resultId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Void> deleteResult(@PathVariable Long resultId) {
         log.debug("REST request to delete Result : {}", resultId);
         Optional<Result> result = resultRepository.findById(resultId);
@@ -412,7 +379,6 @@ public class ResultResource {
      */
     @GetMapping(value = "/results/submission/{submissionId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Result> getResultForSubmission(@PathVariable Long submissionId) {
         log.debug("REST request to get Result for submission : {}", submissionId);
         Optional<Result> result = resultRepository.findDistinctBySubmissionId(submissionId);

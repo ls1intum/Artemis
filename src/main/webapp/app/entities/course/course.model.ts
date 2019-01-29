@@ -5,6 +5,7 @@ import { Moment } from 'moment';
 export class Course implements BaseEntity {
     public id: number;
     public title: string;
+    public description: string;
     public shortName: string;
     public studentGroupName: string;
     public teachingAssistantGroupName: string;
@@ -12,6 +13,8 @@ export class Course implements BaseEntity {
     public startDate: Moment;
     public endDate: Moment;
     public onlineCourse = false; // default value
+    public maxComplaints: number;
+
     public exercises: Exercise[];
 
     // helper attributes

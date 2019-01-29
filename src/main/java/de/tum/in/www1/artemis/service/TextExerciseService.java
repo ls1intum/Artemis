@@ -1,11 +1,17 @@
 package de.tum.in.www1.artemis.service;
 
 import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -16,8 +22,12 @@ public class TextExerciseService {
     private final TextExerciseRepository textExerciseRepository;
     private final ParticipationService participationService;
 
-    public TextExerciseService(ParticipationService participationService,
-                               TextExerciseRepository textExerciseRepository) {
+    public TextExerciseService(TextExerciseRepository textExerciseRepository,
+                               ExerciseRepository exerciseRepository,
+                               UserService userService,
+                               ParticipationService participationService,
+                               AuthorizationCheckService authCheckService) {
+
         this.textExerciseRepository = textExerciseRepository;
         this.participationService = participationService;
     }

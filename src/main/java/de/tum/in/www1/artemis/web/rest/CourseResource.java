@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -80,7 +79,6 @@ public class CourseResource {
      */
     @PostMapping("/courses")
     @PreAuthorize("hasAnyRole('ADMIN')")
-    @Timed
     public ResponseEntity<Course> createCourse(@RequestBody Course course) throws URISyntaxException {
         log.debug("REST request to save Course : {}", course);
         if (course.getId() != null) {
@@ -116,7 +114,6 @@ public class CourseResource {
      */
     @PutMapping("/courses")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR')")
-    @Timed
     @Transactional
     public ResponseEntity<Course> updateCourse(@RequestBody Course updatedCourse) throws URISyntaxException {
         log.debug("REST request to update Course : {}", updatedCourse);
@@ -183,7 +180,6 @@ public class CourseResource {
      */
     @GetMapping("/courses")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public List<Course> getAllCourses() {
         log.debug("REST request to get all Courses the user has access to");
         User user = userService.getUserWithGroupsAndAuthorities();
@@ -205,7 +201,6 @@ public class CourseResource {
      */
     @GetMapping("/courses/for-dashboard")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public List<Course> getAllCoursesForDashboard(Principal principal) {
         log.debug("REST request to get all Courses the user has access to with exercises, participations and results");
         User user = userService.getUserWithGroupsAndAuthorities();
@@ -234,10 +229,24 @@ public class CourseResource {
      */
     @GetMapping("/courses/{id}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Course> getCourse(@PathVariable Long id) {
         log.debug("REST request to get Course : {}", id);
         Course course = courseService.findOne(id);
+        if (!userHasPermission(course)) return forbidden();
+        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(course));
+    }
+
+    /**
+     * GET  /courses/:id : get the "id" course.
+     *
+     * @param id the id of the course to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
+     */
+    @GetMapping("/courses/{id}/with-exercises")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Course> getCourseWithExercises(@PathVariable Long id) {
+        log.debug("REST request to get Course : {}", id);
+        Course course = courseService.findOneWithExercises(id);
         if (!userHasPermission(course)) return forbidden();
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(course));
     }
@@ -257,7 +266,6 @@ public class CourseResource {
      */
     @DeleteMapping("/courses/{id}")
     @PreAuthorize("hasAnyRole('ADMIN')")
-    @Timed
     @Transactional
     public ResponseEntity<Void> deleteCourse(@PathVariable Long id) {
         log.debug("REST request to delete Course : {}", id);
@@ -272,23 +280,4 @@ public class CourseResource {
         courseService.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, title)).build();
     }
-
-
-    /**
-     * GET /courses/:courseId/getAllCourseScoresOfCourseUsers
-     *
-     * @param courseId the Id of the course
-     * @return collection of Results where the sum of the best result per exercise, for each student in a course is cointained:
-     * ResultId refers in this case to the studentId, the score still needs to be divided by the amount of exercises (done in the webapp)
-     */
-    @GetMapping("/courses/{courseId}/getAllCourseScoresOfCourseUsers")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
-    public ResponseEntity<Collection<Result>> getAllSummedScoresOfCourseUsers(@PathVariable("courseId") Long courseId) {
-        log.debug("REST request to get courseScores from course : {}", courseId);
-        Course course = courseService.findOne(courseId);
-        if (!userHasPermission(course)) return forbidden();
-        return ResponseEntity.ok(courseService.getAllOverallScoresOfCourse(courseId));
-    }
-
 }
