@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.service.ExerciseService;
@@ -41,7 +40,6 @@ public class ProgrammingSubmissionResource {
      * @return the ResponseEntity with status 200 (OK), or with status 400 (Bad Request) if the latest commit was already notified about
      */
     @PostMapping(value = "/programming-submissions/{participationId}")
-    @Timed
     public ResponseEntity<?> notifyPush(@PathVariable("participationId") Long participationId, @RequestBody Object requestBody) {
 
         log.info("REST request to inform about new push: {}", participationId);
@@ -57,7 +55,6 @@ public class ProgrammingSubmissionResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @PostMapping("/programming-exercises/test-cases-changed/{exerciseId}")
-    @Timed
     public ResponseEntity<Void> testCaseChanged(@PathVariable Long exerciseId, @RequestBody Object requestBody) {
         log.info("REST request to inform about changed test cases of ProgrammingExercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);

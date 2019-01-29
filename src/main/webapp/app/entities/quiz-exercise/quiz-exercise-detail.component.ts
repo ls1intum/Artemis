@@ -1,23 +1,25 @@
-import { Component, OnDestroy, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, OnDestroy, OnInit, OnChanges, SimpleChanges, HostListener } from '@angular/core';
 import { QuizExerciseService } from './quiz-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
-import { Course } from '../course/course.model';
-import { CourseService } from '../course/course.service';
+import { Course } from 'app/entities/course';
+import { CourseService } from 'app/entities/course';
 import { QuizExercise } from './quiz-exercise.model';
-import { DragAndDropQuestionUtil } from '../../components/util/drag-and-drop-question-util.service';
+import { DragAndDropQuestionUtil } from 'app/components/util/drag-and-drop-question-util.service';
 import { TranslateService } from '@ngx-translate/core';
-import { FileUploaderService } from '../../shared/http/file-uploader.service';
+import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { Question, QuestionType, ScoringType } from '../../entities/question';
-import { MultipleChoiceQuestion } from '../../entities/multiple-choice-question';
-import { DragAndDropQuestion } from '../../entities/drag-and-drop-question';
-import { AnswerOption } from '../../entities/answer-option';
+import { MultipleChoiceQuestion } from 'app/entities/multiple-choice-question';
+import { DragAndDropQuestion } from 'app/entities/drag-and-drop-question';
+import { AnswerOption } from 'app/entities/answer-option';
 import { Option, Duration } from './quiz-exercise-interfaces';
 import { NgbDateStruct, NgbDate, NgbTimeStruct } from '@ng-bootstrap/ng-bootstrap';
 import * as moment from 'moment';
+import { ComponentCanDeactivate } from 'app/shared';
 import { Moment } from 'moment';
 import { JhiAlertService } from 'ng-jhipster';
+import { Observable } from 'rxjs/Observable';
 
 interface Reason {
     translateKey: string;
@@ -34,7 +36,7 @@ interface Warning {
     templateUrl: './quiz-exercise-detail.component.html',
     providers: [DragAndDropQuestionUtil]
 })
-export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy {
+export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy, ComponentCanDeactivate {
     // Make constants available to html for comparison
     readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
@@ -177,6 +179,18 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
             }
         }
         return 'isVisibleBeforeStart';
+    }
+
+    canDeactivate(): Observable<boolean> | boolean {
+        return !this.pendingChanges();
+    }
+
+    // displays the alert for confirming refreshing or closing the page if there are unsaved changes
+    @HostListener('window:beforeunload', ['$event'])
+    unloadNotification($event: any) {
+        if (!this.canDeactivate()) {
+            $event.returnValue = this.translateService.instant('pendingChanges');
+        }
     }
 
     /**

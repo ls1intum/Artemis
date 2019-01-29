@@ -1,7 +1,7 @@
 import { Injectable, isDevMode } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
 
-import { Principal } from '../';
+import { AccountService } from '../';
 import { LoginModalService } from '../login/login-modal.service';
 import { StateStorageService } from './state-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
@@ -11,7 +11,7 @@ export class UserRouteAccessService implements CanActivate {
     constructor(
         private router: Router,
         private loginModalService: LoginModalService,
-        private principal: Principal,
+        private accountService: AccountService,
         private stateStorageService: StateStorageService,
         private localStorage: LocalStorageService
     ) {}
@@ -24,22 +24,22 @@ export class UserRouteAccessService implements CanActivate {
         }
 
         const authorities = route.data['authorities'];
-        // We need to call the checkLogin / and so the principal.identity() function, to ensure,
-        // that the client has a principal too, if they already logged in by the server.
+        // We need to call the checkLogin / and so the accountService.identity() function, to ensure,
+        // that the client has an account too, if they already logged in by the server.
         // This could happen on a page refresh.
         return this.checkLogin(authorities, state.url);
     }
 
     checkLogin(authorities: string[], url: string): Promise<boolean> {
-        const principal = this.principal;
+        const accountService = this.accountService;
         return Promise.resolve(
-            principal.identity().then(account => {
+            accountService.identity().then(account => {
                 if (!authorities || authorities.length === 0) {
                     return true;
                 }
 
                 if (account) {
-                    return principal.hasAnyAuthority(authorities).then(response => {
+                    return accountService.hasAnyAuthority(authorities).then(response => {
                         if (response) {
                             return true;
                         }

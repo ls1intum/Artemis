@@ -4,6 +4,7 @@ import { Resolve, ActivatedRouteSnapshot, RouterStateSnapshot, Routes } from '@a
 import { UserRouteAccessService } from 'app/core';
 import { of } from 'rxjs';
 import { map } from 'rxjs/operators';
+
 import { ProgrammingExercise } from './programming-exercise.model';
 import { ProgrammingExerciseService } from './programming-exercise.service';
 import { ProgrammingExerciseComponent } from './programming-exercise.component';

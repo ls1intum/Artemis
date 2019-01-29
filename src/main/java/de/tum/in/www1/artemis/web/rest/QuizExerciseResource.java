@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Question;
 import de.tum.in.www1.artemis.domain.QuizExercise;
@@ -66,7 +65,6 @@ public class QuizExerciseResource {
      */
     @PostMapping("/quiz-exercises")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<QuizExercise> createQuizExercise(@RequestBody QuizExercise quizExercise) throws URISyntaxException {
         log.debug("REST request to save QuizExercise : {}", quizExercise);
         if (quizExercise.getId() != null) {
@@ -107,7 +105,6 @@ public class QuizExerciseResource {
      */
     @PutMapping("/quiz-exercises")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<QuizExercise> updateQuizExercise(@RequestBody QuizExercise quizExercise) throws URISyntaxException {
         log.debug("REST request to update QuizExercise : {}", quizExercise);
         if (quizExercise.getId() == null) {
@@ -159,7 +156,6 @@ public class QuizExerciseResource {
      */
     @GetMapping(value = "/courses/{courseId}/quiz-exercises")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     @Transactional(readOnly = true)
     public List<QuizExercise> getQuizExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all QuizExercises for the course with id : {}", courseId);
@@ -182,7 +178,6 @@ public class QuizExerciseResource {
      */
     @GetMapping("/quiz-exercises/{quizExerciseId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<QuizExercise> getQuizExercise(@PathVariable Long quizExerciseId) {
         log.debug("REST request to get QuizExercise : {}", quizExerciseId);
         QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
@@ -200,7 +195,6 @@ public class QuizExerciseResource {
      */
     @GetMapping("/quiz-exercises/{quizExerciseId}/recalculate-statistics")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<QuizExercise> recalculateStatistics(@PathVariable Long quizExerciseId) {
         log.debug("REST request to get QuizExercise : {}", quizExerciseId);
         QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
@@ -220,7 +214,6 @@ public class QuizExerciseResource {
      */
     @GetMapping("/quiz-exercises/{id}/for-student")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<QuizExercise> getQuizExerciseForStudent(@PathVariable Long id) {
         log.debug("REST request to get QuizExercise : {}", id);
 
@@ -250,7 +243,6 @@ public class QuizExerciseResource {
      */
     @PostMapping("/quiz-exercises/{id}/{action}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<String> performActionForQuizExercise(@PathVariable Long id, @PathVariable String action) {
         log.debug("REST request to immediately start QuizExercise : {}", id);
 
@@ -321,7 +313,6 @@ public class QuizExerciseResource {
      */
     @DeleteMapping("/quiz-exercises/{id}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Void> deleteQuizExercise(@PathVariable Long id) {
         log.debug("REST request to delete QuizExercise : {}", id);
 
@@ -357,7 +348,6 @@ public class QuizExerciseResource {
      */
     @PutMapping("/quiz-exercises-re-evaluate")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<QuizExercise> reEvaluateQuizExercise(@RequestBody QuizExercise quizExercise) {
         log.debug("REST request to re-evaluate QuizExercise : {}", quizExercise);
         if (quizExercise.getId() == null) {

@@ -29,8 +29,12 @@ public class ShortAnswerSubmittedText implements Serializable {
     @JsonView(QuizView.Before.class)
     private String text;
 
+    @Column(name = "isCorrect")
+    @JsonView(QuizView.Before.class)
+    private Boolean isCorrect;
+
     @OneToOne
-    @JoinColumn(unique = true)
+    @JoinColumn()
     @JsonView(QuizView.Before.class)
     private ShortAnswerSpot spot;
 
@@ -58,6 +62,19 @@ public class ShortAnswerSubmittedText implements Serializable {
 
     public void setText(String text) {
         this.text = text;
+    }
+
+    public Boolean isIsCorrect() {
+        return isCorrect;
+    }
+
+    public ShortAnswerSubmittedText isCorrect(Boolean isCorrect) {
+        this.isCorrect = isCorrect;
+        return this;
+    }
+
+    public void setIsCorrect(Boolean isCorrect) {
+        this.isCorrect = isCorrect;
     }
 
     public ShortAnswerSpot getSpot() {
@@ -112,6 +129,7 @@ public class ShortAnswerSubmittedText implements Serializable {
         return "ShortAnswerSubmittedText{" +
             "id=" + getId() +
             ", text='" + getText() + "'" +
+            ", isCorrect='" + isIsCorrect() + "'" +
             "}";
     }
 }
