@@ -1,25 +1,17 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.JsonAssessmentRepository;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
-import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.compass.CompassService;
-import de.tum.in.www1.artemis.service.compass.conflict.Conflict;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import java.util.*;
+import org.slf4j.*;
+import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Optional;
-import java.util.Set;
-
+import com.google.gson.*;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.compass.CompassService;
+import de.tum.in.www1.artemis.service.compass.conflict.*;
+import de.tum.in.www1.artemis.web.rest.util.*;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 /**
@@ -40,6 +32,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     private final CourseService courseService;
     private final ModelingAssessmentService modelingAssessmentService;
 
+
     public ModelingAssessmentResource(JsonAssessmentRepository jsonAssessmentRepository, ParticipationRepository participationRepository, CompassService compassService, ModelingExerciseService modelingExerciseService, UserService userService, AuthorizationCheckService authCheckService, CourseService courseService, ModelingAssessmentService modelingAssessmentService) {
         super(authCheckService, userService);
 
@@ -54,6 +47,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     //TODO: all API path in this class do not really make sense, we should restructure them and potentially start with /exercise/
 
+
     @DeleteMapping("/modeling-assessments/exercise/{exerciseId}/optimal-model-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<String> resetOptimalModels(@PathVariable Long exerciseId) {
@@ -63,11 +57,14 @@ public class ModelingAssessmentResource extends AssessmentResource {
         }
 
         ResponseEntity responseFailure = checkExercise(modelingExercise);
-        if (responseFailure != null) return responseFailure;
+        if (responseFailure != null) {
+            return responseFailure;
+        }
 
         compassService.resetModelsWaitingForAssessment(exerciseId);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
+
 
     @GetMapping("/modeling-assessments/exercise/{exerciseId}/optimal-model-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
@@ -75,7 +72,9 @@ public class ModelingAssessmentResource extends AssessmentResource {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
 
         ResponseEntity responseFailure = checkExercise(modelingExercise);
-        if (responseFailure != null) return responseFailure;
+        if (responseFailure != null) {
+            return responseFailure;
+        }
 
         //TODO: we need to make sure that per participation there is only one optimalModel
         Set<Long> optimalModelSubmissions = compassService.getModelsWaitingForAssessment(exerciseId);
@@ -88,17 +87,21 @@ public class ModelingAssessmentResource extends AssessmentResource {
         return ResponseEntity.ok(response.toString());
     }
 
+
     @GetMapping("/modeling-assessments/exercise/{exerciseId}/submission/{submissionId}/partial-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<String> getPartialAssessment(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
 
         ResponseEntity responseFailure = checkExercise(modelingExercise);
-        if (responseFailure != null) return responseFailure;
+        if (responseFailure != null) {
+            return responseFailure;
+        }
 
         JsonObject partialAssessment = compassService.getPartialAssessment(exerciseId, submissionId);
         return ResponseEntity.ok(partialAssessment.get("assessments").toString());
     }
+
 
     /**
      * Returns assessments (if found) for a given participationId and submissionId.
@@ -134,6 +137,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
         return ResponseEntity.ok("");
     }
 
+
     /**
      * Saves assessments and updates result.
      *
@@ -144,21 +148,23 @@ public class ModelingAssessmentResource extends AssessmentResource {
      */
     @PutMapping("/modeling-assessments/exercise/{exerciseId}/result/{resultId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> saveModelingAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody String modelingAssessment) {
+    public ResponseEntity<ConflictResultWrapper> saveModelingAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody String modelingAssessment) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         if (modelingExercise == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("modelingExercise", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
         }
         ResponseEntity responseFailure = checkExercise(modelingExercise);
-        if (responseFailure != null) return responseFailure;
+        if (responseFailure != null) {
+            return responseFailure;
+        }
 
         Result result = modelingAssessmentService.saveManualAssessment(resultId, exerciseId, modelingAssessment);
-
-
-        return ResponseEntity.ok(result);
+        Optional<Conflict> conflict = compassService.checkForConflict(exerciseId, result.getSubmission().getId());
+        return ResponseEntity.ok(new ConflictResultWrapper(conflict.get(), result));
     }
 
     //TODO change to POST and remove submision in path or merge with saveNodelingAssessment?
+
 
     /**
      * Saves assessments and updates result. Sets result to rated so the student can see the assessments.
@@ -170,7 +176,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
      */
     @PutMapping("/modeling-assessments/exercise/{exerciseId}/result/{resultId}/submit")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Result> submitModelingAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody String modelingAssessment) {
+    public ResponseEntity<ConflictResultWrapper> submitModelingAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody String modelingAssessment) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
 
         ResponseEntity responseFailure = checkExercise(modelingExercise);
@@ -183,11 +189,9 @@ public class ModelingAssessmentResource extends AssessmentResource {
         // add assessment to compass to include it in the automatic grading process
         compassService.addAssessment(exerciseId, submissionId, modelingAssessment);
         Optional<Conflict> conflict = compassService.checkForConflict(exerciseId, submissionId);
-        if (conflict.isPresent()) {
-            return ResponseEntity.status(HttpStatus.ACCEPTED).body(result);
-        }
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(new ConflictResultWrapper(conflict.get(), result));
     }
+
 
     @Override
     String getEntityName() {
