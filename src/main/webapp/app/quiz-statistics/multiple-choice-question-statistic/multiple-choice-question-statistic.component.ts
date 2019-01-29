@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
 import { ActivatedRoute, Router } from '@angular/router';
-import { JhiWebsocketService, Principal } from '../../core';
+import { JhiWebsocketService, AccountService } from '../../core';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizStatisticUtil } from '../../components/util/quiz-statistic-util.service';
 import { ArtemisMarkdown } from '../../components/util/markdown.service';
@@ -58,7 +58,7 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
     constructor(
         private route: ActivatedRoute,
         private router: Router,
-        private principal: Principal,
+        private accountService: AccountService,
         private translateService: TranslateService,
         private quizExerciseService: QuizExerciseService,
         private jhiWebsocketService: JhiWebsocketService,
@@ -72,7 +72,7 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
         this.sub = this.route.params.subscribe(params => {
             this.questionIdParam = +params['questionId'];
             // use different REST-call if the User is a Student
-            if (this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
+            if (this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
                 this.quizExerciseService.find(params['quizId']).subscribe(res => {
                     this.loadQuiz(res.body, false);
                 });
@@ -122,7 +122,7 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
     loadQuiz(quiz: QuizExercise, refresh: boolean) {
         // if the Student finds a way to the Website
         //      -> the Student will be send back to Courses
-        if (!this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
+        if (!this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
             this.router.navigateByUrl('courses');
         }
         // search selected question in quizExercise based on questionId

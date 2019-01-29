@@ -72,9 +72,10 @@
                             <i class="fa fa-folder-open fa-fw"></i>&nbsp;<span class="d-none d-md-inline">Open exercise</span></a>
                         <ng-template #popContent>
                             <p>Clone your personal repository for this exercise:</p>
-                            <pre style="max-width: 100%;">{{exercise.participations[0].repositoryUrl}}</pre>
+                            <pre style="max-width: 100%;" ngxClipboard [cbContent]="exercise.participations[0].repositoryUrl" (cbOnSuccess)="onCopySuccess()" (cbOnError)="onCopyFailure()">{{exercise.participations[0].repositoryUrl}}</pre>
                             <p *ngIf="repositoryPassword">Your password is: <code class="password">{{repositoryPassword}}</code> (hover to show)</p>
-                            <button class="btn btn-primary btn-sm mr-2" type="button" ngxClipboard [cbContent]="exercise.participations[0].repositoryUrl" (cbOnSuccess)="onCopySuccess()" (cbOnError)="onCopyFailure()" [class.btn-success]="wasCopied">Copy URL</button>
+                            <button ngxClipboard [cbContent]="exercise.participations[0].repositoryUrl" (cbOnSuccess)="onCopySuccess()" (cbOnError)="onCopyFailure()" [class.btn-success]="wasCopied"
+                                    class="btn btn-primary btn-sm mr-2" type="button" style="min-width: 90px;">{{ wasCopied ? "Copied URL" : "Copy URL"}}</button>
                             <a class="btn btn-primary btn-sm mr-2" [href]="buildSourceTreeUrl(exercise.participations[0].repositoryUrl) | safeUrl">Clone in SourceTree</a>
                             <a href="http://www.sourcetreeapp.com" target="_blank">Atlassian SourceTree</a> is the free Git client for Windows or Mac.
                         </ng-template>

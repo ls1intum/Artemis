@@ -12,7 +12,7 @@ import { AuthInterceptor } from './blocks/interceptor/auth.interceptor';
 import { AuthExpiredInterceptor } from './blocks/interceptor/auth-expired.interceptor';
 import { ErrorHandlerInterceptor } from './blocks/interceptor/errorhandler.interceptor';
 import { NotificationInterceptor } from './blocks/interceptor/notification.interceptor';
-import { JhiWebsocketService, Principal, UserRouteAccessService } from './core';
+import { JhiWebsocketService, UserRouteAccessService } from './core';
 import { ArTEMiSSharedModule } from './shared';
 import { ArTEMiSCoreModule } from 'app/core';
 import { ArTEMiSAppRoutingModule } from './app-routing.module';
@@ -102,7 +102,6 @@ import { ParticipationDataProvider } from './courses/exercises/participation-dat
         UserRouteAccessService,
         DifferencePipe,
         JhiWebsocketService,
-        Principal,
         ParticipationDataProvider,
         PendingChangesGuard,
         /**

@@ -63,6 +63,10 @@ public abstract class Exercise implements Serializable {
     @JsonView(QuizView.Before.class)
     private ZonedDateTime dueDate;
 
+    @Column(name = "assessment_due_date")
+    @JsonView(QuizView.Before.class)
+    private ZonedDateTime assessmentDueDate;
+
     @Column(name = "max_score")
     private Double maxScore;
 
@@ -85,6 +89,11 @@ public abstract class Exercise implements Serializable {
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
     @JsonIgnoreProperties("exercise")
     private Set<Participation> participations = new HashSet<>();
+
+    @OneToMany(mappedBy = "assessedExercise")
+    @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+    @JsonIgnoreProperties("assessedExercise")
+    private Set<TutorParticipation> tutorParticipations = new HashSet<>();
 
     @ManyToOne
     @JsonView(QuizView.Before.class)
@@ -154,6 +163,19 @@ public abstract class Exercise implements Serializable {
 
     public void setDueDate(ZonedDateTime dueDate) {
         this.dueDate = dueDate;
+    }
+
+    public ZonedDateTime getAssessmentDueDate() {
+        return assessmentDueDate;
+    }
+
+    public Exercise assessmentDueDate(ZonedDateTime assessmentDueDate) {
+        this.assessmentDueDate = assessmentDueDate;
+        return this;
+    }
+
+    public void setAssessmentDueDate(ZonedDateTime assessmentDueDate) {
+        this.assessmentDueDate = assessmentDueDate;
     }
 
     public Double getMaxScore() {
@@ -440,6 +462,7 @@ public abstract class Exercise implements Serializable {
             ", shortName='" + getShortName() + "'" +
             ", releaseDate='" + getReleaseDate() + "'" +
             ", dueDate='" + getDueDate() + "'" +
+            ", assessmentDueDate='" + getAssessmentDueDate() + "'" +
             ", maxScore=" + getMaxScore() +
             ", difficulty='" + getDifficulty() + "'" +
             ", categories='" + getCategories() + "'" +

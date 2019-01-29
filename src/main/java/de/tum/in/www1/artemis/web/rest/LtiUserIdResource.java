@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.LtiUserId;
 import de.tum.in.www1.artemis.repository.LtiUserIdRepository;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -39,7 +38,6 @@ public class LtiUserIdResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/lti-user-ids")
-    @Timed
     public ResponseEntity<LtiUserId> createLtiUserId(@RequestBody LtiUserId ltiUserId) throws URISyntaxException {
         log.debug("REST request to save LtiUserId : {}", ltiUserId);
         if (ltiUserId.getId() != null) {
@@ -61,7 +59,6 @@ public class LtiUserIdResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/lti-user-ids")
-    @Timed
     public ResponseEntity<LtiUserId> updateLtiUserId(@RequestBody LtiUserId ltiUserId) throws URISyntaxException {
         log.debug("REST request to update LtiUserId : {}", ltiUserId);
         if (ltiUserId.getId() == null) {
@@ -80,7 +77,6 @@ public class LtiUserIdResource {
      * @return the ResponseEntity with status 200 (OK) and with body the ltiUserId, or with status 404 (Not Found)
      */
     @GetMapping("/lti-user-ids/{id}")
-    @Timed
     public ResponseEntity<LtiUserId> getLtiUserId(@PathVariable Long id) {
         log.debug("REST request to get LtiUserId : {}", id);
         Optional<LtiUserId> ltiUserId = ltiUserIdRepository.findById(id);
@@ -94,7 +90,6 @@ public class LtiUserIdResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/lti-user-ids/{id}")
-    @Timed
     public ResponseEntity<Void> deleteLtiUserId(@PathVariable Long id) {
         log.debug("REST request to delete LtiUserId : {}", id);
         ltiUserIdRepository.deleteById(id);

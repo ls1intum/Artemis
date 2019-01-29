@@ -16,15 +16,15 @@
     <div class="table-responsive" *ngIf="modelingExercises">
         <table class="table table-striped">
             <thead>
-            <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
-                <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<span class="fa fa-sort"></span></th>
-                <th jhiSortBy="title"><span jhiTranslate="arTeMiSApp.exercise.title">Title</span>&nbsp;<span class="fa fa-sort"></span></th>
-                <th jhiSortBy="releaseDate"><span jhiTranslate="arTeMiSApp.exercise.releaseDate">Release Date</span>&nbsp;<span class="fa fa-sort"></span></th>
-                <th jhiSortBy="dueDate"><span jhiTranslate="arTeMiSApp.exercise.dueDate">Due Date</span>&nbsp;<span class="fa fa-sort"></span></th>
-                <th jhiSortBy="maxScore"><span jhiTranslate="arTeMiSApp.exercise.maxScore">Max Score</span>&nbsp;<span class="fa fa-sort"></span></th>
-                <th><span jhiTranslate="arTeMiSApp.modelingExercise.diagramType">Diagram Type</span></th>
-                <th></th>
-            </tr>
+                <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
+                    <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<span class="fa fa-sort"></span></th>
+                    <th jhiSortBy="title"><span jhiTranslate="arTeMiSApp.exercise.title">Title</span>&nbsp;<span class="fa fa-sort"></span></th>
+                    <th jhiSortBy="releaseDate"><span jhiTranslate="arTeMiSApp.exercise.releaseDate">Release Date</span>&nbsp;<span class="fa fa-sort"></span></th>
+                    <th jhiSortBy="dueDate"><span jhiTranslate="arTeMiSApp.exercise.dueDate">Due Date</span>&nbsp;<span class="fa fa-sort"></span></th>
+                    <th jhiSortBy="maxScore"><span jhiTranslate="arTeMiSApp.exercise.maxScore">Max Score</span>&nbsp;<span class="fa fa-sort"></span></th>
+                    <th><span jhiTranslate="arTeMiSApp.modelingExercise.diagramType">Diagram Type</span></th>
+                    <th></th>
+                </tr>
             </thead>
             <tbody>
             <tr *ngFor="let modelingExercise of modelingExercises | sortBy: predicate: reverse ;trackBy: trackId">

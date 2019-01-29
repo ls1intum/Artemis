@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
@@ -59,7 +58,6 @@ public class FileUploadExerciseResource {
      */
     @PostMapping("/file-upload-exercises")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<FileUploadExercise> createFileUploadExercise(@RequestBody FileUploadExercise fileUploadExercise) throws URISyntaxException {
         log.debug("REST request to save FileUploadExercise : {}", fileUploadExercise);
         if (fileUploadExercise.getId() != null) {
@@ -92,7 +90,6 @@ public class FileUploadExerciseResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/file-upload-exercises")
-    @Timed
     public ResponseEntity<FileUploadExercise> updateFileUploadExercise(@RequestBody FileUploadExercise fileUploadExercise) throws URISyntaxException {
         log.debug("REST request to update FileUploadExercise : {}", fileUploadExercise);
         if (fileUploadExercise.getId() == null) {
@@ -122,7 +119,6 @@ public class FileUploadExerciseResource {
      */
     @GetMapping(value = "/courses/{courseId}/file-upload-exercises")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<List<FileUploadExercise>> getFileUploadExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
         Course course = courseService.findOne(courseId);
@@ -149,7 +145,6 @@ public class FileUploadExerciseResource {
      */
     @GetMapping("/file-upload-exercises/{id}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     @Transactional(readOnly = true)
     public ResponseEntity<FileUploadExercise> getFileUploadExercise(@PathVariable Long id) {
         log.debug("REST request to get FileUploadExercise : {}", id);
@@ -172,7 +167,6 @@ public class FileUploadExerciseResource {
      */
     @DeleteMapping("/file-upload-exercises/{id}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    @Timed
     public ResponseEntity<Void> deleteFileUploadExercise(@PathVariable Long id) {
         log.debug("REST request to delete FileUploadExercise : {}", id);
         Optional<FileUploadExercise> fileUploadExercise = fileUploadExerciseRepository.findById(id);

@@ -3,6 +3,7 @@ import { Course } from '../course';
 import { Participation } from '../participation';
 import { Moment } from 'moment';
 import { ExampleSubmission } from '../example-submission';
+import { TutorParticipation } from '../tutor-participation';
 
 export const enum DifficultyLevel {
     EASY = 'EASY',
@@ -47,6 +48,7 @@ export abstract class Exercise implements BaseEntity {
     public type: ExerciseType;
 
     public participations: Participation[];
+    public tutorParticipations: TutorParticipation[];
     public course: Course;
     public participationStatus: ParticipationStatus;
 

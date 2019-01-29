@@ -53,7 +53,7 @@
                     <span *ngIf="submission.result && submission.result.assessor">{{ submission.result.assessor.firstName }} {{ submission.result.assessor.lastName }} (lock)</span>
                 </td>
                 <td>
-                    <button *ngIf="(submission.optimal && !(submission.result && submission.result.assessor)) || (submission.result && submission.result.assessor && submission.result.assessor.id === accountId) || canOverrideAssessments"
+                    <button *ngIf="(submission.optimal && !(submission.result && submission.result.assessor)) || (submission.result && submission.result.assessor && submission.result.assessor.id === userId) || canOverrideAssessments"
                             routerLink="/apollon-diagrams/exercise/{{exercise.id}}/{{submission.id}}/tutor"
                             [queryParams]="{optimal: false}"
                             class="btn btn-outline-success btn-sm">

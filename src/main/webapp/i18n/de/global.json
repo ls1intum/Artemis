@@ -175,6 +175,9 @@
         "delete": {
             "title": "Löschen bestätigen"
         },
+        "reset": {
+            "title": "Zurücksetzen bestätigen"
+        },
         "cleanup": {
             "title": "Aufräumen bestätigen"
         },
