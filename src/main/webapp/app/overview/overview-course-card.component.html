@@ -10,7 +10,7 @@
     </div>
 
     <div class="card-footer text-muted" *ngFor="let nextExercise of nextRelevantExercises()"
-         (click)="startExercise(nexExercise)">
+         (click)="startExercise(nextExercise)">
         <h6>Next exercise:</h6>
         <h5>{{nextExercise.title}}</h5>
         <h6>{{nextExercise.dueDate | date:'dd/MM/yy'}}</h6>

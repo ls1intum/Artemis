@@ -1,11 +1,16 @@
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
 import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise';
+import { JhiAlertService } from 'ng-jhipster';
 import { QuizExercise } from 'app/entities/quiz-exercise';
-import { InitializationState, Participation } from 'app/entities/participation';
+import { InitializationState, Participation, ParticipationService } from 'app/entities/participation';
 import * as moment from 'moment';
 import { Moment } from 'moment';
-import { Course } from 'app/entities/course';
-import { AccountService } from 'app/core';
+import { Course, CourseExerciseService } from 'app/entities/course';
+import { AccountService, WindowRef } from 'app/core';
+import { Router } from '@angular/router';
+import { SERVER_API_URL } from 'app/app.constants';
+import { HttpClient } from '@angular/common/http';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
 
 export interface ExerciseIcon {
     faIcon: string;
@@ -26,11 +31,25 @@ export class CourseExerciseRowComponent implements OnInit {
     @HostBinding('class') classes = 'exercise-row';
     @Input() exercise: Exercise;
     @Input() course: Course;
+    public repositoryPassword: string;
+    public wasCopied: boolean = false;
 
-    constructor(private accountService: AccountService) {
+    constructor(private accountService: AccountService,
+                private jhiAlertService: JhiAlertService,
+                private $window: WindowRef,
+                private participationService: ParticipationService,
+                private httpClient: HttpClient,
+                private router: Router,
+                private courseExerciseService: CourseExerciseService) {
     }
 
     ngOnInit() {
+        this.accountService.identity().then(user => {
+            // Only load password if current user login starts with 'edx'
+            if (user && user.login && user.login.startsWith('edx')) {
+                this.getRepositoryPassword();
+            }
+        });
         this.exercise.participationStatus = this.participationStatus(this.exercise);
         if (this.exercise.participations.length > 0) {
             this.exercise.participations[0].exercise = this.exercise;
@@ -57,12 +76,29 @@ export class CourseExerciseRowComponent implements OnInit {
         }
     }
 
+    getRepositoryPassword() {
+        this.httpClient.get(`${SERVER_API_URL}/api/account/password`).subscribe(res => {
+            const password = res['password'];
+            if (password) {
+                this.repositoryPassword = password;
+            }
+        });
+    }
+
     getUrgentClass(dueDate: Moment): string {
         if (Math.abs(dueDate.diff(moment(), 'days')) < 7) {
             return 'text-danger';
         } else {
             return;
         }
+    }
+
+    asProgrammingExercise(exercise: Exercise): ProgrammingExercise {
+        return exercise as ProgrammingExercise;
+    }
+
+    asQuizExercise(exercise: Exercise): QuizExercise {
+        return exercise as QuizExercise;
     }
 
     get exerciseIcon(): ExerciseIcon {
@@ -96,12 +132,33 @@ export class CourseExerciseRowComponent implements OnInit {
         }
     }
 
+    buildSourceTreeUrl(cloneUrl: string): string {
+        return 'sourcetree://cloneRepo?type=stash&cloneUrl=' + encodeURI(cloneUrl) + '&baseWebUrl=https://repobruegge.in.tum.de';
+    }
+
+    goToBuildPlan(participation: Participation) {
+        this.participationService.buildPlanWebUrl(participation.id).subscribe(res => {
+            this.$window.nativeWindow.open(res.url);
+        });
+    }
+
     isActiveQuiz(exercise: Exercise) {
         return (
             exercise.participationStatus === ParticipationStatus.QUIZ_UNINITIALIZED ||
             exercise.participationStatus === ParticipationStatus.QUIZ_ACTIVE ||
             exercise.participationStatus === ParticipationStatus.QUIZ_SUBMITTED
         );
+    }
+
+    onCopyFailure() {
+        console.log('copy fail!');
+    }
+
+    onCopySuccess() {
+        this.wasCopied = true;
+        setTimeout(() => {
+            this.wasCopied = false;
+        }, 3000);
     }
 
     participationStatus(exercise: Exercise): ParticipationStatus {
@@ -157,6 +214,51 @@ export class CourseExerciseRowComponent implements OnInit {
 
     hasResults(participation: Participation): boolean {
         return participation.results && participation.results.length > 0;
+    }
+
+    startExercise(exercise: Exercise) {
+        exercise.loading = true;
+
+        if (exercise.type === ExerciseType.QUIZ) {
+            // Start the quiz
+            return this.router.navigate(['/quiz', exercise.id]);
+        }
+
+        this.courseExerciseService
+            .startExercise(this.course.id, exercise.id)
+            .finally(() => (exercise.loading = false))
+            .subscribe(
+                participation => {
+                    if (participation) {
+                        exercise.participations = [participation];
+                        exercise.participationStatus = this.participationStatus(exercise);
+                    }
+                    if (exercise.type === ExerciseType.PROGRAMMING) {
+                        this.jhiAlertService.success('arTeMiSApp.exercise.personalRepository');
+                    }
+                },
+                error => {
+                    console.log('Error: ' + error);
+                    this.jhiAlertService.warning('arTeMiSApp.exercise.startError');
+                }
+            );
+    }
+
+    resumeExercise(exercise: Exercise) {
+        exercise.loading = true;
+        this.courseExerciseService
+            .resumeExercise(this.course.id, exercise.id)
+            .finally(() => (exercise.loading = false))
+            .subscribe(
+                () => true,
+                error => {
+                    console.log('Error: ' + error.status + ' ' + error.message);
+                }
+            );
+    }
+
+    startPractice(exercise: Exercise) {
+        return this.router.navigate(['/quiz', exercise.id, 'practice']);
     }
 
 }

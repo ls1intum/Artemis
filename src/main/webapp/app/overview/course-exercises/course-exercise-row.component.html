@@ -4,7 +4,7 @@
                  ngbTooltip="{{exerciseIcon.tooltip}}"></fa-icon>
     </div>
     <div class="col-md col-6">
-        <a [routerLink]="[exercise.id]">{{exercise.title}}</a>
+        <a [routerLink]="[exercise.id]" class="exercise-link">{{exercise.title}}</a>
         <span class="d-none d-sm-inline" *ngIf="exercise.isAtLeastTutor">
             <a class="text-primary" routerLink="/course/{{course.id}}/exercise/{{exercise.id}}/dashboard"
                routerLinkActive="active">
@@ -19,10 +19,10 @@
                 <i class="fa fa-pie-chart fa-fw"></i></a>
         </span>
 
-        <span class="badge badge-warning" *ngIf="!exercise.visibleToStudents" placement="right"
+        <span class="badge badge-warning" *ngIf="!asQuizExercise(exercise).visibleToStudents" placement="right"
               ngbTooltip="Only visible to teaching assistants and instructors. Release date: {{exercise.releaseDate | date:'MMM d, y H:mm'}}">
                     Not Released</span>
-        <span class="badge badge-success" [hidden]="!exercise.isActiveQuiz">Live</span>
+        <span class="badge badge-success" [hidden]="!asQuizExercise(exercise).isActiveQuiz">Live</span>
     </div>
     <div class="col-md-auto col-6" [ngClass]="getUrgentClass(exercise.dueDate)">{{exercise.dueDate |
         date:'dd/MM/yy'}}
@@ -76,25 +76,25 @@
                 *ngIf="exercise.type === PROGRAMMING && exercise.participations && exercise.participations.length > 0">
                 <a routerLink="/editor/{{exercise.participations[0].id}}" routerLinkActive="active"
                    class="btn btn-primary btn-sm btn-block" id="btn-online-editor"
-                   *ngIf="exercise.allowOnlineEditor">
+                   *ngIf="asProgrammingExercise(exercise).allowOnlineEditor">
                     <i class="fa fa-folder-open fa-fw"></i>&nbsp;<span
                     class="d-none d-md-inline">Open exercise</span></a>
                 <ng-template #popContent>
                     <p>Clone your personal repository for this exercise:</p>
-                    <pre style="max-width: 100%;">{{exercise.participations[0].repositoryUrl}}</pre>
-                    <p *ngIf="repositoryPassword">Your password is: <code
-                        class="password">{{repositoryPassword}}</code>
+                    <pre style="max-width: 100%;" ngxClipboard [cbContent]="exercise.participations[0].repositoryUrl"
+                         (cbOnSuccess)="onCopySuccess()" (cbOnError)="onCopyFailure()">{{exercise.participations[0].repositoryUrl}}</pre>
+                    <p *ngIf="repositoryPassword">Your password is: <code class="password">{{repositoryPassword}}</code>
                         (hover to show)</p>
-                    <button class="btn btn-primary btn-sm mr-2" type="button" ngxClipboard
-                            [cbContent]="exercise.participations[0].repositoryUrl"
-                            (cbOnSuccess)="onCopySuccess()"
-                            (cbOnError)="onCopyFailure()" [class.btn-success]="wasCopied">Copy URL
+                    <button ngxClipboard [cbContent]="exercise.participations[0].repositoryUrl"
+                            (cbOnSuccess)="onCopySuccess()" (cbOnError)="onCopyFailure()"
+                            [class.btn-success]="wasCopied"
+                            class="btn btn-primary btn-sm mr-2" type="button" style="min-width: 90px;">{{ wasCopied ?
+                        "Copied URL" : "Copy URL"}}
                     </button>
                     <a class="btn btn-primary btn-sm mr-2"
                        [href]="buildSourceTreeUrl(exercise.participations[0].repositoryUrl) | safeUrl">Clone in
                         SourceTree</a>
-                    <a href="http://www.sourcetreeapp.com" target="_blank">Atlassian SourceTree</a> is the free
-                    Git
+                    <a href="http://www.sourcetreeapp.com" target="_blank">Atlassian SourceTree</a> is the free Git
                     client for Windows or Mac.
                 </ng-template>
                 <button placement="left"
@@ -105,7 +105,7 @@
                     class="d-none d-md-inline">Clone repository</span>
                 </button>
                 <button class="btn btn-primary btn-sm btn-block" id="btn-build-plan"
-                        *ngIf="exercise.publishBuildPlanUrl"
+                        *ngIf="asProgrammingExercise(exercise).publishBuildPlanUrl"
                         (click)="goToBuildPlan(exercise.participations[0])"><i
                     class="fa fa-external-link fa-fw"></i>
                     &nbsp;<span class="d-none d-md-inline">Go to build plan</span></button>
@@ -137,7 +137,7 @@
         </div>
         <div class="btn-group flex-btn-group-container" *ngIf="exercise.type === QUIZ">
             <button class="btn btn-warning btn-sm flex-fill"
-                    *ngIf="exercise.isPracticeModeAvailable"
+                    *ngIf="asQuizExercise(exercise).isPracticeModeAvailable"
                     [routerLink]="['/quiz', exercise.id, 'practice']"
                     (click)="startPractice(exercise)"
                     [disabled]="exercise.loading">

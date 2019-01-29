@@ -14,7 +14,7 @@ export class CourseGradeBookComponent implements OnInit {
     private courseId: number;
     private subscription: Subscription;
     private course: Course;
-    private exercises: Exercise[];
+    public exercises: Exercise[];
 
     constructor(
         private courseService: CourseService,

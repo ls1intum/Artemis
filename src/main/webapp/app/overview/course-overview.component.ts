@@ -12,7 +12,7 @@ import { HttpResponse } from '@angular/common/http';
 export class CourseOverviewComponent implements OnInit {
     private courseId: number;
     private subscription: Subscription;
-    private course: Course;
+    public course: Course;
 
     constructor(
         private courseService: CourseService,

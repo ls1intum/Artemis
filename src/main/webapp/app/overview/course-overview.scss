@@ -39,6 +39,9 @@ Course Info Bar
             border-left: 1px solid $light-border-color;
             border-right: 1px solid $light-border-color;
             background-color: $light-background-color;
+            .exercise-link {
+                color: $gray-900;
+            }
         }
     }
     &:last-of-type {

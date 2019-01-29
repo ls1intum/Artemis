@@ -8,7 +8,7 @@ import { HttpResponse } from '@angular/common/http';
     styles: []
 })
 export class OverviewComponent implements OnInit {
-    private courses: Course[];
+    public courses: Course[];
 
     constructor(private courseService: CourseService, private  courseScoreCalculationService: CourseScoreCalculationService) {
         this.courseService.findAll().subscribe(

@@ -11,13 +11,13 @@ import * as moment from 'moment';
     styleUrls: ['../course-overview.scss']
 })
 export class CourseExercisesComponent implements OnInit {
-    private readonly DUE_DATE_ASC = 1;
-    private readonly DUE_DATE_DESC = -1;
+    public readonly DUE_DATE_ASC = 1;
+    public readonly DUE_DATE_DESC = -1;
     private courseId: number;
     private subscription: Subscription;
-    private course: Course;
-    private weeklyIndexKeys: string[];
-    private weeklyExercisesGrouped: object;
+    public course: Course;
+    public weeklyIndexKeys: string[];
+    public weeklyExercisesGrouped: object;
 
     constructor(
         private courseService: CourseService,
@@ -41,7 +41,7 @@ export class CourseExercisesComponent implements OnInit {
         this.groupExercises(this.DUE_DATE_DESC);
     }
 
-    private groupExercises(selectedOrder: number): void {
+    public groupExercises(selectedOrder: number): void {
         this.weeklyExercisesGrouped = {};
         this.weeklyIndexKeys = [];
         const groupedExercises = {};
