@@ -418,7 +418,10 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                 this.apollonEditor &&
                 this.apollonEditor.getState().entities.allIds.length > 0 &&
                 JSON.stringify(this.apollonEditor.getState()) !== '') ||
-            (this.submission && this.submission.model && this.submission.model !== JSON.stringify(this.apollonEditor.getState()))
+            (this.submission &&
+                this.submission.model &&
+                JSON.parse(this.submission.model).version === this.apollonEditor.getState().version &&
+                this.submission.model !== JSON.stringify(this.apollonEditor.getState()))
         ) {
             return false;
         }
