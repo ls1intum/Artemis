@@ -149,7 +149,8 @@
                 "misleadingCorrectMapping": "Question {{index}}: You have defined at least one correct mapping (or group of correct mappings), that when used, makes it impossible to answer the question correctly.",
                 "saQuestionEverySpotHasASolution": "Question {{index}}: At least one spot is missing a solution.",
                 "saQuestionEveryMappedSolutionHasASpot": "Question {{index}}: At least one spot is missing for a correct mapping.",
-                "saQuestionUnsolvable": "Question {{index}}: The question cannot be answered correctly."
+                "saQuestionUnsolvable": "Question {{index}}: The question cannot be answered correctly.",
+                "saQuestionSolutionHasNoValue": "Question {{index}}: At least one solution has no value."
             },
             "scoringType": {
                 "all_or_nothing": "All or Nothing",
