@@ -1,5 +1,5 @@
 # Artemis: Automated Assessment Management System 
-This application was generated using JHipster 5.8.0, you can find documentation and help at [http://www.jhipster.tech/documentation-archive/v5.8.0](http://www.jhipster.tech/documentation-archive/v5.8.0).
+This application was generated using JHipster 5.8.1, you can find documentation and help at [http://www.jhipster.tech/documentation-archive/v5.8.1](http://www.jhipster.tech/documentation-archive/v5.8.1).
 
 **Current version:** 2.3.3
 
@@ -7,7 +7,7 @@ This application was generated using JHipster 5.8.0, you can find documentation 
 Artemis supports the following exercises:
 1. **Programming exercises** with version control and automatic assessment with test cases and continuous integration
 2. **Quiz exercises** with multiple choice questions and drag and drop questions 
-3. **Modeling exercises** with semi-automatic assessment using machine learning concepts (beta)
+3. **Modeling exercises** with semi-automatic assessment using machine learning concepts
 4. **Text exercises** with manual assessment (beta)
 
 All these exercises are supposed to be run either live in-class with instant feedback or as homework. Students can submit their solutions multiple times within the due date and use the (semi-)automatically provided feedback to improve their solution.
