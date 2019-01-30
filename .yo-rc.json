@@ -4,8 +4,8 @@
       "packageName": "de.tum.in.www1.artemis",
       "nativeLanguage": "en"
     },
-    "jhipsterVersion": "5.7.0",
-    "baseName": "ArTEMiS",
+    "jhipsterVersion": "5.8.1",
+    "baseName": "Artemis",
     "packageName": "de.tum.in.www1.artemis",
     "packageFolder": "de/tum/in/www1/artemis",
     "serverPort": "8080",
@@ -26,7 +26,8 @@
     "clientPackageManager": "yarn",
     "applicationType": "monolith",
     "testFrameworks": [
-      "gatling"
+      "gatling",
+      "protractor"
     ],
     "jhiPrefix": "jhi",
     "otherModules": [],

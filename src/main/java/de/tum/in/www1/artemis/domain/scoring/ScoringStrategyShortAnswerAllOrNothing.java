@@ -17,45 +17,11 @@ public class ScoringStrategyShortAnswerAllOrNothing implements ScoringStrategy {
         }
         if (submittedAnswer instanceof ShortAnswerSubmittedAnswer && question instanceof ShortAnswerQuestion) {
             ShortAnswerSubmittedAnswer saAnswer = (ShortAnswerSubmittedAnswer) submittedAnswer;
-            /*
-            for(ShortAnswerSubmittedText submittedText : saAnswer.getSubmittedTexts()){
-                submittedText.setSubmittedAnswer(saAnswer);
-            } */
             ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) question;
-            int correctSolutions = 0;
-            Set<ShortAnswerSolution> solutionsAlreadyUsed = new HashSet<>();
 
-            // iterate through each spot and compare its correct solutions with the submitted texts
-            for (ShortAnswerSpot spot : saQuestion.getSpots()) {
-                Set<ShortAnswerSolution> solutionsForSpot = saQuestion.getCorrectSolutionForSpot(spot);
-                for(ShortAnswerSubmittedText text : saAnswer.getSubmittedTexts()){
-                    if(text.getSpot().equals(spot)){
-                        for(ShortAnswerSolution solution : solutionsForSpot){
-                            /*submittedText answers can be the same (more than once)
-                            when spots do not exist more than once */
-                            if(text.isSubmittedTextCorrect(text.getText(), solution.getText())
-                                && (!saAnswer.submittedTextMoreThanOnceInSubmittedAnswer(text) || !saQuestion.spotMoreThanOnceInMapping(spot))
-                                ){
-                                text.setIsCorrect(true);
-                                correctSolutions++;
-                                break;
-                            }
-                            /*submittedText answers cannot be the same (more than once) */
-                            if(text.isSubmittedTextCorrect(text.getText(), solution.getText())
-                                && saAnswer.submittedTextMoreThanOnceInSubmittedAnswer(text)
-                                && saQuestion.spotMoreThanOnceInMapping(spot)
-                                && saQuestion.solutionMoreThanOnceInMapping(solution)
-                                && !solutionsAlreadyUsed.contains(solution)
-                                ){
-                                solutionsAlreadyUsed.add(solution);
-                                text.setIsCorrect(true);
-                                correctSolutions++;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
+            double[] values = ScoringStrategyShortAnswerUtil.getCorrectAndIncorrectSolutionsrShortAnswerQuestion(saQuestion,saAnswer);
+            double correctSolutions = values[0];
+
             if(correctSolutions == saQuestion.getSpots().size()){
                 return saQuestion.getScore();
             } else {

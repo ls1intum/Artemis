@@ -507,6 +507,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                     //&& this.shortAnswerQuestionUtil.validateNoMisleadingCorrectSAMapping(saQuestion)
                     && this.shortAnswerQuestionUtil.everySpotHasASolution(saQuestion.correctMappings, saQuestion.spots)
                     && this.shortAnswerQuestionUtil.everyMappedSolutionHasASpot(saQuestion.correctMappings)
+                    && saQuestion.solutions.filter(solution => solution.text.trim() === '').length === 0
                 );
             } else {
                 console.log('Unknown question type: ' + question);
@@ -631,6 +632,14 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                         translateValues: { index: index + 1 }
                     });
                 }
+                if(!(saQuestion.solutions.filter(solution => solution.text.trim() === '').length === 0)){
+                    reasons.push({
+                        translateKey: 'arTeMiSApp.quizExercise.invalidReasons.saQuestionSolutionHasNoValue',
+                        translateValues: { index: index + 1 }
+                    });
+                }
+
+
             }
         }, this);
         return reasons;

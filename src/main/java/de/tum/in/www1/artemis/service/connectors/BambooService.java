@@ -826,13 +826,14 @@ public class BambooService implements ContinuousIntegrationService {
             throw new BambooException("HttpError while retrieving build artifact");
         }
 
-        if(response.getHeaders().containsKey("Content-Type") && response.getHeaders().get("Content-Type").get(0).equals("text/html")) {
+        //Note: Content-Type might contain additional elements such as the UTF-8 encoding, therefore we now use contains instead of equals
+        if(response.getHeaders().containsKey("Content-Type") && response.getHeaders().get("Content-Type").get(0).contains("text/html")) {
             // This is an "Index of" HTML page.
             String html = new String(response.getBody(), StandardCharsets.UTF_8);
-            Pattern p = Pattern.compile("href=\"(.*?)\"", Pattern.CASE_INSENSITIVE);
-            Matcher m = p.matcher(html);
-            if (m.find()) {
-                url = m.group(1);
+            Pattern pattern = Pattern.compile("href=\"(.*?)\"", Pattern.CASE_INSENSITIVE);
+            Matcher matcher = pattern.matcher(html);
+            if (matcher.find()) {
+                url = matcher.group(1);
                 // Recursively walk through the responses until we get the actual artifact.
                 return retrieveArtifactPage(BAMBOO_SERVER_URL + url);
             } else {

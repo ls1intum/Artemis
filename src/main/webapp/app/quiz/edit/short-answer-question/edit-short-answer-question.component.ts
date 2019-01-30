@@ -407,16 +407,15 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     /**
      * Handles drag-available UI
      */
-    drag(): void {
-        this.dropAllowed = true;
-    }
-
+    // drag(): void {
+    //     this.dropAllowed = true;
+    // }
     /**
      * Handles drag-available UI
      */
-    drop(): void {
+    /*drop(): void {
         this.dropAllowed = false;
-    }
+    }*/
 
     /**
      * @function mouseMove
@@ -425,132 +424,132 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * - current solution spot (only while dragging)
      * @param e {object} Mouse move event
      */
-    mouseMove(e: any): void {
-        // Update mouse x and y value
-        const event: MouseEvent = e || window.event; // Moz || IE
-        const jQueryBackgroundElement = $('.click-layer-question-' + this.questionIndex);
-        const jQueryBackgroundOffset = jQueryBackgroundElement.offset();
-        const backgroundWidth = jQueryBackgroundElement.width();
-        const backgroundHeight = jQueryBackgroundElement.height();
-        if (event.pageX) {
-            // Moz
-            this.mouse.x = event.pageX - jQueryBackgroundOffset.left;
-            this.mouse.y = event.pageY - jQueryBackgroundOffset.top;
-        } else if (event.clientX) {
-            // IE
-            this.mouse.x = event.clientX - jQueryBackgroundOffset.left;
-            this.mouse.y = event.clientY - jQueryBackgroundOffset.top;
-        }
-        this.mouse.x = Math.min(Math.max(0, this.mouse.x), backgroundWidth);
-        this.mouse.y = Math.min(Math.max(0, this.mouse.y), backgroundHeight);
-
-        if (this.draggingState !== DragState.NONE) {
-            switch (this.draggingState) {
-                case DragState.CREATE:
-                case DragState.RESIZE_X:
-                    // Update current drop location's position and size (only x-axis)
-                    this.currentSpot.posX = Math.round((200 * Math.min(this.mouse.x, this.mouse.startX)) / backgroundWidth);
-                    this.currentSpot.width = Math.round((200 * Math.abs(this.mouse.x - this.mouse.startX)) / backgroundWidth);
-                    break;
-                case DragState.MOVE:
-                    // update current drop location's position
-                    this.currentSpot.posX = Math.round(
-                        Math.min(Math.max(0, (200 * (this.mouse.x + this.mouse.offsetX)) / backgroundWidth), 200 - this.currentSpot.width)
-                    );
-                    this.currentSpot.posY = Math.round(
-                        Math.min(
-                            Math.max(0, (200 * (this.mouse.y + this.mouse.offsetY)) / backgroundHeight),
-                            200 - /*this.spot.height*/ 50 //TODO: Change to actual spot height of SaSolutionsSpots (fix value)
-                        )
-                    );
-                    break;
-            }
-        }
-    }
+    // mouseMove(e: any): void {
+    //     // Update mouse x and y value
+    //     const event: MouseEvent = e || window.event; // Moz || IE
+    //     const jQueryBackgroundElement = $('.click-layer-question-' + this.questionIndex);
+    //     const jQueryBackgroundOffset = jQueryBackgroundElement.offset();
+    //     const backgroundWidth = jQueryBackgroundElement.width();
+    //     const backgroundHeight = jQueryBackgroundElement.height();
+    //     if (event.pageX) {
+    //         // Moz
+    //         this.mouse.x = event.pageX - jQueryBackgroundOffset.left;
+    //         this.mouse.y = event.pageY - jQueryBackgroundOffset.top;
+    //     } else if (event.clientX) {
+    //         // IE
+    //         this.mouse.x = event.clientX - jQueryBackgroundOffset.left;
+    //         this.mouse.y = event.clientY - jQueryBackgroundOffset.top;
+    //     }
+    //     this.mouse.x = Math.min(Math.max(0, this.mouse.x), backgroundWidth);
+    //     this.mouse.y = Math.min(Math.max(0, this.mouse.y), backgroundHeight);
+    //
+    //     if (this.draggingState !== DragState.NONE) {
+    //         switch (this.draggingState) {
+    //             case DragState.CREATE:
+    //             case DragState.RESIZE_X:
+    //                 // Update current drop location's position and size (only x-axis)
+    //                 this.currentSpot.posX = Math.round((200 * Math.min(this.mouse.x, this.mouse.startX)) / backgroundWidth);
+    //                 this.currentSpot.width = Math.round((200 * Math.abs(this.mouse.x - this.mouse.startX)) / backgroundWidth);
+    //                 break;
+    //             case DragState.MOVE:
+    //                 // update current drop location's position
+    //                 this.currentSpot.posX = Math.round(
+    //                     Math.min(Math.max(0, (200 * (this.mouse.x + this.mouse.offsetX)) / backgroundWidth), 200 - this.currentSpot.width)
+    //                 );
+    //                 this.currentSpot.posY = Math.round(
+    //                     Math.min(
+    //                         Math.max(0, (200 * (this.mouse.y + this.mouse.offsetY)) / backgroundHeight),
+    //                         200 - /*this.spot.height*/ 50 //TODO: Change to actual spot height of SaSolutionsSpots (fix value)
+    //                     )
+    //                 );
+    //                 break;
+    //         }
+    //     }
+    // }
 
     /**
      * @function mouseUp
      * @desc React to mouseup events to finish dragging operations
      */
-    mouseUp(): void {
-        if (this.draggingState !== DragState.NONE) {
-            switch (this.draggingState) {
-                case DragState.CREATE:
-                    const jQueryBackgroundElement = $('.click-layer-question-' + this.questionIndex);
-                    const backgroundWidth = jQueryBackgroundElement.width();
-                    const backgroundHeight = jQueryBackgroundElement.height();
-                    if ((this.currentSpot.width / 200) * backgroundWidth < 14) {
-                        // Remove drop Location if too small (assume it was an accidental click/drag),
-                        this.deleteSpot(this.currentSpot);
-                    } else {
-                        // Notify parent of new drop location
-                        this.questionUpdated.emit();
-                    }
-                    break;
-                case DragState.MOVE:
-                case DragState.RESIZE_X:
-                    // Notify parent of changed drop location
-                    this.questionUpdated.emit();
-                    break;
-            }
-        }
-        // Update state
-        this.draggingState = DragState.NONE;
-        this.currentSpot = null;
-    }
+    // mouseUp(): void {
+    //     if (this.draggingState !== DragState.NONE) {
+    //         switch (this.draggingState) {
+    //             case DragState.CREATE:
+    //                 const jQueryBackgroundElement = $('.click-layer-question-' + this.questionIndex);
+    //                 const backgroundWidth = jQueryBackgroundElement.width();
+    //                 const backgroundHeight = jQueryBackgroundElement.height();
+    //                 if ((this.currentSpot.width / 200) * backgroundWidth < 14) {
+    //                     // Remove drop Location if too small (assume it was an accidental click/drag),
+    //                     this.deleteSpot(this.currentSpot);
+    //                 } else {
+    //                     // Notify parent of new drop location
+    //                     this.questionUpdated.emit();
+    //                 }
+    //                 break;
+    //             case DragState.MOVE:
+    //             case DragState.RESIZE_X:
+    //                 // Notify parent of changed drop location
+    //                 this.questionUpdated.emit();
+    //                 break;
+    //         }
+    //     }
+    //     // Update state
+    //     this.draggingState = DragState.NONE;
+    //     this.currentSpot = null;
+    // }
 
     //FDE: Maybe create DropLocation and and afterwards create Spot
     /**
      * @function backgroundMouseDown
      * @desc React to mouse down events on the background to start dragging
      */
-    backgroundMouseDown(): void {
-        let number = 0;
-        for(let spot of this.question.spots){
-            let dropLocation = new DropLocation();
-            dropLocation.height = 50;
-            dropLocation.posX = 125;
-            dropLocation.posY = 125;
-            dropLocation.width = 50;
-            dropLocation.id = number;
-            this.dropLocationsForSpots.push(dropLocation);
-            number++;
-        }
-    }
+    // backgroundMouseDown(): void {
+    //     let number = 0;
+    //     for(let spot of this.question.spots){
+    //         let dropLocation = new DropLocation();
+    //         dropLocation.height = 50;
+    //         dropLocation.posX = 125;
+    //         dropLocation.posY = 125;
+    //         dropLocation.width = 50;
+    //         dropLocation.id = number;
+    //         this.dropLocationsForSpots.push(dropLocation);
+    //         number++;
+    //     }
+    // }
 
     /**
      * @function spotMouseDown
      * @desc React to mousedown events on a spot to start moving it
      * @param spot {object} the spot to move
      */
-    spotMouseDown(spot: ShortAnswerSpot): void {
-        if (this.draggingState === DragState.NONE) {
-            const jQueryBackgroundElement = $('.click-layer-question-' + this.questionIndex);
-            const backgroundWidth = jQueryBackgroundElement.width();
-            const backgroundHeight = jQueryBackgroundElement.height();
-
-            const dropLocationX = (spot.posX / 200) * backgroundWidth;
-            const dropLocationY = (spot.posY / 200) * backgroundHeight;
-
-            // Save offset of mouse in drop location
-            this.mouse.offsetX = dropLocationX - this.mouse.x;
-            this.mouse.offsetY = dropLocationY - this.mouse.y;
-
-            // Update state
-            this.currentSpot = spot;
-            this.draggingState = DragState.MOVE;
-        }
-    }
+    // spotMouseDown(spot: ShortAnswerSpot): void {
+    //     if (this.draggingState === DragState.NONE) {
+    //         const jQueryBackgroundElement = $('.click-layer-question-' + this.questionIndex);
+    //         const backgroundWidth = jQueryBackgroundElement.width();
+    //         const backgroundHeight = jQueryBackgroundElement.height();
+    //
+    //         const dropLocationX = (spot.posX / 200) * backgroundWidth;
+    //         const dropLocationY = (spot.posY / 200) * backgroundHeight;
+    //
+    //         // Save offset of mouse in drop location
+    //         this.mouse.offsetX = dropLocationX - this.mouse.x;
+    //         this.mouse.offsetY = dropLocationY - this.mouse.y;
+    //
+    //         // Update state
+    //         this.currentSpot = spot;
+    //         this.draggingState = DragState.MOVE;
+    //     }
+    // }
 
     /**
      * @function deleteSpot
      * @desc Delete the given spot
      * @param spotToDelete {object} the spot to delete
      */
-    deleteSpot(spotToDelete: ShortAnswerSpot): void {
-        this.question.spots = this.question.spots.filter(spot => spot !== spotToDelete);
-        this.deleteMappingsForSpot(spotToDelete);
-    }
+    // deleteSpot(spotToDelete: ShortAnswerSpot): void {
+    //     this.question.spots = this.question.spots.filter(spot => spot !== spotToDelete);
+    //     this.deleteMappingsForSpot(spotToDelete);
+    // }
 
     /**
      * @function resizeMouseDown
@@ -559,57 +558,57 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @param resizeLocationY {string} 'top', 'middle' or 'bottom'
      * @param resizeLocationX {string} 'left', 'center' or 'right'
      */
-    resizeMouseDown(spot: ShortAnswerSpot, resizeLocationX: string): void {
-        if (this.draggingState === DragState.NONE) {
-            const backgroundWidth = this.clickLayer.nativeElement.offsetWidth;
-            const backgroundHeight = this.clickLayer.nativeElement.offsetHeight;
-
-            // Update state
-            this.draggingState = DragState.RESIZE_X; // Default is both, will be overwritten later, if needed
-            this.currentSpot = spot;
-
-            switch (resizeLocationX) {
-                case 'left':
-                    // Use opposite end as startX
-                    this.mouse.startX = ((spot.posX + spot.width) / 200) * backgroundWidth;
-                    break;
-                case 'center':
-                    // Limit to y-axis, startX will not be used
-                    this.draggingState = DragState.RESIZE_Y; //Why resize_y and not resize_x
-                    break;
-                case 'right':
-                    // Use opposite end as startX
-                    this.mouse.startX = (spot.posX / 200) * backgroundWidth;
-                    break;
-            }
-        }
-    }
+    // resizeMouseDown(spot: ShortAnswerSpot, resizeLocationX: string): void {
+    //     if (this.draggingState === DragState.NONE) {
+    //         const backgroundWidth = this.clickLayer.nativeElement.offsetWidth;
+    //         const backgroundHeight = this.clickLayer.nativeElement.offsetHeight;
+    //
+    //         // Update state
+    //         this.draggingState = DragState.RESIZE_X; // Default is both, will be overwritten later, if needed
+    //         this.currentSpot = spot;
+    //
+    //         switch (resizeLocationX) {
+    //             case 'left':
+    //                 // Use opposite end as startX
+    //                 this.mouse.startX = ((spot.posX + spot.width) / 200) * backgroundWidth;
+    //                 break;
+    //             case 'center':
+    //                 // Limit to y-axis, startX will not be used
+    //                 this.draggingState = DragState.RESIZE_Y; //Why resize_y and not resize_x
+    //                 break;
+    //             case 'right':
+    //                 // Use opposite end as startX
+    //                 this.mouse.startX = (spot.posX / 200) * backgroundWidth;
+    //                 break;
+    //         }
+    //     }
+    // }
 
     /**
      * @function addTextSolution
      * @desc Add an empty Text solution to the question
      */
-    addTextSolution(): void {
-        // Add drag item to question
-        if (!this.question.solutions) {
-            this.question.solutions = [];
-        }
-        const solution = new ShortAnswerSolution();
-        solution.tempID = this.pseudoRandomLong();
-        solution.text = 'Text';
-        this.question.solutions.push(solution);
-        this.questionUpdated.emit();
-    }
+    // addTextSolution(): void {
+    //     // Add drag item to question
+    //     if (!this.question.solutions) {
+    //         this.question.solutions = [];
+    //     }
+    //     const solution = new ShortAnswerSolution();
+    //     solution.tempID = this.pseudoRandomLong();
+    //     solution.text = 'Text';
+    //     this.question.solutions.push(solution);
+    //     this.questionUpdated.emit();
+    // }
 
     /**
      * @function deleteSolution
      * @desc Delete the solution from the question
      * @param solutionToDelete {object} the solution that should be deleted
      */
-    deleteSolution(solutionToDelete: ShortAnswerSolution): void {
-        this.question.solutions = this.question.solutions.filter(solution => solution !== solutionToDelete);
-        this.deleteMappingsForSolution(solutionToDelete);
-    }
+    // deleteSolution(solutionToDelete: ShortAnswerSolution): void {
+    //     this.question.solutions = this.question.solutions.filter(solution => solution !== solutionToDelete);
+    //     this.deleteMappingsForSolution(solutionToDelete);
+    // }
 
     /**
      * @function onDragDrop
@@ -617,38 +616,38 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @param spot {object} the spot involved
      * @param dragEvent {object} the solution involved (may be a copy at this point)
      */
-    onDragDrop(spot: ShortAnswerSpot, dragEvent: any): void {
-        let dragItem = dragEvent.dragData;
-        // Replace dragItem with original (because it may be a copy)
-        dragItem = this.question.solutions.find(originalDragItem =>
-            dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.id === dragItem.tempID
-        );
-
-        if (!dragItem) {
-            // Drag item was not found in question => do nothing
-            return;
-        }
-
-        if (!this.question.correctMappings) {
-            this.question.correctMappings = [];
-        }
-
-        // Check if this mapping already exists
-        if (
-            !this.question.correctMappings.some(
-                existingMapping =>
-                    this.shortAnswerQuestionUtil.isSameSpot(existingMapping.spot, spot) &&
-                    this.shortAnswerQuestionUtil.isSameSolution(existingMapping.solution, dragItem)
-            )
-        ) {
-            // Mapping doesn't exit yet => add this mapping
-            const saMapping = new ShortAnswerMapping(spot, dragItem);
-            this.question.correctMappings.push(saMapping);
-
-            // Notify parent of changes
-            this.questionUpdated.emit();
-        }
-    }
+    // onDragDrop(spot: ShortAnswerSpot, dragEvent: any): void {
+    //     let dragItem = dragEvent.dragData;
+    //     // Replace dragItem with original (because it may be a copy)
+    //     dragItem = this.question.solutions.find(originalDragItem =>
+    //         dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.id === dragItem.tempID
+    //     );
+    //
+    //     if (!dragItem) {
+    //         // Drag item was not found in question => do nothing
+    //         return;
+    //     }
+    //
+    //     if (!this.question.correctMappings) {
+    //         this.question.correctMappings = [];
+    //     }
+    //
+    //     // Check if this mapping already exists
+    //     if (
+    //         !this.question.correctMappings.some(
+    //             existingMapping =>
+    //                 this.shortAnswerQuestionUtil.isSameSpot(existingMapping.spot, spot) &&
+    //                 this.shortAnswerQuestionUtil.isSameSolution(existingMapping.solution, dragItem)
+    //         )
+    //     ) {
+    //         // Mapping doesn't exit yet => add this mapping
+    //         const saMapping = new ShortAnswerMapping(spot, dragItem);
+    //         this.question.correctMappings.push(saMapping);
+    //
+    //         // Notify parent of changes
+    //         this.questionUpdated.emit();
+    //     }
+    // }
 
     /**
      * @function getMappingIndex
@@ -656,27 +655,27 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @param mapping {object} the mapping we want to get an index for
      * @return {number} the index of the mapping (starting with 1), or 0 if unassigned
      */
-    getMappingIndex(mapping: ShortAnswerMapping): number {
-        const visitedSpots: ShortAnswerSpot[] = [];
-        // Save reference to this due to nested some calls
-        const that = this;
-        if (
-            this.question.correctMappings.some(function(correctMapping) {
-                if (
-                    !visitedSpots.some((spot: ShortAnswerSpot) => {
-                        return that.shortAnswerQuestionUtil.isSameSpot(spot, correctMapping.spot);
-                    })
-                ) {
-                    visitedSpots.push(correctMapping.spot);
-                }
-                return that.shortAnswerQuestionUtil.isSameSpot(correctMapping.spot, mapping.spot);
-            })
-        ) {
-            return visitedSpots.length;
-        } else {
-            return 0;
-        }
-    }
+    // getMappingIndex(mapping: ShortAnswerMapping): number {
+    //     const visitedSpots: ShortAnswerSpot[] = [];
+    //     // Save reference to this due to nested some calls
+    //     const that = this;
+    //     if (
+    //         this.question.correctMappings.some(function(correctMapping) {
+    //             if (
+    //                 !visitedSpots.some((spot: ShortAnswerSpot) => {
+    //                     return that.shortAnswerQuestionUtil.isSameSpot(spot, correctMapping.spot);
+    //                 })
+    //             ) {
+    //                 visitedSpots.push(correctMapping.spot);
+    //             }
+    //             return that.shortAnswerQuestionUtil.isSameSpot(correctMapping.spot, mapping.spot);
+    //         })
+    //     ) {
+    //         return visitedSpots.length;
+    //     } else {
+    //         return 0;
+    //     }
+    // }
 
     /**
      * @function getMappingsForSpot
@@ -684,12 +683,12 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @param spot {object} the spot for which we want to get all mappings
      * @return {Array} all mappings that belong to the given spot
      */
-    getMappingsForSpot(spot: ShortAnswerSpot): ShortAnswerMapping[] {
+    /*getMappingsForSpot(spot: ShortAnswerSpot): ShortAnswerMapping[] {
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
         return this.question.correctMappings.filter(mapping => this.shortAnswerQuestionUtil.isSameSpot(mapping.spot, spot));
-    }
+    }*/
 
     /**
      * @function getMappingsForSolution
@@ -697,73 +696,76 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @param solution {object} the solution for which we want to get all mappings
      * @return {Array} all mappings that belong to the given solution
      */
-    getMappingsForSolution(solution: ShortAnswerSolution): ShortAnswerMapping[] {
-        if (!this.question.correctMappings) {
-            this.question.correctMappings = [];
-        }
-        return (
-            this.question.correctMappings
-                .filter(mapping => this.shortAnswerQuestionUtil.isSameSolution(mapping.solution, solution))
-                /** Moved the sorting from the template to the function call*/
-                .sort((m1, m2) => this.getMappingIndex(m1) - this.getMappingIndex(m2))
-        );
-    }
+    // getMappingsForSolution(solution: ShortAnswerSolution): ShortAnswerMapping[] {
+    //     if (!this.question.correctMappings) {
+    //         this.question.correctMappings = [];
+    //     }
+    //     return (
+    //         this.question.correctMappings
+    //             .filter(mapping => this.shortAnswerQuestionUtil.isSameSolution(mapping.solution, solution))
+    //             /** Moved the sorting from the template to the function call*/
+    //             .sort((m1, m2) => this.getMappingIndex(m1) - this.getMappingIndex(m2))
+    //     );
+    // }
 
     /**
      * @function deleteMappingsForSpot
      * @desc Delete all mappings for the given spot
      * @param spot {object} the spot for which we want to delete all mappings
      */
-    deleteMappingsForSpot(spot: ShortAnswerSpot): void {
+    /*deleteMappingsForSpot(spot: ShortAnswerSpot): void {
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
         this.question.correctMappings = this.question.correctMappings.filter(
             mapping => !this.shortAnswerQuestionUtil.isSameSpot(mapping.spot, spot)
         );
-    }
+    }*/
 
     /**
      * @function deleteMappingsForSolution
      * @desc Delete all mappings for the given solution
      * @param solution {object} the solution for which we want to delete all mappings
      */
-    deleteMappingsForSolution(solution: ShortAnswerSolution): void {
+    /*deleteMappingsForSolution(solution: ShortAnswerSolution): void {
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
         this.question.correctMappings = this.question.correctMappings.filter(
             mapping => !this.shortAnswerQuestionUtil.isSameSolution(mapping.solution, solution)
         );
-    }
+    }*/
 
     /**
      * @function deleteMapping
      * @desc Delete the given mapping from the question
      * @param mappingToDelete {object} the mapping to delete
      */
-    deleteMapping(mappingToDelete: ShortAnswerMapping): void {
+    /*deleteMapping(mappingToDelete: ShortAnswerMapping): void {
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
         this.question.correctMappings = this.question.correctMappings.filter(mapping => mapping !== mappingToDelete);
-    }
+    }*/
 
+    /*
+    * Todo reevaluate
+    * */
     /**
      * @function moveUpQuestion
      * @desc Move this question one position up
      */
-    moveUpQuestion(): void {
+    /*moveUpQuestion(): void {
         this.questionMoveUp.emit();
-    }
+    }*/
 
     /**
      * @function moveDownQuestion
      * @desc Move this question one position down
      */
-    moveDownQuestion(): void {
+    /*moveDownQuestion(): void {
         this.questionMoveDown.emit();
-    }
+    }*/
 
     /**
      * @function deleteQuestion
@@ -777,26 +779,26 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @function resetQuestionTitle
      * @desc Resets the question title
      */
-    resetQuestionTitle(): void {
+    /*resetQuestionTitle(): void {
         this.question.title = this.backupQuestion.title;
-    }
+    }*/
 
     /**
      * @function resetQuestionText
      * @desc Resets the question text
      */
-    resetQuestionText(): void {
+    /*resetQuestionText(): void {
         this.question.text = this.backupQuestion.text;
         this.question.explanation = this.backupQuestion.explanation;
         this.question.hint = this.backupQuestion.hint;
         this.setupQuestionEditor();
-    }
+    } */
 
     /**
      * @function resetQuestion
      * @desc Resets the whole question
      */
-    resetQuestion(): void {
+    /*resetQuestion(): void {
         this.question.title = this.backupQuestion.title;
         this.question.invalid = this.backupQuestion.invalid;
         this.question.randomizeOrder = this.backupQuestion.randomizeOrder;
@@ -805,7 +807,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         this.question.solutions = JSON.parse(JSON.stringify(this.backupQuestion.solutions));
         this.question.correctMappings = JSON.parse(JSON.stringify(this.backupQuestion.correctMappings));
         this.resetQuestionText();
-    }
+    }*/
 
     /**
      * @function pseudoRandomLong
@@ -821,6 +823,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @desc Toggles the preview in the template
      */
     togglePreview(): void {
-        this.showPreview = !this.showPreview;
+        //just commented out to remove visual mode for the moment
+       // this.showPreview = !this.showPreview;
     }
 }
