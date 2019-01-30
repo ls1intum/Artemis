@@ -159,13 +159,13 @@ public class ShortAnswerQuestionStatistic extends QuestionStatistic implements S
                             saSubmittedText = submittedText;
                         }
                     }
-                    String saSubmittedTextJustText = saSubmittedText != null ? saSubmittedText.getText() : "";
                     saSolutions = spotCounter.getSpot().getQuestion().getCorrectSolutionForSpot(spotCounter.getSpot());
-                    String saSolution = ""+saSolutions.stream().filter(solution -> solution.getText().equalsIgnoreCase(saSubmittedTextJustText));
 
-                    if(saSubmittedText.isSubmittedTextCorrect(saSubmittedText.getText(), saSolution)){
-                    //if(spotCounter.getSpot().isDropLocationCorrect(saSubmittedAnswer)) {
-                        spotCounter.setRatedCounter(spotCounter.getRatedCounter() + change);
+                    for(ShortAnswerSolution solution : saSolutions){
+                        if(saSubmittedText.isSubmittedTextCorrect(saSubmittedText.getText(), solution.getText())){
+                            //if(spotCounter.getSpot().isDropLocationCorrect(saSubmittedAnswer)) {
+                            spotCounter.setRatedCounter(spotCounter.getRatedCounter() + change);
+                        }
                     }
                 }
             }
@@ -191,12 +191,13 @@ public class ShortAnswerQuestionStatistic extends QuestionStatistic implements S
                             saSubmittedText = submittedText;
                         }
                     }
-                    String saSubmittedTextJustText = saSubmittedText != null ? saSubmittedText.getText() : "";
                     saSolutions = spotCounter.getSpot().getQuestion().getCorrectSolutionForSpot(spotCounter.getSpot());
-                    String saSolution = ""+saSolutions.stream().filter(solution -> solution.getText().equalsIgnoreCase(saSubmittedTextJustText));
-                    
-                    if(saSubmittedText.isSubmittedTextCorrect(saSubmittedText.getText(), saSolution)) {
-                        spotCounter.setUnRatedCounter(spotCounter.getUnRatedCounter() + change);
+
+                    for(ShortAnswerSolution solution : saSolutions){
+                        if(saSubmittedText.isSubmittedTextCorrect(saSubmittedText.getText(), solution.getText())){
+                            //if(spotCounter.getSpot().isDropLocationCorrect(saSubmittedAnswer)) {
+                            spotCounter.setUnRatedCounter(spotCounter.getUnRatedCounter() + change);
+                        }
                     }
                 }
             }

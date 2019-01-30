@@ -276,7 +276,7 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
     }
 
     /**
-     * change label and Color if a dropLocation is invalid
+     * change label and Color if a spot is invalid
      */
     loadInvalidLayout() {
         // set Background for invalid answers = grey
@@ -312,8 +312,8 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
 
         // set data based on the spots for each spot
         this.question.spots.forEach(spot => {
-            const spotCounter = this.questionStatistic.shortAnswerSpotCounters.find(dlCounter => {
-                return spot.id === dlCounter.spot.id;
+            const spotCounter = this.questionStatistic.shortAnswerSpotCounters.find(sCounter => {
+                return spot.id === sCounter.spot.id;
             });
             this.ratedData.push(spotCounter.ratedCounter);
             this.unratedData.push(spotCounter.unRatedCounter);

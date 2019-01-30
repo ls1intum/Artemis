@@ -22,8 +22,8 @@
     <div *ngIf="showResult && !showingSampleSolution">
         <span [ngClass]="{'saQuestion-list': isList}" *ngFor="let textPart of textWithOutSpotsFirstParts; let i = index">
             {{textPart}}
-            <input *ngIf="submittedTexts[i].isCorrect" style="background: lightgreen" disabled value="{{submittedTexts[i].text}}" size="{{submittedTexts[i].text.length}}">
-            <input *ngIf="!submittedTexts[i].isCorrect" style="background: red" disabled value="{{submittedTexts[i].text}}" size="{{submittedTexts[i].text.length}}">
+            <input *ngIf="submittedTexts[i].isCorrect" style="background: lightgreen" disabled value="{{submittedTexts[i].text}}" size="{{submittedTexts[i].text.length+1}}">
+            <input *ngIf="!submittedTexts[i].isCorrect" style="background: red" disabled value="{{submittedTexts[i].text}}" size="{{submittedTexts[i].text.length+1}}">
         </span>
         <span>
             {{textWithOutSpotsLastPart}}
@@ -33,7 +33,7 @@
     <div *ngIf="showResult && showingSampleSolution">
         <span [ngClass]="{'saQuestion-list': isList}" *ngFor="let textPart of textWithOutSpotsFirstParts; let i = index">
             {{textPart}}
-            <input style="background: lightgreen" disabled value="{{sampleSolutions[i].text}}" size="{{sampleSolutions[i].text.length}}">
+            <input style="background: lightgreen" disabled value="{{sampleSolutions[i].text}}" size="{{sampleSolutions[i].text.length+1}}">
         </span>
         <span>
             {{textWithOutSpotsLastPart}}

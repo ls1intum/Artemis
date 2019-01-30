@@ -334,9 +334,9 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
             if (previousQuestion.type === QuestionType.MULTIPLE_CHOICE) {
                 this.router.navigateByUrl('/quiz/' + this.quizExercise.id + '/multiple-choice-question-statistic/' + previousQuestion.id);
             } else if (previousQuestion.type === QuestionType.DRAG_AND_DROP) {
-                this.router.navigateByUrl('/quiz/' + this.quizExercise.id + 'drag-and-drop-question-statistic/' + previousQuestion.id);
+                this.router.navigateByUrl('/quiz/' + this.quizExercise.id + '/drag-and-drop-question-statistic/' + previousQuestion.id);
             } else if (previousQuestion.type === QuestionType.SHORT_ANSWER) {
-                this.router.navigateByUrl('/quiz/' + this.quizExercise.id + 'short-answer-question-statistic/' + previousQuestion.id);
+                this.router.navigateByUrl('/quiz/' + this.quizExercise.id + '/short-answer-question-statistic/' + previousQuestion.id);
             }
         }
     }
