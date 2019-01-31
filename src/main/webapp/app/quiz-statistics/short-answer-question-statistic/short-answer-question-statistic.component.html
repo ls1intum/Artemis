@@ -5,7 +5,6 @@
             <div *ngIf="question" class="col">
                 <h3>{{question.title}} <span style="color:red;" *ngIf="question.invalid"
                                              jhiTranslate="showStatistic.invalid"></span></h3>
-                <h4 [innerHTML]="questionTextRendered"></h4>
 
                 <div *ngIf="!showSolution">
                     <div class="saQuestion-text" [ngClass]="{'saQuestion-list': isList}" *ngFor="let textPart of textWithOutSpotsFirstParts;let i = index">
@@ -35,7 +34,7 @@
                         <div>
                             <div class="saQuestion-text" *ngFor="let mapping of question.correctMappings;let i = index">
                                 <div style="position: relative">
-                                    <input disabled value="{{mapping.solution.text}}" size="{{mapping.solution.text.length + 10}}" style="text-align: center">
+                                    <input disabled value="{{mapping.solution.text}}" size="{{mapping.solution.text.length+1}}" style="text-align: center">
                                     <div class="saQuestion-statistic-letter-solution">
                                         <span>{{getLetter(+lettersForSolutionsString[i]) + "."}}</span>
                                     </div>
