@@ -1,5 +1,3 @@
-@import '~bootstrap/scss/bootstrap.scss';
-
 /*
 * Bootstrap overrides https://getbootstrap.com/docs/4.0/getting-started/theming/
 * All values defined in bootstrap source
@@ -46,3 +44,4 @@ $font-size-base:            0.9rem;
 // Popovers:
 
 $popover-max-width: 100%;
+@import '~bootstrap/scss/bootstrap.scss';

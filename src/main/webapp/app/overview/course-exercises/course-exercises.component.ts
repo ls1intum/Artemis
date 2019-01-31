@@ -49,11 +49,11 @@ export class CourseExercisesComponent implements OnInit {
         const courseExercises = [...this.course.exercises];
         const sortedExercises = courseExercises.sort((a, b) => selectedOrder * (a.dueDate.valueOf() - b.dueDate.valueOf()));
         sortedExercises.forEach(exercise => {
-            const dateIndex = exercise.dueDate.startOf('week').format('YYYY-MM-DD');
+            const dateIndex = moment(exercise.dueDate).startOf('week').format('YYYY-MM-DD');
             if (!groupedExercises[dateIndex]) {
                 indexKeys.push(dateIndex);
                 groupedExercises[dateIndex] = {
-                    label: `<b>${exercise.dueDate.startOf('week').format('DD/MM/YYYY')}</b> - <b>${exercise.dueDate.endOf('week').format('DD/MM/YYYY')}</b>`,
+                    label: `<b>${moment(exercise.dueDate).startOf('week').format('DD/MM/YYYY')}</b> - <b>${moment(exercise.dueDate).endOf('week').format('DD/MM/YYYY')}</b>`,
                     isCollapsed: exercise.dueDate.isBefore(moment(), 'week'),
                     exercises: []
                 };
