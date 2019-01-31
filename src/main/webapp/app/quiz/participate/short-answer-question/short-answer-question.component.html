@@ -3,40 +3,40 @@
     <p *ngIf="questionText !== '' ">{{questionText}}</p>
 
     <div *ngIf="!showResult && !clickDisabled">
-        <span [ngClass]="{'saQuestion-list': isList}" *ngFor="let textPart of textWithOutSpotsFirstParts; let i = index">
+        <span [ngClass]="{'saQuestion-list': isList}" *ngFor="let textPart of textBeforeSpots; let i = index">
         {{textPart}} <input type="text" id="solution-{{i}}" (blur)="setSubmittedText()">
         </span>
         <span>
-            {{textWithOutSpotsLastPart}}
+            {{textAfterSpots}}
         </span>
     </div>
 
     <div *ngIf="!showResult && clickDisabled">
-        <span [ngClass]="{'saQuestion-list': isList}" *ngFor="let textPart of textWithOutSpotsFirstParts; let i = index">
+        <span [ngClass]="{'saQuestion-list': isList}" *ngFor="let textPart of textBeforeSpots; let i = index">
             {{textPart}} <input disabled value="{{submittedTexts[i].text}}">
         </span>
         <span>
-            {{textWithOutSpotsLastPart}}
+            {{textAfterSpots}}
         </span>
     </div>
     <div *ngIf="showResult && !showingSampleSolution">
-        <span [ngClass]="{'saQuestion-list': isList}" *ngFor="let textPart of textWithOutSpotsFirstParts; let i = index">
+        <span [ngClass]="{'saQuestion-list': isList}" *ngFor="let textPart of textBeforeSpots; let i = index">
             {{textPart}}
             <input *ngIf="submittedTexts[i].isCorrect" style="background: lightgreen" disabled value="{{submittedTexts[i].text}}" size="{{submittedTexts[i].text.length+1}}">
             <input *ngIf="!submittedTexts[i].isCorrect" style="background: red" disabled value="{{submittedTexts[i].text}}" size="{{submittedTexts[i].text.length+1}}">
         </span>
         <span>
-            {{textWithOutSpotsLastPart}}
+            {{textAfterSpots}}
         </span>
     </div>
 
     <div *ngIf="showResult && showingSampleSolution">
-        <span [ngClass]="{'saQuestion-list': isList}" *ngFor="let textPart of textWithOutSpotsFirstParts; let i = index">
+        <span [ngClass]="{'saQuestion-list': isList}" *ngFor="let textPart of textBeforeSpots; let i = index">
             {{textPart}}
             <input style="background: lightgreen" disabled value="{{sampleSolutions[i].text}}" size="{{sampleSolutions[i].text.length+1}}">
         </span>
         <span>
-            {{textWithOutSpotsLastPart}}
+            {{textAfterSpots}}
         </span>
     </div>
 

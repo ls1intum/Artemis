@@ -250,6 +250,13 @@ export class ShortAnswerQuestionUtil {
         return a === b || (a && b && ((a.id && b.id && a.id === b.id) || (a.tempID && b.tempID && a.tempID === b.tempID)));
     }
 
+    /**
+     * checks if every spot has a solution
+     *
+     * @param mappings {object} mappings
+     * @param spots {object} spots
+     * @return {boolean}
+     */
     everySpotHasASolution(mappings: ShortAnswerMapping[], spots: ShortAnswerSpot[]): boolean {
         let i = 0;
         for (const spot of spots) {
@@ -260,7 +267,87 @@ export class ShortAnswerQuestionUtil {
         return i === spots.length;
     }
 
+    /**
+     * checks if every mapped solution has a spot
+     *
+     * @param mappings {object} mappings
+     * @return {boolean}
+     */
     everyMappedSolutionHasASpot(mappings: ShortAnswerMapping[]): boolean {
         return !(mappings.filter(mapping => mapping.spot === undefined).length > 0);
+    }
+
+    /**
+     * checks if the first line of the question text is the question
+     *
+     * @param text
+     * @return {string}
+     */
+    firstLineOfQuestion(text: string): string {
+        // first line is the question if there is no [-spot #] tag in the string
+        if (text.split(/\n/g)[0].search(/\[-spot/g) === -1) {
+        return text.split(/\n/g)[0];
+        } else {
+            return '';
+        }
+    }
+
+    /**
+     * separates first line from the rest of the text
+     *
+     * @param text
+     * @return {string}
+     */
+    separateFirstLineOfQuestionFromRestOfText(text: string): string {
+        let firstLineHasQuestion = false;
+
+        if (text !== '') {
+            firstLineHasQuestion = true;
+        }
+
+        let questionTextSplitAtNewLine = '';
+
+        // separates the the rest of the text from the question
+        if (firstLineHasQuestion) {
+            questionTextSplitAtNewLine = text
+                .split(/\n+/g)
+                .slice(1)
+                .join();
+        } else {
+            questionTextSplitAtNewLine = text
+                .split(/\n+/g)
+                .join();
+        }
+
+        // checks if a line break is in the text (marked by "," and replaces it) and check if text is a list
+        if (questionTextSplitAtNewLine.includes(',')) {
+            questionTextSplitAtNewLine = questionTextSplitAtNewLine.replace(/\,/g, ' ');
+        }
+        return questionTextSplitAtNewLine;
+    }
+
+    /**
+     * checks if question format is a list or text
+     *
+     * @param text
+     * @return {boolean}
+     */
+    isQuestionAList(text: string): boolean {
+        if (this.separateFirstLineOfQuestionFromRestOfText(text)
+            .includes('1.')) {
+            return true;
+        }
+    }
+
+    /**
+     * splits the text at the "[-spot " tag to have the parts of the text without the spots
+     *
+     * @param text
+     * @return {boolean}
+     */
+
+    getTextWithoutSpots(text: string): string[] {
+        return this.separateFirstLineOfQuestionFromRestOfText(text)
+            .split(/\[-spot\s\d\]/g);
     }
 }

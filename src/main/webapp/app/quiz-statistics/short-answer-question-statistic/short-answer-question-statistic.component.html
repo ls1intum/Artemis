@@ -6,8 +6,8 @@
                 <h3>{{question.title}} <span style="color:red;" *ngIf="question.invalid"
                                              jhiTranslate="showStatistic.invalid"></span></h3>
 
-                <div *ngIf="!showSolution">
-                    <div class="saQuestion-text" [ngClass]="{'saQuestion-list': isList}" *ngFor="let textPart of textWithOutSpotsFirstParts;let i = index">
+                <div *ngIf="!showSolution" style="display: inline-block; margin-top: 5px">
+                    <div class="saQuestion-text" [ngClass]="{'saQuestion-list': isList}" *ngFor="let textPart of textBeforeSpots;let i = index">
                         {{textPart}}
                         <div style="position: relative">
                             <input disabled>
@@ -16,11 +16,11 @@
                             </div>
                         </div>
                     </div>
-                    <span>{{textWithOutSpotsLastPart}}</span>
+                    <span>{{textAfterSpots}}</span>
                 </div>
 
-                <div *ngIf="showSolution">
-                    <div class="saQuestion-text" [ngClass]="{'saQuestion-list': isList}" *ngFor="let textPart of textWithOutSpotsFirstParts;let i = index">
+                <div *ngIf="showSolution" style="display: inline-block; margin-top: 5px">
+                    <div class="saQuestion-text" [ngClass]="{'saQuestion-list': isList}" *ngFor="let textPart of textBeforeSpots;let i = index">
                         {{textPart}}
                         <div style="position: relative">
                             <input disabled>
@@ -29,12 +29,12 @@
                             </div>
                         </div>
                     </div>
-                    <span>{{textWithOutSpotsLastPart}}</span>
+                    <span>{{textAfterSpots}}</span>
                     <p>Solution: </p>
                         <div>
                             <div class="saQuestion-text" *ngFor="let mapping of question.correctMappings;let i = index">
                                 <div style="position: relative">
-                                    <input disabled value="{{mapping.solution.text}}" size="{{mapping.solution.text.length+1}}" style="text-align: center">
+                                    <input disabled value="{{mapping.solution.text}}" size="{{mapping.solution.text.length + 10}}" style="text-align: center; margin-right: 10px">
                                     <div class="saQuestion-statistic-letter-solution">
                                         <span>{{getLetter(lettersForSolutions[i]) + "."}}</span>
                                     </div>

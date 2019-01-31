@@ -3,11 +3,12 @@ import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { ShortAnswerQuestion } from '../../../entities/short-answer-question';
 import { ShortAnswerSolution } from '../../../entities/short-answer-solution';
 import { ShortAnswerSubmittedText } from 'app/entities/short-answer-submitted-text';
+import { ShortAnswerQuestionUtil } from '../../../components/util/short-answer-question-util.service';
 
 @Component({
     selector: 'jhi-short-answer-question',
     templateUrl: './short-answer-question.component.html',
-    providers: [ArtemisMarkdown]
+    providers: [ArtemisMarkdown, ShortAnswerQuestionUtil]
 })
 export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
     _question: ShortAnswerQuestion;
@@ -54,13 +55,15 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
     rendered: ShortAnswerQuestion;
     questionText: string;
     textWithoutSpots: string[];
-    textWithOutSpotsFirstParts: string[];
-    textWithOutSpotsLastPart: string[];
+    textBeforeSpots: string[];
+    textAfterSpots: string[];
     sampleSolutions: ShortAnswerSolution[] =  [];
     isList = false;
-    firstLineHasQuestion = false;
 
-    constructor(private artemisMarkdown: ArtemisMarkdown) {}
+    constructor(
+        private artemisMarkdown: ArtemisMarkdown,
+        private shortAnswerQuestionUtil: ShortAnswerQuestionUtil
+    ) {}
 
     ngOnInit() {}
 
@@ -71,41 +74,16 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
         const artemisMarkdown = this.artemisMarkdown;
         this.rendered = new ShortAnswerQuestion();
 
-        //first line is the question if there is no [-spot #] tag in the string
-        if(this.question.text.split(/\n/g)[0].search(/\[-spot/g) == -1){
-            this.questionText = this.question.text.split(/\n/g)[0];
-            this.firstLineHasQuestion = true;
-        } else {
-            this.questionText = "";
-        }
+        //is either '' or the question in the first line
+        this.questionText = this.shortAnswerQuestionUtil.firstLineOfQuestion(this.question.text);
+        this.isList = this.shortAnswerQuestionUtil.isQuestionAList(this.question.text);
+        this.textWithoutSpots = this.shortAnswerQuestionUtil.getTextWithoutSpots(this.question.text);
 
-        let questionTextSplitAtNewLine = "";
-        //seperates the the rest of the text from the question
-        if(this.firstLineHasQuestion){
-            questionTextSplitAtNewLine = this.question.text
-                .split(/\n+/g)
-                .slice(1)
-                .join();
-        } else {
-            questionTextSplitAtNewLine = this.question.text
-                .split(/\n+/g)
-                .join();
-        }
-
-        //checks if a line break is in the text (marked by "," and replaces it) and check if text is a list
-        if(questionTextSplitAtNewLine.includes(",")){
-            questionTextSplitAtNewLine = questionTextSplitAtNewLine.replace(/\,/g, " ");
-            if(questionTextSplitAtNewLine.includes("1.")){
-                this.isList = true;
-            }
-        }
-
-        //splits the text at the "[-spot " tag to have the parts of the text without spot tag
-        this.textWithoutSpots = questionTextSplitAtNewLine.split(/\[-spot\s\d\]/g);
         //separates the text into parts that come before the spot tag
-        this.textWithOutSpotsFirstParts = this.textWithoutSpots.slice(0, this.textWithoutSpots.length - 1);
+        this.textBeforeSpots = this.textWithoutSpots.slice(0, this.textWithoutSpots.length - 1);
+
         //the last part that comes after the last spot tag
-        this.textWithOutSpotsLastPart = this.textWithoutSpots.slice(this.textWithoutSpots.length - 1);
+        this.textAfterSpots = this.textWithoutSpots.slice(this.textWithoutSpots.length - 1);
 
         this.rendered.text = artemisMarkdown.htmlForMarkdown(this.question.text);
         this.rendered.hint = artemisMarkdown.htmlForMarkdown(this.question.hint);
@@ -119,7 +97,7 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
      */
     setSubmittedText() {
         this.submittedTexts = [];
-        for (let id in this.textWithOutSpotsFirstParts) {
+        for (let id in this.textBeforeSpots) {
             let submittedText = new ShortAnswerSubmittedText();
             submittedText.text = (<HTMLInputElement>document.getElementById('solution-' + id)).value;
             submittedText.spot = this.question.spots[id];
