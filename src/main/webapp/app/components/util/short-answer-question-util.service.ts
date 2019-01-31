@@ -301,7 +301,7 @@ export class ShortAnswerQuestionUtil {
     separateFirstLineOfQuestionFromRestOfText(text: string): string {
         let firstLineHasQuestion = false;
 
-        if (text !== '') {
+        if (this.firstLineOfQuestion(text) !== '') {
             firstLineHasQuestion = true;
         }
 
