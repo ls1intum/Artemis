@@ -14,7 +14,7 @@ import { ShortAnswerSpot } from '../../entities/short-answer-spot';
 import { ChartOptions } from 'chart.js';
 import { createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
 import { Subscription } from 'rxjs/Subscription';
-import {ShortAnswerSolution} from "app/entities/short-answer-solution";
+import {ShortAnswerSolution} from 'app/entities/short-answer-solution';
 
 interface BackgroundColorConfig {
     backgroundColor: string;
@@ -72,7 +72,7 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
     isList = false;
     firstLineHasQuestion = false;
     lettersForSolutionsMap = new Array< { index: number; value: ShortAnswerSolution} >();
-    lettersForSolutionsString:string[] = [];
+    lettersForSolutions: number[] = [];
 
     constructor(
         private route: ActivatedRoute,
@@ -169,17 +169,17 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
     }
 
     generateSaStructure() {
-        //first line is the question if there is no [-spot #] tag in the string
-        if(this.question.text.split(/\n/g)[0].search(/\[-spot/g) == -1){
+        // first line is the question if there is no [-spot #] tag in the string
+        if (this.question.text.split(/\n/g)[0].search(/\[-spot/g) === -1) {
             this.questionText = this.question.text.split(/\n/g)[0];
             this.firstLineHasQuestion = true;
         } else {
-            this.questionText = "";
+            this.questionText = '';
         }
 
-        let questionTextSplitAtNewLine = "";
-        //seperates the the rest of the text from the question
-        if(this.firstLineHasQuestion){
+        let questionTextSplitAtNewLine = '';
+        // seperates the the rest of the text from the question
+        if (this.firstLineHasQuestion) {
             questionTextSplitAtNewLine = this.question.text
                 .split(/\n+/g)
                 .slice(1)
@@ -190,28 +190,28 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
                 .join();
         }
 
-        //checks if a line break is in the text (marked by "," and replaces it) and check if text is a list
-        if(questionTextSplitAtNewLine.includes(",")){
-            questionTextSplitAtNewLine = questionTextSplitAtNewLine.replace(/\,/g, " ");
-            if(questionTextSplitAtNewLine.includes("1.")){
+        // checks if a line break is in the text (marked by "," and replaces it) and check if text is a list
+        if (questionTextSplitAtNewLine.includes(',')) {
+            questionTextSplitAtNewLine = questionTextSplitAtNewLine.replace(/\,/g, ' ');
+            if (questionTextSplitAtNewLine.includes('1.')) {
                 this.isList = true;
             }
         }
 
-        //splits the text at the "[-spot " tag to have the parts of the text without spot tag
+        // splits the text at the "[-spot " tag to have the parts of the text without spot tag
         this.textWithoutSpots = questionTextSplitAtNewLine.split(/\[-spot\s\d\]/g);
-        //separates the text into parts that come before the spot tag
+        // separates the text into parts that come before the spot tag
         this.textWithOutSpotsFirstParts = this.textWithoutSpots.slice(0, this.textWithoutSpots.length - 1);
-        //the last part that comes after the last spot tag
+        // the last part that comes after the last spot tag
         this.textWithOutSpotsLastPart = this.textWithoutSpots.slice(this.textWithoutSpots.length - 1);
     }
 
-    generateLettersForSolutions(){
-        for(const mapping of this.question.correctMappings){
-            for(const i in this.question.spots){
-                if(mapping.spot.id === this.question.spots[i].id){
+    generateLettersForSolutions() {
+        for (const mapping of this.question.correctMappings) {
+            for (const i in this.question.spots) {
+                if (mapping.spot.id === this.question.spots[i].id) {
                     this.lettersForSolutionsMap.push({index: +i, value: mapping.solution});
-                    this.lettersForSolutionsString.push(i);
+                    this.lettersForSolutions.push(+i);
                     break;
                 }
             }
