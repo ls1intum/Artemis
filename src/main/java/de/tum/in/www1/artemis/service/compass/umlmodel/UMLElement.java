@@ -6,8 +6,8 @@ import java.util.Objects;
 
 public abstract class UMLElement {
 
-    int elementID;
-    String jsonElementID;
+    int elementID; //id of similarity set the element belongs to
+    String jsonElementID; // unique element id //TODO rename into uniqueId?
     private Context context;
 
     /**

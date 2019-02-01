@@ -186,7 +186,7 @@ public class CompassService {
      * Add an assessment to an engine
      *
      * @param exerciseId         the exerciseId
-     * @param submissionId            the corresponding modelId
+     * @param submissionId       the corresponding modelId
      * @param modelingAssessment the new assessment as raw string
      */
     public void addAssessment(long exerciseId, long submissionId, List<ModelElementAssessment> modelingAssessment) {
@@ -202,17 +202,16 @@ public class CompassService {
         }
     }
 
-    public Optional<Conflict> checkForConflict(long exerciseId, long modelId) {
-//        CompassCalculationEngine engine = (CompassCalculationEngine) compassCalculationEngines.get(exerciseId);
-//        Map<Integer, Assessment> conflictingAssessments = engine.getAssessmentsInConflict(modelId);
-//        if (conflictingAssessments.isEmpty()) {
-//            return Optional.empty();
-//        } else {
-//            Conflict conflict = new Conflict(conflictingAssessments);
-//            conflict.setInitiator(userService.getUser());
-//            return Optional.of(conflict);
-//        }
-        return Optional.empty();
+    public Optional<Conflict> checkForConflict(long exerciseId, long modelId, List<ModelElementAssessment> modelingAssessment) {
+        CompassCalculationEngine engine = (CompassCalculationEngine) compassCalculationEngines.get(exerciseId);
+        Set<Integer> conflictingAssessments = engine.getElementIdsInConflict(modelId, modelingAssessment);
+        if (conflictingAssessments.isEmpty()) {
+            return Optional.empty();
+        } else {
+            Conflict conflict = new Conflict(conflictingAssessments);
+            conflict.setInitiator(userService.getUser());
+            return Optional.of(conflict);
+        }
     }
 
     private void assessAutomatically(long modelId, long exerciseId) {

@@ -185,7 +185,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
             return ResponseEntity.notFound().build();
         }
         Long submissionId = result.get().getSubmission().getId();
-        Optional<Conflict> conflict = compassService.checkForConflict(exerciseId, submissionId);
+        Optional<Conflict> conflict = compassService.checkForConflict(exerciseId, submissionId, modelingAssessment);
         if (conflict.isPresent()) {
             modelingAssessmentService.saveManualAssessment(result.get(), modelingExercise.get().getId(), modelingAssessment);
             return ResponseEntity.ok(new ConflictResultWrapper(conflict.get(), result.get()));
