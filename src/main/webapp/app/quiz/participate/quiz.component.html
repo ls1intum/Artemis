@@ -75,7 +75,7 @@
             <div *ngIf="mode === 'solution'">
                 <span jhiTranslate="arTeMiSApp.quizExercise.solution"></span>
             </div>
-            <button *ngIf="!submission.submitted && !showingResult" [disabled]="isSubmitting || waitingForQuizStart || remainingTimeSeconds < 0" class="btn btn-success btn-lg" jhiTranslate="entity.action.submit" (click)="onSubmit()"></button>
+            <button *ngIf="!submission.submitted && !showingResult" [disabled]=" waitingForQuizStart || remainingTimeSeconds < 0" class="btn btn-success btn-lg" jhiTranslate="entity.action.submit" (click)="onSubmit()"></button>
             <button *ngIf="submission.submitted && !showingResult" disabled class="btn btn-success btn-lg" jhiTranslate="arTeMiSApp.quizExercise.submitted"></button>
         </div>
     </div>
