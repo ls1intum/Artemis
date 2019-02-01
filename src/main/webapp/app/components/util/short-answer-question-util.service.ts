@@ -345,7 +345,6 @@ export class ShortAnswerQuestionUtil {
      * @param text
      * @return {boolean}
      */
-
     getTextWithoutSpots(text: string): string[] {
         return this.separateFirstLineOfQuestionFromRestOfText(text)
             .split(/\[-spot\s\d\]/g);

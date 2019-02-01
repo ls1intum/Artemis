@@ -110,6 +110,15 @@ public class ShortAnswerSubmittedAnswer extends SubmittedAnswer implements Seria
         }
     }
 
+    public ShortAnswerSubmittedText getSubmittedTextForSpot(ShortAnswerSpot spot) {
+        for(ShortAnswerSubmittedText submittedText : this.getSubmittedTexts()){
+            if(submittedText.getSpot().equals(spot)) {
+                return submittedText;
+            }
+        }
+        return null;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

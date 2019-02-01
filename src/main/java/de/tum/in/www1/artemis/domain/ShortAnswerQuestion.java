@@ -57,7 +57,6 @@ public class ShortAnswerQuestion extends Question implements Serializable {
         shortAnswerSpot.setQuestion(this);
         //if a spot was added then add the associated AnswerCounter implicitly
         ((ShortAnswerQuestionStatistic)getQuestionStatistic()).addSpot(shortAnswerSpot);
-
         return this;
     }
 

@@ -78,7 +78,6 @@ public class ShortAnswerQuestionStatistic extends QuestionStatistic implements S
             "}";
     }
 
-
     /**
      * 1. creates the ShortAnswerSpotCounter for the new spot
      *          if where is already an ShortAnswerSpotCounter with the given spot -> nothing happens
@@ -86,7 +85,6 @@ public class ShortAnswerQuestionStatistic extends QuestionStatistic implements S
      * @param spot the spot-object which will be added to the ShortAnswerQuestionStatistic
      */
     public void addSpot(ShortAnswerSpot spot) {
-
         if(spot == null) {
             return;
         }
@@ -99,9 +97,7 @@ public class ShortAnswerQuestionStatistic extends QuestionStatistic implements S
         ShortAnswerSpotCounter spotCounter = new ShortAnswerSpotCounter();
         spotCounter.setSpot(spot);
         addShortAnswerSpotCounters(spotCounter);
-
     }
-
 
     @Override
     public void addResult(SubmittedAnswer submittedAnswer, boolean rated) {
@@ -129,13 +125,12 @@ public class ShortAnswerQuestionStatistic extends QuestionStatistic implements S
      * 1. check if the Result is rated or unrated
      * 2. change participants, all the ShortAnswerSpotCounter if the ShortAnswerAssignment is correct and if the complete question is correct, than change the correctCounter
      *
-     * @param submittedAnswer the submittedAnswer object which contains all selected answers
+     * @param submittedAnswer the submittedAnswer object which contains all submittedTexts
      * @param rated specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise)
      *                                  or unrated  ( participated after the dueDate of the quizExercise)
      * @param change the int-value, which will be added to the Counter and participants
      */
     private void changeStatisticBasedOnResult(SubmittedAnswer submittedAnswer, boolean rated, int change) {
-
         if(submittedAnswer == null) {
             return;
         }
@@ -147,23 +142,16 @@ public class ShortAnswerQuestionStatistic extends QuestionStatistic implements S
             setParticipantsRated(getParticipantsRated() + change);
 
             if(saSubmittedAnswer.getSubmittedTexts() != null) {
-                ShortAnswerSubmittedText saSubmittedText = null;
+                ShortAnswerSubmittedText saSubmittedText;
                 Set <ShortAnswerSolution> saSolutions;
 
                 // change rated spotCounter if spot is correct
                 for (ShortAnswerSpotCounter spotCounter: shortAnswerSpotCounters) {
-                    //FDE Check again Idee: spotCounter hat submitted text und dann wird validiert
-
-                    for(ShortAnswerSubmittedText submittedText : saSubmittedAnswer.getSubmittedTexts()){
-                        if(submittedText.getSpot().equals(spotCounter.getSpot())){
-                            saSubmittedText = submittedText;
-                        }
-                    }
+                    saSubmittedText = saSubmittedAnswer.getSubmittedTextForSpot(spotCounter.getSpot());
                     saSolutions = spotCounter.getSpot().getQuestion().getCorrectSolutionForSpot(spotCounter.getSpot());
 
                     for(ShortAnswerSolution solution : saSolutions){
                         if(saSubmittedText.isSubmittedTextCorrect(saSubmittedText.getText(), solution.getText())){
-                            //if(spotCounter.getSpot().isDropLocationCorrect(saSubmittedAnswer)) {
                             spotCounter.setRatedCounter(spotCounter.getRatedCounter() + change);
                         }
                     }
@@ -180,22 +168,15 @@ public class ShortAnswerQuestionStatistic extends QuestionStatistic implements S
             setParticipantsUnrated(getParticipantsUnrated() + change);
 
             if(saSubmittedAnswer.getSubmittedTexts() != null) {
-                ShortAnswerSubmittedText saSubmittedText = null;
+                ShortAnswerSubmittedText saSubmittedText;
                 Set <ShortAnswerSolution> saSolutions;
-                // change unrated dropLocationCounter if dropLocation is correct
+                // change unrated spotCounter if spot is correct
                 for (ShortAnswerSpotCounter spotCounter: shortAnswerSpotCounters) {
-                    //FDE Check again Idee: spotCounter hat submitted text und dann wird validiert
-
-                    for(ShortAnswerSubmittedText submittedText : saSubmittedAnswer.getSubmittedTexts()){
-                        if(submittedText.getSpot().equals(spotCounter.getSpot())){
-                            saSubmittedText = submittedText;
-                        }
-                    }
+                    saSubmittedText = saSubmittedAnswer.getSubmittedTextForSpot(spotCounter.getSpot());
                     saSolutions = spotCounter.getSpot().getQuestion().getCorrectSolutionForSpot(spotCounter.getSpot());
 
                     for(ShortAnswerSolution solution : saSolutions){
                         if(saSubmittedText.isSubmittedTextCorrect(saSubmittedText.getText(), solution.getText())){
-                            //if(spotCounter.getSpot().isDropLocationCorrect(saSubmittedAnswer)) {
                             spotCounter.setUnRatedCounter(spotCounter.getUnRatedCounter() + change);
                         }
                     }
