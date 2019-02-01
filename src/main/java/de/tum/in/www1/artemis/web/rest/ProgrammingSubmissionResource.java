@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.service.ExerciseService;
@@ -39,10 +40,10 @@ public class ProgrammingSubmissionResource {
      * @param participationId the participationId of the participation the repository is linked to
      * @return the ResponseEntity with status 200 (OK), or with status 400 (Bad Request) if the latest commit was already notified about
      */
-    @PostMapping(value = "/programming-submissions/{participationId}")
+    @PostMapping(value = Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + "{participationId}")
     public ResponseEntity<?> notifyPush(@PathVariable("participationId") Long participationId, @RequestBody Object requestBody) {
 
-        log.info("REST request to inform about new push: {}", participationId);
+        log.info("REST request to inform about new commit+push for participation: {}", participationId);
         programmingSubmissionService.notifyPush(participationId, requestBody);
 
         return ResponseEntity.status(HttpStatus.OK).build();
@@ -54,7 +55,7 @@ public class ProgrammingSubmissionResource {
      * @param exerciseId the id of the programmingExercise where the test cases got changed
      * @return the ResponseEntity with status 200 (OK)
      */
-    @PostMapping("/programming-exercises/test-cases-changed/{exerciseId}")
+    @PostMapping(Constants.TEST_CASE_CHANGED_PATH + "{exerciseId}")
     public ResponseEntity<Void> testCaseChanged(@PathVariable Long exerciseId, @RequestBody Object requestBody) {
         log.info("REST request to inform about changed test cases of ProgrammingExercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);

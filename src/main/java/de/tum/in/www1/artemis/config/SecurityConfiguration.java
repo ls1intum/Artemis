@@ -105,6 +105,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/test/**");
 
         web.ignoring().antMatchers(HttpMethod.POST, RESULT_RESOURCE_API_PATH + "*-*");
+        web.ignoring().antMatchers(HttpMethod.POST, NEW_RESULT_RESOURCE_API_PATH);
         web.ignoring().antMatchers(HttpMethod.POST, PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + "*");
         web.ignoring().antMatchers(HttpMethod.POST, TEST_CASE_CHANGED_API_PATH + "*");
     }
