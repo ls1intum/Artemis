@@ -72,10 +72,7 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy, OnChange
     chosenCorrectAnswerOption: number;
     chosenWrongAnswerOption: number;
     amountOfAnswerOptions: number;
-
-    correctAnswers:number;
-
-
+    
     constructor(private artemisMarkdown: ArtemisMarkdown, private dragAndDropQuestionUtil: DragAndDropQuestionUtil) {}
 
     ngOnInit() {
