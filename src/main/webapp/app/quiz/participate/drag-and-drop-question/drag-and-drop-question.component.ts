@@ -73,13 +73,16 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy, OnChange
     chosenWrongAnswerOption: number;
     amountOfAnswerOptions: number;
 
+    test:number;
+
 
     constructor(private artemisMarkdown: ArtemisMarkdown, private dragAndDropQuestionUtil: DragAndDropQuestionUtil) {}
 
-    ngOnInit() {}
+    ngOnInit() {
+        this.count();
+    }
 
     ngOnChanges() {
-        this.count();
     }
 
     ngOnDestroy() {}
@@ -264,8 +267,9 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy, OnChange
     }
 
     count(): void {
-        this.amountOfAnswerOptions = this.question.dragItems.length;
+        this.amountOfAnswerOptions = this.question.dropLocations.length;
         this.chosenWrongAnswerOption = this.question.correctMappings.length;
+
         this.chosenCorrectAnswerOption = this.amountOfAnswerOptions - this.chosenWrongAnswerOption;
     }
 }

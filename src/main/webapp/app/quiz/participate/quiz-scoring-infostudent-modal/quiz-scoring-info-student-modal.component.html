@@ -8,7 +8,7 @@
         <h6>The scoring type was <span jhiTranslate="arTeMiSApp.quizExercise.scoringType.all_or_nothing"></span> This means you either get all the points for the question or non at all.</h6>
         <span *ngIf="this.correctAnswers == this.correctlyChosenAnswers && this.wronglyChosenAnswers == 0"> You have achieved {{this.score}} of the {{this.question.score}} possible points. Since you have chosen all answers correctly.
             wrong answers you have achieved all points in this exercise.</span>
-        <span *ngIf="!(this.correctAnswers == this.correctlyChosenAnswers && this.wronglyChosenAnswers == 0)"> You have achieved {{this.score}} of the {{this.question.score}} possible points. Since you selected {{this.wronglyChosenAnswers}} wrong answers but/and forgot to select {{this.forgottenrightAnswers}} right option you have achieved 0 points in this exercise.</span>
+        <span *ngIf="!(this.correctAnswers == this.correctlyChosenAnswers && this.wronglyChosenAnswers == 0)"> You have achieved {{this.score}} of the {{this.question.score}} possible points. Since you selected {{this.wronglyChosenAnswers}} wrong answers but/and forgot to select {{this.forgottenRightAnswers}} right option you have achieved 0 points in this exercise.</span>
     </div>
     <div class="modal-body" *ngIf="this.question.scoringType === ALL_OR_NOTHING && this.question.type === DRAG_AND_DROP " >
         <h6>The scoring type was <span jhiTranslate="arTeMiSApp.quizExercise.scoringType.all_or_nothing"></span> This means you either get all the points for the question or non at all.</h6>
