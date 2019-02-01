@@ -26,11 +26,6 @@ interface Reason {
     translateValues: {};
 }
 
-interface Warning {
-    translateKey: string;
-    translateValues: {};
-}
-
 @Component({
     selector: 'jhi-quiz-exercise-detail',
     templateUrl: './quiz-exercise-detail.component.html',
