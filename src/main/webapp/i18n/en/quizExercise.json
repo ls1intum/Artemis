@@ -143,11 +143,9 @@
                 "questionCorrectAnswerOption": "Question {{index}}: No answer option is correct.",
                 "questionCorrectMapping": "Question {{index}}: No correct mapping.",
                 "questionUnsolvable": "Question {{index}}: The question cannot be answered correctly without using a drag item twice.",
-                "misleadingCorrectMapping": "Question {{index}}: You have defined at least one correct mapping (or group of correct mappings), that when used, makes it impossible to answer the question correctly."
-            },
-            "warnings": {
+                "misleadingCorrectMapping": "Question {{index}}: You have defined at least one correct mapping (or group of correct mappings), that when used, makes it impossible to answer the question correctly.",
                 "questionTitleLength": "Question {{index}}: Please shorten your question title. Currently it contains more than 250 signs.",
-                "warning": "Warning"
+                "quizTitleLength": "Quiz: The title is too long. Currently it contains more than 250 signs."
             },
             "scoringType": {
                 "all_or_nothing": "All or Nothing",

@@ -452,6 +452,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         const isGenerallyValid: boolean =
             this.quizExercise.title &&
             this.quizExercise.title !== '' &&
+            this.quizExercise.title.length < 250 &&
             this.quizExercise.duration &&
             releaseDateValidAndNotInPastCondition &&
             this.quizExercise.questions &&
@@ -494,6 +495,12 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         if (!this.quizExercise.title || this.quizExercise.title === '') {
             reasons.push({
                 translateKey: 'arTeMiSApp.quizExercise.invalidReasons.quizTitle',
+                translateValues: {}
+            });
+        }
+        if (this.quizExercise.title.length >= 250) {
+            reasons.push({
+                translateKey: 'arTeMiSApp.quizExercise.invalidReasons.quizTitleLength',
                 translateValues: {}
             });
         }
@@ -543,9 +550,9 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                     });
                 }
             }
-            if(question.title.length >= 250) {
+            if (question.title.length >= 250) {
                 reasons.push({
-                    translateKey: 'arTeMiSApp.quizExercise.warnings.questionTitleLength',
+                    translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionTitleLength',
                     translateValues: {index: index + 1}
                 });
             }
@@ -572,7 +579,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         }, this);
         return reasons;
     }
-
 
     /**
      * @function invalidReasonsHTML
