@@ -3,23 +3,23 @@ package de.tum.in.www1.artemis.service.compass.conflict;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.service.compass.assessment.Assessment;
 
-import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 public class Conflict {
-    public Map<Integer, Assessment> conflictingAssessments;
+    public Set<Integer> elementIdsInConflict;
 
     private String id;
     private User initiator;
 
 
-    public Conflict(Map<Integer, Assessment> conflictingAssessments) {
-        conflictingAssessments = conflictingAssessments;
+    public Conflict(Set<Integer> elementIdsInConflict) {
+        this.elementIdsInConflict = elementIdsInConflict;
         id = UUID.randomUUID().toString();
     }
 
-    public void addConflictingElement(int elementID, Assessment correspondingAssessment) {
-        conflictingAssessments.put(elementID, correspondingAssessment);
+    public void addConflictingElement(int elementID) {
+        elementIdsInConflict.add(elementID);
     }
 
     public User getInitiator() {
@@ -34,7 +34,4 @@ public class Conflict {
         return id;
     }
 
-    public void setId(String id) {
-        this.id = id;
-    }
 }
