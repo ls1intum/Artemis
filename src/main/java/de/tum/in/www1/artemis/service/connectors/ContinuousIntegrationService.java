@@ -69,7 +69,8 @@ public interface ContinuousIntegrationService {
      *
      * @param participation participation for which build has completed
      */
-    public Result onBuildCompleted(Participation participation);
+    @Deprecated
+    public Result onBuildCompletedOld(Participation participation);
 
     /**
      * Get the plan key of the finished build, the information of the build gets passed via the requestBody.

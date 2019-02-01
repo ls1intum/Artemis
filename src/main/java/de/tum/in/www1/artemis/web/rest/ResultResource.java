@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -15,7 +16,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -123,23 +123,22 @@ public class ResultResource {
      */
     @PostMapping(value = "/results/{planKey}")
     @Transactional
-    public ResponseEntity<?> notifyResult(@PathVariable("planKey") String planKey) {
+    @Deprecated
+    public ResponseEntity<?> notifyResultOld(@PathVariable("planKey") String planKey) {
         if (planKey.toLowerCase().endsWith("base") || planKey.toLowerCase().endsWith("solution")) {
-            //TODO: can we do this check more precise and compare it with the saved values from the exercises?
-            //In the future we also might want to save these results in the database
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
         Optional<Participation> participation = getParticipation(planKey);
         if (participation.isPresent()) {
-            resultService.onResultNotified(participation.get());
+            resultService.onResultNotifiedOld(participation.get());
             return ResponseEntity.ok().build();
         } else {
             return notFound();
         }
     }
 
-    @PostMapping(value = "/resultsnew")
+    @PostMapping(value = Constants.NEW_RESULT_RESOURCE_PATH)
     @Transactional
     public ResponseEntity<?> notifyResultNew(@RequestHeader("Authorization") String token, @RequestBody Object requestBody) {
         if (token == null || !token.equals(CI_AUTHENTICATION_TOKEN)) {
@@ -148,6 +147,10 @@ public class ResultResource {
 
         try {
             String planKey = continuousIntegrationService.getPlanKey(requestBody);
+            if (planKey.equalsIgnoreCase("base") || planKey.equalsIgnoreCase("solution")) {
+                //TODO: In the future we also might want to save these results in the database
+                return ResponseEntity.ok().build();
+            }
             Optional<Participation> participation = getParticipation(planKey);
             if (participation.isPresent()) {
                 resultService.onResultNotifiedNew(participation.get(), requestBody);

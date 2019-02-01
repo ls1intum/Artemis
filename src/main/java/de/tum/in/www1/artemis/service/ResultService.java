@@ -46,10 +46,11 @@ public class ResultService {
      * @param participation Participation for which a new build is available
      */
     @Async
-    public void onResultNotified(Participation participation) {
+    @Deprecated
+    public void onResultNotifiedOld(Participation participation) {
         log.debug("Received new build result for participation " + participation.getId());
         // fetches the new build result
-        Result result = continuousIntegrationService.get().onBuildCompleted(participation);
+        Result result = continuousIntegrationService.get().onBuildCompletedOld(participation);
         notifyUser(participation, result);
     }
 
@@ -59,7 +60,7 @@ public class ResultService {
      * @param requestBody RequestBody containing all relevant information
      */
     public void onResultNotifiedNew(Participation participation, Object requestBody) throws Exception {
-        log.debug("Received new build result (NEW) for participation " + participation.getId());
+        log.info("Received new build result (NEW) for participation " + participation.getId());
 
         Result result = continuousIntegrationService.get().onBuildCompletedNew(participation, requestBody);
         notifyUser(participation, result);

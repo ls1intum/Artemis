@@ -450,7 +450,8 @@ public class BambooService implements ContinuousIntegrationService {
      */
     @Override
     @Transactional
-    public Result onBuildCompleted(Participation participation) {
+    @Deprecated
+    public Result onBuildCompletedOld(Participation participation) {
         log.debug("Retrieving build result...");
         Boolean isOldBuildResult = true;
         Map buildResults = new HashMap<>();
