@@ -1,17 +1,23 @@
 package de.tum.in.www1.artemis.repository;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.service.compass.assessment.ModelElementAssessment;
 import org.springframework.stereotype.Repository;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings("unused")
 @Repository
 public class JsonAssessmentRepository extends JsonFileSystemRepository {
+    private final ObjectMapper mapper = new ObjectMapper();
+
 
     private Path getPath(long exerciseId, long studentId, long modelId, boolean manual) {
         return Paths.get(Constants.FILEPATH_COMPASS + File.separator + exerciseId + File.separator + studentId +
@@ -27,8 +33,28 @@ public class JsonAssessmentRepository extends JsonFileSystemRepository {
      * @param assessment the assessment as string in a JSON format
      * @return success / failure
      */
+    //TODO merge both writeAssessment Methods?
     public boolean writeAssessment(long exerciseId, long studentId, long modelId, boolean manual, String assessment) {
         return this.write(this.getPath(exerciseId, studentId, modelId, manual), assessment);
+    }
+
+    /**
+     * Write an assessment with the following attributes
+     *
+     * @param exerciseId exerciseId
+     * @param studentId studentId
+     * @param modelId modelId
+     * @param modelingAssessment the assessment as list of the assessed elements
+     * @return success / failure
+     */
+    public boolean writeAssessment(long exerciseId, long studentId, long modelId, boolean manual, List<ModelElementAssessment> modelingAssessment) {
+        String modelingAssessmentString = "{\"assessments\":";
+        try {
+            modelingAssessmentString += mapper.writeValueAsString(modelingAssessment) + "}";
+        } catch (JsonProcessingException e) {
+            e.printStackTrace(); //TODO throw Exception
+        }
+        return this.write(this.getPath(exerciseId, studentId, modelId, manual), modelingAssessmentString);
     }
 
     /**
