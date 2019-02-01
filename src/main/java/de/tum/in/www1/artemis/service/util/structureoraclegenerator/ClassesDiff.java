@@ -1,17 +1,19 @@
 package de.tum.in.www1.artemis.service.util.structureoraclegenerator;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import spoon.reflect.declaration.*;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
+@JsonSerialize(using = ClassesDiffSerializer.class)
 public class ClassesDiff extends TypesDiff {
 	
     protected List<CtField<?>> attributes;
     protected Set<CtConstructor<?>> constructors;
-
     protected boolean classesEqual;
 	
 	public ClassesDiff(CtClass<?> solutionClass, CtClass<?> templateClass) {
@@ -25,14 +27,12 @@ public class ClassesDiff extends TypesDiff {
         Predicate<CtField<?>> fieldIsImplicit = f -> f.isImplicit() ||
             f.getSimpleName().equals(solutionClass.getSimpleName());
 
-        List<CtField<?>> attributesDiff = solutionClass.getFields();
+        List<CtField<?>> attributesDiff = new ArrayList<>();
+        solutionClass.getFields().forEach(solutionField -> attributesDiff.add(solutionField));
         attributesDiff.removeIf(fieldIsImplicit);
 
         if (templateClass != null) {
-            List<CtField<?>> templateAttributes = templateClass.getFields();
-            templateAttributes.removeIf(fieldIsImplicit);
-
-            for (CtField<?> templateAttribute : templateAttributes) {
+            for (CtField<?> templateAttribute : templateClass.getFields()) {
                 attributesDiff.removeIf(solutionAttribute ->
                     solutionAttribute.getSimpleName().equals(templateAttribute.getSimpleName()));
             }
@@ -49,11 +49,7 @@ public class ClassesDiff extends TypesDiff {
         constructorsDiff.removeIf(constructorIsImplicit);
 
         if(templateClass != null) {
-            Set<CtConstructor<?>> templateConstructors = new HashSet<>();
-            templateConstructors.addAll(templateClass.getConstructors());
-            templateConstructors.removeIf(constructorIsImplicit);
-
-            for(CtConstructor<?> templateConstructor : templateConstructors) {
+            for(CtConstructor<?> templateConstructor : templateClass.getConstructors()) {
                 constructorsDiff.removeIf(solutionConstructor ->
                     parameterTypesAreEqual(solutionConstructor, templateConstructor));
             }

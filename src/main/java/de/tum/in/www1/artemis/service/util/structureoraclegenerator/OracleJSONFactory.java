@@ -1,14 +1,16 @@
 package de.tum.in.www1.artemis.service.util.structureoraclegenerator;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.codehaus.jackson.annotate.JsonAutoDetect;
+import org.codehaus.jackson.annotate.JsonMethod;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import spoon.Launcher;
+
 import spoon.reflect.CtModel;
 import spoon.reflect.declaration.CtClass;
 import spoon.reflect.declaration.CtEnum;
@@ -16,7 +18,6 @@ import spoon.reflect.declaration.CtInterface;
 import spoon.reflect.declaration.CtType;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This class serves as a factory for the oracle.
@@ -33,93 +34,78 @@ public class OracleJSONFactory {
 
             TypesDiff typesDiff = new TypesDiff(solutionType, templateType);
             String typeName = typesDiff.name;
-
-            String typesDiffJSON = "";
-            try {
-                typesDiffJSON = new ObjectMapper().writeValueAsString(typesDiff);
-            } catch (IOException e) {
-                log.error("Could not create the JSON for type: " + typeName + "'.", e);
-            }
+            String typesDiffJSON = generateTypesJSON(typesDiff, "type " + typeName, log);
 
             if (solutionType.isEnum()) {
                 CtEnum<Enum<?>> solutionEnum = (CtEnum<Enum<?>>) solutionType;
-                CtEnum<Enum<?>> templateEnum = (templateType != null) ? ((CtEnum<Enum<?>>) templateType) : null;
+                CtEnum<Enum<?>> templateEnum = (CtEnum<Enum<?>>) templateType;
 
                 EnumsDiff enumsDiff = new EnumsDiff(solutionEnum, templateEnum);
                 if(enumsDiff.enumsEqual) { continue; }
 
-                typeName = enumsDiff.name;
-                try {
-                    typesDiffJSON += new ObjectMapper().writeValueAsString(enumsDiff);
-                } catch (IOException e) {
-                    log.error("Could not create the JSON for enum: " + typeName + "'.", e);
-                }
+                typesDiffJSON += generateTypesJSON(enumsDiff, "enum " + typeName, log);
             }
 
             if (solutionType.isInterface()) {
                 CtInterface<?> solutionInterface = (CtInterface<?>) solutionType;
-                CtInterface<?> templateInterface = (templateType != null) ? ((CtInterface<?>) templateType) : null;
+                CtInterface<?> templateInterface = (CtInterface<?>) templateType;
 
                 InterfacesDiff interfacesDiff = new InterfacesDiff(solutionInterface, templateInterface);
                 if(interfacesDiff.interfacesEqual) { continue; }
 
-                typeName = interfacesDiff.name;
-                try {
-                    typesDiffJSON += new ObjectMapper().writeValueAsString(interfacesDiff);
-                } catch (IOException e) {
-                    log.error("Could not create the JSON for interface: '" + typeName + "'.", e);
-                }
+                typesDiffJSON += generateTypesJSON(interfacesDiff, "interface " + typeName, log);
             }
 
             if (solutionType.isClass()) {
                 CtClass<?> solutionClass = (CtClass<?>) solutionType;
-                CtClass<?> templateClass = (templateType != null) ? ((CtClass<?>) templateType) : null;
+                CtClass<?> templateClass = (CtClass<?>) templateType;
 
                 ClassesDiff classesDiff = new ClassesDiff(solutionClass, templateClass);
                 if(classesDiff.classesEqual) { continue; }
 
-                typeName = classesDiff.name;
-                try {
-                    typesDiffJSON += new ObjectMapper().writeValueAsString(classesDiff);
-                } catch (IOException e) {
-                    log.error("Could not create the JSON for class: '" + typeName + "'.", e);
-                }
+                typesDiffJSON += generateTypesJSON(classesDiff, "class", log);
             }
 
-            log.info("Created JSON for: " + typeName);
             structureOracleJSON += typesDiffJSON;
         }
 
         return structureOracleJSON;
     }
+
+    private static String generateTypesJSON(TypesDiff typesDiff, String typeDescription, Logger log) {
+        try {
+            log.info("Creating JSON for: " + typeDescription + "...");
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.setVisibility(JsonMethod.FIELD, JsonAutoDetect.Visibility.ANY);
+            return objectMapper.writeValueAsString(typesDiff);
+        } catch (IOException e) {
+            log.error("Could not create the JSON for " + typeDescription + ": '" + typesDiff.name + "'.", e);
+            return "";
+        }
+    }
 		
 	private static HashMap<CtType<?>, CtType<?>> generateSolutionAndTemplateTypePairs(String solutionProjectPath, String templateProjectPath) {
-		CtModel solutionModel = generateModel(solutionProjectPath);
-		CtModel templateModel = generateModel(templateProjectPath);
+		Collection<CtType<?>> solutionTypes = generateModel(solutionProjectPath).getAllTypes();
+		Collection<CtType<?>> templateTypes = generateModel(templateProjectPath).getAllTypes();
 		
 		HashMap<CtType<?>, CtType<?>> solutionAndTemplateTypes = new HashMap<CtType<?>, CtType<?>>();
-		
-		// Types are uniquely identified by their names
-		for(CtType<?> currentSolutionType : solutionModel.getAllTypes()) {
-			boolean typePresentInTemplate = false;
-			
-			for(CtType<?> currentTemplateType : templateModel.getAllTypes()) {
-				if(currentSolutionType.getSimpleName().equals(currentTemplateType.getSimpleName())) {
-					typePresentInTemplate = true;
-					
-					// Ignore if the types are the same
-					if(!currentSolutionType.equals(currentTemplateType)) {
-						solutionAndTemplateTypes.put(currentSolutionType, currentTemplateType);
-						break;
-					}
-				}
-			}
-			
-			// Add a null template type, if it is not present
-			if(!typePresentInTemplate) {
-				solutionAndTemplateTypes.put(currentSolutionType, null);
-			}
-		}
+
+		for(CtType<?> solutionType : solutionTypes) {
+		    // Put an empty template class as a default placeholder.
+            solutionAndTemplateTypes.put(solutionType, null);
+
+		    for(CtType<?> templateType : templateTypes) {
+		        // If an exact same template class is found, then remove the pair and continue
+		        if(solutionType.equals(templateType)) {
+		            solutionAndTemplateTypes.remove(solutionType);
+		            continue;
+                } else if(solutionType.getSimpleName().equals(templateType.getSimpleName())) {
+                    // If a template class with the same name gets found, then replace the empty template with the real one.
+                    solutionAndTemplateTypes.put(solutionType, templateType);
+                    break;
+                }
+            }
+        }
 		
 		return solutionAndTemplateTypes;
 	}

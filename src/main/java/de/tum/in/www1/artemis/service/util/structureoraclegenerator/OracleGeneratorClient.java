@@ -5,6 +5,7 @@ import org.json.JSONArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -84,7 +85,7 @@ public class OracleGeneratorClient {
         log.info("\nSaving " + fileName + " in: " + filePath + " ...");
 
         try {
-            String fullFilePath = filePath + fileName;
+            String fullFilePath = filePath + File.separator + fileName;
             Files.write(Paths.get(fullFilePath), string.getBytes());
             log.info("\nSuccessfully wrote " + fileName + " in: " + filePath + "!");
         } catch (IOException e) {

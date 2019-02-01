@@ -6,27 +6,32 @@ import java.util.Set;
 
 import java.util.function.Predicate;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import spoon.reflect.declaration.*;
 import spoon.reflect.reference.CtTypeReference;
 
+@JsonSerialize(using = TypesDiffSerializer.class)
 public class TypesDiff {
     private CtType<?> solutionType;
     private CtType<?> templateType;
-	protected String name;
+    protected boolean isTemplateNull;
+    protected String name;
 	protected String packageName;
 	protected boolean isInterface;
 	protected boolean isEnum;
 	protected boolean isAbstract;
 	protected String superClassName;
-	protected String[] superInterfacesNames;
+	protected Set<CtTypeReference<?>> superInterfacesNames;
 	protected Set<CtMethod<?>> methods;
 	protected boolean typesEqual;
-	protected boolean isTemplateNull;
-	
+
 	public TypesDiff(CtType<?> solutionType, CtType<?> templateType) {
 	    this.solutionType = solutionType;
 	    this.templateType = templateType;
-		this.name = generateName();
+        this.isTemplateNull = (templateType == null);
+        this.name = generateName();
 		this.packageName = generatePackageName();
 		this.isInterface = generateInterfaceStereotype();
 		this.isEnum = generateEnumStereotype();
@@ -35,17 +40,14 @@ public class TypesDiff {
 		this.superInterfacesNames = generateSuperInterfacesNames();
 		this.methods = generateMethodsDiff();
 		this.typesEqual = areTypesEqual();
-		this.isTemplateNull = templateType == null;
-	}
+    }
 		
 	private String generateName() {
 	    return solutionType.getSimpleName();
 	}
-
 	private String generatePackageName() {
-		return solutionType.getPackage().getQualifiedName();
+	    return solutionType.getPackage().getQualifiedName();
 	}
-
 	private boolean generateInterfaceStereotype() {
 	    return (isTemplateNull ? solutionType.isInterface() : (solutionType.isInterface() && !templateType.isInterface()));
 	}
@@ -57,12 +59,12 @@ public class TypesDiff {
 	}
 	private String generateSuperClassName() {
 		CtTypeReference<?> solutionSuperClass = solutionType.getSuperclass();
-		CtTypeReference<?> templateSuperClass = isTemplateNull ? null : templateType.getSuperclass();
+		CtTypeReference<?> templateSuperClass = (isTemplateNull || templateType.getSuperclass() == null) ? null : templateType.getSuperclass();
 		
 		return (solutionSuperClass != null && templateSuperClass == null) ? solutionSuperClass.getSimpleName() : "";
 	}
 	
-	private String[] generateSuperInterfacesNames() {
+	private Set<CtTypeReference<?>> generateSuperInterfacesNames() {
         Predicate<CtTypeReference<?>> interfaceIsImplicit = i -> i.isImplicit();
 
         Set<CtTypeReference<?>> superInterfacesDiff = solutionType.getSuperInterfaces();
@@ -79,23 +81,19 @@ public class TypesDiff {
             }
         }
 
-		Set<String> superInterfacesDiffNames = new HashSet<String>();
-		superInterfacesDiff.forEach(superInterface -> superInterfacesDiffNames.add(superInterface.getSimpleName()));
-
-		return (String[]) superInterfacesDiffNames.toArray();
+		return superInterfacesDiff;
 	}
 
     private Set<CtMethod<?>> generateMethodsDiff() {
-        Predicate<CtMethod<?>> methodIsImplicit = m -> m.isImplicit() || m.getSimpleName().equals("main");
 
-        Set<CtMethod<?>> methodsDiff = solutionType.getMethods();
+        Predicate<CtMethod<?>> methodIsImplicit = m -> m.isImplicit() || m.getSimpleName().equals("main") || m == null;
+
+        Set<CtMethod<?>> methodsDiff = new HashSet<>();
+        solutionType.getMethods().forEach(solutionMethod -> methodsDiff.add(solutionMethod));
         methodsDiff.removeIf(methodIsImplicit);
 
-        if(templateType != null) {
-            Set<CtMethod<?>> templateMethods = templateType.getMethods();
-            templateMethods.removeIf(methodIsImplicit);
-
-            for(CtMethod<?> templateMethod : templateMethods) {
+        if(!isTemplateNull) {
+            for(CtMethod<?> templateMethod : templateType.getMethods()) {
                 methodsDiff.removeIf(solutionMethod ->
                     methodNamesAreEqual(solutionMethod, templateMethod) &&
                         parameterTypesAreEqual(solutionMethod, templateMethod));
@@ -139,7 +137,7 @@ public class TypesDiff {
 				&& !this.isEnum
 				&& !this.isAbstract
 				&& this.superClassName.isEmpty()
-				&& this.superInterfacesNames.length == 0
+				&& this.superInterfacesNames.size() == 0
 				&& this.methods.isEmpty();
 	}
 

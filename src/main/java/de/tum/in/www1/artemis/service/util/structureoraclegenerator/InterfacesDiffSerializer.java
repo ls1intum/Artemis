@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.util.structurediffgenerator;
+package de.tum.in.www1.artemis.service.util.structureoraclegenerator;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;

@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import spoon.reflect.declaration.CtMethod;
 import spoon.reflect.declaration.CtParameter;
 import spoon.reflect.declaration.ModifierKind;
+import spoon.reflect.reference.CtTypeReference;
 
 import java.io.IOException;
 
@@ -41,9 +42,12 @@ public class TypesDiffSerializer extends StdSerializer<TypesDiff> {
             if(!typesDiff.superClassName.isEmpty()){
                 jgen.writeStringField("superclass", typesDiff.superClassName);
             }
-            if(typesDiff.superInterfacesNames.length > 0) {
+            if(typesDiff.superInterfacesNames.size() > 0) {
                 jgen.writeArrayFieldStart("interfaces");
-                jgen.writeStartArray(typesDiff.superInterfacesNames.length);
+                jgen.writeStartArray();
+                for (CtTypeReference<?> superInterface : typesDiff.superInterfacesNames) {
+                    jgen.writeString(superInterface.getSimpleName());
+                }
                 jgen.writeEndArray();
             }
 
