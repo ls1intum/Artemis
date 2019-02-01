@@ -86,6 +86,7 @@ public class TextAssessmentService extends AssessmentService {
         // update existing and save new
         for (Feedback feedback : textAssessment) {
             feedback.setResult(result);
+            result.addFeedback(feedback);
             feedback.setType(FeedbackType.MANUAL);
         }
         this.feedbackRepository.saveAll(textAssessment);
