@@ -73,7 +73,7 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy, OnChange
     chosenWrongAnswerOption: number;
     amountOfAnswerOptions: number;
 
-    test:number;
+    correctAnswers:number;
 
 
     constructor(private artemisMarkdown: ArtemisMarkdown, private dragAndDropQuestionUtil: DragAndDropQuestionUtil) {}
