@@ -22,7 +22,7 @@
     </div>
 
     <h2>
-        <span *ngIf="busy" style="color:grey"><span class="fa fa-spinner fa-spin"></span>&nbsp;<span>Please wait while finding the next submission!</span></span>
+        <span *ngIf="busy" style="color:grey"><fa-icon icon="spinner" [spin]="true"></fa-icon>&nbsp;<span>Please wait while finding the next submission!</span></span>
     </h2>
 
     <div class="row" *ngIf="modelingExercise">
@@ -57,8 +57,8 @@
                             <div *ngFor="let assessment of assessments"
                                  [style.top.px]="positions[assessment.id].y"
                                  [style.left.px]="positions[assessment.id].x">
-                                <i class="fa" [ngClass]="{'fa-check': assessment.credits > 0, 'fa-times': assessment.credits < 0}" *ngFor="let i of numberToArray(assessment.credits, 0)"></i>
-                                <i class="fa half" [ngClass]="{'fa-check': assessment.credits > 0, 'fa-times': assessment.credits < 0}" *ngIf="assessment.credits % 1 !== 0"></i>
+                                <fa-icon [icon]="{'check': assessment.credits > 0, 'times': assessment.credits < 0}" *ngFor="let i of numberToArray(assessment.credits, 0)"></fa-icon>
+                                <fa-icon class="half" [icon]="{'check': assessment.credits > 0, 'times': assessment.credits < 0}" *ngIf="assessment.credits % 1 !== 0"></fa-icon>
                             </div>
                         </ng-container>
                     </div>

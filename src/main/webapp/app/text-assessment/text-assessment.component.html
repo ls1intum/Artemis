@@ -24,7 +24,7 @@
 </div>
 
 <h2>
-    <span *ngIf="busy" style="color:grey"><span class="fa fa-spinner fa-spin"></span>&nbsp;<span>Please wait while ArTEMiS is finding the submission!</span></span>
+    <span *ngIf="busy" style="color:grey"><fa-icon icon="spinner" [spin]="true"></fa-icon>&nbsp;<span>Please wait while ArTEMiS is finding the submission!</span></span>
 </h2>
 
 <div class="row" *ngIf="exercise">

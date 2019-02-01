@@ -37,7 +37,7 @@
                 <div class="form-group">
                     <div class="d-inline-block" ngbDropdown placement="top-right">
                         <button class="btn btn-primary btn-sm" ngbDropdownToggle>
-                            <span class="fa fa-list-alt"></span>
+                            <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
                             <span class="hidden-xs hidden-sm" jhiTranslate="showStatistic.chooseStatistic"></span>
                             <span class="caret"></span>
                         </button>
@@ -76,7 +76,7 @@
                         </span>
                     </div>
                     <div *ngIf="waitingForQuizStart || remainingTimeSeconds >= 0" class="connection-status" [ngClass]="{'disconnected': disconnected}">
-                        <i class="fa fa-sm fa-circle"></i>
+                        <fa-icon icon="circle" size="sm"></fa-icon>
                         <span *ngIf="!disconnected" jhiTranslate="arTeMiSApp.quizExercise.connected"></span>
                         <span *ngIf="disconnected" jhiTranslate="arTeMiSApp.quizExercise.disconnected"></span>
                     </div>

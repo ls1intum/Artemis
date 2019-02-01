@@ -27,8 +27,8 @@
 
                     <div class="col-md-12 text-center">
                         <button (click)="switchSolution()" type="button" class="btn btn-primary">
-                            <span *ngIf="showSolution" class="fa fa-check-circle"></span>&nbsp;
-                            <span *ngIf="!showSolution" class="fa fa-times-circle"></span>&nbsp;
+                            <fa-icon *ngIf="showSolution" icon="check-circle"></fa-icon>&nbsp;
+                            <fa-icon *ngIf="!showSolution" icon="times-circle"></fa-icon>&nbsp;
                             <span *ngIf="showSolution"
                                   jhiTranslate="showStatistic.dragAndDropQuestionStatistic.hideSampleSolution"></span>
                             <span *ngIf="!showSolution"
@@ -103,7 +103,7 @@
                 <div class="form-group">
                     <div class="d-inline-block" ngbDropdown placement="top-right">
                         <button class="btn btn-primary btn-sm" ngbDropdownToggle>
-                            <span class="fa fa-list-alt"></span>
+                            <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
                             <span class="hidden-xs hidden-sm" jhiTranslate="showStatistic.chooseStatistic"></span>
                             <span class="caret"></span>
                         </button>

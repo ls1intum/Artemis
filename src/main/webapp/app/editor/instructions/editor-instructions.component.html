@@ -1,8 +1,8 @@
 <div id="cardInstructions" class="card resizable-instructions" [hidden]="readMeFileRenderedContent == null" [ngStyle]="{'width.vw':40}">
     <div class="card-header text-white bg-primary" (click)="toggleEditorCollapse($event, false)">
-        <span class="pull-right "><i class="fa fa-chevron-right"></i></span>
+        <span class="pull-right "><fa-icon icon="chevron-right"></fa-icon></span>
         <h3 class="card-title">
-            <i class="fa fa-list-alt"></i>
+            <fa-class [icon]="['far', 'list-alt']"></fa-class>
             <span> &nbsp; Instructions &nbsp; </span>
         </h3>
     </div>
@@ -14,8 +14,8 @@
                     <!--The css class test-passing removes the cursor icon and the hover effects from passing test circles-->
                     <div data-toggle="tooltip" data-placement="bottom" title="{{step.title}}"
                          class="btn btn-light btn-circle stepwizard-circle" [class.test-passing]="step.done" (click)="triggerTestStatusClick(i)">
-                        <i class="fa fa-lg fa-check text-success" *ngIf="step.done"></i>
-                        <i class="fa fa-lg fa-times text-danger"  *ngIf="!step.done"></i>
+                        <fa-icon icon="check" size="lg" class="text-success" *ngIf="step.done"></fa-icon>
+                        <fa-icon icon="times" size="lg" class="text-danger"  *ngIf="!step.done"></fa-icon>
                     </div>
                 </div>
             </div>

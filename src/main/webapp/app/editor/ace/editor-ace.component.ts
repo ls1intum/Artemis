@@ -157,7 +157,7 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
         setTimeout(() => {
             this.onSaveStatusChange({
                 isSaved: false,
-                saveStatusLabel: ' <i class="fa fa-circle-o-notch fa-spin text-info"></i><span class="text-info"> Saving file.</span>'
+                saveStatusLabel: ' <fa-icon icon="circle-notch" [spin]="true" class="text-info"></fa-icon><span class="text-info"> Saving file.</span>'
             });
 
             this.repositoryFileService
@@ -174,7 +174,7 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
                             this.onSaveStatusChange({
                                 isSaved: false,
                                 saveStatusLabel:
-                                    '<i class="fa fa-times-circle text-danger"></i> <span class="text-danger"> Failed to save file.</span>'
+                                    '<fa-icon icon="times-circle" class="text-danger"></fa-icon> <span class="text-danger"> Failed to save file.</span>'
                             });
                         }
                         console.log('There was an error while saving file', this.fileName, err);

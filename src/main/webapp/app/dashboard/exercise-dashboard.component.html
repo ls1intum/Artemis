@@ -79,16 +79,16 @@
                 <td>{{durationString(result.completionDate, (result.participation.initializationDate ? result.participation.initializationDate : exercise.releaseDate))}} minutes</td>
                 <td *ngIf="exercise.type !== QUIZ">
                     <button *ngIf="exercise.type === PROGRAMMING" class="btn btn-primary btn-sm mr-1" (click)="goToRepository(result)">
-                        <i class="fa fa-code-fork mr"></i>Repository
+                        <fa-icon icon="code-branch" class="mr"></fa-icon>Repository
                     </button>
                     <button *ngIf="exercise.type === PROGRAMMING" class="btn btn-primary btn-sm mr-1" (click)="goToBuildPlan(result)">
-                        <i class="fa fa-file-code-o"></i>Build plan
+                        <fa-icon [icon]="['far', 'file-code']"></fa-icon>Build plan
                     </button>
                     <button routerLink="/editor/{{result.participation.id}}" class="btn btn-info btn-sm mr-1" *ngIf="exercise.type === PROGRAMMING && result.participation.exercise.allowOnlineEditor">
                         <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>Online editor
                     </button>
                     <button *ngIf="exercise.type === PROGRAMMING" [routerLink]="['/', { outlets: { popup: 'participation/' + result.participation.id + '/result/new'} }]" class="btn btn-warning btn-sm mr-1">
-                        <i class="fa fa-asterisk"></i>New result
+                        <fa-icon icon="asterisk"></fa-icon>New result
                     </button>
                 </td>
             </tr>

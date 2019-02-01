@@ -1,13 +1,13 @@
 <div id="cardBuildOutput" class="card border resizable-buildoutput" [ngStyle]="{'height.px':150}">
     <div class="card-header bg-primary text-white" (click)="toggleEditorCollapse($event, true)">
-        <span class="pull-right "><i class="fa fa-chevron-down"></i></span>
+        <span class="pull-right "><fa-icon icon="chevron-down"></fa-icon></span>
         <h3 class="card-title">
-            <i class="fa fa-terminal"></i>
+            <fa-icon icon="terminal"></fa-icon>
             <span> &nbsp; Build Output</span>
         </h3>
     </div>
     <div class="card-body">
-        <p class="text-center" [hidden]="!isBuilding"><i class="fa fa-circle-o-notch fa-spin"></i> Building...</p>
+        <p class="text-center" [hidden]="!isBuilding"><fa-icon icon="circle-notch" [spin]="true"></fa-icon> Building...</p>
         <p class="text-center" [hidden]="!(buildLogs.length == 0) || isBuilding">No build results available</p>
 
         <dl class="buildoutput dl-horizontal" [hidden]="buildLogs.length == 0 || isBuilding">

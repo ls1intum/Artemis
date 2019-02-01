@@ -89,7 +89,7 @@
                                     class="btn btn-outline-secondary"
                                     (click)="d.toggle()"
                                     type="button" style="cursor: pointer;">
-                                <i class="fa fa-calendar"></i>
+                                <fa-icon icon="calendar-alt"></fa-icon>
                             </button>
                         </div>
                     </div>
@@ -221,7 +221,7 @@
                         [ngbTooltip]="tooltipTranslate"
                         tooltip-placement="top-right"
                         tooltip-class="invalid-reasons-tooltip">
-                        <i class="fa fa-exclamation-circle"></i>
+                        <fa-icon icon="exclamation-circle"></fa-icon>
                         <span jhiTranslate="arTeMiSApp.quizExercise.edit.invalidInput"></span>
                         <span>({{invalidReasons().length}})</span>
                     </span>
