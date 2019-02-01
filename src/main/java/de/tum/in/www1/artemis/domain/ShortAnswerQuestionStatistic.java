@@ -151,7 +151,7 @@ public class ShortAnswerQuestionStatistic extends QuestionStatistic implements S
                     saSolutions = spotCounter.getSpot().getQuestion().getCorrectSolutionForSpot(spotCounter.getSpot());
 
                     for(ShortAnswerSolution solution : saSolutions){
-                        if(saSubmittedText.isSubmittedTextCorrect(saSubmittedText.getText(), solution.getText())){
+                        if(saSubmittedText.isSubmittedTextCorrect(saSubmittedText.getText(), solution.getText()) && saSubmittedText.isIsCorrect()){
                             spotCounter.setRatedCounter(spotCounter.getRatedCounter() + change);
                         }
                     }
@@ -176,7 +176,7 @@ public class ShortAnswerQuestionStatistic extends QuestionStatistic implements S
                     saSolutions = spotCounter.getSpot().getQuestion().getCorrectSolutionForSpot(spotCounter.getSpot());
 
                     for(ShortAnswerSolution solution : saSolutions){
-                        if(saSubmittedText.isSubmittedTextCorrect(saSubmittedText.getText(), solution.getText())){
+                        if(saSubmittedText.isSubmittedTextCorrect(saSubmittedText.getText(), solution.getText()) && saSubmittedText.isIsCorrect()){
                             spotCounter.setUnRatedCounter(spotCounter.getUnRatedCounter() + change);
                         }
                     }
