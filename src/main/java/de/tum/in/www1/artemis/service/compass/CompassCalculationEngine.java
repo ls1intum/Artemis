@@ -46,22 +46,24 @@ public class CompassCalculationEngine implements CalculationEngine {
         assessModelsAutomatically();
     }
 
-    public Map<Integer, Assessment> getAssessmentsInConflict(long modelId) {
-        Map<Integer, Assessment> conflictingAssessments = new HashMap<>();
+    public Set<Integer> getElementIdsInConflict(long modelId, List<ModelElementAssessment> modelingAssessment) {
+        HashSet<Integer> elementIdsInConflict = new HashSet<>();
         UMLModel model = modelIndex.getModel(modelId);
-        model.getClassList().forEach(element -> {
-            if (hasConflict(element.getElementID())) {
-                Assessment correspondingAssessment = assessmentIndex.getAssessment(element);
-                conflictingAssessments.put(element.getElementID(), correspondingAssessment);
+        modelingAssessment.forEach(modelElementAssessment -> {
+            UMLElement element = model.getElementByJSONID(modelElementAssessment.getId()); //TODO return Optional ad throw Exception if no UMLElement found
+            Assessment assessment = assessmentIndex.getAssessment(element);
+            if (assessment != null) {
+                assessment.getContextScoreList().values().forEach(scores -> {
+                    Optional<Score> scoreInConflict = scores.stream()
+                        .filter(score -> score.getPoints() != modelElementAssessment.getCredits())//TODO comparison of double values ...
+                        .findFirst();
+                    if (scoreInConflict.isPresent()) {
+                        elementIdsInConflict.add(element.getElementID());
+                    }
+                });
             }
         });
-        model.getAssociationList().forEach(element -> {
-            if (hasConflict(element.getElementID())) {
-                Assessment correspondingAssessment = assessmentIndex.getAssessment(element);
-                conflictingAssessments.put(element.getElementID(), correspondingAssessment);
-            }
-        });
-        return conflictingAssessments;
+        return elementIdsInConflict;
     }
 
     private void buildModel(long id, JsonObject jsonModel) {
