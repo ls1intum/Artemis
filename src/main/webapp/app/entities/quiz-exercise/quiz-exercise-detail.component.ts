@@ -508,6 +508,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                     && this.shortAnswerQuestionUtil.everySpotHasASolution(saQuestion.correctMappings, saQuestion.spots)
                     && this.shortAnswerQuestionUtil.everyMappedSolutionHasASpot(saQuestion.correctMappings)
                     && saQuestion.solutions.filter(solution => solution.text.trim() === '').length === 0
+                    && !this.shortAnswerQuestionUtil.hasMappingDuplicateValues(saQuestion.correctMappings)
                 );
             } else {
                 console.log('Unknown question type: ' + question);
@@ -638,8 +639,12 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                         translateValues: { index: index + 1 }
                     });
                 }
-
-
+                if(this.shortAnswerQuestionUtil.hasMappingDuplicateValues(saQuestion.correctMappings)){
+                    reasons.push({
+                        translateKey: 'arTeMiSApp.quizExercise.invalidReasons.saQuestionDuplicateMapping',
+                        translateValues: { index: index + 1 }
+                    });
+                }
             }
         }, this);
         return reasons;

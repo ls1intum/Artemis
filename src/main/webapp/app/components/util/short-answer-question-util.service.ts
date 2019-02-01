@@ -349,4 +349,23 @@ export class ShortAnswerQuestionUtil {
         return this.separateFirstLineOfQuestionFromRestOfText(text)
             .split(/\[-spot\s\d\]/g);
     }
+
+    /**
+     * checks if mappings have duplicate values
+     *
+     * @param mappings
+     * @return {boolean}
+     */
+    hasMappingDuplicateValues(mappings: ShortAnswerMapping[]): boolean {
+        let duplicateValues = 0;
+        for (let i = 0; i < mappings.length-1; i++) {
+            for (let j = i + 1; j <  mappings.length; j++) {
+                if(mappings[i].spot.spotNr === mappings[j].spot.spotNr
+                    && mappings[i].solution.text === mappings[j].solution.text){
+                    duplicateValues++;
+                }
+            }
+        }
+        return  duplicateValues > 0;
+    }
 }
