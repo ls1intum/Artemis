@@ -20,16 +20,18 @@
                 </div>
 
                 <div *ngIf="showSolution" style="display: inline-block; margin-top: 5px">
-                    <div class="saQuestion-text" [ngClass]="{'saQuestion-list': isList}" *ngFor="let textPart of textBeforeSpots;let i = index">
-                        {{textPart}}
-                        <div style="position: relative">
-                            <input disabled>
-                            <div class="saQuestion-statistic-letter-solution">
-                                <span>{{getLetter(i) + "."}}</span>
+                    <div style="display: inline-block">
+                        <div class="saQuestion-text" [ngClass]="{'saQuestion-list': isList}" *ngFor="let textPart of textBeforeSpots;let i = index">
+                            {{textPart}}
+                            <div style="position: relative">
+                                <input disabled>
+                                <div class="saQuestion-statistic-letter-solution">
+                                    <span>{{getLetter(i) + "."}}</span>
+                                </div>
                             </div>
                         </div>
+                        <span>{{textAfterSpots}}</span>
                     </div>
-                    <span>{{textAfterSpots}}</span>
                     <p>Solution: </p>
                         <div>
                             <div class="saQuestion-text" *ngFor="let mapping of question.correctMappings;let i = index">
