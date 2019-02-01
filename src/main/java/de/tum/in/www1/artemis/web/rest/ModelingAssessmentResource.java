@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.service.compass.conflict.*;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 /**
@@ -185,11 +186,15 @@ public class ModelingAssessmentResource extends AssessmentResource {
         }
         Long submissionId = result.get().getSubmission().getId();
         Optional<Conflict> conflict = compassService.checkForConflict(exerciseId, submissionId);
+        if (conflict.isPresent()) {
+            modelingAssessmentService.saveManualAssessment(result.get(), modelingExercise.get().getId(), modelingAssessment);
+            return ResponseEntity.ok(new ConflictResultWrapper(conflict.get(), result.get()));
+        } else {
+            modelingAssessmentService.submitManualAssessment(result.get(), modelingExercise.get(), modelingAssessment);
+            compassService.addAssessment(exerciseId, submissionId, modelingAssessment);
 
-        modelingAssessmentService.submitManualAssessment(result.get(), modelingExercise.get(), modelingAssessment);
-        // add assessment to compass to include it in the automatic grading process
-        compassService.addAssessment(exerciseId, submissionId, modelingAssessment);
-        return ResponseEntity.ok(new ConflictResultWrapper(null, result.get()));
+            return ResponseEntity.ok(new ConflictResultWrapper(null, result.get()));
+        }
     }
 
 
