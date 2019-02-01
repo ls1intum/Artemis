@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { Participation, ParticipationService } from '../participation';
 import { Result, ResultDetailComponent, ResultService } from '.';
+import { ProgrammingSubmission } from '../programming-submission';
 import { JhiWebsocketService, AccountService } from '../../core';
 import { RepositoryService } from '../repository/repository.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -8,6 +9,7 @@ import { HttpClient } from '@angular/common/http';
 import { ExerciseType } from '../../entities/exercise';
 
 import * as moment from 'moment';
+
 
 @Component({
     selector: 'jhi-result',
@@ -84,7 +86,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
                         this.jhiWebsocketService.subscribe(this.websocketChannelResults);
                         this.jhiWebsocketService.receive(this.websocketChannelResults).subscribe((newResult: Result) => {
                             // convert json string to moment
-                            console.log('Received new result: ' + newResult);
+                            console.log('Received new result ' + newResult.id + ': ' + newResult.resultString);
                             newResult.completionDate = newResult.completionDate != null ? moment(newResult.completionDate) : null;
                             this.handleNewResult(newResult);
                         });
@@ -92,9 +94,9 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
                         // subscribe for new submissions (e.g. when code was pushed and is currently built)
                         this.websocketChannelSubmissions = `/topic/participation/${this.participation.id}/newSubmission`;
                         this.jhiWebsocketService.subscribe(this.websocketChannelSubmissions);
-                        this.jhiWebsocketService.receive(this.websocketChannelSubmissions).subscribe(newSubmission => {
+                        this.jhiWebsocketService.receive(this.websocketChannelSubmissions).subscribe((newProgrammingSubmission: ProgrammingSubmission) => {
                             // TODO handle this case properly, e.g. by animating a progress bar in the result view
-                            console.log('Received new submission: ' + newSubmission);
+                            console.log('Received new submission ' + newProgrammingSubmission.id + ': ' + newProgrammingSubmission.commitHash);
                         });
                     }
                 });
