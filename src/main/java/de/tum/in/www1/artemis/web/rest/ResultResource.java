@@ -46,7 +46,6 @@ public class ResultResource {
     private String CI_AUTHENTICATION_TOKEN = "";
 
     private final ResultRepository resultRepository;
-    private final CourseService courseService;
     private final ParticipationService participationService;
     private final ResultService resultService;
     private final ExerciseService exerciseService;
@@ -62,14 +61,12 @@ public class ResultResource {
                           AuthorizationCheckService authCheckService,
                           FeedbackService feedbackService,
                           ExerciseService exerciseService,
-                          CourseService courseService,
                           ContinuousIntegrationService continuousIntegrationService) {
 
         this.userService = userService;
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.resultService = resultService;
-        this.courseService = courseService;
         this.feedbackService = feedbackService;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
@@ -156,7 +153,8 @@ public class ResultResource {
                 resultService.onResultNotifiedNew(participation.get(), requestBody);
                 return ResponseEntity.ok().build();
             } else {
-                return notFound();
+                //return ok so that Bamboo does not think it was an error
+                return ResponseEntity.ok().build();
             }
 
         } catch (Exception e) {
