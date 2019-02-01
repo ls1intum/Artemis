@@ -1,14 +1,13 @@
 <jhi-alert></jhi-alert>
 <div class="p-4" *ngIf="exercise">
     <div class="row">
-        <div class="col-lg-4" *ngIf="toComplete || readOnly">
+        <div class="col-lg-2">
             <button class="btn btn-secondary" (click)="back()">&larr; Back</button>
         </div>
 
-        <div class="col-12 col-lg-8">
+        <div class="col-12 col-lg-6">
             <h2>
-                <span *ngIf="isNewSubmission">Create New </span>Example Text Submission <span
-                *ngIf="!isNewSubmission">#{{textSubmission?.id}} </span>For Exercise {{exercise?.title}}
+                <span *ngIf="isNewSubmission">Create New </span>Example Text Submission For Exercise {{exercise?.title}}
             </h2>
         </div>
 
@@ -46,14 +45,18 @@
     </div>
 
     <div class="row">
-        <div class="col">
+        <div class="col-8">
             <h2>Example Assessment</h2>
         </div>
 
-        <div class="col text-right">
-            <button class="btn btn-primary ml-3" (click)="save()"
+        <div class="col-4 text-right">
+            <button class="btn btn-primary col-6" (click)="saveAssessments()"
                     [disabled]="!assessments || !assessmentsAreValid"
-                    *ngIf="!isNewSubmission && isAtLeastInstructor && !readOnly && !toComplete">Save Assessment
+                    *ngIf="!isNewSubmission && isAtLeastInstructor && !readOnly && !toComplete">
+                <span class="fa fa-save"></span>
+                <span *ngIf="areNewAssessments">Create new Assessments</span>
+                <span *ngIf="!areNewAssessments">Update Assessments</span>
+
             </button>
         </div>
 

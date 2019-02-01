@@ -24,6 +24,7 @@ import { TutorParticipation } from 'app/entities/tutor-participation';
 })
 export class ExampleTextSubmissionComponent implements OnInit {
     isNewSubmission: boolean;
+    areNewAssessments = true;
     exerciseId: number;
     exampleSubmission = new ExampleSubmission();
     textSubmission = new TextSubmission();
@@ -59,8 +60,13 @@ export class ExampleTextSubmissionComponent implements OnInit {
         // (+) converts string 'id' to a number
         this.subscription = this.route.params.subscribe(params => {
             this.exerciseId = +params.exerciseId;
-            this.exampleSubmissionId = +params.exampleSubmissionId;
-            this.isNewSubmission = this.exampleSubmissionId === -1;
+
+            if (params.exampleSubmissionId === 'new') {
+                this.isNewSubmission = true;
+                this.exampleSubmissionId = -1;
+            } else {
+                this.exampleSubmissionId = +params.exampleSubmissionId;
+            }
 
             this.loadAll();
         });
@@ -77,22 +83,27 @@ export class ExampleTextSubmissionComponent implements OnInit {
             this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course);
         });
 
-        if (!this.isNewSubmission) {
-            this.exampleSubmissionService.get(this.exampleSubmissionId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
-                this.exampleSubmission = exampleSubmissionResponse.body;
-                this.textSubmission = this.exampleSubmission.submission as TextSubmission;
-
-                // Do not load the results when we have to assess the submission. The API will not provide it anyway
-                // if we are not instructors
-                if (!this.toComplete) {
-                    this.assessmentsService.getExampleAssessment(this.exerciseId, this.textSubmission.id).subscribe(result => {
-                        this.result = result;
-                        this.assessments = this.result.feedbacks || [];
-                        this.checkScoreBoundaries();
-                    });
-                }
-            });
+        if (this.isNewSubmission) {
+            return; // We don't need to load anything else
         }
+
+        this.exampleSubmissionService.get(this.exampleSubmissionId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
+            this.exampleSubmission = exampleSubmissionResponse.body;
+            this.textSubmission = this.exampleSubmission.submission as TextSubmission;
+
+            // Do not load the results when we have to assess the submission. The API will not provide it anyway
+            // if we are not instructors
+            if (this.toComplete) {
+                return;
+            }
+
+            this.assessmentsService.getExampleAssessment(this.exerciseId, this.textSubmission.id).subscribe(result => {
+                this.result = result;
+                this.assessments = this.result.feedbacks || [];
+                this.areNewAssessments = this.assessments.length <= 0;
+                this.checkScoreBoundaries();
+            });
+        });
     }
 
     upsertExampleTextSubmission() {
@@ -133,7 +144,7 @@ export class ExampleTextSubmissionComponent implements OnInit {
                 this.isNewSubmission = false;
 
                 // Update the url with the new id, without reloading the page, to make the history consistent
-                const newUrl = window.location.hash.replace('#', '').replace('-1', `${this.exampleSubmissionId}`);
+                const newUrl = window.location.hash.replace('#', '').replace('new', `${this.exampleSubmissionId}`);
                 this.location.go(newUrl);
 
                 if (bothCompleted) {
@@ -208,7 +219,7 @@ export class ExampleTextSubmissionComponent implements OnInit {
         this.invalidError = null;
     }
 
-    public save(): void {
+    public saveAssessments(): void {
         this.checkScoreBoundaries();
         if (!this.assessmentsAreValid) {
             this.jhiAlertService.error('arTeMiSApp.textAssessment.invalidAssessments');
@@ -217,6 +228,7 @@ export class ExampleTextSubmissionComponent implements OnInit {
 
         this.assessmentsService.save(this.assessments, this.exercise.id, this.result.id).subscribe(response => {
             this.result = response.body;
+            this.areNewAssessments = false;
             this.jhiAlertService.success('arTeMiSApp.textAssessment.saveSuccessful');
         });
     }

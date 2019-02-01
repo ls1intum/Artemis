@@ -5,7 +5,7 @@ import { ExampleTextSubmissionComponent } from './example-text-submission.compon
 
 export const exampleTextSubmissionRoute: Routes = [
     {
-        path: 'text/:exerciseId/exampleSubmission/:exampleSubmissionId',
+        path: 'text-exercise/:exerciseId/example-submission/:exampleSubmissionId',
         component: ExampleTextSubmissionComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],

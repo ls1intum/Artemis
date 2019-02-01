@@ -57,7 +57,7 @@
 
             <ul>
                 <li *ngFor="let exampleSubmission of exampleSubmissionsForTutorial">
-                    <button routerLink="/text/{{exercise.id}}/exampleSubmission/{{exampleSubmission.id}}" [queryParams]="{readOnly: true}"
+                    <button routerLink="/text-exercise/{{exercise.id}}/example-submission/{{exampleSubmission.id}}" [queryParams]="{readOnly: true}"
                             class="btn btn-link">Example submission {{exampleSubmission.id}}</button>
                 </li>
             </ul>
@@ -69,7 +69,7 @@
 
             <ul>
                 <li *ngFor="let exampleSubmission of exampleSubmissionsToComplete">
-                    <button routerLink="/text/{{exercise.id}}/exampleSubmission/{{exampleSubmission.id}}" [queryParams]="{toComplete: true}"
+                    <button routerLink="/text-exercise/{{exercise.id}}/example-submission/{{exampleSubmission.id}}" [queryParams]="{toComplete: true}"
                             class="btn btn-link">Example submission {{exampleSubmission.id}}</button>
                     <fa-icon icon="check-circle" *ngIf="hasBeenCompletedByTutor(exampleSubmission.id)"></fa-icon>
                 </li>
