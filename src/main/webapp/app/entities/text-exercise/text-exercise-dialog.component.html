@@ -52,7 +52,7 @@
 
             <ul *ngIf="textExercise.id">
                 <li *ngFor="let exampleSubmission of textExercise.exampleSubmissions; let i = index">
-                    <button routerLink="text-exercise/{{textExercise.id}}/example-submission/{{exampleSubmission.id}}" class="btn btn-link">Example submission {{i}}</button>
+                    <button routerLink="text-exercise/{{textExercise.id}}/example-submission/{{exampleSubmission.id}}" class="btn btn-link">Example submission {{i + 1}}</button>
                     <fa-icon *ngIf="exampleSubmission.usedForTutorial" icon="chalkboard-teacher" style="margin-left: 10px" title="Used for tutorial"></fa-icon>
                     <fa-icon *ngIf="exampleSubmission.submission?.result?.exampleResult" icon="check-circle" style="margin-left: 10px" title="An assessment is available"></fa-icon>
                 </li>

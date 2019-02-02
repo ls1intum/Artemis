@@ -27,6 +27,13 @@
             </div>
         </div>
 
+        <div class="col-12 col-lg-4 text-rigth" *ngIf="readOnly">
+            <button (click)="readAndUnderstood()" class="btn btn-success col-12">
+                <span class="fa fa-save"></span>
+                I have read and understood the example
+            </button>
+        </div>
+
         <div class="col-12">
             <p class="mb-3">
                 <strong>Problem Statement:</strong> {{ exercise.problemStatement }}<br/>

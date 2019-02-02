@@ -1,21 +1,21 @@
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { Location } from '@angular/common';
-import { JhiAlertService } from 'ng-jhipster';
-import { Subscription } from 'rxjs';
-import { AccountService } from '../core';
-import { ExampleSubmission } from 'app/entities/example-submission';
-import { ExerciseService } from 'app/entities/exercise';
-import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
-import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
-import { ExampleSubmissionService } from 'app/entities/example-submission/example-submission.service';
-import { Feedback } from 'app/entities/feedback';
-import { TextAssessmentsService } from 'app/entities/text-assessments/text-assessments.service';
-import { Result } from 'app/entities/result';
-import { HighlightColors } from 'app/text-shared/highlight-colors';
-import { TextExercise } from 'app/entities/text-exercise';
-import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
-import { TutorParticipation } from 'app/entities/tutor-participation';
+import {Component, OnInit} from '@angular/core';
+import {ActivatedRoute, Router} from '@angular/router';
+import {Location} from '@angular/common';
+import {JhiAlertService} from 'ng-jhipster';
+import {Subscription} from 'rxjs';
+import {AccountService} from '../core';
+import {ExampleSubmission} from 'app/entities/example-submission';
+import {ExerciseService} from 'app/entities/exercise';
+import {HttpResponse, HttpErrorResponse} from '@angular/common/http';
+import {TextSubmission, TextSubmissionService} from 'app/entities/text-submission';
+import {ExampleSubmissionService} from 'app/entities/example-submission/example-submission.service';
+import {Feedback} from 'app/entities/feedback';
+import {TextAssessmentsService} from 'app/entities/text-assessments/text-assessments.service';
+import {Result} from 'app/entities/result';
+import {HighlightColors} from 'app/text-shared/highlight-colors';
+import {TextExercise} from 'app/entities/text-exercise';
+import {TutorParticipationService} from 'app/tutor-exercise-dashboard/tutor-participation.service';
+import {TutorParticipation} from 'app/entities/tutor-participation';
 
 @Component({
     selector: 'jhi-example-text-submission',
@@ -52,6 +52,7 @@ export class ExampleTextSubmissionComponent implements OnInit {
         private jhiAlertService: JhiAlertService,
         private accountService: AccountService,
         private route: ActivatedRoute,
+        private router: Router,
         private location: Location
     ) {
     }
@@ -233,8 +234,15 @@ export class ExampleTextSubmissionComponent implements OnInit {
         });
     }
 
-    public back(): void {
-        this.location.back();
+    async back() {
+        const courseId = this.exercise.course.id;
+
+        if (this.readOnly || this.toComplete) {
+            this.router.navigate([`/course/${courseId}/exercise/${this.exerciseId}/tutor-dashboard`]);
+        } else {
+            await this.router.navigate([`/course/${courseId}/text-exercise/`]);
+            this.router.navigate(['/', {outlets: {popup: 'text-exercise/' + this.exerciseId + '/edit'}}]);
+        }
     }
 
     checkAssessment() {
@@ -249,19 +257,27 @@ export class ExampleTextSubmissionComponent implements OnInit {
         exampleSubmission.submission.result.feedbacks = this.assessments;
 
         this.tutorParticipationService.assessExampleSubmission(exampleSubmission, this.exerciseId).subscribe(
-                (res: HttpResponse<TutorParticipation>) => {
-                    this.jhiAlertService.success('arTeMiSApp.exampleSubmission.assessScore.success');
-                },
+            (res: HttpResponse<TutorParticipation>) => {
+                this.jhiAlertService.success('arTeMiSApp.exampleSubmission.assessScore.success');
+            },
             (error: HttpErrorResponse) => {
-                    const errorType = error.headers.get('x-artemisapp-error');
+                const errorType = error.headers.get('x-artemisapp-error');
 
-                    if (errorType === 'error.wrongScore') {
-                        this.jhiAlertService.error('arTeMiSApp.exampleSubmission.assessScore.error');
-                    } else {
-                        this.onError(error.message);
-                    }
+                if (errorType === 'error.wrongScore') {
+                    this.jhiAlertService.error('arTeMiSApp.exampleSubmission.assessScore.error');
+                } else {
+                    this.onError(error.message);
                 }
-            );
+            }
+        );
+    }
+
+    readAndUnderstood() {
+        this.tutorParticipationService.assessExampleSubmission(this.exampleSubmission, this.exerciseId).subscribe(
+            (res: HttpResponse<TutorParticipation>) => {
+                this.jhiAlertService.success('arTeMiSApp.exampleSubmission.readSuccessfully');
+            }
+        );
     }
 
     private onError(error: string) {

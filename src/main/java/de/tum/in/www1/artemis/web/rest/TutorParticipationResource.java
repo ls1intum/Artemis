@@ -108,19 +108,25 @@ public class TutorParticipationResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("tutorParticipations", "tutorParticipationInWrongStatus", "You cannot assess an example submission if you haven't read the grading instructions yet.")).body(null);
         }
 
-        // Retrieve the example feedback created by the instructor
-        List<Feedback> existingFeedback = this.exampleSubmissionService.getFeedbacksForExampleSubmission(exampleSubmission.getId());
+        // Check if it is a tutorial or not
+        boolean isTutorial = exampleSubmission.isUsedForTutorial();
 
-        // Check if the result is the same
-        // TODO: at the moment we check only the score +/10%, maybe we want to do something smarter?
-        float instructorScore = calculateTotalScore(existingFeedback);
-        float lowerInstructorScore = instructorScore - instructorScore / 10;
-        float higherInstructorScore = instructorScore + instructorScore / 10;
+        // If it is not a tutorial we check the assessment
+        if (!isTutorial) {
+            // Retrieve the example feedback created by the instructor
+            List<Feedback> existingFeedback = this.exampleSubmissionService.getFeedbacksForExampleSubmission(exampleSubmission.getId());
 
-        float tutorScore = calculateTotalScore(exampleSubmission.getSubmission().getResult().getFeedbacks());
+            // Check if the result is the same
+            // TODO: at the moment we check only the score +/10%, maybe we want to do something smarter?
+            float instructorScore = calculateTotalScore(existingFeedback);
+            float lowerInstructorScore = instructorScore - instructorScore / 10;
+            float higherInstructorScore = instructorScore + instructorScore / 10;
 
-        if (lowerInstructorScore > tutorScore || tutorScore > higherInstructorScore) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("result", "wrongScore", "Your score is too different from the instructor's one")).body(null);
+            float tutorScore = calculateTotalScore(exampleSubmission.getSubmission().getResult().getFeedbacks());
+
+            if (lowerInstructorScore > tutorScore || tutorScore > higherInstructorScore) {
+                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("result", "wrongScore", "Your score is too different from the instructor's one")).body(null);
+            }
         }
 
         List<ExampleSubmission> alreadyAssessedSubmissions = new ArrayList<>(existingTutorParticipation.getTrainedExampleSubmissions());
@@ -130,15 +136,13 @@ public class TutorParticipationResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("tutorParticipation", "alreadyAssessed", "You have already assesed this example submission")).body(null);
         }
 
-        int numberOfExampleSubmissions = this.exampleSubmissionRepository.findAllByExerciseIdAndUsedForTutorial(exerciseId, null).size();
+        int numberOfExampleSubmissions = this.exampleSubmissionRepository.findAllByExerciseId(exerciseId).size();
         int numberOfAlreadyAssessedSubmissions = alreadyAssessedSubmissions.size() + 1;  // +1 because we haven't added yet the one we just did
 
         /*
-          When the tutor has assessed enough exercises (hardcoded to 3 at the moment), or when the tutor has assessed
-          all exercises (maybe there are less example exercises than 3) the tutor status goes to the next step.
-          TODO: make 3 a configuration option
+          When the tutor has read and assessed all the exercises, the tutor status goes to the next step.
          */
-        if (numberOfAlreadyAssessedSubmissions >= 3 || numberOfAlreadyAssessedSubmissions >= numberOfExampleSubmissions) {
+        if (numberOfAlreadyAssessedSubmissions >= numberOfExampleSubmissions) {
             existingTutorParticipation.setStatus(TutorParticipationStatus.TRAINED);
         }
 

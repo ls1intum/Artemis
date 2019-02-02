@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { Location } from '@angular/common';
 import { Course, CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
 import { Subscription } from 'rxjs';
@@ -29,7 +30,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
     exampleSubmissionsToComplete: ExampleSubmission[] = [];
     exampleSubmissionsCompletedByTutor: ExampleSubmission[] = [];
     tutorParticipation: TutorParticipation;
-    numberOfNeededSubmissions: number;
+    nextExampleSubmissionId: number;
 
     NOT_PARTICIPATED = TutorParticipationStatus.NOT_PARTICIPATED;
     REVIEWED_INSTRUCTIONS = TutorParticipationStatus.REVIEWED_INSTRUCTIONS;
@@ -46,7 +47,8 @@ export class TutorExerciseDashboardComponent implements OnInit {
         private route: ActivatedRoute,
         private tutorParticipationService: TutorParticipationService,
         private textSubmissionService: TextSubmissionService,
-        private modalService: NgbModal
+        private modalService: NgbModal,
+        private location: Location
     ) {}
 
     ngOnInit(): void {
@@ -68,8 +70,17 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 this.tutorParticipationStatus = this.tutorParticipation.status;
                 this.exampleSubmissionsForTutorial = this.exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => exampleSubmission.usedForTutorial);
                 this.exampleSubmissionsToComplete = this.exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => !exampleSubmission.usedForTutorial);
-                this.numberOfNeededSubmissions = Math.min(3, this.exampleSubmissionsToComplete.length);
                 this.exampleSubmissionsCompletedByTutor = this.tutorParticipation.trainedExampleSubmissions;
+
+                console.log(this.exampleSubmissionsForTutorial)
+                console.log(this.exampleSubmissionsCompletedByTutor)
+
+                if (this.exampleSubmissionsCompletedByTutor.length < this.exampleSubmissionsForTutorial.length) {
+                    this.nextExampleSubmissionId = this.exampleSubmissionsForTutorial[this.exampleSubmissionsCompletedByTutor.length].id;
+                } else {
+                    this.nextExampleSubmissionId = this.exampleSubmissionsToComplete[this.exampleSubmissionsCompletedByTutor.length - this.exampleSubmissionsForTutorial.length].id;
+                }
+
             },
             (response: string) => this.onError(response)
         );
@@ -130,5 +141,9 @@ export class TutorExerciseDashboardComponent implements OnInit {
     private onError(error: string) {
         console.error(error);
         this.jhiAlertService.error(error, null, null);
+    }
+
+    back() {
+        this.location.back();
     }
 }

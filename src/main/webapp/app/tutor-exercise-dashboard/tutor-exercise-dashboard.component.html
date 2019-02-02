@@ -8,6 +8,10 @@
     </div>
 
     <div class="row mt-3 justify-content-around">
+        <div class="col-2">
+            <button class="btn btn-secondary" (click)="back()">&larr; Back</button>
+        </div>
+
         <div class="col-4 text-center">
             <p class="h3">Your status:</p>
             <jhi-tutor-participation-graph
@@ -47,30 +51,39 @@
     </ng-template>
 
     <div *ngIf="tutorParticipationStatus === REVIEWED_INSTRUCTIONS" class="alert alert-warning row" role="alert">
-        You need to successfully assess at least {{numberOfNeededSubmissions}} example submissions before continuing. There are {{exampleSubmissionsToComplete.length}} example submissions to review.
+        There are {{exampleSubmissionsForTutorial.length + exampleSubmissionsToComplete.length}} example submissions: {{exampleSubmissionsForTutorial.length}} to review and {{exampleSubmissionsToComplete.length}} to assess.
     </div>
 
     <div class="row" *ngIf="tutorParticipationStatus !== NOT_PARTICIPATED">
         <div class="col-6" *ngIf="exampleSubmissionsForTutorial.length > 0">
-            <p class="h3">Review submissions</p>
-            <div class="alert alert-info" role="alert">You can use these examples as a tutorial</div>
+            <p class="h3">Review submissions ({{exampleSubmissionsCompletedByTutor.length - exampleSubmissionsToComplete.length}} / {{exampleSubmissionsForTutorial.length}})</p>
 
-            <ul>
-                <li *ngFor="let exampleSubmission of exampleSubmissionsForTutorial">
+            <button *ngIf="exampleSubmissionsCompletedByTutor.length < exampleSubmissionsForTutorial.length" class="btn btn-primary"
+                    routerLink="/text-exercise/{{exercise.id}}/example-submission/{{nextExampleSubmissionId}}" [queryParams]="{readOnly: true}">
+                <span *ngIf="exampleSubmissionsCompletedByTutor.length <= 0; else elseBlockSubmissionSForTutorialButton">Start</span><ng-template #elseBlockSubmissionSForTutorialButton>Continue</ng-template> reviewing example submissions
+            </button>
+
+            <ul *ngIf="exampleSubmissionsCompletedByTutor.length >= exampleSubmissionsForTutorial.length">
+                <li *ngFor="let exampleSubmission of exampleSubmissionsForTutorial; let i = index">
                     <button routerLink="/text-exercise/{{exercise.id}}/example-submission/{{exampleSubmission.id}}" [queryParams]="{readOnly: true}"
-                            class="btn btn-link">Example submission {{exampleSubmission.id}}</button>
+                            class="btn btn-link">Review example submission {{i + 1}}</button>
+                    <fa-icon icon="check-circle" *ngIf="hasBeenCompletedByTutor(exampleSubmission.id)"></fa-icon>
                 </li>
             </ul>
         </div>
 
-        <div class="col-6" *ngIf="exampleSubmissionsToComplete.length > 0">
-            <p class="h3">Tutorial submissions ({{exampleSubmissionsCompletedByTutor.length}}/{{numberOfNeededSubmissions}})</p>
-            <div class="alert alert-info" role="alert">You can use these examples as an exercise</div>
+        <div class="col-6" *ngIf="exampleSubmissionsToComplete.length > 0 && exampleSubmissionsCompletedByTutor.length >= exampleSubmissionsForTutorial.length">
+            <p class="h3">Tutorial submissions ({{exampleSubmissionsCompletedByTutor.length - exampleSubmissionsForTutorial.length}}/{{exampleSubmissionsToComplete.length}})</p>
+
+            <button *ngIf="exampleSubmissionsCompletedByTutor.length < exampleSubmissionsToComplete.length + exampleSubmissionsForTutorial.length" class="btn btn-primary"
+                    routerLink="/text-exercise/{{exercise.id}}/example-submission/{{nextExampleSubmissionId}}" [queryParams]="{toComplete: true}">
+                <span *ngIf="exampleSubmissionsCompletedByTutor.length <= exampleSubmissionsForTutorial.length; else elseBlockSubmissionsForReviewButton">Start</span><ng-template #elseBlockSubmissionsForReviewButton>Continue</ng-template> assess example submissions
+            </button>
 
             <ul>
-                <li *ngFor="let exampleSubmission of exampleSubmissionsToComplete">
+                <li *ngFor="let exampleSubmission of exampleSubmissionsToComplete; let i = index">
                     <button routerLink="/text-exercise/{{exercise.id}}/example-submission/{{exampleSubmission.id}}" [queryParams]="{toComplete: true}"
-                            class="btn btn-link">Example submission {{exampleSubmission.id}}</button>
+                            class="btn btn-link">Assess example submission {{i + 1}}</button>
                     <fa-icon icon="check-circle" *ngIf="hasBeenCompletedByTutor(exampleSubmission.id)"></fa-icon>
                 </li>
             </ul>
