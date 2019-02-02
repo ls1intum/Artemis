@@ -1,7 +1,6 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Question, QuestionType, ScoringType } from 'app/entities/question';
-import { AnswerOption } from 'app/entities/answer-option';
 
 @Component({
     selector: 'jhi-quiz-scoring-infostudent-modal',

@@ -776,6 +776,25 @@ export class QuizComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Checks if the array is empty for the question based on the id
+     */
+    checkForSelectedAnswerOption(): boolean {
+        for( let question of this.quizExercise.questions) {
+            if (question.type === QuestionType.MULTIPLE_CHOICE) {
+                if (this.selectedAnswerOptions[question.id] == []) {
+                    return false;
+                }
+            } else {
+                if (question.type === QuestionType.DRAG_AND_DROP) {
+                    if (this.dragAndDropMappings[question.id] == []) {
+                        return false;
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * This function is called when the user clicks the 'Submit' button
      */
     onSubmit() {
@@ -784,7 +803,7 @@ export class QuizComponent implements OnInit, OnDestroy {
 
         let confirmSubmit = true;
 
-        if (this.remainingTimeSeconds > 1) {
+        if (this.remainingTimeSeconds > 1 && !this.checkForSelectedAnswerOption()) {
             confirmSubmit = window.confirm('Are you sure you want to submit? You have not answered all questions and you still have some time left!');
         }
 

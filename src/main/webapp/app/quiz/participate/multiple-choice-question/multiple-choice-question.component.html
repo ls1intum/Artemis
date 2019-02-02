@@ -9,7 +9,7 @@
         <span class="label label-info" [ngbPopover]="renderedHint" placement="right" triggers="mouseenter:mouseleave" *ngIf="question.hint">
             <i class="fa fa-question-circle-o"></i>
             <span jhiTranslate="arTeMiSApp.question.hint"></span>
-        </span> </br>
+        </span>
         <ng-template #renderedExplanation>
             <div [innerHTML]="rendered.explanation"></div>
         </ng-template>
