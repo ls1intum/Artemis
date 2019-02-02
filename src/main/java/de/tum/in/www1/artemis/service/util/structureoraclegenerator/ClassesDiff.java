@@ -9,6 +9,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 
+/**
+ * This class extends the functionality of TypesDiff and handles structural elements that are exclusive to classes:
+ * - Attributes,
+ * - Constructors.
+ */
 @JsonSerialize(using = ClassesDiffSerializer.class)
 public class ClassesDiff extends TypesDiff {
 	
@@ -23,16 +28,28 @@ public class ClassesDiff extends TypesDiff {
 		this.classesEqual = areClassesEqual();
 	}
 
+    /**
+     * This method generates the attributes diff of the solution and template type, e.g. the attributes defined in the
+     * solution type but not in the template type.
+     * @return A set of attributes defined in the solution type but not in the template type.
+     */
     private List<CtField<?>> generateAttributesDiff(CtClass<?> solutionClass, CtClass<?> templateClass) {
+        // Use this predicate to filter out fields that are implicit, e.g. not explicitly defined in the code.
         Predicate<CtField<?>> fieldIsImplicit = f -> f.isImplicit() ||
             f.getSimpleName().equals(solutionClass.getSimpleName());
 
-        List<CtField<?>> attributesDiff = new ArrayList<>();
-        solutionClass.getFields().forEach(solutionField -> attributesDiff.add(solutionField));
+        // Create an empty set of attribute for the attributes diff and deep-copy the methods of the solution type in it.
+        List<CtField<?>> attributesDiff = new ArrayList<>(solutionClass.getFields());
         attributesDiff.removeIf(fieldIsImplicit);
 
-        if (templateClass != null) {
+        // If the template is non-existent, then the attributes diff consists of all the attributes of the solution type.
+        if(templateClass != null) {
+
+            // Check all the attributes in the template type if they match to the ones in the solution type
+            // and remove them from the diff, if that's the case.
             for (CtField<?> templateAttribute : templateClass.getFields()) {
+
+                // The fields are uniquely identified by their names.
                 attributesDiff.removeIf(solutionAttribute ->
                     solutionAttribute.getSimpleName().equals(templateAttribute.getSimpleName()));
             }
@@ -41,15 +58,27 @@ public class ClassesDiff extends TypesDiff {
         return attributesDiff;
     }
 
+    /**
+     * This method generates the constructors diff of the solution and template type, e.g. the constructors defined in the
+     * solution type but not in the template type.
+     * @return A set of constructors defined in the solution type but not in the template type.
+     */
     private Set<CtConstructor<?>> generateConstructorsDiff(CtClass<?> solutionClass, CtClass<?> templateClass) {
-        Predicate<CtConstructor<?>> constructorIsImplicit = c -> c.isImplicit();
+        // Use this predicate to filter out methods that are implicit, e.g. not explicitly defined in the code.
+        Predicate<CtConstructor<?>> constructorIsImplicit = CtElement::isImplicit;
 
-        Set<CtConstructor<?>> constructorsDiff = new HashSet<>();
-        constructorsDiff.addAll(solutionClass.getConstructors());
+        // Create an empty set of constructors for the constructors diff and deep-copy the constructors of the solution type in it.
+        Set<CtConstructor<?>> constructorsDiff = new HashSet<>(solutionClass.getConstructors());
         constructorsDiff.removeIf(constructorIsImplicit);
 
+        // If the template is non-existent, then the constructors diff consists of all the constructors of the solution type.
         if(templateClass != null) {
+
+            // Check all the constructors in the template type if they match to the ones in the solution type
+            // and remove them from the diff, if that's the case.
             for(CtConstructor<?> templateConstructor : templateClass.getConstructors()) {
+
+                // The constructors are uniquely identified by their parameter types.
                 constructorsDiff.removeIf(solutionConstructor ->
                     parameterTypesAreEqual(solutionConstructor, templateConstructor));
             }
@@ -59,8 +88,12 @@ public class ClassesDiff extends TypesDiff {
         return constructorsDiff;
     }
 
-	protected boolean areClassesEqual() {
-		return super.areTypesEqual()
+    /**
+     * This method checks if the solution class is the same in structure as the template class.
+     * @return True, if the solution type is the same in structure as the template type, false otherwise.
+     */
+	private boolean areClassesEqual() {
+		return super.typesEqual
 				&& this.attributes.isEmpty()
 				&& this.constructors.isEmpty();
 	}

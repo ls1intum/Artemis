@@ -7,6 +7,9 @@ import spoon.reflect.declaration.CtEnumValue;
 
 import java.io.IOException;
 
+/**
+ * This class is used to serialize the enums diff.
+ */
 public class EnumsDiffSerializer extends StdSerializer<EnumsDiff> {
 	
     public EnumsDiffSerializer() { this(null); }

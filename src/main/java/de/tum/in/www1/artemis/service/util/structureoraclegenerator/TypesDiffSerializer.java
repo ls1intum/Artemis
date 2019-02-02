@@ -5,11 +5,15 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import spoon.reflect.declaration.CtMethod;
 import spoon.reflect.declaration.CtParameter;
-import spoon.reflect.declaration.ModifierKind;
 import spoon.reflect.reference.CtTypeReference;
 
 import java.io.IOException;
 
+import static de.tum.in.www1.artemis.service.util.structureoraclegenerator.SerializerUtil.serializeModifiers;
+
+/**
+ * This class is used to serialize a TypesDiff object.
+ */
 public class TypesDiffSerializer extends StdSerializer<TypesDiff> {
 	
     public TypesDiffSerializer() {
@@ -21,71 +25,68 @@ public class TypesDiffSerializer extends StdSerializer<TypesDiff> {
     }
 
     @Override
-    public void serialize(TypesDiff typesDiff, JsonGenerator jgen, SerializerProvider provider) {
+    public void serialize(TypesDiff typesDiff, JsonGenerator jsonGenerator, SerializerProvider provider) {
         try {
             // Serialize type properties.
-            jgen.writeObjectFieldStart("class");
-            jgen.writeStartObject();
+            jsonGenerator.writeObjectFieldStart("class");
+            jsonGenerator.writeStartObject();
 
-            jgen.writeStringField("name", typesDiff.name);
-            jgen.writeStringField("package", typesDiff.packageName);
+            jsonGenerator.writeStringField("name", typesDiff.name);
+            jsonGenerator.writeStringField("package", typesDiff.packageName);
 
             if(typesDiff.isInterface) {
-                jgen.writeBooleanField("isInterface", true);
+                jsonGenerator.writeBooleanField("isInterface", true);
             }
             if(typesDiff.isEnum) {
-                jgen.writeBooleanField("isEnum", true);
+                jsonGenerator.writeBooleanField("isEnum", true);
             }
             if(typesDiff.isAbstract) {
-                jgen.writeBooleanField("isAbstract", true);
+                jsonGenerator.writeBooleanField("isAbstract", true);
             }
             if(!typesDiff.superClassName.isEmpty()){
-                jgen.writeStringField("superclass", typesDiff.superClassName);
+                jsonGenerator.writeStringField("superclass", typesDiff.superClassName);
             }
             if(typesDiff.superInterfacesNames.size() > 0) {
-                jgen.writeArrayFieldStart("interfaces");
-                jgen.writeStartArray();
-                for (CtTypeReference<?> superInterface : typesDiff.superInterfacesNames) {
-                    jgen.writeString(superInterface.getSimpleName());
+                jsonGenerator.writeArrayFieldStart("interfaces");
+                jsonGenerator.writeStartArray();
+                for(CtTypeReference<?> superInterface : typesDiff.superInterfacesNames) {
+                    if(!superInterface.isImplicit()) {
+                        jsonGenerator.writeString(superInterface.getSimpleName());
+                    }
                 }
-                jgen.writeEndArray();
+                jsonGenerator.writeEndArray();
             }
 
-            jgen.writeEndObject();
+            jsonGenerator.writeEndObject();
 
             // Serialize methods.
             if(!typesDiff.methods.isEmpty()) {
-                jgen.writeObjectFieldStart("methods");
+                jsonGenerator.writeObjectFieldStart("methods");
 
-                jgen.writeStartObject();
-                jgen.writeStartArray();
+                jsonGenerator.writeStartObject();
+                jsonGenerator.writeStartArray();
 
                 for(CtMethod<?> method : typesDiff.methods) {
-                    jgen.writeStartObject();
+                    jsonGenerator.writeStartObject();
 
-                    jgen.writeStringField("name", method.getSimpleName());
+                    jsonGenerator.writeStringField("name", method.getSimpleName());
 
-                    jgen.writeArrayFieldStart("modifiers");
-                    jgen.writeStartArray();
-                    for(ModifierKind modifier : method.getModifiers()) {
-                        jgen.writeString(modifier.toString());
-                    }
-                    jgen.writeEndArray();
+                    serializeModifiers(jsonGenerator, method.getModifiers());
 
-                    jgen.writeArrayFieldStart("parameters");
-                    jgen.writeStartArray();
+                    jsonGenerator.writeArrayFieldStart("parameters");
+                    jsonGenerator.writeStartArray();
                     for(CtParameter<?> parameter : method.getParameters()) {
                         if(!parameter.isImplicit()) {
-                            jgen.writeString(parameter.getType().getSimpleName());
+                            jsonGenerator.writeString(parameter.getType().getSimpleName());
                         }
                     }
-                    jgen.writeEndArray();
+                    jsonGenerator.writeEndArray();
 
-                    jgen.writeStringField("returnType", method.getType().getSimpleName());
+                    jsonGenerator.writeStringField("returnType", method.getType().getSimpleName());
                 }
 
-                jgen.writeEndArray();
-                jgen.writeEndObject();
+                jsonGenerator.writeEndArray();
+                jsonGenerator.writeEndObject();
             }
         } catch (IOException e) {
             e.printStackTrace();

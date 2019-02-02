@@ -9,6 +9,11 @@ import spoon.reflect.declaration.CtParameter;
 import spoon.reflect.declaration.ModifierKind;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import static de.tum.in.www1.artemis.service.util.structureoraclegenerator.SerializerUtil.serializeModifiers;
+import static de.tum.in.www1.artemis.service.util.structureoraclegenerator.SerializerUtil.serializeParameters;
 
 public class ClassesDiffSerializer extends StdSerializer<ClassesDiff> {
 
@@ -19,57 +24,44 @@ public class ClassesDiffSerializer extends StdSerializer<ClassesDiff> {
     public ClassesDiffSerializer(Class<ClassesDiff> classesDiffClass) { super(classesDiffClass); }
 
     @Override
-    public void serialize(ClassesDiff classesDiff, JsonGenerator jgen, SerializerProvider provider) {
+    public void serialize(ClassesDiff classesDiff, JsonGenerator jsonGenerator, SerializerProvider provider) {
         try{
             // Serialize attributes.
-            jgen.writeArrayFieldStart("attributes");
+            jsonGenerator.writeArrayFieldStart("attributes");
 
-            jgen.writeStartArray();
+            jsonGenerator.writeStartArray();
             for(CtField<?> attribute : classesDiff.attributes) {
-                jgen.writeStartObject();
+                serializeModifiers(jsonGenerator, attribute.getModifiers());
 
-                jgen.writeStringField("name", attribute.getSimpleName());
+                jsonGenerator.writeStringField("type", attribute.getType().getSimpleName());
 
-                jgen.writeArrayFieldStart("modifiers");
-                jgen.writeStartArray();
-                for(ModifierKind modifier : attribute.getModifiers()) {
-                    jgen.writeString(modifier.toString());
-                }
-                jgen.writeEndArray();
-
-                jgen.writeStringField("type", attribute.getType().getSimpleName());
-
-                jgen.writeEndObject();
+                jsonGenerator.writeEndObject();
             }
-            jgen.writeEndArray();
+            jsonGenerator.writeEndArray();
 
             // Serialize constructors.
-            jgen.writeArrayFieldStart("constructors");
+            jsonGenerator.writeArrayFieldStart("constructors");
 
-            jgen.writeStartArray();
+            jsonGenerator.writeStartArray();
             for(CtConstructor<?> constructor : classesDiff.constructors) {
-                jgen.writeStartObject();
+                jsonGenerator.writeStartObject();
 
-                jgen.writeArrayFieldStart("modifiers");
-                jgen.writeStartArray();
-                for(ModifierKind modifier : constructor.getModifiers()) {
-                    jgen.writeString(modifier.toString());
-                }
-                jgen.writeEndArray();
+                serializeModifiers(jsonGenerator, constructor.getModifiers());
 
-                jgen.writeArrayFieldStart("parameters");
-                jgen.writeStartArray();
+                jsonGenerator.writeArrayFieldStart("parameters");
+                jsonGenerator.writeStartArray();
+
                 for(CtParameter<?> parameter : constructor.getParameters()) {
                     if(parameter.isImplicit()) { continue; }
 
                     if(constructor.getDeclaringType().isEnum()) {
-                        jgen.writeString("String");
-                        jgen.writeString("int");
+                        jsonGenerator.writeString("String");
+                        jsonGenerator.writeString("int");
                     }
 
-                    jgen.writeString(parameter.getType().getSimpleName());
+                    jsonGenerator.writeString(parameter.getType().getSimpleName());
                 }
-                jgen.writeEndArray();
+                jsonGenerator.writeEndArray();
             }
         }  catch (IOException e) {
             e.printStackTrace();

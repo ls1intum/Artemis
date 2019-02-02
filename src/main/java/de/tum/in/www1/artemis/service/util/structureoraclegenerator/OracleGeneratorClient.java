@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.util.structureoraclegenerator;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.json.JSONArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,22 +88,6 @@ public class OracleGeneratorClient {
             log.info("\nSuccessfully wrote " + fileName + " in: " + filePath + "!");
         } catch (IOException e) {
             log.error("Couldn't write " + fileName + "! Check the file path: " + filePath, e);
-        }
-    }
-
-    /**
-     * This method return the pretty printed string of a given JSON array.
-     * @param jsonArray The JSON array that needs to get pretty printed.
-     * @return The pretty printed string representation of the JSON array.
-     */
-    private static String prettyPrint(JSONArray jsonArray) {
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            Object jsonObject = mapper.readValue(jsonArray.toString(), Object.class);
-            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonObject);
-        } catch (IOException e) {
-            log.error("Could not pretty print the JSON!", e);
-            return null;
         }
     }
 
