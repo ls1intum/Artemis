@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { DragAndDropQuestionUtil } from '../../../components/util/drag-and-drop-question-util.service';
 import { DragAndDropQuestion } from '../../../entities/drag-and-drop-question';
@@ -77,10 +77,11 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy, OnChange
     constructor(private artemisMarkdown: ArtemisMarkdown, private dragAndDropQuestionUtil: DragAndDropQuestionUtil) {}
 
     ngOnInit() {
-        this.count();
     }
 
-    ngOnChanges() {
+    ngOnChanges(changes: SimpleChanges): void {
+        console.log(changes);
+        this.count();
     }
 
     ngOnDestroy() {}
@@ -265,12 +266,14 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy, OnChange
     }
 
     countRightMappings(): number {
+        this.correctAnswer = 0;
+        let temp = 0;
         for (let item of this.mappings){
             const dropElement =  item.dropLocation;
             if(!(this.isLocationCorrect(dropElement) == null)){
-               return this.correctAnswer + 1;
+              this.correctAnswer = temp + 1;
             }
-        }
+        } return this.correctAnswer;
     }
 
 
@@ -278,7 +281,7 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy, OnChange
         this.amountOfAnswerOptions = this.question.dropLocations.length;
         this.chosenWrongAnswerOption = this.question.correctMappings.length;
         this.countRightMappings();
-        console.log(this.correctAnswer);
+        console.log(this.countRightMappings());
         console.log(this.amountOfAnswerOptions);
         console.log(this.chosenWrongAnswerOption);
     }
