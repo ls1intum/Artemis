@@ -1,19 +1,21 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,6 +27,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.badRequest;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
@@ -39,14 +42,17 @@ public class ResultResource {
 
     private static final String ENTITY_NAME = "result";
 
+    @Value("${artemis.bamboo.authentication-token}")
+    private String CI_AUTHENTICATION_TOKEN = "";
+
     private final ResultRepository resultRepository;
-    private final CourseService courseService;
     private final ParticipationService participationService;
     private final ResultService resultService;
     private final ExerciseService exerciseService;
     private final AuthorizationCheckService authCheckService;
     private final FeedbackService feedbackService;
     private final UserService userService;
+    private final ContinuousIntegrationService continuousIntegrationService;
 
     public ResultResource(UserService userService,
                           ResultRepository resultRepository,
@@ -55,16 +61,16 @@ public class ResultResource {
                           AuthorizationCheckService authCheckService,
                           FeedbackService feedbackService,
                           ExerciseService exerciseService,
-                          CourseService courseService) {
+                          ContinuousIntegrationService continuousIntegrationService) {
 
         this.userService = userService;
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.resultService = resultService;
-        this.courseService = courseService;
         this.feedbackService = feedbackService;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
+        this.continuousIntegrationService = continuousIntegrationService;
     }
 
     /**
@@ -114,28 +120,65 @@ public class ResultResource {
      */
     @PostMapping(value = "/results/{planKey}")
     @Transactional
-    public ResponseEntity<?> notifyResult(@PathVariable("planKey") String planKey) {
+    @Deprecated
+    public ResponseEntity<?> notifyResultOld(@PathVariable("planKey") String planKey) {
         if (planKey.toLowerCase().endsWith("base") || planKey.toLowerCase().endsWith("solution")) {
-            //TODO: can we do this check more precise and compare it with the saved values from the exercises?
-            //In the future we also might want to save these results in the database
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
-        List<Participation> participations = participationService.findByBuildPlanIdAndInitializationState(planKey, InitializationState.INITIALIZED);
-        if (participations.size() > 0) {
-            Participation participation = participations.get(0);
-            if (participations.size() > 1) {
-                //in the rare case of multiple participations, take the latest one.
-                for (Participation otherParticipation : participations) {
-                    if (otherParticipation.getInitializationDate().isAfter(participation.getInitializationDate())) {
-                        participation = otherParticipation;
-                    }
-                }
-            }
-            resultService.onResultNotified(participation);
+
+        Optional<Participation> participation = getParticipation(planKey);
+        if (participation.isPresent()) {
+            resultService.onResultNotifiedOld(participation.get());
             return ResponseEntity.ok().build();
         } else {
             return notFound();
         }
+    }
+
+    @PostMapping(value = Constants.NEW_RESULT_RESOURCE_PATH)
+    @Transactional
+    public ResponseEntity<?> notifyResultNew(@RequestHeader("Authorization") String token, @RequestBody Object requestBody) {
+        if (token == null || !token.equals(CI_AUTHENTICATION_TOKEN)) {
+            return forbidden(); // Only allow endpoint when using correct token
+        }
+
+        try {
+            String planKey = continuousIntegrationService.getPlanKey(requestBody);
+            if (planKey.equalsIgnoreCase("base") || planKey.equalsIgnoreCase("solution")) {
+                //TODO: In the future we also might want to save these results in the database
+                return ResponseEntity.ok().build();
+            }
+            Optional<Participation> participation = getParticipation(planKey);
+            if (participation.isPresent()) {
+                resultService.onResultNotifiedNew(participation.get(), requestBody);
+                return ResponseEntity.ok().build();
+            } else {
+                //return ok so that Bamboo does not think it was an error
+                return ResponseEntity.ok().build();
+            }
+
+        } catch (Exception e) {
+            return badRequest();
+        }
+
+    }
+
+    private Optional<Participation> getParticipation(String planKey) {
+        List<Participation> participations = participationService.findByBuildPlanIdAndInitializationState(planKey, InitializationState.INITIALIZED);
+        Optional<Participation> participation = Optional.empty();
+        if (participations.size() > 0) {
+            participation = Optional.of(participations.get(0));
+            if (participations.size() > 1) {
+                //in the rare case of multiple participations, take the latest one.
+                for (Participation otherParticipation : participations) {
+                    if (otherParticipation.getInitializationDate().isAfter(participation.get().getInitializationDate())) {
+                        participation = Optional.of(otherParticipation);
+                    }
+                }
+            }
+        }
+
+        return participation;
     }
 
 

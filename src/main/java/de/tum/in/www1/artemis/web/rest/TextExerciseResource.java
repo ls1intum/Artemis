@@ -38,6 +38,7 @@ public class TextExerciseResource {
     private static final String ENTITY_NAME = "textExercise";
 
     private final TextAssessmentService textAssessmentService;
+    private final TextExerciseService textExerciseService;
     private final TextExerciseRepository textExerciseRepository;
     private final UserService userService;
     private final CourseService courseService;
@@ -47,6 +48,7 @@ public class TextExerciseResource {
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
     public TextExerciseResource(TextExerciseRepository textExerciseRepository,
+                                TextExerciseService textExerciseService,
                                 TextAssessmentService textAssessmentService,
                                 UserService userService,
                                 AuthorizationCheckService authCheckService,
@@ -55,6 +57,7 @@ public class TextExerciseResource {
                                 ResultRepository resultRepository,
                                 ExampleSubmissionRepository exampleSubmissionRepository) {
         this.textAssessmentService = textAssessmentService;
+        this.textExerciseService = textExerciseService;
         this.textExerciseRepository = textExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
@@ -195,7 +198,7 @@ public class TextExerciseResource {
                 !authCheckService.isAdmin()) {
                 return forbidden();
             }
-            textExerciseRepository.deleteById(id);
+            textExerciseService.delete(id);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
         }
         return ResponseEntity.notFound().build();

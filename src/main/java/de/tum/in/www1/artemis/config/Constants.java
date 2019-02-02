@@ -24,8 +24,13 @@ public final class Constants {
     public static final String FILEPATH_COMPASS = "compass";
 
     public static final String RESULT_RESOURCE_API_PATH = "/api/results/";
-    public static final String PROGRAMMING_SUBMISSION_RESOURCE_API_PATH = "/api/programming-submissions/";
-    public static final String TEST_CASE_CHANGED_API_PATH = "/api/programming-exercises/test-cases-changed/";
+
+    public static final String NEW_RESULT_RESOURCE_PATH = "/programming-exercises/new-result";
+    public static final String NEW_RESULT_RESOURCE_API_PATH = "/api" + NEW_RESULT_RESOURCE_PATH;
+    public static final String TEST_CASE_CHANGED_PATH = "/programming-exercises/test-cases-changed";
+    public static final String TEST_CASE_CHANGED_API_PATH = "/api" + TEST_CASE_CHANGED_PATH;
+    public static final String PROGRAMMING_SUBMISSION_RESOURCE_PATH = "/programming-submissions/";
+    public static final String PROGRAMMING_SUBMISSION_RESOURCE_API_PATH = "/api" + PROGRAMMING_SUBMISSION_RESOURCE_PATH;
 
     public static final String shortNameRegex = "^[a-zA-Z][a-zA-Z0-9]*";
     public static final Pattern shortNamePattern = Pattern.compile(shortNameRegex);

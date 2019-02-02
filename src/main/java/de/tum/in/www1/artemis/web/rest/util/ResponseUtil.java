@@ -12,4 +12,8 @@ public final class ResponseUtil implements io.github.jhipster.web.util.ResponseU
     public static <X> ResponseEntity<X> forbidden() {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     }
+
+    public static <X> ResponseEntity<X> badRequest() {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+    }
 }
