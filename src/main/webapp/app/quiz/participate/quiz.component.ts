@@ -780,6 +780,7 @@ export class QuizComponent implements OnInit, OnDestroy {
      * Checks if the array is empty for the question based on the id
      */
     checkForSelectedAnswerOption(): boolean {
+        this.arrayOfAnswer = [];
         for( let question of this.quizExercise.questions) {
             if (question.type === QuestionType.MULTIPLE_CHOICE) {
                 if (this.selectedAnswerOptions[question.id] == 0) {
