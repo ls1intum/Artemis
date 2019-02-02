@@ -265,20 +265,18 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy, OnChange
     }
 
     countRightMappings(): number {
-        const element = 0;
         for (let item of this.mappings){
             const dropElement =  item.dropLocation;
             if(!(this.isLocationCorrect(dropElement) == null)){
-                this.correctAnswer = element + 1;
+               return this.correctAnswer + 1;
             }
-        } return this.correctAnswer;
+        }
     }
 
 
     count(): void {
         this.amountOfAnswerOptions = this.question.dropLocations.length;
         this.chosenWrongAnswerOption = this.question.correctMappings.length;
-        this.chosenCorrectAnswerOption = this.amountOfAnswerOptions - this.chosenWrongAnswerOption;
         this.countRightMappings();
         console.log(this.correctAnswer);
         console.log(this.amountOfAnswerOptions);

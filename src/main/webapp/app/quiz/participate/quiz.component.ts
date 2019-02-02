@@ -70,6 +70,7 @@ export class QuizComponent implements OnInit, OnDestroy {
     questionScores = {};
     quizId: number;
     interval: any;
+    arrayOfAnswer = new Array<any>();
 
     /**
      * Websocket channels
@@ -781,16 +782,19 @@ export class QuizComponent implements OnInit, OnDestroy {
     checkForSelectedAnswerOption(): boolean {
         for( let question of this.quizExercise.questions) {
             if (question.type === QuestionType.MULTIPLE_CHOICE) {
-                if (this.selectedAnswerOptions[question.id] == []) {
-                    return false;
+                if (this.selectedAnswerOptions[question.id] == 0) {
+                   this.arrayOfAnswer.push(false);
                 }
             } else {
                 if (question.type === QuestionType.DRAG_AND_DROP) {
-                    if (this.dragAndDropMappings[question.id] == []) {
-                        return false;
+                    if (this.dragAndDropMappings[question.id] == 0) {
+                        this.arrayOfAnswer.push(false);
                     }
                 }
             }
+        }
+        if(this.arrayOfAnswer.length > 0) {
+            return false;
         }
     }
 
@@ -803,7 +807,7 @@ export class QuizComponent implements OnInit, OnDestroy {
 
         let confirmSubmit = true;
 
-        if (this.remainingTimeSeconds > 1 && !this.checkForSelectedAnswerOption()) {
+        if (this.remainingTimeSeconds > 1 && (this.checkForSelectedAnswerOption() == false)) {
             confirmSubmit = window.confirm('Are you sure you want to submit? You have not answered all questions and you still have some time left!');
         }
 
