@@ -3,21 +3,27 @@
         <div ngbDropdown placement="bottom-right" class="d-inline-block">
             <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>Sort Exercises</button>
             <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
-                <button class="dropdown-item" (click)="groupExercises(DUE_DATE_DESC)"><fa-icon [icon]="'sort-amount-up'"></fa-icon> Newest first</button>
-                <button class="dropdown-item" (click)="groupExercises(DUE_DATE_ASC)"><fa-icon [icon]="'sort-amount-down'"></fa-icon> Oldest first</button>
+                <button class="dropdown-item" (click)="groupExercises(DUE_DATE_DESC)">
+                    <fa-icon [icon]="'sort-amount-up'"></fa-icon>
+                    Newest first
+                </button>
+                <button class="dropdown-item" (click)="groupExercises(DUE_DATE_ASC)">
+                    <fa-icon [icon]="'sort-amount-down'"></fa-icon>
+                    Oldest first
+                </button>
             </div>
         </div>
     </div>
     <div class="exercise-row-container mb-3" *ngFor="let weekKey of weeklyIndexKeys">
-        <span class="control-label"
-             (click)="weeklyExercisesGrouped[weekKey].isCollapsed = !weeklyExercisesGrouped[weekKey].isCollapsed">
+        <span class="control-label" [ngClass]="weeklyExercisesGrouped[weekKey].isCurrentWeek ? 'text-primary': ''"
+              (click)="weeklyExercisesGrouped[weekKey].isCollapsed = !weeklyExercisesGrouped[weekKey].isCollapsed">
             <fa-icon *ngIf="weeklyExercisesGrouped[weekKey].isCollapsed" class="pr-3" [icon]="'angle-down'"></fa-icon>
             <fa-icon *ngIf="!weeklyExercisesGrouped[weekKey].isCollapsed" class="pr-3" [icon]="'angle-up'"></fa-icon>
             <span [innerHtml]="weeklyExercisesGrouped[weekKey].label"></span>
             <span class="ml-2">Exercises in this week: {{weeklyExercisesGrouped[weekKey].exercises.length}}</span>
         </span>
         <div *ngIf="!weeklyExercisesGrouped[weekKey].isCollapsed">
-            <jhi-course-exercise-row class="pb-1" [exercise]="exercise" [course]="course"
+            <jhi-course-exercise-row class="pb-1" [exercise]="exercise" [course]="course" class="current-week-row" [ngClass]="weeklyExercisesGrouped[weekKey].isCurrentWeek ? 'current-week-row': ''"
                                      *ngFor="let exercise of weeklyExercisesGrouped[weekKey].exercises"></jhi-course-exercise-row>
         </div>
         <div class="collapsed"></div>

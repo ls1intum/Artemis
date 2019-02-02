@@ -55,6 +55,7 @@ export class CourseExercisesComponent implements OnInit {
                 groupedExercises[dateIndex] = {
                     label: `<b>${moment(exercise.dueDate).startOf('week').format('DD/MM/YYYY')}</b> - <b>${moment(exercise.dueDate).endOf('week').format('DD/MM/YYYY')}</b>`,
                     isCollapsed: exercise.dueDate.isBefore(moment(), 'week'),
+                    isCurrentWeek: exercise.dueDate.isSame(moment(), 'week'),
                     exercises: []
                 };
             }

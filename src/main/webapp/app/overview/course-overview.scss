@@ -32,7 +32,15 @@ Course Info Bar
     }
 }
 
+.current-week-row {
+    ::ng-deep {
+        > div {
+            background-color: $light-primary-background-color;
+        }
+    }
+}
 .exercise-row {
+    cursor: pointer;
     ::ng-deep {
         > div {
             padding: 5px 0;

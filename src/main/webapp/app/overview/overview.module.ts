@@ -5,6 +5,7 @@ import { ClipboardModule } from 'ngx-clipboard';
 import { MomentModule } from 'angular2-moment';
 
 import { ArTEMiSSharedModule } from '../shared';
+import { ExerciseTypePipe } from '../entities/exercise/';
 
 import {
     CourseExerciseRowComponent,
@@ -40,7 +41,8 @@ const ENTITY_STATES = [
         CourseExerciseRowComponent,
         CourseExercisesComponent,
         CourseExerciseDetailsComponent,
-        CourseGradeBookComponent
+        CourseGradeBookComponent,
+        ExerciseTypePipe
     ],
     entryComponents: [],
     providers: [],

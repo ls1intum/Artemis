@@ -2,17 +2,17 @@ package de.tum.in.www1.artemis.web.rest;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.CourseService;
-import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import de.tum.in.www1.artemis.web.rest.util.PaginationUtil;
 import io.github.jhipster.web.util.ResponseUtil;
+import io.micrometer.core.annotation.Timed;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.InputStreamResource;
@@ -24,16 +24,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.Principal;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -55,15 +53,17 @@ public class ExerciseResource {
     private final ExerciseService exerciseService;
     private final UserService userService;
     private final CourseService courseService;
+    private final ParticipationService participationService;
     private final AuthorizationCheckService authCheckService;
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final Optional<VersionControlService> versionControlService;
 
-    public ExerciseResource(ExerciseRepository exerciseRepository, ExerciseService exerciseService,
+    public ExerciseResource(ExerciseRepository exerciseRepository, ExerciseService exerciseService, ParticipationService participationService,
                             UserService userService, CourseService courseService, AuthorizationCheckService authCheckService,
                             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService) {
         this.exerciseRepository = exerciseRepository;
         this.exerciseService = exerciseService;
+        this.participationService = participationService;
         this.userService = userService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
@@ -111,8 +111,8 @@ public class ExerciseResource {
         Course course = exercise.getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-             !authCheckService.isInstructorInCourse(course, user) &&
-             !authCheckService.isAdmin()) {
+            !authCheckService.isInstructorInCourse(course, user) &&
+            !authCheckService.isAdmin()) {
             return forbidden();
         }
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(exercise));
@@ -143,7 +143,7 @@ public class ExerciseResource {
     /**
      * Reset the exercise by deleting all its partcipations
      * /exercises/:id/reset
-     *
+     * <p>
      * This can be used by all exercise types, however they can also provide custom implementations
      *
      * @param id the id of the exercise to delete
@@ -178,7 +178,7 @@ public class ExerciseResource {
         Course course = exercise.getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
-             return forbidden();
+            return forbidden();
         }
         exerciseService.cleanup(id, deleteRepositories);
         log.info("Cleanup build plans was successful for Exercise : {}", id);
@@ -216,17 +216,18 @@ public class ExerciseResource {
             .header("filename", zipFile.getName())
             .body(resource);
     }
+
     /**
-    * GET  /exercises/:exerciseId/participations/:studentIds : sends all submissions from studentlist as zip
-        *
-        * @param exerciseId the id of the exercise to get the repos from
-        * @param studentIds the studentIds seperated via semicolon to get their submissions
+     * GET  /exercises/:exerciseId/participations/:studentIds : sends all submissions from studentlist as zip
+     *
+     * @param exerciseId the id of the exercise to get the repos from
+     * @param studentIds the studentIds seperated via semicolon to get their submissions
      * @return ResponseEntity with status
      */
     @GetMapping(value = "/exercises/{exerciseId}/participations/{studentIds}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Resource> exportSubmissions(@PathVariable Long exerciseId, @PathVariable String studentIds) throws IOException {
-        studentIds = studentIds.replaceAll(" ","");
+        studentIds = studentIds.replaceAll(" ", "");
         Exercise exercise = exerciseService.findOne(exerciseId);
         Course course = exercise.getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
@@ -236,11 +237,11 @@ public class ExerciseResource {
             return forbidden();
         }
         List<String> studentList = Arrays.asList(studentIds.split("\\s*,\\s*"));
-        if(studentList.isEmpty() || studentList == null){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).headers(HeaderUtil.createAlert("Given studentlist for export was empty or malformed","")).build();
+        if (studentList.isEmpty() || studentList == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).headers(HeaderUtil.createAlert("Given studentlist for export was empty or malformed", "")).build();
         }
 
-        File zipFile = exerciseService.exportParticipations(exerciseId,studentList);
+        File zipFile = exerciseService.exportParticipations(exerciseId, studentList);
         if (zipFile == null) {
             return ResponseEntity.noContent()
                 .headers(HeaderUtil.createAlert("There was an error on the server and the zip file could not be created", ""))
@@ -253,6 +254,46 @@ public class ExerciseResource {
             .contentType(MediaType.APPLICATION_OCTET_STREAM)
             .header("filename", zipFile.getName())
             .body(resource);
+    }
+
+    /**
+     * GET  /exercises/:exerciseId/results : sends all results for a exercise and the logged in user
+     *
+     * @param exerciseId the id of the exercise to get the repos from
+     * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
+     */
+    @GetMapping(value = "/exercises/{exerciseId}/results")
+    @PreAuthorize("hasAnyRole('User', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @Timed
+    @Transactional(readOnly = true)
+    public ResponseEntity<Exercise> getResultsForCurrentStudent(@PathVariable Long exerciseId) {
+        long start = System.currentTimeMillis();
+        log.debug("REST request to get Results for Course and current Studen : {}", exerciseId);
+
+        User student = userService.getUser();
+        Exercise exercise = exerciseService.findOne(exerciseId);
+
+        if (exercise != null) {
+            List<Participation> participations = participationService.findByExerciseIdAndStudentIdWithEagerResults(exercise.getId(), student.getId());
+
+            Hibernate.initialize(exercise.getParticipations());
+
+            //Removing not needed properties
+            exercise.setParticipations(new HashSet<>());
+
+            for (Participation participation : participations) {
+                //Removing not needed properties
+                participation.setStudent(null);
+
+                participation.setResults(participation.getResults());
+                exercise.addParticipation(participation);
+            }
+        }
+
+
+        log.info("getResultsForCurrentStudent took " + (System.currentTimeMillis() - start) + "ms");
+
+        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(exercise));
     }
 
 }
