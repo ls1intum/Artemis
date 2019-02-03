@@ -10,7 +10,6 @@ import { ExerciseType } from '../../entities/exercise';
 
 import * as moment from 'moment';
 
-
 @Component({
     selector: 'jhi-result',
     templateUrl: './result.component.html',
