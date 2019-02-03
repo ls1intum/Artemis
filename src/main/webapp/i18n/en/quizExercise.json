@@ -151,7 +151,9 @@
                 "saQuestionEveryMappedSolutionHasASpot": "Question {{index}}: At least one spot is missing for a correct mapping.",
                 "saQuestionUnsolvable": "Question {{index}}: The question cannot be answered correctly.",
                 "saQuestionSolutionHasNoValue": "Question {{index}}: At least one solution has no value.",
-                "saQuestionDuplicateMapping": "Question {{index}}: At least one mapping ist duplicated."
+                "saQuestionDuplicateMapping": "Question {{index}}: At least one mapping ist duplicated.",
+                "questionTitleLength": "Question {{index}}: Please shorten your question title. Currently it contains more than 250 signs.",
+                "quizTitleLength": "Quiz: The title is too long. Currently it contains more than 250 signs."
             },
             "scoringType": {
                 "all_or_nothing": "All or Nothing",
