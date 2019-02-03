@@ -13,6 +13,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import org.hibernate.Hibernate;
+import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -364,6 +365,14 @@ public class ParticipationService {
         log.debug("Request to get Participation : {}", id);
         Participation participation = findOneWithEagerResults(id);
         Hibernate.initialize(participation.getSubmissions());
+
+        participation.getSubmissions().forEach(submission -> {
+            Hibernate.initialize(submission.getResult()); // eagerly load the association
+            if (submission.getResult() != null) {
+                Hibernate.initialize(submission.getResult().getAssessor());
+            }
+        });
+
         return participation;
     }
 
@@ -560,14 +569,27 @@ public class ParticipationService {
         }
     }
 
+    @Transactional(readOnly = true)
     public List<Participation> findByExerciseIdForTutorDashboard(Long id) {
-        List<Participation> participations = this.findByExerciseId(id);
+        List<Participation> participationList = this.findByExerciseId(id);
 
-        for (Participation participation : participations) {
+        for (Participation participation : participationList) {
             participation.setStudent(null); // Hide the student from the tutor
             participation.setSubmissions(new HashSet<>(Collections.singleton(participation.findLatestSubmission())));
+
+            List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId());
+
+            results.forEach(result -> {
+                if (result.isRated()) {
+                    if (result.getAssessor() instanceof HibernateProxy) {
+                        result.setAssessor((User) Hibernate.unproxy(result.getAssessor()));
+                    }
+                }
+            });
+
+            participation.setResults(new HashSet<>(results));
         }
 
-        return participations;
+        return participationList;
     }
 }

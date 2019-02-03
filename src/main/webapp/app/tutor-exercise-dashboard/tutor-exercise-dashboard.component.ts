@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
-import { Location } from '@angular/common';
-import { Course, CourseService } from '../entities/course';
+import { ActivatedRoute, Router } from '@angular/router';
+import { CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
 import { Subscription } from 'rxjs';
 import { AccountService, User } from '../core';
@@ -59,7 +58,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         private tutorParticipationService: TutorParticipationService,
         private textSubmissionService: TextSubmissionService,
         private modalService: NgbModal,
-        private location: Location
+        private router: Router
     ) {}
 
     ngOnInit(): void {
@@ -119,7 +118,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
             )
             .subscribe((submissions: TextSubmission[]) => {
                 this.submissions = submissions;
-                this.numberOfTutorAssessments = submissions.length;
+                this.numberOfTutorAssessments = submissions.filter(submission => submission.result.completionDate).length;
             });
     }
 
@@ -158,11 +157,14 @@ export class TutorExerciseDashboardComponent implements OnInit {
     }
 
     private onError(error: string) {
-        console.error(error);
         this.jhiAlertService.error(error, null, null);
     }
 
-    back() {
-        this.location.back();
+    calculateStatus(submission: TextSubmission) {
+        if (submission.result.completionDate) {
+            return 'DONE';
+        }
+
+        return 'DRAFT';
     }
 }

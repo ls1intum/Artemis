@@ -93,8 +93,9 @@ public class TextAssessmentResource extends AssessmentResource {
         participation = participationService.findOneWithEagerResultsAndSubmissions(participation.getId());
         if (!participation.getResults().isEmpty()) {
             User user = userService.getUser();
+            User assessor = participation.findLatestResult().getAssessor();
             // Another tutor started assessing this submission.
-            if (participation.findLatestResult().getAssessor() != user) {
+            if (!assessor.getLogin().equals(user.getLogin())) {
                 // TODO: if the result hasn't been updated in the last 24 hours, we can use it
 
                 // Check if there is another submission without assessment

@@ -9,7 +9,7 @@
 
     <div class="row mt-3 justify-content-around">
         <div class="col-2">
-            <button class="btn btn-secondary" (click)="back()">&larr; Back</button>
+            <button class="btn btn-secondary" [routerLink]="'/course/' + courseId + '/tutor-dashboard'">&larr; Back</button>
         </div>
 
         <div class="col-4 text-center">
@@ -119,7 +119,7 @@
                     <jhi-result [participation]="submission.participation"></jhi-result>
                 </td>
                 <td>
-
+                    {{ calculateStatus(submission) }}
                 </td>
                 <td>
                     <span
@@ -127,18 +127,18 @@
                         %</span>
                 </td>
                 <td>
-                    <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                    <button *ngIf="submission !== null && submission.result === null"
+                    <button *ngIf="submission !== null && calculateStatus(submission) === 'DRAFT'; else continueButton"
                             routerLink="/text/{{exercise.id}}/assessment/{{submission.id}}"
-                            class="btn btn-outline-secondary btn-sm">
-                        <i class="fa fa-folder-open fa-fw"></i>&nbsp;Assess Submission
+                            class="btn btn-warning btn-sm">
+                        <i class="fa fa-folder-open fa-fw"></i>&nbsp;Continue assessment
                     </button>
-                    </span>
-                    <button *ngIf="submission !== null && submission.result !== null"
-                            routerLink="/text/{{exercise.id}}/assessment/{{submission.id}}"
-                            class="btn btn-outline-secondary btn-sm">
-                        <i class="fa fa-folder-open fa-fw"></i>&nbsp;Open assessment
-                    </button>
+                    <ng-template #continueButton>
+                        <button *ngIf="submission !== null && submission.result !== null"
+                                routerLink="/text/{{exercise.id}}/assessment/{{submission.id}}"
+                                class="btn btn-primary btn-sm">
+                            <i class="fa fa-folder-open fa-fw"></i>&nbsp;Open assessment
+                        </button>
+                    </ng-template>
                 </td>
             </tr>
             <tr *ngIf="unassessedSubmission && unassessedSubmission?.id > 0">
@@ -146,7 +146,6 @@
                 <td>{{ unassessedSubmission?.submissionDate | date:'MMM d, y HH:mm:ss' }}</td>
                 <td></td>
                 <td>NEW</td>
-                <td></td>
                 <td></td>
                 <td>
                     <button routerLink="/text/{{exercise.id}}/assessment/{{unassessedSubmission.id}}"
