@@ -8,7 +8,13 @@ export class UnderlineCommand extends Command {
 
     execute(editor: any): void {
         let chosenText = editor.getSelectedText();
-        const textToAdd = `<ins>${chosenText}</ins>`;
+
+        let textToAdd = '';
+
+        if (chosenText.includes('<ins>')) {
+            textToAdd = chosenText.slice(5, -6);
+        } else textToAdd = `<ins>${chosenText}</ins>`;
+
         editor.clearSelection();
         editor.moveCursorTo(editor.getCursorPosition().row, Number.POSITIVE_INFINITY);
         const search: SearchOptions = {

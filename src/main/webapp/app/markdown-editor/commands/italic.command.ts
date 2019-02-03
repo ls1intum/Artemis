@@ -7,7 +7,12 @@ export class ItalicCommand extends Command {
 
     execute(editor: any): void {
         let chosenText = editor.getSelectedText();
-        const textToAdd = `*${chosenText}*`;
+        let textToAdd = '';
+
+        if (chosenText.includes('**')) {
+            textToAdd = chosenText.slice(1, -1);
+        } else textToAdd = `*${chosenText}*`;
+
         editor.clearSelection();
         editor.moveCursorTo(editor.getCursorPosition().row, Number.POSITIVE_INFINITY);
         const search: SearchOptions = {
