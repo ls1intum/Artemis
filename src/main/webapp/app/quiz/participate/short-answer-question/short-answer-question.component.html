@@ -29,7 +29,7 @@
     <div *ngIf="showResult && showingSampleSolution">
         <span class="short-answer-question-display" *ngFor="let textPart of textBeforeSpots; let i = index">
             {{textPart}}
-            <input style="background: lightgreen" disabled value="{{sampleSolutions[i].text}}" size="{{sampleSolutions[i].text.length + 2}}">
+            <input class="short-answer-question-input" style="background: lightgreen" disabled value="{{sampleSolutions[i].text}}" size="{{sampleSolutions[i].text.length + 2}}">
         </span>
         <span>{{textAfterSpots}}</span>
     </div>
