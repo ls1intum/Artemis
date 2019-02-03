@@ -62,7 +62,7 @@ defaultTasks 'bootRun'
 
 group = 'de.tum.in.www1.artemis'
 version = '2.3.3'
-description = 'AuTomated assEssment Management System for Interactive Learning'
+description = 'Automated Assessment Management System for Interactive Learning'
 
 bootWar {
     mainClassName = 'de.tum.in.www1.artemis.ArTEMiSApp'
