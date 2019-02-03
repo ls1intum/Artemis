@@ -17,7 +17,16 @@
             },
             "spots": "Spots",
             "solutions": "Solutions",
-            "correctMappings": "Correct Mappings"
+            "correctMappings": "Correct Mappings",
+
+            "editor": {
+                "addHint": "[-h] Hint",
+                "addExplanation": "[-e] Explanation",
+                "addSpot": "[-spot #] Add Spot",
+                "addOption": "[-option #] Add Answer Option",
+                "text": "Text",
+                "visual": "Visual"
+            }
         }
     }
 }

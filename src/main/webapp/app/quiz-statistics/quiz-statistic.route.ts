@@ -5,6 +5,7 @@ import { QuizStatisticComponent } from './quiz-statistic/quiz-statistic.componen
 import { QuizPointStatisticComponent } from './quiz-point-statistic/quiz-point-statistic.component';
 import { MultipleChoiceQuestionStatisticComponent } from './multiple-choice-question-statistic/multiple-choice-question-statistic.component';
 import { DragAndDropQuestionStatisticComponent } from './drag-and-drop-question-statistic/drag-and-drop-question-statistic.component';
+import { ShortAnswerQuestionStatisticComponent } from './short-answer-question-statistic/short-answer-question-statistic.component';
 
 export const quizStatisticRoute: Routes = [
     {
@@ -37,6 +38,15 @@ export const quizStatisticRoute: Routes = [
     {
         path: 'quiz/:quizId/drag-and-drop-question-statistic/:questionId',
         component: DragAndDropQuestionStatisticComponent,
+        data: {
+            authorities: ['ROLE_USER'],
+            pageTitle: 'arTeMiSApp.course.home.title'
+        },
+        canActivate: [UserRouteAccessService]
+    },
+    {
+        path: 'quiz/:quizId/short-answer-question-statistic/:questionId',
+        component: ShortAnswerQuestionStatisticComponent,
         data: {
             authorities: ['ROLE_USER'],
             pageTitle: 'arTeMiSApp.course.home.title'
