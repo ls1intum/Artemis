@@ -25,7 +25,7 @@
         <span jhiTranslate="arTeMiSApp.question.yourScore" class="colon-suffix"></span>
         <span>{{score || 0}}/{{question.score}}</span>
         <jhi-quiz-scoring-infostudent-modal [score]="score" [question]="question"
-                                            [correctlyChosenAnswers]="chosenCorrectAnswerOption"
+                                            [correctlyChosenAnswers]="chosenCorrectAnswerOption" [correctAnswer]="correctAnswer"
                                             [wronglyChosenAnswers]="chosenWrongAnswerOption" [amountOfAnswerOptions]="amountOfAnswerOptions" ></jhi-quiz-scoring-infostudent-modal>
     </div>
     <div class="drag-and-drop-area">

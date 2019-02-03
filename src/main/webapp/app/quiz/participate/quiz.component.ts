@@ -70,7 +70,7 @@ export class QuizComponent implements OnInit, OnDestroy {
     questionScores = {};
     quizId: number;
     interval: any;
-    arrayOfAnswer = new Array<any>();
+    atLeastOneOptionSelected = new Array<boolean>();
 
     /**
      * Websocket channels
@@ -777,26 +777,26 @@ export class QuizComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Checks if the array is empty for the question based on the id
+     * Checks if at least one answer option is selected for the question
      */
-    checkForSelectedAnswerOption(): boolean {
-        this.arrayOfAnswer = [];
+    checkForAnsweredQuestions(): boolean {
+        this.atLeastOneOptionSelected = [];
         for( let question of this.quizExercise.questions) {
             if (question.type === QuestionType.MULTIPLE_CHOICE) {
                 if (this.selectedAnswerOptions[question.id] == 0) {
-                   this.arrayOfAnswer.push(false);
+                   this.atLeastOneOptionSelected.push(false);
                 }
             } else {
                 if (question.type === QuestionType.DRAG_AND_DROP) {
                     if (this.dragAndDropMappings[question.id] == 0) {
-                        this.arrayOfAnswer.push(false);
+                        this.atLeastOneOptionSelected.push(false);
                     }
                 }
             }
         }
-        if(this.arrayOfAnswer.length > 0) {
+        if(this.atLeastOneOptionSelected.length > 0) {
             return false;
-        }
+        } else return true;
     }
 
     /**
@@ -804,14 +804,12 @@ export class QuizComponent implements OnInit, OnDestroy {
      */
     onSubmit() {
         this.applySelection();
-        this.isSubmitting = true;
 
         let confirmSubmit = true;
 
-        if (this.remainingTimeSeconds > 1 && (this.checkForSelectedAnswerOption() == false)) {
+        if (this.remainingTimeSeconds > 1 && (this.checkForAnsweredQuestions() == false)) {
             confirmSubmit = window.confirm('Are you sure you want to submit? You have not answered all questions and you still have some time left!');
         }
-
         if(confirmSubmit) {
             this.isSubmitting = true;
             switch (this.mode) {
