@@ -307,9 +307,7 @@ public class ParticipationResource {
 
         URL url = continuousIntegrationService.get().getBuildPlanWebUrl(participation);
         return Optional.ofNullable(url)
-            .map(result -> new ResponseEntity<>(
-                url.toString(),
-                HttpStatus.OK))
+            .map(result -> new ResponseEntity<>(url.toString(), HttpStatus.OK))
             .orElse(ResponseUtil.notFound());
     }
 
