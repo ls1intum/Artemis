@@ -3,7 +3,7 @@
     <p *ngIf="questionText !== '' ">{{questionText}}</p>
 
     <div *ngIf="!showResult && !clickDisabled">
-        <span [ngClass]="{'saQuestion-list': isList}" *ngFor="let textPart of textBeforeSpots; let i = index">
+        <span [ngClass]="{'short-answer-question-display': true}" *ngFor="let textPart of textBeforeSpots; let i = index">
         {{textPart}} <input type="text" id="solution-{{i + solutionID}}" (blur)="setSubmittedText()" >
         </span>
         <span>
@@ -12,7 +12,7 @@
     </div>
 
     <div *ngIf="!showResult && clickDisabled">
-        <span [ngClass]="{'saQuestion-list': isList}" *ngFor="let textPart of textBeforeSpots; let i = index">
+        <span [ngClass]="{'short-answer-question-display': true}" *ngFor="let textPart of textBeforeSpots; let i = index">
             {{textPart}} <input *ngIf="submittedTexts[i] !== undefined" value="{{submittedTexts[i].text}}">
             <input *ngIf="submittedTexts[i] === undefined" >
         </span>
@@ -21,11 +21,10 @@
         </span>
     </div>
     <div *ngIf="showResult && !showingSampleSolution">
-        <span [ngClass]="{'saQuestion-list': isList}" *ngFor="let textPart of textBeforeSpots; let i = index">
+        <span [ngClass]="{'short-answer-question-display': true}" *ngFor="let textPart of textBeforeSpots; let i = index">
             {{textPart}}
             <input *ngIf="submittedTexts[i] !== undefined && submittedTexts[i].isCorrect" style="background: lightgreen" disabled value="{{submittedTexts[i].text}}" size="{{submittedTexts[i].text.length+1}}">
             <input *ngIf="submittedTexts[i] !== undefined && !submittedTexts[i].isCorrect" style="background: red" disabled value="{{submittedTexts[i].text}}" size="{{submittedTexts[i].text.length+1}}">
-
             <input *ngIf="submittedTexts[i] === undefined" style="background: red" disabled >
         </span>
         <span>
@@ -34,7 +33,7 @@
     </div>
 
     <div *ngIf="showResult && showingSampleSolution">
-        <span [ngClass]="{'saQuestion-list': isList}" *ngFor="let textPart of textBeforeSpots; let i = index">
+        <span [ngClass]="{'short-answer-question-display': true}" *ngFor="let textPart of textBeforeSpots; let i = index">
             {{textPart}}
             <input style="background: lightgreen" disabled value="{{sampleSolutions[i].text}}" size="{{sampleSolutions[i].text.length+1}}">
         </span>

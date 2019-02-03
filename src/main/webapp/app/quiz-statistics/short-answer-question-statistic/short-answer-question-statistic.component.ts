@@ -69,7 +69,6 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
     textWithoutSpots: string[];
     textBeforeSpots: string[];
     textAfterSpots: string[];
-    isList = false;
     lettersForSolutions: number[] = [];
 
     constructor(
@@ -169,7 +168,6 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
     generateSaStructure() {
         // is either '' or the question in the first line
         this.questionText = this.shortAnswerQuestionUtil.firstLineOfQuestion(this.question.text);
-        this.isList = this.shortAnswerQuestionUtil.isQuestionAList(this.question.text);
         this.textWithoutSpots = this.shortAnswerQuestionUtil.getTextWithoutSpots(this.question.text);
 
         // separates the text into parts that come before the spot tag

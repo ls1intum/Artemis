@@ -58,7 +58,6 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
     textBeforeSpots: string[];
     textAfterSpots: string[];
     sampleSolutions: ShortAnswerSolution[] =  [];
-    isList = false;
     solutionID = 1;
 
     constructor(
@@ -77,7 +76,6 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
 
         // is either '' or the question in the first line
         this.questionText = this.shortAnswerQuestionUtil.firstLineOfQuestion(this.question.text);
-        this.isList = this.shortAnswerQuestionUtil.isQuestionAList(this.question.text);
         this.textWithoutSpots = this.shortAnswerQuestionUtil.getTextWithoutSpots(this.question.text);
 
         // separates the text into parts that come before the spot tag

@@ -9,15 +9,15 @@
     margin-bottom: 8px;
 }
 
-.saQuestion-list {
-    display: block;
+.short-answer-question-display {
+    white-space: pre;
     margin-bottom: 10px;
 }
 
 .saQuestion-text {
     display: inline-flex;
 
-    &.saQuestion-list {
+    &.short-answer-question-display {
         margin-bottom: 10px;
         display: flex;
     }
