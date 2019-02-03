@@ -240,9 +240,9 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         // Split into spots to generated this structure: {"1","2","3"}
         const spotParts = questionText
             .split(/\[-spot/g)
-            .map(text => text.split(/\]/g))
+            .map(splitText => splitText.split(/\]/g))
             .slice(1)
-            .map(text => text[0]);
+            .map(sliceText => sliceText[0]);
 
         // Split new created Array by "]" to generate this structure: {"1,2", " SolutionText"}
         const solutionParts = questionParts.map(questionPart => questionPart.split(/\]/g)).slice(1);
@@ -299,15 +299,15 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     createMapping(solutionText: string[], solution: ShortAnswerSolution) {
         switch (solutionText[0].trim().length) {
             case 1: {
-                const spot = this.question.spots.filter(spot => spot.spotNr === +solutionText[0])[0];
-                this.question.correctMappings.push(new ShortAnswerMapping(spot, solution));
+                const spotForMapping = this.question.spots.filter(spot => spot.spotNr === +solutionText[0])[0];
+                this.question.correctMappings.push(new ShortAnswerMapping(spotForMapping, solution));
                 break;
             }
             default: {
                 const spotsID = solutionText[0].split(',');
                 for (const spotID of spotsID) {
-                    const spot = this.question.spots.filter(spot => spot.spotNr === +spotID[0])[0];
-                    this.question.correctMappings.push(new ShortAnswerMapping(spot, solution));
+                    const spotForMapping = this.question.spots.filter(spot => spot.spotNr === +spotID[0])[0];
+                    this.question.correctMappings.push(new ShortAnswerMapping(spotForMapping, solution));
                 }
                 break;
             }
