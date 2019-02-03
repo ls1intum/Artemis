@@ -8,7 +8,7 @@
 
                 <div *ngIf="!showSolution" style="text-align: left">
                     <span class="short-answer-question-display" *ngFor="let textPart of textBeforeSpots;let i = index">
-                        {{textPart}} <input class="short-answer-question-display" disabled style="position: relative">
+                        {{textPart}} <input class="short-answer-question-input"  disabled>
                         <span class="saQuestion-statistic-letter">{{getLetter(i) + "."}}</span>
                     </span>
                     <span>{{textAfterSpots}}</span>
@@ -16,7 +16,7 @@
 
                 <div *ngIf="showSolution" style="text-align: left">
                     <span class="short-answer-question-display" *ngFor="let textPart of textBeforeSpots;let i = index">
-                        {{textPart}} <input class="short-answer-question-display" disabled value="{{sampleSolutions[i].text}}">
+                        {{textPart}} <input style="background: lightgreen" class="short-answer-question-input" disabled value="{{sampleSolutions[i].text}}">
                         <span class="saQuestion-statistic-letter-solution">{{getLetter(i) + "."}}</span>
                     </span>
                     <span>{{textAfterSpots}}</span>
