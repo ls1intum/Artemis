@@ -312,11 +312,11 @@ export class ShortAnswerQuestionUtil {
             questionTextSplitAtNewLine = text
                 .split(/\n+/g)
                 .slice(1)
-                .join();
+                .join('\n');
         } else {
             questionTextSplitAtNewLine = text
                 .split(/\n+/g)
-                .join();
+                .join('\n');
         }
 
         // checks if a line break is in the text (marked by "," and replaces it) and check if text is a list
@@ -324,19 +324,6 @@ export class ShortAnswerQuestionUtil {
             questionTextSplitAtNewLine = questionTextSplitAtNewLine.replace(/\,/g, ' ');
         }
         return questionTextSplitAtNewLine;
-    }
-
-    /**
-     * checks if question format is a list or text
-     *
-     * @param text
-     * @return {boolean}
-     */
-    isQuestionAList(text: string): boolean {
-        if (this.separateFirstLineOfQuestionFromRestOfText(text)
-            .includes('1.')) {
-            return true;
-        }
     }
 
     /**
