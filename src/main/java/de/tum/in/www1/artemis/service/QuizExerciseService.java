@@ -83,7 +83,7 @@ public class QuizExerciseService {
             } else if (question instanceof ShortAnswerQuestion){
                 ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) question;
                 // save references as index to prevent Hibernate Persistence problem
-                saveCorrectMappingsInIndicesSA(shortAnswerQuestion);
+                saveCorrectMappingsInIndicesShortAnswer(shortAnswerQuestion);
             }
         }
 
@@ -101,7 +101,7 @@ public class QuizExerciseService {
             } else if (question instanceof ShortAnswerQuestion) {
                 ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) question;
                 // restore references from index after save
-                restoreCorrectMappingsFromIndicesSA(shortAnswerQuestion);
+                restoreCorrectMappingsFromIndicesShortAnswer(shortAnswerQuestion);
             }
         }
         return result;
@@ -388,7 +388,7 @@ public class QuizExerciseService {
      *
      * @param shortAnswerQuestion the question for which to perform these actions
      */
-    private void saveCorrectMappingsInIndicesSA(ShortAnswerQuestion shortAnswerQuestion) {
+    private void saveCorrectMappingsInIndicesShortAnswer(ShortAnswerQuestion shortAnswerQuestion) {
         List<ShortAnswerMapping> mappingsToBeRemoved = new ArrayList<>();
         for (ShortAnswerMapping mapping : shortAnswerQuestion.getCorrectMappings()) {
             // check for NullPointers
@@ -455,7 +455,7 @@ public class QuizExerciseService {
      *
      * @param shortAnswerQuestion the question for which to perform these actions
      */
-    private void restoreCorrectMappingsFromIndicesSA(ShortAnswerQuestion shortAnswerQuestion) {
+    private void restoreCorrectMappingsFromIndicesShortAnswer(ShortAnswerQuestion shortAnswerQuestion) {
         for (ShortAnswerMapping mapping : shortAnswerQuestion.getCorrectMappings()) {
             // solution
             mapping.setSolution(shortAnswerQuestion.getSolutions().get(mapping.getShortAnswerSolutionIndex()));

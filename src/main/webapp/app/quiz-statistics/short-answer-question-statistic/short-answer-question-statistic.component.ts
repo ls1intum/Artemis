@@ -167,7 +167,7 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
     }
 
     generateSaStructure() {
-        //is either '' or the question in the first line
+        // is either '' or the question in the first line
         this.questionText = this.shortAnswerQuestionUtil.firstLineOfQuestion(this.question.text);
         this.isList = this.shortAnswerQuestionUtil.isQuestionAList(this.question.text);
         this.textWithoutSpots = this.shortAnswerQuestionUtil.getTextWithoutSpots(this.question.text);
@@ -370,15 +370,15 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
     }
 
     /**
-     * Get the drag item that was mapped to the given drop location in the sample solution
+     * Get the solution that was mapped to the given spot in the sample solution
      *
-     * @param dropLocation {object} the drop location that the drag item should be mapped to
-     * @return {object | null} the mapped drag item,
-     *                          or null if no drag item has been mapped to this location
+     * @param spot {object} the spot that the solution should be mapped to
+     * @return {object | null} the mapped solution,
+     *                          or null if no solution has been mapped to this location
      */
     correctSolutionForSpot(spot: ShortAnswerSpot) {
         const currMapping = this.shortAnswerQuestionUtil
-            .solveSA(this.question, null)
+            .solveShortAnswer(this.question, null)
             .filter(mapping => mapping.spot.id === spot.id)[0];
         if (currMapping) {
             return currMapping.solution;

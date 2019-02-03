@@ -71,7 +71,7 @@ public class ShortAnswerSubmittedAnswer extends SubmittedAnswer implements Seria
             // find same question in quizExercise
             Question question = quizExercise.findQuestionById(getQuestion().getId());
 
-            // Check if a dragItem or dropLocation was deleted and delete the mappings with it
+            // Check if a solution or spot was deleted and delete the mappings with it
             checkAndDeleteSubmittedTexts((ShortAnswerQuestion) question);
         }
     }
@@ -83,7 +83,7 @@ public class ShortAnswerSubmittedAnswer extends SubmittedAnswer implements Seria
     private void checkAndDeleteSubmittedTexts(ShortAnswerQuestion question) {
 
         if( question != null) {
-            // Check if a dragItem or dropLocation was deleted and delete reference to it in mappings
+            // Check if a solution or spot was deleted and delete reference to it in mappings
             Set<ShortAnswerSubmittedText> selectedSubmittedTextsToDelete = new HashSet<>();
             for (ShortAnswerSubmittedText submittedText : this.getSubmittedTexts()) {
                 if ((!question.getSpots().contains(submittedText.getSpot()))) {

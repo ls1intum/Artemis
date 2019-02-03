@@ -55,23 +55,23 @@ public class ShortAnswerQuestion extends Question implements Serializable {
     public ShortAnswerQuestion addSpots(ShortAnswerSpot shortAnswerSpot) {
         this.spots.add(shortAnswerSpot);
         shortAnswerSpot.setQuestion(this);
-        //if a spot was added then add the associated AnswerCounter implicitly
+        // if a spot was added then add the associated AnswerCounter implicitly
         ((ShortAnswerQuestionStatistic)getQuestionStatistic()).addSpot(shortAnswerSpot);
         return this;
     }
 
     public ShortAnswerQuestion removeSpots(ShortAnswerSpot shortAnswerSpot) {
-        //if an spot was removed then remove the associated SpotCounter implicitly
+        // if an spot was removed then remove the associated SpotCounter implicitly
         if (getQuestionStatistic() instanceof ShortAnswerQuestionStatistic) {
-            ShortAnswerQuestionStatistic saStatistic = (ShortAnswerQuestionStatistic) getQuestionStatistic();
+            ShortAnswerQuestionStatistic shortAnswerStatistic = (ShortAnswerQuestionStatistic) getQuestionStatistic();
             ShortAnswerSpotCounter spotCounterToDelete = null;
-            for (ShortAnswerSpotCounter spotCounter : saStatistic.getShortAnswerSpotCounters()) {
+            for (ShortAnswerSpotCounter spotCounter : shortAnswerStatistic.getShortAnswerSpotCounters()) {
                 if (shortAnswerSpot.equals(spotCounter.getSpot())) {
                     spotCounter.setSpot(null);
                     spotCounterToDelete = spotCounter;
                 }
             }
-            saStatistic.getShortAnswerSpotCounters().remove(spotCounterToDelete);
+            shortAnswerStatistic.getShortAnswerSpotCounters().remove(spotCounterToDelete);
         }
         this.spots.remove(shortAnswerSpot);
         shortAnswerSpot.setQuestion(null);
@@ -79,24 +79,24 @@ public class ShortAnswerQuestion extends Question implements Serializable {
     }
 
     public void setSpots(List<ShortAnswerSpot> shortAnswerSpots) {
-        ShortAnswerQuestionStatistic saStatistic;
+        ShortAnswerQuestionStatistic shortAnswerStatistic;
         if (getQuestionStatistic() instanceof ShortAnswerQuestionStatistic) {
-            saStatistic = (ShortAnswerQuestionStatistic)getQuestionStatistic();
+            shortAnswerStatistic = (ShortAnswerQuestionStatistic)getQuestionStatistic();
         }
         else{
-            saStatistic = new ShortAnswerQuestionStatistic();
-            setQuestionStatistic(saStatistic);
+            shortAnswerStatistic = new ShortAnswerQuestionStatistic();
+            setQuestionStatistic(shortAnswerStatistic);
         }
         this.spots = shortAnswerSpots;
 
-        //if a spot was added then add the associated spotCounter implicitly
+        // if a spot was added then add the associated spotCounter implicitly
         for (ShortAnswerSpot spot : getSpots()) {
-            saStatistic.addSpot(spot);
+            shortAnswerStatistic.addSpot(spot);
         }
 
-        //if an spot was removed then remove the associated spotCounters implicitly
+        // if an spot was removed then remove the associated spotCounters implicitly
         Set<ShortAnswerSpotCounter> spotCounterToDelete = new HashSet<>();
-        for (ShortAnswerSpotCounter spotCounter : saStatistic.getShortAnswerSpotCounters()) {
+        for (ShortAnswerSpotCounter spotCounter : shortAnswerStatistic.getShortAnswerSpotCounters()) {
             if (spotCounter.getId() != null) {
                 if(!(shortAnswerSpots.contains(spotCounter.getSpot()))) {
                     spotCounter.setSpot(null);
@@ -104,7 +104,7 @@ public class ShortAnswerQuestion extends Question implements Serializable {
                 }
             }
         }
-        saStatistic.getShortAnswerSpotCounters().removeAll(spotCounterToDelete);
+        shortAnswerStatistic.getShortAnswerSpotCounters().removeAll(spotCounterToDelete);
     }
 
     public List<ShortAnswerSolution> getSolutions() {
@@ -196,9 +196,9 @@ public class ShortAnswerQuestion extends Question implements Serializable {
      public ShortAnswerSolution findSolutionById (Long solutionId) {
 
          if (solutionId != null) {
-             // iterate through all dragItems of this quiz
+             // iterate through all solutions of this quiz
              for (ShortAnswerSolution solution : solutions) {
-                 // return dragItem if the IDs are equal
+                 // return solution if the IDs are equal
                  if (solution.getId().equals(solutionId)) {
                      return solution;
                  }
@@ -216,9 +216,9 @@ public class ShortAnswerQuestion extends Question implements Serializable {
      public ShortAnswerSpot findSpotById (Long spotId) {
 
          if (spotId != null) {
-             // iterate through all dropLocations of this quiz
+             // iterate through all spots of this quiz
              for (ShortAnswerSpot spot : spots) {
-                 // return dropLocation if the IDs are equal
+                 // return spot if the IDs are equal
                  if (spot.getId().equals(spotId)) {
                      return spot;
                  }
@@ -237,11 +237,9 @@ public class ShortAnswerQuestion extends Question implements Serializable {
     @Override
     public void undoUnallowedChanges(Question originalQuestion) {
         if (originalQuestion instanceof ShortAnswerQuestion) {
-            ShortAnswerQuestion saOriginalQuestion = (ShortAnswerQuestion) originalQuestion;
-            //undo unallowed solution changes
-            undoUnallowedSolutionChanges(saOriginalQuestion);
-            //undo unallowed spot changes
-            undoUnallowedSpotChanges(saOriginalQuestion);
+            ShortAnswerQuestion shortAnswerOriginalQuestion = (ShortAnswerQuestion) originalQuestion;
+            undoUnallowedSolutionChanges(shortAnswerOriginalQuestion);
+            undoUnallowedSpotChanges(shortAnswerOriginalQuestion);
         }
     }
 
@@ -255,25 +253,25 @@ public class ShortAnswerQuestion extends Question implements Serializable {
 
          //find added solutions, which are not allowed to be added
          Set<ShortAnswerSolution> notAllowedAddedSolutions = new HashSet<>();
-         //check every solution of the question
+         // check every solution of the question
          for (ShortAnswerSolution solution : this.getSolutions()) {
-             //check if the solution were already in the originalQuestion -> if not it's an added solution
+             // check if the solution were already in the originalQuestion -> if not it's an added solution
              if (originalQuestion.getSolutions().contains(solution)) {
-                 //find original solution
+                 // find original solution
                  ShortAnswerSolution originalSolution = originalQuestion.findSolutionById(solution.getId());
-                 //correct invalid = null to invalid = false
+                 // correct invalid = null to invalid = false
                  if (solution.isInvalid() == null) {
                      solution.setInvalid(false);
                  }
-                 //reset invalid solution if it already set to true (it's not possible to set a solution valid again)
+                 // reset invalid solution if it already set to true (it's not possible to set a solution valid again)
                  solution.setInvalid(solution.isInvalid()
                      || (originalSolution.isInvalid() != null && originalSolution.isInvalid()));
              } else {
-                 //mark the added solution (adding solutions is not allowed)
+                 // mark the added solution (adding solutions is not allowed)
                  notAllowedAddedSolutions.add(solution);
              }
          }
-         //remove the added solutions
+         // remove the added solutions
          this.getSolutions().removeAll(notAllowedAddedSolutions);
      }
 
@@ -286,27 +284,27 @@ public class ShortAnswerQuestion extends Question implements Serializable {
       */
      private void undoUnallowedSpotChanges (ShortAnswerQuestion originalQuestion) {
 
-         //find added spots, which are not allowed to be added
+         // find added spots, which are not allowed to be added
          Set<ShortAnswerSpot> notAllowedAddedSpots = new HashSet<>();
-         //check every spot of the question
+         // check every spot of the question
          for (ShortAnswerSpot spot : this.getSpots()) {
-             //check if the spot were already in the originalQuestion -> if not it's an added spot
+             // check if the spot were already in the originalQuestion -> if not it's an added spot
              if (originalQuestion.getSpots().contains(spot)) {
-                 //find original spot
+                 // find original spot
                  ShortAnswerSpot originalSpot= originalQuestion.findSpotById(spot.getId());
-                 //correct invalid = null to invalid = false
+                 // correct invalid = null to invalid = false
                  if (spot.isInvalid() == null) {
                      spot.setInvalid(false);
                  }
-                 //reset invalid spot if it already set to true (it's not possible to set a spot valid again)
+                 // reset invalid spot if it already set to true (it's not possible to set a spot valid again)
                  spot.setInvalid(spot.isInvalid()
                      || (originalSpot.isInvalid() != null && originalSpot.isInvalid()));
              } else {
-                 //mark the added spot (adding spots is not allowed)
+                 // mark the added spot (adding spots is not allowed)
                  notAllowedAddedSpots.add(spot);
              }
          }
-         //remove the added dropLocations
+         // remove the added spots
          this.getSpots().removeAll(notAllowedAddedSpots);
      }
 
@@ -314,10 +312,10 @@ public class ShortAnswerQuestion extends Question implements Serializable {
      @Override
     public boolean isUpdateOfResultsAndStatisticsNecessary(Question originalQuestion) {
         if (originalQuestion instanceof ShortAnswerQuestion){
-             ShortAnswerQuestion saOriginalQuestion = (ShortAnswerQuestion) originalQuestion;
-             return checkSolutionsIfRecalculationIsNecessary(saOriginalQuestion) ||
-                 checkSpotsIfRecalculationIsNecessary(saOriginalQuestion) ||
-                 !getCorrectMappings().equals(saOriginalQuestion.getCorrectMappings());
+             ShortAnswerQuestion shortAnswerOriginalQuestion = (ShortAnswerQuestion) originalQuestion;
+             return checkSolutionsIfRecalculationIsNecessary(shortAnswerOriginalQuestion) ||
+                 checkSpotsIfRecalculationIsNecessary(shortAnswerOriginalQuestion) ||
+                 !getCorrectMappings().equals(shortAnswerOriginalQuestion.getCorrectMappings());
          }
         return false;
     }
@@ -327,20 +325,20 @@ public class ShortAnswerQuestion extends Question implements Serializable {
       *
       * @param originalQuestion the original ShortAnswerQuestion-object, which will be compared with this question
       *
-      * @return a boolean which is true if the dragItem-changes make an update necessary and false if not
+      * @return a boolean which is true if the solution-changes make an update necessary and false if not
       */
      private boolean checkSolutionsIfRecalculationIsNecessary (ShortAnswerQuestion originalQuestion){
 
          boolean updateNecessary = false;
 
-         //check every solution of the question
+         // check every solution of the question
          for (ShortAnswerSolution solution : this.getSolutions()) {
-             //check if the solution were already in the originalQuizExercise
+             // check if the solution were already in the originalQuizExercise
              if (originalQuestion.getSolutions().contains(solution)) {
-                 //find original solution
+                 // find original solution
                  ShortAnswerSolution originalSolution = originalQuestion.findSolutionById(solution.getId());
 
-                 // check if a dragItem is set invalid
+                 // check if a solution is set invalid
                  // if true an update of the Statistics and Results is necessary
                  if ((solution.isInvalid() && !this.isInvalid() && originalSolution.isInvalid() == null) ||
                      (solution.isInvalid() && !this.isInvalid() && !originalSolution.isInvalid())) {
@@ -348,7 +346,7 @@ public class ShortAnswerQuestion extends Question implements Serializable {
                  }
              }
          }
-         // check if a dragItem was deleted (not allowed added dragItems are not relevant)
+         // check if a solution was deleted (not allowed added solution are not relevant)
          // if true an update of the Statistics and Results is necessary
          if ( this.getSolutions().size() < originalQuestion.getSolutions().size()) {
              updateNecessary = true;
@@ -367,14 +365,14 @@ public class ShortAnswerQuestion extends Question implements Serializable {
 
          boolean updateNecessary = false;
 
-         //check every spot of the question
+         // check every spot of the question
          for (ShortAnswerSpot spot : this.getSpots()) {
-             //check if the spot were already in the originalQuizExercise
+             // check if the spot were already in the originalQuizExercise
              if (originalQuestion.getSpots().contains(spot)) {
-                 //find original spot
+                 // find original spot
                  ShortAnswerSpot originalSpot = originalQuestion.findSpotById(spot.getId());
 
-                 // check if a dropLocation is set invalid
+                 // check if a spot is set invalid
                  // if true an update of the Statistics and Results is necessary
                  if ((spot.isInvalid() && !this.isInvalid() && originalSpot.isInvalid() == null) ||
                      (spot.isInvalid() && !this.isInvalid() && !originalSpot.isInvalid())) {
@@ -382,7 +380,7 @@ public class ShortAnswerQuestion extends Question implements Serializable {
                  }
              }
          }
-         // check if a dropLocation was deleted (not allowed added dropLocations are not relevant)
+         // check if a spot was deleted (not allowed added spots are not relevant)
          // if true an update of the Statistics and Results is necessary
          if ( this.getSpots().size() < originalQuestion.getSpots().size()) {
              updateNecessary = true;
@@ -424,11 +422,7 @@ public class ShortAnswerQuestion extends Question implements Serializable {
                  numberOfSpot++;
              }
          }
-         if(numberOfSpot == 1){
-             return false;
-         } else {
-             return true;
-         }
+         return numberOfSpot != 1;
      }
 
 
@@ -466,9 +460,9 @@ public class ShortAnswerQuestion extends Question implements Serializable {
       * 1. generate associated ShortAnswerQuestionStatistic implicitly
       */
      public ShortAnswerQuestion() {
-         //create associated Statistic implicitly
-         ShortAnswerQuestionStatistic saStatistic = new ShortAnswerQuestionStatistic();
-         setQuestionStatistic(saStatistic);
-         saStatistic.setQuestion(this);
+         // create associated Statistic implicitly
+         ShortAnswerQuestionStatistic shortAnswerStatistic = new ShortAnswerQuestionStatistic();
+         setQuestionStatistic(shortAnswerStatistic);
+         shortAnswerStatistic.setQuestion(this);
      }
 }

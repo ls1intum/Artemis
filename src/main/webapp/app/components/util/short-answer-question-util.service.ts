@@ -9,13 +9,13 @@ export class ShortAnswerQuestionUtil {
     constructor() {}
 
     /**
-     * Get a sample solution for the given drag and drop question
+     * Get a sample solution for the given short answer question
      *
-     * @param question {object} the drag and drop question we want to solve
+     * @param question {object} the short answer question we want to solve
      * @param [mappings] {Array} (optional) the mappings we try to use in the sample solution (this may contain incorrect mappings - they will be filtered out)
      * @return {Array} array of mappings that would solve this question (may be empty, if question is unsolvable)
      */
-    solveSA(question: ShortAnswerQuestion, mappings: ShortAnswerMapping[]) {
+    solveShortAnswer(question: ShortAnswerQuestion, mappings: ShortAnswerMapping[]): ShortAnswerMapping[] {
         if (!question.correctMappings) {
             return [];
         }
@@ -23,7 +23,7 @@ export class ShortAnswerQuestionUtil {
         const sampleMappings = new Array<ShortAnswerMapping>();
         let availableSolutions = question.solutions;
 
-        // filter out dropLocations that do not need to be mapped
+        // filter out spots that do not need to be mapped
         let remainingSpots: ShortAnswerSpot [] = question.spots.filter(function(spot) {
             return question.correctMappings.some(function(mapping) {
                 return this.isSameSpot(mapping.spot, spot);
@@ -37,7 +37,7 @@ export class ShortAnswerQuestionUtil {
         if (mappings) {
             // add mappings that are already correct
             mappings.forEach(function(mapping) {
-                const correctMapping = this.getSAMapping(question.correctMappings, mapping.solution, mapping.spot);
+                const correctMapping = this.getShortAnswerMapping(question.correctMappings, mapping.solution, mapping.spot);
                 if (correctMapping) {
                     sampleMappings.push(correctMapping);
                     remainingSpots = remainingSpots.filter(function(spot) {
@@ -51,7 +51,7 @@ export class ShortAnswerQuestionUtil {
         }
 
         // solve recursively
-        const solved = this.solveSARec(question.correctMappings, remainingSpots, availableSolutions, sampleMappings);
+        const solved = this.solveShortAnswerRec(question.correctMappings, remainingSpots, availableSolutions, sampleMappings);
 
         if (solved) {
             return sampleMappings;
@@ -61,15 +61,15 @@ export class ShortAnswerQuestionUtil {
     }
 
     /**
-     * Try to solve a drag and drop question recursively
+     * Try to solve a short answer question recursively
      *
      * @param correctMappings {Array} the correct mappings defined by the creator of the question
-     * @param remainingDropLocations {Array} the drop locations that still need to be mapped (recursion stops if this is empty)
-     * @param availableDragItems {Array} the unused drag items that can still be used to map to drop locations (recursion stops if this is empty)
+     * @param remainingSpots {Array} the spots that still need to be mapped (recursion stops if this is empty)
+     * @param availableSolutions {Array} the unused solutions that can still be used to map to spots (recursion stops if this is empty)
      * @param sampleMappings {Array} the mappings so far
      * @return {boolean} true, if the question was solved (solution is saved in sampleMappings), otherwise false
      */
-    solveSARec(
+    solveShortAnswerRec(
         correctMappings: ShortAnswerMapping[],
         remainingSpots: ShortAnswerSpot[],
         availableSolutions: ShortAnswerSolution[],
@@ -81,14 +81,14 @@ export class ShortAnswerQuestionUtil {
 
         const spot = remainingSpots[0];
         return availableSolutions.some(function(solution, index) {
-            const correctMapping = this.getSAMapping(correctMappings, solution, spot);
+            const correctMapping = this.getShortAnswerMapping(correctMappings, solution, spot);
             if (correctMapping) {
                 sampleMappings.push(correctMapping); // add new mapping
-                remainingSpots.splice(0, 1); // remove first dropLocation
-                availableSolutions.splice(index, 1); // remove the used dragItem
-                const solved = this.solveSARec(correctMappings, remainingSpots, availableSolutions, sampleMappings);
-                remainingSpots.splice(0, 0, spot); // re-insert first dropLocation
-                availableSolutions.splice(index, 0, solution); // re-insert the used dragItem
+                remainingSpots.splice(0, 1); // remove first spot
+                availableSolutions.splice(index, 1); // remove the used solution
+                const solved = this.solveShortAnswerRec(correctMappings, remainingSpots, availableSolutions, sampleMappings);
+                remainingSpots.splice(0, 0, spot); // re-insert first spot
+                availableSolutions.splice(index, 0, solution); // re-insert the used solution
                 if (!solved) {
                     sampleMappings.pop(); // remove new mapping (only if solution was not found)
                 }
@@ -100,63 +100,63 @@ export class ShortAnswerQuestionUtil {
     }
 
     /**
-     * Validate that all correct mappings (and any combination of them that doesn't use a dropLocation or dragItem twice)
+     * Validate that all correct mappings (and any combination of them that doesn't use a spot or solution twice)
      * can be used in a 100% correct solution.
-     * This means that if any pair of dragItems share a possible dropLocation, then they must share all dropLocations,
-     * or in other words the sets of possible dropLocations for these two dragItems must be identical
+     * This means that if any pair of solutions share a possible spot, then they must share all spots,
+     * or in other words the sets of possible spots for these two solutions must be identical
      *
      * @param question {object} the question to check
      * @return {boolean} true, if the condition is met, otherwise false
      */
 
-    validateNoMisleadingCorrectSAMapping(question: ShortAnswerQuestion) {
+    validateNoMisleadingCorrectShortAnswerMapping(question: ShortAnswerQuestion) {
         if (!question.correctMappings) {
             // no correct mappings at all means there can be no misleading mappings
             return true;
         }
-        // iterate through all pairs of drag items
+        // iterate through all pairs of solutions
         for (let i = 0; i < question.solutions.length; i++) {
             for (let j = 0; j < i; j++) {
-                // if these two drag items have one common drop location, they must share all drop locations
+                // if these two solutions have one common spot, they must share all spots
                 const solution1 = question.solutions[i];
                 const solution2 = question.solutions[j];
                 const shareOneSpot = question.spots.some(function(spot) {
-                    const isMappedWithSolution1 = this.isSAMappedTogether(question.correctMappings, solution1, spot);
-                    const isMappedWithSolution2 = this.isSAMappedTogether(question.correctMappings, solution2, spot);
+                    const isMappedWithSolution1 = this.isMappedTogether(question.correctMappings, solution1, spot);
+                    const isMappedWithSolution2 = this.isMappedTogether(question.correctMappings, solution2, spot);
                     return isMappedWithSolution1 && isMappedWithSolution2;
                 }, this);
                 if (shareOneSpot) {
                     const allSpotsForSolution1 = this.getAllSpotsForSolutions(question.correctMappings, solution1);
                     const allSpotsForSolution2 = this.getAllSpotsForSolutions(question.correctMappings, solution2);
                     if (!this.isSameSetOfSpots(allSpotsForSolution1, allSpotsForSolution2)) {
-                        // condition is violated for this pair of dragItems
+                        // condition is violated for this pair of solutions
                         return false;
                     }
                 }
             }
         }
-        // condition was met for all pairs of drag items
+        // condition was met for all pairs of solutions
         return true;
     }
 
     /**
-     * Check if the given dragItem and dropLocation are mapped together in the given mappings
+     * Check if the given solution and spot are mapped together in the given mappings
      *
      * @param mappings {Array} the existing mappings to consider
-     * @param dragItem {object} the drag item to search for
-     * @param dropLocation {object} the drop location to search for
+     * @param solution {object} the solution to search for
+     * @param spot {object} the spot to search for
      * @return {boolean} true if they are mapped together, otherwise false
      */
-    isSAMappedTogether(mappings: ShortAnswerMapping[], solution: ShortAnswerSolution, spot: ShortAnswerSpot) {
-        return !!this.getSAMapping(mappings, solution, spot);
+    isMappedTogether(mappings: ShortAnswerMapping[], solution: ShortAnswerSolution, spot: ShortAnswerSpot) {
+        return !!this.getShortAnswerMapping(mappings, solution, spot);
     }
 
     /**
-     * Get all drop locations that are mapped to the given drag items
+     * Get all spots that are mapped to the given solutions
      *
      * @param mappings {Array} the existing mappings to consider
-     * @param dragItem {object} the drag item that the returned drop locations have to be mapped to
-     * @return {Array} the resulting drop locations
+     * @param solution {object} the solution that the returned spots have to be mapped to
+     * @return {Array} the resulting spots
      */
     getAllSpotsForSolutions(mappings: ShortAnswerMapping[], solution: ShortAnswerSolution): ShortAnswerSpot[] {
         return mappings
@@ -172,8 +172,8 @@ export class ShortAnswerQuestionUtil {
      * Get all solutions that are mapped to the given spot
      *
      * @param mappings {Array} the existing mappings to consider
-     * @param dragItem {object} the drag item that the returned drop locations have to be mapped to
-     * @return {Array} the resulting drop locations
+     * @param solution {object} the solutions that the returned spots have to be mapped to
+     * @return {Array} the resulting spots
      */
     getAllSolutionsForSpot(mappings: ShortAnswerMapping[], spot: ShortAnswerSpot): ShortAnswerSolution[] {
         return mappings
@@ -186,10 +186,10 @@ export class ShortAnswerQuestionUtil {
     }
 
     /**
-     * Check if set1 and set2 contain the same drag items or drop locations
+     * Check if set1 and set2 contain the same solutions or spots
      *
-     * @param set1 {Array} one set of drag items or drop locations
-     * @param set2 {Array} another set of drag items or drop locations
+     * @param set1 {Array} one set of solutions or spots
+     * @param set2 {Array} another set of solutions or spots
      * @return {boolean} true if the sets contain the same items, otherwise false
      */
     isSameSetOfSpots(set1: ShortAnswerSpot[], set2: ShortAnswerSpot[]): boolean {
@@ -214,14 +214,14 @@ export class ShortAnswerQuestionUtil {
     }
 
     /**
-     * Get the mapping that maps the given dragItem and dropLocation together
+     * Get the mapping that maps the given solution and spot together
      *
      * @param mappings {Array} the existing mappings to consider
-     * @param dragItem {object} the drag item to search for
-     * @param dropLocation {object} the drop location to search for
+     * @param solution {object} the solution to search for
+     * @param spot {object} the spot to search for
      * @return {object | null} the found mapping, or null if it doesn't exist
      */
-    getSAMapping(mappings: ShortAnswerMapping[], solution: ShortAnswerSolution, spot: ShortAnswerSpot) {
+    getShortAnswerMapping(mappings: ShortAnswerMapping[], solution: ShortAnswerSolution, spot: ShortAnswerSpot) {
         const that = this;
         return mappings.find(function(mapping: ShortAnswerMapping) {
             return that.isSameSpot(spot, mapping.spot) && that.isSameSolution(solution, mapping.solution);
@@ -229,10 +229,10 @@ export class ShortAnswerQuestionUtil {
     }
 
     /**
-     * compare if the two objects are drop location
+     * compare if the two objects are the same spot
      *
-     * @param a {object} a drop location
-     * @param b {object} another drop location
+     * @param a {object} a spot
+     * @param b {object} another spot
      * @return {boolean}
      */
     isSameSpot(a: ShortAnswerSpot, b: ShortAnswerSpot): boolean {
@@ -240,10 +240,10 @@ export class ShortAnswerQuestionUtil {
     }
 
     /**
-     * compare if the two objects are the same drag item
+     * compare if the two objects are the same solution
      *
-     * @param a {object} a drag item
-     * @param b {object} another drag item
+     * @param a {object} a solution
+     * @param b {object} another solution
      * @return {boolean}
      */
     isSameSolution(a: ShortAnswerSolution, b: ShortAnswerSolution): boolean {
@@ -358,10 +358,10 @@ export class ShortAnswerQuestionUtil {
      */
     hasMappingDuplicateValues(mappings: ShortAnswerMapping[]): boolean {
         let duplicateValues = 0;
-        for (let i = 0; i < mappings.length-1; i++) {
+        for (let i = 0; i < mappings.length - 1; i++) {
             for (let j = i + 1; j <  mappings.length; j++) {
-                if(mappings[i].spot.spotNr === mappings[j].spot.spotNr
-                    && mappings[i].solution.text === mappings[j].solution.text){
+                if (mappings[i].spot.spotNr === mappings[j].spot.spotNr
+                    && mappings[i].solution.text === mappings[j].solution.text) {
                     duplicateValues++;
                 }
             }

@@ -135,55 +135,55 @@ public class ShortAnswerQuestionStatistic extends QuestionStatistic implements S
             return;
         }
 
-        ShortAnswerSubmittedAnswer saSubmittedAnswer = (ShortAnswerSubmittedAnswer)submittedAnswer;
+        ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer = (ShortAnswerSubmittedAnswer)submittedAnswer;
 
         if(rated) {
-            //change the rated participants
+            // change the rated participants
             setParticipantsRated(getParticipantsRated() + change);
 
-            if(saSubmittedAnswer.getSubmittedTexts() != null) {
-                ShortAnswerSubmittedText saSubmittedText;
-                Set <ShortAnswerSolution> saSolutions;
+            if(shortAnswerSubmittedAnswer.getSubmittedTexts() != null) {
+                ShortAnswerSubmittedText shortAnswerSubmittedText;
+                Set <ShortAnswerSolution> shortAnswerSolutions;
 
                 // change rated spotCounter if spot is correct
                 for (ShortAnswerSpotCounter spotCounter: shortAnswerSpotCounters) {
-                    saSubmittedText = saSubmittedAnswer.getSubmittedTextForSpot(spotCounter.getSpot());
-                    saSolutions = spotCounter.getSpot().getQuestion().getCorrectSolutionForSpot(spotCounter.getSpot());
+                    shortAnswerSubmittedText = shortAnswerSubmittedAnswer.getSubmittedTextForSpot(spotCounter.getSpot());
+                    shortAnswerSolutions = spotCounter.getSpot().getQuestion().getCorrectSolutionForSpot(spotCounter.getSpot());
 
-                    for(ShortAnswerSolution solution : saSolutions){
-                        if(saSubmittedText.isSubmittedTextCorrect(saSubmittedText.getText(), solution.getText()) && saSubmittedText.isIsCorrect()){
+                    for(ShortAnswerSolution solution : shortAnswerSolutions){
+                        if(shortAnswerSubmittedText.isSubmittedTextCorrect(shortAnswerSubmittedText.getText(), solution.getText()) && shortAnswerSubmittedText.isIsCorrect()){
                             spotCounter.setRatedCounter(spotCounter.getRatedCounter() + change);
                         }
                     }
                 }
             }
             // change rated correctCounter if answer is complete correct
-            if(getQuestion().isAnswerCorrect(saSubmittedAnswer)) {
+            if(getQuestion().isAnswerCorrect(shortAnswerSubmittedAnswer)) {
                 setRatedCorrectCounter(getRatedCorrectCounter() + change);
             }
         }
         // Result is unrated
         else{
-            //change the unrated participants
+            // change the unrated participants
             setParticipantsUnrated(getParticipantsUnrated() + change);
 
-            if(saSubmittedAnswer.getSubmittedTexts() != null) {
-                ShortAnswerSubmittedText saSubmittedText;
-                Set <ShortAnswerSolution> saSolutions;
+            if(shortAnswerSubmittedAnswer.getSubmittedTexts() != null) {
+                ShortAnswerSubmittedText shortAnswerSubmittedText;
+                Set <ShortAnswerSolution> shortAnswerSolutions;
                 // change unrated spotCounter if spot is correct
                 for (ShortAnswerSpotCounter spotCounter: shortAnswerSpotCounters) {
-                    saSubmittedText = saSubmittedAnswer.getSubmittedTextForSpot(spotCounter.getSpot());
-                    saSolutions = spotCounter.getSpot().getQuestion().getCorrectSolutionForSpot(spotCounter.getSpot());
+                    shortAnswerSubmittedText = shortAnswerSubmittedAnswer.getSubmittedTextForSpot(spotCounter.getSpot());
+                    shortAnswerSolutions = spotCounter.getSpot().getQuestion().getCorrectSolutionForSpot(spotCounter.getSpot());
 
-                    for(ShortAnswerSolution solution : saSolutions){
-                        if(saSubmittedText.isSubmittedTextCorrect(saSubmittedText.getText(), solution.getText()) && saSubmittedText.isIsCorrect()){
+                    for(ShortAnswerSolution solution : shortAnswerSolutions){
+                        if(shortAnswerSubmittedText.isSubmittedTextCorrect(shortAnswerSubmittedText.getText(), solution.getText()) && shortAnswerSubmittedText.isIsCorrect()){
                             spotCounter.setUnRatedCounter(spotCounter.getUnRatedCounter() + change);
                         }
                     }
                 }
             }
             // change unrated correctCounter if answer is complete correct
-            if(getQuestion().isAnswerCorrect(saSubmittedAnswer)) {
+            if(getQuestion().isAnswerCorrect(shortAnswerSubmittedAnswer)) {
                 setUnRatedCorrectCounter(getUnRatedCorrectCounter() + change);
             }
         }

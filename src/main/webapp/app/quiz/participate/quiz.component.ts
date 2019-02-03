@@ -42,7 +42,7 @@ export class QuizComponent implements OnInit, OnDestroy {
     dndQuestionComponents: QueryList<DragAndDropQuestionComponent>;
 
     @ViewChildren(ShortAnswerQuestionComponent)
-    saQuestionComponents: QueryList<ShortAnswerQuestionComponent>;
+    shortAnswerQuestionComponents: QueryList<ShortAnswerQuestionComponent>;
 
     private subscription: Subscription;
     private subscriptionData: Subscription;
@@ -523,10 +523,10 @@ export class QuizComponent implements OnInit, OnDestroy {
                 return;
             }
             // generate the submittedAnswer object
-            const saSubmittedAnswer = new ShortAnswerSubmittedAnswer();
-            saSubmittedAnswer.question = question;
-            saSubmittedAnswer.submittedTexts = this.shortAnswerSubmittedTexts[questionID];
-            this.submission.submittedAnswers.push(saSubmittedAnswer);
+            const shortAnswerSubmittedAnswer = new ShortAnswerSubmittedAnswer();
+            shortAnswerSubmittedAnswer.question = question;
+            shortAnswerSubmittedAnswer.submittedTexts = this.shortAnswerSubmittedTexts[questionID];
+            this.submission.submittedAnswers.push(shortAnswerSubmittedAnswer);
         }, this);
     }
 
@@ -658,9 +658,9 @@ export class QuizComponent implements OnInit, OnDestroy {
 
                     dndClientQuestion.correctMappings = dndFullQuestionFromServer.correctMappings;
                 } else if (clientQuestion.type === QuestionType.SHORT_ANSWER) {
-                    const saClientQuestion = clientQuestion as ShortAnswerQuestion;
-                    const saFullQuestionFromServer = fullQuestionFromServer as ShortAnswerQuestion;
-                    saClientQuestion.correctMappings = saFullQuestionFromServer.correctMappings;
+                    const shortAnswerClientQuestion = clientQuestion as ShortAnswerQuestion;
+                    const shortAnswerFullQuestionFromServer = fullQuestionFromServer as ShortAnswerQuestion;
+                    shortAnswerClientQuestion.correctMappings = shortAnswerFullQuestionFromServer.correctMappings;
                 } else {
                     console.log('Unknown question type ' + clientQuestion);
                 }
@@ -674,8 +674,8 @@ export class QuizComponent implements OnInit, OnDestroy {
         this.dndQuestionComponents.forEach(function(dndQuestionComponent) {
             dndQuestionComponent.watchCollection();
         });
-        this.saQuestionComponents.forEach(function(saQuestionComponent) {
-            saQuestionComponent.watchCollection();
+        this.shortAnswerQuestionComponents.forEach(function(shortAnswerQuestionComponent) {
+            shortAnswerQuestionComponent.watchCollection();
         });
     }
 

@@ -74,22 +74,21 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
         const artemisMarkdown = this.artemisMarkdown;
         this.rendered = new ShortAnswerQuestion();
 
-        //is either '' or the question in the first line
+        // is either '' or the question in the first line
         this.questionText = this.shortAnswerQuestionUtil.firstLineOfQuestion(this.question.text);
         this.isList = this.shortAnswerQuestionUtil.isQuestionAList(this.question.text);
         this.textWithoutSpots = this.shortAnswerQuestionUtil.getTextWithoutSpots(this.question.text);
 
-        //separates the text into parts that come before the spot tag
+        // separates the text into parts that come before the spot tag
         this.textBeforeSpots = this.textWithoutSpots.slice(0, this.textWithoutSpots.length - 1);
 
-        //the last part that comes after the last spot tag
+        // the last part that comes after the last spot tag
         this.textAfterSpots = this.textWithoutSpots.slice(this.textWithoutSpots.length - 1);
 
         this.rendered.text = artemisMarkdown.htmlForMarkdown(this.question.text);
         this.rendered.hint = artemisMarkdown.htmlForMarkdown(this.question.hint);
         this.rendered.explanation = artemisMarkdown.htmlForMarkdown(this.question.explanation);
     }
-
 
     /**
      * When students type in their answers and the focus gets away from the input spot, the answers are
@@ -115,13 +114,13 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
      */
     showSampleSolution() {
         this.sampleSolutions = [];
-        for(let spot of this.question.spots){
-            for(let mapping of this.question.correctMappings){
-                if(mapping.spot.id  === spot.id
+        for (let spot of this.question.spots) {
+            for (let mapping of this.question.correctMappings) {
+                if (mapping.spot.id  === spot.id
                     &&
                     !(this.sampleSolutions.some(sampleSolution =>
                         sampleSolution.text  === mapping.solution.text
-                        && this.shortAnswerQuestionUtil.getAllSolutionsForSpot(this.question.correctMappings, spot).length >1))){
+                        && this.shortAnswerQuestionUtil.getAllSolutionsForSpot(this.question.correctMappings, spot).length > 1))) {
 
                     this.sampleSolutions.push(mapping.solution);
                     break;

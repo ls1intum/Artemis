@@ -22,7 +22,7 @@ import { ShortAnswerQuestionUtil } from 'app/components/util/short-answer-questi
 import * as $ from 'jquery';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
-//for visual mode
+// for visual mode
 import { DropLocation } from '../../../entities/drop-location';
 import { DragAndDropMouseEvent } from '../../../entities/drag-item/drag-and-drop-mouse-event.class';
 import { DragState } from '../../../entities/drag-item/drag-state.enum';
@@ -65,14 +65,14 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     /** Status boolean for collapse status **/
     isQuestionCollapsed: boolean;
 
-    //equals the highest spotNr
-    numberOfSpot: number = 1;
-    //defines the first gap between text and solutions when
-    firstPressed: number = 1;
-    //has all solution options with their mapping (each spotNr)
+    // equals the highest spotNr
+    numberOfSpot = 1;
+    // defines the first gap between text and solutions when
+    firstPressed = 1;
+    // has all solution options with their mapping (each spotNr)
     optionsWithID: string [] = [];
-    //contains all spots with their spotNr
-    spotsWithID = new Map<string,ShortAnswerSpot>();
+    // contains all spots with their spotNr
+    spotsWithID = new Map<string, ShortAnswerSpot>();
 
     /*
     For visual mode
@@ -101,7 +101,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
 
     constructor(
         private artemisMarkdown: ArtemisMarkdown,
-        private shortAnswerQuestionUtil: ShortAnswerQuestionUtil, //TODO: FDE Check if saQuestionUtil is needed
+        private shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
         private modalService: NgbModal
     ) {}
 
@@ -147,7 +147,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @desc Set up Question text editor
      */
     setupQuestionEditor(): void {
-        //Sets the counter to the highest spotNr and generates solution options with their mapping (each spotNr)
+        // Sets the counter to the highest spotNr and generates solution options with their mapping (each spotNr)
         this.numberOfSpot = this.question.spots.length + 1;
         this.setOptionsWithID();
 
@@ -179,22 +179,22 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @function setOptionsWithID
      * @desc Set up of all solution option with their mapping (spotNr)
      */
-    setOptionsWithID(){
-        for(let solution of this.question.solutions){
-            let spotsForSolution: ShortAnswerSpot [] =[];
-            let option = "[-option ";
+    setOptionsWithID() {
+        for (const solution of this.question.solutions) {
+            let spotsForSolution: ShortAnswerSpot[] = [];
+            let option = '[-option ';
             let firstSolution = true;
             spotsForSolution = this.shortAnswerQuestionUtil.getAllSpotsForSolutions(this.question.correctMappings, solution);
 
-            for(let spotForSolution of spotsForSolution){
-                if(firstSolution){
+            for (const spotForSolution of spotsForSolution) {
+                if (firstSolution) {
                     option += this.question.spots.filter(spot => spot.id === spotForSolution.id)[0].spotNr;
                     firstSolution = false;
                 } else {
-                    option += ","+this.question.spots.filter(spot => spot.id === spotForSolution.id)[0].spotNr;
+                    option += ',' + this.question.spots.filter(spot => spot.id === spotForSolution.id)[0].spotNr;
                 }
             }
-            option += "]";
+            option += ']';
             this.optionsWithID.push(option);
         }
     }
@@ -211,7 +211,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
             this.artemisMarkdown.generateTextHintExplanation(this.question) +
             '\n\n\n\n' +
             this.question.solutions
-                .map((solution, index) => this.optionsWithID[index] +" "+solution.text.trim())
+                .map((solution, index) => this.optionsWithID[index] + ' ' + solution.text.trim())
                 .join('\n\n');
         return markdownText;
     }
@@ -237,14 +237,14 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         const questionParts = text.split(/\[-option /g);
         const questionText = questionParts[0];
 
-        //Split into spots to generated this structure: {"1","2","3"}
+        // Split into spots to generated this structure: {"1","2","3"}
         const spotParts = questionText
             .split(/\[-spot/g)
-            .map(questionText => questionText.split(/\]/g))
+            .map(text => text.split(/\]/g))
             .slice(1)
-            .map(questionText => questionText[0]);
+            .map(text => text[0]);
 
-        //Split new created Array by "]" to generate this structure: {"1,2", " SolutionText"}
+        // Split new created Array by "]" to generate this structure: {"1,2", " SolutionText"}
         const solutionParts = questionParts.map(questionPart => questionPart.split(/\]/g)).slice(1);
 
         // Split question into main text, hint and explanation
@@ -259,7 +259,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         const existingSpotIDs = this.question.spots.filter(spot => spot.id != null).map(spot => spot.id);
         this.question.spots = [];
 
-        //setup spots
+        // setup spots
         for (const spotID of spotParts) {
             const spot = new ShortAnswerSpot();
             spot.tempID = this.pseudoRandomLong();
@@ -287,7 +287,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
             }
             this.question.solutions.push(solution);
 
-            //create mapping according to this structure: {spot(s), solution} -> {"1,2", " SolutionText"}
+            // create mapping according to this structure: {spot(s), solution} -> {"1,2", " SolutionText"}
             this.createMapping(solutionText, solution);
         }
     }
@@ -299,7 +299,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     createMapping(solutionText: string[], solution: ShortAnswerSolution) {
         switch (solutionText[0].trim().length) {
             case 1: {
-                const spot = this.spotsWithID.get(solutionText[0]);;
+                const spot = this.spotsWithID.get(solutionText[0]);
                 this.question.correctMappings.push(new ShortAnswerMapping(spot, solution));
                 break;
             }
@@ -343,8 +343,8 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * an option connected to the spot below the last visible row
      */
     addSpotAtCursor(): void {
-        let editor = this.questionEditor.getEditor();
-        let optionText = editor.getCopyText();
+        const editor = this.questionEditor.getEditor();
+        const optionText = editor.getCopyText();
         const addedText = '[-spot ' + this.numberOfSpot + ']';
         editor.focus();
         editor.insert(addedText);
@@ -377,7 +377,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @desc Add the markdown for a solution option below the last visible row
      */
     addOption(): void {
-        let editor = this.questionEditor.getEditor();
+        const editor = this.questionEditor.getEditor();
         let addedText: string;
         if (this.firstPressed === 1) {
             addedText = '\n\n\n\n[-option #] Please enter here one answer option and do not forget to replace # with a number';
@@ -493,14 +493,14 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     //     this.currentSpot = null;
     // }
 
-    //FDE: Maybe create DropLocation and and afterwards create Spot
+    // FDE: Maybe create DropLocation and and afterwards create Spot
     /**
      * @function backgroundMouseDown
      * @desc React to mouse down events on the background to start dragging
      */
     // backgroundMouseDown(): void {
     //     let number = 0;
-    //     for(let spot of this.question.spots){
+    //     for (let spot of this.question.spots) {
     //         let dropLocation = new DropLocation();
     //         dropLocation.height = 50;
     //         dropLocation.posX = 125;
@@ -569,7 +569,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     //                 break;
     //             case 'center':
     //                 // Limit to y-axis, startX will not be used
-    //                 this.draggingState = DragState.RESIZE_Y; //Why resize_y and not resize_x
+    //                 this.draggingState = DragState.RESIZE_Y; // Why resize_y and not resize_x
     //                 break;
     //             case 'right':
     //                 // Use opposite end as startX
@@ -818,7 +818,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @desc Toggles the preview in the template
      */
     togglePreview(): void {
-        //just commented out to remove visual mode for the moment
+        // just commented out to remove visual mode for the moment
        // this.showPreview = !this.showPreview;
     }
 }

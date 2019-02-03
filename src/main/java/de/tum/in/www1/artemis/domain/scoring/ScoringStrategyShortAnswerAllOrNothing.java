@@ -16,14 +16,14 @@ public class ScoringStrategyShortAnswerAllOrNothing implements ScoringStrategy {
             return question.getScore();
         }
         if (submittedAnswer instanceof ShortAnswerSubmittedAnswer && question instanceof ShortAnswerQuestion) {
-            ShortAnswerSubmittedAnswer saAnswer = (ShortAnswerSubmittedAnswer) submittedAnswer;
-            ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) question;
+            ShortAnswerSubmittedAnswer shortAnswerAnswer = (ShortAnswerSubmittedAnswer) submittedAnswer;
+            ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) question;
 
-            double[] values = ScoringStrategyShortAnswerUtil.getCorrectAndIncorrectSolutionsrShortAnswerQuestion(saQuestion,saAnswer);
+            double[] values = ScoringStrategyShortAnswerUtil.getCorrectAndIncorrectSolutionsrShortAnswerQuestion(shortAnswerQuestion, shortAnswerAnswer);
             double correctSolutions = values[0];
 
-            if(correctSolutions == saQuestion.getSpots().size()){
-                return saQuestion.getScore();
+            if(correctSolutions == shortAnswerQuestion.getSpots().size()){
+                return shortAnswerQuestion.getScore();
             } else {
                 return 0.0;
             }
