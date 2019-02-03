@@ -7,27 +7,12 @@ export class BoldCommand extends Command {
 
     execute(editor: any): void {
         let chosenText = editor.getSelectedText();
-        if(chosenText.includes('**')){
-            const textToAdd = chosenText;
-            editor.clearSelection();
-            editor.moveCursorTo(editor.getCursorPosition().row, Number.POSITIVE_INFINITY);
-            const search: SearchOptions = {
-                needle: chosenText,
-                preventScroll: true,
-                backwards: true,
-                start: null,
-                skipCurrent: false,
-                range: null,
-                preserveCase: false,
-                regExp: chosenText,
-                wholeWord: null,
-                caseSensitive: false,
-                wrap: false
-            };
-            editor.replace(textToAdd, search);
+        let textToAdd = '';
 
-        } else {
-            const textToAdd = `**${chosenText}**`;
+        if (chosenText.includes('**')) {
+           textToAdd = chosenText.slice(2, -2);
+        } else textToAdd = `**${chosenText}**`;
+
             editor.clearSelection();
             editor.moveCursorTo(editor.getCursorPosition().row, Number.POSITIVE_INFINITY);
             const search: SearchOptions = {
@@ -44,6 +29,5 @@ export class BoldCommand extends Command {
                 wrap: false
             };
             editor.replace(textToAdd, search);
-        }
     }
 }
