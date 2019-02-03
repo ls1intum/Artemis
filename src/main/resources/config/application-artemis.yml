@@ -21,6 +21,7 @@ artemis:
         user: <username>    # e.g. ga12abc
         password: <password>
         empty-commit-necessary: true
+        authentication-token: <secrettoken>
     lti:
         id: artemis_lti
         oauth-key: artemis_lti_key
