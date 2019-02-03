@@ -115,13 +115,13 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
     showSampleSolution() {
         this.sampleSolutions = [];
         for (const spot of this.question.spots) {
-            let solutionsForSpot = this.shortAnswerQuestionUtil.getAllSolutionsForSpot(this.question.correctMappings, spot);
+            const solutionsForSpot = this.shortAnswerQuestionUtil.getAllSolutionsForSpot(this.question.correctMappings, spot);
             for (const mapping of this.question.correctMappings) {
                 if (mapping.spot.id  === spot.id
                     &&
                     !(this.sampleSolutions.some(sampleSolution =>
                         sampleSolution.text  === mapping.solution.text
-                        && !this.allSolutionsAreInSampleSolution(solutionsForSpot) ))){
+                        && !this.allSolutionsAreInSampleSolution(solutionsForSpot) ))) {
 
                     this.sampleSolutions.push(mapping.solution);
                     break;
