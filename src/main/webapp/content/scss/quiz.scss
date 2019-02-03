@@ -12,21 +12,16 @@
 .short-answer-question-display {
     white-space: pre;
     margin-bottom: 10px;
+    line-height: 30px;
 }
 
-.saQuestion-text {
-    display: inline-flex;
-
-    &.short-answer-question-display {
-        margin-bottom: 10px;
-        display: flex;
-    }
+.short-answer-question-input {
+    height: 25px;
 }
 
 .saQuestion-statistic-letter {
     position: absolute;
-    right: -3px;
-    top: 12px;
+    right: 10px;
     z-index: 1;
     opacity: 1;
 
@@ -41,8 +36,7 @@
 
 .saQuestion-statistic-letter-solution {
     position: absolute;
-    right: -3px;
-    top: 12px;
+    right: 10px;
     z-index: 1;
     opacity: 1;
 

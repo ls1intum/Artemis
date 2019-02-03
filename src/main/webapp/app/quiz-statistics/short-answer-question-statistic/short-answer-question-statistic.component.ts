@@ -71,6 +71,8 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
     textAfterSpots: string[];
     lettersForSolutions: number[] = [];
 
+    sampleSolutions: ShortAnswerSolution[] =  [];
+
     constructor(
         private route: ActivatedRoute,
         private router: Router,
@@ -163,6 +165,24 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
             this.loadLayout();
         }
         this.loadData();
+
+        this.calculateSampleSolution();
+    }
+
+    calculateSampleSolution() {
+        for (const spot of this.question.spots) {
+            for (const mapping of this.question.correctMappings) {
+                if (mapping.spot.id  === spot.id
+                    &&
+                    !(this.sampleSolutions.some(sampleSolution =>
+                        sampleSolution.text  === mapping.solution.text
+                        && this.shortAnswerQuestionUtil.getAllSolutionsForSpot(this.question.correctMappings, spot).length > 1))) {
+
+                    this.sampleSolutions.push(mapping.solution);
+                    break;
+                }
+            }
+        }
     }
 
     generateSaStructure() {
