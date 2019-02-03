@@ -175,8 +175,11 @@ public class ShortAnswerQuestionStatistic extends QuestionStatistic implements S
                     shortAnswerSubmittedText = shortAnswerSubmittedAnswer.getSubmittedTextForSpot(spotCounter.getSpot());
                     shortAnswerSolutions = spotCounter.getSpot().getQuestion().getCorrectSolutionForSpot(spotCounter.getSpot());
 
-                    for(ShortAnswerSolution solution : shortAnswerSolutions){
-                        if(shortAnswerSubmittedText.isSubmittedTextCorrect(shortAnswerSubmittedText.getText(), solution.getText()) && shortAnswerSubmittedText.isIsCorrect()){
+                    if (shortAnswerSubmittedText == null) {
+                        continue;
+                    }
+                    for(ShortAnswerSolution solution : shortAnswerSolutions) {
+                        if(shortAnswerSubmittedText.isSubmittedTextCorrect(shortAnswerSubmittedText.getText(), solution.getText()) && Boolean.TRUE == shortAnswerSubmittedText.isIsCorrect()){
                             spotCounter.setUnRatedCounter(spotCounter.getUnRatedCounter() + change);
                         }
                     }

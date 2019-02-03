@@ -111,7 +111,7 @@ public class ShortAnswerSubmittedAnswer extends SubmittedAnswer implements Seria
     }
 
     public ShortAnswerSubmittedText getSubmittedTextForSpot(ShortAnswerSpot spot) {
-        for(ShortAnswerSubmittedText submittedText : this.getSubmittedTexts()){
+        for(ShortAnswerSubmittedText submittedText : this.getSubmittedTexts()) {
             if(submittedText.getSpot().equals(spot)) {
                 return submittedText;
             }
