@@ -71,6 +71,7 @@ export class QuizComponent implements OnInit, OnDestroy {
     quizId: number;
     interval: any;
     atLeastOneOptionSelected = new Array<boolean>();
+    atLeastOneOptionSelected1= new Map<number, boolean>();
 
     /**
      * Websocket channels
@@ -794,9 +795,36 @@ export class QuizComponent implements OnInit, OnDestroy {
                 }
             }
         }
-        if(this.atLeastOneOptionSelected.length > 0) {
+        if (this.atLeastOneOptionSelected.length > 0) {
             return false;
-        } else return true;
+        } else {
+            if (this.atLeastOneOptionSelected.length == 0){
+                return true;
+            }
+        }
+    }
+
+    checkForAnsweredQuestions1(): boolean {
+    this.quizExercise.questions.forEach(question => {
+            this.atLeastOneOptionSelected1[question.id] = false;
+        });
+
+        for( let question of this.quizExercise.questions) {
+            if (question.type === QuestionType.MULTIPLE_CHOICE) {
+                if (!(this.selectedAnswerOptions[question.id] == 0)) {
+                    this.atLeastOneOptionSelected1[question.id] = true;
+                }
+            } else {
+                if (question.type === QuestionType.DRAG_AND_DROP) {
+                    if (!(this.dragAndDropMappings[question.id] == 0)) {
+                        this.atLeastOneOptionSelected1[question.id] = true;
+                    }
+                }
+            }
+        }
+        
+               return false;
+
     }
 
     /**
@@ -807,7 +835,7 @@ export class QuizComponent implements OnInit, OnDestroy {
 
         let confirmSubmit = true;
 
-        if (this.remainingTimeSeconds > 1 && (this.checkForAnsweredQuestions() == false)) {
+        if (this.remainingTimeSeconds > 1 && (this.checkForAnsweredQuestions1() == false)) {
             confirmSubmit = window.confirm('Are you sure you want to submit? You have not answered all questions and you still have some time left!');
         }
         if(confirmSubmit) {
