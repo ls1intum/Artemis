@@ -81,6 +81,7 @@ import {
     faArrowsAltV,
     faFile,
     faCodeBranch,
+    faCircle
 } from '@fortawesome/free-solid-svg-icons';
 
 import {
@@ -169,6 +170,7 @@ library.add(faUpload);
 library.add(faArrowsAltV);
 library.add(faFile);
 library.add(faCodeBranch);
+library.add(faCircle);
 
 library.add(farQuestionCircle);
 library.add(farCheckCircle);

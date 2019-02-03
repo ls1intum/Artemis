@@ -1,6 +1,6 @@
 <div *ngIf="course">
     <h4>{{course.title}} <small>{{exercises.length}} released exercises, {{students.length}} students with results</small>
-        <button *ngIf="exportReady" class="btn btn-primary btn-sm float-right" (click)="exportResults()"><fa-icon class="download" [fixedWidth]="true"></fa-icon>&nbsp;Export Results as CSV</button>
+        <button *ngIf="exportReady" class="btn btn-primary btn-sm float-right" (click)="exportResults()"><fa-icon icon="download" [fixedWidth]="true"></fa-icon>&nbsp;Export Results as CSV</button>
     </h4>
     <jhi-alert></jhi-alert>
     <span *ngIf="!exportReady" style="color:grey"><fa-icon icon="spinner" [spin]="true"></fa-icon>&nbsp;<span>Loading the results of all students...</span></span>
