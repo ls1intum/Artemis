@@ -11,7 +11,7 @@ public class ScoringStrategyShortAnswerUtil {
         boolean foundCorrectSolution = false;
         double correctSolutions = 0;
         double incorrectSolutions = 0;
-        Set<ShortAnswerSolution> solutionsAlreadyUsed = new HashSet<>();
+        Set<String> solutionsAlreadyUsed = new HashSet<>();
 
         // iterate through each spot and compare its correct solutions with the submitted texts
         for (ShortAnswerSpot spot : shortAnswerQuestion.getSpots()) {
@@ -35,9 +35,9 @@ public class ScoringStrategyShortAnswerUtil {
                             && shortAnswerAnswer.submittedTextMoreThanOnceInSubmittedAnswer(text)
                             && shortAnswerQuestion.spotMoreThanOnceInMapping(spot)
                             && shortAnswerQuestion.solutionMoreThanOnceInMapping(solution)
-                            && !solutionsAlreadyUsed.contains(solution)
+                            && !solutionsAlreadyUsed.contains(solution.getText().toLowerCase())
                             ){
-                            solutionsAlreadyUsed.add(solution);
+                            solutionsAlreadyUsed.add(solution.getText().toLowerCase());
                             text.setIsCorrect(true);
                             correctSolutions++;
                             foundCorrectSolution = true;
