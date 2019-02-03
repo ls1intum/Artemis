@@ -5,7 +5,7 @@ import { Course, CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
 import { Subscription } from 'rxjs';
 import { AccountService, User } from '../core';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { Exercise, ExerciseService } from 'app/entities/exercise';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor-participation';
 import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
@@ -26,11 +26,22 @@ export class TutorExerciseDashboardComponent implements OnInit {
     tutorParticipationStatus: TutorParticipationStatus;
     submissions: TextSubmission[];
     unassessedSubmission: TextSubmission;
-    exampleSubmissionsForTutorial: ExampleSubmission[] = [];
-    exampleSubmissionsToComplete: ExampleSubmission[] = [];
+    exampleSubmissionsToReview: ExampleSubmission[] = [];
+    exampleSubmissionsToAssess: ExampleSubmission[] = [];
     exampleSubmissionsCompletedByTutor: ExampleSubmission[] = [];
     tutorParticipation: TutorParticipation;
     nextExampleSubmissionId: number;
+
+    stats = {
+        toReview: {
+            done: 0,
+            total: 0
+        },
+        toAssess: {
+            done: 0,
+            total: 0
+        }
+    };
 
     NOT_PARTICIPATED = TutorParticipationStatus.NOT_PARTICIPATED;
     REVIEWED_INSTRUCTIONS = TutorParticipationStatus.REVIEWED_INSTRUCTIONS;
@@ -68,17 +79,19 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 this.exercise = res.body;
                 this.tutorParticipation = this.exercise.tutorParticipations[0];
                 this.tutorParticipationStatus = this.tutorParticipation.status;
-                this.exampleSubmissionsForTutorial = this.exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => exampleSubmission.usedForTutorial);
-                this.exampleSubmissionsToComplete = this.exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => !exampleSubmission.usedForTutorial);
+                this.exampleSubmissionsToReview = this.exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => exampleSubmission.usedForTutorial);
+                this.exampleSubmissionsToAssess = this.exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => !exampleSubmission.usedForTutorial);
                 this.exampleSubmissionsCompletedByTutor = this.tutorParticipation.trainedExampleSubmissions;
 
-                console.log(this.exampleSubmissionsForTutorial)
-                console.log(this.exampleSubmissionsCompletedByTutor)
+                this.stats.toReview.total = this.exampleSubmissionsToReview.length;
+                this.stats.toReview.done = this.exampleSubmissionsCompletedByTutor.filter(e => e.usedForTutorial).length;
+                this.stats.toAssess.total = this.exampleSubmissionsToAssess.length;
+                this.stats.toAssess.done = this.exampleSubmissionsCompletedByTutor.filter(e => !e.usedForTutorial).length;
 
-                if (this.exampleSubmissionsCompletedByTutor.length < this.exampleSubmissionsForTutorial.length) {
-                    this.nextExampleSubmissionId = this.exampleSubmissionsForTutorial[this.exampleSubmissionsCompletedByTutor.length].id;
-                } else {
-                    this.nextExampleSubmissionId = this.exampleSubmissionsToComplete[this.exampleSubmissionsCompletedByTutor.length - this.exampleSubmissionsForTutorial.length].id;
+                if (this.stats.toReview.done < this.stats.toReview.total) {
+                    this.nextExampleSubmissionId = this.exampleSubmissionsToReview[this.stats.toReview.done].id;
+                } else if (this.stats.toAssess.done < this.stats.toAssess.total) {
+                    this.nextExampleSubmissionId = this.exampleSubmissionsToAssess[this.stats.toAssess.done].id;
                 }
 
             },
@@ -115,6 +128,12 @@ export class TutorExerciseDashboardComponent implements OnInit {
             .getTextSubmissionForExerciseWithoutAssessment(this.exerciseId)
             .subscribe((response: HttpResponse<TextSubmission>) => {
                 this.unassessedSubmission = response.body;
+            }, (error: HttpErrorResponse) => {
+                if (error.status === 404) {
+                    // there aren't unassessed submission, nothing we have to worry about
+                } else {
+                    this.onError(error.message);
+                }
             });
     }
 

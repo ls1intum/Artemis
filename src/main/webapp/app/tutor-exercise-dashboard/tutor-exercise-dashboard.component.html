@@ -18,8 +18,7 @@
                 [tutorParticipation]="tutorParticipation"></jhi-tutor-participation-graph>
         </div>
         <div class="col-4 text-center">
-            <p class="h3">Your assessments:</p>
-            <p class="font-weight-bold">{{numberOfTutorAssessments}} / 5 </p>
+            <p class="h3">You assessed {{numberOfTutorAssessments}} submissions so far</p>
         </div>
     </div>
 
@@ -51,38 +50,47 @@
     </ng-template>
 
     <div *ngIf="tutorParticipationStatus === REVIEWED_INSTRUCTIONS" class="alert alert-warning row" role="alert">
-        There are {{exampleSubmissionsForTutorial.length + exampleSubmissionsToComplete.length}} example submissions: {{exampleSubmissionsForTutorial.length}} to review and {{exampleSubmissionsToComplete.length}} to assess.
+        There are {{stats.toReview.total + stats.toAssess.total}} example submissions: {{stats.toReview.total}} to
+        review and {{stats.toAssess.total}} to assess.
     </div>
 
     <div class="row" *ngIf="tutorParticipationStatus !== NOT_PARTICIPATED">
-        <div class="col-6" *ngIf="exampleSubmissionsForTutorial.length > 0">
-            <p class="h3">Review submissions ({{exampleSubmissionsCompletedByTutor.length - exampleSubmissionsToComplete.length}} / {{exampleSubmissionsForTutorial.length}})</p>
+        <div class="col-6" *ngIf="stats.toReview.total > 0">
+            <p class="h3">Review submissions ({{stats.toReview.done}} / {{stats.toReview.total}})</p>
 
-            <button *ngIf="exampleSubmissionsCompletedByTutor.length < exampleSubmissionsForTutorial.length" class="btn btn-primary"
-                    routerLink="/text-exercise/{{exercise.id}}/example-submission/{{nextExampleSubmissionId}}" [queryParams]="{readOnly: true}">
-                <span *ngIf="exampleSubmissionsCompletedByTutor.length <= 0; else elseBlockSubmissionSForTutorialButton">Start</span><ng-template #elseBlockSubmissionSForTutorialButton>Continue</ng-template> reviewing example submissions
+            <button *ngIf="stats.toReview.done < stats.toReview.total" class="btn btn-primary"
+                    routerLink="/text-exercise/{{exercise.id}}/example-submission/{{nextExampleSubmissionId}}"
+                    [queryParams]="{readOnly: true}">
+                <span *ngIf="stats.toReview.done <= 0; else elseBlockSubmissionSForTutorialButton">Start</span>
+                <ng-template #elseBlockSubmissionSForTutorialButton>Continue</ng-template>
+                reviewing example submissions
             </button>
 
-            <ul *ngIf="exampleSubmissionsCompletedByTutor.length >= exampleSubmissionsForTutorial.length">
-                <li *ngFor="let exampleSubmission of exampleSubmissionsForTutorial; let i = index">
-                    <button routerLink="/text-exercise/{{exercise.id}}/example-submission/{{exampleSubmission.id}}" [queryParams]="{readOnly: true}"
+            <ul *ngIf="stats.toReview.done >= stats.toReview.total">
+                <li *ngFor="let exampleSubmission of exampleSubmissionsToReview; let i = index">
+                    <button routerLink="/text-exercise/{{exercise.id}}/example-submission/{{exampleSubmission.id}}"
+                            [queryParams]="{readOnly: true}"
                             class="btn btn-link">Review example submission {{i + 1}}</button>
                     <fa-icon icon="check-circle" *ngIf="hasBeenCompletedByTutor(exampleSubmission.id)"></fa-icon>
                 </li>
             </ul>
         </div>
 
-        <div class="col-6" *ngIf="exampleSubmissionsToComplete.length > 0 && exampleSubmissionsCompletedByTutor.length >= exampleSubmissionsForTutorial.length">
-            <p class="h3">Tutorial submissions ({{exampleSubmissionsCompletedByTutor.length - exampleSubmissionsForTutorial.length}}/{{exampleSubmissionsToComplete.length}})</p>
+        <div class="col-6" *ngIf="stats.toAssess.total > 0 && stats.toReview.done >= stats.toReview.total">
+            <p class="h3">Tutorial submissions ({{stats.toAssess.done}} / {{stats.toAssess.total}})</p>
 
-            <button *ngIf="exampleSubmissionsCompletedByTutor.length < exampleSubmissionsToComplete.length + exampleSubmissionsForTutorial.length" class="btn btn-primary"
-                    routerLink="/text-exercise/{{exercise.id}}/example-submission/{{nextExampleSubmissionId}}" [queryParams]="{toComplete: true}">
-                <span *ngIf="exampleSubmissionsCompletedByTutor.length <= exampleSubmissionsForTutorial.length; else elseBlockSubmissionsForReviewButton">Start</span><ng-template #elseBlockSubmissionsForReviewButton>Continue</ng-template> assess example submissions
+            <button *ngIf="stats.toAssess.done < stats.toAssess.total" class="btn btn-primary"
+                    routerLink="/text-exercise/{{exercise.id}}/example-submission/{{nextExampleSubmissionId}}"
+                    [queryParams]="{toComplete: true}">
+                <span *ngIf="stats.toAssess.done <= 0; else elseBlockSubmissionsForReviewButton">Start</span>
+                <ng-template #elseBlockSubmissionsForReviewButton>Continue</ng-template>
+                assess example submissions
             </button>
 
-            <ul>
-                <li *ngFor="let exampleSubmission of exampleSubmissionsToComplete; let i = index">
-                    <button routerLink="/text-exercise/{{exercise.id}}/example-submission/{{exampleSubmission.id}}" [queryParams]="{toComplete: true}"
+            <ul *ngIf="stats.toAssess.done >= stats.toAssess.total">
+                <li *ngFor="let exampleSubmission of exampleSubmissionsToAssess; let i = index">
+                    <button routerLink="/text-exercise/{{exercise.id}}/example-submission/{{exampleSubmission.id}}"
+                            [queryParams]="{toComplete: true}"
                             class="btn btn-link">Assess example submission {{i + 1}}</button>
                     <fa-icon icon="check-circle" *ngIf="hasBeenCompletedByTutor(exampleSubmission.id)"></fa-icon>
                 </li>
@@ -90,9 +98,9 @@
         </div>
 
     </div>
-    <div class="table-responsive"
-         *ngIf="tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED">
-        <table class="table table-striped exercise-table">
+    <h2 *ngIf="tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED">Students' submissions</h2>
+    <div class="table-responsive" *ngIf="tutorParticipationStatus === TRAINED || tutorParticipationStatus === COMPLETED">
+        <table class="table table-striped exercise-table" *ngIf="(unassessedSubmission && unassessedSubmission?.id > 0) || submissions.length > 0; else noSubmissions">
             <thead>
             <tr>
                 <th>#</th>
@@ -100,13 +108,11 @@
                 <th>Result</th>
                 <th>Status</th>
                 <th>Score</th>
-                <th>Reviewer</th>
                 <th>Action</th>
             </tr>
             </thead>
             <tbody>
-            <tr [ngStyle]="submission.optimal && {'font-weight': 'bold'}"
-                *ngFor="let submission of submissions; let i = index">
+            <tr *ngFor="let submission of submissions; let i = index">
                 <td>{{ i + 1 }}</td>
                 <td>{{ submission.submissionDate | date:'MMM d, y HH:mm:ss' }}</td>
                 <td>
@@ -119,10 +125,6 @@
                     <span
                         *ngIf="submission.result !== null && submission.result.score !== null">{{submission.result.score}}
                         %</span>
-                </td>
-                <td>
-                    <span
-                        *ngIf="submission.result !== null && submission.result.assessor !== null">{{ submission.result.assessor.firstName }} {{ submission.result.assessor.lastName }}</span>
                 </td>
                 <td>
                     <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
@@ -139,20 +141,27 @@
                     </button>
                 </td>
             </tr>
-            <tr *ngIf="unassessedSubmission !== null && unassessedSubmission.id > 0">
+            <tr *ngIf="unassessedSubmission && unassessedSubmission?.id > 0">
                 <td></td>
-                <td>{{ unassessedSubmission.submissionDate | date:'MMM d, y HH:mm:ss' }}</td>
+                <td>{{ unassessedSubmission?.submissionDate | date:'MMM d, y HH:mm:ss' }}</td>
                 <td></td>
                 <td>NEW</td>
                 <td></td>
                 <td></td>
                 <td>
-                    <button routerLink="/text/{{exercise.id}}/assessment/{{unassessedSubmission.id}}" class="btn btn-success">
+                    <button routerLink="/text/{{exercise.id}}/assessment/{{unassessedSubmission.id}}"
+                            class="btn btn-success">
                         <i class="fa fa-folder-open fa-fw"></i>Start new assessment
                     </button>
                 </td>
             </tr>
             </tbody>
         </table>
+
+        <ng-template #noSubmissions>
+            <div class="alert alert-info">
+                There are no submissions by students at the moment
+            </div>
+        </ng-template>
     </div>
 </div>

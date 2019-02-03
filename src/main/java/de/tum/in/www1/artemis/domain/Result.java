@@ -331,6 +331,10 @@ public class Result implements Serializable {
     }
 
     public Boolean isExampleResult() {
+        if (exampleResult == null) {
+            return false;
+        }
+
         return exampleResult;
     }
 

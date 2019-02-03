@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -21,6 +22,10 @@ public class ExampleSubmissionService {
                                     FeedbackRepository feedbackRepository) {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.feedbackRepository = feedbackRepository;
+    }
+
+    public Optional<ExampleSubmission> get(long id) {
+        return exampleSubmissionRepository.findById(id);
     }
 
     /**

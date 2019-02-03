@@ -131,6 +131,11 @@ public class TextExerciseResource {
             return forbidden();
         }
         TextExercise result = textExerciseRepository.save(textExercise);
+
+        // Avoid recursions
+        result.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setExercise(null));
+        result.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipation(null));
+
         return ResponseEntity.ok()
             .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, textExercise.getId().toString()))
             .body(result);

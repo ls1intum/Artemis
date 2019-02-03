@@ -1,18 +1,18 @@
 package de.tum.in.www1.artemis.service;
 
-import de.tum.in.www1.artemis.domain.Participation;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.TextSubmission;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.scheduled.AutomaticSubmissionService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZonedDateTime;
+import java.util.Objects;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -20,11 +20,17 @@ public class TextSubmissionService {
 
     private final TextSubmissionRepository textSubmissionRepository;
     private final ParticipationRepository participationRepository;
+    private final ParticipationService participationService;
+    private final ResultRepository resultRepository;
 
     public TextSubmissionService(TextSubmissionRepository textSubmissionRepository,
-                                 ParticipationRepository participationRepository) {
+                                 ParticipationRepository participationRepository,
+                                 ParticipationService participationService,
+                                 ResultRepository resultRepository) {
         this.textSubmissionRepository = textSubmissionRepository;
         this.participationRepository = participationRepository;
+        this.participationService = participationService;
+        this.resultRepository = resultRepository;
     }
 
     /**
@@ -72,5 +78,30 @@ public class TextSubmissionService {
         }
 
         return textSubmission;
+    }
+
+    // Find a text submission without assessments
+    @Transactional(readOnly = true)
+    public Optional<TextSubmission> textSubmissionWithoutResult(long exerciseId) {
+        return this.participationService.findByExerciseIdWithEagerSubmissions(exerciseId)
+            .stream()
+            .peek(participation -> {
+                participation.getExercise().setParticipations(null);
+            })
+
+            // Map to Latest Submission
+            .map(Participation::findLatestTextSubmission)
+            .filter(Objects::nonNull)
+
+            // It needs to be submitted to be ready for assessment
+            .filter(Submission::isSubmitted)
+
+            .filter(textSubmission -> {
+                Result result = resultRepository.findDistinctBySubmissionId(textSubmission.getId()).orElse(null);
+                return result == null;
+
+            })
+
+            .findAny();
     }
 }

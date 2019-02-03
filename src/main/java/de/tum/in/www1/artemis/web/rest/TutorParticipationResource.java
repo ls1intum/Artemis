@@ -99,17 +99,21 @@ public class TutorParticipationResource {
         User user = userService.getUserWithGroupsAndAuthorities();
 
         TutorParticipation existingTutorParticipation = exercise.getTutorParticipationForExercise(user);
+        // Do not trust the user input
+        Optional<ExampleSubmission> exampleSubmissionFromDatabase = this.exampleSubmissionService.get(exampleSubmission.getId());
 
-        if (existingTutorParticipation == null) {
+        if (existingTutorParticipation == null || !exampleSubmissionFromDatabase.isPresent()) {
             return ResponseEntity.notFound().build();
         }
+
+        ExampleSubmission originalExampleSubmission = exampleSubmissionFromDatabase.get();
 
         if (existingTutorParticipation.getStatus() != TutorParticipationStatus.REVIEWED_INSTRUCTIONS) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("tutorParticipations", "tutorParticipationInWrongStatus", "You cannot assess an example submission if you haven't read the grading instructions yet.")).body(null);
         }
 
         // Check if it is a tutorial or not
-        boolean isTutorial = exampleSubmission.isUsedForTutorial();
+        boolean isTutorial = originalExampleSubmission.isUsedForTutorial();
 
         // If it is not a tutorial we check the assessment
         if (!isTutorial) {

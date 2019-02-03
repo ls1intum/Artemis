@@ -275,38 +275,16 @@ public class TextSubmissionResource {
     @GetMapping(value = "/exercises/{exerciseId}/text-submission-without-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional(readOnly = true)
-    public ResponseEntity<Optional<TextSubmission>> getTextSubmissionWithoutAssessment(@PathVariable Long exerciseId) {
+    public ResponseEntity<TextSubmission> getTextSubmissionWithoutAssessment(@PathVariable Long exerciseId) {
         log.debug("REST request to get a text submission without assessment");
         Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
         User user = userService.getUserWithGroupsAndAuthorities();
 
         if (!hasAtLeastTAPermissions(exercise, user)) return forbidden();
 
-        return ResponseEntity.ok().body(
+        Optional<TextSubmission> textSubmissionWithoutAssessment = this.textSubmissionService.textSubmissionWithoutResult(exerciseId);
 
-            // Participations for Exercise
-            participationService.findByExerciseIdWithEagerSubmissions(exerciseId)
-                .stream()
-                .peek(participation -> {
-                    participation.getExercise().setParticipations(null);
-                })
-
-                // Map to Latest Submission
-                .map(Participation::findLatestTextSubmission)
-                .filter(Objects::nonNull)
-
-                // It needs to be submitted to be ready for assessment
-                .filter(Submission::isSubmitted)
-
-                .filter(textSubmission -> {
-                    Result result = resultRepository.findDistinctBySubmissionId(textSubmission.getId()).orElse(null);
-                    return result == null;
-
-                })
-
-                // TODO: more randomic way to choose the submission to return?
-                .findAny()
-        );
+        return ResponseUtil.wrapOrNotFound(textSubmissionWithoutAssessment);
     }
 
     private boolean hasAtLeastTAPermissions(Exercise exercise, User user) {

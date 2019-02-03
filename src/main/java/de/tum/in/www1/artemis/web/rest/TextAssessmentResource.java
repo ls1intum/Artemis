@@ -12,7 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,6 +32,7 @@ public class TextAssessmentResource extends AssessmentResource {
     private final TextExerciseService textExerciseService;
     private final TextSubmissionRepository textSubmissionRepository;
     private final ResultRepository resultRepository;
+    private final TextSubmissionService textSubmissionService;
 
     public TextAssessmentResource(AuthorizationCheckService authCheckService,
                                   ParticipationService participationService,
@@ -40,6 +40,7 @@ public class TextAssessmentResource extends AssessmentResource {
                                   TextAssessmentService textAssessmentService,
                                   TextExerciseService textExerciseService,
                                   TextSubmissionRepository textSubmissionRepository,
+                                  TextSubmissionService textSubmissionService,
                                   ResultRepository resultRepository,
                                   UserService userService) {
         super(authCheckService, userService);
@@ -50,6 +51,7 @@ public class TextAssessmentResource extends AssessmentResource {
         this.textExerciseService = textExerciseService;
         this.textSubmissionRepository = textSubmissionRepository;
         this.resultRepository = resultRepository;
+        this.textSubmissionService = textSubmissionService;
     }
 
     @PutMapping("/exercise/{exerciseId}/result/{resultId}")
@@ -88,7 +90,26 @@ public class TextAssessmentResource extends AssessmentResource {
         }
 
         Participation participation = textSubmission.get().getParticipation();
-        participation  = participationService.findOneWithEagerResultsAndSubmissions(participation.getId());
+        participation = participationService.findOneWithEagerResultsAndSubmissions(participation.getId());
+        if (!participation.getResults().isEmpty()) {
+            User user = userService.getUser();
+            // Another tutor started assessing this submission.
+            if (participation.findLatestResult().getAssessor() != user) {
+                // TODO: if the result hasn't been updated in the last 24 hours, we can use it
+
+                // Check if there is another submission without assessment
+                Optional<TextSubmission> anotherTextSubmission = this.textSubmissionService.textSubmissionWithoutResult(exerciseId);
+
+                if (!anotherTextSubmission.isPresent()) {
+                    // No more text submissions without assessment
+                    return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("textSubmission", "textSubmissionNotFound", "No text Submission without assessment has been found.")).body(null);
+                }
+
+                // Use another participation
+                participation = anotherTextSubmission.get().getParticipation();
+            }
+        }
+
         if (participation.getResults().isEmpty()) {
             Result result = new Result();
             result.setParticipation(participation);

@@ -50,6 +50,10 @@ public class ExampleSubmission implements Serializable {
     }
 
     public Boolean isUsedForTutorial() {
+        if (usedForTutorial == null) {
+            return false;
+        }
+
         return usedForTutorial;
     }
 
