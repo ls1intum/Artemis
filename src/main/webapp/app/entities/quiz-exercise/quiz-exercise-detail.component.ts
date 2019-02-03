@@ -454,6 +454,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         const isGenerallyValid: boolean =
             this.quizExercise.title &&
             this.quizExercise.title !== '' &&
+            this.quizExercise.title.length < 250 &&
             this.quizExercise.duration &&
             releaseDateValidAndNotInPastCondition &&
             this.quizExercise.questions &&
@@ -461,12 +462,13 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         const areAllQuestionsValid = this.quizExercise.questions.every(function(question) {
             if (question.type === QuestionType.MULTIPLE_CHOICE) {
                 const mcQuestion = question as MultipleChoiceQuestion;
-                return question.title && question.title !== '' && mcQuestion.answerOptions.some(answerOption => answerOption.isCorrect);
+                return question.title && question.title !== '' && question.title.length < 250 && mcQuestion.answerOptions.some(answerOption => answerOption.isCorrect);
             } else if (question.type === QuestionType.DRAG_AND_DROP) {
                 const dndQuestion = question as DragAndDropQuestion;
                 return (
                     question.title &&
                     question.title !== '' &&
+                    question.title.length < 250 &&
                     dndQuestion.correctMappings &&
                     dndQuestion.correctMappings.length > 0 &&
                     this.dragAndDropQuestionUtil.solve(dndQuestion).length &&
@@ -491,9 +493,16 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         if (!this.quizExercise) {
             return;
         }
+
         if (!this.quizExercise.title || this.quizExercise.title === '') {
             reasons.push({
                 translateKey: 'arTeMiSApp.quizExercise.invalidReasons.quizTitle',
+                translateValues: {}
+            });
+        }
+        if (this.quizExercise.title.length >= 250) {
+            reasons.push({
+                translateKey: 'arTeMiSApp.quizExercise.invalidReasons.quizTitleLength',
                 translateValues: {}
             });
         }
@@ -542,6 +551,12 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                         translateValues: { index: index + 1 }
                     });
                 }
+            }
+            if (question.title.length >= 250) {
+                reasons.push({
+                    translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionTitleLength',
+                    translateValues: {index: index + 1}
+                });
             }
             if (question.type === QuestionType.DRAG_AND_DROP) {
                 const dndQuestion = question as DragAndDropQuestion;

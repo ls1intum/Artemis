@@ -69,7 +69,31 @@ public interface ContinuousIntegrationService {
      *
      * @param participation participation for which build has completed
      */
-    public Result onBuildCompleted(Participation participation);
+    @Deprecated
+    public Result onBuildCompletedOld(Participation participation);
+
+    /**
+     * Get the plan key of the finished build, the information of the build gets passed via the requestBody.
+     * The requestBody must match the information passed from the bamboo-server-notification-plugin, the body is
+     * described here: https://github.com/ls1intum/bamboo-server-notification-plugin
+     *
+     * @param requestBody The request Body received from the CI-Server.
+     * @return the plan key of the build
+     * @throws Exception if the Body could not be parsed
+     */
+    public String getPlanKey(Object requestBody) throws Exception;
+
+    /**
+     * Get the result of the finished build, the information of the build gets passed via the requestBody.
+     * The requestBody must match the information passed from the bamboo-server-notification-plugin, the body is
+     * described here: https://github.com/ls1intum/bamboo-server-notification-plugin
+     *
+     * @param participation The participation for which the build finished
+     * @param requestBody The request Body received from the CI-Server.
+     * @return the result of the build
+     * @throws Exception if the Body could not be parsed
+     */
+    public Result onBuildCompletedNew(Participation participation, Object requestBody) throws Exception;
 
     /**
      * Get the current status of the build for the given participation, i.e. INACTIVE, QUEUED, or BUILDING.
