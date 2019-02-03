@@ -299,14 +299,14 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     createMapping(solutionText: string[], solution: ShortAnswerSolution) {
         switch (solutionText[0].trim().length) {
             case 1: {
-                const spot = this.spotsWithID.get(solutionText[0]);
+                const spot = this.question.spots.filter(spot => spot.spotNr === +solutionText[0])[0];
                 this.question.correctMappings.push(new ShortAnswerMapping(spot, solution));
                 break;
             }
             default: {
                 const spotsID = solutionText[0].split(',');
                 for (const spotID of spotsID) {
-                    const spot = this.spotsWithID.get(spotID[0]);
+                    const spot = this.question.spots.filter(spot => spot.spotNr === +spotID[0])[0];
                     this.question.correctMappings.push(new ShortAnswerMapping(spot, solution));
                 }
                 break;

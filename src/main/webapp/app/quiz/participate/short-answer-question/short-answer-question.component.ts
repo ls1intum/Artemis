@@ -59,6 +59,7 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
     textAfterSpots: string[];
     sampleSolutions: ShortAnswerSolution[] =  [];
     isList = false;
+    solutionID = 1;
 
     constructor(
         private artemisMarkdown: ArtemisMarkdown,
@@ -98,10 +99,11 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
         this.submittedTexts = [];
         for (let id in this.textBeforeSpots) {
             let submittedText = new ShortAnswerSubmittedText();
-            submittedText.text = (<HTMLInputElement>document.getElementById('solution-' + id)).value;
+            submittedText.text = (<HTMLInputElement>document.getElementById('solution-' + (this.solutionID + +id))).value;
             submittedText.spot = this.question.spots[id];
             this.submittedTexts.push(submittedText);
         }
+        this.solutionID += this.textBeforeSpots.length;
         this.submittedTextsChange.emit(this.submittedTexts);
         /** Only execute the onMappingUpdate function if we received such input **/
         if (this.fnOnSubmittedTextUpdate) {

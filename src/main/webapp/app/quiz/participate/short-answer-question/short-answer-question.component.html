@@ -4,7 +4,7 @@
 
     <div *ngIf="!showResult && !clickDisabled">
         <span [ngClass]="{'saQuestion-list': isList}" *ngFor="let textPart of textBeforeSpots; let i = index">
-        {{textPart}} <input type="text" id="solution-{{i}}" (blur)="setSubmittedText()">
+        {{textPart}} <input type="text" id="solution-{{i + solutionID}}" (blur)="setSubmittedText()" >
         </span>
         <span>
             {{textAfterSpots}}
@@ -13,7 +13,8 @@
 
     <div *ngIf="!showResult && clickDisabled">
         <span [ngClass]="{'saQuestion-list': isList}" *ngFor="let textPart of textBeforeSpots; let i = index">
-            {{textPart}} <input disabled value="{{submittedTexts[i].text}}">
+            {{textPart}} <input *ngIf="submittedTexts[i] !== undefined" value="{{submittedTexts[i].text}}">
+            <input *ngIf="submittedTexts[i] === undefined" >
         </span>
         <span>
             {{textAfterSpots}}
@@ -22,8 +23,10 @@
     <div *ngIf="showResult && !showingSampleSolution">
         <span [ngClass]="{'saQuestion-list': isList}" *ngFor="let textPart of textBeforeSpots; let i = index">
             {{textPart}}
-            <input *ngIf="submittedTexts[i].isCorrect" style="background: lightgreen" disabled value="{{submittedTexts[i].text}}" size="{{submittedTexts[i].text.length+1}}">
-            <input *ngIf="!submittedTexts[i].isCorrect" style="background: red" disabled value="{{submittedTexts[i].text}}" size="{{submittedTexts[i].text.length+1}}">
+            <input *ngIf="submittedTexts[i] !== undefined && submittedTexts[i].isCorrect" style="background: lightgreen" disabled value="{{submittedTexts[i].text}}" size="{{submittedTexts[i].text.length+1}}">
+            <input *ngIf="submittedTexts[i] !== undefined && !submittedTexts[i].isCorrect" style="background: red" disabled value="{{submittedTexts[i].text}}" size="{{submittedTexts[i].text.length+1}}">
+
+            <input *ngIf="submittedTexts[i] === undefined" style="background: red" disabled >
         </span>
         <span>
             {{textAfterSpots}}

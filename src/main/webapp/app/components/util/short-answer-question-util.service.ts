@@ -357,6 +357,9 @@ export class ShortAnswerQuestionUtil {
      * @return {boolean}
      */
     hasMappingDuplicateValues(mappings: ShortAnswerMapping[]): boolean {
+        if (mappings.filter(mapping => mapping.spot === undefined).length > 0) {
+            return false;
+        }
         let duplicateValues = 0;
         for (let i = 0; i < mappings.length - 1; i++) {
             for (let j = i + 1; j <  mappings.length; j++) {
