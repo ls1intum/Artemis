@@ -7,22 +7,43 @@ export class BoldCommand extends Command {
 
     execute(editor: any): void {
         let chosenText = editor.getSelectedText();
-        const textToAdd = `**${chosenText}**`;
-        editor.clearSelection();
-        editor.moveCursorTo(editor.getCursorPosition().row, Number.POSITIVE_INFINITY);
-        const search: SearchOptions = {
-            needle: chosenText,
-            preventScroll: true,
-            backwards: true,
-            start: null,
-            skipCurrent: false,
-            range: null,
-            preserveCase: false,
-            regExp: chosenText,
-            wholeWord: null,
-            caseSensitive: false,
-            wrap: false
-        };
-        editor.replace(textToAdd, search);
+        if(chosenText.includes('**')){
+            const textToAdd = chosenText;
+            editor.clearSelection();
+            editor.moveCursorTo(editor.getCursorPosition().row, Number.POSITIVE_INFINITY);
+            const search: SearchOptions = {
+                needle: chosenText,
+                preventScroll: true,
+                backwards: true,
+                start: null,
+                skipCurrent: false,
+                range: null,
+                preserveCase: false,
+                regExp: chosenText,
+                wholeWord: null,
+                caseSensitive: false,
+                wrap: false
+            };
+            editor.replace(textToAdd, search);
+
+        } else {
+            const textToAdd = `**${chosenText}**`;
+            editor.clearSelection();
+            editor.moveCursorTo(editor.getCursorPosition().row, Number.POSITIVE_INFINITY);
+            const search: SearchOptions = {
+                needle: chosenText,
+                preventScroll: true,
+                backwards: true,
+                start: null,
+                skipCurrent: false,
+                range: null,
+                preserveCase: false,
+                regExp: chosenText,
+                wholeWord: null,
+                caseSensitive: false,
+                wrap: false
+            };
+            editor.replace(textToAdd, search);
+        }
     }
 }
