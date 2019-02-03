@@ -725,7 +725,6 @@ export class QuizComponent implements OnInit, OnDestroy {
                     } else if (question.type === QuestionType.DRAG_AND_DROP) {
                         this.shuffle((question as DragAndDropQuestion).dragItems);
                     } else if (question.type === QuestionType.SHORT_ANSWER) {
-                        this.shuffle((question as ShortAnswerQuestion).solutions);
                     } else {
                         console.log('Unknown question type: ' + question);
                     }
