@@ -117,12 +117,13 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
     showSampleSolution() {
         this.sampleSolutions = [];
         for (const spot of this.question.spots) {
+            let solutionsForSpot = this.shortAnswerQuestionUtil.getAllSolutionsForSpot(this.question.correctMappings, spot);
             for (const mapping of this.question.correctMappings) {
                 if (mapping.spot.id  === spot.id
                     &&
                     !(this.sampleSolutions.some(sampleSolution =>
                         sampleSolution.text  === mapping.solution.text
-                        && this.shortAnswerQuestionUtil.getAllSolutionsForSpot(this.question.correctMappings, spot).length > 1))) {
+                        && !this.allSolutionsAreInSampleSolution(solutionsForSpot) ))){
 
                     this.sampleSolutions.push(mapping.solution);
                     break;
@@ -130,6 +131,19 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
             }
         }
         this.showingSampleSolution = true;
+    }
+
+    allSolutionsAreInSampleSolution(solutionsForSpot: ShortAnswerSolution[]): boolean {
+        let i = 0;
+        for (const solutionForSpot of solutionsForSpot) {
+            for (const sampleSolution of this.sampleSolutions) {
+                if (solutionForSpot.text === sampleSolution.text) {
+                    i++;
+                    break;
+                }
+            }
+        }
+        return i === solutionsForSpot.length;
     }
 
     /**
