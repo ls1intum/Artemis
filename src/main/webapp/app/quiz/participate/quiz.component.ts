@@ -12,13 +12,17 @@ import { Participation, ParticipationService } from '../../entities/participatio
 import { Result } from '../../entities/result';
 import { DragAndDropQuestion } from '../../entities/drag-and-drop-question';
 import { MultipleChoiceQuestion } from '../../entities/multiple-choice-question';
+import { ShortAnswerQuestion } from '../../entities/short-answer-question';
 import { MultipleChoiceSubmittedAnswer } from '../../entities/multiple-choice-submitted-answer';
 import { DragAndDropSubmittedAnswer } from '../../entities/drag-and-drop-submitted-answer';
+import { ShortAnswerSubmittedAnswer } from '../../entities/short-answer-submitted-answer';
 import { QuestionType } from '../../entities/question';
 import { MultipleChoiceQuestionComponent } from 'app/quiz/participate/multiple-choice-question/multiple-choice-question.component';
 import { DragAndDropQuestionComponent } from 'app/quiz/participate/drag-and-drop-question/drag-and-drop-question.component';
+import { ShortAnswerQuestionComponent } from 'app/quiz/participate/short-answer-question/short-answer-question.component';
 import { DragAndDropMapping } from 'app/entities/drag-and-drop-mapping';
 import { AnswerOption } from 'app/entities/answer-option';
+import { ShortAnswerSubmittedText } from 'app/entities/short-answer-submitted-text';
 
 @Component({
     selector: 'jhi-quiz',
@@ -29,12 +33,16 @@ export class QuizComponent implements OnInit, OnDestroy {
     // make constants available to html for comparison
     readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
+    readonly SHORT_ANSWER = QuestionType.SHORT_ANSWER;
 
     @ViewChildren(MultipleChoiceQuestionComponent)
     mcQuestionComponents: QueryList<MultipleChoiceQuestionComponent>;
 
     @ViewChildren(DragAndDropQuestionComponent)
     dndQuestionComponents: QueryList<DragAndDropQuestionComponent>;
+
+    @ViewChildren(ShortAnswerQuestionComponent)
+    shortAnswerQuestionComponents: QueryList<ShortAnswerQuestionComponent>;
 
     private subscription: Subscription;
     private subscriptionData: Subscription;
@@ -66,6 +74,7 @@ export class QuizComponent implements OnInit, OnDestroy {
     totalScore: number;
     selectedAnswerOptions = new Map<number, AnswerOption[]>();
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
+    shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
     result: Result;
     questionScores = {};
     quizId: number;
@@ -394,6 +403,7 @@ export class QuizComponent implements OnInit, OnDestroy {
         // prepare selection arrays for each question
         this.selectedAnswerOptions = new Map<number, AnswerOption[]>();
         this.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
+        this.shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
         if (this.quizExercise.questions) {
             this.quizExercise.questions.forEach(question => {
@@ -403,6 +413,9 @@ export class QuizComponent implements OnInit, OnDestroy {
                 } else if (question.type === QuestionType.DRAG_AND_DROP) {
                     // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     this.dragAndDropMappings[question.id] = [];
+                } else if (question.type === QuestionType.SHORT_ANSWER) {
+                    // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                    this.shortAnswerSubmittedTexts[question.id] = [];
                 } else {
                     console.error('Unknown question type: ' + question);
                 }
@@ -421,22 +434,31 @@ export class QuizComponent implements OnInit, OnDestroy {
         // for the submittedAnswers to hand the selected options / mappings in individual arrays to the question components
         this.selectedAnswerOptions = new Map<number, AnswerOption[]>();
         this.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
+        this.shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
         if (this.quizExercise.questions) {
             // iterate through all questions of this quiz
             this.quizExercise.questions.forEach(question => {
                 // find the submitted answer that belongs to this question, only when submitted answers already exist
-                const submittedAnswer = this.submission.submittedAnswers ? this.submission.submittedAnswers.find(answer => {
-                    return answer.question.id === question.id;
-                }) : null;
+                const submittedAnswer = this.submission.submittedAnswers
+                    ? this.submission.submittedAnswers.find(answer => {
+                          return answer.question.id === question.id;
+                      })
+                    : null;
 
                 if (question.type === QuestionType.MULTIPLE_CHOICE) {
                     // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     this.selectedAnswerOptions[question.id] = submittedAnswer
-                        ? (submittedAnswer as MultipleChoiceSubmittedAnswer).selectedOptions : [];
+                        ? (submittedAnswer as MultipleChoiceSubmittedAnswer).selectedOptions
+                        : [];
                 } else if (question.type === QuestionType.DRAG_AND_DROP) {
                     // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     this.dragAndDropMappings[question.id] = submittedAnswer ? (submittedAnswer as DragAndDropSubmittedAnswer).mappings : [];
+                } else if (question.type === QuestionType.SHORT_ANSWER) {
+                    // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                    this.shortAnswerSubmittedTexts[question.id] = submittedAnswer
+                        ? (submittedAnswer as ShortAnswerSubmittedAnswer).submittedTexts
+                        : [];
                 } else {
                     console.error('Unknown question type: ' + question);
                 }
@@ -489,6 +511,22 @@ export class QuizComponent implements OnInit, OnDestroy {
             dndSubmittedAnswer.question = question;
             dndSubmittedAnswer.mappings = this.dragAndDropMappings[questionID];
             this.submission.submittedAnswers.push(dndSubmittedAnswer);
+        }, this);
+        // for short-answer questions
+        Object.keys(this.shortAnswerSubmittedTexts).forEach(questionID => {
+            // find the question object for the given question id
+            const question = this.quizExercise.questions.find(function(localQuestion) {
+                return localQuestion.id === Number(questionID);
+            });
+            if (!question) {
+                console.error('question not found for ID: ' + questionID);
+                return;
+            }
+            // generate the submittedAnswer object
+            const shortAnswerSubmittedAnswer = new ShortAnswerSubmittedAnswer();
+            shortAnswerSubmittedAnswer.question = question;
+            shortAnswerSubmittedAnswer.submittedTexts = this.shortAnswerSubmittedTexts[questionID];
+            this.submission.submittedAnswers.push(shortAnswerSubmittedAnswer);
         }, this);
     }
 
@@ -619,6 +657,10 @@ export class QuizComponent implements OnInit, OnDestroy {
                     const dndFullQuestionFromServer = fullQuestionFromServer as DragAndDropQuestion;
 
                     dndClientQuestion.correctMappings = dndFullQuestionFromServer.correctMappings;
+                } else if (clientQuestion.type === QuestionType.SHORT_ANSWER) {
+                    const shortAnswerClientQuestion = clientQuestion as ShortAnswerQuestion;
+                    const shortAnswerFullQuestionFromServer = fullQuestionFromServer as ShortAnswerQuestion;
+                    shortAnswerClientQuestion.correctMappings = shortAnswerFullQuestionFromServer.correctMappings;
                 } else {
                     console.log('Unknown question type ' + clientQuestion);
                 }
@@ -631,6 +673,9 @@ export class QuizComponent implements OnInit, OnDestroy {
         });
         this.dndQuestionComponents.forEach(function(dndQuestionComponent) {
             dndQuestionComponent.watchCollection();
+        });
+        this.shortAnswerQuestionComponents.forEach(function(shortAnswerQuestionComponent) {
+            shortAnswerQuestionComponent.watchCollection();
         });
     }
 
@@ -679,6 +724,7 @@ export class QuizComponent implements OnInit, OnDestroy {
                         this.shuffle((question as MultipleChoiceQuestion).answerOptions);
                     } else if (question.type === QuestionType.DRAG_AND_DROP) {
                         this.shuffle((question as DragAndDropQuestion).dragItems);
+                    } else if (question.type === QuestionType.SHORT_ANSWER) {
                     } else {
                         console.log('Unknown question type: ' + question);
                     }

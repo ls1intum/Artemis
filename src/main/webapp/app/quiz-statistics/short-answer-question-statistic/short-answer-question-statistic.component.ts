@@ -4,16 +4,17 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { JhiWebsocketService, AccountService } from '../../core';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizStatisticUtil } from '../../components/util/quiz-statistic-util.service';
-import { DragAndDropQuestionUtil } from '../../components/util/drag-and-drop-question-util.service';
+import { ShortAnswerQuestionUtil } from '../../components/util/short-answer-question-util.service';
 import { ArtemisMarkdown } from '../../components/util/markdown.service';
 import { HttpClient } from '@angular/common/http';
-import { DragAndDropQuestion } from '../../entities/drag-and-drop-question';
-import { DragAndDropQuestionStatistic } from '../../entities/drag-and-drop-question-statistic';
+import { ShortAnswerQuestion } from '../../entities/short-answer-question';
+import { ShortAnswerQuestionStatistic } from '../../entities/short-answer-question-statistic';
 import { QuestionType } from '../../entities/question';
-import { DropLocation } from '../../entities/drop-location';
+import { ShortAnswerSpot } from '../../entities/short-answer-spot';
 import { ChartOptions } from 'chart.js';
 import { createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
 import { Subscription } from 'rxjs/Subscription';
+import {ShortAnswerSolution} from 'app/entities/short-answer-solution';
 
 interface BackgroundColorConfig {
     backgroundColor: string;
@@ -23,19 +24,19 @@ interface BackgroundColorConfig {
 }
 
 @Component({
-    selector: 'jhi-drag-and-drop-question-statistic',
-    templateUrl: './drag-and-drop-question-statistic.component.html',
-    providers: [QuizStatisticUtil, DragAndDropQuestionUtil, ArtemisMarkdown]
+    selector: 'jhi-short-answer-question-statistic',
+    templateUrl: './short-answer-question-statistic.component.html',
+    providers: [QuizStatisticUtil, ShortAnswerQuestionUtil, ArtemisMarkdown]
 })
-export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
+export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
     // make constants available to html for comparison
     readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
     readonly SHORT_ANSWER = QuestionType.SHORT_ANSWER;
 
     quizExercise: QuizExercise;
-    question: DragAndDropQuestion;
-    questionStatistic: DragAndDropQuestionStatistic;
+    question: ShortAnswerQuestion;
+    questionStatistic: ShortAnswerQuestionStatistic;
     questionIdParam: number;
     private sub: Subscription;
 
@@ -64,6 +65,14 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
     // options for chart in chart.js style
     options: ChartOptions;
 
+    questionText: string;
+    textWithoutSpots: string[];
+    textBeforeSpots: string[];
+    textAfterSpots: string[];
+    lettersForSolutions: number[] = [];
+
+    sampleSolutions: ShortAnswerSolution[] =  [];
+
     constructor(
         private route: ActivatedRoute,
         private router: Router,
@@ -72,7 +81,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
         private quizExerciseService: QuizExerciseService,
         private jhiWebsocketService: JhiWebsocketService,
         private quizStatisticUtil: QuizStatisticUtil,
-        private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
+        private shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
         private artemisMarkdown: ArtemisMarkdown,
     ) {
         this.options = createOptions(this);
@@ -138,36 +147,79 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
         // search selected question in quizExercise based on questionId
         this.quizExercise = quiz;
         const updatedQuestion = this.quizExercise.questions.filter(question => this.questionIdParam === question.id)[0];
-        this.question = updatedQuestion as DragAndDropQuestion;
+        this.question = updatedQuestion as ShortAnswerQuestion;
         // if the Anyone finds a way to the Website,
         // with an wrong combination of QuizId and QuestionId
         //      -> go back to Courses
         if (this.question === null) {
             this.router.navigateByUrl('courses');
         }
-        this.questionStatistic = this.question.questionStatistic as DragAndDropQuestionStatistic;
+        this.questionStatistic = this.question.questionStatistic as ShortAnswerQuestionStatistic;
 
         // load Layout only at the opening (not if the websocket refreshed the data)
         if (!refresh) {
             this.questionTextRendered = this.artemisMarkdown.htmlForMarkdown(this.question.text);
+            this.generateSaStructure();
+            this.generateLettersForSolutions();
+
             this.loadLayout();
         }
         this.loadData();
+
+        this.calculateSampleSolution();
+    }
+
+    calculateSampleSolution() {
+        for (const spot of this.question.spots) {
+            for (const mapping of this.question.correctMappings) {
+                if (mapping.spot.id  === spot.id
+                    &&
+                    !(this.sampleSolutions.some(sampleSolution =>
+                        sampleSolution.text  === mapping.solution.text
+                        && this.shortAnswerQuestionUtil.getAllSolutionsForSpot(this.question.correctMappings, spot).length > 1))) {
+
+                    this.sampleSolutions.push(mapping.solution);
+                    break;
+                }
+            }
+        }
+    }
+
+    generateSaStructure() {
+        // is either '' or the question in the first line
+        this.questionText = this.shortAnswerQuestionUtil.firstLineOfQuestion(this.question.text);
+        this.textWithoutSpots = this.shortAnswerQuestionUtil.getTextWithoutSpots(this.question.text);
+
+        // separates the text into parts that come before the spot tag
+        this.textBeforeSpots = this.textWithoutSpots.slice(0, this.textWithoutSpots.length - 1);
+
+        // the last part that comes after the last spot tag
+        this.textAfterSpots = this.textWithoutSpots.slice(this.textWithoutSpots.length - 1);
+    }
+
+    generateLettersForSolutions() {
+        for (const mapping of this.question.correctMappings) {
+            for (const i in this.question.spots) {
+                if (mapping.spot.id === this.question.spots[i].id) {
+                    this.lettersForSolutions.push(+i);
+                    break;
+                }
+            }
+        }
     }
 
     /**
      * build the Chart-Layout based on the the Json-entity (questionStatistic)
      */
     loadLayout() {
-        this.orderDropLocationByPos();
 
         // reset old data
         this.label = [];
         this.backgroundColor = [];
         this.backgroundSolutionColor = [];
 
-        // set label and backgroundcolor based on the dropLocations
-        this.question.dropLocations.forEach((dropLocation, i) => {
+        // set label and backgroundcolor based on the spots
+        this.question.spots.forEach((spot, i) => {
             this.label.push(String.fromCharCode(65 + i) + '.');
             this.backgroundColor.push({
                 backgroundColor: '#428bca',
@@ -198,7 +250,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
             pointBackgroundColor: '#5bc0de',
             pointBorderColor: '#5bc0de'
         });
-        this.backgroundSolutionColor[this.question.dropLocations.length] = {
+        this.backgroundSolutionColor[this.question.spots.length] = {
             backgroundColor: '#5bc0de',
             borderColor: '#5bc0de',
             pointBackgroundColor: '#5bc0de',
@@ -207,19 +259,19 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
 
         // add Text for last label based on the language
         this.translateService.get('showStatistic.quizStatistic.yAxes').subscribe(lastLabel => {
-            this.label[this.question.dropLocations.length] = lastLabel.split(' ');
+            this.label[this.question.spots.length] = lastLabel.split(' ');
             this.labels = this.label;
         });
     }
 
     /**
-     * change label and Color if a dropLocation is invalid
+     * change label and Color if a spot is invalid
      */
     loadInvalidLayout() {
         // set Background for invalid answers = grey
         this.translateService.get('showStatistic.invalid').subscribe(invalidLabel => {
-            this.question.dropLocations.forEach((dropLocation, i) => {
-                if (dropLocation.invalid) {
+            this.question.spots.forEach((spot, i) => {
+                if (spot.invalid) {
                     this.backgroundColor[i] = {
                         backgroundColor: '#838383',
                         borderColor: '#838383',
@@ -247,13 +299,13 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
         this.ratedData = [];
         this.unratedData = [];
 
-        // set data based on the dropLocations for each dropLocation
-        this.question.dropLocations.forEach(dropLocation => {
-            const dropLocationCounter = this.questionStatistic.dropLocationCounters.find(dlCounter => {
-                return dropLocation.id === dlCounter.dropLocation.id;
+        // set data based on the spots for each spot
+        this.question.spots.forEach(spot => {
+            const spotCounter = this.questionStatistic.shortAnswerSpotCounters.find(sCounter => {
+                return spot.id === sCounter.spot.id;
             });
-            this.ratedData.push(dropLocationCounter.ratedCounter);
-            this.unratedData.push(dropLocationCounter.unRatedCounter);
+            this.ratedData.push(spotCounter.ratedCounter);
+            this.unratedData.push(spotCounter.unRatedCounter);
         });
         // add data for the last bar (correct Solutions)
         this.ratedCorrectData = this.questionStatistic.ratedCorrectCounter;
@@ -336,37 +388,18 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
     }
 
     /**
-     * order DropLocations by Position
-     */
-    orderDropLocationByPos() {
-        let change = true;
-        while (change) {
-            change = false;
-            for (let i = 0; i < this.question.dropLocations.length - 1; i++) {
-                if (this.question.dropLocations[i].posX > this.question.dropLocations[i + 1].posX) {
-                    // switch DropLocations
-                    const temp = this.question.dropLocations[i];
-                    this.question.dropLocations[i] = this.question.dropLocations[i + 1];
-                    this.question.dropLocations[i + 1] = temp;
-                    change = true;
-                }
-            }
-        }
-    }
-
-    /**
-     * Get the drag item that was mapped to the given drop location in the sample solution
+     * Get the solution that was mapped to the given spot in the sample solution
      *
-     * @param dropLocation {object} the drop location that the drag item should be mapped to
-     * @return {object | null} the mapped drag item,
-     *                          or null if no drag item has been mapped to this location
+     * @param spot {object} the spot that the solution should be mapped to
+     * @return {object | null} the mapped solution,
+     *                          or null if no solution has been mapped to this location
      */
-    correctDragItemForDropLocation(dropLocation: DropLocation) {
-        const currMapping = this.dragAndDropQuestionUtil
-            .solve(this.question, null)
-            .filter(mapping => mapping.dropLocation.id === dropLocation.id)[0];
+    correctSolutionForSpot(spot: ShortAnswerSpot) {
+        const currMapping = this.shortAnswerQuestionUtil
+            .solveShortAnswer(this.question, null)
+            .filter(mapping => mapping.spot.id === spot.id)[0];
         if (currMapping) {
-            return currMapping.dragItem;
+            return currMapping.solution;
         } else {
             return null;
         }
