@@ -4,7 +4,6 @@ import SearchOptions = Ace.SearchOptions;
 
 export class ItalicCommand extends Command {
     buttonTitle = 'Italic';
-    buttonIcon = 'fa fa-italic';
 
     execute(editor: any): void {
         let chosenText = editor.getSelectedText();

@@ -8,7 +8,7 @@ import { ItalicCommand } from 'app/markdown-editor/commands/italic.command';
 import { UnderlineCommand } from 'app/markdown-editor/commands/underline.command';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { HintCommand } from 'app/markdown-editor/specialcommands/hint.command';
-import { CorrectoptionCommand } from 'app/markdown-editor/specialcommands/correctoption.command';
+import { CorrectOptionCommand } from 'app/markdown-editor/specialcommands/correctOptionCommand';
 import { IncorrectoptionCommand } from 'app/markdown-editor/specialcommands/incorrectoption.command';
 import { ExplanationCommand } from 'app/markdown-editor/specialcommands/explanation.command';
 
@@ -30,9 +30,12 @@ export class MarkdownEditorComponent implements AfterViewInit {
     questionEditorAutoUpdate = true;
 
     hintCommand = new HintCommand();
-    correctCommand = new CorrectoptionCommand();
+    correctCommand = new CorrectOptionCommand();
     incorrectCommand = new IncorrectoptionCommand();
     explanationCommand = new ExplanationCommand();
+    boldCommand = new BoldCommand();
+    italicCommand = new ItalicCommand();
+    underlineCommand = new UnderlineCommand();
 
     commands: Command[] = [new BoldCommand(), new ItalicCommand(), new UnderlineCommand()];
 

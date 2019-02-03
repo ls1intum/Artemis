@@ -1,25 +1,33 @@
 <div>
     <div class="tool-bar">
-        <div class="btn-group">
-            <ng-container *ngFor="let command of commands">
-                <button class="btn btn-sm btn-default" type="button" [title]="command.buttonTitle"
-                        (click)="command.execute(aceEditorContainer.getEditor())">
-                    <i [ngClass]="command.buttonIcon"></i>
-                </button>
-            </ng-container>
+                <div class="btn btn-group-sm btn-outline-secondary"
+                     (click)="boldCommand.execute(aceEditorContainer.getEditor())">
+                     {{'arTeMiSApp.multipleChoiceQuestion.editor.bold' | translate}}
+                </div>
                 <div class="btn btn-outline-secondary"
-                     jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addCorrectAnswerOption"
-                     (click)="correctCommand.execute(aceEditorContainer.getEditor())"></div>
+                    (click)="italicCommand.execute(aceEditorContainer.getEditor())">
+                    {{'arTeMiSApp.multipleChoiceQuestion.editor.italic' | translate}}
+                </div>
                 <div class="btn btn-outline-secondary"
-                     jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addIncorrectAnswerOption"
-                     (click)="incorrectCommand.execute(aceEditorContainer.getEditor())"></div>
+                    (click)="underlineCommand.execute(aceEditorContainer.getEditor())">
+                    {{'arTeMiSApp.multipleChoiceQuestion.editor.underline' | translate}}
+                </div>
                 <div class="btn btn-outline-secondary"
-                     jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addHint"
-                     (click)="hintCommand.execute(aceEditorContainer.getEditor())"></div>
+                     (click)="correctCommand.execute(aceEditorContainer.getEditor())">
+                    {{'arTeMiSApp.multipleChoiceQuestion.editor.addCorrectAnswerOption' | translate}}
+                </div>
                 <div class="btn btn-outline-secondary"
-                     jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addExplanation"
-                     (click)="explanationCommand.execute(aceEditorContainer.getEditor())"></div>
-        </div>
+                     (click)="incorrectCommand.execute(aceEditorContainer.getEditor())">
+                    {{'arTeMiSApp.multipleChoiceQuestion.editor.addIncorrectAnswerOption' | translate}}
+                </div>
+                <div class="btn btn-outline-secondary"
+                     (click)="hintCommand.execute(aceEditorContainer.getEditor())">
+                    {{'arTeMiSApp.multipleChoiceQuestion.editor.addHint' | translate}}
+                </div>
+                <div class="btn btn-outline-secondary"
+                     (click)="explanationCommand.execute(aceEditorContainer.getEditor())">
+                    {{'arTeMiSApp.multipleChoiceQuestion.editor.addExplanation' | translate}}
+                </div>
     </div>
     <ace-editor #aceEditor [mode]="'markdown'" [autoUpdateContent]="questionEditorAutoUpdate" [(text)]="defaultText"
                 style="min-height: 200px; width:100%; overflow: auto;" class="form-control"></ace-editor>

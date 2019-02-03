@@ -4,7 +4,6 @@ import SearchOptions = Ace.SearchOptions;
 
 export class BoldCommand extends Command {
     buttonTitle = 'Bold';
-    buttonIcon = 'fa fa-bold';
 
     execute(editor: any): void {
         let chosenText = editor.getSelectedText();

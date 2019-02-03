@@ -1,6 +1,6 @@
 import { Specialcommand } from 'app/markdown-editor/specialcommands/specialcommand';
 
-export class CorrectoptionCommand extends Specialcommand {
+export class CorrectOptionCommand extends Specialcommand {
     buttonTitle = 'Correct Option';
 
     /**

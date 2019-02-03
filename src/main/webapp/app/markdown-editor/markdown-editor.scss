@@ -29,10 +29,13 @@
 .md-editor-container .tool-bar {
     background-color: whitesmoke;
     border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    overflow: auto;
+    max-width: 300px;
 }
 
 .md-editor-container .tool-bar .btn-group {
     padding: 6px;
+    overflow: auto
 }
 
 .md-editor-container .tool-bar .btn-group > .btn:first-child::before {

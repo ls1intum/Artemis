@@ -23,7 +23,10 @@
                 "addCorrectAnswerOption": "[X] Correct Option",
                 "addIncorrectAnswerOption": "[ ] Incorrect Option",
                 "addHint": "[-h] Hint",
-                "addExplanation": "[-e] Explanation"
+                "addExplanation": "[-e] Explanation",
+                "bold": "Bold",
+                "italic": "Italic",
+                "underline": "Underline"
             }
         }
     }

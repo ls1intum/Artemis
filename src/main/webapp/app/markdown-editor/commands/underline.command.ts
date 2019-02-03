@@ -4,7 +4,7 @@ import SearchOptions = Ace.SearchOptions;
 
 export class UnderlineCommand extends Command {
     buttonTitle = 'Underline';
-    buttonIcon = 'fa fa-underline';
+
 
     execute(editor: any): void {
         let chosenText = editor.getSelectedText();
