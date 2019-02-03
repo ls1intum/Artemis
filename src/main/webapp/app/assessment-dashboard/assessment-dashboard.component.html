@@ -1,7 +1,7 @@
 <div *ngIf="exercise">
     <h4>Assessment dashboard for exercise "{{exercise.title}}"</h4>
     <div>
-        <div class="button-toolbar pull-right">
+        <div class="button-toolbar float-right">
             <button [disabled]="busy || (optimalSubmissions && optimalSubmissions.length === 0 && assessedSubmissions === submissions.length)" class="btn btn-success btn-sm mr-1" (click)="assessNextOptimal(0)">
                 <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;Assess next submission
             </button>
