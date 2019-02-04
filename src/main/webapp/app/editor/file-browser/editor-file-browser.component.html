@@ -20,6 +20,7 @@
     </div>
 
     <div class="card-footer text-nowrap">
+        <fa-icon [icon]="getSaveStatusIcon().icon" [spin]="getSaveStatusIcon().spin" [ngClass]="getSaveStatusIcon().class"></fa-icon>
         <span [innerHtml]="getSaveStatusLabel() | safeHtml"></span>
         <hr/>
         <span *ngIf="isExerciseCommitted()">

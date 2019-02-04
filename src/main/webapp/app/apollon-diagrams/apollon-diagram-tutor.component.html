@@ -57,8 +57,8 @@
                             <div *ngFor="let assessment of assessments"
                                  [style.top.px]="positions[assessment.id].y"
                                  [style.left.px]="positions[assessment.id].x">
-                                <fa-icon [icon]="{'check': assessment.credits > 0, 'times': assessment.credits < 0}" *ngFor="let i of numberToArray(assessment.credits, 0)"></fa-icon>
-                                <fa-icon class="half" [icon]="{'check': assessment.credits > 0, 'times': assessment.credits < 0}" *ngIf="assessment.credits % 1 !== 0"></fa-icon>
+                                <fa-icon [icon]="assessment.credits > 0 ? 'check' : assessment.credits < 0 ? 'times': ''" *ngFor="let i of numberToArray(assessment.credits, 0)"></fa-icon>
+                                <fa-icon class="half" [icon]="assessment.credits > 0 ? 'check' : assessment.credits < 0 ? 'times': ''" *ngIf="assessment.credits % 1 !== 0"></fa-icon>
                             </div>
                         </ng-container>
                     </div>

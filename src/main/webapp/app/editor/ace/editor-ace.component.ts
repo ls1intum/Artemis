@@ -101,15 +101,23 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
         if (unsavedFiles > 0) {
             this.onSaveStatusChange({
                 isSaved: false,
+                saveStatusIcon: {
+                  spin: true,
+                  icon: 'circle-notch',
+                  class: 'text-info'
+                },
                 saveStatusLabel:
-                    '<fa-icon icon="circle-notch" [spin]="true" class="text-info"></fa-icon> <span class="text-info">Unsaved changes in ' +
-                    unsavedFiles +
-                    ' files.</span>'
+                    `<span class="text-info">Unsaved changes in ${unsavedFiles} files.</span>`
             });
         } else {
             this.onSaveStatusChange({
                 isSaved: true,
-                saveStatusLabel: '<fa-icon icon="check-circle" class="text-success"></fa-icon> <span class="text-success"> All changes saved.</span>'
+                saveStatusIcon: {
+                    spin: false,
+                    icon: 'check-circle',
+                    class: 'text-success'
+                },
+                saveStatusLabel: '<span class="text-success"> All changes saved.</span>'
             });
         }
     }
@@ -157,7 +165,12 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
         setTimeout(() => {
             this.onSaveStatusChange({
                 isSaved: false,
-                saveStatusLabel: ' <fa-icon icon="circle-notch" [spin]="true" class="text-info"></fa-icon><span class="text-info"> Saving file.</span>'
+                saveStatusIcon: {
+                    spin: true,
+                    icon: 'circle-notch',
+                    class: 'text-info'
+                },
+                saveStatusLabel: '<span class="text-info">Saving file.</span>'
             });
 
             this.repositoryFileService
@@ -173,8 +186,12 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
                         if (this.onSaveStatusChange) {
                             this.onSaveStatusChange({
                                 isSaved: false,
-                                saveStatusLabel:
-                                    '<fa-icon icon="times-circle" class="text-danger"></fa-icon> <span class="text-danger"> Failed to save file.</span>'
+                                saveStatusIcon: {
+                                    spin: false,
+                                    icon: 'times-circle',
+                                    class: 'text-danger'
+                                },
+                                saveStatusLabel: '<span class="text-danger"> Failed to save file.</span>'
                             });
                         }
                         console.log('There was an error while saving file', this.fileName, err);
