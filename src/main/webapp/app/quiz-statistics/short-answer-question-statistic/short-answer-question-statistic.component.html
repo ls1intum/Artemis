@@ -26,7 +26,7 @@
                         <div class="short-answer-question-display" *ngFor="let textPart of textBeforeSpots;let i = index">
                             {{textPart}}
                             <div style="position: relative; display: inline-flex">
-                                <input style="background: lightgreen" class="short-answer-question-input" disabled value="{{sampleSolutions[i].text}}" size="{{sampleSolutions[i].text.length + 5}}">
+                                <input style="background: lightgreen" class="short-answer-question-input" disabled value="{{sampleSolutions[i].text}}">
                                 <div class="saQuestion-statistic-letter-solution">
                                     <span>{{getLetter(i) + "."}}</span>
                                 </div>
