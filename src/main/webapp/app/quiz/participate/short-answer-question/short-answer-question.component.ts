@@ -113,35 +113,8 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
      * Display a sample solution instead of the student's answer
      */
     showSampleSolution() {
-        this.sampleSolutions = [];
-        for (const spot of this.question.spots) {
-            const solutionsForSpot = this.shortAnswerQuestionUtil.getAllSolutionsForSpot(this.question.correctMappings, spot);
-            for (const mapping of this.question.correctMappings) {
-                if (mapping.spot.id  === spot.id
-                    &&
-                    !(this.sampleSolutions.some(sampleSolution =>
-                        sampleSolution.text  === mapping.solution.text
-                        && !this.allSolutionsAreInSampleSolution(solutionsForSpot) ))) {
-
-                    this.sampleSolutions.push(mapping.solution);
-                    break;
-                }
-            }
-        }
+        this.sampleSolutions = this.shortAnswerQuestionUtil.getSampleSolution(this.question);
         this.showingSampleSolution = true;
-    }
-
-    allSolutionsAreInSampleSolution(solutionsForSpot: ShortAnswerSolution[]): boolean {
-        let i = 0;
-        for (const solutionForSpot of solutionsForSpot) {
-            for (const sampleSolution of this.sampleSolutions) {
-                if (solutionForSpot.text === sampleSolution.text) {
-                    i++;
-                    break;
-                }
-            }
-        }
-        return i === solutionsForSpot.length;
     }
 
     /**

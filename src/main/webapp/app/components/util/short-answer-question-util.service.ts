@@ -358,4 +358,39 @@ export class ShortAnswerQuestionUtil {
         }
         return  duplicateValues > 0;
     }
+
+    /**
+     * Display a sample solution instead of the student's answer
+     */
+    getSampleSolution(question: ShortAnswerQuestion): ShortAnswerSolution[] {
+        const sampleSolutions: ShortAnswerSolution[] = [];
+        for (const spot of question.spots) {
+            const solutionsForSpot = this.getAllSolutionsForSpot(question.correctMappings, spot);
+            for (const mapping of question.correctMappings) {
+                if (mapping.spot.id  === spot.id
+                    &&
+                    !(sampleSolutions.some(sampleSolution =>
+                        sampleSolution.text  === mapping.solution.text
+                        && !this.allSolutionsAreInSampleSolution(solutionsForSpot, sampleSolutions)))) {
+
+                    sampleSolutions.push(mapping.solution);
+                    break;
+                }
+            }
+        }
+        return sampleSolutions;
+    }
+
+    allSolutionsAreInSampleSolution(solutionsForSpot: ShortAnswerSolution[], sampleSolutions: ShortAnswerSolution[]): boolean {
+        let i = 0;
+        for (const solutionForSpot of solutionsForSpot) {
+            for (const sampleSolution of sampleSolutions) {
+                if (solutionForSpot.text === sampleSolution.text) {
+                    i++;
+                    break;
+                }
+            }
+        }
+        return i === solutionsForSpot.length;
+    }
 }
