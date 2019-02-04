@@ -28,7 +28,7 @@ export class BoldCommand extends Command {
                 range: range,
                 preserveCase: true,
                 regExp: chosenText,
-                wholeWord: chosenText,
+                wholeWord: null,
                 caseSensitive: true,
                 wrap: false
             };

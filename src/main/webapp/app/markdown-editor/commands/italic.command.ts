@@ -26,7 +26,7 @@ export class ItalicCommand extends Command {
             range: range,
             preserveCase: false,
             regExp: chosenText,
-            wholeWord: chosenText,
+            wholeWord: null,
             caseSensitive: false,
             wrap: false
         };
