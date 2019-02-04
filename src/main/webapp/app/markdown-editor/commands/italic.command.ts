@@ -13,6 +13,7 @@ export class ItalicCommand extends Command {
 
         if (chosenText.includes('*')) {
             textToAdd = chosenText.slice(1, -1);
+            editor.insert(textToAdd);
         } else textToAdd = `*${chosenText}*`;
 
         editor.clearSelection();
