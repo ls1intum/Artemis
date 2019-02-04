@@ -166,23 +166,7 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
         }
         this.loadData();
 
-        this.calculateSampleSolution();
-    }
-
-    calculateSampleSolution() {
-        for (const spot of this.question.spots) {
-            for (const mapping of this.question.correctMappings) {
-                if (mapping.spot.id  === spot.id
-                    &&
-                    !(this.sampleSolutions.some(sampleSolution =>
-                        sampleSolution.text  === mapping.solution.text
-                        && this.shortAnswerQuestionUtil.getAllSolutionsForSpot(this.question.correctMappings, spot).length > 1))) {
-
-                    this.sampleSolutions.push(mapping.solution);
-                    break;
-                }
-            }
-        }
+        this.sampleSolutions = this.shortAnswerQuestionUtil.getSampleSolution(this.question);
     }
 
     generateSaStructure() {
@@ -260,7 +244,10 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
         // add Text for last label based on the language
         this.translateService.get('showStatistic.quizStatistic.yAxes').subscribe(lastLabel => {
             this.label[this.question.spots.length] = lastLabel.split(' ');
-            this.labels = this.label;
+            this.labels.length = 0;
+            for (let i = 0; i < this.label.length; i++) {
+                this.labels.push(this.label[i]);
+            }
         });
     }
 
@@ -310,8 +297,10 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
         // add data for the last bar (correct Solutions)
         this.ratedCorrectData = this.questionStatistic.ratedCorrectCounter;
         this.unratedCorrectData = this.questionStatistic.unRatedCorrectCounter;
-
-        this.labels = this.label;
+        this.labels.length = 0;
+        for (let i = 0; i < this.label.length; i++) {
+            this.labels.push(this.label[i]);
+        }
 
         this.loadDataInDiagram();
     }
