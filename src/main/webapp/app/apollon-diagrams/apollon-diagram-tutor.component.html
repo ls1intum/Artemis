@@ -71,8 +71,8 @@
             <ng-container *ngIf="assessments">
                 <div *ngFor="let assessment of assessments" [hidden]="!isSelected(assessment.id, assessment.type)">
                     <div class="card">
-                        <div class="card-header">
-                            <h4 class="card-title" *ngIf="assessmentsNames">Score for <span>{{assessmentsNames[assessment.id]['type']}} </span> <code class="text-primary">{{assessmentsNames[assessment.id]['name']}}</code></h4>
+                        <div class="card-header" >
+                            <h4 class="card-title" [class.conflict]="conflict && this.conflict.elementIdsInConflict[assessment.id] !== undefined" *ngIf="assessmentsNames">Score for <span>{{assessmentsNames[assessment.id]['type']}} </span> <code class="text-primary">{{assessmentsNames[assessment.id]['name']}}</code></h4>
                         </div>
                         <div class="card-body">
                             <div class="form-group">

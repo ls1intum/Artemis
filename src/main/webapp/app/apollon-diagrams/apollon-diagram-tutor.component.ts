@@ -1,15 +1,18 @@
-import { Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
-import { JhiAlertService } from 'ng-jhipster';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import ApollonEditor, { ApollonOptions, Point, State } from '@ls1intum/apollon';
-import { ActivatedRoute, Router } from '@angular/router';
+import {Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, ViewChild} from '@angular/core';
+import {JhiAlertService} from 'ng-jhipster';
+import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
+import ApollonEditor, {ApollonOptions, Point, State} from '@ls1intum/apollon';
+import {ActivatedRoute, Router} from '@angular/router';
 import * as $ from 'jquery';
-import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
-import { DiagramType, ModelingExercise, ModelingExerciseService } from '../entities/modeling-exercise';
-import { Result, ResultService } from '../entities/result';
-import { ModelElementType, ModelingAssessment, ModelingAssessmentService } from '../entities/modeling-assessment';
-import { AccountService } from '../core';
-import { Submission } from '../entities/submission';
+import {ModelingSubmission, ModelingSubmissionService} from '../entities/modeling-submission';
+import {DiagramType, ModelingExercise, ModelingExerciseService} from '../entities/modeling-exercise';
+import {Result, ResultService} from '../entities/result';
+import {ModelElementType, ModelingAssessment, ModelingAssessmentService} from '../entities/modeling-assessment';
+import {AccountService} from '../core';
+import {Submission} from '../entities/submission';
+import {HttpErrorResponse} from '@angular/common/http';
+import {Conflict} from "app/entities/modeling-assessment/Conflict";
+import {isNullOrUndefined} from 'util';
 
 @Component({
     selector: 'jhi-apollon-diagram-tutor',
@@ -29,6 +32,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
     submission: ModelingSubmission;
     modelingExercise: ModelingExercise;
     result: Result;
+    conflict: Conflict;
     assessments: ModelingAssessment[];
     assessmentsNames: Map<string, Map<string, string>>;
     assessmentsAreValid: boolean;
@@ -153,7 +157,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         assessmentsDiv.scrollTop(apollonDiv.scrollTop());
         assessmentsDiv.scrollLeft(apollonDiv.scrollLeft());
 
-        apollonDiv.on('scroll', function() {
+        apollonDiv.on('scroll', function () {
             assessmentsDiv.scrollTop(apollonDiv.scrollTop());
             assessmentsDiv.scrollLeft(apollonDiv.scrollLeft());
         });
@@ -224,11 +228,16 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
 
     submit() {
         this.checkScoreBoundaries();
-        this.modelingAssessmentService.submit(this.assessments, this.modelingExercise.id, this.result.id).subscribe(res => {
-            res.body.participation.results = [res.body];
-            this.result = res.body;
+        this.modelingAssessmentService.submit(this.assessments, this.modelingExercise.id, this.result.id).subscribe((result: Result) => {
+            result.participation.results = [result];
+            this.result = result;
             this.jhiAlertService.success('arTeMiSApp.apollonDiagram.assessment.submitSuccessful');
             this.done = false;
+        }, (error: HttpErrorResponse) => {
+            if (error.status === 409) {
+                this.conflict = error.error;
+                this.jhiAlertService.error('Submission failed! Conflict with existing Assessments detected');
+            }
         });
     }
 

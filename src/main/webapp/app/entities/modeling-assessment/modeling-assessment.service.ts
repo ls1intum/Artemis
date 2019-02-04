@@ -32,10 +32,11 @@ export class ModelingAssessmentService {
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
-    submit(modelingAssessment: ModelingAssessment[], exerciseId: number, resultId: number): Observable<EntityResponseType> {
+    submit(modelingAssessment: ModelingAssessment[], exerciseId: number, resultId: number): Observable<any> {
         return this.http
-            .put<Result>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}/submit`, modelingAssessment, {observe: 'response'})
-            .map((res: EntityResponseType) => this.convertResponse(res));
+            .put<any>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}/submit`, modelingAssessment)
+
+            // .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
     find(participationId: number, submissionId: number): Observable<HttpResponse<ModelingAssessment[]>> {

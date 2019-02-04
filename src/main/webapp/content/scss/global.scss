@@ -269,7 +269,11 @@ ui bootstrap tweaks
 .card-header > .dropdown .dropdown-toggle {
     color: inherit;
 }
-
+.card-header{
+    .conflict{
+        color: red;
+    }
+}
 .card-title {
     margin-top: 0;
     margin-bottom: 0;
