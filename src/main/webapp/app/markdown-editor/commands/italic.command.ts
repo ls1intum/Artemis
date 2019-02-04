@@ -9,7 +9,7 @@ export class ItalicCommand extends Command {
         let chosenText = editor.getSelectedText();
         let textToAdd = '';
 
-        if (chosenText.includes('**')) {
+        if (chosenText.includes('*')) {
             textToAdd = chosenText.slice(1, -1);
         } else textToAdd = `*${chosenText}*`;
 

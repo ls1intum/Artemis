@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
+import { Component, AfterViewInit, ViewChild, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
@@ -18,7 +18,7 @@ import { ExplanationCommand } from 'app/markdown-editor/specialcommands/explanat
     providers: [ArtemisMarkdown],
     templateUrl: './markdown-editor.component.html'
 })
-export class MarkdownEditorComponent implements AfterViewInit {
+export class MarkdownEditorComponent implements AfterViewInit, OnChanges {
     @ViewChild('aceEditor')
     aceEditorContainer: AceEditorComponent;
 
@@ -43,6 +43,17 @@ export class MarkdownEditorComponent implements AfterViewInit {
         requestAnimationFrame(this.setupMarkdownEditor.bind(this));
     }
 
+    ngOnChanges(changes: SimpleChanges): void {
+        this.aceEditorContainer.getEditor().on(
+            'blur',
+            () => {
+                this.defaultTextChanged.emit(this.defaultText);
+            },
+            this
+        );
+    }
+
+
     /**
      * @function setupQuestionEditor
      * @desc Initializes the ace editor for the mc question
@@ -66,4 +77,5 @@ export class MarkdownEditorComponent implements AfterViewInit {
             this
         );
     }
+
 }

@@ -2,6 +2,7 @@ import { Command } from './command';
 import { Ace } from 'ace-builds';
 import SearchOptions = Ace.SearchOptions;
 
+
 export class BoldCommand extends Command {
     buttonTitle = 'Bold';
 
