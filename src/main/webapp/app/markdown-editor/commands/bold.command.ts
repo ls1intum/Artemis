@@ -1,6 +1,7 @@
 import { Command } from './command';
 import { Ace } from 'ace-builds';
 import SearchOptions = Ace.SearchOptions;
+import Range = Ace.Range
 
 
 export class BoldCommand extends Command {
@@ -25,10 +26,11 @@ export class BoldCommand extends Command {
                 range: null,
                 preserveCase: false,
                 regExp: chosenText,
-                wholeWord: null,
+                wholeWord: chosenText,
                 caseSensitive: false,
                 wrap: false
             };
+
             editor.replace(textToAdd, search);
     }
 }

@@ -26,7 +26,7 @@ export class UnderlineCommand extends Command {
             range: null,
             preserveCase: false,
             regExp: chosenText,
-            wholeWord: null,
+            wholeWord: chosenText,
             caseSensitive: false,
             wrap: false
         };
