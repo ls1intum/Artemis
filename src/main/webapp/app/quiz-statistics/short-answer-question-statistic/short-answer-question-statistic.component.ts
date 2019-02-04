@@ -166,23 +166,7 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
         }
         this.loadData();
 
-        this.calculateSampleSolution();
-    }
-
-    calculateSampleSolution() {
-        for (const spot of this.question.spots) {
-            for (const mapping of this.question.correctMappings) {
-                if (mapping.spot.id  === spot.id
-                    &&
-                    !(this.sampleSolutions.some(sampleSolution =>
-                        sampleSolution.text  === mapping.solution.text
-                        && this.shortAnswerQuestionUtil.getAllSolutionsForSpot(this.question.correctMappings, spot).length > 1))) {
-
-                    this.sampleSolutions.push(mapping.solution);
-                    break;
-                }
-            }
-        }
+        this.sampleSolutions = this.shortAnswerQuestionUtil.getSampleSolution(this.question);
     }
 
     generateSaStructure() {
