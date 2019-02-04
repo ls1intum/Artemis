@@ -1,26 +1,53 @@
-<div *ngIf="quizExercise">
-    <div class="row">
-        <div class="col-md-8 offset-md-2 text-center">
-            <h3>{{quizExercise.title}}</h3>
-            <div class="row">
-                <div class="col-md-4 text-left" *ngIf="question">
-                    <h3>{{question.title}} <span style="color:red;" *ngIf="question.invalid" jhiTranslate="showStatistic.invalid"></span></h3>
-                    <h4 [innerHTML]="questionTextRendered"></h4>
-                    <ol type=A *ngIf="question.answerOptions">
-                        <li *ngFor="let answer of question.answerOptions; let i = index">
-                            <span [innerHTML]="answerTextRendered[i]"></span>&nbsp;<span style="color:red;" *ngIf="answer.invalid" jhiTranslate="showStatistic.invalid"></span>
-                        </li>
-                    </ol>
+<div class="row" *ngIf="quizExercise">
+    <div class="col-md-8 offset-md-2 text-center">
+        <h3>{{quizExercise.title}}</h3>
+        <div class="row">
+            <div *ngIf="question" class="col">
+                <h3>{{question.title}} <span style="color:red;" *ngIf="question.invalid"
+                                             jhiTranslate="showStatistic.invalid"></span></h3>
 
+                <div *ngIf="!showSolution" style="display: inline-flex;">
+                    <div style="text-align: left">
+                        <div class="short-answer-question-display" *ngFor="let textPart of textBeforeSpots;let i = index">
+                            {{textPart}}
+                            <div style="position: relative; display: inline-flex">
+                                <input class="short-answer-question-input"  disabled>
+                                <div class="saQuestion-statistic-letter">
+                                    <span>{{getLetter(i) + "."}}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <span>{{textAfterSpots}}</span>
+                    </div>
                 </div>
-                <div class="col-md-8 text-center">
+
+                <div *ngIf="showSolution" style="display: inline-flex">
+                    <div style="text-align: left">
+                        <div class="short-answer-question-display" *ngFor="let textPart of textBeforeSpots;let i = index">
+                            {{textPart}}
+                            <div style="position: relative; display: inline-flex">
+                                <input style="background: lightgreen" class="short-answer-question-input" disabled value="{{sampleSolutions[i].text}}">
+                                <div class="saQuestion-statistic-letter-solution">
+                                    <span>{{getLetter(i) + "."}}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <span>{{textAfterSpots}}</span>
+                    </div>
+                </div>
+
+                <div>
                     <p>&nbsp;</p>
                     <div class="row">
                         <div class="col-md-8 text-left"><p id="text" style="font-size: large">
-                            <span *ngIf="rated" jhiTranslate="showStatistic.multipleChoiceQuestionStatistic.titleRated"></span>
-                            <span *ngIf="!rated" jhiTranslate="showStatistic.multipleChoiceQuestionStatistic.titleUnrated"></span></p></div>
+                        <span *ngIf="rated"
+                              jhiTranslate="showStatistic.multipleChoiceQuestionStatistic.titleRated"></span>
+                            <span *ngIf="!rated"
+                                  jhiTranslate="showStatistic.multipleChoiceQuestionStatistic.titleUnrated"></span></p>
+                        </div>
                         <div class="col-md-3 text-right">
-                            <p style="font-size: large"><span>{{participants}} </span><span jhiTranslate="showStatistic.participants"></span></p>
+                            <p style="font-size: large"><span>{{participants}} </span><span
+                                jhiTranslate="showStatistic.participants"></span></p>
                         </div>
                     </div>
                     <canvas baseChart
@@ -28,22 +55,24 @@
                     </canvas>
 
 
-                    <div class="col-md-12 text-center" >
+                    <div class="col-md-12 text-center">
                         <button (click)="switchSolution()" type="button" class="btn btn-primary">
-                            <fa-icon *ngIf="showSolution" icon="check-circle"></fa-icon>&nbsp;
-                            <fa-icon *ngIf="!showSolution" icon="times-circle"></fa-icon>&nbsp;
-                            <span *ngIf="showSolution" jhiTranslate="showStatistic.hideSolution"></span>
-                            <span *ngIf="!showSolution" jhiTranslate="showStatistic.showSolution"></span></button>
+                            <span *ngIf="showSolution" class="fa fa-check-circle"></span>&nbsp;
+                            <span *ngIf="!showSolution" class="fa fa-times-circle"></span>&nbsp;
+                            <span *ngIf="showSolution"
+                                  jhiTranslate="showStatistic.dragAndDropQuestionStatistic.hideSampleSolution"></span>
+                            <span *ngIf="!showSolution"
+                                  jhiTranslate="showStatistic.dragAndDropQuestionStatistic.showSampleSolution"></span>
+                        </button>
 
                         <button (click)="switchRated()" type="button" class="btn btn-primary">
-                            <fa-icon icon="sync"></fa-icon>&nbsp;
+                            <span class="fa fa-refresh"></span>&nbsp;
                             <span *ngIf="rated" jhiTranslate="showStatistic.switchToUnrated"></span>
-                            <span *ngIf="!rated" jhiTranslate="showStatistic.switchToRated"></span></button>
+                            <span *ngIf="!rated" jhiTranslate="showStatistic.switchToRated"></span>
+                        </button>
                     </div>
                     <p>&nbsp;</p>
                 </div>
-
-            </div>
         </div>
     </div>
     <div class="statistic-footer">
@@ -52,7 +81,7 @@
                 <div class="form-group">
                     <div class="d-inline-block" ngbDropdown placement="top-right">
                         <button class="btn btn-primary btn-sm" ngbDropdownToggle>
-                            <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
+                            <span class="fa fa-list-alt"></span>
                             <span class="hidden-xs hidden-sm" jhiTranslate="showStatistic.chooseStatistic"></span>
                             <span class="caret"></span>
                         </button>
@@ -97,4 +126,5 @@
             </div>
         </div>
     </div>
+</div>
 </div>
