@@ -174,7 +174,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
      */
     @PutMapping("/modeling-assessments/exercise/{exerciseId}/result/{resultId}/submit")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ConflictResultWrapper> submitModelingAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody List<ModelElementAssessment> modelingAssessment) {
+    public ResponseEntity<Object> submitModelingAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody List<ModelElementAssessment> modelingAssessment) {
         Optional<ModelingExercise> modelingExercise = modelingExerciseService.findOne(exerciseId);
         ResponseEntity responseFailure = checkExercise(modelingExercise);
         if (responseFailure != null) {
@@ -188,12 +188,11 @@ public class ModelingAssessmentResource extends AssessmentResource {
         Optional<Conflict> conflict = compassService.checkForConflict(exerciseId, submissionId, modelingAssessment);
         if (conflict.isPresent()) {
             modelingAssessmentService.saveManualAssessment(result.get(), modelingExercise.get().getId(), modelingAssessment);
-            return ResponseEntity.ok(new ConflictResultWrapper(conflict.get(), result.get()));
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(conflict.get());
         } else {
             modelingAssessmentService.submitManualAssessment(result.get(), modelingExercise.get(), modelingAssessment);
             compassService.addAssessment(exerciseId, submissionId, modelingAssessment);
-
-            return ResponseEntity.ok(new ConflictResultWrapper(null, result.get()));
+            return ResponseEntity.ok(result.get());
         }
     }
 
