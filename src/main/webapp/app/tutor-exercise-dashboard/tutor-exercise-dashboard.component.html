@@ -22,7 +22,7 @@
         </div>
     </div>
 
-    <div class="col-12 text-center" style="margin-bottom: 15px">
+    <div class="col-12 text-center" style="margin-bottom: 15px" *ngIf="exercise.gradingInstructions && exercise.gradingInstructions.length > 0; else noGradingInstruction">
         <div *ngIf="tutorParticipationStatus === NOT_PARTICIPATED" class="alert alert-warning" role="alert">
             You need to read the grading instructions before starting assessing
         </div>
@@ -31,6 +31,14 @@
             Read grading instructions
         </button>
     </div>
+
+    <ng-template #noGradingInstruction>
+        <div class="col-12 text-center" *ngIf="tutorParticipationStatus === NOT_PARTICIPATED">
+            <button class="btn btn-primary" (click)="readInstruction()">
+                Start your participation to the exercise
+            </button>
+        </div>
+    </ng-template>
 
     <ng-template #gradingInstructions let-c="close" let-d="dismiss">
         <div class="modal-header">

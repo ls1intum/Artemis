@@ -1,9 +1,11 @@
 package de.tum.in.www1.artemis.service;
 
+import de.tum.in.www1.artemis.domain.ExampleSubmission;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.TutorParticipation;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
+import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,14 +27,17 @@ import java.util.Optional;
 public class TutorParticipationService {
 
     private final Logger log = LoggerFactory.getLogger(TutorParticipationService.class);
+    private final ExampleSubmissionRepository exampleSubmissionRepository;
 
     @Value("${server.url}")
     private String ARTEMIS_BASE_URL;
 
     private final TutorParticipationRepository tutorParticipationRepository;
 
-    public TutorParticipationService(TutorParticipationRepository tutorParticipationRepository) {
+    public TutorParticipationService(TutorParticipationRepository tutorParticipationRepository,
+                                     ExampleSubmissionRepository exampleSubmissionRepository) {
         this.tutorParticipationRepository = tutorParticipationRepository;
+        this.exampleSubmissionRepository = exampleSubmissionRepository;
     }
 
     /**
@@ -102,7 +107,14 @@ public class TutorParticipationService {
     public TutorParticipation createNewParticipation(Exercise exercise, User tutor) {
         TutorParticipation tutorParticipation = new TutorParticipation();
 
-        tutorParticipation.setStatus(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
+        List<ExampleSubmission> exampleSubmissions = exampleSubmissionRepository.findAllByExerciseId(exercise.getId());
+
+        if (exampleSubmissions.size() <= 0) {
+            tutorParticipation.setStatus(TutorParticipationStatus.TRAINED);
+        } else {
+            tutorParticipation.setStatus(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
+        }
+
         tutorParticipation.setTutor(tutor);
         tutorParticipation.setAssessedExercise(exercise);
 

@@ -140,7 +140,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
         this.modalService.open(content, { size: 'lg' });
     }
 
-    readInstruction(onComplete: () => void) {
+    readInstruction(onComplete?: () => void) {
         this.tutorParticipationService.create(this.tutorParticipation, this.exerciseId).subscribe(
             (res: HttpResponse<TutorParticipation>) => {
                 this.tutorParticipation = res.body;
@@ -148,7 +148,11 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 this.jhiAlertService.success('You reviewed the instructions, you can now read the example submissions');
             },
             this.onError,
-            onComplete
+            () => {
+                if (onComplete) {
+                    onComplete();
+                }
+            }
         );
     }
 
