@@ -260,7 +260,10 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
         // add Text for last label based on the language
         this.translateService.get('showStatistic.quizStatistic.yAxes').subscribe(lastLabel => {
             this.label[this.question.spots.length] = lastLabel.split(' ');
-            this.labels = this.label;
+            this.labels.length = 0;
+            for (let i = 0; i < this.label.length; i++) {
+                this.labels.push(this.label[i]);
+            }
         });
     }
 
@@ -310,8 +313,10 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
         // add data for the last bar (correct Solutions)
         this.ratedCorrectData = this.questionStatistic.ratedCorrectCounter;
         this.unratedCorrectData = this.questionStatistic.unRatedCorrectCounter;
-
-        this.labels = this.label;
+        this.labels.length = 0;
+        for (let i = 0; i < this.label.length; i++) {
+            this.labels.push(this.label[i]);
+        }
 
         this.loadDataInDiagram();
     }
