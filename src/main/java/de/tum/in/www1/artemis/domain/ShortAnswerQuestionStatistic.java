@@ -150,6 +150,10 @@ public class ShortAnswerQuestionStatistic extends QuestionStatistic implements S
                     shortAnswerSubmittedText = shortAnswerSubmittedAnswer.getSubmittedTextForSpot(spotCounter.getSpot());
                     shortAnswerSolutions = spotCounter.getSpot().getQuestion().getCorrectSolutionForSpot(spotCounter.getSpot());
 
+                    //TODO Francisco: please double check if this makes sense: it definitely avoids a null pointer exception because the method getSubmittedTextForSpot(...) above can return null
+                    if (shortAnswerSubmittedText == null) {
+                        continue;
+                    }
                     for(ShortAnswerSolution solution : shortAnswerSolutions){
                         if(shortAnswerSubmittedText.isSubmittedTextCorrect(shortAnswerSubmittedText.getText(), solution.getText()) && shortAnswerSubmittedText.isIsCorrect()){
                             spotCounter.setRatedCounter(spotCounter.getRatedCounter() + change);
@@ -175,6 +179,7 @@ public class ShortAnswerQuestionStatistic extends QuestionStatistic implements S
                     shortAnswerSubmittedText = shortAnswerSubmittedAnswer.getSubmittedTextForSpot(spotCounter.getSpot());
                     shortAnswerSolutions = spotCounter.getSpot().getQuestion().getCorrectSolutionForSpot(spotCounter.getSpot());
 
+                    //TODO Francisco: please double check if this makes sense: it definitely avoids a null pointer exception because the method getSubmittedTextForSpot(...) above can return null
                     if (shortAnswerSubmittedText == null) {
                         continue;
                     }
