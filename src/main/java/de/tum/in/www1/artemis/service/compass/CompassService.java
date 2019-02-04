@@ -204,7 +204,7 @@ public class CompassService {
 
     public Optional<Conflict> checkForConflict(long exerciseId, long modelId, List<ModelElementAssessment> modelingAssessment) {
         CompassCalculationEngine engine = (CompassCalculationEngine) compassCalculationEngines.get(exerciseId);
-        Set<Integer> conflictingAssessments = engine.getElementIdsInConflict(modelId, modelingAssessment);
+        HashMap<String, Integer> conflictingAssessments = engine.getElementIdsInConflict(modelId, modelingAssessment);
         if (conflictingAssessments.isEmpty()) {
             return Optional.empty();
         } else {

@@ -33,7 +33,7 @@ public class CompassCalculationEngine implements CalculationEngine {
         assessmentIndex = new AssessmentIndex();
 
         automaticAssessmentController = new AutomaticAssessmentController();
-        modelSelector = new ModelSelector();
+        modelSelector = new ModelSelector(); //TODO fix Bug where on load of exercise no modelsWaitingForAssessment are added ? No differentiation between submitted and saved assessments!
 
         for (Map.Entry<Long, JsonObject> entry : models.entrySet()) {
             buildModel(entry.getKey(), entry.getValue());
@@ -46,8 +46,8 @@ public class CompassCalculationEngine implements CalculationEngine {
         assessModelsAutomatically();
     }
 
-    public Set<Integer> getElementIdsInConflict(long modelId, List<ModelElementAssessment> modelingAssessment) {
-        HashSet<Integer> elementIdsInConflict = new HashSet<>();
+    public HashMap<String,Integer> getElementIdsInConflict(long modelId, List<ModelElementAssessment> modelingAssessment) { //TODO register Assessment in Conflict in ModelSelector?
+        HashMap<String,Integer> elementIdsInConflict = new HashMap<>();
         UMLModel model = modelIndex.getModel(modelId);
         modelingAssessment.forEach(modelElementAssessment -> {
             UMLElement element = model.getElementByJSONID(modelElementAssessment.getId()); //TODO return Optional ad throw Exception if no UMLElement found
@@ -58,7 +58,7 @@ public class CompassCalculationEngine implements CalculationEngine {
                         .filter(score -> score.getPoints() != modelElementAssessment.getCredits())//TODO comparison of double values ...
                         .findFirst();
                     if (scoreInConflict.isPresent()) {
-                        elementIdsInConflict.add(element.getElementID());
+                        elementIdsInConflict.put(modelElementAssessment.getId(), element.getElementID());
                     }
                 });
             }
