@@ -11,7 +11,7 @@
 
     <div *ngIf="!showResult && clickDisabled">
         <div class="short-answer-question-display" *ngFor="let textPart of textBeforeSpots; let i = index">
-            {{textPart}} <input class="short-answer-question-input" *ngIf="submittedTexts[i] !== undefined" value="{{submittedTexts[i].text}}">
+            {{textPart}} <input class="short-answer-question-input" *ngIf="submittedTexts[i] !== undefined" disabled value="{{submittedTexts[i].text}}">
             <input *ngIf="submittedTexts[i] === undefined" >
         </div>
         <span>{{textAfterSpots}}</span>
