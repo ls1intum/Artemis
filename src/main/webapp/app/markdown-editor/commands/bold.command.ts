@@ -11,6 +11,8 @@ export class BoldCommand extends Command {
         let chosenText = editor.getSelectedText();
         let textToAdd = '';
 
+        const range = editor.selection.getRange();
+
         if (chosenText.includes('**')) {
            textToAdd = chosenText.slice(2, -2);
         } else textToAdd = `**${chosenText}**`;
@@ -23,11 +25,11 @@ export class BoldCommand extends Command {
                 backwards: true,
                 start: null,
                 skipCurrent: false,
-                range: null,
-                preserveCase: false,
+                range: range,
+                preserveCase: true,
                 regExp: chosenText,
                 wholeWord: chosenText,
-                caseSensitive: false,
+                caseSensitive: true,
                 wrap: false
             };
 

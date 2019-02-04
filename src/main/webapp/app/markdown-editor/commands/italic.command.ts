@@ -9,6 +9,8 @@ export class ItalicCommand extends Command {
         let chosenText = editor.getSelectedText();
         let textToAdd = '';
 
+        const range = editor.selection.getRange();
+
         if (chosenText.includes('*')) {
             textToAdd = chosenText.slice(1, -1);
         } else textToAdd = `*${chosenText}*`;
@@ -21,7 +23,7 @@ export class ItalicCommand extends Command {
             backwards: true,
             start: null,
             skipCurrent: false,
-            range: null,
+            range: range,
             preserveCase: false,
             regExp: chosenText,
             wholeWord: chosenText,

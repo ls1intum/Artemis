@@ -10,6 +10,7 @@ export class UnderlineCommand extends Command {
         let chosenText = editor.getSelectedText();
 
         let textToAdd = '';
+        const range = editor.selection.getRange();
 
         if (chosenText.includes('<ins>')) {
             textToAdd = chosenText.slice(5, -6);
@@ -23,7 +24,7 @@ export class UnderlineCommand extends Command {
             backwards: true,
             start: null,
             skipCurrent: false,
-            range: null,
+            range: range,
             preserveCase: false,
             regExp: chosenText,
             wholeWord: chosenText,
