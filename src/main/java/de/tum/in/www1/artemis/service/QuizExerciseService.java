@@ -5,11 +5,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.repository.DragAndDropMappingRepository;
+import de.tum.in.www1.artemis.repository.ShortAnswerMappingRepository;
 import de.tum.in.www1.artemis.repository.QuizExerciseRepository;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.messaging.support.MessageBuilder;
@@ -29,6 +31,7 @@ public class QuizExerciseService {
 
     private final QuizExerciseRepository quizExerciseRepository;
     private final DragAndDropMappingRepository dragAndDropMappingRepository;
+    private final ShortAnswerMappingRepository shortAnswerMappingRepository;
     private final ParticipationService participationService;
     private final AuthorizationCheckService authCheckService;
     private final ResultRepository resultRepository;
@@ -40,6 +43,7 @@ public class QuizExerciseService {
     public QuizExerciseService(UserService userService,
                                QuizExerciseRepository quizExerciseRepository,
                                DragAndDropMappingRepository dragAndDropMappingRepository,
+                               ShortAnswerMappingRepository shortAnswerMappingRepository,
                                ParticipationService participationService,
                                AuthorizationCheckService authCheckService,
                                ResultRepository resultRepository,
@@ -49,6 +53,7 @@ public class QuizExerciseService {
         this.userService = userService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.dragAndDropMappingRepository = dragAndDropMappingRepository;
+        this.shortAnswerMappingRepository = shortAnswerMappingRepository;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
         this.resultRepository = resultRepository;
@@ -69,12 +74,16 @@ public class QuizExerciseService {
     public QuizExercise save(QuizExercise quizExercise) {
         log.debug("Request to save QuizExercise : {}", quizExercise);
 
-        // fix references in all drag and drop questions (step 1/2)
+        // fix references in all drag and drop and short answer questions  (step 1/2)
         for (Question question : quizExercise.getQuestions()) {
             if (question instanceof DragAndDropQuestion) {
                 DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
                 // save references as index to prevent Hibernate Persistence problem
                 saveCorrectMappingsInIndices(dragAndDropQuestion);
+            } else if (question instanceof ShortAnswerQuestion){
+                ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) question;
+                // save references as index to prevent Hibernate Persistence problem
+                saveCorrectMappingsInIndicesShortAnswer(shortAnswerQuestion);
             }
         }
 
@@ -83,15 +92,18 @@ public class QuizExerciseService {
         //       and delete the now orphaned entries from the database
         QuizExercise result = quizExerciseRepository.save(quizExercise);
 
-        // fix references in all drag and drop questions (step 2/2)
+        // fix references in all drag and drop questions and short answer questions (step 2/2)
         for (Question question : result.getQuestions()) {
             if (question instanceof DragAndDropQuestion) {
                 DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
                 // restore references from index after save
                 restoreCorrectMappingsFromIndices(dragAndDropQuestion);
+            } else if (question instanceof ShortAnswerQuestion) {
+                ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) question;
+                // restore references from index after save
+                restoreCorrectMappingsFromIndicesShortAnswer(shortAnswerQuestion);
             }
         }
-
         return result;
     }
 
@@ -372,6 +384,55 @@ public class QuizExerciseService {
     }
 
     /**
+     * remove solutions and spots from correct mappings and set solutionIndex and spotIndex instead
+     *
+     * @param shortAnswerQuestion the question for which to perform these actions
+     */
+    private void saveCorrectMappingsInIndicesShortAnswer(ShortAnswerQuestion shortAnswerQuestion) {
+        List<ShortAnswerMapping> mappingsToBeRemoved = new ArrayList<>();
+        for (ShortAnswerMapping mapping : shortAnswerQuestion.getCorrectMappings()) {
+            // check for NullPointers
+            if (mapping.getSolution() == null || mapping.getSpot() == null) {
+                mappingsToBeRemoved.add(mapping);
+                continue;
+            }
+
+            // solution index
+            ShortAnswerSolution solution = mapping.getSolution();
+            boolean solutionFound = false;
+            for (ShortAnswerSolution questionSolution : shortAnswerQuestion.getSolutions()) {
+                if (solution.equals(questionSolution)) {
+                    solutionFound = true;
+                    mapping.setShortAnswerSolutionIndex(shortAnswerQuestion.getSolutions().indexOf(questionSolution));
+                    mapping.setSolution(null);
+                    break;
+                }
+            }
+
+            // replace spot
+            ShortAnswerSpot spot = mapping.getSpot();
+            boolean spotFound = false;
+            for (ShortAnswerSpot questionSpot : shortAnswerQuestion.getSpots()) {
+                if (spot.equals(questionSpot)) {
+                    spotFound = true;
+                    mapping.setShortAnswerSpotIndex(shortAnswerQuestion.getSpots().indexOf(questionSpot));
+                    mapping.setSpot(null);
+                    break;
+                }
+            }
+
+            // if one of them couldn't be found, remove the mapping entirely
+            if (!solutionFound || !spotFound) {
+                mappingsToBeRemoved.add(mapping);
+            }
+        }
+
+        for (ShortAnswerMapping mapping : mappingsToBeRemoved) {
+            shortAnswerQuestion.removeCorrectMappings(mapping);
+        }
+    }
+
+    /**
      * restore dragItem and dropLocation for correct mappings using dragItemIndex and dropLocationIndex
      *
      * @param dragAndDropQuestion the question for which to perform these actions
@@ -389,5 +450,21 @@ public class QuizExerciseService {
         }
     }
 
-
+    /**
+     * restore solution and spots for correct mappings using solutionIndex and spotIndex
+     *
+     * @param shortAnswerQuestion the question for which to perform these actions
+     */
+    private void restoreCorrectMappingsFromIndicesShortAnswer(ShortAnswerQuestion shortAnswerQuestion) {
+        for (ShortAnswerMapping mapping : shortAnswerQuestion.getCorrectMappings()) {
+            // solution
+            mapping.setSolution(shortAnswerQuestion.getSolutions().get(mapping.getShortAnswerSolutionIndex()));
+            // spot
+            mapping.setSpot(shortAnswerQuestion.getSpots().get(mapping.getShortAnswerSpotIndex()));
+            // set question
+            mapping.setQuestion(shortAnswerQuestion);
+            // save mapping
+            shortAnswerMappingRepository.save(mapping);
+        }
+    }
 }

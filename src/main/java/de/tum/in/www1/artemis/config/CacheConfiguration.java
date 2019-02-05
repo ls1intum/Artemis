@@ -118,6 +118,8 @@ public class CacheConfiguration {
             cm.createCache(de.tum.in.www1.artemis.domain.ShortAnswerSubmittedAnswer.class.getName() + ".submittedTexts", jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.ShortAnswerSubmittedText.class.getName(), jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.ShortAnswerMapping.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.ShortAnswerSpot.class.getName() + ".mappings", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.ShortAnswerSolution.class.getName() + ".mappings", jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.Complaint.class.getName(), jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.ComplaintResponse.class.getName(), jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.TutorParticipation.class.getName(), jcacheConfiguration);

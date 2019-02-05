@@ -4,8 +4,38 @@
         <div class="row">
             <div *ngIf="question" class="col">
                 <h3>{{question.title}} <span style="color:red;" *ngIf="question.invalid"
-                                                jhiTranslate="showStatistic.invalid"></span></h3>
-                <h4 [innerHTML]="questionTextRendered"></h4>
+                                             jhiTranslate="showStatistic.invalid"></span></h3>
+
+                <div *ngIf="!showSolution" style="display: inline-flex;">
+                    <div style="text-align: left">
+                        <div class="short-answer-question-display" *ngFor="let textPart of textBeforeSpots;let i = index">
+                            {{textPart}}
+                            <div style="position: relative; display: inline-flex">
+                                <input class="short-answer-question-input"  disabled>
+                                <div class="saQuestion-statistic-letter">
+                                    <span>{{getLetter(i) + "."}}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <span>{{textAfterSpots}}</span>
+                    </div>
+                </div>
+
+                <div *ngIf="showSolution" style="display: inline-flex">
+                    <div style="text-align: left">
+                        <div class="short-answer-question-display" *ngFor="let textPart of textBeforeSpots;let i = index">
+                            {{textPart}}
+                            <div style="position: relative; display: inline-flex">
+                                <input style="background: lightgreen" class="short-answer-question-input" disabled value="{{sampleSolutions[i].text}}">
+                                <div class="saQuestion-statistic-letter-solution">
+                                    <span>{{getLetter(i) + "."}}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <span>{{textAfterSpots}}</span>
+                    </div>
+                </div>
+
                 <div>
                     <p>&nbsp;</p>
                     <div class="row">
@@ -17,7 +47,7 @@
                         </div>
                         <div class="col-md-3 text-right">
                             <p style="font-size: large"><span>{{participants}} </span><span
-                            jhiTranslate="showStatistic.participants"></span></p>
+                                jhiTranslate="showStatistic.participants"></span></p>
                         </div>
                     </div>
                     <canvas baseChart
@@ -43,58 +73,6 @@
                     </div>
                     <p>&nbsp;</p>
                 </div>
-                <div class="drag-and-drop-statistic-picture">
-                    <jhi-secured-image *ngIf="question.backgroundFilePath" [src]="question.backgroundFilePath"></jhi-secured-image>
-
-                    <div class="click-layer">
-                        <div *ngIf="!showSolution">
-                            <div
-                                class="drop-location"
-                                *ngFor="let dropLocation of question.dropLocations; let i = index"
-                                [ngStyle]="{top: dropLocation.posY/2 + '%', left: dropLocation.posX/2 + '%', width: dropLocation.width/2 + '%', height: dropLocation.height/2 + '%'}"
-                            >
-                                <div class="letter">
-                                    <span>{{getLetter(i) + "."}}</span>
-                                </div>
-                                <div class="invalid" *ngIf="dropLocation.invalid">
-                                    <span jhiTranslate="showStatistic.invalid"></span>
-                                </div>
-                            </div>
-                        </div>
-                        <div *ngIf="showSolution">
-                            <div
-                                class="drop-location"
-                                *ngFor="let dropLocation of question.dropLocations; let i = index"
-                                [ngStyle]="{top: dropLocation.posY/2 + '%', left: dropLocation.posX/2 + '%', width: dropLocation.width/2 + '%', height: dropLocation.height/2 + '%'}"
-                            >
-                                <div class="letter-solution">
-                                    <span>{{getLetter(i) + "."}}</span>
-                                </div>
-                                <div class="invalid" *ngIf="dropLocation.invalid">
-                                    <span jhiTranslate="showStatistic.invalid"></span>
-                                </div>
-                                <jhi-drag-item *ngIf="correctDragItemForDropLocation(dropLocation)"
-                                           [dragItem]="correctDragItemForDropLocation(dropLocation)"
-                                           [clickDisabled]="true" [minWidth]="100 + '%'"></jhi-drag-item>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="drag-and-drop-statistic-picture" *ngIf="!showSolution">
-                    <h4>Drag-Items:</h4>
-                    <div class="drag-items" *ngIf="question.dragItems && question.dragItems.length">
-                        <jhi-drag-item *ngFor="let dragItem of question.dragItems"
-                                   [dragItem]="dragItem"
-                                   [invalid]="dragItem.invalid"
-                                   [clickDisabled]="true"
-                                   [minWidth]="100">
-                        </jhi-drag-item>
-                    </div>
-                </div>
-                <p>&nbsp;</p>
-                <p>&nbsp;</p>
-
-            </div>
         </div>
     </div>
     <div class="statistic-footer">
@@ -148,4 +126,5 @@
             </div>
         </div>
     </div>
+</div>
 </div>
