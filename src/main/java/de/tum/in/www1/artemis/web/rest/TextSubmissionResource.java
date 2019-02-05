@@ -229,8 +229,6 @@ public class TextSubmissionResource {
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) return forbidden();
 
-        Stream<TextSubmission> textSubmissionStream =
-
         return ResponseEntity.ok().body(
 
             // Participations for Exercise
