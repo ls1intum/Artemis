@@ -31,7 +31,7 @@
             </thead>
             <tbody>
             <tr *ngFor="let fileUploadExercise of fileUploadExercises | sortBy: predicate: reverse ;trackBy: trackId">
-                <td><a [routerLink]="['../file-upload-exercise', fileUploadExercise.id ]">{{fileUploadExercise.id}}</a></td>
+                <td><a [routerLink]="['/file-upload-exercise', fileUploadExercise.id ]">{{fileUploadExercise.id}}</a></td>
                 <td>{{fileUploadExercise.title}}</td>
                 <td>{{fileUploadExercise.problemStatement}}</td>
                 <td>{{fileUploadExercise.releaseDate | date:'medium'}}</td>

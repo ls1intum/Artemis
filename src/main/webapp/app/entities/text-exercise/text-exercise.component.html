@@ -30,7 +30,7 @@
             </thead>
             <tbody>
             <tr *ngFor="let textExercise of textExercises | sortBy: predicate: reverse ;trackBy: trackId">
-                <td><a [routerLink]="['../text-exercise', textExercise.id ]">{{textExercise.id}}</a></td>
+                <td><a [routerLink]="['/text-exercise', textExercise.id ]">{{textExercise.id}}</a></td>
                 <td>{{textExercise.title}}</td>
                 <td>{{textExercise.problemStatement}}</td>
                 <td>{{textExercise.releaseDate | date:'medium'}}</td>
