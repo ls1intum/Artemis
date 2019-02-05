@@ -27,13 +27,6 @@
             </div>
         </div>
 
-        <div class="col-12 col-lg-4 text-rigth" *ngIf="readOnly">
-            <button (click)="readAndUnderstood()" class="btn btn-success col-12">
-                <span class="fa fa-save"></span>
-                I have read and understood the example
-            </button>
-        </div>
-
         <div class="col-12">
             <p class="mb-3">
                 <strong>Problem Statement:</strong> {{ exercise.problemStatement }}<br/>
@@ -66,13 +59,6 @@
 
             </button>
         </div>
-
-        <div class="col text-right">
-            <button class="btn btn-primary ml-3" (click)="checkAssessment()"
-                    [disabled]="!assessments || !assessmentsAreValid"
-                    *ngIf="toComplete">Submit Assessment
-            </button>
-        </div>
     </div>
 
     <div class="alert alert-info" *ngIf="isNewSubmission">
@@ -102,5 +88,19 @@
                                             (deleteAssessment)="deleteAssessment($event)"></jhi-text-assessment-detail>
             </ng-container>
         </div>
+    </div>
+
+    <div class="col-12 col-lg-4 text-right">
+        <button class="btn btn-primary ml-3" (click)="checkAssessment()"
+                [disabled]="!assessments || !assessmentsAreValid"
+                *ngIf="toComplete">Submit Assessment
+        </button>
+    </div>
+
+    <div class="col-12 col-lg-4 text-rigth" *ngIf="readOnly">
+        <button (click)="readAndUnderstood()" class="btn btn-success col-12">
+            <span class="fa fa-save"></span>
+            I have read and understood the example
+        </button>
     </div>
 </div>
