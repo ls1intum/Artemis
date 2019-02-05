@@ -36,6 +36,11 @@
     </div>
 
     <div class="table-responsive">
+        <div class="form-check col-6 align-baseline">
+            <input type="checkbox" name="showFinishedExercise" id="field_showFinishedExercise"
+                   [ngModel]="showFinishedExercises" (ngModelChange)="triggerFinishedExercises()"/>
+            <label class="form-check-label" for="field_showFinishedExercise">Show finished exercise</label>
+        </div>
         <table class="table exercise-table" [hidden]="exercises.length === 0">
             <thead>
             <tr>

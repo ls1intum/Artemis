@@ -13,7 +13,7 @@
         </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.title" for="field_title">Title</label>
-            <input type="text" class="form-control" name="title" id="field_title" [(ngModel)]="textExercise.title" />
+            <input required minlength="3" type="text" class="form-control" name="title" id="field_title" [(ngModel)]="textExercise.title" />
         </div>
         <div class="form-group">
             <jhi-date-time-picker labelName="Release Date" [entity]="textExercise" field="releaseDate"></jhi-date-time-picker>

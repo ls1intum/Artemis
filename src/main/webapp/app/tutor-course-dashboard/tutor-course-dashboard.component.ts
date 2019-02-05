@@ -7,6 +7,8 @@ import { AccountService, User } from '../core';
 import { HttpResponse } from '@angular/common/http';
 import { Exercise } from 'app/entities/exercise';
 import { SubmissionExerciseType } from 'app/entities/submission';
+import { TutorParticipationStatus } from 'app/entities/tutor-participation';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-courses',
@@ -16,12 +18,16 @@ import { SubmissionExerciseType } from 'app/entities/submission';
 export class TutorCourseDashboardComponent implements OnInit {
     course: Course;
     courseId: number;
+    unfinishedExercises: Exercise[] = [];
+    finishedExercises: Exercise[] = [];
     exercises: Exercise[] = [];
     numberOfSubmissions = 0;
     numberOfAssessments = 0;
     numberOfTutorAssessments = 0;
     numberOfComplaints = 0;
     numberOfTutorComplaints = 0;
+    showFinishedExercises = false;
+
     private subscription: Subscription;
     private tutor: User;
 
@@ -54,9 +60,11 @@ export class TutorCourseDashboardComponent implements OnInit {
                 this.course = res.body;
 
                 if (this.course.exercises && this.course.exercises.length > 0) {
-                    this.exercises = this.course.exercises;
+                    this.unfinishedExercises = this.course.exercises.filter(exercise => exercise.tutorParticipations[0].status !== TutorParticipationStatus.COMPLETED).sort(this.sortByAssessmentDueDate);
+                    this.finishedExercises = this.course.exercises.filter(exercise => exercise.tutorParticipations[0].status === TutorParticipationStatus.COMPLETED).sort(this.sortByAssessmentDueDate);
+                    this.exercises = this.unfinishedExercises;
 
-                    for (const exercise of this.exercises) {
+                    for (const exercise of this.course.exercises) {
                         this.numberOfSubmissions += exercise.participations.filter(
                             participation =>
                                 participation.submissions.filter(
@@ -81,6 +89,24 @@ export class TutorCourseDashboardComponent implements OnInit {
 
     trackId(index: number, item: Course) {
         return item.id;
+    }
+
+    triggerFinishedExercises() {
+        this.showFinishedExercises = !this.showFinishedExercises;
+
+        if (this.showFinishedExercises) {
+            this.exercises = this.unfinishedExercises.concat(this.finishedExercises);
+        } else {
+            this.exercises = this.unfinishedExercises;
+        }
+    }
+
+    private sortByAssessmentDueDate(firstEl: Exercise, secondEl: Exercise): number {
+        if (!firstEl.assessmentDueDate || !secondEl.assessmentDueDate) {
+            return firstEl.id - secondEl.id;
+        }
+
+        return moment(firstEl.assessmentDueDate).diff(secondEl.assessmentDueDate);
     }
 
     private onError(error: string) {

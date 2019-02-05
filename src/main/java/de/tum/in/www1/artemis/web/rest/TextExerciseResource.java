@@ -81,7 +81,12 @@ public class TextExerciseResource {
         if (textExercise.getId() != null) {
             throw new BadRequestAlertException("A new textExercise cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        // fetch course from database to make sure client didn't change groups
+
+        if (textExercise.getTitle() == null) {
+            throw new BadRequestAlertException("A new textExercise needs a title", ENTITY_NAME, "missingtitle");
+        }
+
+        // fet  ch course from database to make sure client didn't change groups
         Course course = courseService.findOne(textExercise.getCourse().getId());
         if (course == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this text exercise does not exist")).body(null);
