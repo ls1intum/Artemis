@@ -124,7 +124,7 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
      * @desc Navigate back to course
      */
     back(): void {
-        this.router.navigate(['/course', this.quizExercise.course.id, 'quiz-exercise']);
+        this.router.navigate(['/course', this.quizExercise.course.id]);
     }
 
     /**
