@@ -90,15 +90,15 @@
         </div>
     </div>
 
-    <div class="col-12 col-lg-4 text-right">
-        <button class="btn btn-primary ml-3" (click)="checkAssessment()"
+    <div class="col-12 text-right">
+        <button class="btn btn-primary col-3" (click)="checkAssessment()"
                 [disabled]="!assessments || !assessmentsAreValid"
                 *ngIf="toComplete">Submit Assessment
         </button>
     </div>
 
     <div class="col-12 col-lg-4 text-rigth" *ngIf="readOnly">
-        <button (click)="readAndUnderstood()" class="btn btn-success col-12">
+        <button (click)="readAndUnderstood()" class="btn btn-success col-3">
             <span class="fa fa-save"></span>
             I have read and understood the example
         </button>

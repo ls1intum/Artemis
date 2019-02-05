@@ -75,7 +75,7 @@ export class TutorCourseDashboardComponent implements OnInit {
                             participation => participation.results.length > 0
                         ).length;
                         this.numberOfTutorAssessments += exercise.participations.filter(
-                            participation => participation.results.filter(result => result.assessor.id === this.tutor.id).length > 0
+                            participation => participation.results.filter(result => result.assessor && result.assessor.id === this.tutor.id).length > 0
                         ).length;
                         this.numberOfComplaints += exercise.participations.filter(
                             participation => participation.results.filter(result => result.hasComplaint === true).length > 0
@@ -102,8 +102,17 @@ export class TutorCourseDashboardComponent implements OnInit {
     }
 
     private sortByAssessmentDueDate(firstEl: Exercise, secondEl: Exercise): number {
-        if (!firstEl.assessmentDueDate || !secondEl.assessmentDueDate) {
+        if (!firstEl.assessmentDueDate && !secondEl.assessmentDueDate) {
             return firstEl.id - secondEl.id;
+        }
+
+        // Priority to the assessment with an assessment date
+        if (!firstEl.assessmentDueDate) {
+            return 1;
+        }
+
+        if (!secondEl.assessmentDueDate) {
+            return -1;
         }
 
         return moment(firstEl.assessmentDueDate).diff(secondEl.assessmentDueDate);
