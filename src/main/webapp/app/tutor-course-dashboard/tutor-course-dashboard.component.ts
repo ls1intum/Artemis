@@ -57,7 +57,6 @@ export class TutorCourseDashboardComponent implements OnInit {
                     this.exercises = this.course.exercises;
 
                     for (const exercise of this.exercises) {
-                        console.log(exercise);
                         this.numberOfSubmissions += exercise.participations.filter(
                             participation =>
                                 participation.submissions.filter(

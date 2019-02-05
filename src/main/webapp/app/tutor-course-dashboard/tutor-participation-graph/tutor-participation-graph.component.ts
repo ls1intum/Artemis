@@ -1,6 +1,7 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor-participation';
 import {Router} from '@angular/router';
+import * as _ from 'lodash';
 
 @Component({
     selector: 'jhi-tutor-participation-graph',
@@ -22,13 +23,18 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
 
     ngOnInit() {
         this.tutorParticipationStatus = this.tutorParticipation.status;
-        if (this.tutorParticipation.assessedExercise && this.tutorParticipation.assessedExercise.course) {
-            this.routerLink = `/course/${this.tutorParticipation.assessedExercise.course.id}/exercise/${this.tutorParticipation.assessedExercise.id}/tutor-dashboard`;
+        const exerciseId = _.get(this.tutorParticipation, 'trainedExampleSubmissions[0].exercise.id');
+        const courseId = _.get(this.tutorParticipation, 'trainedExampleSubmissions[0].exercise.course.id');
+
+        if (courseId && exerciseId) {
+            this.routerLink = `/course/${courseId}/exercise/${exerciseId}/tutor-dashboard`;
         }
     }
 
     navigate() {
-        this.router.navigate([this.routerLink]);
+        if (this.routerLink && this.routerLink.length > 0) {
+            this.router.navigate([this.routerLink]);
+        }
     }
 
     ngOnChanges(changes: SimpleChanges): void {
