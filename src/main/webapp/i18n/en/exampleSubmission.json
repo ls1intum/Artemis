@@ -10,7 +10,8 @@
                 "tooHigh": "The score of your assessment of this submission is too high. Please carefully review the grading criteria and the submission again, and submit your improved assessment."
             },
             "submitSuccessful": "Your example submission has been properly submitted",
-            "saveSuccessful": "Your example submission has been saved"
+            "saveSuccessful": "Your example submission has been saved",
+            "readSuccessfully": "You have read the grading instructions, you can now start reviewing the example submission"
         }
     }
 }

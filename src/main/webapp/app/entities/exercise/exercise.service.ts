@@ -81,7 +81,8 @@ export class ExerciseService {
     convertDateFromClient<E extends Exercise>(exercise: E): E {
         return Object.assign({}, exercise, {
             releaseDate: exercise.releaseDate != null && moment(exercise.releaseDate).isValid() ? exercise.releaseDate.toJSON() : null,
-            dueDate: exercise.dueDate != null && moment(exercise.dueDate).isValid() ? exercise.dueDate.toJSON() : null
+            dueDate: exercise.dueDate != null && moment(exercise.dueDate).isValid() ? exercise.dueDate.toJSON() : null,
+            assessmentDueDate: exercise.assessmentDueDate != null && moment(exercise.assessmentDueDate).isValid() ? exercise.assessmentDueDate.toJSON() : null
         });
     }
 
@@ -89,6 +90,7 @@ export class ExerciseService {
         if (res.body) {
             res.body.releaseDate = res.body.releaseDate != null ? moment(res.body.releaseDate) : null;
             res.body.dueDate = res.body.dueDate != null ? moment(res.body.dueDate) : null;
+            res.body.assessmentDueDate = res.body.assessmentDueDate != null ? moment(res.body.assessmentDueDate) : null;
             res.body.participations = this.participationService.convertParticipationsDateFromServer(res.body.participations);
         }
         return res;

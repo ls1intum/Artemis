@@ -138,8 +138,10 @@ public class TextExerciseResource {
         TextExercise result = textExerciseRepository.save(textExercise);
 
         // Avoid recursions
-        result.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setExercise(null));
-        result.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipation(null));
+        if (textExercise.getExampleSubmissions().size() != 0) {
+            result.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setExercise(null));
+            result.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipation(null));
+        }
 
         return ResponseEntity.ok()
             .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, textExercise.getId().toString()))
