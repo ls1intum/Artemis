@@ -1,6 +1,10 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Question, QuestionType, ScoringType } from 'app/entities/question';
+import { DragAndDropMapping } from '../../../entities/drag-and-drop-mapping';
+import { AnswerOption } from '../../../entities/answer-option';
+import { MultipleChoiceQuestion } from '../../../entities/multiple-choice-question';
+import { DragAndDropQuestion } from '../../../entities/drag-and-drop-question';
 
 @Component({
     selector: 'jhi-quiz-scoring-infostudent-modal',
@@ -27,9 +31,8 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
     multipleChoiceWrongAnswerChosen: number;
     forgottenRightAnswers: number;
     amountOfAnswerOptions: number;
-    dragAndDropItemsOnTheRightLocation: number;
 
-    /* Multiple Choice Counting Variables*/
+    /* Drag and Drop Counting Variables*/
     dragAndDropElementsCount: number;
 
     constructor(private modalService: NgbModal) {
