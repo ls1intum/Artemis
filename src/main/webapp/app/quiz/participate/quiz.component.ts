@@ -778,54 +778,29 @@ export class QuizComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Checks if at least one answer option is selected for the question
+     * Checks if at least one answer option is selected for the question.
+     * Goes trough selectedAnswerOptions and dragAndDropMappings
      */
     checkForAnsweredQuestions(): boolean {
-        this.atLeastOneOptionSelected = [];
-        for( let question of this.quizExercise.questions) {
+        let myVariable = true;
+        for (let question of this.quizExercise.questions) {
             if (question.type === QuestionType.MULTIPLE_CHOICE) {
                 if (this.selectedAnswerOptions[question.id] == 0) {
-                   this.atLeastOneOptionSelected.push(false);
+                    myVariable = false;
+                    break
                 }
             } else {
                 if (question.type === QuestionType.DRAG_AND_DROP) {
                     if (this.dragAndDropMappings[question.id] == 0) {
-                        this.atLeastOneOptionSelected.push(false);
+                        myVariable = false;
+                        break
                     }
                 }
             }
         }
-        if (this.atLeastOneOptionSelected.length > 0) {
-            return false;
-        } else {
-            if (this.atLeastOneOptionSelected.length == 0){
-                return true;
-            }
-        }
+            return myVariable
     }
 
-    checkForAnsweredQuestions1(): boolean {
-    this.quizExercise.questions.forEach(question => {
-            this.atLeastOneOptionSelected1[question.id] = false;
-        });
-
-        for( let question of this.quizExercise.questions) {
-            if (question.type === QuestionType.MULTIPLE_CHOICE) {
-                if (!(this.selectedAnswerOptions[question.id] == 0)) {
-                    this.atLeastOneOptionSelected1[question.id] = true;
-                }
-            } else {
-                if (question.type === QuestionType.DRAG_AND_DROP) {
-                    if (!(this.dragAndDropMappings[question.id] == 0)) {
-                        this.atLeastOneOptionSelected1[question.id] = true;
-                    }
-                }
-            }
-        }
-        
-               return false;
-
-    }
 
     /**
      * This function is called when the user clicks the 'Submit' button
@@ -835,10 +810,10 @@ export class QuizComponent implements OnInit, OnDestroy {
 
         let confirmSubmit = true;
 
-        if (this.remainingTimeSeconds > 1 && (this.checkForAnsweredQuestions1() == false)) {
+        if (this.remainingTimeSeconds > 1 && (this.checkForAnsweredQuestions() == false)) {
             confirmSubmit = window.confirm('Are you sure you want to submit? You have not answered all questions and you still have some time left!');
         }
-        if(confirmSubmit) {
+        if (confirmSubmit) {
             this.isSubmitting = true;
             switch (this.mode) {
                 case 'practice':

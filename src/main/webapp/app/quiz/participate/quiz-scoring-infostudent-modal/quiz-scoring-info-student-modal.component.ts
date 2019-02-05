@@ -15,32 +15,55 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
     readonly PROPORTIONAL_WITH_PENALTY = ScoringType.PROPORTIONAL_WITH_PENALTY;
 
     @Input() score: number;
-    @Input() selectedOption: boolean;
-
-    @Input() correctlyChosenAnswers: number;
-    @Input() correctAnswer: number;
-    @Input() wronglyChosenAnswers: number;
-
-    @Input() amountOfAnswerOptions: number;
 
     @Input() question: Question;
+    @Input() DragAndDropMapping = new Array<DragAndDropMapping>();
+    @Input() MultipleChoiceMapping = new Array<AnswerOption>();
 
+    @Input() correctAnswer: number;
+
+    /* Multiple Choice Counting Variables*/
+    multipleChoiceCorrectAnswerCorrectlyChosen: number;
+    multipleChoiceWrongAnswerChosen: number;
     forgottenRightAnswers: number;
+    amountOfAnswerOptions: number;
+    dragAndDropItemsOnTheRightLocation: number;
+
+    /* Multiple Choice Counting Variables*/
+    dragAndDropElementsCount: number;
 
     constructor(private modalService: NgbModal) {
     }
 
     ngOnInit() {
-        this.count()
+        switch (this.question.type) {
+            case QuestionType.MULTIPLE_CHOICE:
+                this.countMultipleChoice();
+                break;
+            case QuestionType.DRAG_AND_DROP:
+                this.countDragandDrop();
+                break;
+
+        }
     }
 
     open(content: any) {
-        this.modalService.open(content, { size: 'lg' });
+        this.modalService.open(content, {size: 'lg'});
+
     }
 
-    count() {
-        this.forgottenRightAnswers = this.correctAnswer - this.correctlyChosenAnswers;
+    private countMultipleChoice() {
+        const mcmQuestion = this.question as MultipleChoiceQuestion;
+            this.amountOfAnswerOptions = mcmQuestion.answerOptions.length;
+            this.multipleChoiceCorrectAnswerCorrectlyChosen = this.MultipleChoiceMapping.filter(option => option.isCorrect).length; // how many right answers chosen correctly
+            this.multipleChoiceWrongAnswerChosen = this.MultipleChoiceMapping.filter(option => !option.isCorrect).length; // how many wrong answers have been selected
+            this.forgottenRightAnswers = this.MultipleChoiceMapping.filter(option => option.isCorrect).length - this.multipleChoiceCorrectAnswerCorrectlyChosen; // how many right options have been forgotten to be chosen
     }
 
+    private countDragandDrop() {
+        const dndQuestion = this.question as DragAndDropQuestion;
+        this.dragAndDropElementsCount = dndQuestion.dropLocations.length;
+
+    }
 
 }

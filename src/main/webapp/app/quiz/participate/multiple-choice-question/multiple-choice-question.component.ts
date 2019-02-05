@@ -35,13 +35,6 @@ export class MultipleChoiceQuestionComponent implements OnChanges {
     @Input()
     fnOnSelection: any;
 
-    correctAnswers: number;
-    wrongAnswers: number;
-    chosenCorrectAnswerOption: number;
-    chosenWrongAnswerOption: number;
-
-    amountOfAnswerOptions: number;
-
     @Output()
     selectedAnswerOptionsChange = new EventEmitter();
 
@@ -50,7 +43,6 @@ export class MultipleChoiceQuestionComponent implements OnChanges {
     constructor(private artemisMarkdown: ArtemisMarkdown) {}
 
     ngOnChanges(changes: SimpleChanges): void {
-        this.count();
     }
 
     watchCollection() {
@@ -97,16 +89,4 @@ export class MultipleChoiceQuestionComponent implements OnChanges {
         );
     }
 
-    count(): void {
-        const answerOptions = this.question.answerOptions;
-        const selectedOptions = this.selectedAnswerOptions;
-
-        this.amountOfAnswerOptions = this.question.answerOptions.length;
-
-        this.correctAnswers = answerOptions.filter(option => option.isCorrect).length;
-        this.wrongAnswers = answerOptions.filter(option => !option.isCorrect).length;
-
-        this.chosenCorrectAnswerOption = selectedOptions.filter(option => option.isCorrect).length;
-        this.chosenWrongAnswerOption = selectedOptions.filter(option => !option.isCorrect).length;
-    }
 }

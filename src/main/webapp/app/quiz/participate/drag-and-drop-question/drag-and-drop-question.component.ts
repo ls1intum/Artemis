@@ -80,8 +80,8 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy, OnChange
     }
 
     ngOnChanges(changes: SimpleChanges): void {
-        console.log(changes);
-        this.count();
+        this.countRightMappings();
+
     }
 
     ngOnDestroy() {}
@@ -265,24 +265,16 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy, OnChange
         }
     }
 
-    countRightMappings(): number {
+    countRightMappings(): void {
         this.correctAnswer = 0;
-        let temp = 0;
-        for (let item of this.mappings){
-            const dropElement =  item.dropLocation;
-            if(!(this.isLocationCorrect(dropElement) == null)){
-              this.correctAnswer = temp + 1;
+
+        for(let tempdrop of this.question.dropLocations){
+
+            if (this.isLocationCorrect(tempdrop)){
+                this.correctAnswer++;
             }
-        } return this.correctAnswer;
+        }
     }
 
 
-    count(): void {
-        this.amountOfAnswerOptions = this.question.dropLocations.length;
-        this.chosenWrongAnswerOption = this.question.correctMappings.length;
-        this.countRightMappings();
-        console.log(this.countRightMappings());
-        console.log(this.amountOfAnswerOptions);
-        console.log(this.chosenWrongAnswerOption);
-    }
 }
