@@ -228,6 +228,10 @@ public class Result implements Serializable {
     }
 
     public Boolean isRated() {
+        if (rated == null) {
+            return false;
+        }
+
         return rated;
     }
 
