@@ -128,8 +128,12 @@ public class TutorParticipationResource {
 
             float tutorScore = calculateTotalScore(exampleSubmission.getSubmission().getResult().getFeedbacks());
 
-            if (lowerInstructorScore > tutorScore || tutorScore > higherInstructorScore) {
-                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("result", "wrongScore", "Your score is too different from the instructor's one")).body(null);
+            if (lowerInstructorScore > tutorScore) {
+                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("result", "tooLow", "Your score is too different from the instructor's one")).body(null);
+            }
+
+            if (tutorScore > higherInstructorScore) {
+                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("result", "tooHigh", "Your score is too different from the instructor's one")).body(null);
             }
         }
 

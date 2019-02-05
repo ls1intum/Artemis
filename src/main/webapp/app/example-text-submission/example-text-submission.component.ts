@@ -1,21 +1,21 @@
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {Location} from '@angular/common';
-import {JhiAlertService} from 'ng-jhipster';
-import {Subscription} from 'rxjs';
-import {AccountService} from '../core';
-import {ExampleSubmission} from 'app/entities/example-submission';
-import {ExerciseService} from 'app/entities/exercise';
-import {HttpResponse, HttpErrorResponse} from '@angular/common/http';
-import {TextSubmission, TextSubmissionService} from 'app/entities/text-submission';
-import {ExampleSubmissionService} from 'app/entities/example-submission/example-submission.service';
-import {Feedback} from 'app/entities/feedback';
-import {TextAssessmentsService} from 'app/entities/text-assessments/text-assessments.service';
-import {Result} from 'app/entities/result';
-import {HighlightColors} from 'app/text-shared/highlight-colors';
-import {TextExercise} from 'app/entities/text-exercise';
-import {TutorParticipationService} from 'app/tutor-exercise-dashboard/tutor-participation.service';
-import {TutorParticipation} from 'app/entities/tutor-participation';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Location } from '@angular/common';
+import { JhiAlertService } from 'ng-jhipster';
+import { Subscription } from 'rxjs';
+import { AccountService } from '../core';
+import { ExampleSubmission } from 'app/entities/example-submission';
+import { ExerciseService } from 'app/entities/exercise';
+import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
+import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
+import { ExampleSubmissionService } from 'app/entities/example-submission/example-submission.service';
+import { Feedback } from 'app/entities/feedback';
+import { TextAssessmentsService } from 'app/entities/text-assessments/text-assessments.service';
+import { Result } from 'app/entities/result';
+import { HighlightColors } from 'app/text-shared/highlight-colors';
+import { TextExercise } from 'app/entities/text-exercise';
+import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
+import { TutorParticipation } from 'app/entities/tutor-participation';
 
 @Component({
     selector: 'jhi-example-text-submission',
@@ -263,8 +263,10 @@ export class ExampleTextSubmissionComponent implements OnInit {
             (error: HttpErrorResponse) => {
                 const errorType = error.headers.get('x-artemisapp-error');
 
-                if (errorType === 'error.wrongScore') {
-                    this.jhiAlertService.error('arTeMiSApp.exampleSubmission.assessScore.error');
+                if (errorType === 'error.tooLow') {
+                    this.jhiAlertService.error('arTeMiSApp.exampleSubmission.assessScore.tooLow');
+                } else if (errorType === 'error.tooHigh') {
+                    this.jhiAlertService.error('arTeMiSApp.exampleSubmission.assessScore.tooHigh');
                 } else {
                     this.onError(error.message);
                 }
