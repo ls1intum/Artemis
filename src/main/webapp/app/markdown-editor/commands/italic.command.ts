@@ -14,7 +14,9 @@ export class ItalicCommand extends Command {
         if (chosenText.includes('*')) {
             textToAdd = chosenText.slice(1, -1);
             editor.insert(textToAdd);
-        } else textToAdd = `*${chosenText}*`;
+        } else {
+            textToAdd = `*${chosenText}*`;
+        }
 
         editor.clearSelection();
         editor.moveCursorTo(editor.getCursorPosition().row, Number.POSITIVE_INFINITY);
