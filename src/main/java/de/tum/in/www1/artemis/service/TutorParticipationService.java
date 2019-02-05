@@ -109,7 +109,7 @@ public class TutorParticipationService {
 
         List<ExampleSubmission> exampleSubmissions = exampleSubmissionRepository.findAllByExerciseId(exercise.getId());
 
-        if (exampleSubmissions.size() <= 0) {
+        if (exampleSubmissions.size() == 0) {
             tutorParticipation.setStatus(TutorParticipationStatus.TRAINED);
         } else {
             tutorParticipation.setStatus(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
