@@ -102,7 +102,7 @@ public class ExerciseResource {
         log.debug("REST request to get Exercise : {}", id);
         Exercise exercise = exerciseService.findOne(id);
 
-        if (hasNotAtLeastTAPermissions(exercise)) return forbidden();
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) return forbidden();
 
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(exercise));
     }
@@ -119,7 +119,7 @@ public class ExerciseResource {
         log.debug("REST request to delete Exercise : {}", id);
         Exercise exercise = exerciseService.findOneLoadParticipations(id);
         if (Optional.ofNullable(exercise).isPresent()) {
-            if (hastNotAtLeastInstructorPermissions(exercise)) return forbidden();
+            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) return forbidden();
             exerciseService.delete(exercise, true, false);
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
@@ -139,7 +139,7 @@ public class ExerciseResource {
     public ResponseEntity<Void> reset(@PathVariable Long id) {
         log.debug("REST request to reset Exercise : {}", id);
         Exercise exercise = exerciseService.findOneLoadParticipations(id);
-        if (hastNotAtLeastInstructorPermissions(exercise)) return forbidden();
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) return forbidden();
         exerciseService.reset(exercise);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert("exercise", id.toString())).build();
     }
@@ -156,7 +156,7 @@ public class ExerciseResource {
     public ResponseEntity<Resource> cleanup(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean deleteRepositories) throws IOException {
         log.info("Start to cleanup build plans for Exercise: {}, delete repositories: {}", id, deleteRepositories);
         Exercise exercise = exerciseService.findOne(id);
-        if (hastNotAtLeastInstructorPermissions(exercise)) return forbidden();
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) return forbidden();
         exerciseService.cleanup(id, deleteRepositories);
         log.info("Cleanup build plans was successful for Exercise : {}", id);
         return ResponseEntity.ok().headers(HeaderUtil.createAlert("Cleanup was successful. Repositories have been deleted: " + deleteRepositories, "")).build();
@@ -174,7 +174,7 @@ public class ExerciseResource {
     public ResponseEntity<Resource> archiveRepositories(@PathVariable Long id) throws IOException {
         log.info("Start to archive repositories for Exercise : {}", id);
         Exercise exercise = exerciseService.findOne(id);
-        if (hastNotAtLeastInstructorPermissions(exercise)) return forbidden();
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) return forbidden();
         File zipFile = exerciseService.archive(id);
         if (zipFile == null) {
             return ResponseEntity.noContent()
@@ -202,7 +202,7 @@ public class ExerciseResource {
         studentIds = studentIds.replaceAll(" ","");
         Exercise exercise = exerciseService.findOne(exerciseId);
 
-        if (hasNotAtLeastTAPermissions(exercise)) return forbidden();
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) return forbidden();
 
         List<String> studentList = Arrays.asList(studentIds.split("\\s*,\\s*"));
         if(studentList.isEmpty() || studentList == null){
@@ -237,7 +237,7 @@ public class ExerciseResource {
         Exercise exercise = exerciseService.findOne(id);
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        if (hasNotAtLeastTAPermissions(exercise)) return forbidden();
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) return forbidden();
 
         TutorParticipation tutorParticipation = tutorParticipationService.findByExerciseAndTutor(exercise, user);
         exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
@@ -249,21 +249,4 @@ public class ExerciseResource {
 
         return ResponseUtil.wrapOrNotFound(Optional.of(exercise));
     }
-
-    private boolean hasNotAtLeastTAPermissions(Exercise exercise) {
-        Course course = exercise.getCourse();
-        User user = userService.getUserWithGroupsAndAuthorities();
-
-        return !authCheckService.isTeachingAssistantInCourse(course, user) &&
-            !authCheckService.isInstructorInCourse(course, user) &&
-            !authCheckService.isAdmin();
-    }
-
-    private boolean hastNotAtLeastInstructorPermissions(Exercise exercise) {
-        Course course = exercise.getCourse();
-        User user = userService.getUserWithGroupsAndAuthorities();
-
-        return !authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin();
-    }
-
 }

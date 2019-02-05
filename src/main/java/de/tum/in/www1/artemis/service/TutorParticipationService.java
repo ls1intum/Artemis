@@ -109,6 +109,12 @@ public class TutorParticipationService {
 
         List<ExampleSubmission> exampleSubmissions = exampleSubmissionRepository.findAllByExerciseId(exercise.getId());
 
+        // The tutor starts a participation when she reads the grading instruction. If no grading instructions are
+        // available, then she starts her participation clicking on "Start participation".
+        // Usually, the first step is `REVIEWED_INSTRUCTIONS`: after that, she has to train reviewing some example
+        // submissions, and assessing others.
+        // If no example submissions are available, because the instructor hasn't created any, then she goes directly
+        // to the next step, that allows her to assess students' participations
         if (exampleSubmissions.size() == 0) {
             tutorParticipation.setStatus(TutorParticipationStatus.TRAINED);
         } else {

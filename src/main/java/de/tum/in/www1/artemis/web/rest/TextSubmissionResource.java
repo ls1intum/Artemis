@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
@@ -182,8 +183,8 @@ public class TextSubmissionResource {
                                                                       @RequestParam(defaultValue = "false") boolean submittedOnly) {
         log.debug("REST request to get all TextSubmissions");
         Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!hasAtLeastTAPermissions(exercise, user)) return forbidden();
+
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) return forbidden();
 
         return ResponseEntity.ok().body(
 
@@ -226,7 +227,9 @@ public class TextSubmissionResource {
         Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        if (!hasAtLeastTAPermissions(exercise, user)) return forbidden();
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) return forbidden();
+
+        Stream<TextSubmission> textSubmissionStream =
 
         return ResponseEntity.ok().body(
 
@@ -278,20 +281,11 @@ public class TextSubmissionResource {
     public ResponseEntity<TextSubmission> getTextSubmissionWithoutAssessment(@PathVariable Long exerciseId) {
         log.debug("REST request to get a text submission without assessment");
         Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
 
-        if (!hasAtLeastTAPermissions(exercise, user)) return forbidden();
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) return forbidden();
 
         Optional<TextSubmission> textSubmissionWithoutAssessment = this.textSubmissionService.textSubmissionWithoutResult(exerciseId);
 
         return ResponseUtil.wrapOrNotFound(textSubmissionWithoutAssessment);
-    }
-
-    private boolean hasAtLeastTAPermissions(Exercise exercise, User user) {
-        Course course = exercise.getCourse();
-
-        return authCheckService.isTeachingAssistantInCourse(course, user) ||
-            authCheckService.isInstructorInCourse(course, user) ||
-            authCheckService.isAdmin();
     }
 }

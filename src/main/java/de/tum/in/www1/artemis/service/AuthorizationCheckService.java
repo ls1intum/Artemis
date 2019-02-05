@@ -27,12 +27,7 @@ public class AuthorizationCheckService {
     }
 
     public <T extends Exercise> boolean isAtLeastTeachingAssistantForExercise(Optional<T> exercise) {
-        if (exercise.isPresent()) {
-            return isAtLeastTeachingAssistantForExercise(exercise.get());
-        }
-        else {
-            return false;
-        }
+        return exercise.filter(this::isAtLeastTeachingAssistantForExercise).isPresent();
     }
 
     public boolean isAtLeastTeachingAssistantForExercise(Exercise exercise) {
@@ -40,12 +35,7 @@ public class AuthorizationCheckService {
     }
 
     public boolean isAtLeastTeachingAssistantForExercise(Optional<Exercise> exercise, User user) {
-        if (exercise.isPresent()) {
-            return isAtLeastTeachingAssistantForExercise(exercise.get(), user);
-        }
-        else {
-            return false;
-        }
+        return exercise.filter(exercise1 -> isAtLeastTeachingAssistantForExercise(exercise1, user)).isPresent();
     }
 
     public boolean isAtLeastTeachingAssistantForExercise(Exercise exercise, User user) {
@@ -60,6 +50,17 @@ public class AuthorizationCheckService {
             user.getGroups().contains(course.getTeachingAssistantGroupName()) ||
             isAdmin();
 
+    }
+
+    public boolean isAtLeastInstructorForExercise(Exercise exercise) {
+        return isAtLeastInstructorForCourse(exercise.getCourse(), null);
+    }
+
+    public boolean isAtLeastInstructorForCourse(Course course, User user) {
+        if (user == null || user.getGroups() == null) {
+            user = userService.getUserWithGroupsAndAuthorities();
+        }
+        return user.getGroups().contains(course.getInstructorGroupName()) || isAdmin();
     }
 
     /**

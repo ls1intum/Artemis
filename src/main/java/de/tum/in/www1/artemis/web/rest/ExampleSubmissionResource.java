@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import de.tum.in.www1.artemis.domain.ExampleSubmission;
-import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.service.ExampleSubmissionService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -25,12 +24,9 @@ public class ExampleSubmissionResource {
 
     private static final String ENTITY_NAME = "exampleSubmission";
     private final Logger log = LoggerFactory.getLogger(ExampleSubmissionResource.class);
-    private final ExampleSubmissionRepository exampleSubmissionRepository;
     private final ExampleSubmissionService exampleSubmissionService;
 
-    public ExampleSubmissionResource(ExampleSubmissionRepository exampleSubmissionRepository,
-                                     ExampleSubmissionService exampleSubmissionService) {
-        this.exampleSubmissionRepository = exampleSubmissionRepository;
+    public ExampleSubmissionResource(ExampleSubmissionService exampleSubmissionService) {
         this.exampleSubmissionService = exampleSubmissionService;
     }
 
@@ -93,7 +89,7 @@ public class ExampleSubmissionResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<ExampleSubmission> getExampleSubmission(@PathVariable Long id) {
         log.debug("REST request to get ExampleSubmission : {}", id);
-        Optional<ExampleSubmission> exampleSubmission = exampleSubmissionRepository.findById(id);
+        Optional<ExampleSubmission> exampleSubmission = exampleSubmissionService.get(id);
         return ResponseUtil.wrapOrNotFound(exampleSubmission);
     }
 }

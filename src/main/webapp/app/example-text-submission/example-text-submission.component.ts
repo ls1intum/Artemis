@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { JhiAlertService } from 'ng-jhipster';
-import { Subscription } from 'rxjs';
 import { AccountService } from '../core';
 import { ExampleSubmission } from 'app/entities/example-submission';
 import { ExerciseService } from 'app/entities/exercise';
@@ -41,8 +40,6 @@ export class ExampleTextSubmissionComponent implements OnInit {
     public getColorForIndex = HighlightColors.forIndex;
 
     private exampleSubmissionId: number;
-    private subscription: Subscription;
-
     constructor(
         private exerciseService: ExerciseService,
         private textSubmissionService: TextSubmissionService,
@@ -59,23 +56,19 @@ export class ExampleTextSubmissionComponent implements OnInit {
 
     ngOnInit(): void {
         // (+) converts string 'id' to a number
-        this.subscription = this.route.params.subscribe(params => {
-            this.exerciseId = +params.exerciseId;
+        this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
+        const exampleSubmissionId = this.route.snapshot.paramMap.get('exampleSubmissionId');
+        this.readOnly = !!this.route.snapshot.paramMap.get('readOnly');
+        this.toComplete = !!this.route.snapshot.paramMap.get('toComplete');
 
-            if (params.exampleSubmissionId === 'new') {
-                this.isNewSubmission = true;
-                this.exampleSubmissionId = -1;
-            } else {
-                this.exampleSubmissionId = +params.exampleSubmissionId;
-            }
+        if (exampleSubmissionId === 'new') {
+            this.isNewSubmission = true;
+            this.exampleSubmissionId = -1;
+        } else {
+            this.exampleSubmissionId = +exampleSubmissionId;
+        }
 
-            this.loadAll();
-        });
-
-        this.route.queryParams.subscribe(params => {
-            this.readOnly = params['readOnly'];
-            this.toComplete = params['toComplete'];
-        });
+        this.loadAll();
     }
 
     loadAll() {

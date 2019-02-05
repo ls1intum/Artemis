@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Course, CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
-import { Subscription } from 'rxjs';
 import { AccountService, User } from '../core';
 import { HttpResponse } from '@angular/common/http';
 import { Exercise } from 'app/entities/exercise';
@@ -27,8 +26,6 @@ export class TutorCourseDashboardComponent implements OnInit {
     numberOfComplaints = 0;
     numberOfTutorComplaints = 0;
     showFinishedExercises = false;
-
-    private subscription: Subscription;
     private tutor: User;
 
     constructor(
@@ -39,18 +36,8 @@ export class TutorCourseDashboardComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        // (+) converts string 'id' to a number
-        this.subscription = this.route.params.subscribe(params => {
-            this.courseId = +params.courseId;
-            this.loadAll();
-        });
-
-        this.route.queryParams.subscribe(queryParams => {
-            if (queryParams['welcome'] === '') {
-                this.showWelcomeAlert();
-            }
-        });
-
+        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        this.loadAll();
         this.accountService.identity().then(user => (this.tutor = user));
     }
 
@@ -121,12 +108,5 @@ export class TutorCourseDashboardComponent implements OnInit {
     private onError(error: string) {
         console.error(error);
         this.jhiAlertService.error(error, null, null);
-    }
-
-    showWelcomeAlert() {
-        // show alert after timeout to fix translation not loaded
-        setTimeout(() => {
-            this.jhiAlertService.info('arTeMiSApp.exercise.welcome');
-        }, 500);
     }
 }

@@ -580,10 +580,14 @@ public class ParticipationService {
             List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId());
 
             results.forEach(result -> {
-                if (result.isRated()) {
-                    if (result.getAssessor() instanceof HibernateProxy) {
-                        result.setAssessor((User) Hibernate.unproxy(result.getAssessor()));
+                try {
+                    if (result.isRated()) {
+                        if (result.getAssessor() instanceof HibernateProxy) {
+                            result.setAssessor((User) Hibernate.unproxy(result.getAssessor()));
+                        }
                     }
+                } catch (Error error) {
+                    // The result is broken for some reason, just silently ignore it.
                 }
             });
 

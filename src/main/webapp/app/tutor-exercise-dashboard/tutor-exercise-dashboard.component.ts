@@ -1,8 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
-import { Subscription } from 'rxjs';
 import { AccountService, User } from '../core';
 import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { Exercise, ExerciseService } from 'app/entities/exercise';
@@ -47,7 +46,6 @@ export class TutorExerciseDashboardComponent implements OnInit {
     TRAINED = TutorParticipationStatus.TRAINED;
     COMPLETED = TutorParticipationStatus.COMPLETED;
 
-    private subscription: Subscription;
     private tutor: User;
 
     constructor(
@@ -57,17 +55,14 @@ export class TutorExerciseDashboardComponent implements OnInit {
         private route: ActivatedRoute,
         private tutorParticipationService: TutorParticipationService,
         private textSubmissionService: TextSubmissionService,
-        private modalService: NgbModal,
-        private router: Router
+        private modalService: NgbModal
     ) {}
 
     ngOnInit(): void {
-        // (+) converts string 'id' to a number
-        this.subscription = this.route.params.subscribe(params => {
-            this.courseId = +params.courseId;
-            this.exerciseId = +params.exerciseId;
-            this.loadAll();
-        });
+        this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
+        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+
+        this.loadAll();
 
         this.accountService.identity().then(user => (this.tutor = user));
     }

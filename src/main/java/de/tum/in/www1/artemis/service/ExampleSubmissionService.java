@@ -4,7 +4,6 @@ import de.tum.in.www1.artemis.domain.ExampleSubmission;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
-import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,12 +15,9 @@ import java.util.Optional;
 public class ExampleSubmissionService {
 
     private final ExampleSubmissionRepository exampleSubmissionRepository;
-    private final FeedbackRepository feedbackRepository;
 
-    public ExampleSubmissionService(ExampleSubmissionRepository exampleSubmissionRepository,
-                                    FeedbackRepository feedbackRepository) {
+    public ExampleSubmissionService(ExampleSubmissionRepository exampleSubmissionRepository) {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
-        this.feedbackRepository = feedbackRepository;
     }
 
     public Optional<ExampleSubmission> get(long id) {
@@ -51,9 +47,6 @@ public class ExampleSubmissionService {
             return null;
         }
 
-        // TODO find out why this doesn't work
-//        List<Feedback> feedbacks = result.getFeedbacks();
-
-        return this.feedbackRepository.findByResult(result);
+        return result.getFeedbacks();
     }
 }
