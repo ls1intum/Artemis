@@ -127,7 +127,7 @@
                             <button type="submit"
                                     [hidden]="quizIsOver(quizExercise) && userIsInstructor()"
                                     [disabled]="quizExercise.status === QuizStatus.ACTIVE || (quizIsOver(quizExercise) && !userIsInstructor())"
-                                    [routerLink]="['quiz-exercise','edit', quizExercise.id]"
+                                    [routerLink]="['/course', quizExercise.course.id, 'quiz-exercise','edit', quizExercise.id]"
                                     class="btn btn-primary btn-sm mr-1 mb-1">
                                 <span class="fa fa-pencil"></span>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
