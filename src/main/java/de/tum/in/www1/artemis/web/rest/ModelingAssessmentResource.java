@@ -160,9 +160,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
         return ResponseEntity.ok(result.get());
     }
 
-    //TODO change to POST and remove submision in path or merge with saveNodelingAssessment?
     //TODO use Exceptions on wrong path variables resultId exerciseId ?
-    //TODO check element ids
 
     /**
      * Saves assessments and updates result. Sets result to rated so the student can see the assessments.
@@ -174,6 +172,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
      */
     @PutMapping("/modeling-assessments/exercise/{exerciseId}/result/{resultId}/submit")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    //TODO changing submitted assessment always produces Conflict
     public ResponseEntity<Object> submitModelingAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody List<ModelElementAssessment> modelingAssessment) {
         Optional<ModelingExercise> modelingExercise = modelingExerciseService.findOne(exerciseId);
         ResponseEntity responseFailure = checkExercise(modelingExercise);
