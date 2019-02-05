@@ -248,17 +248,6 @@ public class CourseResource {
         course.setExercises(new HashSet<>(exercises));
 
         return ResponseUtil.wrapOrNotFound(Optional.of(course));
-
-//        // get all course with exercises for this user
-//        List<Course> courses = courseService.findAllWithExercisesForUser(principal, user);
-//
-//        for (Course course : courses) {
-//            for (Exercise exercise : course.getExercises()) {
-//               // TODO: get number of assessments done, number of assessment to do, status of participation
-//            }
-//        }
-//
-//        return courses;
     }
 
     /**
