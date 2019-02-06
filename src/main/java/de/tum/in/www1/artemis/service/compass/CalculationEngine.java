@@ -17,17 +17,6 @@ public interface CalculationEngine {
 
     Collection<Long> getModelIds();
 
-    //TODO remove if not needed
-//    /**
-//     * Add a new assessment
-//     *
-//     * @param assessment the new assessment as raw sting
-//     * @param modelId the id of the corresponding model
-//     */
-//    void notifyNewAssessment(String assessment, long modelId);
-
-    //TODO make adaptive to other Assessments?
-
     /**
      * Add a new assessment
      *

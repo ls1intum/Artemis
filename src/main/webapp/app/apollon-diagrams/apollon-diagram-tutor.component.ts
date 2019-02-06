@@ -11,7 +11,7 @@ import {ModelElementType, ModelingAssessment, ModelingAssessmentService} from '.
 import {AccountService} from '../core';
 import {Submission} from '../entities/submission';
 import {HttpErrorResponse} from '@angular/common/http';
-import {Conflict} from "app/entities/modeling-assessment/Conflict";
+import {Conflict} from 'app/entities/modeling-assessment/Conflict';
 import {isNullOrUndefined} from 'util';
 
 @Component({
@@ -157,7 +157,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         assessmentsDiv.scrollTop(apollonDiv.scrollTop());
         assessmentsDiv.scrollLeft(apollonDiv.scrollLeft());
 
-        apollonDiv.on('scroll', function () {
+        apollonDiv.on('scroll', function() {
             assessmentsDiv.scrollTop(apollonDiv.scrollTop());
             assessmentsDiv.scrollLeft(apollonDiv.scrollLeft());
         });
@@ -232,11 +232,12 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
             result.participation.results = [result];
             this.result = result;
             this.jhiAlertService.success('arTeMiSApp.apollonDiagram.assessment.submitSuccessful');
+            this.conflict = undefined;
             this.done = false;
         }, (error: HttpErrorResponse) => {
             if (error.status === 409) {
                 this.conflict = error.error;
-                this.jhiAlertService.error('Submission failed! Conflict with existing Assessments detected');
+                this.jhiAlertService.error('arTeMiSApp.apollonDiagram.assessment.submitFailedWithConflict');
             }
         });
     }

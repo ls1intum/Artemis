@@ -1,23 +1,19 @@
 package de.tum.in.www1.artemis.service.compass;
 
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.*;
+import org.slf4j.*;
+import com.google.gson.*;
 import de.tum.in.www1.artemis.service.compass.assessment.*;
-import de.tum.in.www1.artemis.service.compass.conflict.Conflict;
 import de.tum.in.www1.artemis.service.compass.controller.*;
 import de.tum.in.www1.artemis.service.compass.grade.*;
 import de.tum.in.www1.artemis.service.compass.umlmodel.*;
 import de.tum.in.www1.artemis.service.compass.utils.JSONMapping;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.*;
 
 
 public class CompassCalculationEngine implements CalculationEngine {
-
+    private static final double SCORE_EQUALITY_THRESHOLD = 0.0001;
     private final Logger log = LoggerFactory.getLogger(CompassCalculationEngine.class);
 
     private ModelIndex modelIndex;
@@ -26,6 +22,7 @@ public class CompassCalculationEngine implements CalculationEngine {
     private AutomaticAssessmentController automaticAssessmentController;
     private ModelSelector modelSelector;
     private LocalDateTime lastUsed;
+
 
     CompassCalculationEngine(Map<Long, JsonObject> models, Map<Long, JsonObject> assessments) {
         lastUsed = LocalDateTime.now();
@@ -46,25 +43,25 @@ public class CompassCalculationEngine implements CalculationEngine {
         assessModelsAutomatically();
     }
 
-    public HashMap<String,Integer> getElementIdsInConflict(long modelId, List<ModelElementAssessment> modelingAssessment) { //TODO register Assessment in Conflict in ModelSelector?
-        HashMap<String,Integer> elementIdsInConflict = new HashMap<>();
+
+    public HashMap<String, Integer> getElementIdsInConflict(long modelId, List<ModelElementAssessment> modelingAssessment) { //TODO register Assessment in Conflict in ModelSelector?
+        HashMap<String, Integer> elementIdsInConflict = new HashMap<>();
         UMLModel model = modelIndex.getModel(modelId);
         modelingAssessment.forEach(modelElementAssessment -> {
             UMLElement element = model.getElementByJSONID(modelElementAssessment.getId()); //TODO return Optional ad throw Exception if no UMLElement found
-            Assessment assessment = assessmentIndex.getAssessment(element);
-            if (assessment != null) {
-                assessment.getContextScoreList().values().forEach(scores -> {
-                    Optional<Score> scoreInConflict = scores.stream()
-                        .filter(score -> score.getPoints() != modelElementAssessment.getCredits())//TODO comparison of double values ...
-                        .findFirst();
-                    if (scoreInConflict.isPresent()) {
-                        elementIdsInConflict.put(modelElementAssessment.getId(), element.getElementID());
-                    }
+            Optional<Assessment> assessmentOptional = assessmentIndex.getAssessment(element.getElementID());
+            assessmentOptional.ifPresent(assessment -> assessment.getContextScoreList().values().forEach(scores -> {
+                Optional<Score> scoreInConflict = scores.stream()
+                    .filter(score -> scoresAreConsideredEqual(score.getPoints(), modelElementAssessment.getCredits()))
+                    .findFirst();
+                scoreInConflict.ifPresent(score -> {
+                    elementIdsInConflict.put(modelElementAssessment.getId(), element.getElementID());
                 });
-            }
+            }));
         });
         return elementIdsInConflict;
     }
+
 
     private void buildModel(long id, JsonObject jsonModel) {
         try {
@@ -76,6 +73,7 @@ public class CompassCalculationEngine implements CalculationEngine {
         }
     }
 
+
     private void buildAssessment(long id, JsonObject jsonAssessment) {
         UMLModel model = modelIndex.getModelMap().get(id);
         if (model == null) {
@@ -86,27 +84,33 @@ public class CompassCalculationEngine implements CalculationEngine {
         modelSelector.removeModelWaitingForAssessment(model.getModelID());
     }
 
+
     protected Collection<UMLModel> getUmlModelCollection() {
         return modelIndex.getModelCollection();
     }
 
+
     protected Map<Long, UMLModel> getModelMap() {
         return modelIndex.getModelMap();
     }
+
 
     @SuppressWarnings("unused")
     private double getTotalCoverage() {
         return automaticAssessmentController.getTotalCoverage();
     }
 
+
     @SuppressWarnings("unused")
     private double getTotalConfidence() {
         return automaticAssessmentController.getTotalConfidence();
     }
 
+
     private void assessModelsAutomatically() {
         automaticAssessmentController.assessModelsAutomatically(modelIndex, assessmentIndex);
     }
+
 
     private void addNewManualAssessment(Map<String, Score> scoreHashMap, UMLModel model) {
         try {
@@ -115,6 +119,7 @@ public class CompassCalculationEngine implements CalculationEngine {
             log.error("manual assessment for " + model.getName() + " could not be added: " + e.getMessage());
         }
     }
+
 
     /**
      * @return id of the next optimal model or null if all models are completely assessed
@@ -134,6 +139,7 @@ public class CompassCalculationEngine implements CalculationEngine {
         return new AbstractMap.SimpleEntry<>(optimalModelId, grade);
     }
 
+
     @Override
     public Grade getResultForModel(long modelId) {
         lastUsed = LocalDateTime.now();
@@ -150,10 +156,12 @@ public class CompassCalculationEngine implements CalculationEngine {
         return compassResult;
     }
 
+
     @Override
     public Collection<Long> getModelIds() {
         return modelIndex.getModelMap().keySet();
     }
+
 
     @Override
     public void notifyNewAssessment(List<ModelElementAssessment> modelingAssessment, long submissionId) {
@@ -162,6 +170,7 @@ public class CompassCalculationEngine implements CalculationEngine {
         buildAssessment(submissionId, modelingAssessment);
         assessModelsAutomatically();
     }
+
 
     @Override
     public void notifyNewModel(String model, long modelId) {
@@ -173,10 +182,12 @@ public class CompassCalculationEngine implements CalculationEngine {
         buildModel(modelId, new JsonParser().parse(model).getAsJsonObject());
     }
 
+
     @Override
     public LocalDateTime getLastUsedAt() {
         return lastUsed;
     }
+
 
     @Override
     public Map<Long, Grade> getModelsWaitingForAssessment() {
@@ -186,6 +197,7 @@ public class CompassCalculationEngine implements CalculationEngine {
         }
         return optimalModels;
     }
+
 
     @Override
     public void removeModelWaitingForAssessment(long modelId, boolean isAssessed) {
@@ -198,6 +210,7 @@ public class CompassCalculationEngine implements CalculationEngine {
         }
     }
 
+
     @Override
     public JsonObject exportToJson(Grade grade, long modelId) {
         UMLModel model = this.modelIndex.getModelMap().get(modelId);
@@ -206,6 +219,7 @@ public class CompassCalculationEngine implements CalculationEngine {
         }
         return JSONParser.exportToJSON(grade, model);
     }
+
 
     /**
      * format:
@@ -283,12 +297,14 @@ public class CompassCalculationEngine implements CalculationEngine {
         return jsonObject;
     }
 
+
     private void buildAssessment(long submissionId, List<ModelElementAssessment> modelingAssessment) {
         UMLModel model = modelIndex.getModel(submissionId);
         Map<String, Score> scoreList = createScoreList(modelingAssessment, model);
         this.addNewManualAssessment(scoreList, model);
         modelSelector.removeModelWaitingForAssessment(model.getModelID());
     }
+
 
     private Map<String, Score> createScoreList(List<ModelElementAssessment> modelingAssessment, UMLModel model) {
         Map<String, Score> scoreHashMap = new HashMap<>();
@@ -377,6 +393,12 @@ public class CompassCalculationEngine implements CalculationEngine {
         }
         return conflict;
     }
+
+
+    private boolean scoresAreConsideredEqual(double score1, double score2) {
+        return Math.abs(score1 - score2) < SCORE_EQUALITY_THRESHOLD ;
+    }
+
 
     // Used for internal analysis of metrics
     void printStatistic() {
