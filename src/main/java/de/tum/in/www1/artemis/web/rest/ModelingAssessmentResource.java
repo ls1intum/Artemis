@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import java.util.*;
-
-import de.tum.in.www1.artemis.service.compass.assessment.ModelElementAssessment;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.*;
 import org.springframework.http.*;
@@ -13,9 +11,9 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
-import de.tum.in.www1.artemis.service.compass.conflict.*;
+import de.tum.in.www1.artemis.service.compass.assessment.ModelElementAssessment;
+import de.tum.in.www1.artemis.service.compass.conflict.Conflict;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 /**
@@ -162,6 +160,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     //TODO use Exceptions on wrong path variables resultId exerciseId ?
 
+
     /**
      * Saves assessments and updates result. Sets result to rated so the student can see the assessments.
      *
@@ -173,7 +172,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @PutMapping("/modeling-assessments/exercise/{exerciseId}/result/{resultId}/submit")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     //TODO changing submitted assessment always produces Conflict
-    public ResponseEntity<Object> submitModelingAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody List<ModelElementAssessment> modelingAssessment) {
+    public ResponseEntity<Object> submitModelingAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestParam(value = "ignoreConflict", defaultValue = "false") boolean ignoreConflict, @RequestBody List<ModelElementAssessment> modelingAssessment) {
         Optional<ModelingExercise> modelingExercise = modelingExerciseService.findOne(exerciseId);
         ResponseEntity responseFailure = checkExercise(modelingExercise);
         if (responseFailure != null) {
@@ -183,9 +182,10 @@ public class ModelingAssessmentResource extends AssessmentResource {
         if (!result.isPresent()) {
             return ResponseEntity.notFound().build();
         }
+
         Long submissionId = result.get().getSubmission().getId();
         Optional<Conflict> conflict = compassService.checkForConflict(exerciseId, submissionId, modelingAssessment);
-        if (conflict.isPresent()) {
+        if (conflict.isPresent() && !ignoreConflict) {
             modelingAssessmentService.saveManualAssessment(result.get(), modelingExercise.get().getId(), modelingAssessment);
             return ResponseEntity.status(HttpStatus.CONFLICT).body(conflict.get());
         } else {
