@@ -37,12 +37,10 @@ export class TextExerciseComponent implements OnInit {
     }
 
     ngOnInit() {
-        if (this.course == null) {
             this.subscription = this.route.params.subscribe(params => {
                 this.load();
                 this.registerChangeInTextExercises();
             });
-        }
     }
 
     load() {
