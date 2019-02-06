@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.service.compass.utils.JSONMapping;
 
 
 public class CompassCalculationEngine implements CalculationEngine {
-
+    private static final double SCORE_EQUALITY_THRESHOLD = 0.0001;
     private final Logger log = LoggerFactory.getLogger(CompassCalculationEngine.class);
 
     private ModelIndex modelIndex;
@@ -52,7 +52,7 @@ public class CompassCalculationEngine implements CalculationEngine {
             Optional<Assessment> assessmentOptional = assessmentIndex.getAssessment(element.getElementID());
             assessmentOptional.ifPresent(assessment -> assessment.getContextScoreList().values().forEach(scores -> {
                 Optional<Score> scoreInConflict = scores.stream()
-                    .filter(score -> score.getPoints() != modelElementAssessment.getCredits())//TODO comparison of double values ...
+                    .filter(score -> scoresAreConsideredEqual(score.getPoints(), modelElementAssessment.getCredits()))
                     .findFirst();
                 scoreInConflict.ifPresent(score -> {
                     elementIdsInConflict.put(modelElementAssessment.getId(), element.getElementID());
@@ -392,6 +392,11 @@ public class CompassCalculationEngine implements CalculationEngine {
             }
         }
         return conflict;
+    }
+
+
+    private boolean scoresAreConsideredEqual(double score1, double score2) {
+        return Math.abs(score1 - score2) < SCORE_EQUALITY_THRESHOLD ;
     }
 
 
