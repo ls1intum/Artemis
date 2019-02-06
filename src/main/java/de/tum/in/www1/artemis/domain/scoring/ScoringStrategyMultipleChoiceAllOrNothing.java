@@ -31,9 +31,8 @@ public class ScoringStrategyMultipleChoiceAllOrNothing implements ScoringStrateg
             }
             // the user wasn't wrong about a single answer option => the answer is 100% correct
             return mcQuestion.getScore();
-        } else {
-            // the submitted answer's type doesn't fit the question's type => it cannot be correct
-            return 0.0;
         }
+        // the submitted answer's type doesn't fit the question's type => it cannot be correct
+        return 0.0;
     }
 }

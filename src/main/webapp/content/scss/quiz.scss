@@ -11,6 +11,53 @@
     margin-bottom: 8px;
 }
 
+.short-answer-question-display {
+    display: inline;
+    white-space: pre;
+    margin-bottom: 10px;
+    line-height: 30px;
+}
+
+.short-answer-question-input {
+    margin-bottom: 10px;
+    line-height: 30px;
+}
+
+.saQuestion-statistic-letter {
+    position: absolute;
+    right: 0px;
+    top: 10px;
+    z-index: 1;
+    opacity: 1;
+
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+    background-color: #428bca;
+    color: white;
+    border-radius: 50%;
+    text-align: center;
+}
+
+.saQuestion-statistic-letter-solution {
+    position: absolute;
+    right: 0px;
+    top: 10px;
+    z-index: 1;
+    opacity: 1;
+
+    width: 30px;
+    height: 30px;
+    line-height: 30px;
+    background-color: #5cb85c;
+    color: white;
+    border-radius: 50%;
+    text-align: center;
+}
+
+
+
+
 .edit-quiz .quiz-options,
 .question-options {
     display: flex;
@@ -171,7 +218,8 @@
     background: #fefefe;
 
     .mc-question,
-    .dnd-question {
+    .dnd-question,
+    .sa-question {
         width: 100%;
         box-sizing: border-box;
         border: none;
@@ -185,7 +233,8 @@
 
     .question-card-body,
     .preview-mc-question,
-    .preview-dnd-question {
+    .preview-dnd-question,
+    .preview-sa-question {
         padding: 20px;
     }
 
@@ -234,7 +283,8 @@
 }
 
 .mc-question,
-.dnd-question {
+.dnd-question,
+.sa-question {
     position: relative;
     width: 100%;
     box-sizing: border-box;

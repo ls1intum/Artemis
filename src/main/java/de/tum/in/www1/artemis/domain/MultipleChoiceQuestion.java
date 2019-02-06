@@ -149,8 +149,7 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
      */
     public void undoUnallowedChanges (Question originalQuestion) {
 
-        if (originalQuestion != null
-            && originalQuestion instanceof MultipleChoiceQuestion) {
+        if (originalQuestion instanceof MultipleChoiceQuestion) {
             MultipleChoiceQuestion mcOriginalQuestion = (MultipleChoiceQuestion) originalQuestion;
             undoUnallowedAnswerChanges(mcOriginalQuestion);
         }
@@ -196,7 +195,7 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
      * @return a boolean which is true if the answer-changes make an update necessary and false if not
      */
     public boolean isUpdateOfResultsAndStatisticsNecessary(Question originalQuestion) {
-        if (originalQuestion != null && originalQuestion instanceof MultipleChoiceQuestion){
+        if (originalQuestion instanceof MultipleChoiceQuestion){
             MultipleChoiceQuestion mcOriginalQuestion = (MultipleChoiceQuestion) originalQuestion;
             return checkAnswersIfRecalculationIsNecessary(mcOriginalQuestion);
         }
