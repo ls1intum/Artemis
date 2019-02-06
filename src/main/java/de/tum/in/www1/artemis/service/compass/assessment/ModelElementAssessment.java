@@ -10,6 +10,13 @@ public class ModelElementAssessment {
     public ModelElementAssessment() {
     }
 
+    public ModelElementAssessment(String commment, double credits, String id, String type) {
+        this.commment = commment;
+        this.credits = credits;
+        this.id = id;
+        this.type = type;
+    }
+
     public String getCommment() {
         return commment;
     }
