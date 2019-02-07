@@ -6,14 +6,14 @@
             <div [innerHTML]="rendered.hint"></div>
         </ng-template>
         <span class="label label-info" [ngbPopover]="renderedHint" placement="right" triggers="mouseenter:mouseleave" *ngIf="question.hint">
-            <i class="fa fa-question-circle-o"></i>
+            <fa-icon [icon]="['far', 'question-circle']"></fa-icon>
             <span jhiTranslate="arTeMiSApp.question.hint"></span>
         </span> </br>
         <ng-template #renderedExplanation>
             <div [innerHTML]="rendered.explanation"></div>
         </ng-template>
         <span class="label label-primary" [ngbPopover]="renderedExplanation" placement="right" triggers="mouseenter:mouseleave" *ngIf="question.explanation && showResult">
-            <i class="fa fa-exclamation-circle"></i>
+            <fa-icon icon="exclamation-circle"></fa-icon>
             <span jhiTranslate="arTeMiSApp.question.explanation"></span>
         </span>
     </div>
@@ -34,14 +34,14 @@
                         <div [innerHTML]="rendered.answerOptions[i].hint"></div>
                     </ng-template>
                     <span class="label label-info" [ngbPopover]="renderedAnswerOptionsHint" placement="top" triggers="mouseenter:mouseleave" *ngIf="answerOption.hint">
-                        <i class="fa fa-question-circle-o"></i>
+                        <fa-icon [icon]="['far', 'question-circle']"></fa-icon>
                         <span jhiTranslate="arTeMiSApp.question.hint"></span>
                     </span>
                 </div>
             </div>
             <div class="selection">
-                <i class="fa fa-2x fa-check-square-o" *ngIf="isAnswerOptionSelected(answerOption)"></i>
-                <i class="fa fa-2x fa-square-o" *ngIf="!isAnswerOptionSelected(answerOption)"></i>
+                <fa-icon [icon]="['far', 'check-square']" *ngIf="isAnswerOptionSelected(answerOption)"></fa-icon>
+                <fa-icon [icon]="['far', 'square']" *ngIf="!isAnswerOptionSelected(answerOption)"></fa-icon>
             </div>
         </div>
     </div>
@@ -60,14 +60,14 @@
                         <div [innerHTML]="rendered.answerOptions[i].hint"></div>
                     </ng-template>
                     <span class="label label-info" [ngbPopover]="renderedAnswerOptionsHint2" placement="top" triggers="mouseenter:mouseleave" *ngIf="answerOption.hint">
-                        <i class="fa fa-question-circle-o"></i>
+                        <fa-icon [icon]="['far', 'question-circle']"></fa-icon>
                         <span jhiTranslate="arTeMiSApp.question.hint"></span>
                     </span>
                     <ng-template #renderedAnswerOptionsExplanation>
                         <div [innerHTML]="rendered.answerOptions[i].explanation"></div>
                     </ng-template>
                     <span class="label label-primary" [ngbPopover]="renderedAnswerOptionsExplanation" placement="top" triggers="mouseenter:mouseleave" *ngIf="answerOption.explanation">
-                        <i class="fa fa-exclamation-circle"></i>
+                        <fa-icon icon="exclamation-circle"></fa-icon>
                         <span jhiTranslate="arTeMiSApp.question.explanation"></span>
                     </span>
                 </div>
@@ -76,18 +76,18 @@
                 <span *ngIf="!answerOption.invalid && !question.invalid && answerOption.isCorrect" class="correct">Correct</span>
                 <span *ngIf="!answerOption.invalid && !question.invalid && !answerOption.isCorrect" class="wrong">Wrong</span>
                 <span *ngIf="answerOption.invalid || question.invalid" class="wrong" jhiTranslate="arTeMiSApp.question.invalid"></span>
-                <span ngbTooltip="Invalid answers will be assessed as correct."
+                <fa-icon ngbTooltip="Invalid answers will be assessed as correct."
                            placement="top"
                            style="color:black;"
-                           class="fa fa-question-circle"
-                           *ngIf="answerOption.invalid || question.invalid"></span>
+                           icon="question-circle"
+                           *ngIf="answerOption.invalid || question.invalid"></fa-icon>
             </td>
             <td class="result-symbol" *ngIf="!forceSampleSolution">
-                <i class="fa fa-2x fa-exclamation-triangle warning" *ngIf=" !question.invalid && !answerOption.invalid && ((isAnswerOptionSelected(answerOption) && !answerOption.isCorrect) || (!isAnswerOptionSelected(answerOption) && answerOption.isCorrect )) "></i>
+                <fa-icon size="2x" icon="exclamation-triangle" class="warning" *ngIf="!question.invalid && !answerOption.invalid && ((isAnswerOptionSelected(answerOption) && !answerOption.isCorrect) || (!isAnswerOptionSelected(answerOption) && answerOption.isCorrect )) "></fa-icon>
             </td>
             <td class="selection" *ngIf="!forceSampleSolution">
-                <i class="fa fa-2x fa-check-square-o" *ngIf="isAnswerOptionSelected(answerOption)"></i>
-                <i class="fa fa-2x fa-square-o" *ngIf="!isAnswerOptionSelected(answerOption)"></i>
+                <fa-icon [icon]="['far', 'check-square']" size="2x" *ngIf="isAnswerOptionSelected(answerOption)"></fa-icon>
+                <fa-icon [icon]="['far', 'square']" size="2x" *ngIf="!isAnswerOptionSelected(answerOption)"></fa-icon>
             </td>
         </tr>
     </table>
