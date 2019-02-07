@@ -4,6 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { HttpResponse } from '@angular/common/http';
 import * as moment from 'moment';
+import { Exercise } from 'app/entities/exercise';
 
 @Component({
     selector: 'jhi-course-exercises',
@@ -47,15 +48,16 @@ export class CourseExercisesComponent implements OnInit {
         const groupedExercises = {};
         const indexKeys: string[] = [];
         const courseExercises = [...this.course.exercises];
-        const sortedExercises = courseExercises.sort((a, b) => selectedOrder * (a.dueDate.valueOf() - b.dueDate.valueOf()));
+        const sortedExercises = this.sortExercises(courseExercises, selectedOrder);
         sortedExercises.forEach(exercise => {
-            const dateIndex = moment(exercise.dueDate).startOf('week').format('YYYY-MM-DD');
+            const dateValue = exercise.dueDate ? exercise.dueDate : exercise.releaseDate;
+            const dateIndex = moment(dateValue).startOf('week').format('YYYY-MM-DD');
             if (!groupedExercises[dateIndex]) {
                 indexKeys.push(dateIndex);
                 groupedExercises[dateIndex] = {
-                    label: `<b>${moment(exercise.dueDate).startOf('week').format('DD/MM/YYYY')}</b> - <b>${moment(exercise.dueDate).endOf('week').format('DD/MM/YYYY')}</b>`,
-                    isCollapsed: exercise.dueDate.isBefore(moment(), 'week'),
-                    isCurrentWeek: exercise.dueDate.isSame(moment(), 'week'),
+                    label: `<b>${moment(dateValue).startOf('week').format('DD/MM/YYYY')}</b> - <b>${moment(dateValue).endOf('week').format('DD/MM/YYYY')}</b>`,
+                    isCollapsed: dateValue.isBefore(moment(), 'week'),
+                    isCurrentWeek: dateValue.isSame(moment(), 'week'),
                     exercises: []
                 };
             }
@@ -63,6 +65,15 @@ export class CourseExercisesComponent implements OnInit {
         });
         this.weeklyExercisesGrouped = groupedExercises;
         this.weeklyIndexKeys = indexKeys;
+    }
+
+    private sortExercises(exercises: Exercise[], selectedOrder: number) {
+        return exercises.sort((a, b) => {
+            const aValue = a.dueDate ? a.dueDate.valueOf() : a.releaseDate.valueOf();
+            const bValue = b.dueDate ? b.dueDate.valueOf() : a.releaseDate.valueOf();
+
+            return selectedOrder * (aValue - bValue);
+        });
     }
 
 }

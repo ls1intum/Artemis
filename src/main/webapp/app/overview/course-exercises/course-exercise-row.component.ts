@@ -85,8 +85,8 @@ export class CourseExerciseRowComponent implements OnInit {
         });
     }
 
-    getUrgentClass(dueDate: Moment): string {
-        if (Math.abs(dueDate.diff(moment(), 'days')) < 7) {
+    getUrgentClass(date: Moment): string {
+        if (Math.abs(date.diff(moment(), 'days')) < 7) {
             return 'text-danger';
         } else {
             return;

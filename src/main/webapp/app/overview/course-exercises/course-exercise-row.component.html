@@ -10,10 +10,9 @@
                     Not Released</span>
         <span class="badge badge-success" [hidden]="!asQuizExercise(exercise).isActiveQuiz">Live</span>
     </div>
-    <div class="col-md-auto col-6" [ngClass]="getUrgentClass(exercise.dueDate)">{{exercise.dueDate |
+    <div class="col-md-auto col-6" [ngClass]="getUrgentClass(exercise.dueDate ? exercise.dueDate : exercise.releaseDate)">{{(exercise.dueDate ? exercise.dueDate : exercise.releaseDate) |
         date:'dd/MM/yy'}}
-        <span class="d-none d-sm-inline">({{exercise.dueDate |
-        amTimeAgo}})</span>
+        <span class="d-none d-sm-inline">({{(exercise.dueDate ? exercise.dueDate : exercise.releaseDate) | amTimeAgo}})</span>
     </div>
     <div class="col-md-4 col-12" [ngSwitch]="exercise.participationStatus">
         <span class="text-muted" *ngSwitchCase="'uninitialized'">You have not started this exercise yet.</span>

@@ -15,15 +15,14 @@
         </div>
     </div>
     <div class="exercise-row-container mb-3" *ngFor="let weekKey of weeklyIndexKeys">
-        <span class="control-label" [ngClass]="weeklyExercisesGrouped[weekKey].isCurrentWeek ? 'text-primary': ''"
+        <div class="control-label" [ngClass]="weeklyExercisesGrouped[weekKey].isCurrentWeek ? 'text-primary': ''"
               (click)="weeklyExercisesGrouped[weekKey].isCollapsed = !weeklyExercisesGrouped[weekKey].isCollapsed">
-            <fa-icon *ngIf="weeklyExercisesGrouped[weekKey].isCollapsed" class="pr-3" [icon]="'angle-down'"></fa-icon>
-            <fa-icon *ngIf="!weeklyExercisesGrouped[weekKey].isCollapsed" class="pr-3" [icon]="'angle-up'"></fa-icon>
+            <fa-icon class="pr-3" [icon]="weeklyExercisesGrouped[weekKey].isCollapsed ? 'angle-down' : 'angle-up'"></fa-icon>
             <span [innerHtml]="weeklyExercisesGrouped[weekKey].label"></span>
             <span class="ml-2">Exercises in this week: {{weeklyExercisesGrouped[weekKey].exercises.length}}</span>
-        </span>
+        </div>
         <div *ngIf="!weeklyExercisesGrouped[weekKey].isCollapsed">
-            <jhi-course-exercise-row class="pb-1" [exercise]="exercise" [course]="course" class="current-week-row" [ngClass]="weeklyExercisesGrouped[weekKey].isCurrentWeek ? 'current-week-row': ''"
+            <jhi-course-exercise-row class="pb-1" [exercise]="exercise" [course]="course" class="current-week-row"
                                      *ngFor="let exercise of weeklyExercisesGrouped[weekKey].exercises"></jhi-course-exercise-row>
         </div>
         <div class="collapsed"></div>
