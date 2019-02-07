@@ -135,7 +135,7 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
     }
 
     setQuizExercisesStatus() {
-        this.quizExercises.forEach(quizExercise => (quizExercise.status = this.statusForQuiz(quizExercise)));
+        this.quizExercises.forEach(quizExercise => (quizExercise.status = this.quizExerciseService.statusForQuiz(quizExercise)));
     }
 
     /**
@@ -144,24 +144,6 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
      */
     userIsInstructor() {
         return this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
-    }
-
-    /**
-     * Method for determining the current status of a quiz exercise
-     * @param quizExercise The quiz exercise we want to determine the status of
-     * @returns {string} The status as a string
-     */
-    statusForQuiz(quizExercise: QuizExercise) {
-        if (quizExercise.isPlannedToStart && quizExercise.remainingTime != null) {
-            if (quizExercise.remainingTime <= 0) {
-                // the quiz is over
-                return quizExercise.isOpenForPractice ? this.QuizStatus.OPEN_FOR_PRACTICE : this.QuizStatus.CLOSED;
-            } else {
-                return this.QuizStatus.ACTIVE;
-            }
-        }
-        // the quiz hasn't started yet
-        return quizExercise.isVisibleBeforeStart ? this.QuizStatus.VISIBLE : this.QuizStatus.HIDDEN;
     }
 
     /**
@@ -181,6 +163,7 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
         );
     }
 
+
     /**
      * Do not load all quizExercise if only one has changed
      *
@@ -190,7 +173,7 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
         this.quizExerciseService.find(quizExerciseId).subscribe((res: HttpResponse<QuizExercise>) => {
             const index = this.quizExercises.findIndex(quizExercise => quizExercise.id === quizExerciseId);
             const exercise = res.body;
-            exercise.status = this.statusForQuiz(exercise);
+            exercise.status = this.quizExerciseService.statusForQuiz(exercise);
             if (index === -1) {
                 this.quizExercises.push(exercise);
             } else {
@@ -229,4 +212,12 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
     }
 
     callback() {}
+
+    routerContainPath(): boolean {
+        let temp = location.href.toString();
+        if(temp.includes('quiz-exercise')){
+            console.log(temp);
+        return true;
+        }
+    }
 }

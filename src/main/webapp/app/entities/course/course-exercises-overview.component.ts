@@ -54,10 +54,10 @@ export class CourseExercisesOverviewComponent implements OnInit {
                         this.quizExercises.forEach(quizExercises => {
                             quizExercises.course = this.course;
                         });
+                        this.setQuizExercisesStatus();
                     },
                     (res: HttpErrorResponse) => this.onError(res)
                 );
-
             this.courseExerciseService.findAllTextExercisesForCourse(this.courseId)
                 .subscribe(
                     (res: HttpResponse<TextExercise[]>) => {
@@ -110,5 +110,9 @@ export class CourseExercisesOverviewComponent implements OnInit {
 
     private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message);
+    }
+
+    setQuizExercisesStatus() {
+        this.quizExercises.forEach(quizExercise => (quizExercise.status = this.quizExerciseService.statusForQuiz(quizExercise)));
     }
 }
