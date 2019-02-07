@@ -29,7 +29,7 @@
 
                     <div class="col-md-12 text-center" >
                         <button (click)="switchRated()" type="button" class="btn btn-primary">
-                            <span class="fa fa-refresh"></span>&nbsp;
+                            <fa-icon icon="sync"></fa-icon>&nbsp;
                             <span *ngIf="rated" jhiTranslate="showStatistic.switchToUnrated"></span>
                             <span *ngIf="!rated" jhiTranslate="showStatistic.switchToRated"></span></button>
                     </div>
@@ -45,7 +45,7 @@
                 <div class="form-group">
                     <div class="d-inline-block" ngbDropdown placement="top-right">
                         <button class="btn btn-primary btn-sm" ngbDropdownToggle>
-                            <span class="fa fa-list-alt"></span>
+                            <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
                             <span class="hidden-xs hidden-sm" jhiTranslate="showStatistic.chooseStatistic"></span>
                             <span class="caret"></span>
                         </button>
