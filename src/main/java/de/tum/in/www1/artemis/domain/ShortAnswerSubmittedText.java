@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonView;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import org.apache.commons.text.similarity.LevenshteinDistance;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -104,9 +105,15 @@ public class ShortAnswerSubmittedText implements Serializable {
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
-    // TODO FDE: check if text input is correct needs to improve
-    public boolean isSubmittedTextCorrect(String submittedText, String solution){
-        return submittedText.equalsIgnoreCase(solution);
+    public boolean isSubmittedTextCorrect(String submittedText, String solution) {
+        LevenshteinDistance distance = new LevenshteinDistance();
+        int numberOfTypos = distance.apply(submittedText.toLowerCase(), solution.toLowerCase());
+        if ( (solution.length() < 4 && numberOfTypos > 0)
+            || ((solution.length() >= 4 && solution.length() <= 8) && numberOfTypos > 2)
+            || (solution.length() > 8 && numberOfTypos > 3) ) {
+            return false;
+        }
+        return true;
     }
 
     @Override
