@@ -96,9 +96,7 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
         this.submittedTexts = [];
         for (const id of Object.keys(this.textBeforeSpots)) {
             const submittedText = new ShortAnswerSubmittedText();
-            submittedText.text = (<HTMLInputElement>document.getElementById('solution-' + id +'-'+this._question.id)).value;
-            console.log('solution-'+ id + '-' + this._question.id);
-            console.log(submittedText.text);
+            submittedText.text = (<HTMLInputElement>document.getElementById('solution-' + id + '-' + this._question.id)).value;
             submittedText.spot = this.question.spots[id];
             this.submittedTexts.push(submittedText);
         }
