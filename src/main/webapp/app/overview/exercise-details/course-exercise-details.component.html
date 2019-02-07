@@ -11,72 +11,53 @@
         </h4>
     </div>
     <div class="tab-bar pl-2">
-            <div class="col">
-                <div class="btn-group">
-                    <div class="btn btn-warning">Practice</div>
-                    <div class="btn btn-success">Statistics</div>
+        <div class="col">
+            <div class="btn-group">
+                <div class="btn btn-warning">Practice</div>
+                <div class="btn btn-success">Statistics</div>
+            </div>
+        </div>
+        <div class="col-auto" *ngIf="exercise.isAtLeastTutor">
+            <span class="mr-1">Instructor actions:</span>
+            <div class="btn-group">
+                <div class="btn btn-primary" routerLink="/course/{{courseId}}/exercise/{{exercise.id}}/dashboard">
+                    Information
+                </div>
+                <div class="btn btn-warning" *ngIf="exerciseRouterLink" routerLink="{{exerciseRouterLink}}">
+                    Assessments
+                </div>
+                <div class="btn btn-success" *ngIf="exercise.type === MODELING"
+                     routerLink="/course/{{courseId}}/exercise/{{exercise.id}}/statistics">Statistics
                 </div>
             </div>
-            <div class="col-auto" *ngIf="exercise.isAtLeastTutor">
-                <span class="mr-1">Instructor actions:</span>
-                <div class="btn-group">
-                    <div class="btn btn-primary" routerLink="/course/{{courseId}}/exercise/{{exercise.id}}/dashboard">Information</div>
-                    <div class="btn btn-warning" *ngIf="exerciseRouterLink" routerLink="{{exerciseRouterLink}}">Assessments</div>
-                    <div class="btn btn-success" *ngIf="exercise.type === MODELING" routerLink="/course/{{courseId}}/exercise/{{exercise.id}}/statistics">Statistics</div>
-                </div>
-            </div>
+        </div>
     </div>
     <div class="row mb-2 mt-2 align-items-baseline">
         <div class="col-auto">
             <h1>Your Results</h1>
         </div>
-        <div class="col">
-            <div class="form-group d-flex">
-                <div class="form-check custom-control custom-checkbox">
-                    <input type="checkbox" id="showRatedResults" [(ngModel)]="showRatedResults"
-                           class="form-check-input custom-control-input"/>
-                    <label class="form-check-label custom-control-label" for="showRatedResults">
-                        Show Rated Results
-                    </label>
-                </div>
-                <div class="form-check custom-control custom-checkbox ml-2">
-                    <input type="checkbox" id="showPracticeResults" [(ngModel)]="showPracticeResults"
-                           class="form-check-input custom-control-input"/>
-                    <label class="form-check-label custom-control-label" for="showPracticeResults">
-                        Show Practice Results
-                    </label>
-                </div>
-            </div>
-        </div>
     </div>
     <div class="row">
         <div class="col-12 col-md-6">
-            <div *ngFor="let result of filteredResults">
-                <div class="row justify-content-between">
-                    <div class="col-auto">
-                        <span [ngClass]="exerciseRatedBadge(result)" class="badge badge-success">{{result.rated ? 'RATED' : 'PRACTICE'}}</span>
-                    </div>
-                    <div class="col-auto">
-                        <span>{{result.resultString}}</span>
-                    </div>
-                    <div class="col-auto">
-                        <span>{{result.score}}%</span>
-                    </div>
-                    <div class="col text-right">
-                        <span>{{result.completionDate | date: 'dd/MM/yy'}} ({{result.completionDate | amTimeAgo}})</span>
+            <div *ngFor="let participation of exercise.participations">
+                <div *ngFor="let result of participation.results">
+                    <div class="row justify-content-between">
+                        <div class="col-auto">
+                            <span [ngClass]="exerciseRatedBadge(result)" class="badge badge-success">{{result.rated ? 'RATED' : 'PRACTICE'}}</span>
+                        </div>
+                        <div class="col-auto">
+                            <span>{{result.resultString}}</span>
+                        </div>
+                        <div class="col-auto">
+                            <span>{{result.score}}%</span>
+                        </div>
+                        <div class="col text-right">
+                            <span>{{result.completionDate | date: 'dd/MM/yy'}} ({{result.completionDate | amTimeAgo}})</span>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div *ngIf="filteredResults.length < 1 && showPracticeResults && showRatedResults">
-                You have not participated in this exercise
-            </div>
-            <div *ngIf="filteredResults.length < 1 && !showPracticeResults && showRatedResults">
-                You have no rated results for this exercise.
-            </div>
-            <div *ngIf="filteredResults.length < 1 && showPracticeResults && !showRatedResults">
-                You have no practice results for this exercise.
-            </div>
-            <div *ngIf="filteredResults.length < 1 && !showPracticeResults && !showRatedResults">
+            <div *ngIf="!exercise.participations">
                 No results to show.
             </div>
         </div>

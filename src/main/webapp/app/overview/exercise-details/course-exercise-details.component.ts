@@ -23,9 +23,6 @@ export class CourseExerciseDetailsComponent implements OnInit {
     public courseId: number;
     private subscription: Subscription;
     public exercise: Exercise;
-    public showRatedResults: boolean = true;
-    public showPracticeResults: boolean = true;
-
 
     constructor(private $location: Location, private exerciseService: ExerciseService,
                 private courseService: CourseService,
@@ -51,15 +48,6 @@ export class CourseExerciseDetailsComponent implements OnInit {
 
     backToCourse() {
         this.$location.back();
-    }
-
-    get filteredResults(): Result[] {
-        let results: Result[] = [];
-        let participations = this.exercise.participations;
-        if (!participations) return [];
-        participations.forEach(participation => results = participation.results);
-        results = results.filter(result => result.rated && this.showRatedResults || !result.rated && this.showPracticeResults);
-        return results;
     }
 
     get exerciseStatusBadge(): string {
