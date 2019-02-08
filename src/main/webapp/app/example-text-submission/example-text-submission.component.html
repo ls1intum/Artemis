@@ -20,7 +20,7 @@
                 </div>
 
                 <button (click)="upsertExampleTextSubmission()" class="btn btn-primary col-6">
-                    <span class="fa fa-save"></span>
+                    <fa-icon icon="save"></fa-icon>
                     <span *ngIf="isNewSubmission">Create new submission</span>
                     <span *ngIf="!isNewSubmission">Update text submission</span>
                 </button>
@@ -53,7 +53,7 @@
             <button class="btn btn-primary col-6" (click)="saveAssessments()"
                     [disabled]="!assessments || !assessmentsAreValid"
                     *ngIf="!isNewSubmission && isAtLeastInstructor && !readOnly && !toComplete">
-                <span class="fa fa-save"></span>
+                <fa-icon icon="save"></fa-icon>
                 <span *ngIf="areNewAssessments">Create new Assessments</span>
                 <span *ngIf="!areNewAssessments">Update Assessments</span>
 
@@ -99,7 +99,7 @@
 
     <div class="col-12 text-rigth" *ngIf="readOnly">
         <button (click)="readAndUnderstood()" class="btn btn-success col-3">
-            <span class="fa fa-save"></span>
+            <fa-icon icon="save"></fa-icon>
             I have read and understood the example
         </button>
     </div>
