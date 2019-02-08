@@ -39,6 +39,7 @@
             "filter": {
                 "mcq": "Multiple-Choice Question",
                 "dnd": "Drag-And-Drop Question",
+                "sa": "Short-Answer Question",
                 "applyFilter": "Apply Filter"
             },
             "description": "Description",
@@ -61,8 +62,10 @@
             "noMatchingQuestionsFound": "No questions in the Course match the selected criteria",
             "multipleChoiceQuestion": "Multiple-Choice Question",
             "dragAndDropQuestion": "Drag-And-Drop Question",
+            "shortAnswerQuestion": "Short-Answer Question",
             "addMultipleChoiceQuestion": "Add Multiple-Choice Question",
             "addDragAndDropQuestion": "Add Drag-And-Drop Question",
+            "addShortAnswerQuestion": "Add Short-Answer Question",
             "addExistingQuestions": "Add Existing Questions",
             "addSelectedQuestions": "Add Selected Questions",
             "selectCourse": "Select a Course",
@@ -143,7 +146,14 @@
                 "questionCorrectAnswerOption": "Question {{index}}: No answer option is correct.",
                 "questionCorrectMapping": "Question {{index}}: No correct mapping.",
                 "questionUnsolvable": "Question {{index}}: The question cannot be answered correctly without using a drag item twice.",
-                "misleadingCorrectMapping": "Question {{index}}: You have defined at least one correct mapping (or group of correct mappings), that when used, makes it impossible to answer the question correctly."
+                "misleadingCorrectMapping": "Question {{index}}: You have defined at least one correct mapping (or group of correct mappings), that when used, makes it impossible to answer the question correctly.",
+                "shortAnswerQuestionEverySpotHasASolution": "Question {{index}}: At least one spot is missing a solution.",
+                "shortAnswerQuestionEveryMappedSolutionHasASpot": "Question {{index}}: At least one spot is missing for a correct mapping.",
+                "shortAnswerQuestionUnsolvable": "Question {{index}}: The question cannot be answered correctly.",
+                "shortAnswerQuestionSolutionHasNoValue": "Question {{index}}: At least one solution has no value.",
+                "shortAnswerQuestionDuplicateMapping": "Question {{index}}: At least one mapping ist duplicated.",
+                "questionTitleLength": "Question {{index}}: Please shorten your question title. Currently it contains more than 250 signs.",
+                "quizTitleLength": "Quiz: The title is too long. Currently it contains more than 250 signs."
             },
             "scoringType": {
                 "all_or_nothing": "All or Nothing",

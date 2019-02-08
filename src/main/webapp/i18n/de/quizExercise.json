@@ -37,8 +37,9 @@
                 "quizExerciseTitle": "Quiz Übungstitel"
             },
             "filter": {
-                "mcq": "Multiple-Choice Question",
-                "dnd": "Drag-And-Drop Question",
+                "mcq": "Multiple-Choice Frage",
+                "dnd": "Drag-And-Drop Frage",
+                "sa": "Short-Answer Frage",
                 "applyFilter": "Filter anwenden"
             },
             "description": "Beschreibung",
@@ -61,6 +62,10 @@
             "noMatchingQuestionsFound": "Keine Fragen des Kurses entsprechen den Suchkriterien",
             "multipleChoiceQuestion": "Multiple-Choice Frage",
             "dragAndDropQuestion": "Drag-And-Drop Frage",
+            "shortAnswerQuestion": "Short-Answer Frage",
+            "addMultipleChoiceQuestion": "Multiple-Choice Frage hinzufügen",
+            "addDragAndDropQuestion": "Drag-And-Drop Frage hinzufügen",
+            "addShortAnswerQuestion": "Short-Answer Frage hinzufügen",
             "addExistingQuestions": "Vorhandene Fragen hinzufügen",
             "selectCourse": "Wählen Sie einen Kurs",
             "selectQuizExercise": "Wählen Sie eine Quiz Übung aus",
@@ -141,7 +146,14 @@
                 "questionCorrectAnswerOption": "Frage {{index}}: Es existiert keine korrekte Antwortmöglichkeit.",
                 "questionCorrectMapping": "Frage {{index}}: Es existiert keine korrekte Zuordnung.",
                 "questionUnsolvable": "Frage {{index}}: Es gibt Drag Items, die auf mehrere Drop Locations gleichzeitig platziert werden müssten um die Frage richtig zu beantworten.",
-                "misleadingCorrectMapping": "Frage {{index}}: Es gibt mindestens eine korrekte Zuordnung (oder Kombination an korrekten Zuordnungen), die wenn sie verwendet wird, keine korrekte Gesamtlösung mehr zulässt."
+                "misleadingCorrectMapping": "Frage {{index}}: Es gibt mindestens eine korrekte Zuordnung (oder Kombination an korrekten Zuordnungen), die wenn sie verwendet wird, keine korrekte Gesamtlösung mehr zulässt.",
+                "shortAnswerQuestionEverySpotHasASolution": "Frage {{index}}: Es gibt mindestens ein Eingabefeld, dass keine Lösung besitzt.",
+                "shortAnswerQuestionEveryMappedSolutionHasASpot": "Frage {{index}}: Es fehlt mindestes ein Eingabfeld, um eine Kombination an korrekten Zuordnungen zu erhalten.",
+                "shortAnswerQuestionUnsolvable": "Frage {{index}}: Diese Frage kann nicht richtig beantwortet werden.",
+                "shortAnswerQuestionSolutionHasNoValue": "Frage {{index}}: Es gibt mindestens eine Lösung die keinen Wert besitzt.",
+                "shortAnswerQuestionDuplicateMapping": "Frage {{index}}: Es gibt mindestens ein Mapping das doppelt ist.",
+                "questionTitleLength": "Frage {{index}}: Die Frage ist länger als 250 Zeichen. Bitte kürzen!",
+                "quizTitleLength": "Quiz: Der Titel ist länger als 250 Zeichen. Bitte kürzen!"
             },
             "scoringType": {
                 "all_or_nothing": "Alles-oder-Nichts",

@@ -11,6 +11,7 @@ import { JhiMainComponent } from '../../layouts';
 import { QuizComponent } from './quiz.component';
 import { MultipleChoiceQuestionComponent } from './multiple-choice-question/multiple-choice-question.component';
 import { DragAndDropQuestionComponent } from './drag-and-drop-question/drag-and-drop-question.component';
+import { ShortAnswerQuestionComponent } from './short-answer-question/short-answer-question.component';
 import { DragItemComponent } from './drag-and-drop-question/drag-item.component';
 import { AngularFittextModule } from 'angular-fittext';
 import { SecuredImageComponent } from '../../components/util/secured-image.component';
@@ -27,11 +28,20 @@ const ENTITY_STATES = [...quizRoute];
         DragAndDropQuestionComponent,
         DragItemComponent,
         SecuredImageComponent,
-        QuizScoringInfoStudentModalComponent
+        QuizScoringInfoStudentModalComponent,
+        ShortAnswerQuestionComponent,
+        DragItemComponent,
+        SecuredImageComponent
     ],
     entryComponents: [HomeComponent, QuizComponent, JhiMainComponent],
     providers: [RepositoryService, JhiWebsocketService, JhiAlertService],
-    exports: [MultipleChoiceQuestionComponent, DragAndDropQuestionComponent, DragItemComponent, SecuredImageComponent],
+    exports: [
+        MultipleChoiceQuestionComponent,
+        DragAndDropQuestionComponent,
+        ShortAnswerQuestionComponent,
+        DragItemComponent,
+        SecuredImageComponent
+    ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArTEMiSQuizModule {}

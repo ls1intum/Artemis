@@ -1,4 +1,4 @@
-<ng-template #scoringtype let-c="close" let-d="dismiss">
+<ng-template #info let-c="close" let-d="dismiss">
     <div class="modal-header">
         <h4 class="modal-title">Scoring Types </h4>
         <button type="button" class="close" aria-label="Close" (click)="d()"><span aria-hidden="true">&times;</span></button>
@@ -20,4 +20,5 @@
         <button type="button" class="btn btn-outline" (click)="c()">Close</button>
     </div>
 </ng-template>
-<div><button class="btn" (click)="open(scoringtype)"><i class="fa fa-question-circle-o"></i></button></div>
+<div><button class="btn" (click)="open(info)"><fa-icon [icon]="['far', 'question-circle']"></fa-icon></button></div>
+

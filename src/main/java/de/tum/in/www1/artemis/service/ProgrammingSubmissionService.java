@@ -10,6 +10,7 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,14 +28,17 @@ public class ProgrammingSubmissionService {
     private final ParticipationRepository participationRepository;
     private final Optional<VersionControlService> versionControlService;
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+    private final SimpMessageSendingOperations messagingTemplate;
 
     public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ParticipationRepository participationRepository,
-                                        Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService, ParticipationService participationService) {
+                                        Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
+                                        ParticipationService participationService, SimpMessageSendingOperations messagingTemplate) {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.participationRepository = participationRepository;
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.participationService = participationService;
+        this.messagingTemplate = messagingTemplate;
     }
 
     public void notifyPush(Long participationId, Object requestBody) {
@@ -67,6 +71,9 @@ public class ProgrammingSubmissionService {
         participation.addSubmissions(programmingSubmission);
 
         programmingSubmissionRepository.save(programmingSubmission);
+
+        // notify user via websocket
+        messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newSubmission", programmingSubmission);
     }
 
 }
