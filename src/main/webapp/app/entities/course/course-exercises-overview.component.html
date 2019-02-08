@@ -1,6 +1,6 @@
 <ng-container *ngIf="exercisesReady; else loading">
     <h3><span>{{course.title}}-{{quizExercises.length+programmingExercises.length+modelingExercises.length+fileUploadExercises.length+textExercises.length}} Exercises </span></h3>
-
+    <jhi-alert></jhi-alert>
     <jhi-course-exercise-card headingJhiTranslate="arTeMiSApp.course.programmingExercises">
         <jhi-programming-exercise [showHeading]="true" [course]="course" [programmingExercises]="programmingExercises" ></jhi-programming-exercise>
     </jhi-course-exercise-card>
