@@ -13,6 +13,7 @@
     <div *ngFor="let question of quizExercise.questions; let i = index">
         <jhi-multiple-choice-question *ngIf="question.type === MULTIPLE_CHOICE" [question]="question" [(selectedAnswerOptions)]="selectedAnswerOptions[question.id]" [fnOnSelection]="onSelectionChanged.bind(this)" [clickDisabled]="submission.submitted || remainingTimeSeconds < 0" [showResult]="showingResult" [forceSampleSolution]="mode === 'solution'" [questionIndex]="i + 1" [score]="questionScores[question.id]"></jhi-multiple-choice-question>
         <jhi-drag-and-drop-question *ngIf="question.type === DRAG_AND_DROP" [question]="question" [(mappings)]="dragAndDropMappings[question.id]" [fnOnMappingUpdate]="onSelectionChanged.bind(this)" [clickDisabled]="submission.submitted || remainingTimeSeconds < 0" [showResult]="showingResult" [forceSampleSolution]="mode === 'solution'" [questionIndex]="i + 1" [score]="questionScores[question.id]"></jhi-drag-and-drop-question>
+        <jhi-short-answer-question *ngIf="question.type === SHORT_ANSWER" [question]="question" [(submittedTexts)]="shortAnswerSubmittedTexts[question.id]" [fnOnSubmittedTextUpdate]="onSelectionChanged.bind(this)" [clickDisabled]="submission.submitted || remainingTimeSeconds < 0" [showResult]="showingResult" [forceSampleSolution]="mode === 'solution'" [questionIndex]="i + 1" [score]="questionScores[question.id]"></jhi-short-answer-question>
     </div>
 </div>
 <div class="quiz-footer" *ngIf="quizExercise">
@@ -48,7 +49,7 @@
                     </span>
                 </div>
                 <div *ngIf="mode ==='default'" class="connection-status" [ngClass]="{'disconnected': disconnected}">
-                    <i class="fa fa-sm fa-circle"></i>
+                    <fa-icon icon="circle" size="sm"></fa-icon>
                     <span *ngIf="!disconnected" jhiTranslate="arTeMiSApp.quizExercise.connected"></span>
                     <span *ngIf="disconnected" jhiTranslate="arTeMiSApp.quizExercise.disconnected"></span>
                     <span *ngIf="unsavedChanges" jhiTranslate="arTeMiSApp.quizExercise.unsavedChanges" class="in-parentheses"></span>

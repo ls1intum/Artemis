@@ -30,6 +30,8 @@ export class QuizStatisticUtil {
                 this.router.navigateByUrl('/quiz/' + quizExercise.id + '/multiple-choice-question-statistic/' + previousQuestion.id);
             } else if (previousQuestion.type === QuestionType.DRAG_AND_DROP) {
                 this.router.navigateByUrl('/quiz/' + quizExercise.id + '/drag-and-drop-question-statistic/' + previousQuestion.id);
+            } else if (previousQuestion.type === QuestionType.SHORT_ANSWER) {
+                this.router.navigateByUrl('/quiz/' + quizExercise.id + '/short-answer-question-statistic/' + previousQuestion.id);
             }
         }
     }
@@ -56,6 +58,8 @@ export class QuizStatisticUtil {
                 this.router.navigateByUrl('/quiz/' + quizExercise.id + '/multiple-choice-question-statistic/' + nextQuestion.id);
             } else if (nextQuestion.type === QuestionType.DRAG_AND_DROP) {
                 this.router.navigateByUrl('/quiz/' + quizExercise.id + '/drag-and-drop-question-statistic/' + nextQuestion.id);
+            } else if (nextQuestion.type === QuestionType.SHORT_ANSWER) {
+                this.router.navigateByUrl('/quiz/' + quizExercise.id + '/short-answer-question-statistic/' + nextQuestion.id);
             }
         }
     }

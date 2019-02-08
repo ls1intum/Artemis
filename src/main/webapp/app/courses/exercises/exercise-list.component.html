@@ -21,13 +21,13 @@
             <td>
                 <span>{{exercise.title}}</span>
                 <a class="text-primary" *ngIf="exercise.isAtLeastTutor">
-                    <i class="fa fa-info-circle fa-fw" routerLink="/course/{{exercise.course.id}}/exercise/{{exercise.id}}/dashboard" routerLinkActive="active"></i></a>
+                    <fa-icon icon="info-circle" [fixedWidth]="true" routerLink="/course/{{exercise.course.id}}/exercise/{{exercise.id}}/dashboard" routerLinkActive="active"></fa-icon></a>
                 <a class="text-primary" *ngIf="exercise.isAtLeastTutor">
-                    <i *ngIf="exercise.type === MODELING" class="fa fa-graduation-cap fa-fw" routerLink="/course/{{exercise.course.id}}/exercise/{{exercise.id}}/assessment" routerLinkActive="active"></i></a>
+                    <fa-icon *ngIf="exercise.type === MODELING" icon="graduation-cap" [fixedWidth]="true" routerLink="/course/{{exercise.course.id}}/exercise/{{exercise.id}}/assessment" routerLinkActive="active"></fa-icon></a>
                 <a class="text-primary" *ngIf="exercise.isAtLeastTutor">
-                    <i *ngIf="exercise.type === TEXT" class="fa fa-graduation-cap fa-fw" routerLink="/text/{{exercise.id}}/assessment" routerLinkActive="active"></i></a>
-                <a class="text-primary" *ngIf="exercise.isAtLeastTutor"><i *ngIf="exercise.type === MODELING"
-                   class="fa fa-pie-chart fa-fw" routerLink="/course/{{exercise.course.id}}/exercise/{{exercise.id}}/statistics" routerLinkActive="active"></i></a>
+                    <fa-icon *ngIf="exercise.type === TEXT" icon="graduation-cap" [fixedWidth]="true" routerLink="/text/{{exercise.id}}/assessment" routerLinkActive="active"></fa-icon></a>
+                <a class="text-primary" *ngIf="exercise.isAtLeastTutor"><fa-icon *ngIf="exercise.type === MODELING" [fixedWidth]="true"
+                   icon="chart-pie" routerLink="/course/{{exercise.course.id}}/exercise/{{exercise.id}}/statistics" routerLinkActive="active"></fa-icon></a>
 
                 <span class="badge badge-warning" *ngIf="!exercise.visibleToStudents" placement="right"
                       ngbTooltip="Only visible to teaching assistants and instructors. Release date: {{exercise.releaseDate | date:'MMM d, y H:mm'}}">
@@ -55,21 +55,21 @@
                         *ngSwitchCase="'uninitialized'"
                         (click)="startExercise(exercise)"
                         [disabled]="exercise.loading">
-                    <span [hidden]="exercise.loading"><i class="fa fa-play-circle fa-fw"></i>&nbsp;<span class="d-none d-md-inline">Start exercise</span></span>
-                    <i class="fa fa-circle-o-notch fa-spin" [hidden]="!exercise.loading"></i>
+                    <span [hidden]="exercise.loading"><fa-icon icon="play-circle" [fixedWidth]="true"></fa-icon>&nbsp;<span class="d-none d-md-inline">Start exercise</span></span>
+                    <fa-icon icon="circle-notch" [spin]="true" [hidden]="!exercise.loading"></fa-icon>
                 </button>
                 <button class="btn btn-primary btn-sm btn-block"
                         *ngSwitchCase="'inactive'"
                         (click)="resumeExercise(exercise)"
                         [disabled]="exercise.loading">
-                    <span [hidden]="exercise.loading"><i class="fa fa-play-circle fa-fw"></i>&nbsp;<span class="d-none d-md-inline">Resume exercise</span></span>
-                    <i [hidden]="!exercise.loading" class="fa fa-circle-o-notch fa-spin"></i>
+                    <span [hidden]="exercise.loading"><fa-icon icon="play-circle" [fixedWidth]="true"></fa-icon>&nbsp;<span class="d-none d-md-inline">Resume exercise</span></span>
+                    <fa-icon [hidden]="!exercise.loading" icon="circle-notch " [spin]="true"></fa-icon>
                 </button>
                 <div *ngSwitchCase="'initialized'">
                     <div *ngIf="exercise.type === PROGRAMMING && exercise.participations && exercise.participations.length > 0">
                         <a routerLink="/editor/{{exercise.participations[0].id}}" routerLinkActive="active"
                            class="btn btn-primary btn-sm btn-block" id="btn-online-editor" *ngIf="exercise.allowOnlineEditor">
-                            <i class="fa fa-folder-open fa-fw"></i>&nbsp;<span class="d-none d-md-inline">Open exercise</span></a>
+                            <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;<span class="d-none d-md-inline">Open exercise</span></a>
                         <ng-template #popContent>
                             <p>Clone your personal repository for this exercise:</p>
                             <pre style="max-width: 100%;" ngxClipboard [cbContent]="exercise.participations[0].repositoryUrl" (cbOnSuccess)="onCopySuccess()" (cbOnError)="onCopyFailure()">{{exercise.participations[0].repositoryUrl}}</pre>
@@ -82,11 +82,11 @@
                         <button placement="left"
                                 [ngbPopover]="popContent"
                                 [autoClose]="'outside'"
-                                type="button" class="btn btn-primary btn-sm btn-block"><i
-                            class="fa fa-download fa-fw"></i>&nbsp;<span class="d-none d-md-inline">Clone repository</span>
+                                type="button" class="btn btn-primary btn-sm btn-block">
+                            <fa-icon icon="download" [fixedWidth]="true"></fa-icon>&nbsp;<span class="d-none d-md-inline">Clone repository</span>
                         </button>
                         <button class="btn btn-primary btn-sm btn-block" id="btn-build-plan"
-                                *ngIf="exercise.publishBuildPlanUrl" (click)="goToBuildPlan(exercise.participations[0])"><i class="fa fa-external-link fa-fw"></i>
+                                *ngIf="exercise.publishBuildPlanUrl" (click)="goToBuildPlan(exercise.participations[0])"><fa-icon icon="external-link-alt" [fixedWidth]="true"></fa-icon>
                             &nbsp;<span class="d-none d-md-inline">Go to build plan</span></button>
                     </div>
                 </div>
@@ -94,7 +94,7 @@
                     <div *ngIf="exercise.participations && exercise.participations.length > 0" class="btn-group flex-btn-group-container">
                         <a routerLink="/modeling-editor/{{exercise.participations[0].id}}" routerLinkActive="active"
                            class="btn btn-primary btn-sm btn-block">
-                            <i class="fa fa-folder-open fa-fw"></i>&nbsp;<span class="d-none d-md-inline" *ngIf="exercise.participations[0].initializationState === 'INITIALIZED'">Open modeling editor</span>
+                            <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;<span class="d-none d-md-inline" *ngIf="exercise.participations[0].initializationState === 'INITIALIZED'">Open modeling editor</span>
                             <span class="d-none d-md-inline" *ngIf="exercise.participations[0].initializationState === 'FINISHED'">Show submission</span>
                         </a>
                     </div>
@@ -103,7 +103,7 @@
                     <div *ngIf="exercise.participations && exercise.participations.length > 0" class="btn-group flex-btn-group-container">
                         <a routerLink="/text/{{exercise.participations[0].id}}" routerLinkActive="active"
                            class="btn btn-primary btn-sm btn-block">
-                            <i class="fa fa-folder-open fa-fw"></i>&nbsp;<span class="d-none d-md-inline" *ngIf="exercise.participations[0].initializationState === 'INITIALIZED'">Open text editor</span>
+                            <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;<span class="d-none d-md-inline" *ngIf="exercise.participations[0].initializationState === 'INITIALIZED'">Open text editor</span>
                             <span class="d-none d-md-inline" *ngIf="exercise.participations[0].initializationState === 'FINISHED'">Show submission</span>
                         </a>
                     </div>
@@ -114,49 +114,49 @@
                             [routerLink]="['/quiz', exercise.id, 'practice']"
                             (click)="startPractice(exercise)"
                             [disabled]="exercise.loading">
-                        <span [hidden]="exercise.loading"><i class="fa fa-repeat fa-fw"></i>&nbsp;<span class="d-none d-md-inline">Practice</span></span>
-                        <i class="fa fa-circle-o-notch fa-spin" [hidden]="!exercise.loading"></i>
+                        <span [hidden]="exercise.loading"><fa-icon icon="redo" [fixedWidth]="true"></fa-icon>&nbsp;<span class="d-none d-md-inline">Practice</span></span>
+                        <fa-icon icon="circle-notch" [spin]="true" [hidden]="!exercise.loading"></fa-icon>
                     </button>
                     <button class="btn btn-primary btn-sm btn-block"
                             *ngSwitchCase="'quiz-not-started'"
                             (click)="startExercise(exercise)"
                             [disabled]="exercise.loading">
-                        <span [hidden]="exercise.loading"><i class="fa fa-play-circle fa-fw"></i>&nbsp;<span class="d-none d-md-inline">Open Quiz</span></span>
-                        <i class="fa fa-circle-o-notch fa-spin" [hidden]="!exercise.loading"></i>
+                        <span [hidden]="exercise.loading"><fa-icon icon="play-circle" [fixedWidth]="true"></fa-icon>&nbsp;<span class="d-none d-md-inline">Open Quiz</span></span>
+                        <fa-icon icon="circle-notch" [spin]="true" [hidden]="!exercise.loading"></fa-icon>
                     </button>
                     <button class="btn btn-primary btn-sm btn-block"
                             *ngSwitchCase="'quiz-uninitialized'"
                             (click)="startExercise(exercise)"
                             [disabled]="exercise.loading">
-                        <span [hidden]="exercise.loading"><i class="fa fa-play-circle fa-fw"></i>&nbsp;<span class="d-none d-md-inline">Start Quiz</span></span>
-                        <i class="fa fa-circle-o-notch fa-spin" [hidden]="!exercise.loading"></i>
+                        <span [hidden]="exercise.loading"><fa-icon icon="play-circle" [fixedWidth]="true"></fa-icon>&nbsp;<span class="d-none d-md-inline">Start Quiz</span></span>
+                        <fa-icon icon="circle-notch" [spin]="true" [hidden]="!exercise.loading"></fa-icon>
                     </button>
                     <button class="btn btn-primary btn-sm btn-block"
                             *ngSwitchCase="'quiz-active'"
                             (click)="startExercise(exercise)"
                             [disabled]="exercise.loading">
-                        <span [hidden]="exercise.loading"><i class="fa fa-play-circle fa-fw"></i>&nbsp;<span class="d-none d-md-inline">Resume Quiz</span></span>
-                        <i class="fa fa-circle-o-notch fa-spin" [hidden]="!exercise.loading"></i>
+                        <span [hidden]="exercise.loading"><fa-icon icon="play-circle" [fixedWidth]="true"></fa-icon>&nbsp;<span class="d-none d-md-inline">Resume Quiz</span></span>
+                        <fa-icon icon="circle-notch" [spin]="true" [hidden]="!exercise.loading"></fa-icon>
                     </button>
                     <button class="btn btn-primary btn-sm btn-block"
                             *ngSwitchCase="'quiz-submitted'"
                             (click)="startExercise(exercise)"
                             [disabled]="exercise.loading">
-                        <span [hidden]="exercise.loading"><i class="fa fa-eye fa-fw"></i>&nbsp;<span class="d-none d-md-inline">View Submission</span></span>
-                        <i class="fa fa-circle-o-notch fa-spin" [hidden]="!exercise.loading"></i>
+                        <span [hidden]="exercise.loading"><fa-icon icon="eye" [fixedWidth]="true"></fa-icon>&nbsp;<span class="d-none d-md-inline">View Submission</span></span>
+                        <fa-icon icon="circle-notch" [spin]="true" [hidden]="!exercise.loading"></fa-icon>
                     </button>
                     <button class="btn btn-primary btn-sm btn-block"
                             *ngSwitchCase="'quiz-finished'"
                             (click)="startExercise(exercise)"
                             [disabled]="exercise.loading">
-                        <span [hidden]="exercise.loading"><i class="fa fa-eye fa-fw"></i>&nbsp;<span class="d-none d-md-inline">View Results</span></span>
-                        <i class="fa fa-circle-o-notch fa-spin" [hidden]="!exercise.loading"></i>
+                        <span [hidden]="exercise.loading"><fa-icon icon="eye" [fixedWidth]="true"></fa-icon>&nbsp;<span class="d-none d-md-inline">View Results</span></span>
+                        <fa-icon icon="circle-notch" [spin]="true" [hidden]="!exercise.loading"></fa-icon>
                     </button>
                     <button type="submit"
                             class="btn btn-success btn-sm"
                             *ngIf="exercise.isAtLeastTutor"
                             routerLink="/quiz/{{exercise.id}}/quiz-point-statistic" routerLinkActive="active">
-                        <span class="fa fa-signal"></span>
+                        <fa-icon icon="signal"></fa-icon>
                         <span class="d-none d-md-inline" jhiTranslate="global.menu.entities.statistic">Statistic</span>
                     </button>
                 </div>

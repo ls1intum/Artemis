@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository;
 
 
 /**
- * Spring Data  repository for the ShortAnswerMapping entity.
+ * Spring Data JPA repository for the ShortAnswerMapping entity.
  */
 @SuppressWarnings("unused")
 @Repository

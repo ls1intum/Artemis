@@ -31,6 +31,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
     // make constants available to html for comparison
     readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
+    readonly SHORT_ANSWER = QuestionType.SHORT_ANSWER;
 
     quizExercise: QuizExercise;
     question: DragAndDropQuestion;

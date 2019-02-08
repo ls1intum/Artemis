@@ -9,6 +9,7 @@ import { QuizComponent } from '../participate/quiz.component';
 import { QuizExerciseComponent } from '../../entities/quiz-exercise';
 import { EditMultipleChoiceQuestionComponent } from './multiple-choice-question/edit-multiple-choice-question.component';
 import { EditDragAndDropQuestionComponent } from './drag-and-drop-question/edit-drag-and-drop-question.component';
+import { EditShortAnswerQuestionComponent } from './short-answer-question/edit-short-answer-question.component';
 import { AngularFittextModule } from 'angular-fittext';
 import { AceEditorModule } from 'ng2-ace-editor';
 import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor/markdown-editor.module';
@@ -17,6 +18,7 @@ import { ArTEMiSQuizModule } from '../participate';
 import { QuizScoringInfoModalComponent } from './quiz-scoring-info-modal/quiz-scoring-info-modal.component';
 
 @NgModule({
+
     imports: [
         ArTEMiSSharedModule,
         DndModule.forRoot(),
@@ -25,17 +27,18 @@ import { QuizScoringInfoModalComponent } from './quiz-scoring-info-modal/quiz-sc
         ArTEMiSQuizModule,
         ArTEMiSMarkdownEditorModule
     ],
-    declarations: [EditMultipleChoiceQuestionComponent, EditDragAndDropQuestionComponent, QuizScoringInfoModalComponent],
+    declarations: [EditMultipleChoiceQuestionComponent, EditDragAndDropQuestionComponent, QuizScoringInfoModalComponent, EditShortAnswerQuestionComponent],
     entryComponents: [
         HomeComponent,
         QuizComponent,
         QuizExerciseComponent,
         JhiMainComponent,
         EditMultipleChoiceQuestionComponent,
-        EditDragAndDropQuestionComponent
+        EditDragAndDropQuestionComponent,
+        EditShortAnswerQuestionComponent
     ],
     providers: [RepositoryService, JhiAlertService],
-    exports: [EditMultipleChoiceQuestionComponent, EditDragAndDropQuestionComponent],
+    exports: [EditMultipleChoiceQuestionComponent, EditDragAndDropQuestionComponent, EditShortAnswerQuestionComponent],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArTEMiSQuizEditModule {}

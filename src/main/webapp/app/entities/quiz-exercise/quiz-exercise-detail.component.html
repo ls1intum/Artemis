@@ -10,7 +10,7 @@
             jhiTranslate="arTeMiSApp.quizExercise.new.title"
             [translateValues]="{param: quizExercise.course.title}">
         </span>
-        <span class="badge badge-info align-text-top pull-right">
+        <span class="badge badge-info align-text-top float-right">
             <span jhiTranslate="arTeMiSApp.quizExercise.maxScore"></span>&nbsp;
             <span class="badge badge-light">{{calculateMaxExerciseScore()}}</span>
             <span class="sr-only" jhiTranslate="arTeMiSApp.quizExercise.maxScore"></span>
@@ -89,7 +89,7 @@
                                     class="btn btn-outline-secondary"
                                     (click)="d.toggle()"
                                     type="button" style="cursor: pointer;">
-                                <i class="fa fa-calendar"></i>
+                                <fa-icon icon="calendar-alt"></fa-icon>
                             </button>
                         </div>
                     </div>
@@ -121,18 +121,30 @@
                     (questionUpdated)="onQuestionUpdated()">
                 </jhi-edit-drag-and-drop-question>
             </div>
+            <div *ngIf="question.type === SHORT_ANSWER">
+                <jhi-edit-short-answer-question
+                    [question]="question"
+                    [questionIndex]="i + 1"
+                    (questionDeleted)="deleteQuestion(question)"
+                    (questionUpdated)="onQuestionUpdated()">
+                </jhi-edit-short-answer-question>
+            </div>
         </div>
         <div class="btn-group" role="group">
             <button class="btn btn-success mr-2" (click)="addMultipleChoiceQuestion()">
-                <span class="fa fa-plus"></span>
+                <fa-icon icon="plus"></fa-icon>
                 <span jhiTranslate="arTeMiSApp.quizExercise.addMultipleChoiceQuestion">Add Multiplce-Choice Question</span>
             </button>
             <button class="btn btn-success mr-2" (click)="addDragAndDropQuestion()">
-                <span class="fa fa-plus"></span>
+                <fa-icon icon="plus"></fa-icon>
                 <span jhiTranslate="arTeMiSApp.quizExercise.addDragAndDropQuestion"></span>
             </button>
+            <button class="btn btn-success mr-2" (click)="addShortAnswerQuestion()">
+                <fa-icon icon="plus"></fa-icon>
+                <span jhiTranslate="arTeMiSApp.quizExercise.addShortAnswerQuestion"></span>
+            </button>
             <button class="btn mr-2" (click)="showHideExistingQuestions()" [ngClass]="{'btn-primary': showExistingQuestions, 'btn-success': !showExistingQuestions}">
-                <span class="fa fa-plus"></span>
+                <fa-icon icon="plus"></fa-icon>
                 <span jhiTranslate="arTeMiSApp.quizExercise.addExistingQuestions"></span>
             </button>
         </div>
@@ -221,7 +233,7 @@
                         [ngbTooltip]="tooltipTranslate"
                         tooltip-placement="top-right"
                         tooltip-class="invalid-reasons-tooltip">
-                        <i class="fa fa-exclamation-circle"></i>
+                        <fa-icon icon="exclamation-circle"></fa-icon>
                         <span jhiTranslate="arTeMiSApp.quizExercise.edit.invalidInput"></span>
                         <span>({{invalidReasons().length}})</span>
                     </span>
@@ -297,6 +309,18 @@
                                 </label>
                             </div>
                         </td>
+                        <td>
+                            <div class="form-check custom-control custom-checkbox">
+                                <input
+                                    type="checkbox"
+                                    id="cbShortAnswerFilter"
+                                    class="form-check-input custom-control-input"
+                                    [(ngModel)]="shortAnswerFilterEnabled"/>
+                                <label class="form-check-label custom-control-label" for="cbShortAnswerFilter"
+                                       jhiTranslate="arTeMiSApp.quizExercise.filter.sa">
+                                </label>
+                            </div>
+                        </td>
                         <td align="right">
                             <button class="btn btn-outline-dark" (click)="applyFilter()" jhiTranslate="arTeMiSApp.quizExercise.filter.applyFilter">eq</button>
                         </td>
@@ -333,6 +357,7 @@
                         <td width="10%" class="mb-0">
                             <h5><span *ngIf="question.type === MULTIPLE_CHOICE" class="badge badge-info align-text-top">MC</span></h5>
                             <h5><span *ngIf="question.type === DRAG_AND_DROP" class="badge badge-warning align-text-top">DnD</span></h5>
+                            <h5><span *ngIf="question.type === SHORT_ANSWER" class="badge badge-success align-text-top">SA</span></h5>
                         </td>
                         <td width="5%">
                             <div class="form-check custom-control custom-checkbox">

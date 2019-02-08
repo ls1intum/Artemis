@@ -11,6 +11,7 @@ import { QuizPointStatisticComponent } from './quiz-point-statistic/quiz-point-s
 import { QuizStatisticUtil } from '../components/util/quiz-statistic-util.service';
 import { MultipleChoiceQuestionStatisticComponent } from './multiple-choice-question-statistic/multiple-choice-question-statistic.component';
 import { DragAndDropQuestionStatisticComponent } from './drag-and-drop-question-statistic/drag-and-drop-question-statistic.component';
+import { ShortAnswerQuestionStatisticComponent } from './short-answer-question-statistic/short-answer-question-statistic.component';
 import { ArTEMiSQuizModule } from '../quiz/participate/quiz.module';
 
 const ENTITY_STATES = [...quizStatisticRoute];
@@ -21,7 +22,8 @@ const ENTITY_STATES = [...quizStatisticRoute];
         QuizStatisticComponent,
         QuizPointStatisticComponent,
         MultipleChoiceQuestionStatisticComponent,
-        DragAndDropQuestionStatisticComponent
+        DragAndDropQuestionStatisticComponent,
+        ShortAnswerQuestionStatisticComponent
     ],
     entryComponents: [
         HomeComponent,
@@ -29,7 +31,8 @@ const ENTITY_STATES = [...quizStatisticRoute];
         QuizStatisticComponent,
         QuizPointStatisticComponent,
         MultipleChoiceQuestionStatisticComponent,
-        DragAndDropQuestionStatisticComponent
+        DragAndDropQuestionStatisticComponent,
+        ShortAnswerQuestionStatisticComponent
     ],
     providers: [QuizStatisticUtil]
 })
