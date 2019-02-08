@@ -6,7 +6,7 @@ import * as _ from 'lodash';
 @Component({
     selector: 'jhi-tutor-participation-graph',
     templateUrl: './tutor-participation-graph.component.html',
-    styles: []
+    styleUrls: ['./tutor-participation-graph.component.scss']
 })
 export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     @Input() public tutorParticipation: TutorParticipation;
