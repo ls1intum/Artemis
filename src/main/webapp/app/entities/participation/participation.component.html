@@ -11,12 +11,12 @@
         <table class="table table-striped">
             <thead>
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
-                <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span> <span class="fa fa-sort"></span></th>
-                <th jhiSortBy="repositoryUrl"><span jhiTranslate="arTeMiSApp.participation.repositoryUrl">Repository Url</span> <span class="fa fa-sort"></span></th>
-                <th jhiSortBy="buildPlanId"><span jhiTranslate="arTeMiSApp.participation.buildPlanId">Build Plan Id</span> <span class="fa fa-sort"></span></th>
-                <th jhiSortBy="initializationState"><span jhiTranslate="arTeMiSApp.participation.initializationState">Initialization State</span> <span class="fa fa-sort"></span></th>
-                <th jhiSortBy="initializationDate"><span jhiTranslate="arTeMiSApp.participation.initializationDate">Initialization Date</span> <span class="fa fa-sort"></span></th>
-                <th jhiSortBy="student.firstName"><span jhiTranslate="arTeMiSApp.participation.student">Student</span> <span class="fa fa-sort"></span></th>
+                <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span> <fa-icon icon="sort"></fa-icon></th>
+                <th jhiSortBy="repositoryUrl"><span jhiTranslate="arTeMiSApp.participation.repositoryUrl">Repository Url</span> <fa-icon icon="sort"></fa-icon></th>
+                <th jhiSortBy="buildPlanId"><span jhiTranslate="arTeMiSApp.participation.buildPlanId">Build Plan Id</span> <fa-icon icon="sort"></fa-icon></th>
+                <th jhiSortBy="initializationState"><span jhiTranslate="arTeMiSApp.participation.initializationState">Initialization State</span> <fa-icon icon="sort"></fa-icon></th>
+                <th jhiSortBy="initializationDate"><span jhiTranslate="arTeMiSApp.participation.initializationDate">Initialization Date</span> <fa-icon icon="sort"></fa-icon></th>
+                <th jhiSortBy="student.firstName"><span jhiTranslate="arTeMiSApp.participation.student">Student</span> <fa-icon icon="sort"></fa-icon></th>
                 <th></th>
             </tr>
             </thead>
@@ -36,7 +36,7 @@
                         <button type="submit"
                                 routerLink="/participation/{{participation.id}}"
                                 class="btn btn-info btn-sm mr-1">
-                            <span class="fa fa-eye"></span>
+                            <fa-icon icon="eye"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                         </button>
                         <button type="submit"
@@ -44,14 +44,14 @@
                                 replaceUrl="true"
                                 queryParamsHandling="merge"
                                 class="btn btn-danger btn-sm mr-1">
-                            <span class="fa fa-remove"></span>
+                            <fa-icon icon="times"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
                         </button>
                         <div *ngIf="exercise.type === PROGRAMMING">
                             <button type="submit"
                                     [routerLink]="['/', { outlets: { popup: ['participation', participation.id, 'result', 'new']} }]"
                                     class="btn btn-warning btn-sm mr-1">
-                                <span class="fa fa-asterisk"></span>
+                                <fa-icon icon="asterisk"></fa-icon>
                                 <span class="d-none d-md-inline">New Result</span>
                             </button>
                         </div>

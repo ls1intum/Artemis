@@ -2,7 +2,7 @@
     <h2>{{exercise.course.title}} - {{exercise.title}} <small>{{results.length}} results</small></h2>
     <jhi-alert></jhi-alert>
     <div>
-        <div class="button-toolbar pull-right">
+        <div class="button-toolbar float-right">
             <button type="submit" routerLink="/exercise/{{exercise.id}}/participation" class="btn btn-primary btn-sm mr-1">
                 <fa-icon [icon]="'list-alt'"></fa-icon>
                 <span class="d-none d-md-inline" jhiTranslate="arTeMiSApp.exercise.participations">Participations</span>
@@ -44,22 +44,22 @@
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
                 <th></th>
                 <th jhiSortBy="participation.student.firstName">
-                    <a class="th-link">Student name</a> <span class="fa fa-sort"></span>
+                    <a class="th-link">Student name</a> <fa-icon icon="sort"></fa-icon>
                 </th>
                 <th jhiSortBy="completionDate">
-                    <a class="th-link">Completion date</a> <span class="fa fa-sort"></span>
+                    <a class="th-link">Completion date</a> <fa-icon icon="sort"></fa-icon>
                 </th>
                 <th jhiSortBy="successful">
-                    <a class="th-link">Result</a> <span class="fa fa-sort"></span>
+                    <a class="th-link">Result</a> <fa-icon icon="sort"></fa-icon>
                 </th>
                 <th jhiSortBy="submissionCount">
-                    <a class="th-link">Submission count</a> <span class="fa fa-sort"></span>
+                    <a class="th-link">Submission count</a> <fa-icon icon="sort"></fa-icon>
                 </th>
                 <th jhiSortBy="score">
-                    <a class="th-link">Score</a> <span class="fa fa-sort"></span>
+                    <a class="th-link">Score</a> <fa-icon icon="sort"></fa-icon>
                 </th>
                 <th jhiSortBy="duration">
-                    <a class="th-link">Duration</a> <span class="fa fa-sort"></span>
+                    <a class="th-link">Duration</a> <fa-icon icon="sort"></fa-icon>
                 </th>
                 <th *ngIf="exercise.type !== QUIZ"></th>
             </tr>
@@ -79,16 +79,16 @@
                 <td>{{durationString(result.completionDate, (result.participation.initializationDate ? result.participation.initializationDate : exercise.releaseDate))}} minutes</td>
                 <td *ngIf="exercise.type !== QUIZ">
                     <button *ngIf="exercise.type === PROGRAMMING" class="btn btn-primary btn-sm mr-1" (click)="goToRepository(result)">
-                        <i class="fa fa-code-fork mr"></i>Repository
+                        <fa-icon icon="code-branch" class="mr"></fa-icon>Repository
                     </button>
                     <button *ngIf="exercise.type === PROGRAMMING" class="btn btn-primary btn-sm mr-1" (click)="goToBuildPlan(result)">
-                        <i class="fa fa-file-code-o"></i>Build plan
+                        <fa-icon [icon]="['far', 'file-code']"></fa-icon>Build plan
                     </button>
                     <button routerLink="/editor/{{result.participation.id}}" class="btn btn-info btn-sm mr-1" *ngIf="exercise.type === PROGRAMMING && result.participation.exercise.allowOnlineEditor">
-                        <i class="fa fa-folder-open fa-fw"></i>Online editor
+                        <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>Online editor
                     </button>
                     <button *ngIf="exercise.type === PROGRAMMING" [routerLink]="['/', { outlets: { popup: 'participation/' + result.participation.id + '/result/new'} }]" class="btn btn-warning btn-sm mr-1">
-                        <i class="fa fa-asterisk"></i>New result
+                        <fa-icon icon="asterisk"></fa-icon>New result
                     </button>
                 </td>
             </tr>

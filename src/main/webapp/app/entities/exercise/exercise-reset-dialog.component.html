@@ -20,10 +20,10 @@
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal" (click)="clear()">
-            <span class="fa fa-ban"></span>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+            <fa-icon icon="ban"></fa-icon>>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
         <button type="submit" class="btn btn-danger" [disabled]="resetInProgress || !deleteParticipations || (confirmExerciseName != exercise.title)">
-            <span class="fa fa-remove"></span>&nbsp;<span jhiTranslate="entity.action.delete">Reset</span>
+            <fa-icon icon="times"></fa-icon>&nbsp;<span jhiTranslate="entity.action.delete">Reset</span>
         </button>
     </div>
 </form>

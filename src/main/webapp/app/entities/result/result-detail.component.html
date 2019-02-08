@@ -5,7 +5,7 @@
 </div>
 <div *ngIf="feedbackList" class="modal-body" id="result-detail-body" style="position: relative;" [ngSwitch]="isLoading">
     <div *ngSwitchCase="true" class="text-muted" id="result-detail-spinner">
-        <i class="fa fa-circle-o-notch fa-lg fa-spin "></i>
+        <fa-icon [spin]="true" size="lg" icon="circle-notch"></fa-icon>
     </div>
     <div [hidden]="isLoading" *ngFor="let feedback of feedbackList; last as isLast">
         <p *ngIf="feedback.type === 'AUTOMATIC'">Error in &nbsp;<code-error>{{feedback.text}}</code-error>:</p>
