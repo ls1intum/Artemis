@@ -5,6 +5,8 @@ import { DragAndDropMapping } from '../../../entities/drag-and-drop-mapping';
 import { AnswerOption } from '../../../entities/answer-option';
 import { MultipleChoiceQuestion } from '../../../entities/multiple-choice-question';
 import { DragAndDropQuestion } from '../../../entities/drag-and-drop-question';
+import { ShortAnswerQuestion } from '../../../entities/short-answer-question';
+import { ShortAnswerSubmittedText } from 'app/entities/short-answer-submitted-text';
 
 @Component({
     selector: 'jhi-quiz-scoring-infostudent-modal',
@@ -14,6 +16,7 @@ import { DragAndDropQuestion } from '../../../entities/drag-and-drop-question';
 export class QuizScoringInfoStudentModalComponent implements OnInit {
     readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
+    readonly SHORT_ANSWER = QuestionType.SHORT_ANSWER;
 
     readonly ALL_OR_NOTHING = ScoringType.ALL_OR_NOTHING;
     readonly PROPORTIONAL_WITH_PENALTY = ScoringType.PROPORTIONAL_WITH_PENALTY;
@@ -22,6 +25,7 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
     @Input() question: Question;
     @Input() DragAndDropMapping = new Array<DragAndDropMapping>();
     @Input() MultipleChoiceMapping = new Array<AnswerOption>();
+    @Input() ShortAnswerText = new Array<ShortAnswerSubmittedText>();
 
     /* Multiple Choice Counting Variables*/
     multipleChoiceCorrectAnswerCorrectlyChosen: number;
@@ -35,6 +39,12 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
     wrongMappedItems: number;
     @Input() correctAnswer: number; //Amount of correctly mapped drag and drop items
 
+    /* Short Answer Counting Variables*/
+    shortAnswerSpotCount: number;
+    shortAnswerCorrectAnswers: number;
+    shortAnswerWrongOption: number;
+
+
     constructor(private modalService: NgbModal) {
     }
 
@@ -46,6 +56,10 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
             case QuestionType.DRAG_AND_DROP:
                 this.countDragandDrop();
                 break;
+            case QuestionType.SHORT_ANSWER:
+                this.countShortAnswer();
+                break;
+
 
         }
     }
@@ -69,6 +83,13 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
         this.dragAndDropElementsCount = dndQuestion.dropLocations.length; //Amount of drag and drop zones that should be matched
         this.wrongMappedItems = this.dragAndDropElementsCount - this.correctAnswer; //Amount of wrong matched items or not matched at all
 
+    }
+
+    private countShortAnswer() {
+        const shortAnswer = this.question as ShortAnswerQuestion;
+        this.shortAnswerSpotCount = shortAnswer.spots.length; //Amount of short zones that should be answered
+        this.shortAnswerCorrectAnswers = this.ShortAnswerText.filter(option => option.isCorrect).length;//Amount of right answers
+        this.shortAnswerWrongOption = this.shortAnswerSpotCount - this.shortAnswerCorrectAnswers;
     }
 
 }

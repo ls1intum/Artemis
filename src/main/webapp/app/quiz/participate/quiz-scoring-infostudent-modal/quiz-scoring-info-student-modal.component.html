@@ -4,6 +4,8 @@
         <button type="button" class="close" aria-label="Close" (click)="d()"><span aria-hidden="true">&times;</span>
         </button>
     </div>
+
+
     <div class="modal-body"
          *ngIf="this.question.scoringType === ALL_OR_NOTHING && this.question.type === MULTIPLE_CHOICE ">
         <h6>The scoring type was <span jhiTranslate="arTeMiSApp.quizExercise.scoringType.all_or_nothing"></span>
@@ -16,15 +18,6 @@
             *ngIf="!(this.amountofCorrectMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0)"> You have achieved {{this.score}}
             of the {{this.question.score}} possible points. Since you selected {{this.multipleChoiceWrongAnswerChosen}}
             wrong answers but/and forgot to select {{this.forgottenRightAnswers}} right option you have achieved 0 points in this exercise.</span>
-    </div>
-    <div class="modal-body"
-         *ngIf="this.question.scoringType === ALL_OR_NOTHING && this.question.type === DRAG_AND_DROP ">
-        <h6>The scoring type was <span jhiTranslate="arTeMiSApp.quizExercise.scoringType.all_or_nothing"></span> This
-            means you either get all the points for the question or non at all.</h6>
-        <span *ngIf="this.wrongMappedItems == 0"> You have achieved {{this.score}} of the {{this.question.score}}
-            possible points. Since you have mapped all the items correctly you have achieved all the point. Great Job! </span>
-        <span *ngIf="!(this.wrongMappedItems == 0)"> You have achieved {{this.score}} of the {{this.question.score}}
-            possible points. Since you made {{this.wrongMappedItems}} mistakes when dragging the elements into the correct places you have achieved 0 points.</span>
     </div>
     <div class="modal-body"
          *ngIf="this.question.scoringType === PROPORTIONAL_WITH_PENALTY && this.question.type === MULTIPLE_CHOICE ">
@@ -52,6 +45,17 @@
             * {{this.question.score}}/{{this.amountOfAnswerOptions}} points. Of course you can not have less than 0 points.
         </span>
     </div>
+
+
+    <div class="modal-body"
+         *ngIf="this.question.scoringType === ALL_OR_NOTHING && this.question.type === DRAG_AND_DROP ">
+        <h6>The scoring type was <span jhiTranslate="arTeMiSApp.quizExercise.scoringType.all_or_nothing"></span> This
+            means you either get all the points for the question or non at all.</h6>
+        <span *ngIf="this.wrongMappedItems == 0"> You have achieved {{this.score}} of the {{this.question.score}}
+            possible points. Since you have mapped all the items correctly you have achieved all the point. Great Job! </span>
+        <span *ngIf="!(this.wrongMappedItems == 0)"> You have achieved {{this.score}} of the {{this.question.score}}
+            possible points. Since you made {{this.wrongMappedItems}} mistakes when dragging the elements into the correct places you have achieved 0 points.</span>
+    </div>
     <div class="modal-body"
          *ngIf="this.question.scoringType === PROPORTIONAL_WITH_PENALTY && this.question.type === DRAG_AND_DROP ">
         <h6>The scoring type was <span
@@ -64,8 +68,32 @@
             {{this.wrongMappedItems}} items and correctly mapped {{this.correctAnswer}} items. In total you have {{this.correctAnswer}}
             * {{this.question.score}}/{{this.dragAndDropElementsCount}} -  {{this.wrongMappedItems}}
             * {{this.question.score}}/{{this.dragAndDropElementsCount}} points. Of course you can not have less than 0 points.
-   </span>
+    </span>
     </div>
+
+
+
+    <div class="modal-body"
+         *ngIf="this.question.scoringType === ALL_OR_NOTHING && this.question.type === SHORT_ANSWER ">
+        <h6>The scoring type was <span jhiTranslate="arTeMiSApp.quizExercise.scoringType.all_or_nothing"></span>
+            This means you either get all the points for the question or non at all.</h6>
+        <span> You have achieved {{this.score}} of the {{this.question.score}} possible points. Since you have chosen all answers correctly.
+            wrong answers you have achieved all points in this exercise.</span>
+        <span> You have achieved {{this.score}}of the {{this.question.score}} possible points. Since you selected {{this.shortAnswerWrongOption}}
+            wrong answers but/and forgot to select {{this.shortAnswerCorrectAnswers}} right option you have achieved 0 points in this exercise.</span>
+    </div>
+    <div class="modal-body"
+         *ngIf="this.question.scoringType === PROPORTIONAL_WITH_PENALTY && this.question.type === SHORT_ANSWER ">
+        <h6>The scoring type was <span jhiTranslate="arTeMiSApp.quizExercise.scoringType.all_or_nothing"></span>
+            This means you either get all the points for the question or non at all.</h6>
+        <span> You have achieved {{this.score}} of the {{this.question.score}} possible points. Since you have chosen all answers correctly.
+            wrong answers you have achieved all points in this exercise.</span>
+        <span> You have achieved {{this.score}}
+            of the {{this.question.score}} possible points. Since you selected {{this.shortAnswerCorrectAnswers}}
+            wrong answers but/and forgot to select {{this.shortAnswerCorrectAnswers}} right option you have achieved 0 points in this exercise.</span>
+    </div>
+
+
     <div class="modal-footer">
         <button type="button" class="btn btn-outline" (click)="c()">Close</button>
     </div>
