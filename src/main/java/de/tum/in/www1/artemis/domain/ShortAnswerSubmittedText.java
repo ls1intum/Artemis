@@ -105,6 +105,17 @@ public class ShortAnswerSubmittedText implements Serializable {
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
+    /**
+     * This function checks if the submittedText (typos included) matches the solution.
+     * There can be max 2 typos at all.
+     * solutions with length 0-4 allow 0 typos
+     * solutions with length 4-8 allow 1 typo
+     * solutions with length 8< allow 2 typos
+     *
+     * @param submittedText
+     * @param solution
+     * @return boolean true if submittedText fits the restrictions above, false when not
+     */
     public boolean isSubmittedTextCorrect(String submittedText, String solution) {
         LevenshteinDistance distance = new LevenshteinDistance();
         int numberOfTypos = distance.apply(submittedText.toLowerCase(), solution.toLowerCase());
