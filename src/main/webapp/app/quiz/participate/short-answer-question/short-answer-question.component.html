@@ -4,7 +4,7 @@
 
     <div *ngIf="!showResult && !clickDisabled">
         <div class="short-answer-question-display" *ngFor="let textPart of textBeforeSpots; let i = index">
-        {{textPart}} <input class="short-answer-question-input" type="text" id="solution-{{i + solutionID}}" (blur)="setSubmittedText()" >
+        {{textPart}} <input class="short-answer-question-input" type="text" id="solution-{{i}}-{{_question.id}}" value="{{submittedTexts[i] !== undefined ? submittedTexts[i].text : ''}}" (change)="setSubmittedText()"  >
         </div>
         <span>{{textAfterSpots}}</span>
     </div>
