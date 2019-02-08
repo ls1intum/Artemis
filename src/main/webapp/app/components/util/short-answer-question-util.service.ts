@@ -114,6 +114,7 @@ export class ShortAnswerQuestionUtil {
             // no correct mappings at all means there can be no misleading mappings
             return true;
         }
+        let amountOfSolutionsThatShareOneSpot = 0;
         // iterate through all pairs of solutions
         for (let i = 0; i < question.solutions.length; i++) {
             for (let j = 0; j < i; j++) {
@@ -126,9 +127,12 @@ export class ShortAnswerQuestionUtil {
                     return isMappedWithSolution1 && isMappedWithSolution2;
                 }, this);
                 if (shareOneSpot) {
+                    amountOfSolutionsThatShareOneSpot++;
                     const allSpotsForSolution1 = this.getAllSpotsForSolutions(question.correctMappings, solution1);
                     const allSpotsForSolution2 = this.getAllSpotsForSolutions(question.correctMappings, solution2);
-                    if (!this.isSameSetOfSpots(allSpotsForSolution1, allSpotsForSolution2)) {
+                    //there have to be a least as many solutions that share all spots as the amount of existing spots
+                    if (!this.isSameSetOfSpots(allSpotsForSolution1, allSpotsForSolution2)
+                    && amountOfSolutionsThatShareOneSpot <= question.spots.length) {
                         // condition is violated for this pair of solutions
                         return false;
                     }
@@ -329,8 +333,8 @@ export class ShortAnswerQuestionUtil {
     /**
      * splits the text at the "[-spot " tag to have the parts of the text without the spots
      *
-     * @param text
-     * @return {boolean}
+     * @param {string} text
+     * @returns {string[]}
      */
     getTextWithoutSpots(text: string): string[] {
         return this.separateFirstLineOfQuestionFromRestOfText(text)
@@ -351,7 +355,7 @@ export class ShortAnswerQuestionUtil {
         for (let i = 0; i < mappings.length - 1; i++) {
             for (let j = i + 1; j <  mappings.length; j++) {
                 if (mappings[i].spot.spotNr === mappings[j].spot.spotNr
-                    && mappings[i].solution.text === mappings[j].solution.text) {
+                    && mappings[i].solution.text.toLowerCase() === mappings[j].solution.text.toLowerCase()) {
                     duplicateValues++;
                 }
             }
@@ -361,6 +365,9 @@ export class ShortAnswerQuestionUtil {
 
     /**
      * Display a sample solution instead of the student's answer
+     *
+     * @param {ShortAnswerQuestion} question
+     * @returns {ShortAnswerSolution[]}
      */
     getSampleSolution(question: ShortAnswerQuestion): ShortAnswerSolution[] {
         const sampleSolutions: ShortAnswerSolution[] = [];
@@ -381,6 +388,13 @@ export class ShortAnswerQuestionUtil {
         return sampleSolutions;
     }
 
+    /**
+     * checks if all solutions are in the sample solution
+     *
+     * @param {ShortAnswerSolution[]} solutionsForSpot
+     * @param {ShortAnswerSolution[]} sampleSolutions
+     * @returns {boolean}
+     */
     allSolutionsAreInSampleSolution(solutionsForSpot: ShortAnswerSolution[], sampleSolutions: ShortAnswerSolution[]): boolean {
         let i = 0;
         for (const solutionForSpot of solutionsForSpot) {
@@ -392,5 +406,15 @@ export class ShortAnswerQuestionUtil {
             }
         }
         return i === solutionsForSpot.length;
+    }
+
+    /**
+     * checks if at least there are as many solutions as spots
+     *
+     * @param {ShortAnswerQuestion} question
+     * @returns {boolean}
+     */
+    atLeastAsManySolutionsAsSpots(question: ShortAnswerQuestion): boolean {
+        return question.spots.length <= question.solutions.length
     }
 }
