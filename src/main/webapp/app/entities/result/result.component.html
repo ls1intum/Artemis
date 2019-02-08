@@ -3,12 +3,12 @@
   -- e.g. by using Object.assign to trigger ngOnChanges which makes sure that the result is updated
 -->
 <span *ngIf="!result || (!result.score && result.score !== 0)">
-    <span class="text-muted"><i class="fa fa-circle-o fa-lg"></i>&nbsp;No results</span>
-     <span class="text-primary"  *ngIf="isBuilding"><i class="fa fa-circle-o-notch fa-lg fa-spin"></i>&nbsp;Building...</span>
+    <span class="text-muted"><fa-icon [icon]="['far', 'circle']" size="lg"></fa-icon>&nbsp;No results</span>
+     <span class="text-primary"  *ngIf="isBuilding"><fa-icon icon="circle-notch" size="lg" [spin]="true"></fa-icon>&nbsp;Building...</span>
 </span>
 <ng-container *ngIf="result && (result.score || result.score === 0)">
     <span [ngClass]="textColorClass">
-        <i class="fa fa-lg" [ngClass]="resultIconClass"></i>
+        <fa-icon [icon]="resultIconClass" size="lg"></fa-icon>
         <span class="score"> Score: {{result.score}}%, </span>
         <span *ngIf="hasFeedback">
             <span class="result" (click)="showDetails(result)">{{resultString}}</span>
@@ -17,7 +17,7 @@
         <span> ({{result.completionDate | amTimeAgo}})</span>   <!-- TODO in the future we should make sure that result.submission.submissionDate is used here, because submissionDate and completionDate can be different for certain exercise types -->
     </span>
     <span *ngIf="result.buildArtifact">
-        <a (click)="downloadBuildResult(participation.id)"> &nbsp; <i class="fa fa-file"></i> Download Build Result</a>
+        <a (click)="downloadBuildResult(participation.id)"> &nbsp; <fa-icon icon="file"></fa-icon> Download Build Result</a>
     </span>
 </ng-container>
 
