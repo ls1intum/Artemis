@@ -13,8 +13,8 @@
                                 [hidden]="isBuilding">
                     </jhi-result>
                     <button type="button" class="btn btn-primary navbar-btn" [disabled]="!isSaved || isBuilding" (click)="commit($event)" data-toggle="tooltip" data-placement="left" title="Stage, commit, push, build and test your changes.">
-                        <span *ngIf="isBuilding"><i class="fa fa-circle-o-notch fa-spin"></i> Building</span>
-                        <span *ngIf="!isBuilding"><i class="fa fa-play-circle-o"></i> Commit & Run Tests</span>
+                        <span *ngIf="isBuilding"><fa-icon icon="circle-notch" [spin]="true"></fa-icon> Building</span>
+                        <span *ngIf="!isBuilding"><fa-icon [icon]="['far', 'play-circle']"></fa-icon> Commit & Run Tests</span>
                     </button>
                 </li>
             </ul>

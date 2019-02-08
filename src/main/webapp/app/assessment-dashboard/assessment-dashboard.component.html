@@ -1,17 +1,17 @@
 <div *ngIf="exercise">
     <h4>Assessment dashboard for exercise "{{exercise.title}}"</h4>
     <div>
-        <div class="button-toolbar pull-right">
+        <div class="button-toolbar float-right">
             <button [disabled]="busy || (optimalSubmissions && optimalSubmissions.length === 0 && assessedSubmissions === submissions.length)" class="btn btn-success btn-sm mr-1" (click)="assessNextOptimal(0)">
-                <i class="fa fa-folder-open fa-fw"></i>&nbsp;Assess next submission
+                <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;Assess next submission
             </button>
             <button [disabled]="busy" class="btn btn-primary btn-sm mr-1" (click)="refresh()">
-                <i class="fa fa-refresh fa-fw"></i>&nbsp;Refresh
+                <fa-icon icon="sync" [fixedWidth]="true"></fa-icon>&nbsp;Refresh
             </button>
             <button *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" class="btn btn-primary btn-sm mr-1"
                     [disabled]="busy"
                     (click)="resetOptimality()">
-                <i class="fa fa-refresh fa-fw"></i>&nbsp;Reset assessment order
+                <fa-icon icon="sync" [fixedWidth]="true"></fa-icon>&nbsp;Reset assessment order
             </button>
         </div>
     </div>
@@ -22,7 +22,7 @@
     </h4>
     <jhi-alert></jhi-alert>
     <h4>
-        <span *ngIf="busy" style="color:grey"><span class="fa fa-spinner fa-spin"></span>&nbsp;<span>Please wait while finding the next submission!</span></span>
+        <span *ngIf="busy" style="color:grey"><fa-icon icon="spinner" [spin]="true"></fa-icon>&nbsp;<span>Please wait while finding the next submission!</span></span>
     </h4>
     <p>ArTEMiS optimized the assessment order to minimize your correction effort. Please assess the following submissions first:</p>
     <div class="table-responsive" *ngIf="optimalSubmissions && optimalSubmissions.length > 0">
@@ -57,7 +57,7 @@
                             routerLink="/apollon-diagrams/exercise/{{exercise.id}}/{{submission.id}}/tutor"
                             [queryParams]="{optimal: false}"
                             class="btn btn-outline-success btn-sm">
-                        <i class="fa fa-folder-open fa-fw"></i>&nbsp;Assess model
+                        <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;Assess model
                     </button>
                 </td>
             </tr>
@@ -82,28 +82,28 @@
                     <a class="th-link">#</a>
                 </th>
                 <th jhiSortBy="participation.student.firstName">
-                    <a class="th-link">Student name</a> <span class="fa fa-sort"></span>
+                    <a class="th-link">Student name</a> <fa-icon icon="sort"></fa-icon>
                 </th>
                 <th jhiSortBy="submissionDate">
-                    <a class="th-link">Submission date</a> <span class="fa fa-sort"></span>
+                    <a class="th-link">Submission date</a> <fa-icon icon="sort"></fa-icon>
                 </th>
                 <th jhiSortBy="successful">
-                    <a class="th-link">Result</a> <span class="fa fa-sort"></span>
+                    <a class="th-link">Result</a> <fa-icon icon="sort"></fa-icon>
                 </th>
                 <th jhiSortBy="submissionCount">
-                    <a class="th-link">Submission count</a> <span class="fa fa-sort"></span>
+                    <a class="th-link">Submission count</a> <fa-icon icon="sort"></fa-icon>
                 </th>
                 <th jhiSortBy="score">
-                    <a class="th-link">Score</a> <span class="fa fa-sort"></span>
+                    <a class="th-link">Score</a> <fa-icon icon="sort"></fa-icon>
                 </th>
                 <th jhiSortBy="duration">
-                    <a class="th-link">Duration</a> <span class="fa fa-sort"></span>
+                    <a class="th-link">Duration</a> <fa-icon icon="sort"></fa-icon>
                 </th>
                 <th jhiSortBy="assessmentType">
-                    <a class="th-link">Assessment Type</a> <span class="fa fa-sort"></span>
+                    <a class="th-link">Assessment Type</a> <fa-icon icon="sort"></fa-icon>
                 </th>
                 <th jhiSortBy="assessor.firstName">
-                    <a class="th-link">Reviewer</a> <span class="fa fa-sort"></span>
+                    <a class="th-link">Reviewer</a> <fa-icon icon="sort"></fa-icon>
                 </th>
                 <th>
                     <a class="th-link">Action</a>
@@ -138,7 +138,7 @@
                             [disabled]="busy"
                             [queryParams]="{optimal: false}"
                             class="btn btn-outline-secondary btn-sm">
-                        <i class="fa fa-folder-open fa-fw"></i>&nbsp;Assess model
+                        <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;Assess model
                     </button>
                     </span>
                     <button *ngIf="exercise.type === MODELING && submission && submission.result"
@@ -146,7 +146,7 @@
                             [disabled]="busy"
                             [queryParams]="{optimal: false}"
                             class="btn btn-outline-secondary btn-sm">
-                        <i class="fa fa-folder-open fa-fw"></i>&nbsp;Open assessment
+                        <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;Open assessment
                     </button>
                 </td>
             </tr>

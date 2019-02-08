@@ -1,15 +1,15 @@
 <div id="cardFiles" class="card resizable-filebrowser" [ngStyle]="{'width.px':400}">
     <div class="card-header bg-primary text-white" (click)="toggleEditorCollapse($event, false)">
-        <span class="pull-right "><i class="fa fa-chevron-left"></i></span>
+        <span class="float-right "><fa-icon icon="chevron-left"></fa-icon></span>
         <h3 class="card-title">
-            <i class="fa fa-folder-open"></i>
+            <fa-icon icon="folder-open"></fa-icon>
             <span> &nbsp;{{participation?.exercise.title}}</span>
         </h3>
     </div>
 
     <div class="card-second-header">
-        <a class="btn btn-small" (click)="openCreateFileModal()"><i class="fa fa-plus"></i> </a>
-        <a class="btn btn-small" (click)="openDeleteFileModal()"><i class="fa fa-trash"></i> </a>
+        <a class="btn btn-small" (click)="openCreateFileModal()"><fa-icon icon="plus"></fa-icon> </a>
+        <a class="btn btn-small" (click)="openDeleteFileModal()"><fa-icon icon="trash"></fa-icon> </a>
     </div>
 
     <div class="card-body">
@@ -20,13 +20,14 @@
     </div>
 
     <div class="card-footer text-nowrap">
+        <fa-icon [icon]="getSaveStatusIcon().icon" [spin]="getSaveStatusIcon().spin" [ngClass]="getSaveStatusIcon().class"></fa-icon>
         <span [innerHtml]="getSaveStatusLabel() | safeHtml"></span>
         <hr/>
         <span *ngIf="isExerciseCommitted()">
-            <i class="fa fa-check-circle text-success"></i> <span class="text-success"> All changes committed.</span>
+            <fa-icon icon="check-circle" class="text-success"></fa-icon> <span class="text-success"> All changes committed.</span>
         </span>
         <span *ngIf="!isExerciseCommitted()">
-            <i class="fa fa-warning text-warning"></i> <span class="text-warning"> There are uncommitted changes.</span>
+            <fa-icon icon="exclamation-triangle" class="text-warning"></fa-icon> <span class="text-warning"> There are uncommitted changes.</span>
         </span>
     </div>
 
@@ -41,7 +42,7 @@
         class="list-group-item"
         [class.node-selected]="item.checked"
     >
-        <i aria-hidden="true" class="fa fa-fw" [class.fa-folder]="item.collapsed" [class.fa-folder-open]="!item.collapsed"></i>
+        <fa-icon aria-hidden="true" [icon]="item.collapsed ? 'folder' : 'folder-open'" [fixedWidth]="true"></fa-icon>
         <span>{{ item.text }}</span>
     </li>
     <li *ngIf="!item.children"
@@ -49,7 +50,7 @@
         class="list-group-item"
         [class.node-selected]="item.checked"
     >
-        <i aria-hidden="true" class="fa fa-file fa-fw"></i>
+        <fa-icon aria-hidden="true" icon="file" [fixedWidth]="true"></fa-icon>
         <span>{{ item.text }}</span>
     </li>
 </ng-template>
