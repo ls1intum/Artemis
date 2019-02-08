@@ -412,8 +412,8 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
         let text = '<span class="bold">';
 
         text += done
-            ? '<i class="fa fa-lg fa-check-circle-o text-success" style="font-size: 1.7em;"></i>'
-            : '<i class="fa fa-lg fa-times-circle-o text-danger" style="font-size: 1.7em;"></i>';
+            ? `<fa-icon size="lg" [icon]="['far', 'check-circle']" class="text-success" style="font-size: 1.7em;"></fa-icon>`
+            : `<fa-icon size="lg" [icon]="['far', 'times-circle']" class="text-danger" style="font-size: 1.7em;"></fa-icon>`;
         text += ' ' + tokens[0].title;
         text += '</span>: ';
         // If the test is not done, we set the 'data-tests' attribute to the a-element, which we later use for the details dialog

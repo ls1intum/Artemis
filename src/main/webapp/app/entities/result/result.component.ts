@@ -10,7 +10,6 @@ import { ExerciseType } from '../../entities/exercise';
 
 import * as moment from 'moment';
 
-
 @Component({
     selector: 'jhi-result',
     templateUrl: './result.component.html',
@@ -36,7 +35,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     websocketChannelSubmissions: string;
     textColorClass: string;
     hasFeedback: boolean;
-    resultIconClass: string;
+    resultIconClass: string[];
     resultString: string;
 
     constructor(
@@ -201,20 +200,19 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     /**
-     * Get the css class for the result icon as a string
+     * Get the icon type for the result icon as an array
      *
-     * @return {string} the css class
      */
-    getResultIconClass() {
+    getResultIconClass(): string[] {
         if (this.result.score == null) {
             if (this.result.successful) {
-                return 'fa-check-circle-o';
+                return ['far', 'check-circle'];
             }
-            return 'fa-times-circle-o';
+            return ['far', 'times-circle'];
         }
         if (this.result.score > 80) {
-            return 'fa-check-circle-o';
+            return ['far', 'check-circle'];
         }
-        return 'fa-times-circle-o';
+        return ['far', 'times-circle'];
     }
 }

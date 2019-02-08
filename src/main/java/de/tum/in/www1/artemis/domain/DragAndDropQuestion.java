@@ -346,8 +346,7 @@ public class DragAndDropQuestion extends Question implements Serializable {
      */
     public void undoUnallowedChanges (Question originalQuestion) {
 
-        if (originalQuestion != null
-            && originalQuestion instanceof DragAndDropQuestion) {
+        if (originalQuestion instanceof DragAndDropQuestion) {
             DragAndDropQuestion dndOriginalQuestion = (DragAndDropQuestion) originalQuestion;
             //undo unallowed dragItemChanges
             undoUnallowedDragItemChanges(dndOriginalQuestion);
@@ -428,7 +427,7 @@ public class DragAndDropQuestion extends Question implements Serializable {
      * @return a boolean which is true if the dragItem and dropLocation-changes make an update necessary and false if not
      */
     public boolean isUpdateOfResultsAndStatisticsNecessary(Question originalQuestion) {
-        if (originalQuestion != null && originalQuestion instanceof DragAndDropQuestion){
+        if (originalQuestion instanceof DragAndDropQuestion){
             DragAndDropQuestion dndOriginalQuestion = (DragAndDropQuestion) originalQuestion;
             return checkDragItemsIfRecalculationIsNecessary(dndOriginalQuestion) ||
                 checkDropLocationsIfRecalculationIsNecessary(dndOriginalQuestion) ||

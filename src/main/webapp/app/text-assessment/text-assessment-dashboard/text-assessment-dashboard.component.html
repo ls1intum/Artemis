@@ -9,25 +9,25 @@
                     <a class="th-link">#</a>
                 </th>
                 <th jhiSortBy="submissionDate">
-                    <a class="th-link">Submission date</a> <span class="fa fa-sort"></span>
+                    <a class="th-link">Submission date</a> <fa-icon icon="sort"></fa-icon>
                 </th>
                 <th jhiSortBy="successful">
-                    <a class="th-link">Result</a> <span class="fa fa-sort"></span>
+                    <a class="th-link">Result</a> <fa-icon icon="sort"></fa-icon>
                 </th>
                 <th jhiSortBy="submissionCount">
-                    <a class="th-link">Submission count</a> <span class="fa fa-sort"></span>
+                    <a class="th-link">Submission count</a> <fa-icon icon="sort"></fa-icon>
                 </th>
                 <th jhiSortBy="score">
-                    <a class="th-link">Score</a> <span class="fa fa-sort"></span>
+                    <a class="th-link">Score</a> <fa-icon icon="sort"></fa-icon>
                 </th>
                 <th jhiSortBy="duration">
-                    <a class="th-link">Duration</a> <span class="fa fa-sort"></span>
+                    <a class="th-link">Duration</a> <fa-icon icon="sort"></fa-icon>
                 </th>
                 <th jhiSortBy="assessmentType">
-                    <a class="th-link">Assessment Type</a> <span class="fa fa-sort"></span>
+                    <a class="th-link">Assessment Type</a> <fa-icon icon="sort"></fa-icon>
                 </th>
                 <th jhiSortBy="assessor.firstName">
-                    <a class="th-link">Reviewer</a> <span class="fa fa-sort"></span>
+                    <a class="th-link">Reviewer</a> <fa-icon icon="sort"></fa-icon>
                 </th>
                 <th>
                     <a class="th-link">Action</a>
@@ -61,20 +61,22 @@
                         *ngIf="submission.result && submission.result.assessor">{{ submission.result.assessor.firstName }} {{ submission.result.assessor.lastName }}</span>
                 </td>
                 <td>
-                    <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
+                    <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']">
                     <button *ngIf="submission && !submission.result"
                             routerLink="/text/{{exercise.id}}/assessment/{{submission.id}}"
                             [disabled]="busy"
                             class="btn btn-outline-secondary btn-sm">
-                        <i class="fa fa-folder-open fa-fw"></i>&nbsp;Assess Submission
+                        <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;Assess Submission
                     </button>
                     </span>
+                    <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']">
                     <button *ngIf="submission && submission.result"
                             routerLink="/text/{{exercise.id}}/assessment/{{submission.id}}"
                             [disabled]="busy"
                             class="btn btn-outline-secondary btn-sm">
-                        <i class="fa fa-folder-open fa-fw"></i>&nbsp;Open assessment
+                        <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;Open assessment
                     </button>
+                    </span>
                 </td>
             </tr>
             </tbody>
@@ -88,6 +90,6 @@
 
 <ng-template #loading>
     <h2>
-        <span style="color:grey"><span class="fa fa-spinner fa-spin"></span>&nbsp;<span>Loading..</span></span>
+        <span style="color:grey"><fa-icon icon="spinner" [spin]="true"></fa-icon>&nbsp;<span>Loading..</span></span>
     </h2>
 </ng-template>

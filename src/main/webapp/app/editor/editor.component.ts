@@ -26,6 +26,7 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
     repositoryFiles: string[];
     latestResult: Result;
     saveStatusLabel: string;
+    saveStatusIcon: { spin: boolean; icon: string; class: string };
 
     /** File Status Booleans **/
     isSaved = true;
@@ -131,6 +132,7 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
             this.isCommitted = false;
         }
         this.saveStatusLabel = $event.saveStatusLabel;
+        this.saveStatusIcon = $event.saveStatusIcon;
     }
 
     /**

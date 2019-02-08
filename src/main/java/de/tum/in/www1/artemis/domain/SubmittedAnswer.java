@@ -30,7 +30,7 @@ import java.util.Objects;
 @JsonSubTypes({
     @JsonSubTypes.Type(value=MultipleChoiceSubmittedAnswer.class, name="multiple-choice"),
     @JsonSubTypes.Type(value=DragAndDropSubmittedAnswer.class, name="drag-and-drop"),
-    @JsonSubTypes.Type(value = ShortAnswerQuestion.class, name = "short-answer")
+    @JsonSubTypes.Type(value = ShortAnswerSubmittedAnswer.class, name = "short-answer")
 })
 public abstract class SubmittedAnswer implements Serializable {
 

@@ -49,9 +49,55 @@ import {
     faEraser,
     faDownload,
     faFileExport,
-    faChalkboardTeacher,
-    faCheckCircle
+    faCircleNotch,
+    faCheckCircle,
+    faUndo,
+    faTrash,
+    faExclamationTriangle,
+    faUnlink,
+    faFont,
+    faFolder,
+    faFolderOpen,
+    faPlayCircle,
+    faInfoCircle,
+    faGraduationCap,
+    faChartPie,
+    faExternalLinkAlt,
+    faSignal,
+    faChevronUp,
+    faChevronDown,
+    faChevronLeft,
+    faChevronRight,
+    faRedo,
+    faExclamationCircle,
+    faTerminal,
+    faSpinner,
+    faQuestionCircle,
+    faTimesCircle,
+    faAngleRight,
+    faAngleDown,
+    faCheck,
+    faUpload,
+    faArrowsAltV,
+    faFile,
+    faCodeBranch,
+    faCircle,
+    faChalkboardTeacher
 } from '@fortawesome/free-solid-svg-icons';
+
+import {
+    faQuestionCircle as farQuestionCircle,
+    faCheckCircle as farCheckCircle,
+    faTimesCircle as farTimeCircle,
+    faListAlt as farListAlt,
+    faFileImage as farFileImage,
+    faCheckSquare as farCheckSquare,
+    faSquare as farSquare,
+    faFileAlt as farFileAlt,
+    faPlayCircle as farPlayCircle,
+    faFileCode as farFileCode,
+    faCircle as farCircle
+} from '@fortawesome/free-regular-svg-icons';
 
 // Adds the SVG icon to the library so you can use it in your page
 library.add(faUser);
@@ -88,6 +134,7 @@ library.add(faSignInAlt);
 library.add(faCalendarAlt);
 library.add(faSearch);
 library.add(faTrashAlt);
+library.add(faTrash);
 library.add(faAsterisk);
 library.add(faArchive);
 library.add(faEraser);
@@ -95,5 +142,48 @@ library.add(faDownload);
 library.add(faChalkboardTeacher);
 library.add(faCheckCircle);
 library.add(faFileExport);
+library.add(faCircleNotch);
+library.add(faUndo);
+library.add(faExclamationTriangle);
+library.add(faUnlink);
+library.add(faFont);
+library.add(faFolder);
+library.add(faFolderOpen);
+library.add(faPlayCircle);
+library.add(faInfoCircle);
+library.add(faGraduationCap);
+library.add(faChartPie);
+library.add(faExternalLinkAlt);
+library.add(faSignal);
+library.add(faChevronUp);
+library.add(faChevronDown);
+library.add(faChevronLeft);
+library.add(faChevronRight);
+library.add(faRedo);
+library.add(faExclamationCircle);
+library.add(faTerminal);
+library.add(faSpinner);
+library.add(faQuestionCircle);
+library.add(faTimesCircle);
+library.add(faAngleRight);
+library.add(faAngleDown);
+library.add(faCheck);
+library.add(faUpload);
+library.add(faArrowsAltV);
+library.add(faFile);
+library.add(faCodeBranch);
+library.add(faCircle);
+
+library.add(farQuestionCircle);
+library.add(farCheckCircle);
+library.add(farTimeCircle);
+library.add(farListAlt);
+library.add(farFileImage);
+library.add(farCheckSquare);
+library.add(farSquare);
+library.add(farFileAlt);
+library.add(farPlayCircle);
+library.add(farFileCode);
+library.add(farCircle);
 
 // jhipster-needle-add-element-to-vendor - JHipster will add new menu items here
