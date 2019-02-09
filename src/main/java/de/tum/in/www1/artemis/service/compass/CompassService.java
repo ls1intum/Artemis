@@ -8,7 +8,6 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.UserService;
-import de.tum.in.www1.artemis.service.compass.assessment.Assessment;
 import de.tum.in.www1.artemis.service.compass.assessment.ModelElementAssessment;
 import de.tum.in.www1.artemis.service.compass.conflict.Conflict;
 import de.tum.in.www1.artemis.service.compass.grade.CompassGrade;
@@ -202,15 +201,13 @@ public class CompassService {
         }
     }
 
-    public Optional<Conflict> checkForConflict(long exerciseId, long modelId, List<ModelElementAssessment> modelingAssessment) {
+    public Optional<List<Conflict>> checkForConflict(long exerciseId, long modelId, List<ModelElementAssessment> modelingAssessment) {
         CompassCalculationEngine engine = (CompassCalculationEngine) compassCalculationEngines.get(exerciseId);
-        HashMap<String, Integer> conflictingAssessments = engine.getElementIdsInConflict(modelId, modelingAssessment);
-        if (conflictingAssessments.isEmpty()) {
+        List<Conflict> conflicts = engine.getConflicts(modelId, modelingAssessment);
+        if (conflicts.isEmpty()) {
             return Optional.empty();
         } else {
-            Conflict conflict = new Conflict(conflictingAssessments);
-            conflict.setInitiator(userService.getUser());
-            return Optional.of(conflict);
+            return Optional.of(conflicts);
         }
     }
 
@@ -339,7 +336,7 @@ public class CompassService {
      * [{id}
      * name
      * apollonId
-     * conflict]
+     * conflicts]
      * numberModels
      * numberConflicts
      * totalConfidence

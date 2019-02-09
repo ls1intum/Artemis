@@ -31,11 +31,11 @@ public class ModelingAssessmentService extends AssessmentService {
     private final ModelingSubmissionRepository modelingSubmissionRepository;
 
     public ModelingAssessmentService(
-            JsonAssessmentRepository jsonAssessmentRepository,
-            ResultRepository resultRepository,
-            UserService userService,
-            ModelingExerciseService modelingExerciseService,
-            ModelingSubmissionRepository modelingSubmissionRepository) {
+        JsonAssessmentRepository jsonAssessmentRepository,
+        ResultRepository resultRepository,
+        UserService userService,
+        ModelingExerciseService modelingExerciseService,
+        ModelingSubmissionRepository modelingSubmissionRepository) {
         super(resultRepository);
 
         this.jsonAssessmentRepository = jsonAssessmentRepository;
@@ -59,11 +59,11 @@ public class ModelingAssessmentService extends AssessmentService {
         if (jsonAssessmentRepository.exists(exerciseId, studentId, modelId, true)) {
             // the modelingSubmission was graded manually
             assessmentJson =
-                    jsonAssessmentRepository.readAssessment(exerciseId, studentId, modelId, true);
+                jsonAssessmentRepository.readAssessment(exerciseId, studentId, modelId, true);
         } else if (jsonAssessmentRepository.exists(exerciseId, studentId, modelId, false)) {
             // the modelingSubmission was graded automatically
             assessmentJson =
-                    jsonAssessmentRepository.readAssessment(exerciseId, studentId, modelId, false);
+                jsonAssessmentRepository.readAssessment(exerciseId, studentId, modelId, false);
         }
 
         if (assessmentJson != null) {
@@ -84,7 +84,7 @@ public class ModelingAssessmentService extends AssessmentService {
      */
     @Transactional
     public Result submitManualAssessment(
-            Result result, ModelingExercise exercise, List<ModelElementAssessment> modelingAssessment) {
+        Result result, ModelingExercise exercise, List<ModelElementAssessment> modelingAssessment) {
         saveManualAssessment(result, exercise.getId(), modelingAssessment);
         Double calculatedScore = calculateTotalScore(modelingAssessment);
         return prepareSubmission(result, exercise, calculatedScore);
@@ -101,7 +101,7 @@ public class ModelingAssessmentService extends AssessmentService {
      */
     @Transactional
     public void saveManualAssessment(
-            Result result, Long exerciseId, List<ModelElementAssessment> modelingAssessment) {
+        Result result, Long exerciseId, List<ModelElementAssessment> modelingAssessment) {
         result.setAssessmentType(AssessmentType.MANUAL);
         User user = userService.getUser();
         result.setAssessor(user);
@@ -115,8 +115,7 @@ public class ModelingAssessmentService extends AssessmentService {
             modelingSubmissionRepository.save(modelingSubmission);
         }
         // write assessment to file system
-        jsonAssessmentRepository.writeAssessment(
-                exerciseId, studentId, submissionId, true, modelingAssessment);
+        jsonAssessmentRepository.writeAssessment(exerciseId, studentId, submissionId, true, modelingAssessment);
         resultRepository.save(result);
     }
 

@@ -1,15 +1,24 @@
 package de.tum.in.www1.artemis.service.compass;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import de.tum.in.www1.artemis.service.compass.assessment.Assessment;
+import de.tum.in.www1.artemis.service.compass.assessment.CompassResult;
+import de.tum.in.www1.artemis.service.compass.assessment.ModelElementAssessment;
+import de.tum.in.www1.artemis.service.compass.assessment.Score;
+import de.tum.in.www1.artemis.service.compass.conflict.Conflict;
+import de.tum.in.www1.artemis.service.compass.controller.*;
+import de.tum.in.www1.artemis.service.compass.grade.CompassGrade;
+import de.tum.in.www1.artemis.service.compass.grade.Grade;
+import de.tum.in.www1.artemis.service.compass.umlmodel.*;
+import de.tum.in.www1.artemis.service.compass.utils.JSONMapping;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
-import org.slf4j.*;
-import com.google.gson.*;
-import de.tum.in.www1.artemis.service.compass.assessment.*;
-import de.tum.in.www1.artemis.service.compass.controller.*;
-import de.tum.in.www1.artemis.service.compass.grade.*;
-import de.tum.in.www1.artemis.service.compass.umlmodel.*;
-import de.tum.in.www1.artemis.service.compass.utils.JSONMapping;
+import java.util.stream.Collectors;
 
 
 public class CompassCalculationEngine implements CalculationEngine {
@@ -43,23 +52,23 @@ public class CompassCalculationEngine implements CalculationEngine {
         assessModelsAutomatically();
     }
 
-
-    public HashMap<String, Integer> getElementIdsInConflict(long modelId, List<ModelElementAssessment> modelingAssessment) { //TODO register Assessment in Conflict in ModelSelector?
-        HashMap<String, Integer> elementIdsInConflict = new HashMap<>();
+    //TODO JavaDoc
+    public List<Conflict> getConflicts(long modelId, List<ModelElementAssessment> modelingAssessment) { //TODO register Assessment in Conflict in ModelSelector?
+        ArrayList<Conflict> conflicts = new ArrayList<>();
         UMLModel model = modelIndex.getModel(modelId);
-        modelingAssessment.forEach(modelElementAssessment -> {
-            UMLElement element = model.getElementByJSONID(modelElementAssessment.getId()); //TODO return Optional ad throw Exception if no UMLElement found
-            Optional<Assessment> assessmentOptional = assessmentIndex.getAssessment(element.getElementID());
-            assessmentOptional.ifPresent(assessment -> assessment.getContextScoreList().values().forEach(scores -> {
-                Optional<Score> scoreInConflict = scores.stream()
-                    .filter(score -> scoresAreConsideredEqual(score.getPoints(), modelElementAssessment.getCredits()))
-                    .findFirst();
-                scoreInConflict.ifPresent(score -> {
-                    elementIdsInConflict.put(modelElementAssessment.getId(), element.getElementID());
-                });
-            }));
+        modelingAssessment.forEach(currentElementAssessment -> {
+            UMLElement currentElement = model.getElementByJSONID(currentElementAssessment.getId()); //TODO return Optional ad throw Exception if no UMLElement found
+            assessmentIndex.getAssessment(currentElement.getElementID()).ifPresent(assessment -> {
+                List<Score> scores = assessment.getScores(currentElement.getContext());
+                List<Score> scoresInConflict = scores.stream()
+                    .filter(score -> scoresAreConsideredEqual(score.getPoints(), currentElementAssessment.getCredits()))
+                    .collect(Collectors.toList());
+                if (!scoresInConflict.isEmpty()) {
+                    conflicts.add(new Conflict(currentElement, currentElementAssessment,scoresInConflict));
+                }
+            });
         });
-        return elementIdsInConflict;
+        return conflicts;
     }
 
 
@@ -227,7 +236,7 @@ public class CompassCalculationEngine implements CalculationEngine {
      * [{id}
      * name
      * apollonId
-     * conflict]
+     * conflicts]
      * numberModels
      * numberConflicts
      * totalConfidence
@@ -255,7 +264,7 @@ public class CompassCalculationEngine implements CalculationEngine {
             if (conflict) {
                 conflicts++;
             }
-            uniqueElement.addProperty("conflict", conflict);
+            uniqueElement.addProperty("conflicts", conflict);
             uniqueElements.add(umlElement.getElementID() + "", uniqueElement);
         }
         jsonObject.add("uniqueElements", uniqueElements);
