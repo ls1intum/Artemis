@@ -96,20 +96,6 @@ public class ShortAnswerSubmittedAnswer extends SubmittedAnswer implements Seria
         }
     }
 
-    public boolean submittedTextMoreThanOnceInSubmittedAnswer(ShortAnswerSubmittedText submittedText){
-        int numberOfSubmittedText = 0;
-        for(ShortAnswerSubmittedText submittedTextFromSubmittedAnswer : this.getSubmittedTexts()){
-            if(submittedTextFromSubmittedAnswer.getText().equalsIgnoreCase(submittedText.getText())){
-                numberOfSubmittedText++;
-            }
-        }
-        if(numberOfSubmittedText == 1){
-            return false;
-        } else {
-            return true;
-        }
-    }
-
     public ShortAnswerSubmittedText getSubmittedTextForSpot(ShortAnswerSpot spot) {
         for(ShortAnswerSubmittedText submittedText : this.getSubmittedTexts()) {
             if(submittedText.getSpot().equals(spot)) {

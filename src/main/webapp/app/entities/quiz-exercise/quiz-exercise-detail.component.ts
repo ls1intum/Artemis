@@ -506,11 +506,12 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                 return (
                     question.title && question.title !== '' && shortAnswerQuestion.correctMappings && shortAnswerQuestion.correctMappings.length > 0
                     // && this.shortAnswerQuestionUtil.solveShortAnswer(shortAnswerQuestion).length
-                    // && this.shortAnswerQuestionUtil.validateNoMisleadingCorrectShortAnswerMapping(shortAnswerQuestion)
+                    && this.shortAnswerQuestionUtil.validateNoMisleadingCorrectShortAnswerMapping(shortAnswerQuestion)
                     && this.shortAnswerQuestionUtil.everySpotHasASolution(shortAnswerQuestion.correctMappings, shortAnswerQuestion.spots)
                     && this.shortAnswerQuestionUtil.everyMappedSolutionHasASpot(shortAnswerQuestion.correctMappings)
                     && shortAnswerQuestion.solutions.filter(solution => solution.text.trim() === '').length === 0
                     && !this.shortAnswerQuestionUtil.hasMappingDuplicateValues(shortAnswerQuestion.correctMappings)
+                    && this.shortAnswerQuestionUtil.atLeastAsManySolutionsAsSpots(shortAnswerQuestion)
                 );
             } else {
                 console.log('Unknown question type: ' + question);
@@ -629,13 +630,12 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                         translateValues: { index: index + 1 }
                     });
                 } */
-                /*
                 if (!this.shortAnswerQuestionUtil.validateNoMisleadingCorrectShortAnswerMapping(shortAnswerQuestion)) {
                     reasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.misleadingCorrectMapping',
                         translateValues: { index: index + 1 }
                     });
-                } */
+                }
                 if (!this.shortAnswerQuestionUtil.everySpotHasASolution(shortAnswerQuestion.correctMappings, shortAnswerQuestion.spots)) {
                     reasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.shortAnswerQuestionEverySpotHasASolution',
@@ -657,6 +657,12 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                 if (this.shortAnswerQuestionUtil.hasMappingDuplicateValues(shortAnswerQuestion.correctMappings)) {
                     reasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.shortAnswerQuestionDuplicateMapping',
+                        translateValues: { index: index + 1 }
+                    });
+                }
+                if (!this.shortAnswerQuestionUtil.atLeastAsManySolutionsAsSpots(shortAnswerQuestion)) {
+                    reasons.push({
+                        translateKey: 'arTeMiSApp.quizExercise.invalidReasons.shortAnswerQuestionUnsolvable',
                         translateValues: { index: index + 1 }
                     });
                 }

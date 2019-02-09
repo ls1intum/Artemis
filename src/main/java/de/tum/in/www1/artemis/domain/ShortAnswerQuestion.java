@@ -401,32 +401,6 @@ public class ShortAnswerQuestion extends Question implements Serializable {
          setCorrectMappings(null);
      }
 
-     public boolean solutionMoreThanOnceInMapping(ShortAnswerSolution solution){
-         int numberOfSolution = 0;
-         for(ShortAnswerMapping mapping : this.correctMappings){
-             if(mapping.getSolution().equals(solution)){
-                 numberOfSolution++;
-             }
-         }
-         if(numberOfSolution == 1){
-             return false;
-         } else {
-             return true;
-         }
-     }
-
-     public boolean spotMoreThanOnceInMapping(ShortAnswerSpot spot){
-         int numberOfSpot = 0;
-         for(ShortAnswerMapping mapping : this.correctMappings){
-             if(mapping.getSpot().equals(spot)){
-                 numberOfSpot++;
-             }
-         }
-         return numberOfSpot != 1;
-     }
-
-
-
      @Override
      public boolean equals(Object o) {
          if (this == o) {
