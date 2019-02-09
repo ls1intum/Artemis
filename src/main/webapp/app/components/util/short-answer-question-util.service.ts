@@ -130,7 +130,7 @@ export class ShortAnswerQuestionUtil {
                     amountOfSolutionsThatShareOneSpot++;
                     const allSpotsForSolution1 = this.getAllSpotsForSolutions(question.correctMappings, solution1);
                     const allSpotsForSolution2 = this.getAllSpotsForSolutions(question.correctMappings, solution2);
-                    //there have to be a least as many solutions that share all spots as the amount of existing spots
+                    // there have to be a least as many solutions that share all spots as the amount of existing spots
                     if (!this.isSameSetOfSpots(allSpotsForSolution1, allSpotsForSolution2)
                     && amountOfSolutionsThatShareOneSpot <= question.spots.length) {
                         // condition is violated for this pair of solutions
@@ -415,6 +415,6 @@ export class ShortAnswerQuestionUtil {
      * @returns {boolean}
      */
     atLeastAsManySolutionsAsSpots(question: ShortAnswerQuestion): boolean {
-        return question.spots.length <= question.solutions.length
+        return question.spots.length <= question.solutions.length;
     }
 }
