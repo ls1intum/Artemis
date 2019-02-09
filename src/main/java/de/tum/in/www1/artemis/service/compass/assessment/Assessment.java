@@ -4,8 +4,8 @@ import java.util.*;
 
 public class Assessment {
 
-    private Map <Context, List <Score>> contextScoreList;
-    private Map <Context, Score> contextScoreMapping;
+    private Map<Context, List<Score>> contextScoreList;
+    private Map<Context, Score> contextScoreMapping;
 
     public Assessment(Context context, Score score) {
         contextScoreList = new HashMap<>();
@@ -18,7 +18,7 @@ public class Assessment {
         contextScoreMapping.put(context, score);
     }
 
-    public boolean hasContext (Context context) {
+    public boolean hasContext(Context context) {
         return contextScoreMapping.containsKey(context);
     }
 
@@ -27,14 +27,22 @@ public class Assessment {
     }
 
     /**
+     * @param context The context whose associated scores are to be returned
+     * @return List of Scores added for the given context. Returns empty List when no scores are available for context
+     */
+    public List<Score> getScores(Context context) {
+        return contextScoreList.getOrDefault(context, new ArrayList<>());
+    }
+
+    /**
      * Add score for a specific context to the contextScoreList, recalculate metrics for the contextScoreMapping
-     * @param score The score to add
+     *
+     * @param score   The score to add
      * @param context The context connected to the score
      */
     public void addScore(Score score, Context context) {
         HashSet<String> comments = new HashSet<>();
-        List<Score> scoreList = contextScoreList.computeIfAbsent(context, k -> new ArrayList<>());
-
+        List<Score> scoreList = getScores(context);
         scoreList.add(score);
 
         // sum points and save number of assessments for each unique credit number
@@ -59,6 +67,7 @@ public class Assessment {
 
         contextScoreMapping.put(context, new Score(credits, new ArrayList<>(comments), confidence));
     }
+
 
     /**
      * Used for statistic
