@@ -11,7 +11,7 @@ import {ModelElementType, ModelingAssessment, ModelingAssessmentService} from '.
 import {AccountService} from '../core';
 import {Submission} from '../entities/submission';
 import {HttpErrorResponse} from '@angular/common/http';
-import {Conflict} from 'app/entities/modeling-assessment/Conflict';
+import {Conflict} from 'app/entities/modeling-assessment/conflict.model';
 import {isNullOrUndefined} from 'util';
 
 @Component({
@@ -32,7 +32,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
     submission: ModelingSubmission;
     modelingExercise: ModelingExercise;
     result: Result;
-    conflict: Conflict;
+    conflicts: Conflict[];
     assessments: ModelingAssessment[];
     assessmentsNames: Map<string, Map<string, string>>;
     assessmentsAreValid: boolean;
@@ -232,11 +232,11 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
             result.participation.results = [result];
             this.result = result;
             this.jhiAlertService.success('arTeMiSApp.apollonDiagram.assessment.submitSuccessful');
-            this.conflict = undefined;
+            this.conflicts = undefined;
             this.done = false;
         }, (error: HttpErrorResponse) => {
             if (error.status === 409) {
-                this.conflict = error.error;
+                this.conflicts = error.error;
                 this.jhiAlertService.error('arTeMiSApp.apollonDiagram.assessment.submitFailedWithConflict');
             }
         });

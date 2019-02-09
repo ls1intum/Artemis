@@ -184,10 +184,10 @@ public class ModelingAssessmentResource extends AssessmentResource {
         }
 
         Long submissionId = result.get().getSubmission().getId();
-        Optional<Conflict> conflict = compassService.checkForConflict(exerciseId, submissionId, modelingAssessment);
-        if (conflict.isPresent() && !ignoreConflict) {
+        Optional<List<Conflict>> conflicts = compassService.checkForConflict(exerciseId, submissionId, modelingAssessment);
+        if (conflicts.isPresent() && !ignoreConflict) {
             modelingAssessmentService.saveManualAssessment(result.get(), modelingExercise.get().getId(), modelingAssessment);
-            return ResponseEntity.status(HttpStatus.CONFLICT).body(conflict.get());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(conflicts.get());
         } else {
             modelingAssessmentService.submitManualAssessment(result.get(), modelingExercise.get(), modelingAssessment);
             compassService.addAssessment(exerciseId, submissionId, modelingAssessment);
