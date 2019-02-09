@@ -376,27 +376,24 @@ public class CompassCalculationEngine implements CalculationEngine {
 
 
     private boolean hasConflict(int elementId) {
-        boolean conflict = false;
-        Assessment assessment = this.assessmentIndex.getAssessmentsMap().get(elementId);
-        if (assessment == null) {
-            return false;
-        }
-        for (List<Score> scores : this.assessmentIndex.getAssessmentsMap().get(elementId).getContextScoreList().values()) {
-            double uniqueScore = -1;
-            for (Score score : scores) {
-                if (uniqueScore != -1 && uniqueScore != score.getPoints()) {
-                    conflict = true;
-                    break;
+        Optional<Assessment> assessment = this.assessmentIndex.getAssessment(elementId);
+        if (assessment.isPresent()) {
+            for (List<Score> scores : assessment.get().getContextScoreList().values()) {
+                double uniqueScore = -1;
+                for (Score score : scores) {
+                    if (uniqueScore != -1 && uniqueScore != score.getPoints()) {
+                        return true;
+                    }
+                    uniqueScore = score.getPoints();
                 }
-                uniqueScore = score.getPoints();
             }
         }
-        return conflict;
+        return false;
     }
 
 
     private boolean scoresAreConsideredEqual(double score1, double score2) {
-        return Math.abs(score1 - score2) < SCORE_EQUALITY_THRESHOLD ;
+        return Math.abs(score1 - score2) < SCORE_EQUALITY_THRESHOLD;
     }
 
 
