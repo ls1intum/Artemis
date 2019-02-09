@@ -12,14 +12,7 @@ export class SortByPipe implements PipeTransform {
         array.sort((a: any, b: any) => {
             let tempA = a;
             let tempB = b;
-            if (predicate === 'releaseDate') {
-                if (!tempA['isPlannedToStart']) {
-                    tempA['releaseDate'] = '0';
-                }
-                if (!tempB['isPlannedToStart']) {
-                    tempB['releaseDate'] = '0';
-                }
-            } else if (predicate === 'status') {
+            if (predicate === 'status') {
                 tempA['status'] = this.statusForQuiz(tempA);
                 tempB['status'] = this.statusForQuiz(tempB);
             } else if (predicate === 'duration' && (!tempA['duration'] || !tempB['duration'])) {
