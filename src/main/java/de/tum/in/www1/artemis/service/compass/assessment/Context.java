@@ -19,6 +19,10 @@ public class Context {
         this.contextElementIDs = contextElementIDs;
     }
 
+    public HashSet<Integer> getContextElementIDs() {
+        return contextElementIDs;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (obj == this) {
@@ -32,7 +36,7 @@ public class Context {
     }
 
     @Override
-    public int hashCode () {
+    public int hashCode() {
         return contextElementIDs.hashCode();
     }
 }
