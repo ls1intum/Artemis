@@ -61,7 +61,7 @@ public class CompassCalculationEngine implements CalculationEngine {
             assessmentIndex.getAssessment(currentElement.getElementID()).ifPresent(assessment -> {
                 List<Score> scores = assessment.getScores(currentElement.getContext());
                 List<Score> scoresInConflict = scores.stream()
-                    .filter(score -> scoresAreConsideredEqual(score.getPoints(), currentElementAssessment.getCredits()))
+                    .filter(score -> !scoresAreConsideredEqual(score.getPoints(), currentElementAssessment.getCredits()))
                     .collect(Collectors.toList());
                 if (!scoresInConflict.isEmpty()) {
                     conflicts.add(new Conflict(currentElement, currentElementAssessment,scoresInConflict));
@@ -284,8 +284,8 @@ public class CompassCalculationEngine implements CalculationEngine {
             elements.addAll(modelEntry.getValue().getClassList());
             elements.addAll(modelEntry.getValue().getAssociationList());
             for (UMLClass umlClass : modelEntry.getValue().getClassList()) {
-                elements.addAll(umlClass.getAttributeList());
-                elements.addAll(umlClass.getMethodList());
+                elements.addAll(umlClass.getAttributes());
+                elements.addAll(umlClass.getMethods());
             }
             for (UMLElement element : elements) {
                 boolean modelConflict = this.hasConflict(element.getElementID());
@@ -332,7 +332,7 @@ public class CompassCalculationEngine implements CalculationEngine {
                     break;
                 case JSONMapping.assessmentElementTypeAttribute:
                     for (UMLClass umlClass : model.getClassList()) {
-                        for (UMLAttribute umlAttribute : umlClass.getAttributeList()) {
+                        for (UMLAttribute umlAttribute : umlClass.getAttributes()) {
                             if (umlAttribute.getJSONElementID().equals(jsonElementID)) {
                                 found = true;
                                 break;
@@ -342,7 +342,7 @@ public class CompassCalculationEngine implements CalculationEngine {
                     break;
                 case JSONMapping.assessmentElementTypeMethod:
                     for (UMLClass umlClass : model.getClassList()) {
-                        for (UMLMethod umlMethod : umlClass.getMethodList()) {
+                        for (UMLMethod umlMethod : umlClass.getMethods()) {
                             if (umlMethod.getJSONElementID().equals(jsonElementID)) {
                                 found = true;
                                 break;
@@ -416,7 +416,7 @@ public class CompassCalculationEngine implements CalculationEngine {
         for (UMLModel umlModel : this.getUmlModelCollection()) {
             totalModelElements += umlModel.getClassList().size() + umlModel.getAssociationList().size();
             for (UMLClass umlClass : umlModel.getClassList()) {
-                totalModelElements += umlClass.getMethodList().size() + umlClass.getAttributeList().size();
+                totalModelElements += umlClass.getMethods().size() + umlClass.getAttributes().size();
             }
         }
 
