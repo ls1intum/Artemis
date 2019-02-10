@@ -79,7 +79,7 @@ public class CompassService {
      * @return new Id and partial grade of the optimalModel for next manual assessment, null if all models have been assessed
      */
     private Map.Entry<Long, Grade> getNextOptimalModel(long exerciseId) {
-        if (!loadExerciseIfSuspended(exerciseId)) {
+        if (!loadExerciseIfSuspended(exerciseId)) { //TODO why null?
             return null;
         }
         return compassCalculationEngines.get(exerciseId).getNextOptimalModel();
@@ -160,7 +160,7 @@ public class CompassService {
      */
     @SuppressWarnings("unused")
     public Grade getResultForModel(long exerciseId, long studentId, long modelId) {
-        if (!loadExerciseIfSuspended(exerciseId) || !modelRepository.exists(exerciseId, studentId, modelId)) {
+        if (!loadExerciseIfSuspended(exerciseId) || !modelRepository.exists(exerciseId, studentId, modelId)) { //TODO why null?
             return null;
         }
 
@@ -190,7 +190,7 @@ public class CompassService {
      */
     public void addAssessment(long exerciseId, long submissionId, List<ModelElementAssessment> modelingAssessment) {
         log.info("Add assessment for exercise" + exerciseId + " and model " + submissionId);
-        if (!loadExerciseIfSuspended(exerciseId)) {
+        if (!loadExerciseIfSuspended(exerciseId)) { //TODO rewordk after distinguishing between saved and submitted assessments on filesystem
             return;
         }
         CalculationEngine engine = compassCalculationEngines.get(exerciseId);
@@ -201,14 +201,9 @@ public class CompassService {
         }
     }
 
-    public Optional<List<Conflict>> checkForConflict(long exerciseId, long modelId, List<ModelElementAssessment> modelingAssessment) {
-        CompassCalculationEngine engine = (CompassCalculationEngine) compassCalculationEngines.get(exerciseId);
-        List<Conflict> conflicts = engine.getConflicts(modelId, modelingAssessment);
-        if (conflicts.isEmpty()) {
-            return Optional.empty();
-        } else {
-            return Optional.of(conflicts);
-        }
+    public List<Conflict> checkForConflicts(long exerciseId, long modelId, List<ModelElementAssessment> modelingAssessment) {
+        CompassCalculationEngine engine = getCalculationEngine(exerciseId);
+        return engine.getConflicts(modelId, modelingAssessment);
     }
 
     private void assessAutomatically(long modelId, long exerciseId) {
@@ -297,6 +292,11 @@ public class CompassService {
         }
         compassCalculationEngines.get(exerciseId).notifyNewModel(model, modelId);
         assessAutomatically(modelId, exerciseId);
+    }
+
+    private CompassCalculationEngine getCalculationEngine(long exerciseId) {//TODO throw exception if exerciseId not existing
+        loadExerciseIfSuspended(exerciseId);
+        return (CompassCalculationEngine) compassCalculationEngines.get(exerciseId);
     }
 
     private boolean loadExerciseIfSuspended(long exerciseId) {
