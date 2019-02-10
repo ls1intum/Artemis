@@ -1,0 +1,50 @@
+.header-text {
+    margin-bottom: 0;
+}
+
+.element-score-label {
+    font-size: 18px;
+    font-weight: 400;
+}
+
+.conflicting-scores-label{
+    font-size: 14px;
+    font-weight: 200;
+    padding-right: 10px;
+    label{
+        margin: 0;
+    }
+}
+
+.row-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.card {
+    background-color: rgba(0, 0, 0, 0.03);
+
+    .card-header {
+        padding: 10px 0 10px 10px;
+        background-color: transparent;
+    }
+
+}
+
+.conflict {
+    background-color: rgb(248, 214, 217);
+}
+
+.score-input {
+    font-size: 16px;
+    line-height: 18px;
+    text-align: center;
+    border: none;
+    background: transparent;
+    max-width: 70px;
+}
+
+.feedback-textarea {
+    border: none;
+}

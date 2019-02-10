@@ -17,6 +17,7 @@ import {isNullOrUndefined} from 'util';
 @Component({
     selector: 'jhi-apollon-diagram-tutor',
     templateUrl: './apollon-diagram-tutor.component.html',
+    styleUrls: ['./apollon-diagram-tutor.component.scss'],
     providers: [ModelingAssessmentService]
 })
 export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
@@ -237,7 +238,8 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         }, (error: HttpErrorResponse) => {
             if (error.status === 409) {
                 this.conflicts = new Map();
-                (error.error as Conflict[]).forEach(conflict => this.conflicts.set(conflict.elementInConflict.jsonElementID, conflict));
+                (error.error as Conflict[]).forEach(conflict => this.conflicts.set(conflict.elementInConflict.id, conflict));
+                this.highlightElementsWithConflict();
                 this.jhiAlertService.error('arTeMiSApp.apollonDiagram.assessment.submitFailedWithConflict');
             }
         });
@@ -325,6 +327,10 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         }
     }
 
+    highlightElementsWithConflict(){
+        console.log(this.apollonEditor.getState())
+    }
+
     getElementPositions() {
         this.positions = this.modelingAssessmentService.getElementPositions(this.assessments, this.apollonEditor.getState());
     }
@@ -365,4 +371,5 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
     previousState() {
         this.router.navigate(['course', this.modelingExercise.course.id, 'exercise', this.modelingExercise.id, 'assessment']);
     }
+
 }

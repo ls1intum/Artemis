@@ -4,23 +4,29 @@
     <div class="row">
         <div class="col">
             <h2>
-                Assessment <span *ngIf="result">for Submission: {{result.participation.student.firstName}} {{result.participation.student.lastName}}</span>
+                Assessment <span
+                *ngIf="result">for Submission: {{result.participation.student.firstName}} {{result.participation.student.lastName}}</span>
             </h2>
         </div>
         <div class="col text-right">
-            <span *ngIf="result && result.participation"><jhi-result [participation]="result.participation"></jhi-result></span>
+            <span *ngIf="result && result.participation"><jhi-result
+                [participation]="result.participation"></jhi-result></span>
             <button class="btn btn-primary" (click)="saveAssessment()"
                     [disabled]="!assessments || !assessmentsAreValid || (result?.assessor && result.assessor.id !== userId && !isAuthorized)"
-                    [hidden]="result && result.rated">Save Assessment</button>
+                    [hidden]="result && result.rated">Save Assessment
+            </button>
             <button class="btn btn-success" (click)="submit()"
                     [disabled]="!assessments || !assessmentsAreValid || (result?.assessor && result.assessor.id !== userId && !isAuthorized)"
-                    [hidden]="result && result.rated">Submit Assessment</button>
-            <button *ngIf="conflicts && conflicts.length > 0" class="btn btn-danger" (click)="submit(true)"
+                    [hidden]="result && result.rated">Submit Assessment
+            </button>
+            <button *ngIf="conflicts && conflicts.size > 0" class="btn btn-danger" (click)="submit(true)"
                     [disabled]="!assessments || !assessmentsAreValid"
-                    [hidden]="!result || !result.rated">Ignore Conflict</button>
+                    >Ignore Conflict
+            </button>
             <button class="btn btn-danger" (click)="submit()"
                     [disabled]="!assessments || !assessmentsAreValid"
-                    [hidden]="!result || !result.rated">Override Assessment</button>
+                    [hidden]="!result || !result.rated">Override Assessment
+            </button>
         </div>
     </div>
 
@@ -37,7 +43,8 @@
         </div>
         <div class="col text-right">
             <span><h5><strong>Score:</strong> {{ totalScore | number : '1.0-2' }} / {{ modelingExercise.maxScore }}</h5></span>
-            <span *ngIf="result && result.assessor" style="color:red"><h6>Reviewer: {{result.assessor.firstName + (isAuthorized ? '' : ' - submission locked')}}</h6></span>
+            <span *ngIf="result && result.assessor"
+                  style="color:red"><h6>Reviewer: {{result.assessor.firstName + (isAuthorized ? '' : ' - submission locked')}}</h6></span>
         </div>
     </div>
 
@@ -45,10 +52,13 @@
         <button type="submit" (click)="previousState()" class="btn btn-info">
             <span class="fa fa-arrow-left"></span>&nbsp;<span jhiTranslate="entity.action.back">Back</span>
         </button>
-        <button *ngIf="(result?.rated && !done) || (result?.assessor && result.assessor.id !== userId && !result?.rated)" [disabled]="busy" class="btn btn-success" (click)="assessNextOptimal(0)">
+        <button
+            *ngIf="(result?.rated && !done) || (result?.assessor && result.assessor.id !== userId && !result?.rated)"
+            [disabled]="busy" class="btn btn-success" (click)="assessNextOptimal(0)">
             <i class="fa fa-folder-open fa-fw"></i>&nbsp;Assess next submission
         </button>
-    </div><br>
+    </div>
+    <br>
 
     <div class="row">
         <div class="col-8 col-xl-9">
@@ -60,8 +70,12 @@
                             <div *ngFor="let assessment of assessments"
                                  [style.top.px]="positions[assessment.id].y"
                                  [style.left.px]="positions[assessment.id].x">
-                                <i class="fa" [ngClass]="{'fa-check': assessment.credits > 0, 'fa-times': assessment.credits < 0}" *ngFor="let i of numberToArray(assessment.credits, 0)"></i>
-                                <i class="fa half" [ngClass]="{'fa-check': assessment.credits > 0, 'fa-times': assessment.credits < 0}" *ngIf="assessment.credits % 1 !== 0"></i>
+                                <i class="fa"
+                                   [ngClass]="{'fa-check': assessment.credits > 0, 'fa-times': assessment.credits < 0}"
+                                   *ngFor="let i of numberToArray(assessment.credits, 0)"></i>
+                                <i class="fa half"
+                                   [ngClass]="{'fa-check': assessment.credits > 0, 'fa-times': assessment.credits < 0}"
+                                   *ngIf="assessment.credits % 1 !== 0"></i>
                             </div>
                         </ng-container>
                     </div>
@@ -70,23 +84,38 @@
         </div>
         <div class="col-4 col-xl-3">
             <div *ngIf="invalidError !== ''" class="alert alert-danger" role="alert">{{invalidError}}</div>
-            <div *ngIf="(!selectedEntities && !selectedRelationships) || (selectedEntities?.length === 0 && selectedRelationships?.length === 0)">Select an element to grade the element.</div>
+            <div
+                *ngIf="(!selectedEntities && !selectedRelationships) || (selectedEntities?.length === 0 && selectedRelationships?.length === 0)">
+                Select an element to grade the element.
+            </div>
             <ng-container *ngIf="assessments">
                 <div *ngFor="let assessment of assessments" [hidden]="!isSelected(assessment.id, assessment.type)">
-                    <div class="card">
-                        <div class="card-header" >
-                            <h4 class="card-title" [class.conflict]="conflicts && this.conflicts[assessment.id] !== undefined" *ngIf="assessmentsNames">Score for <span>{{assessmentsNames[assessment.id]['type']}} </span> <code class="text-primary">{{assessmentsNames[assessment.id]['name']}}</code></h4>
-                        </div>
-                        <div class="card-body">
-                            <div class="form-group">
-                                <label>Score </label>
-                                <input type="number" step="0.5" [(ngModel)]="assessment.credits" (ngModelChange)="checkScoreBoundaries()">
+                    <div class="card" [class.conflict]="conflicts && conflicts.get(assessment.id)">
+                        <div class="card-header">
+                            <div class=" row-container">
+                                <h4 class="header-text element-score-label"
+                                    *ngIf="assessmentsNames">
+                                    Score for
+                                    <span>{{assessmentsNames[assessment.id]['type']}} </span>
+                                    <code class="text-primary">{{assessmentsNames[assessment.id]['name']}}</code>
+                                </h4>
+                                <input class="score-input"
+                                       type="number"
+                                       step="0.5"
+                                       [(ngModel)]="assessment.credits"
+                                       (ngModelChange)="checkScoreBoundaries()">
                             </div>
-                            <div class="form-group row">
-                                <label class="col-auto">Feedback</label>
-                                <textarea class="col form-control" rows="2" [(ngModel)]="assessment.comment"></textarea>
+                            <div *ngIf="conflicts && conflicts.get(assessment.id)">
+                                <h4 class="header-text row-container conflicting-scores-label">
+                                    Others assessed similar elements with:
+                                    <div class="row-container">
+                                        <label *ngFor="let score of conflicts.get(assessment.id).scoresInConflict; let isLast=last">{{score.points}}{{isLast ? '' : ', '}}</label>
+                                    </div>
+                                </h4>
                             </div>
                         </div>
+                        <textarea class="form-control feedback-textarea" rows="2" [(ngModel)]="assessment.comment"
+                                  placeholder="Feedback"></textarea>
                     </div>
                     <br>
                 </div>
