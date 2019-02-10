@@ -32,7 +32,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
     submission: ModelingSubmission;
     modelingExercise: ModelingExercise;
     result: Result;
-    conflicts: Conflict[];
+    conflicts: Map<string,Conflict>;
     assessments: ModelingAssessment[];
     assessmentsNames: Map<string, Map<string, string>>;
     assessmentsAreValid: boolean;
@@ -226,9 +226,9 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         });
     }
 
-    submit() {
+    submit(ignoreConflict:boolean = false) {
         this.checkScoreBoundaries();
-        this.modelingAssessmentService.submit(this.assessments, this.modelingExercise.id, this.result.id).subscribe((result: Result) => {
+        this.modelingAssessmentService.submit(this.assessments, this.modelingExercise.id, this.result.id, ignoreConflict).subscribe((result: Result) => {
             result.participation.results = [result];
             this.result = result;
             this.jhiAlertService.success('arTeMiSApp.apollonDiagram.assessment.submitSuccessful');
@@ -236,7 +236,8 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
             this.done = false;
         }, (error: HttpErrorResponse) => {
             if (error.status === 409) {
-                this.conflicts = error.error;
+                this.conflicts = new Map();
+                (error.error as Conflict[]).forEach(conflict => this.conflicts.set(conflict.elementInConflict.jsonElementID, conflict));
                 this.jhiAlertService.error('arTeMiSApp.apollonDiagram.assessment.submitFailedWithConflict');
             }
         });

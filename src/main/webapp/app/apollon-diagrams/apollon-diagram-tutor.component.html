@@ -15,6 +15,9 @@
             <button class="btn btn-success" (click)="submit()"
                     [disabled]="!assessments || !assessmentsAreValid || (result?.assessor && result.assessor.id !== userId && !isAuthorized)"
                     [hidden]="result && result.rated">Submit Assessment</button>
+            <button *ngIf="conflicts && conflicts.length > 0" class="btn btn-danger" (click)="submit(true)"
+                    [disabled]="!assessments || !assessmentsAreValid"
+                    [hidden]="!result || !result.rated">Ignore Conflict</button>
             <button class="btn btn-danger" (click)="submit()"
                     [disabled]="!assessments || !assessmentsAreValid"
                     [hidden]="!result || !result.rated">Override Assessment</button>
@@ -72,7 +75,7 @@
                 <div *ngFor="let assessment of assessments" [hidden]="!isSelected(assessment.id, assessment.type)">
                     <div class="card">
                         <div class="card-header" >
-                            <h4 class="card-title" [class.conflict]="conflict && this.conflict.elementIdsInConflict[assessment.id] !== undefined" *ngIf="assessmentsNames">Score for <span>{{assessmentsNames[assessment.id]['type']}} </span> <code class="text-primary">{{assessmentsNames[assessment.id]['name']}}</code></h4>
+                            <h4 class="card-title" [class.conflict]="conflicts && this.conflicts[assessment.id] !== undefined" *ngIf="assessmentsNames">Score for <span>{{assessmentsNames[assessment.id]['type']}} </span> <code class="text-primary">{{assessmentsNames[assessment.id]['name']}}</code></h4>
                         </div>
                         <div class="card-body">
                             <div class="form-group">

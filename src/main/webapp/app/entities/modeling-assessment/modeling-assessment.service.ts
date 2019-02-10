@@ -32,11 +32,12 @@ export class ModelingAssessmentService {
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
-    submit(modelingAssessment: ModelingAssessment[], exerciseId: number, resultId: number): Observable<any> {
-        return this.http
-            .put<any>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}/submit`, modelingAssessment)
-
-            // .map((res: EntityResponseType) => this.convertResponse(res));
+    submit(modelingAssessment: ModelingAssessment[], exerciseId: number, resultId: number, ignoreConflict: boolean = false): Observable<any> {
+        let url = `${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}/submit`;
+        if (ignoreConflict) {
+            url += '?ignoreConflict=true';
+        }
+        return this.http.put<any>(url, modelingAssessment);
     }
 
     find(participationId: number, submissionId: number): Observable<HttpResponse<ModelingAssessment[]>> {
