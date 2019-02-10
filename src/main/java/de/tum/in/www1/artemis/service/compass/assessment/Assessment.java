@@ -4,7 +4,7 @@ import java.util.*;
 
 public class Assessment {
 
-    private Map<Context, List<Score>> contextScoreList;
+    private Map<Context, List<Score>> contextScoreList; //TODO own object for Score in List with assessment specific information like resultId/modelID ?!
     private Map<Context, Score> contextScoreMapping;
 
     public Assessment(Context context, Score score) {
@@ -41,15 +41,25 @@ public class Assessment {
      * @param context The context connected to the score
      */
     public void addScore(Score score, Context context) {
-        HashSet<String> comments = new HashSet<>();
-        List<Score> scoreList = getScores(context);
-        scoreList.add(score);
+        List<Score> scores = getScores(context);
+        scores.add(score);
+        contextScoreMapping.put(context, calculateTotalScore(scores));
+    }
 
+    /**
+     * Used for statistic
+     */
+    public Map<Context, List<Score>> getContextScoreList() {
+        return this.contextScoreList;
+    }
+
+    private Score calculateTotalScore(List<Score> scores) {
+        HashSet<String> comments = new HashSet<>();
         // sum points and save number of assessments for each unique credit number
         double credits = 0;
         HashMap<Double, Integer> counting = new HashMap<>();
 
-        for (Score existingScores : scoreList) {
+        for (Score existingScores : scores) {
             double points = existingScores.getPoints();
 
             credits += points;
@@ -60,19 +70,8 @@ public class Assessment {
         double maxCount = counting.entrySet().stream().mapToInt(Map.Entry::getValue).max().orElse(0);
 
         // calculate the mean amount of points
-        credits /= scoreList.size();
-
-        // calculate the confidence for this value
-        double confidence = maxCount / scoreList.size();
-
-        contextScoreMapping.put(context, new Score(credits, new ArrayList<>(comments), confidence));
-    }
-
-
-    /**
-     * Used for statistic
-     */
-    public Map<Context, List<Score>> getContextScoreList() {
-        return this.contextScoreList;
+        credits /= scores.size();
+        double confidence = maxCount / scores.size();
+        return new Score(credits, new ArrayList<>(comments), confidence);
     }
 }
