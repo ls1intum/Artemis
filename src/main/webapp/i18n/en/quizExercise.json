@@ -159,7 +159,11 @@
                 "all_or_nothing": "All or Nothing",
                 "proportional_with_penalty": "Proportional with Penalty"
             },
-            "importJSON": "Import Question(s) in JSON Format"
+            "importJSON": "Import Question(s) in JSON Format",
+            "explanationText":{
+                "multipleChoiceAllOrNothingCorrect": "You have achieved {{paramScore}} of the {{paramQuestionScore}} possible points. Since you have chosen all answers correctly you have achieved all point(s) in this exercise. Great Job!"
+
+            }
         }
     }
 }

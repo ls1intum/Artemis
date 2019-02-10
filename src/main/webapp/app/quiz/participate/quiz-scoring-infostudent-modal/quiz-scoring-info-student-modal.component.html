@@ -10,8 +10,9 @@
          *ngIf="this.question.scoringType === ALL_OR_NOTHING && this.question.type === MULTIPLE_CHOICE ">
         <h6>The scoring type was <span jhiTranslate="arTeMiSApp.quizExercise.scoringType.all_or_nothing"></span>
             This means you either get all the points for the question or non at all.</h6>
+            {{'arTeMiSApp.quizExercise.explanationText.multipleChoiceAllOrNothingCorrect' | translate}}
         <span
-            *ngIf="this.amountofCorrectMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0"> You have achieved {{this.score}}
+            *ngIf="this.amountofCorrectMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0">You have achieved {{this.score}}
             of the {{this.question.score}} possible points. Since you have chosen all answers correctly you have achieved all point(s) in this exercise. Great Job!</span>
         <span
             *ngIf="!(this.amountofCorrectMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0)"> You have achieved {{this.score}}
