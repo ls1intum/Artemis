@@ -76,7 +76,7 @@ export const courseRoute: Routes = [
         canActivate: [UserRouteAccessService]
     },
     {
-        path: 'course/:course.id/edit',
+        path: 'course/:id/edit',
         component: CourseUpdateComponent,
         resolve: {
             course: CourseResolve

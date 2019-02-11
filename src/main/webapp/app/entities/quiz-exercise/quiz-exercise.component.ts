@@ -214,10 +214,6 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
     callback() {}
 
     routerContainPath(): boolean {
-        let temp = location.href.toString();
-        if(temp.includes('quiz-exercise')){
-            console.log(temp);
-        return true;
-        }
+        return location.href.toString().includes('quiz-exercise');
     }
 }

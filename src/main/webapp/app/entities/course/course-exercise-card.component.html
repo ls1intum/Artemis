@@ -3,7 +3,7 @@
         <h5 [routerLink]="exerciseRouterLink"><span [jhiTranslate]="headingJhiTranslate"></span></h5>
         <button class="btn btn-light question-collapse" (click)="isCollapsed = !isCollapsed"
                 [attr.aria-expanded]="!isCollapsed" [attr.aria-controls]="'collapseQuestion'">
-            <span class="fa fa-2x" [ngClass]="isCollapsed ? 'fa-angle-right' : 'fa-angle-down'"></span>
+            <fa-icon size="2x" [icon]="isCollapsed ? 'angle-right' : 'angle-down'"></fa-icon>
         </button>
     </div>
     <div class="card-body question-card-body" [ngbCollapse]="isCollapsed">
