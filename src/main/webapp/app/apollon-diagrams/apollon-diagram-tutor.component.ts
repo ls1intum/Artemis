@@ -325,29 +325,6 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         }
     }
 
-    highlightElementsWithConflict() {
-        const state: State = this.apollonEditor.getState();
-        const entitiesToHighlight: string[] = state.entities.allIds.filter((id: string) => {
-            if (this.conflicts.has(id)) {
-                return true;
-            }
-            if (state.entities.byId[id].attributes.find(attribute => this.conflicts.has(attribute.id))) {
-                console.log('attribute found');
-                return true;
-            }
-            if (state.entities.byId[id].methods.find(method => this.conflicts.has(method.id))) {
-                console.log('method found');
-                return true;
-            }
-            return false;
-        });
-        state.relationships.allIds.filter(id => this.conflicts.has(id)).forEach(id => entitiesToHighlight.push(id));
-
-        entitiesToHighlight.forEach(id => {
-            document.getElementById(`entity-${id}`).style.backgroundColor = 'rgb(248, 214, 217)'
-            ;
-        });
-    }
 
     getElementPositions() {
         this.positions = this.modelingAssessmentService.getElementPositions(this.assessments, this.apollonEditor.getState());
@@ -390,4 +367,31 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         this.router.navigate(['course', this.modelingExercise.course.id, 'exercise', this.modelingExercise.id, 'assessment']);
     }
 
+    private highlightElementsWithConflict() {
+        const state: State = this.apollonEditor.getState();
+        const entitiesToHighlight: string[] = state.entities.allIds.filter((id: string) => {
+            if (this.conflicts.has(id)) {
+                return true;
+            }
+            if (state.entities.byId[id].attributes.find(attribute => this.conflicts.has(attribute.id))) {
+                console.log('attribute found');
+                return true;
+            }
+            if (state.entities.byId[id].methods.find(method => this.conflicts.has(method.id))) {
+                console.log('method found');
+                return true;
+            }
+            return false;
+        });
+        const relationshipsToHighlight: string [] = state.relationships.allIds.filter(id => this.conflicts.has(id));
+
+        entitiesToHighlight.forEach(id => {
+            document.getElementById(`entity-${id}`).style.backgroundColor = 'rgb(248, 214, 217)';
+        });
+
+        //TODO highlight relation entities. currently do not have unique id
+        // relationshipsToHighlight.forEach(id => {
+        //     document.getElementById(id).style.color = 'rgb(248, 214, 217)';
+        // })
+    }
 }
