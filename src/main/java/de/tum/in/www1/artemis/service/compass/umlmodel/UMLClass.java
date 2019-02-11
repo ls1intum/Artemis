@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
@@ -28,13 +29,13 @@ public class UMLClass extends UMLElement {
     private String name;
     private UMLClassType type;
 
-    List<UMLAttribute> attributeList;
-    List<UMLMethod> methodList;
+    List<UMLAttribute> attributes;
+    List<UMLMethod> methods;
 
-    public UMLClass(String name, List<UMLAttribute> attributeList, List<UMLMethod> methodList, String jsonElementID, String type) {
+    public UMLClass(String name, List<UMLAttribute> attributes, List<UMLMethod> methodList, String jsonElementID, String type) {
         this.name = name;
-        this.attributeList = attributeList;
-        this.methodList = methodList;
+        this.attributes = attributes;
+        this.methods = methodList;
         this.jsonElementID = jsonElementID;
         this.type = UMLClassType.valueOf(type);
     }
@@ -76,7 +77,7 @@ public class UMLClass extends UMLElement {
 
         UMLClass reference = (UMLClass) element;
 
-        int elementCount = attributeList.size() + methodList.size() + 1;
+        int elementCount = attributes.size() + methods.size() + 1;
 
         double weight = 1.0 / elementCount;
 
@@ -89,7 +90,7 @@ public class UMLClass extends UMLElement {
         }
 
         // check attributes
-        for (UMLAttribute attribute : attributeList) {
+        for (UMLAttribute attribute : attributes) {
             double similarityValue = reference.similarAttributeScore(attribute);
             similarity += weight * similarityValue;
 
@@ -99,7 +100,7 @@ public class UMLClass extends UMLElement {
         }
 
         // check methods
-        for (UMLMethod method : methodList) {
+        for (UMLMethod method : methods) {
             double similarityValue = reference.similarMethodScore(method);
             similarity += weight * similarityValue;
 
@@ -109,8 +110,8 @@ public class UMLClass extends UMLElement {
         }
 
         // Penalty for missing attributes and methods
-        int referenceMissingCount = Math.max(reference.attributeList.size() - attributeList.size(), 0);
-        referenceMissingCount += Math.max(reference.methodList.size() - methodList.size(), 0);
+        int referenceMissingCount = Math.max(reference.attributes.size() - attributes.size(), 0);
+        referenceMissingCount += Math.max(reference.methods.size() - methods.size(), 0);
 
         missingCount += referenceMissingCount;
 
@@ -128,11 +129,11 @@ public class UMLClass extends UMLElement {
     }
 
     private double similarAttributeScore(UMLAttribute otherAttribute) {
-        return this.similarScore(otherAttribute, attributeList);
+        return this.similarScore(otherAttribute, attributes);
     }
 
     private double similarMethodScore(UMLMethod otherMethod) {
-        return this.similarScore(otherMethod, methodList);
+        return this.similarScore(otherMethod, methods);
     }
 
     private double similarScore(UMLElement otherMethod, List<? extends UMLElement> elementList) {
@@ -169,13 +170,13 @@ public class UMLClass extends UMLElement {
             return this;
         }
 
-        for (UMLAttribute umlAttribute : attributeList) {
+        for (UMLAttribute umlAttribute : attributes) {
             if (umlAttribute.jsonElementID.equals(jsonID)) {
                 return umlAttribute;
             }
         }
 
-        for (UMLMethod umlMethod : methodList) {
+        for (UMLMethod umlMethod : methods) {
             if (umlMethod.jsonElementID.equals(jsonID)) {
                 return umlMethod;
             }
@@ -185,15 +186,15 @@ public class UMLClass extends UMLElement {
     }
 
 
-    public List<UMLAttribute> getAttributeList() {
-        return attributeList;
+    public List<UMLAttribute> getAttributes() {
+        return attributes;
     }
 
-    public List<UMLMethod> getMethodList() {
-        return methodList;
+    public List<UMLMethod> getMethods() {
+        return methods;
     }
 
     public int getElementCount() {
-        return attributeList.size() + methodList.size() + 1;
+        return attributes.size() + methods.size() + 1;
     }
 }
