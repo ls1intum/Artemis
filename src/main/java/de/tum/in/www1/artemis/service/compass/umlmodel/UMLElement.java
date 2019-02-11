@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import de.tum.in.www1.artemis.service.compass.assessment.Context;
 
 import java.util.Objects;
@@ -7,8 +10,17 @@ import java.util.Objects;
 public abstract class UMLElement {
 
     int elementID; //id of similarity set the element belongs to
+    @JsonProperty("id")
     String jsonElementID; // unique element id //TODO rename into uniqueId?
     private Context context;
+
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")//Mapping to ModelElementTypes in Client
+    @JsonSubTypes({
+        @JsonSubTypes.Type(value = UMLClass.class, name = "class"),
+        @JsonSubTypes.Type(value = UMLAttribute.class, name = "attribute"),
+        @JsonSubTypes.Type(value = UMLMethod.class, name = "method"),
+        @JsonSubTypes.Type(value = UMLAssociation.class, name = "relationship")
+    })
 
     /**
      * Compare this with another element to calculate the similarity

@@ -190,7 +190,7 @@ public class JSONParser {
                     break;
                 case JSONMapping.assessmentElementTypeAttribute:
                     for (UMLClass umlClass : model.getClassList()) {
-                        for (UMLAttribute umlAttribute : umlClass.getAttributeList()) {
+                        for (UMLAttribute umlAttribute : umlClass.getAttributes()) {
                             if (umlAttribute.getJSONElementID().equals(jsonElementID)) {
                                 found = true;
                                 break;
@@ -200,7 +200,7 @@ public class JSONParser {
                     break;
                 case JSONMapping.assessmentElementTypeMethod:
                     for (UMLClass umlClass : model.getClassList()) {
-                        for (UMLMethod umlMethod : umlClass.getMethodList()) {
+                        for (UMLMethod umlMethod : umlClass.getMethods()) {
                             if (umlMethod.getJSONElementID().equals(jsonElementID)) {
                                 found = true;
                                 break;

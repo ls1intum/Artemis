@@ -134,7 +134,7 @@ public class AutomaticAssessmentController {
 
         Context childContext = new Context(umlClass.getElementID());
 
-        for (UMLAttribute attribute : umlClass.getAttributeList()) {
+        for (UMLAttribute attribute : umlClass.getAttributes()) {
             Optional<Assessment> assessmentOptional = index.getAssessment(attribute.getElementID());
 
             if (!assessmentOptional.isPresent()) {
@@ -149,7 +149,7 @@ public class AutomaticAssessmentController {
             }
         }
 
-        for (UMLMethod method : umlClass.getMethodList()) {
+        for (UMLMethod method : umlClass.getMethods()) {
             Optional<Assessment> assessmentOptional = index.getAssessment(method.getElementID());
 
             if (!assessmentOptional.isPresent()) {
