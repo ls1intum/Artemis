@@ -13,6 +13,7 @@ import {Submission} from '../entities/submission';
 import {HttpErrorResponse} from '@angular/common/http';
 import {Conflict} from 'app/entities/modeling-assessment/conflict.model';
 import {isNullOrUndefined} from 'util';
+import {UMLClass, UMLElement} from "app/entities/modeling-assessment/UMLEntities";
 
 @Component({
     selector: 'jhi-apollon-diagram-tutor',
@@ -33,15 +34,15 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
     submission: ModelingSubmission;
     modelingExercise: ModelingExercise;
     result: Result;
-    conflicts: Map<string,Conflict>;
-    assessments: ModelingAssessment[];
+    conflicts: Map<string, Conflict>;
+    assessments: ModelingAssessment[] = [];
     assessmentsNames: Map<string, Map<string, string>>;
-    assessmentsAreValid: boolean;
+    assessmentsAreValid: boolean = false;
     invalidError = '';
     totalScore = 0;
     positions: Map<string, Point>;
     busy: boolean;
-    done: boolean;
+    done: boolean = true;
     timeout: any;
     userId: number;
     isAuthorized: boolean;
@@ -57,9 +58,6 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         private modelingAssessmentService: ModelingAssessmentService,
         private accountService: AccountService
     ) {
-        this.assessments = [];
-        this.assessmentsAreValid = false;
-        this.done = true;
     }
 
     ngOnInit() {
@@ -158,7 +156,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         assessmentsDiv.scrollTop(apollonDiv.scrollTop());
         assessmentsDiv.scrollLeft(apollonDiv.scrollLeft());
 
-        apollonDiv.on('scroll', function() {
+        apollonDiv.on('scroll', function () {
             assessmentsDiv.scrollTop(apollonDiv.scrollTop());
             assessmentsDiv.scrollLeft(apollonDiv.scrollLeft());
         });
@@ -227,7 +225,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         });
     }
 
-    submit(ignoreConflict:boolean = false) {
+    submit(ignoreConflict: boolean = false) {
         this.checkScoreBoundaries();
         this.modelingAssessmentService.submit(this.assessments, this.modelingExercise.id, this.result.id, ignoreConflict).subscribe((result: Result) => {
             result.participation.results = [result];
@@ -327,8 +325,28 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         }
     }
 
-    highlightElementsWithConflict(){
-        console.log(this.apollonEditor.getState())
+    highlightElementsWithConflict() {
+        const state: State = this.apollonEditor.getState();
+        const entitiesToHighlight: string[] = state.entities.allIds.filter((id: string) => {
+            if (this.conflicts.has(id)) {
+                return true;
+            }
+            if (state.entities.byId[id].attributes.find(attribute => this.conflicts.has(attribute.id))) {
+                console.log('attribute found');
+                return true;
+            }
+            if (state.entities.byId[id].methods.find(method => this.conflicts.has(method.id))) {
+                console.log('method found');
+                return true;
+            }
+            return false;
+        });
+        state.relationships.allIds.filter(id => this.conflicts.has(id)).forEach(id => entitiesToHighlight.push(id));
+
+        entitiesToHighlight.forEach(id => {
+            document.getElementById(`entity-${id}`).style.backgroundColor = 'rgb(248, 214, 217)'
+            ;
+        });
     }
 
     getElementPositions() {

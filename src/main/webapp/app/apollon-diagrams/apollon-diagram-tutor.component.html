@@ -19,14 +19,15 @@
                     [disabled]="!assessments || !assessmentsAreValid || (result?.assessor && result.assessor.id !== userId && !isAuthorized)"
                     [hidden]="result && result.rated">Submit Assessment
             </button>
-            <button *ngIf="conflicts && conflicts.size > 0" class="btn btn-danger" (click)="submit(true)"
-                    [disabled]="!assessments || !assessmentsAreValid"
-                    >Ignore Conflict
-            </button>
             <button class="btn btn-danger" (click)="submit()"
                     [disabled]="!assessments || !assessmentsAreValid"
                     [hidden]="!result || !result.rated">Override Assessment
             </button>
+            <button *ngIf="conflicts && conflicts.size > 0" class="btn btn-danger" (click)="submit(true)"
+                    [disabled]="!assessments || !assessmentsAreValid"
+            >Ignore Conflict
+            </button>
+
         </div>
     </div>
 
@@ -88,7 +89,7 @@
                 *ngIf="(!selectedEntities && !selectedRelationships) || (selectedEntities?.length === 0 && selectedRelationships?.length === 0)">
                 Select an element to grade the element.
             </div>
-            <ng-container *ngIf="assessments">
+            <ng-container>
                 <div *ngFor="let assessment of assessments" [hidden]="!isSelected(assessment.id, assessment.type)">
                     <div class="card" [class.conflict]="conflicts && conflicts.get(assessment.id)">
                         <div class="card-header">
@@ -109,7 +110,8 @@
                                 <h4 class="header-text row-container conflicting-scores-label">
                                     Others assessed similar elements with:
                                     <div class="row-container">
-                                        <label *ngFor="let score of conflicts.get(assessment.id).scoresInConflict; let isLast=last">{{score.points}}{{isLast ? '' : ', '}}</label>
+                                        <label
+                                            *ngFor="let score of conflicts.get(assessment.id).scoresInConflict; let isLast=last">{{score.points}}{{isLast ? '' : ', '}}</label>
                                     </div>
                                 </h4>
                             </div>
