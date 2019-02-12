@@ -13,7 +13,6 @@ import {Submission} from '../entities/submission';
 import {HttpErrorResponse} from '@angular/common/http';
 import {Conflict} from 'app/entities/modeling-assessment/conflict.model';
 import {isNullOrUndefined} from 'util';
-import {UMLClass, UMLElement} from "app/entities/modeling-assessment/UMLEntities";
 
 @Component({
     selector: 'jhi-apollon-diagram-tutor',
@@ -37,12 +36,12 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
     conflicts: Map<string, Conflict>;
     assessments: ModelingAssessment[] = [];
     assessmentsNames: Map<string, Map<string, string>>;
-    assessmentsAreValid: boolean = false;
+    assessmentsAreValid = false;
     invalidError = '';
     totalScore = 0;
     positions: Map<string, Point>;
     busy: boolean;
-    done: boolean = true;
+    done = true;
     timeout: any;
     userId: number;
     isAuthorized: boolean;
@@ -156,7 +155,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         assessmentsDiv.scrollTop(apollonDiv.scrollTop());
         assessmentsDiv.scrollLeft(apollonDiv.scrollLeft());
 
-        apollonDiv.on('scroll', function () {
+        apollonDiv.on('scroll', function() {
             assessmentsDiv.scrollTop(apollonDiv.scrollTop());
             assessmentsDiv.scrollLeft(apollonDiv.scrollLeft());
         });
@@ -225,7 +224,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         });
     }
 
-    submit(ignoreConflict: boolean = false) {
+    submit(ignoreConflict = false) {
         this.checkScoreBoundaries();
         this.modelingAssessmentService.submit(this.assessments, this.modelingExercise.id, this.result.id, ignoreConflict).subscribe((result: Result) => {
             result.participation.results = [result];

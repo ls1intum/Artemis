@@ -1,6 +1,6 @@
-import {ModelingAssessment} from "app/entities/modeling-assessment/modeling-assessment.model";
 import {Score} from "app/entities/modeling-assessment/score.model";
-import {UMLElement} from "app/entities/modeling-assessment/UMLEntities";
+import {UMLElement} from "app/entities/modeling-assessment/uml-element.model";
+import {ModelingAssessment} from "app/entities/modeling-assessment/modeling-assessment.model";
 
 export class Conflict {
     elementInConflict: UMLElement;
