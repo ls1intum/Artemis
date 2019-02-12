@@ -1,19 +1,15 @@
 package de.tum.in.www1.artemis.service;
 
-import de.tum.in.www1.artemis.domain.Participation;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.connectors.LtiService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.Optional;
+import org.slf4j.*;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-
-import java.util.Optional;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.service.connectors.*;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Created by Josias Montag on 06.10.16.
@@ -40,9 +36,13 @@ public class ResultService {
         this.messagingTemplate = messagingTemplate;
     }
 
-    public Optional<Result> findOne(long id){
-        return resultRepository.findById(id);
+
+    public Result findOne(long id) {
+        log.debug("Request to get Result: {}", id);
+        return resultRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Result with id: \"" + id + "\" does not exist"));
     }
+
 
     /**
      * Perform async operations after we were notified about new results.
@@ -66,12 +66,14 @@ public class ResultService {
         }
     }
 
+
     /**
      * Handle the manual creation of a new result potentially including feedback
+     *
      * @param result
      */
     public void createNewResult(Result result) {
-        if(!result.getFeedbacks().isEmpty()) {
+        if (!result.getFeedbacks().isEmpty()) {
             result.setHasFeedback(true);
         }
 
