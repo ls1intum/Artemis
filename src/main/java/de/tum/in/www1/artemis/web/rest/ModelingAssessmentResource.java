@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import java.util.*;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.*;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -14,6 +13,7 @@ import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.service.compass.assessment.ModelElementAssessment;
 import de.tum.in.www1.artemis.service.compass.conflict.Conflict;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import io.swagger.annotations.*;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 /**
@@ -25,6 +25,11 @@ public class ModelingAssessmentResource extends AssessmentResource {
     private final Logger log = LoggerFactory.getLogger(ModelingAssessmentResource.class);
 
     private static final String ENTITY_NAME = "modelingAssessment";
+    private static final String PUT_ASSESSMENT_409_REASON = "Given assessment conflicts with exsisting assessments in the database. Assessment has been stored but is not used for automatic assessment by compass";
+    private static final String PUT_ASSESSMENT_200_REASON = "Given assessment has been saved but is not used for automatic assessment by Compass";
+    private static final String PUT_SUBMIT_ASSESSMENT_200_REASON = "Given assessment has been saved and used for automatic assessment by Compass";
+    private static final String REQ_404_REASON = "Requested ressource does not exist.";
+    private static final String REQ_403_REASON = "Unsufficient permission to perform this request";
 
     private final JsonAssessmentRepository jsonAssessmentRepository;
     private final ParticipationRepository participationRepository;
@@ -53,12 +58,8 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @DeleteMapping("/modeling-assessments/exercise/{exerciseId}/optimal-model-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<String> resetOptimalModels(@PathVariable Long exerciseId) {
-        Optional<ModelingExercise> modelingExercise = modelingExerciseService.findOne(exerciseId);
-        ResponseEntity responseFailure = checkExercise(modelingExercise);
-        if (responseFailure != null) {
-            return responseFailure;
-        }
-
+        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
+        checkAuthorization(modelingExercise);
         compassService.resetModelsWaitingForAssessment(exerciseId);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
@@ -67,11 +68,8 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @GetMapping("/modeling-assessments/exercise/{exerciseId}/optimal-model-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<String> getNextOptimalModelSubmissions(@PathVariable Long exerciseId) {
-        Optional<ModelingExercise> modelingExercise = modelingExerciseService.findOne(exerciseId);
-        ResponseEntity responseFailure = checkExercise(modelingExercise);
-        if (responseFailure != null) {
-            return responseFailure;
-        }
+        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
+        checkAuthorization(modelingExercise);
 
         //TODO: we need to make sure that per participation there is only one optimalModel
         Set<Long> optimalModelSubmissions = compassService.getModelsWaitingForAssessment(exerciseId);
@@ -88,12 +86,8 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @GetMapping("/modeling-assessments/exercise/{exerciseId}/submission/{submissionId}/partial-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<String> getPartialAssessment(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
-        Optional<ModelingExercise> modelingExercise = modelingExerciseService.findOne(exerciseId);
-        ResponseEntity responseFailure = checkExercise(modelingExercise);
-        if (responseFailure != null) {
-            return responseFailure;
-        }
-
+        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
+        checkAuthorization(modelingExercise);
         JsonObject partialAssessment = compassService.getPartialAssessment(exerciseId, submissionId);
         return ResponseEntity.ok(partialAssessment.get("assessments").toString());
     }
@@ -134,78 +128,51 @@ public class ModelingAssessmentResource extends AssessmentResource {
     }
 
 
-    /**
-     * Saves assessments and updates result.
-     *
-     * @param exerciseId         the exerciseId the assessment belongs to
-     * @param resultId           the resultId the assessment belongs to
-     * @param modelingAssessment the assessments as string
-     * @return the ResponseEntity with result as body
-     */
+    @ResponseStatus(HttpStatus.OK)
+    @ApiResponses({
+        @ApiResponse(code = 200, message = PUT_SUBMIT_ASSESSMENT_200_REASON, response = Result.class),
+        @ApiResponse(code = 404, message = REQ_404_REASON),
+        @ApiResponse(code = 403, message = REQ_403_REASON)
+    })
     @PutMapping("/modeling-assessments/exercise/{exerciseId}/result/{resultId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> saveModelingAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody List<ModelElementAssessment> modelingAssessment) {
-        Optional<ModelingExercise> modelingExercise = modelingExerciseService.findOne(exerciseId);
-        ResponseEntity responseFailure = checkExercise(modelingExercise);
-        if (responseFailure != null) {
-            return responseFailure;
-        }
-        Optional<Result> result = resultService.findOne(resultId);
-        if (!result.isPresent()) {
-            return ResponseEntity.notFound().build();
-        }
-        modelingAssessmentService.saveManualAssessment(result.get(), exerciseId, modelingAssessment);
-        return ResponseEntity.ok(result.get());
+        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
+        checkAuthorization(modelingExercise);
+        Result result = resultService.findOne(resultId);
+        modelingAssessmentService.saveManualAssessment(result, exerciseId, modelingAssessment);
+        return ResponseEntity.ok(result);
     }
 
     //TODO use Exceptions on wrong path variables resultId exerciseId ?
 
 
-    /**
-     * Saves assessments and updates result. Sets result to rated so the student can see the assessments.
-     *
-     * @param exerciseId         the exerciseId the assessment belongs to
-     * @param resultId           the resultId the assessment belongs to
-     * @param modelingAssessment the assessments as string
-     * @return the ResponseEntity with result as body
-     */
+    @ResponseStatus(HttpStatus.OK)
+    @ApiResponses({
+        @ApiResponse(code = 200, message = PUT_SUBMIT_ASSESSMENT_200_REASON, response = Result.class),
+        @ApiResponse(code = 403, message = REQ_403_REASON),
+        @ApiResponse(code = 404, message = REQ_404_REASON),
+        @ApiResponse(code = 409, message = PUT_ASSESSMENT_409_REASON, response = Conflict.class, responseContainer = "List")
+    })
     @PutMapping("/modeling-assessments/exercise/{exerciseId}/result/{resultId}/submit")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     //TODO changing submitted assessment always produces Conflict
-    public ResponseEntity<Object> submitModelingAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestParam(value = "ignoreConflict", defaultValue = "false") boolean ignoreConflict, @RequestBody List<ModelElementAssessment> modelingAssessment) {
-        Optional<ModelingExercise> modelingExercise = modelingExerciseService.findOne(exerciseId);
-        ResponseEntity responseFailure = checkExercise(modelingExercise);
-        if (responseFailure != null) {
-            return responseFailure;
-        }
-        Optional<Result> result = resultService.findOne(resultId);
-        if (!result.isPresent()) {
-            return ResponseEntity.notFound().build();
-        }
-        Long submissionId = result.get().getSubmission().getId();
+    public ResponseEntity<Object> submitModelingAssessment(@PathVariable Long exerciseId,
+                                                           @PathVariable Long resultId,
+                                                           @RequestParam(value = "ignoreConflict", defaultValue = "false") boolean ignoreConflict,
+                                                           @RequestBody List<ModelElementAssessment> modelingAssessment) {
+        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
+        checkAuthorization(modelingExercise);
+        Result result = resultService.findOne(resultId);
+        Long submissionId = result.getSubmission().getId();
         List<Conflict> conflicts = compassService.checkForConflicts(exerciseId, submissionId, modelingAssessment);
         if (!conflicts.isEmpty() && !ignoreConflict) {
-            modelingAssessmentService.saveManualAssessment(result.get(), modelingExercise.get().getId(), modelingAssessment);
+            modelingAssessmentService.saveManualAssessment(result, modelingExercise.getId(), modelingAssessment);
             return ResponseEntity.status(HttpStatus.CONFLICT).body(conflicts);
         } else {
-            modelingAssessmentService.submitManualAssessment(result.get(), modelingExercise.get(), modelingAssessment);
+            modelingAssessmentService.submitManualAssessment(result, modelingExercise, modelingAssessment);
             compassService.addAssessment(exerciseId, submissionId, modelingAssessment);
-            return ResponseEntity.ok(result.get());
-        }
-    }
-
-
-    //TODO find better name for one or both of the checkExercise()
-    @Nullable
-    private ResponseEntity<?> checkExercise(Optional<ModelingExercise> modelingExercise) {
-        if (!modelingExercise.isPresent()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("modelingExercise", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
-        }
-        ResponseEntity responseFailure = checkExercise(modelingExercise.get());
-        if (responseFailure != null) {
-            return responseFailure;
-        } else {
-            return null;
+            return ResponseEntity.ok(result);
         }
     }
 
