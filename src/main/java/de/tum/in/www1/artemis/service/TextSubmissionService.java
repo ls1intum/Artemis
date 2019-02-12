@@ -51,7 +51,7 @@ public class TextSubmissionService {
         textSubmission.setSubmissionDate(ZonedDateTime.now());
         textSubmission.setType(SubmissionType.MANUAL);
 
-        boolean isExampleSubmission = textSubmission.isExampleSubmission() != null && textSubmission.isExampleSubmission();
+        boolean isExampleSubmission = textSubmission.isExampleSubmission() == Boolean.TRUE;
 
         // Example submissions do not have a participation
         if (!isExampleSubmission) {
@@ -80,7 +80,12 @@ public class TextSubmissionService {
         return textSubmission;
     }
 
-    // Find a text submission without assessments
+    /**
+     * Given an exercise id, find a text submission for that exercise which still doesn't have any result
+     *
+     * @param exerciseId the exercise we want to retrieve
+     * @return a textSubmission without any result, if any
+     */
     @Transactional(readOnly = true)
     public Optional<TextSubmission> textSubmissionWithoutResult(long exerciseId) {
         return this.participationService.findByExerciseIdWithEagerSubmissions(exerciseId)

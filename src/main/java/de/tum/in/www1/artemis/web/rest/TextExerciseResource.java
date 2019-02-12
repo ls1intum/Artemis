@@ -86,7 +86,11 @@ public class TextExerciseResource {
             throw new BadRequestAlertException("A new textExercise needs a title", ENTITY_NAME, "missingtitle");
         }
 
-        // fet  ch course from database to make sure client didn't change groups
+        if (textExercise.getDueDate() == null) {
+            throw new BadRequestAlertException("A new textExercise needs a dueDate", ENTITY_NAME, "dueDate");
+        }
+
+        // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(textExercise.getCourse().getId());
         if (course == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this text exercise does not exist")).body(null);
@@ -174,22 +178,22 @@ public class TextExerciseResource {
     /**
      * GET  /text-exercises/:id : get the "id" textExercise.
      *
-     * @param id the id of the textExercise to retrieve
+     * @param exerciseId the id of the textExercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the textExercise, or with status 404 (Not Found)
      */
-    @GetMapping("/text-exercises/{id}")
+    @GetMapping("/text-exercises/{exerciseId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<TextExercise> getTextExercise(@PathVariable Long id) {
-        log.debug("REST request to get TextExercise : {}", id);
-        Optional<TextExercise> textExercise = textExerciseRepository.findById(id);
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise)) {
+    public ResponseEntity<TextExercise> getTextExercise(@PathVariable Long exerciseId) {
+        log.debug("REST request to get TextExercise : {}", exerciseId);
+        Optional<TextExercise> optionalTextExercise = textExerciseRepository.findById(exerciseId);
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(optionalTextExercise)) {
             return forbidden();
         }
 
-        Set<ExampleSubmission> exampleSubmissions = new HashSet<>(this.exampleSubmissionRepository.findAllByExerciseId(id));
-        textExercise.ifPresent(textExercise1 -> textExercise1.setExampleSubmissions(exampleSubmissions));
+        Set<ExampleSubmission> exampleSubmissions = new HashSet<>(this.exampleSubmissionRepository.findAllByExerciseId(exerciseId));
+        optionalTextExercise.ifPresent(textExercise -> textExercise.setExampleSubmissions(exampleSubmissions));
 
-        return ResponseUtil.wrapOrNotFound(textExercise);
+        return ResponseUtil.wrapOrNotFound(optionalTextExercise);
     }
 
     /**

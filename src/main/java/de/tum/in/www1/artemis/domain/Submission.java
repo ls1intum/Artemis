@@ -53,7 +53,6 @@ public abstract class Submission implements Serializable {
     private SubmissionType type;
 
     @Column(name = "example_submission")
-    @JsonView(QuizView.Before.class)
     private Boolean exampleSubmission;
 
     @ManyToOne

@@ -76,6 +76,20 @@ public class TextAssessmentResource extends AssessmentResource {
         return ResponseEntity.ok(result);
     }
 
+    /**
+     * Given an exerciseId and a submissionId, the method retrieves from the database all the data needed by the tutor
+     * to assess the submission.
+     *
+     * If the tutor has already started assessing the submission, then we also return all the results the tutor has
+     * already inserted.
+     *
+     * If another tutor has already started working on this submission, the system tries to find another one without
+     * any result, and if it finds any, return it
+     *
+     * @param exerciseId the id of the exercise we want the submission
+     * @param submissionId the id of the submission we want
+     * @return a Participation of the tutor in the submission
+     */
     @GetMapping("/exercise/{exerciseId}/submission/{submissionId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Participation> getDataForTutor(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
@@ -127,6 +141,14 @@ public class TextAssessmentResource extends AssessmentResource {
         return ResponseEntity.ok(participation);
     }
 
+    /**
+     * Retrieve the result of an example assessment, only if the user is an instructor or if the submission is used for
+     * tutorial purposes.
+     *
+     * @param exerciseId the id of the exercise
+     * @param submissionId the id of the submission
+     * @return the result linked to the submission
+     */
     @GetMapping("/exercise/{exerciseId}/submission/{submissionId}/exampleAssessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> getExampleAssessmentForTutor(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
@@ -139,8 +161,8 @@ public class TextAssessmentResource extends AssessmentResource {
 
         // If the user is not an instructor, and this is not an example submission used for tutorial,
         // do not provide the results
-        boolean isAtLeastTeachingAssistant = authCheckService.isAtLeastTeachingAssistantForExercise(textExercise);
-        if (!textSubmission.get().isExampleSubmission() && !isAtLeastTeachingAssistant) {
+        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(textExercise);
+        if (!textSubmission.get().isExampleSubmission() && !isAtLeastInstructor) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("textSubmission", "notAuthorized", "You cannot see results")).body(null);
         }
 

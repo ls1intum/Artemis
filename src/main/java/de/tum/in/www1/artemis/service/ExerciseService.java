@@ -182,13 +182,13 @@ public class ExerciseService {
     /**
      * Find exercise by id and load tutorParticipations in this exercise.
      *
-     * @param id the id of the exercise entity
+     * @param exerciseId the id of the exercise entity
      * @return the exercise entity
      */
     @Transactional(readOnly = true)
-    public Exercise findOneLoadTutorParticipations(Long id) {
-        log.debug("Request to find Exercise with tutorParticipations loaded: {}", id);
-        Exercise exercise = findOne(id);
+    public Exercise findOneLoadTutorParticipations(Long exerciseId) {
+        log.debug("Request to find Exercise with tutorParticipations loaded: {}", exerciseId);
+        Exercise exercise = findOne(exerciseId);
         if(Optional.ofNullable(exercise).isPresent()) {
             Set<TutorParticipation> tutorParticipations = exercise.getTutorParticipations();
 

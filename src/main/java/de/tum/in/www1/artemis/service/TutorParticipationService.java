@@ -53,29 +53,6 @@ public class TutorParticipationService {
     }
 
     /**
-     * Get all the tutorParticipations.
-     *
-     * @return the list of entities
-     */
-    @Transactional(readOnly = true)
-    public List<TutorParticipation> findAll() {
-        log.debug("Request to get all TutorParticipations");
-        return tutorParticipationRepository.findAll();
-    }
-
-    /**
-     * Get all the tutorParticipations.
-     *
-     * @param pageable the pagination information
-     * @return the list of entities
-     */
-    @Transactional(readOnly = true)
-    public Page<TutorParticipation> findAll(Pageable pageable) {
-        log.debug("Request to get all TutorParticipations");
-        return tutorParticipationRepository.findAll(pageable);
-    }
-
-    /**
      * Get one tutorParticipations by id.
      *
      * @param id the id of the entity
@@ -90,7 +67,15 @@ public class TutorParticipationService {
         return tutorParticipation.orElse(null);
     }
 
-    @Transactional
+    /**
+     * Given an exercise and a tutor, it retrieves the participation of the tutor for that exercise. If there isn't
+     * any participation in the database, it returns a participation with status NOT_PARTICIPATED
+     *
+     * @param exercise the exercise we want to retrieve the tutor participation
+     * @param tutor the tutor of who we want to retrieve the participation
+     * @return a tutor participation object for the pair (exercise, tutor) passed as argument
+     */
+    @Transactional(readOnly = true)
     public TutorParticipation findByExerciseAndTutor(Exercise exercise, User tutor) {
         TutorParticipation participation = tutorParticipationRepository.findByAssessedExerciseAndTutor(exercise, tutor);
 
@@ -104,6 +89,13 @@ public class TutorParticipationService {
         return participation;
     }
 
+    /**
+     * Given an exercise and a tutor it creates the participation of the tutor to that exercise
+     *
+     * @param exercise the exercise the tutor is going to participate to
+     * @param tutor the tutor who is going to participate to the exercise
+     * @return a TutorParticipation for the exercise
+     */
     public TutorParticipation createNewParticipation(Exercise exercise, User tutor) {
         TutorParticipation tutorParticipation = new TutorParticipation();
 

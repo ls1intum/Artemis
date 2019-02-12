@@ -224,15 +224,15 @@ public class CourseResource {
     /**
      * GET /courses/:id/for-dashboard
      *
-     * @param id the id of the course to retrieve
+     * @param courseId the id of the course to retrieve
      * @return data about a course including all exercises, plus some data for the tutor
      * as tutor status for assessment
      */
-    @GetMapping("/courses/{id}/for-tutor-dashboard")
+    @GetMapping("/courses/{courseId}/for-tutor-dashboard")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Course> getCourseForTutorDashboard(Principal principal, @PathVariable Long id) {
-        log.debug("REST request /courses/{id}/for-tutor-dashboard");
-        Course course = courseService.findOne(id);
+    public ResponseEntity<Course> getCourseForTutorDashboard(Principal principal, @PathVariable Long courseId) {
+        log.debug("REST request /courses/{courseId}/for-tutor-dashboard");
+        Course course = courseService.findOne(courseId);
         if (!userHasPermission(course)) return forbidden();
 
         User user = userService.getUserWithGroupsAndAuthorities();

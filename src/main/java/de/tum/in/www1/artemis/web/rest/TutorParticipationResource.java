@@ -14,10 +14,8 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
@@ -37,6 +35,8 @@ public class TutorParticipationResource {
     private final ExampleSubmissionRepository exampleSubmissionRepository;
     private final ExampleSubmissionService exampleSubmissionService;
 
+    private static final float scoreRangePercentage = 10;
+
     public TutorParticipationResource(TutorParticipationService tutorParticipationService,
                                       CourseService courseService,
                                       ExerciseService exerciseService,
@@ -52,7 +52,14 @@ public class TutorParticipationResource {
     }
 
     /**
-     * POST /exercises/:exerciseId/tutorParticipations : start the "id" exercise for the current user.
+     * POST /exercises/:exerciseId/tutorParticipations : start the "id" exercise for the current tutor.
+     *
+     * A tutor participation will be created and returned for the exercise given by the exercise id. The tutor
+     * participation status will be assigned based on which features are available for the exercise (e.g. grading
+     * instructions)
+     *
+     * The method is valid only for tutors, since it inits the tutor participation to the exercise, which is different
+     * from a standard participation
      *
      * @param exerciseId the id of the exercise for which to init a tutorParticipations
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
@@ -71,9 +78,10 @@ public class TutorParticipationResource {
 
         TutorParticipation existingTutorParticipation = tutorParticipationService.findByExerciseAndTutor(exercise, user);
         if (existingTutorParticipation != null && existingTutorParticipation.getId() != null) {
-            // tutorParticipations already exists
+            // tutorParticipation already exists
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("tutorParticipations", "tutorParticipationAlreadyExists", "There is already a tutorParticipations for the given exercise and user.")).body(null);
         }
+
         TutorParticipation tutorParticipation = tutorParticipationService.createNewParticipation(exercise, user);
         return ResponseEntity.created(new URI("/api/exercises/" + exerciseId + "tutorParticipations/" + tutorParticipation.getId()))
             .body(tutorParticipation);
@@ -82,7 +90,12 @@ public class TutorParticipationResource {
     /**
      * POST /exercises/:exerciseId/tutorParticipations/:participationId/exampleSubmission: add an example submission to the tutor participation
      *
-     * @param exerciseId      the id of the exercise of the tutorParticipations
+     * The tutor has read (if it is a tutorial) or assessed an example submission.
+     * If it is a tutorial, the method just records that the tutor has read it.
+     * If it is not, the method checks if the assessment given by the tutor is close enough to the instructor one.
+     * If yes, then it returns the participation, if not, it returns an error
+     *
+     * @param exerciseId      the id of the exercise of the tutorParticipation
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
     @PostMapping(value = "/exercises/{exerciseId}/exampleSubmission")
@@ -118,13 +131,13 @@ public class TutorParticipationResource {
         // If it is not a tutorial we check the assessment
         if (!isTutorial) {
             // Retrieve the example feedback created by the instructor
-            List<Feedback> existingFeedback = this.exampleSubmissionService.getFeedbacksForExampleSubmission(exampleSubmission.getId());
+            List<Feedback> existingFeedback = this.exampleSubmissionService.getFeedbackForExampleSubmission(exampleSubmission.getId());
 
             // Check if the result is the same
             // TODO: at the moment we check only the score +/10%, maybe we want to do something smarter?
             float instructorScore = calculateTotalScore(existingFeedback);
-            float lowerInstructorScore = instructorScore - instructorScore / 10;
-            float higherInstructorScore = instructorScore + instructorScore / 10;
+            float lowerInstructorScore = instructorScore - instructorScore / scoreRangePercentage;
+            float higherInstructorScore = instructorScore + instructorScore / scoreRangePercentage;
 
             float tutorScore = calculateTotalScore(exampleSubmission.getSubmission().getResult().getFeedbacks());
 

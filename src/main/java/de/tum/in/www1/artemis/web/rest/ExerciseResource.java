@@ -108,6 +108,32 @@ public class ExerciseResource {
     }
 
     /**
+     * GET  /exercises/:id : get the "id" exercise with data useful for tutors.
+     *
+     * @param id the id of the exercise to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
+     */
+    @GetMapping("/exercises/{id}/for-tutor-dashboard")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Exercise> getExerciseForTutorDashboard(@PathVariable Long id) {
+        log.debug("REST request to get Exercise for tutor dashboard : {}", id);
+        Exercise exercise = exerciseService.findOne(id);
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) return forbidden();
+
+        TutorParticipation tutorParticipation = tutorParticipationService.findByExerciseAndTutor(exercise, user);
+        exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
+
+        List<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllByExerciseId(id);
+        // Do not provide example submissions without any assessment
+        exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission().getResult() == null);
+        exercise.setExampleSubmissions(new HashSet<>(exampleSubmissions));
+
+        return ResponseUtil.wrapOrNotFound(Optional.of(exercise));
+    }
+
+    /**
      * DELETE  /exercises/:id : delete the "id" exercise.
      *
      * @param id the id of the exercise to delete
@@ -119,7 +145,7 @@ public class ExerciseResource {
         log.debug("REST request to delete Exercise : {}", id);
         Exercise exercise = exerciseService.findOneLoadParticipations(id);
         if (Optional.ofNullable(exercise).isPresent()) {
-            if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) return forbidden();
+            if (!authCheckService.isAtLeastInstructorForExercise(exercise)) return forbidden();
             exerciseService.delete(exercise, true, false);
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
@@ -139,13 +165,13 @@ public class ExerciseResource {
     public ResponseEntity<Void> reset(@PathVariable Long id) {
         log.debug("REST request to reset Exercise : {}", id);
         Exercise exercise = exerciseService.findOneLoadParticipations(id);
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) return forbidden();
+        if (!authCheckService.isAtLeastInstructorForExercise(exercise)) return forbidden();
         exerciseService.reset(exercise);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert("exercise", id.toString())).build();
     }
 
     /**
-     * GET  /exercises/:id/cleanup : delete all build plans (except BASE) of all participations belonging to this exercise. Optionally delete and archive all repositories
+     * DELETE  /exercises/:id/cleanup : delete all build plans (except BASE) of all participations belonging to this exercise. Optionally delete and archive all repositories
      *
      * @param id                 the id of the exercise to delete build plans for
      * @param deleteRepositories whether repositories should be deleted or not
@@ -222,31 +248,5 @@ public class ExerciseResource {
             .contentType(MediaType.APPLICATION_OCTET_STREAM)
             .header("filename", zipFile.getName())
             .body(resource);
-    }
-
-    /**
-     * GET  /exercises/:id : get the "id" exercise with data useful for tutors.
-     *
-     * @param id the id of the exercise to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
-     */
-    @GetMapping("/exercises/{id}/for-tutor-dashboard")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Exercise> getExerciseForTutorDashboard(@PathVariable Long id) {
-        log.debug("REST request to get Exercise for tutor dashboard : {}", id);
-        Exercise exercise = exerciseService.findOne(id);
-        User user = userService.getUserWithGroupsAndAuthorities();
-
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) return forbidden();
-
-        TutorParticipation tutorParticipation = tutorParticipationService.findByExerciseAndTutor(exercise, user);
-        exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
-
-        List<ExampleSubmission> exampleSubmissions = this.exampleSubmissionRepository.findAllByExerciseId(id);
-        // Do not provide example submissions without any assessment
-        exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission().getResult() == null);
-        exercise.setExampleSubmissions(new HashSet<>(exampleSubmissions));
-
-        return ResponseUtil.wrapOrNotFound(Optional.of(exercise));
     }
 }

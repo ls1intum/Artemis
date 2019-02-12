@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import de.tum.in.www1.artemis.domain.ExampleSubmission;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,15 +39,28 @@ public class ExampleSubmissionService {
         return exampleSubmission;
     }
 
+    /**
+     * Given the id of an example submission, it returns the results of the linked submission, if any
+     *
+     * @param exampleSubmissionId the id of the example submission we want to retrieve
+     * @return list of feedback for an example submission
+     */
     @Transactional
-    public List<Feedback> getFeedbacksForExampleSubmission(Long id) {
-        ExampleSubmission exampleSubmission = this.exampleSubmissionRepository.getOne(id);
-        Result result = exampleSubmission.getSubmission().getResult();
+    public List<Feedback> getFeedbackForExampleSubmission(Long exampleSubmissionId) {
+        ExampleSubmission exampleSubmission = this.exampleSubmissionRepository.getOne(exampleSubmissionId);
+        Submission submission = exampleSubmission.getSubmission();
 
-        if (!result.isExampleResult()) {
+        if (submission == null) {
             return null;
         }
 
+        Result result = submission.getResult();
+
+        if (result == null || result.isExampleResult() != Boolean.TRUE) {
+            return null;
+        }
+
+        // TODO: create different return for different type of exercises, this is for text exercises
         return result.getFeedbacks();
     }
 }

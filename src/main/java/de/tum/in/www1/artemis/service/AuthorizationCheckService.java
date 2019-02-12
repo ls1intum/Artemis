@@ -35,7 +35,7 @@ public class AuthorizationCheckService {
     }
 
     public boolean isAtLeastTeachingAssistantForExercise(Optional<Exercise> exercise, User user) {
-        return exercise.filter(exercise1 -> isAtLeastTeachingAssistantForExercise(exercise1, user)).isPresent();
+        return exercise.filter(observedExercise -> isAtLeastTeachingAssistantForExercise(observedExercise, user)).isPresent();
     }
 
     public boolean isAtLeastTeachingAssistantForExercise(Exercise exercise, User user) {

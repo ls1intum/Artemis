@@ -570,8 +570,8 @@ public class ParticipationService {
     }
 
     @Transactional(readOnly = true)
-    public List<Participation> findByExerciseIdForTutorDashboard(Long id) {
-        List<Participation> participationList = this.findByExerciseId(id);
+    public List<Participation> findByExerciseIdForTutorDashboard(Long participationId) {
+        List<Participation> participationList = this.findByExerciseId(participationId);
 
         for (Participation participation : participationList) {
             participation.setStudent(null); // Hide the student from the tutor
@@ -581,7 +581,7 @@ public class ParticipationService {
 
             results.forEach(result -> {
                 try {
-                    if (result.isRated()) {
+                    if (result.isRated() == Boolean.TRUE) {
                         if (result.getAssessor() instanceof HibernateProxy) {
                             result.setAssessor((User) Hibernate.unproxy(result.getAssessor()));
                         }
