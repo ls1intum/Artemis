@@ -72,7 +72,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
             (res: HttpResponse<Exercise>) => {
                 this.exercise = res.body;
                 this.tutorParticipation = this.exercise.tutorParticipations[0];
-                this.tutorParticipationStatus = this.tutorParticipation.status;isRated
+                this.tutorParticipationStatus = this.tutorParticipation.status;
                 this.exampleSubmissionsToReview = this.exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => exampleSubmission.usedForTutorial);
                 this.exampleSubmissionsToAssess = this.exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => !exampleSubmission.usedForTutorial);
                 this.exampleSubmissionsCompletedByTutor = this.tutorParticipation.trainedExampleSubmissions;
