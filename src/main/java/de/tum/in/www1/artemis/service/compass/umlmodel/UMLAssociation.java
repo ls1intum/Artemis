@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.service.compass.umlmodel;
 
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
-//TODO rename in Relation to stay consistent
+
 public class UMLAssociation extends UMLElement {
 
     // PLAIN is legacy
