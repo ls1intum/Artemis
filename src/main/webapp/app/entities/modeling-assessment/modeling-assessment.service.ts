@@ -32,9 +32,9 @@ export class ModelingAssessmentService {
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
-    submit(modelingAssessment: ModelingAssessment[], exerciseId: number, resultId: number, ignoreConflict: boolean = false): Observable<any> {
+    submit(modelingAssessment: ModelingAssessment[], exerciseId: number, resultId: number, ignoreConflicts: boolean = false): Observable<any> {
         let url = `${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}/submit`;
-        if (ignoreConflict) {
+        if (ignoreConflicts) {
             url += '?ignoreConflict=true';
         }
         return this.http.put<any>(url, modelingAssessment);

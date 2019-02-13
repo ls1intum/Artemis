@@ -45,6 +45,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
     timeout: any;
     userId: number;
     isAuthorized: boolean;
+    ignoreConflicts: false;
 
     constructor(
         private jhiAlertService: JhiAlertService,
@@ -224,9 +225,9 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         });
     }
 
-    submit(ignoreConflict = false) {
+    submit() {
         this.checkScoreBoundaries();
-        this.modelingAssessmentService.submit(this.assessments, this.modelingExercise.id, this.result.id, ignoreConflict).subscribe((result: Result) => {
+        this.modelingAssessmentService.submit(this.assessments, this.modelingExercise.id, this.result.id, this.ignoreConflicts).subscribe((result: Result) => {
             result.participation.results = [result];
             this.result = result;
             this.jhiAlertService.success('arTeMiSApp.apollonDiagram.assessment.submitSuccessful');
@@ -241,6 +242,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
             }
         });
     }
+
 
     /**
      * Calculates the total score of the current assessment.
@@ -388,7 +390,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
             document.getElementById(`entity-${id}`).style.backgroundColor = 'rgb(248, 214, 217)';
         });
 
-        //TODO highlight relation entities. currently do not have unique id
+        //TODO MJ highlight relation entities. currently do not have unique id
         // relationshipsToHighlight.forEach(id => {
         //     document.getElementById(id).style.color = 'rgb(248, 214, 217)';
         // })

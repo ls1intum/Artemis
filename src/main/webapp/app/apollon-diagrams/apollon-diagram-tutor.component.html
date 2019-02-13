@@ -23,10 +23,10 @@
                     [disabled]="!assessments || !assessmentsAreValid"
                     [hidden]="!result || !result.rated">Override Assessment
             </button>
-            <button *ngIf="conflicts && conflicts.size > 0" class="btn btn-danger" (click)="submit(true)"
-                    [disabled]="!assessments || !assessmentsAreValid"
-            >Ignore Conflict
-            </button>
+            <div *ngIf="conflicts && conflicts.size > 0" class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="customSwitches" [(ngModel)]="ignoreConflicts">
+                <label class="custom-control-label" for="customSwitches">Ignore Conflict</label>
+            </div>
 
         </div>
     </div>
