@@ -68,10 +68,8 @@ public class Assessment {
         }
 
         double maxCount = counting.entrySet().stream().mapToInt(Map.Entry::getValue).max().orElse(0);
-
-        // calculate the mean amount of points
-        credits /= scores.size();
+        double mean = credits / scores.size();
         double confidence = maxCount / scores.size();
-        return new Score(credits, new ArrayList<>(comments), confidence);
+        return new Score(mean, new ArrayList<>(comments), confidence);
     }
 }
