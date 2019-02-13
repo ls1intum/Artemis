@@ -375,11 +375,9 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
                 return true;
             }
             if (state.entities.byId[id].attributes.find(attribute => this.conflicts.has(attribute.id))) {
-                console.log('attribute found');
                 return true;
             }
             if (state.entities.byId[id].methods.find(method => this.conflicts.has(method.id))) {
-                console.log('method found');
                 return true;
             }
             return false;
