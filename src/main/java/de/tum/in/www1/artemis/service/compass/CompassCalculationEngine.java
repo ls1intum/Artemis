@@ -318,7 +318,13 @@ public class CompassCalculationEngine implements CalculationEngine {
         modelSelector.removeModelWaitingForAssessment(model.getModelID());
     }
 
-
+    /**
+     * checks and logs if each ModelElementAssessment corresponds to a element in the UMLModel. And returns a mapping from each jsonElementID in the Assessment to its Score
+     *
+     * @param modelingAssessment the modeling assessment to create the score list of
+     * @param model              UmlModel the modelingAssessment belongs to
+     * @return mapping of the jsonElementID of each ModelElement contained in the modellingAssessment to its corresponding score
+     */
     private Map<String, Score> createScoreList(List<ModelElementAssessment> modelingAssessment, UMLModel model) {
         Map<String, Score> scoreHashMap = new HashMap<>();
         for (ModelElementAssessment assessment : modelingAssessment) {
