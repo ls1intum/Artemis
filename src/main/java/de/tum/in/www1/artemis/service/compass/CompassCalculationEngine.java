@@ -180,7 +180,9 @@ public class CompassCalculationEngine implements CalculationEngine {
     public void notifyNewAssessment(List<ModelElementAssessment> modelingAssessment, long submissionId) {
         lastUsed = LocalDateTime.now();
         modelSelector.addAlreadyAssessedModel(submissionId);
-        buildAssessment(submissionId, modelingAssessment);
+        UMLModel model = modelIndex.getModel(submissionId);
+        addNewManualAssessment(modelingAssessment, model);
+        modelSelector.removeModelWaitingForAssessment(model.getModelID());
         assessModelsAutomatically();
     }
 
@@ -310,12 +312,13 @@ public class CompassCalculationEngine implements CalculationEngine {
         return jsonObject;
     }
 
-
-    private void buildAssessment(long submissionId, List<ModelElementAssessment> modelingAssessment) {
-        UMLModel model = modelIndex.getModel(submissionId);
-        Map<String, Score> scoreList = createScoreList(modelingAssessment, model);
-        this.addNewManualAssessment(scoreList, model);
-        modelSelector.removeModelWaitingForAssessment(model.getModelID());
+    private void addNewManualAssessment(List<ModelElementAssessment> modelingAssessment, UMLModel model) {
+        Map<String, Score> scoreList = createScoreList(modelingAssessment,model);
+        try {
+            automaticAssessmentController.addScoresToAssessment(assessmentIndex, scoreList, model);
+        } catch (IOException e) {
+            log.error("manual assessment for " + model.getName() + " could not be added: " + e.getMessage());
+        }
     }
 
     /**
