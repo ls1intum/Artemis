@@ -156,7 +156,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     })
     @PutMapping("/modeling-assessments/exercise/{exerciseId}/result/{resultId}/submit")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    //TODO changing submitted assessment always produces Conflict
+    //TODO MJ changing submitted assessment always produces Conflict
     public ResponseEntity<Object> submitModelingAssessment(@PathVariable Long exerciseId,
                                                            @PathVariable Long resultId,
                                                            @RequestParam(value = "ignoreConflict", defaultValue = "false") boolean ignoreConflict,
