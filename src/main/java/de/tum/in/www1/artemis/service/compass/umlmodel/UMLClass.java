@@ -28,9 +28,8 @@ public class UMLClass extends UMLElement {
 
     private String name;
     private UMLClassType type;
-
-    List<UMLAttribute> attributes;
-    List<UMLMethod> methods;
+    private List<UMLAttribute> attributes;
+    private List<UMLMethod> methods;
 
     public UMLClass(String name, List<UMLAttribute> attributes, List<UMLMethod> methodList, String jsonElementID, String type) {
         this.name = name;
@@ -116,7 +115,7 @@ public class UMLClass extends UMLElement {
         missingCount += referenceMissingCount;
 
         // make sure: 0.0 <= similarity <= simulation.0
-        if (missingCount > 0 ) {
+        if (missingCount > 0) {
             double penaltyWeight = 1 / missingCount;
             similarity -= penaltyWeight * CompassConfiguration.MISSING_ELEMENT_PENALTY * missingCount;
         }
@@ -156,7 +155,7 @@ public class UMLClass extends UMLElement {
     }
 
     @Override
-    public String getName () {
+    public String getName() {
         return "Class " + name;
     }
 
