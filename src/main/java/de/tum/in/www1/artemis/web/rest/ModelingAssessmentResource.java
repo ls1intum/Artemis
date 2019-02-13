@@ -163,7 +163,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
         checkAuthorization(modelingExercise);
         Result result = resultService.findOne(resultId);
         Long submissionId = result.getSubmission().getId();
-        List<Conflict> conflicts = compassService.checkForConflicts(exerciseId, submissionId, modelingAssessment);
+        List<Conflict> conflicts = compassService.getConflicts(exerciseId, submissionId, modelingAssessment);
         if (!conflicts.isEmpty() && !ignoreConflict) {
             modelingAssessmentService.saveManualAssessment(result, modelingExercise.getId(), modelingAssessment);
             return ResponseEntity.status(HttpStatus.CONFLICT).body(conflicts);

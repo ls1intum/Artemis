@@ -201,7 +201,7 @@ public class CompassService {
         }
     }
 
-    public List<Conflict> checkForConflicts(long exerciseId, long submissionId, List<ModelElementAssessment> modelingAssessment) {
+    public List<Conflict> getConflicts(long exerciseId, long submissionId, List<ModelElementAssessment> modelingAssessment) {
         CompassCalculationEngine engine = getCalculationEngine(exerciseId);
         return engine.getConflicts(submissionId, modelingAssessment);
     }
