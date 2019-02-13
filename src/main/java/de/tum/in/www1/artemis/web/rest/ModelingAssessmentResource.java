@@ -144,8 +144,6 @@ public class ModelingAssessmentResource extends AssessmentResource {
         return ResponseEntity.ok(result);
     }
 
-    //TODO use Exceptions on wrong path variables resultId exerciseId ?
-
 
     @ResponseStatus(HttpStatus.OK)
     @ApiResponses({
