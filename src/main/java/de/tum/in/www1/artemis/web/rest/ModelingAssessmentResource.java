@@ -22,7 +22,7 @@ import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 @RestController
 @RequestMapping("/api")
 public class ModelingAssessmentResource extends AssessmentResource {
-    private final Logger log = LoggerFactory.getLogger(ModelingAssessmentResource.class);
+    private final Logger log = LoggerFactory.getLogger(ModelingAssessmentResource.class); //TODO MJ add logging or remove unused logger
 
     private static final String ENTITY_NAME = "modelingAssessment";
     private static final String PUT_ASSESSMENT_409_REASON = "Given assessment conflicts with exsisting assessments in the database. Assessment has been stored but is not used for automatic assessment by compass";
