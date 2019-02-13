@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { Participation, ParticipationService } from '../participation';
 import { Result, ResultDetailComponent, ResultService } from '.';
+import { ProgrammingSubmission } from '../programming-submission';
 import { JhiWebsocketService, AccountService } from '../../core';
 import { RepositoryService } from '../repository/repository.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -30,10 +31,11 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     @Output() newResult = new EventEmitter<object>();
 
     result: Result;
-    websocketChannel: string;
+    websocketChannelResults: string;
+    websocketChannelSubmissions: string;
     textColorClass: string;
     hasFeedback: boolean;
-    resultIconClass: string;
+    resultIconClass: string[];
     resultString: string;
 
     constructor(
@@ -79,19 +81,21 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
                     // only subscribe for the currently logged in user
                     if (user.id === this.participation.student.id && (exercise.dueDate == null || exercise.dueDate.isAfter(moment()))) {
                         // subscribe for new results (e.g. when a programming exercise was automatically tested)
-                        this.websocketChannel = `/topic/participation/${this.participation.id}/newResults`;
-                        this.jhiWebsocketService.subscribe(this.websocketChannel);
-                        this.jhiWebsocketService.receive(this.websocketChannel).subscribe((newResult: Result) => {
+                        this.websocketChannelResults = `/topic/participation/${this.participation.id}/newResults`;
+                        this.jhiWebsocketService.subscribe(this.websocketChannelResults);
+                        this.jhiWebsocketService.receive(this.websocketChannelResults).subscribe((newResult: Result) => {
                             // convert json string to moment
+                            console.log('Received new result ' + newResult.id + ': ' + newResult.resultString);
                             newResult.completionDate = newResult.completionDate != null ? moment(newResult.completionDate) : null;
                             this.handleNewResult(newResult);
                         });
 
                         // subscribe for new submissions (e.g. when code was pushed and is currently built)
-                        this.websocketChannel = `/topic/participation/${this.participation.id}/newSubmission`;
-                        this.jhiWebsocketService.subscribe(this.websocketChannel);
-                        this.jhiWebsocketService.receive(this.websocketChannel).subscribe(newSubmission => {
+                        this.websocketChannelSubmissions = `/topic/participation/${this.participation.id}/newSubmission`;
+                        this.jhiWebsocketService.subscribe(this.websocketChannelSubmissions);
+                        this.jhiWebsocketService.receive(this.websocketChannelSubmissions).subscribe((newProgrammingSubmission: ProgrammingSubmission) => {
                             // TODO handle this case properly, e.g. by animating a progress bar in the result view
+                            console.log('Received new submission ' + newProgrammingSubmission.id + ': ' + newProgrammingSubmission.commitHash);
                         });
                     }
                 });
@@ -133,8 +137,11 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     ngOnDestroy() {
-        if (this.websocketChannel) {
-            this.jhiWebsocketService.unsubscribe(this.websocketChannel);
+        if (this.websocketChannelResults) {
+            this.jhiWebsocketService.unsubscribe(this.websocketChannelResults);
+        }
+        if (this.websocketChannelSubmissions) {
+            this.jhiWebsocketService.unsubscribe(this.websocketChannelSubmissions);
         }
     }
 
@@ -193,20 +200,19 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     /**
-     * Get the css class for the result icon as a string
+     * Get the icon type for the result icon as an array
      *
-     * @return {string} the css class
      */
-    getResultIconClass() {
+    getResultIconClass(): string[] {
         if (this.result.score == null) {
             if (this.result.successful) {
-                return 'fa-check-circle-o';
+                return ['far', 'check-circle'];
             }
-            return 'fa-times-circle-o';
+            return ['far', 'times-circle'];
         }
         if (this.result.score > 80) {
-            return 'fa-check-circle-o';
+            return ['far', 'check-circle'];
         }
-        return 'fa-times-circle-o';
+        return ['far', 'times-circle'];
     }
 }

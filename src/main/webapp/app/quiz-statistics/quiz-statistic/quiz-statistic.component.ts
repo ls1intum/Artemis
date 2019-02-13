@@ -141,6 +141,7 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
     // make constants available to html for comparison
     readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
+    readonly SHORT_ANSWER = QuestionType.SHORT_ANSWER;
 
     quizExercise: QuizExercise;
     private sub: Subscription;
@@ -373,6 +374,14 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
             } else if (nextQuestion.type === QuestionType.DRAG_AND_DROP) {
                 this.router.navigate([
                     'quiz/:quizId/drag-and-drop-question-statistic/:questionId',
+                    {
+                        quizId: this.quizExercise.id,
+                        questionId: nextQuestion.id
+                    }
+                ]);
+            } else if (nextQuestion.type === QuestionType.SHORT_ANSWER) {
+                this.router.navigate([
+                    'quiz/:quizId/short-answer-question-statistic/:questionId',
                     {
                         quizId: this.quizExercise.id,
                         questionId: nextQuestion.id

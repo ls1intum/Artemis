@@ -1,0 +1,72 @@
+<div class="sa-question" [ngClass]="{disabled: clickDisabled && !showResult, result: showResult && !forceSampleSolution, incorrect: (score || 0) < question.score && !forceSampleSolution}">
+    <h4 class="question-title-display"><span>{{questionIndex}})</span> {{question.title}}</h4>
+    <p *ngIf="questionText !== '' ">{{questionText}}</p>
+
+    <div *ngIf="!showResult && !clickDisabled">
+        <div class="short-answer-question-display" *ngFor="let textPart of textBeforeSpots; let i = index">
+        {{textPart}} <input class="short-answer-question-input" type="text" id="solution-{{i}}-{{_question.id}}" value="{{submittedTexts[i] !== undefined ? submittedTexts[i].text : ''}}" (change)="setSubmittedText()"  >
+        </div>
+        <span>{{textAfterSpots}}</span>
+    </div>
+
+    <div *ngIf="!showResult && clickDisabled">
+        <div class="short-answer-question-display" *ngFor="let textPart of textBeforeSpots; let i = index">
+            {{textPart}} <input class="short-answer-question-input" *ngIf="submittedTexts[i] !== undefined" disabled value="{{submittedTexts[i].text}}">
+            <input *ngIf="submittedTexts[i] === undefined" >
+        </div>
+        <span>{{textAfterSpots}}</span>
+    </div>
+    <div *ngIf="showResult && !showingSampleSolution">
+        <div class="short-answer-question-display" *ngFor="let textPart of textBeforeSpots; let i = index">
+            {{textPart}}
+            <input class="short-answer-question-input" *ngIf="submittedTexts[i] !== undefined && submittedTexts[i].isCorrect" style="background: lightgreen" disabled value="{{submittedTexts[i].text}}" size="{{submittedTexts[i].text.length + 2}}">
+            <input class="short-answer-question-input" *ngIf="submittedTexts[i] !== undefined && !submittedTexts[i].isCorrect" style="background: red" disabled value="{{submittedTexts[i].text}}" size="{{submittedTexts[i].text.length + 2}}">
+            <input class="short-answer-question-input" *ngIf="submittedTexts[i] === undefined" style="background: red" disabled >
+        </div>
+        <span>{{textAfterSpots}}</span>
+    </div>
+
+    <div *ngIf="showResult && showingSampleSolution">
+        <div class="short-answer-question-display" *ngFor="let textPart of textBeforeSpots; let i = index">
+            {{textPart}}
+            <input class="short-answer-question-input" style="background: lightgreen" disabled value="{{sampleSolutions[i].text}}" size="{{sampleSolutions[i].text.length + 2}}">
+        </div>
+        <span>{{textAfterSpots}}</span>
+    </div>
+
+    <span style="color:red;" *ngIf="question.invalid" jhiTranslate="arTeMiSApp.question.invalidText"></span>
+    <div class="hint" *ngIf="question.hint || (question.explanation && showResult)">
+        <ng-template #renderedHint>
+            <div [innerHTML]="rendered.hint"></div>
+        </ng-template>
+        <span class="label label-info" [ngbPopover]="renderedHint" placement="right" triggers="mouseenter:mouseleave" *ngIf="question.hint">
+            <fa-icon [icon]="['far', 'question-circle']"></fa-icon>
+            <span jhiTranslate="arTeMiSApp.question.hint"></span>
+        </span> </br>
+        <ng-template #renderedExplanation>
+            <div [innerHTML]="rendered.explanation"></div>
+        </ng-template>
+        <span class="label label-primary" [ngbPopover]="renderedExplanation" placement="right" triggers="mouseenter:mouseleave" *ngIf="question.explanation && showResult">
+            <fa-icon icon="exclamation-circle"></fa-icon>
+            <span jhiTranslate="arTeMiSApp.question.explanation"></span>
+        </span>
+    </div>
+    <div class="question-score" *ngIf="!showResult || forceSampleSolution">
+        <span jhiTranslate="arTeMiSApp.question.score" class="colon-suffix"></span>
+        <span>{{question.score}}</span>
+    </div>
+    <div class="question-score result" *ngIf="showResult && !forceSampleSolution" [ngClass]="{incorrect: (score || 0) < question.score}">
+        <span jhiTranslate="arTeMiSApp.question.yourScore" class="colon-suffix"></span>
+        <span>{{score || 0}}/{{question.score}}</span>
+    </div>
+    <br>
+    <br>
+    <div *ngIf="showResult && !forceSampleSolution">
+        <div class="btn btn-outline-primary" *ngIf="!showingSampleSolution" (click)="showSampleSolution()">
+            Show Sample Solution
+        </div>
+        <div class="btn btn-outline-primary" *ngIf="showingSampleSolution" (click)="hideSampleSolution()">
+            Hide Sample Solution
+        </div>
+    </div>
+</div>

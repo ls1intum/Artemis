@@ -151,7 +151,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
 
         this.initializeAssessments();
 
-        const apollonDiv = $('.apollon-editor > div > div');
+        const apollonDiv = $('.apollon-editor > div');
         const assessmentsDiv = $('.assessments__container');
         assessmentsDiv.scrollTop(apollonDiv.scrollTop());
         assessmentsDiv.scrollLeft(apollonDiv.scrollLeft());

@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis.service.connectors;
 
+import com.atlassian.bamboo.specs.api.builders.AtlassianModule;
 import com.atlassian.bamboo.specs.api.builders.BambooKey;
 import com.atlassian.bamboo.specs.api.builders.applink.ApplicationLink;
+import com.atlassian.bamboo.specs.api.builders.notification.AnyNotificationRecipient;
+import com.atlassian.bamboo.specs.api.builders.notification.Notification;
 import com.atlassian.bamboo.specs.api.builders.permission.PermissionType;
 import com.atlassian.bamboo.specs.api.builders.permission.Permissions;
 import com.atlassian.bamboo.specs.api.builders.permission.PlanPermissions;
@@ -15,6 +18,7 @@ import com.atlassian.bamboo.specs.api.builders.plan.configuration.ConcurrentBuil
 import com.atlassian.bamboo.specs.api.builders.project.Project;
 import com.atlassian.bamboo.specs.api.builders.repository.VcsChangeDetection;
 import com.atlassian.bamboo.specs.api.builders.repository.VcsRepositoryIdentifier;
+import com.atlassian.bamboo.specs.builders.notification.PlanCompletedNotification;
 import com.atlassian.bamboo.specs.builders.repository.bitbucket.server.BitbucketServerRepository;
 import com.atlassian.bamboo.specs.builders.repository.viewer.BitbucketServerRepositoryViewer;
 import com.atlassian.bamboo.specs.builders.task.CheckoutItem;
@@ -31,6 +35,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.exception.BambooException;
+import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
@@ -56,11 +61,13 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_API_PATH;
 import static de.tum.in.www1.artemis.config.Constants.RESULT_RESOURCE_API_PATH;
 
 @Service
@@ -174,15 +181,15 @@ public class BambooService implements ContinuousIntegrationService {
                             .goal("clean test")
                             .jdk("JDK 1.8")
                             .executableLabel("Maven 3")
-                            .hasTests(true))
-                    .finalTasks(new ScriptTask()
-                        .description("Notify ArTEMiS")
-                        .interpreter(ScriptTaskProperties.Interpreter.BINSH_OR_CMDEXE)
-                        .inlineBody("curl -k -X POST " + SERVER_URL + RESULT_RESOURCE_API_PATH + "${bamboo.planKey}"))))
+                            .hasTests(true))))
             .triggers(new BitbucketServerTrigger())
             .planBranchManagement(new PlanBranchManagement()
                 .delete(new BranchCleanup())
-                .notificationForCommitters());
+                .notificationForCommitters())
+            .notifications(new Notification()
+                .type(new PlanCompletedNotification())
+                .recipients(new AnyNotificationRecipient(new AtlassianModule("de.tum.in.www1.bamboo-server:recipient.server"))
+                    .recipientString(SERVER_URL + NEW_RESULT_RESOURCE_API_PATH)));
         return plan;
     }
 
@@ -443,7 +450,8 @@ public class BambooService implements ContinuousIntegrationService {
      */
     @Override
     @Transactional
-    public Result onBuildCompleted(Participation participation) {
+    @Deprecated
+    public Result onBuildCompletedOld(Participation participation) {
         log.debug("Retrieving build result...");
         Boolean isOldBuildResult = true;
         Map buildResults = new HashMap<>();
@@ -530,6 +538,95 @@ public class BambooService implements ContinuousIntegrationService {
         return result;
     }
 
+    @Override
+    public String getPlanKey(Object requestBody) throws BambooException {
+        try {
+            Map<String, Object> requestBodyMap = (Map<String, Object>) requestBody;
+            Map<String, Object> planMap = (Map<String, Object>) requestBodyMap.get("plan");
+            String planKey = (String) planMap.get("key");
+
+            return planKey;
+
+        } catch (Exception e) {
+            log.error("Error when getting plan key");
+            throw new BitbucketException("Could not get plan key", e);
+        }
+    }
+
+    @Override
+    public Result onBuildCompletedNew(Participation participation, Object requestBody) throws Exception {
+        log.debug("Retrieving build result (NEW) ...");
+        try {
+            Map<String, Object> requestBodyMap = (Map<String, Object>) requestBody;
+            Map<String, Object> buildMap = (Map<String, Object>) requestBodyMap.get("build");
+            String buildReason = (String) buildMap.get("reason");
+            if (buildReason != null && buildReason.contains("First build for this plan")) {
+                //Filter the first build plan that was automatically executed when the build plan was created
+                return null;
+            }
+
+            Result result = new Result();
+            result.setRated(participation.getExercise().getDueDate() == null || ZonedDateTime.now().isBefore(participation.getExercise().getDueDate()));
+            result.setAssessmentType(AssessmentType.AUTOMATIC);
+            result.setSuccessful((Boolean) buildMap.get("successful"));
+
+            Map<String, Object> testSummary = (Map<String, Object>) buildMap.get("testSummary");
+            result.setResultString((String) testSummary.get("description"));
+
+            result.setCompletionDate(ZonedDateTime.parse((String) buildMap.get("buildCompletedDate")));
+            result.setScore(calculateScoreForResult(result));
+            result.setBuildArtifact((Boolean) buildMap.get("artifact"));
+            result.setParticipation(participation);
+
+            addFeedbackToResultNew(result, (List<Object>) buildMap.get("failedJobs"));
+
+            // save result, otherwise the next database access programmingSubmissionRepository.findByCommitHash will throw an exception
+            resultRepository.save(result);
+
+            List<Object> vcsList = (List<Object>) buildMap.get("vcs");
+
+            String commitHash = null;
+            for(Object changeSet : vcsList) {
+                Map<String, Object> changeSetMap = (Map<String, Object>) changeSet;
+                if (changeSetMap.get("repositoryName").equals(ASSIGNMENT_REPO_NAME)) { // We are only interested in the last commit hash of the assignment repo, not the test repo
+                    commitHash = (String) changeSetMap.get("id");
+                }
+            }
+
+            if (commitHash == null) {
+                log.warn("Could not find Commit-Hash (Participation {}, Build-Plan {})", participation.getId(), participation.getBuildPlanId());
+
+            } else {
+                ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHash(participation.getId(), commitHash);
+                if (programmingSubmission == null) { // no matching programming submission
+                    log.warn("Could not find ProgrammingSubmission for Commit-Hash {} (Participation {}, Build-Plan {}). Will create it subsequently...", commitHash, participation.getId(), participation.getBuildPlanId());
+                    // this might be a wrong build (what could be the reason), or this might be due to test changes
+                    // what happens if only the test has changes? should we then create a new submission?
+                    programmingSubmission = new ProgrammingSubmission();
+                    programmingSubmission.setParticipation(participation);
+                    programmingSubmission.setSubmitted(true);
+                    programmingSubmission.setType(SubmissionType.OTHER);
+                    programmingSubmission.setCommitHash(commitHash);
+                    programmingSubmission.setSubmissionDate(result.getCompletionDate());
+                } else {
+                    log.info("Found corresponding submission to build result with Commit-Hash {}", commitHash);
+                }
+
+                result.setSubmission(programmingSubmission);
+                programmingSubmission.setResult(result);
+                programmingSubmissionRepository.save(programmingSubmission); // result gets saved later, no need to save it now
+            }
+
+            resultRepository.save(result);
+
+            return result;
+
+        } catch (Exception e) {
+            log.error("Error when getting build result");
+            throw new BitbucketException("Could not get build result", e);
+        }
+    }
+
     /**
      * Converts build result details into feedback and stores it in the result object
      * @param
@@ -571,6 +668,57 @@ public class BambooService implements ContinuousIntegrationService {
             }
         } catch(Exception failedToParse) {
             log.error("Parsing from bamboo to feedback failed" + failedToParse);
+        }
+
+        return result.getFeedbacks();
+    }
+
+    /**
+     * Converts build result details into feedback and stores it in the result object
+     * @param result the result for which the feedback should be added
+     * @param failedJobs the failedJobs list of the requestBody
+     *
+     * @return a list of feedbacks itemsstored in a result
+     */
+    public List<Feedback> addFeedbackToResultNew(Result result, List<Object> failedJobs) {
+        if(failedJobs == null) {
+            return null;
+        }
+
+        try {
+            List<Map<String, Object>> castedfailedJobs = (List<Map<String, Object>>) (Object) failedJobs; // TODO: check if this works correctly
+
+            for (Map<String, Object> failedJob : castedfailedJobs) {
+                List<Map<String, Object>> failedTests = (List<Map<String, Object>>) (Object) failedJob.get("failedTests");
+                if (!failedTests.isEmpty()) {
+                    result.setHasFeedback(true);
+                }
+
+                for (Map<String, Object> failedTest : failedTests) {
+                    String className = (String) failedTest.get("className");
+                    String methodName = (String) failedTest.get("name"); // in the attribute "methodName", bamboo seems to apply some unwanted logic
+
+                    List<String> errors = (List<String>) failedTest.get("errors");
+                    String errorMessageString = "";
+                    for(String error : errors) {
+                        //Splitting string at the first linebreak to only get the first line of the Exception
+                        errorMessageString += error.split("\\n", 2)[0] + "\n";
+                    }
+
+                    log.debug("errorMSGString is {}", errorMessageString);
+
+                    Feedback feedback = new Feedback();
+                    feedback.setText(methodName);
+                    feedback.setDetailText(errorMessageString);
+                    feedback.setType(FeedbackType.AUTOMATIC);
+                    feedback.setPositive(false);
+                    feedback = feedbackRepository.save(feedback);
+                    result.addFeedback(feedback);
+                }
+            }
+
+        } catch (Exception e)  {
+            log.error("Could not get feedback from failedJobs " + e);
         }
 
         return result.getFeedbacks();
@@ -826,13 +974,14 @@ public class BambooService implements ContinuousIntegrationService {
             throw new BambooException("HttpError while retrieving build artifact");
         }
 
-        if(response.getHeaders().containsKey("Content-Type") && response.getHeaders().get("Content-Type").get(0).equals("text/html")) {
+        //Note: Content-Type might contain additional elements such as the UTF-8 encoding, therefore we now use contains instead of equals
+        if(response.getHeaders().containsKey("Content-Type") && response.getHeaders().get("Content-Type").get(0).contains("text/html")) {
             // This is an "Index of" HTML page.
             String html = new String(response.getBody(), StandardCharsets.UTF_8);
-            Pattern p = Pattern.compile("href=\"(.*?)\"", Pattern.CASE_INSENSITIVE);
-            Matcher m = p.matcher(html);
-            if (m.find()) {
-                url = m.group(1);
+            Pattern pattern = Pattern.compile("href=\"(.*?)\"", Pattern.CASE_INSENSITIVE);
+            Matcher matcher = pattern.matcher(html);
+            if (matcher.find()) {
+                url = matcher.group(1);
                 // Recursively walk through the responses until we get the actual artifact.
                 return retrieveArtifactPage(BAMBOO_SERVER_URL + url);
             } else {

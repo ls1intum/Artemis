@@ -8,7 +8,9 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * A ShortAnswerSolution.
@@ -31,11 +33,36 @@ public class ShortAnswerSolution implements Serializable {
 
     @Column(name = "invalid")
     @JsonView(QuizView.Before.class)
-    private Boolean invalid;
+    private Boolean invalid = false;
 
     @ManyToOne
     @JsonIgnore
     private ShortAnswerQuestion question;
+
+    //added additionally, could possibly be created within artemis.jh?
+    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "solution")
+    @JsonIgnore
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    private Set<ShortAnswerMapping> mappings = new HashSet<>();
+
+    /**
+     * tempID is needed to refer to solutions that have not been persisted yet
+     * in the correctMappings of a question (so user can create mappings in the UI before saving new solutions)
+     */
+    @Transient
+    // variable name must be different from Getter name,
+    // so that Jackson ignores the @Transient annotation,
+    // but Hibernate still respects it
+    private Long tempIDTransient;
+
+    public Long getTempID() {
+        return tempIDTransient;
+    }
+
+    public void setTempID(Long tempID) {
+        this.tempIDTransient = tempID;
+    }
+
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -60,7 +87,7 @@ public class ShortAnswerSolution implements Serializable {
     }
 
     public Boolean isInvalid() {
-        return invalid;
+        return invalid == null ? false : invalid;
     }
 
     public ShortAnswerSolution invalid(Boolean invalid) {
@@ -86,6 +113,29 @@ public class ShortAnswerSolution implements Serializable {
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
+
+
+    public Set<ShortAnswerMapping> getMappings() {
+        return mappings;
+    }
+
+    public ShortAnswerSolution mappings(Set<ShortAnswerMapping> mappings) {
+        this.mappings = mappings;
+        return this;
+    }
+
+    public ShortAnswerSolution addMappings(ShortAnswerMapping mapping) {
+        this.mappings.add(mapping);
+        mapping.setSolution(this);
+        return this;
+    }
+
+    public ShortAnswerSolution removeMappings(ShortAnswerMapping mapping) {
+        this.mappings.remove(mapping);
+        mapping.setSolution(null);
+        return this;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -95,6 +145,9 @@ public class ShortAnswerSolution implements Serializable {
             return false;
         }
         ShortAnswerSolution shortAnswerSolution = (ShortAnswerSolution) o;
+        if (shortAnswerSolution.getTempID() != null && getTempID() != null && Objects.equals(getTempID(), shortAnswerSolution.getTempID())) {
+            return true;
+        }
         if (shortAnswerSolution.getId() == null || getId() == null) {
             return false;
         }

@@ -3,7 +3,7 @@
     <div class="modal-header">
         <h4 class="modal-title" id="myProgrammingExerciseLabel"
             jhiTranslate="arTeMiSApp.exerciseLtiConfiguration.configurationForExercise"
-            translateValues="{title: '{{exercise.title}}'}">
+            [translateValues]="{title: exercise.title}">
             LTI Configuration for exercise {{ exercise.title }}</h4>
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true"
                 (click)="clear()">&times;</button>
@@ -73,7 +73,7 @@
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">
-            <span class="fa fa-ban"></span>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+            <fa-icon icon="ban"></fa-icon>>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
 
     </div>
