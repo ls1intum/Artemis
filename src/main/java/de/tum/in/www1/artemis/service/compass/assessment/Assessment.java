@@ -4,7 +4,7 @@ import java.util.*;
 
 public class Assessment {
 
-    private Map<Context, List<Score>> contextScoreList; //TODO own object for Score in List with assessment specific information like resultId/modelID ?!
+    private Map<Context, List<Score>> contextScoreList; //TODO MJ replace Score with Feedback
     private Map<Context, Score> contextScoreMapping;
 
     public Assessment(Context context, Score score) {

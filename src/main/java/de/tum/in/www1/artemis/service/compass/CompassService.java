@@ -79,7 +79,7 @@ public class CompassService {
      * @return new Id and partial grade of the optimalModel for next manual assessment, null if all models have been assessed
      */
     private Map.Entry<Long, Grade> getNextOptimalModel(long exerciseId) {
-        if (!loadExerciseIfSuspended(exerciseId)) { //TODO why null?
+        if (!loadExerciseIfSuspended(exerciseId)) { //TODO MJ why null?
             return null;
         }
         return compassCalculationEngines.get(exerciseId).getNextOptimalModel();
@@ -201,9 +201,9 @@ public class CompassService {
         }
     }
 
-    public List<Conflict> checkForConflicts(long exerciseId, long modelId, List<ModelElementAssessment> modelingAssessment) {
+    public List<Conflict> checkForConflicts(long exerciseId, long submissionId, List<ModelElementAssessment> modelingAssessment) {
         CompassCalculationEngine engine = getCalculationEngine(exerciseId);
-        return engine.getConflicts(modelId, modelingAssessment);
+        return engine.getConflicts(submissionId, modelingAssessment);
     }
 
     private void assessAutomatically(long modelId, long exerciseId) {

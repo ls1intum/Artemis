@@ -39,7 +39,7 @@ public class CompassCalculationEngine implements CalculationEngine {
         assessmentIndex = new AssessmentIndex();
 
         automaticAssessmentController = new AutomaticAssessmentController();
-        modelSelector = new ModelSelector(); //TODO fix Bug where on load of exercise no modelsWaitingForAssessment are added ? No differentiation between submitted and saved assessments!
+        modelSelector = new ModelSelector(); //TODO MJ fix Bug where on load of exercise no modelsWaitingForAssessment are added ? No differentiation between submitted and saved assessments!
 
         for (Map.Entry<Long, JsonObject> entry : models.entrySet()) {
             buildModel(entry.getKey(), entry.getValue());
@@ -52,19 +52,23 @@ public class CompassCalculationEngine implements CalculationEngine {
         assessModelsAutomatically();
     }
 
-    //TODO JavaDoc
-    public List<Conflict> getConflicts(long modelId, List<ModelElementAssessment> modelingAssessment) { //TODO register Assessment in Conflict in ModelSelector?
+    /**
+     * @param submissionId       ID of submission the modelingAssessment belongs to
+     * @param modelingAssessment assessment to check for conflicts
+     * @return a list of conflicts modelingAssessment causes with the current manual assessment data
+     */
+    public List<Conflict> getConflicts(long submissionId, List<ModelElementAssessment> modelingAssessment) {
         ArrayList<Conflict> conflicts = new ArrayList<>();
-        UMLModel model = modelIndex.getModel(modelId);
+        UMLModel model = modelIndex.getModel(submissionId);
         modelingAssessment.forEach(currentElementAssessment -> {
-            UMLElement currentElement = model.getElementByJSONID(currentElementAssessment.getId()); //TODO return Optional ad throw Exception if no UMLElement found
+            UMLElement currentElement = model.getElementByJSONID(currentElementAssessment.getId()); //TODO MJ return Optional ad throw Exception if no UMLElement found?
             assessmentIndex.getAssessment(currentElement.getElementID()).ifPresent(assessment -> {
                 List<Score> scores = assessment.getScores(currentElement.getContext());
                 List<Score> scoresInConflict = scores.stream()
                     .filter(score -> !scoresAreConsideredEqual(score.getPoints(), currentElementAssessment.getCredits()))
                     .collect(Collectors.toList());
                 if (!scoresInConflict.isEmpty()) {
-                    conflicts.add(new Conflict(currentElement, currentElementAssessment,scoresInConflict));
+                    conflicts.add(new Conflict(currentElement, currentElementAssessment, scoresInConflict));
                 }
             });
         });

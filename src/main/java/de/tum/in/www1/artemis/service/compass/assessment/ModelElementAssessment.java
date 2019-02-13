@@ -1,10 +1,10 @@
 package de.tum.in.www1.artemis.service.compass.assessment;
 
 public class ModelElementAssessment {
-    //TODO enum for type ? change credits name?
+
     private String commment;
     private double credits;
-    private String id; //TODO rename into jsonElementID?
+    private String id; //TODO MJ rename into jsonElementID?
     private String type;
 
     public ModelElementAssessment() {

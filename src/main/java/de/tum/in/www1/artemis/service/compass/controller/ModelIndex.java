@@ -53,7 +53,7 @@ public class ModelIndex {
     }
 
     public UMLModel getModel(long modelId) {
-        return modelMap.get(modelId); //TODO check if there? return Optional?
+        return modelMap.get(modelId); //TODO MJ check if there? return Optional?
     }
 
     public Map<Long, UMLModel> getModelMap() {
