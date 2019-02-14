@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
@@ -230,41 +229,7 @@ public class TextSubmissionResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) return forbidden();
 
         return ResponseEntity.ok().body(
-
-            // Participations for Exercise
-            participationService.findByExerciseIdWithEagerSubmissions(exerciseId)
-                .stream()
-                .peek(participation -> {
-                    participation.getExercise().setParticipations(null);
-                })
-
-                // Map to Latest Submission
-                .map(Participation::findLatestTextSubmission)
-                .filter(Objects::nonNull)
-
-                // It needs to be submitted to have an assessment
-                .filter(Submission::isSubmitted)
-
-                .filter(textSubmission -> {
-                    Result result = resultRepository.findDistinctBySubmissionId(textSubmission.getId()).orElse(null);
-                    if (result == null) {
-                        return false;
-                    }
-
-                    return result.getAssessor() == user;
-                })
-
-                // Load Result for Submission
-                .peek(textSubmission -> {
-                    Hibernate.initialize(textSubmission.getResult()); // eagerly load the association
-                    if (textSubmission.getResult() != null) {
-                        Hibernate.initialize(textSubmission.getResult().getAssessor());
-                        textSubmission.getResult().getAssessor().setGroups(null);
-                    }
-                })
-
-                // Convert Stream to List to Match Return Type
-                .collect(Collectors.toList())
+            textSubmissionService.getAllTextSubmissionsByTutorForExercise(exerciseId, user.getId())
         );
     }
 

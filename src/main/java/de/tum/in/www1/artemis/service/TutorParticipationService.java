@@ -72,7 +72,7 @@ public class TutorParticipationService {
      * any participation in the database, it returns a participation with status NOT_PARTICIPATED
      *
      * @param exercise the exercise we want to retrieve the tutor participation
-     * @param tutor the tutor of who we want to retrieve the participation
+     * @param tutor    the tutor of who we want to retrieve the participation
      * @return a tutor participation object for the pair (exercise, tutor) passed as argument
      */
     @Transactional(readOnly = true)
@@ -92,8 +92,15 @@ public class TutorParticipationService {
     /**
      * Given an exercise and a tutor it creates the participation of the tutor to that exercise
      *
+     * The tutor starts a participation when she reads the grading instruction. If no grading instructions are
+     * available, then she starts her participation clicking on "Start participation".
+     * Usually, the first step is `REVIEWED_INSTRUCTIONS`: after that, she has to train reviewing some example
+     * submissions, and assessing others.
+     * If no example submissions are available, because the instructor hasn't created any, then she goes directly
+     * to the next step, that allows her to assess students' participations
+     *
      * @param exercise the exercise the tutor is going to participate to
-     * @param tutor the tutor who is going to participate to the exercise
+     * @param tutor    the tutor who is going to participate to the exercise
      * @return a TutorParticipation for the exercise
      */
     public TutorParticipation createNewParticipation(Exercise exercise, User tutor) {
@@ -101,12 +108,6 @@ public class TutorParticipationService {
 
         List<ExampleSubmission> exampleSubmissions = exampleSubmissionRepository.findAllByExerciseId(exercise.getId());
 
-        // The tutor starts a participation when she reads the grading instruction. If no grading instructions are
-        // available, then she starts her participation clicking on "Start participation".
-        // Usually, the first step is `REVIEWED_INSTRUCTIONS`: after that, she has to train reviewing some example
-        // submissions, and assessing others.
-        // If no example submissions are available, because the instructor hasn't created any, then she goes directly
-        // to the next step, that allows her to assess students' participations
         if (exampleSubmissions.size() == 0) {
             tutorParticipation.setStatus(TutorParticipationStatus.TRAINED);
         } else {

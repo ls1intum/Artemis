@@ -11,8 +11,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -41,8 +43,8 @@ public class TextSubmissionService {
      * Rolls back if inserting fails - occurs for concurrent createTextSubmission() calls.
      *
      * @param textSubmission the submission to notifyCompass
-     * @param textExercise the exercise to notifyCompass in
-     * @param participation the participation where the result should be saved
+     * @param textExercise   the exercise to notifyCompass in
+     * @param participation  the participation where the result should be saved
      * @return the textSubmission entity
      */
     @Transactional(rollbackFor = Exception.class)
@@ -108,5 +110,33 @@ public class TextSubmissionService {
             })
 
             .findAny();
+    }
+
+    /**
+     * Given an exercise id and a tutor id, it returns all the text submissions where the tutor has a result associated
+     *
+     * @param exerciseId - the id of the exercise we are looking for
+     * @param tutorId    - the id of the tutor we are interested in
+     * @return a list of text Submissions
+     */
+    @Transactional(readOnly = true)
+    public List<TextSubmission> getAllTextSubmissionsByTutorForExercise(Long exerciseId, Long tutorId) {
+        // We take all the results in this exercise associated to the tutor, and from there we retrieve the submissions
+        List<Result> results = this.resultRepository.findAllByParticipationExerciseIdAndAssessorId(exerciseId, tutorId);
+
+        return results.stream()
+            .map(result -> {
+                Submission submission = result.getSubmission();
+                TextSubmission textSubmission = new TextSubmission();
+
+                result.setSubmission(null);
+                textSubmission.setResult(result);
+                textSubmission.setParticipation(submission.getParticipation());
+                textSubmission.setId(submission.getId());
+                textSubmission.setSubmissionDate(submission.getSubmissionDate());
+
+                return textSubmission;
+            })
+            .collect(Collectors.toList());
     }
 }

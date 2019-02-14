@@ -58,8 +58,8 @@ export class ExampleTextSubmissionComponent implements OnInit {
         // (+) converts string 'id' to a number
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         const exampleSubmissionId = this.route.snapshot.paramMap.get('exampleSubmissionId');
-        this.readOnly = !!this.route.snapshot.paramMap.get('readOnly');
-        this.toComplete = !!this.route.snapshot.paramMap.get('toComplete');
+        this.readOnly = !!this.route.snapshot.queryParamMap.get('readOnly');
+        this.toComplete = !!this.route.snapshot.queryParamMap.get('toComplete');
 
         if (exampleSubmissionId === 'new') {
             this.isNewSubmission = true;

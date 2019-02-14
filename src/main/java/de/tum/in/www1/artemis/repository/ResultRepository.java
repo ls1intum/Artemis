@@ -41,6 +41,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     Optional<Result> findDistinctBySubmission(Submission submission);
 
+    List<Result> findAllByParticipationExerciseIdAndAssessorId(Long exerciseId, Long assessorId);
+
     /**
      * This SQL query is used for inserting results if only one unrated result should exist per participation.
      * This prevents multiple (concurrent) inserts with the same participation_id and rated = 0.

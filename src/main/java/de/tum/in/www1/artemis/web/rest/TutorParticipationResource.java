@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 /**
  * REST controller for managing TutorParticipation.
@@ -102,7 +103,7 @@ public class TutorParticipationResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<TutorParticipation> addExampleSubmission(@PathVariable Long exerciseId, @RequestBody ExampleSubmission exampleSubmission) throws URISyntaxException {
         log.debug("REST request to add example submission to exercise id : {}", exerciseId);
-        Exercise exercise = this.exerciseService.findOneLoadTutorParticipations(exerciseId);
+        Exercise exercise = this.exerciseService.findOne(exerciseId);
         Course course = exercise.getCourse();
 
         if (!courseService.userHasAtLeastTAPermissions(course)) {
@@ -111,7 +112,7 @@ public class TutorParticipationResource {
 
         User user = userService.getUserWithGroupsAndAuthorities();
 
-        TutorParticipation existingTutorParticipation = exercise.getTutorParticipationForExercise(user);
+        TutorParticipation existingTutorParticipation = this.tutorParticipationService.findByExerciseAndTutor(exercise, user);
         // Do not trust the user input
         Optional<ExampleSubmission> exampleSubmissionFromDatabase = this.exampleSubmissionService.get(exampleSubmission.getId());
 
