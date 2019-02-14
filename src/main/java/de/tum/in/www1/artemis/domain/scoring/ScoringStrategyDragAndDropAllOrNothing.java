@@ -28,9 +28,8 @@ public class ScoringStrategyDragAndDropAllOrNothing implements ScoringStrategy {
             }
             // the user wasn't wrong about a single drop location => the answer is 100% correct
             return dndQuestion.getScore();
-        } else {
-            // the submitted answer's type doesn't fit the question's type => it cannot be correct
-            return 0.0;
         }
+        // the submitted answer's type doesn't fit the question's type => it cannot be correct
+        return 0.0;
     }
 }

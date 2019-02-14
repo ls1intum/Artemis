@@ -1,0 +1,130 @@
+<div class="row" *ngIf="quizExercise">
+    <div class="col-md-8 offset-md-2 text-center">
+        <h3>{{quizExercise.title}}</h3>
+        <div class="row">
+            <div *ngIf="question" class="col">
+                <h3>{{question.title}} <span style="color:red;" *ngIf="question.invalid"
+                                             jhiTranslate="showStatistic.invalid"></span></h3>
+
+                <div *ngIf="!showSolution" style="display: inline-flex;">
+                    <div style="text-align: left">
+                        <div class="short-answer-question-display" *ngFor="let textPart of textBeforeSpots;let i = index">
+                            {{textPart}}
+                            <div style="position: relative; display: inline-flex">
+                                <input class="short-answer-question-input"  disabled>
+                                <div class="saQuestion-statistic-letter">
+                                    <span>{{getLetter(i) + "."}}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <span>{{textAfterSpots}}</span>
+                    </div>
+                </div>
+
+                <div *ngIf="showSolution" style="display: inline-flex">
+                    <div style="text-align: left">
+                        <div class="short-answer-question-display" *ngFor="let textPart of textBeforeSpots;let i = index">
+                            {{textPart}}
+                            <div style="position: relative; display: inline-flex">
+                                <input style="background: lightgreen" class="short-answer-question-input" disabled value="{{sampleSolutions[i].text}}">
+                                <div class="saQuestion-statistic-letter-solution">
+                                    <span>{{getLetter(i) + "."}}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <span>{{textAfterSpots}}</span>
+                    </div>
+                </div>
+
+                <div>
+                    <p>&nbsp;</p>
+                    <div class="row">
+                        <div class="col-md-8 text-left"><p id="text" style="font-size: large">
+                        <span *ngIf="rated"
+                              jhiTranslate="showStatistic.multipleChoiceQuestionStatistic.titleRated"></span>
+                            <span *ngIf="!rated"
+                                  jhiTranslate="showStatistic.multipleChoiceQuestionStatistic.titleUnrated"></span></p>
+                        </div>
+                        <div class="col-md-3 text-right">
+                            <p style="font-size: large"><span>{{participants}} </span><span
+                                jhiTranslate="showStatistic.participants"></span></p>
+                        </div>
+                    </div>
+                    <canvas baseChart
+                            [datasets]="datasets" [labels]="labels" [options]="options" [chartType]="chartType" [colors]="colors">
+                    </canvas>
+
+
+                    <div class="col-md-12 text-center">
+                        <button (click)="switchSolution()" type="button" class="btn btn-primary">
+                            <fa-icon *ngIf="showSolution" icon="check-circle"></fa-icon>&nbsp;
+                            <fa-icon *ngIf="!showSolution" icon="times-circle"></fa-icon>&nbsp;
+                            <span *ngIf="showSolution"
+                                  jhiTranslate="showStatistic.dragAndDropQuestionStatistic.hideSampleSolution"></span>
+                            <span *ngIf="!showSolution"
+                                  jhiTranslate="showStatistic.dragAndDropQuestionStatistic.showSampleSolution"></span>
+                        </button>
+
+                        <button (click)="switchRated()" type="button" class="btn btn-primary">
+                            <fa-icon icon="sync"></fa-icon>&nbsp;
+                            <span *ngIf="rated" jhiTranslate="showStatistic.switchToUnrated"></span>
+                            <span *ngIf="!rated" jhiTranslate="showStatistic.switchToRated"></span>
+                        </button>
+                    </div>
+                    <p>&nbsp;</p>
+                </div>
+        </div>
+    </div>
+    <div class="statistic-footer">
+        <div class="container">
+            <div class="edit-quiz-footer-content">
+                <div class="form-group">
+                    <div class="d-inline-block" ngbDropdown placement="top-right">
+                        <button class="btn btn-primary btn-sm" ngbDropdownToggle>
+                            <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
+                            <span class="hidden-xs hidden-sm" jhiTranslate="showStatistic.chooseStatistic"></span>
+                            <span class="caret"></span>
+                        </button>
+                        <div ngbDropdownMenu>
+                            <button class="dropdown-item"
+                                    routerLink="/quiz/{{quizExercise.id}}/quiz-point-statistic"
+                                    jhiTranslate="showStatistic.quizPointStatisticTitle"
+                            ></button>
+                            <button class="dropdown-item"
+                                    routerLink="/quiz/{{quizExercise.id}}/quiz-statistic"
+                                    jhiTranslate="showStatistic.quizStatisticTitle"
+                            ></button>
+                            <div *ngIf="quizExercise.questions">
+                                <div *ngFor="let question of quizExercise.questions; let i = index">
+                                    <button *ngIf="question.type === MULTIPLE_CHOICE"
+                                            class="dropdown-item"
+                                            routerLink="/quiz/{{quizExercise.id}}/multiple-choice-question-statistic/{{question.id}}"
+                                    >{{i + 1}}. {{question.title.truncateOnWord(25)}}</button>
+                                    <button *ngIf="question.type === DRAG_AND_DROP"
+                                            class="dropdown-item"
+                                            routerLink="/quiz/{{quizExercise.id}}/drag-and-drop-question-statistic/{{question.id}}"
+                                    >{{i + 1}}. {{question.title.truncateOnWord(25)}}</button>
+                                    <button *ngIf="question.type === SHORT_ANSWER"
+                                            class="dropdown-item"
+                                            routerLink="/quiz/{{quizExercise.id}}/short-answer-question-statistic/{{question.id}}"
+                                    >{{i + 1}}. {{question.title.truncateOnWord(25)}}</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="btn-group flex-btn-group-container">
+                        <button (click)=previousStatistic()
+                                jhiTranslate="showStatistic.previousStatistic"
+                                class="btn btn-default"></button>
+                        <button (click)=nextStatistic()
+                                jhiTranslate="showStatistic.nextStatistic"
+                                class="btn btn-default"></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>

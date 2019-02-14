@@ -3,19 +3,19 @@
         <span *ngIf="course">{{course.title}} - </span><span *ngIf="quizExercises">{{quizExercises.length}} </span>
         <span jhiTranslate="arTeMiSApp.quizExercise.home.title">Quiz Exercises</span>
         <button *ngIf="courseId" class="btn mr-2 btn-primary float-right jh-create-entity create-quiz-exercise" [routerLink]="['new']">
-            <span class="fa fa-plus"></span>
+            <fa-icon icon="plus"></fa-icon>
             <span jhiTranslate="arTeMiSApp.quizExercise.home.createLabel">
                 Create new Quiz
             </span>
         </button>
         <button *ngIf="courseId" class="btn mr-2 btn-primary float-right jh-create-entity create-quiz-exercise" [routerLink]="['export']">
-            <span class="fa fa-plus"></span>
+            <fa-icon icon="plus"></fa-icon>
             <span jhiTranslate="arTeMiSApp.quizExercise.home.exportLabel">
                 Export Quiz Exercises
             </span>
         </button>
         <button *ngIf="courseId" class="btn mr-2 btn-primary float-right" [routerLink]="['/apollon-diagrams']">
-            <span class="fa fa-plus"></span>
+            <fa-icon icon="plus"></fa-icon>
             <span jhiTranslate="arTeMiSApp.quizExercise.home.createModelDragAndDrop">
                 Create new Drag and Drop Model Quiz
             </span>
@@ -29,12 +29,12 @@
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
-                    <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span><span class="fa fa-sort"></span></th>
-                    <th jhiSortBy="title"><span jhiTranslate="arTeMiSApp.exercise.title">Title</span><span class="fa fa-sort"></span></th>
-                    <th jhiSortBy="status"><span jhiTranslate="arTeMiSApp.quizExercise.status">Status</span><span class="fa fa-sort"></span></th>
-                    <th jhiSortBy="releaseDate"><span jhiTranslate="arTeMiSApp.quizExercise.startTime">Start Time</span><span class="fa fa-sort"></span></th>
-                    <th jhiSortBy="duration"><span jhiTranslate="arTeMiSApp.quizExercise.duration">Duration</span><span class="fa fa-sort"></span></th>
-                    <th jhiSortBy="maxScore"><span jhiTranslate="arTeMiSApp.exercise.maxScore">Max Score</span><span class="fa fa-sort"></span></th>
+                    <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span><fa-icon icon="sort"></fa-icon></th>
+                    <th jhiSortBy="title"><span jhiTranslate="arTeMiSApp.exercise.title">Title</span><fa-icon icon="sort"></fa-icon></th>
+                    <th jhiSortBy="status"><span jhiTranslate="arTeMiSApp.quizExercise.status">Status</span><fa-icon icon="sort"></fa-icon></th>
+                    <th jhiSortBy="releaseDate"><span jhiTranslate="arTeMiSApp.quizExercise.startTime">Start Time</span><fa-icon icon="sort"></fa-icon></th>
+                    <th jhiSortBy="duration"><span jhiTranslate="arTeMiSApp.quizExercise.duration">Duration</span><fa-icon icon="sort"></fa-icon></th>
+                    <th jhiSortBy="maxScore"><span jhiTranslate="arTeMiSApp.exercise.maxScore">Max Score</span><fa-icon icon="sort"></fa-icon></th>
                     <th>Quiz Lifecycle</th>
                     <th></th>
                 </tr>
@@ -66,21 +66,21 @@
                                 (click)="openForPractice(quizExercise.id)"
                                 class="btn btn-warning btn-sm mr-1 mb-1"
                                 *ngIf="quizExercise.status === QuizStatus.CLOSED">
-                            <span class="fa fa-play-circle"></span>
+                            <fa-icon icon="play-circle"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="arTeMiSApp.quizExercise.openForPractice"></span>
                         </button>
                         <button type="submit"
                                 (click)="startQuiz(quizExercise.id)"
                                 class="btn btn-warning btn-sm mr-1 mb-1"
                                 *ngIf="quizExercise.status === QuizStatus.VISIBLE">
-                            <span class="fa fa-play-circle"></span>
+                            <fa-icon icon="play-circle"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="arTeMiSApp.quizExercise.startNow">Start Now</span>
                         </button>
                         <button type="submit"
                                 (click)="showQuiz(quizExercise.id)"
                                 class="btn btn-warning btn-sm mr-1 mb-1"
                                 *ngIf="quizExercise.status === QuizStatus.HIDDEN">
-                            <span class="fa fa-eye"></span>
+                            <fa-icon icon="eye"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="arTeMiSApp.quizExercise.showNow">Set Visible</span>
                         </button>
                     </div>
@@ -91,13 +91,13 @@
                             <button type="submit"
                                     [routerLink]="['/quiz', quizExercise.id, 'preview']"
                                     class="btn btn-info btn-sm mr-1 mb-1">
-                                <span class="fa fa-eye"></span>
+                                <fa-icon icon="eye"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="arTeMiSApp.quizExercise.preview">Preview</span>
                             </button>
                             <button type="submit"
                                     [routerLink]="['/quiz', quizExercise.id, 'solution']"
                                     class="btn btn-info btn-sm mr-1 mb-1">
-                                <span class="fa fa-eye"></span>
+                                <fa-icon icon="eye"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="arTeMiSApp.quizExercise.solution">Solution</span>
                             </button>
                         </div>
@@ -105,13 +105,13 @@
                             <button type="submit"
                                     [routerLink]="['/quiz', quizExercise.id, 'quiz-point-statistic']"
                                     class="btn btn-success btn-sm mr-1 mb-1">
-                                <span class="fa fa-signal"></span>
+                                <fa-icon icon="signal"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="global.menu.entities.statistic">Statistic</span>
                             </button>
                             <button type="submit"
                                     [routerLink]="['/course', quizExercise.course.id, 'exercise', quizExercise.id, 'dashboard' ]"
                                     class="btn btn-success btn-sm mr-1 mb-1">
-                                <span class="fa fa-eye"></span>
+                                <fa-icon icon="eye"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.dashboard">Dashboard</span>
                             </button>
                         </div>
@@ -127,14 +127,14 @@
                                     [disabled]="quizExercise.status === QuizStatus.ACTIVE || (quizIsOver(quizExercise) && !userIsInstructor())"
                                     [routerLink]="['edit', quizExercise.id]"
                                     class="btn btn-primary btn-sm mr-1 mb-1">
-                                <span class="fa fa-pencil"></span>
+                                <fa-icon icon="pencil-alt"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                             </button>
                             <button type="submit"
                                     [hidden]="!quizIsOver(quizExercise) || !userIsInstructor()"
                                     [routerLink]="['/course', quizExercise.course.id, 'quiz-exercise', 're-evaluate', quizExercise.id]"
                                     class="btn btn-primary btn-sm mr-1 mb-1">
-                                <span class="fa fa-pencil"></span>
+                                <fa-icon icon="pencil-alt"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.re-evaluate">Re-evaluate</span>
                             </button>
                         </div>
@@ -144,7 +144,7 @@
                                     replaceUrl="true"
                                     queryParamsHandling="merge"
                                     class="btn btn-danger btn-sm mr-1 mb-1">
-                                <span class="fa fa-remove"></span>
+                                <fa-icon icon="times"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
                             </button>
                             <button type="submit"
@@ -152,7 +152,7 @@
                                     replaceUrl="true"
                                     queryParamsHandling="merge"
                                     class="btn btn-danger btn-sm mr-1 mb-1">
-                                <span class="fa fa-remove"></span>
+                                <fa-icon icon="times"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.reset">Reset</span>
                             </button>
                         </div>
