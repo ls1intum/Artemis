@@ -287,6 +287,10 @@ export class EditorFileBrowserComponent implements OnChanges, AfterViewInit {
         return this.parent.saveStatusLabel;
     }
 
+    getSaveStatusIcon(): { spin: boolean; icon: string; class: string } {
+        return this.parent.saveStatusIcon;
+    }
+
     isExerciseCommitted(): boolean {
         return this.parent.isCommitted;
     }

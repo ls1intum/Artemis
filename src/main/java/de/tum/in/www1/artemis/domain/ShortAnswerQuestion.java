@@ -8,11 +8,9 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
-/**
+ /**
  * A ShortAnswerQuestion.
  */
 @Entity
@@ -57,17 +55,56 @@ public class ShortAnswerQuestion extends Question implements Serializable {
     public ShortAnswerQuestion addSpots(ShortAnswerSpot shortAnswerSpot) {
         this.spots.add(shortAnswerSpot);
         shortAnswerSpot.setQuestion(this);
+        // if a spot was added then add the associated AnswerCounter implicitly
+        ((ShortAnswerQuestionStatistic)getQuestionStatistic()).addSpot(shortAnswerSpot);
         return this;
     }
 
     public ShortAnswerQuestion removeSpots(ShortAnswerSpot shortAnswerSpot) {
+        // if an spot was removed then remove the associated SpotCounter implicitly
+        if (getQuestionStatistic() instanceof ShortAnswerQuestionStatistic) {
+            ShortAnswerQuestionStatistic shortAnswerStatistic = (ShortAnswerQuestionStatistic) getQuestionStatistic();
+            ShortAnswerSpotCounter spotCounterToDelete = null;
+            for (ShortAnswerSpotCounter spotCounter : shortAnswerStatistic.getShortAnswerSpotCounters()) {
+                if (shortAnswerSpot.equals(spotCounter.getSpot())) {
+                    spotCounter.setSpot(null);
+                    spotCounterToDelete = spotCounter;
+                }
+            }
+            shortAnswerStatistic.getShortAnswerSpotCounters().remove(spotCounterToDelete);
+        }
         this.spots.remove(shortAnswerSpot);
         shortAnswerSpot.setQuestion(null);
         return this;
     }
 
     public void setSpots(List<ShortAnswerSpot> shortAnswerSpots) {
+        ShortAnswerQuestionStatistic shortAnswerStatistic;
+        if (getQuestionStatistic() instanceof ShortAnswerQuestionStatistic) {
+            shortAnswerStatistic = (ShortAnswerQuestionStatistic)getQuestionStatistic();
+        }
+        else{
+            shortAnswerStatistic = new ShortAnswerQuestionStatistic();
+            setQuestionStatistic(shortAnswerStatistic);
+        }
         this.spots = shortAnswerSpots;
+
+        // if a spot was added then add the associated spotCounter implicitly
+        for (ShortAnswerSpot spot : getSpots()) {
+            shortAnswerStatistic.addSpot(spot);
+        }
+
+        // if an spot was removed then remove the associated spotCounters implicitly
+        Set<ShortAnswerSpotCounter> spotCounterToDelete = new HashSet<>();
+        for (ShortAnswerSpotCounter spotCounter : shortAnswerStatistic.getShortAnswerSpotCounters()) {
+            if (spotCounter.getId() != null) {
+                if(!(shortAnswerSpots.contains(spotCounter.getSpot()))) {
+                    spotCounter.setSpot(null);
+                    spotCounterToDelete.add(spotCounter);
+                }
+            }
+        }
+        shortAnswerStatistic.getShortAnswerSpotCounters().removeAll(spotCounterToDelete);
     }
 
     public List<ShortAnswerSolution> getSolutions() {
@@ -122,44 +159,284 @@ public class ShortAnswerQuestion extends Question implements Serializable {
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
+    public Boolean isValid() {
+        // check general validity (using superclass)
+        if (!super.isValid()) {
             return false;
         }
-        ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) o;
-        if (shortAnswerQuestion.getId() == null || getId() == null) {
-            return false;
-        }
-        return Objects.equals(getId(), shortAnswerQuestion.getId());
+
+        // check if at least one correct mapping exists
+        return getCorrectMappings() != null && !getCorrectMappings().isEmpty();
+
+        // TODO (?): Add checks for "is solvable" and "no misleading correct mapping" --> look at the implementation in the client
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getId());
-    }
+     /**
+      * Get all solution items that are mapped to the given spot
+      *
+      * @param spot the spot  we want to find the correct solutions for
+      * @return all solutions that are defined as correct for this spot
+      */
+     public Set<ShortAnswerSolution> getCorrectSolutionForSpot(ShortAnswerSpot spot) {
+         Set<ShortAnswerSolution> result = new HashSet<>();
+         for (ShortAnswerMapping mapping : correctMappings) {
+             if (mapping.getSpot().equals(spot)) {
+                 result.add(mapping.getSolution());
+             }
+         }
+         return result;
+     }
 
-    @Override
-    public String toString() {
-        return "ShortAnswerQuestion{" +
-            "id=" + getId() +
-            "}";
-    }
+     /**
+      * Get solution by ID
+      *
+      * @param solutionId the ID of the solution, which should be found
+      * @return the sollution with the given ID, or null if the solution is not contained in this question
+      */
+     public ShortAnswerSolution findSolutionById (Long solutionId) {
 
+         if (solutionId != null) {
+             // iterate through all solutions of this quiz
+             for (ShortAnswerSolution solution : solutions) {
+                 // return solution if the IDs are equal
+                 if (solution.getId().equals(solutionId)) {
+                     return solution;
+                 }
+             }
+         }
+         return null;
+     }
+
+     /**
+      * Get spot by ID
+      *
+      * @param spotId the ID of the spot, which should be found
+      * @return the spot with the given ID, or null if the spot is not contained in this question
+      */
+     public ShortAnswerSpot findSpotById (Long spotId) {
+
+         if (spotId != null) {
+             // iterate through all spots of this quiz
+             for (ShortAnswerSpot spot : spots) {
+                 // return spot if the IDs are equal
+                 if (spot.getId().equals(spotId)) {
+                     return spot;
+                 }
+             }
+         }
+         return null;
+     }
+
+
+     /**
+      * undo all solution- and spot-changes which are not allowed ( adding them)
+      *
+      * @param originalQuestion the original Question-object, which will be compared with this question
+      *
+      */
     @Override
     public void undoUnallowedChanges(Question originalQuestion) {
-        //TODO Francisco implement
+        if (originalQuestion instanceof ShortAnswerQuestion) {
+            ShortAnswerQuestion shortAnswerOriginalQuestion = (ShortAnswerQuestion) originalQuestion;
+            undoUnallowedSolutionChanges(shortAnswerOriginalQuestion);
+            undoUnallowedSpotChanges(shortAnswerOriginalQuestion);
+        }
     }
 
-    @Override
+     /**
+      * undo all solution-changes which are not allowed ( adding them)
+      *
+      * @param originalQuestion the original ShortAnswer-object, which will be compared with this question
+      *
+      */
+     private void undoUnallowedSolutionChanges (ShortAnswerQuestion originalQuestion) {
+
+         //find added solutions, which are not allowed to be added
+         Set<ShortAnswerSolution> notAllowedAddedSolutions = new HashSet<>();
+         // check every solution of the question
+         for (ShortAnswerSolution solution : this.getSolutions()) {
+             // check if the solution were already in the originalQuestion -> if not it's an added solution
+             if (originalQuestion.getSolutions().contains(solution)) {
+                 // find original solution
+                 ShortAnswerSolution originalSolution = originalQuestion.findSolutionById(solution.getId());
+                 // correct invalid = null to invalid = false
+                 if (solution.isInvalid() == null) {
+                     solution.setInvalid(false);
+                 }
+                 // reset invalid solution if it already set to true (it's not possible to set a solution valid again)
+                 solution.setInvalid(solution.isInvalid()
+                     || (originalSolution.isInvalid() != null && originalSolution.isInvalid()));
+             } else {
+                 // mark the added solution (adding solutions is not allowed)
+                 notAllowedAddedSolutions.add(solution);
+             }
+         }
+         // remove the added solutions
+         this.getSolutions().removeAll(notAllowedAddedSolutions);
+     }
+
+
+     /**
+      * undo all spot-changes which are not allowed ( adding them)
+      *
+      * @param originalQuestion the original spot-object, which will be compared with this question
+      *
+      */
+     private void undoUnallowedSpotChanges (ShortAnswerQuestion originalQuestion) {
+
+         // find added spots, which are not allowed to be added
+         Set<ShortAnswerSpot> notAllowedAddedSpots = new HashSet<>();
+         // check every spot of the question
+         for (ShortAnswerSpot spot : this.getSpots()) {
+             // check if the spot were already in the originalQuestion -> if not it's an added spot
+             if (originalQuestion.getSpots().contains(spot)) {
+                 // find original spot
+                 ShortAnswerSpot originalSpot= originalQuestion.findSpotById(spot.getId());
+                 // correct invalid = null to invalid = false
+                 if (spot.isInvalid() == null) {
+                     spot.setInvalid(false);
+                 }
+                 // reset invalid spot if it already set to true (it's not possible to set a spot valid again)
+                 spot.setInvalid(spot.isInvalid()
+                     || (originalSpot.isInvalid() != null && originalSpot.isInvalid()));
+             } else {
+                 // mark the added spot (adding spots is not allowed)
+                 notAllowedAddedSpots.add(spot);
+             }
+         }
+         // remove the added spots
+         this.getSpots().removeAll(notAllowedAddedSpots);
+     }
+
+
+     @Override
     public boolean isUpdateOfResultsAndStatisticsNecessary(Question originalQuestion) {
-        //TODO Francisco implement
+        if (originalQuestion instanceof ShortAnswerQuestion){
+             ShortAnswerQuestion shortAnswerOriginalQuestion = (ShortAnswerQuestion) originalQuestion;
+             return checkSolutionsIfRecalculationIsNecessary(shortAnswerOriginalQuestion) ||
+                 checkSpotsIfRecalculationIsNecessary(shortAnswerOriginalQuestion) ||
+                 !getCorrectMappings().equals(shortAnswerOriginalQuestion.getCorrectMappings());
+         }
         return false;
     }
 
+     /**
+      * check solutions if an update of the Results and Statistics is necessary
+      *
+      * @param originalQuestion the original ShortAnswerQuestion-object, which will be compared with this question
+      *
+      * @return a boolean which is true if the solution-changes make an update necessary and false if not
+      */
+     private boolean checkSolutionsIfRecalculationIsNecessary (ShortAnswerQuestion originalQuestion){
 
-    //TODO Francisco Have a look at DndQuestion.java and MCQuestion.java and implement the required methods, constructors and annotations
+         boolean updateNecessary = false;
 
+         // check every solution of the question
+         for (ShortAnswerSolution solution : this.getSolutions()) {
+             // check if the solution were already in the originalQuizExercise
+             if (originalQuestion.getSolutions().contains(solution)) {
+                 // find original solution
+                 ShortAnswerSolution originalSolution = originalQuestion.findSolutionById(solution.getId());
+
+                 // check if a solution is set invalid
+                 // if true an update of the Statistics and Results is necessary
+                 if ((solution.isInvalid() && !this.isInvalid() && originalSolution.isInvalid() == null) ||
+                     (solution.isInvalid() && !this.isInvalid() && !originalSolution.isInvalid())) {
+                     updateNecessary = true;
+                 }
+             }
+         }
+         // check if a solution was deleted (not allowed added solution are not relevant)
+         // if true an update of the Statistics and Results is necessary
+         if ( this.getSolutions().size() < originalQuestion.getSolutions().size()) {
+             updateNecessary = true;
+         }
+         return updateNecessary;
+     }
+
+     /**
+      * check spots if an update of the Results and Statistics is necessary
+      *
+      * @param originalQuestion the original ShortAnswerQuestion-object, which will be compared with this question
+      *
+      * @return a boolean which is true if the spot-changes make an update necessary and false if not
+      */
+     private boolean checkSpotsIfRecalculationIsNecessary (ShortAnswerQuestion originalQuestion){
+
+         boolean updateNecessary = false;
+
+         // check every spot of the question
+         for (ShortAnswerSpot spot : this.getSpots()) {
+             // check if the spot were already in the originalQuizExercise
+             if (originalQuestion.getSpots().contains(spot)) {
+                 // find original spot
+                 ShortAnswerSpot originalSpot = originalQuestion.findSpotById(spot.getId());
+
+                 // check if a spot is set invalid
+                 // if true an update of the Statistics and Results is necessary
+                 if ((spot.isInvalid() && !this.isInvalid() && originalSpot.isInvalid() == null) ||
+                     (spot.isInvalid() && !this.isInvalid() && !originalSpot.isInvalid())) {
+                     updateNecessary = true;
+                 }
+             }
+         }
+         // check if a spot was deleted (not allowed added spots are not relevant)
+         // if true an update of the Statistics and Results is necessary
+         if ( this.getSpots().size() < originalQuestion.getSpots().size()) {
+             updateNecessary = true;
+         }
+         return updateNecessary;
+     }
+
+
+     @Override
+     public void filterForStudentsDuringQuiz() {
+         super.filterForStudentsDuringQuiz();
+         setCorrectMappings(null);
+     }
+
+     @Override
+     public void filterForStatisticWebsocket() {
+         super.filterForStatisticWebsocket();
+         setCorrectMappings(null);
+     }
+
+     @Override
+     public boolean equals(Object o) {
+         if (this == o) {
+             return true;
+         }
+         if (o == null || getClass() != o.getClass()) {
+             return false;
+         }
+         ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) o;
+         if (shortAnswerQuestion.getId() == null || getId() == null) {
+             return false;
+         }
+         return Objects.equals(getId(), shortAnswerQuestion.getId());
+     }
+
+     @Override
+     public int hashCode() {
+         return Objects.hashCode(getId());
+     }
+
+     @Override
+     public String toString() {
+         return "ShortAnswerQuestion{" +
+             "id=" + getId() +
+             "}";
+     }
+
+     /**
+      * Constructor.
+      *
+      * 1. generate associated ShortAnswerQuestionStatistic implicitly
+      */
+     public ShortAnswerQuestion() {
+         // create associated Statistic implicitly
+         ShortAnswerQuestionStatistic shortAnswerStatistic = new ShortAnswerQuestionStatistic();
+         setQuestionStatistic(shortAnswerStatistic);
+         shortAnswerStatistic.setQuestion(this);
+     }
 }

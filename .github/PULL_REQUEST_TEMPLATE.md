@@ -4,7 +4,8 @@
 - [ ] I've run `yarn run webpack:build:main` from the root directory to see that the project builds without errors.
 - [ ] I've removed unnecessary whitespace changes.
 - [ ] I've updated the documentation and models if necessary.
-- [ ] I've tested the changes and all related features on the Artemis test server
+- [ ] I've tested the changes and all related features on the Artemis test server.
+- [ ] I've added (end-to-end) test cases for all new functionality.
 
 ### Motivation and Context
 <!-- Why is this change required? What problem does it solve? -->
@@ -16,3 +17,4 @@
 
 #### Screenshots
 <!-- If applicable, add screenshots to demonstrate the changes in the UI. -->
+<!-- Create a GIF file from a screen recording in a docker container https://toub.es/2017/09/11/high-quality-gif-with-ffmpeg-and-docker/ -->

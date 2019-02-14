@@ -7,6 +7,7 @@ import { NgbDatepickerConfig } from '@ng-bootstrap/ng-bootstrap';
 import { NgxWebstorageModule } from 'ngx-webstorage';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgJhipsterModule } from 'ng-jhipster';
+import { Angulartics2Module } from 'angulartics2';
 
 import { AuthInterceptor } from './blocks/interceptor/auth.interceptor';
 import { AuthExpiredInterceptor } from './blocks/interceptor/auth-expired.interceptor';
@@ -66,6 +67,10 @@ import { ParticipationDataProvider } from './courses/exercises/participation-dat
             i18nEnabled: true,
             defaultI18nLang: 'en'
         }),
+        /**
+         * @external Angulartics offers Vendor-agnostic analytics and integration with Matomo
+         */
+        Angulartics2Module.forRoot(),
         ArTEMiSSharedModule.forRoot(),
         ArTEMiSCoreModule,
         ArTEMiSHomeModule,

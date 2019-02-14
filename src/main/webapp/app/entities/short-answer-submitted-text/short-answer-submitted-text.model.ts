@@ -5,7 +5,7 @@ import { BaseEntity } from 'app/shared';
 export class ShortAnswerSubmittedText implements BaseEntity {
     public id: number;
     public text: string;
-    public isCorrect: string;
+    public isCorrect: boolean;
     public spot: ShortAnswerSpot;
     public submittedAnswer: ShortAnswerSubmittedAnswer;
 }
