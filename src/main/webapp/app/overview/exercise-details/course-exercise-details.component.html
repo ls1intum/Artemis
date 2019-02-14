@@ -5,7 +5,7 @@
             <div class="col general-info">
                 <h3>
                     <fa-icon [icon]="'arrow-left'" (click)="backToCourse()"></fa-icon>
-                    {{exercise.title}}
+                    <span>{{exercise.title}}</span>
                 </h3>
                 <h4>
                     <span class="mr-2">Due Date: {{exercise.dueDate | date:'dd/MM/yy'}}</span>
@@ -16,7 +16,12 @@
             <div class="col-4">
                 <div class="row">
                     <div class="col-6"><h5>Exercise Type:</h5></div>
-                    <div class="col-6"><h5>{{exercise.type | exerciseTypeLabel}}</h5></div>
+                    <div class="col-6">
+                        <h5>
+                            {{exercise.type | exerciseTypeLabel}}
+                            <fa-icon [icon]="exerciseIcon.faIcon" placement="right"></fa-icon>
+                        </h5>
+                    </div>
                 </div>
                 <div class="row">
                     <div class="col-6"><h5>Level:</h5></div>
@@ -24,7 +29,8 @@
                 </div>
                 <div class="row">
                     <div class="col-6"><h5>Exercise Status:</h5></div>
-                    <div class="col-6"><h5>{{exercise.participations[0].initializationState}}</h5></div>
+                    <div class="col-6" *ngIf="exercise.participations && exercise.participations.length > 0">
+                        <h5>{{exercise.participations[0].initializationState}}</h5></div>
                 </div>
                 <div class="row">
                     <div class="col-6"><h5>Max Points:</h5></div>
@@ -35,16 +41,8 @@
     </div>
     <!-- HEADER INFORMATION END -->
     <!-- EXERCISE ACTIONS START -->
-    <div class="tab-bar pl-2">
-        <div class="col">
-            <div class="btn-group">
-                <jhi-exercise-action-button buttonIcon="save" buttonLabel="Test"></jhi-exercise-action-button>
-                <div class="btn btn-primary">Practice</div>
-            </div>
-            <div class="btn-group ml-2">
-                <div class="btn btn-outline-primary">Statistics</div>
-            </div>
-        </div>
+    <div class="tab-bar pl-2 pr-2 justify-content-between">
+        <jhi-exercise-details-student-actions [exercise]="exercise"></jhi-exercise-details-student-actions>
         <div class="col-auto" *ngIf="exercise.isAtLeastTutor">
             <span class="mr-1">Instructor actions:</span>
             <div class="btn-group">
@@ -104,7 +102,9 @@
     </div>
     <div class="row mb-2" *ngIf="exercise.participations && exercise.participations.length > 0">
         <div class="col-12 col-md-8">
-            <jhi-result-history [results]="exercise.participations[0].results" [maxScore]="exercise.maxScore"></jhi-result-history>
+            <jhi-result-history *ngIf="exercise.participations && exercise.participations.length > 0"
+                                [results]="exercise.participations[0].results"
+                                [maxScore]="exercise.maxScore"></jhi-result-history>
         </div>
     </div>
     <div class="row mb-2 mt-2 align-items-baseline" *ngIf="showMoreResults">
@@ -142,7 +142,8 @@
     </div>
     <div class="row mb-2 mt-2 align-items-baseline">
         <div class="col-auto">
-            <a class="text-primary" (click)="showMoreResults = !showMoreResults">{{showMoreResults ? 'Hide' : 'Show'}} other results</a>
+            <a class="text-primary" (click)="showMoreResults = !showMoreResults">{{showMoreResults ? 'Hide' : 'Show'}}
+                former results</a>
         </div>
     </div>
     <!-- RESULTS END -->

@@ -7,6 +7,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { Result } from 'app/entities/result';
 import * as moment from 'moment';
 import { AccountService } from 'app/core';
+import { ExerciseIcon } from 'app/overview';
 
 @Component({
     selector: 'jhi-course-exercise-details',
@@ -75,8 +76,37 @@ export class CourseExerciseDetailsComponent implements OnInit {
     }
 
     get currentResult(): Result {
-        if (!this.exercise.participations) return null;
+        if (!this.exercise.participations || !this.exercise.participations[0].results) return null;
         let results = this.exercise.participations[0].results;
         return results.filter(el => el.rated).pop();
+    }get exerciseIcon(): ExerciseIcon {
+        if (this.exercise.type === this.PROGRAMMING) {
+            return {
+                faIcon: 'keyboard',
+                tooltip: 'This is a programming quiz'
+            };
+        } else if (this.exercise.type === ExerciseType.MODELING) {
+            return {
+                faIcon: 'project-diagram',
+                tooltip: 'This is a modeling quiz'
+            };
+        } else if (this.exercise.type === ExerciseType.QUIZ) {
+            return {
+                faIcon: 'check-double',
+                tooltip: 'This is a multiple choice quiz'
+            };
+        } else if (this.exercise.type === ExerciseType.TEXT) {
+            return {
+                faIcon: 'font',
+                tooltip: 'This is a text quiz'
+            };
+        } else if (this.exercise.type === ExerciseType.FILE_UPLOAD) {
+            return {
+                faIcon: 'file-upload',
+                tooltip: 'This is a file upload'
+            };
+        } else {
+            return;
+        }
     }
 }
