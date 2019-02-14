@@ -6,15 +6,14 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import spoon.reflect.declaration.CtConstructor;
 import spoon.reflect.declaration.CtField;
 import spoon.reflect.declaration.CtParameter;
-import spoon.reflect.declaration.ModifierKind;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 import static de.tum.in.www1.artemis.service.util.structureoraclegenerator.SerializerUtil.serializeModifiers;
-import static de.tum.in.www1.artemis.service.util.structureoraclegenerator.SerializerUtil.serializeParameters;
 
+/**
+ * This class is used to serialize the enums diff.
+ */
 public class ClassesDiffSerializer extends StdSerializer<ClassesDiff> {
 
     public ClassesDiffSerializer() {
