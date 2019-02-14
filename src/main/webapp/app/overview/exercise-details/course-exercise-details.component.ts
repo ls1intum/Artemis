@@ -23,6 +23,7 @@ export class CourseExerciseDetailsComponent implements OnInit {
     public courseId: number;
     private subscription: Subscription;
     public exercise: Exercise;
+    public showMoreResults: boolean = false;
 
     constructor(private $location: Location, private exerciseService: ExerciseService,
                 private courseService: CourseService,
@@ -71,5 +72,11 @@ export class CourseExerciseDetailsComponent implements OnInit {
         } else {
             return;
         }
+    }
+
+    get currentResult(): Result {
+        if (!this.exercise.participations) return null;
+        let results = this.exercise.participations[0].results;
+        return results.filter(el => el.rated).pop();
     }
 }

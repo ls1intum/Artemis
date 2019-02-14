@@ -1,0 +1,206 @@
+<!-- QUIZ EXERCISE ACTIONS START -->
+<!-- ACTIONS START -->
+<div class="btn-group flex-btn-group-container" *ngIf="exercise.type === QUIZ">
+    <button class="btn btn-warning btn-sm flex-fill"
+            *ngIf="asQuizExercise(exercise).isPracticeModeAvailable"
+            [routerLink]="['/quiz', exercise.id, 'practice']"
+            (click)="startPractice(exercise)"
+            [disabled]="exercise.loading">
+                <span [hidden]="exercise.loading">
+                    <i class="fa fa-repeat fa-fw"></i>
+                    <span class="d-none d-md-inline">Practice</span>
+                </span>
+        <i class="fa fa-circle-o-notch fa-spin" [hidden]="!exercise.loading"></i>
+    </button>
+    <button class="btn btn-primary btn-sm flex-fill"
+            (click)="startExercise(exercise)"
+            [disabled]="exercise.loading">
+                <span [hidden]="exercise.loading">
+                    <i class="fa fa-play-circle fa-fw"></i>
+                    <span class="d-none d-md-inline">Open Quiz</span>
+                </span>
+        <i class="fa fa-circle-o-notch fa-spin" [hidden]="!exercise.loading"></i>
+    </button>
+    <button class="btn btn-primary btn-sm flex-fill"
+            (click)="startExercise(exercise)"
+            [disabled]="exercise.loading">
+                <span [hidden]="exercise.loading">
+                    <i class="fa fa-play-circle fa-fw"></i>
+                    <span class="d-none d-md-inline">Start Quiz</span>
+                </span>
+        <i class="fa fa-circle-o-notch fa-spin" [hidden]="!exercise.loading"></i>
+    </button>
+    <button class="btn btn-primary btn-sm flex-fill"
+            (click)="startExercise(exercise)"
+            [disabled]="exercise.loading">
+                <span [hidden]="exercise.loading">
+                    <i class="fa fa-play-circle fa-fw"></i>
+                    <span class="d-none d-md-inline">Resume Quiz</span>
+                </span>
+        <i class="fa fa-circle-o-notch fa-spin" [hidden]="!exercise.loading"></i>
+    </button>
+    <!-- ACTIONS END -->
+    <!-- INFORMATION START -->
+    <button class="btn btn-primary btn-sm flex-fill"
+            (click)="startExercise(exercise)"
+            [disabled]="exercise.loading">
+                <span [hidden]="exercise.loading">
+                    <i class="fa fa-eye fa-fw"></i>
+                    <span class="d-none d-md-inline">View Submission</span>
+                </span>
+        <i class="fa fa-circle-o-notch fa-spin" [hidden]="!exercise.loading"></i>
+    </button>
+    <button class="btn btn-primary btn-sm flex-fill"
+            (click)="startExercise(exercise)"
+            [disabled]="exercise.loading">
+                <span [hidden]="exercise.loading">
+                    <i class="fa fa-eye fa-fw"></i>
+                    <span class="d-none d-md-inline">View Results</span>
+                </span>
+        <i class="fa fa-circle-o-notch fa-spin" [hidden]="!exercise.loading"></i>
+    </button>
+    <button type="submit"
+            class="btn btn-success btn-sm flex-fill"
+            *ngIf="exercise.isAtLeastTutor"
+            routerLink="/quiz/{{exercise.id}}/quiz-point-statistic" routerLinkActive="active">
+        <span class="fa fa-signal"></span>
+        <span class="d-none d-md-inline" jhiTranslate="global.menu.entities.statistic">Statistic</span>
+    </button>
+    <!-- INFORMATION END -->
+</div>
+<!-- QUIZ EXERCISE ACTIONS END -->
+
+
+<!-- MODELING EXERCISE ACTIONS START -->
+<!-- ACTION START -->
+<button class="btn btn-primary btn-sm btn-block"
+        (click)="startExercise(exercise)"
+        [disabled]="exercise.loading">
+            <span [hidden]="exercise.loading"><i class="fa fa-play-circle fa-fw"></i>&nbsp;<span
+                class="d-none d-md-inline">Start exercise</span></span>
+    <i class="fa fa-circle-o-notch fa-spin" [hidden]="!exercise.loading"></i>
+</button>
+<button class="btn btn-primary btn-sm btn-block"
+        (click)="resumeExercise(exercise)"
+        [disabled]="exercise.loading">
+            <span [hidden]="exercise.loading"><i class="fa fa-play-circle fa-fw"></i>&nbsp;<span
+                class="d-none d-md-inline">Resume exercise</span></span>
+    <i [hidden]="!exercise.loading" class="fa fa-circle-o-notch fa-spin"></i>
+</button>
+<!-- ACTION END -->
+<!-- INFORMATION START -->
+<div>
+    <div *ngIf="exercise.participations && exercise.participations.length > 0"
+         class="btn-group flex-btn-group-container">
+        <a routerLink="/modeling-editor/{{exercise.participations[0].id}}" routerLinkActive="active"
+           class="btn btn-primary btn-sm btn-block">
+            <i class="fa fa-folder-open fa-fw"></i>&nbsp;<span class="d-none d-md-inline"
+                                                               *ngIf="exercise.participations[0].initializationState === 'INITIALIZED'">Open modeling editor</span>
+            <span class="d-none d-md-inline"
+                  *ngIf="exercise.participations[0].initializationState === 'FINISHED'">Show submission</span>
+        </a>
+    </div>
+</div>
+<!-- INFORMATION END -->
+<!-- MODELING EXERCISE ACTIONS END -->
+
+
+<!-- PROGRAMMING EXERCISE ACTIONS START -->
+<!-- ACTION START -->
+<div
+    *ngIf="exercise.type === PROGRAMMING && exercise.participations && exercise.participations.length > 0">
+    <a routerLink="/editor/{{exercise.participations[0].id}}" routerLinkActive="active"
+       class="btn btn-primary btn-sm btn-block" id="btn-online-editor"
+       *ngIf="asProgrammingExercise(exercise).allowOnlineEditor">
+        <i class="fa fa-folder-open fa-fw"></i>&nbsp;<span
+        class="d-none d-md-inline">Open exercise</span></a>
+    <ng-template #popContent>
+        <p>Clone your personal repository for this exercise:</p>
+        <pre style="max-width: 100%;" ngxClipboard [cbContent]="exercise.participations[0].repositoryUrl"
+             (cbOnSuccess)="onCopySuccess()"
+             (cbOnError)="onCopyFailure()">{{exercise.participations[0].repositoryUrl}}</pre>
+        <p *ngIf="repositoryPassword">Your password is: <code class="password">{{repositoryPassword}}</code>
+            (hover to show)</p>
+        <button ngxClipboard [cbContent]="exercise.participations[0].repositoryUrl"
+                (cbOnSuccess)="onCopySuccess()" (cbOnError)="onCopyFailure()"
+                [class.btn-success]="wasCopied"
+                class="btn btn-primary btn-sm mr-2" type="button" style="min-width: 90px;">{{ wasCopied ?
+            "Copied URL" : "Copy URL"}}
+        </button>
+        <a class="btn btn-primary btn-sm mr-2"
+           [href]="buildSourceTreeUrl(exercise.participations[0].repositoryUrl) | safeUrl">Clone in
+            SourceTree</a>
+        <a href="http://www.sourcetreeapp.com" target="_blank">Atlassian SourceTree</a> is the free Git
+        client for Windows or Mac.
+    </ng-template>
+    <button placement="left"
+            [ngbPopover]="popContent"
+            [autoClose]="'outside'"
+            type="button" class="btn btn-primary btn-sm btn-block"><i
+        class="fa fa-download fa-fw"></i>&nbsp;<span
+        class="d-none d-md-inline">Clone repository</span>
+    </button>
+    <button class="btn btn-primary btn-sm btn-block" id="btn-build-plan"
+            *ngIf="asProgrammingExercise(exercise).publishBuildPlanUrl"
+            (click)="goToBuildPlan(exercise.participations[0])"><i
+        class="fa fa-external-link fa-fw"></i>
+        &nbsp;<span class="d-none d-md-inline">Go to build plan</span></button>
+</div>
+<!-- ACTION END -->
+<!-- PROGRAMMING EXERCISE ACTIONS END -->
+
+
+<!-- TEXT EXERCISE ACTIONS START -->
+<!-- ACTIONS START -->
+<button class="btn btn-primary btn-sm btn-block"
+        (click)="startExercise(exercise)"
+        [disabled]="exercise.loading">
+            <span [hidden]="exercise.loading"><i class="fa fa-play-circle fa-fw"></i>&nbsp;<span
+                class="d-none d-md-inline">Start exercise</span></span>
+    <i class="fa fa-circle-o-notch fa-spin" [hidden]="!exercise.loading"></i>
+</button>
+<button class="btn btn-primary btn-sm btn-block"
+        (click)="resumeExercise(exercise)"
+        [disabled]="exercise.loading">
+            <span [hidden]="exercise.loading"><i class="fa fa-play-circle fa-fw"></i>&nbsp;<span
+                class="d-none d-md-inline">Resume exercise</span></span>
+    <i [hidden]="!exercise.loading" class="fa fa-circle-o-notch fa-spin"></i>
+</button>
+<!-- ACTIONS END -->
+<!-- INFORMATION START -->
+<div>
+    <div *ngIf="exercise.participations && exercise.participations.length > 0"
+         class="btn-group flex-btn-group-container">
+        <a routerLink="/text/{{exercise.participations[0].id}}" routerLinkActive="active"
+           class="btn btn-primary btn-sm btn-block">
+            <i class="fa fa-folder-open fa-fw"></i>&nbsp;<span class="d-none d-md-inline"
+                                                               *ngIf="exercise.participations[0].initializationState === 'INITIALIZED'">Open text editor</span>
+            <span class="d-none d-md-inline"
+                  *ngIf="exercise.participations[0].initializationState === 'FINISHED'">Show submission</span>
+        </a>
+    </div>
+</div>
+<!-- INFORMATION END -->
+<!-- TEXT EXERCISE ACTIONS END -->
+
+
+<!-- FILE UPLOAD EXERCISE ACTIONS END -->
+<!-- ACTIONS START -->
+<button class="btn btn-primary btn-sm btn-block"
+        (click)="startExercise(exercise)"
+        [disabled]="exercise.loading">
+            <span [hidden]="exercise.loading"><i class="fa fa-play-circle fa-fw"></i>&nbsp;<span
+                class="d-none d-md-inline">Start exercise</span></span>
+    <i class="fa fa-circle-o-notch fa-spin" [hidden]="!exercise.loading"></i>
+</button>
+
+<button class="btn btn-primary btn-sm btn-block"
+        (click)="resumeExercise(exercise)"
+        [disabled]="exercise.loading">
+            <span [hidden]="exercise.loading"><i class="fa fa-play-circle fa-fw"></i>&nbsp;<span
+                class="d-none d-md-inline">Resume exercise</span></span>
+    <i [hidden]="!exercise.loading" class="fa fa-circle-o-notch fa-spin"></i>
+</button>
+<!-- ACTIONS END-->
+<!-- FILE UPLOAD EXERCISE ACTIONS END -->
+

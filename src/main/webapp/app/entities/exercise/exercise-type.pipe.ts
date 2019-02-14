@@ -9,15 +9,15 @@ export class ExerciseTypePipe implements PipeTransform {
     transform(type: ExerciseType): string {
         switch (type) {
             case ExerciseType.PROGRAMMING:
-                return 'Programming Exercise';
+                return 'Programming';
             case ExerciseType.MODELING:
-                return 'Modeling Exercise';
+                return 'Modeling';
             case ExerciseType.QUIZ:
-                return 'Quiz Exercise';
+                return 'Quiz';
             case ExerciseType.TEXT:
-                return 'Text Exercise';
+                return 'Text';
             case ExerciseType.FILE_UPLOAD:
-                return 'File Upload Exercise';
+                return 'File Upload';
             default:
                 return 'Exercise'
         }

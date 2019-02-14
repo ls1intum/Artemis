@@ -1,58 +1,136 @@
 <div *ngIf="exercise">
+    <!-- HEADER INFORMATION START -->
     <div class="course-info-bar">
-        <h3>
-            <fa-icon [icon]="'arrow-left'" (click)="backToCourse()"></fa-icon>
-            {{exercise.title}}
-        </h3>
-        <h4>Type: {{exercise.type | exerciseTypeLabel}}</h4>
-        <h4>
-            <span class="mr-2">Due Date: {{exercise.dueDate | date:'dd/MM/yy'}}</span>
-            <span [ngClass]="exerciseStatusBadge" class="badge">{{exercise.dueDate | amTimeAgo}}</span>
-        </h4>
+        <div class="row">
+            <div class="col general-info">
+                <h3>
+                    <fa-icon [icon]="'arrow-left'" (click)="backToCourse()"></fa-icon>
+                    {{exercise.title}}
+                </h3>
+                <h4>
+                    <span class="mr-2">Due Date: {{exercise.dueDate | date:'dd/MM/yy'}}</span>
+                    <span [ngClass]="exerciseStatusBadge" class="badge">{{exercise.dueDate | amTimeAgo}}</span>
+                </h4>
+                <h4>Categories: Homework, Group exercise</h4>
+            </div>
+            <div class="col-4">
+                <div class="row">
+                    <div class="col-6"><h5>Exercise Type:</h5></div>
+                    <div class="col-6"><h5>{{exercise.type | exerciseTypeLabel}}</h5></div>
+                </div>
+                <div class="row">
+                    <div class="col-6"><h5>Level:</h5></div>
+                    <div class="col-6"><h5>{{exercise.level || "N/A"}}</h5></div>
+                </div>
+                <div class="row">
+                    <div class="col-6"><h5>Exercise Status:</h5></div>
+                    <div class="col-6"><h5>{{exercise.participations[0].initializationState}}</h5></div>
+                </div>
+                <div class="row">
+                    <div class="col-6"><h5>Max Points:</h5></div>
+                    <div class="col-6"><h5>{{exercise.maxScore}} Pts.</h5></div>
+                </div>
+            </div>
+        </div>
     </div>
+    <!-- HEADER INFORMATION END -->
+    <!-- EXERCISE ACTIONS START -->
     <div class="tab-bar pl-2">
         <div class="col">
             <div class="btn-group">
-                <div class="btn btn-warning">Practice</div>
-                <div class="btn btn-success">Statistics</div>
+                <jhi-exercise-action-button buttonIcon="save" buttonLabel="Test"></jhi-exercise-action-button>
+                <div class="btn btn-primary">Practice</div>
+            </div>
+            <div class="btn-group ml-2">
+                <div class="btn btn-outline-primary">Statistics</div>
             </div>
         </div>
         <div class="col-auto" *ngIf="exercise.isAtLeastTutor">
             <span class="mr-1">Instructor actions:</span>
             <div class="btn-group">
-                <div class="btn btn-primary" routerLink="/course/{{courseId}}/exercise/{{exercise.id}}/dashboard">
+                <div class="btn btn-outline-primary"
+                     routerLink="/course/{{courseId}}/exercise/{{exercise.id}}/dashboard">
                     Information
                 </div>
-                <div class="btn btn-warning" *ngIf="exerciseRouterLink" routerLink="{{exerciseRouterLink}}">
+                <div class="btn btn-outline-primary" *ngIf="exerciseRouterLink" routerLink="{{exerciseRouterLink}}">
                     Assessments
                 </div>
-                <div class="btn btn-success" *ngIf="exercise.type === MODELING"
+                <div class="btn btn-outline-primary" *ngIf="exercise.type === MODELING"
                      routerLink="/course/{{courseId}}/exercise/{{exercise.id}}/statistics">Statistics
                 </div>
             </div>
         </div>
     </div>
-    <div class="row mb-2 mt-2 align-items-baseline">
-        <div class="col-auto">
-            <h1>Your Results</h1>
+    <!-- EXERCISE ACTIONS END -->
+    <!-- PROBLEM STATEMENT START -->
+    <div class="row mb-2 mt-2 align-items-baseline" *ngIf="exercise.problemStatement">
+        <div class="col-12 col-md-8">
+            <h1>Problem Statement:</h1>
+            <p>{{exercise.problemStatement}}</p>
         </div>
     </div>
-    <div class="row">
-        <div class="col-12 col-md-6">
+    <!-- PROBLEM STATEMENT END -->
+    <!-- RESULTS START -->
+    <div class="row mb-2 align-items-baseline">
+        <div class="col-auto">
+            <h1>Your Result:</h1>
+        </div>
+    </div>
+    <div class="row mb-2" *ngIf="currentResult">
+        <div class="col-12 col-md-8">
+            <div class="row justify-content-between">
+                <div class="col-auto">
+                    <h4><span class="badge badge-success"
+                              [ngClass]="exerciseRatedBadge(currentResult)">{{currentResult.rated ? 'RATED' : 'PRACTICE'}}</span>
+                    </h4>
+                </div>
+                <div class="col-auto">
+                    <h5>{{currentResult.resultString}}</h5>
+                </div>
+                <div class="col-auto">
+                    <h5>{{currentResult.score}}%</h5>
+                </div>
+                <div class="col text-right">
+                    <h5>{{currentResult.completionDate | date: 'dd/MM/yy'}}
+                        ({{currentResult.completionDate | amTimeAgo}})</h5>
+                </div>
+            </div>
+            <div class="row mb-2" *ngIf="!currentResult">
+                <div class="col-auto">
+                    <h6>No Rated Result available</h6>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mb-2" *ngIf="exercise.participations && exercise.participations.length > 0">
+        <div class="col-12 col-md-8">
+            <jhi-result-history [results]="exercise.participations[0].results" [maxScore]="exercise.maxScore"></jhi-result-history>
+        </div>
+    </div>
+    <div class="row mb-2 mt-2 align-items-baseline" *ngIf="showMoreResults">
+        <div class="col-auto">
+            <h2>Other Results:</h2>
+        </div>
+    </div>
+    <div class="row" *ngIf="showMoreResults">
+        <div class="col-12 col-md-8">
             <div *ngFor="let participation of exercise.participations">
                 <div *ngFor="let result of participation.results">
                     <div class="row justify-content-between">
                         <div class="col-auto">
-                            <span [ngClass]="exerciseRatedBadge(result)" class="badge badge-success">{{result.rated ? 'RATED' : 'PRACTICE'}}</span>
+                            <h4><span class="badge badge-success"
+                                      [ngClass]="exerciseRatedBadge(result)">{{result.rated ? 'RATED' : 'PRACTICE'}}</span>
+                            </h4>
                         </div>
                         <div class="col-auto">
-                            <span>{{result.resultString}}</span>
+                            <h5>{{result.resultString}}</h5>
                         </div>
                         <div class="col-auto">
-                            <span>{{result.score}}%</span>
+                            <h5>{{result.score}}%</h5>
                         </div>
                         <div class="col text-right">
-                            <span>{{result.completionDate | date: 'dd/MM/yy'}} ({{result.completionDate | amTimeAgo}})</span>
+                            <h5>{{result.completionDate | date: 'dd/MM/yy'}} ({{result.completionDate | amTimeAgo}}
+                                )</h5>
                         </div>
                     </div>
                 </div>
@@ -62,4 +140,10 @@
             </div>
         </div>
     </div>
+    <div class="row mb-2 mt-2 align-items-baseline">
+        <div class="col-auto">
+            <a class="text-primary" (click)="showMoreResults = !showMoreResults">{{showMoreResults ? 'Hide' : 'Show'}} other results</a>
+        </div>
+    </div>
+    <!-- RESULTS END -->
 </div>

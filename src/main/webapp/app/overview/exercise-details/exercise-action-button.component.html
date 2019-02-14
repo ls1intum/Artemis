@@ -1,0 +1,8 @@
+<button class="btn btn-primary" *ngIf="buttonVisible" [disabled]="buttonDisabled">
+    <div [hidden]="buttonLoading">
+        <fa-icon *ngIf="buttonIcon" [icon]="buttonIcon"></fa-icon>
+        &nbsp;
+        <span class="d-none d-md-inline">{{buttonLabel}}</span>
+    </div>
+    <i [hidden]="!buttonLoading" class="fa fa-circle-o-notch fa-spin"></i>
+</button>

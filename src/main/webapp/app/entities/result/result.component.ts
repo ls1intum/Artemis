@@ -3,10 +3,11 @@ import { Participation, ParticipationService } from '../participation';
 import { Result, ResultDetailComponent, ResultService } from '.';
 import { ProgrammingSubmission } from '../programming-submission';
 import { JhiWebsocketService, AccountService } from '../../core';
-import { RepositoryService } from '../repository/repository.service';
+import { RepositoryService } from 'app/entities/repository/repository.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpClient } from '@angular/common/http';
-import { ExerciseType } from '../../entities/exercise';
+import { ExerciseType } from 'app/entities/exercise';
+import { MIN_POINTS_GREEN, MIN_POINTS_ORANGE } from 'app/app.constants';
 
 import * as moment from 'moment';
 
@@ -190,10 +191,10 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             }
             return 'text-danger';
         }
-        if (this.result.score > 80) {
+        if (this.result.score > MIN_POINTS_GREEN) {
             return 'text-success';
         }
-        if (this.result.score > 40) {
+        if (this.result.score > MIN_POINTS_ORANGE) {
             return 'result-orange';
         }
         return 'text-danger';
