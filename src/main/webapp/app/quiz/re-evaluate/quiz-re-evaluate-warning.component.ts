@@ -7,6 +7,7 @@ import { QuizReEvaluateService } from './quiz-re-evaluate.service';
 import { Question, QuestionType } from '../../entities/question';
 import { MultipleChoiceQuestion } from '../../entities/multiple-choice-question';
 import { DragAndDropQuestion } from '../../entities/drag-and-drop-question';
+import { ShortAnswerQuestion } from '../../entities/short-answer-question';
 
 @Component({
     selector: 'jhi-quiz-re-evaluate-warning',
@@ -108,6 +109,10 @@ export class QuizReEvaluateWarningComponent implements OnInit {
             if (question.type === QuestionType.DRAG_AND_DROP) {
                 this.checkDragAndDropQuestion(question as DragAndDropQuestion, backUpQuestion as DragAndDropQuestion);
             }
+            // check ShortAnswerQuestions
+            if (question.type === QuestionType.SHORT_ANSWER) {
+                this.checkShortAnswerQuestion(question as ShortAnswerQuestion, backUpQuestion as ShortAnswerQuestion);
+            }
         }
     }
 
@@ -186,6 +191,52 @@ export class QuizReEvaluateWarningComponent implements OnInit {
                 });
                 // dropLocation set invalid?
                 if (backUpDropLocation !== null && dropLocation.invalid !== backUpDropLocation.invalid) {
+                    this.questionElementInvalid = true;
+                }
+            });
+        }
+    }
+
+    /**
+     * @function checkShortAnswerQuestion
+     * @desc
+     * 1. check ShortAnswer-Question-Elements
+     * 2. set flags based on detected changes
+     *
+     * @param question
+     * @param backUpQuestion
+     */
+    checkShortAnswerQuestion(question: ShortAnswerQuestion, backUpQuestion: ShortAnswerQuestion): void {
+        // check if a spot or solution was deleted
+        if (
+            question.solutions.length !== backUpQuestion.solutions.length ||
+            question.spots.length !== backUpQuestion.spots.length
+        ) {
+            this.questionElementDeleted = true;
+        }
+        // check if the correct Mappings has changed
+        if (JSON.stringify(question.correctMappings).toLowerCase() !== JSON.stringify(backUpQuestion.correctMappings).toLowerCase()) {
+            this.questionCorrectness = true;
+        }
+        // only check if there are no changes on the question-elements yet
+        if (!this.questionElementInvalid) {
+            // check each solution
+            question.solutions.forEach(solution => {
+                const backUpSolution = backUpQuestion.solutions.find(solutionBackUp => {
+                    return solutionBackUp.id === solution.id;
+                });
+                // solution set invalid?
+                if (backUpSolution !== null && solution.invalid !== backUpSolution.invalid) {
+                    this.questionElementInvalid = true;
+                }
+            });
+            // check each dropLocation
+            question.spots.forEach(spot => {
+                const backUpSpot = backUpQuestion.spots.find(spotBackUp => {
+                    return spotBackUp.id === spot.id;
+                });
+                // dropLocation set invalid?
+                if (backUpSpot !== null && spot.invalid !== backUpSpot.invalid) {
                     this.questionElementInvalid = true;
                 }
             });

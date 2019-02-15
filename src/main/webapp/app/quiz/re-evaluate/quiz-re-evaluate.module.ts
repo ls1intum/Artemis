@@ -15,6 +15,7 @@ import { ArTEMiSQuizEditModule } from '../edit';
 import { QuizReEvaluateComponent } from './quiz-re-evaluate.component';
 import { ReEvaluateMultipleChoiceQuestionComponent } from './multiple-choice-question/re-evaluate-multiple-choice-question.component';
 import { ReEvaluateDragAndDropQuestionComponent } from './drag-and-drop-question/re-evaluate-drag-and-drop-question.component';
+import { ReEvaluateShortAnswerQuestionComponent } from './short-answer-question/re-evaluate-short-answer-question.component';
 import { QuizReEvaluateWarningComponent } from './quiz-re-evaluate-warning.component';
 import { QuizReEvaluateService } from './quiz-re-evaluate.service';
 
@@ -24,6 +25,7 @@ import { QuizReEvaluateService } from './quiz-re-evaluate.service';
         QuizReEvaluateComponent,
         ReEvaluateMultipleChoiceQuestionComponent,
         ReEvaluateDragAndDropQuestionComponent,
+        ReEvaluateShortAnswerQuestionComponent,
         QuizReEvaluateWarningComponent
     ],
     entryComponents: [HomeComponent, QuizComponent, QuizExerciseComponent, JhiMainComponent, QuizReEvaluateWarningComponent],
@@ -32,6 +34,7 @@ import { QuizReEvaluateService } from './quiz-re-evaluate.service';
         QuizReEvaluateComponent,
         ReEvaluateMultipleChoiceQuestionComponent,
         ReEvaluateDragAndDropQuestionComponent,
+        ReEvaluateShortAnswerQuestionComponent,
         QuizReEvaluateWarningComponent
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
