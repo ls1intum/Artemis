@@ -1266,11 +1266,6 @@ table.answer-options-result {
 
 /* StepwizardQuiz for the progress bar*/
 
-.stepwizardquiz-step p {
-    margin-top: 10px;
-    font-family: Arial, Helvetica, sans-serif;
-
-}
 
 .stepwizardquiz-step .fa {
     vertical-align: initial;
@@ -1280,15 +1275,16 @@ table.answer-options-result {
 .stepwizardquiz {
     display: flex;
     flex-wrap: wrap;
-    max-width: 300px;
+    max-width: 250px;
+    max-height: 47px;
     position: relative;
     font-family: Arial, Helvetica, sans-serif;
     text-align: center;
 
     @media (max-width: 767px) {
         .btn-circle.btn-circle {
-            width: 18px;
-            height: 18px;
+            width: 16px;
+            height: 16px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -1318,10 +1314,10 @@ table.answer-options-result {
 }
 
 .btn-circle.btn-circle{
-    width: 23px;
-    height: 23px;
+    width: 25px;
+    height: 25px;
     text-align: center;
-    font-size: 8px;
+    font-size: 10px;
     font-family: Arial, Helvetica, sans-serif;
     border-radius: 15px;
 }
