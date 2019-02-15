@@ -6,6 +6,7 @@ import * as moment from 'moment';
 import { CourseExerciseService } from 'app/entities/course';
 import { Router } from '@angular/router';
 import { JhiAlertService } from 'ng-jhipster';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -33,6 +34,8 @@ export class ExerciseDetailsStudentActionsComponent {
     readonly INACTIVE = ParticipationStatus.INACTIVE;
 
     @Input() exercise: Exercise;
+
+    public wasCopied: boolean = false;
 
     constructor(
         private jhiAlertService: JhiAlertService,
@@ -101,6 +104,25 @@ export class ExerciseDetailsStudentActionsComponent {
         return quizExercise.isPlannedToStart && quizExercise.isOpenForPractice && moment(quizExercise.dueDate).isBefore(moment());
     }
 
+    isOnlineEditorAllowed(): boolean {
+        return (this.exercise as ProgrammingExercise).allowOnlineEditor;
+    }
+
+    publishBuildPlanUrl(): boolean {
+        return (this.exercise as ProgrammingExercise).publishBuildPlanUrl;
+    }
+
+    onCopyFailure() {
+        console.log('copy fail!');
+    }
+
+    onCopySuccess() {
+        this.wasCopied = true;
+        setTimeout(() => {
+            this.wasCopied = false;
+        }, 3000);
+    }
+
     startExercise() {
         this.exercise.loading = true;
 
@@ -127,6 +149,10 @@ export class ExerciseDetailsStudentActionsComponent {
                     this.jhiAlertService.warning('arTeMiSApp.exercise.startError');
                 }
             );
+    }
+
+    buildSourceTreeUrl(cloneUrl: string): string {
+        return 'sourcetree://cloneRepo?type=stash&cloneUrl=' + encodeURI(cloneUrl) + '&baseWebUrl=https://repobruegge.in.tum.de';
     }
 
     resumeExercise(exercise: Exercise) {

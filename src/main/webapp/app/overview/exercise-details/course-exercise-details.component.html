@@ -4,11 +4,11 @@
         <div class="row">
             <div class="col general-info">
                 <h3>
-                    <fa-icon [icon]="'arrow-left'" (click)="backToCourse()"></fa-icon>
+                    <fa-icon [icon]="'arrow-left'" (click)="backToCourse()" class="back-button mr-2"></fa-icon>
                     <span>{{exercise.title}}</span>
                 </h3>
                 <h4>
-                    <span class="mr-2">Due Date: {{exercise.dueDate | date:'dd/MM/yy'}}</span>
+                    <span class="mr-2">Due Date: {{exercise.dueDate | date:'dd/MM/yy HH:MM'}}</span>
                     <span [ngClass]="exerciseStatusBadge" class="badge">{{exercise.dueDate | amTimeAgo}}</span>
                 </h4>
                 <h4>Categories: Homework, Group exercise</h4>
@@ -41,7 +41,7 @@
     </div>
     <!-- HEADER INFORMATION END -->
     <!-- EXERCISE ACTIONS START -->
-    <div class="tab-bar pl-2 pr-2 justify-content-between">
+    <div class="tab-bar pl-2 pr-2 mb-2 justify-content-between">
         <jhi-exercise-details-student-actions [exercise]="exercise"></jhi-exercise-details-student-actions>
         <div class="col-auto" *ngIf="exercise.isAtLeastTutor">
             <span class="mr-1">Instructor actions:</span>
@@ -61,7 +61,7 @@
     </div>
     <!-- EXERCISE ACTIONS END -->
     <!-- PROBLEM STATEMENT START -->
-    <div class="row mb-2 mt-2 align-items-baseline" *ngIf="exercise.problemStatement">
+    <div class="row mb-2 align-items-baseline" *ngIf="exercise.problemStatement">
         <div class="col-12 col-md-8">
             <h1>Problem Statement:</h1>
             <p>{{exercise.problemStatement}}</p>
@@ -74,7 +74,7 @@
             <h1>Your Result:</h1>
         </div>
     </div>
-    <div class="row mb-2" *ngIf="currentResult">
+    <div class="row mb-2" *ngIf="hasResults && currentResult">
         <div class="col-12 col-md-8">
             <div class="row justify-content-between">
                 <div class="col-auto">
@@ -100,19 +100,23 @@
             </div>
         </div>
     </div>
-    <div class="row mb-2" *ngIf="exercise.participations && exercise.participations.length > 0">
+    <div class="row mb-2" *ngIf="hasResults && !currentResult">
+        <div class="col-auto">
+            <h3>You have no rated result.</h3>
+        </div>
+    </div>
+    <div class="row mb-2" *ngIf="hasResults">
         <div class="col-12 col-md-8">
-            <jhi-result-history *ngIf="exercise.participations && exercise.participations.length > 0"
-                                [results]="exercise.participations[0].results"
+            <jhi-result-history [results]="exercise.participations[0].results"
                                 [maxScore]="exercise.maxScore"></jhi-result-history>
         </div>
     </div>
-    <div class="row mb-2 mt-2 align-items-baseline" *ngIf="showMoreResults">
+    <div class="row mb-2 mt-2 align-items-baseline" *ngIf="showMoreResults && exercise.participations && exercise.participations.length > 0">
         <div class="col-auto">
             <h2>Other Results:</h2>
         </div>
     </div>
-    <div class="row" *ngIf="showMoreResults">
+    <div class="row" *ngIf="showMoreResults && hasResults">
         <div class="col-12 col-md-8">
             <div *ngFor="let participation of exercise.participations">
                 <div *ngFor="let result of participation.results">
@@ -140,10 +144,15 @@
             </div>
         </div>
     </div>
-    <div class="row mb-2 mt-2 align-items-baseline">
+    <div class="row mb-2 mt-2 align-items-baseline" *ngIf="hasResults && exercise.participations[0].results.length > 1">
         <div class="col-auto">
             <a class="text-primary" (click)="showMoreResults = !showMoreResults">{{showMoreResults ? 'Hide' : 'Show'}}
                 former results</a>
+        </div>
+    </div>
+    <div class="row mb-2 mt-2 align-items-baseline" *ngIf="!hasResults">
+        <div class="col-auto">
+            <h3>You have no result yet.</h3>
         </div>
     </div>
     <!-- RESULTS END -->

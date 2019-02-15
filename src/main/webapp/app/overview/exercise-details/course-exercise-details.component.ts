@@ -25,6 +25,7 @@ export class CourseExerciseDetailsComponent implements OnInit {
     private subscription: Subscription;
     public exercise: Exercise;
     public showMoreResults: boolean = false;
+    public exerciseStatusBadge: string = 'badge-success';
 
     constructor(private $location: Location, private exerciseService: ExerciseService,
                 private courseService: CourseService,
@@ -44,6 +45,7 @@ export class CourseExerciseDetailsComponent implements OnInit {
             this.exerciseService.findResultsForExercise(this.exerciseId).subscribe((exercise: Exercise) => {
                 this.exercise = exercise;
                 this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.exercise.course);
+                this.setExerciseStatusBadge()
             });
         }
     }
@@ -52,8 +54,8 @@ export class CourseExerciseDetailsComponent implements OnInit {
         this.$location.back();
     }
 
-    get exerciseStatusBadge(): string {
-        return moment(this.exercise.dueDate).isBefore(moment()) ? 'badge-danger' : 'badge-success';
+    setExerciseStatusBadge(): void {
+        this.exerciseStatusBadge = moment(this.exercise.dueDate).isBefore(moment()) ? 'badge-danger' : 'badge-success';
     }
 
     exerciseRatedBadge(result: Result): string {
@@ -75,11 +77,18 @@ export class CourseExerciseDetailsComponent implements OnInit {
         }
     }
 
+    get hasResults(): boolean {
+        const hasParticipations =this.exercise.participations && this.exercise.participations[0];
+        return hasParticipations && this.exercise.participations[0].results && this.exercise.participations[0].results.length > 0;
+    }
+
     get currentResult(): Result {
         if (!this.exercise.participations || !this.exercise.participations[0].results) return null;
         let results = this.exercise.participations[0].results;
         return results.filter(el => el.rated).pop();
-    }get exerciseIcon(): ExerciseIcon {
+    }
+
+    get exerciseIcon(): ExerciseIcon {
         if (this.exercise.type === this.PROGRAMMING) {
             return {
                 faIcon: 'keyboard',

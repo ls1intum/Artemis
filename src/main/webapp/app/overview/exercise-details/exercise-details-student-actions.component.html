@@ -98,60 +98,49 @@
 
 
 <!-- PROGRAMMING EXERCISE ACTIONS START -->
-<!-- ACTION START -->
-<!--
-<div class="btn-group">
-    <button jhi-exercise-action-button
-        buttonIcon="play-circle"
-        buttonLabel="Start exercise"
-        [buttonLoading]="exercise.loading"
-        (click)="startExercise()"></button>
-    <button jhi-exercise-action-button
-        buttonIcon="play-circle"
-        buttonLabel="Resume exercise"
-        [buttonLoading]="exercise.loading"
-        (click)="resumeExercise()"></button>
+<div class="col" *ngIf="exercise.type === PROGRAMMING">
+    <!-- ACTION START -->
+    <div class="btn-group">
+        <button jhi-exercise-action-button
+                buttonIcon="folder-open"
+                buttonLabel="Open exercise"
+                [buttonLoading]="exercise.loading"
+                routerLink="/editor/{{exercise.participations[0].id}}"></button>
+        <button jhi-exercise-action-button
+                buttonIcon="download"
+                buttonLabel="Clone repository"
+                [buttonLoading]="exercise.loading"
+                placement="right"
+                [ngbPopover]="popContent"
+                [autoClose]="'outside'"></button>
+        <ng-template #popContent>
+            <p>Clone your personal repository for this exercise:</p>
+            <pre style="max-width: 100%;" ngxClipboard [cbContent]="exercise.participations[0].repositoryUrl"
+                 (cbOnSuccess)="onCopySuccess()"
+                 (cbOnError)="onCopyFailure()">{{exercise.participations[0].repositoryUrl}}</pre>
+            <p *ngIf="repositoryPassword">Your password is: <code class="password">{{repositoryPassword}}</code>
+                (hover to show)</p>
+            <button ngxClipboard [cbContent]="exercise.participations[0].repositoryUrl"
+                    (cbOnSuccess)="onCopySuccess()" (cbOnError)="onCopyFailure()"
+                    [class.btn-success]="wasCopied"
+                    class="btn btn-primary btn-sm mr-2" type="button" style="min-width: 90px;">{{ wasCopied ?
+                "Copied URL" : "Copy URL"}}
+            </button>
+            <a class="btn btn-primary btn-sm mr-2"
+               [href]="buildSourceTreeUrl(exercise.participations[0].repositoryUrl) | safeUrl">Clone in
+                SourceTree</a>
+            <a href="http://www.sourcetreeapp.com" target="_blank">Atlassian SourceTree</a> is the free Git
+            client for Windows or Mac.
+        </ng-template>
+        <button jhi-exercise-action-button
+                buttonIcon="external-link"
+                buttonLabel="Go to build plan"
+                [buttonLoading]="exercise.loading"
+                *ngIf="publishBuildPlanUrl()"
+                routerLink="/editor/{{exercise.participations[0].id}}"></button>
+    </div>
+    <!-- ACTION END -->
 </div>
-<div
-    *ngIf="exercise.type === PROGRAMMING && exercise.participations && exercise.participations.length > 0">
-    <a routerLink="/editor/{{exercise.participations[0].id}}" routerLinkActive="active"
-       class="btn btn-primary btn-sm btn-block" id="btn-online-editor"
-       *ngIf="asProgrammingExercise(exercise).allowOnlineEditor">
-        <i class="fa fa-folder-open fa-fw"></i>&nbsp;<span
-        class="d-none d-md-inline">Open exercise</span></a>
-    <ng-template #popContent>
-        <p>Clone your personal repository for this exercise:</p>
-        <pre style="max-width: 100%;" ngxClipboard [cbContent]="exercise.participations[0].repositoryUrl"
-             (cbOnSuccess)="onCopySuccess()"
-             (cbOnError)="onCopyFailure()">{{exercise.participations[0].repositoryUrl}}</pre>
-        <p *ngIf="repositoryPassword">Your password is: <code class="password">{{repositoryPassword}}</code>
-            (hover to show)</p>
-        <button ngxClipboard [cbContent]="exercise.participations[0].repositoryUrl"
-                (cbOnSuccess)="onCopySuccess()" (cbOnError)="onCopyFailure()"
-                [class.btn-success]="wasCopied"
-                class="btn btn-primary btn-sm mr-2" type="button" style="min-width: 90px;">{{ wasCopied ?
-            "Copied URL" : "Copy URL"}}
-        </button>
-        <a class="btn btn-primary btn-sm mr-2"
-           [href]="buildSourceTreeUrl(exercise.participations[0].repositoryUrl) | safeUrl">Clone in
-            SourceTree</a>
-        <a href="http://www.sourcetreeapp.com" target="_blank">Atlassian SourceTree</a> is the free Git
-        client for Windows or Mac.
-    </ng-template>
-    <button placement="left"
-            [ngbPopover]="popContent"
-            [autoClose]="'outside'"
-            type="button" class="btn btn-primary btn-sm btn-block"><i
-        class="fa fa-download fa-fw"></i>&nbsp;<span
-        class="d-none d-md-inline">Clone repository</span>
-    </button>
-    <button class="btn btn-primary btn-sm btn-block" id="btn-build-plan"
-            *ngIf="asProgrammingExercise(exercise).publishBuildPlanUrl"
-            (click)="goToBuildPlan(exercise.participations[0])"><i
-        class="fa fa-external-link fa-fw"></i>
-        &nbsp;<span class="d-none d-md-inline">Go to build plan</span></button>
-</div>-->
-<!-- ACTION END -->
 <!-- PROGRAMMING EXERCISE ACTIONS END -->
 
 
