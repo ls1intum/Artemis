@@ -22,6 +22,7 @@ export class TextExerciseComponent implements OnInit {
     predicate: string;
     reverse: boolean;
     @Input() showHeading = true;
+    showAlertHeading = false;
 
     constructor(
         private textExerciseService: TextExerciseService,
@@ -37,6 +38,9 @@ export class TextExerciseComponent implements OnInit {
     }
 
     ngOnInit() {
+        if(location.href.toString().includes('text-exercise')){
+                 this.showAlertHeading= true;
+        }
             this.subscription = this.route.params.subscribe(params => {
                 this.load();
                 this.registerChangeInTextExercises();

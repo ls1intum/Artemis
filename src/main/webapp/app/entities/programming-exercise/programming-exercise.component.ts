@@ -24,6 +24,7 @@ export class ProgrammingExerciseComponent implements OnInit, OnDestroy {
     predicate: string;
     reverse: boolean;
     @Input() showHeading = true;
+    showAlertHeading: boolean;
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
@@ -39,6 +40,9 @@ export class ProgrammingExerciseComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
+        if(location.href.toString().includes('programming-exercise')){
+            this.showAlertHeading= true;
+        }
         this.subscription = this.route.params.subscribe(params => {
             this.load();
             this.registerChangeInProgrammingExercises();

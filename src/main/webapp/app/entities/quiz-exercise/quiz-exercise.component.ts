@@ -32,6 +32,7 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
     reverse: boolean;
     courseId: number;
     @Input() showHeading = true;
+    showAlertHeading: boolean;
 
     constructor(
         private courseService: CourseService,
@@ -46,6 +47,9 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
+        if(location.href.toString().includes('quiz-exercise')){
+            this.showAlertHeading= true;
+        }
         this.load();
         this.registerChangeInQuizExercises();
     }
@@ -77,7 +81,6 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
-
         this.eventManager.destroy(this.eventSubscriber);
     }
 

@@ -23,6 +23,7 @@ export class FileUploadExerciseComponent implements OnInit, OnDestroy {
     predicate: string;
     reverse: boolean;
     @Input() showHeading = true;
+    showAlertHeading: boolean;
 
     constructor(
         private fileUploadExerciseService: FileUploadExerciseService,
@@ -38,6 +39,9 @@ export class FileUploadExerciseComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
+        if(location.href.toString().includes('file-upload-exercise')){
+            this.showAlertHeading= true;
+        }
         this.subscription = this.route.params.subscribe(params => {
             this.load();
             this.registerChangeInFileUploadExercises();

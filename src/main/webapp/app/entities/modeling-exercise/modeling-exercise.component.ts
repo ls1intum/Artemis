@@ -24,6 +24,7 @@ export class ModelingExerciseComponent implements OnInit, OnDestroy {
     predicate: string;
     reverse: boolean;
     @Input() showHeading = true;
+    showAlertHeading: boolean;
 
     constructor(
         private modelingExerciseService: ModelingExerciseService,
@@ -40,6 +41,9 @@ export class ModelingExerciseComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
+        if(location.href.toString().includes('modeling-exercise')){
+            this.showAlertHeading= true;
+        }
         this.load();
         this.registerChangeInModelingExercises();
     }
