@@ -1,17 +1,19 @@
-import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { JhiAlertService } from 'ng-jhipster';
 import { Observable } from 'rxjs';
 
 import { Course } from './course.model';
 import { CourseService } from './course.service';
-import { JhiAlertService } from 'ng-jhipster';
 
 @Component({
     selector: 'jhi-course-update',
     templateUrl: './course-update.component.html'
 })
 export class CourseUpdateComponent implements OnInit {
+    courseForm: FormGroup;
     course: Course;
     isSaving: boolean;
 
@@ -23,6 +25,18 @@ export class CourseUpdateComponent implements OnInit {
         this.isSaving = false;
         this.activatedRoute.data.subscribe(({ course }) => {
             this.course = course;
+        });
+        this.courseForm = new FormGroup({
+            'id': new FormControl(this.course.id),
+            'title': new FormControl(this.course.title, [Validators.required]),
+            'shortName': new FormControl(this.course.shortName, {validators: [Validators.required, Validators.minLength(3)], updateOn: 'blur'}),
+            'studentGroupName': new FormControl(this.course.studentGroupName, [Validators.required]),
+            'teachingAssistantGroupName': new FormControl(this.course.teachingAssistantGroupName, [Validators.required]),
+            'instructorGroupName': new FormControl(this.course.instructorGroupName, [Validators.required]),
+            'startDate': new FormControl(this.course.startDate),
+            'startTime': new FormControl(this.course.startTime),
+            'endDate': new FormControl(this.course.endDate),
+            'onlineCourse': new FormControl(this.course.onlineCourse)
         });
     }
 
@@ -55,4 +69,6 @@ export class CourseUpdateComponent implements OnInit {
         jhiAlert.msg = errorMessage;
         this.isSaving = false;
     }
+
+    get shortName() { return this.courseForm.get('shortName'); }
 }

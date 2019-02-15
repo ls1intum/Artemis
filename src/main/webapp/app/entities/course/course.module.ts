@@ -1,4 +1,5 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 
 import { ArTEMiSSharedModule } from '../../shared';
@@ -20,7 +21,7 @@ import { FormDateTimePickerModule } from '../../shared/dateTimePicker/date-time-
 const ENTITY_STATES = [...courseRoute, ...coursePopupRoute];
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), FormDateTimePickerModule],
+    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), FormDateTimePickerModule, ReactiveFormsModule],
     declarations: [
         CourseComponent,
         CourseDetailComponent,
