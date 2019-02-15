@@ -117,14 +117,16 @@
                         <span [hidden]="exercise.loading"><fa-icon icon="redo" [fixedWidth]="true"></fa-icon>&nbsp;<span class="d-none d-md-inline">Practice</span></span>
                         <fa-icon icon="circle-notch" [spin]="true" [hidden]="!exercise.loading"></fa-icon>
                     </button>
-                    <button class="btn btn-primary btn-sm btn-block"
+                    <button id="student-quiz-open-{{exercise.id}}"
+                            class="btn btn-primary btn-sm btn-block"
                             *ngSwitchCase="'quiz-not-started'"
                             (click)="startExercise(exercise)"
                             [disabled]="exercise.loading">
                         <span [hidden]="exercise.loading"><fa-icon icon="play-circle" [fixedWidth]="true"></fa-icon>&nbsp;<span class="d-none d-md-inline">Open Quiz</span></span>
                         <fa-icon icon="circle-notch" [spin]="true" [hidden]="!exercise.loading"></fa-icon>
                     </button>
-                    <button class="btn btn-primary btn-sm btn-block"
+                    <button id="student-quiz-start-{{exercise.id}}"
+                            class="btn btn-primary btn-sm btn-block"
                             *ngSwitchCase="'quiz-uninitialized'"
                             (click)="startExercise(exercise)"
                             [disabled]="exercise.loading">
