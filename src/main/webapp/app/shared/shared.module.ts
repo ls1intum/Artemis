@@ -7,17 +7,18 @@ import {
     JhiLoginModalComponent,
     HasAnyAuthorityDirective,
     SafeHtmlPipe,
-    SafeUrlPipe
+    SafeUrlPipe,
+    RemoveKeysPipe
 } from './';
 import { FileUploaderService } from './http/file-uploader.service';
 import { NgbDateMomentAdapter } from './util/datepicker-adapter';
 
 @NgModule({
     imports: [ArTEMiSSharedLibsModule, ArTEMiSSharedCommonModule],
-    declarations: [JhiLoginModalComponent, HasAnyAuthorityDirective, SafeHtmlPipe, SafeUrlPipe],
+    declarations: [JhiLoginModalComponent, HasAnyAuthorityDirective, SafeHtmlPipe, SafeUrlPipe, RemoveKeysPipe],
     providers: [FileUploaderService, DatePipe, { provide: NgbDateAdapter, useClass: NgbDateMomentAdapter }],
     entryComponents: [JhiLoginModalComponent],
-    exports: [ArTEMiSSharedCommonModule, JhiLoginModalComponent, HasAnyAuthorityDirective, DatePipe, SafeHtmlPipe, SafeUrlPipe],
+    exports: [ArTEMiSSharedCommonModule, JhiLoginModalComponent, HasAnyAuthorityDirective, DatePipe, SafeHtmlPipe, SafeUrlPipe, RemoveKeysPipe],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArTEMiSSharedModule {

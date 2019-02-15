@@ -9,6 +9,7 @@ export * from './util/request-util';
 export * from './model/base-entity';
 export * from './pipes/safe-html.pipe';
 export * from './pipes/safe-url.pipe';
+export * from './pipes/remove-keys.pipe';
 export * from './shared-libs.module';
 export * from './shared-common.module';
 export * from './shared.module';

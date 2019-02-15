@@ -17,10 +17,11 @@
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="arTeMiSApp.course.shortName" for="field_shortName">Short Name</label>
                     <input required type="text" class="form-control" name="shortName" id="field_shortName" formControlName="shortName" [(ngModel)]="course.shortName" />
-                    <div *ngIf="shortName.invalid && (shortName.dirty || shortName.touched)" class="alert alert-danger">
-                        <div *ngIf="shortName.errors.required">Short Name is required.</div>
-                        <div *ngIf="shortName.errors.minlength">Short Name must have 3 characters or more.</div>
-                    </div>
+                    <ng-container *ngIf="shortName.invalid && (shortName.dirty || shortName.touched)">
+                        <div class="alert alert-danger">
+                            <div *ngFor="let e of shortName.errors | keyvalue | removekeys: ['required']"><div>{{errorMessages['shortName'][e.key]}}</div></div>
+                        </div>
+                    </ng-container>
                 </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="arTeMiSApp.course.studentGroupName" for="field_studentGroupName">Student Group Name</label>
