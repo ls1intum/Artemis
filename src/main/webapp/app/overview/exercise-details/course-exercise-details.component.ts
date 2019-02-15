@@ -26,6 +26,7 @@ export class CourseExerciseDetailsComponent implements OnInit {
     public exercise: Exercise;
     public showMoreResults: boolean = false;
     public exerciseStatusBadge: string = 'badge-success';
+    public sortedResults: Result[];
 
     constructor(private $location: Location, private exerciseService: ExerciseService,
                 private courseService: CourseService,
@@ -46,6 +47,13 @@ export class CourseExerciseDetailsComponent implements OnInit {
                 this.exercise = exercise;
                 this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.exercise.course);
                 this.setExerciseStatusBadge()
+                if (this.hasResults) {
+                    this.sortedResults = this.exercise.participations[0].results.sort((a, b) => {
+                        const aValue = moment(a.completionDate) .valueOf();
+                        const bValue = moment(b.completionDate).valueOf();
+                        return aValue - bValue;
+                    })
+                }
             });
         }
     }
@@ -78,7 +86,7 @@ export class CourseExerciseDetailsComponent implements OnInit {
     }
 
     get hasResults(): boolean {
-        const hasParticipations =this.exercise.participations && this.exercise.participations[0];
+        const hasParticipations = this.exercise.participations && this.exercise.participations[0];
         return hasParticipations && this.exercise.participations[0].results && this.exercise.participations[0].results.length > 0;
     }
 

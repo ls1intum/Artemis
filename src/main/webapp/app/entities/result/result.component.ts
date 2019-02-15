@@ -29,6 +29,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
 
     @Input() participation: Participation;
     @Input() isBuilding: boolean;
+    @Input() short: boolean = false;
     @Output() newResult = new EventEmitter<object>();
 
     result: Result;

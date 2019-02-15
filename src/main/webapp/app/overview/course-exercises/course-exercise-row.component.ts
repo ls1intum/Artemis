@@ -20,7 +20,7 @@ export interface ExerciseIcon {
 @Component({
     selector: 'jhi-course-exercise-row',
     templateUrl: './course-exercise-row.component.html',
-    styleUrls: ['../course-overview.scss']
+    styleUrls: ['./course-exercise-row.scss']
 })
 export class CourseExerciseRowComponent implements OnInit {
     readonly QUIZ = ExerciseType.QUIZ;
@@ -105,27 +105,27 @@ export class CourseExerciseRowComponent implements OnInit {
         if (this.exercise.type === this.PROGRAMMING) {
             return {
                 faIcon: 'keyboard',
-                tooltip: 'This is a programming quiz'
+                tooltip: 'This is a programming exercise'
             };
         } else if (this.exercise.type === ExerciseType.MODELING) {
             return {
                 faIcon: 'project-diagram',
-                tooltip: 'This is a modeling quiz'
+                tooltip: 'This is a modeling exercise'
             };
         } else if (this.exercise.type === ExerciseType.QUIZ) {
             return {
                 faIcon: 'check-double',
-                tooltip: 'This is a multiple choice quiz'
+                tooltip: 'This is a quiz exercise'
             };
         } else if (this.exercise.type === ExerciseType.TEXT) {
             return {
                 faIcon: 'font',
-                tooltip: 'This is a text quiz'
+                tooltip: 'This is a text exercise'
             };
         } else if (this.exercise.type === ExerciseType.FILE_UPLOAD) {
             return {
                 faIcon: 'file-upload',
-                tooltip: 'This is a file upload'
+                tooltip: 'This is a file upload exercise'
             };
         } else {
             return;

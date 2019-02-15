@@ -38,9 +38,10 @@ $result-element-size: 25px;
 
             .result-score-info {
                 display: flex;
-                justify-content: center;
-                margin-left: -12px;
-                margin-right: -12px;
+                flex-direction: column;
+                align-items: center;
+                margin-left: -32px;
+                margin-right: -32px;
             }
         }
 

@@ -46,63 +46,6 @@ Course Info Bar
     }
 }
 
-.exercise-row {
-    cursor: pointer;
-
-    ::ng-deep {
-        > div {
-            padding: 5px 0;
-            border-left: 1px solid $light-border-color;
-            border-right: 1px solid $light-border-color;
-            background-color: $light-background-color;
-
-            .exercise-link {
-                color: $gray-900;
-            }
-        }
-    }
-
-    &:last-of-type {
-        ::ng-deep {
-            > div {
-                margin-bottom: 10px;
-                border-bottom: 1px solid $light-border-color;
-                border-radius: 0 0 3px 3px;
-            }
-
-            .exercise-divider {
-                display: none;
-            }
-        }
-    }
-
-    &:first-of-type {
-        ::ng-deep {
-            > div {
-                margin-top: 10px;
-                border-top: 1px solid $light-border-color;
-                border-radius: 3px 3px 0 0;
-            }
-        }
-    }
-
-    &:only-of-type {
-        ::ng-deep {
-            > div {
-                margin-top: 10px;
-                margin-bottom: 10px;
-                border-top: 1px solid $light-border-color;
-                border-bottom: 1px solid $light-border-color;
-                border-radius: 3px;
-            }
-
-            .exercise-divider {
-                display: none;
-            }
-        }
-    }
-}
-
 .statistic-summary {
     margin-top: 25px;
 
