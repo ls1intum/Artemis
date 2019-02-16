@@ -25,7 +25,7 @@
             <span class="text-danger" *ngIf="resultString.invalid && resultString.errors.required">Result text is required.</span>
         </div>
         <div class="form-group">
-          <jhi-date-time-picker labelName="Completion Date" [entity]="result" field="completionDate"></jhi-date-time-picker>
+          <jhi-date-time-picker labelName="Completion Date" [(ngModel)]="result.completionDate"></jhi-date-time-picker>
         </div>
         <div class="form-group row align-items-end">
             <div class="col-md-6">

@@ -18,11 +18,13 @@
             <input required type="text" class="form-control" name="title" id="field_title"
                    [(ngModel)]="programmingExercise.title" />
         </div>
-        <div class="form-group-narrow">
-          <jhi-date-time-picker labelName="Release Date" [entity]="programmingExercise" field="releaseDate"></jhi-date-time-picker>
-        </div>
-        <div class="form-group-narrow">
-          <jhi-date-time-picker labelName="Due Date" [entity]="programmingExercise" field="dueDate"></jhi-date-time-picker>
+        <div class="d-flex">
+            <div class="form-group-narrow flex-grow-1">
+                <jhi-date-time-picker labelName="Release Date" [(ngModel)]="programmingExercise.releaseDate"></jhi-date-time-picker>
+            </div>
+            <div class="form-group-narrow flex-grow-1">
+                <jhi-date-time-picker labelName="Due Date" [(ngModel)]="programmingExercise.dueDate"></jhi-date-time-picker>
+            </div>
         </div>
         <div class="form-group-narrow">
             <label class="label-narrow" jhiTranslate="arTeMiSApp.exercise.maxScore" for="field_maxScore">Max Score</label>
