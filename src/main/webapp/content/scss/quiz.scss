@@ -169,7 +169,7 @@
 }
 
 .quiz-footer {
-    height: 95px;
+    height: 100px;
 }
 
 .edit-quiz-footer-content,
@@ -873,7 +873,7 @@
     margin-top: 6px;
     margin-bottom: 110px;
 
-    min-height: calc(100vh - 390px);
+    min-height: calc(100vh - 400px);
 
     .question-index {
         padding: 2px 6px;
@@ -1007,6 +1007,10 @@ table.answer-options-result {
 
 .colon-suffix:after {
     content: ':';
+}
+
+.align-text {
+    max-height: 22px;
 }
 
 .in-parentheses:before {
@@ -1275,7 +1279,7 @@ table.answer-options-result {
     display: flex;
     flex-wrap: wrap;
     max-width: 300px;
-    max-height: 49px;
+    max-height: 57px;
     position: relative;
     text-align: center;
 
@@ -1288,6 +1292,19 @@ table.answer-options-result {
             align-items: center;
             .fa {
                 font-size: 6px;
+            }
+        }
+    }
+
+    @media (max-width: 990px) {
+        .btn-circle.btn-circle {
+            width: 23px;
+            height: 23px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            .fa {
+                font-size: 10px;
             }
         }
     }
@@ -1312,20 +1329,32 @@ table.answer-options-result {
 }
 
 .btn-circle.btn-circle{
-    width: 26px;
-    height: 26px;
+    width: 30px;
+    height: 30px;
     text-align: center;
-    font-size: 10px;
+    font-size: 12px;
     font-family: Arial, Helvetica, sans-serif;
     border-radius: 15px;
+    border-spacing: 5px;
+    &.btn-light {
+        border-color: #ffffff;
+    }
 }
 
-.default-question {
-    background-color: #ee832c;
-    border-color: #ee832c;
+.draganddropcolor-question {
+    background-color: #9ae5ee;
+
+}
+.multiplechoicecolor-question {
+    background-color: #eec5a2;
+
+}
+.shortanswercolor-question {
+    background-color: #eeb7db;
+
 }
 
 .changed-question {
-    background-color: #2751d7;
-    border-color: #2751d7;
+    background-color: #527cd7;
+
 }
