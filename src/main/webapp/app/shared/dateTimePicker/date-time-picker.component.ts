@@ -28,10 +28,6 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     @Input()
     labelName: string;
     @Input()
-    entity: any;
-    @Input()
-    field: string;
-    @Input()
     value: any;
     _onChange = (val: Moment) => {};
 
