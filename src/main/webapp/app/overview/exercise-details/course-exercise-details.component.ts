@@ -24,8 +24,8 @@ export class CourseExerciseDetailsComponent implements OnInit {
     public courseId: number;
     private subscription: Subscription;
     public exercise: Exercise;
-    public showMoreResults: boolean = false;
-    public exerciseStatusBadge: string = 'badge-success';
+    public showMoreResults = false;
+    public exerciseStatusBadge = 'badge-success';
     public sortedResults: Result[];
 
     constructor(private $location: Location, private exerciseService: ExerciseService,
@@ -46,13 +46,13 @@ export class CourseExerciseDetailsComponent implements OnInit {
             this.exerciseService.findResultsForExercise(this.exerciseId).subscribe((exercise: Exercise) => {
                 this.exercise = exercise;
                 this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.exercise.course);
-                this.setExerciseStatusBadge()
+                this.setExerciseStatusBadge();
                 if (this.hasResults) {
                     this.sortedResults = this.exercise.participations[0].results.sort((a, b) => {
                         const aValue = moment(a.completionDate) .valueOf();
                         const bValue = moment(b.completionDate).valueOf();
                         return aValue - bValue;
-                    })
+                    });
                 }
             });
         }
@@ -91,8 +91,10 @@ export class CourseExerciseDetailsComponent implements OnInit {
     }
 
     get currentResult(): Result {
-        if (!this.exercise.participations || !this.exercise.participations[0].results) return null;
-        let results = this.exercise.participations[0].results;
+        if (!this.exercise.participations || !this.exercise.participations[0].results) {
+            return null;
+        }
+        const results = this.exercise.participations[0].results;
         return results.filter(el => el.rated).pop();
     }
 

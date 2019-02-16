@@ -37,7 +37,7 @@ export class CourseExerciseRowActionsComponent {
 
     @Input() exercise: Exercise;
 
-    public wasCopied: boolean = false;
+    public wasCopied = false;
 
     constructor(
         private jhiAlertService: JhiAlertService,

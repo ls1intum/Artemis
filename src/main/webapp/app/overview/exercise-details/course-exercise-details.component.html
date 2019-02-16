@@ -7,9 +7,12 @@
                     <fa-icon [icon]="'arrow-left'" (click)="backToCourse()" class="back-button mr-2"></fa-icon>
                     <span>{{exercise.title}}</span>
                 </h3>
-                <h4>
+                <h4 *ngIf="exercise.dueDate">
                     <span class="mr-2">Due Date: {{exercise.dueDate | date:'dd/MM/yy HH:MM'}}</span>
-                    <span [ngClass]="exerciseStatusBadge" class="badge">{{exercise.dueDate | amTimeAgo}}</span>
+                    <span [ngClass]="exerciseStatusBadge" class="badge"exercise.dueDate>{{exercise.dueDate | amTimeAgo}}</span>
+                </h4>
+                <h4 *ngIf="!exercise.dueDate">
+                    <span class="mr-2">Due Date: N/A</span>
                 </h4>
                 <h4>Categories: Homework, Group exercise</h4>
             </div>

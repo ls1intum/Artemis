@@ -32,7 +32,7 @@ export class CourseExerciseRowComponent implements OnInit {
     @Input() exercise: Exercise;
     @Input() course: Course;
     public repositoryPassword: string;
-    public wasCopied: boolean = false;
+    public wasCopied = false;
 
     constructor(private accountService: AccountService,
                 private jhiAlertService: JhiAlertService,
@@ -263,8 +263,8 @@ export class CourseExerciseRowComponent implements OnInit {
     }
 
     showDetails(event: any) {
-        if(!(event.target.closest('jhi-course-exercise-row-actions') && event.target.closest('.btn'))) {
-            this.router.navigate([ this.exercise.id ], { relativeTo: this.route });
+        if (!(event.target.closest('jhi-course-exercise-row-actions') && event.target.closest('.btn'))) {
+            this.router.navigate([this.exercise.id], {relativeTo: this.route});
         }
     }
 
