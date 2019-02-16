@@ -1269,16 +1269,14 @@ table.answer-options-result {
 
 .stepwizardquiz-step .fa {
     vertical-align: initial;
-    font-family: Arial, Helvetica, sans-serif;
 }
 
 .stepwizardquiz {
     display: flex;
     flex-wrap: wrap;
-    max-width: 250px;
-    max-height: 47px;
+    max-width: 300px;
+    max-height: 49px;
     position: relative;
-    font-family: Arial, Helvetica, sans-serif;
     text-align: center;
 
     @media (max-width: 767px) {
@@ -1314,8 +1312,8 @@ table.answer-options-result {
 }
 
 .btn-circle.btn-circle{
-    width: 25px;
-    height: 25px;
+    width: 26px;
+    height: 26px;
     text-align: center;
     font-size: 10px;
     font-family: Arial, Helvetica, sans-serif;
