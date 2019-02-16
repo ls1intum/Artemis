@@ -92,7 +92,15 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         responsive: true,
         scales: {
             xAxes: [{
-                stacked: true
+                stacked: true,
+                ticks: {
+                    autoSkip: false,
+                    maxRotation: 0,
+                    minRotation: 0
+                },
+                gridLines: {
+                    display: false
+                }
             }],
             yAxes: [{
                 stacked: true
@@ -107,7 +115,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
             }
         }
     };
-    public barChartType = 'bar';
+    public barChartType = 'horizontalBar';
 
     public barChartData: any[] = [65, 59, 80, 81, 56, 55, 40];
     public doughnutChartType = 'doughnut';
@@ -152,10 +160,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
             this.calculateRelativeScores();
             this.groupExercisesByType();
         }
-    }
-
-    previousState() {
-        window.history.back();
     }
 
     ngOnDestroy() {
