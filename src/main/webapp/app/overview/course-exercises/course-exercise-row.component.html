@@ -1,4 +1,4 @@
-<div class="row align-items-center mb-2 mt-2" [routerLink]="[exercise.id]">
+<div class="row align-items-center mb-2 mt-2" (click)="showDetails($event)">
     <div class="col-auto d-none d-sm-block">
         <fa-icon [icon]="exerciseIcon.faIcon" size="2x" placement="right"
                  [ngbTooltip]="exerciseIcon.tooltip" container="body"></fa-icon>
@@ -39,7 +39,7 @@
             </div>
         </div>
         <div class="row">
-            <div class="col"><div class="btn btn-primary btn-sm">Start Exercise</div></div>
+            <div class="col"><jhi-course-exercise-row-actions [exercise]="exercise"></jhi-course-exercise-row-actions></div>
             <div class="col">Here my Tags</div>
             <div class="col-auto"
                  [ngClass]="getUrgentClass(exercise.dueDate ? exercise.dueDate : exercise.releaseDate)">{{(exercise.dueDate ? exercise.dueDate : exercise.releaseDate) |

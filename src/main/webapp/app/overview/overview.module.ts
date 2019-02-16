@@ -9,6 +9,7 @@ import { ExerciseTypePipe } from '../entities/exercise/';
 
 import {
     CourseExerciseRowComponent,
+    CourseExerciseRowActionsComponent,
     CourseExercisesComponent,
     CourseOverviewComponent,
     CourseGradeBookComponent,
@@ -39,6 +40,7 @@ const ENTITY_STATES = [
         OverviewComponent,
         CourseOverviewComponent,
         OverviewCourseCardComponent,
+        CourseExerciseRowActionsComponent,
         CourseStatisticsComponent,
         CourseExerciseRowComponent,
         CourseExercisesComponent,

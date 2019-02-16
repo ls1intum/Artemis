@@ -1,115 +1,87 @@
 <!-- QUIZ EXERCISE ACTIONS START -->
-<div class="col" *ngIf="exercise.type === QUIZ">
+<div *ngIf="exercise.type === QUIZ">
     <!-- ACTIONS START -->
     <div class="btn-group mr-2">
         <button jhi-exercise-action-button
                 buttonIcon="redo"
                 buttonLabel="Practice"
+                smallButton="true"
                 [buttonLoading]="exercise.loading"
                 *ngIf="isPracticeModeAvailable()"
                 [routerLink]="['/quiz', exercise.id, 'practice']"></button>
         <button jhi-exercise-action-button
                 buttonIcon="play-circle"
                 buttonLabel="Open Quiz"
+                smallButton="true"
                 [buttonLoading]="exercise.loading"
                 *ngIf="participationStatus() === QUIZ_NOT_STARTED"
                 (click)="startExercise()"></button>
         <button jhi-exercise-action-button
                 buttonIcon="play-circle"
                 buttonLabel="Start Quiz"
+                smallButton="true"
                 [buttonLoading]="exercise.loading"
                 *ngIf="participationStatus() === QUIZ_UNINITIALIZED"
                 (click)="startExercise()"></button>
         <button jhi-exercise-action-button
                 buttonIcon="play-circle"
                 buttonLabel="Resume Quiz"
+                smallButton="true"
                 *ngIf="participationStatus() === QUIZ_ACTIVE"
                 [buttonLoading]="exercise.loading"
                 (click)="startExercise()"></button>
     </div>
     <!-- ACTIONS END -->
-    <!-- INFORMATION START -->
-    <div class="btn-group">
-        <button jhi-exercise-action-button
-                buttonIcon="eye"
-                buttonLabel="View Submission"
-                outlined="true"
-                [buttonLoading]="exercise.loading"
-                (click)="startExercise()"></button>
-        <button jhi-exercise-action-button
-                buttonIcon="eye"
-                buttonLabel="View Results"
-                outlined="true"
-                [buttonLoading]="exercise.loading"
-                (click)="startExercise()"></button>
-        <button jhi-exercise-action-button
-                *ngIf="exercise.isAtLeastTutor"
-                buttonIcon="signal"
-                buttonLabel="Statistics"
-                outlined="true"
-                [buttonLoading]="exercise.loading"
-                routerLink="/quiz/{{exercise.id}}/quiz-point-statistic"></button>
-
-    </div>
-    <!-- INFORMATION END -->
 </div>
 <!-- QUIZ EXERCISE ACTIONS END -->
 
 
 <!-- MODELING EXERCISE ACTIONS START -->
-<div class="col" *ngIf="exercise.type === MODELING">
+<div *ngIf="exercise.type === MODELING">
     <!-- ACTION START -->
     <div class="btn-group mr-2">
         <button jhi-exercise-action-button
                 buttonIcon="play-circle"
                 buttonLabel="Start exercise"
+                smallButton="true"
                 [buttonLoading]="exercise.loading"
                 *ngIf="participationStatus() === UNINITIALIZED"
                 (click)="startExercise()"></button>
         <button jhi-exercise-action-button
                 buttonIcon="play-circle"
                 buttonLabel="Resume exercise"
+                smallButton="true"
                 [buttonLoading]="exercise.loading"
                 *ngIf="participationStatus() === INACTIVE"
                 (click)="resumeExercise()"></button>
         <button jhi-exercise-action-button
                 buttonIcon="folder-open"
                 buttonLabel="Open modeling editor"
+                smallButton="true"
                 [buttonLoading]="exercise.loading"
                 *ngIf="exercise.participations && exercise.participations.length > 0 && exercise.participations[0].initializationState === 'INITIALIZED'"
                 routerLink="/modeling-editor/{{exercise.participations[0].id}}"></button>
     </div>
     <!-- ACTION END -->
-    <!-- INFORMATION START -->
-    <div class="btn-group">
-        <div class="btn-group">
-            <button jhi-exercise-action-button
-                    buttonIcon="folder-open"
-                    buttonLabel="Show submission"
-                    outlined="true"
-                    [buttonLoading]="exercise.loading"
-                    *ngIf="exercise.participations && exercise.participations.length > 0 && exercise.participations[0].initializationState === 'FINISHED'"
-                    routerLink="/modeling-editor/{{exercise.participations[0].id}}"></button>
-        </div>
-    </div>
-    <!-- INFORMATION END -->
 </div>
 <!-- MODELING EXERCISE ACTIONS END -->
 
 
 <!-- PROGRAMMING EXERCISE ACTIONS START -->
-<div class="col" *ngIf="exercise.type === PROGRAMMING">
+<div *ngIf="exercise.type === PROGRAMMING">
     <!-- ACTION START -->
     <div class="btn-group">
         <button jhi-exercise-action-button
                 buttonIcon="folder-open"
                 buttonLabel="Open exercise"
-                [buttonLoading]="exercise.loading"
+                smallButton="true"
                 *ngIf="isOnlineEditorAllowed()"
+                [buttonLoading]="exercise.loading"
                 routerLink="/editor/{{exercise.participations[0].id}}"></button>
         <button jhi-exercise-action-button
                 buttonIcon="download"
                 buttonLabel="Clone repository"
+                smallButton="true"
                 [buttonLoading]="exercise.loading"
                 placement="right"
                 container="body"
@@ -137,6 +109,7 @@
         <button jhi-exercise-action-button
                 buttonIcon="external-link"
                 buttonLabel="Go to build plan"
+                smallButton="true"
                 [buttonLoading]="exercise.loading"
                 *ngIf="publishBuildPlanUrl()"
                 routerLink="/editor/{{exercise.participations[0].id}}"></button>
@@ -147,54 +120,49 @@
 
 
 <!-- TEXT EXERCISE ACTIONS START -->
-<div class="col" *ngIf="exercise.type === TEXT">
+<div *ngIf="exercise.type === TEXT">
     <!-- ACTIONS START -->
     <div class="btn-group mr-2">
         <button jhi-exercise-action-button
                 buttonIcon="play-circle"
                 buttonLabel="Start exercise"
+                smallButton="true"
                 [buttonLoading]="exercise.loading"
                 (click)="startExercise()"></button>
         <button jhi-exercise-action-button
                 buttonIcon="play-circle"
                 buttonLabel="Resume exercise"
+                smallButton="true"
                 [buttonLoading]="exercise.loading"
                 (click)="resumeExercise()"></button>
         <button jhi-exercise-action-button
                 buttonIcon="folder-open"
                 buttonLabel="Open text editor"
+                smallButton="true"
                 [buttonLoading]="exercise.loading"
                 routerLink="/text/{{exercise.participations[0].id}}"></button>
     </div>
     <!-- ACTIONS END -->
-    <!-- INFORMATION START -->
-    <div class="btn-group">
-        <button jhi-exercise-action-button
-                buttonIcon="folder-open"
-                buttonLabel="Show submission"
-                outlined="true"
-                [buttonLoading]="exercise.loading"
-                routerLink="/text/{{exercise.participations[0].id}}"></button>
-    </div>
-    <!-- INFORMATION END -->
 </div>
 <!-- TEXT EXERCISE ACTIONS END -->
 
 
 <!-- FILE UPLOAD EXERCISE ACTIONS END -->
-<div class="col" *ngIf="exercise.type === FILE_UPLOAD">
+<div *ngIf="exercise.type === FILE_UPLOAD">
     <!-- ACTIONS START -->
     <div class="btn-group">
         <button jhi-exercise-action-button
                 buttonIcon="play-circle"
                 buttonLabel="Start exercise"
                 outlined="true"
+                smallButton="true"
                 [buttonLoading]="exercise.loading"
                 (click)="startExercise()"></button>
         <button jhi-exercise-action-button
                 buttonIcon="play-circle"
                 buttonLabel="Resume exercise"
                 outlined="true"
+                smallButton="true"
                 [buttonLoading]="exercise.loading"
                 (click)="resumeExercise()"></button>
     </div>

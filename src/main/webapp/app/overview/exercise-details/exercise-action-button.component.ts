@@ -10,11 +10,15 @@ export class ExerciseActionButtonComponent {
     @Input() buttonIcon: string;
     @Input() buttonLabel: string;
     @Input() outlined: boolean = false;
+    @Input() smallButton: boolean = false;
     @HostBinding('disabled') @Input() buttonLoading: boolean = false;
 
     @HostBinding('class')
     public get buttonClass(): string {
-        return this.outlined ? 'btn btn-outline-primary' : 'btn btn-primary';
+        const btnClass = ['btn'];
+        btnClass.push(this.outlined ? 'btn-outline-primary' : 'btn-primary');
+        if(this.smallButton) btnClass.push('btn-sm');
+        return btnClass.join(' ');
     }
 
 }

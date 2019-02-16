@@ -7,7 +7,7 @@ import * as moment from 'moment';
 import { Moment } from 'moment';
 import { Course, CourseExerciseService } from 'app/entities/course';
 import { AccountService, WindowRef } from 'app/core';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClient } from '@angular/common/http';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
@@ -40,6 +40,7 @@ export class CourseExerciseRowComponent implements OnInit {
                 private participationService: ParticipationService,
                 private httpClient: HttpClient,
                 private router: Router,
+                private route: ActivatedRoute,
                 private courseExerciseService: CourseExerciseService) {
     }
 
@@ -105,27 +106,27 @@ export class CourseExerciseRowComponent implements OnInit {
         if (this.exercise.type === this.PROGRAMMING) {
             return {
                 faIcon: 'keyboard',
-                tooltip: 'This is a programming exercise'
+                tooltip: 'Programming exercise'
             };
         } else if (this.exercise.type === ExerciseType.MODELING) {
             return {
                 faIcon: 'project-diagram',
-                tooltip: 'This is a modeling exercise'
+                tooltip: 'Modeling exercise'
             };
         } else if (this.exercise.type === ExerciseType.QUIZ) {
             return {
                 faIcon: 'check-double',
-                tooltip: 'This is a quiz exercise'
+                tooltip: 'Quiz exercise'
             };
         } else if (this.exercise.type === ExerciseType.TEXT) {
             return {
                 faIcon: 'font',
-                tooltip: 'This is a text exercise'
+                tooltip: 'Text exercise'
             };
         } else if (this.exercise.type === ExerciseType.FILE_UPLOAD) {
             return {
                 faIcon: 'file-upload',
-                tooltip: 'This is a file upload exercise'
+                tooltip: 'File upload exercise'
             };
         } else {
             return;
@@ -259,6 +260,12 @@ export class CourseExerciseRowComponent implements OnInit {
 
     startPractice(exercise: Exercise) {
         return this.router.navigate(['/quiz', exercise.id, 'practice']);
+    }
+
+    showDetails(event: any) {
+        if(!(event.target.closest('jhi-course-exercise-row-actions') && event.target.closest('.btn'))) {
+            this.router.navigate([ this.exercise.id ], { relativeTo: this.route });
+        }
     }
 
 }
