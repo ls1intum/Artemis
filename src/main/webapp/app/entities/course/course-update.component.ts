@@ -20,7 +20,12 @@ export class CourseUpdateComponent implements OnInit {
     isSaving: boolean;
 
     shortNamePattern = /^[a-zA-Z][a-zA-Z0-9]*/; // must start with a letter and cannot contain special characters
-    errorMessages = {shortName: {minlength: 'Short Name must have a length of 3 or more characters.', forbidden: 'Short Name must start with a letter and cannot contain special characters.'}};
+    errorMessages = {
+        shortName: {
+            minlength: 'Short Name must have a length of 3 or more characters.',
+            forbidden: 'Short Name must start with a letter and cannot contain special characters.'
+        }
+    };
 
     constructor(private courseService: CourseService, private activatedRoute: ActivatedRoute, private jhiAlertService: JhiAlertService) {}
 
@@ -30,16 +35,18 @@ export class CourseUpdateComponent implements OnInit {
             this.course = course;
         });
         this.courseForm = new FormGroup({
-            'id': new FormControl(this.course.id),
-            'title': new FormControl(this.course.title, [Validators.required]),
-            'shortName': new FormControl(this.course.shortName, {validators: [Validators.required, Validators.minLength(3), regexValidator(this.shortNamePattern) ], updateOn: 'blur'}),
-            'studentGroupName': new FormControl(this.course.studentGroupName, [Validators.required]),
-            'teachingAssistantGroupName': new FormControl(this.course.teachingAssistantGroupName, [Validators.required]),
-            'instructorGroupName': new FormControl(this.course.instructorGroupName, [Validators.required]),
-            'startDate': new FormControl(this.course.startDate),
-            // 'startTime': new FormControl(this.course.startTime),
-            'endDate': new FormControl(this.course.endDate),
-            'onlineCourse': new FormControl(this.course.onlineCourse)
+            id: new FormControl(this.course.id),
+            title: new FormControl(this.course.title, [Validators.required]),
+            shortName: new FormControl(this.course.shortName, {
+                validators: [Validators.required, Validators.minLength(3), regexValidator(this.shortNamePattern)],
+                updateOn: 'blur'
+            }),
+            studentGroupName: new FormControl(this.course.studentGroupName, [Validators.required]),
+            teachingAssistantGroupName: new FormControl(this.course.teachingAssistantGroupName, [Validators.required]),
+            instructorGroupName: new FormControl(this.course.instructorGroupName, [Validators.required]),
+            startDate: new FormControl(this.course.startDate),
+            endDate: new FormControl(this.course.endDate),
+            onlineCourse: new FormControl(this.course.onlineCourse)
         });
     }
 
@@ -50,9 +57,9 @@ export class CourseUpdateComponent implements OnInit {
     save() {
         this.isSaving = true;
         if (this.course.id !== undefined) {
-            this.subscribeToSaveResponse(this.courseService.update(this.course));
+            this.subscribeToSaveResponse(this.courseService.update(this.courseForm.value));
         } else {
-            this.subscribeToSaveResponse(this.courseService.create(this.course));
+            this.subscribeToSaveResponse(this.courseService.create(this.courseForm.value));
         }
     }
 
@@ -73,5 +80,7 @@ export class CourseUpdateComponent implements OnInit {
         this.isSaving = false;
     }
 
-    get shortName() { return this.courseForm.get('shortName'); }
+    get shortName() {
+        return this.courseForm.get('shortName');
+    }
 }
