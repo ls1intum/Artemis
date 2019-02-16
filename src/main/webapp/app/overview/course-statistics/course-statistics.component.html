@@ -33,7 +33,7 @@
 
                     ></canvas>
                 </div>
-                <div class="col-12 col-md-4 align-self-center" *ngIf="exerciseGroup && exerciseGroup.absoluteScore && exerciseGroup.totalMaxScore && exerciseGroup.relativeScore">
+                <div class="col-12 col-md-4 align-self-center" *ngIf="exerciseGroup">
                     <h4>Number of Exercises: {{exerciseGroup.names.length}}</h4>
                     <h4>Absolute Score: {{exerciseGroup.absoluteScore}} Pts</h4>
                     <h4>Total Max Score: {{exerciseGroup.totalMaxScore}} Pts</h4>

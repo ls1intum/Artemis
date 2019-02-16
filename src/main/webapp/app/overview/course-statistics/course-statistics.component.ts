@@ -117,7 +117,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     };
     public barChartType = 'horizontalBar';
 
-    public barChartData: any[] = [65, 59, 80, 81, 56, 55, 40];
     public doughnutChartType = 'doughnut';
     public totalScoreOptions: object = {
         cutoutPercentage: 75,
