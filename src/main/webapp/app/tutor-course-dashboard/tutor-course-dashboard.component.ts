@@ -50,24 +50,6 @@ export class TutorCourseDashboardComponent implements OnInit {
                     this.unfinishedExercises = this.course.exercises.filter(exercise => exercise.tutorParticipations[0].status !== TutorParticipationStatus.COMPLETED).sort(this.sortByAssessmentDueDate);
                     this.finishedExercises = this.course.exercises.filter(exercise => exercise.tutorParticipations[0].status === TutorParticipationStatus.COMPLETED).sort(this.sortByAssessmentDueDate);
                     this.exercises = this.unfinishedExercises;
-
-                    // for (const exercise of this.course.exercises) {
-                    //     this.numberOfSubmissions += exercise.participations.filter(
-                    //         participation =>
-                    //             participation.submissions.filter(
-                    //                 submission => submission.submissionExerciseType === SubmissionExerciseType.TEXT
-                    //             ).length > 0
-                    //     ).length;
-                    //     this.numberOfAssessments += exercise.participations.filter(
-                    //         participation => participation.results.length > 0
-                    //     ).length;
-                    //     this.numberOfTutorAssessments += exercise.participations.filter(
-                    //         participation => participation.results.filter(result => result.assessor && result.assessor.id === this.tutor.id).length > 0
-                    //     ).length;
-                    //     this.numberOfComplaints += exercise.participations.filter(
-                    //         participation => participation.results.filter(result => result.hasComplaint === true).length > 0
-                    //     ).length;
-                    // }
                 }
             },
             (response: string) => this.onError(response)
@@ -82,10 +64,6 @@ export class TutorCourseDashboardComponent implements OnInit {
             },
             (response: string) => this.onError(response)
         )
-    }
-
-    trackId(index: number, item: Course) {
-        return item.id;
     }
 
     triggerFinishedExercises() {

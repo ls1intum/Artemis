@@ -234,7 +234,7 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/:id/for-dashboard
+     * GET /courses/:id/for-tutor-dashboard
      *
      * @param courseId the id of the course to retrieve
      * @return data about a course including all exercises, plus some data for the tutor
