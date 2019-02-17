@@ -7,6 +7,8 @@ import { CourseExerciseService } from 'app/entities/course';
 import { Router } from '@angular/router';
 import { JhiAlertService } from 'ng-jhipster';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
+import { SERVER_API_URL } from 'app/app.constants';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -35,11 +37,13 @@ export class ExerciseDetailsStudentActionsComponent {
 
     @Input() exercise: Exercise;
 
+    public repositoryPassword: string;
     public wasCopied: boolean = false;
 
     constructor(
         private jhiAlertService: JhiAlertService,
         private courseExerciseService: CourseExerciseService,
+        private httpClient: HttpClient,
         private router: Router,
     ) {
     }
@@ -155,11 +159,11 @@ export class ExerciseDetailsStudentActionsComponent {
         return 'sourcetree://cloneRepo?type=stash&cloneUrl=' + encodeURI(cloneUrl) + '&baseWebUrl=https://repobruegge.in.tum.de';
     }
 
-    resumeExercise(exercise: Exercise) {
-        exercise.loading = true;
+    resumeExercise() {
+        this.exercise.loading = true;
         this.courseExerciseService
             .resumeExercise(this.exercise.course.id, this.exercise.id)
-            .finally(() => (exercise.loading = false))
+            .finally(() => (this.exercise.loading = false))
             .subscribe(
                 () => true,
                 error => {
@@ -168,7 +172,16 @@ export class ExerciseDetailsStudentActionsComponent {
             );
     }
 
-    startPractice(exercise: Exercise) {
-        return this.router.navigate(['/quiz', exercise.id, 'practice']);
+    startPractice() {
+        return this.router.navigate(['/quiz', this.exercise.id, 'practice']);
+    }
+
+    getRepositoryPassword() {
+        this.httpClient.get(`${SERVER_API_URL}/api/account/password`).subscribe(res => {
+            const password = res['password'];
+            if (password) {
+                this.repositoryPassword = password;
+            }
+        });
     }
 }

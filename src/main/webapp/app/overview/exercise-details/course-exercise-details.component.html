@@ -9,7 +9,8 @@
                 </h3>
                 <h4 *ngIf="exercise.dueDate">
                     <span class="mr-2">Due Date: {{exercise.dueDate | date:'dd/MM/yy HH:MM'}}</span>
-                    <span [ngClass]="exerciseStatusBadge" class="badge"exercise.dueDate>{{exercise.dueDate | amTimeAgo}}</span>
+                    <span [ngClass]="exerciseStatusBadge" class="badge"
+                          exercise.dueDate>{{exercise.dueDate | amTimeAgo}}</span>
                 </h4>
                 <h4 *ngIf="!exercise.dueDate">
                     <span class="mr-2">Due Date: N/A</span>
@@ -28,7 +29,7 @@
                 </div>
                 <div class="row">
                     <div class="col-6"><h5>Level:</h5></div>
-                    <div class="col-6"><h5>{{exercise.level || "N/A"}}</h5></div>
+                    <div class="col-6"><h5>{{"N/A"}}</h5></div>
                 </div>
                 <div class="row">
                     <div class="col-6"><h5>Exercise status:</h5></div>

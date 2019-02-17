@@ -37,11 +37,13 @@ export class CourseExerciseRowActionsComponent {
 
     @Input() exercise: Exercise;
 
+    public repositoryPassword: string;
     public wasCopied = false;
 
     constructor(
         private jhiAlertService: JhiAlertService,
         private courseExerciseService: CourseExerciseService,
+        private httpClient: HttpClient,
         private router: Router,
     ) {
     }
@@ -157,11 +159,11 @@ export class CourseExerciseRowActionsComponent {
         return 'sourcetree://cloneRepo?type=stash&cloneUrl=' + encodeURI(cloneUrl) + '&baseWebUrl=https://repobruegge.in.tum.de';
     }
 
-    resumeExercise(exercise: Exercise) {
-        exercise.loading = true;
+    resumeExercise() {
+        this.exercise.loading = true;
         this.courseExerciseService
             .resumeExercise(this.exercise.course.id, this.exercise.id)
-            .finally(() => (exercise.loading = false))
+            .finally(() => (this.exercise.loading = false))
             .subscribe(
                 () => true,
                 error => {
@@ -170,7 +172,16 @@ export class CourseExerciseRowActionsComponent {
             );
     }
 
-    startPractice(exercise: Exercise) {
-        return this.router.navigate(['/quiz', exercise.id, 'practice']);
+    startPractice() {
+        return this.router.navigate(['/quiz', this.exercise.id, 'practice']);
+    }
+
+    getRepositoryPassword() {
+        this.httpClient.get(`${SERVER_API_URL}/api/account/password`).subscribe(res => {
+            const password = res['password'];
+            if (password) {
+                this.repositoryPassword = password;
+            }
+        });
     }
 }
