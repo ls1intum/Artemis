@@ -10,6 +10,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { QuizSubmission, QuizSubmissionService } from '../../entities/quiz-submission';
 import { Participation, ParticipationService } from '../../entities/participation';
 import { Result } from '../../entities/result';
+import { TranslateService } from '@ngx-translate/core';
 import { DragAndDropQuestion } from '../../entities/drag-and-drop-question';
 import { MultipleChoiceQuestion } from '../../entities/multiple-choice-question';
 import { ShortAnswerQuestion } from '../../entities/short-answer-question';
@@ -24,11 +25,18 @@ import { DragAndDropMapping } from 'app/entities/drag-and-drop-mapping';
 import { AnswerOption } from 'app/entities/answer-option';
 import { ShortAnswerSubmittedText } from 'app/entities/short-answer-submitted-text';
 
+interface Explanation {
+    translateKey: string;
+    translateValues: {};
+}
+
 @Component({
     selector: 'jhi-quiz',
     templateUrl: './quiz.component.html',
     providers: [ParticipationService]
 })
+
+
 export class QuizComponent implements OnInit, OnDestroy {
     // make constants available to html for comparison
     readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
@@ -103,7 +111,8 @@ export class QuizComponent implements OnInit, OnDestroy {
         private participationService: ParticipationService,
         private route: ActivatedRoute,
         private jhiAlertService: JhiAlertService,
-        private quizSubmissionService: QuizSubmissionService
+        private quizSubmissionService: QuizSubmissionService,
+        private translateService: TranslateService,
     ) {}
 
     ngOnInit() {
@@ -893,6 +902,23 @@ export class QuizComponent implements OnInit, OnDestroy {
         document.getElementById('question' + questionIndex).scrollIntoView({
             behavior: 'smooth'
         });
+    }
+
+    explainProgressBarColor(id: number): Explanation[] {
+        const explanation = new Array<Explanation>();
+
+            if (this.selectedAnswerOptions[id] == 0|| this.dragAndDropMappings[id] == 0 || this.shortAnswerSubmittedTexts[id] == 0) {
+                explanation.push({
+                    translateKey: 'arTeMiSApp.quizExercise.explanationNotAnswered',
+                    translateValues: {}
+                });
+            } else {
+                explanation.push({
+                    translateKey: 'arTeMiSApp.quizExercise.explanationAnswered',
+                    translateValues: {}
+                });
+            }
+         return explanation;
     }
 
 }

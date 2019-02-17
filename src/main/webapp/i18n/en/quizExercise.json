@@ -159,7 +159,9 @@
                 "all_or_nothing": "All or Nothing",
                 "proportional_with_penalty": "Proportional with Penalty"
             },
-            "importJSON": "Import Question(s) in JSON Format"
+            "importJSON": "Import Question(s) in JSON Format",
+            "explanationAnswered": "You have answered this question",
+            "explanationNotAnswered": "You have not had a look at this question"
         }
     }
 }
