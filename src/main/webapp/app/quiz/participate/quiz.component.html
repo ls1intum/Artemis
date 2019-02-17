@@ -21,10 +21,9 @@
         <div class="quiz-footer-content">
             <div>
                 <div class="stepwizardquiz">
-                    <div *ngFor="let question of quizExercise.questions; let i = index" class="stepwizardquiz-step"
-                            [ngbTooltip]="tooltipExplanationTranslate"
-                            tooltip-placement="top-right"
-                            tooltip-class="invalid-reasons-tooltip">
+                        <div *ngFor="let question of quizExercise.questions; let i = index" class="stepwizardquiz-step"
+                             [ngbTooltip]="tooltipExplanationTranslate"
+                             tooltip-placement="top-right">
                         <div data-toggle="tooltip" data-placement="bottom"
                              class="btn btn-light btn-circle stepbutton stepwizardquiz-circle"
                              (click)="navigateToQuestion(i)"
@@ -34,12 +33,10 @@
                             <b class="fa" *ngIf="question.type === SHORT_ANSWER">SA</b>
                             </div>
                         <ng-template #tooltipExplanationTranslate>
-                            <div *ngIf="selectedAnswerOptions[question.id]?.length || dragAndDropMappings[question.id]?.length || shortAnswerSubmittedTexts[question.id]?.length">
-                                {{'arTeMiSApp.quizExercise.explanationAnswered' | translate}}
-                            </div>
-                            <div *ngIf="!(selectedAnswerOptions[question.id]?.length) || !(dragAndDropMappings[question.id]?.length) || !(shortAnswerSubmittedTexts[question.id]?.length)">
-                                {{'arTeMiSApp.quizExercise.explanationNotAnswered' | translate}}
-                            </div>
+                            <p *ngIf="!(selectedAnswerOptions[question.id]?.length) || !(dragAndDropMappings[question.id]?.length) || !(shortAnswerSubmittedTexts[question.id]?.length)">
+                                {{'arTeMiSApp.quizExercise.explanationNotAnswered' | translate}}</p>
+                            <p *ngIf="selectedAnswerOptions[question.id]?.length || dragAndDropMappings[question.id]?.length || shortAnswerSubmittedTexts[question.id]?.length">
+                                {{'arTeMiSApp.quizExercise.explanationAnswered' | translate}}</p>
                         </ng-template>
                         </div>
                     </div>
