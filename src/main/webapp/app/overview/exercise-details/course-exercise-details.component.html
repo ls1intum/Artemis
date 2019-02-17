@@ -15,9 +15,9 @@
                 <h4 *ngIf="!exercise.dueDate">
                     <span class="mr-2">Due Date: N/A</span>
                 </h4>
-                <h4>Categories: Homework, Group exercise</h4>
+                <!--<h4>Categories: Homework, Group exercise</h4>-->
             </div>
-            <div class="col-4">
+            <div class="col-4 d-none d-md-flex">
                 <div class="row">
                     <div class="col-6"><h5>Exercise type:</h5></div>
                     <div class="col-6">
@@ -47,7 +47,7 @@
     <!-- EXERCISE ACTIONS START -->
     <div class="tab-bar pl-2 pr-2 mb-2 justify-content-between">
         <jhi-exercise-details-student-actions [exercise]="exercise"></jhi-exercise-details-student-actions>
-        <div class="col-auto" *ngIf="exercise.isAtLeastTutor">
+        <div class="col-auto d-none d-md-flex" *ngIf="exercise.isAtLeastTutor">
             <span class="mr-1">Instructor actions:</span>
             <div class="btn-group">
                 <div class="btn btn-outline-primary"
@@ -89,13 +89,13 @@
                 <div class="col text-center">
                     <h5>{{currentResult.resultString}}</h5>
                 </div>
-                <div class="col text-center">
+                <div class="col text-center d-none d-md-flex">
                     <h5>{{currentResult.score}}%</h5>
                 </div>
                 <div class="col text-center">
                     <h5>{{currentResult.completionDate | date: 'dd/MM/yy'}}</h5>
                 </div>
-                <div class="col text-left">
+                <div class="col text-left d-none d-md-flex">
                     <h5>({{currentResult.completionDate | amTimeAgo}})</h5>
                 </div>
             </div>
@@ -111,13 +111,13 @@
             <h6>You have no rated result.</h6>
         </div>
     </div>
-    <div class="row mb-2 mt-2 align-items-baseline"
+    <div class="row mb-2 mt-2 align-items-baseline d-none d-md-flex"
          *ngIf="hasResults">
         <div class="col-auto">
             <h3>Recent results:</h3>
         </div>
     </div>
-    <div class="row mb-2" *ngIf="hasResults">
+    <div class="row mb-2 d-none d-md-flex" *ngIf="hasResults">
         <div class="col-12 col-md-8">
             <jhi-result-history [results]="sortedHistoryResult"
                                 [showPreviousDivider]="hasMoreResults"
@@ -142,13 +142,13 @@
                     <div class="col text-center">
                         <h5>{{result.resultString}}</h5>
                     </div>
-                    <div class="col text-center">
+                    <div class="col text-center d-none d-md-flex">
                         <h5>{{result.score}}%</h5>
                     </div>
                     <div class="col text-center">
                         <h5>{{result.completionDate | date: 'dd/MM/yy'}}</h5>
                     </div>
-                    <div class="col text-left">
+                    <div class="col text-left d-none d-md-flex">
                         <h5>({{result.completionDate | amTimeAgo}})</h5>
                     </div>
                 </div>

@@ -1,5 +1,5 @@
 <div *ngIf="course">
-    <div class="row">
+    <div class="row" *ngIf="course.exercises && course.exercises.length > 0">
 
         <div class="co-12 col-md-4 statistic-summary">
             <h2 class="text-center">Your total score</h2>
@@ -20,7 +20,8 @@
         <div class="col-12 col-md-8">
             <div class="row mt-3" *ngFor="let exerciseGroup of groupedExercises">
                 <div class="col-12 mb-1 d-flex align-items-center">
-                    <div class="color-indicator"[style.background]="exerciseTitles[exerciseGroup.type].color"></div> <h2>{{exerciseTitles[exerciseGroup.type].name}}</h2>
+                    <div class="color-indicator" [style.background]="exerciseTitles[exerciseGroup.type].color"></div>
+                    <h2>{{exerciseTitles[exerciseGroup.type].name}}</h2>
                 </div>
                 <div class="col-12 col-md-8">
                     <canvas baseChart height="250"
@@ -40,6 +41,11 @@
                     <h4>Relative Score: {{exerciseGroup.relativeScore}} %</h4>
                 </div>
             </div>
+        </div>
+    </div>
+    <div class="row" *ngIf="!(course.exercises && course.exercises.length > 0)">
+        <div class="col mt-3">
+            No statistics available for the course.
         </div>
     </div>
 </div>

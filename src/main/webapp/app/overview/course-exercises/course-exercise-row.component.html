@@ -5,14 +5,14 @@
     </div>
     <div class="col">
         <div class="row">
-            <div class="col">
+            <div class="col-sm col-12">
                 <h4>{{exercise.title}}</h4>
                 <span class="badge badge-warning" *ngIf="!asQuizExercise(exercise).visibleToStudents" placement="right"
                       ngbTooltip="Only visible to teaching assistants and instructors. Release date: {{exercise.releaseDate | date:'MMM d, y H:mm'}}">
                     Not Released</span>
                 <span class="badge badge-success" [hidden]="!asQuizExercise(exercise).isActiveQuiz">Live</span>
             </div>
-            <div class="col-auto" [ngSwitch]="exercise.participationStatus">
+            <div class="col-sm-auto col-12" [ngSwitch]="exercise.participationStatus">
                 <span class="text-muted" *ngSwitchCase="'uninitialized'">You have not started this exercise yet.</span>
                 <span class="text-muted" *ngSwitchCase="'quiz-not-started'">The quiz hasn't started yet.</span>
                 <span class="text-muted" *ngSwitchCase="'quiz-uninitialized'">You have not started this quiz yet.</span>

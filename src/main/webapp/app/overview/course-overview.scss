@@ -19,7 +19,7 @@ Course Info Bar
 ========================================================================== */
 .tab-bar {
     display: flex;
-    height: 60px;
+    min-height: 60px;
     align-items: center;
     margin: 0 -1.25rem;
     border-bottom: 1px solid $border-color;
