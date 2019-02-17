@@ -22,24 +22,18 @@
             <div>
                 <div class="stepwizardquiz">
                         <div *ngFor="let question of quizExercise.questions; let i = index" class="stepwizardquiz-step"
-                             [ngbTooltip]=" selectedAnswerOptions[question.id]?.length || dragAndDropMappings[question.id]?.length || shortAnswerSubmittedTexts[question.id]?.length ? '' : tooltipNotExplanationTranslate"
-                             tooltip-placement="right">
-                        <div data-toggle="tooltip" data-placement="bottom"
+                             [ngbTooltip]=" !(selectedAnswerOptions[question.id]?.length || dragAndDropMappings[question.id]?.length || shortAnswerSubmittedTexts[question.id]?.length ) ? '' : tooltipExplanationTranslate">
+                        <div data-toggle="tooltip"
                              class="btn btn-light btn-circle stepbutton stepwizardquiz-circle"
                              (click)="navigateToQuestion(i)"
-                             tooltip-placement="left"
-                             [ngbTooltip]=" !(selectedAnswerOptions[question.id]?.length || dragAndDropMappings[question.id]?.length || shortAnswerSubmittedTexts[question.id]?.length ) ? '' : tooltipExplanationTranslate"
+                             [ngbTooltip]="selectedAnswerOptions[question.id]?.length || dragAndDropMappings[question.id]?.length || shortAnswerSubmittedTexts[question.id]?.length ? '' : tooltipNotExplanationTranslate"
                              [ngClass]="{'multiplechoicecolor-question': question.type === MULTIPLE_CHOICE, 'draganddropcolor-question': question.type === DRAG_AND_DROP, 'shortanswercolor-question': question.type === SHORT_ANSWER, 'changed-question': selectedAnswerOptions[question.id]?.length || dragAndDropMappings[question.id]?.length || shortAnswerSubmittedTexts[question.id]?.length} " >
                             <b class="fa" *ngIf="question.type === DRAG_AND_DROP">DD</b>
                             <b class="fa" *ngIf="question.type === MULTIPLE_CHOICE">MC</b>
                             <b class="fa" *ngIf="question.type === SHORT_ANSWER">SA</b>
                             </div>
-                            <ng-template #tooltipExplanationTranslate>
-                                    {{'arTeMiSApp.quizExercise.explanationAnswered' | translate}}
-                            </ng-template>
-                            <ng-template #tooltipNotExplanationTranslate>
-                                    {{'arTeMiSApp.quizExercise.explanationNotAnswered' | translate}}
-                            </ng-template>
+                            <ng-template #tooltipExplanationTranslate>{{'arTeMiSApp.quizExercise.explanationAnswered' | translate}}</ng-template>
+                            <ng-template #tooltipNotExplanationTranslate>{{'arTeMiSApp.quizExercise.explanationNotAnswered' | translate}}</ng-template>
                         </div>
                     </div>
                 <div *ngIf="quizExercise.questions" class="align-text">
