@@ -28,7 +28,7 @@
         <jhi-quiz-scoring-infostudent-modal [score]="score" [question]="question" [MultipleChoiceMapping]="selectedAnswerOptions" ></jhi-quiz-scoring-infostudent-modal>
     </div>
     <div class="answer-options" *ngIf="!showResult">
-        <div *ngFor="let answerOption of question.answerOptions; let i = index" class="answer-option" [ngClass]="{'click-disabled': clickDisabled}" (click)="toggleSelection(answerOption)">
+        <div *ngFor="let answerOption of question.answerOptions; let i = index" id="answer-option-{{i}}" class="answer-option" [ngClass]="{'click-disabled': clickDisabled}" (click)="toggleSelection(answerOption)">
             <div class="content">
                 <div class="text" [innerHTML]="rendered.answerOptions[i].text"></div>
                 <div class="hint">
@@ -42,8 +42,8 @@
                 </div>
             </div>
             <div class="selection">
-                <fa-icon [icon]="['far', 'check-square']" *ngIf="isAnswerOptionSelected(answerOption)"></fa-icon>
-                <fa-icon [icon]="['far', 'square']" *ngIf="!isAnswerOptionSelected(answerOption)"></fa-icon>
+                <fa-icon [icon]="['far', 'check-square']" size="2x" *ngIf="isAnswerOptionSelected(answerOption)"></fa-icon>
+                <fa-icon [icon]="['far', 'square']" size="2x" *ngIf="!isAnswerOptionSelected(answerOption)"></fa-icon>
             </div>
         </div>
     </div>
@@ -75,9 +75,9 @@
                 </div>
             </td>
             <td class="solution">
-                <span *ngIf="!answerOption.invalid && !question.invalid && answerOption.isCorrect" class="correct">Correct</span>
-                <span *ngIf="!answerOption.invalid && !question.invalid && !answerOption.isCorrect" class="wrong">Wrong</span>
-                <span *ngIf="answerOption.invalid || question.invalid" class="wrong" jhiTranslate="arTeMiSApp.question.invalid"></span>
+                <span id="answer-option-{{i}}-correct" *ngIf="!answerOption.invalid && !question.invalid && answerOption.isCorrect" class="correct">Correct</span>
+                <span id="answer-option-{{i}}-wrong" *ngIf="!answerOption.invalid && !question.invalid && !answerOption.isCorrect" class="wrong">Wrong</span>
+                <span id="answer-option-{{i}}-invalid" *ngIf="answerOption.invalid || question.invalid" class="wrong" jhiTranslate="arTeMiSApp.question.invalid"></span>
                 <fa-icon ngbTooltip="Invalid answers will be assessed as correct."
                            placement="top"
                            style="color:black;"

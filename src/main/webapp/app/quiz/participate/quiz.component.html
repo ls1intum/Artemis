@@ -64,7 +64,7 @@
             <div *ngIf="showingResult && mode !== 'solution'" class="text-center">
                 <div id="quiz-score" [ngClass]="{incorrect: userScore < totalScore}">
                     <span class="colon-suffix" jhiTranslate="arTeMiSApp.quizExercise.totalScore"></span>
-                    <span>{{userScore}}/{{totalScore}} ({{result.score}} %)</span>
+                    <span id="quiz-score-result">{{userScore}}/{{totalScore}} ({{result.score}} %)</span>
                 </div>
                 <div *ngIf="mode === 'practice'">
                     <span jhiTranslate="arTeMiSApp.quizExercise.practiceMode"></span>
@@ -76,7 +76,7 @@
             <div *ngIf="mode === 'solution'">
                 <span jhiTranslate="arTeMiSApp.quizExercise.solution"></span>
             </div>
-            <button *ngIf="!submission.submitted && !showingResult" [disabled]=" isSubmitting || waitingForQuizStart || remainingTimeSeconds < 0" class="btn btn-success btn-lg" jhiTranslate="entity.action.submit" (click)="onSubmit()"></button>
+            <button id="submit-quiz" *ngIf="!submission.submitted && !showingResult" [disabled]="isSubmitting || waitingForQuizStart || remainingTimeSeconds < 0" class="btn btn-success btn-lg" jhiTranslate="entity.action.submit" (click)="onSubmit()"></button>
             <button *ngIf="submission.submitted && !showingResult" disabled class="btn btn-success btn-lg" jhiTranslate="arTeMiSApp.quizExercise.submitted"></button>
         </div>
     </div>
