@@ -83,7 +83,11 @@ public class TextSubmissionService {
     }
 
     /**
-     * Given an exercise id, find a text submission for that exercise which still doesn't have any result
+     * Given an exercise id, find a random text submission for that exercise which still doesn't have any result.
+     *
+     * We relay for the randomness to `findAny()`, which return any element of the stream. While it is not
+     * mathematically random, it is not deterministic
+     * https://docs.oracle.com/javase/8/docs/api/java/util/stream/Stream.html#findAny--
      *
      * @param exerciseId the exercise we want to retrieve
      * @return a textSubmission without any result, if any
@@ -138,5 +142,14 @@ public class TextSubmissionService {
                 return textSubmission;
             })
             .collect(Collectors.toList());
+    }
+
+    /**
+     * Given a courseId, return the number of submissions for that course
+     * @param courseId - the course we are interested in
+     * @return a number of submissions for the course
+     */
+    public long countNumberOfSubmissions(Long courseId) {
+        return textSubmissionRepository.countByParticipation_Exercise_Course_Id(courseId);
     }
 }

@@ -20,4 +20,5 @@ public interface TutorParticipationRepository extends JpaRepository<TutorPartici
 
     TutorParticipation findByAssessedExerciseAndTutor(Exercise assessedExercise, User tutor);
 
+    List<TutorParticipation> findAllByAssessedExercise_Course_IdAndTutor_Id(long courseId, long tutorId);
 }

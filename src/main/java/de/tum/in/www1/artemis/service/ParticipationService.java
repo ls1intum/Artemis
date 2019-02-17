@@ -568,32 +568,4 @@ public class ParticipationService {
             delete(participation.getId(), deleteBuildPlan, deleteRepository);
         }
     }
-
-    @Transactional(readOnly = true)
-    public List<Participation> findByExerciseIdForTutorDashboard(Long participationId) {
-        List<Participation> participationList = this.findByExerciseId(participationId);
-
-        for (Participation participation : participationList) {
-            participation.setStudent(null); // Hide the student from the tutor
-            participation.setSubmissions(new HashSet<>(Collections.singleton(participation.findLatestSubmission())));
-
-            List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId());
-
-            results.forEach(result -> {
-                try {
-                    if (result.isRated() == Boolean.TRUE) {
-                        if (result.getAssessor() instanceof HibernateProxy) {
-                            result.setAssessor((User) Hibernate.unproxy(result.getAssessor()));
-                        }
-                    }
-                } catch (Error error) {
-                    // The result is broken for some reason, just silently ignore it.
-                }
-            });
-
-            participation.setResults(new HashSet<>(results));
-        }
-
-        return participationList;
-    }
 }

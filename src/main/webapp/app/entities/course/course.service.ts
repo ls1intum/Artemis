@@ -19,6 +19,13 @@ import { Result } from 'app/entities/result';
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
 
+export type StatsForTutorDashboard = {
+    numberOfAssessments: number;
+    numberOfTutorAssessments: number;
+    numberOfComplaints: number;
+    numberOfSubmissions: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CourseService {
     private resourceUrl = SERVER_API_URL + 'api/courses';
@@ -65,6 +72,11 @@ export class CourseService {
         return this.http
             .get<Course>(`${this.resourceUrl}/${id}/for-tutor-dashboard`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+    }
+
+    getStatsForTutors(id: number): Observable<HttpResponse<StatsForTutorDashboard>> {
+        return this.http
+            .get<StatsForTutorDashboard>(`${this.resourceUrl}/${id}/stats-for-tutor-dashboard`, { observe: 'response' });
     }
 
     query(): Observable<EntityArrayResponseType> {

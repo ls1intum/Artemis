@@ -65,4 +65,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @Modifying
     @Query(value = "insert into result (participation_id, rated) select :participationId, 0 from dual where not exists (select * from result where participation_id = :participationId and rated = 0)", nativeQuery = true)
     void insertIfNonExisting(@Param("participationId") Long participationId);
+
+    Long countByAssessorIsNotNullAndParticipation_Exercise_CourseId(long courseId);
+
+    Long countByAssessor_IdAndParticipation_Exercise_CourseId(long assessorId, long courseId);
 }

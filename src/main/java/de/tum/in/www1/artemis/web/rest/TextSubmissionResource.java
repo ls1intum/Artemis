@@ -185,6 +185,8 @@ public class TextSubmissionResource {
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) return forbidden();
 
+        // TODO @rpadovani: refactor to remove all the hidden DB calls, and merge with the other two methods
+
         return ResponseEntity.ok().body(
 
             // Participations for Exercise

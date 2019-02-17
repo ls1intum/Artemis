@@ -14,4 +14,6 @@ import java.util.List;
 @Repository
 public interface TextSubmissionRepository extends JpaRepository<TextSubmission, Long> {
     List<TextSubmission> findByIdIn(List<Long> textSubmissionsId);
+
+    long countByParticipation_Exercise_Course_Id(Long courseId);
 }

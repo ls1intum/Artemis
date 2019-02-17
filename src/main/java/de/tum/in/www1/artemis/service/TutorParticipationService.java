@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import de.tum.in.www1.artemis.domain.ExampleSubmission;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.TutorParticipation;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
@@ -118,5 +115,24 @@ public class TutorParticipationService {
         tutorParticipation.setAssessedExercise(exercise);
 
         return save(tutorParticipation);
+    }
+
+    /**
+     * Given a course and a tutor, it finds all the participation of that tutor in the course, with related assessed
+     * exercise and trained example submissions
+     * @param course - the course we are interested in
+     * @param user - the tutor who is querying the service
+     * @return a list of tutor participation for the course
+     */
+    @Transactional(readOnly = true)
+    public List<TutorParticipation> findAllByCourseAndTutor(Course course, User user) {
+        List<TutorParticipation> tutorParticipations = tutorParticipationRepository.findAllByAssessedExercise_Course_IdAndTutor_Id(course.getId(), user.getId());
+
+        for (TutorParticipation tutorParticipation : tutorParticipations) {
+            tutorParticipation.setAssessedExercise(tutorParticipation.getAssessedExercise());
+            tutorParticipation.getTrainedExampleSubmissions().size();
+        }
+
+        return tutorParticipations;
     }
 }

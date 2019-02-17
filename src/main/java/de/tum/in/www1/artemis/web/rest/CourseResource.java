@@ -1,6 +1,10 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
@@ -13,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -47,8 +52,12 @@ public class CourseResource {
     private final AuthorizationCheckService authCheckService;
     private final CourseRepository courseRepository;
     private final ExerciseService exerciseService;
+    private final TextSubmissionService submissionService;
     private final Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider;
     private final TutorParticipationService tutorParticipationService;
+    private final ObjectMapper objectMapper;
+    private final TextAssessmentService textAssessmentService;
+
 
     public CourseResource(Environment env,
                           UserService userService,
@@ -58,7 +67,10 @@ public class CourseResource {
                           ExerciseService exerciseService,
                           AuthorizationCheckService authCheckService,
                           TutorParticipationService tutorParticipationService,
-                          Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider) {
+                          TextSubmissionService submissionService,
+                          MappingJackson2HttpMessageConverter springMvcJacksonConverter,
+                          Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider,
+                          TextAssessmentService textAssessmentService) {
         this.env = env;
         this.userService = userService;
         this.courseService = courseService;
@@ -67,7 +79,10 @@ public class CourseResource {
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
         this.tutorParticipationService = tutorParticipationService;
+        this.submissionService = submissionService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
+        this.objectMapper = springMvcJacksonConverter.getObjectMapper();
+        this.textAssessmentService = textAssessmentService;
     }
 
     /**
@@ -95,8 +110,7 @@ public class CourseResource {
             return ResponseEntity.created(new URI("/api/courses/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getTitle()))
                 .body(result);
-        }
-        catch(ArtemisAuthenticationException ex) {
+        } catch (ArtemisAuthenticationException ex) {
             //a specified group does not exist, notify the client
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "groupNotFound", ex.getMessage())).body(null);
         }
@@ -139,13 +153,11 @@ public class CourseResource {
                 return ResponseEntity.ok()
                     .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, updatedCourse.getTitle()))
                     .body(result);
-            }
-            catch(ArtemisAuthenticationException ex) {
+            } catch (ArtemisAuthenticationException ex) {
                 //a specified group does not exist, notify the client
                 return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(ex.getMessage(), "groupNotFound")).body(null);
             }
-        }
-        else {
+        } else {
             return forbidden();
         }
     }
@@ -157,17 +169,17 @@ public class CourseResource {
         }
         //only execute this method in the production environment because normal developers might not have the right to call this method on the authentication server
         if (course.getInstructorGroupName() != null) {
-            if(!artemisAuthenticationProvider.get().checkIfGroupExists(course.getInstructorGroupName())) {
+            if (!artemisAuthenticationProvider.get().checkIfGroupExists(course.getInstructorGroupName())) {
                 throw new ArtemisAuthenticationException("Cannot save! The group " + course.getInstructorGroupName() + " for instructors does not exist. Please double check the instructor group name!");
             }
         }
         if (course.getTeachingAssistantGroupName() != null) {
-            if(!artemisAuthenticationProvider.get().checkIfGroupExists(course.getTeachingAssistantGroupName())) {
+            if (!artemisAuthenticationProvider.get().checkIfGroupExists(course.getTeachingAssistantGroupName())) {
                 throw new ArtemisAuthenticationException("Cannot save! The group " + course.getTeachingAssistantGroupName() + " for teaching assistants does not exist. Please double check the teaching assistants group name!");
             }
         }
         if (course.getStudentGroupName() != null) {
-            if(!artemisAuthenticationProvider.get().checkIfGroupExists(course.getStudentGroupName())) {
+            if (!artemisAuthenticationProvider.get().checkIfGroupExists(course.getStudentGroupName())) {
                 throw new ArtemisAuthenticationException("Cannot save! The group " + course.getStudentGroupName() + " for students does not exist. Please double check the students group name!");
             }
         }
@@ -185,9 +197,9 @@ public class CourseResource {
         User user = userService.getUserWithGroupsAndAuthorities();
         List<Course> courses = courseService.findAll();
         Stream<Course> userCourses = courses.stream().filter(
-            course ->   user.getGroups().contains(course.getTeachingAssistantGroupName()) ||
-                        user.getGroups().contains(course.getInstructorGroupName()) ||
-                        authCheckService.isAdmin()
+            course -> user.getGroups().contains(course.getTeachingAssistantGroupName()) ||
+                user.getGroups().contains(course.getInstructorGroupName()) ||
+                authCheckService.isAdmin()
         );
         return userCourses.collect(Collectors.toList());
     }
@@ -237,17 +249,65 @@ public class CourseResource {
 
         User user = userService.getUserWithGroupsAndAuthorities();
         List<Exercise> exercises = exerciseService.findAllForCourse(course, false, principal, user);
+        List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
 
-        for (Exercise exercise: exercises) {
-            List<Participation> participations = participationService.findByExerciseIdForTutorDashboard(exercise.getId());
-            exercise.setParticipations(new HashSet<>(participations));
-            TutorParticipation tutorParticipation = tutorParticipationService.findByExerciseAndTutor(exercise, user);
+        for (Exercise exercise : exercises) {
+//            TutorParticipation tutorParticipation = tutorParticipationService.findByExerciseAndTutor(exercise, user);
+            TutorParticipation tutorParticipation = tutorParticipations.stream()
+                .filter(participation -> participation.getAssessedExercise().getId().equals(exercise.getId()))
+                .findFirst().orElseGet(() -> {
+                    TutorParticipation emptyTutorParticipation = new TutorParticipation();
+                    emptyTutorParticipation.setStatus(TutorParticipationStatus.NOT_PARTICIPATED);
+
+                    return emptyTutorParticipation;
+                });
+
             exercise.setTutorParticipations(Collections.singleton(tutorParticipation));
         }
 
         course.setExercises(new HashSet<>(exercises));
 
         return ResponseUtil.wrapOrNotFound(Optional.of(course));
+    }
+
+    /**
+     * GET /courses/:id/stats-for-tutor-dashboard
+     * <p>
+     * A collection of useful statistics for the tutor course dashboard, including:
+     * - number of submissions to the course
+     * - number of assessments
+     * - number of assessments assessed by the tutor
+     * - number of complaints
+     *
+     * @param courseId the id of the course to retrieve
+     * @return data about a course including all exercises, plus some data for the tutor
+     * as tutor status for assessment
+     */
+    @GetMapping("/courses/{courseId}/stats-for-tutor-dashboard")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<JsonNode> getStatsForTutorDashboard(@PathVariable Long courseId) {
+        log.debug("REST request /courses/{courseId}/stats-for-tutor-dashboard");
+
+        ObjectNode data = objectMapper.createObjectNode();
+
+        Course course = courseService.findOne(courseId);
+        if (!userHasPermission(course)) return forbidden();
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+
+        long numberOfSubmissions = submissionService.countNumberOfSubmissions(courseId);
+        data.set("numberOfSubmissions", objectMapper.valueToTree(numberOfSubmissions));
+
+        long numberOfAssessments = textAssessmentService.countNumberOfAssessments(courseId);
+        data.set("numberOfAssessments", objectMapper.valueToTree(numberOfAssessments));
+
+        long numberOfTutorAssessments = textAssessmentService.countNumberOfAssessmentsForTutor(courseId, user.getId());
+        data.set("numberOfTutorAssessments", objectMapper.valueToTree(numberOfTutorAssessments));
+
+        long numberOfComplaints = 0; // TODO: when implementing the complaints implement this as well
+        data.set("numberOfComplaints", objectMapper.valueToTree(numberOfComplaints));
+
+        return ResponseEntity.ok(data);
     }
 
     /**
@@ -302,7 +362,7 @@ public class CourseResource {
         if (course == null) {
             return ResponseEntity.notFound().build();
         }
-        for(Exercise exercise : course.getExercises()) {
+        for (Exercise exercise : course.getExercises()) {
             exerciseService.delete(exercise, false, false);
         }
         String title = course.getTitle();

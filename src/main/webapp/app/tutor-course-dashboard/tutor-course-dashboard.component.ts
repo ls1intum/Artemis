@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Course, CourseService } from '../entities/course';
+import {Course, CourseService, StatsForTutorDashboard} from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
 import { AccountService, User } from '../core';
 import { HttpResponse } from '@angular/common/http';
@@ -51,27 +51,37 @@ export class TutorCourseDashboardComponent implements OnInit {
                     this.finishedExercises = this.course.exercises.filter(exercise => exercise.tutorParticipations[0].status === TutorParticipationStatus.COMPLETED).sort(this.sortByAssessmentDueDate);
                     this.exercises = this.unfinishedExercises;
 
-                    for (const exercise of this.course.exercises) {
-                        this.numberOfSubmissions += exercise.participations.filter(
-                            participation =>
-                                participation.submissions.filter(
-                                    submission => submission.submissionExerciseType === SubmissionExerciseType.TEXT
-                                ).length > 0
-                        ).length;
-                        this.numberOfAssessments += exercise.participations.filter(
-                            participation => participation.results.length > 0
-                        ).length;
-                        this.numberOfTutorAssessments += exercise.participations.filter(
-                            participation => participation.results.filter(result => result.assessor && result.assessor.id === this.tutor.id).length > 0
-                        ).length;
-                        this.numberOfComplaints += exercise.participations.filter(
-                            participation => participation.results.filter(result => result.hasComplaint === true).length > 0
-                        ).length;
-                    }
+                    // for (const exercise of this.course.exercises) {
+                    //     this.numberOfSubmissions += exercise.participations.filter(
+                    //         participation =>
+                    //             participation.submissions.filter(
+                    //                 submission => submission.submissionExerciseType === SubmissionExerciseType.TEXT
+                    //             ).length > 0
+                    //     ).length;
+                    //     this.numberOfAssessments += exercise.participations.filter(
+                    //         participation => participation.results.length > 0
+                    //     ).length;
+                    //     this.numberOfTutorAssessments += exercise.participations.filter(
+                    //         participation => participation.results.filter(result => result.assessor && result.assessor.id === this.tutor.id).length > 0
+                    //     ).length;
+                    //     this.numberOfComplaints += exercise.participations.filter(
+                    //         participation => participation.results.filter(result => result.hasComplaint === true).length > 0
+                    //     ).length;
+                    // }
                 }
             },
             (response: string) => this.onError(response)
         );
+
+        this.courseService.getStatsForTutors(this.courseId).subscribe(
+            (res: HttpResponse<StatsForTutorDashboard>) => {
+                this.numberOfSubmissions = res.body.numberOfSubmissions;
+                this.numberOfAssessments = res.body.numberOfAssessments;
+                this.numberOfTutorAssessments = res.body.numberOfTutorAssessments;
+                this.numberOfComplaints = res.body.numberOfComplaints;
+            },
+            (response: string) => this.onError(response)
+        )
     }
 
     trackId(index: number, item: Course) {
