@@ -33,6 +33,8 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
     amountofCorrectMultipleChoiceAnswers:number;
     forgottenRightAnswers: number;
     amountOfAnswerOptions: number;
+    inTotalRightOptions: number;
+    inTotalWrongOptions: number;
 
     /* Drag and Drop Counting Variables*/
     dragAndDropElementsCount: number;
@@ -76,6 +78,8 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
             this.multipleChoiceCorrectAnswerCorrectlyChosen = this.MultipleChoiceMapping.filter(option => option.isCorrect).length; // how many right answers chosen correctly
             this.multipleChoiceWrongAnswerChosen = this.MultipleChoiceMapping.filter(option => !option.isCorrect).length; // how many wrong answers have been selected
             this.forgottenRightAnswers = this.amountofCorrectMultipleChoiceAnswers - this.multipleChoiceCorrectAnswerCorrectlyChosen; // how many right options have been forgotten to be chosen
+            this.inTotalRightOptions = this.multipleChoiceCorrectAnswerCorrectlyChosen + (this.amountOfAnswerOptions - this.amountofCorrectMultipleChoiceAnswers-this.multipleChoiceWrongAnswerChosen)
+            this.inTotalWrongOptions = this.multipleChoiceWrongAnswerChosen + this.forgottenRightAnswers
     }
 
     private countDragandDrop() {
