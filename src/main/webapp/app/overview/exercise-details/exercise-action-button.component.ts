@@ -3,24 +3,19 @@ import { Component, HostBinding, Input } from '@angular/core';
 @Component({
     selector: '[jhi-exercise-action-button]',
     templateUrl: './exercise-action-button.component.html',
-    styleUrls: ['../course-overview.scss']
+    styleUrls: ['../course-overview.scss'],
+    host: {'class': 'btn'}
 })
 export class ExerciseActionButtonComponent {
     @Input() buttonVisible = true;
     @Input() buttonIcon: string;
     @Input() buttonLabel: string;
-    @Input() outlined = false;
-    @Input() smallButton = false;
-    @HostBinding('disabled') @Input() buttonLoading = false;
+    @HostBinding('attr.disabled') @Input() buttonLoading = false;
+    @HostBinding('class.btn-outline-primary') @Input() outlined = false;
+    @HostBinding('class.btn-sm') @Input() smallButton = false;
 
-    @HostBinding('class')
-    public get buttonClass(): string {
-        const btnClass = ['btn'];
-        btnClass.push(this.outlined ? 'btn-outline-primary' : 'btn-primary');
-        if (this.smallButton) {
-            btnClass.push('btn-sm');
-        }
-        return btnClass.join(' ');
+    @HostBinding('class.btn-primary')
+    public get btnPrimary(): boolean {
+        return !this.outlined;
     }
-
 }
