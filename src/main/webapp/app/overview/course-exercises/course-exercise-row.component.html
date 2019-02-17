@@ -40,7 +40,7 @@
         </div>
         <div class="row">
             <div class="col"><jhi-course-exercise-row-actions [exercise]="exercise"></jhi-course-exercise-row-actions></div>
-            <div class="col">Here my Tags</div>
+            <!--<div class="col">Here my Tags</div>-->
             <div class="col-auto"
                  [ngClass]="getUrgentClass(exercise.dueDate ? exercise.dueDate : exercise.releaseDate)">{{(exercise.dueDate ? exercise.dueDate : exercise.releaseDate) |
                 date:'dd/MM/yy'}}
