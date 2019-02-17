@@ -9,6 +9,8 @@ import * as moment from 'moment';
 import { AccountService } from 'app/core';
 import { ExerciseIcon } from 'app/overview';
 
+const MAX_RESULT_HISTORY_LENGTH = 5;
+
 @Component({
     selector: 'jhi-course-exercise-details',
     templateUrl: './course-exercise-details.component.html',
@@ -27,6 +29,7 @@ export class CourseExerciseDetailsComponent implements OnInit {
     public showMoreResults = false;
     public exerciseStatusBadge = 'badge-success';
     public sortedResults: Result[];
+    public sortedHistoryResult: Result[];
 
     constructor(private $location: Location, private exerciseService: ExerciseService,
                 private courseService: CourseService,
@@ -49,10 +52,13 @@ export class CourseExerciseDetailsComponent implements OnInit {
                 this.setExerciseStatusBadge();
                 if (this.hasResults) {
                     this.sortedResults = this.exercise.participations[0].results.sort((a, b) => {
-                        const aValue = moment(a.completionDate) .valueOf();
+                        const aValue = moment(a.completionDate).valueOf();
                         const bValue = moment(b.completionDate).valueOf();
                         return aValue - bValue;
                     });
+                    let sortedResultLength = this.sortedResults.length;
+                    let startingElement = sortedResultLength - MAX_RESULT_HISTORY_LENGTH;
+                    this.sortedHistoryResult = this.sortedResults.slice(startingElement, sortedResultLength);
                 }
             });
         }
@@ -72,6 +78,10 @@ export class CourseExerciseDetailsComponent implements OnInit {
 
     get exerciseIsOver(): boolean {
         return moment(this.exercise.dueDate).isBefore(moment());
+    }
+
+    get hasMoreResults(): boolean {
+        return this.sortedResults.length > MAX_RESULT_HISTORY_LENGTH;
     }
 
     get exerciseRouterLink(): string {

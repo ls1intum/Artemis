@@ -11,6 +11,7 @@ import { MIN_POINTS_GREEN, MIN_POINTS_ORANGE } from 'app/app.constants';
 export class ResultHistoryComponent implements OnInit {
     @Input() results: Result[];
     @Input() maxScore: number;
+    @Input() showPreviousDivider = false;
 
     constructor() {
     }

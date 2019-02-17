@@ -7,7 +7,7 @@ $result-element-size: 25px;
 
     .result-history-element {
         display: flex;
-        flex: 1;
+        flex: 2;
 
         .result-score {
             .result-score-icon {
@@ -54,6 +54,14 @@ $result-element-size: 25px;
         &:last-child {
             .result-divider {
                 border-top: 1px dashed;
+            }
+        }
+
+        &.previous-history-element {
+            flex: 1;
+            .result-divider {
+                border-top: 1px dashed;
+                width: 100%;
             }
         }
     }

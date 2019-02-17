@@ -1,4 +1,7 @@
 <div class="result-history-wrapper ml-3">
+    <div class="result-history-element previous-history-element" *ngIf="showPreviousDivider">
+        <div class="result-divider"></div>
+    </div>
     <div class="result-history-element" *ngFor="let result of results">
         <div class="result-score">
             <div class="result-score-icon" [ngClass]="resultClass(result)">

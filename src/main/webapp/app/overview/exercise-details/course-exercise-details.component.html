@@ -114,12 +114,13 @@
     <div class="row mb-2 mt-2 align-items-baseline"
          *ngIf="hasResults">
         <div class="col-auto">
-            <h3>Result timeline:</h3>
+            <h3>Recent results:</h3>
         </div>
     </div>
     <div class="row mb-2" *ngIf="hasResults">
         <div class="col-12 col-md-8">
-            <jhi-result-history [results]="sortedResults"
+            <jhi-result-history [results]="sortedHistoryResult"
+                                [showPreviousDivider]="hasMoreResults"
                                 [maxScore]="exercise.maxScore"></jhi-result-history>
         </div>
     </div>
