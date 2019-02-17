@@ -34,8 +34,11 @@
                             <b class="fa" *ngIf="question.type === SHORT_ANSWER">SA</b>
                             </div>
                         <ng-template #tooltipExplanationTranslate>
-                            <div *ngFor="let explanation of explainProgressBarColor(i)">
-                                <p *ngIf="(explanation.translateValues | json) == '{}'" jhiTranslate="{{explanation.translateKey}}"></p>
+                            <div *ngIf="selectedAnswerOptions[question.id]?.length || dragAndDropMappings[question.id]?.length || shortAnswerSubmittedTexts[question.id]?.length">
+                                {{'arTeMiSApp.quizExercise.explanationAnswered' | translate}}
+                            </div>
+                            <div *ngIf="!(selectedAnswerOptions[question.id]?.length) || !(dragAndDropMappings[question.id]?.length) || !(shortAnswerSubmittedTexts[question.id]?.length)">
+                                {{'arTeMiSApp.quizExercise.explanationNotAnswered' | translate}}
                             </div>
                         </ng-template>
                         </div>
