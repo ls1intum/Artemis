@@ -1,0 +1,67 @@
+<div *ngIf="course">
+    <jhi-alert></jhi-alert>
+
+    <div class="header-container bg-primary text-white">
+        <h4 class="card-header">
+            <strong>Instructor Course Dashboard for course {{course.title}}</strong>
+            &nbsp;
+            <a class="text-primary card-link" routerLink="/course/{{course.id}}/dashboard" routerLinkActive="active">
+                <fa-icon icon="info-circle" [fixedWidth]="true" style="color:white;"></fa-icon>
+            </a>
+        </h4>
+    </div>
+
+    <div class="container-fluid">
+        <div class="row" *ngIf="stats" style="margin-top: 15px">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="card-title">Information about the course</h4>
+                    </div>
+                    <div class="card-body">
+                        <ul>
+                            <li><b>Students:</b> {{stats.numberOfStudents}}</li>
+                            <li><b>Submissions:</b> {{stats.numberOfSubmissions}}</li>
+                            <li><b>Tutors:</b> {{stats.numberOfTutors}}</li>
+                            <li><b>Assessments:</b> {{stats.numberOfAssessments}} ({{stats.numberOfSubmissions - stats.numberOfAssessments}} open)</li>
+                            <li><b>Complaints:</b> {{stats.numberOfComplaints}} ({{stats.numberOfOpenComplaints}} open)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row table-responsive" style="margin-top: 15px">
+            <div *ngIf="course.exercises.length === 0">
+                There isn't any exercise for this course
+            </div>
+
+            <table class="table" *ngIf="course.exercises.length >= 0">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Exercise</th>
+                        <th>Due date</th>
+                        <th>Assessment due date</th>
+                        <th>Submissions</th>
+                        <th>Complaints</th>
+                        <th>Assessments</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let exercise of course.exercises">
+                        <td>{{exercise.id}}</td>
+                        <td>{{exercise.title}}</td>
+                        <td>{{exercise.dueDate | date:'medium'}}</td>
+                        <td>{{exercise.assessmentDueDate | date:'medium'}}</td>
+                        <td><!--{{exercise.participations.length}}--></td>
+                        <td><!--{{exercise.complaints.length}}--></td>
+                        <td><!--{{exercise.assessments.length}}--></td>
+                        <td><button class="btn btn-primary">Exercise dashboard</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

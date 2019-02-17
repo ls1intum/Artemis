@@ -74,6 +74,9 @@
                             <fa-icon [icon]="'eye'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                         </button>
+                        <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [routerLink]="['/course', course.id, 'instructor-dashboard']" class="btn btn-primary btn-sm mr-1">
+                            <span class="d-none d-md-inline" jhiTranslate="arTeMiSApp.course.instructorDashboard">Instructor dashboard</span>
+                        </button>
                         <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [routerLink]="['/course', course.id, 'edit']" class="btn btn-primary btn-sm mr-1">
                             <fa-icon [icon]="'pencil-alt'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>

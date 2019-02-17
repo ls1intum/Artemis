@@ -397,4 +397,12 @@ public class UserService {
     private void clearUserCaches(User user) {
         cacheManager.getCache(UserRepository.USERS_CACHE).evict(user.getLogin());
     }
+
+    public long countNumberOfStudents(Long courseId) {
+        return 0; // TODO: implement
+    }
+
+    public long countNumberOfTutors(Long courseId) {
+        return 0; // TODO: implement
+    }
 }

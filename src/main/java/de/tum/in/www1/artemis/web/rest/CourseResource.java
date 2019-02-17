@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -13,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -51,6 +55,7 @@ public class CourseResource {
     private final CourseRepository courseRepository;
     private final ExerciseService exerciseService;
     private final Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider;
+    private final ObjectMapper objectMapper;
 
     public CourseResource(Environment env,
                           UserService userService,
@@ -59,6 +64,7 @@ public class CourseResource {
                           CourseRepository courseRepository,
                           ExerciseService exerciseService,
                           AuthorizationCheckService authCheckService,
+                          MappingJackson2HttpMessageConverter springMvcJacksonConverter,
                           Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider) {
         this.env = env;
         this.userService = userService;
@@ -68,6 +74,7 @@ public class CourseResource {
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
+        this.objectMapper = springMvcJacksonConverter.getObjectMapper();
     }
 
     /**
@@ -249,6 +256,57 @@ public class CourseResource {
         Course course = courseService.findOneWithExercises(id);
         if (!userHasPermission(course)) return forbidden();
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(course));
+    }
+
+    /**
+     * GET /courses/:id/stats-for-instructor-dashboard
+     * <p>
+     * A collection of useful statistics for the instructor course dashboard, including:
+     * - number of students
+     * - number of instructors
+     * - number of submissions
+     * - number of assessments
+     * - number of complaints
+     * - number of open complaints
+     *
+     * @param courseId the id of the course to retrieve
+     * @return data about a course including all exercises, plus some data for the tutor
+     * as tutor status for assessment
+     */
+    @GetMapping("/courses/{courseId}/stats-for-instructor-dashboard")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<JsonNode> getStatsForInstructorDashboard(@PathVariable Long courseId) {
+        log.debug("REST request /courses/{courseId}/stats-for-instructor-dashboard");
+
+        ObjectNode data = objectMapper.createObjectNode();
+
+        Course course = courseService.findOne(courseId);
+        if (!userHasPermission(course)) return forbidden();
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        long numberOfStudents = userService.countNumberOfStudents(courseId);
+        data.set("numberOfStudents", objectMapper.valueToTree(numberOfStudents));
+
+        long numberOfTutors = userService.countNumberOfTutors(courseId);
+        data.set("numberOfTutors", objectMapper.valueToTree(numberOfTutors));
+
+        // TODO: Enable when the tutor instructor dashboard is merged
+//        long numberOfSubmissions = submissionService.countNumberOfSubmissions(courseId);
+        long numberOfSubmissions = 0;
+        data.set("numberOfSubmissions", objectMapper.valueToTree(numberOfSubmissions));
+
+        // TODO: Enable when the tutor instructor dashboard is merged
+//        long numberOfAssessments = textAssessmentService.countNumberOfAssessments(courseId);
+        long numberOfAssessments = 0;
+        data.set("numberOfAssessments", objectMapper.valueToTree(numberOfAssessments));
+
+        long numberOfComplaints = 0; // TODO: when implementing the complaints implement this as well
+        data.set("numberOfComplaints", objectMapper.valueToTree(numberOfComplaints));
+
+        long numberOfOpenComplaints = 0; // TODO: when implementing the complaints implement this as well
+        data.set("numberOfOpenComplaints", objectMapper.valueToTree(numberOfOpenComplaints));
+
+        return ResponseEntity.ok(data);
     }
 
     private boolean userHasPermission(Course course) {

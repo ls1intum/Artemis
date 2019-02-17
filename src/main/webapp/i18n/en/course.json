@@ -29,7 +29,8 @@
             "quizExercises": "Quiz Exercises",
             "modelingExercises": "Modeling Exercises",
             "textExercises": "Text Exercises (Beta)",
-            "fileUploadExercises": "File Upload Exercises (Beta)"
+            "fileUploadExercises": "File Upload Exercises (Beta)",
+            "instructorDashboard": "Instructor Dashboard"
         }
     }
 }
