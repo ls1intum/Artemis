@@ -1,0 +1,35 @@
+<jhi-alert></jhi-alert>
+
+<div *ngIf="exercise">
+    <div class="header-container bg-primary text-white">
+        <h4 class="card-header">
+            <strong>Instructor Exercise Dashboard for Exercise {{exercise.title}}</strong>
+        </h4>
+    </div>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-2">
+                <button class="btn btn-secondary" [routerLink]="'/course/' + courseId + '/instructor-dashboard'">&larr; Back</button>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="card-title">Information about the exercise</h4>
+                    </div>
+                    <div class="card-body">
+                        <ul>
+                            <li><b>Exercise due date:</b> {{exercise.dueDate | date: 'medium'}}</li>
+                            <li><b>Submissions:</b> 0</li>
+                            <li><b>Assessments due date:</b> {{exercise.assessmentDueDate | date: 'medium'}}</li>
+                            <li><b>Assessments:</b> 0 (0 open)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

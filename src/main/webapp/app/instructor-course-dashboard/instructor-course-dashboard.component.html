@@ -58,7 +58,9 @@
                         <td><!--{{exercise.participations.length}}--></td>
                         <td><!--{{exercise.complaints.length}}--></td>
                         <td><!--{{exercise.assessments.length}}--></td>
-                        <td><button class="btn btn-primary">Exercise dashboard</button></td>
+                        <td><button class="btn btn-primary"
+                                    routerLink="/course/{{course.id}}/exercise/{{exercise.id}}/instructor-dashboard">
+                            Exercise dashboard</button></td>
                     </tr>
                 </tbody>
             </table>
