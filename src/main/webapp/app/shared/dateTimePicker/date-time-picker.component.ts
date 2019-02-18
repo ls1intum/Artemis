@@ -9,8 +9,14 @@ import moment, { isMoment, Moment } from 'moment';
             {{ labelName }}
         </label>
         <div class="d-flex">
-            <input class="form-control" [ngModel]="value" (ngModelChange)="updateField($event)" [owlDateTime]="dt" name="datePicker" />
-            <button [owlDateTimeTrigger]="dt" class="btn" type="button">
+            <input
+                class="form-control position-relative pl-5"
+                [ngModel]="value"
+                (ngModelChange)="updateField($event)"
+                [owlDateTime]="dt"
+                name="datePicker"
+            />
+            <button [owlDateTimeTrigger]="dt" class="btn position-absolute" type="button">
                 <fa-icon [icon]="'calendar-alt'"></fa-icon>
             </button>
             <owl-date-time #dt></owl-date-time>
