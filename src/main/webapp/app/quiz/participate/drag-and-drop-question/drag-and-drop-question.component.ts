@@ -265,7 +265,7 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy, OnChange
         }
     }
 
-    countRightMappings(): void {
+    countCorrectMappings(): void {
         this.correctAnswer = 0;
 
         for(let tempdrop of this.question.dropLocations){
