@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChildren } from '@angular/core';
 import { Course } from 'app/entities/course/course.model';
 import { CourseExerciseService, CourseService } from 'app/entities/course/course.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -10,13 +10,29 @@ import { TextExercise } from 'app/entities/text-exercise/text-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise/programming-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise/modeling-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise/file-upload-exercise.model';
-import { Exercise } from 'app/entities/exercise';
+import { QuizExerciseComponent } from 'app/entities/quiz-exercise';
+import { ModelingExerciseComponent } from 'app/entities/modeling-exercise';
+import { ProgrammingExerciseComponent } from 'app/entities/programming-exercise';
+import { FileUploadExerciseComponent } from 'app/entities/file-upload-exercise';
+import { TextExerciseComponent } from 'app/entities/text-exercise';
 
 @Component({
     selector: 'jhi-course-overview',
     templateUrl: './course-exercises-overview.component.html'
 })
 export class CourseExercisesOverviewComponent implements OnInit {
+
+    @ViewChildren(QuizExerciseComponent)
+    quiz:QuizExerciseComponent;
+    @ViewChildren(ModelingExerciseComponent)
+    modeling:ModelingExerciseComponent;
+    @ViewChildren(ProgrammingExerciseComponent)
+    programming:ProgrammingExerciseComponent;
+    @ViewChildren(FileUploadExerciseComponent)
+    fileupload:FileUploadExerciseComponent;
+    @ViewChildren(TextExerciseComponent)
+    text:TextExerciseComponent;
+
     quizExercises: QuizExercise[];
     textExercises: TextExercise[];
     programmingExercises: ProgrammingExercise[];
@@ -33,6 +49,10 @@ export class CourseExercisesOverviewComponent implements OnInit {
         private quizExerciseService: QuizExerciseService
     ) {}
 
+    ngAfterViewInit(){
+        this.quiz.loadForCourse(this.courseId);
+    }
+
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.load();
@@ -46,18 +66,7 @@ export class CourseExercisesOverviewComponent implements OnInit {
         this.courseService.find(this.courseId).subscribe(courseResponse => {
             this.course = courseResponse.body;
 
-            this.quizExerciseService.findForCourse(this.courseId)
-                .subscribe(
-                    (res: HttpResponse<QuizExercise[]>) => {
-                        this.quizExercises = res.body;
-                        // reconnect exercise with course
-                        this.quizExercises.forEach(quizExercises => {
-                            quizExercises.course = this.course;
-                        });
-                        this.setQuizExercisesStatus();
-                    },
-                    (res: HttpErrorResponse) => this.onError(res)
-                );
+
             this.courseExerciseService.findAllTextExercisesForCourse(this.courseId)
                 .subscribe(
                     (res: HttpResponse<TextExercise[]>) => {
