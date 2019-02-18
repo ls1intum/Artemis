@@ -6,7 +6,7 @@ import java.util.*;
 
 public class ScoringStrategyShortAnswerUtil {
 
-    public static double[] getCorrectAndIncorrectSolutionsrShortAnswerQuestion(ShortAnswerQuestion shortAnswerQuestion, ShortAnswerSubmittedAnswer shortAnswerAnswer) {
+    public static double[] getCorrectAndIncorrectSolutionsShortAnswerQuestion(ShortAnswerQuestion shortAnswerQuestion, ShortAnswerSubmittedAnswer shortAnswerAnswer) {
         boolean foundCorrectSolution;
         double correctSolutions = 0;
         double incorrectSolutions = 0;
@@ -18,18 +18,20 @@ public class ScoringStrategyShortAnswerUtil {
             ShortAnswerSubmittedText submittedTextForSpot = shortAnswerAnswer.getSubmittedTextForSpot(spot);
             foundCorrectSolution = false;
 
-            for (ShortAnswerSolution solution : solutionsForSpot) {
-                if (submittedTextForSpot.isSubmittedTextCorrect(submittedTextForSpot.getText(), solution.getText())
-                    && notUsedSolutions.contains(solution)) {
-                    notUsedSolutions.remove(solution);
-                    submittedTextForSpot.setIsCorrect(true);
-                    correctSolutions++;
-                    foundCorrectSolution = true;
-                    break;
+            if (submittedTextForSpot != null) {
+                for (ShortAnswerSolution solution : solutionsForSpot) {
+                    if (submittedTextForSpot.isSubmittedTextCorrect(submittedTextForSpot.getText(), solution.getText())
+                        && notUsedSolutions.contains(solution)) {
+                        notUsedSolutions.remove(solution);
+                        submittedTextForSpot.setIsCorrect(true);
+                        correctSolutions++;
+                        foundCorrectSolution = true;
+                        break;
+                    }
                 }
-            }
-            if (!foundCorrectSolution) {
-                incorrectSolutions++;
+                if (!foundCorrectSolution) {
+                    incorrectSolutions++;
+                }
             }
         }
         double[] values = {correctSolutions,incorrectSolutions};
