@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import java.util.*;
+
+import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
 import org.slf4j.*;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,8 +30,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     private static final String PUT_ASSESSMENT_409_REASON = "Given assessment conflicts with exsisting assessments in the database. Assessment has been stored but is not used for automatic assessment by compass";
     private static final String PUT_ASSESSMENT_200_REASON = "Given assessment has been saved but is not used for automatic assessment by Compass";
     private static final String PUT_SUBMIT_ASSESSMENT_200_REASON = "Given assessment has been saved and used for automatic assessment by Compass";
-    private static final String REQ_404_REASON = "Requested ressource does not exist.";
-    private static final String REQ_403_REASON = "Unsufficient permission to perform this request";
+
 
     private final JsonAssessmentRepository jsonAssessmentRepository;
     private final ParticipationRepository participationRepository;
@@ -131,8 +132,8 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @ResponseStatus(HttpStatus.OK)
     @ApiResponses({
         @ApiResponse(code = 200, message = PUT_SUBMIT_ASSESSMENT_200_REASON, response = Result.class),
-        @ApiResponse(code = 404, message = REQ_404_REASON),
-        @ApiResponse(code = 403, message = REQ_403_REASON)
+        @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON),
+        @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON)
     })
     @PutMapping("/modeling-assessments/exercise/{exerciseId}/result/{resultId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
@@ -148,8 +149,8 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @ResponseStatus(HttpStatus.OK)
     @ApiResponses({
         @ApiResponse(code = 200, message = PUT_SUBMIT_ASSESSMENT_200_REASON, response = Result.class),
-        @ApiResponse(code = 403, message = REQ_403_REASON),
-        @ApiResponse(code = 404, message = REQ_404_REASON),
+        @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON),
+        @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON),
         @ApiResponse(code = 409, message = PUT_ASSESSMENT_409_REASON, response = Conflict.class, responseContainer = "List")
     })
     @PutMapping("/modeling-assessments/exercise/{exerciseId}/result/{resultId}/submit")
