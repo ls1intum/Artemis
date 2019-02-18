@@ -15,7 +15,7 @@
     </div>
     <div class="modal-body" *ngIf="this.question.scoringType === PROPORTIONAL_WITH_PENALTY && this.question.type === MULTIPLE_CHOICE">
         <h6 jhiTranslate="arTeMiSApp.quizExercise.explanationText.scoringTypeProportionalWithPenalty"></h6>
-        <span><p jhiTranslate="arTeMiSApp.quizExercise.explanationText.multipleChoiceProp" [translateValues]="{paramScore: this.score, paramQuestionScore: this.question.score, paramAmountOfAnswerOptions: this.amountOfAnswerOptions, paramMultipleChoiceWrongAnswerChosen: this.multipleChoiceWrongAnswerChosen, paramMultipleChoiceCorrectAnswerCorrectlyChosen: this.multipleChoiceCorrectAnswerCorrectlyChosen, paramForgottenRightAnswers: this.forgottenRightAnswers }"></p>
+        <span><p jhiTranslate="arTeMiSApp.quizExercise.explanationText.multipleChoiceProp" [translateValues]="{paramScore: this.score, paramQuestionScore: this.question.score, paramAmountOfAnswerOptions: this.amountOfAnswerOptions, paramInTotalWrongOptions: this.inTotalWrongOptions, paramInTotalRightOptions:this.inTotalRightOptions}"></p>
             In total you have </br><b>{{this.inTotalRightOptions}}*{{this.question.score}}/{{this.amountOfAnswerOptions}}-{{this.inTotalWrongOptions}}*{{this.question.score}}/{{this.amountOfAnswerOptions}}={{this.score}}</b></br> point(s).Of course you can not have less than 0 points.
         </span>
     </div>
@@ -30,11 +30,8 @@
     </div>
     <div class="modal-body" *ngIf="this.question.scoringType === PROPORTIONAL_WITH_PENALTY && this.question.type === DRAG_AND_DROP">
         <h6 jhiTranslate="arTeMiSApp.quizExercise.explanationText.scoringTypeProportionalWithPenalty"></h6>
-        <span> You have achieved {{this.score}}
-            of the {{this.question.score}} possible point(s). Each of the {{this.dragAndDropElementsCount}} drag and drop item(s) grants you {{this.question.score}}/{{this.dragAndDropElementsCount}} point(s )if you map it to the corresponding location. You have mismapped
-            {{this.wrongMappedItems}} item(s) and correctly mapped {{this.correctAnswer}} item(s).</br>
-            <b> In total you have {{this.correctAnswer}}*{{this.question.score}}/{{this.dragAndDropElementsCount}} - {{this.wrongMappedItems}}*{{this.question.score}}/{{this.dragAndDropElementsCount}} point(s).</b>
-            Of course you can not have less than 0 points.
+        <span><p jhiTranslate="arTeMiSApp.quizExercise.explanationText.dragAndDropProp" [translateValues]="{paramScore: this.score, paramQuestionScore: this.question.score, paramWrongMappedItems: this.wrongMappedItems, paramRightMapping: this.correctAnswer, paramDragAndDropElementsCount: this.dragAndDropElementsCount}"></p>
+            In total you have <br><b>{{this.correctAnswer}}*{{this.question.score}}/{{this.dragAndDropElementsCount}}-{{this.wrongMappedItems}}*{{this.question.score}}/{{this.dragAndDropElementsCount}}={{this.score}}</b></br> point(s). Of course you can not have less than 0 points.
     </span>
     </div>
 
@@ -42,18 +39,17 @@
 
     <div class="modal-body" *ngIf="this.question.scoringType === ALL_OR_NOTHING && this.question.type === SHORT_ANSWER">
         <h6 jhiTranslate="arTeMiSApp.quizExercise.explanationText.scoringTypeAllOrNothing"></h6>
-        <span *ngIf ="!(this.shortAnswerWrongOption > 0)"> You have achieved {{this.score}} of the {{this.question.score}} possible point(s). Since you have filled all gap(s) correctly you have achieved all point(s) in this exercise.</span>
-        <span *ngIf ="this.shortAnswerWrongOption > 0"> You have achieved {{this.score}} of the {{this.question.score}} possible point(s). Since you filled {{this.shortAnswerWrongOption}}
-            gap(s) wrongly and {{this.shortAnswerCorrectAnswers}} gap(s) correctly you have achieved 0 points in this exercise.</span>
+        <span *ngIf ="!(this.shortAnswerWrongOption > 0)">
+           <span jhiTranslate="arTeMiSApp.quizExercise.explanationText.shortAnswerAllOrNothingCorrect" [translateValues]="{paramScore: this.score, paramQuestionScore: this.question.score}"></span></span>
+        <span *ngIf ="this.shortAnswerWrongOption > 0">
+            <span jhiTranslate="arTeMiSApp.quizExercise.explanationText.shortAnswerAllOrNothingNotCorrect" [translateValues]="{paramScore: this.score, paramQuestionScore:this.question.score, paramShortAnswerWrongOption: this.shortAnswerWrongOption, paramShortAnswerCorrectAnswers: this.shortAnswerCorrectAnswers}"></span></span>
     </div>
     <div class="modal-body" *ngIf="this.question.scoringType === PROPORTIONAL_WITH_PENALTY && this.question.type === SHORT_ANSWER">
         <h6 jhiTranslate="arTeMiSApp.quizExercise.explanationText.scoringTypeProportionalWithPenalty"></h6>
-        <span *ngIf ="!(this.shortAnswerWrongOption > 0)" > You have achieved {{this.score}} of the {{this.question.score}} possible point(s). Since you have filled all the gap(s) correctly all point(s) in this exercise.</span>
-        <span *ngIf ="this.shortAnswerWrongOption > 0"> You have achieved {{this.score}}
-            of the {{this.question.score}} possible point(s). Since you have filled out {{this.shortAnswerWrongOption}} gap(s)
-            wrongly and {{this.shortAnswerCorrectAnswers}} gap(s) correctly.</br>
-            <b> You have achieved {{this.shortAnswerCorrectAnswers}}*{{this.question.score}}/{{this.shortAnswerSpotCount}}- {{this.shortAnswerWrongOption}}*{{this.question.score}}/{{this.shortAnswerSpotCount}} point(s) in this exercise.</b>
-            Of course you can not have less than 0 points. </span>
+        <span *ngIf ="!(this.shortAnswerWrongOption > 0)"><span jhiTranslate="arTeMiSApp.quizExercise.explanationText.shortAnswerAllOrNothingCorrect" [translateValues]="{paramScore: this.score, paramQuestionScore: this.question.score}"></span></span>
+        <span *ngIf ="this.shortAnswerWrongOption > 0">
+            <p jhiTranslate="arTeMiSApp.quizExercise.explanationText.shortAnswerProp" [translateValues]="{paramScore: this.score, paramQuestionScore:this.question.score, paramShortAnswerWrongOption: this.shortAnswerWrongOption, paramShortAnswerCorrectAnswers: this.shortAnswerCorrectAnswers}"></p>
+            You have achieved </br><b>{{this.shortAnswerCorrectAnswers}}*{{this.question.score}}/{{this.shortAnswerSpotCount}}-{{this.shortAnswerWrongOption}}*{{this.question.score}}/{{this.shortAnswerSpotCount}}={{this.score}}</b></br> point(s).Of course you can not have less than 0 points. </span>
     </div>
 
 
