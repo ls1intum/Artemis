@@ -4,7 +4,7 @@ public class ModelElementAssessment {
 
     private String commment;
     private double credits;
-    private String id; //TODO MJ rename into jsonElementID?
+    private String id; //TODO MJ rename into jsonElementID!
     private String type;
 
     public ModelElementAssessment() {
