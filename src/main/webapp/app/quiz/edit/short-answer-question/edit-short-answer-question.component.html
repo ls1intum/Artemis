@@ -8,7 +8,7 @@
             <fa-icon size="3x" [icon]="isQuestionCollapsed ? 'angle-right' : 'angle-down'"></fa-icon>
         </button>
         <div class="form-group question-title col-lg-9 col-md-7 col-sm-12 col-xs-12">
-            <input class="form-control" [(ngModel)]="question.title" placeholder="Question Title"/>
+            <input id="short-answer-question-title" class="form-control" [(ngModel)]="question.title" placeholder="Question Title"/>
         </div>
         <div class="form-group col-lg-2 col-md-3 col-sm-7 col-xs-8">
             <span jhiTranslate="arTeMiSApp.question.score" class="colon-suffix"></span>

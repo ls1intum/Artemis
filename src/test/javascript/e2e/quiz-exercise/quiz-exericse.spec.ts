@@ -188,6 +188,45 @@ describe('quiz-exercise', () => {
         //TODO delete quiz
     });
 
+    it('create SA quiz', async () => {
+        const createQuizButton = await element(by.id('create-quiz-button'));
+        // expect(createQuizButton.isPresent());
+        await createQuizButton.click();
+
+        //set title of SA quiz
+        const title = element(by.id('quiz-title'));
+        title.sendKeys("test-SA-quiz");
+
+        //set duration of quiz
+        const durationMinutes = await element(by.id('quiz-duration-minutes'));
+        durationMinutes.clear();
+        durationMinutes.sendKeys("0");
+        const durationSeconds = await element(by.id('quiz-duration-seconds'));
+        durationSeconds.clear();
+        durationSeconds.sendKeys("5");
+
+        //add short answer question
+        const addShortAnswerButton = await element(by.id('quiz-add-short-answer-question'));
+        await addShortAnswerButton.click();
+
+        // set title of short answer question
+        const shortAnswerQuestionTitle = await element(by.id('short-answer-question-title'));  //TODO: we need to support multiple questions
+        shortAnswerQuestionTitle.sendKeys("test-short-answer");
+
+        const quizSaveButton = await element(by.id('quiz-save'));
+        expect(quizSaveButton.isPresent());
+        await quizSaveButton.click();
+
+        browser.wait(ec.urlContains(`${courseId}/quiz-exercise/new`), 1000).then((result) => expect(result).to.be.true);
+
+        const backButton = await element(by.id('quiz-cancel-back-button'));
+        expect(backButton.isPresent());
+        //TODO: check that the button name is "Back"
+        await backButton.click();
+
+        //TODO: check that we leave the page and there is a new entry
+    });
+
     after(async () => {
         await navBarPage.clickOnCourseAdminMenu();
         browser.waitForAngularEnabled(true);
