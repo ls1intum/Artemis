@@ -86,6 +86,9 @@ public class TextAssessmentResource extends AssessmentResource {
      * If another tutor has already started working on this submission, the system tries to find another one without
      * any result, and if it finds any, return it
      *
+     * TODO @rpadovani: refactor the method, change the name and move to a dedicated resource retrieving an exercise
+     *  without an assessment
+     *
      * @param exerciseId the id of the exercise we want the submission
      * @param submissionId the id of the submission we want
      * @return a Participation of the tutor in the submission
@@ -105,9 +108,10 @@ public class TextAssessmentResource extends AssessmentResource {
 
         Participation participation = textSubmission.get().getParticipation();
         participation = participationService.findOneWithEagerResultsAndSubmissions(participation.getId());
+
         if (!participation.getResults().isEmpty()) {
             User user = userService.getUser();
-            User assessor = participation.findLatestResult().getAssessor();
+            User assessor = participation.findLatestSubmission().getResult().getAssessor();
             // Another tutor started assessing this submission.
             if (!assessor.getLogin().equals(user.getLogin())) {
                 // TODO: if the result hasn't been updated in the last 24 hours, we can use it

@@ -86,8 +86,8 @@ public class TextExerciseResource {
             throw new BadRequestAlertException("A new textExercise needs a title", ENTITY_NAME, "missingtitle");
         }
 
-        if (textExercise.getDueDate() == null) {
-            throw new BadRequestAlertException("A new textExercise needs a dueDate", ENTITY_NAME, "dueDate");
+        if (textExercise.getDueDate() == null && textExercise.getAssessmentDueDate() != null ) {
+            throw new BadRequestAlertException("If you set an assessmentDueDate, then you need to add also a dueDate", ENTITY_NAME, "dueDate");
         }
 
         // fetch course from database to make sure client didn't change groups
@@ -102,7 +102,7 @@ public class TextExerciseResource {
             return forbidden();
         }
 
-        if (textExercise.getAssessmentDueDate() == null) {
+        if (textExercise.getDueDate() != null && textExercise.getAssessmentDueDate() == null) {
             textExercise.setAssessmentDueDate(textExercise.getDueDate().plusWeeks(1));
         }
 

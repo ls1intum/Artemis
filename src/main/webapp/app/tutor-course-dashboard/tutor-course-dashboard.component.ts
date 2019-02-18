@@ -63,7 +63,7 @@ export class TutorCourseDashboardComponent implements OnInit {
                 this.numberOfComplaints = res.body.numberOfComplaints;
             },
             (response: string) => this.onError(response)
-        )
+        );
     }
 
     triggerFinishedExercises() {

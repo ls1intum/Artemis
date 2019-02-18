@@ -22,7 +22,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
     exerciseId: number;
     numberOfTutorAssessments = 0;
     tutorParticipationStatus: TutorParticipationStatus;
-    submissions: TextSubmission[];
+    submissions: TextSubmission[] = [];
     unassessedSubmission: TextSubmission;
     exampleSubmissionsToReview: ExampleSubmission[] = [];
     exampleSubmissionsToAssess: ExampleSubmission[] = [];
@@ -73,8 +73,10 @@ export class TutorExerciseDashboardComponent implements OnInit {
                 this.exercise = res.body;
                 this.tutorParticipation = this.exercise.tutorParticipations[0];
                 this.tutorParticipationStatus = this.tutorParticipation.status;
-                this.exampleSubmissionsToReview = this.exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => exampleSubmission.usedForTutorial);
-                this.exampleSubmissionsToAssess = this.exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => !exampleSubmission.usedForTutorial);
+                if (this.exercise.exampleSubmissions && this.exercise.exampleSubmissions.length > 0) {
+                    this.exampleSubmissionsToReview = this.exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => exampleSubmission.usedForTutorial);
+                    this.exampleSubmissionsToAssess = this.exercise.exampleSubmissions.filter((exampleSubmission: ExampleSubmission) => !exampleSubmission.usedForTutorial);
+                }
                 this.exampleSubmissionsCompletedByTutor = this.tutorParticipation.trainedExampleSubmissions;
 
                 this.stats.toReview.total = this.exampleSubmissionsToReview.length;

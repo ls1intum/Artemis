@@ -56,6 +56,7 @@ public class ExampleSubmissionService {
 
         Result result = submission.getResult();
 
+        // result.isExampleResult() can have 3 values: null, false, true. We return if it is not true
         if (result == null || result.isExampleResult() != Boolean.TRUE) {
             return null;
         }

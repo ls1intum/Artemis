@@ -26,6 +26,23 @@ public class AuthorizationCheckService {
         adminAuthority.setName(AuthoritiesConstants.ADMIN);
     }
 
+    /**
+     * Given any type of exercise, the method returns if the current user is at least TA for the course the exercise
+     * belongs to.
+     *
+     * If exercise is not present, it will return false, because the optional will be empty, and therefore
+     * `isPresent()` will return false
+     *
+     * This is due how `filter` works:
+     *
+     *      If a value is present, apply the provided mapping function to it, and if the result is non-null, return an
+     *      Optional describing the result. Otherwise return an empty Optional.
+     *
+     * https://docs.oracle.com/javase/8/docs/api/java/util/Optional.html#filter-java.util.function.Predicate-
+     *
+     * @param exercise the exercise that needed to be checked
+     * @return true if the user is at least a teaching assistant
+     */
     public <T extends Exercise> boolean isAtLeastTeachingAssistantForExercise(Optional<T> exercise) {
         return exercise.filter(this::isAtLeastTeachingAssistantForExercise).isPresent();
     }

@@ -14,7 +14,6 @@ import { TextExercise } from '../text-exercise/text-exercise.model';
 import { FileUploadExercise } from '../file-upload-exercise/file-upload-exercise.model';
 import { Exercise } from '../exercise/exercise.model';
 import { ExerciseService } from '../exercise/exercise.service';
-import { Result } from 'app/entities/result';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -24,7 +23,7 @@ export type StatsForTutorDashboard = {
     numberOfTutorAssessments: number;
     numberOfComplaints: number;
     numberOfSubmissions: number;
-}
+};
 
 @Injectable({ providedIn: 'root' })
 export class CourseService {

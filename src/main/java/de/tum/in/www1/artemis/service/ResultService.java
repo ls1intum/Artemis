@@ -104,8 +104,8 @@ public class ResultService {
         // this call should cascade all feedback relevant changed and save them accordingly
         Result savedResult = resultRepository.save(result);
 
-        // if it is an example result we do not have any participation
-        if (!result.isExampleResult()) {
+        // if it is an example result we do not have any participation (isExampleResult can be also null)
+        if (result.isExampleResult() != Boolean.TRUE) {
             try {
                 result.getParticipation().addResult(savedResult);
                 participationService.save(result.getParticipation());

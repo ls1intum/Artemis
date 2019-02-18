@@ -4,15 +4,18 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import javassist.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.InvalidParameterException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,11 +33,19 @@ public class TutorParticipationService {
     private String ARTEMIS_BASE_URL;
 
     private final TutorParticipationRepository tutorParticipationRepository;
+    private final UserService userService;
+    private final ExampleSubmissionService exampleSubmissionService;
+
+    private static final float scoreRangePercentage = 10;
 
     public TutorParticipationService(TutorParticipationRepository tutorParticipationRepository,
-                                     ExampleSubmissionRepository exampleSubmissionRepository) {
+                                     ExampleSubmissionRepository exampleSubmissionRepository,
+                                     UserService userService,
+                                     ExampleSubmissionService exampleSubmissionService) {
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
+        this.userService = userService;
+        this.exampleSubmissionService = exampleSubmissionService;
     }
 
     /**
@@ -134,5 +145,93 @@ public class TutorParticipationService {
         }
 
         return tutorParticipations;
+    }
+
+    /**
+     * Given an exercise, it adds to the tutor participation of that exercise the example submission passed as
+     * argument, if it is valid (e.g: if it is an example submission used for review, we check the result is close
+     * enough to the one of the instructor)
+     *
+     * TODO @rpadovani: after https://github.com/ls1intum/ArTEMiS/pull/160 has been merged, move to that kind of
+     *      exceptions
+     *
+     * @param exercise - the exercise we are referring to
+     * @param exampleSubmission - the example submission to add
+     * @return the updated tutor participation
+     */
+    public TutorParticipation addExampleSubmission(Exercise exercise, ExampleSubmission exampleSubmission) throws NotFoundException, IllegalStateException, InvalidParameterException {
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        TutorParticipation existingTutorParticipation = this.findByExerciseAndTutor(exercise, user);
+        // Do not trust the user input
+        Optional<ExampleSubmission> exampleSubmissionFromDatabase = exampleSubmissionService.get(exampleSubmission.getId());
+
+        if (existingTutorParticipation == null || !exampleSubmissionFromDatabase.isPresent()) {
+            throw new NotFoundException("There isn't such example submission, or there isn't any tutor participation for this exercise");
+        }
+
+        ExampleSubmission originalExampleSubmission = exampleSubmissionFromDatabase.get();
+
+        if (existingTutorParticipation.getStatus() != TutorParticipationStatus.REVIEWED_INSTRUCTIONS) {
+            throw new IllegalStateException();
+        }
+
+        // Check if it is a tutorial or not
+        boolean isTutorial = originalExampleSubmission.isUsedForTutorial() == Boolean.TRUE;
+
+        // If it is not a tutorial we check the assessment
+        if (!isTutorial) {
+            // Retrieve the example feedback created by the instructor
+            List<Feedback> existingFeedback = this.exampleSubmissionService.getFeedbackForExampleSubmission(exampleSubmission.getId());
+
+            // Check if the result is the same
+            // TODO: at the moment we check only the score +/10%, maybe we want to do something smarter?
+            float instructorScore = calculateTotalScore(existingFeedback);
+            float lowerInstructorScore = instructorScore - instructorScore / scoreRangePercentage;
+            float higherInstructorScore = instructorScore + instructorScore / scoreRangePercentage;
+
+            float tutorScore = calculateTotalScore(exampleSubmission.getSubmission().getResult().getFeedbacks());
+
+            if (lowerInstructorScore > tutorScore) {
+                throw new InvalidParameterException("tooLow");
+            }
+
+            if (tutorScore > higherInstructorScore) {
+                throw new InvalidParameterException("tooHigh");
+            }
+        }
+
+        List<ExampleSubmission> alreadyAssessedSubmissions = new ArrayList<>(existingTutorParticipation.getTrainedExampleSubmissions());
+
+        // If the example submission was already assessed, we do not assess it again
+        if (alreadyAssessedSubmissions.contains(exampleSubmission)) {
+            throw new InvalidParameterException("alreadyAssessed");
+        }
+
+        int numberOfExampleSubmissions = this.exampleSubmissionRepository.findAllByExerciseId(exercise.getId()).size();
+        int numberOfAlreadyAssessedSubmissions = alreadyAssessedSubmissions.size() + 1;  // +1 because we haven't added yet the one we just did
+
+        /*
+          When the tutor has read and assessed all the exercises, the tutor status goes to the next step.
+         */
+        if (numberOfAlreadyAssessedSubmissions >= numberOfExampleSubmissions) {
+            existingTutorParticipation.setStatus(TutorParticipationStatus.TRAINED);
+        }
+
+        existingTutorParticipation = existingTutorParticipation.addTrainedExampleSubmissions(exampleSubmission);
+        exampleSubmissionService.save(exampleSubmission);
+        this.save(existingTutorParticipation);
+
+        // Avoid infinite recursion for JSON
+        existingTutorParticipation.getTrainedExampleSubmissions().forEach(t -> {
+            t.setTutorParticipation(null);
+            t.setExercise(null);
+        });
+
+        return existingTutorParticipation;
+    }
+
+    private float calculateTotalScore(List<Feedback> feedbacks) {
+        return (float) feedbacks.stream().mapToDouble(Feedback::getCredits).sum();
     }
 }

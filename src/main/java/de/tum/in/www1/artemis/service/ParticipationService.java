@@ -12,8 +12,6 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
-import org.hibernate.Hibernate;
-import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,7 +23,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URL;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 
 import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
 import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.FINISHED;
@@ -363,17 +364,8 @@ public class ParticipationService {
     @Transactional(readOnly = true)
     public Participation findOneWithEagerResultsAndSubmissions(Long id) {
         log.debug("Request to get Participation : {}", id);
-        Participation participation = findOneWithEagerResults(id);
-        Hibernate.initialize(participation.getSubmissions());
 
-        participation.getSubmissions().forEach(submission -> {
-            Hibernate.initialize(submission.getResult()); // eagerly load the association
-            if (submission.getResult() != null) {
-                Hibernate.initialize(submission.getResult().getAssessor());
-            }
-        });
-
-        return participation;
+        return participationRepository.findByIdWithEagerSubmissionsAndEagerResultsAndEagerAssessors(id);
     }
 
 
