@@ -1,6 +1,6 @@
 import { Component, forwardRef, Input } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { isMoment, Moment } from 'moment';
+import moment, { isMoment, Moment } from 'moment';
 
 @Component({
     selector: 'jhi-date-time-picker',
@@ -45,6 +45,6 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     }
     updateField(newValue: Moment) {
         this.value = newValue;
-        this._onChange(this.value);
+        this._onChange(moment(this.value));
     }
 }
