@@ -1,6 +1,6 @@
 import {JhiAlertService} from 'ng-jhipster';
 import {Component, OnInit} from '@angular/core';
-import {Course, CourseService, StatsForInstructorDashboard} from "app/entities/course";
+import {Course, CourseService, StatsForInstructorDashboard} from 'app/entities/course';
 import {ActivatedRoute} from '@angular/router';
 import {HttpResponse, HttpErrorResponse} from '@angular/common/http';
 
@@ -37,7 +37,7 @@ export class InstructorCourseDashboardComponent implements OnInit {
                 this.stats = res.body;
             },
             (response: string) => this.onError(response)
-        )
+        );
     }
 
     private onError(error: string) {

@@ -48,8 +48,8 @@ import { ArTEMiSModelingEditorModule } from './modeling-editor/modeling-editor.m
 import { QuizExerciseExportComponent } from './entities/quiz-exercise/quiz-exercise-export.component';
 import { PendingChangesGuard } from './shared/guard/pending-changes.guard';
 import { ParticipationDataProvider } from './courses/exercises/participation-data-provider';
-import {ArTEMiSInstructorCourseStatsDashboardModule} from "app/instructor-course-dashboard";
-import {ArTEMiSInstructorExerciseStatsDashboardModule} from "app/instructor-exercise-dashboard";
+import {ArTEMiSInstructorCourseStatsDashboardModule} from 'app/instructor-course-dashboard';
+import {ArTEMiSInstructorExerciseStatsDashboardModule} from 'app/instructor-exercise-dashboard';
 
 @NgModule({
     imports: [

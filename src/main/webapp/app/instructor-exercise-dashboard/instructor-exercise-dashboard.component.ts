@@ -2,7 +2,7 @@ import {JhiAlertService} from 'ng-jhipster';
 import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
 import {HttpResponse, HttpErrorResponse} from '@angular/common/http';
-import {Exercise, ExerciseService} from "app/entities/exercise";
+import {Exercise, ExerciseService} from 'app/entities/exercise';
 
 @Component({
     selector: 'jhi-instructor-exercise-dashboard',
@@ -27,7 +27,7 @@ export class InstructorExerciseDashboardComponent implements OnInit {
     private loadExercise(exerciseId: number) {
         this.exerciseService.find(exerciseId).subscribe(
             (res: HttpResponse<Exercise>) => {
-                this.exercise = res.body
+                this.exercise = res.body;
             },
             (response: HttpErrorResponse) => this.onError(response.message)
         );

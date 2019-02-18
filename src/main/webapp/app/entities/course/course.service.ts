@@ -26,7 +26,7 @@ export type StatsForInstructorDashboard = {
     numberOfAssessments: number;
     numberOfComplaints: number;
     numberOfOpenComplaints: number;
-}
+};
 
 @Injectable({ providedIn: 'root' })
 export class CourseService {
