@@ -1,6 +1,7 @@
 import { Component, forwardRef, Input } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import moment, { isMoment, Moment } from 'moment';
+import * as moment from 'moment';
+import { Moment, isMoment } from 'moment';
 
 @Component({
     selector: 'jhi-date-time-picker',
