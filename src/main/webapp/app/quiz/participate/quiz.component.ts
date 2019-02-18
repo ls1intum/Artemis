@@ -79,8 +79,6 @@ export class QuizComponent implements OnInit, OnDestroy {
     questionScores = {};
     quizId: number;
     interval: any;
-    atLeastOneOptionSelected = new Array<boolean>();
-    atLeastOneOptionSelected1= new Map<number, boolean>();
 
     /**
      * Websocket channels
@@ -824,27 +822,29 @@ export class QuizComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Checks if at least one answer option is selected for the question.
+     * Checks if the student has selected or made an answer for each question within the exercise.
      * Goes trough selectedAnswerOptions and dragAndDropMappings
      */
     checkForAnsweredQuestions(): boolean {
-        let myVariable = true;
         for (let question of this.quizExercise.questions) {
             if (question.type === QuestionType.MULTIPLE_CHOICE) {
                 if (this.selectedAnswerOptions[question.id] == 0) {
-                    myVariable = false;
+                    return false;
                     break
                 }
-            } else {
-                if (question.type === QuestionType.DRAG_AND_DROP) {
+            } else if (question.type === QuestionType.DRAG_AND_DROP) {
                     if (this.dragAndDropMappings[question.id] == 0) {
-                        myVariable = false;
+                        return false;
                         break
                     }
+                } else if (question.type === QuestionType.SHORT_ANSWER) {
+                    if (this.shortAnswerSubmittedTexts[question.id] == 0) {
+                    return false;
+                    break
                 }
             }
         }
-            return myVariable
+            return true
     }
 
 

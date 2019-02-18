@@ -88,5 +88,4 @@ export class MultipleChoiceQuestionComponent implements OnChanges {
             }) !== -1
         );
     }
-
 }
