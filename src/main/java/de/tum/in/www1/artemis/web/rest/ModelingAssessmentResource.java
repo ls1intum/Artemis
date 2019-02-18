@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.service.compass.assessment.ModelElementAssessment;
 import de.tum.in.www1.artemis.service.compass.conflict.Conflict;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.swagger.annotations.*;
+
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 /**
@@ -131,7 +132,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     @ResponseStatus(HttpStatus.OK)
     @ApiResponses({
-        @ApiResponse(code = 200, message = PUT_SUBMIT_ASSESSMENT_200_REASON, response = Result.class),
+        @ApiResponse(code = 200, message = PUT_ASSESSMENT_200_REASON, response = Result.class),
         @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON),
         @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON)
     })
