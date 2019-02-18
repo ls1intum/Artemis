@@ -70,7 +70,8 @@
     <div class="modal-body"
          *ngIf="this.question.scoringType === PROPORTIONAL_WITH_PENALTY && this.question.type === SHORT_ANSWER ">
         <h6>The scoring type was <span jhiTranslate="arTeMiSApp.quizExercise.scoringType.proportional_with_penalty"></span>
-            meaning you either get all the points for the question or non at all.</h6>
+            meaning each correct answer results in a fraction of the total score. To avoid guesswork, the same fraction is subtracted from
+            the achieved points for each mistake.<</h6>
         <span *ngIf ="!(this.shortAnswerWrongOption > 0)" > You have achieved {{this.score}} of the {{this.question.score}} possible point(s). Since you have filled all the gap(s) correctly all point(s) in this exercise.</span>
         <span *ngIf ="this.shortAnswerWrongOption > 0"> You have achieved {{this.score}}
             of the {{this.question.score}} possible point(s). Since you have filled out {{this.shortAnswerWrongOption}} gap(s)
