@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.compass;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.service.compass.assessment.Assessment;
 import de.tum.in.www1.artemis.service.compass.assessment.CompassResult;
 import de.tum.in.www1.artemis.service.compass.assessment.ModelElementAssessment;
@@ -22,7 +23,7 @@ import java.util.stream.Collectors;
 
 
 public class CompassCalculationEngine implements CalculationEngine {
-    private static final double SCORE_EQUALITY_THRESHOLD = 0.0001;
+
     private final Logger log = LoggerFactory.getLogger(CompassCalculationEngine.class);
 
     private ModelIndex modelIndex;
@@ -415,7 +416,7 @@ public class CompassCalculationEngine implements CalculationEngine {
 
 
     private boolean scoresAreConsideredEqual(double score1, double score2) {
-        return Math.abs(score1 - score2) < SCORE_EQUALITY_THRESHOLD;
+        return Math.abs(score1 - score2) < Constants.COMPASS_SCORE_EQUALITY_THRESHOLD;
     }
 
 
