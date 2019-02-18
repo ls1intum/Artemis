@@ -25,15 +25,11 @@ import { DragAndDropMapping } from 'app/entities/drag-and-drop-mapping';
 import { AnswerOption } from 'app/entities/answer-option';
 import { ShortAnswerSubmittedText } from 'app/entities/short-answer-submitted-text';
 
-
-
 @Component({
     selector: 'jhi-quiz',
     templateUrl: './quiz.component.html',
     providers: [ParticipationService]
 })
-
-
 export class QuizComponent implements OnInit, OnDestroy {
     // make constants available to html for comparison
     readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
@@ -108,7 +104,7 @@ export class QuizComponent implements OnInit, OnDestroy {
         private participationService: ParticipationService,
         private route: ActivatedRoute,
         private jhiAlertService: JhiAlertService,
-        private quizSubmissionService: QuizSubmissionService,
+        private quizSubmissionService: QuizSubmissionService
     ) {}
 
     ngOnInit() {
@@ -899,5 +895,5 @@ export class QuizComponent implements OnInit, OnDestroy {
             behavior: 'smooth'
         });
     }
-    
+
 }

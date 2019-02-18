@@ -1,5 +1,4 @@
 @import "~bootstrap/scss/bootstrap-grid.scss";
-
 .edit-quiz {
     display: flex;
     flex-direction: column;
@@ -524,7 +523,6 @@
             text-align: center;
 
             opacity: 0;
-
             &:hover {
                 opacity: 1;
             }
@@ -534,31 +532,24 @@
     .mapping-color-1 {
         background: #2980b9;
     }
-
     .mapping-color-2 {
         background: #c0392b;
     }
-
     .mapping-color-3 {
         background: #27ae60;
     }
-
     .mapping-color-4 {
         background: #f1c40f;
     }
-
     .mapping-color-5 {
         background: #e67e22;
     }
-
     .mapping-color-6 {
         background: #8e44ad;
     }
-
     .mapping-color-7 {
         background: #1abc9c;
     }
-
     .mapping-color-0 {
         background: #2c3e50;
     }
