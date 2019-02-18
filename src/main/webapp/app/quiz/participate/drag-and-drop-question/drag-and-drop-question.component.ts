@@ -69,8 +69,6 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy, OnChange
     sampleSolutionMappings = new Array<DragAndDropMapping>();
     dropAllowed = false;
 
-    chosenCorrectAnswerOption: number;
-    chosenWrongAnswerOption: number;
     amountOfAnswerOptions: number;
     correctAnswer: number;
 
@@ -80,8 +78,7 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy, OnChange
     }
 
     ngOnChanges(changes: SimpleChanges): void {
-        this.countRightMappings();
-
+        this.countCorrectMappings();
     }
 
     ngOnDestroy() {}
@@ -267,10 +264,8 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy, OnChange
 
     countCorrectMappings(): void {
         this.correctAnswer = 0;
-
-        for(let tempdrop of this.question.dropLocations){
-
-            if (this.isLocationCorrect(tempdrop)){
+        for(let dropLocation of this.question.dropLocations){
+            if (this.isLocationCorrect(dropLocation)){
                 this.correctAnswer++;
             }
         }
