@@ -113,6 +113,9 @@ public class ModelingAssessmentService extends AssessmentService {
     }
 
 
+    /**
+     * @return sum of every modelingAssessments credit rounded to max two numbers after the comma
+     */
     public static Double calculateTotalScore(List<ModelElementAssessment> modelingAssessment) {
         double totalScore = 0.0;
         for (ModelElementAssessment assessment : modelingAssessment) {
