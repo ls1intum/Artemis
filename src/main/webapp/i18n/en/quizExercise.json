@@ -161,8 +161,13 @@
             },
             "importJSON": "Import Question(s) in JSON Format",
             "explanationText":{
-                "multipleChoiceAllOrNothingCorrect": "You have achieved {{paramScore}} of the {{paramQuestionScore}} possible points. Since you have chosen all answers correctly you have achieved all point(s) in this exercise. Great Job!"
-
+                "scoringTypeProportionalWithPenalty": "The scoring type was Proportional with Penalty meaning each correct answer results in a fraction of the total score. To avoid guesswork, the same fraction is subtracted from the achieved points for each mistake.",
+                "scoringTypeAllOrNothing": "The scoring type was All or Nothing meaning you either get all the points for the question or non at all.",
+                "multipleChoiceAllOrNothingCorrect": "You have achieved {{paramScore}} of the {{paramQuestionScore}} possible point(s). Since you have chosen all answers correctly you have achieved all point(s) in this exercise. Great Job!",
+                "multipleChoiceAllOrNothingNotCorrect": "You have achieved {{paramScore}} the {{paramQuestionScore}} possible point(s). Since you selected {{paramInTotalWrongOptions}} wrong option(s) and {{paramInTotalRightOptions}} right option(s) you have achieved 0 points in this exercise.",
+                "multipleChoiceProp": "You have achieved {{paramScore}} of the {{paramQuestionScore}} possible point(s). Each of the {{paramAmountOfAnswerOptions}} option(s) grants you {{paramQuestionScore}}/{{paramAmountOfAnswerOptions}} points if you choose correctly. You have selected {{paramMultipleChoiceWrongAnswerChosen}} wrong answer option(s) and {{paramMultipleChoiceCorrectAnswerCorrectlyChosen}} correct answer option(s). Nevertheless, you forgot to select {{paramForgottenRightAnswers}} correct answer option(s).",
+                "dragAndDropAllOrNothingCorrect": "You have achieved {{paramScore}} of the {{paramQuestionScore}} possible point(s). Since you have mapped all the items correctly you have achieved all point(s) in this exercise. Great Job!",
+                "dragAndDropAllOrNothingNotCorrect":"You have achieved {{paramScore}} of the {{paramQuestionScore}} possible points. Since you mapped {{paramRightMapping}} correctly but due to the fact that you have mapped {{paramWrongMappedItems}} item(s) wrongly you have achieved 0 points."
             }
         }
     }
