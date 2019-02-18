@@ -270,6 +270,4 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy, OnChange
             }
         }
     }
-
-
 }
