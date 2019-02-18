@@ -20,7 +20,7 @@ public interface CalculationEngine {
     /**
      * Add a new assessment
      *
-     * @param modelingAssessment the new assessment as raw sting
+     * @param modelingAssessment the new assessment as list of individual model element assessments
      * @param submissionId       the id of the corresponding model
      */
     void notifyNewAssessment(List<ModelElementAssessment> modelingAssessment, long submissionId);
