@@ -25,10 +25,7 @@ import { DragAndDropMapping } from 'app/entities/drag-and-drop-mapping';
 import { AnswerOption } from 'app/entities/answer-option';
 import { ShortAnswerSubmittedText } from 'app/entities/short-answer-submitted-text';
 
-interface Reason {
-    translateKey: string;
-    translateValues: {};
-}
+
 
 @Component({
     selector: 'jhi-quiz',
@@ -902,41 +899,5 @@ export class QuizComponent implements OnInit, OnDestroy {
             behavior: 'smooth'
         });
     }
-
-    progressBarColor(questionIndex: number): Reason [] {
-        const reasons = new Array<Reason>();
-
-
-                if (this.selectedAnswerOptions[questionIndex] == 0) {
-                    reasons.push({
-                        translateKey: 'arTeMiSApp.quizExercise.explanationAnswered',
-                        translateValues: {}
-                    });
-
-            } else
-
-                    if (this.dragAndDropMappings[questionIndex] == 0) {
-                        reasons.push({
-                            translateKey: 'arTeMiSApp.quizExercise.explanationAnswered',
-                            translateValues: {}
-                        });
-                    }
-
-             else
-                    if (this.shortAnswerSubmittedTexts[questionIndex] == 1) {
-                        reasons.push({
-                            translateKey: 'arTeMiSApp.quizExercise.explanationAnswered',
-                            translateValues: {}
-                        });
-
-                } else {
-                    reasons.push({
-                        translateKey: 'arTeMiSApp.quizExercise.explanationNotAnswered',
-                        translateValues: {}
-                    });
-            }
-
-        return reasons;
-    }
-
+    
 }
