@@ -34,9 +34,7 @@ public class ExampleSubmissionService {
      */
     @Transactional(rollbackFor = Exception.class)
     public ExampleSubmission save(ExampleSubmission exampleSubmission) {
-        exampleSubmission = exampleSubmissionRepository.save(exampleSubmission);
-
-        return exampleSubmission;
+        return exampleSubmissionRepository.saveAndFlush(exampleSubmission);
     }
 
     /**

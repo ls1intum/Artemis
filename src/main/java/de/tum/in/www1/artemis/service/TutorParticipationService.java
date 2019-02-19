@@ -218,15 +218,9 @@ public class TutorParticipationService {
             existingTutorParticipation.setStatus(TutorParticipationStatus.TRAINED);
         }
 
-        existingTutorParticipation = existingTutorParticipation.addTrainedExampleSubmissions(exampleSubmission);
-        exampleSubmissionService.save(exampleSubmission);
+        existingTutorParticipation = existingTutorParticipation.addTrainedExampleSubmissions(originalExampleSubmission);
+        exampleSubmissionService.save(originalExampleSubmission);
         this.save(existingTutorParticipation);
-
-        // Avoid infinite recursion for JSON
-        existingTutorParticipation.getTrainedExampleSubmissions().forEach(t -> {
-            t.setTutorParticipation(null);
-            t.setExercise(null);
-        });
 
         return existingTutorParticipation;
     }
