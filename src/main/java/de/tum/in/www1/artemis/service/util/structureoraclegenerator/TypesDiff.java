@@ -1,13 +1,12 @@
 package de.tum.in.www1.artemis.service.util.structureoraclegenerator;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import spoon.reflect.declaration.*;
 import spoon.reflect.reference.CtTypeReference;
 
@@ -27,7 +26,6 @@ import spoon.reflect.reference.CtTypeReference;
  * - Superinterfaces names,
  * - Methods.
  */
-@JsonSerialize(using = TypesDiffSerializer.class)
 public class TypesDiff {
     private CtType<?> solutionType;
     private CtType<?> templateType;
@@ -38,7 +36,7 @@ public class TypesDiff {
 	protected boolean isEnum;
 	protected boolean isAbstract;
 	protected String superClassName;
-	protected Set<CtTypeReference<?>> superInterfacesNames;
+	protected Set<CtTypeReference<?>> superInterfaces;
 	protected Set<CtMethod<?>> methods;
 	protected boolean typesEqual;
 
@@ -52,7 +50,7 @@ public class TypesDiff {
 		this.isEnum = generateEnumStereotype();
 		this.isAbstract = generateAbstractModifier();
 		this.superClassName = generateSuperClassName();
-		this.superInterfacesNames = generateSuperInterfaces();
+		this.superInterfaces = generateSuperInterfaces();
 		this.methods = generateMethodsDiff();
 		this.typesEqual = areTypesEqual();
     }
@@ -170,8 +168,7 @@ public class TypesDiff {
 
                 // The methods are uniquely identified by their names and parameter types.
                 methodsDiff.removeIf(solutionMethod ->
-                    methodNamesAreEqual(solutionMethod, templateMethod) &&
-                        parameterTypesAreEqual(solutionMethod, templateMethod));
+                    methodNamesAreEqual(solutionMethod, templateMethod) && parameterTypesAreEqual(solutionMethod, templateMethod));
             }
         }
 
@@ -198,20 +195,14 @@ public class TypesDiff {
     protected boolean parameterTypesAreEqual(CtExecutable<?> solutionExecutable, CtExecutable<?> templateExecutable) {
         // Create lists containing only the parameter type names for both the executable.
         // This is done to work with them more easily, since types are uniquely identified only by their names.
-        List<String> solutionParams = new ArrayList<>();
-        List<String> templateParams = new ArrayList<>();
-        solutionExecutable.getParameters().forEach(parameter -> solutionParams.add(parameter.getSimpleName()));
-        templateExecutable.getParameters().forEach(parameter -> templateParams.add(parameter.getSimpleName()));
-
-        // If the number of the parameters is not equal, then the parameters are not the same.
-        if(solutionParams.size() != templateParams.size()) {
-            return false;
-        }
+        List<String> solutionParams = solutionExecutable.getParameters().stream().map(CtNamedElement::getSimpleName).collect(Collectors.toList());
+        List<String> templateParams = templateExecutable.getParameters().stream().map(CtNamedElement::getSimpleName).collect(Collectors.toList());;
 
         // If both executables have no empty, then they parameters are the same.
-        if(solutionParams.isEmpty() && templateParams.isEmpty()) {
-            return true;
-        }
+        if(solutionParams.isEmpty() && templateParams.isEmpty()) return true;
+
+        // If the number of the parameters is not equal, then the parameters are not the same.
+        if(solutionParams.size() != templateParams.size()) return false;
 
         // Otherwise, check if the list of the parameters of the solution executable contains all the parameters
         // in the template executable.
@@ -227,7 +218,7 @@ public class TypesDiff {
 				&& !this.isEnum
 				&& !this.isAbstract
 				&& this.superClassName.isEmpty()
-				&& this.superInterfacesNames.size() == 0
+				&& this.superInterfaces.size() == 0
 				&& this.methods.isEmpty();
 	}
 

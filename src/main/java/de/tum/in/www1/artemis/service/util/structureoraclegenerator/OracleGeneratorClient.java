@@ -1,12 +1,23 @@
 package de.tum.in.www1.artemis.service.util.structureoraclegenerator;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import spoon.Launcher;
+import spoon.reflect.CtModel;
+import spoon.reflect.declaration.CtClass;
+import spoon.reflect.declaration.CtEnum;
+import spoon.reflect.declaration.CtType;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Kristian Dimo (kristian.dimo@tum.de)
@@ -63,32 +74,154 @@ public class OracleGeneratorClient {
      * @param oracleFilePath The path to the directory where the oracle file should be saved in.
      * @param oracleFileName The file name of the oracle file.
      */
-	public static void run(String solutionProjectRootPath, String templateProjectRootPath, String oracleFilePath, String oracleFileName) {
+	public static void run(Path solutionProjectRootPath, Path templateProjectRootPath, Path oracleFilePath) throws IOException {
 		log.info("GENERATING THE ORACLE FOR THE FOLLOWING PROJECTS: \n"
 				+ "Solution project: " + solutionProjectRootPath + "\n"
 				+ "Template project: " + templateProjectRootPath + "\n");
-		
-		String oracleJSON = OracleJSONFactory.generateStructureOracleJSON(solutionProjectRootPath, templateProjectRootPath, log);
-		
-		saveFile(oracleJSON, oracleFilePath, oracleFileName);
+
+		JSONArray oracleJSON = generateStructureOracleJSON(solutionProjectRootPath, templateProjectRootPath);
+
+        log.info("Saving the structure oracle in: " + oracleFilePath + " ...");
+        Files.write(oracleFilePath, prettyPrint(oracleJSON).getBytes());
 	}
 
     /**
-     * This method writes the contents of the passed string into the given file path.
-     * @param string The string that needs to get written.
-     * @param filePath The path of the directory where the JSON array will get written in.
-     * @param fileName The name of the file that will get written.
+     * This method pretty prints a given JSON array.
+     * @param jsonArray The JSON array that needs to get pretty printed.
+     * @return The pretty printed JSON array in its string representation.
      */
-    private static void saveFile(String string, String filePath, String fileName) {
-        log.info("\nSaving " + fileName + " in: " + filePath + " ...");
-
+    private static String prettyPrint(JSONArray jsonArray) {
+        ObjectMapper mapper = new ObjectMapper();
         try {
-            String fullFilePath = filePath + File.separator + fileName;
-            Files.write(Paths.get(fullFilePath), string.getBytes());
-            log.info("\nSuccessfully wrote " + fileName + " in: " + filePath + "!");
+            Object jsonObject = mapper.readValue(jsonArray.toString(), Object.class);
+            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonObject);
         } catch (IOException e) {
-            log.error("Couldn't write " + fileName + "! Check the file path: " + filePath, e);
+            log.info("Could not pretty print the JSON!");
+            return "";
         }
+    }
+
+    /**
+     * This method generates the structure oracle by scanning the Java projects contained in the paths passed as arguments.
+     * @param solutionProjectPath: The path to the project of the solution of a programming exercise.
+     * @param templateProjectPath: The path to the project of the template of a programming exercise.
+     * @return The string of the JSON representation of the structure oracle.
+     */
+    private static JSONArray generateStructureOracleJSON(Path solutionProjectPath, Path templateProjectPath) {
+        // Initialize the empty string.
+        JSONArray structureOracleJSON = new JSONArray();
+
+        // Generate the pairs of the types found in the solution project with the corresponding one from the template project.
+        HashMap<CtType<?>, CtType<?>> solutionAndTemplateTypes = generateSolutionAndTemplateTypePairs(solutionProjectPath, templateProjectPath);
+
+        // Loop over each pair of types and create the diff data structures and the JSON representation afterwards for each.
+        // If the types, classes or enums are equal, then ignore and continue with the next pair
+        for (Map.Entry<CtType<?>, CtType<?>> entry : solutionAndTemplateTypes.entrySet()) {
+            JSONObject diffJSON = new JSONObject();
+
+            CtType<?> solutionType = entry.getKey();
+            CtType<?> templateType = entry.getValue();
+
+            // Initialize the types diff containing various properties as well as methods.
+            TypesDiff typesDiff = new TypesDiff(solutionType, templateType);
+            if(typesDiff.typesEqual) { continue; }
+
+            // If we are dealing with interfaces, the types diff already has all the information we need
+            // So we do not need to do anything more
+            TypesDiffSerializer typesDiffSerializer = new TypesDiffSerializer(typesDiff);
+            diffJSON.put("class", typesDiffSerializer.serializeHierarchy());
+            if(!typesDiff.methods.isEmpty()) {
+                diffJSON.put("methods", typesDiffSerializer.serializeMethods());
+            }
+
+            // Otherwise check then if the current types are enums or classes and create the corresponding
+            // diffs in order to extract specific elements.
+
+            if (solutionType.isEnum()) {
+                CtEnum<Enum<?>> solutionEnum = (CtEnum<Enum<?>>) solutionType;
+                CtEnum<Enum<?>> templateEnum = (CtEnum<Enum<?>>) templateType;
+
+                EnumsDiff enumsDiff = new EnumsDiff(solutionEnum, templateEnum);
+                if(enumsDiff.enumsEqual) { continue; }
+
+                EnumsDiffSerializer enumsDiffSerializer = new EnumsDiffSerializer(enumsDiff);
+                if(!enumsDiff.enumValues.isEmpty()) {
+                    diffJSON.put("enumValues", enumsDiffSerializer.serializeEnumValues(enumsDiff));
+                }
+            }
+
+            if (solutionType.isClass()) {
+                CtClass<?> solutionClass = (CtClass<?>) solutionType;
+                CtClass<?> templateClass = (CtClass<?>) templateType;
+
+                ClassesDiff classesDiff = new ClassesDiff(solutionClass, templateClass);
+                if(classesDiff.classesEqual) { continue; }
+
+                ClassesDiffSerializer classesDiffSerializer = new ClassesDiffSerializer(classesDiff);
+                if(!classesDiff.attributes.isEmpty()) {
+                    diffJSON.put("attributes", classesDiffSerializer.serializeAttributes());
+                }
+                if(!classesDiff.constructors.isEmpty()) {
+                    diffJSON.put("constructors", classesDiffSerializer.serializeConstructors());
+                }
+            }
+
+            log.info("Generated JSON for '" + solutionType.getSimpleName() + "'.");
+            structureOracleJSON.put(diffJSON);
+        }
+
+        return structureOracleJSON;
+    }
+
+    /**
+     * This method scans the meta models of the solution and template projects and generates pairs of matching types.
+     * Matching types means here types with the same name, since they are uniquely defined from their names.
+     * The list of the type pairs contains with certainty all the types found in the solution project, but it often
+     * happens that no corresponding types are declared in the template.
+     * For this, a null type is inserted instead and handled accordingly in the diffs.
+     * Also, if the type in the template is the same to the one in the solution, then they get ignored and do not
+     * get added to the structure oracle.
+     * @param solutionProjectPath: The path to the solution project.
+     * @param templateProjectPath: The path to the template project.
+     * @return: A hash map containing the type pairs of the solution types and their respective counterparts in the template.
+     */
+    private static HashMap<CtType<?>, CtType<?>> generateSolutionAndTemplateTypePairs(Path solutionProjectPath, Path templateProjectPath) {
+        Collection<CtType<?>> solutionTypes = generateModel(solutionProjectPath).getAllTypes();
+        Collection<CtType<?>> templateTypes = generateModel(templateProjectPath).getAllTypes();
+
+        HashMap<CtType<?>, CtType<?>> solutionAndTemplateTypes = new HashMap<CtType<?>, CtType<?>>();
+
+        for(CtType<?> solutionType : solutionTypes) {
+            // Put an empty template class as a default placeholder.
+            solutionAndTemplateTypes.put(solutionType, null);
+
+            for(CtType<?> templateType : templateTypes) {
+                // If an exact same template class is found, then remove the pair and continue
+                if(solutionType.equals(templateType)) {
+                    solutionAndTemplateTypes.remove(solutionType);
+                    break;
+                } else if(solutionType.getSimpleName().equals(templateType.getSimpleName())) {
+                    // If a template class with the same name gets found, then replace the empty template with the real one.
+                    solutionAndTemplateTypes.put(solutionType, templateType);
+                    break;
+                }
+            }
+        }
+
+        return solutionAndTemplateTypes;
+    }
+
+    /**
+     * This method extracts the meta model of a Java project using the Spoon Framework in order to query the types
+     * contained in it.
+     * @param projectPath: The path of the Java project the meta model is needed for.
+     * @return: The meta model of the project.
+     */
+    private static CtModel generateModel(Path projectPath) {
+        Launcher launcher = new Launcher();
+        launcher.addInputResource(projectPath.toString());
+        launcher.buildModel();
+        return launcher.getModel();
     }
 
 }

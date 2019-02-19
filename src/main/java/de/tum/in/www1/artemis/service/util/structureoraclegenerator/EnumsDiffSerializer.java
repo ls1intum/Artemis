@@ -1,39 +1,30 @@
 package de.tum.in.www1.artemis.service.util.structureoraclegenerator;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import org.json.JSONArray;
 import spoon.reflect.declaration.CtEnumValue;
 
-import java.io.IOException;
-
 /**
- * This class is used to serialize the enums diff.
+ * This class is used to serialize the elements that are unique to enums, e.g. enum values.
  */
-public class EnumsDiffSerializer extends StdSerializer<EnumsDiff> {
-	
-    public EnumsDiffSerializer() { this(null); }
+public class EnumsDiffSerializer {
 
-    public EnumsDiffSerializer(Class<EnumsDiff> enumsDiffClass) { super(enumsDiffClass); }
+    private EnumsDiff enumsDiff;
 
-	@Override
-    public void serialize(EnumsDiff enumsDiff, JsonGenerator jgen, SerializerProvider provider) {
-        try {
-            // Serialize enum values, if any are specified.
-            if(!enumsDiff.enumValues.isEmpty()) {
-                jgen.writeArrayFieldStart("enumValues");
-
-                jgen.writeStartArray();
-
-                for(CtEnumValue<?> enumValue : enumsDiff.enumValues) {
-                    jgen.writeString(enumValue.getSimpleName());
-                }
-
-                jgen.writeEndArray();
-            }
-        } catch(IOException e) {
-            e.printStackTrace();
-        }
+    public EnumsDiffSerializer(EnumsDiff enumsDiff) {
+        this.enumsDiff = enumsDiff;
     }
 
+    /**
+     * This method is used to serialize the string representations of each enum value into a JSON array.
+     * @return The JSON array consisting of string representations of each enum value defined in the enums diff.
+     */
+    public JSONArray serializeEnumValues(EnumsDiff enumsDiff) {
+        JSONArray enumValues = new JSONArray();
+
+        for(CtEnumValue<?> enumValue : enumsDiff.enumValues) {
+            enumValues.put(enumValue.getSimpleName());
+        }
+
+        return enumValues;
+    }
 }

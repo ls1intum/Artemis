@@ -26,6 +26,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -188,7 +190,7 @@ public class ProgrammingExerciseService {
         }
     }
 
-    // Generates the structure diff aka the test.json file for the current programming exercise
+    // Generates the structure oracle aka the test.json file for the current programming exercise
     public void generateStructureOracleFile(URL solutionRepoURL, URL exerciseRepoURL, URL testRepoURL, String testsPath) throws IOException, InterruptedException {
         Repository solutionRepository = gitService.getOrCheckoutRepository(solutionRepoURL);
         Repository exerciseRepository = gitService.getOrCheckoutRepository(exerciseRepoURL);
@@ -198,11 +200,11 @@ public class ProgrammingExerciseService {
         gitService.pull(exerciseRepository);
         gitService.pull(testRepository);
 
-        String solutionRepositoryPath = solutionRepository.getLocalPath().toAbsolutePath().toString() + File.separator;
-        String exerciseRepositoryPath = exerciseRepository.getLocalPath().toAbsolutePath().toString() + File.separator;
-        String testRepositoryPath = testRepository.getLocalPath().toAbsolutePath().toString() + File.separator + testsPath;
+        Path solutionRepositoryPath = solutionRepository.getLocalPath().toRealPath();
+        Path exerciseRepositoryPath = exerciseRepository.getLocalPath().toRealPath();
+        Path structureOraclePath = Paths.get(testRepository.getLocalPath().toRealPath().toString(), testsPath, "test.json");
 
-        OracleGeneratorClient.run(solutionRepositoryPath, exerciseRepositoryPath, testRepositoryPath, "test.json");
+        OracleGeneratorClient.run(solutionRepositoryPath, exerciseRepositoryPath, structureOraclePath);
 
         try {
             gitService.stageAllChanges(testRepository);
@@ -210,6 +212,5 @@ public class ProgrammingExerciseService {
         } catch (GitAPIException e) {
             log.error("An exception occurred while pushing the structure oracle file to the test repository.", e);
         }
-
     }
 }

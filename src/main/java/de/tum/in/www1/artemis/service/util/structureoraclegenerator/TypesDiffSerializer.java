@@ -1,96 +1,98 @@
 package de.tum.in.www1.artemis.service.util.structureoraclegenerator;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import spoon.reflect.declaration.CtMethod;
-import spoon.reflect.declaration.CtParameter;
 import spoon.reflect.reference.CtTypeReference;
 
-import java.io.IOException;
-
-import static de.tum.in.www1.artemis.service.util.structureoraclegenerator.SerializerUtil.serializeModifiers;
-
 /**
- * This class is used to serialize a TypesDiff object.
+ * This class is used to serialize the elements that are generally defined in types, e.g. methods and various properties
+ * of the types. These properties are defined as the hierarchy of the types.
  */
-public class TypesDiffSerializer extends StdSerializer<TypesDiff> {
-	
-    public TypesDiffSerializer() {
-        this(null);
+public class TypesDiffSerializer {
+
+    private TypesDiff typesDiff;
+
+    public TypesDiffSerializer(TypesDiff typesDiff) {
+        this.typesDiff = typesDiff;
     }
 
-    public TypesDiffSerializer(Class<TypesDiff> typesDiffClass) {
-        super(typesDiffClass);
-    }
+    /**
+     * This method is used to serialize the hierarchy properties of each type defined in the types diff
+     * into a JSON object containing the following information:
+     * - Name of the type
+     * - Package of the type
+     * - Interface stereotype
+     * - Enum stereotype
+     * - Abstract stereotype
+     * - Superclass (if any)
+     * - Super interfaces (if any)
+     * @return The JSON object consisting of JSON objects representation for the wanted hierarchy properties of a type
+     * defined in the types diff.
+     */
+    public JSONObject serializeHierarchy() {
+        JSONObject hierarchyJSON = new JSONObject();
 
-    @Override
-    public void serialize(TypesDiff typesDiff, JsonGenerator jsonGenerator, SerializerProvider provider) {
-        try {
-            // Serialize type properties.
-            jsonGenerator.writeObjectFieldStart("class");
-            jsonGenerator.writeStartObject();
+        hierarchyJSON.put("name", typesDiff.name);
+        hierarchyJSON.put("package", typesDiff.packageName);
 
-            jsonGenerator.writeStringField("name", typesDiff.name);
-            jsonGenerator.writeStringField("package", typesDiff.packageName);
-
-            if(typesDiff.isInterface) {
-                jsonGenerator.writeBooleanField("isInterface", true);
-            }
-            if(typesDiff.isEnum) {
-                jsonGenerator.writeBooleanField("isEnum", true);
-            }
-            if(typesDiff.isAbstract) {
-                jsonGenerator.writeBooleanField("isAbstract", true);
-            }
-            if(!typesDiff.superClassName.isEmpty()){
-                jsonGenerator.writeStringField("superclass", typesDiff.superClassName);
-            }
-            if(typesDiff.superInterfacesNames.size() > 0) {
-                jsonGenerator.writeArrayFieldStart("interfaces");
-                jsonGenerator.writeStartArray();
-                for(CtTypeReference<?> superInterface : typesDiff.superInterfacesNames) {
-                    if(!superInterface.isImplicit()) {
-                        jsonGenerator.writeString(superInterface.getSimpleName());
-                    }
-                }
-                jsonGenerator.writeEndArray();
-            }
-
-            jsonGenerator.writeEndObject();
-
-            // Serialize methods.
-            if(!typesDiff.methods.isEmpty()) {
-                jsonGenerator.writeObjectFieldStart("methods");
-
-                jsonGenerator.writeStartObject();
-                jsonGenerator.writeStartArray();
-
-                for(CtMethod<?> method : typesDiff.methods) {
-                    jsonGenerator.writeStartObject();
-
-                    jsonGenerator.writeStringField("name", method.getSimpleName());
-
-                    serializeModifiers(jsonGenerator, method.getModifiers());
-
-                    jsonGenerator.writeArrayFieldStart("parameters");
-                    jsonGenerator.writeStartArray();
-                    for(CtParameter<?> parameter : method.getParameters()) {
-                        if(!parameter.isImplicit()) {
-                            jsonGenerator.writeString(parameter.getType().getSimpleName());
-                        }
-                    }
-                    jsonGenerator.writeEndArray();
-
-                    jsonGenerator.writeStringField("returnType", method.getType().getSimpleName());
-                }
-
-                jsonGenerator.writeEndArray();
-                jsonGenerator.writeEndObject();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+        if(typesDiff.isInterface) {
+            hierarchyJSON.put("isInterface", true);
         }
+        if(typesDiff.isEnum) {
+            hierarchyJSON.put("isEnum", true);
+        }
+        if(typesDiff.isAbstract) {
+            hierarchyJSON.put("isAbstract", true);
+        }
+        if(!typesDiff.superClassName.isEmpty()){
+            hierarchyJSON.put("superclass", typesDiff.superClassName);
+        }
+        if(typesDiff.superInterfaces.size() > 0) {
+            JSONArray superInterfaces = new JSONArray();
+
+            for(CtTypeReference<?> superInterface : typesDiff.superInterfaces) {
+                if(!superInterface.isImplicit()) {
+                    superInterfaces.put(superInterface.getSimpleName());
+                }
+            }
+
+            hierarchyJSON.put("interfaces", superInterfaces);
+        }
+
+        return hierarchyJSON;
+    }
+
+    /**
+     * This method is used to serialize the methods of a type into a JSON array containing the following information for each
+     * method defined in the classes packed into a JSON object:
+     * - Name
+     * - Modifiers (if any)
+     * - Parameter types (if any)
+     * - Return type
+     * @return The JSON array consisting of JSON objects representation for each method defined in the types diff.
+     */
+    public JSONArray serializeMethods() {
+        JSONArray methodsJSON = new JSONArray();
+
+        for(CtMethod<?> method : typesDiff.methods) {
+            JSONObject methodJSON = new JSONObject();
+
+            methodJSON.put("name", method.getSimpleName());
+
+            if(!method.getModifiers().isEmpty()) {
+                methodJSON.put("modifiers", SerializerUtil.serializeModifiers(method.getModifiers()));
+            }
+
+            if(!method.getParameters().isEmpty()) {
+                methodJSON.put("parameters", SerializerUtil.serializeParameters(method.getParameters(), false));
+            }
+            methodJSON.put("returnType", method.getType().getSimpleName());
+
+            methodsJSON.put(methodJSON);
+        }
+
+        return methodsJSON;
     }
 
 }

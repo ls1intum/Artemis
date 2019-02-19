@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.util.structureoraclegenerator;
 
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import spoon.reflect.declaration.*;
 
 import java.util.ArrayList;
@@ -8,23 +7,26 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * This class extends the functionality of TypesDiff and handles structural elements that are exclusive to classes:
  * - Attributes,
  * - Constructors.
  */
-@JsonSerialize(using = ClassesDiffSerializer.class)
-public class ClassesDiff extends TypesDiff {
-	
+public class ClassesDiff {
+
+    private CtClass<?> solutionClass;
+    private CtClass<?> templateClass;
     protected List<CtField<?>> attributes;
     protected Set<CtConstructor<?>> constructors;
     protected boolean classesEqual;
 	
 	public ClassesDiff(CtClass<?> solutionClass, CtClass<?> templateClass) {
-		super(solutionClass, templateClass);
-		this.attributes = generateAttributesDiff(solutionClass, templateClass);
-		this.constructors = generateConstructorsDiff(solutionClass, templateClass);
+	    this.solutionClass = solutionClass;
+	    this.templateClass = templateClass;
+		this.attributes = generateAttributesDiff();
+		this.constructors = generateConstructorsDiff();
 		this.classesEqual = areClassesEqual();
 	}
 
@@ -33,7 +35,7 @@ public class ClassesDiff extends TypesDiff {
      * solution type but not in the template type.
      * @return A set of attributes defined in the solution type but not in the template type.
      */
-    private List<CtField<?>> generateAttributesDiff(CtClass<?> solutionClass, CtClass<?> templateClass) {
+    private List<CtField<?>> generateAttributesDiff() {
         // Use this predicate to filter out fields that are implicit, e.g. not explicitly defined in the code.
         Predicate<CtField<?>> fieldIsImplicit = f -> f.isImplicit() ||
             f.getSimpleName().equals(solutionClass.getSimpleName());
@@ -63,7 +65,7 @@ public class ClassesDiff extends TypesDiff {
      * solution type but not in the template type.
      * @return A set of constructors defined in the solution type but not in the template type.
      */
-    private Set<CtConstructor<?>> generateConstructorsDiff(CtClass<?> solutionClass, CtClass<?> templateClass) {
+    private Set<CtConstructor<?>> generateConstructorsDiff() {
         // Use this predicate to filter out methods that are implicit, e.g. not explicitly defined in the code.
         Predicate<CtConstructor<?>> constructorIsImplicit = CtElement::isImplicit;
 
@@ -79,8 +81,7 @@ public class ClassesDiff extends TypesDiff {
             for(CtConstructor<?> templateConstructor : templateClass.getConstructors()) {
 
                 // The constructors are uniquely identified by their parameter types.
-                constructorsDiff.removeIf(solutionConstructor ->
-                    parameterTypesAreEqual(solutionConstructor, templateConstructor));
+                constructorsDiff.removeIf(solutionConstructor -> parameterTypesAreEqual(solutionConstructor, templateConstructor));
             }
 
         }
@@ -89,13 +90,35 @@ public class ClassesDiff extends TypesDiff {
     }
 
     /**
+     * This method checks if the parameter types of an executable in the solution type are the same to an executable
+     * in the template type. An executable can be a method or a constructor.
+     * @param solutionExecutable: The executable present in the solution type.
+     * @param templateExecutable: The executable present in the template type.
+     * @return True, if the parameter types are the same, false otherwise.
+     */
+    protected boolean parameterTypesAreEqual(CtExecutable<?> solutionExecutable, CtExecutable<?> templateExecutable) {
+        // Create lists containing only the parameter type names for both the executable.
+        // This is done to work with them more easily, since types are uniquely identified only by their names.
+        List<String> solutionParams = solutionExecutable.getParameters().stream().map(CtNamedElement::getSimpleName).collect(Collectors.toList());
+        List<String> templateParams = templateExecutable.getParameters().stream().map(CtNamedElement::getSimpleName).collect(Collectors.toList());
+
+        // If both executables have no empty, then they parameters are the same.
+        if(solutionParams.isEmpty() && templateParams.isEmpty()) return true;
+
+        // If the number of the parameters is not equal, then the parameters are not the same.
+        if(solutionParams.size() != templateParams.size()) return false;
+
+        // Otherwise, check if the list of the parameters of the solution executable contains all the parameters
+        // in the template executable.
+        return solutionParams.containsAll(templateParams);
+    }
+
+    /**
      * This method checks if the solution class is the same in structure as the template class.
      * @return True, if the solution type is the same in structure as the template type, false otherwise.
      */
 	private boolean areClassesEqual() {
-		return super.typesEqual
-				&& this.attributes.isEmpty()
-				&& this.constructors.isEmpty();
+		return this.attributes.isEmpty() && this.constructors.isEmpty();
 	}
 
 }

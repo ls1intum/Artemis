@@ -1,70 +1,74 @@
 package de.tum.in.www1.artemis.service.util.structureoraclegenerator;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import spoon.reflect.declaration.CtConstructor;
 import spoon.reflect.declaration.CtField;
-import spoon.reflect.declaration.CtParameter;
-
-import java.io.IOException;
-
-import static de.tum.in.www1.artemis.service.util.structureoraclegenerator.SerializerUtil.serializeModifiers;
 
 /**
- * This class is used to serialize the enums diff.
+ * This class is used to serialize the elements that are unique to classes, e.g. attributes and constructors.
  */
-public class ClassesDiffSerializer extends StdSerializer<ClassesDiff> {
+public class ClassesDiffSerializer {
 
-    public ClassesDiffSerializer() {
-        this(null);
+    private ClassesDiff classesDiff;
+
+    public ClassesDiffSerializer(ClassesDiff classesDiff) {
+        this.classesDiff = classesDiff;
     }
 
-    public ClassesDiffSerializer(Class<ClassesDiff> classesDiffClass) { super(classesDiffClass); }
+    /**
+     * This method is used to serialize the attributes of a class into a JSON array containing the following information for each
+     * attribute defined in the classes packed into a JSON object:
+     * - Name
+     * - Modifiers (if any)
+     * - Type
+     * @return The JSON array consisting of JSON objects representation for each attribute defined in the classes diff.
+     */
+    public JSONArray serializeAttributes() {
+        JSONArray attributesJSON = new JSONArray();
 
-    @Override
-    public void serialize(ClassesDiff classesDiff, JsonGenerator jsonGenerator, SerializerProvider provider) {
-        try{
-            // Serialize attributes.
-            jsonGenerator.writeArrayFieldStart("attributes");
+        for(CtField<?> attribute : classesDiff.attributes) {
+            JSONObject attributeJSON = new JSONObject();
 
-            jsonGenerator.writeStartArray();
-            for(CtField<?> attribute : classesDiff.attributes) {
-                serializeModifiers(jsonGenerator, attribute.getModifiers());
+            attributeJSON.put("name", attribute.getSimpleName());
 
-                jsonGenerator.writeStringField("type", attribute.getType().getSimpleName());
-
-                jsonGenerator.writeEndObject();
+            if(!attribute.getModifiers().isEmpty()) {
+                attributeJSON.put("modifiers", SerializerUtil.serializeModifiers(attribute.getModifiers()));
             }
-            jsonGenerator.writeEndArray();
 
-            // Serialize constructors.
-            jsonGenerator.writeArrayFieldStart("constructors");
+            attributeJSON.put("type", attribute.getType().getSimpleName());
 
-            jsonGenerator.writeStartArray();
-            for(CtConstructor<?> constructor : classesDiff.constructors) {
-                jsonGenerator.writeStartObject();
-
-                serializeModifiers(jsonGenerator, constructor.getModifiers());
-
-                jsonGenerator.writeArrayFieldStart("parameters");
-                jsonGenerator.writeStartArray();
-
-                for(CtParameter<?> parameter : constructor.getParameters()) {
-                    if(parameter.isImplicit()) { continue; }
-
-                    if(constructor.getDeclaringType().isEnum()) {
-                        jsonGenerator.writeString("String");
-                        jsonGenerator.writeString("int");
-                    }
-
-                    jsonGenerator.writeString(parameter.getType().getSimpleName());
-                }
-                jsonGenerator.writeEndArray();
-            }
-        }  catch (IOException e) {
-            e.printStackTrace();
+            attributesJSON.put(attributeJSON);
         }
+
+        return  attributesJSON;
+    }
+
+    /**
+     * This method is used to serialize the constructors of a class into a JSON array containing the following information for each
+     * constructor defined in the classes packed into a JSON object:
+     * - Modifiers (if any)
+     * - Parameter types (if any)
+     * @return The JSON array consisting of JSON objects representation for each constructor defined in the classes diff.
+     */
+    public JSONArray serializeConstructors() {
+        JSONArray constructorsJSON = new JSONArray();
+
+        for(CtConstructor<?> constructor : classesDiff.constructors) {
+            JSONObject constructorJSON = new JSONObject();
+
+            if(!constructor.getModifiers().isEmpty()) {
+                constructorJSON.put("modifiers", SerializerUtil.serializeModifiers(constructor.getModifiers()));
+            }
+
+            if(!constructor.getParameters().isEmpty()) {
+                constructorJSON.put("parameters", SerializerUtil.serializeParameters(constructor.getParameters(), constructor.getDeclaringType().isEnum()));
+            }
+
+            constructorsJSON.put(constructorJSON);
+        }
+
+        return constructorsJSON;
     }
 
 }

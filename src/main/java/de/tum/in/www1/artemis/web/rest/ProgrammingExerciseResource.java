@@ -344,7 +344,7 @@ public class ProgrammingExerciseResource {
      * PUT  /programming-exercises/{id}/generate-tests : Makes a call to StructureOracleGenerator to generate the
      * structure oracle aka the test.json file
      *
-     * @param programmingExercise the programming exercise for which the structure oracle should get generated
+     * @param id The ID of teh programming exercise for which the structure oracle should get generated
      * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the parameters are invalid
      */
     @PutMapping("/programming-exercises/{id}/generate-tests")
@@ -370,23 +370,29 @@ public class ProgrammingExerciseResource {
             !authCheckService.isAdmin()) {
             return forbidden();
         }
+        if (programmingExercise.getPackageFolderName() == null) {
+            return ResponseEntity
+                .badRequest()
+                .headers(HeaderUtil.createAlert("structureOracleGenerationNotPossible", "This is a linked exercise and generating the structure oracle for this exercise is not possible."))
+                .body(null);
+        }
 
         URL solutionRepoURL = programmingExercise.getSolutionRepositoryUrlAsUrl();
         URL exerciseRepoURL = programmingExercise.getBaseRepositoryUrlAsUrl();
         URL testRepoURL = programmingExercise.getTestRepositoryUrlAsUrl();
 
         try {
-            //String testsPath = "test" + programmingExercise.getPackageName().replace(".", "/");
-            String testsPath = "test/de/in/tum/www1";
+            String testsPath = "test" + programmingExercise.getPackageName().replace(".", "/");
+            // String testsPath = "test/de/tum/in/www1";
             programmingExerciseService.generateStructureOracleFile(solutionRepoURL, exerciseRepoURL, testRepoURL, testsPath);
+
             return ResponseEntity.ok("Successfully generated the structure oracle for the exercise " + programmingExercise.getProjectName() + " with "
-                + " the solution project in the repository: " + solutionRepoURL.getPath() + " and the template in the repository : " + exerciseRepoURL.getPath()
+                + "the solution project in the repository: " + solutionRepoURL.getPath() + " and the template in the repository : " + exerciseRepoURL.getPath()
                 + ". \n The structure oracle file is in: " + testRepoURL.getPath() + File.separator + testsPath);
         } catch (Exception e) {
-            log.error("Error while generating the structure oracle.", e);
             return ResponseEntity
                 .badRequest()
-                .headers(HeaderUtil.createAlert("An error occurred while generating the structure oracle for the exercise: " + e.getMessage(), "errorStructureDiffGeneration"))
+                .headers(HeaderUtil.createAlert("An error occurred while generating the structure oracle for the exercise " + programmingExercise.getProjectName() + ": \n" + e.getMessage(), "errorStructureDiffGeneration"))
                 .body(null);
         }
     }
