@@ -461,6 +461,16 @@ public class QuizExercise extends Exercise implements Serializable {
         }
     }
 
+    @Override
+    public Set<Result> findResultsWithCompletionDate(Participation participation) {
+        if (shouldFilterForStudents()) {
+            // results are never relevant before quiz has ended => return null
+            return null;
+        } else {
+            return participation.getResults();
+        }
+    }
+
     /**
      * undo all changes which are not allowed after the dueDate ( dueDate, releaseDate, question.points, adding Questions and Answers)
      *

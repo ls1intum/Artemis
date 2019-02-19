@@ -263,7 +263,7 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
     @GetMapping(value = "/exercises/{exerciseId}/results")
-    @PreAuthorize("hasAnyRole('User', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     @Transactional(readOnly = true)
     public ResponseEntity<Exercise> getResultsForCurrentStudent(@PathVariable Long exerciseId) {
@@ -285,7 +285,7 @@ public class ExerciseResource {
                 //Removing not needed properties
                 participation.setStudent(null);
 
-                participation.setResults(participation.getResults());
+                participation.setResults(exercise.findResultsWithCompletionDate(participation));
                 exercise.addParticipation(participation);
             }
         }
