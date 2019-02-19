@@ -68,8 +68,8 @@ export class ExerciseService {
         return this.http.get<Exercise>(`${this.resourceUrl}/${id}/results`);
     }
 
-    getNextExercisesForDays(exercises: Exercise[], delay = 7): Exercise[] {
-        return exercises.filter(exercise => {
+    getNextExerciseForDays(exercises: Exercise[], delay = 7): Exercise {
+        return exercises.find(exercise => {
             return moment().isBefore(exercise.dueDate) && moment().add(delay, 'day').isSameOrAfter(exercise.dueDate);
         });
     }

@@ -9,13 +9,13 @@
         <h2>{{displayTotalRelativeScore()}}%</h2>
     </div>
 
-    <div class="card-footer text-muted" *ngFor="let nextExercise of nextRelevantExercises()"
-         (click)="startExercise(nextExercise)">
+    <div class="card-footer text-muted" *ngIf="nextRelevantExercise"
+         (click)="startExercise(nextRelevantExercise)">
         <h6>Next exercise:</h6>
-        <h5>{{nextExercise.title}}</h5>
-        <h6>{{nextExercise.dueDate | date:'dd/MM/yy'}}</h6>
+        <h5>{{nextRelevantExercise.title}}</h5>
+        <h6>{{nextRelevantExercise.dueDate | date:'dd/MM/yy HH:mm'}}</h6>
     </div>
-    <div class="card-footer text-muted" *ngIf="nextRelevantExercises().length === 0">
+    <div class="card-footer text-muted" *ngIf="!nextRelevantExercise">
         <h6>No Exercise planned</h6>
     </div>
 </div>

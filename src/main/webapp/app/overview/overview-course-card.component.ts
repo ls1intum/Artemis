@@ -1,6 +1,7 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { Course, CourseScoreCalculationService } from 'app/entities/course';
 import { Exercise, ExerciseService } from 'app/entities/exercise';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
     selector: 'jhi-overview-course-card',
@@ -11,6 +12,8 @@ export class OverviewCourseCardComponent implements OnInit {
     @Input() course: Course;
 
     constructor(
+        private router: Router,
+        private route: ActivatedRoute,
         private courseScoreCalculationService: CourseScoreCalculationService,
         private exerciseService: ExerciseService
     ) {
@@ -34,12 +37,11 @@ export class OverviewCourseCardComponent implements OnInit {
         }
     }
 
-    nextRelevantExercises(): Exercise[] {
-        return this.exerciseService.getNextExercisesForDays(this.course.exercises);
+    get nextRelevantExercise(): Exercise {
+        return this.exerciseService.getNextExerciseForDays(this.course.exercises);
     }
 
     startExercise(exercise: Exercise): void {
-        console.log(exercise);
-        console.warn('NYI');
+        this.router.navigate([this.course.id, 'exercises', exercise.id], {relativeTo: this.route});
     }
 }
