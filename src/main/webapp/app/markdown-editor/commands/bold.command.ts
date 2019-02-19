@@ -10,7 +10,9 @@ export class BoldCommand extends Command {
         if (chosenText.includes('**')) {
             textToAdd = chosenText.slice(2, -2);
             editor.insert(textToAdd);
-        } else textToAdd = `**${chosenText}**`;
+        } else {
+            textToAdd = `**${chosenText}**`;
             editor.insert(textToAdd);
+        }
     }
 }

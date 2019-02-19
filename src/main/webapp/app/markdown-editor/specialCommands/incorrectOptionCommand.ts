@@ -1,7 +1,9 @@
 import { SpecialCommand } from 'app/markdown-editor/specialCommands/specialCommand';
+import {BDelegate} from 'app/markdown-editor';
 
 export class IncorrectOptionCommand extends SpecialCommand {
     buttonTitle = 'Incorrect Option';
+    identifier = '[x]'
 
     /**
      * @function addAnswerOptionTextToEditor
@@ -17,5 +19,11 @@ export class IncorrectOptionCommand extends SpecialCommand {
         const range = editor.selection.getRange();
         range.setStart(range.start.row, 6);
         editor.selection.setRange(range);
+    }
+
+    parsing(delegate: BDelegate, text: string /*, question: Question*/): void {
+        //this.artemisMarkdown.parseTextHintExplanation(text, question);
+        console.log('parsing in HintCommand and forward result to ', delegate);
+        delegate.handleResponse(text);
     }
 }

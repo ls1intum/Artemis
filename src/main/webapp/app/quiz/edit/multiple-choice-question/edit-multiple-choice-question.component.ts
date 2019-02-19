@@ -6,6 +6,7 @@ import { AceEditorComponent } from 'ng2-ace-editor';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
 import { MarkdownEditorComponent } from 'app/markdown-editor';
+import { BDelegate } from 'app/markdown-editor';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
@@ -13,7 +14,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
     templateUrl: './edit-multiple-choice-question.component.html',
     providers: [ArtemisMarkdown]
 })
-export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges {
+export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, BDelegate {
     @ViewChild('questionEditor')
     private questionEditor: AceEditorComponent;
 
@@ -103,9 +104,11 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges {
      * Note: Existing IDs for answer options are reused in the original order.
      */
     parseMarkdown(text: string): void {
+        /**
         // First split by [], [ ], [x] and [X]
         const questionParts = text.split(/\[\]|\[ \]|\[x\]|\[X\]/g);
         const questionText = questionParts[0];
+         */
 
         // Split question into main text, hint and explanation
         this.artemisMarkdown.parseTextHintExplanation(questionText, this.question);
@@ -155,6 +158,12 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges {
      */
     togglePreview(): void {
         this.showPreview = !this.showPreview;
+        console.log('inform MarkdownEditor about command', this.markdownEditor);
+        this.markdownEditor.searchForTheParsingCommand();
+    }
+
+    handleResponse(response: any) {
+        console.log('Client recevied', response);
     }
 
     /**

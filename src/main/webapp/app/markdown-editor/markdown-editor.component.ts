@@ -12,6 +12,12 @@ import { CorrectOptionCommand } from 'app/markdown-editor/specialCommands/correc
 import { IncorrectOptionCommand } from 'app/markdown-editor/specialCommands/incorrectOptionCommand';
 import { ExplanationCommand } from 'app/markdown-editor/specialCommands/explanation.command';
 
+export interface BDelegate {
+    togglePreview():void;
+    parseMarkdown(text: string): void;
+    handleResponse(response: any): void;
+}
+
 @Component({
     selector: 'jhi-markdown-editor',
     styleUrls: ['./markdown-editor.scss'],
@@ -22,6 +28,8 @@ export class MarkdownEditorComponent implements AfterViewInit, OnChanges {
     @ViewChild('aceEditor')
     aceEditorContainer: AceEditorComponent;
 
+    @Input() delegate: BDelegate;
+
     @Input() defaultText: string;
 
     @Output() defaultTextChanged = new EventEmitter();
@@ -29,13 +37,17 @@ export class MarkdownEditorComponent implements AfterViewInit, OnChanges {
     questionEditorText = '';
     questionEditorAutoUpdate = true;
 
+    showPreview: boolean;
+
     hintCommand = new HintCommand();
-    correctCommand = new CorrectOptionCommand();
+    correctCommand = new CorrectOptionCommand(this.artemisMarkdown);
     incorrectCommand = new IncorrectOptionCommand();
     explanationCommand = new ExplanationCommand();
     boldCommand = new BoldCommand();
     italicCommand = new ItalicCommand();
     underlineCommand = new UnderlineCommand();
+
+    constructor(private artemisMarkdown: ArtemisMarkdown) {}
 
     commands: Command[] = [new BoldCommand(), new ItalicCommand(), new UnderlineCommand()];
 
@@ -53,6 +65,9 @@ export class MarkdownEditorComponent implements AfterViewInit, OnChanges {
         );
     }
 
+    ngOnInit() {
+        this.delegate.togglePreview();
+    }
 
     /**
      * @function setupQuestionEditor
@@ -78,4 +93,20 @@ export class MarkdownEditorComponent implements AfterViewInit, OnChanges {
         );
     }
 
+    searchForTheParsingCommand(): void {
+        const text = this.defaultText;
+        const questionParts = text.split(/\[\]|\[ \]|\[x\]|\[X\]/g);
+
+        for( let element of questionParts){
+            if (element.includes('[\]')){
+                this.correctCommand.parsing(this.delegate, element)
+            } else if (element.includes('[ \]')){
+                this.correctCommand.parsing(this.delegate, element)
+            } else if (element.includes('[ \]')){
+                this.incorrectCommand.parsing(this.delegate, element)
+            } else {
+                this.incorrectCommand.parsing(this.delegate, element)
+            }
+        }
+    }
 }
