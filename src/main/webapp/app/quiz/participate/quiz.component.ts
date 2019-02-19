@@ -822,7 +822,10 @@ export class QuizComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Checks if the student has selected or made an answer for each question within the exercise.
+     * Checks if the student has interacted with each question of the quiz
+     * For a Multiple Choice Questions it checks if an answer option was selected
+     * For a Drag and Drop Questions it checks if at least one mapping has been made
+     * For a Short Answer Questions it checks if at least one field has been clicked in 
      * Goes trough selectedAnswerOptions and dragAndDropMappings
      */
     checkForAnsweredQuestions(): boolean {
