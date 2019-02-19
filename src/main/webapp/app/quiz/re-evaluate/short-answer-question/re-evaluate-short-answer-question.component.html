@@ -1,0 +1,111 @@
+<div class="edit-sa-question">
+    <div class="row">
+        <div class="col-md-10 text-left">
+            <div class="input-group">
+                <input class="form-control" [(ngModel)]="question.title" placeholder="Question Title"
+                       style="height: 33px"/>
+                <span class="input-group-btn">
+                    <button class="btn btn-outline-secondary" type="button" (click)="resetQuestionTitle()">
+                        <fa-icon icon="undo"></fa-icon>
+                    </button>
+                </span>
+            </div>
+        </div>
+        <div class="col-md-2 text-right">
+            <div class="form-group">
+                <div class="re-evaluate-button" (click)="moveUp()">
+                    <fa-icon icon="chevron-up" size="2x"></fa-icon>
+                </div>
+                <div class="re-evaluate-button" (click)="moveDown()">
+                    <fa-icon icon="chevron-down" size="2x"></fa-icon>
+                </div>
+                <div class="re-evaluate-button" (click)="resetQuestion()">
+                    <fa-icon icon="undo" size="2x"></fa-icon>
+                </div>
+                <div class="re-evaluate-button" (click)="delete()">
+                    <fa-icon icon="trash" size="2x"></fa-icon>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="question-options">
+        <div class="form-group">
+            <span jhiTranslate="arTeMiSApp.question.scoringType" class="colon-suffix no-flex-shrink"></span>
+            <select class="form-control" [(ngModel)]="question.scoringType" title="scoring type">
+                <option value="ALL_OR_NOTHING">{{'arTeMiSApp.quizExercise.scoringType.all_or_nothing' | translate}}</option>
+                <option value="PROPORTIONAL_WITH_PENALTY">{{'arTeMiSApp.quizExercise.scoringType.proportional_with_penalty' | translate}}</option>
+            </select>
+            <span jhiTranslate="arTeMiSApp.question.score" class="colon-suffix"></span>
+            <span>{{question.score}}</span>
+        </div>
+        <button
+            class="btn btn-outline-secondary"
+            [hidden]="question.invalid"
+            (click)="question.invalid = true"
+            jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.setQuestionInvalid">
+        </button>
+        <button
+            class="btn btn-outline-secondary"
+            [hidden]="!question.invalid"
+            [disabled]="question.invalid"
+            jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.questionIsInvalid">
+        </button>
+    </div>
+    <div class="markupEditorArea">
+        <div class="question-content" style="padding-bottom: 12px">
+            <div class="input-group" style="height: 60px">
+                <ace-editor
+                    #questionEditor
+                    [(text)]="questionEditorText"
+                    [mode]="editorMode"
+                    [autoUpdateContent]="editorAutoUpdate"
+                    style="min-height: 40px; width:90%; overflow: auto;"
+                    class="form-control">
+                </ace-editor>
+                <span class="input-group-btn" style="vertical-align: top">
+                    <button class="btn btn-outline-secondary btn-lg" type="button" (click)="resetQuestionText()">
+                        <fa-icon icon="undo"></fa-icon>
+                    </button>
+                </span>
+            </div>
+        </div>
+    </div>
+    <div class="answer-border" dnd-sortable-container [sortableData]="question.solutions">
+        <div class="answer-border"
+             *ngFor="let solution of question.solutions; let i = index"
+             dnd-sortable [sortableIndex]="i">
+            <div class="question-options">
+                <span class="answer-handle re-evaluate-order-button text-center" style="width: 5%" dnd-sortable-handle>
+                    <fa-icon icon="arrows-alt-v" size="2x"></fa-icon>
+                </span>
+                <ace-editor
+                    [mode]="editorMode"
+                    [autoUpdateContent]="editorAutoUpdate"
+                    style="min-height: 40px; height: 60px; width:65%; overflow: auto;"
+                    class="form-control">
+                </ace-editor>
+                <div class="form-group text-center" style="width: 25%">
+                    <button
+                        class="btn btn-outline-secondary"
+                        [hidden]="isSolutionInvalid(solution)"
+                        (click)="setSolutionInvalid(solution)"
+                        jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.setAnswerInvalid">
+                    </button>
+                    <button
+                        class="btn btn-outline-secondary"
+                        [hidden]="!isSolutionInvalid(solution)"
+                        [disabled]="isSolutionInvalid(solution)"
+                        jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.answerIsInvalid">
+                    </button>&nbsp;
+                    <span class="re-evaluate-button" (click)="resetSolution(solution)">
+                        <fa-icon icon="undo" size="2x"></fa-icon>
+                    </span>
+                    <span class="re-evaluate-button" (click)="deleteSolution(solution)">
+                        <fa-icon icon="trash" size="2x"></fa-icon>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
