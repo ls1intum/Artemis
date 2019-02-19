@@ -169,9 +169,9 @@
                 "dragAndDropAllOrNothingCorrect": "You have achieved {{paramScore}} point(s) of the {{paramQuestionScore}} possible point(s). Since you have mapped all the items correctly you have achieved all point(s) in this exercise. Great Job!",
                 "dragAndDropAllOrNothingNotCorrect":"You have achieved {{paramScore}} point(s) of the {{paramQuestionScore}} possible points. Since you mapped {{paramRightMapping}} item(s) correctly but mismapped {{paramWrongMappedItems}} item(s) you have achieved 0 points.",
                 "dragAndDropProp": "You have achieved {{paramScore}} point(s) of the {{paramQuestionScore}} possible point(s). Each of the {{paramDragAndDropElementsCount}} drag and drop item(s) grants you {{paramQuestionScore}}/{{paramDragAndDropElementsCount}} point(s) if you map it to the corresponding location. You have mismapped {{paramWrongMappedItems}} item(s) and correctly mapped {{paramRightMapping}} item(s).",
-                "shortAnswerAllOrNothingCorrect": "You have achieved {{paramScore}} point(s) of the {{paramQuestionScore}} possible point(s). Since you have filled all gap(s) correctly you have achieved all point(s) in this exercise. Great Job!",
+                "shortAnswerAllOrNothingCorrect": "You have achieved {{paramScore}} point(s) of the {{paramQuestionScore}} possible point(s). Since you filled all gap(s) correctly you have achieved all point(s) in this exercise. Great Job!",
                 "shortAnswerAllOrNothingNotCorrect": "You have achieved {{paramScore}} point(s) of the {{paramQuestionScore}} possible point(s). Since you filled out {{paramShortAnswerWrongOption}} gap(s) wrongly and {{paramShortAnswerCorrectAnswers}} gap(s) correctly you have achieved 0 points in this exercise.",
-                "shortAnswerProp": "You have achieved {{paramScore}} point(s) of the {{paramQuestionScore}} possible point(s). Since you have filled out {{paramShortAnswerWrongOption}}} gap(s) wrongly and {{paramShortAnswerCorrectAnswers}} gap(s) correctly."
+                "shortAnswerProp": "You have achieved {{paramScore}} point(s) of the {{paramQuestionScore}} possible point(s). You filled out {{paramShortAnswerWrongOption}} gap(s) wrongly and {{paramShortAnswerCorrectAnswers}} gap(s) correctly."
             }
         }
     }

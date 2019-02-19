@@ -31,7 +31,7 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
     multipleChoiceCorrectAnswerCorrectlyChosen: number;
     multipleChoiceWrongAnswerChosen: number;
     amountofCorrectMultipleChoiceAnswers:number;
-    forgottenRightAnswers: number;
+    forgottenMultipleChoiceRightAnswers: number;
     amountOfAnswerOptions: number;
     inTotalRightOptions: number;
     inTotalWrongOptions: number;
@@ -77,9 +77,9 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
             this.amountofCorrectMultipleChoiceAnswers = mcmQuestion.answerOptions.filter(option => option.isCorrect).length;
             this.multipleChoiceCorrectAnswerCorrectlyChosen = this.MultipleChoiceMapping.filter(option => option.isCorrect).length; // how many right answers chosen correctly
             this.multipleChoiceWrongAnswerChosen = this.MultipleChoiceMapping.filter(option => !option.isCorrect).length; // how many wrong answers have been selected
-            this.forgottenRightAnswers = this.amountofCorrectMultipleChoiceAnswers - this.multipleChoiceCorrectAnswerCorrectlyChosen; // how many right options have been forgotten to be chosen
+            this.forgottenMultipleChoiceRightAnswers = this.amountofCorrectMultipleChoiceAnswers - this.multipleChoiceCorrectAnswerCorrectlyChosen; // how many right options have been forgotten to be chosen
             this.inTotalRightOptions = this.multipleChoiceCorrectAnswerCorrectlyChosen + (this.amountOfAnswerOptions - this.amountofCorrectMultipleChoiceAnswers-this.multipleChoiceWrongAnswerChosen)
-            this.inTotalWrongOptions = this.multipleChoiceWrongAnswerChosen + this.forgottenRightAnswers
+            this.inTotalWrongOptions = this.multipleChoiceWrongAnswerChosen + this.forgottenMultipleChoiceRightAnswers
     }
 
     private countDragandDrop() {
