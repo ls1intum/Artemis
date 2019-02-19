@@ -60,7 +60,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
         private accountService: AccountService,
         private translateService: TranslateService,
         private quizExerciseService: QuizExerciseService,
-        private jhiWebsocketService: JhiWebsocketService
+        private jhiWebsocketService: JhiWebsocketService,
     ) {
         this.options = createOptions(this);
     }

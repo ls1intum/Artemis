@@ -173,7 +173,7 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
         private accountService: AccountService,
         private translateService: TranslateService,
         private quizExerciseService: QuizExerciseService,
-        private jhiWebsocketService: JhiWebsocketService
+        private jhiWebsocketService: JhiWebsocketService,
     ) {
         this.options = createOptions(this);
     }
@@ -392,4 +392,5 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
             }
         }
     }
+
 }

@@ -12,6 +12,7 @@ export type ResultResponseType = HttpResponse<Result>;
 
 @Injectable({ providedIn: 'root' })
 export class QuizSubmissionService {
+
     constructor(private http: HttpClient) {}
 
     submitForPractice(quizSubmission: QuizSubmission, courseId: number, exerciseId: number): Observable<ResultResponseType> {

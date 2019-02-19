@@ -1,6 +1,6 @@
-import { Specialcommand } from 'app/markdown-editor/specialcommands/specialcommand';
+import { SpecialCommand } from 'app/markdown-editor/specialCommands/specialCommand';
 
-export class HintCommand extends Specialcommand {
+export class HintCommand extends SpecialCommand {
     buttonTitle = 'Hint';
 
     execute(editor: any): void {

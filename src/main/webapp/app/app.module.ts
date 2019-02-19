@@ -89,7 +89,6 @@ import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor/markdown-editor
         ArTEMiSModelingStatisticsModule,
         ArTEMiSTextModule,
         ArTEMiSTextAssessmentModule
-
         // jhipster-needle-angular-add-module JHipster will add new module here
     ],
     declarations: [

@@ -10,6 +10,7 @@ export type EntityResponseType = HttpResponse<TextSubmission>;
 
 @Injectable({ providedIn: 'root' })
 export class TextSubmissionService {
+
     constructor(private http: HttpClient) {}
 
     create(textSubmission: TextSubmission, exerciseId: number): Observable<EntityResponseType> {

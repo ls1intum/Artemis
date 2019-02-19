@@ -14,10 +14,17 @@ import { DragAndDropQuestionStatisticComponent } from './drag-and-drop-question-
 import { ShortAnswerQuestionStatisticComponent } from './short-answer-question-statistic/short-answer-question-statistic.component';
 import { ArTEMiSQuizModule } from '../quiz/participate/quiz.module';
 
-const ENTITY_STATES = [...quizStatisticRoute];
+const ENTITY_STATES = [
+    ...quizStatisticRoute
+];
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), ChartsModule, ArTEMiSQuizModule],
+    imports: [
+        ArTEMiSSharedModule,
+        RouterModule.forChild(ENTITY_STATES),
+        ChartsModule,
+        ArTEMiSQuizModule
+    ],
     declarations: [
         QuizStatisticComponent,
         QuizPointStatisticComponent,
@@ -34,6 +41,8 @@ const ENTITY_STATES = [...quizStatisticRoute];
         DragAndDropQuestionStatisticComponent,
         ShortAnswerQuestionStatisticComponent
     ],
-    providers: [QuizStatisticUtil]
+    providers: [
+        QuizStatisticUtil
+    ]
 })
 export class ArTEMiSStatisticModule {}

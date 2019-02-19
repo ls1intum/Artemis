@@ -73,7 +73,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
         private jhiWebsocketService: JhiWebsocketService,
         private quizStatisticUtil: QuizStatisticUtil,
         private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
-        private artemisMarkdown: ArtemisMarkdown
+        private artemisMarkdown: ArtemisMarkdown,
     ) {
         this.options = createOptions(this);
     }

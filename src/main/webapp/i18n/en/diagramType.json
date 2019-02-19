@@ -1,6 +1,6 @@
 {
     "arTeMiSApp": {
-        "DiagramType": {
+        "DiagramType" : {
             "null": "",
             "undefined": "",
             "CLASS": "Class Diagram",

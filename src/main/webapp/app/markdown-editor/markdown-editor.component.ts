@@ -7,10 +7,10 @@ import { BoldCommand } from 'app/markdown-editor/commands/bold.command';
 import { ItalicCommand } from 'app/markdown-editor/commands/italic.command';
 import { UnderlineCommand } from 'app/markdown-editor/commands/underline.command';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-import { HintCommand } from 'app/markdown-editor/specialcommands/hint.command';
-import { CorrectOptionCommand } from 'app/markdown-editor/specialcommands/correctOptionCommand';
-import { IncorrectoptionCommand } from 'app/markdown-editor/specialcommands/incorrectoption.command';
-import { ExplanationCommand } from 'app/markdown-editor/specialcommands/explanation.command';
+import { HintCommand } from 'app/markdown-editor/specialCommands/hint.command';
+import { CorrectOptionCommand } from 'app/markdown-editor/specialCommands/correctOptionCommand';
+import { IncorrectOptionCommand } from 'app/markdown-editor/specialCommands/incorrectOptionCommand';
+import { ExplanationCommand } from 'app/markdown-editor/specialCommands/explanation.command';
 
 @Component({
     selector: 'jhi-markdown-editor',
@@ -31,7 +31,7 @@ export class MarkdownEditorComponent implements AfterViewInit, OnChanges {
 
     hintCommand = new HintCommand();
     correctCommand = new CorrectOptionCommand();
-    incorrectCommand = new IncorrectoptionCommand();
+    incorrectCommand = new IncorrectOptionCommand();
     explanationCommand = new ExplanationCommand();
     boldCommand = new BoldCommand();
     italicCommand = new ItalicCommand();

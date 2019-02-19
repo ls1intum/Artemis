@@ -1,7 +1,7 @@
-import { Specialcommand } from 'app/markdown-editor/specialcommands/specialcommand';
+import { SpecialCommand } from 'app/markdown-editor/specialCommands/specialCommand';
 
-export class IncorrectoptionCommand extends Specialcommand {
-    buttonTitle = 'Incorrect Option';
+export class CorrectOptionCommand extends SpecialCommand {
+    buttonTitle = 'Correct Option';
 
     /**
      * @function addAnswerOptionTextToEditor
@@ -9,7 +9,7 @@ export class IncorrectoptionCommand extends Specialcommand {
      * @param mode {boolean} mode true sets the text for an correct answerOption, false for an incorrect one
      */
     execute(editor: any): void {
-        const addedText = '\n[x] Enter a correct answer option here';
+        const addedText = '\n[ ] Enter an incorrect answer option here';
         editor.focus();
         editor.clearSelection();
         editor.moveCursorTo(editor.getCursorPosition().row, Number.POSITIVE_INFINITY);

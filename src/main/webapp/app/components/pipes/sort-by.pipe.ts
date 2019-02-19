@@ -6,7 +6,7 @@ import { BaseEntity } from '../../shared';
     name: 'sortBy'
 })
 export class SortByPipe implements PipeTransform {
-    constructor(private momentDiff: DifferencePipe) {}
+    constructor(private momentDiff: DifferencePipe) { }
 
     transform(array: any[], predicate: string, reverse: boolean): any[] {
         array.sort((a: any, b: any) => {
@@ -36,20 +36,9 @@ export class SortByPipe implements PipeTransform {
                     }
                 }
             }
-            const result =
-                tempA < tempB
-                    ? -1
-                    : tempA > tempB
-                    ? 1
-                    : tempA == null && tempB !== null
-                    ? -1
-                    : tempA !== null && tempB == null
-                    ? 1
-                    : a.id < b.id
-                    ? -1
-                    : a.id > b.id
-                    ? 1
-                    : 0;
+            const result = (tempA < tempB) ? -1 : (tempA > tempB) ? 1 : (tempA == null && tempB !== null ? -1 : (tempA !== null && tempB == null ? 1 : (
+                (a.id < b.id) ? -1 : (a.id > b.id) ? 1 : 0
+            )));
             return result * (reverse ? 1 : -1);
         });
         return array;
