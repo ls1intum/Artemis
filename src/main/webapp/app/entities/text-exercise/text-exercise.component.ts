@@ -69,7 +69,7 @@ export class TextExerciseComponent implements OnInit {
             );
         });
     }
-    
+
 
     trackId(index: number, item: TextExercise) {
         return item.id;
