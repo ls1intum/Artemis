@@ -26,7 +26,7 @@
         </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.maxScore" for="field_maxScore">Max Score</label>
-            <input type="number" class="form-control" [pattern]="maxScorePattern" min="0" max="9999" name="maxScore" id="field_maxScore" [(ngModel)]="textExercise.maxScore" />
+            <input required type="number" class="form-control" [pattern]="maxScorePattern" min="0" max="9999" name="maxScore" id="field_maxScore" [(ngModel)]="textExercise.maxScore" />
         </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.course" for="field_course">Course</label>

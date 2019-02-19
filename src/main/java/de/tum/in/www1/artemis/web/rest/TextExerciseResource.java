@@ -86,6 +86,10 @@ public class TextExerciseResource {
             throw new BadRequestAlertException("A new textExercise needs a title", ENTITY_NAME, "missingtitle");
         }
 
+        if (textExercise.getMaxScore() == null) {
+            throw new BadRequestAlertException("A new textExercise needs a max score", ENTITY_NAME, "missingmaxscore");
+        }
+
         if (textExercise.getDueDate() == null && textExercise.getAssessmentDueDate() != null ) {
             throw new BadRequestAlertException("If you set an assessmentDueDate, then you need to add also a dueDate", ENTITY_NAME, "dueDate");
         }
