@@ -41,13 +41,11 @@ export class CourseExercisesOverviewComponent implements OnInit {
     load() {
         this.courseService.find(this.courseId).subscribe(courseResponse => {
             this.course = courseResponse.body;
-
             this.quizExercises = [];
             this.textExercises = [];
             this.programmingExercises = [];
             this.modelingExercises = [];
             this.fileUploadExercises = [];
-
         });
     }
 }
