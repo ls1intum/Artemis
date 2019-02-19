@@ -50,10 +50,10 @@ export class ProgrammingExerciseComponent implements OnInit, OnDestroy {
     }
 
     load() {
-            this.subscription = this.route.params.subscribe(params => {
-                this.courseId = params['courseId'];
-                this.loadForCourse();
-            });
+        this.subscription = this.route.params.subscribe(params => {
+            this.courseId = params['courseId'];
+            this.loadForCourse();
+        });
     }
 
     loadForCourse() {
