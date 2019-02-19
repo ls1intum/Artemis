@@ -24,7 +24,7 @@ public class ScoringStrategyShortAnswerProportionalWithPenalty implements Scorin
             ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) question;
             double totalSolutions = shortAnswerQuestion.getSpots().size();
 
-            double[] values = ScoringStrategyShortAnswerUtil.getCorrectAndIncorrectSolutionsrShortAnswerQuestion(shortAnswerQuestion,shortAnswerAnswer);
+            double[] values = ScoringStrategyShortAnswerUtil.getCorrectAndIncorrectSolutionsShortAnswerQuestion(shortAnswerQuestion,shortAnswerAnswer);
             double correctSolutions = values[0];
             double incorrectSolutions = values[1];
 
