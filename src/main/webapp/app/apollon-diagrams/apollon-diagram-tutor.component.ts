@@ -385,7 +385,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         const relationshipsToHighlight: string [] = state.relationships.allIds.filter(id => this.conflicts.has(id));
 
         entitiesToHighlight.forEach(id => {
-            document.getElementById(`entity-${id}`).style.backgroundColor = 'rgb(248, 214, 217)';
+            document.getElementById(id).style.fill = 'rgb(248, 214, 217)';
         });
 
         //TODO MJ highlight relation entities. currently do not have unique id
