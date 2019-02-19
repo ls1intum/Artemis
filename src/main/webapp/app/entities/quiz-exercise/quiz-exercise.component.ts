@@ -60,11 +60,13 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
                 this.courseId = params['courseId'];
                 this.loadForCourse(this.courseId);
             });
+        } else {
+            this.loadForCourse(this.course.id)
         }
     }
 
     loadForCourse(courseId: number) {
-        this.courseService.find(this.courseId).subscribe(courseResponse => {
+        this.courseService.find(courseId).subscribe(courseResponse => {
             this.course = courseResponse.body;
             this.quizExerciseService.findForCourse(courseId).subscribe(
                 (res: HttpResponse<QuizExercise[]>) => {
