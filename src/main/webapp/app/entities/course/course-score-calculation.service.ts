@@ -8,12 +8,13 @@ import { Participation } from '../participation';
 import * as moment from 'moment';
 import { Moment } from 'moment';
 
-@Injectable({ providedIn: 'root' })
+@Injectable({providedIn: 'root'})
 export class CourseScoreCalculationService {
     private SCORE_NORMALIZATION_VALUE = 0.01;
     private courses: Course[] = [];
 
-    constructor() {}
+    constructor() {
+    }
 
     calculateTotalScores(courseExercises: Exercise[]): Map<string, number> {
         const scores = new Map<string, number>();
@@ -68,9 +69,7 @@ export class CourseScoreCalculationService {
     }
 
     setCourses(courses: Course[]) {
-        for (let i = 0; i < courses.length; i++) {
-            this.courses.push(courses[i]);
-        }
+        this.courses = courses;
     }
 
     getCourse(courseId: number): Course {

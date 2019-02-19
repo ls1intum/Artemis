@@ -32,6 +32,8 @@ export class CourseOverviewComponent implements OnInit {
                 this.courseCalculationService.setCourses(res.body);
                 this.course = this.courseCalculationService.getCourse(this.courseId);
             });
+        } else {
+            this.course = this.courseCalculationService.getCourse(this.courseId);
         }
     }
 
