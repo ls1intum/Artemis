@@ -19,7 +19,7 @@ public class ScoringStrategyShortAnswerAllOrNothing implements ScoringStrategy {
             ShortAnswerSubmittedAnswer shortAnswerAnswer = (ShortAnswerSubmittedAnswer) submittedAnswer;
             ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) question;
 
-            double[] values = ScoringStrategyShortAnswerUtil.getCorrectAndIncorrectSolutionsrShortAnswerQuestion(shortAnswerQuestion, shortAnswerAnswer);
+            double[] values = ScoringStrategyShortAnswerUtil.getCorrectAndIncorrectSolutionsShortAnswerQuestion(shortAnswerQuestion, shortAnswerAnswer);
             double correctSolutions = values[0];
 
             if(correctSolutions == shortAnswerQuestion.getSpots().size()){
