@@ -670,7 +670,6 @@
                 padding: 2px;
             }
         }
-
         .dimensions {
             position: absolute;
             left: 2px;
@@ -758,7 +757,6 @@
                     -o-transform: translate3d(-63%, -63%, 0);
                     transform: translate3d(-63%, -63%, 0);
                 }
-
                 .invalid {
                     color: red;
                     position: absolute;
@@ -1086,7 +1084,6 @@ table.answer-options-result {
                 -o-transform: translate3d(-63%, -63%, 0);
                 transform: translate3d(-63%, -63%, 0);
             }
-
             .letter-solution {
                 color: white;
                 position: absolute;
@@ -1100,7 +1097,6 @@ table.answer-options-result {
                 -o-transform: translate3d(-63%, -63%, 0);
                 transform: translate3d(-63%, -63%, 0);
             }
-
             .invalid {
                 color: red;
                 position: absolute;
@@ -1167,13 +1163,11 @@ table.answer-options-result {
                 border: 1px solid transparent;
             }
         }
-
         div.invalid {
             span {
                 color: red;
                 padding: 0;
             }
-
             width: auto;
             height: auto;
 
@@ -1199,7 +1193,6 @@ table.answer-options-result {
         border-radius: 50%;
         text-align: center;
     }
-
     .letter-solution {
         position: absolute;
         z-index: 10;

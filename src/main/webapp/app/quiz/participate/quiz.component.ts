@@ -895,5 +895,4 @@ export class QuizComponent implements OnInit, OnDestroy {
             behavior: 'smooth'
         });
     }
-
 }
