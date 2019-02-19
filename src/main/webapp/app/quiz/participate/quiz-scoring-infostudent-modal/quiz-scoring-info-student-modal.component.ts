@@ -35,16 +35,19 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
     amountOfAnswerOptions: number;
     inTotalRightOptions: number;
     inTotalWrongOptions: number;
+    differenceMultipleChoice: number;
 
     /* Drag and Drop Counting Variables*/
     dragAndDropElementsCount: number;
     wrongMappedItems: number;
-    @Input() correctAnswer: number; //Amount of correctly mapped drag and drop items
+    @Input() correctlyMappedDragandDropItems: number; //Amount of correctly mapped drag and drop items
+    differenceDragandDrop: number;
 
     /* Short Answer Counting Variables*/
     shortAnswerSpotCount: number;
     shortAnswerCorrectAnswers: number;
     shortAnswerWrongOption: number;
+    differenceShortAnswer: number;
 
 
     constructor(private modalService: NgbModal) {
@@ -61,8 +64,6 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
             case QuestionType.SHORT_ANSWER:
                 this.countShortAnswer();
                 break;
-
-
         }
     }
 
@@ -79,14 +80,15 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
             this.multipleChoiceWrongAnswerChosen = this.MultipleChoiceMapping.filter(option => !option.isCorrect).length; // how many wrong answers have been selected
             this.forgottenMultipleChoiceRightAnswers = this.amountofCorrectMultipleChoiceAnswers - this.multipleChoiceCorrectAnswerCorrectlyChosen; // how many right options have been forgotten to be chosen
             this.inTotalRightOptions = this.multipleChoiceCorrectAnswerCorrectlyChosen + (this.amountOfAnswerOptions - this.amountofCorrectMultipleChoiceAnswers-this.multipleChoiceWrongAnswerChosen)
-            this.inTotalWrongOptions = this.multipleChoiceWrongAnswerChosen + this.forgottenMultipleChoiceRightAnswers
+            this.inTotalWrongOptions = this.multipleChoiceWrongAnswerChosen + this.forgottenMultipleChoiceRightAnswers;
+            this.differenceMultipleChoice = this.inTotalRightOptions - this.inTotalWrongOptions;
     }
 
     private countDragandDrop() {
         const dndQuestion = this.question as DragAndDropQuestion;
         this.dragAndDropElementsCount = dndQuestion.dropLocations.length; //Amount of drag and drop zones that should be matched
-        this.wrongMappedItems = this.dragAndDropElementsCount - this.correctAnswer; //Amount of wrong matched items or not matched at all
-
+        this.wrongMappedItems = this.dragAndDropElementsCount - this.correctlyMappedDragandDropItems; //Amount of wrong matched items or not matched at all
+        this.differenceDragandDrop = this.correctlyMappedDragandDropItems - this.wrongMappedItems;
     }
 
     private countShortAnswer() {
@@ -94,6 +96,7 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
         this.shortAnswerSpotCount = shortAnswer.spots.length; //Amount of short zones that should be answered
         this.shortAnswerCorrectAnswers = this.ShortAnswerText.filter(option => option.isCorrect).length;//Amount of right answers
         this.shortAnswerWrongOption = this.shortAnswerSpotCount - this.shortAnswerCorrectAnswers;
+        this.differenceShortAnswer = this.shortAnswerCorrectAnswers - this.shortAnswerWrongOption;
     }
 
 }
