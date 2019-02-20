@@ -14,10 +14,16 @@ import { TextExercise } from '../text-exercise/text-exercise.model';
 import { FileUploadExercise } from '../file-upload-exercise/file-upload-exercise.model';
 import { Exercise } from '../exercise/exercise.model';
 import { ExerciseService } from '../exercise/exercise.service';
-import { Result } from 'app/entities/result';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
+
+export type StatsForTutorDashboard = {
+    numberOfAssessments: number;
+    numberOfTutorAssessments: number;
+    numberOfComplaints: number;
+    numberOfSubmissions: number;
+};
 
 @Injectable({ providedIn: 'root' })
 export class CourseService {
@@ -59,6 +65,17 @@ export class CourseService {
 
     findAllParticipationsWithResults(courseId: number): Observable<Participation[]> {
         return this.http.get<Participation[]>(`${this.resourceUrl}/${courseId}/participations`);
+    }
+
+    getForTutors(id: number): Observable<EntityResponseType> {
+        return this.http
+            .get<Course>(`${this.resourceUrl}/${id}/for-tutor-dashboard`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+    }
+
+    getStatsForTutors(id: number): Observable<HttpResponse<StatsForTutorDashboard>> {
+        return this.http
+            .get<StatsForTutorDashboard>(`${this.resourceUrl}/${id}/stats-for-tutor-dashboard`, { observe: 'response' });
     }
 
     query(): Observable<EntityArrayResponseType> {

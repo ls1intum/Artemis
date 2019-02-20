@@ -20,11 +20,25 @@ abstract class AssessmentService {
         result.setCompletionDate(ZonedDateTime.now());
 
         Double maxScore = exercise.getMaxScore();
-        Double totalScore = Math.min(Math.max(0, calculatedScore), maxScore);
-        double percentageScore = totalScore/maxScore * 100;
+        Double totalScore;
+        double percentageScore;
+
+        if (maxScore == null) {
+            totalScore = Math.max(0, calculatedScore);
+            percentageScore = 100;
+        } else {
+            totalScore = Math.min(Math.max(0, calculatedScore), maxScore);
+            percentageScore = totalScore/maxScore * 100;
+        }
+
         result.setScore(Math.round(percentageScore));
         DecimalFormat formatter = new DecimalFormat("#.##"); // limit decimal places to 2
-        result.setResultString(formatter.format(totalScore) + " of " + formatter.format(maxScore) + " points");
+
+        if (maxScore == null) {
+            result.setResultString(formatter.format(totalScore) + " points");
+        } else {
+            result.setResultString(formatter.format(totalScore) + " of " + formatter.format(maxScore) + " points");
+        }
         result.setSuccessful(result.getScore() == 100L);
 
         resultRepository.save(result);

@@ -13,7 +13,7 @@
         </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.title" for="field_title">Title</label>
-            <input type="text" class="form-control" name="title" id="field_title" [(ngModel)]="textExercise.title" />
+            <input required minlength="3" type="text" class="form-control" name="title" id="field_title" [(ngModel)]="textExercise.title" />
         </div>
         <div class="form-group">
             <jhi-date-time-picker labelName="Release Date" [entity]="textExercise" field="releaseDate"></jhi-date-time-picker>
@@ -22,8 +22,11 @@
             <jhi-date-time-picker labelName="Due Date" [entity]="textExercise" field="dueDate"></jhi-date-time-picker>
         </div>
         <div class="form-group">
+            <jhi-date-time-picker labelName="Assessment Due Date" [entity]="textExercise" field="assessmentDueDate"></jhi-date-time-picker>
+        </div>
+        <div class="form-group">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.maxScore" for="field_maxScore">Max Score</label>
-            <input type="number" class="form-control" [pattern]="maxScorePattern" min="0" max="9999" name="maxScore" id="field_maxScore" [(ngModel)]="textExercise.maxScore" />
+            <input required type="number" class="form-control" [pattern]="maxScorePattern" min="0" max="9999" name="maxScore" id="field_maxScore" [(ngModel)]="textExercise.maxScore" />
         </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.course" for="field_course">Course</label>
@@ -40,7 +43,25 @@
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.sampleSolution" for="field_sampleSolution">Sample Solution</label>
             <textarea class="form-control" name="sampleSolution" id="field_sampleSolution" maxLength="1000" [(ngModel)]="textExercise.sampleSolution"></textarea>
         </div>
-    </div>
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.gradingInstructions" for="field_gradingInstructions">Grading instructions</label>
+            <textarea class="form-control" name="gradingInstructions" id="field_gradingInstructions" maxLength="1000" [(ngModel)]="textExercise.gradingInstructions"></textarea>
+        </div>
+        <div class="form-group">
+            <span>Example submissions</span>
+
+            <ul *ngIf="textExercise.id">
+                <li *ngFor="let exampleSubmission of textExercise.exampleSubmissions; let i = index">
+                    <button routerLink="text-exercise/{{textExercise.id}}/example-submission/{{exampleSubmission.id}}" class="btn btn-link">Example submission {{i + 1}}</button>
+                    <fa-icon *ngIf="exampleSubmission.usedForTutorial" icon="chalkboard-teacher" style="margin-left: 10px" title="Used for tutorial"></fa-icon>
+                    <fa-icon *ngIf="exampleSubmission.submission?.result?.exampleResult" icon="check-circle" style="margin-left: 10px" title="An assessment is available"></fa-icon>
+                </li>
+            </ul>
+
+            <button *ngIf="textExercise.id" class="btn btn-primary" routerLink="text-exercise/{{textExercise.id}}/example-submission/new">Create example submission</button>
+
+            <div class="alert alert-info" *ngIf="!textExercise.id">To create an example submission, you first need to finish creating the text exercise</div>
+        </div>
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">

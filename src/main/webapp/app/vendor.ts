@@ -81,7 +81,8 @@ import {
     faArrowsAltV,
     faFile,
     faCodeBranch,
-    faCircle
+    faCircle,
+    faChalkboardTeacher
 } from '@fortawesome/free-solid-svg-icons';
 
 import {
@@ -138,9 +139,10 @@ library.add(faAsterisk);
 library.add(faArchive);
 library.add(faEraser);
 library.add(faDownload);
+library.add(faChalkboardTeacher);
+library.add(faCheckCircle);
 library.add(faFileExport);
 library.add(faCircleNotch);
-library.add(faCheckCircle);
 library.add(faUndo);
 library.add(faExclamationTriangle);
 library.add(faUnlink);
