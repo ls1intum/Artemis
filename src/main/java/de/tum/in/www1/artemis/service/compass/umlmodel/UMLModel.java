@@ -130,13 +130,13 @@ public class UMLModel {
                 return false;
             }
 
-            for (UMLAttribute attribute : umlClass.attributeList) {
+            for (UMLAttribute attribute : umlClass.getAttributes()) {
                 if (!lastAssessmentCompassResult.getJsonIdPointsMapping().containsKey(attribute.jsonElementID)) {
                     return false;
                 }
             }
 
-            for (UMLMethod method : umlClass.methodList) {
+            for (UMLMethod method : umlClass.getMethods()) {
                 if (!lastAssessmentCompassResult.getJsonIdPointsMapping().containsKey(method.jsonElementID)) {
                     return false;
                 }
