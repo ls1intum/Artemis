@@ -75,7 +75,7 @@
                 buttonIcon="folder-open"
                 buttonLabel="Open exercise"
                 smallButton="true"
-                *ngIf="isOnlineEditorAllowed()"
+                *ngIf="isOnlineEditorAllowed() && exercise.participations && exercise.participations.length > 0"
                 [buttonLoading]="exercise.loading"
                 routerLink="/editor/{{exercise.participations[0].id}}"></button>
         <button jhi-exercise-action-button
@@ -132,7 +132,7 @@
                 (click)="startExercise()"></button>
         <button jhi-exercise-action-button
                 buttonIcon="folder-open"
-                [buttonLabel]="!!exercise.loading"
+                buttonLabel="Open Modeling Editor"
                 smallButton="true"
                 [buttonLoading]="exercise.loading"
                 *ngIf="participationStatus() === TEXT_EXERCISE && exercise.participations && exercise.participations.length > 0"
