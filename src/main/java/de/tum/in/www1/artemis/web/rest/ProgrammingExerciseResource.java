@@ -382,8 +382,8 @@ public class ProgrammingExerciseResource {
         URL testRepoURL = programmingExercise.getTestRepositoryUrlAsUrl();
 
         try {
-            String testsPath = "test" + programmingExercise.getPackageName().replace(".", "/");
- //            String testsPath = "test/de/tum/in/www1";
+ //           String testsPath = "test" + programmingExercise.getPackageName().replace(".", "/");
+             String testsPath = "test/de/tum/in/www1";
             programmingExerciseService.generateStructureOracleFile(solutionRepoURL, exerciseRepoURL, testRepoURL, testsPath);
 
             return ResponseEntity.ok("Successfully generated the structure oracle for the exercise " + programmingExercise.getProjectName() + " with "
