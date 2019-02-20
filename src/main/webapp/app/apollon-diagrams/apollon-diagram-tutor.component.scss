@@ -1,0 +1,17 @@
+.conflicting-scores-label{
+    font-size: 14px;
+    font-weight: 200;
+    label{
+        margin: 0;
+    }
+}
+
+.row-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.conflict {
+    background-color: rgb(248, 214, 217);
+}
