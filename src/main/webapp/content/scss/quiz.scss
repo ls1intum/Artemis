@@ -1297,12 +1297,12 @@ table.answer-options-result {
 
 .stepwizardquiz-step button[disabled] {
     opacity: 1 !important;
-    filter: alpha(opacity=0) !important;
     cursor: default;
 }
 
 .stepwizardquiz-step .btn {
     cursor: default;
+    opacity: 1 !important;
 }
 
 
@@ -1326,19 +1326,14 @@ table.answer-options-result {
 }
 
 .draganddropcolor-question {
-    background-color: #86ccd5;
-
+    background-color: #86ccd5 !important;
 }
 .multiplechoicecolor-question {
-    background-color: #eee066;
-
+    background-color: #eee066 !important;
 }
 .shortanswercolor-question {
-    background-color: #d8956c;
-
+    background-color: #d8956c !important;
 }
-
 .changed-question {
-    background-color: #527cd7;
-
+    background-color: #527cd7 !important;
 }

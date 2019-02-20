@@ -161,7 +161,7 @@
             },
             "importJSON": "Import Question(s) in JSON Format",
             "explanationAnswered": "You have answered this question",
-            "explanationNotAnswered": "You have not had a look at this question"
+            "explanationNotAnswered": "You have not answered this question"
         }
     }
 }
