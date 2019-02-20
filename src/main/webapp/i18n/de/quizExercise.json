@@ -159,7 +159,9 @@
                 "all_or_nothing": "Alles-oder-Nichts",
                 "proportional_with_penalty": "Anteilig mit Abzügen"
             },
-            "importJSON": "Fragen importieren (JSON)"
+            "importJSON": "Fragen importieren (JSON)",
+            "explanationAnswered": "Du hast die Frage beantwortet",
+            "explanationNotAnswered": "Du hast die Frage noch nicht beantwortet"
         }
     }
 }
