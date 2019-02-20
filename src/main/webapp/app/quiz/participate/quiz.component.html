@@ -26,7 +26,6 @@
                             <div *ngIf="question.type === DRAG_AND_DROP"
                                   class="btn btn-light btn-circle stepbutton stepwizardquiz-circle draganddropcolor-question"
                                   (click)="navigateToQuestion(i)"
-                                 tooltipClass = "progress"
                                   [ngbTooltip]="dragAndDropMappings[question.id]?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
                                   [ngClass]="{'changed-question': dragAndDropMappings[question.id]?.length }">
                                 <b class="fa">DD</b>
@@ -45,7 +44,7 @@
                                   [ngClass]="{'changed-question': shortAnswerSubmittedTexts[question.id]?.length }">
                             <b class="fa">SA</b>
                             </span>
-                            <ng-template style="width: 100px" #tooltipExplanationTranslate>{{'arTeMiSApp.quizExercise.explanationAnswered' | translate}}</ng-template>
+                            <ng-template #tooltipExplanationTranslate>{{'arTeMiSApp.quizExercise.explanationAnswered' | translate}}</ng-template>
                             <ng-template #tooltipNotExplanationTranslate>{{'arTeMiSApp.quizExercise.explanationNotAnswered' | translate}}</ng-template>
                         </div>
                     </div>

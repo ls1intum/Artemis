@@ -201,9 +201,7 @@
             padding: 4px;
         }
     }
-    .progress {
-        width: 300px;
-    }
+
 }
 
 .question:first-of-type {
@@ -1297,6 +1295,20 @@ table.answer-options-result {
     }
 
 }
+
+/* Start Changes Progress Bar */
+
+ngb-tooltip-window {
+    padding: 0;
+    width: 200px!important;
+    /*background: #cf0!important;*/
+}
+
+    ngb-tooltip-window > div {
+        margin: auto!important;
+    }
+
+/* End Changes Progress Bar */
 
 .stepwizardquiz-step button[disabled] {
     opacity: 1 !important;
