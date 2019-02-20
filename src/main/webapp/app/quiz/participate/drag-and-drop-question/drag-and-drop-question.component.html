@@ -25,7 +25,7 @@
         <span jhiTranslate="arTeMiSApp.question.yourScore" class="colon-suffix"></span>
         <span>{{score || 0}}/{{question.score}}</span>
         <jhi-quiz-scoring-infostudent-modal [score]="score" [question]="question" [DragAndDropMapping]="mappings"
-                                            [correctlyMappedDragandDropItems]="correctAnswer"></jhi-quiz-scoring-infostudent-modal>
+                                            [correctlyMappedDragAndDropItems]="correctAnswer"></jhi-quiz-scoring-infostudent-modal>
     </div>
     <div class="drag-and-drop-area">
         <div class="instructions" *ngIf="showResult">

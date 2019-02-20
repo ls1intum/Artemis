@@ -28,26 +28,26 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
     @Input() ShortAnswerText = new Array<ShortAnswerSubmittedText>();
 
     /* Multiple Choice Counting Variables*/
-    multipleChoiceCorrectAnswerCorrectlyChosen: number;
-    multipleChoiceWrongAnswerChosen: number;
-    amountofCorrectMultipleChoiceAnswers:number;
-    forgottenMultipleChoiceRightAnswers: number;
-    amountOfAnswerOptions: number;
-    inTotalRightOptions: number;
-    inTotalWrongOptions: number;
-    differenceMultipleChoice: number;
+    multipleChoiceCorrectAnswerCorrectlyChosen: number; //Amount of right options chosen by the student
+    multipleChoiceWrongAnswerChosen: number; //Amount of wrong options chosen by the student
+    amountOfCorrectMultipleChoiceAnswers:number; //Amount of correct options for the question
+    forgottenMultipleChoiceRightAnswers: number; //Amount of wrong options for the question
+    amountOfMultipleChoiceAnswerOptions: number; //Amount of all possible options for the question
+    inTotalSelectedRightOptions: number; //Amount of correct and wrong options assigned correctly
+    inTotalSelectedWrongOptions: number; //Amount of correct and wrong options assigned wrongly
+    differenceMultipleChoice: number; //Difference between inTotalSelectedRightOptions and differenceMultipleChoice
 
     /* Drag and Drop Counting Variables*/
-    dragAndDropElementsCount: number;
-    wrongMappedItems: number;
-    @Input() correctlyMappedDragandDropItems: number; //Amount of correctly mapped drag and drop items
-    differenceDragandDrop: number;
+    amountOfDragAndDropZones: number; //Amount of drag and drop Zones
+    wronglyMappedDragAndDropItems: number; // Amount of wrongly mapped drag and drop item
+    @Input() correctlyMappedDragAndDropItems: number; //Amount of correctly mapped drag and drop items
+    differenceDragAndDrop: number; //Difference between the wronglyMappedDragAndDropItems and correctlyMappedDragAndDropItems
 
     /* Short Answer Counting Variables*/
-    shortAnswerSpotCount: number;
-    shortAnswerCorrectAnswers: number;
-    shortAnswerWrongOption: number;
-    differenceShortAnswer: number;
+    shortAnswerSpotCount: number; //Amount of short answer spots
+    shortAnswerCorrectAnswers: number; //Amount of correctly filled out spots
+    shortAnswerWrongAnswers: number; //Amount of wrongly filled out spots
+    differenceShortAnswer: number; //Difference between shortAnswerCorrectAnswers and shortAnswerWrongAnswers
 
 
     constructor(private modalService: NgbModal) {
@@ -74,29 +74,29 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
 
     private countMultipleChoice() {
         const mcmQuestion = this.question as MultipleChoiceQuestion;
-            this.amountOfAnswerOptions = mcmQuestion.answerOptions.length; // Amount of answer options
-            this.amountofCorrectMultipleChoiceAnswers = mcmQuestion.answerOptions.filter(option => option.isCorrect).length;
-            this.multipleChoiceCorrectAnswerCorrectlyChosen = this.MultipleChoiceMapping.filter(option => option.isCorrect).length; // how many right answers chosen correctly
-            this.multipleChoiceWrongAnswerChosen = this.MultipleChoiceMapping.filter(option => !option.isCorrect).length; // how many wrong answers have been selected
-            this.forgottenMultipleChoiceRightAnswers = this.amountofCorrectMultipleChoiceAnswers - this.multipleChoiceCorrectAnswerCorrectlyChosen; // how many right options have been forgotten to be chosen
-            this.inTotalRightOptions = this.multipleChoiceCorrectAnswerCorrectlyChosen + (this.amountOfAnswerOptions - this.amountofCorrectMultipleChoiceAnswers-this.multipleChoiceWrongAnswerChosen)
-            this.inTotalWrongOptions = this.multipleChoiceWrongAnswerChosen + this.forgottenMultipleChoiceRightAnswers;
-            this.differenceMultipleChoice = this.inTotalRightOptions - this.inTotalWrongOptions;
+            this.amountOfMultipleChoiceAnswerOptions = mcmQuestion.answerOptions.length;
+            this.amountOfCorrectMultipleChoiceAnswers = mcmQuestion.answerOptions.filter(option => option.isCorrect).length;
+            this.multipleChoiceCorrectAnswerCorrectlyChosen = this.MultipleChoiceMapping.filter(option => option.isCorrect).length;
+            this.multipleChoiceWrongAnswerChosen = this.MultipleChoiceMapping.filter(option => !option.isCorrect).length;
+            this.forgottenMultipleChoiceRightAnswers = this.amountOfCorrectMultipleChoiceAnswers - this.multipleChoiceCorrectAnswerCorrectlyChosen;
+            this.inTotalSelectedRightOptions = this.multipleChoiceCorrectAnswerCorrectlyChosen + (this.amountOfMultipleChoiceAnswerOptions - this.amountOfCorrectMultipleChoiceAnswers-this.multipleChoiceWrongAnswerChosen);
+            this.inTotalSelectedWrongOptions = this.multipleChoiceWrongAnswerChosen + this.forgottenMultipleChoiceRightAnswers;
+            this.differenceMultipleChoice = this.inTotalSelectedRightOptions - this.inTotalSelectedWrongOptions;
     }
 
     private countDragandDrop() {
         const dndQuestion = this.question as DragAndDropQuestion;
-        this.dragAndDropElementsCount = dndQuestion.dropLocations.length; //Amount of drag and drop zones that should be matched
-        this.wrongMappedItems = this.dragAndDropElementsCount - this.correctlyMappedDragandDropItems; //Amount of wrong matched items or not matched at all
-        this.differenceDragandDrop = this.correctlyMappedDragandDropItems - this.wrongMappedItems;
+            this.amountOfDragAndDropZones = dndQuestion.dropLocations.length;
+            this.wronglyMappedDragAndDropItems = this.amountOfDragAndDropZones - this.correctlyMappedDragAndDropItems;
+            this.differenceDragAndDrop = this.correctlyMappedDragAndDropItems - this.wronglyMappedDragAndDropItems;
     }
 
     private countShortAnswer() {
         const shortAnswer = this.question as ShortAnswerQuestion;
-        this.shortAnswerSpotCount = shortAnswer.spots.length; //Amount of short zones that should be answered
-        this.shortAnswerCorrectAnswers = this.ShortAnswerText.filter(option => option.isCorrect).length;//Amount of right answers
-        this.shortAnswerWrongOption = this.shortAnswerSpotCount - this.shortAnswerCorrectAnswers;
-        this.differenceShortAnswer = this.shortAnswerCorrectAnswers - this.shortAnswerWrongOption;
+            this.shortAnswerSpotCount = shortAnswer.spots.length;
+            this.shortAnswerCorrectAnswers = this.ShortAnswerText.filter(option => option.isCorrect).length;
+            this.shortAnswerWrongAnswers = this.shortAnswerSpotCount - this.shortAnswerCorrectAnswers;
+            this.differenceShortAnswer = this.shortAnswerCorrectAnswers - this.shortAnswerWrongAnswers;
     }
 
 }

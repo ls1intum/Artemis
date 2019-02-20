@@ -8,65 +8,65 @@
 
     <div class="modal-body" *ngIf="this.question.scoringType === ALL_OR_NOTHING && this.question.type === MULTIPLE_CHOICE">
         <h6 jhiTranslate="arTeMiSApp.quizExercise.explanationText.scoringTypeAllOrNothing"></h6>
-        <span *ngIf="this.amountofCorrectMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0">
+        <span *ngIf="this.amountOfCorrectMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0">
             <span jhiTranslate="arTeMiSApp.quizExercise.explanationText.multipleChoiceAllOrNothingCorrect" [translateValues]="{paramScore: this.score, paramQuestionScore: this.question.score}"></span></span>
-        <span *ngIf="!(this.amountofCorrectMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0)">
-            <span jhiTranslate="arTeMiSApp.quizExercise.explanationText.multipleChoiceAllOrNothingNotCorrect" [translateValues]="{paramScore: this.score, paramQuestionScore:this.question.score, paramInTotalWrongOptions: this.inTotalWrongOptions, paramInTotalRightOptions:this.inTotalRightOptions}"></span></span>
+        <span *ngIf="!(this.amountOfCorrectMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0)">
+            <span jhiTranslate="arTeMiSApp.quizExercise.explanationText.multipleChoiceAllOrNothingNotCorrect" [translateValues]="{paramScore: this.score, paramQuestionScore:this.question.score, paramInTotalWrongOptions: this.inTotalSelectedWrongOptions, paramInTotalRightOptions:this.inTotalSelectedRightOptions}"></span></span>
     </div>
     <div class="modal-body" *ngIf="this.question.scoringType === PROPORTIONAL_WITH_PENALTY && this.question.type === MULTIPLE_CHOICE">
         <h6 jhiTranslate="arTeMiSApp.quizExercise.explanationText.scoringTypeProportionalWithPenalty"></h6>
-        <span *ngIf="this.amountofCorrectMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0">
+        <span *ngIf="this.amountOfCorrectMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0">
             <span jhiTranslate="arTeMiSApp.quizExercise.explanationText.multipleChoiceAllOrNothingCorrect" [translateValues]="{paramScore: this.score, paramQuestionScore: this.question.score}"></span></span>
-        <span *ngIf="!(this.amountofCorrectMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0) && this.differenceMultipleChoice >= 0">
-            <p jhiTranslate="arTeMiSApp.quizExercise.explanationText.multipleChoiceProp" [translateValues]="{paramScore: this.score, paramQuestionScore: this.question.score, paramAmountOfAnswerOptions: this.amountOfAnswerOptions, paramInTotalWrongOptions: this.inTotalWrongOptions, paramInTotalRightOptions:this.inTotalRightOptions}"></p>
-            In total you have </br><b>{{this.inTotalRightOptions}}*{{this.question.score}}/{{this.amountOfAnswerOptions}} - {{this.inTotalWrongOptions}}*{{this.question.score}}/{{this.amountOfAnswerOptions}} = {{this.score}}</b></br> point(s). Of course you can not have less than 0 points.
+        <span *ngIf="!(this.amountOfCorrectMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0) && this.differenceMultipleChoice >= 0">
+            <p jhiTranslate="arTeMiSApp.quizExercise.explanationText.multipleChoiceProp" [translateValues]="{paramScore: this.score, paramQuestionScore: this.question.score, paramAmountOfAnswerOptions: this.amountOfMultipleChoiceAnswerOptions, paramInTotalWrongOptions: this.inTotalSelectedWrongOptions, paramInTotalRightOptions:this.inTotalSelectedRightOptions}"></p>
+            In total you have </br><b>{{this.inTotalSelectedRightOptions}}*{{this.question.score}}/{{this.amountOfMultipleChoiceAnswerOptions}} - {{this.inTotalSelectedWrongOptions}}*{{this.question.score}}/{{this.amountOfMultipleChoiceAnswerOptions}} = {{this.score}}</b></br> point(s). Of course you can not have less than 0 points.
         </span>
-        <span *ngIf="!(this.amountofCorrectMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0) && this.differenceMultipleChoice < 0">
-            <p jhiTranslate="arTeMiSApp.quizExercise.explanationText.multipleChoiceProp" [translateValues]="{paramScore: this.score, paramQuestionScore: this.question.score, paramAmountOfAnswerOptions: this.amountOfAnswerOptions, paramInTotalWrongOptions: this.inTotalWrongOptions, paramInTotalRightOptions:this.inTotalRightOptions}"></p>
-            In total you have </br><b>{{this.inTotalRightOptions}}*{{this.question.score}}/{{this.amountOfAnswerOptions}} - {{this.inTotalWrongOptions}}*{{this.question.score}}/{{this.amountOfAnswerOptions}} = {{this.differenceMultipleChoice}}/{{this.amountOfAnswerOptions}} </b></br> point(s). Of course you can not have less than 0 points.
+        <span *ngIf="!(this.amountOfCorrectMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0) && this.differenceMultipleChoice < 0">
+            <p jhiTranslate="arTeMiSApp.quizExercise.explanationText.multipleChoiceProp" [translateValues]="{paramScore: this.score, paramQuestionScore: this.question.score, paramAmountOfAnswerOptions: this.amountOfMultipleChoiceAnswerOptions, paramInTotalWrongOptions: this.inTotalSelectedWrongOptions, paramInTotalRightOptions:this.inTotalSelectedRightOptions}"></p>
+            In total you have </br><b>{{this.inTotalSelectedRightOptions}}*{{this.question.score}}/{{this.amountOfMultipleChoiceAnswerOptions}} - {{this.inTotalSelectedWrongOptions}}*{{this.question.score}}/{{this.amountOfMultipleChoiceAnswerOptions}} = {{this.differenceMultipleChoice}}/{{this.amountOfMultipleChoiceAnswerOptions}} </b></br> point(s). Of course you can not have less than 0 points.
         </span>
     </div>
 
 
     <div class="modal-body" *ngIf="this.question.scoringType === ALL_OR_NOTHING && this.question.type === DRAG_AND_DROP">
         <h6 jhiTranslate="arTeMiSApp.quizExercise.explanationText.scoringTypeAllOrNothing"></h6>
-        <span *ngIf="this.wrongMappedItems == 0">
+        <span *ngIf="this.wronglyMappedDragAndDropItems == 0">
             <span jhiTranslate="arTeMiSApp.quizExercise.explanationText.dragAndDropAllOrNothingCorrect" [translateValues]="{paramScore: this.score, paramQuestionScore: this.question.score}"></span></span>
-        <span *ngIf="!(this.wrongMappedItems == 0)">
-        <span jhiTranslate="arTeMiSApp.quizExercise.explanationText.dragAndDropAllOrNothingNotCorrect" [translateValues]="{paramScore: this.score, paramQuestionScore:this.question.score, paramWrongMappedItems: this.wrongMappedItems, paramRightMapping: this.correctlyMappedDragandDropItems}"></span></span>
+        <span *ngIf="!(this.wronglyMappedDragAndDropItems == 0)">
+        <span jhiTranslate="arTeMiSApp.quizExercise.explanationText.dragAndDropAllOrNothingNotCorrect" [translateValues]="{paramScore: this.score, paramQuestionScore:this.question.score, paramWrongMappedItems: this.wronglyMappedDragAndDropItems, paramRightMapping: this.correctlyMappedDragAndDropItems}"></span></span>
     </div>
     <div class="modal-body" *ngIf="this.question.scoringType === PROPORTIONAL_WITH_PENALTY && this.question.type === DRAG_AND_DROP">
         <h6 jhiTranslate="arTeMiSApp.quizExercise.explanationText.scoringTypeProportionalWithPenalty"></h6>
-        <span *ngIf="this.wrongMappedItems == 0">
+        <span *ngIf="this.wronglyMappedDragAndDropItems == 0">
             <span jhiTranslate="arTeMiSApp.quizExercise.explanationText.dragAndDropAllOrNothingCorrect" [translateValues]="{paramScore: this.score, paramQuestionScore: this.question.score}"></span></span>
-        <span *ngIf="!(this.wrongMappedItems == 0) && this.differenceDragandDrop >= 0">
-            <p jhiTranslate="arTeMiSApp.quizExercise.explanationText.dragAndDropProp" [translateValues]="{paramScore: this.score, paramQuestionScore: this.question.score, paramWrongMappedItems: this.wrongMappedItems, paramRightMapping: this.correctlyMappedDragandDropItems, paramDragAndDropElementsCount: this.dragAndDropElementsCount}"></p>
-            In total you have <br><b>{{this.correctlyMappedDragandDropItems}}*{{this.question.score}}/{{this.dragAndDropElementsCount}} - {{this.wrongMappedItems}}*{{this.question.score}}/{{this.dragAndDropElementsCount}} = {{this.score}}</b></br> point(s). Of course you can not have less than 0 points.
+        <span *ngIf="!(this.wronglyMappedDragAndDropItems == 0) && this.differenceDragAndDrop >= 0">
+            <p jhiTranslate="arTeMiSApp.quizExercise.explanationText.dragAndDropProp" [translateValues]="{paramScore: this.score, paramQuestionScore: this.question.score, paramWrongMappedItems: this.wronglyMappedDragAndDropItems, paramRightMapping: this.correctlyMappedDragAndDropItems, paramDragAndDropElementsCount: this.amountOfDragAndDropZones}"></p>
+            In total you have <br><b>{{this.correctlyMappedDragAndDropItems}}*{{this.question.score}}/{{this.amountOfDragAndDropZones}} - {{this.wronglyMappedDragAndDropItems}}*{{this.question.score}}/{{this.amountOfDragAndDropZones}} = {{this.score}}</b></br> point(s). Of course you can not have less than 0 points.
     </span>
-        <span *ngIf="!(this.wrongMappedItems == 0) && this.differenceDragandDrop < 0">
-            <p jhiTranslate="arTeMiSApp.quizExercise.explanationText.dragAndDropProp" [translateValues]="{paramScore: this.score, paramQuestionScore: this.question.score, paramWrongMappedItems: this.wrongMappedItems, paramRightMapping: this.correctlyMappedDragandDropItems, paramDragAndDropElementsCount: this.dragAndDropElementsCount}"></p>
-            In total you have <br><b>{{this.correctlyMappedDragandDropItems}}*{{this.question.score}}/{{this.dragAndDropElementsCount}} - {{this.wrongMappedItems}}*{{this.question.score}}/{{this.dragAndDropElementsCount}} = {{this.differenceDragandDrop}}/{{this.dragAndDropElementsCount}}</b></br> point(s). Of course you can not have less than 0 points.
+        <span *ngIf="!(this.wronglyMappedDragAndDropItems == 0) && this.differenceDragAndDrop < 0">
+            <p jhiTranslate="arTeMiSApp.quizExercise.explanationText.dragAndDropProp" [translateValues]="{paramScore: this.score, paramQuestionScore: this.question.score, paramWrongMappedItems: this.wronglyMappedDragAndDropItems, paramRightMapping: this.correctlyMappedDragAndDropItems, paramDragAndDropElementsCount: this.amountOfDragAndDropZones}"></p>
+            In total you have <br><b>{{this.correctlyMappedDragAndDropItems}}*{{this.question.score}}/{{this.amountOfDragAndDropZones}} - {{this.wronglyMappedDragAndDropItems}}*{{this.question.score}}/{{this.amountOfDragAndDropZones}} = {{this.differenceDragAndDrop}}/{{this.amountOfDragAndDropZones}}</b></br> point(s). Of course you can not have less than 0 points.
     </span>
     </div>
 
 
     <div class="modal-body" *ngIf="this.question.scoringType === ALL_OR_NOTHING && this.question.type === SHORT_ANSWER">
         <h6 jhiTranslate="arTeMiSApp.quizExercise.explanationText.scoringTypeAllOrNothing"></h6>
-        <span *ngIf ="!(this.shortAnswerWrongOption > 0)">
+        <span *ngIf ="!(this.shortAnswerWrongAnswers > 0)">
            <span jhiTranslate="arTeMiSApp.quizExercise.explanationText.shortAnswerAllOrNothingCorrect" [translateValues]="{paramScore: this.score, paramQuestionScore: this.question.score}"></span></span>
-        <span *ngIf ="this.shortAnswerWrongOption > 0">
-            <span jhiTranslate="arTeMiSApp.quizExercise.explanationText.shortAnswerAllOrNothingNotCorrect" [translateValues]="{paramScore: this.score, paramQuestionScore:this.question.score, paramShortAnswerWrongOption: this.shortAnswerWrongOption, paramShortAnswerCorrectAnswers: this.shortAnswerCorrectAnswers}"></span></span>
+        <span *ngIf ="this.shortAnswerWrongAnswers > 0">
+            <span jhiTranslate="arTeMiSApp.quizExercise.explanationText.shortAnswerAllOrNothingNotCorrect" [translateValues]="{paramScore: this.score, paramQuestionScore:this.question.score, paramShortAnswerWrongOption: this.shortAnswerWrongAnswers, paramShortAnswerCorrectAnswers: this.shortAnswerCorrectAnswers}"></span></span>
     </div>
     <div class="modal-body" *ngIf="this.question.scoringType === PROPORTIONAL_WITH_PENALTY && this.question.type === SHORT_ANSWER">
         <h6 jhiTranslate="arTeMiSApp.quizExercise.explanationText.scoringTypeProportionalWithPenalty"></h6>
-        <span *ngIf ="!(this.shortAnswerWrongOption > 0)"><span jhiTranslate="arTeMiSApp.quizExercise.explanationText.shortAnswerAllOrNothingCorrect" [translateValues]="{paramScore: this.score, paramQuestionScore: this.question.score}"></span></span>
-        <span *ngIf ="this.shortAnswerWrongOption > 0 && this.differenceShortAnswer >= 0">
-            <p jhiTranslate="arTeMiSApp.quizExercise.explanationText.shortAnswerProp" [translateValues]="{paramScore: this.score, paramQuestionScore:this.question.score, paramShortAnswerWrongOption: this.shortAnswerWrongOption, paramShortAnswerCorrectAnswers: this.shortAnswerCorrectAnswers}"></p>
-            You have achieved </br><b>{{this.shortAnswerCorrectAnswers}}*{{this.question.score}}/{{this.shortAnswerSpotCount}} - {{this.shortAnswerWrongOption}}*{{this.question.score}}/{{this.shortAnswerSpotCount}} = {{this.score}}</b></br> point(s). Of course you can not have less than 0 points.
+        <span *ngIf ="!(this.shortAnswerWrongAnswers > 0)"><span jhiTranslate="arTeMiSApp.quizExercise.explanationText.shortAnswerAllOrNothingCorrect" [translateValues]="{paramScore: this.score, paramQuestionScore: this.question.score}"></span></span>
+        <span *ngIf ="this.shortAnswerWrongAnswers > 0 && this.differenceShortAnswer >= 0">
+            <p jhiTranslate="arTeMiSApp.quizExercise.explanationText.shortAnswerProp" [translateValues]="{paramScore: this.score, paramQuestionScore:this.question.score, paramShortAnswerWrongOption: this.shortAnswerWrongAnswers, paramShortAnswerCorrectAnswers: this.shortAnswerCorrectAnswers}"></p>
+            You have achieved </br><b>{{this.shortAnswerCorrectAnswers}}*{{this.question.score}}/{{this.shortAnswerSpotCount}} - {{this.shortAnswerWrongAnswers}}*{{this.question.score}}/{{this.shortAnswerSpotCount}} = {{this.score}}</b></br> point(s). Of course you can not have less than 0 points.
         </span>
-        <span *ngIf ="this.shortAnswerWrongOption > 0 && this.differenceShortAnswer < 0">
-            <p jhiTranslate="arTeMiSApp.quizExercise.explanationText.shortAnswerProp" [translateValues]="{paramScore: this.score, paramQuestionScore:this.question.score, paramShortAnswerWrongOption: this.shortAnswerWrongOption, paramShortAnswerCorrectAnswers: this.shortAnswerCorrectAnswers}"></p>
-            You have achieved </br><b>{{this.shortAnswerCorrectAnswers}}*{{this.question.score}}/{{this.shortAnswerSpotCount}} - {{this.shortAnswerWrongOption}}*{{this.question.score}}/{{this.shortAnswerSpotCount}} = {{this.differenceShortAnswer}}/{{this.shortAnswerSpotCount}}</b></br> point(s). Of course you can not have less than 0 points.
+        <span *ngIf ="this.shortAnswerWrongAnswers > 0 && this.differenceShortAnswer < 0">
+            <p jhiTranslate="arTeMiSApp.quizExercise.explanationText.shortAnswerProp" [translateValues]="{paramScore: this.score, paramQuestionScore:this.question.score, paramShortAnswerWrongOption: this.shortAnswerWrongAnswers, paramShortAnswerCorrectAnswers: this.shortAnswerCorrectAnswers}"></p>
+            You have achieved </br><b>{{this.shortAnswerCorrectAnswers}}*{{this.question.score}}/{{this.shortAnswerSpotCount}} - {{this.shortAnswerWrongAnswers}}*{{this.question.score}}/{{this.shortAnswerSpotCount}} = {{this.differenceShortAnswer}}/{{this.shortAnswerSpotCount}}</b></br> point(s). Of course you can not have less than 0 points.
         </span>
     </div>
 
