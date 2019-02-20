@@ -281,14 +281,13 @@ public class CourseResource {
     }
 
     /**
-     * GET  /exercises/:exerciseId/participations/:studentIds : sends all submissions from studentlist as zip
+     * GET  /courses/:courseId/results : Returns all results of the exercises of a course for the currently logged in user
      *
-     * @param exerciseId the id of the exercise to get the repos from
-     * @param studentIds the studentIds seperated via semicolon to get their submissions
-     * @return ResponseEntity with status
+     * @param courseId the id of the course to get the results from
+     * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
     @GetMapping(value = "/courses/{courseId}/results")
-    @PreAuthorize("hasAnyRole('User', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     @Transactional(readOnly = true)
     public ResponseEntity<Course> getResultsForCurrentStudent(@PathVariable Long courseId) {

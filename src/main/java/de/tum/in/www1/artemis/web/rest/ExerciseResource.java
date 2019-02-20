@@ -143,7 +143,7 @@ public class ExerciseResource {
     /**
      * Reset the exercise by deleting all its partcipations
      * /exercises/:id/reset
-     * <p>
+     *
      * This can be used by all exercise types, however they can also provide custom implementations
      *
      * @param id the id of the exercise to delete
@@ -227,7 +227,7 @@ public class ExerciseResource {
     @GetMapping(value = "/exercises/{exerciseId}/participations/{studentIds}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Resource> exportSubmissions(@PathVariable Long exerciseId, @PathVariable String studentIds) throws IOException {
-        studentIds = studentIds.replaceAll(" ", "");
+        studentIds = studentIds.replaceAll(" ","");
         Exercise exercise = exerciseService.findOne(exerciseId);
         Course course = exercise.getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
@@ -237,11 +237,11 @@ public class ExerciseResource {
             return forbidden();
         }
         List<String> studentList = Arrays.asList(studentIds.split("\\s*,\\s*"));
-        if (studentList.isEmpty() || studentList == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).headers(HeaderUtil.createAlert("Given studentlist for export was empty or malformed", "")).build();
+        if(studentList.isEmpty() || studentList == null){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).headers(HeaderUtil.createAlert("Given studentlist for export was empty or malformed","")).build();
         }
 
-        File zipFile = exerciseService.exportParticipations(exerciseId, studentList);
+        File zipFile = exerciseService.exportParticipations(exerciseId,studentList);
         if (zipFile == null) {
             return ResponseEntity.noContent()
                 .headers(HeaderUtil.createAlert("There was an error on the server and the zip file could not be created", ""))
