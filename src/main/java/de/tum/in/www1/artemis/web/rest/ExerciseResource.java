@@ -111,8 +111,8 @@ public class ExerciseResource {
         Course course = exercise.getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-            !authCheckService.isInstructorInCourse(course, user) &&
-            !authCheckService.isAdmin()) {
+             !authCheckService.isInstructorInCourse(course, user) &&
+             !authCheckService.isAdmin()) {
             return forbidden();
         }
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(exercise));
@@ -178,7 +178,7 @@ public class ExerciseResource {
         Course course = exercise.getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
-            return forbidden();
+             return forbidden();
         }
         exerciseService.cleanup(id, deleteRepositories);
         log.info("Cleanup build plans was successful for Exercise : {}", id);
@@ -216,12 +216,11 @@ public class ExerciseResource {
             .header("filename", zipFile.getName())
             .body(resource);
     }
-
     /**
-     * GET  /exercises/:exerciseId/participations/:studentIds : sends all submissions from studentlist as zip
-     *
-     * @param exerciseId the id of the exercise to get the repos from
-     * @param studentIds the studentIds seperated via semicolon to get their submissions
+    * GET  /exercises/:exerciseId/participations/:studentIds : sends all submissions from studentlist as zip
+        *
+        * @param exerciseId the id of the exercise to get the repos from
+        * @param studentIds the studentIds seperated via semicolon to get their submissions
      * @return ResponseEntity with status
      */
     @GetMapping(value = "/exercises/{exerciseId}/participations/{studentIds}")
