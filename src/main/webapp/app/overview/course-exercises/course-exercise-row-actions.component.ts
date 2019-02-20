@@ -138,13 +138,9 @@ export class CourseExerciseRowActionsComponent {
 
         this.courseExerciseService
             .startExercise(this.courseId, this.exercise.id)
-            .finally(() => {
-                debugger
-                 this.exercise.loading = false
-            })
+            .finally(() => {(this.exercise.loading = false)})
             .subscribe(
                 participation => {
-                debugger
                     if (participation) {
                         this.exercise.participations = [participation];
                         this.exercise.participationStatus = this.participationStatus();
