@@ -41,6 +41,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     Optional<Result> findDistinctBySubmission(Submission submission);
 
+    List<Result> findAllByParticipationExerciseIdAndAssessorId(Long exerciseId, Long assessorId);
+
     /**
      * This SQL query is used for inserting results if only one unrated result should exist per participation.
      * This prevents multiple (concurrent) inserts with the same participation_id and rated = 0.
@@ -63,4 +65,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @Modifying
     @Query(value = "insert into result (participation_id, rated) select :participationId, 0 from dual where not exists (select * from result where participation_id = :participationId and rated = 0)", nativeQuery = true)
     void insertIfNonExisting(@Param("participationId") Long participationId);
+
+    Long countByAssessorIsNotNullAndParticipation_Exercise_CourseId(long courseId);
+
+    Long countByAssessor_IdAndParticipation_Exercise_CourseId(long assessorId, long courseId);
 }
