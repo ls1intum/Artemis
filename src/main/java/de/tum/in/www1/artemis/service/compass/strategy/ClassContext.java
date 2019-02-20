@@ -26,10 +26,10 @@ public class ClassContext {
                 relations.add(umlAssociation.getElementID());
             }
         }
-        for (UMLElement element: umlClass.getAttributeList()) {
+        for (UMLElement element: umlClass.getAttributes()) {
             relations.add(element.getElementID());
         }
-        for (UMLElement element: umlClass.getMethodList()) {
+        for (UMLElement element: umlClass.getMethods()) {
             relations.add(element.getElementID());
         }
         if (relations.isEmpty()) {

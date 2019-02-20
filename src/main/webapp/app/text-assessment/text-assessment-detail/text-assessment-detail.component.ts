@@ -12,6 +12,7 @@ export class TextAssessmentDetailComponent {
     @Output() public assessmentChange = new EventEmitter<Feedback>();
     @Input() public highlightColor: HighlightColors.Color;
     @Output() public deleteAssessment = new EventEmitter<Feedback>();
+    @Input() public disabled = false;
 
     public emitChanges(): void {
         this.assessmentChange.emit(this.assessment);
