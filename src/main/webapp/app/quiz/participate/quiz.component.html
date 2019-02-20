@@ -22,13 +22,12 @@
             <div>
                 <div class="stepwizardquiz">
                         <div *ngFor="let question of quizExercise.questions; let i = index"
-                             class="stepwizardquiz-step"
-                             [ngbTooltip]=" !(selectedAnswerOptions[question.id]?.length || dragAndDropMappings[question.id]?.length || shortAnswerSubmittedTexts[question.id]?.length ) ? '' : tooltipExplanationTranslate">
+                             class="stepwizardquiz-step" >
                             <span *ngIf="question.type === DRAG_AND_DROP"
                                  data-toggle="tooltip"
                                  class="btn btn-light btn-circle stepbutton stepwizardquiz-circle draganddropcolor-question"
                                 (click)="navigateToQuestion(i)"
-                                [ngbTooltip]="dragAndDropMappings[question.id]?.length ? '' : tooltipNotExplanationTranslate"
+                                [ngbTooltip]="dragAndDropMappings[question.id]?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
                                 [ngClass]="{'changed-question': dragAndDropMappings[question.id]?.length }">
                                 <b class="fa">DD</b>
                             </span>
@@ -36,7 +35,7 @@
                                 data-toggle="tooltip"
                                  class="btn btn-light btn-circle stepbutton stepwizardquiz-circle multiplechoicecolor-question"
                                  (click)="navigateToQuestion(i)"
-                                 [ngbTooltip]="selectedAnswerOptions[question.id]?.length ? '' : tooltipNotExplanationTranslate"
+                                 [ngbTooltip]="selectedAnswerOptions[question.id]?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
                                  [ngClass]="{'changed-question': selectedAnswerOptions[question.id]?.length }">
                                 <b class="fa">MC</b>
                             </span>
@@ -44,7 +43,7 @@
                                  data-toggle="tooltip"
                                  class="btn btn-light btn-circle stepbutton stepwizardquiz-circle shortanswercolor-question"
                                  (click)="navigateToQuestion(i)"
-                                 [ngbTooltip]="shortAnswerSubmittedTexts[question.id]?.length ? '' : tooltipNotExplanationTranslate"
+                                 [ngbTooltip]="shortAnswerSubmittedTexts[question.id]?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
                                  [ngClass]="{'changed-question': shortAnswerSubmittedTexts[question.id]?.length }">
                             <b class="fa">SA</b>
                             </span>
