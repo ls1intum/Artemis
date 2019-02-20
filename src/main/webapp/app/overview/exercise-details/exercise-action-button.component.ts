@@ -10,7 +10,7 @@ export class ExerciseActionButtonComponent {
     @Input() buttonVisible = true;
     @Input() buttonIcon: string;
     @Input() buttonLabel: string;
-    @HostBinding('attr.disabled') @Input() buttonLoading = false;
+    @Input() buttonLoading = false;
     @HostBinding('class.btn-outline-primary') @Input() outlined = false;
     @HostBinding('class.btn-sm') @Input() smallButton = false;
 

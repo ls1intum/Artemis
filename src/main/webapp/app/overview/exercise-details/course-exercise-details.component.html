@@ -50,7 +50,7 @@
     <!-- HEADER INFORMATION END -->
     <!-- EXERCISE ACTIONS START -->
     <div class="tab-bar pl-2 pr-2 mb-2 justify-content-between">
-        <jhi-exercise-details-student-actions [exercise]="exercise"></jhi-exercise-details-student-actions>
+        <jhi-exercise-details-student-actions [courseId]="courseId" [exercise]="exercise"></jhi-exercise-details-student-actions>
         <div class="col-auto d-none d-md-flex align-items-center" *ngIf="exercise.isAtLeastTutor">
             <span class="mr-1">Instructor actions:</span>
             <div class="btn-group">

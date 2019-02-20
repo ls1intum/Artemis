@@ -154,16 +154,13 @@
                 buttonIcon="play-circle"
                 buttonLabel="Start exercise"
                 [buttonLoading]="exercise.loading"
+                *ngIf="participationStatus() === UNINITIALIZED"
                 (click)="startExercise()"></button>
-        <button jhi-exercise-action-button
-                buttonIcon="play-circle"
-                buttonLabel="Resume exercise"
-                [buttonLoading]="exercise.loading"
-                (click)="resumeExercise()"></button>
         <button jhi-exercise-action-button
                 buttonIcon="folder-open"
                 buttonLabel="Open text editor"
                 [buttonLoading]="exercise.loading"
+                *ngIf="participationStatus() === TEXT_EXERCISE && exercise.participations && exercise.participations.length > 0"
                 routerLink="/text/{{exercise.participations[0].id}}"></button>
     </div>
     <!-- ACTIONS END -->
@@ -174,6 +171,7 @@
                 buttonLabel="Show submission"
                 outlined="true"
                 [buttonLoading]="exercise.loading"
+                *ngIf="participationStatus() === TEXT_EXERCISE && exercise.participations && exercise.participations.length > 0"
                 routerLink="/text/{{exercise.participations[0].id}}"></button>
     </div>
     <!-- INFORMATION END -->

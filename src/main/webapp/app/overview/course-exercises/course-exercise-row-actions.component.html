@@ -128,18 +128,14 @@
                 buttonLabel="Start exercise"
                 smallButton="true"
                 [buttonLoading]="exercise.loading"
+                *ngIf="participationStatus() === UNINITIALIZED"
                 (click)="startExercise()"></button>
         <button jhi-exercise-action-button
-                buttonIcon="play-circle"
-                buttonLabel="Resume exercise"
-                smallButton="true"
-                [buttonLoading]="exercise.loading"
-                (click)="resumeExercise()"></button>
-        <button jhi-exercise-action-button
                 buttonIcon="folder-open"
-                buttonLabel="Open text editor"
+                [buttonLabel]="!!exercise.loading"
                 smallButton="true"
                 [buttonLoading]="exercise.loading"
+                *ngIf="participationStatus() === TEXT_EXERCISE && exercise.participations && exercise.participations.length > 0"
                 routerLink="/text/{{exercise.participations[0].id}}"></button>
     </div>
     <!-- ACTIONS END -->
@@ -156,6 +152,7 @@
                 buttonLabel="Start exercise"
                 outlined="true"
                 smallButton="true"
+                *ngIf="participationStatus() === UNINITIALIZED"
                 [buttonLoading]="exercise.loading"
                 (click)="startExercise()"></button>
         <button jhi-exercise-action-button
@@ -163,6 +160,7 @@
                 buttonLabel="Resume exercise"
                 outlined="true"
                 smallButton="true"
+                *ngIf="participationStatus() !== UNINITIALIZED"
                 [buttonLoading]="exercise.loading"
                 (click)="resumeExercise()"></button>
     </div>

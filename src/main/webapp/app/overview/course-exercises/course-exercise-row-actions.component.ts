@@ -36,6 +36,7 @@ export class CourseExerciseRowActionsComponent {
     readonly INACTIVE = ParticipationStatus.INACTIVE;
 
     @Input() exercise: Exercise;
+    @Input() courseId: number;
 
     public repositoryPassword: string;
     public wasCopied = false;
@@ -136,10 +137,14 @@ export class CourseExerciseRowActionsComponent {
         }
 
         this.courseExerciseService
-            .startExercise(this.exercise.course.id, this.exercise.id)
-            .finally(() => (this.exercise.loading = false))
+            .startExercise(this.courseId, this.exercise.id)
+            .finally(() => {
+                debugger
+                 this.exercise.loading = false
+            })
             .subscribe(
                 participation => {
+                debugger
                     if (participation) {
                         this.exercise.participations = [participation];
                         this.exercise.participationStatus = this.participationStatus();
@@ -162,7 +167,7 @@ export class CourseExerciseRowActionsComponent {
     resumeExercise() {
         this.exercise.loading = true;
         this.courseExerciseService
-            .resumeExercise(this.exercise.course.id, this.exercise.id)
+            .resumeExercise(this.courseId, this.exercise.id)
             .finally(() => (this.exercise.loading = false))
             .subscribe(
                 () => true,
