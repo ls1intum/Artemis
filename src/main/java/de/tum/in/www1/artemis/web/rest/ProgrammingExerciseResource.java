@@ -370,12 +370,12 @@ public class ProgrammingExerciseResource {
             !authCheckService.isAdmin()) {
             return forbidden();
         }
-        if (programmingExercise.getPackageFolderName() == null) {
-            return ResponseEntity
-                .badRequest()
-                .headers(HeaderUtil.createAlert("structureOracleGenerationNotPossible", "This is a linked exercise and generating the structure oracle for this exercise is not possible."))
-                .body(null);
-        }
+//        if (programmingExercise.getPackageFolderName() == null) {
+//            return ResponseEntity
+//                .badRequest()
+//                .headers(HeaderUtil.createAlert("structureOracleGenerationNotPossible", "This is a linked exercise and generating the structure oracle for this exercise is not possible."))
+//                .body(null);
+//        }
 
         URL solutionRepoURL = programmingExercise.getSolutionRepositoryUrlAsUrl();
         URL exerciseRepoURL = programmingExercise.getBaseRepositoryUrlAsUrl();
@@ -383,7 +383,7 @@ public class ProgrammingExerciseResource {
 
         try {
             String testsPath = "test" + programmingExercise.getPackageName().replace(".", "/");
-            // String testsPath = "test/de/tum/in/www1";
+ //            String testsPath = "test/de/tum/in/www1";
             programmingExerciseService.generateStructureOracleFile(solutionRepoURL, exerciseRepoURL, testRepoURL, testsPath);
 
             return ResponseEntity.ok("Successfully generated the structure oracle for the exercise " + programmingExercise.getProjectName() + " with "
