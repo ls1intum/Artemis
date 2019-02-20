@@ -130,6 +130,13 @@ export class AccountService {
         );
     }
 
+    isAtLeastInstructorInCourse(course: Course) {
+        return (
+            this.hasGroup(course.instructorGroupName) ||
+            this.hasAnyAuthorityDirect(['ROLE_ADMIN'])
+        );
+    }
+
     isAuthenticated(): boolean {
         return this.authenticated;
     }

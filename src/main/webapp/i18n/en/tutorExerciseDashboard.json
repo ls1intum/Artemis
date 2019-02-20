@@ -1,0 +1,12 @@
+{
+    "arTeMiSApp": {
+        "tutorExerciseDashboard": {
+            "home": {
+                "title": "Tutor Exercise Dashboard"
+            },
+            "participation": {
+                "instructionsReviewed": "You reviewed the instructions, you can now read the example submissions"
+            }
+        }
+    }
+}

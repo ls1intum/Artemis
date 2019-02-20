@@ -1,23 +1,16 @@
 package de.tum.in.www1.artemis.service;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import de.tum.in.www1.artemis.domain.ModelingExercise;
-import de.tum.in.www1.artemis.domain.ModelingSubmission;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.repository.JsonAssessmentRepository;
-import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.math.BigDecimal;
+import java.util.List;
+import org.slf4j.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.text.DecimalFormat;
-import java.time.ZonedDateTime;
+import com.google.gson.JsonObject;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.compass.assessment.ModelElementAssessment;
+import static java.math.BigDecimal.ROUND_HALF_EVEN;
 
 @Service
 public class ModelingAssessmentService extends AssessmentService {
@@ -28,6 +21,7 @@ public class ModelingAssessmentService extends AssessmentService {
     private final UserService userService;
     private final ModelingExerciseService modelingExerciseService;
     private final ModelingSubmissionRepository modelingSubmissionRepository;
+
 
     public ModelingAssessmentService(JsonAssessmentRepository jsonAssessmentRepository,
                                      ResultRepository resultRepository,
@@ -43,9 +37,10 @@ public class ModelingAssessmentService extends AssessmentService {
         this.modelingSubmissionRepository = modelingSubmissionRepository;
     }
 
+
     /**
-     * Find latest assessment for given exerciseId, studentId and modelId. First checks for existence of manual assessment,
-     * then of automatic assessment.
+     * Find latest assessment for given exerciseId, studentId and modelId. First checks for existence of manual
+     * assessment, then of automatic assessment.
      *
      * @param exerciseId
      * @param studentId
@@ -68,43 +63,38 @@ public class ModelingAssessmentService extends AssessmentService {
         return null;
     }
 
+
     /**
-     * This function is used for manually assessed results. It updates the completion date, sets the assessment type to MANUAL
-     * and sets the assessor attribute. Furthermore, it saves the assessment in the file system the total score is calculated and set in the result.
+     * This function is used for manually assessed results. It updates the completion date, sets the
+     * assessment type to MANUAL and sets the assessor attribute. Furthermore, it saves the assessment
+     * in the file system the total score is calculated and set in the result.
      *
-     * @param resultId              the resultId the assessment belongs to
-     * @param exerciseId            the exerciseId the assessment belongs to
-     * @param modelingAssessment    the assessments as string
+     * @param result             the result the assessment belongs to
+     * @param exercise           the exercise the assessment belongs to
+     * @param modelingAssessment the assessments as string
      * @return the ResponseEntity with result as body
      */
     @Transactional
-    public Result submitManualAssessment(Long resultId, Long exerciseId, String modelingAssessment) {
-        Result result = saveManualAssessment(resultId, exerciseId, modelingAssessment);
-        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-
-        Long studentId = result.getParticipation().getStudent().getId();
-        Long submissionId = result.getSubmission().getId();
-        // set score, result string and successful if rated
-        // TODO: is it really necessary to read the assessment? It should be the same as 'modelingAssessment'
-        JsonObject assessmentJson = jsonAssessmentRepository.readAssessment(exerciseId, studentId, submissionId, true);
-        Double calculatedScore = calculateTotalScore(assessmentJson);
-
-        return prepareSubmission(result, modelingExercise, calculatedScore);
+    public Result submitManualAssessment(
+        Result result, ModelingExercise exercise, List<ModelElementAssessment> modelingAssessment) {
+        saveManualAssessment(result, exercise.getId(), modelingAssessment);
+        Double calculatedScore = calculateTotalScore(modelingAssessment);
+        return prepareSubmission(result, exercise, calculatedScore);
     }
 
 
     /**
-     * This function is used for manually assessed results. It updates the completion date, sets the assessment type to MANUAL
-     * and sets the assessor attribute. Furthermore, it saves the assessment in the file system the total score is calculated and set in the result.
+     * This function is used for manually assessed results. It updates the completion date, sets the
+     * assessment type to MANUAL and sets the assessor attribute. Furthermore, it saves the assessment
+     * in the file system the total score is calculated and set in the result.
      *
-     * @param resultId              the resultId the assessment belongs to
-     * @param exerciseId            the exerciseId the assessment belongs to
-     * @param modelingAssessment    the assessments as string
-     * @return the ResponseEntity with result as body
+     * @param result             the result the assessment belongs to
+     * @param exerciseId         the exerciseId the assessment belongs to
+     * @param modelingAssessment List of assessed model elements
      */
     @Transactional
-    public Result saveManualAssessment(Long resultId, Long exerciseId, String modelingAssessment) {
-        Result result = resultRepository.findById(resultId).get();
+    public void saveManualAssessment(
+        Result result, Long exerciseId, List<ModelElementAssessment> modelingAssessment) {
         result.setAssessmentType(AssessmentType.MANUAL);
         User user = userService.getUser();
         result.setAssessor(user);
@@ -120,24 +110,17 @@ public class ModelingAssessmentService extends AssessmentService {
         // write assessment to file system
         jsonAssessmentRepository.writeAssessment(exerciseId, studentId, submissionId, true, modelingAssessment);
         resultRepository.save(result);
-        return result;
     }
 
 
     /**
-     * Helper function to calculate the total score of an assessment json. It loops through all assessed model elements
-     * and sums the credits up.
-     *
-     * @param assessmentJson    the assessments as JsonObject
-     * @return the total score
+     * @return sum of every modelingAssessments credit rounded to max two numbers after the comma
      */
-    private Double calculateTotalScore(JsonObject assessmentJson) {
-        Double totalScore = 0.0;
-        JsonArray assessments = assessmentJson.get("assessments").getAsJsonArray();
-        for (JsonElement assessment : assessments) {
-            totalScore += assessment.getAsJsonObject().getAsJsonPrimitive("credits").getAsDouble();
+    public static Double calculateTotalScore(List<ModelElementAssessment> modelingAssessment) {
+        double totalScore = 0.0;
+        for (ModelElementAssessment assessment : modelingAssessment) {
+            totalScore += assessment.getCredits();
         }
-        //TODO round this value to max two numbers after the comma
-        return totalScore;
+        return new BigDecimal(totalScore).setScale(2, ROUND_HALF_EVEN).doubleValue();
     }
 }

@@ -1,4 +1,5 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { Location } from '@angular/common';
 import { TextExercise } from 'app/entities/text-exercise';
 import { TextSubmission } from 'app/entities/text-submission';
 import { HighlightColors } from '../text-shared/highlight-colors';
@@ -39,7 +40,8 @@ export class TextAssessmentComponent implements OnInit, OnDestroy {
         private router: Router,
         private route: ActivatedRoute,
         private resultService: ResultService,
-        private assessmentsService: TextAssessmentsService
+        private assessmentsService: TextAssessmentsService,
+        private location: Location
     ) {
         this.assessments = [];
         this.assessmentsAreValid = false;
@@ -115,7 +117,7 @@ export class TextAssessmentComponent implements OnInit, OnDestroy {
     }
 
     public previous(): void {
-        this.router.navigate(['text', this.exercise.id, 'assessment']);
+        this.location.back();
     }
 
     /**

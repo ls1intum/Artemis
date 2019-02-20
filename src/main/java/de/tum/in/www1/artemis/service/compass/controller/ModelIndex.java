@@ -35,7 +35,6 @@ public class ModelIndex {
         if (modelElementMapping.containsKey(element)) {
             return modelElementMapping.get(element);
         }
-
         // element is similar to existing element
         for (UMLElement knownElement : uniqueModelElementList) {
             if (knownElement.similarity(element) > CompassConfiguration.EQUALITY_THRESHOLD) {
@@ -43,7 +42,6 @@ public class ModelIndex {
                 return knownElement.getElementID();
             }
         }
-
         // element does not fit already known element
         uniqueModelElementList.add(element);
         modelElementMapping.put(element, uniqueModelElementList.size() - 1);
@@ -52,6 +50,10 @@ public class ModelIndex {
 
     public void addModel(UMLModel model) {
         modelMap.put(model.getModelID(), model);
+    }
+
+    public UMLModel getModel(long modelId) {
+        return modelMap.get(modelId); //TODO MJ check if there? return Optional?
     }
 
     public Map<Long, UMLModel> getModelMap() {
