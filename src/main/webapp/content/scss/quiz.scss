@@ -201,6 +201,9 @@
             padding: 4px;
         }
     }
+    .progress {
+        width: 300px;
+    }
 }
 
 .question:first-of-type {
@@ -1301,7 +1304,7 @@ table.answer-options-result {
 }
 
 .stepwizardquiz-step .btn {
-    cursor: default;
+    cursor: pointer;
     opacity: 1 !important;
 }
 
