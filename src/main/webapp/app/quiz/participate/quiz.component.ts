@@ -61,7 +61,6 @@ export class QuizComponent implements OnInit, OnDestroy {
     justSaved = false;
     waitingForQuizStart = false;
 
-
     remainingTimeText = '?';
     remainingTimeSeconds = 0;
     timeUntilStart = '0';
@@ -108,7 +107,9 @@ export class QuizComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         private jhiAlertService: JhiAlertService,
         private quizSubmissionService: QuizSubmissionService
-    ) { smoothscroll.polyfill();}
+    ) {
+        smoothscroll.polyfill();
+    }
 
     ngOnInit() {
         // set correct mode
@@ -893,6 +894,9 @@ export class QuizComponent implements OnInit, OnDestroy {
         this.isSubmitting = false;
     }
 
+    /**
+     * By clicking on the bubble of the progress navigation towards the corresponding question of the quiz is triggered
+     */
     navigateToQuestion(questionIndex: number): void {
         document.getElementById('question' + questionIndex).scrollIntoView({
             behavior: 'smooth'
