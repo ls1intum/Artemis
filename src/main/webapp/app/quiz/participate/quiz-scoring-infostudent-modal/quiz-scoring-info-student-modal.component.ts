@@ -67,11 +67,17 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
         }
     }
 
+    /**
+     * opens the pop-up for the explanation of the points
+     */
     open(content: any) {
         this.modalService.open(content, {size: 'lg'});
 
     }
 
+    /**
+     * counts the variables for Multiple Choice Questions
+     */
     private countMultipleChoice() {
         const mcmQuestion = this.question as MultipleChoiceQuestion;
             this.amountOfMultipleChoiceAnswerOptions = mcmQuestion.answerOptions.length;
@@ -84,6 +90,9 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
             this.differenceMultipleChoice = this.inTotalSelectedRightOptions - this.inTotalSelectedWrongOptions;
     }
 
+    /**
+     * counts the variables for Drag and Drop Questions
+     */
     private countDragandDrop() {
         const dndQuestion = this.question as DragAndDropQuestion;
             this.amountOfDragAndDropZones = dndQuestion.dropLocations.length;
@@ -91,6 +100,9 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
             this.differenceDragAndDrop = this.correctlyMappedDragAndDropItems - this.wronglyMappedDragAndDropItems;
     }
 
+    /**
+     * counts the variables for Short Answer Questions
+     */
     private countShortAnswer() {
         const shortAnswer = this.question as ShortAnswerQuestion;
             this.shortAnswerSpotCount = shortAnswer.spots.length;

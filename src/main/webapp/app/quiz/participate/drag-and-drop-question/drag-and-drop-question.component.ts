@@ -68,8 +68,6 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy, OnChange
     rendered: DragAndDropQuestion;
     sampleSolutionMappings = new Array<DragAndDropMapping>();
     dropAllowed = false;
-
-    amountOfAnswerOptions: number;
     correctAnswer: number;
 
     constructor(private artemisMarkdown: ArtemisMarkdown, private dragAndDropQuestionUtil: DragAndDropQuestionUtil) {}
@@ -262,6 +260,9 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy, OnChange
         }
     }
 
+    /**
+     * counts the amount of right mappings for a question by using the isLocationCorrect Method
+     */
     countCorrectMappings(): void {
         this.correctAnswer = 0;
         for(let dropLocation of this.question.dropLocations){
