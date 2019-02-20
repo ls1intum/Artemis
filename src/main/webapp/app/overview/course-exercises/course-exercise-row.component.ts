@@ -87,7 +87,10 @@ export class CourseExerciseRowComponent implements OnInit {
     }
 
     getUrgentClass(date: Moment): string {
-        const remainingDays =  date.diff(moment(), 'days');
+        if (!date) {
+            return;
+        }
+        const remainingDays = date.diff(moment(), 'days');
         if (0 <= remainingDays && remainingDays < 7) {
             return 'text-danger';
         } else {

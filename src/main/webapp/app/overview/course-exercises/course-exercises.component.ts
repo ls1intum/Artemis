@@ -50,7 +50,7 @@ export class CourseExercisesComponent implements OnInit {
         const courseExercises = [...this.course.exercises];
         const sortedExercises = this.sortExercises(courseExercises, selectedOrder);
         sortedExercises.forEach(exercise => {
-            const dateValue = exercise.dueDate ? exercise.dueDate : exercise.releaseDate;
+            const dateValue = exercise.dueDate ? exercise.dueDate : exercise.releaseDate ? exercise.releaseDate : moment();
             const dateIndex = moment(dateValue).startOf('week').format('YYYY-MM-DD');
             if (!groupedExercises[dateIndex]) {
                 indexKeys.push(dateIndex);
@@ -69,8 +69,8 @@ export class CourseExercisesComponent implements OnInit {
 
     private sortExercises(exercises: Exercise[], selectedOrder: number) {
         return exercises.sort((a, b) => {
-            const aValue = a.dueDate ? a.dueDate.valueOf() : a.releaseDate.valueOf();
-            const bValue = b.dueDate ? b.dueDate.valueOf() : a.releaseDate.valueOf();
+            const aValue = a.dueDate ? a.dueDate.valueOf() : a.releaseDate ? a.releaseDate.valueOf() : moment().valueOf();
+            const bValue = b.dueDate ? b.dueDate.valueOf() : a.releaseDate ? a.releaseDate.valueOf() : moment().valueOf();
 
             return selectedOrder * (aValue - bValue);
         });

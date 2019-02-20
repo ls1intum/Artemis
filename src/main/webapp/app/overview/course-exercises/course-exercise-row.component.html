@@ -49,12 +49,15 @@
                     <span class="badge badge-success" [hidden]="!asQuizExercise(exercise).isActiveQuiz">Live</span>
                 </h4>
             </div>
-            <div class="col-auto"
+            <div class="col-auto" *ngIf="exercise.dueDate || exercise.releaseDate; else noDate"
                  [ngClass]="getUrgentClass(exercise.dueDate ? exercise.dueDate : exercise.releaseDate)">{{(exercise.dueDate ? exercise.dueDate : exercise.releaseDate) |
                 date:'dd/MM/yy'}}
                 <span
                     class="d-none d-sm-inline">({{(exercise.dueDate ? exercise.dueDate : exercise.releaseDate) | amTimeAgo}}
                     )</span></div>
+            <ng-template #noDate>
+                <div class="col-auto">N/A</div>
+            </ng-template>
         </div>
     </div>
 </div>
