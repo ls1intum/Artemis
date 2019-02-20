@@ -243,7 +243,6 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         });
     }
 
-
     /**
      * Calculates the total score of the current assessment.
      * Returns an error if the total score cannot be calculated
@@ -326,7 +325,6 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         }
     }
 
-
     getElementPositions() {
         this.positions = this.modelingAssessmentService.getElementPositions(this.assessments, this.apollonEditor.getState());
     }
@@ -388,7 +386,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
             document.getElementById(id).style.fill = 'rgb(248, 214, 217)';
         });
 
-        //TODO MJ highlight relation entities. currently do not have unique id
+        // TODO MJ highlight relation entities. currently do not have unique id
         // relationshipsToHighlight.forEach(id => {
         //     document.getElementById(id).style.color = 'rgb(248, 214, 217)';
         // })
