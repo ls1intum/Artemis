@@ -24,6 +24,8 @@ import { ShortAnswerQuestionComponent } from 'app/quiz/participate/short-answer-
 import { DragAndDropMapping } from 'app/entities/drag-and-drop-mapping';
 import { AnswerOption } from 'app/entities/answer-option';
 import { ShortAnswerSubmittedText } from 'app/entities/short-answer-submitted-text';
+import * as smoothscroll from "smoothscroll-polyfill";
+
 
 @Component({
     selector: 'jhi-quiz',
@@ -58,6 +60,7 @@ export class QuizComponent implements OnInit, OnDestroy {
     lastSavedTimeText = 'never';
     justSaved = false;
     waitingForQuizStart = false;
+
 
     remainingTimeText = '?';
     remainingTimeSeconds = 0;
@@ -105,7 +108,7 @@ export class QuizComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         private jhiAlertService: JhiAlertService,
         private quizSubmissionService: QuizSubmissionService
-    ) {}
+    ) { smoothscroll.polyfill();}
 
     ngOnInit() {
         // set correct mode
