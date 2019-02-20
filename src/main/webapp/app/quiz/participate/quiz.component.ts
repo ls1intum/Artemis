@@ -26,7 +26,6 @@ import { AnswerOption } from 'app/entities/answer-option';
 import { ShortAnswerSubmittedText } from 'app/entities/short-answer-submitted-text';
 import * as smoothscroll from "smoothscroll-polyfill";
 
-
 @Component({
     selector: 'jhi-quiz',
     templateUrl: './quiz.component.html',
