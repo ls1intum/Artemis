@@ -111,4 +111,22 @@ public class TextAssessmentService extends AssessmentService {
         return assessments.stream().mapToDouble(Feedback::getCredits).sum();
     }
 
+    /**
+     * Given a courseId, return the number of assessments for that course
+     * @param courseId - the course we are interested in
+     * @return a number of submissions for the course
+     */
+    public long countNumberOfAssessments(Long courseId) {
+        return resultRepository.countByAssessorIsNotNullAndParticipation_Exercise_CourseId(courseId);
+    }
+
+    /**
+     * Given a courseId and a tutorId, return the number of assessments for that course written by that tutor
+     * @param courseId - the course we are interested in
+     * @param tutorId - the tutor we are interested in
+     * @return a number of submissions for the course
+     */
+    public long countNumberOfAssessmentsForTutor(Long courseId, Long tutorId) {
+        return resultRepository.countByAssessor_IdAndParticipation_Exercise_CourseId(tutorId, courseId);
+    }
 }

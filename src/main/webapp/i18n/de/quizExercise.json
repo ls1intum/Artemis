@@ -171,9 +171,10 @@
                 "dragAndDropProp": "Sie haben {{paramScore}} Punkt(e) der {{paramQuestionScore}}} möglichen Punkte erreicht. Jeder der {{paramDragAndDropElementsCount}} Element(e) gewährt Ihnen {{paramQuestionScore}}/{{paramDragAndDropElementsCount}} Punkte, wenn Sie ihn an die entsprechende Stelle zuordnen. Sie haben {{paramWrongMappedItems}} Element(e) falsch zugeordnet und {{paramRightMapping}} Element(e) korrekt zugeordnet.",
                 "shortAnswerAllOrNothingCorrect": "Sie haben {{paramScore}} Punkt(e) der {{paramQuestionScore}} möglichen Punkte erreicht. Da Sie alle Lücken richtig ausgefüllt haben, haben Sie in dieser Übung alle Punkte erreicht. Tolle Arbeit!",
                 "shortAnswerAllOrNothingNotCorrect": "Sie haben {{paramScore}} Punkt(e) der {{paramQuestionScore}} möglichen Punkte erreicht. Da Sie {{paramShortAnswerWrongOption}} Lücke(n) falsch und {{paramShortAnswerCorrectAnswers}} Lücke(n) korrekt ausgefüllt haben, haben Sie in dieser Übung 0 Punkte erreicht.",
-                "shortAnswerProp": "Sie haben {{paramScore}} Punkt(e) der {{paramQuestionScore}} möglichen Punkte erreicht. Da Sie {{paramShortAnswerWrongOption}} Lücke(n) falsch und {{paramShortAnswerCorrectAnswers}} Lücke(n) korrekt ausgefüllt haben."
-            }
-
+                "shortAnswerProp": "Sie haben {{paramScore}} Punkt(e) der {{paramQuestionScore}} möglichen Punkte erreicht. Jede Lücke gewährt Ihnen {{paramQuestionScore}}}/{{paramCount}}} Punkt(e), wenn Sie diese korrekt ausfüllen. Da Sie {{paramShortAnswerWrongOption}} Lücke(n) falsch und {{paramShortAnswerCorrectAnswers}} Lücke(n) korrekt ausgefüllt haben."
+            },
+            "explanationAnswered": "Du hast die Frage beantwortet",
+            "explanationNotAnswered": "Du hast die Frage noch nicht beantwortet"
         }
     }
 }

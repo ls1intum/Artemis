@@ -158,8 +158,10 @@ export class ParticipationService {
         const convertedSubmissions: Submission[] = [];
         if (submissions != null && submissions.length > 0) {
             submissions.forEach((submission: Submission) => {
-                submission.submissionDate = submission.submissionDate != null ? moment(submission.submissionDate) : null;
-                convertedSubmissions.push(submission);
+                if (submission !== null) {
+                    submission.submissionDate = submission.submissionDate != null ? moment(submission.submissionDate) : null;
+                    convertedSubmissions.push(submission);
+                }
             });
         }
         return convertedSubmissions;

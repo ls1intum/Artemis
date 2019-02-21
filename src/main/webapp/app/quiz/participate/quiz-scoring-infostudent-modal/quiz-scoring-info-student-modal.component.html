@@ -1,4 +1,4 @@
-<ng-template #scoringexplanation let-c="close" let-d="dismiss">
+<ng-template #scoringExplanation let-c="close" let-d="dismiss">
     <div class="modal-header">
         <h5 class="modal-title">Scoring type explanation</h5>
         <button type="button" class="close" aria-label="Close" (click)="d()"><span aria-hidden="true">&times;</span>
@@ -61,11 +61,11 @@
         <h6 jhiTranslate="arTeMiSApp.quizExercise.explanationText.scoringTypeProportionalWithPenalty"></h6>
         <span *ngIf ="!(this.shortAnswerWrongAnswers > 0)"><span jhiTranslate="arTeMiSApp.quizExercise.explanationText.shortAnswerAllOrNothingCorrect" [translateValues]="{paramScore: this.score, paramQuestionScore: this.question.score}"></span></span>
         <span *ngIf ="this.shortAnswerWrongAnswers > 0 && this.differenceShortAnswer >= 0">
-            <p jhiTranslate="arTeMiSApp.quizExercise.explanationText.shortAnswerProp" [translateValues]="{paramScore: this.score, paramQuestionScore:this.question.score, paramShortAnswerWrongOption: this.shortAnswerWrongAnswers, paramShortAnswerCorrectAnswers: this.shortAnswerCorrectAnswers}"></p>
+            <p jhiTranslate="arTeMiSApp.quizExercise.explanationText.shortAnswerProp" [translateValues]="{paramScore: this.score, paramQuestionScore:this.question.score, paramShortAnswerWrongOption: this.shortAnswerWrongAnswers, paramShortAnswerCorrectAnswers: this.shortAnswerCorrectAnswers, paramCount: this.shortAnswerSpotCount}"></p>
             You have achieved </br><b>{{this.shortAnswerCorrectAnswers}}*{{this.question.score}}/{{this.shortAnswerSpotCount}} - {{this.shortAnswerWrongAnswers}}*{{this.question.score}}/{{this.shortAnswerSpotCount}} = {{this.score}}</b></br>
         </span>
         <span *ngIf ="this.shortAnswerWrongAnswers > 0 && this.differenceShortAnswer < 0">
-            <p jhiTranslate="arTeMiSApp.quizExercise.explanationText.shortAnswerProp" [translateValues]="{paramScore: this.score, paramQuestionScore:this.question.score, paramShortAnswerWrongOption: this.shortAnswerWrongAnswers, paramShortAnswerCorrectAnswers: this.shortAnswerCorrectAnswers}"></p>
+            <p jhiTranslate="arTeMiSApp.quizExercise.explanationText.shortAnswerProp" [translateValues]="{paramScore: this.score, paramQuestionScore:this.question.score, paramShortAnswerWrongOption: this.shortAnswerWrongAnswers, paramShortAnswerCorrectAnswers: this.shortAnswerCorrectAnswers, paramCount: this.shortAnswerSpotCount}"></p>
             You have achieved </br><b>{{this.shortAnswerCorrectAnswers}}*{{this.question.score}}/{{this.shortAnswerSpotCount}} - {{this.shortAnswerWrongAnswers}}*{{this.question.score}}/{{this.shortAnswerSpotCount}} = 0 </b></br>  (Of course you can not have less than 0 points.)
         </span>
     </div>
@@ -76,5 +76,5 @@
     </div>
 </ng-template>
 <div>
-    <button class="btn" (click)="open(scoringexplanation)"><fa-icon [icon]="['far', 'question-circle']"></fa-icon> </button>
+    <button class="btn" (click)="open(scoringExplanation)"><fa-icon [icon]="['far', 'question-circle']"></fa-icon> </button>
 </div>
