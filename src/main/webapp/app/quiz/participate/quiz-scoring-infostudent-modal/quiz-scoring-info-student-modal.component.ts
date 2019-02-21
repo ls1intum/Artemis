@@ -7,6 +7,7 @@ import { MultipleChoiceQuestion } from '../../../entities/multiple-choice-questi
 import { DragAndDropQuestion } from '../../../entities/drag-and-drop-question';
 import { ShortAnswerQuestion } from '../../../entities/short-answer-question';
 import { ShortAnswerSubmittedText } from 'app/entities/short-answer-submitted-text';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-quiz-scoring-infostudent-modal',
@@ -22,6 +23,7 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
     readonly PROPORTIONAL_WITH_PENALTY = ScoringType.PROPORTIONAL_WITH_PENALTY;
 
     @Input() score: number; // Score of the student that has been achieved
+    @Input() questionIndex: number; //Question Index of the question
     @Input() question: Question;
     @Input() DragAndDropMapping = new Array<DragAndDropMapping>();
     @Input() MultipleChoiceMapping = new Array<AnswerOption>();
@@ -49,11 +51,22 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
     shortAnswerWrongAnswers: number; //Amount of wrongly filled out spots
     differenceShortAnswer: number; //Difference between shortAnswerCorrectAnswers and shortAnswerWrongAnswers
 
+    /* Plural Variables*/
+    questionPoint: string;
+    scorePoint: string;
+    wrongOption: string;
+    rightOption: string;
+    rightMap: string;
+    wrongMap: string;
+    rightGap: string;
+    wrongGap: string;
 
-    constructor(private modalService: NgbModal) {
-    }
+    constructor(
+        private modalService: NgbModal,
+        private translateService: TranslateService) {}
 
     ngOnInit() {
+        this.pluralOfPoint();
         switch (this.question.type) {
             case QuestionType.MULTIPLE_CHOICE:
                 this.countMultipleChoice();
@@ -72,13 +85,13 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
      */
     open(content: any) {
         this.modalService.open(content, {size: 'lg'});
-
     }
 
     /**
      * counts the variables for Multiple Choice Questions
      */
     private countMultipleChoice() {
+        const translationBasePath = 'arTeMiSApp.quizExercise.explanationText.';
         const mcmQuestion = this.question as MultipleChoiceQuestion;
             this.amountOfMultipleChoiceAnswerOptions = mcmQuestion.answerOptions.length;
             this.amountOfCorrectMultipleChoiceAnswers = mcmQuestion.answerOptions.filter(option => option.isCorrect).length;
@@ -88,27 +101,82 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
             this.inTotalSelectedRightOptions = this.multipleChoiceCorrectAnswerCorrectlyChosen + (this.amountOfMultipleChoiceAnswerOptions - this.amountOfCorrectMultipleChoiceAnswers-this.multipleChoiceWrongAnswerChosen);
             this.inTotalSelectedWrongOptions = this.multipleChoiceWrongAnswerChosen + this.forgottenMultipleChoiceRightAnswers;
             this.differenceMultipleChoice = this.inTotalSelectedRightOptions - this.inTotalSelectedWrongOptions;
+
+            if(this.inTotalSelectedRightOptions == 1){
+                this.rightOption = this.translateService.instant(translationBasePath + 'option');
+            } else {
+                this.rightOption = this.translateService.instant(translationBasePath + 'options');
+            }
+
+            if(this.inTotalSelectedWrongOptions == 1){
+                this.wrongOption = this.translateService.instant(translationBasePath + 'option');
+            } else {
+                this.wrongOption = this.translateService.instant(translationBasePath + 'options');
+            }
     }
 
     /**
      * counts the variables for Drag and Drop Questions
      */
     private countDragandDrop() {
+        const translationBasePath = 'arTeMiSApp.quizExercise.explanationText.';
         const dndQuestion = this.question as DragAndDropQuestion;
             this.amountOfDragAndDropZones = dndQuestion.dropLocations.length;
             this.wronglyMappedDragAndDropItems = this.amountOfDragAndDropZones - this.correctlyMappedDragAndDropItems;
             this.differenceDragAndDrop = this.correctlyMappedDragAndDropItems - this.wronglyMappedDragAndDropItems;
+
+        if(this.wronglyMappedDragAndDropItems == 1){
+            this.rightMap = this.translateService.instant(translationBasePath + 'item');
+        } else {
+            this.rightMap = this.translateService.instant(translationBasePath + 'items');
+        }
+
+        if(this.correctlyMappedDragAndDropItems == 1){
+            this.wrongMap = this.translateService.instant(translationBasePath + 'item');
+        } else {
+            this.wrongMap = this.translateService.instant(translationBasePath + 'items');
+        }
     }
 
     /**
      * counts the variables for Short Answer Questions
      */
     private countShortAnswer() {
+        const translationBasePath = 'arTeMiSApp.quizExercise.explanationText.';
         const shortAnswer = this.question as ShortAnswerQuestion;
             this.shortAnswerSpotCount = shortAnswer.spots.length;
             this.shortAnswerCorrectAnswers = this.ShortAnswerText.filter(option => option.isCorrect).length;
             this.shortAnswerWrongAnswers = this.shortAnswerSpotCount - this.shortAnswerCorrectAnswers;
             this.differenceShortAnswer = this.shortAnswerCorrectAnswers - this.shortAnswerWrongAnswers;
+
+        if(this.shortAnswerCorrectAnswers == 1){
+            this.rightGap = this.translateService.instant(translationBasePath + 'textgap');
+        } else {
+            this.rightGap = this.translateService.instant(translationBasePath + 'textgaps');
+        }
+
+        if(this.shortAnswerWrongAnswers == 1){
+            this.wrongGap = this.translateService.instant(translationBasePath + 'textgap');
+        } else {
+            this.wrongGap = this.translateService.instant(translationBasePath + 'textgaps');
+        }
     }
 
+    /**
+     * Checks the score of the question and the score the student has achieved
+     */
+    private pluralOfPoint() {
+        const translationBasePath = 'arTeMiSApp.quizExercise.explanationText.';
+        if(this.question.score == 1){
+            this.questionPoint = this.translateService.instant(translationBasePath + 'point');
+        } else {
+            this.questionPoint = this.translateService.instant(translationBasePath + 'points');
+        }
+
+        if(this.score == 1){
+            this.scorePoint = this.translateService.instant(translationBasePath + 'point');
+        } else {
+            this.scorePoint = this.translateService.instant(translationBasePath + 'points');
+        }
+    }
 }

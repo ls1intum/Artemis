@@ -996,6 +996,19 @@ table.answer-options-result {
 
 .colon-suffix:after {
     content: ':';
+    display: inline-block;
+}
+
+.show-explanation {
+    display: inline-block;
+}
+
+.questionright {
+    color: green
+}
+
+.questionwrong {
+    color: orange;
 }
 
 .align-text {
