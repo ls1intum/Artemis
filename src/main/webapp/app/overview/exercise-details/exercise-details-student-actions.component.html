@@ -203,7 +203,6 @@
         <button jhi-exercise-action-button
                 buttonIcon="play-circle"
                 buttonLabel="Start exercise"
-                outlined="true"
                 [buttonLoading]="exercise.loading"
                 *ngIf="participationStatus() === UNINITIALIZED"
                 [smallButton]="smallButtons"
@@ -211,7 +210,6 @@
         <button jhi-exercise-action-button
                 buttonIcon="play-circle"
                 buttonLabel="Resume exercise"
-                outlined="true"
                 [buttonLoading]="exercise.loading"
                 *ngIf="participationStatus() === FILE_UPLOAD && exercise.participations && exercise.participations.length > 0"
                 [smallButton]="smallButtons"
