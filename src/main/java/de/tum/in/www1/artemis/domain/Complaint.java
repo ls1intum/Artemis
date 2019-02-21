@@ -5,7 +5,6 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
 import javax.validation.constraints.Size;
-
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.Objects;

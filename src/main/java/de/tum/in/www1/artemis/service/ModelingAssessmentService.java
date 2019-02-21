@@ -1,15 +1,23 @@
 package de.tum.in.www1.artemis.service;
 
-import java.math.BigDecimal;
-import java.util.List;
-import org.slf4j.*;
+import com.google.gson.JsonObject;
+import de.tum.in.www1.artemis.domain.ModelingExercise;
+import de.tum.in.www1.artemis.domain.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.repository.JsonAssessmentRepository;
+import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.service.compass.assessment.ModelElementAssessment;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.google.gson.JsonObject;
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.compass.assessment.ModelElementAssessment;
+
+import java.math.BigDecimal;
+import java.util.List;
+
 import static java.math.BigDecimal.ROUND_HALF_EVEN;
 
 @Service

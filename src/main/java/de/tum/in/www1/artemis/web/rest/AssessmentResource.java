@@ -1,11 +1,15 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.http.ResponseEntity;
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.web.rest.errors.*;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
