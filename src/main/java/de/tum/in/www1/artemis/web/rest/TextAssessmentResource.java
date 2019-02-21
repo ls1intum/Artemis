@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -30,6 +31,8 @@ public class TextAssessmentResource extends AssessmentResource {
     private final TextAssessmentService textAssessmentService;
     private final TextExerciseService textExerciseService;
     private final TextSubmissionRepository textSubmissionRepository;
+    private final ResultRepository resultRepository;
+    private final TextSubmissionService textSubmissionService;
 
     public TextAssessmentResource(AuthorizationCheckService authCheckService,
                                   ParticipationService participationService,
@@ -37,6 +40,8 @@ public class TextAssessmentResource extends AssessmentResource {
                                   TextAssessmentService textAssessmentService,
                                   TextExerciseService textExerciseService,
                                   TextSubmissionRepository textSubmissionRepository,
+                                  TextSubmissionService textSubmissionService,
+                                  ResultRepository resultRepository,
                                   UserService userService) {
         super(authCheckService, userService);
 
@@ -45,6 +50,8 @@ public class TextAssessmentResource extends AssessmentResource {
         this.textAssessmentService = textAssessmentService;
         this.textExerciseService = textExerciseService;
         this.textSubmissionRepository = textSubmissionRepository;
+        this.resultRepository = resultRepository;
+        this.textSubmissionService = textSubmissionService;
     }
 
     @PutMapping("/exercise/{exerciseId}/result/{resultId}")
@@ -69,6 +76,23 @@ public class TextAssessmentResource extends AssessmentResource {
         return ResponseEntity.ok(result);
     }
 
+    /**
+     * Given an exerciseId and a submissionId, the method retrieves from the database all the data needed by the tutor
+     * to assess the submission.
+     *
+     * If the tutor has already started assessing the submission, then we also return all the results the tutor has
+     * already inserted.
+     *
+     * If another tutor has already started working on this submission, the system tries to find another one without
+     * any result, and if it finds any, return it
+     *
+     * TODO @rpadovani: refactor the method, change the name and move to a dedicated resource retrieving an exercise
+     *  without an assessment
+     *
+     * @param exerciseId the id of the exercise we want the submission
+     * @param submissionId the id of the submission we want
+     * @return a Participation of the tutor in the submission
+     */
     @GetMapping("/exercise/{exerciseId}/submission/{submissionId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Participation> getDataForTutor(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
@@ -83,7 +107,28 @@ public class TextAssessmentResource extends AssessmentResource {
         }
 
         Participation participation = textSubmission.get().getParticipation();
-        participation  = participationService.findOneWithEagerResultsAndSubmissions(participation.getId());
+        participation = participationService.findOneWithEagerResultsAndSubmissions(participation.getId());
+
+        if (!participation.getResults().isEmpty()) {
+            User user = userService.getUser();
+            User assessor = participation.findLatestSubmission().getResult().getAssessor();
+            // Another tutor started assessing this submission.
+            if (!assessor.getLogin().equals(user.getLogin())) {
+                // TODO: if the result hasn't been updated in the last 24 hours, we can use it
+
+                // Check if there is another submission without assessment
+                Optional<TextSubmission> anotherTextSubmission = this.textSubmissionService.textSubmissionWithoutResult(exerciseId);
+
+                if (!anotherTextSubmission.isPresent()) {
+                    // No more text submissions without assessment
+                    return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("textSubmission", "textSubmissionNotFound", "No text Submission without assessment has been found.")).body(null);
+                }
+
+                // Use another participation
+                participation = anotherTextSubmission.get().getParticipation();
+            }
+        }
+
         if (participation.getResults().isEmpty()) {
             Result result = new Result();
             result.setParticipation(participation);
@@ -98,6 +143,46 @@ public class TextAssessmentResource extends AssessmentResource {
         }
 
         return ResponseEntity.ok(participation);
+    }
+
+    /**
+     * Retrieve the result of an example assessment, only if the user is an instructor or if the submission is used for
+     * tutorial purposes.
+     *
+     * @param exerciseId the id of the exercise
+     * @param submissionId the id of the submission
+     * @return the result linked to the submission
+     */
+    @GetMapping("/exercise/{exerciseId}/submission/{submissionId}/exampleAssessment")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Result> getExampleAssessmentForTutor(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
+        log.debug("REST request to get example assessment for tutors text assessment: {}", submissionId);
+        Optional<TextSubmission> textSubmission = textSubmissionRepository.findById(submissionId);
+        TextExercise textExercise = textExerciseService.findOne(exerciseId);
+        if (!textSubmission.isPresent()) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("textSubmission", "textSubmissionNotFound", "No Submission was found for the given ID.")).body(null);
+        }
+
+        // If the user is not an instructor, and this is not an example submission used for tutorial,
+        // do not provide the results
+        boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(textExercise);
+        if (!textSubmission.get().isExampleSubmission() && !isAtLeastInstructor) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("textSubmission", "notAuthorized", "You cannot see results")).body(null);
+        }
+
+        Optional<Result> databaseResult = this.resultRepository.findDistinctBySubmissionId(submissionId);
+        Result result = databaseResult.orElseGet(() -> {
+            Result newResult = new Result();
+            newResult.setSubmission(textSubmission.get());
+            newResult.setExampleResult(true);
+            resultService.createNewResult(newResult);
+            return newResult;
+        });
+
+        List<Feedback> assessments = textAssessmentService.getAssessmentsForResult(result);
+        result.setFeedbacks(assessments);
+
+        return ResponseEntity.ok(result);
     }
 
     @Override

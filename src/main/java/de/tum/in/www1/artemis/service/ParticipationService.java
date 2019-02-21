@@ -12,7 +12,6 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -365,9 +364,8 @@ public class ParticipationService {
     @Transactional(readOnly = true)
     public Participation findOneWithEagerResultsAndSubmissions(Long id) {
         log.debug("Request to get Participation : {}", id);
-        Participation participation = findOneWithEagerResults(id);
-        Hibernate.initialize(participation.getSubmissions());
-        return participation;
+
+        return participationRepository.findByIdWithEagerSubmissionsAndEagerResultsAndEagerAssessors(id);
     }
 
 

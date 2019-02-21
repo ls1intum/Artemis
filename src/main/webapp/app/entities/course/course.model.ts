@@ -19,6 +19,9 @@ export class Course implements BaseEntity {
 
     // helper attributes
     public isAtLeastTutor: boolean;
+    public relativeScore: number;
+    public absoluteScore: number;
+    public maxScore: number;
 
     constructor() {}
 }

@@ -9,7 +9,6 @@ import { AccountService } from '../../core';
 import { ActivatedRoute } from '@angular/router';
 import * as moment from 'moment';
 import { Course, CourseService } from '../course';
-import { Question } from '../question';
 
 @Component({
     selector: 'jhi-quiz-exercise',

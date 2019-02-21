@@ -20,6 +20,7 @@ import { TextSharedModule } from 'app/text-shared/text-shared.module';
         TextAssessmentDetailComponent,
         TextAssessmentDashboardComponent
     ],
-    imports: [CommonModule, SortByModule, ArTEMiSTextAssessmentRoutingModule, ArTEMiSSharedModule, ArTEMiSResultModule, TextSharedModule]
+    imports: [CommonModule, SortByModule, ArTEMiSTextAssessmentRoutingModule, ArTEMiSSharedModule, ArTEMiSResultModule, TextSharedModule],
+    exports: [TextAssessmentEditorComponent, TextAssessmentDetailComponent]
 })
 export class ArTEMiSTextAssessmentModule {}

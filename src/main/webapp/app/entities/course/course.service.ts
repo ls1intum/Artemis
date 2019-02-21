@@ -14,16 +14,22 @@ import { TextExercise } from '../text-exercise/text-exercise.model';
 import { FileUploadExercise } from '../file-upload-exercise/file-upload-exercise.model';
 import { Exercise } from '../exercise/exercise.model';
 import { ExerciseService } from '../exercise/exercise.service';
-import { Result } from 'app/entities/result';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
+
+export type StatsForTutorDashboard = {
+    numberOfAssessments: number;
+    numberOfTutorAssessments: number;
+    numberOfComplaints: number;
+    numberOfSubmissions: number;
+};
 
 @Injectable({ providedIn: 'root' })
 export class CourseService {
     private resourceUrl = SERVER_API_URL + 'api/courses';
 
-    constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
+    constructor(private http: HttpClient, private exerciseService: ExerciseService) { }
 
     create(course: Course): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(course);
@@ -63,6 +69,17 @@ export class CourseService {
 
     findAllResultsOfCourseForExerciseAndCurrentUser(courseId: number): Observable<Course> {
         return this.http.get<Course>(`${this.resourceUrl}/${courseId}/results`);
+    }
+
+    getForTutors(id: number): Observable<EntityResponseType> {
+        return this.http
+            .get<Course>(`${this.resourceUrl}/${id}/for-tutor-dashboard`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+    }
+
+    getStatsForTutors(id: number): Observable<HttpResponse<StatsForTutorDashboard>> {
+        return this.http
+            .get<StatsForTutorDashboard>(`${this.resourceUrl}/${id}/stats-for-tutor-dashboard`, { observe: 'response' });
     }
 
     query(): Observable<EntityArrayResponseType> {
@@ -108,7 +125,7 @@ export class CourseService {
 export class CourseExerciseService {
     private resourceUrl = SERVER_API_URL + `api/courses`;
 
-    constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
+    constructor(private http: HttpClient, private exerciseService: ExerciseService) { }
 
     findExercise(courseId: number, exerciseId: number): Observable<Exercise> {
         return this.http

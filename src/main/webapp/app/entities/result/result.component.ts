@@ -48,7 +48,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
         private accountService: AccountService,
         private http: HttpClient,
         private modalService: NgbModal
-    ) {}
+    ) { }
 
     ngOnInit(): void {
         if (this.participation && this.participation.id) {

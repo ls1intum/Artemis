@@ -4,8 +4,8 @@ import java.util.*;
 
 public class Assessment {
 
-    private Map <Context, List <Score>> contextScoreList;
-    private Map <Context, Score> contextScoreMapping;
+    private Map<Context, List<Score>> contextScoreList; //TODO MJ replace Score with Feedback
+    private Map<Context, Score> contextScoreMapping;
 
     public Assessment(Context context, Score score) {
         contextScoreList = new HashMap<>();
@@ -18,7 +18,7 @@ public class Assessment {
         contextScoreMapping.put(context, score);
     }
 
-    public boolean hasContext (Context context) {
+    public boolean hasContext(Context context) {
         return contextScoreMapping.containsKey(context);
     }
 
@@ -27,21 +27,39 @@ public class Assessment {
     }
 
     /**
+     * @param context The context whose associated scores are to be returned
+     * @return List of Scores added for the given context. Returns empty List when no scores are available for context
+     */
+    public List<Score> getScores(Context context) {
+        return contextScoreList.getOrDefault(context, new ArrayList<>());
+    }
+
+    /**
      * Add score for a specific context to the contextScoreList, recalculate metrics for the contextScoreMapping
-     * @param score The score to add
+     *
+     * @param score   The score to add
      * @param context The context connected to the score
      */
     public void addScore(Score score, Context context) {
+        List<Score> scores = getScores(context);
+        scores.add(score);
+        contextScoreMapping.put(context, calculateTotalScore(scores));
+    }
+
+    /**
+     * Used for statistic
+     */
+    public Map<Context, List<Score>> getContextScoreList() {
+        return this.contextScoreList;
+    }
+
+    private Score calculateTotalScore(List<Score> scores) {
         HashSet<String> comments = new HashSet<>();
-        List<Score> scoreList = contextScoreList.computeIfAbsent(context, k -> new ArrayList<>());
-
-        scoreList.add(score);
-
         // sum points and save number of assessments for each unique credit number
         double credits = 0;
         HashMap<Double, Integer> counting = new HashMap<>();
 
-        for (Score existingScores : scoreList) {
+        for (Score existingScores : scores) {
             double points = existingScores.getPoints();
 
             credits += points;
@@ -50,20 +68,8 @@ public class Assessment {
         }
 
         double maxCount = counting.entrySet().stream().mapToInt(Map.Entry::getValue).max().orElse(0);
-
-        // calculate the mean amount of points
-        credits /= scoreList.size();
-
-        // calculate the confidence for this value
-        double confidence = maxCount / scoreList.size();
-
-        contextScoreMapping.put(context, new Score(credits, new ArrayList<>(comments), confidence));
-    }
-
-    /**
-     * Used for statistic
-     */
-    public Map<Context, List<Score>> getContextScoreList() {
-        return this.contextScoreList;
+        double mean = credits / scores.size();
+        double confidence = maxCount / scores.size();
+        return new Score(mean, new ArrayList<>(comments), confidence);
     }
 }

@@ -21,6 +21,7 @@
             "assessment": {
                 "saveSuccessful": "Your assessment was saved successfully!",
                 "submitSuccessful": "Your assessment was submitted successfully!",
+                "submitFailedWithConflict": "Submission failed! Conflict with existing Assessments detected",
                 "resultDismissed": "Your assessment was dismissed because another tutor already rated this model."
             },
             "lock": "You do now have the lock on this submission. Only you can assess this model. Please assess this model before opening other submissions."

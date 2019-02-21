@@ -5,7 +5,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
 import { WindowRef } from '../core/websocket/window.service';
 import { Participation, ParticipationService } from '../entities/participation';
-import { ParticipationDataProvider } from '../courses/exercises/participation-data-provider';
+import { ParticipationDataProvider } from '../course-list/exercise-list/participation-data-provider';
 import { RepositoryFileService, RepositoryService } from '../entities/repository/repository.service';
 import { Result } from '../entities/result';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';

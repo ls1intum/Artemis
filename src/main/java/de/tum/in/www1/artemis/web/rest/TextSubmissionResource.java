@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -22,7 +23,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
@@ -36,6 +36,7 @@ public class TextSubmissionResource {
     private static final String ENTITY_NAME = "textSubmission";
     private final Logger log = LoggerFactory.getLogger(TextSubmissionResource.class);
     private final TextSubmissionRepository textSubmissionRepository;
+    private final ResultRepository resultRepository;
     private final ExerciseService exerciseService;
     private final TextExerciseService textExerciseService;
     private final CourseService courseService;
@@ -51,6 +52,7 @@ public class TextSubmissionResource {
                                   ParticipationService participationService,
                                   TextSubmissionService textSubmissionService,
                                   UserService userService,
+                                  ResultRepository resultRepository,
                                   AuthorizationCheckService authCheckService) {
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseService = exerciseService;
@@ -60,6 +62,7 @@ public class TextSubmissionResource {
         this.textSubmissionService = textSubmissionService;
         this.userService = userService;
         this.authCheckService = authCheckService;
+        this.resultRepository = resultRepository;
     }
 
     /**
@@ -179,13 +182,10 @@ public class TextSubmissionResource {
                                                                       @RequestParam(defaultValue = "false") boolean submittedOnly) {
         log.debug("REST request to get all TextSubmissions");
         Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
-        Course course = exercise.getCourse();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-            !authCheckService.isInstructorInCourse(course, user) &&
-            !authCheckService.isAdmin()) {
-            return forbidden();
-        }
+
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) return forbidden();
+
+        // TODO @rpadovani: refactor to remove all the hidden DB calls, and merge with the other two methods
 
         return ResponseEntity.ok().body(
 
@@ -213,5 +213,44 @@ public class TextSubmissionResource {
                 // Convert Stream to List to Match Return Type
                 .collect(Collectors.toList())
         );
+    }
+
+    /**
+     * GET  /text-submissions-assessed-by-tutor : get all the textSubmissions assessed by the current tutor.
+     *
+     * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
+     */
+    @GetMapping(value = "/exercises/{exerciseId}/text-submissions-assessed-by-tutor")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<TextSubmission>> getAllTextSubmissionsByTutor(@PathVariable Long exerciseId) {
+        log.debug("REST request to get all TextSubmissions filtered by assessed by tutor");
+        Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) return forbidden();
+
+        return ResponseEntity.ok().body(
+            textSubmissionService.getAllTextSubmissionsByTutorForExercise(exerciseId, user.getId())
+        );
+    }
+
+    /**
+     * GET  /text-submission-without-assessment : get one textSubmission without assessment.
+     *
+     * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
+     */
+    @GetMapping(value = "/exercises/{exerciseId}/text-submission-without-assessment")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<TextSubmission> getTextSubmissionWithoutAssessment(@PathVariable Long exerciseId) {
+        log.debug("REST request to get a text submission without assessment");
+        Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
+
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) return forbidden();
+
+        Optional<TextSubmission> textSubmissionWithoutAssessment = this.textSubmissionService.textSubmissionWithoutResult(exerciseId);
+
+        return ResponseUtil.wrapOrNotFound(textSubmissionWithoutAssessment);
     }
 }

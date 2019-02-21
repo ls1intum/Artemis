@@ -7,6 +7,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -39,6 +40,14 @@ public class ResultService {
         this.ltiService = ltiService;
         this.messagingTemplate = messagingTemplate;
     }
+
+
+    public Result findOne(long id) {
+        log.debug("Request to get Result: {}", id);
+        return resultRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Result with id: \"" + id + "\" does not exist"));
+    }
+
 
     /**
      * Perform async operations after we were notified about new results.
@@ -79,12 +88,14 @@ public class ResultService {
         }
     }
 
+
     /**
      * Handle the manual creation of a new result potentially including feedback
+     *
      * @param result
      */
     public void createNewResult(Result result) {
-        if(!result.getFeedbacks().isEmpty()) {
+        if (!result.getFeedbacks().isEmpty()) {
             result.setHasFeedback(true);
         }
 
@@ -103,14 +114,18 @@ public class ResultService {
 
         // this call should cascade all feedback relevant changed and save them accordingly
         Result savedResult = resultRepository.save(result);
-        try {
-            result.getParticipation().addResult(savedResult);
-            participationService.save(result.getParticipation());
-        } catch (NullPointerException ex) {
-            log.warn("Unable to load result list for participation", ex);
-        }
 
-        messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
-        ltiService.onNewBuildResult(savedResult.getParticipation());
+        // if it is an example result we do not have any participation (isExampleResult can be also null)
+        if (result.isExampleResult() != Boolean.TRUE) {
+            try {
+                result.getParticipation().addResult(savedResult);
+                participationService.save(result.getParticipation());
+            } catch (NullPointerException ex) {
+                log.warn("Unable to load result list for participation", ex);
+            }
+
+            messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
+            ltiService.onNewBuildResult(savedResult.getParticipation());
+        }
     }
 }

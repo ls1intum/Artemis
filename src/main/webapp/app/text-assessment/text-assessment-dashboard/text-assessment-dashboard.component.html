@@ -1,5 +1,5 @@
 <div *ngIf="exercise; else loading">
-    <h4>Assessment dashboard for text exercise "{{exercise.title}}"</h4>
+    <h4>Tutor Assessment dashboard for text exercise "{{exercise.title}}"</h4>
     <ng-container *ngIf="!busy; else loading"></ng-container>
     <div class="table-responsive" *ngIf="submissions && submissions.length > 0; else emptyTable">
         <table class="table table-striped exercise-table">
@@ -7,9 +7,6 @@
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse">
                 <th>
                     <a class="th-link">#</a>
-                </th>
-                <th jhiSortBy="participation.student.firstName">
-                    <a class="th-link">Student name</a> <fa-icon icon="sort"></fa-icon>
                 </th>
                 <th jhiSortBy="submissionDate">
                     <a class="th-link">Submission date</a> <fa-icon icon="sort"></fa-icon>
@@ -42,7 +39,6 @@
             <tr [ngStyle]="submission.optimal && {'font-weight': 'bold'}"
                 *ngFor="let submission of submissions | sortBy: predicate: reverse; let i = index">
                 <td>{{ i + 1 }}</td>
-                <td>{{ submission.participation.student.firstName }} {{ submission.participation.student.lastName}}</td>
                 <td>{{ submission.submissionDate | date:'MMM d, y HH:mm:ss' }}</td>
                 <td>
                     <jhi-result [participation]="submission.participation"></jhi-result>

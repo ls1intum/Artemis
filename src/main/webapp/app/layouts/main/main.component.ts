@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Router, ActivatedRouteSnapshot, NavigationEnd, NavigationError } from '@angular/router';
+import { ActivatedRouteSnapshot, NavigationEnd, NavigationError, Router } from '@angular/router';
 import { Angulartics2 } from 'angulartics2';
 import { Angulartics2Piwik } from 'angulartics2/piwik';
 
