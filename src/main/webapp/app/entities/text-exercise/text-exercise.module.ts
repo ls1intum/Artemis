@@ -7,13 +7,13 @@ import {
     TextExerciseDeleteDialogComponent,
     TextExerciseDeletePopupComponent,
     TextExerciseDetailComponent,
-    TextExerciseUpdateComponent,
     TextExerciseDialogComponent,
     TextExercisePopupComponent,
     textExercisePopupRoute,
     TextExercisePopupService,
     textExerciseRoute,
-    TextExerciseService
+    TextExerciseService,
+    TextExerciseUpdateComponent
 } from './';
 import { SortByModule } from 'app/components/pipes';
 import { FormDateTimePickerModule } from 'app/shared/dateTimePicker/date-time-picker.module';

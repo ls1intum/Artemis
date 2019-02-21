@@ -1,10 +1,9 @@
-import { Component, OnDestroy, OnInit, OnChanges, SimpleChanges, HostListener } from '@angular/core';
+import { Component, HostListener, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 import { QuizExerciseService } from './quiz-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
-import { Course } from 'app/entities/course';
-import { CourseService } from 'app/entities/course';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Course, CourseService } from 'app/entities/course';
 import { QuizExercise } from './quiz-exercise.model';
 import { DragAndDropQuestionUtil } from '../../components/util/drag-and-drop-question-util.service';
 import { ShortAnswerQuestionUtil } from '../../components/util/short-answer-question-util.service';
@@ -15,11 +14,11 @@ import { MultipleChoiceQuestion } from 'app/entities/multiple-choice-question';
 import { DragAndDropQuestion } from 'app/entities/drag-and-drop-question';
 import { ShortAnswerQuestion } from 'app/entities/short-answer-question';
 import { AnswerOption } from 'app/entities/answer-option';
-import { Option, Duration } from './quiz-exercise-interfaces';
-import { NgbDateStruct, NgbDate, NgbTimeStruct } from '@ng-bootstrap/ng-bootstrap';
+import { Duration, Option } from './quiz-exercise-interfaces';
+import { NgbDate, NgbDateStruct, NgbTimeStruct } from '@ng-bootstrap/ng-bootstrap';
 import * as moment from 'moment';
-import { ComponentCanDeactivate } from 'app/shared';
 import { Moment } from 'moment';
+import { ComponentCanDeactivate } from 'app/shared';
 import { JhiAlertService } from 'ng-jhipster';
 import { Observable } from 'rxjs/Observable';
 

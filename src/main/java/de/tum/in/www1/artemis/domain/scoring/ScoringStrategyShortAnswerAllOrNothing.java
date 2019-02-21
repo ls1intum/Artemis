@@ -1,8 +1,9 @@
 package de.tum.in.www1.artemis.domain.scoring;
 
-import de.tum.in.www1.artemis.domain.*;
-import java.util.HashSet;
-import java.util.Set;
+import de.tum.in.www1.artemis.domain.Question;
+import de.tum.in.www1.artemis.domain.ShortAnswerQuestion;
+import de.tum.in.www1.artemis.domain.ShortAnswerSubmittedAnswer;
+import de.tum.in.www1.artemis.domain.SubmittedAnswer;
 
 /**
  * All or nothing means the full score is given if the answer is 100% correct,

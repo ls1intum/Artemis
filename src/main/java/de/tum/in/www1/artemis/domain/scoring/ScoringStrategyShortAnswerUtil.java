@@ -2,7 +2,8 @@ package de.tum.in.www1.artemis.domain.scoring;
 
 import de.tum.in.www1.artemis.domain.*;
 
-import java.util.*;
+import java.util.List;
+import java.util.Set;
 
 public class ScoringStrategyShortAnswerUtil {
 

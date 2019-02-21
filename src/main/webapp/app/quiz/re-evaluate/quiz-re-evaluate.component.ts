@@ -1,9 +1,8 @@
-import { Component, OnDestroy, OnInit, OnChanges, SimpleChanges } from '@angular/core';
-import { Duration, QuizExercise, QuizExercisePopupService, QuizExerciseService } from '../../entities/quiz-exercise';
+import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import { Duration, Option, QuizExercise, QuizExercisePopupService, QuizExerciseService } from '../../entities/quiz-exercise';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Option } from '../../entities/quiz-exercise';
 import { Question, QuestionType } from '../../entities/question';
 import { QuizReEvaluateWarningComponent } from './quiz-re-evaluate-warning.component';
 import { HttpResponse } from '@angular/common/http';

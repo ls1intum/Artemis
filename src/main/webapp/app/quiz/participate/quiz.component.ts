@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChildren, QueryList } from '@angular/core';
+import { Component, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
 import { JhiWebsocketService } from '../../core';
 import * as moment from 'moment';
 import * as _ from 'lodash';
@@ -23,6 +23,7 @@ import { ShortAnswerQuestionComponent } from 'app/quiz/participate/short-answer-
 import { DragAndDropMapping } from 'app/entities/drag-and-drop-mapping';
 import { AnswerOption } from 'app/entities/answer-option';
 import { ShortAnswerSubmittedText } from 'app/entities/short-answer-submitted-text';
+import * as smoothscroll from 'smoothscroll-polyfill';
 
 @Component({
     selector: 'jhi-quiz',
@@ -104,7 +105,9 @@ export class QuizComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         private jhiAlertService: JhiAlertService,
         private quizSubmissionService: QuizSubmissionService
-    ) {}
+    ) {
+        smoothscroll.polyfill();
+    }
 
     ngOnInit() {
         // set correct mode
@@ -887,5 +890,14 @@ export class QuizComponent implements OnInit, OnDestroy {
             'Submitting was not possible. Please try again later. If your answers have been saved, you can also wait until the quiz has finished.'
         );
         this.isSubmitting = false;
+    }
+
+    /**
+     * By clicking on the bubble of the progress navigation towards the corresponding question of the quiz is triggered
+     */
+    navigateToQuestion(questionIndex: number): void {
+        document.getElementById('question' + questionIndex).scrollIntoView({
+            behavior: 'smooth'
+        });
     }
 }

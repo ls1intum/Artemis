@@ -1,11 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import {Course, CourseService, StatsForTutorDashboard} from '../entities/course';
+import { Course, CourseService, StatsForTutorDashboard } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
 import { AccountService, User } from '../core';
 import { HttpResponse } from '@angular/common/http';
 import { Exercise } from 'app/entities/exercise';
-import { SubmissionExerciseType } from 'app/entities/submission';
 import { TutorParticipationStatus } from 'app/entities/tutor-participation';
 import * as moment from 'moment';
 

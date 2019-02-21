@@ -1,21 +1,11 @@
-import {Injectable} from '@angular/core';
-import {HttpClient, HttpResponse} from '@angular/common/http';
-import {Observable} from 'rxjs/Observable';
-import {SERVER_API_URL} from '../../app.constants';
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpResponse } from '@angular/common/http';
+import { Observable } from 'rxjs/Observable';
+import { SERVER_API_URL } from '../../app.constants';
 
-import {ModelElementType, ModelingAssessment} from './modeling-assessment.model';
-import {Result} from '../result';
-import {
-    ENTITY_KIND_HEIGHT,
-    ENTITY_MEMBER_HEIGHT,
-    ENTITY_MEMBER_LIST_VERTICAL_PADDING,
-    ENTITY_NAME_HEIGHT,
-    Point,
-    EntityKind,
-    RelationshipKind,
-    State,
-    RectEdge
-} from '@ls1intum/apollon';
+import { ModelElementType, ModelingAssessment } from './modeling-assessment.model';
+import { Result } from '../result';
+import { ENTITY_KIND_HEIGHT, ENTITY_MEMBER_HEIGHT, ENTITY_MEMBER_LIST_VERTICAL_PADDING, ENTITY_NAME_HEIGHT, EntityKind, Point, RectEdge, RelationshipKind, State } from '@ls1intum/apollon';
 
 export type EntityResponseType = HttpResponse<Result>;
 
@@ -32,7 +22,7 @@ export class ModelingAssessmentService {
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
-    submit(modelingAssessment: ModelingAssessment[], exerciseId: number, resultId: number, ignoreConflicts: boolean = false): Observable<any> {
+    submit(modelingAssessment: ModelingAssessment[], exerciseId: number, resultId: number, ignoreConflicts = false): Observable<any> {
         let url = `${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}/submit`;
         if (ignoreConflicts) {
             url += '?ignoreConflict=true';
@@ -96,7 +86,6 @@ export class ModelingAssessmentService {
         }
         return res.clone({body});
     }
-
 
     /**
      * Creates the labels for the assessment elements for displaying them in the modeling and assessment editor.
