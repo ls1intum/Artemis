@@ -161,8 +161,8 @@
             },
             "importJSON": "Import Question(s) in JSON Format",
             "explanationText":{
-                "scoringTypeProportionalWithPenalty": "The scoring type was Proportional with Penalty meaning each correct answer results in a fraction of the total score. To avoid guesswork, the same fraction is subtracted from the achieved points for each mistake.",
-                "scoringTypeAllOrNothing": "The scoring type was All or Nothing meaning you either get all the points for the question or none at all.",
+                "scoringTypeProportionalWithPenalty": "The scoring type was 'Proportional with Penalty' meaning each correct answer results in a fraction of the total score. To avoid guesswork, the same fraction is subtracted from the achieved points for each mistake.",
+                "scoringTypeAllOrNothing": "The scoring type was 'All or Nothing' meaning you either get all the points for the question or none at all.",
                 "multipleChoiceAllOrNothingCorrect": "You have achieved {{paramScore}} of the {{paramQuestionScore}} possible point(s). Since you have classified all answer options correctly you have achieved all point(s) in this question. Great Job!",
                 "multipleChoiceAllOrNothingNotCorrect": "You have achieved {{paramScore}} point(s) of the {{paramQuestionScore}} possible point(s). Since you have classified {{paramInTotalWrongOptions}} answer option(s) wrongly and {{paramInTotalRightOptions}} answer option(s) correctly you have achieved 0 points in this exercise.",
                 "multipleChoiceProp": "You have achieved {{paramScore}} point(s) of the {{paramQuestionScore}} possible point(s). Each of the {{paramAmountOfAnswerOptions}} options grants you {{paramQuestionScore}}/{{paramAmountOfAnswerOptions}} points if you classify the answer options correctly. You have classified {{paramInTotalWrongOptions}} answer option(s) wrongly and {{paramInTotalRightOptions}} answer option(s) correctly.",
