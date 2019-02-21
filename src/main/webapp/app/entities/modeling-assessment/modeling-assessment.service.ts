@@ -32,7 +32,7 @@ export class ModelingAssessmentService {
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
-    submit(modelingAssessment: ModelingAssessment[], exerciseId: number, resultId: number, ignoreConflicts: boolean = false): Observable<any> {
+    submit(modelingAssessment: ModelingAssessment[], exerciseId: number, resultId: number, ignoreConflicts = false): Observable<any> {
         let url = `${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}/submit`;
         if (ignoreConflicts) {
             url += '?ignoreConflict=true';
@@ -96,7 +96,6 @@ export class ModelingAssessmentService {
         }
         return res.clone({body});
     }
-
 
     /**
      * Creates the labels for the assessment elements for displaying them in the modeling and assessment editor.
