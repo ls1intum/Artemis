@@ -363,7 +363,6 @@ public class CourseResource {
 
         Course course = courseService.findOne(courseId);
         if (!userHasPermission(course)) return forbidden();
-        User user = userService.getUserWithGroupsAndAuthorities();
 
         long numberOfStudents = userService.countNumberOfStudents(courseId);
         data.set("numberOfStudents", objectMapper.valueToTree(numberOfStudents));
@@ -371,14 +370,10 @@ public class CourseResource {
         long numberOfTutors = userService.countNumberOfTutors(courseId);
         data.set("numberOfTutors", objectMapper.valueToTree(numberOfTutors));
 
-        // TODO: Enable when the tutor instructor dashboard is merged
-//        long numberOfSubmissions = submissionService.countNumberOfSubmissions(courseId);
-        long numberOfSubmissions = 0;
+        long numberOfSubmissions = submissionService.countNumberOfSubmissions(courseId);
         data.set("numberOfSubmissions", objectMapper.valueToTree(numberOfSubmissions));
 
-        // TODO: Enable when the tutor instructor dashboard is merged
-//        long numberOfAssessments = textAssessmentService.countNumberOfAssessments(courseId);
-        long numberOfAssessments = 0;
+        long numberOfAssessments = textAssessmentService.countNumberOfAssessments(courseId);
         data.set("numberOfAssessments", objectMapper.valueToTree(numberOfAssessments));
 
         long numberOfComplaints = 0; // TODO: when implementing the complaints implement this as well
