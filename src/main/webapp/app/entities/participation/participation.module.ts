@@ -1,9 +1,11 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-import { ArTEMiSSharedModule } from '../../shared';
-import { ArTEMiSAdminModule } from '../../admin/admin.module';
+import { ArTEMiSSharedModule } from 'app/shared';
+import { ArTEMiSAdminModule } from 'app/admin/admin.module';
 import {
+    ParticipationCleanupBuildPlanDialogComponent,
+    ParticipationCleanupBuildPlanPopupComponent,
     ParticipationComponent,
     ParticipationDeleteDialogComponent,
     ParticipationDeletePopupComponent,
@@ -13,7 +15,7 @@ import {
     participationRoute,
     ParticipationService
 } from './';
-import { SortByModule } from '../../components/pipes';
+import { SortByModule } from 'app/components/pipes';
 
 const ENTITY_STATES = [
     ...participationRoute,
@@ -32,11 +34,16 @@ const ENTITY_STATES = [
         ParticipationDetailComponent,
         ParticipationDeleteDialogComponent,
         ParticipationDeletePopupComponent,
+        ParticipationCleanupBuildPlanDialogComponent,
+        ParticipationCleanupBuildPlanPopupComponent
     ],
     entryComponents: [
         ParticipationComponent,
         ParticipationDeleteDialogComponent,
         ParticipationDeletePopupComponent,
+        ParticipationCleanupBuildPlanDialogComponent,
+        ParticipationCleanupBuildPlanPopupComponent
+
     ],
     providers: [
         ParticipationService,
