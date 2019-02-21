@@ -382,8 +382,7 @@ public class ProgrammingExerciseResource {
         URL testRepoURL = programmingExercise.getTestRepositoryUrlAsUrl();
 
         try {
-            String testsPath = "test" + programmingExercise.getPackageFolderName();
- //            String testsPath = "/test/de/tum/in/www1";
+            String testsPath = "test" + File.separator + programmingExercise.getPackageFolderName();
             boolean didGenerateOracle = programmingExerciseService.generateStructureOracleFile(solutionRepoURL, exerciseRepoURL, testRepoURL, testsPath);
 
             if(didGenerateOracle) {
