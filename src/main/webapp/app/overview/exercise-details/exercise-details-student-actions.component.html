@@ -211,7 +211,7 @@
                 buttonIcon="play-circle"
                 buttonLabel="Resume exercise"
                 [buttonLoading]="exercise.loading"
-                *ngIf="participationStatus() === FILE_UPLOAD && exercise.participations && exercise.participations.length > 0"
+                *ngIf="participationStatus() === INACTIVE && exercise.participations && exercise.participations.length > 0"
                 [smallButton]="smallButtons"
                 (click)="resumeExercise()"></button>
     </div>
