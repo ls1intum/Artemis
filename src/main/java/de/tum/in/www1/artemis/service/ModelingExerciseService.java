@@ -1,15 +1,20 @@
 package de.tum.in.www1.artemis.service;
 
-import java.io.File;
-import java.nio.file.*;
-import org.slf4j.*;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.FileSystemUtils;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.ModelingExercise;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.FileSystemUtils;
+
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @Service
 @Transactional

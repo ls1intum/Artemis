@@ -1,8 +1,9 @@
 package de.tum.in.www1.artemis.domain.scoring;
 
-import de.tum.in.www1.artemis.domain.*;
-import java.util.HashSet;
-import java.util.Set;
+import de.tum.in.www1.artemis.domain.Question;
+import de.tum.in.www1.artemis.domain.ShortAnswerQuestion;
+import de.tum.in.www1.artemis.domain.ShortAnswerSubmittedAnswer;
+import de.tum.in.www1.artemis.domain.SubmittedAnswer;
 
 /**
  * Proportional with Penalty means that

@@ -1,21 +1,30 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.util.*;
-
-import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
-import org.slf4j.*;
-import org.springframework.http.*;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-import com.google.gson.*;
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.*;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import de.tum.in.www1.artemis.domain.ModelingExercise;
+import de.tum.in.www1.artemis.domain.Participation;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.repository.JsonAssessmentRepository;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.service.compass.assessment.ModelElementAssessment;
 import de.tum.in.www1.artemis.service.compass.conflict.Conflict;
+import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import io.swagger.annotations.*;
+import io.swagger.annotations.ApiResponse;
+import io.swagger.annotations.ApiResponses;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
