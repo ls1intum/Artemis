@@ -53,7 +53,7 @@
                             <fa-icon icon="asterisk"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.newResult">New Result</span>
                         </button>
-                        <button type="submit" *ngIf="exercise.type === PROGRAMMING"
+                        <button type="submit" *ngIf="exercise.type === PROGRAMMING && participation.buildPlanId !== null"
                                 [routerLink]="['/', { outlets: { popup: ['participation', participation.id, 'cleanupBuildPlan']} }]"
                                 class="btn btn-danger btn-sm mr-1">
                             <fa-icon [icon]="'eraser'"></fa-icon>
