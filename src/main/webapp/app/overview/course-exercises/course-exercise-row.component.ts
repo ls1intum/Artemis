@@ -267,7 +267,7 @@ export class CourseExerciseRowComponent implements OnInit {
     }
 
     showDetails(event: any) {
-        if (!(event.target.closest('jhi-course-exercise-row-actions') && event.target.closest('.btn'))) {
+        if (!(event.target.closest('jhi-exercise-details-student-actions') && event.target.closest('.btn'))) {
             this.router.navigate([this.exercise.id], {relativeTo: this.route});
         }
     }
