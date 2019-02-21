@@ -11,7 +11,7 @@
                     </a>
                 </h4>
                 <div class="total-score-wrapper">
-                    <span class="span-total-score">Total Score: {{displayTotalRelativeScoreForCourse(course)}} %</span>
+                    <span class="span-total-score">Total Score: {{course.exercises.length > 0 ? course.relativeScore: 0}} %</span>
                     <button class="btn-total-score btn-sm" routerLink="/course/{{course.id}}/score-calculation">
                         Details
                     </button>
