@@ -19,7 +19,7 @@ import { ArTEMiSCoreModule } from 'app/core';
 import { ArTEMiSAppRoutingModule } from './app-routing.module';
 import { ArTEMiSHomeModule } from './home';
 import { ArTEMiSAccountModule } from './account/account.module';
-import { ArTEMiSCoursesModule } from './courses';
+import { ArTEMiSCourseListModule } from './course-list';
 import { ArTEMiSEntityModule } from './entities/entity.module';
 import { ArTEMiSInstructorCourseDashboardModule, ArTEMiSInstructorDashboardModule } from './dashboard';
 import { ArTEMiSAssessmentDashboardModule } from './assessment-dashboard';
@@ -39,7 +39,7 @@ import { ArTEMiSStatisticModule } from './quiz-statistics/quiz-statistic.module'
 import { ArTEMiSModelingEditorModule } from './modeling-editor/modeling-editor.module';
 import { QuizExerciseExportComponent } from './entities/quiz-exercise/quiz-exercise-export.component';
 import { PendingChangesGuard } from './shared/guard/pending-changes.guard';
-import { ParticipationDataProvider } from './courses/exercises/participation-data-provider';
+import { ParticipationDataProvider } from './course-list/exercise-list/participation-data-provider';
 import { ArTEMiSTutorCourseDashboardModule } from 'app/tutor-course-dashboard';
 import { ArTEMiSTutorExerciseDashboardModule } from 'app/tutor-exercise-dashboard';
 import { ArTEMiSExampleSubmissionModule } from 'app/example-text-submission';
@@ -71,7 +71,7 @@ import { ArTEMiSExampleSubmissionModule } from 'app/example-text-submission';
         ArTEMiSAccountModule,
         ArTEMiSEntityModule,
         ArTEMiSApollonDiagramsModule,
-        ArTEMiSCoursesModule,
+        ArTEMiSCourseListModule,
         ArTEMiSEditorModule,
         ArTEMiSQuizModule,
         ArTEMiSInstructorCourseDashboardModule,
