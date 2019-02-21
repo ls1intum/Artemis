@@ -20,12 +20,6 @@ export class CourseUpdateComponent implements OnInit {
     isSaving: boolean;
 
     shortNamePattern = /^[a-zA-Z][a-zA-Z0-9]*$/; // must start with a letter and cannot contain special characters
-    errorMessages = {
-        shortName: {
-            minlength: 'Short Name must have a length of 3 or more characters.',
-            forbidden: 'Short Name must start with a letter and cannot contain special characters.'
-        }
-    };
 
     constructor(private courseService: CourseService, private activatedRoute: ActivatedRoute, private jhiAlertService: JhiAlertService) {}
 
