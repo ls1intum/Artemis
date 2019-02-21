@@ -1,4 +1,4 @@
-import {ModelElementType} from "app/entities/modeling-assessment/modeling-assessment.model";
+import { ModelElementType } from 'app/entities/modeling-assessment/modeling-assessment.model';
 
 export interface UMLElement {
     id: string;
