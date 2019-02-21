@@ -437,7 +437,6 @@ public class ExerciseService {
         }
     }
 
-
     private Map<Path, ScheduledFuture> futures = new HashMap<>();
 
     private ScheduledExecutorService executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
