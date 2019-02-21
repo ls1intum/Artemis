@@ -412,7 +412,7 @@ public class CourseResource {
         }
 
 
-        log.info("getResultsForCurrentStudent took " + (System.currentTimeMillis() - start) + "ms");
+        log.debug("getResultsForCurrentStudent took " + (System.currentTimeMillis() - start) + "ms");
 
         return ResponseEntity.ok().body(course);
     }

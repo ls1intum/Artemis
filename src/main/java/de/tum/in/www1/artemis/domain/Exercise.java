@@ -386,13 +386,14 @@ public abstract class Exercise implements Serializable {
     }
 
     /**
-     * Returns all results of an exercise for give participation
+     * Returns all results of an exercise for give participation.
+     * If the exercise is restricted like {@link QuizExercise} please override this function with the respective filter.
      * (relevancy depends on Exercise type => this should be overridden by subclasses if necessary)
      *
      * @param participation the participation whose results we are considering
      * @return all results of given participation, or null, if none exist
      */
-    public Set<Result> findResultsWithCompletionDate(Participation participation) {
+    public Set<Result> findResultsFilteredForStudents(Participation participation) {
         return participation.getResults();
     }
 

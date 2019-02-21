@@ -282,13 +282,13 @@ public class ExerciseResource {
                 //Removing not needed properties
                 participation.setStudent(null);
 
-                participation.setResults(exercise.findResultsWithCompletionDate(participation));
+                participation.setResults(exercise.findResultsFilteredForStudents(participation));
                 exercise.addParticipation(participation);
             }
         }
 
 
-        log.info("getResultsForCurrentStudent took " + (System.currentTimeMillis() - start) + "ms");
+        log.debug("getResultsForCurrentStudent took " + (System.currentTimeMillis() - start) + "ms");
 
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(exercise));
     }
