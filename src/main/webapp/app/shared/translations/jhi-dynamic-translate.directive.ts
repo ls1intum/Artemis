@@ -9,10 +9,10 @@ import { JhiTranslateDirective } from 'ng-jhipster/';
 })
 export class JhiDynamicTranslateDirective extends JhiTranslateDirective implements OnChanges {
     @Input() jhiDynamicTranslate: string;
-    @Input() dynamicLookup: any;
+    @Input() dynamicLookup: string;
 
     ngOnChanges() {
-        this.jhiTranslate = [this.jhiDynamicTranslate, this.dynamicLookup].join('.');
+        this.jhiTranslate = [this.jhiDynamicTranslate, this.dynamicLookup || ''].join('.');
         super.ngOnChanges();
     }
 }
