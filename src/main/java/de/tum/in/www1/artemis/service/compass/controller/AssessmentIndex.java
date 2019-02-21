@@ -1,9 +1,10 @@
 package de.tum.in.www1.artemis.service.compass.controller;
 
 import de.tum.in.www1.artemis.service.compass.assessment.Assessment;
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 public class AssessmentIndex {
 

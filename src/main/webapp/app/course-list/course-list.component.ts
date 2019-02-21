@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Course, CourseScoreCalculationService, CourseService } from '../entities/course';
+import { ABSOLUTE_SCORE, Course, CourseScoreCalculationService, CourseService, MAX_SCORE, RELATIVE_SCORE } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
 import { Subscription } from 'rxjs';
 import { AccountService } from '../core';
@@ -8,10 +8,10 @@ import { HttpResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-courses',
-    templateUrl: './courses.component.html',
+    templateUrl: './course-list.component.html',
     providers: [JhiAlertService, CourseService]
 })
-export class CoursesComponent implements OnInit {
+export class CourseListComponent implements OnInit {
     courses: Course[];
     filterByCourseId: number;
     filterByExerciseId: number;
@@ -46,11 +46,16 @@ export class CoursesComponent implements OnInit {
                 this.courses = res.body;
                 for (const course of this.courses) {
                     course.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(course);
+                    const scores = this.courseScoreCalculationService.calculateTotalScores(course.exercises);
+                    course.absoluteScore = scores.get(ABSOLUTE_SCORE);
+                    course.relativeScore = scores.get(RELATIVE_SCORE);
+                    course.maxScore = scores.get(MAX_SCORE);
                 }
                 this.courseScoreCalculationService.setCourses(this.courses);
                 if (this.filterByCourseId) {
                     this.courses = this.courses.filter(course => course.id === this.filterByCourseId);
                 }
+
             },
             (response: string) => this.onError(response)
         );
@@ -69,13 +74,5 @@ export class CoursesComponent implements OnInit {
         setTimeout(() => {
             this.jhiAlertService.info('arTeMiSApp.exercise.welcome');
         }, 500);
-    }
-
-    displayTotalRelativeScoreForCourse(course: Course): number {
-        if (course.exercises.length > 0) {
-            return this.courseScoreCalculationService.calculateTotalScores(course.exercises).get('relativeScore');
-        } else {
-            return 0;
-        }
     }
 }

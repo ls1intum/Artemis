@@ -1,15 +1,20 @@
 import { Injectable } from '@angular/core';
 
-import { Result } from '../result/result.model';
-import { Course } from './course.model';
-import { Exercise } from '../exercise/exercise.model';
-import { Participation } from '../participation';
+import { Result } from '../entities/result/result.model';
+import { Course } from '../entities/course/course.model';
+import { Exercise } from '../entities/exercise/exercise.model';
+import { Participation } from '../entities/participation';
 
 import * as moment from 'moment';
 import { Moment } from 'moment';
 
+export const ABSOLUTE_SCORE = 'absoluteScore';
+export const RELATIVE_SCORE = 'relativeScore';
+export const MAX_SCORE = 'maxScore';
+
 @Injectable({ providedIn: 'root' })
 export class CourseScoreCalculationService {
+
     private SCORE_NORMALIZATION_VALUE = 0.01;
     private courses: Course[] = [];
 
@@ -19,8 +24,8 @@ export class CourseScoreCalculationService {
         const scores = new Map<string, number>();
         let absoluteScore = 0.0;
         let maxScore = 0;
-        courseExercises.forEach(exercise => {
-            if (exercise.maxScore !== null) {
+        for (const exercise of courseExercises) {
+            if (exercise.maxScore != null) {
                 maxScore = maxScore + exercise.maxScore;
                 const participation: Participation = this.getParticipationForExercise(exercise);
                 if (participation !== null) {
@@ -34,14 +39,14 @@ export class CourseScoreCalculationService {
                     }
                 }
             }
-        });
-        scores.set('absoluteScore', this.round(absoluteScore, 1));
-        if (maxScore > 0) {
-            scores.set('relativeScore', this.round((absoluteScore / maxScore) * 100, 1));
-        } else {
-            scores.set('relativeScore', 0);
         }
-        scores.set('maxScore', maxScore);
+        scores.set(ABSOLUTE_SCORE, this.round(absoluteScore, 1));
+        if (maxScore > 0) {
+            scores.set(RELATIVE_SCORE, this.round((absoluteScore / maxScore) * 100, 1));
+        } else {
+            scores.set(RELATIVE_SCORE, 0);
+        }
+        scores.set(MAX_SCORE, maxScore);
         return scores;
     }
 
@@ -68,21 +73,11 @@ export class CourseScoreCalculationService {
     }
 
     setCourses(courses: Course[]) {
-        for (let i = 0; i < courses.length; i++) {
-            this.courses.push(courses[i]);
-        }
+        this.courses = courses;
     }
 
     getCourse(courseId: number): Course {
-        let course: Course;
-        if (this.courses.length > 0) {
-            for (let i = 0; i < this.courses.length; i++) {
-                if (this.courses[i].id === courseId) {
-                    course = this.courses[i];
-                    return course;
-                }
-            }
-        }
+        return this.courses.find(course => course.id === courseId);
     }
 
     getParticipationForExercise(exercise: Exercise): Participation {

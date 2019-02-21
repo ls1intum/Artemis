@@ -1,6 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { DifferencePipe } from 'angular2-moment';
-import { BaseEntity } from '../../shared';
 
 @Pipe({
     name: 'sortBy'
