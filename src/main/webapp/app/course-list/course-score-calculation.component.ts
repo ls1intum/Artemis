@@ -43,7 +43,6 @@ export class CourseScoreCalculationComponent implements OnInit, OnDestroy {
     constructor(
         private courseService: CourseService,
         private courseCalculationService: CourseScoreCalculationService,
-        private courseServer: CourseService,
         private route: ActivatedRoute
     ) {}
 
