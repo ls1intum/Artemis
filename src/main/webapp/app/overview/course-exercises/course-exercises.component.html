@@ -19,7 +19,7 @@
               (click)="weeklyExercisesGrouped[weekKey].isCollapsed = !weeklyExercisesGrouped[weekKey].isCollapsed">
             <fa-icon class="pr-3" [icon]="weeklyExercisesGrouped[weekKey].isCollapsed ? 'angle-down' : 'angle-up'"></fa-icon>
             <span [innerHtml]="weeklyExercisesGrouped[weekKey].label"></span>
-            <span class="ml-2">Exercises this week: {{weeklyExercisesGrouped[weekKey].exercises.length}}</span>
+            <span class="ml-2">Exercises: {{weeklyExercisesGrouped[weekKey].exercises.length}}</span>
         </div>
         <div *ngIf="!weeklyExercisesGrouped[weekKey].isCollapsed">
             <jhi-course-exercise-row class="pb-1" [exercise]="exercise" [course]="course"

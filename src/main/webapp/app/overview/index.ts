@@ -3,7 +3,6 @@ export * from './course-overview.component';
 export * from './course-statistics/course-statistics.component';
 export * from './course-grade-book/course-grade-book.component';
 export * from './course-exercises/course-exercise-row.component';
-export * from './course-exercises/course-exercise-row-actions.component';
 export * from './course-exercises/course-exercises.component';
 export * from './exercise-details/course-exercise-details.component';
 export * from './exercise-details/exercise-details-student-actions.component';

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, HostBinding, Input } from '@angular/core';
 import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise';
 import { QuizExercise } from 'app/entities/quiz-exercise';
 import { InitializationState, Participation } from 'app/entities/participation';
@@ -35,8 +35,13 @@ export class ExerciseDetailsStudentActionsComponent {
     readonly INITIALIZED = ParticipationStatus.INITIALIZED;
     readonly INACTIVE = ParticipationStatus.INACTIVE;
 
+    @HostBinding('class') classes = 'col';
+
     @Input() exercise: Exercise;
     @Input() courseId: number;
+
+    @Input() actionsOnly: boolean;
+    @Input() smallButtons: boolean;
 
     public repositoryPassword: string;
     public wasCopied: boolean = false;

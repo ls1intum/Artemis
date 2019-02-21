@@ -4,12 +4,11 @@ import { ChartsModule } from 'ng2-charts';
 import { ClipboardModule } from 'ngx-clipboard';
 import { MomentModule } from 'angular2-moment';
 
-import { ArTEMiSSharedModule } from '../shared';
-import { ExerciseTypePipe } from '../entities/exercise/';
+import { ArTEMiSSharedModule } from 'app/shared';
+import { ExerciseTypePipe } from 'app/entities/exercise/';
 
 import {
     CourseExerciseRowComponent,
-    CourseExerciseRowActionsComponent,
     CourseExercisesComponent,
     CourseOverviewComponent,
     CourseGradeBookComponent,
@@ -40,7 +39,6 @@ const ENTITY_STATES = [
         OverviewComponent,
         CourseOverviewComponent,
         OverviewCourseCardComponent,
-        CourseExerciseRowActionsComponent,
         CourseStatisticsComponent,
         CourseExerciseRowComponent,
         CourseExercisesComponent,

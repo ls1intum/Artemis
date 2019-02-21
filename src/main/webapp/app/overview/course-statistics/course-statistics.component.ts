@@ -57,6 +57,14 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         'programming': {
             'name': 'Programming Exercises',
             'color': PROGRAMMING_EXERCISE_COLOR,
+        },
+        'text': {
+            'name': 'Text Exercises',
+            'color': PROGRAMMING_EXERCISE_COLOR,
+        },
+        'file-upload': {
+            'name': 'File Upload Exercises',
+            'color': PROGRAMMING_EXERCISE_COLOR,
         }
     };
 

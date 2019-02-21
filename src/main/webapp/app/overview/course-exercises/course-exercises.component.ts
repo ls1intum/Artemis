@@ -49,22 +49,43 @@ export class CourseExercisesComponent implements OnInit {
         const indexKeys: string[] = [];
         const courseExercises = [...this.course.exercises];
         const sortedExercises = this.sortExercises(courseExercises, selectedOrder);
+        const notAssociatedExercises: Exercise[] = [];
         sortedExercises.forEach(exercise => {
-            const dateValue = exercise.dueDate ? exercise.dueDate : exercise.releaseDate ? exercise.releaseDate : moment();
-            const dateIndex = moment(dateValue).startOf('week').format('YYYY-MM-DD');
+            const dateValue = exercise.dueDate ? exercise.dueDate : exercise.releaseDate;
+            if (!dateValue) {
+                notAssociatedExercises.push(exercise);
+                return;
+            }
+            const dateIndex = dateValue ? moment(dateValue).startOf('week').format('YYYY-MM-DD') : 'NoDate';
             if (!groupedExercises[dateIndex]) {
                 indexKeys.push(dateIndex);
-                groupedExercises[dateIndex] = {
-                    label: `<b>${moment(dateValue).startOf('week').format('DD/MM/YYYY')}</b> - <b>${moment(dateValue).endOf('week').format('DD/MM/YYYY')}</b>`,
-                    isCollapsed: dateValue.isBefore(moment(), 'week'),
-                    isCurrentWeek: dateValue.isSame(moment(), 'week'),
-                    exercises: []
-                };
+                if (dateValue) {
+                    groupedExercises[dateIndex] = {
+                        label: `<b>${moment(dateValue).startOf('week').format('DD/MM/YYYY')}</b> - <b>${moment(dateValue).endOf('week').format('DD/MM/YYYY')}</b>`,
+                        isCollapsed: dateValue.isBefore(moment(), 'week'),
+                        isCurrentWeek: dateValue.isSame(moment(), 'week'),
+                        exercises: []
+                    };
+                } else {
+                    groupedExercises[dateIndex] = {
+                        label: `No date associated`,
+                        isCollapsed: false,
+                        isCurrentWeek: false,
+                        exercises: []
+                    };
+                }
             }
             groupedExercises[dateIndex].exercises.push(exercise);
         });
-        this.weeklyExercisesGrouped = groupedExercises;
-        this.weeklyIndexKeys = indexKeys;
+        this.weeklyExercisesGrouped = {
+            'noDate': {
+                label: `No date associated`,
+                isCollapsed: false,
+                isCurrentWeek: false,
+                exercises: notAssociatedExercises
+            }, ...groupedExercises
+        };
+        this.weeklyIndexKeys = ['noDate', ...indexKeys];
     }
 
     private sortExercises(exercises: Exercise[], selectedOrder: number) {

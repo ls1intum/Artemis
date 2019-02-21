@@ -1,7 +1,9 @@
 <div class="row align-items-center mb-2 mt-2" (click)="showDetails($event)">
     <div class="col-auto d-none d-sm-block">
-        <fa-icon [icon]="exerciseIcon.faIcon" size="2x" placement="right"
-                 [ngbTooltip]="exerciseIcon.tooltip" container="body"></fa-icon>
+        <div class="exercise-row-icon">
+            <fa-icon [icon]="exerciseIcon.faIcon" size="2x" placement="right"
+                     [ngbTooltip]="exerciseIcon.tooltip" container="body"></fa-icon>
+        </div>
     </div>
     <div class="col">
         <div class="row">
@@ -35,10 +37,8 @@
             </div>
         </div>
         <div class="row">
-            <div class="col">
-                <jhi-course-exercise-row-actions [courseId]="course.id" [exercise]="exercise"></jhi-course-exercise-row-actions>
-            </div>
-            <div class="col">
+            <jhi-exercise-details-student-actions [actionsOnly]="true" [smallButtons]="true" [courseId]="course.id" [exercise]="exercise"></jhi-exercise-details-student-actions>
+            <div class="col d-flex">
                 <h4>
                     <span class="badge badge-warning" *ngIf="!asQuizExercise(exercise).visibleToStudents"
                           placement="right"
