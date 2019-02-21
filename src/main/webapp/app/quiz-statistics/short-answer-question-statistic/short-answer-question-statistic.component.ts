@@ -1,12 +1,11 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
 import { ActivatedRoute, Router } from '@angular/router';
-import { JhiWebsocketService, AccountService } from '../../core';
+import { AccountService, JhiWebsocketService } from '../../core';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizStatisticUtil } from '../../components/util/quiz-statistic-util.service';
 import { ShortAnswerQuestionUtil } from '../../components/util/short-answer-question-util.service';
 import { ArtemisMarkdown } from '../../components/util/markdown.service';
-import { HttpClient } from '@angular/common/http';
 import { ShortAnswerQuestion } from '../../entities/short-answer-question';
 import { ShortAnswerQuestionStatistic } from '../../entities/short-answer-question-statistic';
 import { QuestionType } from '../../entities/question';
@@ -14,7 +13,7 @@ import { ShortAnswerSpot } from '../../entities/short-answer-spot';
 import { ChartOptions } from 'chart.js';
 import { createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
 import { Subscription } from 'rxjs/Subscription';
-import {ShortAnswerSolution} from 'app/entities/short-answer-solution';
+import { ShortAnswerSolution } from 'app/entities/short-answer-solution';
 
 interface BackgroundColorConfig {
     backgroundColor: string;

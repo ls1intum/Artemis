@@ -33,15 +33,7 @@ import { ArTEMiSTextAssessmentModule } from './text-assessment';
 import { ArTEMiSModelingStatisticsModule } from './modeling-statistics/';
 import * as moment from 'moment';
 // jhipster-needle-angular-add-module-import JHipster will add new module here
-import {
-    ActiveMenuDirective,
-    ErrorComponent,
-    FooterComponent,
-    JhiMainComponent,
-    NavbarComponent,
-    PageRibbonComponent,
-    ProfileService
-} from './layouts';
+import { ActiveMenuDirective, ErrorComponent, FooterComponent, JhiMainComponent, NavbarComponent, PageRibbonComponent, ProfileService } from './layouts';
 import { ArTEMiSApollonDiagramsModule } from './apollon-diagrams';
 import { ArTEMiSStatisticModule } from './quiz-statistics/quiz-statistic.module';
 import { ArTEMiSModelingEditorModule } from './modeling-editor/modeling-editor.module';
@@ -50,7 +42,7 @@ import { PendingChangesGuard } from './shared/guard/pending-changes.guard';
 import { ParticipationDataProvider } from './courses/exercises/participation-data-provider';
 import { ArTEMiSTutorCourseDashboardModule } from 'app/tutor-course-dashboard';
 import { ArTEMiSTutorExerciseDashboardModule } from 'app/tutor-exercise-dashboard';
-import {ArTEMiSExampleSubmissionModule} from 'app/example-text-submission';
+import { ArTEMiSExampleSubmissionModule } from 'app/example-text-submission';
 
 @NgModule({
     imports: [

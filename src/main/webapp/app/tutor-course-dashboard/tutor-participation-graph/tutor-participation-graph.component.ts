@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/tutor-participation';
-import {Router} from '@angular/router';
+import { Router } from '@angular/router';
 import * as _ from 'lodash';
 
 @Component({

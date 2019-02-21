@@ -1,10 +1,15 @@
 package de.tum.in.www1.artemis.service.compass.controller;
 
+import de.tum.in.www1.artemis.service.compass.assessment.Assessment;
+import de.tum.in.www1.artemis.service.compass.assessment.CompassResult;
+import de.tum.in.www1.artemis.service.compass.assessment.Context;
+import de.tum.in.www1.artemis.service.compass.assessment.Score;
+import de.tum.in.www1.artemis.service.compass.umlmodel.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.util.*;
-import org.slf4j.*;
-import de.tum.in.www1.artemis.service.compass.assessment.*;
-import de.tum.in.www1.artemis.service.compass.umlmodel.*;
 
 public class AutomaticAssessmentController {
 

@@ -1,15 +1,4 @@
-import {
-    Component,
-    Input,
-    Output,
-    OnInit,
-    AfterViewInit,
-    EventEmitter,
-    ViewChild,
-    OnChanges,
-    SimpleChanges,
-    ElementRef
-} from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { ShortAnswerQuestion } from '../../../entities/short-answer-question';
 import { ShortAnswerSpot } from '../../../entities/short-answer-spot';
 import { ShortAnswerSolution } from '../../../entities/short-answer-solution';
@@ -19,9 +8,7 @@ import { AceEditorComponent } from 'ng2-ace-editor';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
 import { ShortAnswerQuestionUtil } from 'app/components/util/short-answer-question-util.service';
-import * as $ from 'jquery';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-
 // for visual mode
 import { DropLocation } from '../../../entities/drop-location';
 import { DragAndDropMouseEvent } from '../../../entities/drag-item/drag-and-drop-mouse-event.class';

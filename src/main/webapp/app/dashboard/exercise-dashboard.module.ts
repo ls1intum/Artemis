@@ -9,23 +9,11 @@ import { JhiMainComponent } from '../layouts';
 import { ExerciseDashboardComponent } from './exercise-dashboard.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArTEMiSResultModule, ResultComponent, ResultDetailComponent } from '../entities/result';
-import {
-    ProgrammingExerciseArchiveDialogComponent,
-    InstructorDashboardArchivePopupComponent
-} from '../entities/programming-exercise/programming-exercise-archive-dialog.component';
-import {
-    ProgrammingExerciseCleanupDialogComponent,
-    InstructorDashboardCleanupPopupComponent
-} from '../entities/programming-exercise/programming-exercise-cleanup-dialog.component';
-import {
-    InstructorDashboardExportReposComponent,
-    InstructorDashboardExportReposPopupComponent
-} from './exercise-dashboard-repo-export-dialog.component';
+import { InstructorDashboardArchivePopupComponent, ProgrammingExerciseArchiveDialogComponent } from '../entities/programming-exercise/programming-exercise-archive-dialog.component';
+import { InstructorDashboardCleanupPopupComponent, ProgrammingExerciseCleanupDialogComponent } from '../entities/programming-exercise/programming-exercise-cleanup-dialog.component';
+import { InstructorDashboardExportReposComponent, InstructorDashboardExportReposPopupComponent } from './exercise-dashboard-repo-export-dialog.component';
 import { ExerciseDashboardPopupService } from './exercise-dashboard-popup.service';
-import {
-    ExerciseDashboardResultDialogComponent,
-    InstructorDashboardResultPopupComponent
-} from './exercise-dashboard-result-dialog.component';
+import { ExerciseDashboardResultDialogComponent, InstructorDashboardResultPopupComponent } from './exercise-dashboard-result-dialog.component';
 import { SortByModule } from '../components/pipes';
 import { FormDateTimePickerModule } from '../shared/dateTimePicker/date-time-picker.module';
 

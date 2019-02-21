@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 

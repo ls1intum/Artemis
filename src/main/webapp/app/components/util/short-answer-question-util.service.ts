@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { ShortAnswerSolution } from '../../entities/short-answer-solution';
 import { ShortAnswerSpot } from '../../entities/short-answer-spot';
 import { ShortAnswerMapping } from '../../entities/short-answer-mapping';
-import { ShortAnswerQuestion} from '../../entities/short-answer-question';
+import { ShortAnswerQuestion } from '../../entities/short-answer-question';
 
 @Injectable({ providedIn: 'root' })
 export class ShortAnswerQuestionUtil {
