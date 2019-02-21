@@ -117,7 +117,7 @@
                 buttonLabel="Open exercise"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
-                *ngIf="isOnlineEditorAllowed()"
+                *ngIf="isOnlineEditorAllowed() && exercise.participations && exercise.participations.length > 0"
                 routerLink="/editor/{{exercise.participations[0].id}}"></button>
         <button jhi-exercise-action-button
                 buttonIcon="download"
@@ -152,7 +152,7 @@
                 buttonLabel="Go to build plan"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
-                *ngIf="publishBuildPlanUrl()"
+                *ngIf="publishBuildPlanUrl() && exercise.participations && exercise.participations.length > 0"
                 routerLink="/editor/{{exercise.participations[0].id}}"></button>
     </div>
     <!-- ACTION END -->
@@ -205,6 +205,7 @@
                 buttonLabel="Start exercise"
                 outlined="true"
                 [buttonLoading]="exercise.loading"
+                *ngIf="participationStatus() === UNINITIALIZED"
                 [smallButton]="smallButtons"
                 (click)="startExercise()"></button>
         <button jhi-exercise-action-button
@@ -212,6 +213,7 @@
                 buttonLabel="Resume exercise"
                 outlined="true"
                 [buttonLoading]="exercise.loading"
+                *ngIf="participationStatus() === FILE_UPLOAD && exercise.participations && exercise.participations.length > 0"
                 [smallButton]="smallButtons"
                 (click)="resumeExercise()"></button>
     </div>
