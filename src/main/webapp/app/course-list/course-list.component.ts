@@ -8,10 +8,10 @@ import { HttpResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-courses',
-    templateUrl: './courses.component.html',
+    templateUrl: './course-list.component.html',
     providers: [JhiAlertService, CourseService]
 })
-export class CoursesComponent implements OnInit {
+export class CourseListComponent implements OnInit {
     courses: Course[];
     filterByCourseId: number;
     filterByExerciseId: number;
