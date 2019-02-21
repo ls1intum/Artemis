@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+
 import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
@@ -13,6 +14,7 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationUpdateServ
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.util.structureoraclegenerator.OracleGeneratorClient;
+import org.apache.commons.lang3.ArrayUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,10 +28,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -190,8 +192,19 @@ public class ProgrammingExerciseService {
         }
     }
 
-    // Generates the structure oracle aka the test.json file for the current programming exercise
-    public void generateStructureOracleFile(URL solutionRepoURL, URL exerciseRepoURL, URL testRepoURL, String testsPath) throws IOException, InterruptedException {
+    /**
+     * This method calls the StructureOracleGenerator, generates the string out of the JSON representation of the structure
+     * oracle of the programming exercise and returns true if the file was updated or generated, false otherwise.
+     * This can happen if the contents of the file have not changed.
+     * @param solutionRepoURL The URL of the solution repository.
+     * @param exerciseRepoURL The URL of the exercise repository.
+     * @param testRepoURL The URL of the tests repository.
+     * @param testsPath The path to the tests folder, e.g. the path inside the repository where the structure oracle file will be saved in.
+     * @return True, if the structure oracle was successfully generated or updated, false if no changes to the file were made.
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public boolean generateStructureOracleFile(URL solutionRepoURL, URL exerciseRepoURL, URL testRepoURL, String testsPath) throws IOException, InterruptedException {
         Repository solutionRepository = gitService.getOrCheckoutRepository(solutionRepoURL);
         Repository exerciseRepository = gitService.getOrCheckoutRepository(exerciseRepoURL);
         Repository testRepository = gitService.getOrCheckoutRepository(testRepoURL);
@@ -204,13 +217,40 @@ public class ProgrammingExerciseService {
         Path exerciseRepositoryPath = exerciseRepository.getLocalPath().toRealPath();
         Path structureOraclePath = Paths.get(testRepository.getLocalPath().toRealPath().toString(), testsPath, "test.json");
 
-        OracleGeneratorClient.run(solutionRepositoryPath, exerciseRepositoryPath, structureOraclePath);
+        String structureOracleJSON = OracleGeneratorClient.generateStructureOracleJSON(solutionRepositoryPath, exerciseRepositoryPath);
 
-        try {
-            gitService.stageAllChanges(testRepository);
-            gitService.commitAndPush(testRepository, "Generated the structure oracle file.");
-        } catch (GitAPIException e) {
-            log.error("An exception occurred while pushing the structure oracle file to the test repository.", e);
+        // If the oracle file does not already exist, then save the generated string to the file.
+        // If it does, check if the contents of the existing file are the same as the generated one.
+        // If they are, do not push anything and inform the user about it.
+        // If not, then update the oracle file by rewriting it and push  the changes.
+        if(!Files.exists(structureOraclePath)) {
+            try {
+                Files.write(structureOraclePath, structureOracleJSON.getBytes());
+                gitService.stageAllChanges(testRepository);
+                gitService.commitAndPush(testRepository, "Generate the structure oracle file.");
+                return true;
+            } catch (GitAPIException e) {
+                log.error("An exception occurred while pushing the structure oracle file to the test repository.", e);
+                return false;
+            }
+        } else {
+            Byte[] existingContents = ArrayUtils.toObject(Files.readAllBytes(structureOraclePath));
+            Byte[] newContents = ArrayUtils.toObject(structureOracleJSON.getBytes());
+
+            if(Arrays.deepEquals(existingContents, newContents)) {
+                log.info("No changes to the oracle detected.");
+                return false;
+            } else {
+                try {
+                    Files.write(structureOraclePath, structureOracleJSON.getBytes());
+                    gitService.stageAllChanges(testRepository);
+                    gitService.commitAndPush(testRepository, "Update the structure oracle file.");
+                    return true;
+                } catch (GitAPIException e) {
+                    log.error("An exception occurred while pushing the structure oracle file to the test repository.", e);
+                    return false;
+                }
+            }
         }
     }
 }

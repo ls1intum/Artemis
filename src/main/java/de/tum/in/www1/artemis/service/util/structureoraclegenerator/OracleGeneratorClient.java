@@ -12,9 +12,7 @@ import spoon.reflect.declaration.CtEnum;
 import spoon.reflect.declaration.CtType;
 
 import java.io.*;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -67,47 +65,16 @@ public class OracleGeneratorClient {
     private static final Logger log = LoggerFactory.getLogger(OracleGeneratorClient.class);
 
     /**
-     * This method serves as a facade to the Oracle Generator. It generates the oracle for the projects in the given
-     * paths and saves the file in the given file path with the given file name.
-     * @param solutionProjectRootPath The path to the root of the project containing the solution of a programming exercise.
-     * @param templateProjectRootPath The path to the root of the project containing the template of a programming exercise.
-     * @param oracleFilePath The path to the directory where the oracle file should be saved in.
-     * @param oracleFileName The file name of the oracle file.
-     */
-	public static void run(Path solutionProjectRootPath, Path templateProjectRootPath, Path oracleFilePath) throws IOException {
-		log.info("GENERATING THE ORACLE FOR THE FOLLOWING PROJECTS: \n"
-				+ "Solution project: " + solutionProjectRootPath + "\n"
-				+ "Template project: " + templateProjectRootPath + "\n");
-
-		JSONArray oracleJSON = generateStructureOracleJSON(solutionProjectRootPath, templateProjectRootPath);
-
-        log.info("Saving the structure oracle in: " + oracleFilePath + " ...");
-        Files.write(oracleFilePath, prettyPrint(oracleJSON).getBytes());
-	}
-
-    /**
-     * This method pretty prints a given JSON array.
-     * @param jsonArray The JSON array that needs to get pretty printed.
-     * @return The pretty printed JSON array in its string representation.
-     */
-    private static String prettyPrint(JSONArray jsonArray) {
-        ObjectMapper mapper = new ObjectMapper();
-        try {
-            Object jsonObject = mapper.readValue(jsonArray.toString(), Object.class);
-            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonObject);
-        } catch (IOException e) {
-            log.info("Could not pretty print the JSON!");
-            return "";
-        }
-    }
-
-    /**
      * This method generates the structure oracle by scanning the Java projects contained in the paths passed as arguments.
      * @param solutionProjectPath: The path to the project of the solution of a programming exercise.
      * @param templateProjectPath: The path to the project of the template of a programming exercise.
      * @return The string of the JSON representation of the structure oracle.
      */
-    private static JSONArray generateStructureOracleJSON(Path solutionProjectPath, Path templateProjectPath) {
+    public static String generateStructureOracleJSON(Path solutionProjectPath, Path templateProjectPath) {
+        log.info("GENERATING THE ORACLE FOR THE FOLLOWING PROJECTS: \n"
+            + "Solution project: " + solutionProjectPath + "\n"
+            + "Template project: " + templateProjectPath + "\n");
+
         // Initialize the empty string.
         JSONArray structureOracleJSON = new JSONArray();
 
@@ -170,7 +137,23 @@ public class OracleGeneratorClient {
             structureOracleJSON.put(diffJSON);
         }
 
-        return structureOracleJSON;
+        return prettyPrint(structureOracleJSON);
+    }
+
+    /**
+     * This method pretty prints a given JSON array.
+     * @param jsonArray The JSON array that needs to get pretty printed.
+     * @return The pretty printed JSON array in its string representation.
+     */
+    private static String prettyPrint(JSONArray jsonArray) {
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            Object jsonObject = mapper.readValue(jsonArray.toString(), Object.class);
+            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonObject);
+        } catch (IOException e) {
+            log.info("Could not pretty print the JSON!");
+            return "";
+        }
     }
 
     /**
