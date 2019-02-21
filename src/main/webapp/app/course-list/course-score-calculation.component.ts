@@ -3,8 +3,8 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { HttpResponse } from '@angular/common/http';
 
-import { ABSOLUTE_SCORE, Course, CourseScoreCalculationService, CourseService, MAX_SCORE, RELATIVE_SCORE } from '../../entities/course';
-import { Exercise, ExerciseType } from '../../entities/exercise';
+import { ABSOLUTE_SCORE, Course, CourseScoreCalculationService, CourseService, MAX_SCORE, RELATIVE_SCORE } from '../entities/course';
+import { Exercise, ExerciseType } from '../entities/exercise';
 
 @Component({
     selector: 'jhi-course-score',
@@ -43,13 +43,12 @@ export class CourseScoreCalculationComponent implements OnInit, OnDestroy {
     constructor(
         private courseService: CourseService,
         private courseCalculationService: CourseScoreCalculationService,
-        private courseServer: CourseService,
         private route: ActivatedRoute
     ) {}
 
     ngOnInit() {
         this.subscription = this.route.params.subscribe(params => {
-            this.courseId = parseInt(params['id'], 10);
+            this.courseId = parseInt(params['courseId'], 10);
         });
 
         this.course = this.courseCalculationService.getCourse(this.courseId);

@@ -23,16 +23,16 @@ public class ScoringStrategyShortAnswerProportionalWithPenalty implements Scorin
         if (submittedAnswer instanceof ShortAnswerSubmittedAnswer && question instanceof ShortAnswerQuestion) {
             ShortAnswerSubmittedAnswer shortAnswerAnswer = (ShortAnswerSubmittedAnswer) submittedAnswer;
             ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) question;
-            double totalSolutions = shortAnswerQuestion.getSpots().size();
+            double totalSolutionsCount = shortAnswerQuestion.getSpots().size();
 
-            double[] values = ScoringStrategyShortAnswerUtil.getCorrectAndIncorrectSolutionsShortAnswerQuestion(shortAnswerQuestion,shortAnswerAnswer);
-            double correctSolutions = values[0];
-            double incorrectSolutions = values[1];
+            int[] values = ScoringStrategyShortAnswerUtil.getCorrectAndIncorrectSolutionCount(shortAnswerQuestion,shortAnswerAnswer);
+            double correctSolutionsCount = values[0];
+            double incorrectSolutionsCount = values[1];
 
             // calculate the fraction of the total score the user should get
             // every correct mapping increases fraction by 1/mapped spots,
             // every incorrect mapping decreases fraction by 1/mapped spots
-            double fraction = ((correctSolutions / totalSolutions) - (incorrectSolutions / totalSolutions));
+            double fraction = ((correctSolutionsCount / totalSolutionsCount) - (incorrectSolutionsCount / totalSolutionsCount));
 
             // end result is maxScore * fraction, but at least 0
             return Math.max(0, question.getScore() * fraction);

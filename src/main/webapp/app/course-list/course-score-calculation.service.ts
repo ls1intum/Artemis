@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 
-import { Result } from '../result/result.model';
-import { Course } from './course.model';
-import { Exercise } from '../exercise/exercise.model';
-import { Participation } from '../participation';
+import { Result } from '../entities/result/result.model';
+import { Course } from '../entities/course/course.model';
+import { Exercise } from '../entities/exercise/exercise.model';
+import { Participation } from '../entities/participation';
 
 import * as moment from 'moment';
 import { Moment } from 'moment';
