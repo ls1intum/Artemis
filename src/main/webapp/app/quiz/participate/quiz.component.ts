@@ -860,7 +860,6 @@ export class QuizComponent implements OnInit, OnDestroy {
      */
     onSubmit() {
         this.applySelection();
-
         let confirmSubmit = true;
 
         if (this.remainingTimeSeconds > 1 && (this.checkForAnsweredQuestions() == false)) {

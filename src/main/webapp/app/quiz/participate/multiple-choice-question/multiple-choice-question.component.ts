@@ -3,7 +3,6 @@ import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { MultipleChoiceQuestion } from '../../../entities/multiple-choice-question';
 import { AnswerOption } from '../../../entities/answer-option';
 
-
 @Component({
     selector: 'jhi-multiple-choice-question',
     templateUrl: './multiple-choice-question.component.html',
@@ -42,8 +41,7 @@ export class MultipleChoiceQuestionComponent implements OnChanges {
 
     constructor(private artemisMarkdown: ArtemisMarkdown) {}
 
-    ngOnChanges(changes: SimpleChanges): void {
-    }
+    ngOnChanges(changes: SimpleChanges): void {}
 
     watchCollection() {
         // update html for text, hint and explanation for the question and every answer option
