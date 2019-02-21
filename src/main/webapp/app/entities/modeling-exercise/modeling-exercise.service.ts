@@ -4,8 +4,7 @@ import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from '../../app.constants';
 
 import { ModelingExercise } from './modeling-exercise.model';
-import { createRequestOption } from '../../shared';
-import { EntityArrayResponseType, ExerciseService } from 'app/entities/exercise';
+import { ExerciseService } from 'app/entities/exercise';
 import { ModelingStatistic } from 'app/entities/modeling-statistic';
 
 export type EntityResponseType = HttpResponse<ModelingExercise>;

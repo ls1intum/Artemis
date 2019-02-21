@@ -1,15 +1,20 @@
 package de.tum.in.www1.artemis.service;
 
-import java.util.Optional;
-import org.slf4j.*;
+import de.tum.in.www1.artemis.domain.Participation;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.LtiService;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.service.connectors.*;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+
+import java.util.Optional;
 
 /**
  * Created by Josias Montag on 06.10.16.

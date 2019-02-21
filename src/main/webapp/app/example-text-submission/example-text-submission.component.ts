@@ -5,7 +5,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { AccountService } from '../core';
 import { ExampleSubmission } from 'app/entities/example-submission';
 import { ExerciseService } from 'app/entities/exercise';
-import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
 import { ExampleSubmissionService } from 'app/entities/example-submission/example-submission.service';
 import { Feedback } from 'app/entities/feedback';

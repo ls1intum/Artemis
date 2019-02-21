@@ -4,11 +4,11 @@ import { BrowserModule } from '@angular/platform-browser';
 import { RouterModule } from '@angular/router';
 
 import { ArTEMiSSharedModule } from '../shared';
-import { coursesRoute } from './courses.route';
-import { CourseComponent, CourseExerciseService, CourseScoreCalculationService, CourseService } from '../entities/course';
+import { courseListRoute } from './course-list.route';
+import { CourseExerciseService, CourseScoreCalculationComponent, CourseScoreCalculationService, CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
-import { CoursesComponent } from './courses.component';
-import { ExerciseListComponent, ShowExercisePipe } from './exercises/exercise-list.component';
+import { CourseListComponent } from './course-list.component';
+import { ExerciseListComponent, ShowExercisePipe } from './exercise-list/exercise-list.component';
 import { RepositoryService } from '../entities/repository/repository.service';
 import { ArTEMiSResultModule, ResultComponent, ResultService } from '../entities/result';
 import { HomeComponent } from '../home';
@@ -17,13 +17,13 @@ import { MomentModule } from 'angular2-moment';
 import { JhiMainComponent } from '../layouts';
 import { ClipboardModule } from 'ngx-clipboard';
 
-const ENTITY_STATES = [...coursesRoute];
+const ENTITY_STATES = [...courseListRoute];
 
 @NgModule({
     imports: [BrowserModule, ArTEMiSSharedModule, ArTEMiSResultModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES)],
-    declarations: [CoursesComponent, ExerciseListComponent, ShowExercisePipe],
+    declarations: [CourseListComponent, CourseScoreCalculationComponent, ExerciseListComponent, ShowExercisePipe],
     exports: [ResultComponent],
-    entryComponents: [HomeComponent, CourseComponent, JhiMainComponent, ResultComponent],
+    entryComponents: [HomeComponent, CourseListComponent, CourseScoreCalculationComponent, JhiMainComponent, ResultComponent],
     providers: [
         CourseService,
         JhiAlertService,
@@ -35,4 +35,4 @@ const ENTITY_STATES = [...coursesRoute];
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
-export class ArTEMiSCoursesModule {}
+export class ArTEMiSCourseListModule {}
