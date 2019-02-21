@@ -125,13 +125,13 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
             this.wronglyMappedDragAndDropItems = this.amountOfDragAndDropZones - this.correctlyMappedDragAndDropItems;
             this.differenceDragAndDrop = this.correctlyMappedDragAndDropItems - this.wronglyMappedDragAndDropItems;
 
-        if(this.wronglyMappedDragAndDropItems == 1){
+        if(this.correctlyMappedDragAndDropItems == 1){
             this.rightMap = this.translateService.instant(translationBasePath + 'item');
         } else {
             this.rightMap = this.translateService.instant(translationBasePath + 'items');
         }
 
-        if(this.correctlyMappedDragAndDropItems == 1){
+        if(this.wronglyMappedDragAndDropItems == 1){
             this.wrongMap = this.translateService.instant(translationBasePath + 'item');
         } else {
             this.wrongMap = this.translateService.instant(translationBasePath + 'items');
