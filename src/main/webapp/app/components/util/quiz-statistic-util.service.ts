@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import * as moment from 'moment';
 import { Router } from '@angular/router';
 import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
 import { Question, QuestionType } from '../../entities/question';

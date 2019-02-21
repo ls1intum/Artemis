@@ -1,16 +1,4 @@
-import {
-    Component,
-    Input,
-    Output,
-    EventEmitter,
-    OnInit,
-    OnChanges,
-    SimpleChanges,
-    AfterViewInit,
-    ViewChild,
-    ViewChildren,
-    QueryList
-} from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnInit, Output, QueryList, SimpleChanges, ViewChild, ViewChildren } from '@angular/core';
 import { MultipleChoiceQuestion } from '../../../entities/multiple-choice-question';
 import { AnswerOption } from '../../../entities/answer-option';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
