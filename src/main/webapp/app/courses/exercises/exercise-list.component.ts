@@ -1,11 +1,11 @@
-import { Component, Input, OnInit, OnDestroy, Pipe, PipeTransform } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, Pipe, PipeTransform } from '@angular/core';
 import { Course, CourseExerciseService } from '../../entities/course';
 import { Exercise, ExerciseType, ParticipationStatus } from '../../entities/exercise';
 import { AccountService } from '../../core';
 import { WindowRef } from '../../core/websocket/window.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService } from 'ng-jhipster';
-import { Router, NavigationStart } from '@angular/router';
+import { NavigationStart, Router } from '@angular/router';
 import { InitializationState, Participation, ParticipationService } from '../../entities/participation';
 import { ParticipationDataProvider } from '../../courses/exercises/participation-data-provider';
 import { HttpClient } from '@angular/common/http';
