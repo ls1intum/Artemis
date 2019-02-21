@@ -20,10 +20,10 @@ public class ScoringStrategyShortAnswerAllOrNothing implements ScoringStrategy {
             ShortAnswerSubmittedAnswer shortAnswerAnswer = (ShortAnswerSubmittedAnswer) submittedAnswer;
             ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) question;
 
-            double[] values = ScoringStrategyShortAnswerUtil.getCorrectAndIncorrectSolutionsShortAnswerQuestion(shortAnswerQuestion, shortAnswerAnswer);
-            double correctSolutions = values[0];
+            int[] values = ScoringStrategyShortAnswerUtil.getCorrectAndIncorrectSolutionCount(shortAnswerQuestion, shortAnswerAnswer);
+            int correctSolutionsCount = values[0];
 
-            if(correctSolutions == shortAnswerQuestion.getSpots().size()){
+            if(correctSolutionsCount == shortAnswerQuestion.getSpots().size()){
                 return shortAnswerQuestion.getScore();
             } else {
                 return 0.0;
