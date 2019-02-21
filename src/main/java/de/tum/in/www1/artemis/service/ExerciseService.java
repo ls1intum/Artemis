@@ -1,13 +1,13 @@
 package de.tum.in.www1.artemis.service;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -152,7 +152,7 @@ public class ExerciseService {
     public Exercise findOne(Long id) {
         Optional<Exercise> exercise = exerciseRepository.findById(id);
         if (!exercise.isPresent()) {
-            return null;
+            throw new EntityNotFoundException("Exercise with id " + id + " does not exist!");
         }
         if (exercise.get() instanceof QuizExercise) {
             QuizExercise quizExercise = (QuizExercise) exercise.get();
@@ -268,33 +268,16 @@ public class ExerciseService {
         log.info("Request to cleanup all participations for Exercise : {}", exercise.getTitle());
 
         if (Optional.ofNullable(exercise).isPresent() && exercise instanceof ProgrammingExercise) {
-            exercise.getParticipations().forEach(participation -> {
-                if (participation.getBuildPlanId() != null) {     //ignore participations without build plan id
-                    continuousIntegrationService.get().deleteBuildPlan(participation.getBuildPlanId());
-                    participation.setInitializationState(InitializationState.INACTIVE);
-                    participation.setBuildPlanId(null);
-                    participationService.save(participation);
-                }
-            });
+            exercise.getParticipations().forEach(participationService::cleanupBuildPlan);
 
-            if (deleteRepositories == false) {
-                return ;    //in this case, we are done
+            if (!deleteRepositories) {
+                return;    //in this case, we are done
             }
 
-            exercise.getParticipations().forEach(participation -> {
-                if (participation.getRepositoryUrl() != null) {      //ignore participations without repository URL
-                    //delete the repository on the VC Server
-                    versionControlService.get().deleteRepository(participation.getRepositoryUrlAsUrl());
-                    participation.setRepositoryUrl(null);
-                    participation.setInitializationState(InitializationState.FINISHED);
-                    participationService.save(participation);
-                }
-            });
-
+            exercise.getParticipations().forEach(participationService::cleanupRepository);
 
         } else {
-            log.info("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to cleanup repositories and build plan", id);
-            return;
+            log.warn("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to cleanup repositories and build plan", id);
         }
     }
 

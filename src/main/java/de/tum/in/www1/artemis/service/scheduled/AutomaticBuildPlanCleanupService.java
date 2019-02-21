@@ -2,11 +2,8 @@ package de.tum.in.www1.artemis.service.scheduled;
 
 import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import io.github.jhipster.config.JHipsterConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,16 +27,13 @@ public class AutomaticBuildPlanCleanupService {
     private final Environment env;
     private final ParticipationRepository participationRepository;
     private final ParticipationService participationService;
-    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     public AutomaticBuildPlanCleanupService(Environment env,
                                             ParticipationRepository participationRepository,
-                                            ParticipationService participationService,
-                                            Optional<ContinuousIntegrationService> continuousIntegrationService) {
+                                            ParticipationService participationService) {
         this.env = env;
         this.participationRepository = participationRepository;
         this.participationService = participationService;
-        this.continuousIntegrationService = continuousIntegrationService;
     }
 
     //TODO: before we deploy this to production, we need to make sure the scheduler is deactivated
@@ -118,7 +112,7 @@ public class AutomaticBuildPlanCleanupService {
                 }
             }
         }
-        log.info("Found " + allParticipationsWithBuildPlanId.size() + " participations with build plan in " + (System.currentTimeMillis() - start) + " ms execution time");
+        log.info("Found " + allParticipationsWithBuildPlanId.size() + " participations with build plans in " + (System.currentTimeMillis() - start) + " ms execution time");
         log.info("Found " + participationsWithBuildPlanToDelete.size() + " old build plans to delete");
         log.info("Found " + countNoResultAfter14Days + " build plans without results 14 days after initialization");
         log.info("Found " + countSuccessfulLatestResultAfter7Days + " build plans with successful latest result is older than 7 days");
@@ -127,13 +121,8 @@ public class AutomaticBuildPlanCleanupService {
         log.info("Build plans: " + buildPlanIds);
 
         for (Participation participation : participationsWithBuildPlanToDelete) {
-            if (participation.getBuildPlanId() != null) {
-                //TODO activate the actual deletion
-//                continuousIntegrationService.get().deleteBuildPlan(participation.getBuildPlanId());
-//                participation.setInitializationState(InitializationState.INACTIVE);
-//                participation.setBuildPlanId(null);
-//                participationService.save(participation);
-            }
+            //TODO: the actual cleanup is deactivated for now, we will activate it soon after some initial tests.
+//            participationService.cleanupBuildPlan(participation);
         }
     }
 }

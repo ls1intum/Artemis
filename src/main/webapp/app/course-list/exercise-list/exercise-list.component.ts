@@ -213,9 +213,18 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
             .resumeExercise(this.course.id, exercise.id)
             .finally(() => (exercise.loading = false))
             .subscribe(
-                () => true,
+                participation => {
+                    if (participation) {
+                        exercise.participations = [participation];
+                        exercise.participationStatus = this.participationStatus(exercise);
+                    }
+                    if (exercise.type === ExerciseType.PROGRAMMING) {
+                        this.jhiAlertService.success('arTeMiSApp.exercise.personalRepository');
+                    }
+                },
                 error => {
-                    console.log('Error: ' + error.status + ' ' + error.message);
+                    console.log('Error: ' + error);
+                    this.jhiAlertService.warning('arTeMiSApp.exercise.startError');
                 }
             );
     }
