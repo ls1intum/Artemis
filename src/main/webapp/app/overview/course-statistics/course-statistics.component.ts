@@ -3,16 +3,18 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { HttpResponse } from '@angular/common/http';
 
-import { CourseService } from 'app/entities/course';
-import { CourseScoreCalculationService } from 'app/entities/course';
+import { ABSOLUTE_SCORE, MAX_SCORE, RELATIVE_SCORE, Course, CourseService, CourseScoreCalculationService } from 'app/entities/course';
 import { Exercise, ExerciseType } from 'app/entities/exercise';
-import { Course } from 'app/entities/course/course.model';
+
+import { Result } from 'app/entities/result';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';
 const MODELING_EXERCISE_COLOR = '#6610f2';
+const TEXT_EXERCISE_COLOR = '#B00B6B';
+const FILE_UPLOAD_EXERCISE_COLOR = '#2D9C88';
 
-export interface DataSet {
+export interface CourseStatisticsDataSet {
     data: Array<number>;
     backgroundColor: Array<any>;
 }
@@ -60,15 +62,15 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         },
         'text': {
             'name': 'Text Exercises',
-            'color': PROGRAMMING_EXERCISE_COLOR,
+            'color': TEXT_EXERCISE_COLOR,
         },
         'file-upload': {
             'name': 'File Upload Exercises',
-            'color': PROGRAMMING_EXERCISE_COLOR,
+            'color': FILE_UPLOAD_EXERCISE_COLOR,
         }
     };
 
-    public doughnutChartData: DataSet[] = [{
+    public doughnutChartData: CourseStatisticsDataSet[] = [{
         data: [0, 0, 0, 0],
         backgroundColor: this.doughnutChartColors
     }];
@@ -195,13 +197,14 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                 };
             }
             exercise.participations.forEach(participation => {
-                const participationScore = this.courseCalculationService.getResultForParticipation(participation, exercise.dueDate).score;
+                const participationResult = this.courseCalculationService.getResultForParticipation(participation, exercise.dueDate);
+                const participationScore = participationResult.score;
                 const missedScore = 100 - participationScore;
                 groupedExercises[index].scores.data.push(participationScore);
                 groupedExercises[index].missedScores.data.push(missedScore);
                 groupedExercises[index].names.push(exercise.title);
-                groupedExercises[index].scores.tooltips.push(`Achieved Score: ${exercise.maxScore * participationScore / 100} points (${participationScore}%)`);
-                groupedExercises[index].missedScores.tooltips.push(`Missed Score: ${exercise.maxScore * missedScore / 100} points (${missedScore}%)`);
+                groupedExercises[index].scores.tooltips.push(`Achieved Score: ${this.absoluteResult(participationResult)} points (${participationScore}%)`);
+                groupedExercises[index].missedScores.tooltips.push(`Missed Score: ${exercise.maxScore - this.absoluteResult(participationResult)} points (${missedScore}%)`);
             });
             groupedExercises[index].relativeScore = this.relativeScores[exercise.type];
             groupedExercises[index].totalMaxScore = this.totalMaxScores[exercise.type];
@@ -211,42 +214,61 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         this.groupedExercises = groupedExercises;
     }
 
+    absoluteResult(result: Result): number {
+        if(!result.resultString) {
+            return 0;
+        }
+        return parseInt(result.resultString.slice(0, result.resultString.indexOf('of')), 10);
+    }
+
     calculateAbsoluteScores(): void {
-        const quizzesTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, 'absoluteScore');
-        const programmingExerciseTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, 'absoluteScore');
-        const modelingExerciseTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, 'absoluteScore');
-        this.totalScore = this.calculateTotalScoreForTheCourse('absoluteScore');
+        const quizzesTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, ABSOLUTE_SCORE);
+        const programmingExerciseTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, ABSOLUTE_SCORE);
+        const modelingExerciseTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, ABSOLUTE_SCORE);
+        const textExerciseTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.TEXT, ABSOLUTE_SCORE);
+        const fileUploadExerciseTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.FILE_UPLOAD, ABSOLUTE_SCORE);
+        this.totalScore = this.calculateTotalScoreForTheCourse(ABSOLUTE_SCORE);
         const totalMissedPoints = this.totalMaxScore - this.totalScore;
         const absoluteScores = {};
         absoluteScores[ExerciseType.QUIZ] = quizzesTotalScore;
         absoluteScores[ExerciseType.PROGRAMMING] = programmingExerciseTotalScore;
         absoluteScores[ExerciseType.MODELING] = modelingExerciseTotalScore;
+        absoluteScores[ExerciseType.TEXT] = textExerciseTotalScore;
+        absoluteScores[ExerciseType.FILE_UPLOAD] = fileUploadExerciseTotalScore;
         this.absoluteScores = absoluteScores;
         this.doughnutChartData[0].data = [quizzesTotalScore, programmingExerciseTotalScore, modelingExerciseTotalScore, totalMissedPoints];
     }
 
     calculateMaxScores() {
-        const quizzesTotalMaxScore = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, 'maxScore');
-        const programmingExerciseTotalMaxScore = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, 'maxScore');
-        const modelingExerciseTotalMaxScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, 'maxScore');
+        const quizzesTotalMaxScore = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, MAX_SCORE);
+        const programmingExerciseTotalMaxScore = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, MAX_SCORE);
+        const modelingExerciseTotalMaxScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, MAX_SCORE);
+        const textExerciseTotalMaxScore = this.calculateScoreTypeForExerciseType(ExerciseType.TEXT, MAX_SCORE);
+        const fileUploadExerciseTotalMaxScore = this.calculateScoreTypeForExerciseType(ExerciseType.FILE_UPLOAD, MAX_SCORE);
         const totalMaxScores = {};
         totalMaxScores[ExerciseType.QUIZ] = quizzesTotalMaxScore;
         totalMaxScores[ExerciseType.PROGRAMMING] = programmingExerciseTotalMaxScore;
         totalMaxScores[ExerciseType.MODELING] = modelingExerciseTotalMaxScore;
+        totalMaxScores[ExerciseType.TEXT] = textExerciseTotalMaxScore;
+        totalMaxScores[ExerciseType.FILE_UPLOAD] = fileUploadExerciseTotalMaxScore;
         this.totalMaxScores = totalMaxScores;
         this.totalMaxScore = this.calculateTotalScoreForTheCourse('maxScore');
     }
 
     calculateRelativeScores(): void {
-        const quizzesRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, 'relativeScore');
-        const programmingExerciseRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, 'relativeScore');
-        const modelingExerciseRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, 'relativeScore');
+        const quizzesRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, RELATIVE_SCORE);
+        const programmingExerciseRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, RELATIVE_SCORE);
+        const modelingExerciseRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, RELATIVE_SCORE);
+        const textExerciseRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, RELATIVE_SCORE);
+        const fileUploadExerciseRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, RELATIVE_SCORE);
         const relativeScores = {};
         relativeScores[ExerciseType.QUIZ] = quizzesRelativeScore;
         relativeScores[ExerciseType.PROGRAMMING] = programmingExerciseRelativeScore;
         relativeScores[ExerciseType.MODELING] = modelingExerciseRelativeScore;
+        relativeScores[ExerciseType.TEXT] = textExerciseRelativeScore;
+        relativeScores[ExerciseType.FILE_UPLOAD] = fileUploadExerciseRelativeScore;
         this.relativeScores = relativeScores;
-        this.totalRelativeScore = this.calculateTotalScoreForTheCourse('relativeScore');
+        this.totalRelativeScore = this.calculateTotalScoreForTheCourse(RELATIVE_SCORE);
     }
 
     calculateScores(filterFunction: (courseExercise: Exercise) => boolean) {
