@@ -8,11 +8,11 @@ import {
     CourseDeletePopupComponent,
     CourseDetailComponent,
     CourseExerciseService,
-    coursePopupRoute,
-    courseRoute,
     CourseScoreCalculationComponent,
     CourseService,
-    CourseUpdateComponent
+    CourseUpdateComponent,
+    coursePopupRoute,
+    courseRoute
 } from './';
 import { CourseScoreCalculationService } from './course-score-calculation.service';
 import { FormDateTimePickerModule } from '../../shared/dateTimePicker/date-time-picker.module';
