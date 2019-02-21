@@ -1,0 +1,25 @@
+<div *ngIf="courses">
+    <jhi-alert></jhi-alert>
+    <div *ngFor="let course of courses;trackBy: trackId">
+        <div class="card card-primary card-inverse jh-card border-primary">
+            <div class="header-container  bg-primary text-white">
+                <h4 class="card-header">
+                    <strong>{{course.title}}</strong>
+                    &nbsp;
+                    <a class="text-primary card-link" *ngIf="course.isAtLeastTutor" routerLink="/course/{{course.id}}/dashboard" routerLinkActive="active">
+                        <fa-icon icon="info-circle" [fixedWidth]="true" style="color:white;"></fa-icon>
+                    </a>
+                </h4>
+                <div class="total-score-wrapper">
+                    <span class="span-total-score">Total Score: {{course.exercises.length > 0 ? course.relativeScore: 0}} %</span>
+                    <button class="btn-total-score btn-sm" routerLink="/course/{{course.id}}/score-calculation">
+                        Details
+                    </button>
+                </div>
+            </div>
+            <div class="card-body card-block">
+                <jhi-exercise-list [course]="course" [filterByExerciseId]="filterByExerciseId"></jhi-exercise-list>
+            </div>
+        </div>
+    </div>
+</div>

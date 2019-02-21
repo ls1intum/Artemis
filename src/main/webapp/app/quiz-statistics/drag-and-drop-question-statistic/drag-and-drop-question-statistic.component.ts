@@ -1,12 +1,11 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
 import { ActivatedRoute, Router } from '@angular/router';
-import { JhiWebsocketService, AccountService } from '../../core';
+import { AccountService, JhiWebsocketService } from '../../core';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizStatisticUtil } from '../../components/util/quiz-statistic-util.service';
 import { DragAndDropQuestionUtil } from '../../components/util/drag-and-drop-question-util.service';
 import { ArtemisMarkdown } from '../../components/util/markdown.service';
-import { HttpClient } from '@angular/common/http';
 import { DragAndDropQuestion } from '../../entities/drag-and-drop-question';
 import { DragAndDropQuestionStatistic } from '../../entities/drag-and-drop-question-statistic';
 import { QuestionType } from '../../entities/question';

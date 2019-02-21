@@ -6,9 +6,9 @@ import { SERVER_API_URL } from '../../app.constants';
 import * as moment from 'moment';
 
 import { Exercise } from './exercise.model';
-import { createRequestOption } from '../../shared';
 import { LtiConfiguration } from '../lti-configuration';
 import { ParticipationService } from '../participation/participation.service';
+import { map } from 'rxjs/operators';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
@@ -63,6 +63,7 @@ export class ExerciseService {
     convertExerciseDateFromServer(exercise: Exercise): Exercise {
         exercise.releaseDate = exercise.releaseDate != null ? moment(exercise.releaseDate) : null;
         exercise.dueDate = exercise.dueDate != null ? moment(exercise.dueDate) : null;
+        exercise.assessmentDueDate = exercise.assessmentDueDate != null ? moment(exercise.assessmentDueDate) : null;
         exercise.participations = this.participationService.convertParticipationsDateFromServer(exercise.participations);
         return exercise;
     }
@@ -80,7 +81,8 @@ export class ExerciseService {
     convertDateFromClient<E extends Exercise>(exercise: E): E {
         return Object.assign({}, exercise, {
             releaseDate: exercise.releaseDate != null && moment(exercise.releaseDate).isValid() ? exercise.releaseDate.toJSON() : null,
-            dueDate: exercise.dueDate != null && moment(exercise.dueDate).isValid() ? exercise.dueDate.toJSON() : null
+            dueDate: exercise.dueDate != null && moment(exercise.dueDate).isValid() ? exercise.dueDate.toJSON() : null,
+            assessmentDueDate: exercise.assessmentDueDate != null && moment(exercise.assessmentDueDate).isValid() ? exercise.assessmentDueDate.toJSON() : null
         });
     }
 
@@ -88,6 +90,7 @@ export class ExerciseService {
         if (res.body) {
             res.body.releaseDate = res.body.releaseDate != null ? moment(res.body.releaseDate) : null;
             res.body.dueDate = res.body.dueDate != null ? moment(res.body.dueDate) : null;
+            res.body.assessmentDueDate = res.body.assessmentDueDate != null ? moment(res.body.assessmentDueDate) : null;
             res.body.participations = this.participationService.convertParticipationsDateFromServer(res.body.participations);
         }
         return res;
@@ -100,6 +103,12 @@ export class ExerciseService {
             });
         }
         return res;
+    }
+
+    getForTutors(exerciseId: number): Observable<HttpResponse<Exercise>> {
+        return this.http
+            .get<Exercise>(`${this.resourceUrl}/${exerciseId}/for-tutor-dashboard`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 }
 

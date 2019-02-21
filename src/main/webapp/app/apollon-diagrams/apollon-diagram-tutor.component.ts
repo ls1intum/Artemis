@@ -10,10 +10,14 @@ import { Result, ResultService } from '../entities/result';
 import { ModelElementType, ModelingAssessment, ModelingAssessmentService } from '../entities/modeling-assessment';
 import { AccountService } from '../core';
 import { Submission } from '../entities/submission';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Conflict } from 'app/entities/modeling-assessment/conflict.model';
+import { isNullOrUndefined } from 'util';
 
 @Component({
     selector: 'jhi-apollon-diagram-tutor',
     templateUrl: './apollon-diagram-tutor.component.html',
+    styleUrls: ['./apollon-diagram-tutor.component.scss'],
     providers: [ModelingAssessmentService]
 })
 export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
@@ -29,17 +33,19 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
     submission: ModelingSubmission;
     modelingExercise: ModelingExercise;
     result: Result;
-    assessments: ModelingAssessment[];
+    conflicts: Map<string, Conflict>;
+    assessments: ModelingAssessment[] = [];
     assessmentsNames: Map<string, Map<string, string>>;
-    assessmentsAreValid: boolean;
+    assessmentsAreValid = false;
     invalidError = '';
     totalScore = 0;
     positions: Map<string, Point>;
     busy: boolean;
-    done: boolean;
+    done = true;
     timeout: any;
     userId: number;
     isAuthorized: boolean;
+    ignoreConflicts: false;
 
     constructor(
         private jhiAlertService: JhiAlertService,
@@ -52,9 +58,6 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         private modelingAssessmentService: ModelingAssessmentService,
         private accountService: AccountService
     ) {
-        this.assessments = [];
-        this.assessmentsAreValid = false;
-        this.done = true;
     }
 
     ngOnInit() {
@@ -224,11 +227,19 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
 
     submit() {
         this.checkScoreBoundaries();
-        this.modelingAssessmentService.submit(this.assessments, this.modelingExercise.id, this.result.id).subscribe(res => {
-            res.body.participation.results = [res.body];
-            this.result = res.body;
+        this.modelingAssessmentService.submit(this.assessments, this.modelingExercise.id, this.result.id, this.ignoreConflicts).subscribe((result: Result) => {
+            result.participation.results = [result];
+            this.result = result;
             this.jhiAlertService.success('arTeMiSApp.apollonDiagram.assessment.submitSuccessful');
+            this.conflicts = undefined;
             this.done = false;
+        }, (error: HttpErrorResponse) => {
+            if (error.status === 409) {
+                this.conflicts = new Map();
+                (error.error as Conflict[]).forEach(conflict => this.conflicts.set(conflict.elementInConflict.id, conflict));
+                this.highlightElementsWithConflict();
+                this.jhiAlertService.error('arTeMiSApp.apollonDiagram.assessment.submitFailedWithConflict');
+            }
         });
     }
 
@@ -353,5 +364,31 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
 
     previousState() {
         this.router.navigate(['course', this.modelingExercise.course.id, 'exercise', this.modelingExercise.id, 'assessment']);
+    }
+
+    private highlightElementsWithConflict() {
+        const state: State = this.apollonEditor.getState();
+        const entitiesToHighlight: string[] = state.entities.allIds.filter((id: string) => {
+            if (this.conflicts.has(id)) {
+                return true;
+            }
+            if (state.entities.byId[id].attributes.find(attribute => this.conflicts.has(attribute.id))) {
+                return true;
+            }
+            if (state.entities.byId[id].methods.find(method => this.conflicts.has(method.id))) {
+                return true;
+            }
+            return false;
+        });
+        const relationshipsToHighlight: string [] = state.relationships.allIds.filter(id => this.conflicts.has(id));
+
+        entitiesToHighlight.forEach(id => {
+            document.getElementById(id).style.fill = 'rgb(248, 214, 217)';
+        });
+
+        // TODO MJ highlight relation entities. currently do not have unique id
+        // relationshipsToHighlight.forEach(id => {
+        //     document.getElementById(id).style.color = 'rgb(248, 214, 217)';
+        // })
     }
 }

@@ -1,12 +1,13 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
 import { ActivatedRoute, Router } from '@angular/router';
-import { JhiWebsocketService, AccountService } from '../../core';
+import { AccountService, JhiWebsocketService } from '../../core';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
 import { Chart, ChartAnimationOptions, ChartOptions } from 'chart.js';
 import { QuestionType } from '../../entities/question';
 import { Subscription } from 'rxjs/Subscription';
+
 const Sugar = require('sugar');
 Sugar.extend();
 require('sugar/string/truncateOnWord');

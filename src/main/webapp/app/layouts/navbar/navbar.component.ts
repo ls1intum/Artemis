@@ -5,7 +5,7 @@ import { JhiLanguageService } from 'ng-jhipster';
 import { SessionStorageService } from 'ngx-webstorage';
 
 import { ProfileService } from '../profiles/profile.service';
-import { JhiLanguageHelper, LoginModalService, LoginService, AccountService, User } from '../../core';
+import { AccountService, JhiLanguageHelper, LoginModalService, LoginService, User } from '../../core';
 
 import { VERSION } from '../../app.constants';
 

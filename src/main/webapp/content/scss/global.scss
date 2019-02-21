@@ -50,7 +50,6 @@ Browser Upgrade Prompt
     padding: 0.2em 0;
 }
 
-
 /* ==========================================================================
 Narrow styles
 ========================================================================== */
@@ -498,4 +497,9 @@ code.password:hover {
             }
         }
     }
+}
+
+// This puts the owl-datetime-picker on top of the ngbootstrap modal
+.cdk-overlay-container {
+    z-index: 1060;
 }

@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.ModelingExercise;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -24,11 +25,13 @@ public class ModelingExerciseService {
     private final ModelingExerciseRepository modelingExerciseRepository;
     private final ParticipationService participationService;
 
+
     public ModelingExerciseService(ParticipationService participationService,
                                    ModelingExerciseRepository modelingExerciseRepository) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.participationService = participationService;
     }
+
 
     /**
      * Get one quiz exercise by id.
@@ -39,8 +42,10 @@ public class ModelingExerciseService {
     @Transactional(readOnly = true)
     public ModelingExercise findOne(Long id) {
         log.debug("Request to get Modeling Exercise : {}", id);
-        return modelingExerciseRepository.findById(id).get();
+        return modelingExerciseRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Exercise with id: \"" + id + "\" does not exist"));
     }
+
 
     /**
      * Delete the modeling exercise by id.

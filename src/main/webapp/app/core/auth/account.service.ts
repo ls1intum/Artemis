@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 
 import { SERVER_API_URL } from 'app/app.constants';
-import { Account } from 'app/core/user/account.model';
 
 import { JhiLanguageService } from 'ng-jhipster';
 import { SessionStorageService } from 'ngx-webstorage';
@@ -126,6 +125,13 @@ export class AccountService {
         return (
             this.hasGroup(course.instructorGroupName) ||
             this.hasGroup(course.teachingAssistantGroupName) ||
+            this.hasAnyAuthorityDirect(['ROLE_ADMIN'])
+        );
+    }
+
+    isAtLeastInstructorInCourse(course: Course) {
+        return (
+            this.hasGroup(course.instructorGroupName) ||
             this.hasAnyAuthorityDirect(['ROLE_ADMIN'])
         );
     }

@@ -1,0 +1,70 @@
+ul {
+    padding-left: 0;
+    z-index: 1;
+    position: relative;
+}
+
+li {
+    width: 2em;
+    height: 2em;
+    text-align: center;
+    line-height: 2em;
+    border-radius: 1em;
+    background: green;
+    margin: 0 1em;
+    display: inline-block;
+    color: white;
+    position: relative;
+    /*z-index: 1;*/
+}
+
+li::before{
+    content: '';
+    position: absolute;
+    top: .9em;
+    left: -4em;
+    width: 4em;
+    height: .2em;
+    background: green;
+    z-index: -1;
+}
+
+li:first-child::before {
+    display: none;
+}
+
+.active {
+    background: green;
+}
+
+.active ~ li {
+    background: red;
+}
+
+.active ~ li::before {
+    background: red;
+}
+
+.not_participated {
+    display: none;
+}
+
+.not_participated + li::before {
+    display: none !important;
+}
+
+.opaque {
+    background: darkred !important;
+}
+
+.opaque::before {
+    background: darkred !important;
+}
+
+.orange {
+    background: orange !important;
+}
+
+.orange::before {
+    background: orange !important;
+}

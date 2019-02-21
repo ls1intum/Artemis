@@ -468,4 +468,12 @@ public abstract class Exercise implements Serializable {
             ", categories='" + getCategories() + "'" +
             "}";
     }
+
+    public Set<TutorParticipation> getTutorParticipations() {
+        return tutorParticipations;
+    }
+
+    public void setTutorParticipations(Set<TutorParticipation> tutorParticipations) {
+        this.tutorParticipations = tutorParticipations;
+    }
 }
