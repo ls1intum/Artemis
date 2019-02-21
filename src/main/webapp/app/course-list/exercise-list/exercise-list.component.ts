@@ -7,7 +7,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService } from 'ng-jhipster';
 import { NavigationStart, Router } from '@angular/router';
 import { InitializationState, Participation, ParticipationService } from '../../entities/participation';
-import { ParticipationDataProvider } from '../../courses/exercises/participation-data-provider';
+import { ParticipationDataProvider } from './/participation-data-provider';
 import { HttpClient } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { SERVER_API_URL } from '../../app.constants';
