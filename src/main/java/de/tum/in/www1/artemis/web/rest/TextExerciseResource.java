@@ -1,13 +1,13 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -21,6 +21,7 @@ import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
@@ -43,6 +44,7 @@ public class TextExerciseResource {
     private final AuthorizationCheckService authCheckService;
     private final ParticipationService participationService;
     private final ResultRepository resultRepository;
+    private final ExampleSubmissionRepository exampleSubmissionRepository;
 
     public TextExerciseResource(TextExerciseRepository textExerciseRepository,
                                 TextExerciseService textExerciseService,
@@ -51,7 +53,8 @@ public class TextExerciseResource {
                                 AuthorizationCheckService authCheckService,
                                 CourseService courseService,
                                 ParticipationService participationService,
-                                ResultRepository resultRepository) {
+                                ResultRepository resultRepository,
+                                ExampleSubmissionRepository exampleSubmissionRepository) {
         this.textAssessmentService = textAssessmentService;
         this.textExerciseService = textExerciseService;
         this.textExerciseRepository = textExerciseRepository;
@@ -60,6 +63,7 @@ public class TextExerciseResource {
         this.authCheckService = authCheckService;
         this.participationService = participationService;
         this.resultRepository = resultRepository;
+        this.exampleSubmissionRepository = exampleSubmissionRepository;
     }
 
     /**
@@ -76,6 +80,19 @@ public class TextExerciseResource {
         if (textExercise.getId() != null) {
             throw new BadRequestAlertException("A new textExercise cannot already have an ID", ENTITY_NAME, "idexists");
         }
+
+        if (textExercise.getTitle() == null) {
+            throw new BadRequestAlertException("A new textExercise needs a title", ENTITY_NAME, "missingtitle");
+        }
+
+        if (textExercise.getMaxScore() == null) {
+            throw new BadRequestAlertException("A new textExercise needs a max score", ENTITY_NAME, "missingmaxscore");
+        }
+
+        if (textExercise.getDueDate() == null && textExercise.getAssessmentDueDate() != null ) {
+            throw new BadRequestAlertException("If you set an assessmentDueDate, then you need to add also a dueDate", ENTITY_NAME, "dueDate");
+        }
+
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(textExercise.getCourse().getId());
         if (course == null) {
@@ -87,6 +104,11 @@ public class TextExerciseResource {
             !authCheckService.isAdmin()) {
             return forbidden();
         }
+
+        if (textExercise.getDueDate() != null && textExercise.getAssessmentDueDate() == null) {
+            textExercise.setAssessmentDueDate(textExercise.getDueDate().plusWeeks(1));
+        }
+
         TextExercise result = textExerciseRepository.save(textExercise);
         return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
@@ -121,6 +143,13 @@ public class TextExerciseResource {
             return forbidden();
         }
         TextExercise result = textExerciseRepository.save(textExercise);
+
+        // Avoid recursions
+        if (textExercise.getExampleSubmissions().size() != 0) {
+            result.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setExercise(null));
+            result.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipation(null));
+        }
+
         return ResponseEntity.ok()
             .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, textExercise.getId().toString()))
             .body(result);
@@ -152,18 +181,22 @@ public class TextExerciseResource {
     /**
      * GET  /text-exercises/:id : get the "id" textExercise.
      *
-     * @param id the id of the textExercise to retrieve
+     * @param exerciseId the id of the textExercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the textExercise, or with status 404 (Not Found)
      */
-    @GetMapping("/text-exercises/{id}")
+    @GetMapping("/text-exercises/{exerciseId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<TextExercise> getTextExercise(@PathVariable Long id) {
-        log.debug("REST request to get TextExercise : {}", id);
-        Optional<TextExercise> textExercise = textExerciseRepository.findById(id);
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise)) {
+    public ResponseEntity<TextExercise> getTextExercise(@PathVariable Long exerciseId) {
+        log.debug("REST request to get TextExercise : {}", exerciseId);
+        Optional<TextExercise> optionalTextExercise = textExerciseRepository.findById(exerciseId);
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(optionalTextExercise)) {
             return forbidden();
         }
-        return ResponseUtil.wrapOrNotFound(textExercise);
+
+        Set<ExampleSubmission> exampleSubmissions = new HashSet<>(this.exampleSubmissionRepository.findAllByExerciseId(exerciseId));
+        optionalTextExercise.ifPresent(textExercise -> textExercise.setExampleSubmissions(exampleSubmissions));
+
+        return ResponseUtil.wrapOrNotFound(optionalTextExercise);
     }
 
     /**

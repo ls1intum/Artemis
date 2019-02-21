@@ -1,12 +1,9 @@
 import { RepositoryFileService } from 'app/entities/repository';
-import { Component, EventEmitter, Input, OnChanges, AfterViewInit, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Participation } from 'app/entities/participation';
-import { JhiWebsocketService } from 'app/core';
-import { WindowRef } from 'app/core';
-import { EditorComponent } from 'app/editor';
-import { EditorFileBrowserCreateComponent } from 'app/editor';
-import { EditorFileBrowserDeleteComponent } from 'app/editor';
+import { JhiWebsocketService, WindowRef } from 'app/core';
+import { EditorComponent, EditorFileBrowserCreateComponent, EditorFileBrowserDeleteComponent } from 'app/editor';
 import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem } from 'ngx-treeview';
 import { HttpErrorResponse } from '@angular/common/http';
 import * as interact from 'interactjs';

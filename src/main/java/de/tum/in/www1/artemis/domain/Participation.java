@@ -14,11 +14,7 @@ import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.*;
 
 /**
  * A Participation.
@@ -300,7 +296,7 @@ public class Participation implements Serializable {
         if (results == null || results.size() == 0) {
             return null;
         }
-        List<Result> sortedResults = results.stream().collect(Collectors.toList());
+        List<Result> sortedResults = new ArrayList<>(results);
         sortedResults.sort((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate()));
         return sortedResults.get(0);
     }

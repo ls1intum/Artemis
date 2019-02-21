@@ -11,20 +11,48 @@
 </div>
 <div class="quiz-content container" *ngIf="quizExercise">
     <div *ngFor="let question of quizExercise.questions; let i = index">
-        <jhi-multiple-choice-question *ngIf="question.type === MULTIPLE_CHOICE" [question]="question" [(selectedAnswerOptions)]="selectedAnswerOptions[question.id]" [fnOnSelection]="onSelectionChanged.bind(this)" [clickDisabled]="submission.submitted || remainingTimeSeconds < 0" [showResult]="showingResult" [forceSampleSolution]="mode === 'solution'" [questionIndex]="i + 1" [score]="questionScores[question.id]"></jhi-multiple-choice-question>
-        <jhi-drag-and-drop-question *ngIf="question.type === DRAG_AND_DROP" [question]="question" [(mappings)]="dragAndDropMappings[question.id]" [fnOnMappingUpdate]="onSelectionChanged.bind(this)" [clickDisabled]="submission.submitted || remainingTimeSeconds < 0" [showResult]="showingResult" [forceSampleSolution]="mode === 'solution'" [questionIndex]="i + 1" [score]="questionScores[question.id]"></jhi-drag-and-drop-question>
-        <jhi-short-answer-question *ngIf="question.type === SHORT_ANSWER" [question]="question" [(submittedTexts)]="shortAnswerSubmittedTexts[question.id]" [fnOnSubmittedTextUpdate]="onSelectionChanged.bind(this)" [clickDisabled]="submission.submitted || remainingTimeSeconds < 0" [showResult]="showingResult" [forceSampleSolution]="mode === 'solution'" [questionIndex]="i + 1" [score]="questionScores[question.id]"></jhi-short-answer-question>
+        <jhi-multiple-choice-question id="question{{i}}" *ngIf="question.type === MULTIPLE_CHOICE" [question]="question" [(selectedAnswerOptions)]="selectedAnswerOptions[question.id]" [fnOnSelection]="onSelectionChanged.bind(this)" [clickDisabled]="submission.submitted || remainingTimeSeconds < 0" [showResult]="showingResult" [forceSampleSolution]="mode === 'solution'" [questionIndex]="i + 1" [score]="questionScores[question.id]"></jhi-multiple-choice-question>
+        <jhi-drag-and-drop-question id="question{{i}}"  *ngIf="question.type === DRAG_AND_DROP" [question]="question" [(mappings)]="dragAndDropMappings[question.id]" [fnOnMappingUpdate]="onSelectionChanged.bind(this)" [clickDisabled]="submission.submitted || remainingTimeSeconds < 0" [showResult]="showingResult" [forceSampleSolution]="mode === 'solution'" [questionIndex]="i + 1" [score]="questionScores[question.id]"></jhi-drag-and-drop-question>
+        <jhi-short-answer-question id="question{{i}}" *ngIf="question.type === SHORT_ANSWER" [question]="question" [(submittedTexts)]="shortAnswerSubmittedTexts[question.id]" [fnOnSubmittedTextUpdate]="onSelectionChanged.bind(this)" [clickDisabled]="submission.submitted || remainingTimeSeconds < 0" [showResult]="showingResult" [forceSampleSolution]="mode === 'solution'" [questionIndex]="i + 1" [score]="questionScores[question.id]"></jhi-short-answer-question>
     </div>
 </div>
 <div class="quiz-footer" *ngIf="quizExercise">
     <div class="container">
         <div class="quiz-footer-content">
             <div>
-                <div *ngIf="quizExercise.questions">
+                <div class="stepwizardquiz">
+                        <div *ngFor="let question of quizExercise.questions; let i = index"
+                             class="stepwizardquiz-step" >
+                            <div *ngIf="question.type === DRAG_AND_DROP"
+                                  class="btn btn-light btn-circle stepbutton stepwizardquiz-circle draganddropcolor-question"
+                                  (click)="navigateToQuestion(i)"
+                                  [ngbTooltip]="dragAndDropMappings[question.id]?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
+                                  [ngClass]="{'changed-question': dragAndDropMappings[question.id]?.length }">
+                                <b class="fa">DD</b>
+                            </div>
+                            <span *ngIf="question.type === MULTIPLE_CHOICE"
+                                  class="btn btn-light btn-circle stepbutton stepwizardquiz-circle multiplechoicecolor-question"
+                                  (click)="navigateToQuestion(i)"
+                                  [ngbTooltip]="selectedAnswerOptions[question.id]?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
+                                  [ngClass]="{'changed-question': selectedAnswerOptions[question.id]?.length }">
+                                <b class="fa">MC</b>
+                            </span>
+                            <span *ngIf="question.type === SHORT_ANSWER"
+                                  class="btn btn-light btn-circle stepbutton stepwizardquiz-circle shortanswercolor-question"
+                                  (click)="navigateToQuestion(i)"
+                                  [ngbTooltip]="shortAnswerSubmittedTexts[question.id]?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
+                                  [ngClass]="{'changed-question': shortAnswerSubmittedTexts[question.id]?.length }">
+                            <b class="fa">SA</b>
+                            </span>
+                            <ng-template #tooltipExplanationTranslate>{{'arTeMiSApp.quizExercise.explanationAnswered' | translate}}</ng-template>
+                            <ng-template #tooltipNotExplanationTranslate>{{'arTeMiSApp.quizExercise.explanationNotAnswered' | translate}}</ng-template>
+                        </div>
+                    </div>
+                <div *ngIf="quizExercise.questions" class="align-text">
                     <span jhiTranslate="arTeMiSApp.quizExercise.questions" class="colon-suffix"></span>
                     {{quizExercise.questions ? quizExercise.questions.length : 0}}
                 </div>
-                <div *ngIf="quizExercise.questions">
+                <div *ngIf="quizExercise.questions" class="align-text">
                     <span jhiTranslate="arTeMiSApp.quizExercise.totalPoints" class="colon-suffix"></span>
                     {{totalScore}}
                 </div>
