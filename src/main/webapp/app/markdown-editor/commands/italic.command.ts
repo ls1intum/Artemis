@@ -1,10 +1,11 @@
 import { Command } from './command';
 
 export class ItalicCommand extends Command {
+
     buttonTitle = 'Italic';
 
     execute(editor: any): void {
-        let chosenText = editor.getSelectedText();
+        const chosenText = editor.getSelectedText();
         let textToAdd = '';
 
         if (chosenText.includes('*')) {

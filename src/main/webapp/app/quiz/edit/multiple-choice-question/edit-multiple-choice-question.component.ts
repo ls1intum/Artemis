@@ -111,7 +111,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, B
          */
 
         // Split question into main text, hint and explanation
-        this.artemisMarkdown.parseTextHintExplanation(questionText, this.question);
+        this.artemisMarkdown.parseTextHintExplanation(text, this.question);
 
         // Extract existing answer option IDs
         const existingAnswerOptionIDs = this.question.answerOptions
@@ -119,12 +119,12 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, B
             .map(questionAnswerOption => questionAnswerOption.id);
         this.question.answerOptions = [];
 
-        let endOfPreviousPart = text.indexOf(questionText) + questionText.length;
+        let endOfPreviousPart = text.indexOf(text) + text.length;
         /**
          * Work on answer options
          * We slice the first questionPart since that's our question text and no real answer option
          */
-        for (const answerOptionText of questionParts.slice(1)) {
+        for (const answerOptionText of text.slice(1)) {
             // Find the box (text in-between the parts)
             const answerOption = new AnswerOption();
             const startOfThisPart = text.indexOf(answerOptionText, endOfPreviousPart);

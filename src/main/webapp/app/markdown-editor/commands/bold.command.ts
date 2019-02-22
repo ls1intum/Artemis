@@ -1,10 +1,11 @@
 import { Command } from './command';
 
 export class BoldCommand extends Command {
+
     buttonTitle = 'Bold';
 
     execute(editor: any): void {
-        let chosenText = editor.getSelectedText();
+        const chosenText = editor.getSelectedText();
         let textToAdd = '';
 
         if (chosenText.includes('**')) {
