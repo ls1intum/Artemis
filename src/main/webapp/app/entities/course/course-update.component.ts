@@ -36,7 +36,7 @@ export class CourseUpdateComponent implements OnInit {
                 updateOn: 'blur'
             }),
             studentGroupName: new FormControl(this.course.studentGroupName, [Validators.required]),
-            teachingAssistantGroupName: new FormControl(this.course.teachingAssistantGroupName, [Validators.required]),
+            teachingAssistantGroupName: new FormControl(this.course.teachingAssistantGroupName),
             instructorGroupName: new FormControl(this.course.instructorGroupName, [Validators.required]),
             startDate: new FormControl(this.course.startDate),
             endDate: new FormControl(this.course.endDate),
