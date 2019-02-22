@@ -54,10 +54,10 @@ public class Assessment {
     }
 
     private Score calculateTotalScore(List<Score> scores) {
-        HashSet<String> comments = new HashSet<>();
+        Set<String> comments = new HashSet<>();
         // sum points and save number of assessments for each unique credit number
         double credits = 0;
-        HashMap<Double, Integer> counting = new HashMap<>();
+        Map<Double, Integer> counting = new HashMap<>();
 
         for (Score existingScores : scores) {
             double points = existingScores.getPoints();
