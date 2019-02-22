@@ -14,23 +14,77 @@
             </div>
         </div>
     </div>
-    <div class="exercise-row-container mb-3" *ngFor="let weekKey of weeklyIndexKeys">
-        <div class="control-label" [ngClass]="weeklyExercisesGrouped[weekKey].isCurrentWeek ? 'text-primary': ''"
-              (click)="weeklyExercisesGrouped[weekKey].isCollapsed = !weeklyExercisesGrouped[weekKey].isCollapsed">
-            <fa-icon class="pr-3" [icon]="weeklyExercisesGrouped[weekKey].isCollapsed ? 'angle-down' : 'angle-up'"></fa-icon>
-            <span [innerHtml]="weeklyExercisesGrouped[weekKey].label"></span>
-            <span class="ml-2">Exercises: {{weeklyExercisesGrouped[weekKey].exercises.length}}</span>
+    <div class="row">
+        <div class="col-12 col-md-8">
+            <div class="exercise-row-container mb-3" *ngFor="let weekKey of weeklyIndexKeys">
+                <div class="control-label"
+                     [ngClass]="weeklyExercisesGrouped[weekKey].isCurrentWeek ? 'text-primary': ''"
+                     (click)="weeklyExercisesGrouped[weekKey].isCollapsed = !weeklyExercisesGrouped[weekKey].isCollapsed">
+                    <fa-icon class="pr-3"
+                             [icon]="weeklyExercisesGrouped[weekKey].isCollapsed ? 'angle-down' : 'angle-up'"></fa-icon>
+                    <span [innerHtml]="weeklyExercisesGrouped[weekKey].label"></span>
+                    <span class="ml-2">Exercises: {{weeklyExercisesGrouped[weekKey].exercises.length}}</span>
+                </div>
+                <div *ngIf="!weeklyExercisesGrouped[weekKey].isCollapsed">
+                    <jhi-course-exercise-row class="pb-1" [exercise]="exercise" [course]="course"
+                                             *ngFor="let exercise of weeklyExercisesGrouped[weekKey].exercises"></jhi-course-exercise-row>
+                </div>
+                <div class="collapsed"></div>
+            </div>
+            <div *ngIf="course.exercises.length === 0">
+                <div class="row">
+                    <div class="col">
+                        No exercises available for the course.
+                    </div>
+                </div>
+            </div>
         </div>
-        <div *ngIf="!weeklyExercisesGrouped[weekKey].isCollapsed">
-            <jhi-course-exercise-row class="pb-1" [exercise]="exercise" [course]="course"
-                                     *ngFor="let exercise of weeklyExercisesGrouped[weekKey].exercises"></jhi-course-exercise-row>
-        </div>
-        <div class="collapsed"></div>
-    </div>
-    <div *ngIf="course.exercises.length === 0">
-        <div class="row">
-            <div class="col">
-                No exercises available for the course.
+        <div class="col-12 col-md-4 course-information">
+            <jhi-side-panel panelHeader="Course Information:">
+                <div class="row mb-1">
+                    <div class="col-8">Total Exercises:</div>
+                    <div class="col-4">{{course.exercises.length}}</div>
+                </div>
+                <div class="row mb-1">
+                    <div class="col-8">Total Quiz Exercises:</div>
+                    <div class="col-4">{{numberOfQuizExercises}}</div>
+                </div>
+                <div class="row mb-1">
+                    <div class="col-8">Total Modeling Exercises:</div>
+                    <div class="col-4">{{numberOfModelingExercises}}</div>
+                </div>
+                <div class="row mb-1">
+                    <div class="col-8">Total Programming Exercises:</div>
+                    <div class="col-4">{{numberOfProgrammingExercises}}</div>
+                </div>
+                <div class="row mb-1">
+                    <div class="col-8">Total Text Exercises:</div>
+                    <div class="col-4">{{numberOfTextExercises}}</div>
+                </div>
+                <div class="row mb-1">
+                    <div class="col-8">Total File Upload Exercises:</div>
+                    <div class="col-4">{{numberOfFileUploadExercises}}</div>
+                </div>
+                <div class="row mb-1" *ngIf="course.startDate">
+                    <div class="col-8">Start Date:</div>
+                    <div class="col-4">{{course.startDate | date:'dd/MM/yy'}}</div>
+                </div>
+                <div class="row" *ngIf="course.endDate">
+                    <div class="col-8">End Date:</div>
+                    <div class="col-4">{{course.endDate | date:'dd/MM/yy'}}</div>
+                </div>
+            </jhi-side-panel>
+            <div class="exercise-panel mt-3">
+                <jhi-side-panel panelHeader="Upcoming Deadlines:">
+                    <div class="row mb-1 align-items-center" *ngFor="let exercise of upcomingExercises" [routerLink]="[exercise.id]">
+                        <div class="col-5">{{exercise.dueDate | date:'dd/MM/yy HH:mm'}}</div>
+                        <div class="col-5">{{exercise.title}}</div>
+                        <div class="col-2 icon"><fa-icon icon="play-circle"></fa-icon></div>
+                    </div>
+                    <div class="row mb-1 align-items-center" *ngIf="upcomingExercises.length === 0">
+                        <div class="col">There are no upcoming exercises.</div>
+                    </div>
+                </jhi-side-panel>
             </div>
         </div>
     </div>
