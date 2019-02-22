@@ -25,7 +25,6 @@ import {
 import { CourseExerciseCardComponent } from 'app/entities/course/course-exercise-card.component';
 import { FormDateTimePickerModule } from '../../shared/dateTimePicker/date-time-picker.module';
 
-
 const ENTITY_STATES = [...courseRoute, ...coursePopupRoute];
 
 @NgModule({

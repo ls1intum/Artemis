@@ -1,6 +1,5 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs/Subscription';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { ModelingExercise } from './modeling-exercise.model';
@@ -8,78 +7,53 @@ import { ModelingExerciseService } from './modeling-exercise.service';
 import { AccountService } from '../../core';
 import { CourseExerciseService } from '../course/course.service';
 import { ActivatedRoute } from '@angular/router';
-import { Course, CourseService } from '../course';
+import { CourseService } from '../course';
+import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 
 @Component({
     selector: 'jhi-modeling-exercise',
     templateUrl: './modeling-exercise.component.html'
 })
-export class ModelingExerciseComponent implements OnInit, OnDestroy {
-    private subscription: Subscription;
+export class ModelingExerciseComponent extends ExerciseComponent {
     @Input() modelingExercises: ModelingExercise[];
-    @Input() course: Course;
-    eventSubscriber: Subscription;
-    courseId: number;
     predicate: string;
     reverse: boolean;
-    @Input() showHeading = true;
-    showAlertHeading: boolean;
 
     constructor(
         private modelingExerciseService: ModelingExerciseService,
         private courseExerciseService: CourseExerciseService,
-        private courseService: CourseService,
+        courseService: CourseService,
         private jhiAlertService: JhiAlertService,
-        private eventManager: JhiEventManager,
+        eventManager: JhiEventManager,
         private accountService: AccountService,
-        private route: ActivatedRoute
+        route: ActivatedRoute
     ) {
+        super(courseService, route, eventManager);
         this.modelingExercises = [];
         this.predicate = 'id';
         this.reverse = true;
     }
 
-    ngOnInit() {
-        if(location.href.toString().includes('modeling-exercise')){
-            this.showAlertHeading= true;
-        }
-        this.load();
-        this.registerChangeInModelingExercises();
-    }
-
-    load() {
-        this.subscription = this.route.params.subscribe(params => {
-            this.courseId = params['courseId'];
-            this.loadForCourse();
-        });
-    }
-
-    loadForCourse() {
-        this.courseService.find(this.courseId).subscribe(courseResponse => {
-            this.course = courseResponse.body;
-            this.courseExerciseService.findAllModelingExercisesForCourse(this.courseId).subscribe(
-                (res: HttpResponse<ModelingExercise[]>) => {
-                    this.modelingExercises = res.body;
-                    // reconnect exercise with course
-                    this.modelingExercises.forEach(modelingExercise => {
-                        modelingExercise.course = this.course;
-                    });
-                },
-                (res: HttpErrorResponse) => this.onError(res)
-            );
-        });
-    }
-
-    ngOnDestroy() {
-        this.eventManager.destroy(this.eventSubscriber);
+    protected loadExercises(): void {
+        this.courseExerciseService.findAllModelingExercisesForCourse(this.courseId).subscribe(
+            (res: HttpResponse<ModelingExercise[]>) => {
+                this.modelingExercises = res.body;
+                // reconnect exercise with course
+                this.modelingExercises.forEach(modelingExercise => {
+                    modelingExercise.course = this.course;
+                });
+                this.emitExerciseCount(this.modelingExercises.length);
+            },
+            (res: HttpErrorResponse) => this.onError(res)
+        );
     }
 
     trackId(index: number, item: ModelingExercise) {
         return item.id;
     }
 
-    registerChangeInModelingExercises() {
-        this.eventSubscriber = this.eventManager.subscribe('modelingExerciseListModification', () => this.load());
+    protected getChangeEventName(): string {
+        return 'modelingExerciseListModification';
     }
 
     private onError(error: HttpErrorResponse) {

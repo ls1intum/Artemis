@@ -224,7 +224,7 @@ public class CourseService {
         Course course = findOne(courseId);
         Set<Exercise> exercisesOfCourse = course.getExercises();
         //key stores the userId to identify if he already got a score, value contains the Result itself with the score of the user
-        HashMap<Long, Result> allOverallSummedScoresOfCourse = new HashMap<>();
+        Map<Long, Result> allOverallSummedScoresOfCourse = new HashMap<>();
 
         for (Exercise exercise : exercisesOfCourse) {
             Set<Participation> participations = exercise.getParticipations();
