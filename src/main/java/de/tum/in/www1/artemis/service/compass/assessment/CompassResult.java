@@ -78,7 +78,7 @@ public class CompassResult implements Grade {
      * @return the calculated result
      */
     public static CompassResult buildResultFromResultList (List<CompassResult> compassResultList, double coverage) {
-        HashMap<UMLElement, Score> newScoreMapping = new HashMap<>();
+        Map<UMLElement, Score> newScoreMapping = new HashMap<>();
 
         for (CompassResult compassResult : compassResultList) {
             newScoreMapping.putAll(compassResult.elementScoreMapping);
