@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -173,7 +174,11 @@ public class CourseService {
     @Transactional(readOnly = true)
     public Course findOne(Long courseId) {
         log.debug("Request to get Course : {}", courseId);
-        return courseRepository.findById(courseId).get();
+        Optional<Course> course = courseRepository.findById(courseId);
+        if (!course.isPresent()) {
+            throw new EntityNotFoundException("Course with id " + courseId + " does not exist!");
+        }
+        return course.get();
     }
 
     /**
