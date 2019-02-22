@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import com.google.common.collect.Sets;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -124,6 +125,9 @@ public class ParticipationResource {
         log.debug("REST request to resume Exercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
         Participation participation = participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName());
+        //TODO: are results initialized here?
+        Result result = participation.findLatestResult();
+        participation.setResults(Sets.newHashSet(result));
         checkAccessPermissionOwner(participation);
         if (exercise instanceof ProgrammingExercise) {
             participation = participationService.resume(exercise, participation);

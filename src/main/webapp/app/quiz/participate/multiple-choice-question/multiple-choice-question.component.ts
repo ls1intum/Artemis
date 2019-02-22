@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { MultipleChoiceQuestion } from '../../../entities/multiple-choice-question';
 import { AnswerOption } from '../../../entities/answer-option';
@@ -8,7 +8,7 @@ import { AnswerOption } from '../../../entities/answer-option';
     templateUrl: './multiple-choice-question.component.html',
     providers: [ArtemisMarkdown]
 })
-export class MultipleChoiceQuestionComponent implements OnInit, OnDestroy {
+export class MultipleChoiceQuestionComponent implements OnChanges {
     _question: MultipleChoiceQuestion;
 
     @Input()
@@ -41,9 +41,7 @@ export class MultipleChoiceQuestionComponent implements OnInit, OnDestroy {
 
     constructor(private artemisMarkdown: ArtemisMarkdown) {}
 
-    ngOnInit() {}
-
-    ngOnDestroy() {}
+    ngOnChanges(changes: SimpleChanges): void {}
 
     watchCollection() {
         // update html for text, hint and explanation for the question and every answer option

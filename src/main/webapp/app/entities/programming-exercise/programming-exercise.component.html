@@ -20,7 +20,7 @@
     <jhi-alert *ngIf="showAlertHeading"></jhi-alert>
     <div class="row">
     </div>
-    <br/>
+    <br>
     <div class="table-responsive" *ngIf="programmingExercises">
         <table class="table table-striped">
             <thead>
@@ -46,13 +46,13 @@
                 <td>{{programmingExercise.dueDate | date:'medium'}}</td>
                 <td>{{programmingExercise.maxScore}}</td>
                 <td>
-                    <span *ngIf="programmingExercise.baseRepositoryUrl != null"><a href="{{programmingExercise.baseRepositoryUrl}}" target="_blank">Template</a></span><br/>
-                    <span *ngIf="programmingExercise.solutionRepositoryUrl != null"><a href="{{programmingExercise.solutionRepositoryUrl}}" target="_blank">Solution</a></span><br/>
-                    <span *ngIf="programmingExercise.testRepositoryUrl != null"><a href="{{programmingExercise.testRepositoryUrl}}" target="_blank">Test</a></span><br/>
+                    <span *ngIf="programmingExercise.baseRepositoryUrl != null"><a href="{{programmingExercise.baseRepositoryUrl}}" target="_blank">Template</a></span><br>
+                    <span *ngIf="programmingExercise.solutionRepositoryUrl != null"><a href="{{programmingExercise.solutionRepositoryUrl}}" target="_blank">Solution</a></span><br>
+                    <span *ngIf="programmingExercise.testRepositoryUrl != null"><a href="{{programmingExercise.testRepositoryUrl}}" target="_blank">Test</a></span><br>
                 </td>
                 <td><!-- TODO get the correct URL from the server instead of hardcoding Bamboo here -->
-                    <span *ngIf="programmingExercise.baseBuildPlanId != null"><a href="https://bamboobruegge.in.tum.de/browse/{{programmingExercise.baseBuildPlanId}}" target="_blank">Template</a></span><br/>
-                    <span *ngIf="programmingExercise.solutionBuildPlanId != null"><a href="https://bamboobruegge.in.tum.de/browse/{{programmingExercise.solutionBuildPlanId}}" target="_blank">Solution</a></span><br/>
+                    <span *ngIf="programmingExercise.baseBuildPlanId != null"><a href="https://bamboobruegge.in.tum.de/browse/{{programmingExercise.baseBuildPlanId}}" target="_blank">Template</a></span><br>
+                    <span *ngIf="programmingExercise.solutionBuildPlanId != null"><a href="https://bamboobruegge.in.tum.de/browse/{{programmingExercise.solutionBuildPlanId}}" target="_blank">Solution</a></span><br>
                 <td>{{programmingExercise.publishBuildPlanUrl}}</td>
                 <td>{{programmingExercise.allowOnlineEditor}}</td>
                 <td class="text-right">

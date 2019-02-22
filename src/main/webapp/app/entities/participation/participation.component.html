@@ -6,7 +6,7 @@
     <jhi-alert></jhi-alert>
     <div class="row">
     </div>
-    <br/>
+    <br>
     <div class="table-responsive" *ngIf="participations">
         <table class="table table-striped">
             <thead>
@@ -24,8 +24,8 @@
             <tr *ngFor="let participation of participations | sortBy: predicate: reverse ;trackBy: trackId">
                 <td><a routerLink="/participation/{{participation.id}}">{{participation.id}}</a></td>
                 <!-- TODO get the correct URL from the server instead of hardcoding Bamboo here -->
-                <td *ngIf="exercise.type == PROGRAMMING"><span *ngIf="participation.repositoryUrl !== null"><a href="{{participation.repositoryUrl}}" target="_blank">Repository Link</a></span></td>
-                <td *ngIf="exercise.type == PROGRAMMING"><span *ngIf="participation.buildPlanId !== null"><a href="https://bamboobruegge.in.tum.de/browse/{{participation.buildPlanId}}" target="_blank">{{participation.buildPlanId}}</a></span></td>
+                <td *ngIf="exercise.type == PROGRAMMING"><span *ngIf="participation.repositoryUrl != null"><a href="{{participation.repositoryUrl}}" target="_blank">Repository Link</a></span></td>
+                <td *ngIf="exercise.type == PROGRAMMING"><span *ngIf="participation.buildPlanId != null"><a href="https://bamboobruegge.in.tum.de/browse/{{participation.buildPlanId}}" target="_blank">{{participation.buildPlanId}}</a></span></td>
                 <td>{{participation.initializationState}}</td>
                 <td>{{participation.initializationDate | date:'medium'}}</td>
                 <td>
@@ -53,7 +53,7 @@
                             <fa-icon icon="asterisk"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.newResult">New Result</span>
                         </button>
-                        <button type="submit" *ngIf="exercise.type === PROGRAMMING && participation.buildPlanId !== null"
+                        <button type="submit" *ngIf="exercise.type === PROGRAMMING && participation.buildPlanId != null"
                                 [routerLink]="['/', { outlets: { popup: ['participation', participation.id, 'cleanupBuildPlan']} }]"
                                 class="btn btn-danger btn-sm mr-1">
                             <fa-icon [icon]="'eraser'"></fa-icon>

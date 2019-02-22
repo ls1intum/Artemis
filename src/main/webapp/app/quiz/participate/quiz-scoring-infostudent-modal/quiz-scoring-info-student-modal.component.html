@@ -1,0 +1,97 @@
+<ng-template #scoringExplanation let-c="close" let-d="dismiss">
+    <div class="modal-header">
+        <h5 class="modal-title"><span jhiTranslate="arTeMiSApp.quizExercise.explanationText.scoringTitle" [translateValues]="{paramTitle: this.question.title , paramIndex: this.questionIndex}"></span></h5>
+        <button type="button" class="close" aria-label="Close" (click)="d()"><span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+
+
+    <div class="modal-body" *ngIf="this.question.scoringType === ALL_OR_NOTHING">
+        <span class="show-explanation"><span style="font-weight:bold" jhiTranslate="arTeMiSApp.quizExercise.explanationText.scoringTypeAllOrNothing"></span><span jhiTranslate="arTeMiSApp.quizExercise.explanationText.scoringTypeAllOrNothingExplanation"></span></span><br>
+
+        <div *ngIf= "this.question.type === MULTIPLE_CHOICE">
+            <span *ngIf="this.correctMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0">
+            <span jhiTranslate="arTeMiSApp.quizExercise.explanationText.multipleChoiceAllOrNothingCorrect" [translateValues]="{paramScore: this.score, paramQuestionScore: this.question.score,  paramPoint: this.scorePoint, paramScorePoint: this.questionPoint}"></span></span>
+
+            <span *ngIf="!(this.correctMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0)">
+            <span jhiTranslate="arTeMiSApp.quizExercise.explanationText.multipleChoiceAllOrNothingNotCorrect" [translateValues]="{paramScore: this.score, paramQuestionScore:this.question.score, paramInTotalWrongOptions: this.inTotalSelectedWrongOptions, paramInTotalRightOptions:this.inTotalSelectedRightOptions, paramPoint: this.scorePoint , paramScorePoint: this.questionPoint, wrongOption: this.wrongOption, rightOption:rightOption }"></span></span>
+        </div>
+
+        <div *ngIf= "this.question.type === DRAG_AND_DROP">
+            <span *ngIf="this.wronglyMappedDragAndDropItems == 0">
+            <span jhiTranslate="arTeMiSApp.quizExercise.explanationText.dragAndDropAllOrNothingCorrect" [translateValues]="{paramScore: this.score, paramQuestionScore: this.question.score, paramPoint: this.scorePoint , paramScorePoint: this.questionPoint}"></span></span>
+
+            <span *ngIf="!(this.wronglyMappedDragAndDropItems == 0)">
+            <span jhiTranslate="arTeMiSApp.quizExercise.explanationText.dragAndDropAllOrNothingNotCorrect" [translateValues]="{paramScore: this.score, paramQuestionScore:this.question.score, paramWrongMappedItems: this.wronglyMappedDragAndDropItems, paramRightMapping: this.correctlyMappedDragAndDropItems, paramPoint: this.scorePoint , paramScorePoint: this.questionPoint, rightMap: this.rightMap, wrongMap: this.wrongMap}"></span></span>
+        </div>
+
+        <div *ngIf= "this.question.type === SHORT_ANSWER">
+            <span *ngIf ="!(this.shortAnswerWrongAnswers > 0)">
+            <span jhiTranslate="arTeMiSApp.quizExercise.explanationText.shortAnswerAllOrNothingCorrect" [translateValues]="{paramScore: this.score, paramQuestionScore: this.question.score, paramPoint: this.scorePoint , paramScorePoint: this.questionPoint}"></span></span>
+
+            <span *ngIf ="this.shortAnswerWrongAnswers > 0">
+            <span jhiTranslate="arTeMiSApp.quizExercise.explanationText.shortAnswerAllOrNothingNotCorrect" [translateValues]="{paramScore: this.score, paramQuestionScore:this.question.score, paramShortAnswerWrongOption: this.shortAnswerWrongAnswers, paramShortAnswerCorrectAnswers: this.shortAnswerCorrectAnswers, paramPoint: this.scorePoint , paramScorePoint: this.questionPoint, rightGap: this.rightGap, wrongGap: this.wrongGap}"></span></span>
+        </div>
+    </div>
+
+
+
+    <div class="modal-body" *ngIf="this.question.scoringType === PROPORTIONAL_WITH_PENALTY">
+        <span class="show-explanation"><span style="font-weight:bold" jhiTranslate="arTeMiSApp.quizExercise.explanationText.scoringTypeProportional"></span><span jhiTranslate="arTeMiSApp.quizExercise.explanationText.scoringTypeProportionalExplanation"></span></span><br>
+
+    <div *ngIf="this.question.type === MULTIPLE_CHOICE">
+            <span *ngIf="this.correctMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0">
+            <span jhiTranslate="arTeMiSApp.quizExercise.explanationText.multipleChoiceAllOrNothingCorrect" [translateValues]="{paramScore: this.score, paramQuestionScore: this.question.score, paramPoint: this.scorePoint , paramScorePoint: this.questionPoint}"></span></span>
+
+            <span *ngIf="!(this.correctMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0) && this.differenceMultipleChoice >= 0">
+                <p jhiTranslate="arTeMiSApp.quizExercise.explanationText.multipleChoiceProp" [translateValues]="{paramScore: this.score, paramQuestionScore: this.question.score, paramAmountOfAnswerOptions: this.multipleChoiceAnswerOptions, paramInTotalWrongOptions: this.inTotalSelectedWrongOptions, paramInTotalRightOptions:this.inTotalSelectedRightOptions, paramPoint: this.scorePoint , paramScorePoint: this.questionPoint, wrongOption: this.wrongOption, rightOption:rightOption}"></p>
+                <b>+ {{this.inTotalSelectedRightOptions}}*{{this.question.score}}/{{this.multipleChoiceAnswerOptions}} - {{this.inTotalSelectedWrongOptions}}*{{this.question.score}}/{{this.multipleChoiceAnswerOptions}} = {{this.score}}</b><p jhiTranslate="arTeMiSApp.quizExercise.explanationText.KeepTrying"></p>
+            </span>
+
+            <span *ngIf="!(this.correctMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0) && this.differenceMultipleChoice < 0">
+                <p jhiTranslate="arTeMiSApp.quizExercise.explanationText.multipleChoiceProp" [translateValues]="{paramScore: this.score, paramQuestionScore: this.question.score, paramAmountOfAnswerOptions: this.multipleChoiceAnswerOptions, paramInTotalWrongOptions: this.inTotalSelectedWrongOptions, paramInTotalRightOptions:this.inTotalSelectedRightOptions, paramPoint: this.scorePoint , paramScorePoint: this.questionPoint, wrongOption: this.wrongOption, rightOption:rightOption}"></p>
+                <b>+ {{this.inTotalSelectedRightOptions}}*{{this.question.score}}/{{this.multipleChoiceAnswerOptions}} - {{this.inTotalSelectedWrongOptions}}*{{this.question.score}}/{{this.multipleChoiceAnswerOptions}} = 0 </b><p jhiTranslate="arTeMiSApp.quizExercise.explanationText.zeroPointer"></p><p jhiTranslate="arTeMiSApp.quizExercise.explanationText.KeepTrying"></p>
+            </span>
+    </div>
+
+
+    <div *ngIf="this.question.type === DRAG_AND_DROP">
+            <span *ngIf="this.wronglyMappedDragAndDropItems == 0">
+            <span jhiTranslate="arTeMiSApp.quizExercise.explanationText.dragAndDropAllOrNothingCorrect" [translateValues]="{paramScore: this.score, paramQuestionScore: this.question.score, paramPoint: this.scorePoint , paramScorePoint: this.questionPoint}"></span></span>
+
+            <span *ngIf="!(this.wronglyMappedDragAndDropItems == 0) && this.differenceDragAndDrop >= 0">
+                <p jhiTranslate="arTeMiSApp.quizExercise.explanationText.dragAndDropProp" [translateValues]="{paramScore: this.score, paramQuestionScore: this.question.score, paramWrongMappedItems: this.wronglyMappedDragAndDropItems, paramRightMapping: this.correctlyMappedDragAndDropItems, paramDragAndDropElementsCount: this.dragAndDropZones, paramPoint: this.scorePoint, paramScorePoint: this.questionPoint, rightMap: this.rightMap, wrongMap: this.wrongMap}"></p>
+                <b>+ {{this.correctlyMappedDragAndDropItems}}*{{this.question.score}}/{{this.dragAndDropZones}} - {{this.wronglyMappedDragAndDropItems}}*{{this.question.score}}/{{this.dragAndDropZones}} = {{this.score}}</b><p jhiTranslate="arTeMiSApp.quizExercise.explanationText.KeepTrying"></p>
+            </span>
+
+            <span *ngIf="!(this.wronglyMappedDragAndDropItems == 0) && this.differenceDragAndDrop < 0">
+                <p jhiTranslate="arTeMiSApp.quizExercise.explanationText.dragAndDropProp" [translateValues]="{paramScore: this.score, paramQuestionScore: this.question.score, paramWrongMappedItems: this.wronglyMappedDragAndDropItems, paramRightMapping: this.correctlyMappedDragAndDropItems, paramDragAndDropElementsCount: this.dragAndDropZones, paramPoint: this.scorePoint, paramScorePoint: this.questionPoint, rightMap: this.rightMap, wrongMap: this.wrongMap}"></p>
+                <b>+ {{this.correctlyMappedDragAndDropItems}}*{{this.question.score}}/{{this.dragAndDropZones}} - {{this.wronglyMappedDragAndDropItems}}*{{this.question.score}}/{{this.dragAndDropZones}} = 0 </b><p jhiTranslate="arTeMiSApp.quizExercise.explanationText.zeroPointer"></p><p jhiTranslate="arTeMiSApp.quizExercise.explanationText.KeepTrying"></p>
+            </span>
+    </div>
+
+
+    <div *ngIf="this.question.type === SHORT_ANSWER">
+            <span *ngIf ="!(this.shortAnswerWrongAnswers > 0)">
+            <span jhiTranslate="arTeMiSApp.quizExercise.explanationText.shortAnswerAllOrNothingCorrect" [translateValues]="{paramScore: this.score, paramQuestionScore: this.question.score, paramPoint: this.scorePoint, paramScorePoint: this.questionPoint}"></span></span>
+
+            <span *ngIf ="this.shortAnswerWrongAnswers > 0 && this.differenceShortAnswer >= 0">
+                <p jhiTranslate="arTeMiSApp.quizExercise.explanationText.shortAnswerProp" [translateValues]="{paramScore: this.score, paramQuestionScore:this.question.score, paramShortAnswerWrongOption: this.shortAnswerWrongAnswers, paramShortAnswerCorrectAnswers: this.shortAnswerCorrectAnswers, paramCount: this.shortAnswerSpots, paramPoint: this.scorePoint , paramScorePoint: this.questionPoint, rightGap: this.rightGap, wrongGap: this.wrongGap}"></p>
+                <b>+ {{this.shortAnswerCorrectAnswers}}*{{this.question.score}}/{{this.shortAnswerSpots}} - {{this.shortAnswerWrongAnswers}}*{{this.question.score}}/{{this.shortAnswerSpots}} = {{this.score}}</b><p jhiTranslate="arTeMiSApp.quizExercise.explanationText.KeepTrying"></p>
+            </span>
+
+            <span *ngIf ="this.shortAnswerWrongAnswers > 0 && this.differenceShortAnswer < 0">
+                <p jhiTranslate="arTeMiSApp.quizExercise.explanationText.shortAnswerProp" [translateValues]="{paramScore: this.score, paramQuestionScore:this.question.score, paramShortAnswerWrongOption: this.shortAnswerWrongAnswers, paramShortAnswerCorrectAnswers: this.shortAnswerCorrectAnswers, paramCount: this.shortAnswerSpots, paramPoint: this.scorePoint , paramScorePoint: this.questionPoint, rightGap: this.rightGap, wrongGap: this.wrongGap}"></p>
+                <b>+ {{this.shortAnswerCorrectAnswers}}*{{this.question.score}}/{{this.shortAnswerSpots}} - {{this.shortAnswerWrongAnswers}}*{{this.question.score}}/{{this.shortAnswerSpots}} = 0 </b><p jhiTranslate="arTeMiSApp.quizExercise.explanationText.zeroPointer"></p><p jhiTranslate="arTeMiSApp.quizExercise.explanationText.KeepTrying"></p>
+            </span>
+    </div>
+
+    </div>
+
+    <div class="modal-footer">
+        <button type="button" class="btn btn-outline" (click)="c()">Close</button>
+    </div>
+</ng-template>
+<div>
+    <button class="btn" (click)="open(scoringExplanation)"><fa-icon [ngClass]="{'questionright': (this.score === this.question.score), 'questionwrong': !(this.score === this.question.score)}" [icon]="['far', 'question-circle']"></fa-icon> </button>
+</div>
