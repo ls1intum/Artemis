@@ -249,7 +249,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         absoluteScores[ExerciseType.TEXT] = textExerciseTotalScore;
         absoluteScores[ExerciseType.FILE_UPLOAD] = fileUploadExerciseTotalScore;
         this.absoluteScores = absoluteScores;
-        this.doughnutChartData[0].data = [quizzesTotalScore, programmingExerciseTotalScore, modelingExerciseTotalScore, textExerciseTotalScore, fileUploadExerciseTotalScore totalMissedPoints];
+        this.doughnutChartData[0].data = [quizzesTotalScore, programmingExerciseTotalScore, modelingExerciseTotalScore, textExerciseTotalScore, fileUploadExerciseTotalScore, totalMissedPoints];
     }
 
     calculateMaxScores() {
