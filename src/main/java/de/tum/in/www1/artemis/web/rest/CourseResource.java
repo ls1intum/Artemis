@@ -404,7 +404,6 @@ public class CourseResource {
      */
     @GetMapping(value = "/courses/{courseId}/results")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
     @Transactional(readOnly = true)
     public ResponseEntity<Course> getResultsForCurrentStudent(@PathVariable Long courseId) {
         long start = System.currentTimeMillis();

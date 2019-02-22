@@ -109,33 +109,35 @@ export class CourseExerciseDetailsComponent implements OnInit {
     }
 
     get exerciseIcon(): ExerciseIcon {
-        if (this.exercise.type === this.PROGRAMMING) {
-            return {
-                faIcon: 'keyboard',
-                tooltip: 'This is a programming quiz'
-            };
-        } else if (this.exercise.type === ExerciseType.MODELING) {
-            return {
-                faIcon: 'project-diagram',
-                tooltip: 'This is a modeling quiz'
-            };
-        } else if (this.exercise.type === ExerciseType.QUIZ) {
-            return {
-                faIcon: 'check-double',
-                tooltip: 'This is a multiple choice quiz'
-            };
-        } else if (this.exercise.type === ExerciseType.TEXT) {
-            return {
-                faIcon: 'font',
-                tooltip: 'This is a text quiz'
-            };
-        } else if (this.exercise.type === ExerciseType.FILE_UPLOAD) {
-            return {
-                faIcon: 'file-upload',
-                tooltip: 'This is a file upload'
-            };
-        } else {
-            return;
+        switch(this.exercise.type) {
+            case this.PROGRAMMING:
+                return {
+                    faIcon: 'keyboard',
+                    tooltip: 'This is a programming exercise'
+                };
+            case this.MODELING:
+                return {
+                    faIcon: 'project-diagram',
+                    tooltip: 'This is a modeling exercise'
+                };
+            case this.QUIZ:
+                return {
+                    faIcon: 'check-double',
+                    tooltip: 'This is a quiz exercise'
+                };
+            case this.TEXT:
+                return {
+                    faIcon: 'font',
+                    tooltip: 'This is a text exercise'
+                };
+            case this.FILE_UPLOAD:
+                return {
+                    faIcon: 'file-upload',
+                    tooltip: 'This is a file upload exercise'
+                };
+            default:
+                return;
+
         }
     }
 }
