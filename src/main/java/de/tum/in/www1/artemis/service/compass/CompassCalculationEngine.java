@@ -59,7 +59,7 @@ public class CompassCalculationEngine implements CalculationEngine {
      * @return a list of conflicts modelingAssessment causes with the current manual assessment data
      */
     public List<Conflict> getConflicts(long submissionId, List<ModelElementAssessment> modelingAssessment) {
-        ArrayList<Conflict> conflicts = new ArrayList<>();
+        List<Conflict> conflicts = new ArrayList<>();
         UMLModel model = modelIndex.getModel(submissionId);
         modelingAssessment.forEach(currentElementAssessment -> {
             UMLElement currentElement = model.getElementByJSONID(currentElementAssessment.getId()); //TODO MJ return Optional ad throw Exception if no UMLElement found?

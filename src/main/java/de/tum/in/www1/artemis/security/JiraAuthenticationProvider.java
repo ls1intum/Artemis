@@ -289,7 +289,7 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
                 ArrayList.class);
 
 
-            ArrayList results = authenticationResponse.getBody();
+            List results = authenticationResponse.getBody();
             if(results.size() == 0) {
                 // no result
                 return Optional.empty();
