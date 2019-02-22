@@ -1,6 +1,7 @@
 <div class="mc-question" [ngClass]="{disabled: clickDisabled && !showResult, result: showResult && !forceSampleSolution, incorrect: (score || 0) < question.score && !forceSampleSolution}">
     <h4 class="question-title-display"><span>{{questionIndex}})</span> {{question.title}}</h4>
     <p [innerHTML]="rendered.text"></p><span style="color:red;" *ngIf="question.invalid" jhiTranslate="arTeMiSApp.question.invalidText"></span>
+    <h6>Please choose all correct answer options</h6>
     <div class="hint" *ngIf="question.hint || (question.explanation && showResult)">
         <ng-template #renderedHint>
             <div [innerHTML]="rendered.hint"></div>
@@ -23,7 +24,12 @@
     </div>
     <div class="question-score result" *ngIf="showResult && !forceSampleSolution" [ngClass]="{incorrect: (score || 0) < question.score}">
         <span jhiTranslate="arTeMiSApp.question.yourScore" class="colon-suffix"></span>
-        <span>{{score || 0}}/{{question.score}}</span>
+        <span class="show-explanation">{{score || 0}}/{{question.score}}</span>
+        <span class="show-explanation">
+            <jhi-quiz-scoring-infostudent-modal [score]="score" [question]="question"
+                                                [multipleChoiceMapping]="selectedAnswerOptions"
+                                                [questionIndex]="questionIndex"></jhi-quiz-scoring-infostudent-modal>
+        </span>
     </div>
     <div class="answer-options" *ngIf="!showResult">
         <div *ngFor="let answerOption of question.answerOptions; let i = index" id="answer-option-{{i}}" class="answer-option" [ngClass]="{'click-disabled': clickDisabled}" (click)="toggleSelection(answerOption)">
