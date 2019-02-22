@@ -39,6 +39,18 @@ export const courseRoute: Routes = [
         canActivate: [UserRouteAccessService]
     },
     {
+        path: 'new',
+        component: CourseUpdateComponent,
+        resolve: {
+            course: CourseResolve
+        },
+        data: {
+            authorities: ['ROLE_ADMIN'],
+            pageTitle: 'arTeMiSApp.course.home.title'
+        },
+        canActivate: [UserRouteAccessService]
+    },
+    {
         path: 'course/:id/view',
         component: CourseDetailComponent,
         resolve: {
@@ -58,18 +70,6 @@ export const courseRoute: Routes = [
         },
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_TA', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.course.home.title'
-        },
-        canActivate: [UserRouteAccessService]
-    },
-    {
-        path: 'course/new',
-        component: CourseUpdateComponent,
-        resolve: {
-            course: CourseResolve
-        },
-        data: {
-            authorities: ['ROLE_ADMIN'],
             pageTitle: 'arTeMiSApp.course.home.title'
         },
         canActivate: [UserRouteAccessService]
