@@ -31,7 +31,7 @@ export class ProgrammingExerciseService {
     }
 
     generateStructureOracle(exerciseId: number) {
-        return this.http.put<string>(this.resourceUrl + '/' + id + '/generate-tests', { observe: 'response' });
+        return this.http.put<string>(this.resourceUrl + '/' + exerciseId + '/generate-tests', { observe: 'response' });
     }
 
     update(programmingExercise: ProgrammingExercise): Observable<EntityResponseType> {
