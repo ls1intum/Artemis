@@ -826,31 +826,28 @@ export class QuizComponent implements OnInit, OnDestroy {
 
     /**
      * Checks if the student has interacted with each question of the quiz
-     * For a Multiple Choice Questions it checks if an answer option was selected
-     * For a Drag and Drop Questions it checks if at least one mapping has been made
-     * For a Short Answer Questions it checks if at least one field has been clicked in 
-     * Goes trough selectedAnswerOptions and dragAndDropMappings
+     * for a Multiple Choice Questions it checks if an answer option was selected
+     * for a Drag and Drop Questions it checks if at least one mapping has been made
+     * for a Short Answer Questions it checks if at least one field has been clicked in
+     * @return {boolean} true when student interacted with every question, false when at least one question is without interaction
      */
-    checkForAnsweredQuestions(): boolean {
-        for (let question of this.quizExercise.questions) {
+    areAllQuestionsAnswered(): boolean {
+        for (const question of this.quizExercise.questions) {
             if (question.type === QuestionType.MULTIPLE_CHOICE) {
                 if (this.selectedAnswerOptions[question.id] == 0) {
                     return false;
-                    break
                 }
             } else if (question.type === QuestionType.DRAG_AND_DROP) {
-                    if (this.dragAndDropMappings[question.id] == 0) {
-                        return false;
-                        break
-                    }
-                } else if (question.type === QuestionType.SHORT_ANSWER) {
-                    if (this.shortAnswerSubmittedTexts[question.id] == 0) {
+                if (this.dragAndDropMappings[question.id] == 0) {
                     return false;
-                    break
+                }
+            } else if (question.type === QuestionType.SHORT_ANSWER) {
+                if (this.shortAnswerSubmittedTexts[question.id] == 0) {
+                    return false;
                 }
             }
         }
-            return true
+        return true;
     }
 
 
@@ -861,7 +858,7 @@ export class QuizComponent implements OnInit, OnDestroy {
         this.applySelection();
         let confirmSubmit = true;
 
-        if (this.remainingTimeSeconds > 15 && (this.checkForAnsweredQuestions() == false)) {
+        if (this.remainingTimeSeconds > 15 && (this.areAllQuestionsAnswered() == false)) {
             confirmSubmit = window.confirm('Are you sure you want to submit? You have not answered all questions and you still have some time left!');
         }
         if (confirmSubmit) {
@@ -931,6 +928,7 @@ export class QuizComponent implements OnInit, OnDestroy {
 
     /**
      * By clicking on the bubble of the progress navigation towards the corresponding question of the quiz is triggered
+     * @param questionIndex
      */
     navigateToQuestion(questionIndex: number): void {
         document.getElementById('question' + questionIndex).scrollIntoView({

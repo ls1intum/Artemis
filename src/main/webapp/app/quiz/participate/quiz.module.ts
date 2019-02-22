@@ -26,8 +26,6 @@ const ENTITY_STATES = [...quizRoute];
         QuizComponent,
         MultipleChoiceQuestionComponent,
         DragAndDropQuestionComponent,
-        DragItemComponent,
-        SecuredImageComponent,
         QuizScoringInfoStudentModalComponent,
         ShortAnswerQuestionComponent,
         DragItemComponent,
