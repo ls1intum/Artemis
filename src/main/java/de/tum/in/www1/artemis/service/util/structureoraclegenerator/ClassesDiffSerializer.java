@@ -27,7 +27,7 @@ public class ClassesDiffSerializer {
     public JSONArray serializeAttributes() {
         JSONArray attributesJSON = new JSONArray();
 
-        for(CtField<?> attribute : classesDiff.attributes) {
+        for(CtField<?> attribute : classesDiff.attributesDiff) {
             JSONObject attributeJSON = SerializerUtil.createJsonObject(attribute.getSimpleName(), attribute.getModifiers());
             attributeJSON.put("type", attribute.getType().getSimpleName());
             attributesJSON.put(attributeJSON);
@@ -46,7 +46,7 @@ public class ClassesDiffSerializer {
     public JSONArray serializeConstructors() {
         JSONArray constructorsJSON = new JSONArray();
 
-        for(CtConstructor<?> constructor : classesDiff.constructors) {
+        for(CtConstructor<?> constructor : classesDiff.constructorsDiff) {
             JSONObject constructorJSON = new JSONObject();
 
             if(!constructor.getModifiers().isEmpty()) {

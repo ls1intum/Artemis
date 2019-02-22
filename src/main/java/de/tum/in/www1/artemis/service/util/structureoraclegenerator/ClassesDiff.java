@@ -20,15 +20,15 @@ public class ClassesDiff {
 
     private CtClass<?> solutionClass;
     private CtClass<?> templateClass;
-    protected List<CtField<?>> attributes;
-    protected Set<CtConstructor<?>> constructors;
+    protected List<CtField<?>> attributesDiff;
+    protected Set<CtConstructor<?>> constructorsDiff;
     protected boolean classesEqual;
 	
 	public ClassesDiff(CtClass<?> solutionClass, CtClass<?> templateClass) {
 	    this.solutionClass = solutionClass;
 	    this.templateClass = templateClass;
-		this.attributes = generateAttributesDiff();
-		this.constructors = generateConstructorsDiff();
+		this.attributesDiff = generateAttributesDiff();
+		this.constructorsDiff = generateConstructorsDiff();
 		this.classesEqual = areClassesEqual();
 	}
 
@@ -94,7 +94,7 @@ public class ClassesDiff {
      * @return True, if the solution type is the same in structure as the template type, false otherwise.
      */
 	private boolean areClassesEqual() {
-		return this.attributes.isEmpty() && this.constructors.isEmpty();
+		return this.attributesDiff.isEmpty() && this.constructorsDiff.isEmpty();
 	}
 
 }

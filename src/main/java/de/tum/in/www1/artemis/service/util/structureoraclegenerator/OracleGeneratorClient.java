@@ -131,10 +131,10 @@ public class OracleGeneratorClient {
                 }
 
                 ClassesDiffSerializer classesDiffSerializer = new ClassesDiffSerializer(classesDiff);
-                if(!classesDiff.attributes.isEmpty()) {
+                if(!classesDiff.attributesDiff.isEmpty()) {
                     diffJSON.put("attributes", classesDiffSerializer.serializeAttributes());
                 }
-                if(!classesDiff.constructors.isEmpty()) {
+                if(!classesDiff.constructorsDiff.isEmpty()) {
                     diffJSON.put("constructors", classesDiffSerializer.serializeConstructors());
                 }
             }
