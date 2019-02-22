@@ -49,7 +49,7 @@ describe('course', () => {
         await newCoursePage.clickCancel();
     });
 
-    it('should not create new course without tutor group', async () => {
+    it('should allow to create new course without tutor group', async () => {
         await coursePage.clickOnCreateNewCourse();
 
         await newCoursePage.setTitle(courseName);
@@ -57,7 +57,7 @@ describe('course', () => {
         await newCoursePage.setStudentGroupName('tumuser');
         await newCoursePage.setInstructorGroupName('ls1instructor');
 
-        expect(await newCoursePage.save.getAttribute('disabled')).to.equal('true');
+        expect(await newCoursePage.save.getAttribute('disabled')).to.equal(null);
         await newCoursePage.clickCancel();
     });
 
