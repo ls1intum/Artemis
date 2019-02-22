@@ -28,20 +28,12 @@ public class ClassesDiffSerializer {
         JSONArray attributesJSON = new JSONArray();
 
         for(CtField<?> attribute : classesDiff.attributes) {
-            JSONObject attributeJSON = new JSONObject();
-
-            attributeJSON.put("name", attribute.getSimpleName());
-
-            if(!attribute.getModifiers().isEmpty()) {
-                attributeJSON.put("modifiers", SerializerUtil.serializeModifiers(attribute.getModifiers()));
-            }
-
+            JSONObject attributeJSON = SerializerUtil.createJsonObject(attribute.getSimpleName(), attribute.getModifiers());
             attributeJSON.put("type", attribute.getType().getSimpleName());
-
             attributesJSON.put(attributeJSON);
         }
 
-        return  attributesJSON;
+        return attributesJSON;
     }
 
     /**

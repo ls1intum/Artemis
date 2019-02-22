@@ -1,10 +1,12 @@
 package de.tum.in.www1.artemis.service.util.structureoraclegenerator;
 
 import org.json.JSONArray;
+import org.json.JSONObject;
 import spoon.reflect.declaration.CtParameter;
 import spoon.reflect.declaration.ModifierKind;
 
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * This class contains helper methods for serializing information on structural elements that we deal with repeatedly
@@ -53,4 +55,19 @@ public abstract class SerializerUtil {
         return parametersArray;
     }
 
+    /**
+     * creates the json object for the serialization and inserts the name and the modifiers
+     *
+     * @param name
+     * @param modifiers
+     * @return
+     */
+    public static JSONObject createJsonObject(String name, Set<ModifierKind> modifiers) {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("name", name);
+        if(!modifiers.isEmpty()) {
+            jsonObject.put("modifiers", serializeModifiers(modifiers));
+        }
+        return jsonObject;
+    }
 }

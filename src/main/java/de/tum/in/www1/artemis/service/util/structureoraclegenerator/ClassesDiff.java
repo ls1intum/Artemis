@@ -9,6 +9,8 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static de.tum.in.www1.artemis.service.util.structureoraclegenerator.TypesDiff.parameterTypesAreEqual;
+
 /**
  * This class extends the functionality of TypesDiff and handles structural elements that are exclusive to classes:
  * - Attributes,
@@ -37,8 +39,7 @@ public class ClassesDiff {
      */
     private List<CtField<?>> generateAttributesDiff() {
         // Use this predicate to filter out fields that are implicit, e.g. not explicitly defined in the code.
-        Predicate<CtField<?>> fieldIsImplicit = f -> f.isImplicit() ||
-            f.getSimpleName().equals(solutionClass.getSimpleName());
+        Predicate<CtField<?>> fieldIsImplicit = field -> field.isImplicit() || field.getSimpleName().equals(solutionClass.getSimpleName());
 
         // Create an empty set of attribute for the attributes diff and deep-copy the methods of the solution type in it.
         List<CtField<?>> attributesDiff = new ArrayList<>(solutionClass.getFields());
@@ -52,8 +53,7 @@ public class ClassesDiff {
             for (CtField<?> templateAttribute : templateClass.getFields()) {
 
                 // The fields are uniquely identified by their names.
-                attributesDiff.removeIf(solutionAttribute ->
-                    solutionAttribute.getSimpleName().equals(templateAttribute.getSimpleName()));
+                attributesDiff.removeIf(solutionAttribute -> solutionAttribute.getSimpleName().equals(templateAttribute.getSimpleName()));
             }
         }
 
@@ -87,30 +87,6 @@ public class ClassesDiff {
         }
 
         return constructorsDiff;
-    }
-
-    /**
-     * This method checks if the parameter types of an executable in the solution type are the same to an executable
-     * in the template type. An executable can be a method or a constructor.
-     * @param solutionExecutable: The executable present in the solution type.
-     * @param templateExecutable: The executable present in the template type.
-     * @return True, if the parameter types are the same, false otherwise.
-     */
-    protected boolean parameterTypesAreEqual(CtExecutable<?> solutionExecutable, CtExecutable<?> templateExecutable) {
-        // Create lists containing only the parameter type names for both the executable.
-        // This is done to work with them more easily, since types are uniquely identified only by their names.
-        List<String> solutionParams = solutionExecutable.getParameters().stream().map(CtNamedElement::getSimpleName).collect(Collectors.toList());
-        List<String> templateParams = templateExecutable.getParameters().stream().map(CtNamedElement::getSimpleName).collect(Collectors.toList());
-
-        // If both executables have no empty, then they parameters are the same.
-        if(solutionParams.isEmpty() && templateParams.isEmpty()) return true;
-
-        // If the number of the parameters is not equal, then the parameters are not the same.
-        if(solutionParams.size() != templateParams.size()) return false;
-
-        // Otherwise, check if the list of the parameters of the solution executable contains all the parameters
-        // in the template executable.
-        return solutionParams.containsAll(templateParams);
     }
 
     /**

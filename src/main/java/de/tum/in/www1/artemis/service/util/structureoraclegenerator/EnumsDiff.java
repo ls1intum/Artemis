@@ -1,12 +1,12 @@
 package de.tum.in.www1.artemis.service.util.structureoraclegenerator;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Predicate;
-
 import spoon.reflect.declaration.CtElement;
 import spoon.reflect.declaration.CtEnum;
 import spoon.reflect.declaration.CtEnumValue;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * This diff extends the functionality of ClassesDiff and handles structural elements that are exclusive to enums:

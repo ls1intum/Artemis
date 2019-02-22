@@ -11,7 +11,7 @@ import spoon.reflect.declaration.CtClass;
 import spoon.reflect.declaration.CtEnum;
 import spoon.reflect.declaration.CtType;
 
-import java.io.*;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;

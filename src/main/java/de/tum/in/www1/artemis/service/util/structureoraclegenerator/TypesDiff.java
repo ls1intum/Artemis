@@ -1,14 +1,13 @@
 package de.tum.in.www1.artemis.service.util.structureoraclegenerator;
 
+import spoon.reflect.declaration.*;
+import spoon.reflect.reference.CtTypeReference;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
-import spoon.reflect.declaration.*;
-import spoon.reflect.reference.CtTypeReference;
 
 /**
  * This class represents the so-called diff of the solution type and the template type. 
@@ -27,6 +26,7 @@ import spoon.reflect.reference.CtTypeReference;
  * - Methods.
  */
 public class TypesDiff {
+
     private CtType<?> solutionType;
     private CtType<?> templateType;
     protected boolean isTemplateNull;
@@ -192,7 +192,7 @@ public class TypesDiff {
      * @param templateExecutable: The executable present in the template type.
      * @return True, if the parameter types are the same, false otherwise.
      */
-    protected boolean parameterTypesAreEqual(CtExecutable<?> solutionExecutable, CtExecutable<?> templateExecutable) {
+    public static boolean parameterTypesAreEqual(CtExecutable<?> solutionExecutable, CtExecutable<?> templateExecutable) {
         // Create lists containing only the parameter type names for both the executable.
         // This is done to work with them more easily, since types are uniquely identified only by their names.
         List<String> solutionParams = solutionExecutable.getParameters().stream().map(CtNamedElement::getSimpleName).collect(Collectors.toList());
