@@ -1,8 +1,8 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs/Subscription';
-import { JhiEventManager } from 'ng-jhipster';
+import { JhiEventManager, JhiAlertService } from 'ng-jhipster';
 
 import { Course } from './course.model';
 import { CourseService } from './course.service';
@@ -20,7 +20,8 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     constructor(
         private eventManager: JhiEventManager,
         private courseService: CourseService,
-        private route: ActivatedRoute
+        private route: ActivatedRoute,
+        private jhiAlertService: JhiAlertService
     ) {
     }
 
@@ -31,11 +32,26 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         this.registerChangeInCourses();
     }
 
-    load(id: number) {
-        this.courseService.find(id)
+    load(courseId: number) {
+        this.courseService.find(courseId)
             .subscribe((courseResponse: HttpResponse<Course>) => {
                 this.course = courseResponse.body;
             });
+    }
+
+    registerForCourse() {
+        this.courseService.registerForCourse(this.course.id).subscribe(userResponse => {
+            if (userResponse.body != null) {
+                const message = 'Registered user for course ' + this.course.title;
+                const jhiAlert = this.jhiAlertService.info(message);
+                jhiAlert.msg = message;
+            }
+        }, (error: HttpErrorResponse) =>  {
+            const errorMessage = error.headers.get('X-arTeMiSApp-message');
+            // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
+            const jhiAlert = this.jhiAlertService.error(errorMessage);
+            jhiAlert.msg = errorMessage;
+        });
     }
 
     previousState() {
