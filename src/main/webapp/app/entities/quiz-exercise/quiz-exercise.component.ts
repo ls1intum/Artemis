@@ -1,6 +1,5 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs/Subscription';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { QuizExercise } from './quiz-exercise.model';
@@ -8,15 +7,14 @@ import { QuizExerciseService } from './quiz-exercise.service';
 import { AccountService } from '../../core';
 import { ActivatedRoute } from '@angular/router';
 import * as moment from 'moment';
-import { Course, CourseService } from '../course';
+import { CourseService } from '../course';
+import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 
 @Component({
     selector: 'jhi-quiz-exercise',
     templateUrl: './quiz-exercise.component.html'
 })
-export class QuizExerciseComponent implements OnInit, OnDestroy {
-    private subscription: Subscription;
-    private eventSubscriber: Subscription;
+export class QuizExerciseComponent extends ExerciseComponent {
 
     QuizStatus = {
         HIDDEN: 'Hidden',
@@ -26,72 +24,44 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
         OPEN_FOR_PRACTICE: 'Open for Practice'
     };
 
-    @Input() quizExercises: QuizExercise[];
-    @Input() course: Course;
+    @Input() quizExercises: QuizExercise[] = [];
     predicate: string;
     reverse: boolean;
-    courseId: number;
-    @Input() showHeading = true;
-    showAlertHeading: boolean;
 
     constructor(
-        private courseService: CourseService,
+        courseService: CourseService,
         private quizExerciseService: QuizExerciseService,
         private jhiAlertService: JhiAlertService,
-        private eventManager: JhiEventManager,
+        eventManager: JhiEventManager,
         private accountService: AccountService,
-        private route: ActivatedRoute
+        route: ActivatedRoute
     ) {
+        super(courseService, route, eventManager);
         this.predicate = 'id';
         this.reverse = true;
     }
 
-    ngOnInit() {
-        if(location.href.toString().includes('quiz-exercise')){
-            this.showAlertHeading= true;
-        }
-        this.load();
-        this.registerChangeInQuizExercises();
-    }
-
-    load() {
-        if (this.course == null) {
-            this.subscription = this.route.params.subscribe(params => {
-                this.courseId = params['courseId'];
-                this.loadForCourse(this.courseId);
-            });
-        } else {
-            this.loadForCourse(this.course.id)
-        }
-    }
-
-    loadForCourse(courseId: number) {
-        this.courseService.find(courseId).subscribe(courseResponse => {
-            this.course = courseResponse.body;
-            this.quizExerciseService.findForCourse(courseId).subscribe(
-                (res: HttpResponse<QuizExercise[]>) => {
-                    this.quizExercises = res.body;
-                    // reconnect exercise with course
-                    this.quizExercises.forEach(quizExercise => {
-                        quizExercise.course = this.course;
-                    });
-                    this.setQuizExercisesStatus();
-                },
-                (res: HttpErrorResponse) => this.onError(res)
-            );
-        });
-    }
-
-    ngOnDestroy() {
-        this.eventManager.destroy(this.eventSubscriber);
+    protected loadExercises(): void {
+        this.quizExerciseService.findForCourse(this.courseId).subscribe(
+            (res: HttpResponse<QuizExercise[]>) => {
+                this.quizExercises = res.body;
+                // reconnect exercise with course
+                this.quizExercises.forEach(quizExercise => {
+                    quizExercise.course = this.course;
+                });
+                this.emitExerciseCount(this.quizExercises.length);
+                this.setQuizExercisesStatus();
+            },
+            (res: HttpErrorResponse) => this.onError(res)
+        );
     }
 
     trackId(index: number, item: QuizExercise) {
         return item.id;
     }
 
-    registerChangeInQuizExercises() {
-        this.eventSubscriber = this.eventManager.subscribe('quizExerciseListModification', () => this.load());
+    protected getChangeEventName(): string {
+        return 'quizExerciseListModification';
     }
 
     private onError(error: HttpErrorResponse) {
@@ -167,7 +137,6 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
             }
         );
     }
-
 
     /**
      * Do not load all quizExercise if only one has changed
