@@ -14,16 +14,23 @@ import { TextExercise } from '../text-exercise/text-exercise.model';
 import { FileUploadExercise } from '../file-upload-exercise/file-upload-exercise.model';
 import { Exercise } from '../exercise/exercise.model';
 import { ExerciseService } from '../exercise/exercise.service';
-import { Result } from 'app/entities/result';
+import { AccountService, User } from 'app/core';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
+
+export type StatsForTutorDashboard = {
+    numberOfAssessments: number;
+    numberOfTutorAssessments: number;
+    numberOfComplaints: number;
+    numberOfSubmissions: number;
+};
 
 @Injectable({ providedIn: 'root' })
 export class CourseService {
     private resourceUrl = SERVER_API_URL + 'api/courses';
 
-    constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
+    constructor(private http: HttpClient, private exerciseService: ExerciseService, private accountService: AccountService) {}
 
     create(course: Course): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(course);
@@ -61,14 +68,37 @@ export class CourseService {
         return this.http.get<Participation[]>(`${this.resourceUrl}/${courseId}/participations`);
     }
 
+    getForTutors(courseId: number): Observable<EntityResponseType> {
+        return this.http
+            .get<Course>(`${this.resourceUrl}/${courseId}/for-tutor-dashboard`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+    }
+
+    getStatsForTutors(courseId: number): Observable<HttpResponse<StatsForTutorDashboard>> {
+        return this.http
+            .get<StatsForTutorDashboard>(`${this.resourceUrl}/${courseId}/stats-for-tutor-dashboard`, { observe: 'response' });
+    }
+
+    // the body is null, because the server can identify the user anyway
+    registerForCourse(courseId: number): Observable<HttpResponse<User>> {
+        return this.http
+            .post<User>(`${this.resourceUrl}/${courseId}/register`, null, { observe: 'response' })
+            .pipe(map((res: HttpResponse<User>) => {
+                if (res.body != null) {
+                    this.accountService.syncGroups(res.body);
+                }
+                return res;
+        }));
+    }
+
     query(): Observable<EntityArrayResponseType> {
         return this.http
             .get<Course[]>(this.resourceUrl, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
     }
 
-    delete(id: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${id}`, { observe: 'response' });
+    delete(courseId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${courseId}`, { observe: 'response' });
     }
 
     protected convertDateFromClient(course: Course): Course {

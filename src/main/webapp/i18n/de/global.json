@@ -104,7 +104,7 @@
                 "authenticated": {
                     "prefix": "Wenn Sie sich ",
                     "link": "anmelden",
-                    "suffix": " möchten, versuchen Sie es mit <br/>- Administrator (Name=\"admin\" und Passwort=\"admin\")<br/>- Benutzer (Name=\"user\" und Passwort=\"user\")."
+                    "suffix": " möchten, versuchen Sie es mit <br>- Administrator (Name=\"admin\" und Passwort=\"admin\")<br>- Benutzer (Name=\"user\" und Passwort=\"user\")."
                 },
                 "register": {
                     "noaccount": "Sie haben noch keinen Zugang?",
@@ -165,7 +165,12 @@
             "re-evaluate": "Überarbeiten",
             "close": "Schließen",
             "import": "Import",
-            "export": "Export"
+            "export": "Export",
+            "tutorCourseDashboard": "Tutor Kurs Dashboard",
+            "exerciseDashboard": "Übungs Dashboard",
+            "newResult": "Neues Ergebnis",
+            "cleanupBuildPlan": "Build Plan aufräumen",
+            "registerForCourse": "Für Kurs anmelden"
         },
         "detail": {
             "field": "Feld",

@@ -1,15 +1,4 @@
-import {
-    AfterViewInit,
-    Component,
-    ElementRef,
-    EventEmitter,
-    Input,
-    OnInit,
-    Output,
-    SimpleChanges,
-    ViewChild,
-    OnChanges
-} from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { DragAndDropQuestion } from '../../../entities/drag-and-drop-question';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { DragAndDropQuestionUtil } from '../../../components/util/drag-and-drop-question-util.service';

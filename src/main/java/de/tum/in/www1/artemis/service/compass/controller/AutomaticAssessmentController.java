@@ -9,10 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class AutomaticAssessmentController {
 
@@ -21,12 +18,13 @@ public class AutomaticAssessmentController {
     private double totalCoverage;
     private double totalConfidence;
 
+
     /**
      * Add a score to an assessment, creates a new assessment if it does not exists
      *
-     * @param index manages all assessments
+     * @param index        manages all assessments
      * @param scoreHashMap maps elementIds to scores
-     * @param model the UML model - contains all elements with its corresponding jsonIds
+     * @param model        the UML model - contains all elements with its corresponding jsonIds
      * @throws IOException if the score for the element is null
      */
     public void addScoresToAssessment(AssessmentIndex index, Map<String, Score> scoreHashMap, UMLModel model) throws IOException {
@@ -39,13 +37,13 @@ public class AutomaticAssessmentController {
             }
 
             Context context = element.getContext();
-            Assessment assessment = index.getAssessment(element);
+            Optional<Assessment> assessmentOptional = index.getAssessment(element.getElementID());
 
-            if (assessment == null) {
-                assessment = new Assessment(context, scoreHashMap.get(jsonElementID));
-                index.addAssessment(element.getElementID(), assessment);
+            if (assessmentOptional.isPresent()) {
+                assessmentOptional.get().addScore(scoreHashMap.get(jsonElementID), context);
             } else {
-                assessment.addScore(scoreHashMap.get(jsonElementID), context);
+                Assessment newAssessment = new Assessment(context, scoreHashMap.get(jsonElementID));
+                index.addAssessment(element.getElementID(), newAssessment);
             }
         }
     }
@@ -54,7 +52,7 @@ public class AutomaticAssessmentController {
     /**
      * Loops over all models and triggers their automatic assessments
      *
-     * @param modelIndex manages all models
+     * @param modelIndex      manages all models
      * @param assessmentIndex manages all assessments
      */
     public void assessModelsAutomatically(ModelIndex modelIndex, AssessmentIndex assessmentIndex) {
@@ -75,10 +73,11 @@ public class AutomaticAssessmentController {
         totalCoverage /= modelIndex.getModelCollectionSize();
     }
 
+
     /**
      * Loop over all elements of a model, get their assessments and build a result with them
      *
-     * @param model the UML model which contains all the model elements
+     * @param model           the UML model which contains all the model elements
      * @param assessmentIndex manages all assessments
      * @return a result
      */
@@ -100,13 +99,13 @@ public class AutomaticAssessmentController {
         Map<UMLElement, Score> scoreHashMap = new HashMap<>();
 
         for (UMLAssociation relation : model.getAssociationList()) {
-            Assessment assessment = assessmentIndex.getAssessment(relation);
+            Optional<Assessment> assessmentOptional = assessmentIndex.getAssessment(relation.getElementID());
             totalCount++;
 
-            if (assessment == null) {
+            if (!assessmentOptional.isPresent()) {
                 missingCount++;
             } else {
-                Score score = assessment.getScore(relation.getContext());
+                Score score = assessmentOptional.get().getScore(relation.getContext());
                 if (score == null) {
                     log.debug("Unable to find score for relation " + relation.getJSONElementID() + " in model " + model.getModelID()
                         + " with the specific context");
@@ -132,21 +131,21 @@ public class AutomaticAssessmentController {
         return compassResult;
     }
 
+
     private CompassResult assessConnectable(UMLClass umlClass, AssessmentIndex index) {
-        HashMap<UMLElement, Score> scoreHashMap = new HashMap<>();
+        Map<UMLElement, Score> scoreHashMap = new HashMap<>();
 
         int missing = 0;
 
         Context childContext = new Context(umlClass.getElementID());
 
-        for (UMLAttribute attribute : umlClass.getAttributeList()) {
-            Assessment assessment = index.getAssessment(attribute);
+        for (UMLAttribute attribute : umlClass.getAttributes()) {
+            Optional<Assessment> assessmentOptional = index.getAssessment(attribute.getElementID());
 
-            if (assessment == null) {
+            if (!assessmentOptional.isPresent()) {
                 missing++;
-            } else if (assessment.hasContext(childContext)) {
-                Score score = assessment.getScore(childContext);
-
+            } else if (assessmentOptional.get().hasContext(childContext)) {
+                Score score = assessmentOptional.get().getScore(childContext);
                 if (score == null) {
                     log.warn("Unable to find score for attribute " + attribute.getJSONElementID());
                 } else {
@@ -155,13 +154,13 @@ public class AutomaticAssessmentController {
             }
         }
 
-        for (UMLMethod method : umlClass.getMethodList()) {
-            Assessment assessment = index.getAssessment(method);
+        for (UMLMethod method : umlClass.getMethods()) {
+            Optional<Assessment> assessmentOptional = index.getAssessment(method.getElementID());
 
-            if (assessment == null) {
+            if (!assessmentOptional.isPresent()) {
                 missing++;
-            } else if (assessment.hasContext(childContext)) {
-                Score score = assessment.getScore(childContext);
+            } else if (assessmentOptional.get().hasContext(childContext)) {
+                Score score = assessmentOptional.get().getScore(childContext);
 
                 if (score == null) {
                     log.warn("Unable to find score for method " + method.getJSONElementID());
@@ -171,12 +170,12 @@ public class AutomaticAssessmentController {
             }
         }
 
-        Assessment assessment = index.getAssessment(umlClass);
+        Optional<Assessment> assessmentOptional = index.getAssessment(umlClass.getElementID());
 
-        if (assessment == null) {
+        if (!assessmentOptional.isPresent()) {
             missing++;
         } else {
-            Score score = assessment.getScore(umlClass.getContext());
+            Score score = assessmentOptional.get().getScore(umlClass.getContext());
 
             if (score == null) {
                 log.debug("Unable to find score for class " + umlClass.getJSONElementID() + " with the specific context");
@@ -189,8 +188,7 @@ public class AutomaticAssessmentController {
         double coverage = 1;
         if (totalCount != 0) {
             coverage = (totalCount - missing) / totalCount;
-        }
-        else {
+        } else {
             log.warn("'totalCount' was 0. Set coverage to 1 for a CompassResult");
         }
 
@@ -201,6 +199,7 @@ public class AutomaticAssessmentController {
     public double getTotalCoverage() {
         return totalCoverage;
     }
+
 
     public double getTotalConfidence() {
         return totalConfidence;

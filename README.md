@@ -1,24 +1,24 @@
 # Artemis: Automated Assessment Management System 
 This application was generated using JHipster 5.8.1, you can find documentation and help at [http://www.jhipster.tech/documentation-archive/v5.8.1](http://www.jhipster.tech/documentation-archive/v5.8.1).
 
-**Current version:** 2.3.3
+**Current version:** 2.4.0
 
 ## Main features
 Artemis supports the following exercises:
 1. **Programming exercises** with version control and automatic assessment with test cases and continuous integration
-2. **Quiz exercises** with multiple choice questions and drag and drop questions 
+2. **Quiz exercises** with multiple choice, drag and drop and short answer questions 
 3. **Modeling exercises** with semi-automatic assessment using machine learning concepts
 4. **Text exercises** with manual assessment (beta)
 
-All these exercises are supposed to be run either live in-class with instant feedback or as homework. Students can submit their solutions multiple times within the due date and use the (semi-)automatically provided feedback to improve their solution.
+All these exercises are supposed to be run either live in the lecture with instant feedback or as homework. Students can submit their solutions multiple times within the due date and use the (semi-)automatically provided feedback to improve their solution.
 
 ## Top-Level Design
 
-The following UML diagram shows the top-level design of Artemis which is decomposed into an application client and an application server. The application server then connects to a version control system (VCS), a continuous integration system (CIS) and a user management system (UMS).
+The following diagram shows the top-level design of Artemis which is decomposed into an application client (running as Angular web app in the browser) and an application server (based on Spring Boot). For programming exercises, the application server connects to a version control system (VCS) and a continuous integration system (CIS). Authentication is handled by an external user management system (UMS).
 
 ![Top-Level Design](doc/TopLevelDesign.png "Top-Level Design")
 
-While Artemis includes generic adapters to these three external systems with a defined protocol which can be instantiated to connect to any VCS, CIS or UMS, it also provides 3 concrete implementations for these adapters to connect to:
+While Artemis includes generic adapters to these three external systems with a defined protocol that can be instantiated to connect to any VCS, CIS or UMS, it also provides 3 concrete implementations for these adapters to connect to:
 
 1. **VCS:** Atlassian Bitbucket Server
 2. **CIS:** Atlassian Bamboo Server
@@ -43,7 +43,7 @@ The following activity diagram shows this exercise workflow.
 
 ## Online Editor
 
-The following screenshot shows the online editor with interactive and dynamic exercise instructions on the right side.
+The following screenshot shows the online code editor with interactive and dynamic exercise instructions on the right side.
 Tasks and UML diagram elements are referenced by test cases and update their color from red to green after students submit a new version and all test cases associated with a task or diagram element pass.
 This allows the students to immediately recognize which tasks are already fulfilled and is particularly helpful for programming beginners.
 
@@ -58,8 +58,8 @@ Before you can build Artemis, you must install and configure the following depen
 
 1. [Java 8 JDK](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html): Java is the main development language for the server application of Artemis. (Please note that newer versions of Java might work, but are not yet supported)
 2. [MySQL Database Server 5.7.x](https://dev.mysql.com/downloads/mysql): Artemis uses Hibernate to store entities in a MySQL database. Download and install the MySQL Community Server (5.7.x) and configure the 'root' user with an empty password. (In case you want to use a different password, make sure to change the value in application-dev.yml and in liquibase.gradle). The required Artemis scheme will be created / updated automatically at startup time of the server application. (Please note that MySQL 8 is not yet supported)
-3. [Node.js](https://nodejs.org): We use Node (>=6.9.0 and <= 10.x) to run a development web server and build the project. Depending on your system, you can install Node either from source or as a pre-packaged bundle. (Please note that Node 11 has an annoying bug, so it is recommended to use the latest version of Node 10.x)
-4. [Yarn 1.9.x](https://yarnpkg.com): We use Yarn to manage Node dependencies.
+3. [Node.js](https://nodejs.org): We use Node (>=6.9.0) to run a development web server and build the project. Depending on your system, you can install Node either from source or as a pre-packaged bundle. (Please note that Node 11 has an annoying bug, so it is recommended to use the latest version of Node 10.x)
+4. [Yarn 1.13.x](https://yarnpkg.com): We use Yarn to manage Node dependencies.
 Depending on your system, you can install Yarn either from source or as a pre-packaged bundle.
 
 ### Server Setup
@@ -76,16 +76,17 @@ artemis:
     user: <username>
     password: <password>
     admin-group-name: tumuser
-  bitbucket:
+  version-control:
     url: https://repobruegge.in.tum.de
     user: <username>
-    password: <password>
+    secret: <password>
   bamboo:
     url: https://bamboobruegge.in.tum.de
     bitbucket-application-link-id: de1bf2e0-eb40-3a2d-9494-93cbe2e22d08
     user: <username>
     password: <password>
     empty-commit-necessary: true
+    authentication-token: <token>
   lti:
     id: artemis_lti
     oauth-key: artemis_lti_key
@@ -164,12 +165,10 @@ The Continuous Integration Server typically delegates the build jobs to local bu
 
 ## Data Model
 
-The Artemis application server used the following (initial) data model in the MySQL database. It supports multiple courses with multiple exercises. Each student in the participating student group can participate in the exercise by clicking the **Start Exercise** button. Then a repository and a build plan for the student (User) will be created and configured. The initialization state variable (Enum) helps to track the progress of this complex operation and allows to recover from errors. A student can submit multiple solutions by committing and pushing the source code changes to a given example code into the version control system. Each submission is automatically tested by the continuous integration server, which notifies the Artemis application server, when a new result exists. In addition, teaching assistants can assess student solutions and "manually" create results.
-The current data model is more complex and supports different types of exercises such as programming exercises, modeling exercises and quiz exercises.
+The Artemis application server used the following data model in the MySQL database.  It supports multiple courses with multiple exercises. Each student in the participating student group can participate in the exercise by clicking the **Start Exercise** button. Then a repository and a build plan for the student (User) will be created and configured. The initialization state variable (Enum) helps to track the progress of this complex operation and allows to recover from errors. A student can submit multiple solutions by committing and pushing the source code changes to a given example code into the version control system or using the user interface. Each submission is automatically tested by the continuous integration server, which notifies the Artemis application server, when a new result exists. In addition, teaching assistants can assess student solutions and "manually" create results.
+The current data model is more complex and supports different types of exercises such as programming exercises, modeling exercises, quiz, and text exercises.
 
 ![Data Model](doc/DataModel.png "Data Model")
-
-In the future, we want to allow different types of exercises, so expect multiple subclasses for programming, modeling and quiz exercises.
 
 
 ## Server Architecture

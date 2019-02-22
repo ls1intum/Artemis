@@ -1,4 +1,4 @@
-import { Component, DoCheck, Input, IterableDiffers, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, DoCheck, Input, IterableDiffers, OnChanges, SimpleChanges } from '@angular/core';
 import { Feedback } from 'app/entities/feedback';
 import { HighlightColors } from 'app/text-shared/highlight-colors';
 
@@ -21,7 +21,7 @@ export class HighlightedTextAreaComponent implements OnChanges, DoCheck {
         if (!this.submissionText) {
             return '';
         }
-        return this.submissionText.replace(/(?:\r\n|\r|\n)/g, '<br />');
+        return this.submissionText.replace(/(?:\r\n|\r|\n)/g, '<br>');
     }
 
     ngOnChanges(changes: SimpleChanges): void {

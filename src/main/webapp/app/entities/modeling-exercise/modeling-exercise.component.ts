@@ -5,7 +5,6 @@ import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { ModelingExercise } from './modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
-import { ITEMS_PER_PAGE } from '../../shared';
 import { AccountService } from '../../core';
 import { CourseExerciseService } from '../course/course.service';
 import { ActivatedRoute } from '@angular/router';

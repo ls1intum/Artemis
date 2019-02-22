@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 
 import { SERVER_API_URL } from 'app/app.constants';
-import { Account } from 'app/core/user/account.model';
 
 import { JhiLanguageService } from 'ng-jhipster';
 import { SessionStorageService } from 'ngx-webstorage';
@@ -36,6 +35,10 @@ export class AccountService {
         this.userIdentity = identity;
         this.authenticated = identity !== null;
         this.authenticationState.next(this.userIdentity);
+    }
+
+    syncGroups(identity: User) {
+        this.userIdentity.groups = identity.groups;
     }
 
     hasAnyAuthority(authorities: string[]): Promise<boolean> {
@@ -72,7 +75,7 @@ export class AccountService {
     }
 
     hasGroup(group: string): boolean {
-        if (!this.authenticated || !this.userIdentity || !this.userIdentity.authorities) {
+        if (!this.authenticated || !this.userIdentity || !this.userIdentity.authorities || !this.userIdentity.groups) {
             return false;
         }
 
@@ -126,6 +129,13 @@ export class AccountService {
         return (
             this.hasGroup(course.instructorGroupName) ||
             this.hasGroup(course.teachingAssistantGroupName) ||
+            this.hasAnyAuthorityDirect(['ROLE_ADMIN'])
+        );
+    }
+
+    isAtLeastInstructorInCourse(course: Course) {
+        return (
+            this.hasGroup(course.instructorGroupName) ||
             this.hasAnyAuthorityDirect(['ROLE_ADMIN'])
         );
     }

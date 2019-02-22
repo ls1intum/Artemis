@@ -1,6 +1,7 @@
 <div class="mc-question" [ngClass]="{disabled: clickDisabled && !showResult, result: showResult && !forceSampleSolution, incorrect: (score || 0) < question.score && !forceSampleSolution}">
     <h4 class="question-title-display"><span>{{questionIndex}})</span> {{question.title}}</h4>
     <p [innerHTML]="rendered.text"></p><span style="color:red;" *ngIf="question.invalid" jhiTranslate="arTeMiSApp.question.invalidText"></span>
+    <h6>Please choose all correct answer options</h6>
     <div class="hint" *ngIf="question.hint || (question.explanation && showResult)">
         <ng-template #renderedHint>
             <div [innerHTML]="rendered.hint"></div>
@@ -8,7 +9,7 @@
         <span class="label label-info" [ngbPopover]="renderedHint" placement="right" triggers="mouseenter:mouseleave" *ngIf="question.hint">
             <fa-icon [icon]="['far', 'question-circle']"></fa-icon>
             <span jhiTranslate="arTeMiSApp.question.hint"></span>
-        </span> </br>
+        </span> <br>
         <ng-template #renderedExplanation>
             <div [innerHTML]="rendered.explanation"></div>
         </ng-template>
@@ -23,10 +24,15 @@
     </div>
     <div class="question-score result" *ngIf="showResult && !forceSampleSolution" [ngClass]="{incorrect: (score || 0) < question.score}">
         <span jhiTranslate="arTeMiSApp.question.yourScore" class="colon-suffix"></span>
-        <span>{{score || 0}}/{{question.score}}</span>
+        <span class="show-explanation">{{score || 0}}/{{question.score}}</span>
+        <span class="show-explanation">
+            <jhi-quiz-scoring-infostudent-modal [score]="score" [question]="question"
+                                                [multipleChoiceMapping]="selectedAnswerOptions"
+                                                [questionIndex]="questionIndex"></jhi-quiz-scoring-infostudent-modal>
+        </span>
     </div>
     <div class="answer-options" *ngIf="!showResult">
-        <div *ngFor="let answerOption of question.answerOptions; let i = index" class="answer-option" [ngClass]="{'click-disabled': clickDisabled}" (click)="toggleSelection(answerOption)">
+        <div *ngFor="let answerOption of question.answerOptions; let i = index" id="answer-option-{{i}}" class="answer-option" [ngClass]="{'click-disabled': clickDisabled}" (click)="toggleSelection(answerOption)">
             <div class="content">
                 <div class="text" [innerHTML]="rendered.answerOptions[i].text"></div>
                 <div class="hint">
@@ -40,8 +46,8 @@
                 </div>
             </div>
             <div class="selection">
-                <fa-icon [icon]="['far', 'check-square']" *ngIf="isAnswerOptionSelected(answerOption)"></fa-icon>
-                <fa-icon [icon]="['far', 'square']" *ngIf="!isAnswerOptionSelected(answerOption)"></fa-icon>
+                <fa-icon [icon]="['far', 'check-square']" size="2x" *ngIf="isAnswerOptionSelected(answerOption)"></fa-icon>
+                <fa-icon [icon]="['far', 'square']" size="2x" *ngIf="!isAnswerOptionSelected(answerOption)"></fa-icon>
             </div>
         </div>
     </div>
@@ -73,9 +79,9 @@
                 </div>
             </td>
             <td class="solution">
-                <span *ngIf="!answerOption.invalid && !question.invalid && answerOption.isCorrect" class="correct">Correct</span>
-                <span *ngIf="!answerOption.invalid && !question.invalid && !answerOption.isCorrect" class="wrong">Wrong</span>
-                <span *ngIf="answerOption.invalid || question.invalid" class="wrong" jhiTranslate="arTeMiSApp.question.invalid"></span>
+                <span id="answer-option-{{i}}-correct" *ngIf="!answerOption.invalid && !question.invalid && answerOption.isCorrect" class="correct">Correct</span>
+                <span id="answer-option-{{i}}-wrong" *ngIf="!answerOption.invalid && !question.invalid && !answerOption.isCorrect" class="wrong">Wrong</span>
+                <span id="answer-option-{{i}}-invalid" *ngIf="answerOption.invalid || question.invalid" class="wrong" jhiTranslate="arTeMiSApp.question.invalid"></span>
                 <fa-icon ngbTooltip="Invalid answers will be assessed as correct."
                            placement="top"
                            style="color:black;"

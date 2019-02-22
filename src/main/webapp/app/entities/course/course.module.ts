@@ -1,4 +1,5 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 
 import { ArTEMiSSharedModule } from '../../shared';
@@ -10,33 +11,29 @@ import {
     CourseExerciseService,
     coursePopupRoute,
     courseRoute,
-    CourseScoreCalculationComponent,
     CourseService,
     CourseUpdateComponent
 } from './';
-import { CourseScoreCalculationService } from './course-score-calculation.service';
 import { FormDateTimePickerModule } from '../../shared/dateTimePicker/date-time-picker.module';
 
 const ENTITY_STATES = [...courseRoute, ...coursePopupRoute];
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), FormDateTimePickerModule],
+    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), FormDateTimePickerModule, ReactiveFormsModule],
     declarations: [
         CourseComponent,
         CourseDetailComponent,
         CourseDeleteDialogComponent,
         CourseUpdateComponent,
-        CourseDeletePopupComponent,
-        CourseScoreCalculationComponent
+        CourseDeletePopupComponent
     ],
     entryComponents: [
         CourseComponent,
         CourseUpdateComponent,
         CourseDeleteDialogComponent,
-        CourseDeletePopupComponent,
-        CourseScoreCalculationComponent
+        CourseDeletePopupComponent
     ],
-    providers: [CourseService, CourseExerciseService, CourseScoreCalculationService],
+    providers: [CourseService, CourseExerciseService],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArTEMiSCourseModule {}

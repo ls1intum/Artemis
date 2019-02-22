@@ -1,9 +1,9 @@
 <jhi-alert></jhi-alert>
 
-<div class="row">
+<div class="row" *ngIf="submission">
     <div class="col">
         <h2>
-            Assessment <span *ngIf="participation">for Submission: {{participation.student.firstName}} {{participation.student.lastName}}</span>
+            <span *ngIf="submission.exampleSubmission">Example </span>Assessment <span *ngIf="participation">for Submission</span>
         </h2>
     </div>
     <div class="col text-right">
@@ -30,8 +30,8 @@
 <div class="row" *ngIf="exercise">
     <div class="col">
         <p class="mb-3">
-            <strong>Exercise:</strong> {{ exercise.title }}<br />
-            <strong>Problem Statement:</strong> {{ exercise.problemStatement }}<br />
+            <strong>Exercise:</strong> {{ exercise.title }}<br>
+            <strong>Problem Statement:</strong> {{ exercise.problemStatement }}<br>
             <ng-container *ngIf="exercise.sampleSolution">
                 <strong>Sample Solution:</strong> {{ exercise.sampleSolution }}
             </ng-container>

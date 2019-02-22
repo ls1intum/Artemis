@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
 import { ActivatedRoute, Router } from '@angular/router';
-import { JhiWebsocketService, AccountService } from '../../core';
+import { AccountService, JhiWebsocketService } from '../../core';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizPointStatistic } from '../../entities/quiz-point-statistic';
 import { ChartOptions } from 'chart.js';

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChildren, QueryList } from '@angular/core';
+import { Component, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
 import { JhiWebsocketService } from '../../core';
 import * as moment from 'moment';
 import * as _ from 'lodash';
@@ -23,6 +23,7 @@ import { ShortAnswerQuestionComponent } from 'app/quiz/participate/short-answer-
 import { DragAndDropMapping } from 'app/entities/drag-and-drop-mapping';
 import { AnswerOption } from 'app/entities/answer-option';
 import { ShortAnswerSubmittedText } from 'app/entities/short-answer-submitted-text';
+import * as smoothscroll from 'smoothscroll-polyfill';
 
 @Component({
     selector: 'jhi-quiz',
@@ -104,7 +105,9 @@ export class QuizComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         private jhiAlertService: JhiAlertService,
         private quizSubmissionService: QuizSubmissionService
-    ) {}
+    ) {
+        smoothscroll.polyfill();
+    }
 
     ngOnInit() {
         // set correct mode
@@ -822,47 +825,80 @@ export class QuizComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Checks if the student has interacted with each question of the quiz
+     * for a Multiple Choice Questions it checks if an answer option was selected
+     * for a Drag and Drop Questions it checks if at least one mapping has been made
+     * for a Short Answer Questions it checks if at least one field has been clicked in
+     * @return {boolean} true when student interacted with every question, false when at least one question is without interaction
+     */
+    areAllQuestionsAnswered(): boolean {
+        for (const question of this.quizExercise.questions) {
+            if (question.type === QuestionType.MULTIPLE_CHOICE) {
+                if (this.selectedAnswerOptions[question.id] === 0) {
+                    return false;
+                }
+            } else if (question.type === QuestionType.DRAG_AND_DROP) {
+                if (this.dragAndDropMappings[question.id] === 0) {
+                    return false;
+                }
+            } else if (question.type === QuestionType.SHORT_ANSWER) {
+                if (this.shortAnswerSubmittedTexts[question.id] === 0) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
      * This function is called when the user clicks the 'Submit' button
      */
     onSubmit() {
         this.applySelection();
-        this.isSubmitting = true;
-        switch (this.mode) {
-            case 'practice':
-                if (!this.submission.id) {
-                    this.quizSubmissionService.submitForPractice(this.submission, 1, this.quizId).subscribe(
-                        (response: HttpResponse<Result>) => {
-                            this.onSubmitPracticeOrPreviewSuccess(response.body);
-                        },
-                        (response: HttpErrorResponse) => this.onSubmitError(response.message)
-                    );
-                }
-                break;
-            case 'preview':
-                if (!this.submission.id) {
-                    this.quizSubmissionService.submitForPreview(this.submission, 1, this.quizId).subscribe(
-                        (response: HttpResponse<Result>) => {
-                            this.onSubmitPracticeOrPreviewSuccess(response.body);
-                        },
-                        (response: HttpErrorResponse) => this.onSubmitError(response.message)
-                    );
-                }
-                break;
-            case 'default':
-                if (this.disconnected || !this.submissionChannel) {
-                    alert(
-                        "Cannot Submit while disconnected. Don't worry, answers that were saved" +
+        let confirmSubmit = true;
+
+        if (this.remainingTimeSeconds > 15 && (this.areAllQuestionsAnswered() === false)) {
+            confirmSubmit = window.confirm('Are you sure you want to submit? You have not answered all questions and you still have some time left!');
+        }
+        if (confirmSubmit) {
+            this.isSubmitting = true;
+            switch (this.mode) {
+                case 'practice':
+                    if (!this.submission.id) {
+                        this.quizSubmissionService.submitForPractice(this.submission, 1, this.quizId).subscribe(
+                            (response: HttpResponse<Result>) => {
+                                this.onSubmitPracticeOrPreviewSuccess(response.body);
+                            },
+                            (response: HttpErrorResponse) => this.onSubmitError(response.message)
+                        );
+                    }
+                    break;
+                case 'preview':
+                    if (!this.submission.id) {
+                        this.quizSubmissionService.submitForPreview(this.submission, 1, this.quizId).subscribe(
+                            (response: HttpResponse<Result>) => {
+                                this.onSubmitPracticeOrPreviewSuccess(response.body);
+                            },
+                            (response: HttpErrorResponse) => this.onSubmitError(response.message)
+                        );
+                    }
+                    break;
+                case 'default':
+                    if (this.disconnected || !this.submissionChannel) {
+                        alert(
+                            'Cannot Submit while disconnected. Don\'t worry, answers that were saved' +
                             'while you were still connected will be submitted automatically when the quiz ends.'
-                    );
-                    this.isSubmitting = false;
-                    return;
-                }
-                // copy submission and send it through websocket with 'submitted = true'
-                const quizSubmission = new QuizSubmission();
-                quizSubmission.submittedAnswers = this.submission.submittedAnswers;
-                quizSubmission.submitted = true;
-                this.jhiWebsocketService.send(this.submissionChannel, quizSubmission);
-                break;
+                        );
+                        this.isSubmitting = false;
+                        return;
+                    }
+                    // copy submission and send it through websocket with 'submitted = true'
+                    const quizSubmission = new QuizSubmission();
+                    quizSubmission.submittedAnswers = this.submission.submittedAnswers;
+                    quizSubmission.submitted = true;
+                    this.jhiWebsocketService.send(this.submissionChannel, quizSubmission);
+                    break;
+            }
         }
     }
 
@@ -887,5 +923,15 @@ export class QuizComponent implements OnInit, OnDestroy {
             'Submitting was not possible. Please try again later. If your answers have been saved, you can also wait until the quiz has finished.'
         );
         this.isSubmitting = false;
+    }
+
+    /**
+     * By clicking on the bubble of the progress navigation towards the corresponding question of the quiz is triggered
+     * @param questionIndex
+     */
+    navigateToQuestion(questionIndex: number): void {
+        document.getElementById('question' + questionIndex).scrollIntoView({
+            behavior: 'smooth'
+        });
     }
 }

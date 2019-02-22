@@ -1,0 +1,106 @@
+<jhi-alert></jhi-alert>
+<div class="p-4" *ngIf="exercise">
+    <div class="row">
+        <div class="col-lg-2">
+            <button class="btn btn-secondary" (click)="back()">&larr; Back</button>
+        </div>
+
+        <div class="col-12 col-lg-6">
+            <h2>
+                <span *ngIf="isNewSubmission">Create New </span>Example Text Submission For Exercise {{exercise?.title}}
+            </h2>
+        </div>
+
+        <div class="col-12 col-lg-4 text-right" *ngIf="isAtLeastInstructor && !readOnly && !toComplete">
+            <div class="row">
+                <div class="form-check col-6 align-baseline">
+                    <input type="checkbox" name="usedForTutorial" id="field_usedForTutorial"
+                           [(ngModel)]="exampleSubmission.usedForTutorial"/>
+                    <label class="form-check-label" for="field_usedForTutorial">Used for tutorial</label>
+                </div>
+
+                <button (click)="upsertExampleTextSubmission()" class="btn btn-primary col-6">
+                    <fa-icon icon="save"></fa-icon>
+                    <span *ngIf="isNewSubmission">Create new submission</span>
+                    <span *ngIf="!isNewSubmission">Update text submission</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <p class="mb-3">
+                <strong>Problem Statement:</strong> {{ exercise.problemStatement }}<br>
+                <ng-container *ngIf="exercise.sampleSolution">
+                    <strong>Sample Solution:</strong> {{ exercise.sampleSolution }}
+                </ng-container>
+            </p>
+        </div>
+
+        <div class="col-12" *ngIf="isAtLeastInstructor && !readOnly && !toComplete">
+            <textarea [readOnly]="toComplete || readOnly || !isAtLeastInstructor"
+                      [disabled]="toComplete || readOnly || !isAtLeastInstructor" [(ngModel)]="textSubmission.text"
+                      style="width: 100%; height: 50vh;"></textarea>
+        </div>
+
+    </div>
+
+    <div class="row">
+        <div class="col-8">
+            <h2>Example Assessment</h2>
+        </div>
+
+        <div class="col-4 text-right">
+            <button class="btn btn-primary col-6" (click)="saveAssessments()"
+                    [disabled]="!assessments || !assessmentsAreValid"
+                    *ngIf="!isNewSubmission && isAtLeastInstructor && !readOnly && !toComplete">
+                <fa-icon icon="save"></fa-icon>
+                <span *ngIf="areNewAssessments">Create new Assessments</span>
+                <span *ngIf="!areNewAssessments">Update Assessments</span>
+
+            </button>
+        </div>
+    </div>
+
+    <div class="alert alert-info" *ngIf="isNewSubmission">
+        You need to create the example text submission before creating the example assessment
+    </div>
+
+    <div class="row" *ngIf="!isNewSubmission">
+        <div class="col text-right">
+            <h5><strong>Score:</strong> {{ totalScore | number : '1.0-2' }} / {{ exercise.maxScore }}</h5>
+        </div>
+    </div>
+
+    <div class="row" *ngIf="!isNewSubmission">
+        <div class="col-sm-12 col-md-7 col-xl-8 mb-sm-3">
+            <jhi-text-assessment-editor [submissionText]="textSubmission?.text" [assessments]="assessments"
+                                        (assessedText)="addAssessment($event)"
+                                        [disabled]="readOnly || (!isAtLeastInstructor && !toComplete)"></jhi-text-assessment-editor>
+        </div>
+        <div class="col-sm-12 col-md-5 col-xl-4">
+            <div *ngIf="invalidError" class="alert alert-danger" role="alert">{{invalidError}}</div>
+            <div *ngIf="!assessments || assessments.length == 0" class="alert alert-secondary" role="alert"
+                 jhiTranslate="arTeMiSApp.textAssessment.assessInstruction"></div>
+            <ng-container *ngFor="let assessment of assessments; let i = index">
+                <jhi-text-assessment-detail [(assessment)]="assessments[i]" (assessmentChange)="checkScoreBoundaries()"
+                                            [highlightColor]="getColorForIndex(i)"
+                                            [disabled]="readOnly || (!isAtLeastInstructor && !toComplete)"
+                                            (deleteAssessment)="deleteAssessment($event)"></jhi-text-assessment-detail>
+            </ng-container>
+        </div>
+    </div>
+
+    <div class="col-12 text-right" *ngIf="toComplete">
+        <button class="btn btn-primary col-3" (click)="checkAssessment()"
+                [disabled]="!assessments || !assessmentsAreValid">
+            Submit Assessment
+        </button>
+    </div>
+
+    <div class="col-12 text-rigth" *ngIf="readOnly">
+        <button (click)="readAndUnderstood()" class="btn btn-success col-3">
+            <fa-icon icon="save"></fa-icon>
+            I have read and understood the example
+        </button>
+    </div>
+</div>

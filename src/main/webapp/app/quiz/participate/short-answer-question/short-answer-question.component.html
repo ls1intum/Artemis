@@ -11,8 +11,7 @@
 
     <div *ngIf="!showResult && clickDisabled">
         <div class="short-answer-question-display" *ngFor="let textPart of textBeforeSpots; let i = index">
-            {{textPart}} <input class="short-answer-question-input" *ngIf="submittedTexts[i] !== undefined" disabled value="{{submittedTexts[i].text}}">
-            <input *ngIf="submittedTexts[i] === undefined" >
+            {{textPart}} <input class="short-answer-question-input" disabled value="{{submittedTexts[i] !== undefined ? submittedTexts[i].text : ''}}">
         </div>
         <span>{{textAfterSpots}}</span>
     </div>
@@ -42,7 +41,7 @@
         <span class="label label-info" [ngbPopover]="renderedHint" placement="right" triggers="mouseenter:mouseleave" *ngIf="question.hint">
             <fa-icon [icon]="['far', 'question-circle']"></fa-icon>
             <span jhiTranslate="arTeMiSApp.question.hint"></span>
-        </span> </br>
+        </span> <br>
         <ng-template #renderedExplanation>
             <div [innerHTML]="rendered.explanation"></div>
         </ng-template>
@@ -57,7 +56,12 @@
     </div>
     <div class="question-score result" *ngIf="showResult && !forceSampleSolution" [ngClass]="{incorrect: (score || 0) < question.score}">
         <span jhiTranslate="arTeMiSApp.question.yourScore" class="colon-suffix"></span>
-        <span>{{score || 0}}/{{question.score}}</span>
+        <span class="show-explanation">{{score || 0}}/{{question.score}}</span>
+        <span class="show-explanation">
+            <jhi-quiz-scoring-infostudent-modal [score]="score" [question]="question"
+                                                [shortAnswerText]="submittedTexts"
+                                                [questionIndex]="questionIndex"></jhi-quiz-scoring-infostudent-modal>
+        </span>
     </div>
     <br>
     <br>

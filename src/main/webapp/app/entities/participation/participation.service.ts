@@ -71,6 +71,12 @@ export class ParticipationService {
         return this.http.delete<void>(`${this.resourceUrl}/${id}`, { params: options, observe: 'response' });
     }
 
+    cleanupBuildPlan(participation: Participation): Observable<EntityResponseType> {
+        const copy = this.convertDateFromClient(participation);
+        return this.http.put<Participation>(`${this.resourceUrl}/${participation.id}/cleanupBuildPlan`, copy, { observe: 'response' })
+            .map((res: EntityResponseType) => this.convertDateFromServer(res));
+    }
+
     repositoryWebUrl(participationId: number) {
         return this.http.get(`${this.resourceUrl}/${participationId}/repositoryWebUrl`, { responseType: 'text' }).map(repositoryWebUrl => {
             return { url: repositoryWebUrl };
@@ -158,8 +164,10 @@ export class ParticipationService {
         const convertedSubmissions: Submission[] = [];
         if (submissions != null && submissions.length > 0) {
             submissions.forEach((submission: Submission) => {
-                submission.submissionDate = submission.submissionDate != null ? moment(submission.submissionDate) : null;
-                convertedSubmissions.push(submission);
+                if (submission !== null) {
+                    submission.submissionDate = submission.submissionDate != null ? moment(submission.submissionDate) : null;
+                    convertedSubmissions.push(submission);
+                }
             });
         }
         return convertedSubmissions;

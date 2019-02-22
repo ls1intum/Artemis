@@ -1,10 +1,32 @@
-import { element, by } from 'protractor';
+import { browser, element, by } from 'protractor';
+
+const expect = chai.expect;
 
 export class CoursePage {
     createNewCourse = element(by.className('create-course'));
 
+
     async clickOnCreateNewCourse() {
         await this.createNewCourse.click();
+    }
+
+    async navigateIntoLastCourseQuizzes() {
+        const rows = element.all(by.tagName('tbody')).all(by.tagName('tr'));
+        const courseId = await rows.last().element(by.css('td:nth-child(1) > a')).getText();
+
+        await browser.sleep(1000);
+
+        const exerciseDropdownButton = element(by.id(`exercises-button-${courseId}`));
+        expect(exerciseDropdownButton.isPresent());
+        await exerciseDropdownButton.click();
+
+        await browser.sleep(1000);
+
+        const quizExerciseButton = element(by.id(`quiz-exercises-button-${courseId}`));
+        expect(quizExerciseButton.isPresent());
+        await quizExerciseButton.click();
+
+        return courseId;
     }
 }
 
@@ -15,6 +37,7 @@ export class NewCoursePage {
     shortName = element(by.id('field_shortName'));
     studentGroupName = element(by.id('field_studentGroupName'));
     instructorGroupName = element(by.id('field_instructorGroupName'));
+    tutorGroupName = element(by.id('field_teachingAssistantGroupName'));
 
     async setTitle(title: string) {
         await this.title.sendKeys(title);
@@ -30,6 +53,10 @@ export class NewCoursePage {
 
     async setInstructorGroupName(instructorGroupName: string) {
         await this.instructorGroupName.sendKeys(instructorGroupName);
+    }
+
+    async setTutorGroupName(tutorGroupName: string) {
+        await this.tutorGroupName .sendKeys(tutorGroupName);
     }
 
     async clickSave() {

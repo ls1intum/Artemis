@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, S
 import { Participation, ParticipationService } from '../participation';
 import { Result, ResultDetailComponent, ResultService } from '.';
 import { ProgrammingSubmission } from '../programming-submission';
-import { JhiWebsocketService, AccountService } from '../../core';
+import { AccountService, JhiWebsocketService } from '../../core';
 import { RepositoryService } from '../repository/repository.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpClient } from '@angular/common/http';

@@ -23,10 +23,8 @@ import com.atlassian.bamboo.specs.builders.repository.bitbucket.server.Bitbucket
 import com.atlassian.bamboo.specs.builders.repository.viewer.BitbucketServerRepositoryViewer;
 import com.atlassian.bamboo.specs.builders.task.CheckoutItem;
 import com.atlassian.bamboo.specs.builders.task.MavenTask;
-import com.atlassian.bamboo.specs.builders.task.ScriptTask;
 import com.atlassian.bamboo.specs.builders.task.VcsCheckoutTask;
 import com.atlassian.bamboo.specs.builders.trigger.BitbucketServerTrigger;
-import com.atlassian.bamboo.specs.model.task.ScriptTaskProperties;
 import com.atlassian.bamboo.specs.util.BambooServer;
 import com.atlassian.bamboo.specs.util.SimpleUserPasswordCredentials;
 import com.atlassian.bamboo.specs.util.UserPasswordCredentials;
@@ -61,14 +59,12 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_API_PATH;
-import static de.tum.in.www1.artemis.config.Constants.RESULT_RESOURCE_API_PATH;
 
 @Service
 @Profile("bamboo")
@@ -649,28 +645,32 @@ public class BambooService implements ContinuousIntegrationService {
                 String className = (String)detail.get("className");
                 String methodName = (String)detail.get("methodName");
 
-                HashMap<String, Object> errorsMap = (HashMap<String, Object>) detail.get("errors");
-                List<HashMap<String, Object>> errors = (List<HashMap<String, Object>>)errorsMap.get("error");
+                Map<String, Object> errorsMap = (Map<String, Object>) detail.get("errors");
+                List<Map<String, Object>> errors = (List<Map<String, Object>>)errorsMap.get("error");
 
                 String errorMessageString = "";
-                for(HashMap<String, Object> error : errors) {
+                for(Map<String, Object> error : errors) {
                     //Splitting string at the first linebreak to only get the first line of the Exception
                     errorMessageString += ((String)error.get("message")).split("\\n", 2)[0] + "\n";
                 }
 
-                Feedback feedback = new Feedback();
-                feedback.setText(methodName);
-                feedback.setDetailText(errorMessageString);
-                feedback.setType(FeedbackType.AUTOMATIC);
-                feedback.setPositive(false);
-                feedback = feedbackRepository.save(feedback);
-                result.addFeedback(feedback);
+                createAutomaticFeedback(result, methodName, errorMessageString);
             }
         } catch(Exception failedToParse) {
             log.error("Parsing from bamboo to feedback failed" + failedToParse);
         }
 
         return result.getFeedbacks();
+    }
+
+    private void createAutomaticFeedback(Result result, String methodName, String errorMessageString) {
+        Feedback feedback = new Feedback();
+        feedback.setText(methodName);
+        feedback.setDetailText(errorMessageString);
+        feedback.setType(FeedbackType.AUTOMATIC);
+        feedback.setPositive(false);
+        feedback = feedbackRepository.save(feedback);
+        result.addFeedback(feedback);
     }
 
     /**
@@ -707,13 +707,7 @@ public class BambooService implements ContinuousIntegrationService {
 
                     log.debug("errorMSGString is {}", errorMessageString);
 
-                    Feedback feedback = new Feedback();
-                    feedback.setText(methodName);
-                    feedback.setDetailText(errorMessageString);
-                    feedback.setType(FeedbackType.AUTOMATIC);
-                    feedback.setPositive(false);
-                    feedback = feedbackRepository.save(feedback);
-                    result.addFeedback(feedback);
+                    createAutomaticFeedback(result, methodName, errorMessageString);
                 }
             }
 
@@ -853,10 +847,10 @@ public class BambooService implements ContinuousIntegrationService {
             log.error("HttpError while retrieving build result logs from Bamboo: " + e.getMessage());
         }
 
-        ArrayList logs = new ArrayList<BuildLogEntry>();
+        List logs = new ArrayList<BuildLogEntry>();
 
         if (response != null) {
-            for (HashMap<String, Object> logEntry : (List<HashMap>) ((Map) response.getBody().get("logEntries")).get("logEntry")) {
+            for (Map<String, Object> logEntry : (List<Map>) ((Map) response.getBody().get("logEntries")).get("logEntry")) {
                 String logString = (String) logEntry.get("log");
                 boolean compilationErrorFound = true;
 

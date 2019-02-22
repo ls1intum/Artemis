@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { Routes, RouterModule } from '@angular/router';
+import { RouterModule, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core';
 import { TextAssessmentComponent } from './text-assessment.component';
 import { TextAssessmentDashboardComponent } from './text-assessment-dashboard/text-assessment-dashboard.component';

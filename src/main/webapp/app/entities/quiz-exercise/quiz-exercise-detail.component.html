@@ -32,6 +32,7 @@
                     class="colon-suffix">
                 </span>
                 <input
+                    id="quiz-duration-minutes"
                     style="width: 56px;"
                     class="form-control mb-2 mr-sm-2"
                     title="Duration"
@@ -43,6 +44,7 @@
                     (blur)="onDurationChange()"/>
                 <span jhiTranslate="arTeMiSApp.quizExercise.minutes"></span>
                 <input
+                    id="quiz-duration-seconds"
                     style="width: 56px;"
                     class="form-control mb-2 mr-sm-2"
                     title="Duration"
@@ -131,7 +133,7 @@
             </div>
         </div>
         <div class="btn-group" role="group">
-            <button class="btn btn-success mr-2" (click)="addMultipleChoiceQuestion()">
+            <button id="quiz-add-mc-question" class="btn btn-success mr-2" (click)="addMultipleChoiceQuestion()">
                 <fa-icon icon="plus"></fa-icon>
                 <span jhiTranslate="arTeMiSApp.quizExercise.addMultipleChoiceQuestion">Add Multiplce-Choice Question</span>
             </button>
@@ -238,6 +240,7 @@
                         <span>({{invalidReasons().length}})</span>
                     </span>
                     <button
+                        id="quiz-cancel-back-button"
                         *ngIf="quizExercise.course"
                         class="btn btn-default"
                         [ngClass]="{'btn-secondary': !pendingChanges(), 'btn-danger': pendingChanges()}"
@@ -245,6 +248,7 @@
                         jhiTranslate="{{pendingChanges() ? 'entity.action.cancel' : 'entity.action.back'}}">
                     </button>
                     <button
+                        id="quiz-save"
                         class="btn btn-success"
                         (click)="save()"
                         [ngClass]="{disabled: !pendingChanges() || !validQuiz() || hasSavedQuizStarted() || isSaving}"

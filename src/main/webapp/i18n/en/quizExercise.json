@@ -80,7 +80,7 @@
             "remainingTime": "Remaining Time",
             "waitingForStart": "Waiting for Start",
             "quizInstructions": {
-                "default": "Mark the correct answers for each question and click the \"Submit\" button, when you're done.",
+                "default": "Answer all questions in remaining time and only click the \"Submit\" button, when you're done.",
                 "wait": "Please wait until the quiz has ended to see your results.",
                 "result": "You have finished the quiz with {{userScore}} out of {{maxScore}} points ({{percentage}} %).",
                 "waitForStart": "Please wait.<br><br>This page will refresh automatically, when the quiz starts.",
@@ -159,7 +159,35 @@
                 "all_or_nothing": "All or Nothing",
                 "proportional_with_penalty": "Proportional with Penalty"
             },
-            "importJSON": "Import Question(s) in JSON Format"
+            "importJSON": "Import Question(s) in JSON Format",
+            "explanationText": {
+                "point":"point",
+                "points":"points",
+                "item":"item",
+                "items":"items",
+                "textgap":"text gap",
+                "textgaps":"text gaps",
+                "option":"option",
+                "options":"options",
+                "scoringTitle":"Scoring explanation for question {{paramIndex}}) {{paramTitle}}",
+                "scoringTypeProportional":"Scoring Proportional with Penalty: ",
+                "scoringTypeAllOrNothing":"Scoring All or Nothing: ",
+                "scoringTypeProportionalExplanation": "every correct answer gives positive points, each mistake gives negative points to avoid guesswork. ",
+                "scoringTypeAllOrNothingExplanation": "you either get all points or none at all.",
+                "multipleChoiceAllOrNothingCorrect": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}. Since you have selected all answer options correctly you have achieved all points in this question. Great Job!",
+                "multipleChoiceAllOrNothingNotCorrect": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}, since you have selected {{paramInTotalWrongOptions}} answer {{wrongOption}} wrongly and {{paramInTotalRightOptions}} answer {{rightOption}} correctly. Keep trying!",
+                "multipleChoiceProp": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}. Each of the {{paramAmountOfAnswerOptions}} options grants you {{paramQuestionScore}}/{{paramAmountOfAnswerOptions}} points if you select the answer options correctly. You have selected {{paramInTotalWrongOptions}} answer {{wrongOption}} wrongly and {{paramInTotalRightOptions}} answer {{rightOption}} correctly. In total you have",
+                "dragAndDropAllOrNothingCorrect": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}. Since you have mapped all the items correctly you have achieved all points in this question. Great Job!",
+                "dragAndDropAllOrNothingNotCorrect":"You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}, since you mapped {{paramRightMapping}} {{rightMap}} correctly and mismapped {{paramWrongMappedItems}} {{wrongMap}}. Keep trying!",
+                "dragAndDropProp": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}. Each of the {{paramDragAndDropElementsCount}} drag and drop items grants you {{paramQuestionScore}}/{{paramDragAndDropElementsCount}} points if you map it to the corresponding location. You have mismapped {{paramWrongMappedItems}} {{wrongMap}} and correctly mapped {{paramRightMapping}} {{rightMap}}. In total you have",
+                "shortAnswerAllOrNothingCorrect": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}. Since you filled all text gaps correctly you have achieved all points in this question. Great Job!",
+                "shortAnswerAllOrNothingNotCorrect": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}, since you filled out {{paramShortAnswerWrongOption}} {{wrongGap}} wrongly and {{paramShortAnswerCorrectAnswers}} {{rightGap}} correctly. Keep trying!",
+                "shortAnswerProp": "You have achieved {{paramScore}} {{paramPoint}} of the {{paramQuestionScore}} possible {{paramScorePoint}}. Each text gap grants you {{paramQuestionScore}}/{{paramCount}} points if you fill it out correctly. You filled out {{paramShortAnswerWrongOption}} {{wrongGap}} wrongly and {{paramShortAnswerCorrectAnswers}} {{rightGap}} correctly. In total you have",
+                "KeepTrying": "Keep trying!",
+                "zeroPointer": "(Of course you can not have less than 0 points.)"
+            },
+            "explanationAnswered": "You have answered this question",
+            "explanationNotAnswered": "You have not answered this question"
         }
     }
 }
