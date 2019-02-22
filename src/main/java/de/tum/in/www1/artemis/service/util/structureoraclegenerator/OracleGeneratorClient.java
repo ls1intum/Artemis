@@ -79,7 +79,7 @@ public class OracleGeneratorClient {
         JSONArray structureOracleJSON = new JSONArray();
 
         // Generate the pairs of the types found in the solution project with the corresponding one from the template project.
-        HashMap<CtType<?>, CtType<?>> solutionAndTemplateTypes = generateSolutionAndTemplateTypePairs(solutionProjectPath, templateProjectPath);
+        Map<CtType<?>, CtType<?>> solutionAndTemplateTypes = generateSolutionAndTemplateTypePairs(solutionProjectPath, templateProjectPath);
 
         // Loop over each pair of types and create the diff data structures and the JSON representation afterwards for each.
         // If the types, classes or enums are equal, then ignore and continue with the next pair
@@ -168,11 +168,11 @@ public class OracleGeneratorClient {
      * @param templateProjectPath: The path to the template project.
      * @return: A hash map containing the type pairs of the solution types and their respective counterparts in the template.
      */
-    private static HashMap<CtType<?>, CtType<?>> generateSolutionAndTemplateTypePairs(Path solutionProjectPath, Path templateProjectPath) {
+    private static Map<CtType<?>, CtType<?>> generateSolutionAndTemplateTypePairs(Path solutionProjectPath, Path templateProjectPath) {
         Collection<CtType<?>> solutionTypes = generateModel(solutionProjectPath).getAllTypes();
         Collection<CtType<?>> templateTypes = generateModel(templateProjectPath).getAllTypes();
 
-        HashMap<CtType<?>, CtType<?>> solutionAndTemplateTypes = new HashMap<CtType<?>, CtType<?>>();
+        Map<CtType<?>, CtType<?>> solutionAndTemplateTypes = new HashMap<CtType<?>, CtType<?>>();
 
         for(CtType<?> solutionType : solutionTypes) {
             // Put an empty template class as a default placeholder.

@@ -112,11 +112,11 @@ public class StructuralTest {
         // or their order are not relevant to us.
         String[] expectedParameterTypeNames = new String[expectedParameters.length()];
         for(int i = 0; i < expectedParameters.length(); i++) expectedParameterTypeNames[i] = expectedParameters.getString(i);
-        HashMap<String, Integer> expectedParametersHashtable = createParametersHashMap(expectedParameterTypeNames);
+        Map<String, Integer> expectedParametersHashtable = createParametersHashMap(expectedParameterTypeNames);
 
         String[] observedParameterTypeNames = new String[observedParameters.length];
         for(int i = 0; i < observedParameters.length; i++) observedParameterTypeNames[i] = observedParameters[i].getSimpleName();
-        HashMap<String, Integer> observedParametersHashtable = createParametersHashMap(observedParameterTypeNames);
+        Map<String, Integer> observedParametersHashtable = createParametersHashMap(observedParameterTypeNames);
 
         return expectedParametersHashtable.equals(observedParametersHashtable);
     }
@@ -126,8 +126,8 @@ public class StructuralTest {
      * @param parameterTypeNames
      * @return
      */
-    private HashMap<String, Integer> createParametersHashMap(String... parameterTypeNames) {
-        HashMap<String, Integer> parametersHashTable = new HashMap<String, Integer>();
+    private Map<String, Integer> createParametersHashMap(String... parameterTypeNames) {
+        Map<String, Integer> parametersHashTable = new HashMap<String, Integer>();
 
         for(String parameterTypeName : parameterTypeNames) {
             if(!parametersHashTable.containsKey(parameterTypeName)) {

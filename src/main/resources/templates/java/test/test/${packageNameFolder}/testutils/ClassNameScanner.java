@@ -148,8 +148,8 @@ public class ClassNameScanner {
 	 * The root node (which is the assignment folder) is defined in the pom.xml file of the project.
 	 * @return The JSON object containing the type names as keys and the type packages as values.
 	 */
-	private HashMap<String, String> retrieveObservedClasses() {
-		HashMap<String, String> observedTypes = new HashMap<String, String>();
+	private Map<String, String> retrieveObservedClasses() {
+		Map<String, String> observedTypes = new HashMap<String, String>();
 		
 		try {
 			File pomFile = new File("pom.xml");
@@ -163,12 +163,8 @@ public class ClassNameScanner {
 				
 				if(buildNode.getNodeType() == Node.ELEMENT_NODE) {
 					Element buildNodeElement = (Element) buildNode;
-										
-					String sourceDirectoryPropertyValue = 
-							buildNodeElement.getElementsByTagName("sourceDirectory").item(0).getTextContent();
-					String assignmentFolderName = 
-							sourceDirectoryPropertyValue.substring(sourceDirectoryPropertyValue.indexOf("}") + 2);
-														
+					String sourceDirectoryPropertyValue = buildNodeElement.getElementsByTagName("sourceDirectory").item(0).getTextContent();
+					String assignmentFolderName = sourceDirectoryPropertyValue.substring(sourceDirectoryPropertyValue.indexOf("}") + 2);
 					walkProjectFileStructure(assignmentFolderName, new File(assignmentFolderName), observedTypes);
 				}
 			}
@@ -216,8 +212,8 @@ public class ClassNameScanner {
 	 * @param structureDiffJSON: The JSON representation of the structure diff.
 	 * @return The JSON object containing the type names as keys and the type packages as values.
 	 */
-	private HashMap<String, String> retrieveExpectedClasses(JSONArray structureDiffJSON) {
-		HashMap<String, String> expectedTypes = new HashMap<String, String>();
+	private Map<String, String> retrieveExpectedClasses(JSONArray structureDiffJSON) {
+		Map<String, String> expectedTypes = new HashMap<String, String>();
 		
 		for (int i = 0; i < structureDiffJSON.length(); i++) {
 			JSONObject currentTypeJSON = (JSONObject) structureDiffJSON.get(i);
