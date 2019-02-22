@@ -23,33 +23,33 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
     readonly PROPORTIONAL_WITH_PENALTY = ScoringType.PROPORTIONAL_WITH_PENALTY;
 
     @Input() score: number; // Score of the student that has been achieved
-    @Input() questionIndex: number; //Question Index of the question
+    @Input() questionIndex: number; // Question Index of the question
     @Input() question: Question;
     @Input() dragAndDropMapping = new Array<DragAndDropMapping>();
     @Input() multipleChoiceMapping = new Array<AnswerOption>();
     @Input() shortAnswerText = new Array<ShortAnswerSubmittedText>();
-    @Input() correctlyMappedDragAndDropItems: number; //Amount of correctly mapped drag and drop items
+    @Input() correctlyMappedDragAndDropItems: number; // Amount of correctly mapped drag and drop items
 
     /* Multiple Choice Counting Variables*/
-    multipleChoiceCorrectAnswerCorrectlyChosen: number; //Amount of right options chosen by the student
-    multipleChoiceWrongAnswerChosen: number; //Amount of wrong options chosen by the student
-    correctMultipleChoiceAnswers: number; //Amount of correct options for the question
-    forgottenMultipleChoiceRightAnswers: number; //Amount of wrong options for the question
-    multipleChoiceAnswerOptions: number; //Amount of all possible options for the question
-    inTotalSelectedRightOptions: number; //Amount of correct and wrong options assigned correctly
-    inTotalSelectedWrongOptions: number; //Amount of correct and wrong options assigned wrongly
-    differenceMultipleChoice: number; //Difference between inTotalSelectedRightOptions and differenceMultipleChoice
+    multipleChoiceCorrectAnswerCorrectlyChosen: number; // Amount of right options chosen by the student
+    multipleChoiceWrongAnswerChosen: number; // Amount of wrong options chosen by the student
+    correctMultipleChoiceAnswers: number; // Amount of correct options for the question
+    forgottenMultipleChoiceRightAnswers: number; // Amount of wrong options for the question
+    multipleChoiceAnswerOptions: number; // Amount of all possible options for the question
+    inTotalSelectedRightOptions: number; // Amount of correct and wrong options assigned correctly
+    inTotalSelectedWrongOptions: number; // Amount of correct and wrong options assigned wrongly
+    differenceMultipleChoice: number; // Difference between inTotalSelectedRightOptions and differenceMultipleChoice
 
     /* Drag and Drop Counting Variables*/
-    dragAndDropZones: number; //Amount of drag and drop Zones
+    dragAndDropZones: number; // Amount of drag and drop Zones
     wronglyMappedDragAndDropItems: number; // Amount of wrongly mapped drag and drop item
-    differenceDragAndDrop: number; //Difference between the wronglyMappedDragAndDropItems and correctlyMappedDragAndDropItems
+    differenceDragAndDrop: number; // Difference between the wronglyMappedDragAndDropItems and correctlyMappedDragAndDropItems
 
     /* Short Answer Counting Variables*/
-    shortAnswerSpots: number; //Amount of short answer spots
-    shortAnswerCorrectAnswers: number; //Amount of correctly filled out spots
-    shortAnswerWrongAnswers: number; //Amount of wrongly filled out spots
-    differenceShortAnswer: number; //Difference between shortAnswerCorrectAnswers and shortAnswerWrongAnswers
+    shortAnswerSpots: number; // Amount of short answer spots
+    shortAnswerCorrectAnswers: number; // A mount of correctly filled out spots
+    shortAnswerWrongAnswers: number; // A mount of wrongly filled out spots
+    differenceShortAnswer: number; // Difference between shortAnswerCorrectAnswers and shortAnswerWrongAnswers
 
     /* Plural Variables*/
     questionPoint: string;
@@ -103,13 +103,13 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
         this.inTotalSelectedWrongOptions = this.multipleChoiceWrongAnswerChosen + this.forgottenMultipleChoiceRightAnswers;
         this.differenceMultipleChoice = this.inTotalSelectedRightOptions - this.inTotalSelectedWrongOptions;
 
-        if (this.inTotalSelectedRightOptions == 1) {
+        if (this.inTotalSelectedRightOptions === 1) {
             this.rightOption = this.translateService.instant(translationBasePath + 'option');
         } else {
             this.rightOption = this.translateService.instant(translationBasePath + 'options');
         }
 
-        if (this.inTotalSelectedWrongOptions == 1) {
+        if (this.inTotalSelectedWrongOptions === 1) {
             this.wrongOption = this.translateService.instant(translationBasePath + 'option');
         } else {
             this.wrongOption = this.translateService.instant(translationBasePath + 'options');
@@ -126,13 +126,13 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
         this.wronglyMappedDragAndDropItems = this.dragAndDropZones - this.correctlyMappedDragAndDropItems;
         this.differenceDragAndDrop = this.correctlyMappedDragAndDropItems - this.wronglyMappedDragAndDropItems;
 
-        if (this.correctlyMappedDragAndDropItems == 1) {
+        if (this.correctlyMappedDragAndDropItems === 1) {
             this.rightMap = this.translateService.instant(translationBasePath + 'item');
         } else {
             this.rightMap = this.translateService.instant(translationBasePath + 'items');
         }
 
-        if (this.wronglyMappedDragAndDropItems == 1) {
+        if (this.wronglyMappedDragAndDropItems === 1) {
             this.wrongMap = this.translateService.instant(translationBasePath + 'item');
         } else {
             this.wrongMap = this.translateService.instant(translationBasePath + 'items');
@@ -150,13 +150,13 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
         this.shortAnswerWrongAnswers = this.shortAnswerSpots - this.shortAnswerCorrectAnswers;
         this.differenceShortAnswer = this.shortAnswerCorrectAnswers - this.shortAnswerWrongAnswers;
 
-        if (this.shortAnswerCorrectAnswers == 1) {
+        if (this.shortAnswerCorrectAnswers === 1) {
             this.rightGap = this.translateService.instant(translationBasePath + 'textgap');
         } else {
             this.rightGap = this.translateService.instant(translationBasePath + 'textgaps');
         }
 
-        if (this.shortAnswerWrongAnswers == 1) {
+        if (this.shortAnswerWrongAnswers === 1) {
             this.wrongGap = this.translateService.instant(translationBasePath + 'textgap');
         } else {
             this.wrongGap = this.translateService.instant(translationBasePath + 'textgaps');
@@ -168,13 +168,13 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
      */
     private checkForSingleOrPluralPoints() {
         const translationBasePath = 'arTeMiSApp.quizExercise.explanationText.';
-        if (this.question.score == 1) {
+        if (this.question.score === 1) {
             this.questionPoint = this.translateService.instant(translationBasePath + 'point');
         } else {
             this.questionPoint = this.translateService.instant(translationBasePath + 'points');
         }
 
-        if (this.score == 1) {
+        if (this.score === 1) {
             this.scorePoint = this.translateService.instant(translationBasePath + 'point');
         } else {
             this.scorePoint = this.translateService.instant(translationBasePath + 'points');
