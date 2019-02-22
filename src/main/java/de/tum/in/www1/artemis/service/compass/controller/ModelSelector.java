@@ -2,17 +2,14 @@ package de.tum.in.www1.artemis.service.compass.controller;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLModel;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 public class ModelSelector {
 
     private static final int MAX_CANDIDATE_LIST_SIZE = 50;
 
-    private HashSet<Long> modelsWaitingForAssessment = new HashSet<>();
-    private HashSet<Long> alreadyAssessedModels = new HashSet<>();
+    private Set<Long> modelsWaitingForAssessment = new HashSet<>();
+    private Set<Long> alreadyAssessedModels = new HashSet<>();
 
     /**
      * Calculate the model which would mean the biggest knowledge gain to support the automatic assessment process
