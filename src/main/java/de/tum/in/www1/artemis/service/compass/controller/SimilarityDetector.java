@@ -18,11 +18,11 @@ public class SimilarityDetector {
         for (UMLClass umlClass : model.getClassList()) {
             umlClass.setElementID(index.getElementID(umlClass));
 
-            for (UMLAttribute attribute : umlClass.getAttributeList()) {
+            for (UMLAttribute attribute : umlClass.getAttributes()) {
                 attribute.setElementID(index.getElementID(attribute));
             }
 
-            for (UMLMethod method : umlClass.getMethodList()) {
+            for (UMLMethod method : umlClass.getMethods()) {
                 method.setElementID(index.getElementID(method));
             }
         }
@@ -37,10 +37,10 @@ public class SimilarityDetector {
     private static void setContext(UMLModel model) {
         for (UMLClass umlClass : model.getClassList()) {
             umlClass.setContext(generateContextForElement(model, umlClass));
-            for (UMLAttribute attribute : umlClass.getAttributeList()) {
+            for (UMLAttribute attribute : umlClass.getAttributes()) {
                 attribute.setContext(generateContextForElement(model, attribute));
             }
-            for (UMLMethod method : umlClass.getMethodList()) {
+            for (UMLMethod method : umlClass.getMethods()) {
                 method.setContext(generateContextForElement(model, method));
             }
         }
@@ -55,14 +55,14 @@ public class SimilarityDetector {
 
         if (element.getClass() == UMLAttribute.class) {
             for (UMLClass umlClass : model.getClassList()) {
-                if (umlClass.getAttributeList().contains(element)) {
+                if (umlClass.getAttributes().contains(element)) {
                     return new Context(umlClass.getElementID());
                 }
             }
         }
         else if (element.getClass() == UMLMethod.class) {
             for (UMLClass umlClass : model.getClassList()) {
-                if (umlClass.getMethodList().contains(element)) {
+                if (umlClass.getMethods().contains(element)) {
                     return new Context(umlClass.getElementID());
                 }
             }

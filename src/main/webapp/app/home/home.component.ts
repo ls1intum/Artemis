@@ -3,7 +3,7 @@ import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { JhiEventManager } from 'ng-jhipster';
 import { Router } from '@angular/router';
 
-import { LoginModalService, AccountService, User } from '../core';
+import { AccountService, LoginModalService, User } from '../core';
 
 @Component({
     selector: 'jhi-home',

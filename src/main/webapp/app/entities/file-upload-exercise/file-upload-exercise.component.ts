@@ -5,10 +5,8 @@ import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { FileUploadExercise } from './file-upload-exercise.model';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
-import { ITEMS_PER_PAGE } from '../../shared';
 import { Course, CourseExerciseService, CourseService } from '../course';
 import { ActivatedRoute } from '@angular/router';
-import { fileUploadExerciseRoute } from 'app/entities/file-upload-exercise/file-upload-exercise.route';
 
 @Component({
     selector: 'jhi-file-upload-exercise',

@@ -1,23 +1,22 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-import { ArTEMiSSharedModule } from '../../shared';
+import { ArTEMiSSharedModule, PendingChangesGuard } from '../../shared';
 import {
     QuizExerciseComponent,
     QuizExerciseDeleteDialogComponent,
     QuizExerciseDeletePopupComponent,
-    QuizExerciseResetDialogComponent,
-    QuizExerciseResetPopupComponent,
     QuizExerciseDetailComponent,
     quizExercisePopupRoute,
     QuizExercisePopupService,
+    QuizExerciseResetDialogComponent,
+    QuizExerciseResetPopupComponent,
     quizExerciseRoute,
     QuizExerciseService
 } from './';
 import { SortByModule } from '../../components/pipes';
 import { ArTEMiSQuizEditModule } from '../../quiz/edit';
 import { ArTEMiSQuizReEvaluateModule } from '../../quiz/re-evaluate';
-import { PendingChangesGuard } from '../../shared';
 
 const ENTITY_STATES = [...quizExerciseRoute, ...quizExercisePopupRoute];
 

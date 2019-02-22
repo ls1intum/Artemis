@@ -17,13 +17,14 @@
             <input required type="text" class="form-control" name="title" id="field_title"
                    [(ngModel)]="modelingExercise.title" />
         </div>
-        <div class="form-group">
-          <jhi-date-time-picker labelName="Release Date" [entity]="modelingExercise" field="releaseDate"></jhi-date-time-picker>
+        <div class="d-flex">
+            <div class="form-group flex-grow-1">
+                <jhi-date-time-picker labelName="Release Date" [(ngModel)]="modelingExercise.releaseDate" name="releaseDate"></jhi-date-time-picker>
+            </div>
+            <div class="form-group flex-grow-1 ml-3">
+                <jhi-date-time-picker labelName="Due Date" [(ngModel)]="modelingExercise.dueDate" name="dueDate"></jhi-date-time-picker>
+            </div>
         </div>
-        <div class="form-group">
-          <jhi-date-time-picker labelName="Due Date" [entity]="modelingExercise" field="dueDate"></jhi-date-time-picker>
-        </div>
-
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.maxScore" for="field_maxScore">Max Score</label>
             <input type="number" required class="form-control" [pattern]="maxScorePattern" min="0" max="9999" name="maxScore" id="field_maxScore"
@@ -54,7 +55,7 @@
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">
-            <fa-icon icon="ban"></fa-icon>>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+            <fa-icon icon="ban"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
         <button type="submit" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
             <fa-icon icon="save"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>

@@ -11,7 +11,6 @@ import { CourseDetailComponent } from './course-detail.component';
 import { CourseUpdateComponent } from './course-update.component';
 import { CourseExercisesOverviewComponent } from './course-exercises-overview.component';
 import { CourseDeletePopupComponent } from './course-delete-dialog.component';
-import { CourseScoreCalculationComponent } from './course-score-calculation.component';
 
 @Injectable({ providedIn: 'root' })
 export class CourseResolve implements Resolve<Course> {
@@ -83,15 +82,6 @@ export const courseRoute: Routes = [
         },
         data: {
             authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.course.home.title'
-        },
-        canActivate: [UserRouteAccessService]
-    },
-    {
-        path: 'course/:id/score-calculation',
-        component: CourseScoreCalculationComponent,
-        data: {
-            authorities: ['ROLE_USER', 'ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'arTeMiSApp.course.home.title'
         },
         canActivate: [UserRouteAccessService]

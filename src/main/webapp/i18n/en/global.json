@@ -166,7 +166,11 @@
             "re-evaluate": "Re-evaluate",
             "close": "Close",
             "import": "Import",
-            "export": "Export"
+            "export": "Export",
+            "tutorCourseDashboard": "Tutor Course Dashboard",
+            "exerciseDashboard": "Exercise Dashboard",
+            "newResult": "New Result",
+            "cleanupBuildPlan": "Cleanup Build Plan"
         },
         "detail": {
             "field": "Field",

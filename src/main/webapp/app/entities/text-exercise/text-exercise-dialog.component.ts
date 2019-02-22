@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 
 import { Observable } from 'rxjs/Observable';
@@ -29,7 +29,8 @@ export class TextExerciseDialogComponent implements OnInit {
         private jhiAlertService: JhiAlertService,
         private textExerciseService: TextExerciseService,
         private courseService: CourseService,
-        private eventManager: JhiEventManager
+        private eventManager: JhiEventManager,
+        private router: Router
     ) {}
 
     ngOnInit() {
@@ -40,6 +41,12 @@ export class TextExerciseDialogComponent implements OnInit {
             },
             (res: HttpErrorResponse) => this.onError(res)
         );
+
+        this.router.events.subscribe(event => {
+            if (event instanceof NavigationEnd) {
+                this.activeModal.close();
+            }
+        });
     }
 
     clear() {

@@ -35,6 +35,8 @@ public final class Constants {
     public static final String shortNameRegex = "^[a-zA-Z][a-zA-Z0-9]*";
     public static final Pattern shortNamePattern = Pattern.compile(shortNameRegex);
 
+    public static final double COMPASS_SCORE_EQUALITY_THRESHOLD = 0.0001;
+
     private Constants() {
     }
 }

@@ -5,11 +5,11 @@ import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { ProgrammingExercise } from './programming-exercise.model';
 import { ProgrammingExerciseService } from './programming-exercise.service';
-import { ITEMS_PER_PAGE } from '../../shared';
 import { Course, CourseExerciseService, CourseService } from '../course';
 import { ActivatedRoute } from '@angular/router';
 import { programmingExerciseRoute } from 'app/entities/programming-exercise/programming-exercise.route';
 import { EMPTY } from 'rxjs';
+
 
 @Component({
     selector: 'jhi-programming-exercise',

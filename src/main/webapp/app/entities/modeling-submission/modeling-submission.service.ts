@@ -5,7 +5,6 @@ import { SERVER_API_URL } from '../../app.constants';
 
 import { ModelingSubmission } from './modeling-submission.model';
 import { createRequestOption } from '../../shared';
-import { EntityArrayResponseType, Result } from 'app/entities/result';
 
 export type EntityResponseType = HttpResponse<ModelingSubmission>;
 
