@@ -35,7 +35,7 @@ export class CourseGradeBookComponent implements OnInit {
                 this.course = this.courseCalculationService.getCourse(this.courseId);
             });
         }
-        this.courseService.findAllResultsOfCourseForExerciseAndCurrentUser(this.courseId).subscribe((course) => {
+        this.courseService.findAllResultsOfCourseForExerciseAndCurrentUser(this.courseId).subscribe(course => {
             this.exercises = course.exercises;
         });
     }

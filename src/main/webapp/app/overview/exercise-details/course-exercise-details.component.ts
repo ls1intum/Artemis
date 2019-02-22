@@ -56,8 +56,8 @@ export class CourseExerciseDetailsComponent implements OnInit {
                         const bValue = moment(b.completionDate).valueOf();
                         return aValue - bValue;
                     });
-                    let sortedResultLength = this.sortedResults.length;
-                    let startingElement = sortedResultLength - MAX_RESULT_HISTORY_LENGTH;
+                    const sortedResultLength = this.sortedResults.length;
+                    const startingElement = sortedResultLength - MAX_RESULT_HISTORY_LENGTH;
                     this.sortedHistoryResult = this.sortedResults.slice(startingElement, sortedResultLength);
                 }
             });

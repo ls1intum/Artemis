@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { ExerciseType } from "app/entities/exercise/exercise.model";
+import { ExerciseType } from 'app/entities/exercise/exercise.model';
 
 @Pipe({
     name: 'exerciseTypeLabel'
@@ -19,7 +19,7 @@ export class ExerciseTypePipe implements PipeTransform {
             case ExerciseType.FILE_UPLOAD:
                 return 'File Upload';
             default:
-                return 'Exercise'
+                return 'Exercise';
         }
     }
 

@@ -3,7 +3,14 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { HttpResponse } from '@angular/common/http';
 
-import { ABSOLUTE_SCORE, MAX_SCORE, RELATIVE_SCORE, Course, CourseService, CourseScoreCalculationService } from 'app/entities/course';
+import {
+    ABSOLUTE_SCORE,
+    MAX_SCORE,
+    RELATIVE_SCORE,
+    Course,
+    CourseService,
+    CourseScoreCalculationService
+} from 'app/entities/course';
 import { Exercise, ExerciseType } from 'app/entities/exercise';
 
 import { Result } from 'app/entities/result';
@@ -204,7 +211,9 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
                 groupedExercises[index].missedScores.data.push(missedScore);
                 groupedExercises[index].names.push(exercise.title);
                 groupedExercises[index].scores.tooltips.push(`Achieved Score: ${this.absoluteResult(participationResult)} points (${participationScore}%)`);
-                groupedExercises[index].missedScores.tooltips.push(`Missed Score: ${exercise.maxScore - this.absoluteResult(participationResult)} points (${missedScore}%)`);
+                if (exercise.maxScore) {
+                    groupedExercises[index].missedScores.tooltips.push(`Missed Score: ${exercise.maxScore - this.absoluteResult(participationResult)} points (${missedScore}%)`);
+                }
             });
             groupedExercises[index].relativeScore = this.relativeScores[exercise.type];
             groupedExercises[index].totalMaxScore = this.totalMaxScores[exercise.type];
@@ -215,10 +224,14 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     }
 
     absoluteResult(result: Result): number {
-        if(!result.resultString) {
+        if (!result.resultString) {
             return 0;
         }
-        return parseInt(result.resultString.slice(0, result.resultString.indexOf('of')), 10);
+        if (result.resultString.indexOf('of') === -1) {
+            return parseInt(result.resultString.slice(0, result.resultString.indexOf('points')), 10);
+        } else {
+            return parseInt(result.resultString.slice(0, result.resultString.indexOf('of')), 10);
+        }
     }
 
     calculateAbsoluteScores(): void {
@@ -259,8 +272,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         const quizzesRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, RELATIVE_SCORE);
         const programmingExerciseRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, RELATIVE_SCORE);
         const modelingExerciseRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, RELATIVE_SCORE);
-        const textExerciseRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, RELATIVE_SCORE);
-        const fileUploadExerciseRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, RELATIVE_SCORE);
+        const textExerciseRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.TEXT, RELATIVE_SCORE);
+        const fileUploadExerciseRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseType.FILE_UPLOAD, RELATIVE_SCORE);
         const relativeScores = {};
         relativeScores[ExerciseType.QUIZ] = quizzesRelativeScore;
         relativeScores[ExerciseType.PROGRAMMING] = programmingExerciseRelativeScore;

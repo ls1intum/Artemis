@@ -38,6 +38,13 @@ export class ResultHistoryComponent implements OnInit {
     }
 
     absoluteResult(result: Result): number {
-        return parseInt(result.resultString.slice(0, result.resultString.indexOf('of')), 10);
+        if (!result.resultString) {
+            return 0;
+        }
+        if (result.resultString.indexOf('of') === -1) {
+            return parseInt(result.resultString.slice(0, result.resultString.indexOf('points')), 10);
+        } else {
+            return parseInt(result.resultString.slice(0, result.resultString.indexOf('of')), 10);
+        }
     }
 }

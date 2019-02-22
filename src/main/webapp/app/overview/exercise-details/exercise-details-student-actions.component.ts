@@ -44,7 +44,7 @@ export class ExerciseDetailsStudentActionsComponent {
     @Input() smallButtons: boolean;
 
     public repositoryPassword: string;
-    public wasCopied: boolean = false;
+    public wasCopied = false;
 
     constructor(
         private jhiAlertService: JhiAlertService,
