@@ -861,7 +861,7 @@ export class QuizComponent implements OnInit, OnDestroy {
         this.applySelection();
         let confirmSubmit = true;
 
-        if (this.remainingTimeSeconds > 1 && (this.checkForAnsweredQuestions() == false)) {
+        if (this.remainingTimeSeconds > 15 && (this.checkForAnsweredQuestions() == false)) {
             confirmSubmit = window.confirm('Are you sure you want to submit? You have not answered all questions and you still have some time left!');
         }
         if (confirmSubmit) {
