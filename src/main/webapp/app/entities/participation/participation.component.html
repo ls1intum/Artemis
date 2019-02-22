@@ -6,14 +6,14 @@
     <jhi-alert></jhi-alert>
     <div class="row">
     </div>
-    <br/>
+    <br>
     <div class="table-responsive" *ngIf="participations">
         <table class="table table-striped">
             <thead>
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
                 <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span> <fa-icon icon="sort"></fa-icon></th>
-                <th jhiSortBy="repositoryUrl"><span jhiTranslate="arTeMiSApp.participation.repositoryUrl">Repository Url</span> <fa-icon icon="sort"></fa-icon></th>
-                <th jhiSortBy="buildPlanId"><span jhiTranslate="arTeMiSApp.participation.buildPlanId">Build Plan Id</span> <fa-icon icon="sort"></fa-icon></th>
+                <th *ngIf="exercise.type == PROGRAMMING" jhiSortBy="repositoryUrl"><span jhiTranslate="arTeMiSApp.participation.repositoryUrl">Repository Url</span> <fa-icon icon="sort"></fa-icon></th>
+                <th *ngIf="exercise.type == PROGRAMMING" jhiSortBy="buildPlanId"><span jhiTranslate="arTeMiSApp.participation.buildPlanId">Build Plan Id</span> <fa-icon icon="sort"></fa-icon></th>
                 <th jhiSortBy="initializationState"><span jhiTranslate="arTeMiSApp.participation.initializationState">Initialization State</span> <fa-icon icon="sort"></fa-icon></th>
                 <th jhiSortBy="initializationDate"><span jhiTranslate="arTeMiSApp.participation.initializationDate">Initialization Date</span> <fa-icon icon="sort"></fa-icon></th>
                 <th jhiSortBy="student.firstName"><span jhiTranslate="arTeMiSApp.participation.student">Student</span> <fa-icon icon="sort"></fa-icon></th>
@@ -24,8 +24,8 @@
             <tr *ngFor="let participation of participations | sortBy: predicate: reverse ;trackBy: trackId">
                 <td><a routerLink="/participation/{{participation.id}}">{{participation.id}}</a></td>
                 <!-- TODO get the correct URL from the server instead of hardcoding Bamboo here -->
-                <td><span *ngIf="participation.repositoryUrl !== null"><a href="{{participation.repositoryUrl}}" target="_blank">{{participation.repositoryUrl}}</a></span></td>
-                <td><span *ngIf="participation.buildPlanId !== null"><a href="https://bamboobruegge.in.tum.de/browse/{{participation.buildPlanId}}" target="_blank">{{participation.buildPlanId}}</a></span></td>
+                <td *ngIf="exercise.type == PROGRAMMING"><span *ngIf="participation.repositoryUrl !== null"><a href="{{participation.repositoryUrl}}" target="_blank">Repository Link</a></span></td>
+                <td *ngIf="exercise.type == PROGRAMMING"><span *ngIf="participation.buildPlanId !== null"><a href="https://bamboobruegge.in.tum.de/browse/{{participation.buildPlanId}}" target="_blank">{{participation.buildPlanId}}</a></span></td>
                 <td>{{participation.initializationState}}</td>
                 <td>{{participation.initializationDate | date:'medium'}}</td>
                 <td>
@@ -47,14 +47,18 @@
                             <fa-icon icon="times"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
                         </button>
-                        <div *ngIf="exercise.type === PROGRAMMING">
-                            <button type="submit"
-                                    [routerLink]="['/', { outlets: { popup: ['participation', participation.id, 'result', 'new']} }]"
-                                    class="btn btn-warning btn-sm mr-1">
-                                <fa-icon icon="asterisk"></fa-icon>
-                                <span class="d-none d-md-inline">New Result</span>
-                            </button>
-                        </div>
+                        <button type="submit" *ngIf="exercise.type === PROGRAMMING"
+                                [routerLink]="['/', { outlets: { popup: ['participation', participation.id, 'result', 'new']} }]"
+                                class="btn btn-warning btn-sm mr-1">
+                            <fa-icon icon="asterisk"></fa-icon>
+                            <span class="d-none d-md-inline" jhiTranslate="entity.action.newResult">New Result</span>
+                        </button>
+                        <button type="submit" *ngIf="exercise.type === PROGRAMMING && participation.buildPlanId !== null"
+                                [routerLink]="['/', { outlets: { popup: ['participation', participation.id, 'cleanupBuildPlan']} }]"
+                                class="btn btn-danger btn-sm mr-1">
+                            <fa-icon [icon]="'eraser'"></fa-icon>
+                            <span class="d-none d-md-inline" jhiTranslate="entity.action.cleanupBuildPlan">Cleanup build plan</span>
+                        </button>
                     </div>
                 </td>
             </tr>

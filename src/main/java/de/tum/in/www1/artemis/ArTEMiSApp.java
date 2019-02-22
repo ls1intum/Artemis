@@ -59,13 +59,13 @@ public class ArTEMiSApp {
         }
 
         // activate Quiz Schedule Service
-        quizScheduleService.startSchedule(3 * 1000);                    //every 3 seconds
+        quizScheduleService.startSchedule(3 * 1000);                          //every 3 seconds
 
         // activate Automatic Submission Service
-        automaticSubmissionService.startSchedule(10 * 1000);            //every 10 seconds
+        automaticSubmissionService.startSchedule(10 * 1000);                  //every 10 seconds
 
         // activate Automatic Submission Service
-        automaticBuildPlanCleanupService.startSchedule(60 * 60 * 1000);       //every 60 minutes
+        automaticBuildPlanCleanupService.startSchedule(12 * 60 * 60 * 1000);       //every 12 hours
     }
 
     /**

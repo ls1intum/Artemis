@@ -12,6 +12,7 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -99,7 +100,7 @@ public class ParticipationService {
         // common for all exercises
         // Check if participation already exists
         Participation participation = participationRepository.findOneByExerciseIdAndStudentLogin(exercise.getId(), username);
-        if (!Optional.ofNullable(participation).isPresent() ||
+        if (participation == null ||
             (exercise instanceof ProgrammingExercise && participation.getInitializationState() == InitializationState.FINISHED)) {
             // create a new participation only if it was finished before (only for programming exercises)
             participation = new Participation();
@@ -328,7 +329,11 @@ public class ParticipationService {
     @Transactional(readOnly = true)
     public Participation findOne(Long id) {
         log.debug("Request to get Participation : {}", id);
-        return participationRepository.findById(id).get();
+        Optional<Participation> participation = participationRepository.findById(id);
+        if (!participation.isPresent()) {
+            throw new EntityNotFoundException("Participation with " + id + " was not found!");
+        }
+        return participation.get();
     }
 
     /**
@@ -340,7 +345,11 @@ public class ParticipationService {
     @Transactional(readOnly = true)
     public Participation findOneWithEagerResults(Long id) {
         log.debug("Request to get Participation : {}", id);
-        return participationRepository.findByIdWithEagerResults(id);
+        Optional<Participation> participation =  participationRepository.findByIdWithEagerResults(id);
+        if (!participation.isPresent()) {
+            throw new EntityNotFoundException("Participation with " + id + " was not found!");
+        }
+        return participation.get();
     }
 
     /**
@@ -352,7 +361,11 @@ public class ParticipationService {
     @Transactional(readOnly = true)
     public Participation findOneWithEagerSubmissions(Long id) {
         log.debug("Request to get Participation : {}", id);
-        return participationRepository.findByIdWithEagerSubmissions(id);
+        Optional<Participation> participation =  participationRepository.findByIdWithEagerSubmissions(id);
+        if (!participation.isPresent()) {
+            throw new EntityNotFoundException("Participation with " + id + " was not found!");
+        }
+        return participation.get();
     }
 
     /**
@@ -364,8 +377,11 @@ public class ParticipationService {
     @Transactional(readOnly = true)
     public Participation findOneWithEagerResultsAndSubmissions(Long id) {
         log.debug("Request to get Participation : {}", id);
-
-        return participationRepository.findByIdWithEagerSubmissionsAndEagerResultsAndEagerAssessors(id);
+        Optional<Participation> participation =  participationRepository.findByIdWithEagerSubmissionsAndEagerResultsAndEagerAssessors(id);
+        if (!participation.isPresent()) {
+            throw new EntityNotFoundException("Participation with " + id + " was not found!");
+        }
+        return participation.get();
     }
 
 
@@ -381,7 +397,7 @@ public class ParticipationService {
         log.debug("Request to get initialized/inactive Participation for User {} for Exercise with id: {}", username, exerciseId);
 
         Participation participation = participationRepository.findOneByExerciseIdAndStudentLoginAndInitializationState(exerciseId, username, INITIALIZED);
-        if(!Optional.ofNullable(participation).isPresent()) {
+        if(participation == null) {
             participation = participationRepository.findOneByExerciseIdAndStudentLoginAndInitializationState(exerciseId, username, InitializationState.INACTIVE);
         }
         return participation;
@@ -397,7 +413,6 @@ public class ParticipationService {
     @Transactional(readOnly = true)
     public Participation findOneByExerciseIdAndStudentLoginAnyState(Long exerciseId, String username) {
         log.debug("Request to get Participation for User {} for Exercise with id: {}", username, exerciseId);
-
         Participation participation = participationRepository.findOneByExerciseIdAndStudentLogin(exerciseId, username);
         return participation;
     }
@@ -493,6 +508,42 @@ public class ParticipationService {
         }
         return participations;
     }
+
+    /**
+     * Deletes the build plan on the continuous integration server and sets the initialization state of the participation to inactive
+     * This means the participation can be resumed in the future
+     *
+     * @param participation
+     */
+    @Transactional
+    public void cleanupBuildPlan(Participation participation) {
+        if (participation.getBuildPlanId() != null) { //ignore participations without build plan id
+            continuousIntegrationService.get().deleteBuildPlan(participation.getBuildPlanId());
+            participation.setInitializationState(InitializationState.INACTIVE);
+            participation.setBuildPlanId(null);
+            save(participation);
+        }
+    }
+
+    /**
+     * NOTICE: be careful with this method because it deletes the students code on the version control server
+     *
+     * Deletes the repository on the version control server and sets the initialization state of the participation to finished
+     * This means the participation cannot be resumed in the future and would need to be restarted
+     *
+     * @param participation
+     */
+    @Transactional
+    public void cleanupRepository(Participation participation) {
+        if (participation.getRepositoryUrl() != null) {      //ignore participations without repository URL
+            versionControlService.get().deleteRepository(participation.getRepositoryUrlAsUrl());
+            participation.setRepositoryUrl(null);
+            participation.setInitializationState(InitializationState.FINISHED);
+            save(participation);
+        }
+    }
+
+
 
     /**
      * Delete the participation by id.
