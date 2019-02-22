@@ -33,7 +33,7 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
     /* Multiple Choice Counting Variables*/
     multipleChoiceCorrectAnswerCorrectlyChosen: number; //Amount of right options chosen by the student
     multipleChoiceWrongAnswerChosen: number; //Amount of wrong options chosen by the student
-    amountOfCorrectMultipleChoiceAnswers: number; //Amount of correct options for the question
+    correctMultipleChoiceAnswers: number; //Amount of correct options for the question
     forgottenMultipleChoiceRightAnswers: number; //Amount of wrong options for the question
     multipleChoiceAnswerOptions: number; //Amount of all possible options for the question
     inTotalSelectedRightOptions: number; //Amount of correct and wrong options assigned correctly
@@ -41,7 +41,7 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
     differenceMultipleChoice: number; //Difference between inTotalSelectedRightOptions and differenceMultipleChoice
 
     /* Drag and Drop Counting Variables*/
-    amountOfDragAndDropZones: number; //Amount of drag and drop Zones
+    dragAndDropZones: number; //Amount of drag and drop Zones
     wronglyMappedDragAndDropItems: number; // Amount of wrongly mapped drag and drop item
     differenceDragAndDrop: number; //Difference between the wronglyMappedDragAndDropItems and correctlyMappedDragAndDropItems
 
@@ -95,11 +95,11 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
         const translationBasePath = 'arTeMiSApp.quizExercise.explanationText.';
         const mcmQuestion = this.question as MultipleChoiceQuestion;
         this.multipleChoiceAnswerOptions = mcmQuestion.answerOptions.length;
-        this.amountOfCorrectMultipleChoiceAnswers = mcmQuestion.answerOptions.filter(option => option.isCorrect).length;
+        this.correctMultipleChoiceAnswers = mcmQuestion.answerOptions.filter(option => option.isCorrect).length;
         this.multipleChoiceCorrectAnswerCorrectlyChosen = this.multipleChoiceMapping.filter(option => option.isCorrect).length;
         this.multipleChoiceWrongAnswerChosen = this.multipleChoiceMapping.filter(option => !option.isCorrect).length;
-        this.forgottenMultipleChoiceRightAnswers = this.amountOfCorrectMultipleChoiceAnswers - this.multipleChoiceCorrectAnswerCorrectlyChosen;
-        this.inTotalSelectedRightOptions = this.multipleChoiceCorrectAnswerCorrectlyChosen + (this.multipleChoiceAnswerOptions - this.amountOfCorrectMultipleChoiceAnswers - this.multipleChoiceWrongAnswerChosen);
+        this.forgottenMultipleChoiceRightAnswers = this.correctMultipleChoiceAnswers - this.multipleChoiceCorrectAnswerCorrectlyChosen;
+        this.inTotalSelectedRightOptions = this.multipleChoiceCorrectAnswerCorrectlyChosen + (this.multipleChoiceAnswerOptions - this.correctMultipleChoiceAnswers - this.multipleChoiceWrongAnswerChosen);
         this.inTotalSelectedWrongOptions = this.multipleChoiceWrongAnswerChosen + this.forgottenMultipleChoiceRightAnswers;
         this.differenceMultipleChoice = this.inTotalSelectedRightOptions - this.inTotalSelectedWrongOptions;
 
@@ -122,8 +122,8 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
     private countDragAndDrop() {
         const translationBasePath = 'arTeMiSApp.quizExercise.explanationText.';
         const dndQuestion = this.question as DragAndDropQuestion;
-        this.amountOfDragAndDropZones = dndQuestion.dropLocations.length;
-        this.wronglyMappedDragAndDropItems = this.amountOfDragAndDropZones - this.correctlyMappedDragAndDropItems;
+        this.dragAndDropZones = dndQuestion.dropLocations.length;
+        this.wronglyMappedDragAndDropItems = this.dragAndDropZones - this.correctlyMappedDragAndDropItems;
         this.differenceDragAndDrop = this.correctlyMappedDragAndDropItems - this.wronglyMappedDragAndDropItems;
 
         if (this.correctlyMappedDragAndDropItems == 1) {
