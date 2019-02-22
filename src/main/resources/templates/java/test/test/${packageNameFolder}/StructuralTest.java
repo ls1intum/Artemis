@@ -111,11 +111,15 @@ public class StructuralTest {
         // Checking the occurrences of a certain parameter type is enough, since the parameter names
         // or their order are not relevant to us.
         String[] expectedParameterTypeNames = new String[expectedParameters.length()];
-        for(int i = 0; i < expectedParameters.length(); i++) expectedParameterTypeNames[i] = expectedParameters.getString(i);
+        for(int i = 0; i < expectedParameters.length(); i++) {
+            expectedParameterTypeNames[i] = expectedParameters.getString(i);
+        }
         Map<String, Integer> expectedParametersHashtable = createParametersHashMap(expectedParameterTypeNames);
 
         String[] observedParameterTypeNames = new String[observedParameters.length];
-        for(int i = 0; i < observedParameters.length; i++) observedParameterTypeNames[i] = observedParameters[i].getSimpleName();
+        for(int i = 0; i < observedParameters.length; i++) {
+            observedParameterTypeNames[i] = observedParameters[i].getSimpleName();
+        }
         Map<String, Integer> observedParametersHashtable = createParametersHashMap(observedParameterTypeNames);
 
         return expectedParametersHashtable.equals(observedParametersHashtable);
@@ -177,5 +181,4 @@ public class StructuralTest {
 
         return new JSONArray(result.toString());
     }
-
 }

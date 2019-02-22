@@ -47,11 +47,9 @@ public class MethodTest extends StructuralTest {
                 JSONObject expectedClassPropertiesJSON = expectedClassJSON.getJSONObject("class");
                 String expectedClassName = expectedClassPropertiesJSON.getString("name");
                 String expectedPackageName = expectedClassPropertiesJSON.getString("package");
-
                 testData.add(new Object[] { expectedClassName, expectedPackageName, expectedClassJSON });
             }
         }
-
         return testData;
     }
 

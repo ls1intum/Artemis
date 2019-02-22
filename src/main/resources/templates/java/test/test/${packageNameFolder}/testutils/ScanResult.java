@@ -2,7 +2,7 @@ package ${packageName}.testutils;
 
 /**
  * @author Kristian Dimo (kristian.dimo@tum.de)
- * @version 1.1 (28.01.2018)
+ * @version 1.5 (25.01.2019)
  *
  * This class represents the result object generated from the ClassNamesScanner.
  * It consists of an enum representing the type of the result and a string 

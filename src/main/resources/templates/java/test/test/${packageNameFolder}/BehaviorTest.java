@@ -9,7 +9,7 @@ import java.util.Arrays;
 
 /**
  * @author Kristian Dimo (kristian.dimo@tum.de)
- * @version 1.1 (25.01.2019)
+ * @version 1.5 (25.01.2019)
  *
  * This class serves as an API to Java Reflection to facilitate various operations that are performed
  * regularly in the functional tests. Facilitation mainly means automatically handling all the various
@@ -21,7 +21,7 @@ import java.util.Arrays;
  * - Retrieving a method from a class given the method's name and parameter types,
  * - Invoking a method with certain parameter instances and retrieving its return type.
  */
-public abstract class FunctionalTest {
+public abstract class BehaviorTest {
 
     /**
      * Retrieve the actual class by its qualified name.
@@ -193,5 +193,4 @@ public abstract class FunctionalTest {
             return parameterTypesInformation += " ]";
         }
     }
-
 }

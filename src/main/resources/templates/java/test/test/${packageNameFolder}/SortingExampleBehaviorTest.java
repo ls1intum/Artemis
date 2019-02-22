@@ -16,7 +16,7 @@ import java.util.Date;
 import org.junit.Before;
 import org.junit.Test;
 
-public class MethodFunctionalTest extends FunctionalTest {
+public class SortingExampleBehaviorTest extends BehaviorTest {
 
     private List<Date> dates;
     private List<Date> datesWithCorrectOrder;

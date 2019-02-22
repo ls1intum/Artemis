@@ -19,7 +19,7 @@ import org.xml.sax.SAXException;
 
 /**
  * @author Kristian Dimo (kristian.dimo@tum.de)
- * @version 1.1 (28.01.2018)
+ * @version 1.5 (25.01.2019)
  * 
  * This class scans the submission project if the current expected class is actually 
  * present in it or not. The result is returned as an instance of ScanResult.
@@ -47,8 +47,8 @@ public class ClassNameScanner {
 	private final String expectedPackageName;
 	
 	// The names of the classes observed in the project
-	private final HashMap<String, String> observedClasses;
-	private final HashMap<String, String> expectedClasses;
+	private final Map<String, String> observedClasses;
+	private final Map<String, String> expectedClasses;
 	private final ScanResult scanResult;
 	
 	public ClassNameScanner(String expectedClassName, String expectedPackageName, JSONArray structureOracleJSON) {
@@ -83,15 +83,14 @@ public class ClassNameScanner {
 			String observedPackageName = observedClasses.get(expectedClassName);
 			classIsCorrectlyPlaced = observedPackageName.equals(expectedPackageName);
 			
-			scanResultType = classIsCorrectlyPlaced 
-					? ScanResultType.CORRECTNAME_CORRECTPLACE 
-					: ScanResultType.CORRECTNAME_MISPLACED;
+			scanResultType = classIsCorrectlyPlaced ? ScanResultType.CORRECTNAME_CORRECTPLACE : ScanResultType.CORRECTNAME_MISPLACED;
 			scanResultMessage = classIsCorrectlyPlaced
 					? "The class " + expectedClassName + " has the correct name and is in the correct package." 
 					: "The class " + expectedClassName + " has the correct name,"
 							+ " but the package it's in, " + observedClasses.get(expectedClassName) + ", deviates from the expectation."
 							+ "  Please make sure it is placed in the correct package.";
-		} else {			
+		}
+		else {
 			for(String observedClassName : observedClasses.keySet()) {
 				String observedPackageName = observedClasses.get(observedClassName);
 				classIsCorrectlyPlaced = observedPackageName.equals(expectedPackageName);
@@ -100,9 +99,7 @@ public class ClassNameScanner {
 				boolean hasTypos = new LevenshteinDistance().apply(observedClassName, expectedClassName) < Math.ceil(expectedClassName.length() / 4);
 
 				if(hasWrongCase) {
-					scanResultType = classIsCorrectlyPlaced 
-							? ScanResultType.WRONGCASE_CORRECTPLACE
-							: ScanResultType.WRONGCASE_MISPLACED;
+					scanResultType = classIsCorrectlyPlaced ? ScanResultType.WRONGCASE_CORRECTPLACE : ScanResultType.WRONGCASE_MISPLACED;
 					scanResultMessage = classIsCorrectlyPlaced
 							? "The exercise expects a class with the name " + expectedClassName
 									+ ". We found that you implemented a class " + observedClassName + ", which deviates from the expectation."
@@ -112,10 +109,9 @@ public class ClassNameScanner {
 									+ ", which deviates from the expectation."
 									+ " Please check for wrong upper case / lower case lettering and make sure you place it in the correct package.";
 					break;
-				} else if(hasTypos) {
-					scanResultType = classIsCorrectlyPlaced 
-							? ScanResultType.TYPOS_CORRECTPLACE
-							: ScanResultType.TYPOS_MISPLACED;
+				}
+				else if(hasTypos) {
+					scanResultType = classIsCorrectlyPlaced ? ScanResultType.TYPOS_CORRECTPLACE : ScanResultType.TYPOS_MISPLACED;
 					scanResultMessage = classIsCorrectlyPlaced
 							? "The exercise expects a class with the name " + expectedClassName
 									+ ". We found that you implemented a class " + observedClassName + ", which deviates from the expectation."
@@ -125,7 +121,8 @@ public class ClassNameScanner {
 									+ ", which deviates from the expectation."
 									+ " Please check for typos in the class name and make sure you place it in the correct package.";
 					break;
-				} else {
+				}
+				else {
 					scanResultType = ScanResultType.NOTFOUND;
 					scanResultMessage = "You have implemented " + observedClassName + " in the package " + observedClassName
 							+ ". This class is not expected in the exercise."
@@ -155,9 +152,9 @@ public class ClassNameScanner {
 			File pomFile = new File("pom.xml");
 			DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-			Document pomDocument = documentBuilder.parse(pomFile);
+			Document pomXmlDocument = documentBuilder.parse(pomFile);
 						
-			NodeList buildNodes = pomDocument.getElementsByTagName("build");
+			NodeList buildNodes = pomXmlDocument.getElementsByTagName("build");
 			for(int i = 0; i < buildNodes.getLength(); i++) {
 				Node buildNode = buildNodes.item(i);
 				
@@ -183,7 +180,7 @@ public class ClassNameScanner {
 	 * @param node: The current node the method is visiting.
 	 * @param types: The JSON object where the type names and packages get appended.
 	 */
-	private void walkProjectFileStructure(String assignmentFolderName, File node, HashMap<String, String> types) {
+	private void walkProjectFileStructure(String assignmentFolderName, File node, Map<String, String> types) {
 		String currentFileName = node.getName();
 
 		if(currentFileName.contains(".java")) {	
