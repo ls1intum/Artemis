@@ -427,7 +427,7 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
                 text += '<a data-tests="' + tests.toString() + '" class="test-status"><span class="text-danger result">' + label + '</span></a>';
             }
         }
-        text += '<br />';
+        text += '<br>';
 
         this.steps.push({
             title: tokens[0].title,
