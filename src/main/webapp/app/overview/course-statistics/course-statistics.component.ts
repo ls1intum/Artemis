@@ -51,9 +51,9 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     totalMaxScores = {};
 
     groupedExercises: Exercise[][] = [];
-    doughnutChartColors = [QUIZ_EXERCISE_COLOR, PROGRAMMING_EXERCISE_COLOR, MODELING_EXERCISE_COLOR, 'rgba(0, 0, 0, 0.5)'];
+    doughnutChartColors = [QUIZ_EXERCISE_COLOR, PROGRAMMING_EXERCISE_COLOR, MODELING_EXERCISE_COLOR, TEXT_EXERCISE_COLOR, FILE_UPLOAD_EXERCISE_COLOR, 'rgba(0, 0, 0, 0.5)'];
 
-    public doughnutChartLabels: string[] = ['Quiz Points', 'Programming Points', 'Modeling Points', 'Missing Points'];
+    public doughnutChartLabels: string[] = ['Quiz Points', 'Programming Points', 'Modeling Points', 'Text Points', 'File Upload Points', 'Missing Points'];
     public exerciseTitles: object = {
         'quiz': {
             'name': 'Quiz Exercises',
@@ -78,7 +78,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     };
 
     public doughnutChartData: CourseStatisticsDataSet[] = [{
-        data: [0, 0, 0, 0],
+        data: [0, 0, 0, 0, 0, 0],
         backgroundColor: this.doughnutChartColors
     }];
 
@@ -249,7 +249,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         absoluteScores[ExerciseType.TEXT] = textExerciseTotalScore;
         absoluteScores[ExerciseType.FILE_UPLOAD] = fileUploadExerciseTotalScore;
         this.absoluteScores = absoluteScores;
-        this.doughnutChartData[0].data = [quizzesTotalScore, programmingExerciseTotalScore, modelingExerciseTotalScore, totalMissedPoints];
+        this.doughnutChartData[0].data = [quizzesTotalScore, programmingExerciseTotalScore, modelingExerciseTotalScore, textExerciseTotalScore, fileUploadExerciseTotalScore totalMissedPoints];
     }
 
     calculateMaxScores() {
