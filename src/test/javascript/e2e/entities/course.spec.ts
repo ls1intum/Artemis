@@ -35,7 +35,7 @@ describe('course', () => {
     it('should not create new course with empty input', async () => {
         await coursePage.clickOnCreateNewCourse();
 
-        expect(await newCoursePage.save.getAttribute('disabled')).to.eq('true');
+        expect(await newCoursePage.save.getAttribute('disabled')).to.equal('true');
         await newCoursePage.clickCancel();
     });
 
@@ -45,29 +45,32 @@ describe('course', () => {
         await newCoursePage.setTitle(courseName);
         await newCoursePage.setShortName(courseName);
 
-        expect(await newCoursePage.save.getAttribute('disabled')).to.eq('true');
+        expect(await newCoursePage.save.getAttribute('disabled')).to.equal('true');
         await newCoursePage.clickCancel();
     });
 
-    it('should not create new course without groups', async () => {
-        await coursePage.clickOnCreateNewCourse();
-
-        await newCoursePage.setTitle(courseName);
-        await newCoursePage.setShortName(courseName);
-
-        expect(await newCoursePage.save.getAttribute('disabled')).to.eq('true');
-        await newCoursePage.clickCancel();
-    });
-
-    it('should save course with title, short title, student and instructor groups', async () => {
+    it('should allow to create new course without tutor group', async () => {
         await coursePage.clickOnCreateNewCourse();
 
         await newCoursePage.setTitle(courseName);
         await newCoursePage.setShortName(courseName);
         await newCoursePage.setStudentGroupName('tumuser');
-        await newCoursePage.setInstructorGroupName('artemis-dev');
+        await newCoursePage.setInstructorGroupName('ls1instructor');
 
-        expect(await newCoursePage.save.getAttribute('disabled')).to.be.null;
+        expect(await newCoursePage.save.getAttribute('disabled')).to.equal(null);
+        await newCoursePage.clickCancel();
+    });
+
+    it('should save course with title, short title, student, tutor and instructor groups', async () => {
+        await coursePage.clickOnCreateNewCourse();
+
+        await newCoursePage.setTitle(courseName);
+        await newCoursePage.setShortName(courseName);
+        await newCoursePage.setStudentGroupName('tumuser');
+        await newCoursePage.setTutorGroupName('artemis-dev');
+        await newCoursePage.setInstructorGroupName('ls1instructor');
+
+        expect(await newCoursePage.save.getAttribute('disabled')).to.equal(null);
         await newCoursePage.clickSave();
 
         browser.wait(ec.urlContains('/course'), 5000).then((result) => expect(result).to.be.true);
