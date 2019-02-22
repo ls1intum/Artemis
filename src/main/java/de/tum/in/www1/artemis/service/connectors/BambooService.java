@@ -21,16 +21,16 @@ import com.atlassian.bamboo.specs.api.builders.repository.VcsRepositoryIdentifie
 import com.atlassian.bamboo.specs.builders.notification.PlanCompletedNotification;
 import com.atlassian.bamboo.specs.builders.repository.bitbucket.server.BitbucketServerRepository;
 import com.atlassian.bamboo.specs.builders.repository.viewer.BitbucketServerRepositoryViewer;
-import com.atlassian.bamboo.specs.builders.task.CheckoutItem;
-import com.atlassian.bamboo.specs.builders.task.MavenTask;
-import com.atlassian.bamboo.specs.builders.task.VcsCheckoutTask;
+import com.atlassian.bamboo.specs.builders.task.*;
 import com.atlassian.bamboo.specs.builders.trigger.BitbucketServerTrigger;
+import com.atlassian.bamboo.specs.model.task.TestParserTaskProperties;
 import com.atlassian.bamboo.specs.util.BambooServer;
 import com.atlassian.bamboo.specs.util.SimpleUserPasswordCredentials;
 import com.atlassian.bamboo.specs.util.UserPasswordCredentials;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.exception.BitbucketException;
@@ -138,7 +138,13 @@ public class BambooService implements ContinuousIntegrationService {
         final String teachingAssistantGroupName = course.getTeachingAssistantGroupName();
         final String instructorGroupName = course.getInstructorGroupName();
 
-        final Plan plan = createPlan(planKey, planName, planDescription, projectKey, projectName, projectKey, assignmentVcsRepositorySlug, testVcsRepositorySlug);
+        Plan plan = null;
+        if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
+            plan = createJavaPlan(planKey, planName, planDescription, projectKey, projectName, projectKey, assignmentVcsRepositorySlug, testVcsRepositorySlug);
+        }
+        else if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.PYTHON) {
+            plan = createPythonPlan(planKey, planName, planDescription, projectKey, projectName, projectKey, assignmentVcsRepositorySlug, testVcsRepositorySlug);
+        }
         bambooServer.publish(plan);
 
         final PlanPermissions planPermission = setPlanPermission(projectKey, planKey, teachingAssistantGroupName, instructorGroupName, ADMIN_GROUP_NAME);
@@ -152,8 +158,46 @@ public class BambooService implements ContinuousIntegrationService {
             .name(name);
     }
 
-    private Plan createPlan(String planKey, String planName, String planDescription, String projectKey, String projectName,
-                     String vcsProjectKey, String vcsAssignmentRepositorySlug, String vcsTestRepositorySlug) {
+    private Plan createPythonPlan(String planKey, String planName, String planDescription, String projectKey, String projectName,
+                                String vcsProjectKey, String vcsAssignmentRepositorySlug, String vcsTestRepositorySlug) {
+        @SuppressWarnings("unchecked")
+        final Plan plan = new Plan(createProject(projectName, projectKey), planName, planKey)
+            .description(planDescription)
+            .pluginConfigurations(new ConcurrentBuilds().useSystemWideDefault(true))
+            .planRepositories(
+                createBuildPlanRepository(ASSIGNMENT_REPO_NAME, vcsProjectKey, vcsAssignmentRepositorySlug),
+                createBuildPlanRepository(TEST_REPO_NAME, vcsProjectKey, vcsTestRepositorySlug))
+            .stages(new Stage("Default Stage")
+                .jobs(new Job("Default Job",
+                    new BambooKey("JOB1"))
+                    .tasks(new VcsCheckoutTask()
+                            .description("Checkout Default Repository")
+                            .checkoutItems(new CheckoutItem()
+                                    .repository(new VcsRepositoryIdentifier()
+                                        .name(ASSIGNMENT_REPO_NAME))
+                                    .path(ASSIGNMENT_REPO_PATH),	//NOTE: this path needs to be specified in the Maven pom.xml in the Tests Repo
+                                new CheckoutItem()
+                                    .repository(new VcsRepositoryIdentifier()
+                                        .name(TEST_REPO_NAME))),
+                                new ScriptTask()
+                                    .description("Builds and tests the code")
+                                    .inlineBody("pytest --junitxml=test-reports/results.xml\nexit 0"),
+                                new TestParserTask(TestParserTaskProperties.TestType.JUNIT)
+                                    .resultDirectories("test-reports/results.xml"))))
+            .triggers(new BitbucketServerTrigger())
+            .planBranchManagement(new PlanBranchManagement()
+                .delete(new BranchCleanup())
+                .notificationForCommitters())
+            .notifications(new Notification()
+                .type(new PlanCompletedNotification())
+                .recipients(new AnyNotificationRecipient(new AtlassianModule("de.tum.in.www1.bamboo-server:recipient.server"))
+                    .recipientString(SERVER_URL + NEW_RESULT_RESOURCE_API_PATH)));
+        return plan;
+    }
+
+
+    private Plan createJavaPlan(String planKey, String planName, String planDescription, String projectKey, String projectName,
+                                String vcsProjectKey, String vcsAssignmentRepositorySlug, String vcsTestRepositorySlug) {
         @SuppressWarnings("unchecked")
         final Plan plan = new Plan(createProject(projectName, projectKey), planName, planKey)
             .description(planDescription)

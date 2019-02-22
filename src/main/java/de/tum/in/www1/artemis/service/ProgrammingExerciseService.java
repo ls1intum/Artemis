@@ -114,7 +114,7 @@ public class ProgrammingExerciseService {
 
         String programmingLanguage = programmingExercise.getProgrammingLanguage().toString().toLowerCase();
 
-        String templatePath = "classpath:templates/java";
+        String templatePath = "classpath:templates/" + programmingLanguage;
         String exercisePath = templatePath + "/exercise/**/*.*";
         String solutionPath = templatePath + "/solution/**/*.*";
         String testPath = templatePath + "/test/**/*.*";

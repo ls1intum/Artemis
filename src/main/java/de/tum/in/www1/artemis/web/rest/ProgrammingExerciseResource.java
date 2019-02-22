@@ -183,6 +183,7 @@ public class ProgrammingExerciseResource {
         }
 
         // Check if package name is set
+        // TODO: in case of pyton the package name might not be necessary
         if (programmingExercise.getPackageName() == null || programmingExercise.getPackageName().length() < 3) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The packagename is invalid", "packagenameInvalid")).body(null);
         }
