@@ -259,6 +259,6 @@ export class DragAndDropQuestionComponent implements OnChanges {
      * counts the amount of right mappings for a question by using the isLocationCorrect Method
      */
     countCorrectMappings(): void {
-        this.correctAnswer = this.question.dropLocations.filter(dropLocation => this.isLocationCorrect(dropLocation )).length;
+        this.correctAnswer = this.question.dropLocations.filter(dropLocation => this.isLocationCorrect(dropLocation)).length;
     }
 }
