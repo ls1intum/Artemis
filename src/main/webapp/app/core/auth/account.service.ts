@@ -37,6 +37,10 @@ export class AccountService {
         this.authenticationState.next(this.userIdentity);
     }
 
+    syncGroups(identity: User) {
+        this.userIdentity.groups = identity.groups;
+    }
+
     hasAnyAuthority(authorities: string[]): Promise<boolean> {
         return Promise.resolve(this.hasAnyAuthorityDirect(authorities));
     }
@@ -71,7 +75,7 @@ export class AccountService {
     }
 
     hasGroup(group: string): boolean {
-        if (!this.authenticated || !this.userIdentity || !this.userIdentity.authorities) {
+        if (!this.authenticated || !this.userIdentity || !this.userIdentity.authorities || !this.userIdentity.groups) {
             return false;
         }
 

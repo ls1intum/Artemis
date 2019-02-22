@@ -160,7 +160,7 @@ public class LtiService {
         User user = userService.getUser();
 
         // Make sure user is added to group for this exercise
-        addUserToExerciseGroup(user, exercise);
+        addUserToExerciseGroup(user, exercise.getCourse());
 
         // Save LTI user ID to automatically sign in the next time
         saveLtiUserId(user, launchRequest.getUser_id());
@@ -260,23 +260,23 @@ public class LtiService {
     }
 
     /**
-     * Add an user to the exercise group
+     * Add an user to the course student group
      *
      * @param user
-     * @param exercise
+     * @param course
      */
-    private void addUserToExerciseGroup(User user, Exercise exercise) {
-        String courseGroup = exercise.getCourse().getStudentGroupName();
-        if (!user.getGroups().contains(courseGroup)) {
+    private void addUserToExerciseGroup(User user, Course course) {
+        String courseStudentGroupName = course.getStudentGroupName();
+        if (!user.getGroups().contains(courseStudentGroupName)) {
             List<String> groups = user.getGroups();
-            groups.add(courseGroup);
+            groups.add(courseStudentGroupName);
             user.setGroups(groups);
             userRepository.save(user);
 
             if (!user.getLogin().startsWith("edx")) {
                 // try to sync with authentication service for actual users (not for edx users)
                 try {
-                    artemisAuthenticationProvider.get().addUserToGroup(user.getLogin(), courseGroup);
+                    artemisAuthenticationProvider.get().addUserToGroup(user.getLogin(), courseStudentGroupName);
                 } catch (ArtemisAuthenticationException e) {
                 /*
                     This might throw exceptions, for example if the group does not exist on the authentication service.

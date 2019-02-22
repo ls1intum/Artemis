@@ -170,7 +170,8 @@
             "tutorCourseDashboard": "Tutor Course Dashboard",
             "exerciseDashboard": "Exercise Dashboard",
             "newResult": "New Result",
-            "cleanupBuildPlan": "Cleanup Build Plan"
+            "cleanupBuildPlan": "Cleanup Build Plan",
+            "registerForCourse": "Register For Course"
         },
         "detail": {
             "field": "Field",
