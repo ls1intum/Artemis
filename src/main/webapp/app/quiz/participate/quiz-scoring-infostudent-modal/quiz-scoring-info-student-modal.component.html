@@ -7,7 +7,7 @@
 
 
     <div class="modal-body" *ngIf="this.question.scoringType === ALL_OR_NOTHING">
-        <span class="show-explanation"><span style="font-weight:bold" jhiTranslate="arTeMiSApp.quizExercise.explanationText.scoringTypeAllOrNothing"></span><span jhiTranslate="arTeMiSApp.quizExercise.explanationText.scoringTypeAllOrNothingExplanation"></span></span></br>
+        <span class="show-explanation"><span style="font-weight:bold" jhiTranslate="arTeMiSApp.quizExercise.explanationText.scoringTypeAllOrNothing"></span><span jhiTranslate="arTeMiSApp.quizExercise.explanationText.scoringTypeAllOrNothingExplanation"></span></span><br>
 
         <div *ngIf= "this.question.type === MULTIPLE_CHOICE">
             <span *ngIf="this.correctMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0">
@@ -37,7 +37,7 @@
 
 
     <div class="modal-body" *ngIf="this.question.scoringType === PROPORTIONAL_WITH_PENALTY">
-        <span class="show-explanation"><span style="font-weight:bold" jhiTranslate="arTeMiSApp.quizExercise.explanationText.scoringTypeProportional"></span><span jhiTranslate="arTeMiSApp.quizExercise.explanationText.scoringTypeProportionalExplanation"></span></span></br>
+        <span class="show-explanation"><span style="font-weight:bold" jhiTranslate="arTeMiSApp.quizExercise.explanationText.scoringTypeProportional"></span><span jhiTranslate="arTeMiSApp.quizExercise.explanationText.scoringTypeProportionalExplanation"></span></span><br>
 
     <div *ngIf="this.question.type === MULTIPLE_CHOICE">
             <span *ngIf="this.correctMultipleChoiceAnswers == this.multipleChoiceCorrectAnswerCorrectlyChosen && this.multipleChoiceWrongAnswerChosen == 0">

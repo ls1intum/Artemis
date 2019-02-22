@@ -886,7 +886,7 @@ export class QuizComponent implements OnInit, OnDestroy {
                 case 'default':
                     if (this.disconnected || !this.submissionChannel) {
                         alert(
-                            "Cannot Submit while disconnected. Don't worry, answers that were saved" +
+                            'Cannot Submit while disconnected. Don\'t worry, answers that were saved' +
                             'while you were still connected will be submitted automatically when the quiz ends.'
                         );
                         this.isSubmitting = false;

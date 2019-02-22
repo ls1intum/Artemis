@@ -25,9 +25,11 @@
     <div class="question-score result" *ngIf="showResult && !forceSampleSolution" [ngClass]="{incorrect: (score || 0) < question.score}">
         <span jhiTranslate="arTeMiSApp.question.yourScore" class="colon-suffix"></span>
         <span class="show-explanation">{{score || 0}}/{{question.score}}</span>
-        <span class="show-explanation"><jhi-quiz-scoring-infostudent-modal [score]="score" [question]="question"
-                                                                           [multipleChoiceMapping]="selectedAnswerOptions"
-                                                                           [questionIndex]="questionIndex"></jhi-quiz-scoring-infostudent-modal></span>
+        <span class="show-explanation">
+            <jhi-quiz-scoring-infostudent-modal [score]="score" [question]="question"
+                                                [multipleChoiceMapping]="selectedAnswerOptions"
+                                                [questionIndex]="questionIndex"></jhi-quiz-scoring-infostudent-modal>
+        </span>
     </div>
     <div class="answer-options" *ngIf="!showResult">
         <div *ngFor="let answerOption of question.answerOptions; let i = index" id="answer-option-{{i}}" class="answer-option" [ngClass]="{'click-disabled': clickDisabled}" (click)="toggleSelection(answerOption)">

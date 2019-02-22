@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { DragAndDropQuestionUtil } from '../../../components/util/drag-and-drop-question-util.service';
 import { DragAndDropQuestion } from '../../../entities/drag-and-drop-question';
@@ -26,7 +26,7 @@ window.addEventListener('touchmove', function() {});
     templateUrl: './drag-and-drop-question.component.html',
     providers: [ArtemisMarkdown, DragAndDropQuestionUtil]
 })
-export class DragAndDropQuestionComponent implements OnInit, OnDestroy, OnChanges {
+export class DragAndDropQuestionComponent implements OnChanges {
     _question: DragAndDropQuestion;
     _forceSampleSolution: boolean;
 
@@ -72,14 +72,9 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy, OnChange
 
     constructor(private artemisMarkdown: ArtemisMarkdown, private dragAndDropQuestionUtil: DragAndDropQuestionUtil) {}
 
-    ngOnInit() {
-    }
-
     ngOnChanges(changes: SimpleChanges): void {
         this.countCorrectMappings();
     }
-
-    ngOnDestroy() {}
 
     watchCollection() {
         // update html for text, hint and explanation for the question
@@ -205,7 +200,7 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy, OnChange
      * @param dropLocation {object} the drop location to check for correctness
      * @return {boolean} true, if the drop location is correct, otherwise false
      */
-    isLocationCorrect(dropLocation: DropLocation) {
+    isLocationCorrect(dropLocation: DropLocation): boolean {
         if (!this.question.correctMappings) {
             return false;
         }
@@ -264,11 +259,6 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy, OnChange
      * counts the amount of right mappings for a question by using the isLocationCorrect Method
      */
     countCorrectMappings(): void {
-        this.correctAnswer = 0;
-        for (const dropLocation of this.question.dropLocations) {
-            if (this.isLocationCorrect(dropLocation)) {
-                this.correctAnswer++;
-            }
-        }
+        this.correctAnswer = this.question.dropLocations.filter(dropLocation => this.isLocationCorrect(dropLocation )).length;
     }
 }
