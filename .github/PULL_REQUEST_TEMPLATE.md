@@ -1,11 +1,12 @@
 <!-- Thanks for contributing to ArTEMiS! Before you submit your pull request, please make sure to check the following boxes by putting an x in the [ ] (don't: [x ], [ x], do: [x]) -->
 
 ### Checklist
-- [ ] I've run `yarn run webpack:build:main` from the root directory to see that the project builds without errors.
-- [ ] I've removed unnecessary whitespace changes.
-- [ ] I've updated the documentation and models if necessary.
-- [ ] I've tested the changes and all related features on the Artemis test server.
-- [ ] I've added (end-to-end) test cases for all new functionality.
+- [ ] I run `yarn run webpack:build:main`: the project builds without errors.
+- [ ] I run `yarn lint`: there project builds without code style warnings.
+- [ ] I removed unnecessary whitespace changes in all related files.
+- [ ] I updated the documentation and models.
+- [ ] I tested the changes and all related features on the test server https://artemistest.ase.in.tum.de.
+- [ ] I added (end-to-end) test cases for the new functionality.
 
 ### Motivation and Context
 <!-- Why is this change required? What problem does it solve? -->
