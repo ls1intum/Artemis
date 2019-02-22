@@ -153,7 +153,7 @@ public class TypesDiff {
      */
     private Set<CtMethod<?>> generateMethodsDiff() {
         // Use this predicate to filter out methods that are implicit, e.g. not explicitly defined in the code.
-        Predicate<CtMethod<?>> methodIsImplicit = m -> m.isImplicit() || m.getSimpleName().equals("main") || m == null;
+        Predicate<CtMethod<?>> methodIsImplicit = method -> method.isImplicit() || method.getSimpleName().equals("main") || method == null;
 
         // Create an empty set of methods for the methods diff and deep-copy the methods of the solution type in it.
         Set<CtMethod<?>> methodsDiff = new HashSet<>(solutionType.getMethods());
@@ -167,8 +167,7 @@ public class TypesDiff {
             for(CtMethod<?> templateMethod : templateType.getMethods()) {
 
                 // The methods are uniquely identified by their names and parameter types.
-                methodsDiff.removeIf(solutionMethod ->
-                    methodNamesAreEqual(solutionMethod, templateMethod) && parameterTypesAreEqual(solutionMethod, templateMethod));
+                methodsDiff.removeIf(solutionMethod -> methodNamesAreEqual(solutionMethod, templateMethod) && parameterTypesAreEqual(solutionMethod, templateMethod));
             }
         }
 

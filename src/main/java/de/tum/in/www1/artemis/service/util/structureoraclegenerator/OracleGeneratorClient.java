@@ -71,7 +71,7 @@ public class OracleGeneratorClient {
      * @return The string of the JSON representation of the structure oracle.
      */
     public static String generateStructureOracleJSON(Path solutionProjectPath, Path templateProjectPath) {
-        log.info("GENERATING THE ORACLE FOR THE FOLLOWING PROJECTS: \n"
+        log.debug("GENERATING THE ORACLE FOR THE FOLLOWING PROJECTS: \n"
             + "Solution project: " + solutionProjectPath + "\n"
             + "Template project: " + templateProjectPath + "\n");
 
@@ -91,7 +91,9 @@ public class OracleGeneratorClient {
 
             // Initialize the types diff containing various properties as well as methods.
             TypesDiff typesDiff = new TypesDiff(solutionType, templateType);
-            if(typesDiff.typesEqual) { continue; }
+            if(typesDiff.typesEqual) {
+                continue;
+            }
 
             // If we are dealing with interfaces, the types diff already has all the information we need
             // So we do not need to do anything more
@@ -109,7 +111,9 @@ public class OracleGeneratorClient {
                 CtEnum<Enum<?>> templateEnum = (CtEnum<Enum<?>>) templateType;
 
                 EnumsDiff enumsDiff = new EnumsDiff(solutionEnum, templateEnum);
-                if(enumsDiff.enumsEqual) { continue; }
+                if(enumsDiff.enumsEqual) {
+                    continue;
+                }
 
                 EnumsDiffSerializer enumsDiffSerializer = new EnumsDiffSerializer(enumsDiff);
                 if(!enumsDiff.enumValues.isEmpty()) {
@@ -122,7 +126,9 @@ public class OracleGeneratorClient {
                 CtClass<?> templateClass = (CtClass<?>) templateType;
 
                 ClassesDiff classesDiff = new ClassesDiff(solutionClass, templateClass);
-                if(classesDiff.classesEqual) { continue; }
+                if(classesDiff.classesEqual) {
+                    continue;
+                }
 
                 ClassesDiffSerializer classesDiffSerializer = new ClassesDiffSerializer(classesDiff);
                 if(!classesDiff.attributes.isEmpty()) {
@@ -133,7 +139,7 @@ public class OracleGeneratorClient {
                 }
             }
 
-            log.info("Generated JSON for '" + solutionType.getSimpleName() + "'.");
+            log.debug("Generated JSON for '" + solutionType.getSimpleName() + "'.");
             structureOracleJSON.put(diffJSON);
         }
 
@@ -151,7 +157,7 @@ public class OracleGeneratorClient {
             Object jsonObject = mapper.readValue(jsonArray.toString(), Object.class);
             return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonObject);
         } catch (IOException e) {
-            log.info("Could not pretty print the JSON!");
+            log.error("Could not pretty print the JSON!");
             return "";
         }
     }

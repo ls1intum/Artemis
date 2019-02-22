@@ -42,8 +42,7 @@ public class EnumsDiff {
             templateEnumValues.removeIf(enumValueIsImplicit);
 
             for(CtEnumValue<?> templateEnumValue : templateEnumValues) {
-                enumValuesDiff.removeIf(solutionEnumValue ->
-                    solutionEnumValue.getSimpleName().equals(templateEnumValue.getSimpleName()));
+                enumValuesDiff.removeIf(solutionEnumValue -> solutionEnumValue.getSimpleName().equals(templateEnumValue.getSimpleName()));
             }
         }
 

@@ -12,7 +12,7 @@ import java.util.Set;
  * This class contains helper methods for serializing information on structural elements that we deal with repeatedly
  * throughout the other serializers in order to avoid code repetition.
  */
-public abstract class SerializerUtil {
+public class SerializerUtil {
 
     /**
      * This method is used to serialize the string representations of each modifier into a JSON array.
@@ -21,11 +21,9 @@ public abstract class SerializerUtil {
      */
     public static JSONArray serializeModifiers(Collection<ModifierKind> modifiers) {
         JSONArray modifiersArray = new JSONArray();
-
         for(ModifierKind modifier : modifiers) {
             modifiersArray.put(modifier.toString());
         }
-
         return modifiersArray;
     }
 

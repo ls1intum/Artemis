@@ -52,15 +52,11 @@ public class ClassesDiffSerializer {
             if(!constructor.getModifiers().isEmpty()) {
                 constructorJSON.put("modifiers", SerializerUtil.serializeModifiers(constructor.getModifiers()));
             }
-
             if(!constructor.getParameters().isEmpty()) {
                 constructorJSON.put("parameters", SerializerUtil.serializeParameters(constructor.getParameters(), constructor.getDeclaringType().isEnum()));
             }
-
             constructorsJSON.put(constructorJSON);
         }
-
         return constructorsJSON;
     }
-
 }
