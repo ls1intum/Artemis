@@ -417,10 +417,9 @@ public class CourseResource {
         for (Exercise exercise : exercises) {
             List<Participation> participations = participationService.findByExerciseIdAndStudentIdWithEagerResults(exercise.getId(), student.getId());
 
-            Hibernate.initialize(exercise.getParticipations());
+            exercise.setParticipations(new HashSet<>());
 
             //Removing not needed properties
-            exercise.setParticipations(new HashSet<>());
             exercise.setCourse(null);
 
             for (Participation participation : participations) {
