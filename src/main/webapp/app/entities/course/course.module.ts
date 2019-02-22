@@ -19,11 +19,9 @@ import {
     courseRoute,
     CourseService,
     CourseExercisesOverviewComponent,
-    CourseScoreCalculationComponent,
     CourseUpdateComponent
 } from './';
 
-import { CourseScoreCalculationService } from './course-score-calculation.service';
 import { CourseExerciseCardComponent } from 'app/entities/course/course-exercise-card.component';
 import { FormDateTimePickerModule } from '../../shared/dateTimePicker/date-time-picker.module';
 
@@ -40,7 +38,8 @@ const ENTITY_STATES = [...courseRoute, ...coursePopupRoute];
         ArTEMiSTextExerciseModule,
         ArTEMiSModelingExerciseModule,
         RouterModule.forChild(ENTITY_STATES),
-        FormDateTimePickerModule
+        FormDateTimePickerModule,
+        ReactiveFormsModule
     ],
     declarations: [
         CourseComponent,
@@ -48,7 +47,6 @@ const ENTITY_STATES = [...courseRoute, ...coursePopupRoute];
         CourseDeleteDialogComponent,
         CourseUpdateComponent,
         CourseDeletePopupComponent,
-        CourseScoreCalculationComponent,
         CourseExerciseCardComponent,
         CourseExercisesOverviewComponent
     ],
@@ -57,7 +55,6 @@ const ENTITY_STATES = [...courseRoute, ...coursePopupRoute];
         CourseUpdateComponent,
         CourseDeleteDialogComponent,
         CourseDeletePopupComponent,
-        CourseScoreCalculationComponent,
         CourseExerciseCardComponent,
         CourseDeletePopupComponent
     ],
