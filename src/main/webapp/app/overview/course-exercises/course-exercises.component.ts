@@ -5,7 +5,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
 import * as moment from 'moment';
-import { Exercise } from 'app/entities/exercise';
+import { Exercise, ExerciseType } from 'app/entities/exercise';
 
 @Component({
     selector: 'jhi-course-exercises',
@@ -21,6 +21,14 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     public course: Course;
     public weeklyIndexKeys: string[];
     public weeklyExercisesGrouped: object;
+
+    public upcomingExercises: Exercise[];
+
+    public numberOfQuizExercises = 0;
+    public numberOfModelingExercises = 0;
+    public numberOfProgrammingExercises = 0;
+    public numberOfTextExercises = 0;
+    public numberOfFileUploadExercises = 0;
 
     constructor(
         private courseService: CourseService,
@@ -63,8 +71,10 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         const courseExercises = [...this.course.exercises];
         const sortedExercises = this.sortExercises(courseExercises, selectedOrder);
         const notAssociatedExercises: Exercise[] = [];
+        const upcomingExercises: Exercise[] = [];
         sortedExercises.forEach(exercise => {
             const dateValue = exercise.dueDate ? exercise.dueDate : exercise.releaseDate;
+            this.increaseExerciseCounter(exercise);
             if (!dateValue) {
                 notAssociatedExercises.push(exercise);
                 return;
@@ -89,7 +99,11 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
                 }
             }
             groupedExercises[dateIndex].exercises.push(exercise);
+            if (exercise.dueDate && moment().isSameOrBefore(exercise.dueDate, 'day')) {
+                upcomingExercises.push(exercise)
+            }
         });
+        this.updateUpcomingExercises(upcomingExercises);
         this.weeklyExercisesGrouped = {
             ...groupedExercises,
             'noDate': {
@@ -109,6 +123,36 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
 
             return selectedOrder * (aValue - bValue);
         });
+    }
+
+    private increaseExerciseCounter(exercise: Exercise) {
+        switch (exercise.type) {
+            case ExerciseType.PROGRAMMING:
+                this.numberOfProgrammingExercises++;
+                break;
+            case ExerciseType.MODELING:
+                this.numberOfModelingExercises++;
+                break;
+            case ExerciseType.QUIZ:
+                this.numberOfQuizExercises++;
+                break;
+            case ExerciseType.TEXT:
+                this.numberOfTextExercises++;
+                break;
+            case ExerciseType.FILE_UPLOAD:
+                this.numberOfFileUploadExercises++;
+                break;
+        }
+    }
+
+    private updateUpcomingExercises(upcomingExercises: Exercise[]) {
+        if (upcomingExercises.length < 5) {
+            this.upcomingExercises = this.sortExercises(upcomingExercises, this.DUE_DATE_ASC);
+        } else {
+            const numberOfExercises = upcomingExercises.length;
+            upcomingExercises = upcomingExercises.slice(numberOfExercises - 5, numberOfExercises);
+            this.upcomingExercises = this.sortExercises(upcomingExercises, this.DUE_DATE_ASC);
+        }
     }
 
 }
