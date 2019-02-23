@@ -54,6 +54,11 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
 
     callback() {}
 
+    /**
+     * Checks if the url contains the string
+     *
+     * @returns true if it is within the url
+     */
     routerContainPath(): boolean {
         return location.href.toString().includes('programming-exercise');
     }
