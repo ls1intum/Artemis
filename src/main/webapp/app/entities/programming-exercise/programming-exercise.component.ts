@@ -53,4 +53,8 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     }
 
     callback() {}
+
+    routerContainPath(): boolean {
+        return location.href.toString().includes('programming-exercise');
+    }
 }

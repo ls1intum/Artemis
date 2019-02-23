@@ -8,7 +8,13 @@
             Link new Programming Exercise
             </span>
         </button>
-        <button *ngIf="course" id="jh-create-entity" class="btn btn-primary float-right jh-create-entity create-programming-exercise mr-1" [routerLink]="['programming-exercise', 'new']">
+        <button *ngIf="course && !routerContainPath()" id="jh-create-entity" class="btn btn-primary float-right jh-create-entity create-programming-exercise mr-1" [routerLink]="['programming-exercise','new']">
+            <fa-icon [icon]="'plus'"></fa-icon>
+            <span class="hidden-sm-down" jhiTranslate="arTeMiSApp.programmingExercise.home.createLabel">
+            Create new Programming Exercise
+            </span>
+        </button>
+        <button *ngIf="course && routerContainPath()" id="jh-create-entity" class="btn btn-primary float-right jh-create-entity create-programming-exercise mr-1" [routerLink]="['new']">
             <fa-icon [icon]="'plus'"></fa-icon>
             <span class="hidden-sm-down" jhiTranslate="arTeMiSApp.programmingExercise.home.createLabel">
             Create new Programming Exercise
