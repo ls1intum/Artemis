@@ -25,8 +25,6 @@ export class QuizExerciseComponent extends ExerciseComponent {
     };
 
     @Input() quizExercises: QuizExercise[] = [];
-    predicate: string;
-    reverse: boolean;
 
     constructor(
         courseService: CourseService,
@@ -37,8 +35,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
         route: ActivatedRoute
     ) {
         super(courseService, route, eventManager);
-        this.predicate = 'id';
-        this.reverse = true;
+
     }
 
     protected loadExercises(): void {

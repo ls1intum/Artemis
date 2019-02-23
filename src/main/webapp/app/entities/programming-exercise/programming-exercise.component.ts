@@ -13,8 +13,6 @@ import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 })
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
     @Input() programmingExercises: ProgrammingExercise[];
-    predicate: string;
-    reverse: boolean;
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
@@ -26,8 +24,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     ) {
         super(courseService, route, eventManager);
         this.programmingExercises = [];
-        this.predicate = 'id';
-        this.reverse = true;
     }
 
     protected loadExercises(): void {

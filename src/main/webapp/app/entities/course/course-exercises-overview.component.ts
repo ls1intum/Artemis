@@ -1,7 +1,7 @@
-import {Component, OnInit} from '@angular/core';
-import {Course} from 'app/entities/course/course.model';
-import {CourseService} from 'app/entities/course/course.service';
-import {ActivatedRoute} from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { Course } from 'app/entities/course/course.model';
+import { CourseService } from 'app/entities/course/course.service';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
     selector: 'jhi-course-overview',

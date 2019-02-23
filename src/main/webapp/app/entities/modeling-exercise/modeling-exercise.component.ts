@@ -16,8 +16,6 @@ import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 })
 export class ModelingExerciseComponent extends ExerciseComponent {
     @Input() modelingExercises: ModelingExercise[];
-    predicate: string;
-    reverse: boolean;
 
     constructor(
         private modelingExerciseService: ModelingExerciseService,
@@ -30,8 +28,6 @@ export class ModelingExerciseComponent extends ExerciseComponent {
     ) {
         super(courseService, route, eventManager);
         this.modelingExercises = [];
-        this.predicate = 'id';
-        this.reverse = true;
     }
 
     protected loadExercises(): void {

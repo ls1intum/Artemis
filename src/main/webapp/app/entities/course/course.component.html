@@ -1,7 +1,7 @@
 <div>
     <h4>
         <span id="course-page-heading" jhiTranslate="arTeMiSApp.course.home.title">Courses</span>
-        <button *jhiHasAnyAuthority="'ROLE_ADMIN'" class="btn btn-primary float-right jh-create-entity create-course" [routerLink]="['/new']">
+        <button *jhiHasAnyAuthority="'ROLE_ADMIN'" class="btn btn-primary float-right jh-create-entity create-course" [routerLink]="['/coursenew']">
             <fa-icon [icon]="'plus'"></fa-icon>
             <span class="hidden-sm-down"  jhiTranslate="arTeMiSApp.course.home.createLabel">
             Create new Course

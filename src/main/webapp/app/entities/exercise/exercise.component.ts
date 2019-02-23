@@ -7,13 +7,18 @@ import { Course, CourseService } from 'app/entities/course';
 export abstract class ExerciseComponent implements OnInit, OnDestroy {
     private eventSubscriber: Subscription;
     @Input() embedded = false;
+    @Input() course: Course;
+    @Output() exerciseCount = new EventEmitter<number>();
     showAlertHeading: boolean;
     showHeading: boolean;
     courseId: number;
-    @Input() course: Course;
-    @Output() exerciseCount = new EventEmitter<number>();
+    predicate: string;
+    reverse: boolean;
 
-    protected constructor(private courseService: CourseService, private route: ActivatedRoute, private eventManager: JhiEventManager) {}
+    protected constructor(private courseService: CourseService, private route: ActivatedRoute, private eventManager: JhiEventManager) {
+        this.predicate = 'id';
+        this.reverse = true;
+    }
 
     ngOnInit(): void {
         this.showAlertHeading = !this.embedded;

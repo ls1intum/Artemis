@@ -13,8 +13,6 @@ import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 })
 export class FileUploadExerciseComponent extends ExerciseComponent {
     @Input() fileUploadExercises: FileUploadExercise[];
-    predicate: string;
-    reverse: boolean;
 
     constructor(
         private fileUploadExerciseService: FileUploadExerciseService,
@@ -26,8 +24,6 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
     ) {
         super(courseService, route, eventManager);
         this.fileUploadExercises = [];
-        this.predicate = 'id';
-        this.reverse = true;
     }
 
     protected loadExercises(): void {

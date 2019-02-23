@@ -834,15 +834,15 @@ export class QuizComponent implements OnInit, OnDestroy {
     areAllQuestionsAnswered(): boolean {
         for (const question of this.quizExercise.questions) {
             if (question.type === QuestionType.MULTIPLE_CHOICE) {
-                if (this.selectedAnswerOptions[question.id] === 0) {
+                if (this.selectedAnswerOptions[question.id] == 0) {
                     return false;
                 }
             } else if (question.type === QuestionType.DRAG_AND_DROP) {
-                if (this.dragAndDropMappings[question.id] === 0) {
+                if (this.dragAndDropMappings[question.id] == 0) {
                     return false;
                 }
             } else if (question.type === QuestionType.SHORT_ANSWER) {
-                if (this.shortAnswerSubmittedTexts[question.id] === 0) {
+                if (this.shortAnswerSubmittedTexts[question.id] == 0) {
                     return false;
                 }
             }
@@ -860,6 +860,7 @@ export class QuizComponent implements OnInit, OnDestroy {
         if (this.remainingTimeSeconds > 15 && (this.areAllQuestionsAnswered() === false)) {
             confirmSubmit = window.confirm('Are you sure you want to submit? You have not answered all questions and you still have some time left!');
         }
+
         if (confirmSubmit) {
             this.isSubmitting = true;
             switch (this.mode) {

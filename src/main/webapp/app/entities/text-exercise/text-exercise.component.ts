@@ -14,8 +14,6 @@ import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 })
 export class TextExerciseComponent extends ExerciseComponent {
     @Input() textExercises: TextExercise[];
-    predicate: string;
-    reverse: boolean;
 
     constructor(
         private textExerciseService: TextExerciseService,
@@ -27,8 +25,6 @@ export class TextExerciseComponent extends ExerciseComponent {
     ) {
         super(courseService, route, eventManager);
         this.textExercises = [];
-        this.predicate = 'id';
-        this.reverse = true;
     }
 
     protected loadExercises(): void {
