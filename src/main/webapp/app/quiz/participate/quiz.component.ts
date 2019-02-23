@@ -834,15 +834,15 @@ export class QuizComponent implements OnInit, OnDestroy {
     areAllQuestionsAnswered(): boolean {
         for (const question of this.quizExercise.questions) {
             if (question.type === QuestionType.MULTIPLE_CHOICE) {
-                if (this.selectedAnswerOptions.get(question.id) === undefined) {
+                if (this.selectedAnswerOptions[question.id] >= 0) {
                     return false;
                 }
             } else if (question.type === QuestionType.DRAG_AND_DROP) {
-                if (this.dragAndDropMappings.get(question.id) === []) {
+                if (this.dragAndDropMappings[question.id] >= 0) {
                     return false;
                 }
             } else if (question.type === QuestionType.SHORT_ANSWER) {
-                if (this.shortAnswerSubmittedTexts.get(question.id) === []) {
+                if (this.shortAnswerSubmittedTexts[question.id] >= 0) {
                     return false;
                 }
             }
