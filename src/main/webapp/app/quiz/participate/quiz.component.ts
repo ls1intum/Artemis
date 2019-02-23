@@ -829,20 +829,25 @@ export class QuizComponent implements OnInit, OnDestroy {
      * for a Multiple Choice Questions it checks if an answer option was selected
      * for a Drag and Drop Questions it checks if at least one mapping has been made
      * for a Short Answer Questions it checks if at least one field has been clicked in
-     * @return {boolean} true when student did not interacted with every question, false when all questions are with interaction
+     * @return {boolean} true when student interacted with every question, false when at least one question is without interaction
      */
     areAllQuestionsAnswered(): boolean {
-        return !this.quizExercise.questions
-            .some(question => {
-                switch (question.type) {
-                    case QuestionType.MULTIPLE_CHOICE:
-                        return this.selectedAnswerOptions[question.id] === 0;
-                    case QuestionType.DRAG_AND_DROP:
-                        return this.dragAndDropMappings[question.id] === 0;
-                    case QuestionType.SHORT_ANSWER:
-                        return this.shortAnswerSubmittedTexts[question.id] === 0;
+        for (const question of this.quizExercise.questions) {
+            if (question.type === QuestionType.MULTIPLE_CHOICE) {
+                if (this.selectedAnswerOptions[question.id] === 0) {
+                    return false;
                 }
-            });
+            } else if (question.type === QuestionType.DRAG_AND_DROP) {
+                if (this.dragAndDropMappings[question.id] === 0) {
+                    return false;
+                }
+            } else if (question.type === QuestionType.SHORT_ANSWER) {
+                if (this.shortAnswerSubmittedTexts[question.id] === 0) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     /**
@@ -852,7 +857,7 @@ export class QuizComponent implements OnInit, OnDestroy {
         this.applySelection();
         let confirmSubmit = true;
 
-        if (this.remainingTimeSeconds > 15 && (this.areAllQuestionsAnswered() === true)) {
+        if (this.remainingTimeSeconds > 15 && (this.areAllQuestionsAnswered() === false)) {
             confirmSubmit = window.confirm('Are you sure you want to submit? You have not answered all questions and you still have some time left!');
         }
         if (confirmSubmit) {
