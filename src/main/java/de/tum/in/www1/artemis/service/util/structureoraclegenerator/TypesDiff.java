@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 /**
  * This class represents the so-called diff of the solution type and the template type. 
  * The solution type is a fully defined type found in the solution of a programming exercise.
- * The template type its is counterpart found in the template of the same exercise.
+ * The template type is its counterpart found in the template of the same exercise.
  * It is clear that the template type misses some of the structural elements of the solution type.
  * This diff contains information on these structural elements.
  * The ones the diff currently handles is:
@@ -37,7 +37,7 @@ public class TypesDiff {
 	protected boolean isAbstract;
 	protected String superClassName;
 	protected Set<CtTypeReference<?>> superInterfaces;
-	protected Set<CtMethod<?>> methods;
+	protected Set<CtMethod<?>> methodsDiff;
 	protected boolean typesEqual;
 
 	public TypesDiff(CtType<?> solutionType, CtType<?> templateType) {
@@ -51,7 +51,7 @@ public class TypesDiff {
 		this.isAbstract = generateAbstractModifier();
 		this.superClassName = generateSuperClassName();
 		this.superInterfaces = generateSuperInterfaces();
-		this.methods = generateMethodsDiff();
+		this.methodsDiff = generateMethodsDiff();
 		this.typesEqual = areTypesEqual();
     }
 
@@ -197,10 +197,10 @@ public class TypesDiff {
         List<String> solutionParams = solutionExecutable.getParameters().stream().map(CtNamedElement::getSimpleName).collect(Collectors.toList());
         List<String> templateParams = templateExecutable.getParameters().stream().map(CtNamedElement::getSimpleName).collect(Collectors.toList());;
 
-        // If both executables have no empty, then they parameters are the same.
+        // If both executables have no parameters, then their parameters are the same.
         if(solutionParams.isEmpty() && templateParams.isEmpty()) return true;
 
-        // If the number of the parameters is not equal, then the parameters are not the same.
+        // If the number of the parameters is not equal, then their parameters are not the same.
         if(solutionParams.size() != templateParams.size()) return false;
 
         // Otherwise, check if the list of the parameters of the solution executable contains all the parameters
@@ -218,7 +218,7 @@ public class TypesDiff {
 				&& !this.isAbstract
 				&& this.superClassName.isEmpty()
 				&& this.superInterfaces.size() == 0
-				&& this.methods.isEmpty();
+				&& this.methodsDiff.isEmpty();
 	}
 
 }

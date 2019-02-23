@@ -99,7 +99,7 @@ public class OracleGeneratorClient {
             // So we do not need to do anything more
             TypesDiffSerializer typesDiffSerializer = new TypesDiffSerializer(typesDiff);
             diffJSON.put("class", typesDiffSerializer.serializeHierarchy());
-            if(!typesDiff.methods.isEmpty()) {
+            if(!typesDiff.methodsDiff.isEmpty()) {
                 diffJSON.put("methods", typesDiffSerializer.serializeMethods());
             }
 
@@ -116,7 +116,7 @@ public class OracleGeneratorClient {
                 }
 
                 EnumsDiffSerializer enumsDiffSerializer = new EnumsDiffSerializer(enumsDiff);
-                if(!enumsDiff.enumValues.isEmpty()) {
+                if(!enumsDiff.enumValuesDiff.isEmpty()) {
                     diffJSON.put("enumValues", enumsDiffSerializer.serializeEnumValues(enumsDiff));
                 }
             }
@@ -149,7 +149,7 @@ public class OracleGeneratorClient {
     /**
      * This method pretty prints a given JSON array.
      * @param jsonArray The JSON array that needs to get pretty printed.
-     * @return The pretty printed JSON array in its string representation.
+     * @return The pretty printed JSON array in its string representation. If there is any IO exception, an empty string is returned instead.
      */
     private static String prettyPrint(JSONArray jsonArray) {
         ObjectMapper mapper = new ObjectMapper();

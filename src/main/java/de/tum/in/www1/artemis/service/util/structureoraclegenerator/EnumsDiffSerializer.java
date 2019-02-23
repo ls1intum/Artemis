@@ -21,7 +21,7 @@ public class EnumsDiffSerializer {
     public JSONArray serializeEnumValues(EnumsDiff enumsDiff) {
         JSONArray enumValues = new JSONArray();
 
-        for(CtEnumValue<?> enumValue : enumsDiff.enumValues) {
+        for(CtEnumValue<?> enumValue : enumsDiff.enumValuesDiff) {
             enumValues.put(enumValue.getSimpleName());
         }
 

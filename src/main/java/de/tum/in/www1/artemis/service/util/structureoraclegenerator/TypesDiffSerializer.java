@@ -75,7 +75,7 @@ public class TypesDiffSerializer {
     public JSONArray serializeMethods() {
         JSONArray methodsJSON = new JSONArray();
 
-        for(CtMethod<?> method : typesDiff.methods) {
+        for(CtMethod<?> method : typesDiff.methodsDiff) {
             JSONObject methodJSON = SerializerUtil.createJsonObject(method.getSimpleName(), method.getModifiers());
             if(!method.getParameters().isEmpty()) {
                 methodJSON.put("parameters", SerializerUtil.serializeParameters(method.getParameters(), false));

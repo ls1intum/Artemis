@@ -16,13 +16,13 @@ public class EnumsDiff {
 
     private CtEnum<Enum<?>> solutionEnum;
     private CtEnum<Enum<?>> templateEnum;
-	protected List<CtEnumValue<?>> enumValues;
+	protected List<CtEnumValue<?>> enumValuesDiff;
 	protected boolean enumsEqual;
 	
 	public EnumsDiff(CtEnum<Enum<?>> solutionEnum, CtEnum<Enum<?>> templateEnum) {
 		this.solutionEnum = solutionEnum;
 		this.templateEnum = templateEnum;
-		this.enumValues = generateEnumValuesDiff();
+		this.enumValuesDiff = generateEnumValuesDiff();
 		this.enumsEqual = areEnumsEqual();
 	}
 
@@ -54,7 +54,7 @@ public class EnumsDiff {
      * @return True, if the solution enum is the same in structure as the template enum, false otherwise.
      */
 	private boolean areEnumsEqual() {
-		return this.enumValues.isEmpty();
+		return this.enumValuesDiff.isEmpty();
 	}
 	
 }
