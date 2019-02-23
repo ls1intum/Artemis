@@ -2,12 +2,14 @@ package ${packageName}.testutils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import com.google.common.collect.Multimap;
 import org.apache.commons.text.similarity.LevenshteinDistance;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -47,7 +49,7 @@ public class ClassNameScanner {
 	private final String expectedPackageName;
 	
 	// The names of the classes observed in the project
-	private final Map<String, String> observedClasses;
+	private final Multimap<String, String> observedClasses;
 	private final Map<String, String> expectedClasses;
 	private final ScanResult scanResult;
 	
@@ -78,75 +80,126 @@ public class ClassNameScanner {
 		
 		boolean classIsFound = observedClasses.containsKey(expectedClassName);
 		boolean classIsCorrectlyPlaced;
+		boolean classIsPresentMultipleTimes;
 		
 		if(classIsFound) {
-			String observedPackageName = observedClasses.get(expectedClassName);
-			classIsCorrectlyPlaced = observedPackageName.equals(expectedPackageName);
-			
-			scanResultType = classIsCorrectlyPlaced ? ScanResultType.CORRECTNAME_CORRECTPLACE : ScanResultType.CORRECTNAME_MISPLACED;
-			scanResultMessage = classIsCorrectlyPlaced
-					? "The class " + expectedClassName + " has the correct name and is in the correct package." 
-					: "The class " + expectedClassName + " has the correct name,"
-							+ " but the package it's in, " + observedClasses.get(expectedClassName) + ", deviates from the expectation."
-							+ "  Please make sure it is placed in the correct package.";
+			Collection<String> observedPackageNames = observedClasses.get(expectedClassName);
+			classIsPresentMultipleTimes = observedPackageNames.size() > 1;
+			classIsCorrectlyPlaced = classIsPresentMultipleTimes ? false : (observedPackageNames.contains(expectedPackageName));
+
+			scanResultType = classIsPresentMultipleTimes
+                ? $.ScanResultType.CORRECTNAME_MULTIPLETIMESPRESENT
+                : (classIsCorrectlyPlaced
+                    ? $.ScanResultType.CORRECTNAME_CORRECTPLACE
+                    : $.ScanResultType.CORRECTNAME_MISPLACED);
 		}
 		else {
 			for(String observedClassName : observedClasses.keySet()) {
-				String observedPackageName = observedClasses.get(observedClassName);
-				classIsCorrectlyPlaced = observedPackageName.equals(expectedPackageName);
+				Collection<String> observedPackageNames = observedClasses.get(observedClassName);
+				classIsPresentMultipleTimes = observedPackageNames.size() > 1;
+                classIsCorrectlyPlaced = classIsPresentMultipleTimes ? false : (observedPackageNames.contains(expectedPackageName));
 
 				boolean hasWrongCase = observedClassName.equalsIgnoreCase(expectedClassName);	
 				boolean hasTypos = new LevenshteinDistance().apply(observedClassName, expectedClassName) < Math.ceil(expectedClassName.length() / 4);
 
 				if(hasWrongCase) {
-					scanResultType = classIsCorrectlyPlaced ? ScanResultType.WRONGCASE_CORRECTPLACE : ScanResultType.WRONGCASE_MISPLACED;
-					scanResultMessage = classIsCorrectlyPlaced
-							? "The exercise expects a class with the name " + expectedClassName
-									+ ". We found that you implemented a class " + observedClassName + ", which deviates from the expectation."
-									+ " Please check for wrong upper case / lower case lettering."
-							: "The exercise expects a class with the name " + expectedClassName + " in the package " + expectedPackageName
-									+ ". We found that you implemented a class " + observedClassName + ", in the package " + observedClassName
-									+ ", which deviates from the expectation."
-									+ " Please check for wrong upper case / lower case lettering and make sure you place it in the correct package.";
+                    scanResultType = classIsPresentMultipleTimes
+                        ? $.ScanResultType.WRONGCASE_MULTIPLETIMESPRESENT
+                        : (classIsCorrectlyPlaced
+                            ? $.ScanResultType.WRONGCASE_CORRECTPLACE
+                            : $.ScanResultType.WRONGCASE_MISPLACED);
 					break;
 				}
 				else if(hasTypos) {
 					scanResultType = classIsCorrectlyPlaced ? ScanResultType.TYPOS_CORRECTPLACE : ScanResultType.TYPOS_MISPLACED;
-					scanResultMessage = classIsCorrectlyPlaced
-							? "The exercise expects a class with the name " + expectedClassName
-									+ ". We found that you implemented a class " + observedClassName + ", which deviates from the expectation."
-									+ " Please check for typos in the class name."
-							: "The exercise expects a class with the name " + expectedClassName + "in the package " + expectedPackageName
-									+ ". We found that you implemented a class " + observedClassName + ", in the package " + observedPackageName
-									+ ", which deviates from the expectation."
-									+ " Please check for typos in the class name and make sure you place it in the correct package.";
+                    scanResultType = classIsPresentMultipleTimes
+                        ? $.ScanResultType.TYPOS_MULTIPLETIMESPRESENT
+                        : (classIsCorrectlyPlaced
+                            ? $.ScanResultType.TYPOS_CORRECTPLACE
+                            : $.ScanResultType.TYPOS_MISPLACED);
 					break;
 				}
 				else {
 					scanResultType = ScanResultType.NOTFOUND;
-					scanResultMessage = "You have implemented " + observedClassName + " in the package " + observedClassName
-							+ ". This class is not expected in the exercise."
-							+ "\n The assignment expects the following classes and in the according packages: \n";
-					
-					// Append the expected classes and package names to the result message
-					for(String expectedClassName : expectedClasses.keySet()) {
-						scanResultMessage += "Class: " + expectedClassName +
-											" Package:" + expectedClasses.get(expectedClassName) +",\n";
-					} 
 				}
 			}
 		}
-		
+
+        switch (scanResultType) {
+            case $.ScanResultType.CORRECTNAME_CORRECTPLACE :
+                "The class " + expectedClassName + " has the correct name and is in the correct package.";
+                break;
+            case $.ScanResultType.CORRECTNAME_MISPLACED :
+                "The class " + expectedClassName + " has the correct name,"
+                    + " but the package it's in, " + observedClasses.get(expectedClassName) + ", deviates from the expectation."
+                    + "  Please make sure it is placed in the correct package.";
+                break;
+            case $.ScanResultType.CORRECTNAME_MULTIPLETIMESPRESENT:
+                "The class " + expectedClassName + " has the correct name,"
+                    + " but it is located multiple times in the project and in the packages: "
+                    + observedClasses.get(expectedClassName).toString() +", which deviates from the expectation."
+                    + " Please make sure to place the class in the correct package and remove any superfluous ones.";
+                break;
+            case $.ScanResultType.WRONGCASE_CORRECTPLACE:
+                "The exercise expects a class with the name " + expectedClassName
+                    + ". We found that you implemented a class " + observedClassName + ", which deviates from the expectation."
+                    + " Please check for wrong upper case / lower case lettering.";
+                break;
+            case $.ScanResultType.WRONGCASE_MISPLACED:
+                "The exercise expects a class with the name " + expectedClassName + " in the package " + expectedPackageName
+                    + ". We found that you implemented a class " + observedClassName + ", in the package " + observedClasses.get(observedClassName).toString()
+                    + ", which deviates from the expectation."
+                    + " Please check for wrong upper case / lower case lettering and make sure you place it in the correct package.";
+                break;
+            case $.ScanResultType.WRONGCASE_MULTIPLETIMESPRESENT:
+                "The exercise expects a class with the name " + expectedClassName + " in the package " + expectedPackageName
+                    + ". We found that you implemented a class " + observedClassName + ", in the packages " + observedClasses.get(observedClassName).toString()
+                    + ", which deviates from the expectation."
+                    + " Please check for wrong upper case / lower case lettering and make sure you place one class in the correct package and remove any superfluous classes.";
+                break;
+            case $.ScanResultType.TYPOS_CORRECTPLACE:
+                "The exercise expects a class with the name " + expectedClassName
+                    + ". We found that you implemented a class " + observedClassName + ", which deviates from the expectation."
+                    + " Please check for typos in the class name.";
+                break;
+            case $.ScanResultType.TYPOS_MISPLACED:
+                "The exercise expects a class with the name " + expectedClassName + "in the package " + expectedPackageName
+                    + ". We found that you implemented a class " + observedClassName + ", in the package " + observedClasses.get(observedClassName).toString()
+                    + ", which deviates from the expectation."
+                    + " Please check for typos in the class name and make sure you place it in the correct package.";
+                break;
+            case $.ScanResultType.TYPOS_MULTIPLETIMESPRESENT:
+                "The exercise expects a class with the name " + expectedClassName + "in the package " + expectedPackageName
+                    + ". We found that you implemented a class " + observedClassName + ", in the packages " + observedClasses.get(observedClassName).toString()
+                    + ", which deviates from the expectation."
+                    + " Please check for typos in the class name and make sure you place one class it in the correct package and remove any superfluous classes.";
+                break;
+            case $.ScanResultType.NOTFOUND:
+                "You have implemented " + observedClassName + " in the package " + observedClassName
+                    + ". This class is not expected in the exercise."
+                    + "\n The assignment expects the following classes and in the according packages: \n";
+
+                // Append the expected classes and package names to the result message
+                for(String expectedClassName : expectedClasses.keySet()) {
+                    scanResultMessage += "Class: " + expectedClassName +
+                        " Package:" + expectedClasses.get(expectedClassName) +",\n";
+                }
+                break;
+            case $.ScanResultType.UNDEFINED:
+                "The class could not be scanned.";
+                break;
+        }
+
 		return new ScanResult(scanResultType, scanResultMessage);
 	}
 	
 	/**
 	 * This method retrieves the actual type names and their packages by walking the project file structure.
 	 * The root node (which is the assignment folder) is defined in the pom.xml file of the project.
-	 * @return The JSON object containing the type names as keys and the type packages as values.
+	 * @return The map containing the type names as keys and the type packages as values.
 	 */
-	private Map<String, String> retrieveObservedClasses() {
-		Map<String, String> observedTypes = new HashMap<String, String>();
+	private Multimap<String, String> retrieveObservedClasses() {
+		Map<String, String> observedTypes = new Multimap<String, String>();
 		
 		try {
 			File pomFile = new File("pom.xml");
@@ -154,17 +207,14 @@ public class ClassNameScanner {
 			DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
 			Document pomXmlDocument = documentBuilder.parse(pomFile);
 						
-			NodeList buildNodes = pomXmlDocument.getElementsByTagName("build");
-			for(int i = 0; i < buildNodes.getLength(); i++) {
-				Node buildNode = buildNodes.item(i);
-				
-				if(buildNode.getNodeType() == Node.ELEMENT_NODE) {
-					Element buildNodeElement = (Element) buildNode;
-					String sourceDirectoryPropertyValue = buildNodeElement.getElementsByTagName("sourceDirectory").item(0).getTextContent();
-					String assignmentFolderName = sourceDirectoryPropertyValue.substring(sourceDirectoryPropertyValue.indexOf("}") + 2);
-					walkProjectFileStructure(assignmentFolderName, new File(assignmentFolderName), observedTypes);
-				}
-			}
+			for(Node buildNode : pomXmlDocument.getElementsByTagName("build")) {
+                if(buildNode.getNodeType() == Node.ELEMENT_NODE) {
+                    Element buildNodeElement = (Element) buildNode;
+                    String sourceDirectoryPropertyValue = buildNodeElement.getElementsByTagName("sourceDirectory").item(0).getTextContent();
+                    String assignmentFolderName = sourceDirectoryPropertyValue.substring(sourceDirectoryPropertyValue.indexOf("}") + 2);
+                    walkProjectFileStructure(assignmentFolderName, new File(assignmentFolderName), observedTypes);
+                }
+            }
 		} catch (ParserConfigurationException | SAXException | IOException e) {
 			System.err.println("Could not retrieve the source directory from the pom.xml file. Please contact your instructor immediately.");
 			e.printStackTrace();
@@ -180,7 +230,7 @@ public class ClassNameScanner {
 	 * @param node: The current node the method is visiting.
 	 * @param types: The JSON object where the type names and packages get appended.
 	 */
-	private void walkProjectFileStructure(String assignmentFolderName, File node, Map<String, String> types) {
+	private void walkProjectFileStructure(String assignmentFolderName, File node, Multimap<String, String> types) {
 		String currentFileName = node.getName();
 
 		if(currentFileName.contains(".java")) {	
@@ -192,7 +242,7 @@ public class ClassNameScanner {
 					packageName.indexOf(assignmentFolderName) + assignmentFolderName.length() + 1, 
 					packageName.lastIndexOf(File.separator + className));
 			packageName = packageName.replace(File.separatorChar, '.');
-			
+
 			types.put(className, packageName);
 		}
 
