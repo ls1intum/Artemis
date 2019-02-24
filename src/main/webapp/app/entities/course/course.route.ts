@@ -39,7 +39,7 @@ export const courseRoute: Routes = [
         canActivate: [UserRouteAccessService]
     },
     {
-        path: 'coursenew',
+        path: 'course/new',
         component: CourseUpdateComponent,
         resolve: {
             course: CourseResolve
