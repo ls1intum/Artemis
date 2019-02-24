@@ -1,20 +1,11 @@
 package ${packageName};
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import static org.junit.Assert.*;
+import de.tum.in.www1.testutils.*;
+import java.io.*;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.HashMap;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
-
-import de.tum.in.www1.testutils.ClassNameScanner;
-import de.tum.in.www1.testutils.ScanResultType;
+import java.util.*;
+import org.json.*;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)

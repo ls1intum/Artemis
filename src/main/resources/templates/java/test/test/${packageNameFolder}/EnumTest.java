@@ -1,4 +1,4 @@
-package de.tum.in.www1.eist;
+package ${packageName};
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -38,8 +38,8 @@ public class EnumTest extends StructuralTest {
         List<Object[]> testData = new ArrayList<Object[]>();
 
         for(int i = 0; i < structureDiffJSON.length(); i++) {
-            JSONObject expectedClassJSON = structureDiffJSON.getJSONObject(i);
-            JSONObject expectedClassPropertiesJSON = expectedClassJSON.getJSONObject("class");
+            JSONObject expectedClassJSON = structureOracleJSON.getJSONObject(i);
+            JSONObject expectedClassPropertiesJSON = structureOracleJSON.getJSONObject("class");
 
             // Only test the enums.
             if(expectedClassPropertiesJSON.has("isEnum") && expectedClassPropertiesJSON.has("superclass")) {
