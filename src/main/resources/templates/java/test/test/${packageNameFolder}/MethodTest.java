@@ -78,8 +78,8 @@ public class MethodTest extends StructuralTest {
         for(int i = 0; i < expectedMethods.length(); i++) {
             JSONObject expectedMethod = expectedMethods.getJSONObject(i);
             String expectedName = expectedMethod.getString("name");
-            JSONArray expectedParameters = expectedMethod.getJSONArray("parameters");
-            JSONArray expectedModifiers = expectedMethod.getJSONArray("modifiers");
+            JSONArray expectedParameters = expectedMethod.has("parameters") ? expectedMethod.getJSONArray("parameters") : new JSONArray;
+            JSONArray expectedModifiers = expectedMethod.has("modifiers") ? expectedMethod.getJSONArray("modifiers") : new JSONArray();
             String expectedReturnType = expectedMethod.getString("returnType");
 
             boolean nameIsRight = false;
