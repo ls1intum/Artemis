@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.compass;
+package de.tum.in.www1.artemis;
 
 import de.tum.in.www1.artemis.service.ModelingAssessmentService;
 import de.tum.in.www1.artemis.service.compass.assessment.ModelElementAssessment;
