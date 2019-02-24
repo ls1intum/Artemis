@@ -37,9 +37,9 @@ public class EnumTest extends StructuralTest {
     public static Collection<Object[]> findClasses() {
         List<Object[]> testData = new ArrayList<Object[]>();
 
-        for(int i = 0; i < structureDiffJSON.length(); i++) {
+        for(int i = 0; i < structureOracleJSON.length(); i++) {
             JSONObject expectedClassJSON = structureOracleJSON.getJSONObject(i);
-            JSONObject expectedClassPropertiesJSON = structureOracleJSON.getJSONObject("class");
+            JSONObject expectedClassPropertiesJSON = expectedClassJSON.getJSONObject("class");
 
             // Only test the enums.
             if(expectedClassPropertiesJSON.has("isEnum") && expectedClassPropertiesJSON.has("superclass")) {
