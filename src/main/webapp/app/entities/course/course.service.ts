@@ -72,6 +72,12 @@ export class CourseService {
         return this.http.get<Course>(`${this.resourceUrl}/${courseId}/results`);
     }
 
+    findAllToRegister(): Observable<EntityArrayResponseType> {
+        return this.http
+            .get<Course[]>(`${this.resourceUrl}/to-register`, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
+    }
+
     getForTutors(courseId: number): Observable<EntityResponseType> {
         return this.http
             .get<Course>(`${this.resourceUrl}/${courseId}/for-tutor-dashboard`, { observe: 'response' })

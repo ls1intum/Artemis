@@ -62,6 +62,17 @@ public class CourseService {
     }
 
     /**
+     * Get all the courses.
+     *
+     * @return the list of entities
+     */
+    @Transactional(readOnly = true)
+    public List<Course> findAllCurrentlyActive() {
+        log.debug("Request to get all Courses which are active");
+        return courseRepository.findAllCurrentlyActive();
+    }
+
+    /**
      * Check if the current user has at least Student-level permissions for the given course
      *
      * @param course the course to check permissions for

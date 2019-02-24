@@ -1,10 +1,39 @@
-<div class="row mb-3">
-    <div class="col">
+<div class="row mb-3 align-items-center">
+    <div class="col-12 col-sm">
         <h3 jhiTranslate="arTeMiSApp.studentDashboard.title">Your current courses</h3>
+    </div>
+    <div class="col-12 col-sm-auto" *ngIf="!showCourseSelection && !addedSuccessful">
+        <button class="btn btn-primary" [disabled]="loading" (click)="startRegistration()">
+            <span *ngIf="!loading">Sign up for a course</span>
+            <fa-icon icon="spinner" [spin]="true" *ngIf="loading"></fa-icon>
+        </button>
+    </div>
+    <div class="col-12 col-sm-auto text-success" *ngIf="addedSuccessful">
+        <fa-icon icon="check-circle"></fa-icon>
+        Register successful
+    </div>
+    <div class="col-12 col-sm-auto" *ngIf="showCourseSelection && coursesToSelect.length > 0">
+        <select class="form-control" id="field_course" name="course" [(ngModel)]="courseToRegister">
+            <option [ngValue]="null"></option>
+            <option [ngValue]="course" *ngFor="let course of coursesToSelect; trackBy: trackCourseById">{{course.title}}</option>
+        </select>
+    </div>
+    <div class="col-12 col-sm-auto" *ngIf="showCourseSelection && coursesToSelect.length > 0">
+        <div class="btn-group">
+            <button class="btn btn-primary" (click)="registerForCourse()">
+                Sign up for selected course
+            </button>
+            <button class="btn btn-default" (click)="cancelRegistration()">
+                Cancel
+            </button>
+        </div>
+    </div>
+    <div class="col-12 col-sm-auto text-warning" *ngIf="showCourseSelection && coursesToSelect.length === 0">
+        No course available to register to
     </div>
 </div>
 <div class="row">
     <div class="col-12 col-md-6 col-lg-3 pr-2 pl-2 mb-2" *ngFor="let course of courses">
-        <jhi-overview-course-card [course]="course"> </jhi-overview-course-card>
+        <jhi-overview-course-card [course]="course"></jhi-overview-course-card>
     </div>
 </div>
