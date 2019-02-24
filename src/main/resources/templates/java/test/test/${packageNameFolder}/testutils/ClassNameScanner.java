@@ -87,11 +87,8 @@ public class ClassNameScanner {
 			classIsPresentMultipleTimes = observedPackageNames.size() > 1;
 			classIsCorrectlyPlaced = classIsPresentMultipleTimes ? false : (observedPackageNames.contains(expectedPackageName));
 
-			scanResultType = classIsPresentMultipleTimes
-                ? $.ScanResultType.CORRECTNAME_MULTIPLETIMESPRESENT
-                : (classIsCorrectlyPlaced
-                    ? $.ScanResultType.CORRECTNAME_CORRECTPLACE
-                    : $.ScanResultType.CORRECTNAME_MISPLACED);
+			scanResultType = classIsPresentMultipleTimes ? ScanResultType.CORRECTNAME_MULTIPLETIMESPRESENT :
+                (classIsCorrectlyPlaced ? ScanResultType.CORRECTNAME_CORRECTPLACE : ScanResultType.CORRECTNAME_MISPLACED);
 		}
 		else {
 			for(String observedClassName : observedClasses.keySet()) {
@@ -103,20 +100,14 @@ public class ClassNameScanner {
 				boolean hasTypos = new LevenshteinDistance().apply(observedClassName, expectedClassName) < Math.ceil(expectedClassName.length() / 4);
 
 				if(hasWrongCase) {
-                    scanResultType = classIsPresentMultipleTimes
-                        ? $.ScanResultType.WRONGCASE_MULTIPLETIMESPRESENT
-                        : (classIsCorrectlyPlaced
-                            ? $.ScanResultType.WRONGCASE_CORRECTPLACE
-                            : $.ScanResultType.WRONGCASE_MISPLACED);
+                    scanResultType = classIsPresentMultipleTimes ? ScanResultType.WRONGCASE_MULTIPLETIMESPRESENT :
+                        (classIsCorrectlyPlaced ? ScanResultType.WRONGCASE_CORRECTPLACE : ScanResultType.WRONGCASE_MISPLACED);
 					break;
 				}
 				else if(hasTypos) {
 					scanResultType = classIsCorrectlyPlaced ? ScanResultType.TYPOS_CORRECTPLACE : ScanResultType.TYPOS_MISPLACED;
-                    scanResultType = classIsPresentMultipleTimes
-                        ? $.ScanResultType.TYPOS_MULTIPLETIMESPRESENT
-                        : (classIsCorrectlyPlaced
-                            ? $.ScanResultType.TYPOS_CORRECTPLACE
-                            : $.ScanResultType.TYPOS_MISPLACED);
+                    scanResultType = classIsPresentMultipleTimes ? ScanResultType.TYPOS_MULTIPLETIMESPRESENT :
+                        (classIsCorrectlyPlaced ? ScanResultType.TYPOS_CORRECTPLACE : ScanResultType.TYPOS_MISPLACED);
 					break;
 				}
 				else {
@@ -126,56 +117,56 @@ public class ClassNameScanner {
 		}
 
         switch (scanResultType) {
-            case $.ScanResultType.CORRECTNAME_CORRECTPLACE :
-                "The class " + expectedClassName + " has the correct name and is in the correct package.";
+            case ScanResultType.CORRECTNAME_CORRECTPLACE :
+                scanResultMessage = "The class " + expectedClassName + " has the correct name and is in the correct package.";
                 break;
-            case $.ScanResultType.CORRECTNAME_MISPLACED :
-                "The class " + expectedClassName + " has the correct name,"
+            case ScanResultType.CORRECTNAME_MISPLACED :
+                scanResultMessage = "The class " + expectedClassName + " has the correct name,"
                     + " but the package it's in, " + observedClasses.get(expectedClassName) + ", deviates from the expectation."
                     + "  Please make sure it is placed in the correct package.";
                 break;
-            case $.ScanResultType.CORRECTNAME_MULTIPLETIMESPRESENT:
-                "The class " + expectedClassName + " has the correct name,"
+            case ScanResultType.CORRECTNAME_MULTIPLETIMESPRESENT:
+                scanResultMessage = "The class " + expectedClassName + " has the correct name,"
                     + " but it is located multiple times in the project and in the packages: "
                     + observedClasses.get(expectedClassName).toString() +", which deviates from the expectation."
                     + " Please make sure to place the class in the correct package and remove any superfluous ones.";
                 break;
-            case $.ScanResultType.WRONGCASE_CORRECTPLACE:
-                "The exercise expects a class with the name " + expectedClassName
+            case ScanResultType.WRONGCASE_CORRECTPLACE:
+                scanResultMessage = "The exercise expects a class with the name " + expectedClassName
                     + ". We found that you implemented a class " + observedClassName + ", which deviates from the expectation."
                     + " Please check for wrong upper case / lower case lettering.";
                 break;
-            case $.ScanResultType.WRONGCASE_MISPLACED:
-                "The exercise expects a class with the name " + expectedClassName + " in the package " + expectedPackageName
+            case ScanResultType.WRONGCASE_MISPLACED:
+                scanResultMessage = "The exercise expects a class with the name " + expectedClassName + " in the package " + expectedPackageName
                     + ". We found that you implemented a class " + observedClassName + ", in the package " + observedClasses.get(observedClassName).toString()
                     + ", which deviates from the expectation."
                     + " Please check for wrong upper case / lower case lettering and make sure you place it in the correct package.";
                 break;
-            case $.ScanResultType.WRONGCASE_MULTIPLETIMESPRESENT:
-                "The exercise expects a class with the name " + expectedClassName + " in the package " + expectedPackageName
+            case ScanResultType.WRONGCASE_MULTIPLETIMESPRESENT:
+                scanResultMessage = "The exercise expects a class with the name " + expectedClassName + " in the package " + expectedPackageName
                     + ". We found that you implemented a class " + observedClassName + ", in the packages " + observedClasses.get(observedClassName).toString()
                     + ", which deviates from the expectation."
                     + " Please check for wrong upper case / lower case lettering and make sure you place one class in the correct package and remove any superfluous classes.";
                 break;
-            case $.ScanResultType.TYPOS_CORRECTPLACE:
-                "The exercise expects a class with the name " + expectedClassName
+            case ScanResultType.TYPOS_CORRECTPLACE:
+                scanResultMessage = "The exercise expects a class with the name " + expectedClassName
                     + ". We found that you implemented a class " + observedClassName + ", which deviates from the expectation."
                     + " Please check for typos in the class name.";
                 break;
-            case $.ScanResultType.TYPOS_MISPLACED:
-                "The exercise expects a class with the name " + expectedClassName + "in the package " + expectedPackageName
+            case ScanResultType.TYPOS_MISPLACED:
+                scanResultMessage = "The exercise expects a class with the name " + expectedClassName + "in the package " + expectedPackageName
                     + ". We found that you implemented a class " + observedClassName + ", in the package " + observedClasses.get(observedClassName).toString()
                     + ", which deviates from the expectation."
                     + " Please check for typos in the class name and make sure you place it in the correct package.";
                 break;
-            case $.ScanResultType.TYPOS_MULTIPLETIMESPRESENT:
-                "The exercise expects a class with the name " + expectedClassName + "in the package " + expectedPackageName
+            case ScanResultType.TYPOS_MULTIPLETIMESPRESENT:
+                scanResultMessage = "The exercise expects a class with the name " + expectedClassName + "in the package " + expectedPackageName
                     + ". We found that you implemented a class " + observedClassName + ", in the packages " + observedClasses.get(observedClassName).toString()
                     + ", which deviates from the expectation."
                     + " Please check for typos in the class name and make sure you place one class it in the correct package and remove any superfluous classes.";
                 break;
-            case $.ScanResultType.NOTFOUND:
-                "You have implemented " + observedClassName + " in the package " + observedClassName
+            case ScanResultType.NOTFOUND:
+                scanResultMessage = "You have implemented " + observedClassName + " in the package " + observedClassName
                     + ". This class is not expected in the exercise."
                     + "\n The assignment expects the following classes and in the according packages: \n";
 
@@ -185,8 +176,8 @@ public class ClassNameScanner {
                         " Package:" + expectedClasses.get(expectedClassName) +",\n";
                 }
                 break;
-            case $.ScanResultType.UNDEFINED:
-                "The class could not be scanned.";
+            case ScanResultType.UNDEFINED:
+                scanResultMessage = "The class could not be scanned.";
                 break;
         }
 
@@ -265,14 +256,11 @@ public class ClassNameScanner {
 		for (int i = 0; i < structureDiffJSON.length(); i++) {
 			JSONObject currentTypeJSON = (JSONObject) structureDiffJSON.get(i);
 			JSONObject currentTypePropertiesJSON = currentTypeJSON.getJSONObject("class");
-				
 			String expectedClassName = currentTypePropertiesJSON.getString("name");
 			String expectedPackageName = currentTypePropertiesJSON.getString("package");
-			
 			expectedTypes.put(expectedClassName, expectedPackageName);
 		}
 		
 		return expectedTypes;
 	}
-
 }

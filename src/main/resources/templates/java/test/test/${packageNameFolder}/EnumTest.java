@@ -16,7 +16,7 @@ import org.junit.runners.Parameterized;
 
 /**
  * @author Kristian Dimo (kristian.dimo@tum.de)
- * @version 1.2 (25.01.2019)
+ * @version 1.5 (25.01.2018)
  *
  * This test evaluates if the specified enums in the structure oracle
  * are correctly implemented with the expected names.
@@ -46,7 +46,6 @@ public class EnumTest extends StructuralTest {
                 if(expectedClassPropertiesJSON.getBoolean("isEnum") && expectedClassPropertiesJSON.getString("superclass").equals("Enum")) {
                     String expectedClassName = expectedClassPropertiesJSON.getString("name");
                     String expectedClassPackage = expectedClassPropertiesJSON.getString("package");
-
                     testData.add(new Object[] { expectedClassName, expectedClassPackage, expectedClassJSON });
                 }
             }
@@ -95,12 +94,10 @@ public class EnumTest extends StructuralTest {
                     break;
                 }
             }
-
             if(!enumValueExists) {
                 fail("Problem: the class '" + expectedClassName + "' does not include the enum value: " + expectedEnumValue
                     + ". Make sure to implement it as expected.");
             }
         }
     }
-
 }
