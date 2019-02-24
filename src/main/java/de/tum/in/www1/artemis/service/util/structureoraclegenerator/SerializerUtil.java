@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service.util.structureoraclegenerator;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import spoon.reflect.declaration.CtParameter;
 import spoon.reflect.declaration.ModifierKind;
 
@@ -19,10 +19,10 @@ public class SerializerUtil {
      * @param modifiers A collection of modifiers that needs to get serialized.
      * @return The JSON array containing the string representations of the modifiers.
      */
-    public static JSONArray serializeModifiers(Collection<ModifierKind> modifiers) {
-        JSONArray modifiersArray = new JSONArray();
+    public static JsonArray serializeModifiers(Collection<ModifierKind> modifiers) {
+        JsonArray modifiersArray = new JsonArray();
         for(ModifierKind modifier : modifiers) {
-            modifiersArray.put(modifier.toString());
+            modifiersArray.add(modifier.toString());
         }
         return modifiersArray;
     }
@@ -35,18 +35,18 @@ public class SerializerUtil {
      *                                      we need to add manually in order to be compatible with the Spoon Framework.
      * @return The JSON array containing the string representations of the parameter types.
      */
-    public static JSONArray serializeParameters(Collection<CtParameter<?>> parameters,
+    public static JsonArray serializeParameters(Collection<CtParameter<?>> parameters,
                                                 boolean executableDeclaringTypeIsEnum) {
-        JSONArray parametersArray = new JSONArray();
+        JsonArray parametersArray = new JsonArray();
 
         for(CtParameter<?> parameter : parameters) {
             if(parameter.isImplicit()) { continue; }
 
-            parametersArray.put(parameter.getType().getSimpleName());
+            parametersArray.add(parameter.getType().getSimpleName());
 
             if(executableDeclaringTypeIsEnum) {
-                parametersArray.put("String");
-                parametersArray.put("int");
+                parametersArray.add("String");
+                parametersArray.add("int");
             }
         }
 
@@ -60,11 +60,11 @@ public class SerializerUtil {
      * @param modifiers
      * @return
      */
-    public static JSONObject createJsonObject(String name, Set<ModifierKind> modifiers) {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("name", name);
+    public static JsonObject createJsonObject(String name, Set<ModifierKind> modifiers) {
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("name", name);
         if(!modifiers.isEmpty()) {
-            jsonObject.put("modifiers", serializeModifiers(modifiers));
+            jsonObject.add("modifiers", serializeModifiers(modifiers));
         }
         return jsonObject;
     }

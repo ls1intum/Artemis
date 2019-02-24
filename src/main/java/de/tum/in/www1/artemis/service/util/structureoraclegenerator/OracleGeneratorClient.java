@@ -1,8 +1,9 @@
 package de.tum.in.www1.artemis.service.util.structureoraclegenerator;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spoon.Launcher;
@@ -76,7 +77,7 @@ public class OracleGeneratorClient {
             + "Template project: " + templateProjectPath + "\n");
 
         // Initialize the empty string.
-        JSONArray structureOracleJSON = new JSONArray();
+        JsonArray structureOracleJSON = new JsonArray();
 
         // Generate the pairs of the types found in the solution project with the corresponding one from the template project.
         Map<CtType<?>, CtType<?>> solutionAndTemplateTypes = generateSolutionAndTemplateTypePairs(solutionProjectPath, templateProjectPath);
@@ -84,7 +85,7 @@ public class OracleGeneratorClient {
         // Loop over each pair of types and create the diff data structures and the JSON representation afterwards for each.
         // If the types, classes or enums are equal, then ignore and continue with the next pair
         for (Map.Entry<CtType<?>, CtType<?>> entry : solutionAndTemplateTypes.entrySet()) {
-            JSONObject diffJSON = new JSONObject();
+            JsonObject diffJSON = new JsonObject();
 
             CtType<?> solutionType = entry.getKey();
             CtType<?> templateType = entry.getValue();
@@ -98,9 +99,9 @@ public class OracleGeneratorClient {
             // If we are dealing with interfaces, the types diff already has all the information we need
             // So we do not need to do anything more
             TypesDiffSerializer typesDiffSerializer = new TypesDiffSerializer(typesDiff);
-            diffJSON.put("class", typesDiffSerializer.serializeHierarchy());
+            diffJSON.add("class", typesDiffSerializer.serializeHierarchy());
             if(!typesDiff.methodsDiff.isEmpty()) {
-                diffJSON.put("methods", typesDiffSerializer.serializeMethods());
+                diffJSON.add("methods", typesDiffSerializer.serializeMethods());
             }
 
             // Otherwise check then if the current types are enums or classes and create the corresponding
@@ -117,7 +118,7 @@ public class OracleGeneratorClient {
 
                 EnumsDiffSerializer enumsDiffSerializer = new EnumsDiffSerializer(enumsDiff);
                 if(!enumsDiff.enumValuesDiff.isEmpty()) {
-                    diffJSON.put("enumValues", enumsDiffSerializer.serializeEnumValues(enumsDiff));
+                    diffJSON.add("enumValues", enumsDiffSerializer.serializeEnumValues(enumsDiff));
                 }
             }
 
@@ -132,15 +133,15 @@ public class OracleGeneratorClient {
 
                 ClassesDiffSerializer classesDiffSerializer = new ClassesDiffSerializer(classesDiff);
                 if(!classesDiff.attributesDiff.isEmpty()) {
-                    diffJSON.put("attributes", classesDiffSerializer.serializeAttributes());
+                    diffJSON.add("attributes", classesDiffSerializer.serializeAttributes());
                 }
                 if(!classesDiff.constructorsDiff.isEmpty()) {
-                    diffJSON.put("constructors", classesDiffSerializer.serializeConstructors());
+                    diffJSON.add("constructors", classesDiffSerializer.serializeConstructors());
                 }
             }
 
             log.debug("Generated JSON for '" + solutionType.getSimpleName() + "'.");
-            structureOracleJSON.put(diffJSON);
+            structureOracleJSON.add(diffJSON);
         }
 
         return prettyPrint(structureOracleJSON);
@@ -151,14 +152,16 @@ public class OracleGeneratorClient {
      * @param jsonArray The JSON array that needs to get pretty printed.
      * @return The pretty printed JSON array in its string representation. If there is any IO exception, an empty string is returned instead.
      */
-    private static String prettyPrint(JSONArray jsonArray) {
+    private static String prettyPrint(JsonArray jsonArray) {
         ObjectMapper mapper = new ObjectMapper();
+
+        //TODO: instead of using two different libraries and convert the json vice versa we should try to pretty print via gson or directly use Jackson
         try {
             Object jsonObject = mapper.readValue(jsonArray.toString(), Object.class);
             return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonObject);
         } catch (IOException e) {
-            log.error("Could not pretty print the JSON!");
-            return "";
+            log.error("Could not pretty print the JSON!", e);
+            throw new InternalServerErrorException("Could not pretty print the JSON!");
         }
     }
 

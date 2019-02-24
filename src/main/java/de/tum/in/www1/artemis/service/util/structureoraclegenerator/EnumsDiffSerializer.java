@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.util.structureoraclegenerator;
 
-import org.json.JSONArray;
+import com.google.gson.JsonArray;
 import spoon.reflect.declaration.CtEnumValue;
 
 /**
@@ -18,11 +18,11 @@ public class EnumsDiffSerializer {
      * This method is used to serialize the string representations of each enum value into a JSON array.
      * @return The JSON array consisting of string representations of each enum value defined in the enums diff.
      */
-    public JSONArray serializeEnumValues(EnumsDiff enumsDiff) {
-        JSONArray enumValues = new JSONArray();
+    public JsonArray serializeEnumValues(EnumsDiff enumsDiff) {
+        JsonArray enumValues = new JsonArray();
 
         for(CtEnumValue<?> enumValue : enumsDiff.enumValuesDiff) {
-            enumValues.put(enumValue.getSimpleName());
+            enumValues.add(enumValue.getSimpleName());
         }
 
         return enumValues;

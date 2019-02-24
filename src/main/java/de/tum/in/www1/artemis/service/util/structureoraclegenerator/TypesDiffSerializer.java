@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service.util.structureoraclegenerator;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import spoon.reflect.declaration.CtMethod;
 import spoon.reflect.reference.CtTypeReference;
 
@@ -30,36 +30,34 @@ public class TypesDiffSerializer {
      * @return The JSON object consisting of JSON objects representation for the wanted hierarchy properties of a type
      * defined in the types diff.
      */
-    public JSONObject serializeHierarchy() {
-        JSONObject hierarchyJSON = new JSONObject();
+    public JsonObject serializeHierarchy() {
+        JsonObject hierarchyJSON = new JsonObject();
 
-        hierarchyJSON.put("name", typesDiff.name);
-        hierarchyJSON.put("package", typesDiff.packageName);
+        hierarchyJSON.addProperty("name", typesDiff.name);
+        hierarchyJSON.addProperty("package", typesDiff.packageName);
 
         if(typesDiff.isInterface) {
-            hierarchyJSON.put("isInterface", true);
+            hierarchyJSON.addProperty("isInterface", true);
         }
         if(typesDiff.isEnum) {
-            hierarchyJSON.put("isEnum", true);
+            hierarchyJSON.addProperty("isEnum", true);
         }
         if(typesDiff.isAbstract) {
-            hierarchyJSON.put("isAbstract", true);
+            hierarchyJSON.addProperty("isAbstract", true);
         }
         if(!typesDiff.superClassName.isEmpty()){
-            hierarchyJSON.put("superclass", typesDiff.superClassName);
+            hierarchyJSON.addProperty("superclass", typesDiff.superClassName);
         }
         if(typesDiff.superInterfaces.size() > 0) {
-            JSONArray superInterfaces = new JSONArray();
+            JsonArray superInterfaces = new JsonArray();
 
             for(CtTypeReference<?> superInterface : typesDiff.superInterfaces) {
                 if(!superInterface.isImplicit()) {
-                    superInterfaces.put(superInterface.getSimpleName());
+                    superInterfaces.add(superInterface.getSimpleName());
                 }
             }
-
-            hierarchyJSON.put("interfaces", superInterfaces);
+            hierarchyJSON.add("interfaces", superInterfaces);
         }
-
         return hierarchyJSON;
     }
 
@@ -72,19 +70,17 @@ public class TypesDiffSerializer {
      * - Return type
      * @return The JSON array consisting of JSON objects representation for each method defined in the types diff.
      */
-    public JSONArray serializeMethods() {
-        JSONArray methodsJSON = new JSONArray();
+    public JsonArray serializeMethods() {
+        JsonArray methodsJSON = new JsonArray();
 
         for(CtMethod<?> method : typesDiff.methodsDiff) {
-            JSONObject methodJSON = SerializerUtil.createJsonObject(method.getSimpleName(), method.getModifiers());
+            JsonObject methodJSON = SerializerUtil.createJsonObject(method.getSimpleName(), method.getModifiers());
             if(!method.getParameters().isEmpty()) {
-                methodJSON.put("parameters", SerializerUtil.serializeParameters(method.getParameters(), false));
+                methodJSON.add("parameters", SerializerUtil.serializeParameters(method.getParameters(), false));
             }
-            methodJSON.put("returnType", method.getType().getSimpleName());
-            methodsJSON.put(methodJSON);
+            methodJSON.addProperty("returnType", method.getType().getSimpleName());
+            methodsJSON.add(methodJSON);
         }
-
         return methodsJSON;
     }
-
 }
