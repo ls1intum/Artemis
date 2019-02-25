@@ -214,7 +214,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
 
     /**
      * @function close
-     * @desc Close modal and go back to QuizExercise-Overview
+     * @desc Close modal
      */
     close(): void {
         this.activeModal.close();
