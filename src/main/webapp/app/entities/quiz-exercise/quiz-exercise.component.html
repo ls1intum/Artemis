@@ -2,25 +2,13 @@
     <h4>
         <span *ngIf="course && !showHeading">{{course.title}} - </span><span *ngIf="quizExercises && showHeading">{{quizExercises.length}} </span>
         <span jhiTranslate="arTeMiSApp.quizExercise.home.title">Quiz Exercises</span>
-        <button *ngIf="!routerContainPath()" class="btn mr-2 btn-primary float-right jh-create-entity create-quiz-exercise" [routerLink]="['quiz-exercise' , 'new']">
-            <fa-icon icon="plus"></fa-icon>
-            <span jhiTranslate="arTeMiSApp.quizExercise.home.createLabel">
-                Create Quiz
-            </span>
-        </button>
-        <button *ngIf="routerContainPath()" class="btn mr-2 btn-primary float-right jh-create-entity create-quiz-exercise" [routerLink]="['new']">
+        <button class="btn mr-2 btn-primary float-right jh-create-entity create-quiz-exercise" [routerLink]="['/course', courseId, 'quiz-exercise', 'new']">
             <fa-icon icon="plus"></fa-icon>
             <span jhiTranslate="arTeMiSApp.quizExercise.home.createLabel">
                 Create new Quiz
             </span>
         </button>
-        <button *ngIf="!routerContainPath()" class="btn mr-2 btn-primary float-right jh-create-entity create-quiz-exercise" [routerLink]="['quiz-exercise', 'export']">
-            <fa-icon icon="plus"></fa-icon>
-            <span jhiTranslate="arTeMiSApp.quizExercise.home.exportLabel">
-                Export Quiz Exercises
-            </span>
-        </button>
-        <button *ngIf="routerContainPath()" class="btn mr-2 btn-primary float-right jh-create-entity create-quiz-exercise" [routerLink]="['export']">
+        <button class="btn mr-2 btn-primary float-right jh-create-entity create-quiz-exercise" [routerLink]="['/course', courseId, 'quiz-exercise', 'export']">
             <fa-icon icon="plus"></fa-icon>
             <span jhiTranslate="arTeMiSApp.quizExercise.home.exportLabel">
                 Export Quiz Exercises
