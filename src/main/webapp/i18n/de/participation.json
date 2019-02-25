@@ -3,28 +3,31 @@
     "arTeMiSApp": {
         "participation" : {
             "home": {
-                "title": "Participations",
-                "createLabel": "Participation erstellen",
-                "createOrEditLabel": "Participation erstellen oder bearbeiten"
+                "title": "Teilnahmen",
+                "createLabel": "Teilnahme erstellen",
+                "createOrEditLabel": "Teilnahme erstellen oder bearbeiten"
             },
-            "created": "Participation erstellt mit ID {{ param }}",
-            "updated": "Participation aktualisiert mit ID {{ param }}",
-            "deleted": "Participation gelöscht mit ID {{ param }}",
+            "created": "Teilnahme erstellt mit ID {{ param }}",
+            "updated": "Teilnahme von {{ param }} aktualisiert",
+            "deleted": "Teilnahme von {{ param }} gelöscht",
             "delete": {
-                "question": "Soll Participation {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll die Teilnahme von {{ student }} wirklich dauerhaft gelöscht werden?"
+            },
+            "cleanupBuildPlan": {
+                "question": "Soll der Build Plan der Teilnahme von {{ student }} wirklich gelöscht werden?"
             },
             "detail": {
-                "title": "Participation"
+                "title": "Teilnahme"
             },
             "repositoryUrl": "Repository Url",
             "buildPlanId": "Build Plan Id",
             "initializationState": "Initialization State",
             "initializationDate": "Initialization Date",
             "presentationScore": "Presentation Score",
-            "results": "Results",
-            "submissions": "Submissions",
+            "results": "Ergebnisse",
+            "submissions": "Einreichungen",
             "student": "Student",
-            "exercise": "Exercise"
+            "exercise": "Übung"
         }
     }
 }

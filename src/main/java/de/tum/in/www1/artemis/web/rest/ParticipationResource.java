@@ -1,10 +1,13 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import com.google.common.collect.Sets;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 import org.slf4j.Logger;
@@ -25,8 +28,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 /**
  * REST controller for managing Participation.
@@ -74,10 +75,7 @@ public class ParticipationResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Participation> createParticipation(@RequestBody Participation participation) throws URISyntaxException {
         log.debug("REST request to save Participation : {}", participation);
-        Course course = participation.getExercise().getCourse();
-        if (!courseService.userHasAtLeastTAPermissions(course)) {
-            return forbidden();
-        }
+        checkAccessPermissionAtLeastTA(participation);
         if (participation.getId() != null) {
             throw new BadRequestAlertException("A new participation cannot already have an ID", ENTITY_NAME, "idexists");
         }
@@ -102,19 +100,15 @@ public class ParticipationResource {
         Exercise exercise = exerciseService.findOne(exerciseId);
         Course course = exercise.getCourse();
         if (!courseService.userHasAtLeastStudentPermissions(course)) {
-            return forbidden();
+            throw new AccessForbiddenException("You are not allowed to access this resource");
         }
-        if (Optional.ofNullable(exercise).isPresent()) {
-            if (participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName()) != null) {
-                // participation already exists
-                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("participation", "participationAlreadyExists", "There is already a participation for the given exercise and user.")).body(null);
-            }
-            Participation participation = participationService.startExercise(exercise, principal.getName());
-            return ResponseEntity.created(new URI("/api/participations/" + participation.getId()))
-                .body(participation);
-        } else {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("participation", "exerciseNotFound", "No exercise was found for the given ID")).body(null);
+        if (participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName()) != null) {
+            // participation already exists
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("participation", "participationAlreadyExists", "There is already a participation for the given exercise and user.")).body(null);
         }
+        Participation participation = participationService.startExercise(exercise, principal.getName());
+        return ResponseEntity.created(new URI("/api/participations/" + participation.getId()))
+            .body(participation);
     }
 
     /**
@@ -131,15 +125,13 @@ public class ParticipationResource {
         log.debug("REST request to resume Exercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
         Participation participation = participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName());
-        Course course = participation.getExercise().getCourse();
-        if (!authCheckService.isOwnerOfParticipation(participation)) {
-            if(!courseService.userHasAtLeastTAPermissions(course)) {
-                return forbidden();
-            }
-        }
+        //TODO: are results initialized here?
+        Result result = participation.findLatestResult();
+        participation.setResults(Sets.newHashSet(result));
+        checkAccessPermissionOwner(participation);
         if (exercise instanceof ProgrammingExercise) {
             participation = participationService.resume(exercise, participation);
-            return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, participation.getId().toString()))
+            return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, participation.getStudent().getFirstName()))
                 .body(participation);
         }
         log.debug("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to resume participation", exerciseId);
@@ -161,14 +153,14 @@ public class ParticipationResource {
         log.debug("REST request to update Participation : {}", participation);
         Course course = participation.getExercise().getCourse();
         if (!courseService.userHasAtLeastTAPermissions(course)) {
-            return forbidden();
+            throw new AccessForbiddenException("You are not allowed to access this resource");
         }
         if (participation.getId() == null) {
             return createParticipation(participation);
         }
         Participation result = participationService.save(participation);
         return ResponseEntity.ok()
-            .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, participation.getId().toString()))
+            .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, participation.getStudent().getFirstName()))
             .body(result);
     }
 
@@ -185,7 +177,7 @@ public class ParticipationResource {
         Exercise exercise = exerciseService.findOne(exerciseId);
         Course course = exercise.getCourse();
         if (!courseService.userHasAtLeastTAPermissions(course)) {
-            return forbidden();
+            throw new AccessForbiddenException("You are not allowed to access this resource");
         }
         List<Participation> participations = participationService.findByExerciseId(exerciseId);
         return ResponseEntity.ok(participations);
@@ -204,7 +196,7 @@ public class ParticipationResource {
         log.debug("REST request to get all Participations for Course {}", courseId);
         Course course = courseService.findOne(courseId);
         if (!courseService.userHasAtLeastTAPermissions(course)) {
-            return forbidden();
+            throw new AccessForbiddenException("You are not allowed to access this resource");
         }
         List<Participation> participations = participationService.findByCourseIdWithRelevantResults(courseId);
         long end = System.currentTimeMillis();
@@ -223,22 +215,14 @@ public class ParticipationResource {
     public ResponseEntity<Participation> getParticipationWithLatestResult(@PathVariable Long id) {
         log.debug("REST request to get Participation : {}", id);
         Participation participation = participationService.findOneWithEagerResults(id);
-        if (participation == null) {
-            return ResponseUtil.notFound();
-        }
+        checkAccessPermissionOwner(participation);
         Result result = participation.getExercise().findLatestRatedResultWithCompletionDate(participation);
         Set<Result> results = new HashSet<>();
         if (result != null) {
             results.add(result);
         }
         participation.setResults(results);
-        Course course = participation.getExercise().getCourse();
-        if (!authCheckService.isOwnerOfParticipation(participation)) {
-             if(!courseService.userHasAtLeastTAPermissions(course)) {
-                 return forbidden();
-             }
-        }
-        return  new ResponseEntity<>(participation, HttpStatus.OK);
+        return new ResponseEntity<>(participation, HttpStatus.OK);
     }
 
     /**
@@ -250,35 +234,24 @@ public class ParticipationResource {
     @GetMapping("/participations/{id}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Participation> getParticipation(@PathVariable Long id) {
-        log.debug("REST request to get Participation : {}", id);
+        log.debug("REST request to get participation : {}", id);
         Participation participation = participationService.findOne(id);
-        Course course = participation.getExercise().getCourse();
-        if (!authCheckService.isOwnerOfParticipation(participation)) {
-            if(!courseService.userHasAtLeastTAPermissions(course)) {
-                return forbidden();
-            }
-        }
+        checkAccessPermissionOwner(participation);
         return Optional.ofNullable(participation)
             .map(result -> new ResponseEntity<>(result, HttpStatus.OK))
             .orElse(ResponseUtil.notFound());
     }
 
+
     @GetMapping(value = "/participations/{id}/repositoryWebUrl")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<String> getParticipationRepositoryWebUrl(@PathVariable Long id, Authentication authentication) {
-        log.debug("REST request to get Participation : {}", id);
+        log.debug("REST request to get repositoryWebUrl of participation : {}", id);
         Participation participation = participationService.findOne(id);
-        Course course = participation.getExercise().getCourse();
-        if (!authCheckService.isOwnerOfParticipation(participation)) {
-             if(!courseService.userHasAtLeastTAPermissions(course)) {
-                 return forbidden();
-             }
-        }
+        checkAccessPermissionOwner(participation);
         URL url = versionControlService.get().getRepositoryWebUrl(participation);
         return Optional.ofNullable(url)
-            .map(result -> new ResponseEntity<>(
-                url.toString(),
-                HttpStatus.OK))
+            .map(result -> new ResponseEntity<>(url.toString(), HttpStatus.OK))
             .orElse(ResponseUtil.notFound());
     }
 
@@ -287,20 +260,17 @@ public class ParticipationResource {
     public ResponseEntity<String> getParticipationBuildPlanWebUrl(@PathVariable Long id) {
         log.debug("REST request to get Participation : {}", id);
         Participation participation = participationService.findOne(id);
-        if (participation == null) {
-            return ResponseUtil.notFound();
-        }
         Course course = participation.getExercise().getCourse();
         if (!authCheckService.isOwnerOfParticipation(participation)) {
             if(!courseService.userHasAtLeastTAPermissions(course)) {
-                return forbidden();
+                throw new AccessForbiddenException("You are not allowed to access this resource");
             }
         } else if (!courseService.userHasAtLeastTAPermissions(course)) {
             // Check if build plan URL is published, if user is owner of participation and is not TA or higher
             if (participation.getExercise() instanceof ProgrammingExercise) {
                 ProgrammingExercise programmingExercise = (ProgrammingExercise) participation.getExercise();
                 if (!programmingExercise.isPublishBuildPlanUrl()) {
-                    return forbidden();
+                    throw new AccessForbiddenException("You are not allowed to access this resource");
                 }
             }
         }
@@ -317,12 +287,7 @@ public class ParticipationResource {
     public ResponseEntity getParticipationBuildArtifact(@PathVariable Long id) {
         log.debug("REST request to get Participation build artifact: {}", id);
         Participation participation = participationService.findOne(id);
-        Course course = participation.getExercise().getCourse();
-        if (!authCheckService.isOwnerOfParticipation(participation)) {
-            if(!courseService.userHasAtLeastTAPermissions(course)) {
-                return forbidden();
-            }
-        }
+        checkAccessPermissionOwner(participation);
 
         return continuousIntegrationService.get().retrieveLatestArtifact(participation);
     }
@@ -343,11 +308,11 @@ public class ParticipationResource {
         log.debug("REST request to get Participation for Exercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
         if (exercise == null) {
-            return ResponseUtil.notFound();
+            throw new EntityNotFoundException("Exercise with " + exerciseId + " does not exist");
         }
         Course course = exercise.getCourse();
         if (!courseService.userHasAtLeastStudentPermissions(course)) {
-            return forbidden();
+            throw new AccessForbiddenException("You are not allowed to access this resource");
         }
         MappingJacksonValue response;
         if (exercise instanceof QuizExercise) {
@@ -418,9 +383,7 @@ public class ParticipationResource {
         } else if (participation.getExercise() instanceof ProgrammingExercise) {
             ContinuousIntegrationService.BuildStatus buildStatus = continuousIntegrationService.get().getBuildStatus(participation);
             return Optional.ofNullable(buildStatus)
-                .map(status -> new ResponseEntity<>(
-                    status,
-                    HttpStatus.OK))
+                .map(status -> new ResponseEntity<>(status, HttpStatus.OK))
                 .orElse(ResponseUtil.notFound());
         }
         return ResponseEntity.unprocessableEntity().build();
@@ -439,11 +402,40 @@ public class ParticipationResource {
                                                     @RequestParam(defaultValue = "false") boolean deleteRepository) {
         log.debug("REST request to delete Participation : {}, deleteBuildPlan: {}, deleteRepository: {}", id, deleteBuildPlan, deleteRepository);
         Participation participation = participationService.findOne(id);
+        String username = participation.getStudent().getFirstName();
+        participationService.delete(id, deleteBuildPlan, deleteRepository);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("participation", username)).build();
+    }
+
+    /**
+     * DELETE  /participations/:id : delete the "id" participation.
+     *
+     * @param id the id of the participation to delete
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @PutMapping("/participations/{id}/cleanupBuildPlan")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Participation> deleteParticipation(@PathVariable Long id) {
+        Participation participation = participationService.findOne(id);
+        log.info("REST request clean up participation with build plan id " + participation.getBuildPlanId());
+        checkAccessPermissionAtLeastTA(participation);
+        participationService.cleanupBuildPlan(participation);
+        return ResponseEntity.ok().body(participation);
+    }
+
+    private void checkAccessPermissionAtLeastTA(Participation participation) {
         Course course = participation.getExercise().getCourse();
         if (!courseService.userHasAtLeastTAPermissions(course)) {
-            return forbidden();
+            throw new AccessForbiddenException("You are not allowed to access this resource");
         }
-        participationService.delete(id, deleteBuildPlan, deleteRepository);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("participation", id.toString())).build();
+    }
+
+    private void checkAccessPermissionOwner(Participation participation) {
+        Course course = participation.getExercise().getCourse();
+        if (!authCheckService.isOwnerOfParticipation(participation)) {
+            if (!courseService.userHasAtLeastTAPermissions(course)) {
+                throw new AccessForbiddenException("You are not allowed to access this resource");
+            }
+        }
     }
 }

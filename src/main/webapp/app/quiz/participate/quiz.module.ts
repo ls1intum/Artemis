@@ -16,6 +16,7 @@ import { DragItemComponent } from './drag-and-drop-question/drag-item.component'
 import { AngularFittextModule } from 'angular-fittext';
 import { SecuredImageComponent } from '../../components/util/secured-image.component';
 import { DndModule } from 'ng2-dnd';
+import { QuizScoringInfoStudentModalComponent } from './quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
 
 const ENTITY_STATES = [...quizRoute];
 
@@ -25,6 +26,7 @@ const ENTITY_STATES = [...quizRoute];
         QuizComponent,
         MultipleChoiceQuestionComponent,
         DragAndDropQuestionComponent,
+        QuizScoringInfoStudentModalComponent,
         ShortAnswerQuestionComponent,
         DragItemComponent,
         SecuredImageComponent

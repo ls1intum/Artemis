@@ -63,7 +63,7 @@
                         (click)="resumeExercise(exercise)"
                         [disabled]="exercise.loading">
                     <span [hidden]="exercise.loading"><fa-icon icon="play-circle" [fixedWidth]="true"></fa-icon>&nbsp;<span class="d-none d-md-inline">Resume exercise</span></span>
-                    <fa-icon [hidden]="!exercise.loading" icon="circle-notch " [spin]="true"></fa-icon>
+                    <fa-icon icon="circle-notch" [spin]="true" [hidden]="!exercise.loading"></fa-icon>
                 </button>
                 <div *ngSwitchCase="'initialized'">
                     <div *ngIf="exercise.type === PROGRAMMING && exercise.participations && exercise.participations.length > 0">

@@ -78,7 +78,7 @@ public class SimilarityDetector {
         }
         else if (element.getClass() == UMLAssociation.class) {
             UMLAssociation relation = (UMLAssociation) element;
-            HashSet<Integer> edges = new HashSet<>();
+            Set<Integer> edges = new HashSet<>();
             for (UMLClass connectableElement : model.getClassList()) {
                 if (relation.getSource().equals(connectableElement) || relation.getTarget().equals(connectableElement)) {
                     edges.add(connectableElement.getElementID());
