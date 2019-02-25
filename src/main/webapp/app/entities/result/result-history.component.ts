@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { Result } from './';
 import { MIN_POINTS_GREEN, MIN_POINTS_ORANGE } from 'app/app.constants';
 
@@ -8,16 +8,10 @@ import { MIN_POINTS_GREEN, MIN_POINTS_ORANGE } from 'app/app.constants';
     templateUrl: './result-history.component.html',
     styleUrls: ['./result-history.scss']
 })
-export class ResultHistoryComponent implements OnInit {
+export class ResultHistoryComponent {
     @Input() results: Result[];
     @Input() maxScore: number;
     @Input() showPreviousDivider = false;
-
-    constructor() {
-    }
-
-    ngOnInit(): void {
-    }
 
     resultIcon(result: Result): string {
         if (result.score >= 75) {
