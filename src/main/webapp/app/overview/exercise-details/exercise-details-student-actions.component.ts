@@ -1,4 +1,4 @@
-import { Component, HostBinding, Input } from '@angular/core';
+import { Component, HostBinding, Input, OnInit } from '@angular/core';
 import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise';
 import { QuizExercise } from 'app/entities/quiz-exercise';
 import { InitializationState, Participation } from 'app/entities/participation';
@@ -7,16 +7,17 @@ import { CourseExerciseService } from 'app/entities/course';
 import { Router } from '@angular/router';
 import { JhiAlertService } from 'ng-jhipster';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
-import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClient } from '@angular/common/http';
+import { AccountService } from 'app/core';
+import { SourceTreeService } from 'app/components/util/sourceTree.service';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
     templateUrl: './exercise-details-student-actions.component.html',
     styleUrls: ['../course-overview.scss'],
-    providers: [JhiAlertService]
+    providers: [JhiAlertService, SourceTreeService]
 })
-export class ExerciseDetailsStudentActionsComponent {
+export class ExerciseDetailsStudentActionsComponent implements OnInit {
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
@@ -50,8 +51,19 @@ export class ExerciseDetailsStudentActionsComponent {
         private jhiAlertService: JhiAlertService,
         private courseExerciseService: CourseExerciseService,
         private httpClient: HttpClient,
+        private accountService: AccountService,
+        private sourceTreeService: SourceTreeService,
         private router: Router,
     ) {
+    }
+
+    ngOnInit(): void {
+        this.accountService.identity().then(user => {
+            // Only load password if current user login starts with 'edx'
+            if (user && user.login && user.login.startsWith('edx')) {
+                this.getRepositoryPassword();
+            }
+        });
     }
 
     participationStatus(): ParticipationStatus {
@@ -162,7 +174,7 @@ export class ExerciseDetailsStudentActionsComponent {
     }
 
     buildSourceTreeUrl(cloneUrl: string): string {
-        return 'sourcetree://cloneRepo?type=stash&cloneUrl=' + encodeURI(cloneUrl) + '&baseWebUrl=https://repobruegge.in.tum.de';
+        return this.sourceTreeService.buildSourceTreeUrl(cloneUrl);
     }
 
     resumeExercise() {
@@ -183,7 +195,7 @@ export class ExerciseDetailsStudentActionsComponent {
     }
 
     getRepositoryPassword() {
-        this.httpClient.get(`${SERVER_API_URL}/api/account/password`).subscribe(res => {
+        this.sourceTreeService.getRepositoryPassword().subscribe(res => {
             const password = res['password'];
             if (password) {
                 this.repositoryPassword = password;
