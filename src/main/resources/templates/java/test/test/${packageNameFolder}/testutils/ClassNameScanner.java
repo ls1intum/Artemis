@@ -7,18 +7,17 @@ import org.json.*;
 import org.w3c.dom.*;
 import org.xml.sax.SAXException;
 
-import com.google.common.collect.*;
-import org.apache.commons.text.similarity.LevenshteinDistance;
+import me.xdrop.fuzzywuzzy.FuzzySearch;
 
 /**
- * @author Kristian Dimo (kristian.dimo@tum.de)
- * @version 1.5 (25.01.2019)
+ * @author Stephan Krusche (krusche@in.tum.de)
+ * @version 2.0 (24.02.2019)
  *
- * This class scans the submission project if the current expected class is actually 
+ * This class scans the submission project if the current expected class is actually
  * present in it or not. The result is returned as an instance of ScanResult.
  * The ScanResult consists of a ScanResultType and a ScanResultMessage as a string.
- * ScanResultType is an enum and is implemented so that identifying just the type of 
- * the error and the binding of several messages to a certain result is possible. 
+ * ScanResultType is an enum and is implemented so that identifying just the type of
+ * the error and the binding of several messages to a certain result is possible.
  *
  * There are the following possible results:
  * - The class has the correct name and is placed in the correct package.
@@ -40,7 +39,7 @@ public class ClassNameScanner {
     private final String expectedPackageName;
 
     // The names of the classes observed in the project
-    private final Multimap<String, String> observedClasses;
+    private final Map<String, List<String>> observedClasses;
     private final Map<String, String> expectedClasses;
     private final ScanResult scanResult;
 
@@ -79,7 +78,7 @@ public class ClassNameScanner {
         String foundObservedClassName = expectedClassName;
 
         if(classIsFound) {
-            Collection<String> observedPackageNames = observedClasses.get(expectedClassName);
+            List<String> observedPackageNames = observedClasses.get(expectedClassName);
             classIsPresentMultipleTimes = observedPackageNames.size() > 1;
             classIsCorrectlyPlaced = classIsPresentMultipleTimes ? false : (observedPackageNames.contains(expectedPackageName));
 
@@ -94,7 +93,9 @@ public class ClassNameScanner {
                 classIsCorrectlyPlaced = classIsPresentMultipleTimes ? false : (observedPackageNames.contains(expectedPackageName));
 
                 boolean hasWrongCase = observedClassName.equalsIgnoreCase(expectedClassName);
-                boolean hasTypos = new LevenshteinDistance().apply(observedClassName, expectedClassName) < Math.ceil(expectedClassName.length() / 4);
+                boolean hasTypos = FuzzySearch.ratio(observedClassName, expectedClassName) > 90;
+                //The previous implementation
+//				boolean hasTypos = DiffUtils.levEditDistance(observedClassName, expectedClassName, 1) < Math.ceil(expectedClassName.length() / 4);
 
                 if(hasWrongCase) {
                     scanResultType = classIsPresentMultipleTimes ? ScanResultType.WRONGCASE_MULTIPLETIMESPRESENT :
@@ -185,8 +186,8 @@ public class ClassNameScanner {
      * The root node (which is the assignment folder) is defined in the pom.xml file of the project.
      * @return The map containing the type names as keys and the type packages as values.
      */
-    private Multimap<String, String> retrieveObservedClasses() {
-        Multimap<String, String> observedTypes = ArrayListMultimap.create();
+    private Map<String, List<String>> retrieveObservedClasses() {
+        Map<String, List<String>> observedTypes = new HashMap<>();
 
         try {
             File pomFile = new File("pom.xml");
@@ -219,26 +220,31 @@ public class ClassNameScanner {
      * @param node: The current node the method is visiting.
      * @param types: The JSON object where the type names and packages get appended.
      */
-    private void walkProjectFileStructure(String assignmentFolderName, File node, Multimap<String, String> types) {
-        String currentFileName = node.getName();
+    private void walkProjectFileStructure(String assignmentFolderName, File node, Map<String, List<String>> foundTypes) {
+        String fileName = node.getName();
 
-        if(currentFileName.contains(".java")) {
-            String[] currentFileNameComponents = currentFileName.split("\\.");
+        if(fileName.contains(".java")) {
+            String[] fileNameComponents = fileName.split("\\.");
 
-            String className = currentFileNameComponents[currentFileNameComponents.length - 2];
+            String className = fileNameComponents[fileNameComponents.length - 2];
             String packageName = node.getPath().substring(0, node.getPath().indexOf(".java"));
             packageName = packageName.substring(
                 packageName.indexOf(assignmentFolderName) + assignmentFolderName.length() + 1,
                 packageName.lastIndexOf(File.separator + className));
             packageName = packageName.replace(File.separatorChar, '.');
 
-            types.put(className, packageName);
+            if(foundTypes.containsKey(className)) {
+                foundTypes.get(className).add(packageName);
+            }
+            else {
+                foundTypes.put(className, Arrays.asList(packageName));
+            }
         }
 
         if(node.isDirectory()) {
             String[] subNodes = node.list();
             for(String currentSubNode : subNodes) {
-                walkProjectFileStructure(assignmentFolderName, new File(node, currentSubNode), types);
+                walkProjectFileStructure(assignmentFolderName, new File(node, currentSubNode), foundTypes);
             }
         }
     }

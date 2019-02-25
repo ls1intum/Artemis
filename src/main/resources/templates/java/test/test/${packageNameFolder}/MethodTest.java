@@ -1,23 +1,19 @@
 package ${packageName};
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.lang.reflect.*;
+import java.util.*;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
+import org.json.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
- * @version 1.5 (25.01.2018)
+ * @version 2.0 (24.02.2019)
  *
  * This test evaluates if the specified methods in the structure oracle
  * are correctly implemented with the expected name, return type, parameter types
@@ -78,8 +74,8 @@ public class MethodTest extends StructuralTest {
         for(int i = 0; i < expectedMethods.length(); i++) {
             JSONObject expectedMethod = expectedMethods.getJSONObject(i);
             String expectedName = expectedMethod.getString("name");
-            JSONArray expectedParameters = expectedMethod.getJSONArray("parameters");
-            JSONArray expectedModifiers = expectedMethod.getJSONArray("modifiers");
+            JSONArray expectedParameters = expectedMethod.has("parameters") ? expectedMethod.getJSONArray("parameters") : new JSONArray();
+            JSONArray expectedModifiers = expectedMethod.has("modifiers") ? expectedMethod.getJSONArray("modifiers") : new JSONArray();
             String expectedReturnType = expectedMethod.getString("returnType");
 
             boolean nameIsRight = false;
@@ -118,7 +114,7 @@ public class MethodTest extends StructuralTest {
             String expectedMethodInformation = "the expected method '" + expectedName + "' of the class '" + expectedClassName + "' with "
                 + ((expectedParameters.length() == 0) ? "no parameters" : "the parameters: " + expectedParameters.toString());
 
-            assertTrue("Problem: the method " + expectedMethodInformation + " was not found or is named wrongly.",
+            assertTrue("Problem: " + expectedMethodInformation + " was not found or is named wrongly.",
                 nameIsRight);
 
             assertTrue("Problem: the parameters of " + expectedMethodInformation + " are not implemented as expected.",

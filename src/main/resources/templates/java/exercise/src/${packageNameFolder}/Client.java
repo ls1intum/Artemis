@@ -1,4 +1,6 @@
-package ${packageName};
+package $
+
+{packageName};
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -12,12 +14,12 @@ public class Client {
     // TODO: Implement BubbleSort
     // TODO: Implement MergeSort
 
-	// TODO: Create a SortStrategy interface according to the UML class diagram
-	// TODO: Make the sorting algorithms implement this interface.
-	
-	// TODO: Create and implement a Context class according to the UML class diagram
-	// TODO: Create and implement a Policy class as described in the problem statement
-	
+    // TODO: Create a SortStrategy interface according to the UML class diagram
+    // TODO: Make the sorting algorithms implement this interface.
+
+    // TODO: Create and implement a Context class according to the UML class diagram
+    // TODO: Create and implement a Policy class as described in the problem statement
+
     /**
      * Main method.
      * Add code to demonstrate your implementation here.
@@ -25,7 +27,7 @@ public class Client {
     public static void main(String[] args) throws ParseException {
 
         // TODO: Init Context and Policy
-    	
+
 
         // Run 10 times to simulate different sorting strategies for different Array sizes
         for (int i = 0; i < 10; i++) {
@@ -54,7 +56,7 @@ public class Client {
         Date lowestDate = dateFormat.parse("08.11.2016");
         Date highestDate = dateFormat.parse("15.04.2019");
 
-        for (int i = 0; i < listLength; i++){
+        for (int i = 0; i < listLength; i++) {
             Date randomDate = randomDateWithin(lowestDate, highestDate);
             list.add(randomDate);
         }

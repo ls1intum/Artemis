@@ -9,7 +9,7 @@ import org.json.*;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
- * @version 1.5 (25.01.2019)
+ * @version 2.0 (24.02.2019)
  *
  * This test evaluates if the following specified elements of a given class in the structure oracle are
  * correctly implemented (in case they are specified):
@@ -93,7 +93,7 @@ public class StructuralTest {
      */
     protected boolean checkParameters(Class<?>[] observedParameters, JSONArray expectedParameters) {
 
-        // If the number of parameters do not match, then the parameters per se do not match either.
+        // If the number of parameters do not match, then the parameters cannot match either.
         if(observedParameters.length != expectedParameters.length()) {
             return false;
         }

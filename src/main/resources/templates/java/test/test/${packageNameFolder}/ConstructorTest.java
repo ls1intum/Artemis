@@ -16,7 +16,7 @@ import org.junit.runners.Parameterized;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
- * @version 1.5 (25.01.2019)
+ * @version 2.0 (24.02.2019)
  *
  * This test evaluates if the specified constructors in the structure oracle
  * are correctly implemented with the expected parameter types

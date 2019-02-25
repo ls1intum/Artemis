@@ -1,6 +1,8 @@
 package ${packageName};
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.lang.reflect.Type;
 import java.lang.reflect.Field;
@@ -18,7 +20,7 @@ import org.junit.runners.Parameterized;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
- * @version 1.5 (25.01.2019)
+ * @version 2.0 (24.02.2019)
  *
  * This test evaluates if the specified attributes in the structure oracle
  * are correctly implemented with the expected types and visibility modifiers
@@ -44,7 +46,7 @@ public class AttributeTest extends StructuralTest {
             JSONObject expectedClassJSON = structureOracleJSON.getJSONObject(i);
 
             // Only test the classes that have attributes defined in the oracle.
-            if(expectedClassJSON.has("class") && expectedClassJSON.has("attributes")) {
+            if(expectedClassJSON.has("class") && (expectedClassJSON.has("attributes") || expectedClassJSON.has("enumValues"))) {
                 JSONObject expectedClassPropertiesJSON = expectedClassJSON.getJSONObject("class");
                 String expectedClassName = expectedClassPropertiesJSON.getString("name");
                 String expectedPackageName = expectedClassPropertiesJSON.getString("package");
@@ -64,8 +66,11 @@ public class AttributeTest extends StructuralTest {
 
         if(expectedClassJSON.has("attributes")) {
             JSONArray expectedAttributes = expectedClassJSON.getJSONArray("attributes");
-
             checkAttributes(observedClass, expectedAttributes);
+        }
+        if(expectedClassJSON.has("enumValues")) {
+            JSONArray expectedEnumValues = expectedClassJSON.getJSONArray("enumValues");
+            checkEnumValues(observedClass, expectedEnumValues);
         }
     }
 
@@ -125,6 +130,38 @@ public class AttributeTest extends StructuralTest {
 
             assertTrue("Problem: the access modifiers of " + expectedAttributeInformation + " are not implemented as expected.",
                 modifiersAreRight);
+        }
+    }
+
+    /**
+     * This method checks if the observed enum values match the expected ones defined in the structure oracle.
+     * @param observedClass: The enum that needs to be checked as a Class object.
+     * @param expectedEnumValues: The information on the expected enum values contained in a JSON array. This information consists
+     * of the name of each enum value.
+     */
+    private void checkEnumValues(Class<?> observedClass, JSONArray expectedEnumValues) {
+        Object[] observedEnumValues = observedClass.getEnumConstants();
+
+        assertNotNull("Problem: the enum '" + expectedClassName + "' does not contain any enum constants. Please implement them.", observedEnumValues);
+
+        assertTrue("Problem: the enum '" + expectedClassName + "' does not contain all the expected enum values. Please implement the missing enums.",
+            expectedEnumValues.length() == observedEnumValues.length);
+
+        for(int i = 0; i < expectedEnumValues.length(); i++) {
+            String expectedEnumValue = expectedEnumValues.getString(i);
+
+            boolean enumValueExists = false;
+            for(Object observedEnumValue : observedEnumValues) {
+
+                if(expectedEnumValue.equals(observedEnumValue.toString())) {
+                    enumValueExists = true;
+                    break;
+                }
+            }
+            if(!enumValueExists) {
+                fail("Problem: the class '" + expectedClassName + "' does not include the enum value: " + expectedEnumValue
+                    + ". Make sure to implement it as expected.");
+            }
         }
     }
 

@@ -3,19 +3,19 @@ package de.tum.in.www1.artemis.service.util.structureoraclegenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.thoughtworks.qdox.JavaProjectBuilder;
+import com.thoughtworks.qdox.model.JavaClass;
+import com.thoughtworks.qdox.model.JavaSource;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import spoon.Launcher;
-import spoon.reflect.CtModel;
-import spoon.reflect.declaration.CtClass;
-import spoon.reflect.declaration.CtEnum;
-import spoon.reflect.declaration.CtType;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -72,7 +72,7 @@ public class OracleGeneratorClient {
      * @return The string of the JSON representation of the structure oracle.
      */
     public static String generateStructureOracleJSON(Path solutionProjectPath, Path templateProjectPath) {
-        log.debug("GENERATING THE ORACLE FOR THE FOLLOWING PROJECTS: \n"
+        log.debug("Generating the Oracle for the following projects: \n"
             + "Solution project: " + solutionProjectPath + "\n"
             + "Template project: " + templateProjectPath + "\n");
 
@@ -80,15 +80,15 @@ public class OracleGeneratorClient {
         JsonArray structureOracleJSON = new JsonArray();
 
         // Generate the pairs of the types found in the solution project with the corresponding one from the template project.
-        Map<CtType<?>, CtType<?>> solutionAndTemplateTypes = generateSolutionAndTemplateTypePairs(solutionProjectPath, templateProjectPath);
+        Map<JavaClass, JavaClass> solutionToTemplateMapping = generateSolutionToTemplateMapping(solutionProjectPath, templateProjectPath);
 
         // Loop over each pair of types and create the diff data structures and the JSON representation afterwards for each.
         // If the types, classes or enums are equal, then ignore and continue with the next pair
-        for (Map.Entry<CtType<?>, CtType<?>> entry : solutionAndTemplateTypes.entrySet()) {
+        for (Map.Entry<JavaClass, JavaClass> entry : solutionToTemplateMapping.entrySet()) {
             JsonObject diffJSON = new JsonObject();
 
-            CtType<?> solutionType = entry.getKey();
-            CtType<?> templateType = entry.getValue();
+            JavaClass solutionType = entry.getKey();
+            JavaClass templateType = entry.getValue();
 
             // Initialize the types diff containing various properties as well as methods.
             TypesDiff typesDiff = new TypesDiff(solutionType, templateType);
@@ -104,43 +104,20 @@ public class OracleGeneratorClient {
                 diffJSON.add("methods", typesDiffSerializer.serializeMethods());
             }
 
-            // Otherwise check then if the current types are enums or classes and create the corresponding
-            // diffs in order to extract specific elements.
-
-            if (solutionType.isEnum()) {
-                CtEnum<Enum<?>> solutionEnum = (CtEnum<Enum<?>>) solutionType;
-                CtEnum<Enum<?>> templateEnum = (CtEnum<Enum<?>>) templateType;
-
-                EnumsDiff enumsDiff = new EnumsDiff(solutionEnum, templateEnum);
-                if(enumsDiff.enumsEqual) {
-                    continue;
-                }
-
-                EnumsDiffSerializer enumsDiffSerializer = new EnumsDiffSerializer(enumsDiff);
-                if(!enumsDiff.enumValuesDiff.isEmpty()) {
-                    diffJSON.add("enumValues", enumsDiffSerializer.serializeEnumValues(enumsDiff));
-                }
+            if(!typesDiff.attributesDiff.isEmpty()) {
+                diffJSON.add("attributes", typesDiffSerializer.serializeAttributes());
             }
 
-            if (solutionType.isClass()) {
-                CtClass<?> solutionClass = (CtClass<?>) solutionType;
-                CtClass<?> templateClass = (CtClass<?>) templateType;
+            //TODO: handle enumValues and generate them as follows
+            //        "enumValues": [
+            //        	"Auto", "Lkw", "Panzer"
+            //        ],
 
-                ClassesDiff classesDiff = new ClassesDiff(solutionClass, templateClass);
-                if(classesDiff.classesEqual) {
-                    continue;
-                }
-
-                ClassesDiffSerializer classesDiffSerializer = new ClassesDiffSerializer(classesDiff);
-                if(!classesDiff.attributesDiff.isEmpty()) {
-                    diffJSON.add("attributes", classesDiffSerializer.serializeAttributes());
-                }
-                if(!classesDiff.constructorsDiff.isEmpty()) {
-                    diffJSON.add("constructors", classesDiffSerializer.serializeConstructors());
-                }
+            if(!typesDiff.constructorsDiff.isEmpty()) {
+                diffJSON.add("constructors", typesDiffSerializer.serializeConstructors());
             }
 
-            log.debug("Generated JSON for '" + solutionType.getSimpleName() + "'.");
+            log.debug("Generated JSON for '" + solutionType.getCanonicalName() + "'.");
             structureOracleJSON.add(diffJSON);
         }
 
@@ -177,43 +154,68 @@ public class OracleGeneratorClient {
      * @param templateProjectPath: The path to the template project.
      * @return: A hash map containing the type pairs of the solution types and their respective counterparts in the template.
      */
-    private static Map<CtType<?>, CtType<?>> generateSolutionAndTemplateTypePairs(Path solutionProjectPath, Path templateProjectPath) {
-        Collection<CtType<?>> solutionTypes = generateModel(solutionProjectPath).getAllTypes();
-        Collection<CtType<?>> templateTypes = generateModel(templateProjectPath).getAllTypes();
+    private static Map<JavaClass, JavaClass> generateSolutionToTemplateMapping(Path solutionProjectPath, Path templateProjectPath) {
+        List<File> templateFiles = retrieveJavaSourceFiles(templateProjectPath);
+        List<File> solutionFiles = retrieveJavaSourceFiles(solutionProjectPath);
+        log.info("Template Java Files " + templateFiles);
+        log.info("Solution Java Files " + solutionFiles);
+        List<JavaClass> templateClasses = getClassesFromFiles(templateFiles);
+        List<JavaClass> solutionClasses = getClassesFromFiles(solutionFiles);
 
-        Map<CtType<?>, CtType<?>> solutionAndTemplateTypes = new HashMap<CtType<?>, CtType<?>>();
+        Map<JavaClass, JavaClass> solutionToTemplateMapping = new HashMap<JavaClass, JavaClass>();
 
-        for(CtType<?> solutionType : solutionTypes) {
+        for(JavaClass solutionClass : solutionClasses) {
             // Put an empty template class as a default placeholder.
-            solutionAndTemplateTypes.put(solutionType, null);
+            solutionToTemplateMapping.put(solutionClass, null);
 
-            for(CtType<?> templateType : templateTypes) {
-                // If an exact same template class is found, then remove the pair and continue
-                if(solutionType.equals(templateType)) {
-                    solutionAndTemplateTypes.remove(solutionType);
-                    break;
-                } else if(solutionType.getSimpleName().equals(templateType.getSimpleName())) {
-                    // If a template class with the same name gets found, then replace the empty template with the real one.
-                    solutionAndTemplateTypes.put(solutionType, templateType);
+            for(JavaClass templateClass : templateClasses) {
+                if(solutionClass.getSimpleName().equals(templateClass.getSimpleName()) && templateClass.getPackageName().equals(solutionClass.getPackageName())) {
+                    // If a template class with the same name and package gets found, then replace the empty template with the real one.
+                    solutionToTemplateMapping.put(solutionClass, templateClass);
                     break;
                 }
             }
         }
 
-        return solutionAndTemplateTypes;
+        return solutionToTemplateMapping;
     }
 
-    /**
-     * This method extracts the meta model of a Java project using the Spoon Framework in order to query the types
-     * contained in it.
-     * @param projectPath: The path of the Java project the meta model is needed for.
-     * @return: The meta model of the project.
-     */
-    private static CtModel generateModel(Path projectPath) {
-        Launcher launcher = new Launcher();
-        launcher.addInputResource(projectPath.toString());
-        launcher.buildModel();
-        return launcher.getModel();
+    private static List<JavaClass> getClassesFromFiles(List<File> javaSourceFiles) {
+
+        List<JavaClass> foundJavaClasses = new ArrayList<>();
+        for(File javaSourceFile : javaSourceFiles) {
+            try {
+                JavaProjectBuilder builder = new JavaProjectBuilder();
+                JavaSource src = builder.addSource(javaSourceFile);
+                foundJavaClasses.addAll(src.getClasses());
+            } catch (IOException e) {
+                log.error("Could not add java source to builder", e);
+            }
+        }
+        return foundJavaClasses;
+    }
+
+    private static List<File> retrieveJavaSourceFiles(Path path) {
+        List<File> foundFiles = new ArrayList<>();
+
+        walkProjectFileStructure(path.toFile(), foundFiles);
+
+        return foundFiles;
+    }
+
+    private static void walkProjectFileStructure(File file, List<File> foundFiles) {
+        String fileName = file.getName();
+
+        if(fileName.contains(".java")) {
+            foundFiles.add(file);
+        }
+
+        if(file.isDirectory()) {
+            String[] subFiles = file.list();
+            for(String subFile : subFiles) {
+                walkProjectFileStructure(new File(file, subFile), foundFiles);
+            }
+        }
     }
 
 }

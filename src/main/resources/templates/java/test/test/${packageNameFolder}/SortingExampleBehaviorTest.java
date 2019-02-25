@@ -1,21 +1,18 @@
 package ${packageName};
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.util.List;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
+import java.text.*;
+import java.util.*;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
+/**
+ * @author Stephan Krusche (krusche@in.tum.de)
+ * @version 2.0 (24.02.2019)
+ */
 public class SortingExampleBehaviorTest extends BehaviorTest {
 
     private List<Date> dates;
@@ -35,14 +32,14 @@ public class SortingExampleBehaviorTest extends BehaviorTest {
 
     @Test(timeout = 1000)
     public void testBubbleSort() {
-        BubbleSort bubbleSort = (BubbleSort) newInstance("${packageName}.BubbleSort");
+        BubbleSort bubbleSort = (BubbleSort) newInstance("de.tum.in.www1.BubbleSort");
         bubbleSort.performSort(dates);
         assertEquals("Problem: BubbleSort does not sort correctly", datesWithCorrectOrder, dates);
     }
 
     @Test(timeout = 1000)
     public void testMergeSort() {
-        MergeSort mergeSort = (MergeSort) newInstance("${packageName}.MergeSort");
+        MergeSort mergeSort = (MergeSort) newInstance("de.tum.in.www1.MergeSort");
         mergeSort.performSort(dates);
         assertEquals("Problem: MergeSort does not sort correctly", datesWithCorrectOrder, dates);
     }
@@ -62,18 +59,18 @@ public class SortingExampleBehaviorTest extends BehaviorTest {
     }
 
     private Object configurePolicyAndContext(List<Date> dates) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, InstantiationException, ClassNotFoundException {
-        Class<?> contextClass = getClass("${packageName}.Context");
+        Class<?> contextClass = getClass("de.tum.in.www1.Context");
         assertNotNull("Problem: Context class is not created yet", contextClass);
-                
-        Object sortingContext = newInstance("${packageName}.Context");
+
+        Object sortingContext = newInstance("de.tum.in.www1.Context");
         invokeMethod(sortingContext, getMethod(contextClass, "setDates", List.class), dates);
 
-        Class<?> policyClass = getClass("${packageName}.Policy");
+        Class<?> policyClass = getClass("de.tum.in.www1.Policy");
         assertNotNull("Problem: Policy class is not created yet", policyClass);
-        
-        Object policy = newInstance("${packageName}.Policy", sortingContext);
+
+        Object policy = newInstance("de.tum.in.www1.Policy", sortingContext);
         invokeMethod(policy, getMethod(policyClass, "configure"));
-        
+
         Object chosenSortStrategy = invokeMethod(sortingContext, getMethod(contextClass, "getSortAlgorithm"));
 
         return chosenSortStrategy;

@@ -17,7 +17,7 @@ import org.junit.runners.Parameterized;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
- * @version 1.5 (25.01.2019)
+ * @version 2.0 (24.02.2019)
  *
  * This test evaluates the hierarchy of the class, i.e. if the class is abstract
  * or an interface or an enum and also if the class extends another class and if
@@ -44,11 +44,9 @@ public class ClassTest extends StructuralTest {
             JSONObject expectedClassPropertiesJSON = expectedClassJSON.getJSONObject("class");
 
             // Only test the classes that have properties defined in the structure oracle.
-            if (expectedClassPropertiesJSON.has("name") &&
-                (expectedClassPropertiesJSON.has("superclass") ||
-                    expectedClassPropertiesJSON.has("interfaces") ||
-                    expectedClassPropertiesJSON.has("isAbstract") ||
-                    expectedClassPropertiesJSON.has("isInterface"))) {
+            // TODO: there are cases where we define the class, but we don't want it to be tested. Should we just remove the name then?
+            // Or should we better declare this explicitly with another attribute in json?
+            if (expectedClassPropertiesJSON.has("name")) {
                 String expectedClassName = expectedClassPropertiesJSON.getString("name");
                 String expectedPackageName = expectedClassPropertiesJSON.getString("package");
                 testData.add(new Object[] { expectedClassName, expectedPackageName, expectedClassJSON });
@@ -70,6 +68,11 @@ public class ClassTest extends StructuralTest {
         if (expectedClassPropertiesJSON.has("isAbstract")) {
             assertTrue("Problem: the class '" + expectedClassName + "' is not abstract as it is expected.",
                 Modifier.isAbstract(observedClass.getModifiers()));
+        }
+
+        if (expectedClassPropertiesJSON.has("isEnum")) {
+            assertTrue("Problem: the type '" + expectedClassName + "' is not an enum as it is expected.",
+                (observedClass.isEnum()));
         }
 
         if (expectedClassPropertiesJSON.has("isInterface")) {

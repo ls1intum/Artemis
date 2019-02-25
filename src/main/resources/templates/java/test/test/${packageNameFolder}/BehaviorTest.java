@@ -8,8 +8,8 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 
 /**
- * @author Kristian Dimo (kristian.dimo@tum.de)
- * @version 1.5 (25.01.2019)
+ * @author Stephan Krusche (krusche@in.tum.de)
+ * @version 2.0 (24.02.2019)
  *
  * This class serves as an API to Java Reflection to facilitate various operations that are performed
  * regularly in the functional tests. Facilitation mainly means automatically handling all the various

@@ -2,11 +2,9 @@ package de.tum.in.www1.artemis.service.util.structureoraclegenerator;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import spoon.reflect.declaration.CtParameter;
-import spoon.reflect.declaration.ModifierKind;
+import com.thoughtworks.qdox.model.*;
 
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
 
 /**
  * This class contains helper methods for serializing information on structural elements that we deal with repeatedly
@@ -19,10 +17,24 @@ public class SerializerUtil {
      * @param modifiers A collection of modifiers that needs to get serialized.
      * @return The JSON array containing the string representations of the modifiers.
      */
-    public static JsonArray serializeModifiers(Collection<ModifierKind> modifiers) {
+    public static JsonArray serializeModifiers(Set<String> modifiers, JavaMember javaMember) {
         JsonArray modifiersArray = new JsonArray();
-        for(ModifierKind modifier : modifiers) {
-            modifiersArray.add(modifier.toString());
+        if (javaMember.getDeclaringClass().isInterface()) {
+            // constructors are not possible here
+            if (javaMember instanceof JavaMethod) {
+                // interface methods are always public and abstract, however the qdox framework does not report this when parsing the Java source file
+                modifiers.add("public");
+                modifiers.add("abstract");
+            }
+            else if (javaMember instanceof JavaField) {
+                // interface attributes are always public, static and final, however the qdox framework does not report this when parsing the Java source file
+                modifiers.add("public");
+                modifiers.add("static");
+                modifiers.add("final");
+            }
+        }
+        for(String modifier : modifiers) {
+            modifiersArray.add(modifier);
         }
         return modifiersArray;
     }
@@ -30,24 +42,12 @@ public class SerializerUtil {
     /**
      * This method is used to serialize the string representations of each parameter into a JSON array.
      * @param parameters A collection of modifiers that needs to get serialized.
-     * @param executableDeclaringTypeIsEnum Indicator if the executable that defines the given parameters is declared by an enum.
-     *                                      This is because these executables implicitly have a String and int parameter that
-     *                                      we need to add manually in order to be compatible with the Spoon Framework.
      * @return The JSON array containing the string representations of the parameter types.
      */
-    public static JsonArray serializeParameters(Collection<CtParameter<?>> parameters,
-                                                boolean executableDeclaringTypeIsEnum) {
+    public static JsonArray serializeParameters(List<JavaParameter> parameters) {
         JsonArray parametersArray = new JsonArray();
-
-        for(CtParameter<?> parameter : parameters) {
-            if(parameter.isImplicit()) { continue; }
-
-            parametersArray.add(parameter.getType().getSimpleName());
-
-            if(executableDeclaringTypeIsEnum) {
-                parametersArray.add("String");
-                parametersArray.add("int");
-            }
+        for(JavaParameter parameter : parameters) {
+            parametersArray.add(parameter.getType().getValue());
         }
 
         return parametersArray;
@@ -60,11 +60,11 @@ public class SerializerUtil {
      * @param modifiers
      * @return
      */
-    public static JsonObject createJsonObject(String name, Set<ModifierKind> modifiers) {
+    public static JsonObject createJsonObject(String name, Set<String> modifiers, JavaMember javaMember) {
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("name", name);
         if(!modifiers.isEmpty()) {
-            jsonObject.add("modifiers", serializeModifiers(modifiers));
+            jsonObject.add("modifiers", serializeModifiers(modifiers, javaMember));
         }
         return jsonObject;
     }
