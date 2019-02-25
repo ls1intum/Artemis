@@ -829,20 +829,20 @@ export class QuizComponent implements OnInit, OnDestroy {
      * for a Multiple Choice Questions it checks if an answer option was selected
      * for a Drag and Drop Questions it checks if at least one mapping has been made
      * for a Short Answer Questions it checks if at least one field has been clicked in
-     * @return {boolean} true when student interacted with every question, false when at least one question is without interaction
+     * @return {boolean} true when student interacted with every question, false when not with every questions has an interaction
      */
     areAllQuestionsAnswered(): boolean {
         for (const question of this.quizExercise.questions) {
             if (question.type === QuestionType.MULTIPLE_CHOICE) {
-                if (this.selectedAnswerOptions[question.id] === 0) {
+                if (this.selectedAnswerOptions[question.id] >= 0) {
                     return false;
                 }
             } else if (question.type === QuestionType.DRAG_AND_DROP) {
-                if (this.dragAndDropMappings[question.id] === 0) {
+                if (this.dragAndDropMappings[question.id] >= 0) {
                     return false;
                 }
             } else if (question.type === QuestionType.SHORT_ANSWER) {
-                if (this.shortAnswerSubmittedTexts[question.id] === 0) {
+                if (this.shortAnswerSubmittedTexts[question.id] >= 0) {
                     return false;
                 }
             }
