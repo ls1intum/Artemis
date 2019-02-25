@@ -4,6 +4,7 @@ import { Participation } from '../participation';
 import { Moment } from 'moment';
 import { ExampleSubmission } from '../example-submission';
 import { TutorParticipation } from 'app/entities/tutor-participation';
+import { Result } from 'app/entities/result';
 
 export const enum DifficultyLevel {
     EASY = 'EASY',
@@ -61,6 +62,7 @@ export abstract class Exercise implements BaseEntity {
     public numberOfParticipationsWithRatedResult: number;
     public numberOfSuccessfulParticipations: number;
     public averagePoints: number;
+    public assessments: Result[];
 
     protected constructor(type: ExerciseType) {
         this.type = type;

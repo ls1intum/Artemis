@@ -13,6 +13,7 @@ export class InstructorCourseDashboardComponent implements OnInit {
     course: Course;
 
     stats: StatsForInstructorDashboard;
+    dataForGraph: number[];
 
     constructor(
         private courseService: CourseService,
@@ -25,9 +26,14 @@ export class InstructorCourseDashboardComponent implements OnInit {
     }
 
     private loadCourse(courseId: number) {
-        this.courseService.findWithExercises(courseId).subscribe(
+        this.courseService.findWithExercisesAndParticipations(courseId).subscribe(
             (res: HttpResponse<Course>) => {
                 this.course = res.body;
+
+                for (const exercise of this.course.exercises) {
+                    exercise.participations = exercise.participations.filter(participation => participation.submissions.filter(submission => submission.submitted).length > 0);
+                    exercise.assessments = exercise.participations.map(participation => participation.results);
+                }
             },
             (response: HttpErrorResponse) => this.onError(response.message)
         );
@@ -35,6 +41,10 @@ export class InstructorCourseDashboardComponent implements OnInit {
         this.courseService.getStatsForInstructors(courseId).subscribe(
             (res: HttpResponse<StatsForInstructorDashboard>) => {
                 this.stats = res.body;
+                this.dataForGraph = [
+                    res.body.numberOfSubmissions - res.body.numberOfAssessments,
+                    res.body.numberOfAssessments
+                ];
             },
             (response: string) => this.onError(response)
         );

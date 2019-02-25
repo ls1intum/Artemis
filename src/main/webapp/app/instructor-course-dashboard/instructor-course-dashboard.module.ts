@@ -1,8 +1,8 @@
-
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-
 import { RouterModule } from '@angular/router';
+
+import { ChartsModule } from 'ng2-charts';
 
 import { ArTEMiSSharedModule } from '../shared';
 import { instructorCourseDashboardRoute } from './instructor-course-dashboard.route';
@@ -13,7 +13,7 @@ import { ClipboardModule } from 'ngx-clipboard';
 const ENTITY_STATES = instructorCourseDashboardRoute;
 
 @NgModule({
-    imports: [BrowserModule, ArTEMiSSharedModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES)],
+    imports: [BrowserModule, ArTEMiSSharedModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES), ChartsModule],
     declarations: [InstructorCourseDashboardComponent],
     entryComponents: [],
     providers: [],

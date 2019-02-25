@@ -340,6 +340,28 @@ public class CourseResource {
     }
 
     /**
+     * GET  /courses/:id : get the "id" course, with relevant participations
+     *
+     * @param id the id of the course to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
+     */
+    @GetMapping("/courses/{id}/with-exercises-and-relevant-participations")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Course> getCourseWithExercisesAndRelevantParticipations(@PathVariable Long id) {
+        log.debug("REST request to get Course : {}", id);
+        Course course = courseService.findOneWithExercises(id);
+
+        if (!userHasPermission(course)) return forbidden();
+
+        for (Exercise exercise : course.getExercises()) {
+            List<Participation> participations = this.participationService.findByCourseIdWithRelevantResults(exercise.getId());
+            exercise.setParticipations(new HashSet<>(participations));
+        }
+
+        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(course));
+    }
+
+    /**
      * GET /courses/:id/stats-for-instructor-dashboard
      * <p>
      * A collection of useful statistics for the instructor course dashboard, including:
@@ -364,10 +386,10 @@ public class CourseResource {
         Course course = courseService.findOne(courseId);
         if (!userHasPermission(course)) return forbidden();
 
-        long numberOfStudents = userService.countNumberOfStudents(courseId);
+        long numberOfStudents = userService.countNumberOfStudentsForCourse(course);
         data.set("numberOfStudents", objectMapper.valueToTree(numberOfStudents));
 
-        long numberOfTutors = userService.countNumberOfTutors(courseId);
+        long numberOfTutors = userService.countNumberOfTutorsForCourse(course);
         data.set("numberOfTutors", objectMapper.valueToTree(numberOfTutors));
 
         long numberOfSubmissions = submissionService.countNumberOfSubmissions(courseId);

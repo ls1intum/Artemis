@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Authority;
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -26,10 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -394,15 +392,29 @@ public class UserService {
         return authorityRepository.findAll().stream().map(Authority::getName).collect(Collectors.toList());
     }
 
+    /**
+     * Given a Course object, it returns the number of users enrolled in the course
+     *
+     * @param course - the course object we are interested in
+     * @return the number of students for that course
+     */
+    public long countNumberOfStudentsForCourse(Course course) {
+        String groupName = course.getStudentGroupName();
+        return userRepository.countByGroupsIsContaining(Collections.singletonList(groupName));
+    }
+
+    /**
+     * Given a Course object, it returns the number of tutors assigned to the course
+     *
+     * @param course - the course object we are interested in
+     * @return the number of tutors for that course
+     */
+    public long countNumberOfTutorsForCourse(Course course) {
+        String groupName = course.getTeachingAssistantGroupName();
+        return userRepository.countByGroupsIsContaining(Collections.singletonList(groupName));
+    }
+
     private void clearUserCaches(User user) {
         cacheManager.getCache(UserRepository.USERS_CACHE).evict(user.getLogin());
-    }
-
-    public long countNumberOfStudents(Long courseId) {
-        return 0; // TODO: implement
-    }
-
-    public long countNumberOfTutors(Long courseId) {
-        return 0; // TODO: implement
     }
 }

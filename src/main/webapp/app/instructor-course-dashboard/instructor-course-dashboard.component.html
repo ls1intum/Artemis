@@ -29,6 +29,14 @@
                     </div>
                 </div>
             </div>
+
+            <div class="col-md-6" *ngIf="stats">
+                <canvas baseChart
+                        [data]="dataForGraph"
+                        [labels]="['Open assessments', 'Completed assessments']"
+                        chartType="pie">
+                </canvas>
+            </div>
         </div>
 
         <div class="row table-responsive" style="margin-top: 15px">
@@ -55,7 +63,7 @@
                         <td>{{exercise.title}}</td>
                         <td>{{exercise.dueDate | date:'medium'}}</td>
                         <td>{{exercise.assessmentDueDate | date:'medium'}}</td>
-                        <td><!--{{exercise.participations.length}}--></td>
+                        <td>{{exercise.participations.length}}</td>
                         <td><!--{{exercise.complaints.length}}--></td>
                         <td><!--{{exercise.assessments.length}}--></td>
                         <td><button class="btn btn-primary"
