@@ -34,6 +34,16 @@ public class ModelingSubmission extends Submission implements Serializable {
         return this;
     }
 
+    public ModelingSubmission explanationText(String explanationText) {
+        this.explanationText = explanationText;
+        return this;
+    }
+
+
+    public ModelingSubmission() {
+    }
+
+
     public void setModel(String model) {
         this.model = model;
     }
@@ -42,10 +52,7 @@ public class ModelingSubmission extends Submission implements Serializable {
         return explanationText;
     }
 
-    public ModelingSubmission explanationText(String explanationText) {
-        this.explanationText = explanationText;
-        return this;
-    }
+
 
     public void setExplanationText(String explanationText) {
         this.explanationText = explanationText;
