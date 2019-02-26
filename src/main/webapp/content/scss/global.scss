@@ -504,3 +504,17 @@ code.password:hover {
 .cdk-overlay-container {
     z-index: 1060;
 }
+
+/* ==========================================================================
+Course Info Bar
+========================================================================== */
+.course-info-bar {
+    background-color: $artemis-dark;
+    padding: 1em 1em;
+    margin: -1.25rem -1.25rem 0 -1.25rem;
+    min-height: 160px;
+    display: flex;
+    color: #FFFFFF;
+    flex-direction: column;
+    justify-content: center;
+}

@@ -1,10 +1,9 @@
 <jhi-alert></jhi-alert>
 
 <div *ngIf="exercise">
-    <div class="header-container bg-primary text-white">
-        <h4 class="card-header">
-            <strong>Instructor Exercise Dashboard for {{exercise.title}}</strong>
-        </h4>
+    <div class="course-info-bar">
+        <h3>Instructor Exercise Dashboard for {{exercise.title}}</h3>
+        <h4>{{exercise.problemStatement || "No problem statement available"}}</h4>
     </div>
 
     <div class="container-fluid">
@@ -15,7 +14,7 @@
         </div>
 
         <div class="row">
-            <div class="col-md-6">
+            <div class="col-md-8">
                 <div class="card">
                     <div class="card-header bg-primary text-white">
                         <h4 class="card-title">Information about the exercise</h4>
@@ -31,7 +30,7 @@
                 </div>
             </div>
 
-            <div class="col-md-6" *ngIf="exercise.participations.length > 0">
+            <div class="col-md-4" *ngIf="exercise.participations.length > 0">
                 <canvas baseChart
                         [data]="dataForGraph"
                         [labels]="['Open assessments', 'Completed assessments']"
@@ -39,5 +38,9 @@
                 </canvas>
             </div>
         </div>
+
+        <h2>Tutor Leaderboard for this Exercise</h2>
+
+        <jhi-tutor-leaderboard [tutorsData]="tutors"></jhi-tutor-leaderboard>
     </div>
 </div>

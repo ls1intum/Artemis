@@ -9,12 +9,14 @@ import { instructorCourseDashboardRoute } from './instructor-course-dashboard.ro
 import { InstructorCourseDashboardComponent } from './instructor-course-dashboard.component';
 import { MomentModule } from 'angular2-moment';
 import { ClipboardModule } from 'ngx-clipboard';
+import {TutorLeaderboardComponent} from 'app/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.component';
 
 const ENTITY_STATES = instructorCourseDashboardRoute;
 
 @NgModule({
     imports: [BrowserModule, ArTEMiSSharedModule, MomentModule, ClipboardModule, RouterModule.forChild(ENTITY_STATES), ChartsModule],
-    declarations: [InstructorCourseDashboardComponent],
+    declarations: [InstructorCourseDashboardComponent, TutorLeaderboardComponent],
+    exports: [TutorLeaderboardComponent],
     entryComponents: [],
     providers: [],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]

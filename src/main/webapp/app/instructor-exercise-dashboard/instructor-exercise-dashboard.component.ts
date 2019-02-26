@@ -4,6 +4,8 @@ import {ActivatedRoute} from '@angular/router';
 import {HttpResponse, HttpErrorResponse} from '@angular/common/http';
 import {Exercise, ExerciseService} from 'app/entities/exercise';
 import {Participation, ParticipationService} from 'app/entities/participation';
+import {Result, ResultService} from 'app/entities/result';
+import {TutorLeaderboardData} from 'app/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.component';
 
 @Component({
     selector: 'jhi-instructor-exercise-dashboard',
@@ -15,12 +17,14 @@ export class InstructorExerciseDashboardComponent implements OnInit {
     courseId: number;
 
     dataForGraph: number[];
+    tutors: TutorLeaderboardData = {};
 
     constructor(
         private exerciseService: ExerciseService,
         private route: ActivatedRoute,
         private jhiAlertService: JhiAlertService,
-        private participationService: ParticipationService
+        private participationService: ParticipationService,
+        private resultService: ResultService
     ) {}
 
     ngOnInit(): void {
@@ -45,6 +49,24 @@ export class InstructorExerciseDashboardComponent implements OnInit {
                 });
             },
             (response: HttpErrorResponse) => this.onError(response.message)
+        );
+
+        this.resultService.getResultsForExercise(this.courseId, exerciseId, {withAssessors: true}).subscribe(
+            (res: HttpResponse<Result[]>) => {
+                const results = res.body;
+
+                for (const result of results) {
+                    const tutorId = result.assessor.id;
+                    if (!this.tutors[tutorId]) {
+                        this.tutors[tutorId] = {
+                            tutor: result.assessor,
+                            nrOfAssessments: 0
+                        };
+                    }
+
+                    this.tutors[tutorId].nrOfAssessments++;
+                }
+            }
         );
     }
 

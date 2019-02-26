@@ -1,19 +1,14 @@
 <div *ngIf="course">
     <jhi-alert></jhi-alert>
 
-    <div class="header-container bg-primary text-white">
-        <h4 class="card-header">
-            <strong>Instructor Course Dashboard for {{course.title}}</strong>
-            &nbsp;
-            <a class="text-primary card-link" routerLink="/course/{{course.id}}/dashboard" routerLinkActive="active">
-                <fa-icon icon="info-circle" [fixedWidth]="true" style="color:white;"></fa-icon>
-            </a>
-        </h4>
+    <div class="course-info-bar">
+        <h3>Instructor Course Dashboard for {{course.title}}</h3>
+        <h4>{{course.description || "No description available"}}</h4>
     </div>
 
     <div class="container-fluid">
         <div class="row" *ngIf="stats" style="margin-top: 15px">
-            <div class="col-md-6">
+            <div class="col-md-8">
                 <div class="card">
                     <div class="card-header bg-primary text-white">
                         <h4 class="card-title">Information about the course</h4>
@@ -23,14 +18,17 @@
                             <li><b>Students:</b> {{stats.numberOfStudents}}</li>
                             <li><b>Submissions:</b> {{stats.numberOfSubmissions}}</li>
                             <li><b>Tutors:</b> {{stats.numberOfTutors}}</li>
-                            <li><b>Assessments:</b> {{stats.numberOfAssessments}} ({{stats.numberOfSubmissions - stats.numberOfAssessments}} open)</li>
-                            <li><b>Complaints:</b> {{stats.numberOfComplaints}} ({{stats.numberOfOpenComplaints}} open)</li>
+                            <li><b>Assessments:</b> {{stats.numberOfAssessments}}
+                                ({{stats.numberOfSubmissions - stats.numberOfAssessments}} open)
+                            </li>
+                            <li><b>Complaints:</b> {{stats.numberOfComplaints}} ({{stats.numberOfOpenComplaints}} open)
+                            </li>
                         </ul>
                     </div>
                 </div>
             </div>
 
-            <div class="col-md-6" *ngIf="stats">
+            <div class="col-md-4" *ngIf="stats">
                 <canvas baseChart
                         [data]="dataForGraph"
                         [labels]="['Open assessments', 'Completed assessments']"
@@ -46,42 +44,54 @@
 
             <table class="table" *ngIf="course.exercises.length >= 0">
                 <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Exercise</th>
-                        <th>Due date</th>
-                        <th>Assessment due date</th>
-                        <th>Submissions</th>
-                        <th>Complaints</th>
-                        <th>Completed assessments</th>
-                        <th>Action</th>
-                    </tr>
+                <tr>
+                    <th>#</th>
+                    <th>Exercise</th>
+                    <th>Due date</th>
+                    <th>Assessment due date</th>
+                    <th>Submissions</th>
+                    <th>Complaints</th>
+                    <th>Completed assessments</th>
+                    <th>Action</th>
+                </tr>
                 </thead>
                 <tbody>
-                    <tr *ngFor="let exercise of course.exercises" >
-                        <td>{{exercise.id}}</td>
-                        <td>{{exercise.title}}</td>
-                        <td>{{exercise.dueDate | date:'medium'}}</td>
-                        <td>{{exercise.assessmentDueDate | date:'medium'}}</td>
-                        <td>{{exercise.participations.length}}</td>
-                        <td><!--{{exercise.complaints.length}}-->0</td>
-                        <td class="text-center">
-                            <div class="progress position-relative">
-                                <div class="progress-bar" role="progressbar"
-                                     [ngClass]="calculateClass(exercise.numberOfAssessments, exercise.participations.length)"
-                                     [style.width]="calculatePercentage(exercise.numberOfAssessments, exercise.participations.length) + '%'"
-                                     attr.aria-valuenow="{{calculatePercentage(exercise.numberOfAssessments, exercise.participations.length)}}"
-                                     aria-valuemin="0" aria-valuemax="100">
-                                    <span class="justify-content-center d-flex position-absolute w-100 text-dark">{{exercise.numberOfAssessments}}</span>
-                                </div>
+                <tr *ngFor="let exercise of course.exercises">
+                    <td>
+                        {{exercise.id}}
+                        <fa-icon [icon]="getIcon(exercise.type)" placement="right"
+                                 [ngbTooltip]="getIconTooltip(exercise.type)" container="body"></fa-icon>
+                    </td>
+                    <td>{{exercise.title}}</td>
+                    <td>{{exercise.dueDate | date:'medium'}}</td>
+                    <td>{{exercise.assessmentDueDate | date:'medium'}}</td>
+                    <td>{{exercise.participations.length}}</td>
+                    <td><!--{{exercise.complaints.length}}-->0</td>
+                    <td class="text-center">
+                        <div class="progress position-relative">
+                            <div class="progress-bar" role="progressbar"
+                                 [ngClass]="calculateClass(exercise.numberOfAssessments, exercise.participations.length)"
+                                 [style.width]="calculatePercentage(exercise.numberOfAssessments, exercise.participations.length) + '%'"
+                                 attr.aria-valuenow="{{calculatePercentage(exercise.numberOfAssessments, exercise.participations.length)}}"
+                                 aria-valuemin="0" aria-valuemax="100">
+                                <span
+                                    class="justify-content-center d-flex position-absolute w-100 text-dark">{{exercise.numberOfAssessments}}</span>
                             </div>
-                        </td>
-                        <td><button class="btn btn-primary"
-                                    routerLink="/course/{{course.id}}/exercise/{{exercise.id}}/instructor-dashboard">
-                            Exercise dashboard</button></td>
-                    </tr>
+                        </div>
+                    </td>
+                    <td>
+                        <button class="btn btn-primary"
+                                routerLink="/course/{{course.id}}/exercise/{{exercise.id}}/instructor-dashboard">
+                            Exercise dashboard
+                        </button>
+                    </td>
+                </tr>
                 </tbody>
             </table>
         </div>
+
+        <h2>Tutor Course Leaderboard</h2>
+
+        <jhi-tutor-leaderboard [tutorsData]="tutors"></jhi-tutor-leaderboard>
     </div>
 </div>

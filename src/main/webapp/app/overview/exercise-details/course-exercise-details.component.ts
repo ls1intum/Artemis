@@ -1,13 +1,12 @@
 import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
-import { Exercise, ExerciseService, ExerciseType } from 'app/entities/exercise';
+import { Exercise, ExerciseService, ExerciseType, getIcon } from 'app/entities/exercise';
 import { CourseScoreCalculationService, CourseService } from 'app/entities/course';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { Result } from 'app/entities/result';
 import * as moment from 'moment';
 import { AccountService } from 'app/core';
-import { ExerciseIcon } from 'app/overview';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -30,6 +29,8 @@ export class CourseExerciseDetailsComponent implements OnInit {
     public exerciseStatusBadge = 'badge-success';
     public sortedResults: Result[];
     public sortedHistoryResult: Result[];
+
+    getIcon = getIcon;
 
     constructor(private $location: Location, private exerciseService: ExerciseService,
                 private courseService: CourseService,
@@ -106,38 +107,5 @@ export class CourseExerciseDetailsComponent implements OnInit {
         }
         const results = this.exercise.participations[0].results;
         return results.filter(el => el.rated).pop();
-    }
-
-    get exerciseIcon(): ExerciseIcon {
-        switch(this.exercise.type) {
-            case this.PROGRAMMING:
-                return {
-                    faIcon: 'keyboard',
-                    tooltip: 'This is a programming exercise'
-                };
-            case this.MODELING:
-                return {
-                    faIcon: 'project-diagram',
-                    tooltip: 'This is a modeling exercise'
-                };
-            case this.QUIZ:
-                return {
-                    faIcon: 'check-double',
-                    tooltip: 'This is a quiz exercise'
-                };
-            case this.TEXT:
-                return {
-                    faIcon: 'font',
-                    tooltip: 'This is a text exercise'
-                };
-            case this.FILE_UPLOAD:
-                return {
-                    faIcon: 'file-upload',
-                    tooltip: 'This is a file upload exercise'
-                };
-            default:
-                return;
-
-        }
     }
 }

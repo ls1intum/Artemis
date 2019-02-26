@@ -51,6 +51,7 @@ public class ResultResource {
     private final FeedbackService feedbackService;
     private final UserService userService;
     private final ContinuousIntegrationService continuousIntegrationService;
+    private final CourseService courseService;
 
     public ResultResource(UserService userService,
                           ResultRepository resultRepository,
@@ -59,7 +60,8 @@ public class ResultResource {
                           AuthorizationCheckService authCheckService,
                           FeedbackService feedbackService,
                           ExerciseService exerciseService,
-                          ContinuousIntegrationService continuousIntegrationService) {
+                          ContinuousIntegrationService continuousIntegrationService,
+                          CourseService courseService) {
 
         this.userService = userService;
         this.resultRepository = resultRepository;
@@ -69,6 +71,7 @@ public class ResultResource {
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
         this.continuousIntegrationService = continuousIntegrationService;
+        this.courseService = courseService;
     }
 
     /**
@@ -265,6 +268,35 @@ public class ResultResource {
             result.getParticipation().setResults(null);
             result.getParticipation().setSubmissions(null);
         });
+        return ResponseEntity.ok().body(results);
+    }
+
+    /**
+     * GET  /courses/:courseId/results : get all the results for a course
+     *
+     * @param courseId   the course we care for
+     * @return the ResponseEntity with status 200 (OK) and the list of results in body
+     */
+    @GetMapping(value = "/courses/{courseId}/all-results")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<Result>> getResultsForCourse(@PathVariable Long courseId,
+                                                              @RequestParam(defaultValue = "false") boolean withAssessors) {
+        log.debug("REST request to get Results for course : {}", courseId);
+
+
+        Course course = courseService.findOne(courseId);
+
+        if (!userHasPermissions(course)) return forbidden();
+
+        List<Result> results = resultService.findByCourseId(courseId);
+
+        if (withAssessors) {
+            results.forEach(result -> {
+                Hibernate.initialize(result.getAssessor()); // eagerly load the association
+            });
+        }
+
         return ResponseEntity.ok().body(results);
     }
 

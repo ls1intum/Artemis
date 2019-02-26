@@ -4,6 +4,9 @@ import {Course, CourseService, StatsForInstructorDashboard} from 'app/entities/c
 import {ActivatedRoute} from '@angular/router';
 import {HttpErrorResponse, HttpResponse} from '@angular/common/http';
 import {InitializationState} from 'app/entities/participation';
+import {getIcon, getIconTooltip} from 'app/entities/exercise';
+import {Result, ResultService} from 'app/entities/result';
+import {TutorLeaderboardData} from 'app/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.component';
 
 @Component({
     selector: 'jhi-instructor-course-dashboard',
@@ -13,11 +16,17 @@ import {InitializationState} from 'app/entities/participation';
 export class InstructorCourseDashboardComponent implements OnInit {
     course: Course;
 
+    getIcon = getIcon;
+    getIconTooltip = getIconTooltip;
+
     stats: StatsForInstructorDashboard;
     dataForGraph: number[];
 
+    tutors: TutorLeaderboardData = {};
+
     constructor(
         private courseService: CourseService,
+        private resultService: ResultService,
         private route: ActivatedRoute,
         private jhiAlertService: JhiAlertService
     ) {}
@@ -48,6 +57,24 @@ export class InstructorCourseDashboardComponent implements OnInit {
                 ];
             },
             (response: string) => this.onError(response)
+        );
+
+        this.resultService.findByCourseId(courseId, {withAssessors: true}).subscribe(
+            (res: HttpResponse<Result[]>) => {
+                const results = res.body;
+
+                for (const result of results) {
+                    const tutorId = result.assessor.id;
+                    if (!this.tutors[tutorId]) {
+                        this.tutors[tutorId] = {
+                            tutor: result.assessor,
+                            nrOfAssessments: 0
+                        };
+                    }
+
+                    this.tutors[tutorId].nrOfAssessments++;
+                }
+            }
         );
     }
 

@@ -48,6 +48,14 @@ export class ResultService {
             .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
+    findByCourseId(courseId: number, options: {withAssessors: boolean}): Observable<EntityArrayResponseType> {
+        const params = createRequestOption(options);
+
+        return this.http
+            .get<Result[]>(`${this.courseResourceUrl}/${courseId}/all-results`, { observe: 'response', params})
+            .map((res: EntityArrayResponseType) => this.convertArrayResponse(res));
+    }
+
     findResultsForParticipation(
         courseId: number,
         exerciseId: number,
