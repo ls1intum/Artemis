@@ -3,7 +3,7 @@
 <div *ngIf="exercise">
     <div class="header-container bg-primary text-white">
         <h4 class="card-header">
-            <strong>Instructor Exercise Dashboard for Exercise {{exercise.title}}</strong>
+            <strong>Instructor Exercise Dashboard for {{exercise.title}}</strong>
         </h4>
     </div>
 
@@ -23,12 +23,20 @@
                     <div class="card-body">
                         <ul>
                             <li><b>Exercise due date:</b> {{exercise.dueDate | date: 'medium'}}</li>
-                            <li><b>Submissions:</b> 0</li>
+                            <li><b>Submissions:</b> {{exercise.participations.length}}</li>
                             <li><b>Assessments due date:</b> {{exercise.assessmentDueDate | date: 'medium'}}</li>
                             <li><b>Assessments:</b> 0 (0 open)</li>
                         </ul>
                     </div>
                 </div>
+            </div>
+
+            <div class="col-md-6" *ngIf="exercise.participations.length > 0">
+                <canvas baseChart
+                        [data]="dataForGraph"
+                        [labels]="['Open assessments', 'Completed assessments']"
+                        chartType="pie">
+                </canvas>
             </div>
         </div>
     </div>

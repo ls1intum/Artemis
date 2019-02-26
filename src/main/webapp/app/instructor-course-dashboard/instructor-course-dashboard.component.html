@@ -3,7 +3,7 @@
 
     <div class="header-container bg-primary text-white">
         <h4 class="card-header">
-            <strong>Instructor Course Dashboard for course {{course.title}}</strong>
+            <strong>Instructor Course Dashboard for {{course.title}}</strong>
             &nbsp;
             <a class="text-primary card-link" routerLink="/course/{{course.id}}/dashboard" routerLinkActive="active">
                 <fa-icon icon="info-circle" [fixedWidth]="true" style="color:white;"></fa-icon>
@@ -53,19 +53,29 @@
                         <th>Assessment due date</th>
                         <th>Submissions</th>
                         <th>Complaints</th>
-                        <th>Assessments</th>
+                        <th>Completed assessments</th>
                         <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr *ngFor="let exercise of course.exercises">
+                    <tr *ngFor="let exercise of course.exercises" >
                         <td>{{exercise.id}}</td>
                         <td>{{exercise.title}}</td>
                         <td>{{exercise.dueDate | date:'medium'}}</td>
                         <td>{{exercise.assessmentDueDate | date:'medium'}}</td>
                         <td>{{exercise.participations.length}}</td>
-                        <td><!--{{exercise.complaints.length}}--></td>
-                        <td><!--{{exercise.assessments.length}}--></td>
+                        <td><!--{{exercise.complaints.length}}-->0</td>
+                        <td class="text-center">
+                            <div class="progress position-relative">
+                                <div class="progress-bar" role="progressbar"
+                                     [ngClass]="calculateClass(exercise.numberOfAssessments, exercise.participations.length)"
+                                     [style.width]="calculatePercentage(exercise.numberOfAssessments, exercise.participations.length) + '%'"
+                                     attr.aria-valuenow="{{calculatePercentage(exercise.numberOfAssessments, exercise.participations.length)}}"
+                                     aria-valuemin="0" aria-valuemax="100">
+                                    <span class="justify-content-center d-flex position-absolute w-100 text-dark">{{exercise.numberOfAssessments}}</span>
+                                </div>
+                            </div>
+                        </td>
                         <td><button class="btn btn-primary"
                                     routerLink="/course/{{course.id}}/exercise/{{exercise.id}}/instructor-dashboard">
                             Exercise dashboard</button></td>

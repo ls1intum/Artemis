@@ -364,7 +364,9 @@ public class CourseResource {
     }
 
     /**
-     * GET  /courses/:id : get the "id" course, with relevant participations
+     * GET  /courses/:id/with-exercises-and-relevant-participations
+     *
+     * Get the "id" course, with text and modelling exercises and their participations
      *
      * @param id the id of the course to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
@@ -372,17 +374,27 @@ public class CourseResource {
     @GetMapping("/courses/{id}/with-exercises-and-relevant-participations")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Course> getCourseWithExercisesAndRelevantParticipations(@PathVariable Long id) {
-        log.debug("REST request to get Course : {}", id);
+        log.debug("REST request to get Course with exercises and relevant participations : {}", id);
         Course course = courseService.findOneWithExercises(id);
 
         if (!userHasPermission(course)) return forbidden();
 
+        Set<Exercise> interestingExercises = course.getExercises().stream()
+            .filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise)
+            .collect(Collectors.toSet());
+
+        course.setExercises(interestingExercises);
+
+        List<Participation> participations = this.participationService.findByCourseIdWithRelevantResults(course.getId());
+
         for (Exercise exercise : course.getExercises()) {
-            List<Participation> participations = this.participationService.findByCourseIdWithRelevantResults(exercise.getId());
-            exercise.setParticipations(new HashSet<>(participations));
+            Stream<Participation> participationsForExercise = participations.stream()
+                .filter(participation -> participation.getExercise().getId().equals(exercise.getId()));
+
+            exercise.setParticipations(participationsForExercise.collect(Collectors.toSet()));
         }
 
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(course));
+        return ResponseUtil.wrapOrNotFound(Optional.of(course));
     }
 
     /**

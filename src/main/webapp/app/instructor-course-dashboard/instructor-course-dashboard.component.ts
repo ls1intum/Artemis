@@ -2,7 +2,8 @@ import {JhiAlertService} from 'ng-jhipster';
 import {Component, OnInit} from '@angular/core';
 import {Course, CourseService, StatsForInstructorDashboard} from 'app/entities/course';
 import {ActivatedRoute} from '@angular/router';
-import {HttpResponse, HttpErrorResponse} from '@angular/common/http';
+import {HttpErrorResponse, HttpResponse} from '@angular/common/http';
+import {InitializationState} from 'app/entities/participation';
 
 @Component({
     selector: 'jhi-instructor-course-dashboard',
@@ -31,8 +32,8 @@ export class InstructorCourseDashboardComponent implements OnInit {
                 this.course = res.body;
 
                 for (const exercise of this.course.exercises) {
-                    exercise.participations = exercise.participations.filter(participation => participation.submissions.filter(submission => submission.submitted).length > 0);
-                    exercise.assessments = exercise.participations.map(participation => participation.results);
+                    exercise.participations = exercise.participations.filter(participation => participation.initializationState === InitializationState.FINISHED);
+                    exercise.numberOfAssessments = exercise.participations.filter(participation => participation.results.filter(result => result.rated).length > 0).length;
                 }
             },
             (response: HttpErrorResponse) => this.onError(response.message)
@@ -48,6 +49,26 @@ export class InstructorCourseDashboardComponent implements OnInit {
             },
             (response: string) => this.onError(response)
         );
+    }
+
+    calculatePercentage(numerator: number, denominator: number): number {
+        if (denominator === 0) {
+            return 0;
+        }
+
+        return Math.round( numerator / denominator * 100);
+    }
+
+    calculateClass(numberOfAssessments: number, length: number): string {
+        const percentage = this.calculatePercentage(numberOfAssessments, length);
+
+        if (percentage < 50) {
+            return 'bg-danger';
+        } else if (percentage < 100) {
+            return 'bg-warning';
+        }
+
+        return 'bg-success';
     }
 
     private onError(error: string) {
