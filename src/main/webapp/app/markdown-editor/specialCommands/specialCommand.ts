@@ -9,4 +9,6 @@ export abstract class SpecialCommand extends Command {
     public setQuestion(question: Question) {
         this.question = question;
     }
+
+    abstract parsing(text: string): void;
 }

@@ -98,9 +98,9 @@ export class MarkdownEditorComponent implements AfterViewInit, OnChanges, OnInit
         const text = this.defaultText;
         const questionParts = text.split(/\[\]|\[ \]|\[x\]|\[X\]/g);
 
-        for ( const element of this.commands){
+        /*for (const element of this.commands){
              element.parsing(text);
-        }
+        }*/
     }
 
 }

@@ -17,6 +17,4 @@ export abstract class Command {
 
 
     abstract execute(): void;
-
-    abstract parsing(text: string): void;
 }
