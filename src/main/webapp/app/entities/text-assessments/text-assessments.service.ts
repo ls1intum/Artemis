@@ -37,6 +37,10 @@ export class TextAssessmentsService {
         return this.http.get<Result>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}/exampleAssessment`);
     }
 
+    getParticipationForSubmissionWithoutAssessment(exerciseId: number) {
+        return this.http.get<Participation>(`${this.resourceUrl}/exercise/${exerciseId}/participation-without-assessment`);
+    }
+
     private convertResponse(res: EntityResponseType): EntityResponseType {
         const body: Result = this.convertItemFromServer(res.body);
 

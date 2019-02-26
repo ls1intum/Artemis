@@ -4,6 +4,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -83,11 +84,7 @@ public class TextAssessmentResource extends AssessmentResource {
      * If the tutor has already started assessing the submission, then we also return all the results the tutor has
      * already inserted.
      *
-     * If another tutor has already started working on this submission, the system tries to find another one without
-     * any result, and if it finds any, return it
-     *
-     * TODO @rpadovani: refactor the method, change the name and move to a dedicated resource retrieving an exercise
-     *  without an assessment
+     * If another tutor has already started working on this submission, the system returns an error
      *
      * @param exerciseId the id of the exercise we want the submission
      * @param submissionId the id of the submission we want
@@ -95,7 +92,7 @@ public class TextAssessmentResource extends AssessmentResource {
      */
     @GetMapping("/exercise/{exerciseId}/submission/{submissionId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Participation> getDataForTutor(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
+    public ResponseEntity<Participation> retrieveParticipationForSubmission(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
         log.debug("REST request to get data for tutors text assessment: {}", exerciseId, submissionId);
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
         ResponseEntity<Participation> responseFailure = checkTextExerciseForRequest(textExercise);
@@ -114,18 +111,7 @@ public class TextAssessmentResource extends AssessmentResource {
             User assessor = participation.findLatestSubmission().getResult().getAssessor();
             // Another tutor started assessing this submission.
             if (!assessor.getLogin().equals(user.getLogin())) {
-                // TODO: if the result hasn't been updated in the last 24 hours, we can use it
-
-                // Check if there is another submission without assessment
-                Optional<TextSubmission> anotherTextSubmission = this.textSubmissionService.textSubmissionWithoutResult(exerciseId);
-
-                if (!anotherTextSubmission.isPresent()) {
-                    // No more text submissions without assessment
-                    return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("textSubmission", "textSubmissionNotFound", "No text Submission without assessment has been found.")).body(null);
-                }
-
-                // Use another participation
-                participation = anotherTextSubmission.get().getParticipation();
+                throw new BadRequestAlertException("This submission is being assessed by another tutor", ENTITY_NAME, "alreadyAssessed");
             }
         }
 

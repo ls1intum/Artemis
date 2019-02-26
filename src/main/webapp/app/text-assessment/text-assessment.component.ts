@@ -50,17 +50,30 @@ export class TextAssessmentComponent implements OnInit, OnDestroy {
     public ngOnInit(): void {
         this.busy = true;
         const exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
-        const submissionId = Number(this.route.snapshot.paramMap.get('submissionId'));
+        const submissionValue = this.route.snapshot.paramMap.get('submissionId');
 
-        this.assessmentsService.getFeedbackDataForExerciseSubmission(exerciseId, submissionId).subscribe(participation => {
-            this.participation = participation;
-            this.submission = <TextSubmission>this.participation.submissions[0];
-            this.exercise = <TextExercise>this.participation.exercise;
-            this.result = this.participation.results[0];
-            this.assessments = this.result.feedbacks || [];
-            this.busy = false;
-            this.checkScoreBoundaries();
-        });
+        if (submissionValue === 'new') {
+            this.assessmentsService.getParticipationForSubmissionWithoutAssessment(exerciseId).subscribe(participation => {
+                this.participation = participation;
+                this.result = new Result();
+                this.submission = <TextSubmission>this.participation.submissions[0];
+                this.exercise = <TextExercise>this.participation.exercise;
+                this.assessments = [];
+                this.busy = false;
+            })
+        } else {
+            const submissionId = Number(submissionValue);
+
+            this.assessmentsService.getFeedbackDataForExerciseSubmission(exerciseId, submissionId).subscribe(participation => {
+                this.participation = participation;
+                this.submission = <TextSubmission>this.participation.submissions[0];
+                this.exercise = <TextExercise>this.participation.exercise;
+                this.result = this.participation.results[0];
+                this.assessments = this.result.feedbacks || [];
+                this.busy = false;
+                this.checkScoreBoundaries();
+            });
+        }
     }
 
     public ngOnDestroy(): void {

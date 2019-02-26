@@ -96,9 +96,7 @@ public class TextSubmissionService {
     public Optional<TextSubmission> textSubmissionWithoutResult(long exerciseId) {
         return this.participationService.findByExerciseIdWithEagerSubmissions(exerciseId)
             .stream()
-            .peek(participation -> {
-                participation.getExercise().setParticipations(null);
-            })
+            .peek(participation -> participation.getExercise().setParticipations(null))
 
             // Map to Latest Submission
             .map(Participation::findLatestTextSubmission)

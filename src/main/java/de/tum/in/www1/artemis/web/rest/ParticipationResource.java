@@ -47,6 +47,7 @@ public class ParticipationResource {
     private final Optional<VersionControlService> versionControlService;
 
     private static final String ENTITY_NAME = "participation";
+    private final TextSubmissionService textSubmissionService;
 
     public ParticipationResource(ParticipationService participationService,
                                  CourseService courseService,
@@ -54,7 +55,8 @@ public class ParticipationResource {
                                  ExerciseService exerciseService,
                                  AuthorizationCheckService authCheckService,
                                  Optional<ContinuousIntegrationService> continuousIntegrationService,
-                                 Optional<VersionControlService> versionControlService) {
+                                 Optional<VersionControlService> versionControlService,
+                                 TextSubmissionService textSubmissionService) {
         this.participationService = participationService;
         this.quizExerciseService = quizExerciseService;
         this.exerciseService = exerciseService;
@@ -62,6 +64,7 @@ public class ParticipationResource {
         this.authCheckService = authCheckService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
+        this.textSubmissionService = textSubmissionService;
     }
 
     /**
@@ -181,6 +184,29 @@ public class ParticipationResource {
         }
         List<Participation> participations = participationService.findByExerciseId(exerciseId);
         return ResponseEntity.ok(participations);
+    }
+
+
+    /**
+     * GET /exercise/{exerciseId}/participation-without-assessment
+     *
+     * Given an exerciseId, retrieve a participation where the latest submission has no assessment, or returns 404
+     *
+     * @param exerciseId the id of the exercise of which we want a submission
+     * @return a student participation
+     */
+    @GetMapping(value = "/exercise/{exerciseId}/participation-without-assessment")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Participation> getParticipationForExerciseWithoutAssessment(@PathVariable Long exerciseId) {
+        Optional<TextSubmission> textSubmission = this.textSubmissionService.textSubmissionWithoutResult(exerciseId);
+
+        if (!textSubmission.isPresent()) {
+            throw new EntityNotFoundException("No text Submission without assessment has been found");
+        }
+
+        Participation participation = textSubmission.get().getParticipation();
+
+        return ResponseEntity.ok(participation);
     }
 
     /**
