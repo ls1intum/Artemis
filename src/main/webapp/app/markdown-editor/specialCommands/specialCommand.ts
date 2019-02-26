@@ -1,8 +1,12 @@
 import {Command} from 'app/markdown-editor/commands/command';
+import {Question} from 'app/entities/question';
 
 export abstract class SpecialCommand extends Command {
-    buttonTitle: string;
     identifier: string;
 
-    abstract execute(editor: any): void;
+    public question: Question;
+
+    public setQuestion(question: Question) {
+        this.question = question;
+    }
 }

@@ -3,17 +3,18 @@ import { Command } from './command';
 export class BoldCommand extends Command {
 
     buttonTitle = 'Bold';
+    buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.bold';
 
-    execute(editor: any): void {
-        const chosenText = editor.getSelectedText();
+    execute(): void {
+        const chosenText = this.editor.getSelectedText();
         let textToAdd = '';
 
         if (chosenText.includes('**')) {
             textToAdd = chosenText.slice(2, -2);
-            editor.insert(textToAdd);
+            this.editor.insert(textToAdd);
         } else {
             textToAdd = `**${chosenText}**`;
-            editor.insert(textToAdd);
+            this.editor.insert(textToAdd);
         }
     }
 }

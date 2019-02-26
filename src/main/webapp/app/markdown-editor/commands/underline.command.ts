@@ -3,17 +3,18 @@ import { Command } from './command';
 export class UnderlineCommand extends Command {
 
     buttonTitle = 'Underline';
+    buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.underline';
 
-    execute(editor: any): void {
-        const chosenText = editor.getSelectedText();
+    execute(): void {
+        const chosenText = this.editor.getSelectedText();
         let textToAdd = '';
 
         if (chosenText.includes('<ins>')) {
             textToAdd = chosenText.slice(5, -6);
-            editor.insert(textToAdd);
+            this.editor.insert(textToAdd);
         } else {
             textToAdd = `<ins>${chosenText}</ins>`;
-            editor.insert(textToAdd);
+            this.editor.insert(textToAdd);
         }
     }
 }

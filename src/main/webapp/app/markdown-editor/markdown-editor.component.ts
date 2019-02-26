@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, ViewChild, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, AfterViewInit, ViewChild, Input, Output, EventEmitter, OnChanges, SimpleChanges, OnInit} from '@angular/core';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
@@ -24,7 +24,7 @@ export interface BDelegate {
     providers: [ArtemisMarkdown],
     templateUrl: './markdown-editor.component.html'
 })
-export class MarkdownEditorComponent implements AfterViewInit, OnChanges {
+export class MarkdownEditorComponent implements AfterViewInit, OnChanges, OnInit {
     @ViewChild('aceEditor')
     aceEditorContainer: AceEditorComponent;
 
@@ -39,20 +39,24 @@ export class MarkdownEditorComponent implements AfterViewInit, OnChanges {
 
     showPreview: boolean;
 
-    hintCommand = new HintCommand();
-    correctCommand = new CorrectOptionCommand(this.artemisMarkdown);
-    incorrectCommand = new IncorrectOptionCommand();
-    explanationCommand = new ExplanationCommand();
-    boldCommand = new BoldCommand();
-    italicCommand = new ItalicCommand();
-    underlineCommand = new UnderlineCommand();
+
 
     constructor(private artemisMarkdown: ArtemisMarkdown) {}
 
-    commands: Command[] = [new BoldCommand(), new ItalicCommand(), new UnderlineCommand()];
+    commands: Command[];
+    defaultCommands: Command[] = [new BoldCommand(), new ItalicCommand(), new UnderlineCommand()];
+    @Input() additionalCommands: Command[];
 
     ngAfterViewInit(): void {
         requestAnimationFrame(this.setupMarkdownEditor.bind(this));
+    }
+
+    ngOnInit(): void {
+        this.commands = [...this.defaultCommands, ...this.additionalCommands];
+        this.commands.forEach(command => {
+            command.setEditor(this.aceEditorContainer.getEditor());
+            command.setArtemisMarkdownService(this.artemisMarkdown);
+        });
     }
 
     ngOnChanges(changes: SimpleChanges): void {
@@ -63,10 +67,6 @@ export class MarkdownEditorComponent implements AfterViewInit, OnChanges {
             },
             this
         );
-    }
-
-    ngOnInit() {
-        this.delegate.togglePreview();
     }
 
     /**
@@ -93,20 +93,14 @@ export class MarkdownEditorComponent implements AfterViewInit, OnChanges {
         );
     }
 
+
     searchForTheParsingCommand(): void {
         const text = this.defaultText;
         const questionParts = text.split(/\[\]|\[ \]|\[x\]|\[X\]/g);
 
-        for( let element of questionParts){
-            if (element.includes('[\]')){
-                this.correctCommand.parsing(this.delegate, element)
-            } else if (element.includes('[ \]')){
-                this.correctCommand.parsing(this.delegate, element)
-            } else if (element.includes('[ \]')){
-                this.incorrectCommand.parsing(this.delegate, element)
-            } else {
-                this.incorrectCommand.parsing(this.delegate, element)
-            }
+        for ( const element of this.commands){
+             element.parsing(text);
         }
     }
+
 }

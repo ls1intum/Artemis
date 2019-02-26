@@ -21,7 +21,7 @@
             "scoringType": "Type / Scoring",
             "editor": {
                 "addCorrectAnswerOption": "[X] Correct Option",
-                "addIncorrectAnswerOption": "[ ] Incorrect Option",
+                "addInCorrectAnswerOption": "[ ] Incorrect Option",
                 "addHint": "[-h] Hint",
                 "addExplanation": "[-e] Explanation",
                 "bold": "Bold",

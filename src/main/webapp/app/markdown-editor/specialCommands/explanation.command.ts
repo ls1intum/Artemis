@@ -9,22 +9,24 @@ import { ArtemisMarkdown } from '../../components/util/markdown.service';
 
 export class ExplanationCommand extends SpecialCommand {
     buttonTitle = 'Explanation';
-    iidentifier = '[-e]';
+    identifier = '[-e]';
+    buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.addExplanation';
 
-    //constructor(private artemisMarkdown: ArtemisMarkdown) { super() }
-
-    execute(editor: any): void {
+    execute(): void {
         const addedText = '\n\t[-e] Add an explanation here (only visible in feedback after quiz has ended)';
-        editor.focus();
-        editor.clearSelection();
-        editor.moveCursorTo(editor.getCursorPosition().row, Number.POSITIVE_INFINITY);
-        editor.insert(addedText);
-        const range = editor.selection.getRange();
+        this.editor.focus();
+        this.editor.clearSelection();
+        this.editor.moveCursorTo(this.editor.getCursorPosition().row, Number.POSITIVE_INFINITY);
+        this.editor.insert(addedText);
+        const range = this.editor.selection.getRange();
         range.setStart(range.start.row, 6);
-        editor.selection.setRange(range);
+        this.editor.selection.setRange(range);
     }
 
-    parsing(text: string, question: Question): void {
-        //this.artemisMarkdown.parseTextHintExplanation(text, question);
+    parsing(text: string): void {
+        const questionParts = text.split(/\[\]|\[ \]|\[x\]|\[X\]/g);
+        const questionText = questionParts[0];
+
+        this.artemisMarkdown.parseTextHintExplanation(questionText, this.question);
     }
 }

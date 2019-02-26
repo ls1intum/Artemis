@@ -8,6 +8,15 @@ import 'brace/mode/markdown';
 import { MarkdownEditorComponent } from 'app/markdown-editor';
 import { BDelegate } from 'app/markdown-editor';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import {HintCommand} from 'app/markdown-editor/specialCommands/hint.command';
+import {CorrectOptionCommand} from 'app/markdown-editor/specialCommands/correctOptionCommand';
+import {IncorrectOptionCommand} from 'app/markdown-editor/specialCommands/incorrectOptionCommand';
+import {ExplanationCommand} from 'app/markdown-editor/specialCommands/explanation.command';
+import {Command} from 'app/markdown-editor/commands/command';
+import {BoldCommand} from 'app/markdown-editor/commands/bold.command';
+import {ItalicCommand} from 'app/markdown-editor/commands/italic.command';
+import {UnderlineCommand} from 'app/markdown-editor/commands/underline.command';
+import {SpecialCommand} from 'app/markdown-editor/specialCommands/specialCommand';
 
 @Component({
     selector: 'jhi-edit-multiple-choice-question',
@@ -41,11 +50,19 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, B
 
     showPreview: boolean;
 
+    hintCommand = new HintCommand();
+    correctCommand = new CorrectOptionCommand();
+    incorrectCommand = new IncorrectOptionCommand();
+    explanationCommand = new ExplanationCommand();
+
+    commandMultipleChoiceQuestion: SpecialCommand[] = [this.correctCommand, this.incorrectCommand, this.explanationCommand, this.hintCommand];
+
     constructor(private artemisMarkdown: ArtemisMarkdown, private modalService: NgbModal) {}
 
     ngOnInit(): void {
         this.showPreview = false;
         this.setupQuestionEditor();
+        this.commandMultipleChoiceQuestion.forEach(specialcommand => specialcommand.setQuestion(this.question));
     }
 
     /**
@@ -104,14 +121,14 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, B
      * Note: Existing IDs for answer options are reused in the original order.
      */
     parseMarkdown(text: string): void {
-        /**
-        // First split by [], [ ], [x] and [X]
+        //this.markdownEditor.searchForTheParsingCommand();
+
+            // First split by [], [ ], [x] and [X]
         const questionParts = text.split(/\[\]|\[ \]|\[x\]|\[X\]/g);
         const questionText = questionParts[0];
-         */
 
         // Split question into main text, hint and explanation
-        this.artemisMarkdown.parseTextHintExplanation(text, this.question);
+        this.artemisMarkdown.parseTextHintExplanation(questionText, this.question);
 
         // Extract existing answer option IDs
         const existingAnswerOptionIDs = this.question.answerOptions
@@ -119,12 +136,12 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, B
             .map(questionAnswerOption => questionAnswerOption.id);
         this.question.answerOptions = [];
 
-        let endOfPreviousPart = text.indexOf(text) + text.length;
+        let endOfPreviousPart = text.indexOf(questionText) + questionText.length;
         /**
          * Work on answer options
          * We slice the first questionPart since that's our question text and no real answer option
          */
-        for (const answerOptionText of text.slice(1)) {
+        for (const answerOptionText of questionParts.slice(1)) {
             // Find the box (text in-between the parts)
             const answerOption = new AnswerOption();
             const startOfThisPart = text.indexOf(answerOptionText, endOfPreviousPart);
@@ -159,7 +176,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, B
     togglePreview(): void {
         this.showPreview = !this.showPreview;
         console.log('inform MarkdownEditor about command', this.markdownEditor);
-        this.markdownEditor.searchForTheParsingCommand();
+        //this.markdownEditor.searchForTheParsingCommand();
     }
 
     handleResponse(response: any) {

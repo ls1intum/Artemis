@@ -3,17 +3,18 @@ import { Command } from './command';
 export class ItalicCommand extends Command {
 
     buttonTitle = 'Italic';
+    buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.italic';
 
-    execute(editor: any): void {
-        const chosenText = editor.getSelectedText();
+    execute(): void {
+        const chosenText = this.editor.getSelectedText();
         let textToAdd = '';
 
         if (chosenText.includes('*')) {
             textToAdd = chosenText.slice(1, -1);
-            editor.insert(textToAdd);
+            this.editor.insert(textToAdd);
         } else {
             textToAdd = `*${chosenText}*`;
-            editor.insert(textToAdd);
+            this.editor.insert(textToAdd);
         }
     }
 }
