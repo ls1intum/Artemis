@@ -1,0 +1,10 @@
+@import '../_overview-vars.scss';
+
+.result-card {
+    border: 1px solid $light-border-color;
+    background-color: $light-background-color;
+    height: 100%;
+    .badge {
+        width: 65px;
+    }
+}

@@ -2,6 +2,7 @@ import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { ArTEMiSSharedModule } from '../../shared';
 import { ResultComponent, ResultDetailComponent, ResultService } from './';
 import { MomentModule } from 'angular2-moment';
+import { ResultHistoryComponent } from 'app/entities/result/result-history.component';
 
 @NgModule({
     imports: [
@@ -10,11 +11,13 @@ import { MomentModule } from 'angular2-moment';
     ],
     declarations: [
         ResultComponent,
-        ResultDetailComponent
+        ResultDetailComponent,
+        ResultHistoryComponent
     ],
     exports: [
         ResultComponent,
-        ResultDetailComponent
+        ResultDetailComponent,
+        ResultHistoryComponent
     ],
     entryComponents: [
         ResultComponent,

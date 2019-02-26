@@ -68,6 +68,10 @@ export class CourseService {
         return this.http.get<Participation[]>(`${this.resourceUrl}/${courseId}/participations`);
     }
 
+    findAllResultsOfCourseForExerciseAndCurrentUser(courseId: number): Observable<Course> {
+        return this.http.get<Course>(`${this.resourceUrl}/${courseId}/results`);
+    }
+
     getForTutors(courseId: number): Observable<EntityResponseType> {
         return this.http
             .get<Course>(`${this.resourceUrl}/${courseId}/for-tutor-dashboard`, { observe: 'response' })
@@ -88,7 +92,7 @@ export class CourseService {
                     this.accountService.syncGroups(res.body);
                 }
                 return res;
-        }));
+            }));
     }
 
     query(): Observable<EntityArrayResponseType> {
@@ -134,7 +138,7 @@ export class CourseService {
 export class CourseExerciseService {
     private resourceUrl = SERVER_API_URL + `api/courses`;
 
-    constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
+    constructor(private http: HttpClient, private exerciseService: ExerciseService) { }
 
     findExercise(courseId: number, exerciseId: number): Observable<Exercise> {
         return this.http
