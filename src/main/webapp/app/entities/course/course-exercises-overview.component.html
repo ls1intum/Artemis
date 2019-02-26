@@ -14,13 +14,14 @@
         <jhi-modeling-exercise [embedded]="true" [course]="course" (exerciseCount)="modelingExercisesCount= $event"></jhi-modeling-exercise>
     </jhi-course-exercise-card>
 
-    <jhi-course-exercise-card headingJhiTranslate="arTeMiSApp.course.fileUploadExercises">
-        <jhi-file-upload-exercise [embedded]="true" [course]="course" (exerciseCount)="fileUploadExercisesCount = $event"></jhi-file-upload-exercise>
-    </jhi-course-exercise-card>
-
     <jhi-course-exercise-card headingJhiTranslate="arTeMiSApp.course.textExercises">
         <jhi-text-exercise [embedded]="true" [course]="course" (exerciseCount)="textExercisesCount = $event"></jhi-text-exercise>
     </jhi-course-exercise-card>
+
+    <!--  <jhi-course-exercise-card headingJhiTranslate="arTeMiSApp.course.fileUploadExercises">
+                <jhi-file-upload-exercise [embedded]="true" [course]="course" (exerciseCount)="fileUploadExercisesCount = $event"></jhi-file-upload-exercise>
+          </jhi-course-exercise-card> -->
+
 </ng-container>
 
 <ng-template #loading>
