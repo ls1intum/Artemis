@@ -10,9 +10,9 @@ import { InitializationState, Participation, ParticipationService } from '../../
 import { ParticipationDataProvider } from './/participation-data-provider';
 import { HttpClient } from '@angular/common/http';
 import { Subscription } from 'rxjs';
-import { SERVER_API_URL } from '../../app.constants';
 import { QuizExercise } from '../../entities/quiz-exercise';
 import * as moment from 'moment';
+import { SourceTreeService } from 'app/components/util/sourceTree.service';
 
 @Pipe({ name: 'showExercise' })
 export class ShowExercisePipe implements PipeTransform {
@@ -27,7 +27,7 @@ export class ShowExercisePipe implements PipeTransform {
 @Component({
     selector: 'jhi-exercise-list',
     templateUrl: './exercise-list.component.html',
-    providers: [JhiAlertService, WindowRef, ParticipationService, CourseExerciseService, NgbModal]
+    providers: [JhiAlertService, WindowRef, ParticipationService, CourseExerciseService, NgbModal, SourceTreeService]
 })
 export class ExerciseListComponent implements OnInit, OnDestroy {
     // Make constants available to html for comparison
@@ -73,6 +73,7 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
         private accountService: AccountService,
         private httpClient: HttpClient,
         private courseExerciseService: CourseExerciseService,
+        private sourceTreeService: SourceTreeService,
         private router: Router,
         private participationDataProvider: ParticipationDataProvider
     ) {
@@ -171,7 +172,7 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
     }
 
     getRepositoryPassword() {
-        this.httpClient.get(`${SERVER_API_URL}/api/account/password`).subscribe(res => {
+        this.sourceTreeService.getRepositoryPassword().subscribe(res => {
             const password = res['password'];
             if (password) {
                 this.repositoryPassword = password;
@@ -238,13 +239,11 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
     }
 
     buildSourceTreeUrl(cloneUrl: string): string {
-        return 'sourcetree://cloneRepo?type=stash&cloneUrl=' + encodeURI(cloneUrl) + '&baseWebUrl=https://repobruegge.in.tum.de';
+        return this.sourceTreeService.buildSourceTreeUrl(cloneUrl);
     }
 
     goToBuildPlan(participation: Participation) {
-        this.participationService.buildPlanWebUrl(participation.id).subscribe(res => {
-            this.$window.nativeWindow.open(res.url);
-        });
+        this.sourceTreeService.goToBuildPlan(participation)
     }
 
     onCopyFailure() {
