@@ -334,6 +334,51 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @desc Add the markdown for a spot at the current cursor location and
      * an option connected to the spot below the last visible row
      */
+    addSpotAtCursorVisualMode(): void {
+
+        const markedText = window.getSelection().toString()
+/*
+        // Add solution to question
+        if (!this.question.solutions) {
+            this.question.solutions = [];
+        }
+        const solution = new ShortAnswerSolution();
+        solution.tempID = this.pseudoRandomLong();
+        solution.text = markedText; */
+
+        const editor = this.questionEditor.getEditor();
+        editor.find( markedText ,{
+            caseSensitive: true,
+            wholeWord: true,
+            range: null,
+        });
+
+        editor.replace('[-spot ' + this.numberOfSpot + ']');
+
+        editor.moveCursorTo(editor.getLastVisibleRow() + this.numberOfSpot, Number.POSITIVE_INFINITY);
+        this.addOptionToSpot(editor, this.numberOfSpot, markedText, this.firstPressed);
+
+        this.numberOfSpot++;
+        this.firstPressed++;
+
+        this.textWithoutSpots = this.shortAnswerQuestionUtil.getTextWithoutSpots(editor.getValue().split(/\[-option /g)[0]);
+
+        // separates the text into parts that come before the spot tag
+        this.textBeforeSpots = this.textWithoutSpots.slice(0, this.textWithoutSpots.length - 1);
+
+        // the last part that comes after the last spot tag
+        this.textAfterSpots = this.textWithoutSpots.slice(this.textWithoutSpots.length - 1);
+
+        this.parseMarkdown(editor.getValue());
+
+        this.questionUpdated.emit();
+    }
+
+    /**
+     * @function addSpotAtCursor
+     * @desc Add the markdown for a spot at the current cursor location and
+     * an option connected to the spot below the last visible row
+     */
     addSpotAtCursor(): void {
         const editor = this.questionEditor.getEditor();
         const optionText = editor.getCopyText();
@@ -582,7 +627,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         }
         const solution = new ShortAnswerSolution();
         solution.tempID = this.pseudoRandomLong();
-        solution.text = 'Text';
+        solution.text = 'Please enter here your text';
         this.question.solutions.push(solution);
         this.questionUpdated.emit();
     }
@@ -604,10 +649,11 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @param dragEvent {object} the solution involved (may be a copy at this point)
      */
     onDragDrop(spot: ShortAnswerSpot, dragEvent: any): void {
+
         let dragItem = dragEvent.dragData;
         // Replace dragItem with original (because it may be a copy)
         dragItem = this.question.solutions.find(originalDragItem =>
-            dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.id === dragItem.tempID
+            dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.tempID === dragItem.tempID
         );
 
         if (!dragItem) {
