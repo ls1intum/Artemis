@@ -66,7 +66,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     }
 
 
-    @DeleteMapping("/modeling-assessments/exercise/{exerciseId}/optimal-model-submissions")//exercise/{exerciseId}/optimal-model-submissions
+    @DeleteMapping("/modeling-assessments/exercise/{exerciseId}/optimal-model-submissions")//exercises/{exerciseId}/optimal-model-submissions
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<String> resetOptimalModels(@PathVariable Long exerciseId) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
@@ -76,7 +76,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     }
 
 
-    @GetMapping("/modeling-assessments/exercise/{exerciseId}/optimal-model-submissions")//exercise/{exerciseId}/optimal-model-submissions
+    @GetMapping("/modeling-assessments/exercise/{exerciseId}/optimal-model-submissions")//exercises/{exerciseId}/optimal-model-submissions
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<String> getNextOptimalModelSubmissions(@PathVariable Long exerciseId) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
