@@ -2,7 +2,6 @@ import { Injectable, isDevMode } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
 
 import { AccountService } from '../';
-import { LoginModalService } from '../login/login-modal.service';
 import { StateStorageService } from './state-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
 
@@ -10,7 +9,6 @@ import { LocalStorageService } from 'ngx-webstorage';
 export class UserRouteAccessService implements CanActivate {
     constructor(
         private router: Router,
-        private loginModalService: LoginModalService,
         private accountService: AccountService,
         private stateStorageService: StateStorageService,
         private localStorage: LocalStorageService
@@ -54,7 +52,7 @@ export class UserRouteAccessService implements CanActivate {
                 this.router.navigate(['accessdenied']).then(() => {
                     // only show the login dialog, if the user hasn't logged in yet
                     if (!account) {
-                        this.loginModalService.open();
+                        this.router.navigate(['login']);
                     }
                 });
                 return false;

@@ -5,7 +5,7 @@ import { JhiLanguageService } from 'ng-jhipster';
 import { SessionStorageService } from 'ngx-webstorage';
 
 import { ProfileService } from '../profiles/profile.service';
-import { AccountService, JhiLanguageHelper, LoginModalService, LoginService, User } from '../../core';
+import { AccountService, JhiLanguageHelper, LoginService, User } from '../../core';
 
 import { VERSION } from '../../app.constants';
 
@@ -28,7 +28,6 @@ export class NavbarComponent implements OnInit {
         private languageHelper: JhiLanguageHelper,
         private sessionStorage: SessionStorageService,
         private accountService: AccountService,
-        private loginModalService: LoginModalService,
         private profileService: ProfileService,
         private router: Router
     ) {
@@ -73,7 +72,7 @@ export class NavbarComponent implements OnInit {
     }
 
     login() {
-        this.modalRef = this.loginModalService.open();
+        this.router.navigate(['login']);
     }
 
     logout() {

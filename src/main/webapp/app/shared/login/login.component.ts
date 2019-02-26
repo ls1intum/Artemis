@@ -9,10 +9,10 @@ import { Credentials } from 'app/core';
 import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
-    selector: 'jhi-login-modal',
-    templateUrl: './login.component.html'
+    selector: 'jhi-login',
+    templateUrl: './login.component.html',
 })
-export class JhiLoginModalComponent implements AfterViewInit {
+export class JhiLoginComponent implements AfterViewInit {
     authenticationError = false;
     authenticationAttempts = 0;
     captchaRequired = false;
@@ -28,7 +28,6 @@ export class JhiLoginModalComponent implements AfterViewInit {
         private elementRef: ElementRef,
         private renderer: Renderer,
         private router: Router,
-        public activeModal: NgbActiveModal
     ) {
         this.credentials = {
             username: null,
@@ -50,7 +49,6 @@ export class JhiLoginModalComponent implements AfterViewInit {
         this.captchaRequired = false;
         this.authenticationError = false;
         this.authenticationAttempts = 0;
-        this.activeModal.dismiss('cancel');
     }
 
     login() {
@@ -65,7 +63,6 @@ export class JhiLoginModalComponent implements AfterViewInit {
                 this.authenticationAttempts = 0;
                 this.captchaRequired = false;
 
-                this.activeModal.dismiss('login success');
                 if (this.router.url === '/register' || /^\/activate\//.test(this.router.url) || /^\/reset\//.test(this.router.url)) {
                     this.router.navigate(['']);
                 }
@@ -95,12 +92,10 @@ export class JhiLoginModalComponent implements AfterViewInit {
     }
 
     register() {
-        this.activeModal.dismiss('to state register');
         this.router.navigate(['/register']);
     }
 
     requestResetPassword() {
-        this.activeModal.dismiss('to state requestReset');
         this.router.navigate(['/reset', 'request']);
     }
 }
