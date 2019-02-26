@@ -335,6 +335,12 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * an option connected to the spot below the last visible row
      */
     addSpotAtCursorVisualMode(): void {
+        const wrapperDiv = document.getElementById('test');
+        const child = window.getSelection().baseNode;
+
+        if (!wrapperDiv.contains(child)) {
+            return
+        }
 
         const markedText = window.getSelection().toString()
 /*
@@ -352,7 +358,6 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
             wholeWord: true,
             range: null,
         });
-
         editor.replace('[-spot ' + this.numberOfSpot + ']');
 
         editor.moveCursorTo(editor.getLastVisibleRow() + this.numberOfSpot, Number.POSITIVE_INFINITY);

@@ -61,7 +61,7 @@
             <div class="preview-sa-question" *ngIf="!reEvaluationInProgress && showPreview">
                 <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.addSpot" (click)="addSpotAtCursorVisualMode()"></div>
                 <hr/>
-                <div class="sa-question" >
+                <div id="test" class="sa-question" >
                     <p *ngIf="questionText !== '' ">{{questionText}}</p>
                     <div class="short-answer-question-display" *ngFor="let textPart of textBeforeSpots; let i = index">
                         {{textPart}}
