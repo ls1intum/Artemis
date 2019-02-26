@@ -85,7 +85,7 @@ public class AttributeTest extends StructuralTest {
             JSONObject expectedAttribute = expectedAttributes.getJSONObject(i);
             String expectedName = expectedAttribute.getString("name");
             String expectedTypeName= expectedAttribute.getString("type");
-            JSONArray expectedModifiers = expectedAttribute.getJSONArray("modifiers");
+            JSONArray expectedModifiers = expectedAttribute.has("modifiers") ? expectedAttribute.getJSONArray("modifiers") : new JSONArray();
 
             // Filter out any eventual enum values, which are of the same type as the class.
             if(expectedTypeName.equals(observedClass.getName())) {
@@ -114,7 +114,7 @@ public class AttributeTest extends StructuralTest {
                 // And then the modifiers
                 modifiersAreRight = checkModifiers(observedModifiers, expectedModifiers);
 
-                // If both are correct, then we found our attribute and we can break the loop
+                // If all are correct, then we found our attribute and we can break the loop
                 if(nameIsRight && typeIsRight && modifiersAreRight) {
                     break;
                 }

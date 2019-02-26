@@ -93,6 +93,11 @@ public class StructuralTest {
      */
     protected boolean checkParameters(Class<?>[] observedParameters, JSONArray expectedParameters) {
 
+        // If both the observed and expected elements have no parameters, then they match.
+        if(observedParameters.length == 0 && expectedParameters.length() == 0) {
+            return true;
+        }
+
         // If the number of parameters do not match, then the parameters cannot match either.
         if(observedParameters.length != expectedParameters.length()) {
             return false;
