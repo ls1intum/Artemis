@@ -66,7 +66,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     }
 
 
-    @DeleteMapping("/modeling-assessments/exercise/{exerciseId}/optimal-model-submissions")
+    @DeleteMapping("/modeling-assessments/exercise/{exerciseId}/optimal-model-submissions")//exercise/{exerciseId}/optimal-model-submissions
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<String> resetOptimalModels(@PathVariable Long exerciseId) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
@@ -76,7 +76,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     }
 
 
-    @GetMapping("/modeling-assessments/exercise/{exerciseId}/optimal-model-submissions")
+    @GetMapping("/modeling-assessments/exercise/{exerciseId}/optimal-model-submissions")//exercise/{exerciseId}/optimal-model-submissions
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<String> getNextOptimalModelSubmissions(@PathVariable Long exerciseId) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
@@ -94,7 +94,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     }
 
 
-    @GetMapping("/modeling-assessments/exercise/{exerciseId}/submission/{submissionId}/partial-assessment")
+    @GetMapping("/modeling-assessments/exercise/{exerciseId}/submission/{submissionId}/partial-assessment")//submissions/{submissionId}/partial-assessment
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<String> getPartialAssessment(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
@@ -111,7 +111,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
      * @param submissionId    the submissionId for which to find assessments for
      * @return the ResponseEntity with assessments string as body
      */
-    @GetMapping("/modeling-assessments/participation/{participationId}/submission/{submissionId}")
+    @GetMapping("/modeling-assessments/participation/{participationId}/submission/{submissionId}")//participations/{participationId}/submissions/{submissionId}
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<String> getAssessmentBySubmissionId(@PathVariable Long participationId, @PathVariable Long submissionId) {
         Optional<Participation> optionalParticipation = participationRepository.findById(participationId);
@@ -145,7 +145,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
         @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON),
         @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON)
     })
-    @PutMapping("/modeling-assessments/exercise/{exerciseId}/result/{resultId}")
+    @PutMapping("/modeling-assessments/exercise/{exerciseId}/result/{resultId}")//exercises/{exerciseId}/results/{resultId}/modeling-assessment?submit=false
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> saveModelingAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody List<ModelElementAssessment> modelingAssessment) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
@@ -163,7 +163,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
         @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON),
         @ApiResponse(code = 409, message = PUT_ASSESSMENT_409_REASON, response = Conflict.class, responseContainer = "List")
     })
-    @PutMapping("/modeling-assessments/exercise/{exerciseId}/result/{resultId}/submit")
+    @PutMapping("/modeling-assessments/exercise/{exerciseId}/result/{resultId}/submit")//exercises/{exerciseId}/results/{resultId}/modeling-assessment?submit=true
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     //TODO MJ changing submitted assessment always produces Conflict
     public ResponseEntity<Object> submitModelingAssessment(@PathVariable Long exerciseId,
