@@ -15,8 +15,8 @@ public class ModelingSubmission extends Submission implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @Transient
-    @JsonProperty
+    @Column(name = "model")
+    @Lob
     private String model;
 
     @Column(name = "explanation_text")
