@@ -70,10 +70,10 @@ public class ProgrammingExerciseResource {
      * @return the error message as response or null if everything is fine
      */
     private ResponseEntity<ProgrammingExercise> checkProgrammingExerciseForError(ProgrammingExercise exercise) {
-        if(!continuousIntegrationService.get().buildPlanIdIsValid(exercise.getBaseBuildPlanId())) {
+        if(!continuousIntegrationService.get().buildPlanIdIsValid(exercise.getTemplateBuildPlanId())) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("exercise", "invalid.template.build.plan.id", "The Template Build Plan ID seems to be invalid.")).body(null);
         }
-        if(exercise.getBaseRepositoryUrlAsUrl() == null || !versionControlService.get().repositoryUrlIsValid(exercise.getBaseRepositoryUrlAsUrl())) {
+        if(exercise.getTemplateRepositoryUrlAsUrl() == null || !versionControlService.get().repositoryUrlIsValid(exercise.getTemplateRepositoryUrlAsUrl())) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("exercise", "invalid.template.repository.url", "The Template Repository URL seems to be invalid.")).body(null);
         }
         if(exercise.getSolutionBuildPlanId() != null && !continuousIntegrationService.get().buildPlanIdIsValid(exercise.getSolutionBuildPlanId())) {

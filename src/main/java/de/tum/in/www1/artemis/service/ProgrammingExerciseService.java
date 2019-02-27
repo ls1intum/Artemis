@@ -146,8 +146,8 @@ public class ProgrammingExerciseService {
         continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, "BASE", exerciseRepoName, testRepoName); // plan for the exercise (students)
         continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, "SOLUTION", solutionRepoName, testRepoName); // plan for the solution (instructors) with solution repository
 
-        programmingExercise.setBaseBuildPlanId(projectKey + "-BASE"); // Set build plan id to newly created BaseBuild plan
-        programmingExercise.setBaseRepositoryUrl(versionControlService.get().getCloneURL(projectKey, exerciseRepoName).toString());
+        programmingExercise.setTemplateBuildPlanId(projectKey + "-BASE"); // Set build plan id to newly created BaseBuild plan
+        programmingExercise.setTemplateRepositoryUrl(versionControlService.get().getCloneURL(projectKey, exerciseRepoName).toString());
         programmingExercise.setSolutionBuildPlanId(projectKey + "-SOLUTION");
         programmingExercise.setSolutionRepositoryUrl(versionControlService.get().getCloneURL(projectKey, solutionRepoName).toString());
         programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneURL(projectKey, testRepoName).toString());
@@ -184,6 +184,37 @@ public class ProgrammingExerciseService {
             gitService.stageAllChanges(repository);
             gitService.commitAndPush(repository, templateName + "-Template pushed by ArTEMiS");
             repository.setFiles(null); // Clear cache to avoid multiple commits when ArTEMiS server is not restarted between attempts
+        }
+    }
+
+    /**
+     * migrates the programming exercises to use templateParticipation and solutionParticipation
+     */
+    public void migrateAllProgrammingExercises() {
+
+        List<ProgrammingExercise> allProgrammingExercises = programmingExerciseRepository.findAll();
+
+        for (ProgrammingExercise programmingExercise : allProgrammingExercises) {
+            if (programmingExercise.getTemplateParticipation() == null) {
+                Participation templateParticipation = new Participation();
+                templateParticipation.setRepositoryUrl(programmingExercise.getTemplateRepositoryUrlOld());
+                templateParticipation.setBuildPlanId(programmingExercise.getTemplateBuildPlanIdOld());
+                programmingExercise.setTemplateParticipation(templateParticipation);
+                programmingExercise.setTemplateRepositoryUrlOld(null);
+                programmingExercise.setTemplateBuildPlanIdOld(null);
+                participationRepository.save(templateParticipation);
+                programmingExerciseRepository.save(programmingExercise);
+            }
+            if (programmingExercise.getSolutionParticipation() == null) {
+                Participation solutionParticipation = new Participation();
+                solutionParticipation.setRepositoryUrl(programmingExercise.getSolutionRepositoryUrlOld());
+                solutionParticipation.setBuildPlanId(programmingExercise.getSolutionBuildPlanIdOld());
+                programmingExercise.setSolutionParticipation(solutionParticipation);
+                programmingExercise.setSolutionRepositoryUrlOld(null);
+                programmingExercise.setSolutionBuildPlanIdOld(null);
+                participationRepository.save(solutionParticipation);
+                programmingExerciseRepository.save(programmingExercise);
+            }
         }
     }
 }

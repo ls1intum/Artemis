@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
@@ -263,6 +264,7 @@ public class Participation implements Serializable {
         return this;
     }
 
+    @JsonIgnore
     public URL getRepositoryUrlAsUrl() {
         if (repositoryUrl == null) {
             return null;
