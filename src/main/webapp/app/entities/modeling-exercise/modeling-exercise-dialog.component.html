@@ -26,6 +26,9 @@
             </div>
         </div>
         <div class="form-group">
+            <jhi-date-time-picker labelName="Assessment Due Date" [(ngModel)]="modelingExercise.assessmentDueDate" name="assessmentDueDate"></jhi-date-time-picker>
+        </div>
+        <div class="form-group">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.maxScore" for="field_maxScore">Max Score</label>
             <input type="number" required class="form-control" [pattern]="maxScorePattern" min="0" max="9999" name="maxScore" id="field_maxScore"
                    [(ngModel)]="modelingExercise.maxScore" />
@@ -51,6 +54,26 @@
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.problemStatement" for="field_problemStatement">Problem Statement</label>
             <textarea required class="form-control" name="problemStatement" id="field_problemStatement" maxLength="1000"
                       [(ngModel)]="modelingExercise.problemStatement"></textarea>
+        </div>
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.gradingInstructions" for="field_gradingInstructions">Grading instructions</label>
+            <textarea class="form-control" name="gradingInstructions" id="field_gradingInstructions" maxLength="1000"
+                      [(ngModel)]="modelingExercise.gradingInstructions"></textarea>
+        </div>
+        <div class="form-group">
+            <span>Example submissions</span>
+
+            <ul *ngIf="modelingExercise.id">
+                <li *ngFor="let exampleSubmission of modelingExercise.exampleSubmissions; let i = index">
+                    <button routerLink="modeling-exercise/{{modelingExercise.id}}/example-submission/{{exampleSubmission.id}}" class="btn btn-link">Example submission {{i + 1}}</button>
+                    <fa-icon *ngIf="exampleSubmission.usedForTutorial" icon="chalkboard-teacher" style="margin-left: 10px" title="Used for tutorial"></fa-icon>
+                    <fa-icon *ngIf="exampleSubmission.submission?.result?.exampleResult" icon="check-circle" style="margin-left: 10px" title="An assessment is available"></fa-icon>
+                </li>
+            </ul>
+
+            <button *ngIf="modelingExercise.id" class="btn btn-primary" routerLink="modeling-exercise/{{modelingExercise.id}}/example-submission/new">Create example submission</button>
+
+            <div class="alert alert-info" *ngIf="!modelingExercise.id">To create an example submission, you first need to finish creating the modeling exercise</div>
         </div>
     </div>
     <div class="modal-footer">
