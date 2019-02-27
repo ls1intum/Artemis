@@ -109,7 +109,7 @@ export class CourseExerciseDetailsComponent implements OnInit {
     }
 
     get exerciseIcon(): ExerciseIcon {
-        switch(this.exercise.type) {
+        switch (this.exercise.type) {
             case this.PROGRAMMING:
                 return {
                     faIcon: 'keyboard',

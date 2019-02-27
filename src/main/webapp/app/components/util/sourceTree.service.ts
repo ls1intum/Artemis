@@ -9,7 +9,6 @@ import { WindowRef } from 'app/core';
 export class SourceTreeService {
     constructor(private httpClient: HttpClient, private participationService: ParticipationService, private $window: WindowRef) {}
 
-
     buildSourceTreeUrl(cloneUrl: string): string {
         return 'sourcetree://cloneRepo?type=stash&cloneUrl=' + encodeURI(cloneUrl) + '&baseWebUrl=https://repobruegge.in.tum.de';
     }
