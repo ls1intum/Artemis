@@ -280,7 +280,7 @@ public class ResultResource {
     @GetMapping(value = "/courses/{courseId}/all-results")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional(readOnly = true)
-    public ResponseEntity<List<Result>> getResultsForCourse(@PathVariable Long courseId,
+    public ResponseEntity<List<Result>> getAllResultsForCourse(@PathVariable Long courseId,
                                                               @RequestParam(defaultValue = "false") boolean withAssessors) {
         log.debug("REST request to get Results for course : {}", courseId);
 

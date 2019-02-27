@@ -32,7 +32,7 @@
 
             <div class="col-md-4" *ngIf="exercise.participations.length > 0">
                 <canvas baseChart
-                        [data]="dataForGraph"
+                        [data]="dataNumbersForPieChart"
                         [labels]="['Open assessments', 'Completed assessments']"
                         chartType="pie">
                 </canvas>
@@ -41,6 +41,6 @@
 
         <h2>Tutor Leaderboard for this Exercise</h2>
 
-        <jhi-tutor-leaderboard [tutorsData]="tutors"></jhi-tutor-leaderboard>
+        <jhi-tutor-leaderboard [tutorsData]="tutorLeaderboardData"></jhi-tutor-leaderboard>
     </div>
 </div>

@@ -19,22 +19,6 @@ import { AccountService, User } from 'app/core';
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
 
-export type StatsForInstructorDashboard = {
-    numberOfStudents: number;
-    numberOfSubmissions: number;
-    numberOfTutors: number;
-    numberOfAssessments: number;
-    numberOfComplaints: number;
-    numberOfOpenComplaints: number;
-};
-
-export type StatsForTutorDashboard = {
-    numberOfAssessments: number;
-    numberOfTutorAssessments: number;
-    numberOfComplaints: number;
-    numberOfSubmissions: number;
-};
-
 @Injectable({ providedIn: 'root' })
 export class CourseService {
     private resourceUrl = SERVER_API_URL + 'api/courses';

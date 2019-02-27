@@ -16,8 +16,8 @@ export class InstructorExerciseDashboardComponent implements OnInit {
     exercise: Exercise;
     courseId: number;
 
-    dataForGraph: number[];
-    tutors: TutorLeaderboardData = {};
+    dataNumbersForPieChart: number[];
+    tutorLeaderboardData: TutorLeaderboardData = {};
 
     constructor(
         private exerciseService: ExerciseService,
@@ -40,7 +40,7 @@ export class InstructorExerciseDashboardComponent implements OnInit {
                 this.participationService.findAllParticipationsByExercise(this.exercise.id).subscribe((participationRes: HttpResponse<Participation[]>) => {
                     this.exercise.participations = participationRes.body;
 
-                    this.dataForGraph = [
+                    this.dataNumbersForPieChart = [
                         this.exercise.participations.length,
                         this.exercise.participations.filter(participation =>
                             participation.results.filter(result => result.rated).length > 0
@@ -57,14 +57,14 @@ export class InstructorExerciseDashboardComponent implements OnInit {
 
                 for (const result of results) {
                     const tutorId = result.assessor.id;
-                    if (!this.tutors[tutorId]) {
-                        this.tutors[tutorId] = {
+                    if (!this.tutorLeaderboardData[tutorId]) {
+                        this.tutorLeaderboardData[tutorId] = {
                             tutor: result.assessor,
                             nrOfAssessments: 0
                         };
                     }
 
-                    this.tutors[tutorId].nrOfAssessments++;
+                    this.tutorLeaderboardData[tutorId].nrOfAssessments++;
                 }
             }
         );

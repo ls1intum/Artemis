@@ -20,7 +20,7 @@ export class InstructorCourseDashboardComponent implements OnInit {
     getIconTooltip = getIconTooltip;
 
     stats: StatsForInstructorDashboard;
-    dataForGraph: number[];
+    dataNumbersForPieChart: number[];
 
     tutors: TutorLeaderboardData = {};
 
@@ -51,7 +51,7 @@ export class InstructorCourseDashboardComponent implements OnInit {
         this.courseService.getStatsForInstructors(courseId).subscribe(
             (res: HttpResponse<StatsForInstructorDashboard>) => {
                 this.stats = res.body;
-                this.dataForGraph = [
+                this.dataNumbersForPieChart = [
                     res.body.numberOfSubmissions - res.body.numberOfAssessments,
                     res.body.numberOfAssessments
                 ];
