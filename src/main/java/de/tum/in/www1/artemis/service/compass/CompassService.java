@@ -32,8 +32,6 @@ import java.util.stream.Collectors;
 public class CompassService {
 
     private final Logger log = LoggerFactory.getLogger(CompassService.class);
-    private final JsonAssessmentRepository assessmentRepository;
-    private final JsonModelRepository modelRepository;
     private final ResultRepository resultRepository;
     private final ModelingExerciseRepository modelingExerciseRepository;
     private final ModelingSubmissionRepository modelingSubmissionRepository;
@@ -64,9 +62,7 @@ public class CompassService {
     private final static int NUMBER_OF_OPTIMAL_MODELS = 10;
     private static Map<Long, Thread> optimalModelThreads = new ConcurrentHashMap<>();
 
-    public CompassService(JsonAssessmentRepository assessmentRepository, JsonModelRepository modelRepository, ResultRepository resultRepository, ModelingExerciseRepository modelingExerciseRepository, ModelingSubmissionRepository modelingSubmissionRepository, UserService userService) {
-        this.assessmentRepository = assessmentRepository;
-        this.modelRepository = modelRepository;
+    public CompassService(ResultRepository resultRepository, ModelingExerciseRepository modelingExerciseRepository, ModelingSubmissionRepository modelingSubmissionRepository, UserService userService) {
         this.resultRepository = resultRepository;
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingSubmissionRepository = modelingSubmissionRepository;

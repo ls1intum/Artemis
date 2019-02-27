@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.JsonAssessmentRepository;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -40,7 +39,6 @@ public class ModelingSubmissionResource {
 
     private static final String ENTITY_NAME = "modelingSubmission";
 
-    private final JsonAssessmentRepository jsonAssessmentRepository;
     private final ModelingSubmissionRepository modelingSubmissionRepository;
     private final ModelingSubmissionService modelingSubmissionService;
     private final ModelingExerciseService modelingExerciseService;
@@ -52,8 +50,7 @@ public class ModelingSubmissionResource {
     private final CourseService courseService;
     private final AuthorizationCheckService authCheckService;
 
-    public ModelingSubmissionResource(JsonAssessmentRepository jsonAssessmentRepository,
-                                      ModelingSubmissionRepository modelingSubmissionRepository,
+    public ModelingSubmissionResource(ModelingSubmissionRepository modelingSubmissionRepository,
                                       ModelingSubmissionService modelingSubmissionService,
                                       ModelingExerciseService modelingExerciseService,
                                       ParticipationService participationService,
@@ -63,7 +60,6 @@ public class ModelingSubmissionResource {
                                       UserService userService,
                                       CourseService courseService,
                                       AuthorizationCheckService authCheckService) {
-        this.jsonAssessmentRepository = jsonAssessmentRepository;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseService = modelingExerciseService;

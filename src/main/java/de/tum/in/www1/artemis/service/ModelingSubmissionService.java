@@ -22,21 +22,15 @@ public class ModelingSubmissionService {
 
     private final ModelingSubmissionRepository modelingSubmissionRepository;
     private final ResultRepository resultRepository;
-    private final JsonModelRepository jsonModelRepository;
-    private final JsonAssessmentRepository jsonAssessmentRepository;
     private final CompassService compassService;
     private final ParticipationRepository participationRepository;
 
     public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository,
                                      ResultRepository resultRepository,
-                                     JsonModelRepository jsonModelRepository,
-                                     JsonAssessmentRepository jsonAssessmentRepository,
                                      CompassService compassService,
                                      ParticipationRepository participationRepository) {
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.resultRepository = resultRepository;
-        this.jsonModelRepository = jsonModelRepository;
-        this.jsonAssessmentRepository = jsonAssessmentRepository;
         this.compassService = compassService;
         this.participationRepository = participationRepository;
     }

@@ -5,7 +5,6 @@ import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.domain.ModelingExercise;
 import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.repository.JsonAssessmentRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
@@ -41,8 +40,6 @@ public class ModelingAssessmentResource extends AssessmentResource {
     private static final String PUT_ASSESSMENT_200_REASON = "Given assessment has been saved but is not used for automatic assessment by Compass";
     private static final String PUT_SUBMIT_ASSESSMENT_200_REASON = "Given assessment has been saved and used for automatic assessment by Compass";
 
-
-    private final JsonAssessmentRepository jsonAssessmentRepository;
     private final ParticipationRepository participationRepository;
     private final ResultService resultService;
     private final CompassService compassService;
@@ -53,9 +50,8 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
 
     //TODO: all API path in this class do not really make sense, we should restructure them and potentially start with /exercise/
-    public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserService userService, JsonAssessmentRepository jsonAssessmentRepository, ParticipationRepository participationRepository, ResultService resultService, CompassService compassService, ModelingExerciseService modelingExerciseService, CourseService courseService, ModelingAssessmentService modelingAssessmentService) {
+    public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserService userService, ParticipationRepository participationRepository, ResultService resultService, CompassService compassService, ModelingExerciseService modelingExerciseService, CourseService courseService, ModelingAssessmentService modelingAssessmentService) {
         super(authCheckService, userService);
-        this.jsonAssessmentRepository = jsonAssessmentRepository;
         this.participationRepository = participationRepository;
         this.resultService = resultService;
         this.compassService = compassService;

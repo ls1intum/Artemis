@@ -6,7 +6,6 @@ import de.tum.in.www1.artemis.domain.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.repository.JsonAssessmentRepository;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.compass.assessment.ModelElementAssessment;
@@ -24,21 +23,17 @@ import static java.math.BigDecimal.ROUND_HALF_EVEN;
 public class ModelingAssessmentService extends AssessmentService {
     private final Logger log = LoggerFactory.getLogger(ModelingAssessmentService.class);
 
-    private final JsonAssessmentRepository jsonAssessmentRepository;
     private final ResultRepository resultRepository;
     private final UserService userService;
     private final ModelingExerciseService modelingExerciseService;
     private final ModelingSubmissionRepository modelingSubmissionRepository;
 
 
-    public ModelingAssessmentService(JsonAssessmentRepository jsonAssessmentRepository,
-                                     ResultRepository resultRepository,
+    public ModelingAssessmentService(ResultRepository resultRepository,
                                      UserService userService,
                                      ModelingExerciseService modelingExerciseService,
                                      ModelingSubmissionRepository modelingSubmissionRepository) {
         super(resultRepository);
-
-        this.jsonAssessmentRepository = jsonAssessmentRepository;
         this.resultRepository = resultRepository;
         this.userService = userService;
         this.modelingExerciseService = modelingExerciseService;
