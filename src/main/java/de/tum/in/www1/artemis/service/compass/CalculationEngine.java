@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.compass;
 
 import com.google.gson.JsonObject;
+import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.service.compass.assessment.ModelElementAssessment;
 import de.tum.in.www1.artemis.service.compass.grade.Grade;
 
@@ -42,7 +43,7 @@ public interface CalculationEngine {
 
     void removeModelWaitingForAssessment(long modelId, boolean isAssessed);
 
-    JsonObject exportToJson(Grade grade, long modelId);
+    List<Feedback> convertToFeedback(Grade grade, long modelId);
 
     /**
      * @return statistics about the UML model

@@ -1,12 +1,10 @@
 package de.tum.in.www1.artemis.service;
 
 import com.google.gson.JsonObject;
-import de.tum.in.www1.artemis.domain.ModelingExercise;
-import de.tum.in.www1.artemis.domain.ModelingSubmission;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.compass.assessment.ModelElementAssessment;
 import org.slf4j.Logger;
@@ -25,45 +23,18 @@ public class ModelingAssessmentService extends AssessmentService {
 
     private final ResultRepository resultRepository;
     private final UserService userService;
-    private final ModelingExerciseService modelingExerciseService;
     private final ModelingSubmissionRepository modelingSubmissionRepository;
-
+    private final ParticipationRepository participationRepository;
 
     public ModelingAssessmentService(ResultRepository resultRepository,
                                      UserService userService,
-                                     ModelingExerciseService modelingExerciseService,
-                                     ModelingSubmissionRepository modelingSubmissionRepository) {
+                                     ModelingSubmissionRepository modelingSubmissionRepository,
+                                     ParticipationRepository participationRepository) {
         super(resultRepository);
         this.resultRepository = resultRepository;
         this.userService = userService;
-        this.modelingExerciseService = modelingExerciseService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
-    }
-
-
-    /**
-     * Find latest assessment for given exerciseId, studentId and modelId. First checks for existence of manual
-     * assessment, then of automatic assessment.
-     *
-     * @param exerciseId
-     * @param studentId
-     * @param modelId
-     * @return
-     */
-    public String findLatestAssessment(Long exerciseId, Long studentId, Long modelId) {
-        JsonObject assessmentJson = null;
-        if (jsonAssessmentRepository.exists(exerciseId, studentId, modelId, true)) {
-            // the modelingSubmission was graded manually
-            assessmentJson = jsonAssessmentRepository.readAssessment(exerciseId, studentId, modelId, true);
-        } else if (jsonAssessmentRepository.exists(exerciseId, studentId, modelId, false)) {
-            // the modelingSubmission was graded automatically
-            assessmentJson = jsonAssessmentRepository.readAssessment(exerciseId, studentId, modelId, false);
-        }
-
-        if (assessmentJson != null) {
-            return assessmentJson.get("assessments").toString();
-        }
-        return null;
+        this.participationRepository = participationRepository;
     }
 
 
@@ -78,9 +49,8 @@ public class ModelingAssessmentService extends AssessmentService {
      * @return the ResponseEntity with result as body
      */
     @Transactional
-    public Result submitManualAssessment(
-        Result result, ModelingExercise exercise, List<ModelElementAssessment> modelingAssessment) {
-        saveManualAssessment(result, exercise.getId(), modelingAssessment);
+    public Result submitManualAssessment(Result result, ModelingExercise exercise, List<ModelElementAssessment> modelingAssessment) {
+        saveManualAssessment(result);
         Double calculatedScore = calculateTotalScore(modelingAssessment);
         return prepareSubmission(result, exercise, calculatedScore);
     }
@@ -92,26 +62,18 @@ public class ModelingAssessmentService extends AssessmentService {
      * in the file system the total score is calculated and set in the result.
      *
      * @param result             the result the assessment belongs to
-     * @param exerciseId         the exerciseId the assessment belongs to
-     * @param modelingAssessment List of assessed model elements
      */
     @Transactional
-    public void saveManualAssessment(
-        Result result, Long exerciseId, List<ModelElementAssessment> modelingAssessment) {
+    public void saveManualAssessment(Result result) {
         result.setAssessmentType(AssessmentType.MANUAL);
         User user = userService.getUser();
         result.setAssessor(user);
-
-        Long studentId = result.getParticipation().getStudent().getId();
-        Long submissionId = result.getSubmission().getId();
 
         if (result.getSubmission() instanceof ModelingSubmission && result.getSubmission().getResult() == null) {
             ModelingSubmission modelingSubmission = (ModelingSubmission) result.getSubmission();
             modelingSubmission.setResult(result);
             modelingSubmissionRepository.save(modelingSubmission);
         }
-        // write assessment to file system
-        jsonAssessmentRepository.writeAssessment(exerciseId, studentId, submissionId, true, modelingAssessment);
         resultRepository.save(result);
     }
 

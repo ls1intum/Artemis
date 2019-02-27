@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
@@ -49,25 +48,12 @@ public class ModelingSubmissionService {
      */
     @Transactional(rollbackFor = Exception.class)
     public ModelingSubmission save(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise, Participation participation) {
-        String model = modelingSubmission.getModel();
-        log.debug("save model: " + model);
 
         // update submission properties
         modelingSubmission.setSubmissionDate(ZonedDateTime.now());
         modelingSubmission.setType(SubmissionType.MANUAL);
         modelingSubmission.setParticipation(participation);
         modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
-
-        //saving the modeling submission makes all transient objects null, so we have to set the model again
-        modelingSubmission.setModel(model);
-
-        User user = participation.getStudent();
-        if (model != null && !model.isEmpty()) {
-            jsonModelRepository.writeModel(modelingExercise.getId(), user.getId(), modelingSubmission.getId(), model);
-        } else {
-            log.warn("Empty model was submitted in submission " + modelingSubmission.getId() + " for user " + participation.getStudent().getLogin());
-            //TODO: we should reject this call, in case modelingSubmission.getModel() is null
-        }
 
         participation.addSubmissions(modelingSubmission);
 
@@ -77,6 +63,7 @@ public class ModelingSubmissionService {
             participation.setInitializationState(InitializationState.FINISHED);
         } else if (modelingExercise.getDueDate() != null && !modelingExercise.isEnded()) {
             // save submission to HashMap if exercise not ended yet
+            User user = participation.getStudent();
             AutomaticSubmissionService.updateSubmission(modelingExercise.getId(), user.getLogin(), modelingSubmission);
         }
         Participation savedParticipation = participationRepository.save(participation);
@@ -95,59 +82,20 @@ public class ModelingSubmissionService {
      * @param modelingExercise      the exercise the submission belongs to
      */
     public void notifyCompass(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {
-        modelingSubmission = getAndSetModel(modelingSubmission);
         this.compassService.addModel(modelingExercise.getId(), modelingSubmission.getId(), modelingSubmission.getModel());
     }
 
     /**
-     * Checks if zhe model for given exerciseId, studentId and model modelId exists and returns it if found.
+     * //TODO I do not really understand this method. We should probably refactor it
      *
-     * @param exerciseId    the exercise modelId for which to find the model
-     * @param studentId     the student modelId for which to find the model
-     * @param modelId       the model modelId which corresponds to the submission id
-     * @return the model JsonObject if found otherwise null
-     */
-    public JsonObject getModel(long exerciseId, long studentId, long modelId) {
-        if (jsonModelRepository.exists(exerciseId, studentId, modelId)) {
-            return jsonModelRepository.readModel(exerciseId, studentId, modelId);
-        }
-        return null;
-    }
-
-    /**
-     * Checks whether the given modelingSubmission has a model or not and tries to read and set it.
-     *
-     * @param modelingSubmission    the modeling submission for which to get and set the model
-     * @return the modelingSubmission with the model if the model could be read
-     */
-    public ModelingSubmission getAndSetModel(ModelingSubmission modelingSubmission) {
-        if (modelingSubmission.getModel() == null || modelingSubmission.getModel().equals("")) {
-            Participation participation = modelingSubmission.getParticipation();
-            if (participation == null) {
-                log.error("The modeling submission {} does not have a participation.", modelingSubmission);
-            }
-            Exercise exercise = participation.getExercise();
-            try {
-                JsonObject model = getModel(exercise.getId(), participation.getStudent().getId(), modelingSubmission.getId());
-                if (model != null) {
-                    modelingSubmission.setModel(model.toString());
-                }
-            } catch (Exception e) {
-                log.error("Exception while retrieving the model for modeling submission {}:\n{}", modelingSubmission.getId(), e.getMessage());
-            }
-        }
-        return modelingSubmission;
-    }
-
-    /**
      * Check if automatic assessment is available and set the result if found.
      *
      * @param modelingSubmission    the modeling submission, which contains the model and the submission status
      */
     public void checkAutomaticResult(ModelingSubmission modelingSubmission) {
         Participation participation = modelingSubmission.getParticipation();
-        boolean automaticAssessmentAvailable = jsonAssessmentRepository.exists(participation.getExercise().getId(), participation.getStudent().getId(), modelingSubmission.getId(), false);
         // create empty result in case submission couldn't be assessed automatically
+        //TODO: we need to check if an automatic Assessment is available, I guess we need to look into the result?
         if (modelingSubmission.getResult() == null && automaticAssessmentAvailable) {
             //use the automatic result if available
             Optional<Result> optionalAutomaticResult = resultRepository.findDistinctBySubmissionId(modelingSubmission.getId());

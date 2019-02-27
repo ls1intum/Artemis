@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
+import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.service.compass.assessment.Score;
 import de.tum.in.www1.artemis.service.compass.grade.Grade;
 import de.tum.in.www1.artemis.service.compass.umlmodel.*;
@@ -248,22 +249,22 @@ public class JSONParser {
      * Export the grade to a json object which can be written to the file system
      * TODO adapt the parser to support different UML diagrams
      *
-     * @param result the grade which should be exported
+     * @param grade the grade which should be exported
      * @param model the corresponding UML model
      * @return a json object representing
      */
-    public static JsonObject exportToJSON (Grade result, UMLModel model) {
-        JsonObject jsonObject = new JsonObject();
-        JsonArray assessments = new JsonArray();
+    //TODO: move into a different class/file
+    public static List<Feedback> convertToFeedback (Grade grade, UMLModel model) {
+        List<Feedback> feedbackList = new ArrayList<>();
 
-        for (Map.Entry<String, Double> entry : result.getJsonIdPointsMapping().entrySet()) {
-            JsonObject assessment = new JsonObject();
+        for (Map.Entry<String, Double> gradePointsEntry : grade.getJsonIdPointsMapping().entrySet()) {
+            Feedback feedback = new Feedback();
 
-            String jsonElementID = entry.getKey();
+            String jsonElementID = gradePointsEntry.getKey();
             UMLElement umlElement = model.getElementByJSONID(jsonElementID);
 
             if (umlElement == null) {
-                log.error("Element " + entry.getKey() + " was not found in Model");
+                log.error("Element " + gradePointsEntry.getKey() + " was not found in Model");
                 continue;
             }
 
@@ -286,20 +287,20 @@ public class JSONParser {
                     type = "";
             }
 
+            feedback.setCredits(gradePointsEntry.getValue());
+            feedback.setPositive(feedback.getCredits() >= 0);
+            feedback.setText(grade.getJsonIdCommentsMapping().getOrDefault(jsonElementID, ""));
+            feedback.setReference(type + ":" + jsonElementID);
             //assessment.addProperty(JSONMapping.assessmentMode, JSONMapping.assessmentModeAutomatic);
-            assessment.addProperty(JSONMapping.assessmentElementID, jsonElementID);
-            assessment.addProperty(JSONMapping.assessmentElementType, type);
-            assessment.addProperty(JSONMapping.assessmentPoints, entry.getValue());
-            assessment.addProperty(JSONMapping.assessmentComment, result.getJsonIdCommentsMapping().getOrDefault(jsonElementID, ""));
 
-            assessments.add(assessment);
+            feedbackList.add(feedback);
         }
 
-        jsonObject.add(JSONMapping.assessments, assessments);
-        jsonObject.addProperty(JSONMapping.assessmentElementConfidence, result.getConfidence());
-        jsonObject.addProperty(JSONMapping.assessmentElementCoverage, result.getCoverage());
+        //TODO: in the future we want to store this information as well, but for now we ignore it.
+//        jsonObject.addProperty(JSONMapping.assessmentElementConfidence, grade.getConfidence());
+//        jsonObject.addProperty(JSONMapping.assessmentElementCoverage, grade.getCoverage());
 
-        return jsonObject;
+        return feedbackList;
     }
 }
 

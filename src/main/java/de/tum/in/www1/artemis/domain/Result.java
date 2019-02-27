@@ -108,10 +108,6 @@ public class Result implements Serializable {
     @Column(name = "example_result")
     private Boolean exampleResult;
 
-    @Transient
-    @JsonProperty
-    private String assessments;
-
     /**
      * This property stores the total number of results in the participation this result belongs to.
      * Not stored in the database, computed dynamically and used in showing statistics to the user
@@ -400,11 +396,4 @@ public class Result implements Serializable {
             "}";
     }
 
-    public String getAssessments() {
-        return assessments;
-    }
-
-    public void setAssessments(String assessments) {
-        this.assessments = assessments;
-    }
 }

@@ -6,6 +6,8 @@ import { SERVER_API_URL } from '../../app.constants';
 import { ModelElementType, ModelingAssessment } from './modeling-assessment.model';
 import { Result } from '../result';
 import { ENTITY_KIND_HEIGHT, ENTITY_MEMBER_HEIGHT, ENTITY_MEMBER_LIST_VERTICAL_PADDING, ENTITY_NAME_HEIGHT, EntityKind, Point, RectEdge, RelationshipKind, State } from '@ls1intum/apollon';
+import { Feedback } from 'app/entities/feedback';
+import { ModelingSubmission } from 'app/entities/modeling-submission';
 
 export type EntityResponseType = HttpResponse<Result>;
 
@@ -30,9 +32,9 @@ export class ModelingAssessmentService {
         return this.http.put<any>(url, modelingAssessment);
     }
 
-    find(participationId: number, submissionId: number): Observable<HttpResponse<ModelingAssessment[]>> {
+    find(participationId: number, submissionId: number): Observable<HttpResponse<Result>> {
         return this.http
-            .get<ModelingAssessment[]>(`${this.resourceUrl}/participation/${participationId}/submission/${submissionId}`, {
+            .get<Result>(`${this.resourceUrl}/participation/${participationId}/submission/${submissionId}`, {
                 observe: 'response'
             })
             .map(res => this.convertArrayResponse(res));
@@ -42,16 +44,14 @@ export class ModelingAssessmentService {
         return this.http.get(`${this.resourceUrl}/exercise/${exerciseId}/optimal-model-submissions`, {observe: 'response'});
     }
 
-    getPartialAssessment(exerciseId: number, submissionId: number): Observable<HttpResponse<ModelingAssessment[]>> {
+    getPartialAssessment(exerciseId: number, submissionId: number): Observable<HttpResponse<Result>> {
         return this.http
-            .get<ModelingAssessment[]>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}/partial-assessment`, {
-                observe: 'response'
-            })
+            .get<Result>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}/partial-assessment`, {observe: 'response'})
             .map(res => this.convertArrayResponse(res));
     }
 
-    getDataForEditor(exerciseId: number, submissionId: number): Observable<any> {
-        return this.http.get(`api/assessment-editor/${exerciseId}/${submissionId}`, {responseType: 'json'});
+    getDataForEditor(exerciseId: number, submissionId: number): Observable<HttpResponse<ModelingSubmission>> {
+        return this.http.get<ModelingSubmission>(`api/assessment-editor/${exerciseId}/${submissionId}`, {observe: 'response'});
     }
 
     resetOptimality(exerciseId: number): Observable<HttpResponse<void>> {

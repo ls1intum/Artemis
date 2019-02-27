@@ -293,10 +293,6 @@ public class ModelingExerciseResource {
             modelingSubmission = new ModelingSubmission();  //NOTE: this object is not yet persisted
             modelingSubmission.setParticipation(participation);
         }
-        else {
-            //only try to get and set the model if the modelingSubmission existed before
-            modelingSubmission = modelingSubmissionService.getAndSetModel(modelingSubmission);
-        }
 
         //make sure only the latest submission and latest result is sent to the client
         participation.setSubmissions(null);
@@ -304,14 +300,6 @@ public class ModelingExerciseResource {
 
         if (modelingSubmission.getResult() instanceof HibernateProxy) {
             modelingSubmission.setResult((Result) Hibernate.unproxy(modelingSubmission.getResult()));
-        }
-        Result result = modelingSubmission.getResult();
-        if (modelingSubmission.isSubmitted() && result != null && result.getCompletionDate() != null) {
-            // find assessments if modelingSubmission is submitted and assessment has been submitted
-            String assessments = modelingAssessmentService.findLatestAssessment(modelingExercise.getId(), participation.getStudent().getId(), modelingSubmission.getId());
-            if (assessments != null && !assessments.equals("")) {
-                result.setAssessments(assessments);
-            }
         }
         return ResponseEntity.ok(modelingSubmission);
     }
@@ -327,8 +315,8 @@ public class ModelingExerciseResource {
     @GetMapping("/assessment-editor/{exerciseId}/{submissionId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional
-    //TODO: return a proper object here, e.g. modelingSubmission and fix the REST URL
-    public ResponseEntity<JsonNode> getDataForAssessmentEditor(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
+    //TODO: fix the REST URL
+    public ResponseEntity<ModelingSubmission> getDataForAssessmentEditor(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
         Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findById(exerciseId);
         if (!modelingExercise.isPresent()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("modelingExercise", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
@@ -366,24 +354,8 @@ public class ModelingExerciseResource {
         if (result.getAssessor() instanceof HibernateProxy) {
             result.setAssessor((User) Hibernate.unproxy(result.getAssessor()));
         }
-        JsonObject model = modelingSubmissionService.getModel(modelingExercise.get().getId(), modelingSubmission.getParticipation().getStudent().getId(), submissionId);
-        if (model != null) {
-            modelingSubmission.setModel(model.toString());
-        }
-        ObjectNode data = objectMapper.createObjectNode();
-        data.set("modelingExercise", objectMapper.valueToTree(modelingExercise));
-        data.set("result", objectMapper.valueToTree(result));
-        data.set("modelingSubmission", objectMapper.valueToTree(modelingSubmission));
-        if (modelingSubmission.isSubmitted()) {
-            String assessment = modelingAssessmentService.findLatestAssessment(modelingExercise.get().getId(), result.getParticipation().getStudent().getId(), modelingSubmission.getId());
-            if (assessment != null && !assessment.equals("")) {
-                try {
-                    data.set("assessments", objectMapper.readTree(assessment));
-                } catch (IOException e) {
-                    log.error("Error while reading assessment JSON: {}", e.getMessage());
-                }
-            }
-        }
-        return ResponseEntity.ok(data);
+        //Make sure the exercise is connected to the participation in the json response
+        modelingSubmission.getParticipation().setExercise(modelingExercise.get());
+        return ResponseEntity.ok(modelingSubmission);
     }
 }

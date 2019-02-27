@@ -17,6 +17,7 @@ import { JhiWebsocketService } from '../core';
 import { Observable } from 'rxjs/Observable';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
+import { Feedback } from 'app/entities/feedback';
 
 @Component({
     selector: 'jhi-modeling-editor',
@@ -44,7 +45,8 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
      */
     submissionState: State;
 
-    assessments: ModelingAssessment[];
+    //TODO: rename
+    assessments: Result;
     assessmentsNames: Map<string, Map<string, string>>;
     totalScore: number;
 
@@ -363,6 +365,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
     initializeAssessmentInfo() {
         if (this.assessments && this.submission && this.submission.model) {
             this.submissionState = JSON.parse(this.submission.model);
+            //TODO: use Result instead of ModelingAssessment
             this.assessmentsNames = this.modelingAssessmentService.getNamesForAssessments(this.assessments, this.submissionState);
             this.positions = this.modelingAssessmentService.getElementPositions(this.assessments, this.submissionState);
             let totalScore = 0;
@@ -374,6 +377,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
     }
 
     getElementPositions() {
+        //TODO: use Result instead of ModelingAssessment
         this.positions = this.modelingAssessmentService.getElementPositions(this.assessments, this.apollonEditor.getState());
     }
 

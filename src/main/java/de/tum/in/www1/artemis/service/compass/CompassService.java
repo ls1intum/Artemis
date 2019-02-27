@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.compass;
 
 import com.google.gson.JsonObject;
+import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ModelingExercise;
 import de.tum.in.www1.artemis.domain.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
@@ -137,14 +138,14 @@ public class CompassService {
      * @return an partial assessment for model elements where an automatic assessment is already possible,
      * other model elements have to be assessed by the assessor
      */
-    public JsonObject getPartialAssessment(long exerciseId, long modelId) {
+    public List<Feedback> getPartialAssessment(long exerciseId, long modelId) {
         if (!loadExerciseIfSuspended(exerciseId)) {
             return null;
         }
 
         CalculationEngine engine = compassCalculationEngines.get(exerciseId);
 
-        return engine.exportToJson(engine.getResultForModel(modelId), modelId);
+        return engine.convertToFeedback(engine.getResultForModel(modelId), modelId);
     }
 
     /**
@@ -227,14 +228,8 @@ public class CompassService {
                 // and give a slight advantage which makes 100% scores easier reachable
                 // see: https://confluencebruegge.in.tum.de/display/ArTEMiS/Feature+suggestions for more information
                 grade = roundGrades(grade);
-                // Save to file system + database
-                JsonObject json = engine.exportToJson(grade, modelId);
-                if (json == null || json.toString().isEmpty()) {
-                    log.error("Unable to export automatic assessment to json");
-                    return;
-                }
-                assessmentRepository.writeAssessment(exerciseId, result.getParticipation().getStudent().getId(), modelId,
-                    false, json.toString());
+                // Save to database
+                List<Feedback> automaticFeedbackAssessments = engine.convertToFeedback(grade, modelId);
 
                 result.setRated(modelingExercise.getDueDate() == null || modelingSubmission.get().getSubmissionDate().isBefore(modelingExercise.getDueDate()));
                 result.setAssessmentType(AssessmentType.AUTOMATIC);
@@ -311,11 +306,13 @@ public class CompassService {
             return;
         }
         log.info("Compass calculation engine for exercise " + exerciseId + " has to be load from file system");
+        //TODO: in this case we need to retrieve all modeling submissions from the database for this exercise id
         Map<Long, JsonObject> models = modelRepository.readModelsForExercise(exerciseId);
         models.entrySet().removeIf(entry -> {
             Optional<Result> result = resultRepository.findDistinctBySubmissionId(entry.getKey());
             return !result.isPresent();
         });
+        //TODO: above we should eagerly load the corresponding results
         Map<Long, JsonObject> manualAssessments = assessmentRepository.readAssessmentsForExercise(exerciseId, true);
         manualAssessments.entrySet().removeIf(entry -> !models.containsKey(entry.getKey()));
         CalculationEngine calculationEngine = new CompassCalculationEngine(models, manualAssessments);

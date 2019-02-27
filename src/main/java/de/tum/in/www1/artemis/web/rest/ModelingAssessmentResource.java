@@ -2,9 +2,8 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import de.tum.in.www1.artemis.domain.ModelingExercise;
-import de.tum.in.www1.artemis.domain.Participation;
-import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
@@ -14,6 +13,8 @@ import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import org.hibernate.Hibernate;
+import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -26,6 +27,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 /**
  * REST controller for managing ModelingAssessment.
@@ -47,10 +49,12 @@ public class ModelingAssessmentResource extends AssessmentResource {
     private final AuthorizationCheckService authCheckService;
     private final CourseService courseService;
     private final ModelingAssessmentService modelingAssessmentService;
-
+    private final ModelingSubmissionRepository modelingSubmissionRepository;
 
     //TODO: all API path in this class do not really make sense, we should restructure them and potentially start with /exercise/
-    public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserService userService, ParticipationRepository participationRepository, ResultService resultService, CompassService compassService, ModelingExerciseService modelingExerciseService, CourseService courseService, ModelingAssessmentService modelingAssessmentService) {
+    public ModelingAssessmentResource(AuthorizationCheckService authCheckService, UserService userService, ParticipationRepository participationRepository,
+                                      ResultService resultService, CompassService compassService, ModelingExerciseService modelingExerciseService,
+                                      CourseService courseService, ModelingAssessmentService modelingAssessmentService, ModelingSubmissionRepository modelingSubmissionRepository) {
         super(authCheckService, userService);
         this.participationRepository = participationRepository;
         this.resultService = resultService;
@@ -59,6 +63,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
         this.authCheckService = authCheckService;
         this.courseService = courseService;
         this.modelingAssessmentService = modelingAssessmentService;
+        this.modelingSubmissionRepository = modelingSubmissionRepository;
     }
 
 
@@ -92,11 +97,17 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     @GetMapping("/modeling-assessments/exercise/{exerciseId}/submission/{submissionId}/partial-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<String> getPartialAssessment(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
+    public ResponseEntity<Result> getPartialAssessment(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         checkAuthorization(modelingExercise);
-        JsonObject partialAssessment = compassService.getPartialAssessment(exerciseId, submissionId);
-        return ResponseEntity.ok(partialAssessment.get("assessments").toString());
+        ModelingSubmission modelingSubmission = modelingSubmissionRepository.getOne(submissionId);
+        if (modelingSubmission.getResult() instanceof HibernateProxy) {
+            modelingSubmission.setResult((Result) Hibernate.unproxy(modelingSubmission.getResult()));
+        }
+        List<Feedback> partialFeedbackAssessment = compassService.getPartialAssessment(exerciseId, submissionId);
+        Result result = modelingSubmission.getResult();
+        result.setFeedbacks(partialFeedbackAssessment);
+        return ResponseEntity.ok(result);
     }
 
 
@@ -109,7 +120,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
      */
     @GetMapping("/modeling-assessments/participation/{participationId}/submission/{submissionId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<String> getAssessmentBySubmissionId(@PathVariable Long participationId, @PathVariable Long submissionId) {
+    public ResponseEntity<Result> getAssessmentBySubmissionId(@PathVariable Long participationId, @PathVariable Long submissionId) {
         Optional<Participation> optionalParticipation = participationRepository.findById(participationId);
         if (!optionalParticipation.isPresent()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "participationNotFound", "No participation was found for the given ID.")).body(null);
@@ -121,17 +132,17 @@ public class ModelingAssessmentResource extends AssessmentResource {
             return forbidden();
         }
 
-        Long exerciseId = participation.getExercise().getId();
-        Long studentId = participation.getStudent().getId();
-        if (jsonAssessmentRepository.exists(exerciseId, studentId, submissionId, true)) {
-            JsonObject assessmentJson = jsonAssessmentRepository.readAssessment(exerciseId, studentId, submissionId, true);
-            return ResponseEntity.ok(assessmentJson.get("assessments").toString());
+        ModelingSubmission modelingSubmission = modelingSubmissionRepository.getOne(submissionId);
+        if (modelingSubmission.getResult() instanceof HibernateProxy) {
+            modelingSubmission.setResult((Result) Hibernate.unproxy(modelingSubmission.getResult()));
         }
-        if (jsonAssessmentRepository.exists(exerciseId, studentId, submissionId, false)) {
-            JsonObject assessmentJson = jsonAssessmentRepository.readAssessment(exerciseId, studentId, submissionId, false);
-            return ResponseEntity.ok(assessmentJson.get("assessments").toString());
+        Result result = modelingSubmission.getResult();
+        if (result != null) {
+            return ResponseEntity.ok(result);
         }
-        return ResponseEntity.ok("");
+        else {
+            return notFound();
+        }
     }
 
 
@@ -143,11 +154,12 @@ public class ModelingAssessmentResource extends AssessmentResource {
     })
     @PutMapping("/modeling-assessments/exercise/{exerciseId}/result/{resultId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    //TODO: in this case we should already send the feedback items in the Result object
     public ResponseEntity<Result> saveModelingAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody List<ModelElementAssessment> modelingAssessment) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         checkAuthorization(modelingExercise);
         Result result = resultService.findOne(resultId);
-        modelingAssessmentService.saveManualAssessment(result, exerciseId, modelingAssessment);
+        modelingAssessmentService.saveManualAssessment(result);
         return ResponseEntity.ok(result);
     }
 
@@ -162,6 +174,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @PutMapping("/modeling-assessments/exercise/{exerciseId}/result/{resultId}/submit")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     //TODO MJ changing submitted assessment always produces Conflict
+    //TODO: in this case we should already send the feedback items in the Result object
     public ResponseEntity<Object> submitModelingAssessment(@PathVariable Long exerciseId,
                                                            @PathVariable Long resultId,
                                                            @RequestParam(value = "ignoreConflict", defaultValue = "false") boolean ignoreConflict,
@@ -172,7 +185,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
         Long submissionId = result.getSubmission().getId();
         List<Conflict> conflicts = compassService.getConflicts(exerciseId, submissionId, modelingAssessment);
         if (!conflicts.isEmpty() && !ignoreConflict) {
-            modelingAssessmentService.saveManualAssessment(result, modelingExercise.getId(), modelingAssessment);
+            modelingAssessmentService.saveManualAssessment(result);
             return ResponseEntity.status(HttpStatus.CONFLICT).body(conflicts);
         } else {
             modelingAssessmentService.submitManualAssessment(result, modelingExercise, modelingAssessment);

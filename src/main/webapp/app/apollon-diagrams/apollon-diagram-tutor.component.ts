@@ -74,8 +74,9 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
                 nextOptimal = query['optimal'] === 'true';
             });
 
-            this.modelingAssessmentService.getDataForEditor(exerciseId, submissionId).subscribe(data => {
-                this.modelingExercise = data.modelingExercise as ModelingExercise;
+            this.modelingAssessmentService.getDataForEditor(exerciseId, submissionId).subscribe(res => {
+                this.submission = res.body;
+                this.modelingExercise = this.submission.participation.exercise as ModelingExercise;
                 /**
                  * set diagramType to class diagram if exercise is null, use case or communication
                  * apollon does not support use case and communication yet
@@ -87,14 +88,13 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
                 ) {
                     this.modelingExercise.diagramType = DiagramType.CLASS;
                 }
-                this.submission = data.modelingSubmission as ModelingSubmission;
                 if (this.submission.model) {
                     this.initializeApollonEditor(JSON.parse(this.submission.model));
                 } else {
                     this.jhiAlertService.error(`No model could be found for this submission.`);
                 }
-                data.result.participation.results = [data.result];
-                this.result = data.result as Result;
+                this.submission.result.participation.results = [this.submission.result];
+                this.result = this.submission.result;
                 if ((this.result.assessor == null || this.result.assessor.id === this.userId) && !this.result.rated) {
                     this.jhiAlertService.info('arTeMiSApp.apollonDiagram.lock');
                 }
