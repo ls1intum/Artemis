@@ -243,7 +243,7 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
     }
 
     goToBuildPlan(participation: Participation) {
-        this.sourceTreeService.goToBuildPlan(participation)
+        this.sourceTreeService.goToBuildPlan(participation);
     }
 
     onCopyFailure() {
