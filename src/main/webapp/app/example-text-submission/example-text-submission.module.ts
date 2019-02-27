@@ -28,4 +28,4 @@ const ENTITY_STATES = [...exampleTextSubmissionRoute];
     ],
     schemas: []
 })
-export class ArTEMiSExampleSubmissionModule {}
+export class ArTEMiSExampleTextSubmissionModule {}
