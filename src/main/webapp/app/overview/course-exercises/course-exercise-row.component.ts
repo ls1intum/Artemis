@@ -77,7 +77,7 @@ export class CourseExerciseRowComponent implements OnInit {
     }
 
     get exerciseIcon(): ExerciseIcon {
-        switch(this.exercise.type) {
+        switch (this.exercise.type) {
             case this.PROGRAMMING:
                 return {
                     faIcon: 'keyboard',
@@ -172,11 +172,9 @@ export class CourseExerciseRowComponent implements OnInit {
         return participation.results && participation.results.length > 0;
     }
 
-
     showDetails(event: any) {
         if (!(event.target.closest('jhi-exercise-details-student-actions') && event.target.closest('.btn'))) {
             this.router.navigate([this.exercise.id], {relativeTo: this.route});
         }
     }
-
 }

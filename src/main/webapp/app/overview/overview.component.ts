@@ -3,7 +3,6 @@ import { Course, CourseScoreCalculationService, CourseService } from 'app/entiti
 import { HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 
-
 @Component({
     selector: 'jhi-overview',
     templateUrl: './overview.component.html',
