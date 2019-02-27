@@ -1,0 +1,221 @@
+<!-- QUIZ EXERCISE ACTIONS START -->
+<div *ngIf="exercise.type === QUIZ">
+    <!-- ACTIONS START -->
+    <div class="btn-group mr-2">
+        <button jhi-exercise-action-button
+                buttonIcon="redo"
+                buttonLabel="Practice"
+                [buttonLoading]="exercise.loading"
+                [smallButton]="smallButtons"
+                *ngIf="isPracticeModeAvailable()"
+                [routerLink]="['/quiz', exercise.id, 'practice']"></button>
+        <button jhi-exercise-action-button
+                buttonIcon="play-circle"
+                buttonLabel="Open Quiz"
+                [buttonLoading]="exercise.loading"
+                [smallButton]="smallButtons"
+                *ngIf="participationStatus() === QUIZ_NOT_STARTED"
+                (click)="startExercise()"></button>
+        <button jhi-exercise-action-button
+                buttonIcon="play-circle"
+                buttonLabel="Start Quiz"
+                [buttonLoading]="exercise.loading"
+                [smallButton]="smallButtons"
+                *ngIf="participationStatus() === QUIZ_UNINITIALIZED"
+                (click)="startExercise()"></button>
+        <button jhi-exercise-action-button
+                buttonIcon="play-circle"
+                buttonLabel="Resume Quiz"
+                *ngIf="participationStatus() === QUIZ_ACTIVE"
+                [buttonLoading]="exercise.loading"
+                [smallButton]="smallButtons"
+                (click)="startExercise()"></button>
+    </div>
+    <!-- ACTIONS END -->
+    <!-- INFORMATION START -->
+    <div class="btn-group" *ngIf="!actionsOnly">
+        <button jhi-exercise-action-button
+                buttonIcon="eye"
+                buttonLabel="View Submission"
+                outlined="true"
+                [buttonLoading]="exercise.loading"
+                [smallButton]="smallButtons"
+                (click)="startExercise()"></button>
+        <button jhi-exercise-action-button
+                buttonIcon="eye"
+                buttonLabel="View Results"
+                outlined="true"
+                [buttonLoading]="exercise.loading"
+                [smallButton]="smallButtons"
+                (click)="startExercise()"></button>
+        <button jhi-exercise-action-button
+                *ngIf="exercise.isAtLeastTutor"
+                buttonIcon="signal"
+                buttonLabel="Statistics"
+                outlined="true"
+                [buttonLoading]="exercise.loading"
+                [smallButton]="smallButtons"
+                routerLink="/quiz/{{exercise.id}}/quiz-point-statistic"></button>
+
+    </div>
+    <!-- INFORMATION END -->
+</div>
+<!-- QUIZ EXERCISE ACTIONS END -->
+
+
+<!-- MODELING EXERCISE ACTIONS START -->
+<div *ngIf="exercise.type === MODELING">
+    <!-- ACTION START -->
+    <div class="btn-group mr-2">
+        <button jhi-exercise-action-button
+                buttonIcon="play-circle"
+                buttonLabel="Start exercise"
+                [buttonLoading]="exercise.loading"
+                [smallButton]="smallButtons"
+                *ngIf="participationStatus() === UNINITIALIZED"
+                (click)="startExercise()"></button>
+        <button jhi-exercise-action-button
+                buttonIcon="play-circle"
+                buttonLabel="Resume exercise"
+                [buttonLoading]="exercise.loading"
+                [smallButton]="smallButtons"
+                *ngIf="participationStatus() === INACTIVE"
+                (click)="resumeExercise()"></button>
+        <button jhi-exercise-action-button
+                buttonIcon="folder-open"
+                buttonLabel="Open modeling editor"
+                [buttonLoading]="exercise.loading"
+                [smallButton]="smallButtons"
+                *ngIf="exercise.participations && exercise.participations.length > 0 && exercise.participations[0].initializationState === 'INITIALIZED'"
+                routerLink="/modeling-editor/{{exercise.participations[0].id}}"></button>
+    </div>
+    <!-- ACTION END -->
+    <!-- INFORMATION START -->
+    <div class="btn-group" *ngIf="!actionsOnly">
+        <div class="btn-group">
+            <button jhi-exercise-action-button
+                    buttonIcon="folder-open"
+                    buttonLabel="Show submission"
+                    outlined="true"
+                    [buttonLoading]="exercise.loading"
+                [smallButton]="smallButtons"
+                    *ngIf="exercise.participations && exercise.participations.length > 0 && exercise.participations[0].initializationState === 'FINISHED'"
+                    routerLink="/modeling-editor/{{exercise.participations[0].id}}"></button>
+        </div>
+    </div>
+    <!-- INFORMATION END -->
+</div>
+<!-- MODELING EXERCISE ACTIONS END -->
+
+
+<!-- PROGRAMMING EXERCISE ACTIONS START -->
+<div *ngIf="exercise.type === PROGRAMMING">
+    <!-- ACTION START -->
+    <div class="btn-group">
+        <button jhi-exercise-action-button
+                buttonIcon="folder-open"
+                buttonLabel="Open exercise"
+                [buttonLoading]="exercise.loading"
+                [smallButton]="smallButtons"
+                *ngIf="isOnlineEditorAllowed() && exercise.participations && exercise.participations.length > 0"
+                routerLink="/editor/{{exercise.participations[0].id}}"></button>
+        <button jhi-exercise-action-button
+                buttonIcon="download"
+                buttonLabel="Clone repository"
+                [buttonLoading]="exercise.loading"
+                [smallButton]="smallButtons"
+                placement="right"
+                container="body"
+                [ngbPopover]="popContent"
+                [autoClose]="'outside'"></button>
+        <ng-template #popContent>
+            <p>Clone your personal repository for this exercise:</p>
+            <pre style="max-width: 100%;" ngxClipboard [cbContent]="exercise.participations[0].repositoryUrl"
+                 (cbOnSuccess)="onCopySuccess()"
+                 (cbOnError)="onCopyFailure()">{{exercise.participations[0].repositoryUrl}}</pre>
+            <p *ngIf="repositoryPassword">Your password is: <code class="password">{{repositoryPassword}}</code>
+                (hover to show)</p>
+            <button ngxClipboard [cbContent]="exercise.participations[0].repositoryUrl"
+                    (cbOnSuccess)="onCopySuccess()" (cbOnError)="onCopyFailure()"
+                    [class.btn-success]="wasCopied"
+                    class="btn btn-primary btn-sm mr-2" type="button" style="min-width: 90px;">{{ wasCopied ?
+                "Copied URL" : "Copy URL"}}
+            </button>
+            <a class="btn btn-primary btn-sm mr-2"
+               [href]="buildSourceTreeUrl(exercise.participations[0].repositoryUrl) | safeUrl">Clone in
+                SourceTree</a>
+            <a href="http://www.sourcetreeapp.com" target="_blank">Atlassian SourceTree</a> is the free Git
+            client for Windows or Mac.
+        </ng-template>
+        <button jhi-exercise-action-button
+                buttonIcon="external-link"
+                buttonLabel="Go to build plan"
+                [buttonLoading]="exercise.loading"
+                [smallButton]="smallButtons"
+                *ngIf="publishBuildPlanUrl() && exercise.participations && exercise.participations.length > 0"
+                routerLink="/editor/{{exercise.participations[0].id}}"></button>
+    </div>
+    <!-- ACTION END -->
+</div>
+<!-- PROGRAMMING EXERCISE ACTIONS END -->
+
+
+<!-- TEXT EXERCISE ACTIONS START -->
+<div *ngIf="exercise.type === TEXT">
+    <!-- ACTIONS START -->
+    <div class="btn-group mr-2">
+        <button jhi-exercise-action-button
+                buttonIcon="play-circle"
+                buttonLabel="Start exercise"
+                [buttonLoading]="exercise.loading"
+                [smallButton]="smallButtons"
+                *ngIf="participationStatus() === UNINITIALIZED"
+                (click)="startExercise()"></button>
+        <button jhi-exercise-action-button
+                buttonIcon="folder-open"
+                buttonLabel="Open text editor"
+                [buttonLoading]="exercise.loading"
+                [smallButton]="smallButtons"
+                *ngIf="participationStatus() === TEXT_EXERCISE && exercise.participations && exercise.participations.length > 0"
+                routerLink="/text/{{exercise.participations[0].id}}"></button>
+    </div>
+    <!-- ACTIONS END -->
+    <!-- INFORMATION START -->
+    <div class="btn-group" *ngIf="!actionsOnly">
+        <button jhi-exercise-action-button
+                buttonIcon="folder-open"
+                buttonLabel="Show submission"
+                outlined="true"
+                [buttonLoading]="exercise.loading"
+                [smallButton]="smallButtons"
+                *ngIf="participationStatus() === TEXT_EXERCISE && exercise.participations && exercise.participations.length > 0"
+                routerLink="/text/{{exercise.participations[0].id}}"></button>
+    </div>
+    <!-- INFORMATION END -->
+</div>
+<!-- TEXT EXERCISE ACTIONS END -->
+
+
+<!-- FILE UPLOAD EXERCISE ACTIONS END -->
+<div *ngIf="exercise.type === FILE_UPLOAD">
+    <!-- ACTIONS START -->
+    <div class="btn-group">
+        <button jhi-exercise-action-button
+                buttonIcon="play-circle"
+                buttonLabel="Start exercise"
+                [buttonLoading]="exercise.loading"
+                *ngIf="participationStatus() === UNINITIALIZED"
+                [smallButton]="smallButtons"
+                (click)="startExercise()"></button>
+        <button jhi-exercise-action-button
+                buttonIcon="play-circle"
+                buttonLabel="Resume exercise"
+                [buttonLoading]="exercise.loading"
+                *ngIf="participationStatus() === INACTIVE && exercise.participations && exercise.participations.length > 0"
+                [smallButton]="smallButtons"
+                (click)="resumeExercise()"></button>
+    </div>
+    <!-- ACTIONS END-->
+</div>
+<!-- FILE UPLOAD EXERCISE ACTIONS END -->
+
