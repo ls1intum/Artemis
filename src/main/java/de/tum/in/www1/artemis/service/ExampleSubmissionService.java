@@ -26,7 +26,7 @@ public class ExampleSubmissionService {
     }
 
     /**
-     * Saves the given example submission and the corresponding model and creates the result if necessary.
+     * Saves the given example submission.
      * Rolls back if inserting fails - occurs for concurrent createExampleSubmission() calls.
      *
      * @param exampleSubmission the submission to save

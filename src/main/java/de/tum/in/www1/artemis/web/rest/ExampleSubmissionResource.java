@@ -33,7 +33,7 @@ public class ExampleSubmissionResource {
     /**
      * POST  /exercises/{exerciseId}/example-submissions : Create a new exampleSubmission.
      *
-     * @param exerciseId     the id of the exercise for which to init a participation
+     * @param exerciseId     the id of the corresponding exercise
      * @param exampleSubmission the exampleSubmission to create
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
@@ -51,10 +51,8 @@ public class ExampleSubmissionResource {
 
     /**
      * PUT  /exercises/{exerciseId}/example-submissions : Updates an existing exampleSubmission.
-     * This function is called by the text editor for saving and submitting text submissions.
-     * The submit specific handling occurs in the ExampleSubmissionService.save() function.
      *
-     * @param exerciseId     the id of the exercise for which to init a participation
+     * @param exerciseId     the id of the corresponding exercise
      * @param exampleSubmission the exampleSubmission to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated exampleSubmission,
      * or with status 400 (Bad Request) if the exampleSubmission is not valid,
