@@ -22,7 +22,7 @@ export class InstructorCourseDashboardComponent implements OnInit {
     stats: StatsForInstructorDashboard;
     dataNumbersForPieChart: number[];
 
-    tutors: TutorLeaderboardData = {};
+    tutorLeaderboardData: TutorLeaderboardData = {};
 
     constructor(
         private courseService: CourseService,
@@ -65,14 +65,14 @@ export class InstructorCourseDashboardComponent implements OnInit {
 
                 for (const result of results) {
                     const tutorId = result.assessor.id;
-                    if (!this.tutors[tutorId]) {
-                        this.tutors[tutorId] = {
+                    if (!this.tutorLeaderboardData[tutorId]) {
+                        this.tutorLeaderboardData[tutorId] = {
                             tutor: result.assessor,
                             nrOfAssessments: 0
                         };
                     }
 
-                    this.tutors[tutorId].nrOfAssessments++;
+                    this.tutorLeaderboardData[tutorId].nrOfAssessments++;
                 }
             }
         );
