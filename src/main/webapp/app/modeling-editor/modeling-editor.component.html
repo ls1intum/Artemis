@@ -1,7 +1,7 @@
 <div class="p-4">
     <jhi-alert></jhi-alert>
 
-    <div class="row" [ngClass]="{'align-items-center': submission?.submitted}">
+    <div class="row" [ngClass]="{'align-items-center': submission?.submitted}" *ngIf="!isExampleSubmission">
         <div class="col-12 col-lg-8">
             <h2>
                 Modeling Editor <span *ngIf="modelingExercise">for Exercise: {{modelingExercise.title}}</span>

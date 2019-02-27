@@ -25,6 +25,9 @@ const ENTITY_STATES = [
     ],
     providers: [
         ModelingEditorService
+    ],
+    exports: [
+        ModelingEditorComponent
     ]
 })
 export class ArTEMiSModelingEditorModule {}
