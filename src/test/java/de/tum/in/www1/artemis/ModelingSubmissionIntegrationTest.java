@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import de.tum.in.www1.artemis.domain.Course;
@@ -9,7 +8,6 @@ import de.tum.in.www1.artemis.domain.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.service.ParticipationService;
@@ -28,6 +26,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.util.ResourceUtils;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.time.ZonedDateTime;
 
@@ -43,10 +42,8 @@ public class ModelingSubmissionIntegrationTest {
   @Autowired UserRepository userRepo;
   @Autowired RequestUtilService request;
   @Autowired DatabaseUtilService database;
-  @Autowired ParticipationRepository participationRepo;
   @Autowired ModelingSubmissionService modelSublissionService;
-  @Autowired ParticipationService partSer;
-  @Autowired private ObjectMapper mapper;
+  @Autowired ParticipationService participationService;
 
   private ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(1);
   private ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(1);
@@ -55,7 +52,8 @@ public class ModelingSubmissionIntegrationTest {
   private Exercise exercise;
 
   @Before
-  public void initTestCase() {
+  public void initTestCase() throws IOException {
+    database.resetFileStorage();
     database.reset();
     database.addUsers();
     database.addCourseWithModelingExercise();

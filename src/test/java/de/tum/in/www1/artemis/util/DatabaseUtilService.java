@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.util;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Participation;
@@ -8,9 +9,15 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.ModelingSubmissionService;
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -24,6 +31,7 @@ public class DatabaseUtilService {
   @Autowired ExerciseRepository exerciseRepo;
   @Autowired UserRepository userRepo;
   @Autowired ParticipationRepository participationRepo;
+  @Autowired ModelingSubmissionService modelSubmissionService;
 
   private static ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(1);
   private static ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(1);
@@ -37,6 +45,11 @@ public class DatabaseUtilService {
     assertThat(courseRepo.findAll()).as("course data has been cleared").isEmpty();
     assertThat(exerciseRepo.findAll()).as("exercise data has been cleared").isEmpty();
     assertThat(userRepo.findAll()).as("user data has been cleared").isEmpty();
+  }
+
+  public void resetFileStorage() throws IOException {
+    Path path = Paths.get(Constants.FILEPATH_COMPASS + File.separator);
+    FileUtils.cleanDirectory(new File(path.toUri()));
   }
 
   public void addParticipationForExercise(Exercise exercise, String login) {
@@ -69,6 +82,8 @@ public class DatabaseUtilService {
         .as("users are correctly stored")
         .containsExactlyInAnyOrder(users);
   }
+
+  public void addModelingSubmissions() {}
 
   public void addCourseWithModelingExercise() {
     Course course =
