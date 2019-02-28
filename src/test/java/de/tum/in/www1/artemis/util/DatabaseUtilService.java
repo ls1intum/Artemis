@@ -1,10 +1,7 @@
 package de.tum.in.www1.artemis.util;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Participation;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
@@ -13,14 +10,16 @@ import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ResourceUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
-import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,7 +36,7 @@ public class DatabaseUtilService {
   private static ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(1);
   private static ZonedDateTime futureFututreTimestamp = ZonedDateTime.now().plusDays(2);
 
-  public void reset() {
+  public void resetDatabase() {
     participationRepo.deleteAll();
     exerciseRepo.deleteAll();
     courseRepo.deleteAll();
@@ -52,7 +51,7 @@ public class DatabaseUtilService {
     FileUtils.cleanDirectory(new File(path.toUri()));
   }
 
-  public void addParticipationForExercise(Exercise exercise, String login) {
+  public Participation addParticipationForExercise(Exercise exercise, String login) {
     User user =
         userRepo
             .findOneByLogin(login)
@@ -65,25 +64,28 @@ public class DatabaseUtilService {
     Participation storedParticipation =
         participationRepo.findOneByExerciseIdAndStudentLogin(exercise.getId(), login);
     assertThat(storedParticipation).isNotNull();
+    return storedParticipation;
   }
 
-  public void addUsers() {
-    User student1 = ModelGenrator.generateActivatedUser("student1");
-    User student2 = ModelGenrator.generateActivatedUser("student2");
-    String[] groups = {"tumuser"};
-    student1.setGroups(Arrays.asList(groups));
-    student2.setGroups(Arrays.asList(groups));
-    groups = new String[] {"tutor"};
-    User tutor1 = ModelGenrator.generateActivatedUser("tutor1");
-    tutor1.setGroups(Arrays.asList(groups));
-    User[] users = {student1, student2, tutor1};
-    userRepo.saveAll(Arrays.asList(users));
+  public void addUsers(int numberOfStudents, int numberOfTutors) {
+    LinkedList<User> students =
+        ModelGenrator.generateActivatedUsers("student", new String[] {"tumuser"}, numberOfStudents);
+    LinkedList<User> tutors =
+        ModelGenrator.generateActivatedUsers("tutor", new String[] {"tutor"}, numberOfStudents);
+    LinkedList<User> usersToAdd = new LinkedList<>();
+    usersToAdd.addAll(students);
+    usersToAdd.addAll(tutors);
+    userRepo.saveAll(usersToAdd);
     assertThat(userRepo.findAll())
         .as("users are correctly stored")
-        .containsExactlyInAnyOrder(users);
+        .containsExactlyInAnyOrder((User[]) usersToAdd.toArray());
   }
 
-  public void addModelingSubmissions() {}
+  public void addModelingSubmissions(ModelingExercise exercise, String model, String login) {
+    Participation participation = addParticipationForExercise(exercise, login);
+    ModelingSubmission submission = new ModelingSubmission(true, model);
+    modelSubmissionService.save(submission, exercise, participation);
+  }
 
   public void addCourseWithModelingExercise() {
     Course course =
@@ -111,5 +113,18 @@ public class DatabaseUtilService {
     assertThat(courseRepoContent.get(0).getExercises().contains(exerciseRepoContent.get(0)))
         .as("course contains the right exercise")
         .isTrue();
+  }
+
+  /**
+   * @param path path relative to the test resources folder
+   * @return string representation of given file
+   * @throws Exception
+   */
+  public String loadFileFromResource(String path) throws Exception {
+    java.io.File file = ResourceUtils.getFile("classpath:" + path);
+    StringBuilder builder = new StringBuilder();
+    Files.lines(file.toPath()).forEach(builder::append);
+    assertThat(builder.toString()).as("model has been correctly read from file").isNotEqualTo("");
+    return builder.toString();
   }
 }

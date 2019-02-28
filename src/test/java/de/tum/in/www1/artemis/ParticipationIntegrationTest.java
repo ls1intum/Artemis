@@ -36,16 +36,16 @@ public class ParticipationIntegrationTest {
 
   @Before
   public void initTestCase() {
-    database.reset();
-    database.addUsers();
+    database.resetDatabase();
+    database.addUsers(2, 0);
     database.addCourseWithModelingExercise();
   }
 
   @Test
   @WithMockUser(username = "student1", roles = "USER")
   public void participateInExercise() throws Exception {
-      Course course = courseRepo.findAll().get(0);
-      Exercise exercise = exerciseRepo.findAll().get(0);
+    Course course = courseRepo.findAll().get(0);
+    Exercise exercise = exerciseRepo.findAll().get(0);
     URI location =
         request.post(
             "/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/participations",

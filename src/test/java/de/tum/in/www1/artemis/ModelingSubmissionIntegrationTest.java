@@ -24,10 +24,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.util.ResourceUtils;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.time.ZonedDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -54,8 +52,8 @@ public class ModelingSubmissionIntegrationTest {
   @Before
   public void initTestCase() throws IOException {
     database.resetFileStorage();
-    database.reset();
-    database.addUsers();
+    database.resetDatabase();
+    database.addUsers(2,0);
     database.addCourseWithModelingExercise();
     course = courseRepo.findAll().get(0);
     exercise = exerciseRepo.findAll().get(0);
@@ -66,14 +64,14 @@ public class ModelingSubmissionIntegrationTest {
   public void modelingSubmissionOfStudent() throws Exception {
     User user = userRepo.findOneByLogin("student1").get();
     database.addParticipationForExercise(exercise, "student1");
-    String model = loadModelFromResource("test-data/model-submission/empty-model.json");
+    String model = database.loadFileFromResource("test-data/model-submission/empty-model.json");
     ModelingSubmission submission = new ModelingSubmission(false, model);
     ModelingSubmission returnedSubmission =
         performInitialModelSubmission(course.getId(), exercise.getId(), submission);
     checkSubmissionCorrectlyStored(
         user.getId(), exercise.getId(), returnedSubmission.getId(), model);
 
-    model = loadModelFromResource("test-data/model-submission/model.54727.json");
+    model = database.loadFileFromResource("test-data/model-submission/model.54727.json");
     submission = new ModelingSubmission(false, model);
     returnedSubmission =
         performUpdateOnModelSubmission(course.getId(), exercise.getId(), submission);
@@ -86,14 +84,14 @@ public class ModelingSubmissionIntegrationTest {
   public void updateModelSubmissionAfterSubmit() throws Exception {
     User user = userRepo.findOneByLogin("student2").get();
     database.addParticipationForExercise(exercise, "student2");
-    String model = loadModelFromResource("test-data/model-submission/model.54727.json");
+    String model = database.loadFileFromResource("test-data/model-submission/model.54727.json");
     ModelingSubmission submission = new ModelingSubmission(true, model);
     ModelingSubmission returnedSubmission =
         performInitialModelSubmission(course.getId(), exercise.getId(), submission);
     checkSubmissionCorrectlyStored(
         user.getId(), exercise.getId(), returnedSubmission.getId(), model);
 
-    model = loadModelFromResource("test-data/model-submission/empty-model.json");
+    model = database.loadFileFromResource("test-data/model-submission/empty-model.json");
     submission = new ModelingSubmission(true, model);
     try {
       returnedSubmission =
@@ -105,13 +103,7 @@ public class ModelingSubmissionIntegrationTest {
     }
   }
 
-  public String loadModelFromResource(String path) throws Exception {
-    java.io.File file = ResourceUtils.getFile("classpath:" + path);
-    StringBuilder builder = new StringBuilder();
-    Files.lines(file.toPath()).forEach(builder::append);
-    assertThat(builder.toString()).as("model has been correctly read from file").isNotEqualTo("");
-    return builder.toString();
-  }
+
 
   private ModelingSubmission performInitialModelSubmission(
       Long courseId, Long exerciseId, ModelingSubmission submission) throws Exception {

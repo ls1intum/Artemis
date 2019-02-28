@@ -17,6 +17,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.io.IOException;
 import java.time.ZonedDateTime;
 
 @RunWith(SpringRunner.class)
@@ -39,11 +40,15 @@ public class ModellingAssessmentIntegrationTest {
   private Exercise exercise;
 
   @Before
-  public void initTestCase() {
-    database.reset();
-    database.addUsers();
+  public void initTestCase() throws IOException {
+    database.resetFileStorage();
+    database.resetDatabase();
+    database.addUsers(2, 1);
 
     course = courseRepo.findAll().get(0);
     exercise = exerciseRepo.findAll().get(0);
   }
+
+
+
 }

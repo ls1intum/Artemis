@@ -5,10 +5,7 @@ import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 public class ModelGenrator {
 
@@ -35,6 +32,17 @@ public class ModelGenrator {
         DiagramType.CLASS,
         "",
         "");
+  }
+
+  public static LinkedList<User> generateActivatedUsers(
+      String loginPrefix, String[] groups, int amount) {
+    LinkedList<User> generatedUsers = new LinkedList<>();
+    for (int i = 1; i <= amount; i++) {
+      User student = ModelGenrator.generateActivatedUser(loginPrefix + i);
+      student.setGroups(Arrays.asList(groups));
+      generatedUsers.add(student);
+    }
+    return generatedUsers;
   }
 
   public static User generateActivatedUser(String login) {
