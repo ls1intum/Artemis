@@ -4,6 +4,7 @@ import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -152,8 +153,21 @@ public class ProgrammingExerciseService {
         programmingExercise.setSolutionRepositoryUrl(versionControlService.get().getCloneURL(projectKey, solutionRepoName).toString());
         programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneURL(projectKey, testRepoName).toString());
 
-        //save to get the id required for the webhook
+        // Save participations before saving programmingExercise to avoid an error where the programmingExercise could not be saved due to the missing participation
+        programmingExercise.setSolutionParticipation(participationRepository.save(programmingExercise.getSolutionParticipation()));
+        programmingExercise.setTemplateParticipation(participationRepository.save(programmingExercise.getTemplateParticipation()));
+        programmingExercise.getSolutionParticipation().setInitializationState(InitializationState.INITIALIZED);
+        programmingExercise.getTemplateParticipation().setInitializationState(InitializationState.INITIALIZED);
+        programmingExercise.getSolutionParticipation().setInitializationDate(ZonedDateTime.now());
+        programmingExercise.getTemplateParticipation().setInitializationDate(ZonedDateTime.now());
+
+        // save to get the id required for the webhook
         ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
+
+        // TODO: This seems to break jackson as we have an infinite recursion loop (programmingExercise -> participation -> programmingExercise -> ...), check if it is fine without this
+        // programmingExercise.getSolutionParticipation().setExercise(result);
+        // programmingExercise.getTemplateParticipation().setExercise(result);
+
         versionControlService.get().addWebHook(testsRepoUrl, ARTEMIS_BASE_URL + TEST_CASE_CHANGED_API_PATH + programmingExercise.getId(), "ArTEMiS Tests WebHook");
         return result;
     }
