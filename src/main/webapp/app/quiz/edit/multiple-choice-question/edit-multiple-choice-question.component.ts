@@ -6,7 +6,6 @@ import { AceEditorComponent } from 'ng2-ace-editor';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
 import { MarkdownEditorComponent } from 'app/markdown-editor';
-import { BDelegate } from 'app/markdown-editor';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import {HintCommand} from 'app/markdown-editor/specialCommands/hint.command';
 import {CorrectOptionCommand} from 'app/markdown-editor/specialCommands/correctOptionCommand';
@@ -23,7 +22,7 @@ import {SpecialCommand} from 'app/markdown-editor/specialCommands/specialCommand
     templateUrl: './edit-multiple-choice-question.component.html',
     providers: [ArtemisMarkdown]
 })
-export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, BDelegate {
+export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges {
     @ViewChild('questionEditor')
     private questionEditor: AceEditorComponent;
 
@@ -55,14 +54,13 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, B
     incorrectCommand = new IncorrectOptionCommand();
     explanationCommand = new ExplanationCommand();
 
-    commandMultipleChoiceQuestion: SpecialCommand[] = [this.correctCommand, this.incorrectCommand, this.explanationCommand, this.hintCommand];
+    commandMultipleChoiceQuestions: SpecialCommand[] = [this.correctCommand, this.incorrectCommand, this.explanationCommand, this.hintCommand];
 
     constructor(private artemisMarkdown: ArtemisMarkdown, private modalService: NgbModal) {}
 
     ngOnInit(): void {
         this.showPreview = false;
         this.setupQuestionEditor();
-        this.commandMultipleChoiceQuestion.forEach(specialcommand => specialcommand.setQuestion(this.question));
     }
 
     /**
@@ -176,7 +174,41 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, B
     togglePreview(): void {
         this.showPreview = !this.showPreview;
         console.log('inform MarkdownEditor about command', this.markdownEditor);
-        //this.markdownEditor.searchForTheParsingCommand();
+        this.markdownEditor.parse();
+        // TODO: reset the current question
+    }
+
+    currentAnswerOption: AnswerOption;
+
+    specialCommmandFound(textLine: string, specialCommand: SpecialCommand) {
+        if (specialCommand instanceof CorrectOptionCommand) {
+            this.currentAnswerOption = new AnswerOption();
+            this.currentAnswerOption.isCorrect = true;
+            this.currentAnswerOption.text = textLine;
+            this.question.answerOptions.push(this.currentAnswerOption)
+        }
+        else if (specialCommand instanceof IncorrectOptionCommand) {
+            this.currentAnswerOption = new AnswerOption();
+            this.currentAnswerOption.isCorrect = false;
+            this.currentAnswerOption.text = textLine;
+            this.question.answerOptions.push(this.currentAnswerOption)
+        }
+        else if (specialCommand instanceof ExplanationCommand) {
+            if (this.currentAnswerOption != null) {
+                this.currentAnswerOption.explanation = textLine;
+            }
+            else {
+                this.question.explanation = textLine;
+            }
+        }
+        else if (specialCommand instanceof HintCommand) {
+            if (this.currentAnswerOption != null) {
+                this.currentAnswerOption.hint = textLine;
+            }
+            else {
+                this.question.hint = textLine;
+            }
+        }
     }
 
     handleResponse(response: any) {

@@ -1,15 +1,7 @@
-import { Component } from '@angular/core';
 import { SpecialCommand } from 'app/markdown-editor/specialCommands/specialCommand';
-import { MarkDownElement, Question} from 'app/entities/question';
-import { ArtemisMarkdown } from '../../components/util/markdown.service';
-
-@Component({
-    providers: [ArtemisMarkdown]
-})
 
 export class ExplanationCommand extends SpecialCommand {
-    buttonTitle = 'Explanation';
-    identifier = '[-e]';
+
     buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.addExplanation';
 
     execute(): void {
@@ -23,10 +15,7 @@ export class ExplanationCommand extends SpecialCommand {
         this.editor.selection.setRange(range);
     }
 
-    parsing(text: string): void {
-        const questionParts = text.split(/\[\]|\[ \]|\[x\]|\[X\]/g);
-        const questionText = questionParts[0];
-
-        this.artemisMarkdown.parseTextHintExplanation(questionText, this.question);
+    getIdentifier(): string {
+        return '[-e]';
     }
 }

@@ -1,6 +1,14 @@
 <div>
     <div class="tool-bar">
-        <ng-container *ngFor="let command of commands">
+        <ng-container *ngFor="let command of defaultCommands">
+            <div class="btn btn-group-sm btn-outline-secondary mr-1"
+                 (click)="command.execute()">
+                {{command.buttonTranslationString | translate}}
+            </div>
+        </ng-container>
+    </div>
+    <div class="tool-bar" *ngIf="specialCommands && specialCommands.length != 0">
+        <ng-container *ngFor="let command of specialCommands">
             <div class="btn btn-group-sm btn-outline-secondary mr-1"
                  (click)="command.execute()">
                 {{command.buttonTranslationString | translate}}
@@ -9,5 +17,7 @@
     </div>
     <ace-editor #aceEditor [mode]="'markdown'" [autoUpdateContent]="questionEditorAutoUpdate" [(text)]="defaultText"
                 style="min-height: 200px; width:100%; overflow: auto;" class="form-control"></ace-editor>
-</div>
+    <!-- TODO we need a preview button here, that can be deactivated by the client.
+              This preview button simply invokes the parse() function and switches to the preview mode
+              where the text is displayed as html in a simple div. -->
 </div>

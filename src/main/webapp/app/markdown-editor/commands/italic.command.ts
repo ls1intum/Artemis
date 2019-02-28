@@ -2,7 +2,6 @@ import { Command } from './command';
 
 export class ItalicCommand extends Command {
 
-    buttonTitle = 'Italic';
     buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.italic';
 
     execute(): void {

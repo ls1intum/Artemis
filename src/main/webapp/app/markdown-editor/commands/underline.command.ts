@@ -2,7 +2,6 @@ import { Command } from './command';
 
 export class UnderlineCommand extends Command {
 
-    buttonTitle = 'Underline';
     buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.underline';
 
     execute(): void {

@@ -7,16 +7,7 @@ import { BoldCommand } from 'app/markdown-editor/commands/bold.command';
 import { ItalicCommand } from 'app/markdown-editor/commands/italic.command';
 import { UnderlineCommand } from 'app/markdown-editor/commands/underline.command';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-import { HintCommand } from 'app/markdown-editor/specialCommands/hint.command';
-import { CorrectOptionCommand } from 'app/markdown-editor/specialCommands/correctOptionCommand';
-import { IncorrectOptionCommand } from 'app/markdown-editor/specialCommands/incorrectOptionCommand';
-import { ExplanationCommand } from 'app/markdown-editor/specialCommands/explanation.command';
-
-export interface BDelegate {
-    togglePreview():void;
-    parseMarkdown(text: string): void;
-    handleResponse(response: any): void;
-}
+import { SpecialCommand } from 'app/markdown-editor/specialCommands/specialCommand';
 
 @Component({
     selector: 'jhi-markdown-editor',
@@ -28,11 +19,11 @@ export class MarkdownEditorComponent implements AfterViewInit, OnChanges, OnInit
     @ViewChild('aceEditor')
     aceEditorContainer: AceEditorComponent;
 
-    @Input() delegate: BDelegate;
-
     @Input() defaultText: string;
 
     @Output() defaultTextChanged = new EventEmitter();
+
+    @Output() textWithSpecialCommandFound = new EventEmitter<[string, SpecialCommand]>();
 
     questionEditorText = '';
     questionEditorAutoUpdate = true;
@@ -43,19 +34,27 @@ export class MarkdownEditorComponent implements AfterViewInit, OnChanges, OnInit
 
     constructor(private artemisMarkdown: ArtemisMarkdown) {}
 
-    commands: Command[];
     defaultCommands: Command[] = [new BoldCommand(), new ItalicCommand(), new UnderlineCommand()];
-    @Input() additionalCommands: Command[];
+    
+    addCommand(command: Command) {
+        this.defaultCommands.push(command);
+    }
+    
+    removeCommand(command: Command) {
+        // TODO: remove this command from the default commands
+    }
+    
+    
+    
+    @Input() specialCommands: SpecialCommand[];
 
     ngAfterViewInit(): void {
         requestAnimationFrame(this.setupMarkdownEditor.bind(this));
     }
 
     ngOnInit(): void {
-        this.commands = [...this.defaultCommands, ...this.additionalCommands];
-        this.commands.forEach(command => {
+        [...this.defaultCommands, ...this.specialCommands].forEach(command => {
             command.setEditor(this.aceEditorContainer.getEditor());
-            command.setArtemisMarkdownService(this.artemisMarkdown);
         });
     }
 
@@ -83,7 +82,7 @@ export class MarkdownEditorComponent implements AfterViewInit, OnChanges, OnInit
         this.aceEditorContainer.getEditor().setHighlightActiveLine(false);
         this.aceEditorContainer.getEditor().setShowPrintMargin(false);
         this.aceEditorContainer.getEditor().clearSelection();
-        this.defaultText;
+
         this.aceEditorContainer.getEditor().on(
             'blur',
             () => {
@@ -101,6 +100,34 @@ export class MarkdownEditorComponent implements AfterViewInit, OnChanges, OnInit
         /*for (const element of this.commands){
              element.parsing(text);
         }*/
+    }
+
+
+    // TODO this method should be invoked by the Preview button of the Markdown Editor (in case it is active) and the client should be able to invoke it
+    parse(): void {
+        
+        if (this.specialCommands == null || this.specialCommands.length === 0) {
+            // we are already done, TODO we just need to invoke the standard markdown --> html parser
+            return;
+        }
+        
+        const text = this.defaultText;
+        const textLines = text.split("\n");
+        for (const textLine of textLines) {
+
+            for (const specialCommand of this.specialCommands) {
+                if (textLine.indexOf(specialCommand.getIdentifier()) != -1
+                    || textLine.indexOf(specialCommand.getIdentifier().toLowerCase()) != -1
+                    || textLine.indexOf(specialCommand.getIdentifier().toUpperCase()) != -1) {
+
+                    // TODO one possible extension would be to search for opening and closing tags and send all text in-between (potentially multiple lines) into the emitter
+                    this.textWithSpecialCommandFound.emit(
+                        [textLine.replace(specialCommand.getIdentifier(), ''), specialCommand]
+                    );
+                    break;
+                }
+            }
+        }
     }
 
 }

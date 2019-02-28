@@ -2,7 +2,6 @@ import { Command } from './command';
 
 export class BoldCommand extends Command {
 
-    buttonTitle = 'Bold';
     buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.bold';
 
     execute(): void {

@@ -49,7 +49,8 @@
         </div>
         <div class="markupEditorArea">
             <div class="question-content">
-                <jhi-markdown-editor #markdownEditor [defaultText]="questionEditorText" (defaultTextChanged)="parseMarkdown($event)" [delegate]="this" [additionalCommands]="commandMultipleChoiceQuestion"></jhi-markdown-editor>
+                <jhi-markdown-editor #markdownEditor [defaultText]="questionEditorText" (defaultTextChanged)="parseMarkdown($event)"
+                                     [specialCommands]="commandMultipleChoiceQuestions" (textWithSpecialCommandFound)="specialCommmandFound($event[0], $event[1])"></jhi-markdown-editor>
             </div>
             <hr/>
             <div class="toolbar">
