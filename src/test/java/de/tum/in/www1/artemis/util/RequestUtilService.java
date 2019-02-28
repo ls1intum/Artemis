@@ -35,14 +35,49 @@ public class RequestUtilService {
                     .with(csrf()))
             .andExpect(status().is(expectedStatus.value()))
             .andReturn();
-    if (expectedStatus != HttpStatus.CREATED) {
+    if (!expectedStatus.is2xxSuccessful()) {
       assertThat(res.getResponse().containsHeader("location"))
-          .as("location header set on POST request")
+          .as("no location header on failed request")
           .isFalse();
       return null;
     }
     assertThat(res.getResponse().containsHeader("location")).isTrue();
     return new URI(res.getResponse().getHeader("location"));
+  }
+
+  public <T, R> R postWithResponseBody(
+      String path, T body, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
+    String jsonBody = mapper.writeValueAsString(body);
+    MvcResult res =
+        mvc.perform(
+                MockMvcRequestBuilders.post(new URI(path))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(jsonBody)
+                    .with(csrf()))
+            .andExpect(status().is(expectedStatus.value()))
+            .andReturn();
+    if (!expectedStatus.is2xxSuccessful()) {
+      assertThat(res.getResponse().containsHeader("location"))
+          .as("no location header on failed request")
+          .isFalse();
+      return null;
+    }
+    return mapper.readValue(res.getResponse().getContentAsString(), responseType);
+  }
+
+  public <T, R> R putWithResponseBody(
+      String path, T body, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
+    String jsonBody = mapper.writeValueAsString(body);
+    MvcResult res =
+        mvc.perform(
+                MockMvcRequestBuilders.put(new URI(path))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(jsonBody)
+                    .with(csrf()))
+            .andExpect(status().is(expectedStatus.value()))
+            .andReturn();
+
+    return mapper.readValue(res.getResponse().getContentAsString(), responseType);
   }
 
   public <T> void put(String path, T body, HttpStatus expectedStatus) throws Exception {
@@ -66,7 +101,6 @@ public class RequestUtilService {
           .isEqualTo("application/problem+json"); // TODO MJ more sufficient check?
       return null;
     }
-
     return mapper.readValue(res.getResponse().getContentAsString(), responseType);
   }
 

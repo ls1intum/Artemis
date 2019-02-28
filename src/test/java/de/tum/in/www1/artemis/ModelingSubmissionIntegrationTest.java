@@ -1,14 +1,21 @@
 package de.tum.in.www1.artemis;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ModelingSubmission;
-import de.tum.in.www1.artemis.domain.Participation;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.ModelingSubmissionService;
+import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
+import org.assertj.core.api.Fail;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -21,7 +28,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.util.ResourceUtils;
 
-import java.net.URI;
 import java.nio.file.Files;
 import java.time.ZonedDateTime;
 
@@ -37,42 +43,69 @@ public class ModelingSubmissionIntegrationTest {
   @Autowired UserRepository userRepo;
   @Autowired RequestUtilService request;
   @Autowired DatabaseUtilService database;
+  @Autowired ParticipationRepository participationRepo;
+  @Autowired ModelingSubmissionService modelSublissionService;
+  @Autowired ParticipationService partSer;
+  @Autowired private ObjectMapper mapper;
 
   private ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(1);
   private ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(1);
   private ZonedDateTime futureFututreTimestamp = ZonedDateTime.now().plusDays(2);
+  private Course course;
+  private Exercise exercise;
 
   @Before
   public void initTestCase() {
     database.reset();
     database.addUsers();
     database.addCourseWithModelingExercise();
+    course = courseRepo.findAll().get(0);
+    exercise = exerciseRepo.findAll().get(0);
   }
 
   @Test
   @WithMockUser(value = "student1", roles = "USER")
   public void modelingSubmissionOfStudent() throws Exception {
-    Course course = courseRepo.findAll().get(0);
-    Exercise exercise = exerciseRepo.findAll().get(0);
+    User user = userRepo.findOneByLogin("student1").get();
     database.addParticipationForExercise(exercise, "student1");
     String model = loadModelFromResource("test-data/model-submission/empty-model.json");
     ModelingSubmission submission = new ModelingSubmission(false, model);
-    URI submissionLocation =
-        request.post(
-            "/api/courses/"
-                + course.getId()
-                + "/exercises/"
-                + exercise.getId()
-                + "/modeling-submissions",
-            submission,
-            HttpStatus.OK);
-    Participation storedParticipation =
-        request.get(submissionLocation.toString(), HttpStatus.OK, Participation.class);
-    assertThat(storedParticipation.findLatestModelingSubmission().getModel())
-        .as("model correctly stored")
-        .isEqualTo(model);
+    ModelingSubmission returnedSubmission =
+        performInitialModelSubmission(course.getId(), exercise.getId(), submission);
+    checkSubmissionCorrectlyStored(
+        user.getId(), exercise.getId(), returnedSubmission.getId(), model);
 
     model = loadModelFromResource("test-data/model-submission/model.54727.json");
+    submission = new ModelingSubmission(false, model);
+    returnedSubmission =
+        performUpdateOnModelSubmission(course.getId(), exercise.getId(), submission);
+    checkSubmissionCorrectlyStored(
+        user.getId(), exercise.getId(), returnedSubmission.getId(), model);
+  }
+
+
+  @Test
+  @WithMockUser(value = "student1", roles = "USER")
+  public void updateModelSubmissionAfterSubmit() throws Exception {
+    User user = userRepo.findOneByLogin("student1").get();
+    database.addParticipationForExercise(exercise, "student1");
+    String model = loadModelFromResource("test-data/model-submission/model.54727.json");
+    ModelingSubmission submission = new ModelingSubmission(true, model);
+    ModelingSubmission returnedSubmission =
+        performInitialModelSubmission(course.getId(), exercise.getId(), submission);
+    checkSubmissionCorrectlyStored(
+        user.getId(), exercise.getId(), returnedSubmission.getId(), model);
+
+    model = loadModelFromResource("test-data/model-submission/empty-model.json");
+    submission = new ModelingSubmission(true, model);
+    try {
+      returnedSubmission =
+          performUpdateOnModelSubmission(course.getId(), exercise.getId(), submission);
+      checkSubmissionCorrectlyStored(
+          user.getId(), exercise.getId(), returnedSubmission.getId(), model);
+    } catch (Exception e) {
+      Fail.fail("update on submitted ModelingSubmission worked");
+    }
   }
 
   public String loadModelFromResource(String path) throws Exception {
@@ -81,5 +114,31 @@ public class ModelingSubmissionIntegrationTest {
     Files.lines(file.toPath()).forEach(builder::append);
     assertThat(builder.toString()).as("model has been correctly read from file").isNotEqualTo("");
     return builder.toString();
+  }
+
+  private ModelingSubmission performInitialModelSubmission(
+      Long courseId, Long exerciseId, ModelingSubmission submission) throws Exception {
+    return request.postWithResponseBody(
+        "/api/courses/" + courseId + "/exercises/" + exerciseId + "/modeling-submissions",
+        submission,
+        ModelingSubmission.class,
+        HttpStatus.OK);
+  }
+
+  private ModelingSubmission performUpdateOnModelSubmission(
+      Long courseId, Long exerciseId, ModelingSubmission submission) throws Exception {
+    return request.putWithResponseBody(
+        "/api/courses/" + courseId + "/exercises/" + exerciseId + "/modeling-submissions",
+        submission,
+        ModelingSubmission.class,
+        HttpStatus.OK);
+  }
+
+  private void checkSubmissionCorrectlyStored(
+      Long studentId, Long exerciseId, Long submissionId, String sentModel) throws Exception {
+    JsonObject storedModel = modelSublissionService.getModel(exerciseId, studentId, submissionId);
+    JsonParser parser = new JsonParser();
+    JsonObject sentModelObject = parser.parse(sentModel).getAsJsonObject();
+    assertThat(storedModel).as("model correctly stored").isEqualTo(sentModelObject);
   }
 }
