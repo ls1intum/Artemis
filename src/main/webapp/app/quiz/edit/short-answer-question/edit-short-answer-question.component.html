@@ -93,8 +93,8 @@
                             <fa-icon icon="bars" class="drag-handle" size="lg"></fa-icon>
                         </div>
                         <div class="mapping-numbers-wrapper">
-                            <div *ngFor="let mapping of getMappingsForSolution(solution)" [ngClass]="'mapping-number mapping-color-' + (getMappingIndex(mapping) % 8)">
-                                {{getMappingIndex(mapping)}}
+                            <div *ngFor="let mapping of getMappingsForSolution(solution)" [ngClass]="'mapping-number mapping-color-' + (mapping.spot.spotNr % 8)">
+                                {{mapping.spot.spotNr}}
                                 <div class="unlink-mapping" (click)="deleteMapping(mapping)">
                                     <fa-icon icon="unlink" size="lg"></fa-icon>
                                 </div>

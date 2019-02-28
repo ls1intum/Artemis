@@ -366,6 +366,9 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         this.numberOfSpot++;
         this.firstPressed++;
 
+        // is either '' or the question in the first line
+        this.questionText = this.shortAnswerQuestionUtil.firstLineOfQuestion(editor.getValue());
+        console.log(this.questionText);
         this.textWithoutSpots = this.shortAnswerQuestionUtil.getTextWithoutSpots(editor.getValue().split(/\[-option /g)[0]);
 
         // separates the text into parts that come before the spot tag
