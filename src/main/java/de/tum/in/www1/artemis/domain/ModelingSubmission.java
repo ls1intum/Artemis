@@ -1,9 +1,11 @@
 package de.tum.in.www1.artemis.domain;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.time.ZonedDateTime;
 import java.util.Objects;
 
 /**
@@ -23,6 +25,14 @@ public class ModelingSubmission extends Submission implements Serializable {
     @Lob
     private String explanationText;
 
+    public ModelingSubmission() {
+    }
+
+    public ModelingSubmission(Boolean submitted, String  model) {
+        super(submitted);
+        this.model = model;
+    }
+
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 
     public String getModel() {
@@ -34,16 +44,6 @@ public class ModelingSubmission extends Submission implements Serializable {
         return this;
     }
 
-    public ModelingSubmission explanationText(String explanationText) {
-        this.explanationText = explanationText;
-        return this;
-    }
-
-
-    public ModelingSubmission() {
-    }
-
-
     public void setModel(String model) {
         this.model = model;
     }
@@ -52,7 +52,10 @@ public class ModelingSubmission extends Submission implements Serializable {
         return explanationText;
     }
 
-
+    public ModelingSubmission explanationText(String explanationText) {
+        this.explanationText = explanationText;
+        return this;
+    }
 
     public void setExplanationText(String explanationText) {
         this.explanationText = explanationText;
