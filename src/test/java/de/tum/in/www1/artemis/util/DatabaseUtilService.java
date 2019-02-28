@@ -9,7 +9,6 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.service.compass.assessment.ModelElementAssessment;
 import org.apache.commons.io.FileUtils;
-import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
@@ -23,10 +22,10 @@ import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/** Service responsible for initializing the database with specific testdata for a testscenario */
 @Service
 public class DatabaseUtilService {
   @Autowired CourseRepository courseRepo;
@@ -57,25 +56,15 @@ public class DatabaseUtilService {
     FileUtils.cleanDirectory(new File(path.toUri()));
   }
 
-  public Participation addParticipationForExercise(Exercise exercise, String login) {
-    User user =
-        userRepo
-            .findOneByLogin(login)
-            .orElseThrow(
-                () -> new IllegalArgumentException("Provided login does not exist in database"));
-    Participation participation = new Participation();
-    participation.setStudent(user);
-    participation.setExercise(exercise);
-    participationRepo.save(participation);
-    Participation storedParticipation =
-        participationRepo.findOneByExerciseIdAndStudentLogin(exercise.getId(), login);
-    assertThat(storedParticipation).isNotNull();
-
-    return participationRepo
-        .findByIdWithEagerSubmissionsAndEagerResultsAndEagerAssessors(storedParticipation.getId())
-        .get();
-  }
-
+  /**
+   * Adds the provided number of students and tutors into the user repository. Students login is a
+   * concatenation of the prefix "student" and a number counting from 1 to numberOfStudents Tutors
+   * login is a concatenation of the prefix "tutor" and a number counting from 1 to numberOfStudents
+   * Tutors are all in the "tutor" group and students in the "tumuser" group
+   *
+   * @param numberOfStudents
+   * @param numberOfTutors
+   */
   public void addUsers(int numberOfStudents, int numberOfTutors) {
     LinkedList<User> students =
         ModelGenrator.generateActivatedUsers("student", new String[] {"tumuser"}, numberOfStudents);
@@ -93,20 +82,29 @@ public class DatabaseUtilService {
         .containsAnyOf(usersToAdd.toArray(new User[0]));
   }
 
-  public ModelingSubmission addModelingSubmissionForAssessment(
-      ModelingExercise exercise, String model, String login) {
-    Participation participation = addParticipationForExercise(exercise, login);
-    ModelingSubmission submission = new ModelingSubmission(true, model);
-    participation.setSubmissions(
-        (Set<Submission>) Hibernate.unproxy(participation.getSubmissions()));
-    submission = modelSubmissionService.save(submission, exercise, participation);
-    Result result = new Result();
-    result.setSubmission(submission);
-    submission.setResult(result);
-    submission.getParticipation().addResult(result);
-    resultRepo.save(result);
-    modelingSubmissionRepo.save(submission);
-    return submission;
+  /**
+   * Stores participation of the user with the given login for the given exercise
+   *
+   * @param exercise
+   * @param login login of the user
+   * @return eagerly loaded representation of the participation object stored in the database
+   */
+  public Participation addParticipationForExercise(Exercise exercise, String login) {
+    User user =
+        userRepo
+            .findOneByLogin(login)
+            .orElseThrow(
+                () -> new IllegalArgumentException("Provided login does not exist in database"));
+    Participation participation = new Participation();
+    participation.setStudent(user);
+    participation.setExercise(exercise);
+    participationRepo.save(participation);
+    Participation storedParticipation =
+        participationRepo.findOneByExerciseIdAndStudentLogin(exercise.getId(), login);
+    assertThat(storedParticipation).isNotNull();
+    return participationRepo
+        .findByIdWithEagerSubmissionsAndEagerResultsAndEagerAssessors(storedParticipation.getId())
+        .get();
   }
 
   public void addCourseWithModelingExercise() {
@@ -138,6 +136,36 @@ public class DatabaseUtilService {
   }
 
   /**
+   * Stores for the given model a submission of the user and initiates the corresponding Result
+   *
+   * @param exercise exercise the submission belongs to
+   * @param model ModelingSubmission json as string contained in the submission
+   * @param login of the user the submission belongs to
+   * @return submission stored in the modelingSubmissionRepository
+   */
+  public ModelingSubmission addModelingSubmissionForAssessment(
+      ModelingExercise exercise, String model, String login) {
+    Participation participation = addParticipationForExercise(exercise, login);
+    ModelingSubmission submission = new ModelingSubmission(true, model);
+    submission = modelSubmissionService.save(submission, exercise, participation);
+    Result result = new Result();
+    result.setSubmission(submission);
+    submission.setResult(result);
+    submission.getParticipation().addResult(result);
+    resultRepo.save(result);
+    modelingSubmissionRepo.save(submission);
+    return submission;
+  }
+
+  public void checkSubmissionCorrectlyStored(
+      Long studentId, Long exerciseId, Long submissionId, String sentModel) throws Exception {
+    JsonObject storedModel = modelSubmissionService.getModel(exerciseId, studentId, submissionId);
+    JsonParser parser = new JsonParser();
+    JsonObject sentModelObject = parser.parse(sentModel).getAsJsonObject();
+    assertThat(storedModel).as("model correctly stored").isEqualTo(sentModelObject);
+  }
+
+  /**
    * @param path path relative to the test resources folder
    * @return string representation of given file
    * @throws Exception
@@ -157,13 +185,5 @@ public class DatabaseUtilService {
     return mapper.readValue(
         fileContent,
         mapper.getTypeFactory().constructCollectionType(List.class, ModelElementAssessment.class));
-  }
-
-  public void checkSubmissionCorrectlyStored(
-      Long studentId, Long exerciseId, Long submissionId, String sentModel) throws Exception {
-    JsonObject storedModel = modelSubmissionService.getModel(exerciseId, studentId, submissionId);
-    JsonParser parser = new JsonParser();
-    JsonObject sentModelObject = parser.parse(sentModel).getAsJsonObject();
-    assertThat(storedModel).as("model correctly stored").isEqualTo(sentModelObject);
   }
 }
