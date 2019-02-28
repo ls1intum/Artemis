@@ -320,7 +320,7 @@ public class ModelingExerciseResource {
      * Returns the data needed for the assessment editor, which includes the modelingExercise, result, modelingSubmission
      * and the assessments if the submission was already submitted.
      *
-     * @param exerciseId the participationId for which to find the data for the modeling editor
+     * @param exerciseId the participationId for which to find the data for the modeling editormodelingSubmission
      * @param submissionId the participationId for which to find the data for the modeling editor
      * @return the ResponseEntity with json as body
      */
@@ -328,6 +328,7 @@ public class ModelingExerciseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional
     //TODO: return a proper object here, e.g. modelingSubmission and fix the REST URL
+    //TODO MJ Move into ModelingassessmentResource ??
     public ResponseEntity<JsonNode> getDataForAssessmentEditor(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
         Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findById(exerciseId);
         if (!modelingExercise.isPresent()) {
