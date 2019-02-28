@@ -83,12 +83,11 @@ public class ModelingSubmissionIntegrationTest {
         user.getId(), exercise.getId(), returnedSubmission.getId(), model);
   }
 
-
   @Test
-  @WithMockUser(value = "student1", roles = "USER")
+  @WithMockUser(value = "student2", roles = "USER")
   public void updateModelSubmissionAfterSubmit() throws Exception {
-    User user = userRepo.findOneByLogin("student1").get();
-    database.addParticipationForExercise(exercise, "student1");
+    User user = userRepo.findOneByLogin("student2").get();
+    database.addParticipationForExercise(exercise, "student2");
     String model = loadModelFromResource("test-data/model-submission/model.54727.json");
     ModelingSubmission submission = new ModelingSubmission(true, model);
     ModelingSubmission returnedSubmission =
@@ -103,8 +102,8 @@ public class ModelingSubmissionIntegrationTest {
           performUpdateOnModelSubmission(course.getId(), exercise.getId(), submission);
       checkSubmissionCorrectlyStored(
           user.getId(), exercise.getId(), returnedSubmission.getId(), model);
-    } catch (Exception e) {
       Fail.fail("update on submitted ModelingSubmission worked");
+    } catch (Exception e) {
     }
   }
 

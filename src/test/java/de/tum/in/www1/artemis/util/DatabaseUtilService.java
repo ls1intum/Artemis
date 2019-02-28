@@ -30,8 +30,9 @@ public class DatabaseUtilService {
   private static ZonedDateTime futureFututreTimestamp = ZonedDateTime.now().plusDays(2);
 
   public void reset() {
-    courseRepo.deleteAll();
+    participationRepo.deleteAll();
     exerciseRepo.deleteAll();
+    courseRepo.deleteAll();
     userRepo.deleteAll();
     assertThat(courseRepo.findAll()).as("course data has been cleared").isEmpty();
     assertThat(exerciseRepo.findAll()).as("exercise data has been cleared").isEmpty();
@@ -48,7 +49,8 @@ public class DatabaseUtilService {
     participation.setStudent(user);
     participation.setExercise(exercise);
     participationRepo.save(participation);
-    Participation storedParticipation = participationRepo.findOneByExerciseIdAndStudentLogin(exercise.getId(),login);
+    Participation storedParticipation =
+        participationRepo.findOneByExerciseIdAndStudentLogin(exercise.getId(), login);
     assertThat(storedParticipation).isNotNull();
   }
 
