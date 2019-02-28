@@ -1,4 +1,9 @@
-import { ModelElementType } from 'app/entities/modeling-assessment/modeling-assessment.model';
+export const enum ModelElementType {
+    CLASS = 'class',
+    ATTRIBUTE = 'attribute',
+    METHOD = 'method',
+    RELATIONSHIP = 'relationship'
+}
 
 export interface UMLElement {
     id: string;
