@@ -1,4 +1,6 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { JhiLanguageService } from 'ng-jhipster';
+import { JhiLanguageHelper } from 'app/core';
 
 import { ArTEMiSSharedModule } from '../../shared';
 import { JhiAlertService } from 'ng-jhipster';
@@ -27,7 +29,7 @@ import { QuizReEvaluateService } from './quiz-re-evaluate.service';
         QuizReEvaluateWarningComponent
     ],
     entryComponents: [HomeComponent, QuizComponent, QuizExerciseComponent, JhiMainComponent, QuizReEvaluateWarningComponent],
-    providers: [RepositoryService, JhiAlertService, QuizReEvaluateService],
+    providers: [RepositoryService, JhiAlertService, QuizReEvaluateService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     exports: [
         QuizReEvaluateComponent,
         ReEvaluateMultipleChoiceQuestionComponent,
@@ -36,4 +38,12 @@ import { QuizReEvaluateService } from './quiz-re-evaluate.service';
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
-export class ArTEMiSQuizReEvaluateModule {}
+export class ArTEMiSQuizReEvaluateModule {
+    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
+        this.languageHelper.language.subscribe((languageKey: string) => {
+            if (languageKey !== undefined) {
+                this.languageService.changeLanguage(languageKey);
+            }
+        });
+    }
+}
