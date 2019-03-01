@@ -16,6 +16,8 @@ import {
     ParticipationService
 } from './';
 import { SortByModule } from 'app/components/pipes';
+import { JhiLanguageService } from 'ng-jhipster';
+import { JhiLanguageHelper } from 'app/core';
 
 const ENTITY_STATES = [
     ...participationRoute,
@@ -48,7 +50,16 @@ const ENTITY_STATES = [
     providers: [
         ParticipationService,
         ParticipationPopupService,
+        { provide: JhiLanguageService, useClass: JhiLanguageService }
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
-export class ArTEMiSParticipationModule {}
+export class ArTEMiSParticipationModule {
+    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
+        this.languageHelper.language.subscribe((languageKey: string) => {
+            if (languageKey !== undefined) {
+                this.languageService.changeLanguage(languageKey);
+            }
+        });
+    }
+}
