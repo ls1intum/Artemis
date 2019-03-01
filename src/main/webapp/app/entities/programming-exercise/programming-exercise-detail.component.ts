@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
-import { ProgrammingExercise } from './programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage } from './programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/entities/programming-exercise/programming-exercise.service';
 
 @Component({
@@ -9,6 +9,8 @@ import { ProgrammingExerciseService } from 'app/entities/programming-exercise/pr
     templateUrl: './programming-exercise-detail.component.html'
 })
 export class ProgrammingExerciseDetailComponent implements OnInit {
+    readonly JAVA = ProgrammingLanguage.JAVA;
+
     programmingExercise: ProgrammingExercise;
 
     constructor(private activatedRoute: ActivatedRoute, private programmingExerciseService: ProgrammingExerciseService) {}
