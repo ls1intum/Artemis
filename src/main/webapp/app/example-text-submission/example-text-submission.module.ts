@@ -1,7 +1,8 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-
 import { RouterModule } from '@angular/router';
+import { JhiLanguageService } from 'ng-jhipster';
+import { JhiLanguageHelper } from 'app/core';
 
 import { ArTEMiSSharedModule } from '../shared';
 import { CourseComponent, CourseService } from '../entities/course';
@@ -25,7 +26,16 @@ const ENTITY_STATES = [...exampleTextSubmissionRoute];
     providers: [
         CourseService,
         JhiAlertService,
+        { provide: JhiLanguageService, useClass: JhiLanguageService }
     ],
     schemas: []
 })
-export class ArTEMiSExampleSubmissionModule {}
+export class ArTEMiSExampleSubmissionModule {
+    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
+        this.languageHelper.language.subscribe((languageKey: string) => {
+            if (languageKey !== undefined) {
+                this.languageService.changeLanguage(languageKey);
+            }
+        });
+    }
+}
