@@ -1,7 +1,8 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-
 import { RouterModule } from '@angular/router';
+import { JhiLanguageService } from 'ng-jhipster';
+import { JhiLanguageHelper } from 'app/core';
 
 import { ArTEMiSSharedModule } from '../shared';
 import { tutorCourseDashboardRoute } from './tutor-course-dashboard.route';
@@ -31,8 +32,17 @@ const ENTITY_STATES = [...tutorCourseDashboardRoute];
         ResultService,
         CourseExerciseService,
         ParticipationService,
-        CourseScoreCalculationService
+        CourseScoreCalculationService,
+        { provide: JhiLanguageService, useClass: JhiLanguageService }
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
-export class ArTEMiSTutorCourseDashboardModule {}
+export class ArTEMiSTutorCourseDashboardModule {
+    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
+        this.languageHelper.language.subscribe((languageKey: string) => {
+            if (languageKey !== undefined) {
+                this.languageService.changeLanguage(languageKey);
+            }
+        });
+    }
+}
