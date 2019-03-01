@@ -32,17 +32,6 @@ public class ModelingExercise extends Exercise implements Serializable {
     @Lob
     private String sampleSolutionExplanation;
 
-    public ModelingExercise() {
-        super();
-    }
-
-    public ModelingExercise(String title, String shortName, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Double maxScore, String problemStatement, String gradingInstructions, List<String> categories, DifficultyLevel difficulty, Set<Participation> participations, Set<TutorParticipation> tutorParticipations, Course course, Set<ExampleSubmission> exampleSubmissions, DiagramType diagramType, String sampleSolutionModel, String sampleSolutionExplanation) {
-        super(title, shortName, releaseDate, dueDate, assessmentDueDate, maxScore, problemStatement, gradingInstructions, categories, difficulty, participations, tutorParticipations, course, exampleSubmissions);
-        this.diagramType = diagramType;
-        this.sampleSolutionModel = sampleSolutionModel;
-        this.sampleSolutionExplanation = sampleSolutionExplanation;
-    }
-
     // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
 
     public DiagramType getDiagramType() {

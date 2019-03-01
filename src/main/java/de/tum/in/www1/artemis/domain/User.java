@@ -96,26 +96,6 @@ public class User extends AbstractAuditingEntity implements Serializable {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<PersistentToken> persistentTokens = new HashSet<>();
 
-    public User() {
-    }
-
-    public User(@NotNull @Pattern(regexp = Constants.LOGIN_REGEX) @Size(min = 1, max = 50) String login, String password, @Size(max = 50) String firstName, @Size(max = 50) String lastName, @Email @Size(max = 100) String email, @NotNull boolean activated, @Size(min = 2, max = 6) String langKey, @Size(max = 256) String imageUrl, @Size(max = 20) String activationKey, @Size(max = 20) String resetKey, Instant resetDate, List<String> groups, Set<Authority> authorities, Set<PersistentToken> persistentTokens) {
-        this.login = login;
-        this.password = password;
-        this.firstName = firstName;
-        this.lastName = lastName;
-        this.email = email;
-        this.activated = activated;
-        this.langKey = langKey;
-        this.imageUrl = imageUrl;
-        this.activationKey = activationKey;
-        this.resetKey = resetKey;
-        this.resetDate = resetDate;
-        this.groups = groups;
-        this.authorities = authorities;
-        this.persistentTokens = persistentTokens;
-    }
-
     public Long getId() {
         return id;
     }

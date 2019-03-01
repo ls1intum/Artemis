@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.util;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ModelingExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 
@@ -14,24 +17,21 @@ public class ModelGenrator {
       ZonedDateTime dueDate,
       ZonedDateTime assessmentDueDate,
       Course course) {
-    return new ModelingExercise(
-        UUID.randomUUID().toString(),
-        "t" + UUID.randomUUID().toString().substring(0, 3),
-        releaseDate,
-        dueDate,
-        assessmentDueDate,
-        5.0,
-        "",
-        "",
-        new LinkedList<String>(),
-        DifficultyLevel.MEDIUM,
-        new HashSet<Participation>(),
-        new HashSet<TutorParticipation>(),
-        course,
-        new HashSet<ExampleSubmission>(),
-        DiagramType.CLASS,
-        "",
-        "");
+    ModelingExercise exercise = new ModelingExercise();
+    exercise.setTitle(UUID.randomUUID().toString());
+    exercise.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
+    exercise.setMaxScore(5.0);
+    exercise.setReleaseDate(releaseDate);
+    exercise.setDueDate(dueDate);
+    exercise.assessmentDueDate(assessmentDueDate);
+    exercise.setDiagramType(DiagramType.CLASS);
+    exercise.setCourse(course);
+    exercise.setParticipations(new HashSet<>());
+    exercise.setExampleSubmissions(new HashSet<>());
+    exercise.setTutorParticipations(new HashSet<>());
+    exercise.setDifficulty(DifficultyLevel.MEDIUM);
+    exercise.setCategories(new LinkedList<>());
+    return exercise;
   }
 
   public static LinkedList<User> generateActivatedUsers(
@@ -46,21 +46,18 @@ public class ModelGenrator {
   }
 
   public static User generateActivatedUser(String login) {
-    return new User(
-        login,
-        "0000",
-        login + "First",
-        login + "Last",
-        login + "@test.de",
-        true,
-        "de",
-        "",
-        null,
-        null,
-        null,
-        new LinkedList<String>(),
-        new HashSet<Authority>(),
-        new HashSet<PersistentToken>());
+    User user = new User();
+    user.setLogin(login);
+    user.setPassword("0000");
+    user.setFirstName(login + "First");
+    user.setLastName(login + "Last");
+    user.setEmail(login + "@test.de");
+    user.setActivated(true);
+    user.setLangKey("en");
+    user.setGroups(new LinkedList<>());
+    user.setAuthorities(new HashSet<>());
+    user.setPersistentTokens(new HashSet<>());
+    return user;
   }
 
   public static Course generateCourse(
@@ -83,18 +80,19 @@ public class ModelGenrator {
       String studentGroupName,
       String teachingAssistantGroupName,
       String instructorGroupName) {
-    return new Course(
-        id,
-        UUID.randomUUID().toString(),
-        UUID.randomUUID().toString(),
-        "t" + UUID.randomUUID().toString().substring(0, 3),
-        studentGroupName,
-        teachingAssistantGroupName,
-        instructorGroupName,
-        startDate,
-        endDate,
-        false,
-        5,
-        exercises);
+    Course course = new Course();
+    course.setId(id);
+    course.setTitle(UUID.randomUUID().toString());
+    course.setDescription(UUID.randomUUID().toString());
+    course.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
+    course.setStudentGroupName(studentGroupName);
+    course.setTeachingAssistantGroupName(teachingAssistantGroupName);
+    course.setInstructorGroupName(instructorGroupName);
+    course.setStartDate(startDate);
+    course.setEndDate(endDate);
+    course.setMaxComplaints(5);
+    course.setExercises(exercises);
+    course.setOnlineCourse(false);
+    return course;
   }
 }
