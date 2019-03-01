@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
 import static de.tum.in.www1.artemis.config.Constants.TEST_CASE_CHANGED_API_PATH;
 
 @Service
@@ -109,6 +110,28 @@ public class ProgrammingExerciseService {
         versionControlService.get().createRepository(projectKey, testRepoName, null); // Create tests repository
         versionControlService.get().createRepository(projectKey, solutionRepoName, null); // Create solution repository
 
+        // Save participations before saving programmingExercise to avoid an error where the programmingExercise could not be saved due to the missing participation
+        programmingExercise.setSolutionParticipation(participationRepository.save(new Participation()));
+        programmingExercise.setTemplateParticipation(participationRepository.save(new Participation()));
+        Participation solutionParticipation = programmingExercise.getSolutionParticipation();
+        Participation templateParticipation = programmingExercise.getTemplateParticipation();
+
+        solutionParticipation.setInitializationState(InitializationState.INITIALIZED);
+        templateParticipation.setInitializationState(InitializationState.INITIALIZED);
+        solutionParticipation.setInitializationDate(ZonedDateTime.now());
+        templateParticipation.setInitializationDate(ZonedDateTime.now());
+
+        programmingExercise.setTemplateBuildPlanId(projectKey + "-BASE"); // Set build plan id to newly created BaseBuild plan
+        programmingExercise.setTemplateRepositoryUrl(versionControlService.get().getCloneURL(projectKey, exerciseRepoName).toString());
+        programmingExercise.setSolutionBuildPlanId(projectKey + "-SOLUTION");
+        programmingExercise.setSolutionRepositoryUrl(versionControlService.get().getCloneURL(projectKey, solutionRepoName).toString());
+        programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneURL(projectKey, testRepoName).toString());
+
+        // The creation of the webhooks must occur before the initial push to ensure that the initial commit creates a result
+        versionControlService.get().addWebHook(solutionParticipation.getRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + solutionParticipation.getId(), "ArTEMiS WebHook");
+        versionControlService.get().addWebHook(templateParticipation.getRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + templateParticipation.getId(), "ArTEMiS WebHook");
+
+
         URL exerciseRepoUrl = versionControlService.get().getCloneURL(projectKey, exerciseRepoName);
         URL testsRepoUrl = versionControlService.get().getCloneURL(projectKey, testRepoName);
         URL solutionRepoUrl = versionControlService.get().getCloneURL(projectKey, solutionRepoName);
@@ -147,26 +170,9 @@ public class ProgrammingExerciseService {
         continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, "BASE", exerciseRepoName, testRepoName); // plan for the exercise (students)
         continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, "SOLUTION", solutionRepoName, testRepoName); // plan for the solution (instructors) with solution repository
 
-        programmingExercise.setTemplateBuildPlanId(projectKey + "-BASE"); // Set build plan id to newly created BaseBuild plan
-        programmingExercise.setTemplateRepositoryUrl(versionControlService.get().getCloneURL(projectKey, exerciseRepoName).toString());
-        programmingExercise.setSolutionBuildPlanId(projectKey + "-SOLUTION");
-        programmingExercise.setSolutionRepositoryUrl(versionControlService.get().getCloneURL(projectKey, solutionRepoName).toString());
-        programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneURL(projectKey, testRepoName).toString());
-
-        // Save participations before saving programmingExercise to avoid an error where the programmingExercise could not be saved due to the missing participation
-        programmingExercise.setSolutionParticipation(participationRepository.save(programmingExercise.getSolutionParticipation()));
-        programmingExercise.setTemplateParticipation(participationRepository.save(programmingExercise.getTemplateParticipation()));
-        programmingExercise.getSolutionParticipation().setInitializationState(InitializationState.INITIALIZED);
-        programmingExercise.getTemplateParticipation().setInitializationState(InitializationState.INITIALIZED);
-        programmingExercise.getSolutionParticipation().setInitializationDate(ZonedDateTime.now());
-        programmingExercise.getTemplateParticipation().setInitializationDate(ZonedDateTime.now());
 
         // save to get the id required for the webhook
         ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
-
-        // TODO: This seems to break jackson as we have an infinite recursion loop (programmingExercise -> participation -> programmingExercise -> ...), check if it is fine without this
-        // programmingExercise.getSolutionParticipation().setExercise(result);
-        // programmingExercise.getTemplateParticipation().setExercise(result);
 
         versionControlService.get().addWebHook(testsRepoUrl, ARTEMIS_BASE_URL + TEST_CASE_CHANGED_API_PATH + programmingExercise.getId(), "ArTEMiS Tests WebHook");
         return result;
@@ -230,5 +236,25 @@ public class ProgrammingExerciseService {
                 programmingExerciseRepository.save(programmingExercise);
             }
         }
+    }
+
+    /**
+     * Find the ProgrammingExercise where the given Participation is the template Participation
+     *
+     * @param participation The template participation
+     * @return The ProgrammingExercise where the given Participation is the template Participation
+     */
+    public ProgrammingExercise getExerciseForTemplateParticipation(Participation participation) {
+        return programmingExerciseRepository.findOneByTemplateParticipationId(participation.getId());
+    }
+
+    /**
+     * Find the ProgrammingExercise where the given Participation is the solution Participation
+     *
+     * @param participation The solution participation
+     * @return The ProgrammingExercise where the given Participation is the solution Participation
+     */
+    public ProgrammingExercise getExerciseForSolutionParticipation(Participation participation) {
+        return programmingExerciseRepository.findOneBySolutionParticipationId(participation.getId());
     }
 }

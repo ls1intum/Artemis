@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,10 +41,12 @@ public class ProgrammingExercise extends Exercise implements Serializable {
 
     @OneToOne(orphanRemoval=true)
     @JoinColumn(unique = true)
+    @JsonIgnoreProperties("exercise")
     private Participation templateParticipation;
 
     @OneToOne
     @JoinColumn(unique = true)
+    @JsonIgnoreProperties("exercise")
     private Participation solutionParticipation;
 
     // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
