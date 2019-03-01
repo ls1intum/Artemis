@@ -36,7 +36,7 @@ public class TextSubmissionService {
     }
 
     /**
-     * Saves the given submission and the corresponding model and creates the result if necessary.
+     * Saves the given submission and the corresponding model and creates the result if necessary. TODO: which model? which result? is this a copy and paste mistake?
      * Furthermore, the submission is added to the AutomaticSubmissionService if not submitted yet.
      * Is used for creating and updating text submissions.
      * If it is used for a submit action, Compass is notified about the new model.

@@ -94,52 +94,53 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
     }
 
     ngOnInit() {
-        // different behavior for example submissions
-        if (!this.isExampleSubmission) {
-            this.subscription = this.route.params.subscribe(params => {
-                if (params['participationId']) {
-                    this.modelingEditorService.get(params['participationId']).subscribe(
-                        modelingSubmission => {
-                            // reconnect participation <--> result
-                            if (modelingSubmission.result) {
-                                modelingSubmission.participation.results = [modelingSubmission.result];
-                            }
-                            this.participation = modelingSubmission.participation;
-                            this._modelingExercise = this.participation.exercise as ModelingExercise;
-                            this.checkDiagramType();
-                            this.isActive =
-                                this._modelingExercise.dueDate == null || new Date() <= moment(this._modelingExercise.dueDate).toDate();
-                            this._submission = modelingSubmission;
-                            if (this._submission && this._submission.id && !this._submission.submitted) {
-                                this.subscribeToWebsocket();
-                            }
-                            if (this._submission && this._submission.result) {
-                                this.result = this._submission.result;
-                            }
-                            this.initializeEditor();
-                            if (this._submission && this._submission.submitted && this.result && this.result.completionDate) {
-                                if (this.result.assessments) {
-                                    this.assessments = JSON.parse(this.result.assessments);
-                                    this.initializeAssessmentInfo();
-                                } else {
-                                    this.modelingAssessmentService
-                                        .find(params['participationId'], this._submission.id)
-                                        .subscribe(assessments => {
-                                            this.assessments = assessments.body;
-                                            this.initializeAssessmentInfo();
-                                        });
-                                }
-                            }
-                        },
-                        error => {
-                            if (error.status === 403) {
-                                this.router.navigate(['accessdenied']);
+        if (this.isExampleSubmission) {
+            return; // different behavior for example submissions - exercise and submission set from parent component
+        }
+
+        this.subscription = this.route.params.subscribe(params => {
+            if (params['participationId']) {
+                this.modelingEditorService.get(params['participationId']).subscribe(
+                    modelingSubmission => {
+                        // reconnect participation <--> result
+                        if (modelingSubmission.result) {
+                            modelingSubmission.participation.results = [modelingSubmission.result];
+                        }
+                        this.participation = modelingSubmission.participation;
+                        this._modelingExercise = this.participation.exercise as ModelingExercise;
+                        this.checkDiagramType();
+                        this.isActive =
+                            this._modelingExercise.dueDate == null || new Date() <= moment(this._modelingExercise.dueDate).toDate();
+                        this._submission = modelingSubmission;
+                        if (this._submission && this._submission.id && !this._submission.submitted) {
+                            this.subscribeToWebsocket();
+                        }
+                        if (this._submission && this._submission.result) {
+                            this.result = this._submission.result;
+                        }
+                        this.initializeEditor();
+                        if (this._submission && this._submission.submitted && this.result && this.result.completionDate) {
+                            if (this.result.assessments) {
+                                this.assessments = JSON.parse(this.result.assessments);
+                                this.initializeAssessmentInfo();
+                            } else {
+                                this.modelingAssessmentService
+                                    .find(params['participationId'], this._submission.id)
+                                    .subscribe(assessments => {
+                                        this.assessments = assessments.body;
+                                        this.initializeAssessmentInfo();
+                                    });
                             }
                         }
-                    );
-                }
-            });
-        }
+                    },
+                    error => {
+                        if (error.status === 403) {
+                            this.router.navigate(['accessdenied']);
+                        }
+                    }
+                );
+            }
+        });
         window.scroll(0, 0);
     }
 
@@ -246,6 +247,9 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                 diagramType: <ApollonOptions['diagramType']>this._modelingExercise.diagramType
             });
             this.updateSubmissionModel();
+            if (this.isExampleSubmission) {
+                return; // disable auto save for example submissions
+            }
             // auto save of submission if there are changes
             this.autoSaveInterval = window.setInterval(() => {
                 this.autoSaveTimer++;
@@ -484,7 +488,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         this.result = null; // TODO: think about how we could visualize old results and assessments after retry
 
         clearInterval(this.autoSaveInterval);
-        this.initializeEditor()
+        this.initializeEditor();
     }
 
     /**

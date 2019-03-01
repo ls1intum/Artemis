@@ -71,8 +71,14 @@ public class ExampleSubmissionResource {
     }
 
     @NotNull
-    private ResponseEntity<ExampleSubmission> handleExampleSubmission(@PathVariable Long exerciseId, @RequestBody ExampleSubmission exampleSubmission) {
-        // update and save submission
+    private ResponseEntity<ExampleSubmission> handleExampleSubmission(Long exerciseId, ExampleSubmission exampleSubmission) {
+        if (!exampleSubmission.getExercise().getId().equals(exerciseId)) {
+            throw new BadRequestAlertException(
+                "The exercise id in the path does not match the exercise id of the submission",
+                ENTITY_NAME,
+                "idsNotMatching"
+            );
+        }
         exampleSubmission = exampleSubmissionService.save(exampleSubmission);
         return ResponseEntity.ok(exampleSubmission);
     }

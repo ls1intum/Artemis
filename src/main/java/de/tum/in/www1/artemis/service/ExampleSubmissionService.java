@@ -5,6 +5,7 @@ import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,9 +17,11 @@ import java.util.Optional;
 public class ExampleSubmissionService {
 
     private final ExampleSubmissionRepository exampleSubmissionRepository;
+    private final SubmissionRepository submissionRepository;
 
-    public ExampleSubmissionService(ExampleSubmissionRepository exampleSubmissionRepository) {
+    public ExampleSubmissionService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository) {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
+        this.submissionRepository = submissionRepository;
     }
 
     public Optional<ExampleSubmission> get(long id) {
@@ -34,6 +37,12 @@ public class ExampleSubmissionService {
      */
     @Transactional(rollbackFor = Exception.class)
     public ExampleSubmission save(ExampleSubmission exampleSubmission) {
+        if (exampleSubmission.getSubmission() != null)
+        {
+            // first save the contained submission
+            submissionRepository.save(exampleSubmission.getSubmission());
+        }
+        // then save the example submission
         return exampleSubmissionRepository.saveAndFlush(exampleSubmission);
     }
 
