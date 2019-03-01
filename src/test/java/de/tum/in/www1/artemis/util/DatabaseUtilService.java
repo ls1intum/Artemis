@@ -67,9 +67,9 @@ public class DatabaseUtilService {
    */
   public void addUsers(int numberOfStudents, int numberOfTutors) {
     LinkedList<User> students =
-        ModelGenrator.generateActivatedUsers("student", new String[] {"tumuser"}, numberOfStudents);
+        ModelFactory.generateActivatedUsers("student", new String[] {"tumuser"}, numberOfStudents);
     LinkedList<User> tutors =
-        ModelGenrator.generateActivatedUsers("tutor", new String[] {"tutor"}, numberOfTutors);
+        ModelFactory.generateActivatedUsers("tutor", new String[] {"tutor"}, numberOfTutors);
     LinkedList<User> usersToAdd = new LinkedList<>();
     usersToAdd.addAll(students);
     usersToAdd.addAll(tutors);
@@ -109,7 +109,7 @@ public class DatabaseUtilService {
 
   public void addCourseWithModelingExercise() {
     Course course =
-        ModelGenrator.generateCourse(
+        ModelFactory.generateCourse(
             null,
             pastTimestamp,
             futureFututreTimestamp,
@@ -118,7 +118,7 @@ public class DatabaseUtilService {
             "tutor",
             "tutor");
     ModelingExercise exercise =
-        ModelGenrator.generateModelingExercise(
+        ModelFactory.generateModelingExercise(
             pastTimestamp, futureTimestamp, futureFututreTimestamp, course);
     course.addExercises(exercise);
     courseRepo.save(course);

@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.util.ModelGenrator;
+import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,12 +39,12 @@ public class CourseIntegrationTest {
   @Test
   @WithMockUser(roles = "ADMIN")
   public void createCourseWithPermission() throws Exception {
-    Course course = ModelGenrator.generateCourse(null, null, null, new HashSet<>());
+    Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
     request.post("/api/courses", course, HttpStatus.CREATED);
     List<Course> repoContent = courseRepo.findAll();
     assertThat(repoContent.size()).as("Course got stored").isEqualTo(1);
 
-    course = ModelGenrator.generateCourse(1L, null, null, new HashSet<>());
+    course = ModelFactory.generateCourse(1L, null, null, new HashSet<>());
     request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
     assertThat(courseRepo.findAll())
         .as("Course has not been stored")
@@ -54,7 +54,7 @@ public class CourseIntegrationTest {
   @Test
   @WithMockUser(roles = "USER")
   public void createCourseWithoutPermission() throws Exception {
-    Course course = ModelGenrator.generateCourse(null, null, null, new HashSet<>());
+    Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
     request.post("/api/courses", course, HttpStatus.FORBIDDEN);
     assertThat(courseRepo.findAll().size()).as("Course got stored").isEqualTo(0);
   }
@@ -66,7 +66,7 @@ public class CourseIntegrationTest {
   }
 
   public void loadInitialCourses() {
-    Course course = ModelGenrator.generateCourse(1L, null, null, new HashSet<>());
+    Course course = ModelFactory.generateCourse(1L, null, null, new HashSet<>());
     assertThat(courseRepo.findAll()).as("course repo got initialized correctly").contains(course);
   }
 }

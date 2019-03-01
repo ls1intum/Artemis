@@ -10,7 +10,7 @@ import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-public class ModelGenrator {
+public class ModelFactory {
 
   public static ModelingExercise generateModelingExercise(
       ZonedDateTime releaseDate,
@@ -38,7 +38,7 @@ public class ModelGenrator {
       String loginPrefix, String[] groups, int amount) {
     LinkedList<User> generatedUsers = new LinkedList<>();
     for (int i = 1; i <= amount; i++) {
-      User student = ModelGenrator.generateActivatedUser(loginPrefix + i);
+      User student = ModelFactory.generateActivatedUser(loginPrefix + i);
       student.setGroups(Arrays.asList(groups));
       generatedUsers.add(student);
     }
