@@ -1,5 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { JhiLanguageService } from 'ng-jhipster';
+import { JhiLanguageHelper } from 'app/core';
 
 import { ArTEMiSSharedModule } from '../shared';
 import { quizStatisticRoute } from './quiz-statistic.route';
@@ -42,7 +44,16 @@ const ENTITY_STATES = [
         ShortAnswerQuestionStatisticComponent
     ],
     providers: [
-        QuizStatisticUtil
+        QuizStatisticUtil,
+        { provide: JhiLanguageService, useClass: JhiLanguageService }
     ]
 })
-export class ArTEMiSStatisticModule {}
+export class ArTEMiSStatisticModule {
+    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
+        this.languageHelper.language.subscribe((languageKey: string) => {
+            if (languageKey !== undefined) {
+                this.languageService.changeLanguage(languageKey);
+            }
+        });
+    }
+}

@@ -13,6 +13,7 @@ import * as $ from 'jquery';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import * as TempID from 'app/quiz/edit/temp-id';
 
 @Component({
     selector: 'jhi-edit-drag-and-drop-question',
@@ -345,7 +346,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
 
             // Create new drop location
             this.currentDropLocation = new DropLocation();
-            this.currentDropLocation.tempID = this.pseudoRandomLong();
+            this.currentDropLocation.tempID = TempID.generate();
             this.currentDropLocation.posX = this.mouse.x;
             this.currentDropLocation.posY = this.mouse.y;
             this.currentDropLocation.width = 0;
@@ -403,7 +404,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
      */
     duplicateDropLocation(dropLocation: DropLocation): void {
         const duplicatedDropLocation = new DropLocation();
-        duplicatedDropLocation.tempID = this.pseudoRandomLong();
+        duplicatedDropLocation.tempID = TempID.generate();
         duplicatedDropLocation.posX =
             dropLocation.posX + dropLocation.width < 197 ? dropLocation.posX + 3 : Math.max(0, dropLocation.posX - 3);
         duplicatedDropLocation.posY =
@@ -471,7 +472,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
             this.question.dragItems = [];
         }
         const dragItem = new DragItem();
-        dragItem.tempID = this.pseudoRandomLong();
+        dragItem.tempID = TempID.generate();
         dragItem.text = 'Text';
         this.question.dragItems.push(dragItem);
         this.questionUpdated.emit();
@@ -504,7 +505,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
                     this.question.dragItems = [];
                 }
                 const dragItem = new DragItem();
-                dragItem.tempID = this.pseudoRandomLong();
+                dragItem.tempID = TempID.generate();
                 dragItem.pictureFilePath = result.path;
                 this.question.dragItems.push(dragItem);
                 this.questionUpdated.emit();
@@ -830,15 +831,6 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
         // Remove current DragItem at given index and insert the backup at the same position
         this.question.dragItems.splice(dragItemIndex, 1);
         this.question.dragItems.splice(dragItemIndex, 0, backupDragItem);
-    }
-
-    /**
-     * @function pseudoRandomLong
-     * @desc Creates a random long number value
-     * @return {number} The generated long number value
-     */
-    pseudoRandomLong(): number {
-        return Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
     }
 
     /**

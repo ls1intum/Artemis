@@ -13,6 +13,8 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.config.JHipsterConstants;
 import io.github.jhipster.web.util.ResponseUtil;
+import io.micrometer.core.annotation.Timed;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
@@ -392,5 +394,48 @@ public class CourseResource {
         String title = course.getTitle();
         courseService.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, title)).build();
+    }
+
+    /**
+     * GET  /courses/:courseId/results : Returns all results of the exercises of a course for the currently logged in user
+     *
+     * @param courseId the id of the course to get the results from
+     * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
+     */
+    @GetMapping(value = "/courses/{courseId}/results")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<Course> getResultsForCurrentStudent(@PathVariable Long courseId) {
+        long start = System.currentTimeMillis();
+        log.debug("REST request to get Results for Course and current Studen : {}", courseId);
+
+        User student = userService.getUser();
+        Course course = courseService.findOne(courseId);
+
+        List<Exercise> exercises = exerciseService.findAllExercisesByCourseId(course, student);
+
+        for (Exercise exercise : exercises) {
+            List<Participation> participations = participationService.findByExerciseIdAndStudentIdWithEagerResults(exercise.getId(), student.getId());
+
+            exercise.setParticipations(new HashSet<>());
+
+            //Removing not needed properties
+            exercise.setCourse(null);
+
+            for (Participation participation : participations) {
+                //Removing not needed properties
+                participation.setStudent(null);
+
+                participation.setResults(participation.getResults());
+                exercise.addParticipation(participation);
+            }
+            course.addExercises(exercise);
+
+        }
+
+
+        log.debug("getResultsForCurrentStudent took " + (System.currentTimeMillis() - start) + "ms");
+
+        return ResponseEntity.ok().body(course);
     }
 }

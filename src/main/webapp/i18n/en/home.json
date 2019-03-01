@@ -1,7 +1,9 @@
 {
     "home": {
-        "title": "Welcome to ArTEMiS!",
-        "subtitle": "Interactive Learning with an AuTomated assEssment Management System",
+        "title": "Welcome to Artemis!",
+        "subtitle": "Interactive Learning with an Automated Assessment Management System",
+        "please": "Please",
+        "usingTUMcredentials": "using your TUM credentials",
         "logged": {
             "message": "You are logged in as user \"{{username}}\". Go to your <a class=\"alert-link\" routerLink=\"courses\">courses</a> to get started."
         }

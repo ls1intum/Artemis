@@ -1,5 +1,7 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { JhiLanguageService } from 'ng-jhipster';
+import { JhiLanguageHelper } from 'app/core';
 
 import { ArTEMiSSharedModule } from 'app/shared';
 import {
@@ -16,7 +18,7 @@ import {
     TextExerciseUpdateComponent
 } from './';
 import { SortByModule } from 'app/components/pipes';
-import { FormDateTimePickerModule } from 'app/shared/dateTimePicker/date-time-picker.module';
+import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 
 const ENTITY_STATES = [...textExerciseRoute, ...textExercisePopupRoute];
 
@@ -39,8 +41,16 @@ const ENTITY_STATES = [...textExerciseRoute, ...textExercisePopupRoute];
         TextExerciseDeleteDialogComponent,
         TextExerciseDeletePopupComponent
     ],
-    providers: [TextExerciseService, TextExercisePopupService],
+  providers: [TextExerciseService, TextExercisePopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     exports: [TextExerciseComponent],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
-export class ArTEMiSTextExerciseModule {}
+export class ArTEMiSTextExerciseModule {
+    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
+        this.languageHelper.language.subscribe((languageKey: string) => {
+            if (languageKey !== undefined) {
+                this.languageService.changeLanguage(languageKey);
+            }
+        });
+    }
+}

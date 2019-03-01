@@ -1,7 +1,9 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { JhiLanguageService } from 'ng-jhipster';
+import { JhiLanguageHelper } from 'app/core';
 
-import { ArTEMiSSharedModule } from '../../shared';
+import { ArTEMiSSharedModule } from 'app/shared';
 import {
     FileUploadExerciseComponent,
     FileUploadExerciseDeleteDialogComponent,
@@ -15,7 +17,7 @@ import {
     FileUploadExerciseService,
     FileUploadExerciseUpdateComponent
 } from './';
-import { SortByModule } from '../../components/pipes';
+import { SortByModule } from 'app/components/pipes';
 
 const ENTITY_STATES = [...fileUploadExerciseRoute, ...fileUploadExercisePopupRoute];
 
@@ -39,7 +41,16 @@ const ENTITY_STATES = [...fileUploadExerciseRoute, ...fileUploadExercisePopupRou
         FileUploadExerciseDeletePopupComponent
     ],
     exports: [FileUploadExerciseComponent],
-    providers: [FileUploadExerciseService, FileUploadExercisePopupService],
+    providers: [FileUploadExerciseService, FileUploadExercisePopupService,
+        { provide: JhiLanguageService, useClass: JhiLanguageService }]
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
-export class ArTEMiSFileUploadExerciseModule {}
+export class ArTEMiSFileUploadExerciseModule {
+    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
+        this.languageHelper.language.subscribe((languageKey: string) => {
+            if (languageKey !== undefined) {
+                this.languageService.changeLanguage(languageKey);
+            }
+        });
+    }
+}

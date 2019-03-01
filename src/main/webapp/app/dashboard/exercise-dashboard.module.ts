@@ -1,5 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { JhiLanguageService } from 'ng-jhipster';
+import { JhiLanguageHelper } from 'app/core';
 
 import { ArTEMiSSharedModule } from '../shared';
 import { UserRouteAccessService } from '../core';
@@ -15,7 +17,7 @@ import { InstructorDashboardExportReposComponent, InstructorDashboardExportRepos
 import { ExerciseDashboardPopupService } from './exercise-dashboard-popup.service';
 import { ExerciseDashboardResultDialogComponent, InstructorDashboardResultPopupComponent } from './exercise-dashboard-result-dialog.component';
 import { SortByModule } from '../components/pipes';
-import { FormDateTimePickerModule } from '../shared/dateTimePicker/date-time-picker.module';
+import { FormDateTimePickerModule } from '../shared/date-time-picker/date-time-picker.module';
 
 const ENTITY_STATES = [
     {
@@ -105,6 +107,14 @@ const ENTITY_STATES = [
         InstructorDashboardExportReposComponent,
         InstructorDashboardExportReposPopupComponent
     ],
-    providers: [ExerciseDashboardPopupService]
+    providers: [ExerciseDashboardPopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }]
 })
-export class ArTEMiSInstructorDashboardModule {}
+export class ArTEMiSInstructorDashboardModule {
+    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
+        this.languageHelper.language.subscribe((languageKey: string) => {
+            if (languageKey !== undefined) {
+                this.languageService.changeLanguage(languageKey);
+            }
+        });
+    }
+}
