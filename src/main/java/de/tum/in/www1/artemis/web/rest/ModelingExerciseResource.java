@@ -320,7 +320,7 @@ public class ModelingExerciseResource {
      * Returns the data needed for the assessment editor, which includes the modelingExercise, result, modelingSubmission
      * and the assessments if the submission was already submitted.
      *
-     * @param exerciseId the participationId for which to find the data for the modeling editormodelingSubmission
+     * @param exerciseId the participationId for which to find the data for the modeling editor
      * @param submissionId the participationId for which to find the data for the modeling editor
      * @return the ResponseEntity with json as body
      */
