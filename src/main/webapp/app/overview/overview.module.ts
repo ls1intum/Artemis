@@ -1,9 +1,11 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { JhiLanguageService } from 'ng-jhipster';
+import { JhiLanguageHelper } from 'app/core';
+
 import { ChartsModule } from 'ng2-charts';
 import { ClipboardModule } from 'ngx-clipboard';
 import { MomentModule } from 'angular2-moment';
-
 import { ArTEMiSSharedModule } from 'app/shared';
 import { ExerciseTypePipe } from 'app/entities/exercise/';
 
@@ -49,8 +51,15 @@ const ENTITY_STATES = [
         ExerciseTypePipe
     ],
     entryComponents: [],
-    providers: [],
+    providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArTEMiSOverviewModule {
+    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
+        this.languageHelper.language.subscribe((languageKey: string) => {
+            if (languageKey !== undefined) {
+                this.languageService.changeLanguage(languageKey);
+            }
+        });
+    }
 }
