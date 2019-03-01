@@ -32,7 +32,7 @@
                     </select>
                 </div>
 
-                <div class="form-group-narrow">
+                <div class="form-group-narrow" *ngIf="programmingExercise.programmingLanguage === JAVA">
                     <label class="label-narrow" jhiTranslate="arTeMiSApp.programmingExercise.packageName" for="field_packageName">Package Name</label>
                     <input required type="text" [pattern]="packageNamePattern" class="form-control" name="packageName" id="field_packageName"
                            [(ngModel)]="programmingExercise.packageName" [readonly]="programmingExercise.id"/>
