@@ -1,7 +1,8 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-
+import { JhiLanguageService } from 'ng-jhipster';
+import { JhiLanguageHelper } from 'app/core';
 import { ArTEMiSSharedModule } from '../../shared';
 import {
     CourseComponent,
@@ -33,7 +34,15 @@ const ENTITY_STATES = [...courseRoute, ...coursePopupRoute];
         CourseDeleteDialogComponent,
         CourseDeletePopupComponent
     ],
-    providers: [CourseService, CourseExerciseService],
+    providers: [CourseService, CourseExerciseService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
-export class ArTEMiSCourseModule {}
+export class ArTEMiSCourseModule {
+    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
+        this.languageHelper.language.subscribe((languageKey: string) => {
+            if (languageKey !== undefined) {
+                this.languageService.changeLanguage(languageKey);
+            }
+        });
+    }
+}

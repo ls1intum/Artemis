@@ -3,13 +3,13 @@
   -- e.g. by using Object.assign to trigger ngOnChanges which makes sure that the result is updated
 -->
 <span *ngIf="!result || (!result.score && result.score !== 0)">
-    <span class="text-muted"><fa-icon [icon]="['far', 'circle']" size="lg"></fa-icon>&nbsp;No results</span>
-     <span class="text-primary"  *ngIf="isBuilding"><fa-icon icon="circle-notch" size="lg" [spin]="true"></fa-icon>&nbsp;Building...</span>
+    <span class="text-muted"><fa-icon [icon]="['far', 'circle']" size="lg"></fa-icon>&nbsp;<span jhiTranslate="arTeMiSApp.result.noResult">No results</span></span>
+    <span class="text-primary" *ngIf="isBuilding"><fa-icon icon="circle-notch" size="lg" [spin]="true"></fa-icon>&nbsp;Building...</span>
 </span>
 <ng-container *ngIf="result && (result.score || result.score === 0)">
     <span [ngClass]="textColorClass">
         <fa-icon [icon]="resultIconClass" size="lg"></fa-icon>
-        <span class="score"> <span *ngIf="!short">Score:</span> {{result.score}}%, </span>
+        <span class="score">&nbsp;<span *ngIf="!short">Score:</span> {{result.score}}%, </span>
         <span *ngIf="hasFeedback">
             <span class="result" (click)="showDetails(result)">{{resultString}}</span>
         </span>
