@@ -16,6 +16,7 @@
             "detail": {
                 "title": "Kurs"
             },
+            "totalScore": "Gesamtergebnis:",
             "title": "Titel",
             "shortName": "Kurzname",
             "studentGroupName": "Studenten Gruppe",

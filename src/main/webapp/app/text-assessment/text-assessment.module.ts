@@ -1,5 +1,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { JhiLanguageService } from 'ng-jhipster';
+import { JhiLanguageHelper } from 'app/core';
 
 import { ArTEMiSTextAssessmentRoutingModule } from './text-assessment-routing.module';
 import { TextAssessmentComponent } from './text-assessment.component';
@@ -21,6 +23,15 @@ import { TextSharedModule } from 'app/text-shared/text-shared.module';
         TextAssessmentDashboardComponent
     ],
     imports: [CommonModule, SortByModule, ArTEMiSTextAssessmentRoutingModule, ArTEMiSSharedModule, ArTEMiSResultModule, TextSharedModule],
-    exports: [TextAssessmentEditorComponent, TextAssessmentDetailComponent]
+    exports: [TextAssessmentEditorComponent, TextAssessmentDetailComponent],
+    providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }]
 })
-export class ArTEMiSTextAssessmentModule {}
+export class ArTEMiSTextAssessmentModule {
+    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
+        this.languageHelper.language.subscribe((languageKey: string) => {
+            if (languageKey !== undefined) {
+                this.languageService.changeLanguage(languageKey);
+            }
+        });
+    }
+}

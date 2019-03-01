@@ -1,7 +1,7 @@
 <div class="row">
     <div class="col-md-8 offset-md-2 text-center">
-        <h1 jhiTranslate="home.title">Welcome to ArTEMiS!</h1>
-        <p class="lead" translate="home.subtitle">Interactive Learning with an AuTomated assEssment Management System</p>
+        <h1 jhiTranslate="home.title">Welcome to Artemis!</h1>
+        <p class="lead" jhiTranslate="home.subtitle">Interactive Learning with an AuTomated assEssment Management System</p>
         <div [ngSwitch]="isAuthenticated()">
             <div class="alert alert-success" *ngSwitchCase="true">
                 <span *ngIf="account">
@@ -10,7 +10,7 @@
             </div>
 
             <div class="lead" *ngSwitchCase="false">
-                Please <a class="alert-link" (click)="login()" jhiTranslate="global.messages.info.authenticated.link">sign in</a> using your TUM credentials.
+                <span jhiTranslate="home.please">Please</span>&nbsp;<a class="alert-link" (click)="login()" jhiTranslate="global.messages.info.authenticated.link">sign in</a>&nbsp;<span jhiTranslate="home.usingTUMcredentials">using your TUM credentials</span>.
             </div>
         </div>
     </div>
