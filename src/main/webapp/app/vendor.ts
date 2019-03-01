@@ -32,6 +32,15 @@ import {
     faCloud,
     faCodeBranch,
     faDownload,
+    faCheckDouble,
+    faKeyboard,
+    faProjectDiagram,
+    faFileUpload,
+    faThLarge,
+    faAngleUp,
+    faSortAmountUp,
+    faSortAmountDown,
+    faUndo,
     faEraser,
     faExclamationCircle,
     faExclamationTriangle,
@@ -74,7 +83,6 @@ import {
     faTimesCircle,
     faTrash,
     faTrashAlt,
-    faUndo,
     faUnlink,
     faUpload,
     faUser,
@@ -138,6 +146,16 @@ library.add(faAsterisk);
 library.add(faArchive);
 library.add(faEraser);
 library.add(faDownload);
+library.add(faCheckDouble);
+library.add(faKeyboard);
+library.add(faProjectDiagram);
+library.add(faFileUpload);
+library.add(faFont);
+library.add(faThLarge);
+library.add(faAngleUp);
+library.add(faAngleDown);
+library.add(faSortAmountUp);
+library.add(faSortAmountDown);
 library.add(faChalkboardTeacher);
 library.add(faCheckCircle);
 library.add(faFileExport);
@@ -145,7 +163,6 @@ library.add(faCircleNotch);
 library.add(faUndo);
 library.add(faExclamationTriangle);
 library.add(faUnlink);
-library.add(faFont);
 library.add(faFolder);
 library.add(faFolderOpen);
 library.add(faPlayCircle);
@@ -165,7 +182,6 @@ library.add(faSpinner);
 library.add(faQuestionCircle);
 library.add(faTimesCircle);
 library.add(faAngleRight);
-library.add(faAngleDown);
 library.add(faCheck);
 library.add(faUpload);
 library.add(faArrowsAltV);

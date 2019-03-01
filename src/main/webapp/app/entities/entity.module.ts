@@ -6,9 +6,7 @@ import { ArTEMiSQuizExerciseModule } from './quiz-exercise/quiz-exercise.module'
 import { ArTEMiSParticipationModule } from './participation/participation.module';
 import { ArTEMiSProgrammingExerciseModule } from './programming-exercise/programming-exercise.module';
 import { ArTEMiSModelingExerciseModule } from './modeling-exercise/modeling-exercise.module';
-import { ArTEMiSQuizSubmissionModule } from './quiz-submission/quiz-submission.module';
-import { ArTEMiSModelingSubmissionModule } from './modeling-submission/modeling-submission.module';
-import { ArTEMiSResultModule } from './result/result.module';
+import { ArTEMiSResultModule } from 'app/entities/result';
 import { ArTEMiSTextExerciseModule } from './text-exercise/text-exercise.module';
 import { ArTEMiSFileUploadExerciseModule } from './file-upload-exercise/file-upload-exercise.module';
 
@@ -22,8 +20,6 @@ import { ArTEMiSFileUploadExerciseModule } from './file-upload-exercise/file-upl
         ArTEMiSParticipationModule,
         ArTEMiSProgrammingExerciseModule,
         ArTEMiSModelingExerciseModule,
-        ArTEMiSQuizSubmissionModule,
-        ArTEMiSModelingSubmissionModule,
         ArTEMiSResultModule,
         ArTEMiSTextExerciseModule,
         ArTEMiSFileUploadExerciseModule
