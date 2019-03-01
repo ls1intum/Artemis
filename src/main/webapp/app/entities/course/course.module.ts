@@ -15,7 +15,7 @@ import {
     CourseService,
     CourseUpdateComponent
 } from './';
-import { FormDateTimePickerModule } from '../../shared/dateTimePicker/date-time-picker.module';
+import { FormDateTimePickerModule } from '../../shared/date-time-picker/date-time-picker.module';
 
 const ENTITY_STATES = [...courseRoute, ...coursePopupRoute];
 

@@ -1,5 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { JhiLanguageService } from 'ng-jhipster';
+import { JhiLanguageHelper } from 'app/core';
 
 import { ArTEMiSSharedModule } from 'app/shared';
 import { ArTEMiSResultModule } from 'app/entities/result';
@@ -13,6 +15,15 @@ const ENTITY_STATES = [...textEditorRoute];
 @NgModule({
     declarations: [TextEditorComponent, TextEditorScoreCardComponent],
     entryComponents: [TextEditorComponent],
-    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), ArTEMiSResultModule, TextSharedModule]
+    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), ArTEMiSResultModule, TextSharedModule],
+    providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }]
 })
-export class ArTEMiSTextModule {}
+export class ArTEMiSTextModule {
+    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
+        this.languageHelper.language.subscribe((languageKey: string) => {
+            if (languageKey !== undefined) {
+                this.languageService.changeLanguage(languageKey);
+            }
+        });
+    }
+}

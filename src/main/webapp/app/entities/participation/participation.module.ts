@@ -1,5 +1,7 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { JhiLanguageService } from 'ng-jhipster';
+import { JhiLanguageHelper } from 'app/core';
 
 import { ArTEMiSSharedModule } from 'app/shared';
 import { ArTEMiSAdminModule } from 'app/admin/admin.module';
@@ -16,8 +18,6 @@ import {
     ParticipationService
 } from './';
 import { SortByModule } from 'app/components/pipes';
-import { JhiLanguageService } from 'ng-jhipster';
-import { JhiLanguageHelper } from 'app/core';
 
 const ENTITY_STATES = [
     ...participationRoute,
