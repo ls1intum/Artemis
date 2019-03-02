@@ -240,15 +240,14 @@ public class CompassService {
                 assessmentRepository.writeAssessment(exerciseId, result.getParticipation().getStudent().getId(), modelId,
                     false, json.toString());
 
-                result.setRated(modelingExercise.getDueDate() == null || modelingSubmission.get().getSubmissionDate().isBefore(modelingExercise.getDueDate()));
+                result.setRatedIfNotExceeded(modelingExercise.getDueDate(),modelingSubmission.get().getSubmissionDate());
                 result.setAssessmentType(AssessmentType.AUTOMATIC);
                 double maxPoints = modelingExercise.getMaxScore();
                 // biased points
                 double points = Math.max(Math.min(grade.getPoints(), maxPoints), 0);
                 result.setScore((long) (points * 100 / maxPoints));
                 result.setCompletionDate(ZonedDateTime.now());
-                DecimalFormat formatter = new DecimalFormat("#.##"); // limit decimal places to 2
-                result.setResultString(formatter.format(points) + " of " + formatter.format(modelingExercise.getMaxScore()) + " points");
+                result.setResultString(points,modelingExercise.getMaxScore());
 
                 resultRepository.save(result);
                 engine.removeModelWaitingForAssessment(modelId, true);

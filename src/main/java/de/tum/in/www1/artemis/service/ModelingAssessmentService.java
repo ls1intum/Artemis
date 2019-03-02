@@ -46,6 +46,8 @@ public class ModelingAssessmentService extends AssessmentService {
     }
 
 
+
+
     /**
      * Find latest assessment for given exerciseId, studentId and modelId. First checks for existence of manual
      * assessment, then of automatic assessment.
@@ -83,11 +85,9 @@ public class ModelingAssessmentService extends AssessmentService {
      * @return the ResponseEntity with result as body
      */
     @Transactional
-    public Result submitManualAssessment(
-        Result result, ModelingExercise exercise, List<ModelElementAssessment> modelingAssessment) {
-        saveManualAssessment(result, exercise.getId(), modelingAssessment);
+    public Result submitManualAssessment(Result result, ModelingExercise exercise, List<ModelElementAssessment> modelingAssessment) {
         Double calculatedScore = calculateTotalScore(modelingAssessment);
-        return prepareSubmission(result, exercise, calculatedScore);
+        return submitResult(result, exercise, calculatedScore);
     }
 
 

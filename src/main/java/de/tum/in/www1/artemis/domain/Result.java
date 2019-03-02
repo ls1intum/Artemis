@@ -9,6 +9,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import javax.annotation.Nullable;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.text.DecimalFormat;
@@ -152,6 +153,20 @@ public class Result implements Serializable {
         this.resultString = resultString;
     }
 
+    /**
+     * builds and sets the resultString attribute
+     * @param totalScore    total amount of scored points between 0 and maxScore
+     * @param maxScore      maximum score reachable at corresponding exercise
+     */
+    public void setResultString(Double totalScore, @Nullable Double maxScore) {
+        DecimalFormat formatter = new DecimalFormat("#.##");
+        if (maxScore == null) {
+            resultString = (formatter.format(totalScore) + " points");
+        } else {
+            resultString = (formatter.format(totalScore) + " of " + formatter.format(maxScore) + " points");
+        }
+    }
+
     public ZonedDateTime getCompletionDate() {
         return completionDate;
     }
@@ -221,13 +236,17 @@ public class Result implements Serializable {
      */
     public void setScore(Long score) {
         this.score = score;
-        if (score == null) {
-            this.successful = false;
-        }
-        else {
-            //if score is 100 set successful true, if not, set it false
-            successful = score == 100;
-        }
+        this.successful = score == 100L;
+    }
+
+    /**
+     * calculates and sets the score attribute and accordingly the successfull flag
+     * @param totalScore    total amount of scored points between 0 and maxScore
+     * @param maxScore      maximum score reachable at corresponding exercise
+     */
+    public void setScore (Double totalScore, @Nullable Double maxScore){
+        Long score  = (maxScore == null) ? 100L : Math.round(totalScore / maxScore * 100);
+        setScore(score);
     }
 
     public Boolean isRated() {
@@ -241,6 +260,10 @@ public class Result implements Serializable {
 
     public void setRated(Boolean rated) {
         this.rated = rated;
+    }
+
+    public void setRatedIfNotExceeded(ZonedDateTime exerciseDueDate, ZonedDateTime submissionDate){
+        this.rated = exerciseDueDate == null || submissionDate.isBefore(exerciseDueDate);
     }
 
     public Submission getSubmission() {
@@ -359,10 +382,7 @@ public class Result implements Serializable {
             // update score
             setScore(quizExercise.getScoreForSubmission(quizSubmission));
             // update result string
-            DecimalFormat formatter = new DecimalFormat("#.##"); // limit decimal places to 2
-            setResultString(formatter.format(quizExercise.getScoreInPointsForSubmission(quizSubmission)) + " of " + formatter.format(quizExercise.getMaxTotalScore()) + " points");
-            // update successful
-            setSuccessful(score == 100L);
+            setResultString(quizExercise.getScoreInPointsForSubmission(quizSubmission),quizExercise.getMaxTotalScore().doubleValue());
         }
     }
 
