@@ -12,11 +12,14 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import javax.annotation.Nullable;
 import javax.persistence.*;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+
+import static java.math.BigDecimal.ROUND_HALF_EVEN;
 
 /**
  * A Result.
@@ -52,7 +55,6 @@ public class Result implements Serializable {
 
     /**
      * Relative score in %
-     *
      */
     @Column(name = "score")
     @JsonView(QuizView.After.class)
@@ -62,13 +64,13 @@ public class Result implements Serializable {
      * Describes whether a result counts against the total score of a student.
      * It determines whether the result is shown in the course dashboard or not.
      * For quiz exercises:
-     *  - results are rated=true when students participate in the live quiz mode (there can only be one such result)
-     *  - results are rated=false when students participate in the practice mode
-     *
+     * - results are rated=true when students participate in the live quiz mode (there can only be one such result)
+     * - results are rated=false when students participate in the practice mode
+     * <p>
      * For all other exercises (modeling, programming, etc.)
-     *  - results are rated=true when students submit before the due date (or when the due date is null),
-     *    multiple results can be rated=true, then the result with the last completionDate counts towards the total score of a student
-     *  - results are rated=false when students submit after the due date
+     * - results are rated=true when students submit before the due date (or when the due date is null),
+     * multiple results can be rated=true, then the result with the last completionDate counts towards the total score of a student
+     * - results are rated=false when students submit after the due date
      */
     @Column(name = "rated")
     @JsonView(QuizView.Before.class)
@@ -94,7 +96,7 @@ public class Result implements Serializable {
     @JsonView(QuizView.Before.class)
     private Participation participation;
 
-    @OneToOne(cascade=CascadeType.MERGE, fetch = FetchType.LAZY)
+    @OneToOne(cascade = CascadeType.MERGE, fetch = FetchType.LAZY)
     @JoinColumn(unique = false)
     private User assessor;
 
@@ -151,8 +153,9 @@ public class Result implements Serializable {
 
     /**
      * builds and sets the resultString attribute
-     * @param totalScore    total amount of scored points between 0 and maxScore
-     * @param maxScore      maximum score reachable at corresponding exercise
+     *
+     * @param totalScore total amount of scored points between 0 and maxScore
+     * @param maxScore   maximum score reachable at corresponding exercise
      */
     public void setResultString(Double totalScore, @Nullable Double maxScore) {
         DecimalFormat formatter = new DecimalFormat("#.##");
@@ -237,11 +240,12 @@ public class Result implements Serializable {
 
     /**
      * calculates and sets the score attribute and accordingly the successfull flag
-     * @param totalScore    total amount of scored points between 0 and maxScore
-     * @param maxScore      maximum score reachable at corresponding exercise
+     *
+     * @param totalScore total amount of scored points between 0 and maxScore
+     * @param maxScore   maximum score reachable at corresponding exercise
      */
-    public void setScore (Double totalScore, @Nullable Double maxScore){
-        Long score  = (maxScore == null) ? 100L : Math.round(totalScore / maxScore * 100);
+    public void setScore(Double totalScore, @Nullable Double maxScore) {
+        Long score = (maxScore == null) ? 100L : Math.round(totalScore / maxScore * 100);
         setScore(score);
     }
 
@@ -258,7 +262,7 @@ public class Result implements Serializable {
         this.rated = rated;
     }
 
-    public void setRatedIfNotExceeded(ZonedDateTime exerciseDueDate, ZonedDateTime submissionDate){
+    public void setRatedIfNotExceeded(ZonedDateTime exerciseDueDate, ZonedDateTime submissionDate) {
         this.rated = exerciseDueDate == null || submissionDate.isBefore(exerciseDueDate);
     }
 
@@ -378,8 +382,14 @@ public class Result implements Serializable {
             // update score
             setScore(quizExercise.getScoreForSubmission(quizSubmission));
             // update result string
-            setResultString(quizExercise.getScoreInPointsForSubmission(quizSubmission),quizExercise.getMaxTotalScore().doubleValue());
+            setResultString(quizExercise.getScoreInPointsForSubmission(quizSubmission), quizExercise.getMaxTotalScore().doubleValue());
         }
+    }
+
+    public void evaluateFeedback(Double maxScore) {
+        double totalScore = calculateTotalScore();
+        setScore(totalScore, maxScore);
+        setResultString(totalScore, maxScore);
     }
 
     @Override
@@ -416,4 +426,14 @@ public class Result implements Serializable {
             "}";
     }
 
+    /**
+     * @return sum of every feedback credit rounded to max two numbers after the comma
+     */
+    public Double calculateTotalScore() {
+        double totalScore = 0.0;
+        for (Feedback feedback : this.feedbacks) {
+            totalScore += feedback.getCredits();
+        }
+        return new BigDecimal(totalScore).setScale(2, ROUND_HALF_EVEN).doubleValue();
+    }
 }
