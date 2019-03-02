@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild, OnChanges, SimpleChanges } from '@angular/core';
 import { MultipleChoiceQuestion } from '../../../entities/multiple-choice-question';
 import { AnswerOption } from '../../../entities/answer-option';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
@@ -7,18 +7,18 @@ import 'brace/theme/chrome';
 import 'brace/mode/markdown';
 import { MarkdownEditorComponent } from 'app/markdown-editor';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import {HintCommand} from 'app/markdown-editor/specialCommands/hint.command';
-import {CorrectOptionCommand} from 'app/markdown-editor/specialCommands/correctOptionCommand';
-import {IncorrectOptionCommand} from 'app/markdown-editor/specialCommands/incorrectOptionCommand';
-import {ExplanationCommand} from 'app/markdown-editor/specialCommands/explanation.command';
-import {SpecialCommand} from 'app/markdown-editor/specialCommands/specialCommand';
+import { HintCommand } from 'app/markdown-editor/specialCommands/hint.command';
+import { CorrectOptionCommand } from 'app/markdown-editor/specialCommands/correctOptionCommand';
+import { IncorrectOptionCommand } from 'app/markdown-editor/specialCommands/incorrectOptionCommand';
+import { ExplanationCommand } from 'app/markdown-editor/specialCommands/explanation.command';
+import { SpecialCommand } from 'app/markdown-editor/specialCommands/specialCommand';
 
 @Component({
     selector: 'jhi-edit-multiple-choice-question',
     templateUrl: './edit-multiple-choice-question.component.html',
     providers: [ArtemisMarkdown]
 })
-export class EditMultipleChoiceQuestionComponent implements OnInit {
+export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges {
     @ViewChild('questionEditor')
     private questionEditor: AceEditorComponent;
 
@@ -69,6 +69,19 @@ export class EditMultipleChoiceQuestionComponent implements OnInit {
     setupQuestionEditor(): void {
         this.questionEditorText = this.generateMarkdown();
     }
+
+    /**
+     * @function ngOnChanges
+     * @desc Watch for any changes to the question model and notify listener
+     * @param changes {SimpleChanges}
+     */
+    ngOnChanges(changes: SimpleChanges): void {
+        /** Check if previousValue wasn't null to avoid firing at component initialization **/
+        if (changes.question && changes.question.previousValue != null) {
+            this.questionUpdated.emit();
+        }
+    }
+
 
     /**
      * @function generateMarkdown
