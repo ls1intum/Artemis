@@ -62,7 +62,6 @@ export class EditMultipleChoiceQuestionComponent implements OnInit {
         this.setupQuestionEditor();
     }
 
-
     /**
      * @function setupQuestionEditor
      * @desc Initializes the ace editor for the mc question
@@ -103,8 +102,9 @@ export class EditMultipleChoiceQuestionComponent implements OnInit {
      * @desc Toggles the preview in the template
      */
     togglePreview(): void {
-        this.showPreview = !this.showPreview;
+        this.question.answerOptions.splice(0);
         this.markdownEditor.parse();
+        this.showPreview = !this.showPreview;
     }
 
     toggleAntiPreview(): void {
@@ -135,11 +135,6 @@ export class EditMultipleChoiceQuestionComponent implements OnInit {
                     this.question.hint = textLine;
                 }
             }
-    }
-
-
-    handleResponse(response: any) {
-        console.log('Client recevied', response);
     }
 
     /**
