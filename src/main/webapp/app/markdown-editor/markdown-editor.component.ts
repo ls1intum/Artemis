@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, ViewChild, Input, Output, EventEmitter, OnChanges, SimpleChanges, OnInit} from '@angular/core';
+import { Component, AfterViewInit, ViewChild, Input, Output, EventEmitter, OnInit} from '@angular/core';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
@@ -15,22 +15,20 @@ import { SpecialCommand } from 'app/markdown-editor/specialCommands/specialComma
     providers: [ArtemisMarkdown],
     templateUrl: './markdown-editor.component.html'
 })
-export class MarkdownEditorComponent implements AfterViewInit, OnChanges, OnInit {
+export class MarkdownEditorComponent implements AfterViewInit, OnInit {
     @ViewChild('aceEditor')
     aceEditorContainer: AceEditorComponent;
 
     @Input() defaultText: string;
-
-    @Output() defaultTextChanged = new EventEmitter();
+    @Input() specialCommands: SpecialCommand[];
 
     @Output() textWithSpecialCommandFound = new EventEmitter<[string, SpecialCommand]>();
+    @Output() triggerParsingInClient = new EventEmitter();
 
     questionEditorText = '';
     questionEditorAutoUpdate = true;
 
     showPreview: boolean;
-
-
 
     constructor(private artemisMarkdown: ArtemisMarkdown) {}
 
@@ -41,12 +39,12 @@ export class MarkdownEditorComponent implements AfterViewInit, OnChanges, OnInit
     }
     
     removeCommand(command: Command) {
-        // TODO: remove this command from the default commands
+        this.defaultCommands.forEach( (item, index) => {
+            if(item === command) this.defaultCommands.splice(index,1);
+        });
     }
     
-    
-    
-    @Input() specialCommands: SpecialCommand[];
+
 
     ngAfterViewInit(): void {
         requestAnimationFrame(this.setupMarkdownEditor.bind(this));
@@ -56,16 +54,6 @@ export class MarkdownEditorComponent implements AfterViewInit, OnChanges, OnInit
         [...this.defaultCommands, ...this.specialCommands].forEach(command => {
             command.setEditor(this.aceEditorContainer.getEditor());
         });
-    }
-
-    ngOnChanges(changes: SimpleChanges): void {
-        this.aceEditorContainer.getEditor().on(
-            'blur',
-            () => {
-                this.defaultTextChanged.emit(this.defaultText);
-            },
-            this
-        );
     }
 
     /**
@@ -82,32 +70,14 @@ export class MarkdownEditorComponent implements AfterViewInit, OnChanges, OnInit
         this.aceEditorContainer.getEditor().setHighlightActiveLine(false);
         this.aceEditorContainer.getEditor().setShowPrintMargin(false);
         this.aceEditorContainer.getEditor().clearSelection();
-
-        this.aceEditorContainer.getEditor().on(
-            'blur',
-            () => {
-                this.defaultTextChanged.emit(this.defaultText);
-            },
-            this
-        );
     }
-
-
-    searchForTheParsingCommand(): void {
-        const text = this.defaultText;
-        const questionParts = text.split(/\[\]|\[ \]|\[x\]|\[X\]/g);
-
-        /*for (const element of this.commands){
-             element.parsing(text);
-        }*/
-    }
-
 
     // TODO this method should be invoked by the Preview button of the Markdown Editor (in case it is active) and the client should be able to invoke it
     parse(): void {
         
         if (this.specialCommands == null || this.specialCommands.length === 0) {
             // we are already done, TODO we just need to invoke the standard markdown --> html parser
+            this.artemisMarkdown.htmlForMarkdown(this.defaultText);
             return;
         }
         
@@ -128,6 +98,14 @@ export class MarkdownEditorComponent implements AfterViewInit, OnChanges, OnInit
                 }
             }
         }
+    }
+
+    /**
+     * @function togglePreview
+     * @desc Toggles the preview in the template
+     */
+    togglePreview(): void {
+        this.triggerParsingInClient.emit();
     }
 
 }

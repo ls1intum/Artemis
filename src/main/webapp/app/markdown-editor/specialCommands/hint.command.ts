@@ -1,7 +1,7 @@
-import {SpecialCommand} from 'app/markdown-editor/specialCommands/specialCommand';
+import { SpecialCommand } from 'app/markdown-editor/specialCommands/specialCommand';
 
 export class HintCommand extends SpecialCommand {
-    identifier = '[-h]';
+
     buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.addHint';
 
     execute(): void {

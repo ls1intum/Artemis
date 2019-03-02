@@ -49,8 +49,11 @@
         </div>
         <div class="markupEditorArea">
             <div class="question-content">
-                <jhi-markdown-editor #markdownEditor [defaultText]="questionEditorText" (defaultTextChanged)="parseMarkdown($event)"
-                                     [specialCommands]="commandMultipleChoiceQuestions" (textWithSpecialCommandFound)="specialCommmandFound($event[0], $event[1])"></jhi-markdown-editor>
+                <jhi-markdown-editor #markdownEditor [defaultText]="questionEditorText"
+                                     [specialCommands]="commandMultipleChoiceQuestions"
+                                     (textWithSpecialCommandFound)="specialCommandFound($event[0], $event[1])"
+                                     (triggerParsingInClient)="togglePreview()"
+                ></jhi-markdown-editor>
             </div>
             <hr/>
             <div class="toolbar">
@@ -68,7 +71,7 @@
                                   [questionIndex]="questionIndex">
     </jhi-multiple-choice-question>
     <hr/>
-    <div class="btn btn-outline-secondary" (click)="togglePreview()">
+    <div class="btn btn-outline-secondary" (click)="toggleAntiPreview()">
         <fa-icon icon="pencil-alt"></fa-icon>
         <span jhiTranslate="entity.action.edit"></span>
     </div>
