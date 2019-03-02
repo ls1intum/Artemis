@@ -1,21 +1,21 @@
-import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs/Subscription';
-import { DiagramType, ModelingExercise } from '../entities/modeling-exercise';
-import { Participation } from '../entities/participation';
-import { ApollonDiagramService } from '../entities/apollon-diagram/apollon-diagram.service';
-import ApollonEditor, { ApollonOptions, Point, State } from '@ls1intum/apollon';
-import { JhiAlertService } from 'ng-jhipster';
-import { Result } from '../entities/result';
-import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
-import { ModelElementType, ModelingAssessment, ModelingAssessmentService } from '../entities/modeling-assessment';
+import {Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {ActivatedRoute, Router} from '@angular/router';
+import {Subscription} from 'rxjs/Subscription';
+import {DiagramType, ModelingExercise} from '../entities/modeling-exercise';
+import {Participation} from '../entities/participation';
+import {ApollonDiagramService} from '../entities/apollon-diagram/apollon-diagram.service';
+import ApollonEditor, {ApollonOptions, Point, State} from '@ls1intum/apollon';
+import {JhiAlertService} from 'ng-jhipster';
+import {Result} from '../entities/result';
+import {ModelingSubmission, ModelingSubmissionService} from '../entities/modeling-submission';
+import {ModelElementType, ModelingAssessment, ModelingAssessmentService} from '../entities/modeling-assessment';
 import * as $ from 'jquery';
-import { ModelingEditorService } from './modeling-editor.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ComponentCanDeactivate } from '../shared';
-import { JhiWebsocketService } from '../core';
-import { Observable } from 'rxjs/Observable';
-import { TranslateService } from '@ngx-translate/core';
+import {ModelingEditorService} from './modeling-editor.service';
+import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
+import {ComponentCanDeactivate} from '../shared';
+import {JhiWebsocketService} from '../core';
+import {Observable} from 'rxjs/Observable';
+import {TranslateService} from '@ngx-translate/core';
 import * as moment from 'moment';
 
 @Component({
@@ -121,9 +121,9 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                                 this.initializeAssessmentInfo();
                             } else {
                                 this.modelingAssessmentService
-                                    .find(params['participationId'], this.submission.id)
+                                    .getAssessment(this.submission.id)
                                     .subscribe(assessments => {
-                                        this.assessments = assessments.body;
+                                        this.assessments = assessments;
                                         this.initializeAssessmentInfo();
                                     });
                             }
@@ -150,8 +150,8 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
             if (submission.submitted) {
                 this.submission = submission;
                 if (this.submission.result && this.submission.result.rated) {
-                    this.modelingAssessmentService.find(this.submission.participation.id, this.submission.id).subscribe(assessments => {
-                        this.assessments = assessments.body;
+                    this.modelingAssessmentService.getAssessment(this.submission.id).subscribe(assessments => {
+                        this.assessments = assessments;
                         this.initializeAssessmentInfo();
                     });
                 }
@@ -207,7 +207,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
             assessmentsDiv.scrollTop(apollonDiv.scrollTop());
             assessmentsDiv.scrollLeft(apollonDiv.scrollLeft());
 
-            apollonDiv.on('scroll', function() {
+            apollonDiv.on('scroll', function () {
                 assessmentsDiv.scrollTop(apollonDiv.scrollTop());
                 assessmentsDiv.scrollLeft(apollonDiv.scrollLeft());
             });
@@ -307,8 +307,8 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                         const participation = this.participation;
                         participation.results = [this.result];
                         this.participation = Object.assign({}, participation);
-                        this.modelingAssessmentService.find(this.participation.id, this.submission.id).subscribe(assessments => {
-                            this.assessments = assessments.body;
+                        this.modelingAssessmentService.getAssessment(this.submission.id).subscribe(assessments => {
+                            this.assessments = assessments;
                             this.initializeAssessmentInfo();
                         });
                         this.jhiAlertService.success('arTeMiSApp.modelingEditor.submitSuccessfulWithAssessment');
@@ -408,7 +408,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
      * This function opens the modal for the help dialog.
      */
     open(content: any) {
-        this.modalService.open(content, { size: 'lg' });
+        this.modalService.open(content, {size: 'lg'});
     }
 
     // function to check whether there are pending changes

@@ -1,53 +1,53 @@
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
-import { SERVER_API_URL } from '../../app.constants';
+import {Injectable} from '@angular/core';
+import {HttpClient, HttpResponse} from '@angular/common/http';
+import {Observable} from 'rxjs/Observable';
+import {SERVER_API_URL} from '../../app.constants';
 
-import { ModelElementType, ModelingAssessment } from './modeling-assessment.model';
-import { Result } from '../result';
-import { ENTITY_KIND_HEIGHT, ENTITY_MEMBER_HEIGHT, ENTITY_MEMBER_LIST_VERTICAL_PADDING, ENTITY_NAME_HEIGHT, EntityKind, Point, RectEdge, RelationshipKind, State } from '@ls1intum/apollon';
+import {ModelElementType, ModelingAssessment} from './modeling-assessment.model';
+import {Result} from '../result';
+import {
+    ENTITY_KIND_HEIGHT,
+    ENTITY_MEMBER_HEIGHT,
+    ENTITY_MEMBER_LIST_VERTICAL_PADDING,
+    ENTITY_NAME_HEIGHT,
+    EntityKind,
+    Point,
+    RectEdge,
+    RelationshipKind,
+    State
+} from '@ls1intum/apollon';
 
 export type EntityResponseType = HttpResponse<Result>;
 
 @Injectable({providedIn: 'root'})
 export class ModelingAssessmentService {
-    private resourceUrl = SERVER_API_URL + 'api/modeling-assessments';
+    private resourceUrl = SERVER_API_URL + 'api/';
 
     constructor(private http: HttpClient) {
     }
 
-    save(modelingAssessment: ModelingAssessment[], exerciseId: number, resultId: number): Observable<EntityResponseType> {
-        return this.http
-            .put<Result>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}`, modelingAssessment, {observe: 'response'})
-            .map((res: EntityResponseType) => this.convertResponse(res));
-    }
-
-    submit(modelingAssessment: ModelingAssessment[], exerciseId: number, resultId: number, ignoreConflicts = false): Observable<any> {
-        let url = `${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}/submit`;
-        if (ignoreConflicts) {
-            url += '?ignoreConflict=true';
+    save(modelingAssessment: ModelingAssessment[], submissionId: number, submit = false, ignoreConflicts = false): Observable<any> {
+        let url = `${this.resourceUrl}/submissions/${submissionId}/modeling-assessment`;
+        if(submit){
+            url += '?submit=true';
+            if(ignoreConflicts){
+                url += '&ignoreConflicts=true';
+            }
         }
-        return this.http.put<any>(url, modelingAssessment);
+        return this.http.put<any>(url.toString(), modelingAssessment);
     }
 
-    find(participationId: number, submissionId: number): Observable<HttpResponse<ModelingAssessment[]>> {
-        return this.http
-            .get<ModelingAssessment[]>(`${this.resourceUrl}/participation/${participationId}/submission/${submissionId}`, {
-                observe: 'response'
-            })
-            .map(res => this.convertArrayResponse(res));
+    getAssessment(submissionId: number): Observable<ModelingAssessment[]> {
+        return this.http.get<ModelingAssessment[]>(`${this.resourceUrl}/submissions/${submissionId}/modeling-assessment`);
     }
 
     getOptimalSubmissions(exerciseId: number): Observable<HttpResponse<any>> {
-        return this.http.get(`${this.resourceUrl}/exercise/${exerciseId}/optimal-model-submissions`, {observe: 'response'});
+        return this.http.get(`${this.resourceUrl}/exercises/${exerciseId}/optimal-model-submissions`, {observe: 'response'});
     }
 
-    getPartialAssessment(exerciseId: number, submissionId: number): Observable<HttpResponse<ModelingAssessment[]>> {
+    getPartialAssessment(submissionId: number): Observable<ModelingAssessment[]> {
         return this.http
-            .get<ModelingAssessment[]>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}/partial-assessment`, {
-                observe: 'response'
-            })
-            .map(res => this.convertArrayResponse(res));
+            .get<ModelingAssessment[]>(`${this.resourceUrl}/submissions/${submissionId}/partial-assessment`,);
     }
 
     getDataForEditor(exerciseId: number, submissionId: number): Observable<any> {
@@ -55,36 +55,7 @@ export class ModelingAssessmentService {
     }
 
     resetOptimality(exerciseId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/exercise/${exerciseId}/optimal-model-submissions`, {observe: 'response'});
-    }
-
-    private convertResponse(res: EntityResponseType): EntityResponseType {
-        const body: Result = this.convertItemFromServer(res.body);
-        return res.clone({body});
-    }
-
-    /**
-     * Convert a returned JSON object to Result.
-     */
-    private convertItemFromServer(result: Result): Result {
-        const copy: Result = Object.assign({}, result);
-        return copy;
-    }
-
-    private convertAssessmentFromServer(assessment: ModelingAssessment): ModelingAssessment {
-        const copy: ModelingAssessment = Object.assign({}, assessment);
-        return copy;
-    }
-
-    private convertArrayResponse(res: HttpResponse<ModelingAssessment[]>): HttpResponse<ModelingAssessment[]> {
-        const jsonResponse: ModelingAssessment[] = res.body;
-        const body: ModelingAssessment[] = [];
-        if (jsonResponse) {
-            for (let i = 0; i < jsonResponse.length; i++) {
-                body.push(this.convertAssessmentFromServer(jsonResponse[i]));
-            }
-        }
-        return res.clone({body});
+        return this.http.delete<void>(`${this.resourceUrl}/exercises/${exerciseId}/optimal-model-submissions`, {observe: 'response'});
     }
 
     /**

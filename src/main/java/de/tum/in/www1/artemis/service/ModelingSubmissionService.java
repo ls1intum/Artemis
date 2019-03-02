@@ -7,6 +7,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.service.scheduled.AutomaticSubmissionService;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -106,7 +107,7 @@ public class ModelingSubmissionService {
     }
 
     /**
-     * Checks if zhe model for given exerciseId, studentId and model modelId exists and returns it if found.
+     * Checks if the model for given exerciseId, studentId and model modelId exists and returns it if found.
      *
      * @param exerciseId    the exercise modelId for which to find the model
      * @param studentId     the student modelId for which to find the model
@@ -118,6 +119,11 @@ public class ModelingSubmissionService {
             return jsonModelRepository.readModel(exerciseId, studentId, modelId);
         }
         return null;
+    }
+
+    public ModelingSubmission findOne (Long id){
+      return  modelingSubmissionRepository.findById(id)
+          .orElseThrow(() -> new EntityNotFoundException("Exercise with id: \"" + id + "\" does not exist"));
     }
 
     /**
