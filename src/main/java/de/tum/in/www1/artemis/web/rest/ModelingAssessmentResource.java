@@ -76,7 +76,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
     checkAuthorization(modelingExercise);
     compassService.resetModelsWaitingForAssessment(exerciseId);
-    return ResponseEntity.status(HttpStatus.OK).build();
+    return ResponseEntity.noContent().build();
   }
 
   @GetMapping("/exercises/{exerciseId}/optimal-model-submissions")
@@ -153,8 +153,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
     checkAuthorization(modelingExercise);
     Result result = submission.getResult();
-    modelingAssessmentService.saveManualAssessment(
-        result, modelingExercise.getId(), modelingAssessment);
+    modelingAssessmentService.saveManualAssessment(result, exerciseId, modelingAssessment);
     if (submit) {
       List<Conflict> conflicts =
           compassService.getConflicts(exerciseId, submissionId, modelingAssessment);
