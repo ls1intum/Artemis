@@ -50,9 +50,8 @@ public class ModelingAssessmentService extends AssessmentService {
      */
     @Transactional
     public Result submitManualAssessment(Result result, ModelingExercise exercise, List<ModelElementAssessment> modelingAssessment) {
-        saveManualAssessment(result);
         Double calculatedScore = calculateTotalScore(modelingAssessment);
-        return prepareSubmission(result, exercise, calculatedScore);
+        return submitResult(result, exercise, calculatedScore);
     }
 
 

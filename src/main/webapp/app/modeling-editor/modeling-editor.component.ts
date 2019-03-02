@@ -123,9 +123,9 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                                 this.initializeAssessmentInfo();
                             } else {
                                 this.modelingAssessmentService
-                                    .find(params['participationId'], this.submission.id)
+                                    .getAssessment(this.submission.id)
                                     .subscribe(assessments => {
-                                        this.assessmentResult = assessments.body;
+                                        this.assessmentResult = assessments;
                                         this.initializeAssessmentInfo();
                                     });
                             }
@@ -152,8 +152,8 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
             if (submission.submitted) {
                 this.submission = submission;
                 if (this.submission.result && this.submission.result.rated) {
-                    this.modelingAssessmentService.find(this.submission.participation.id, this.submission.id).subscribe(assessments => {
-                        this.assessmentResult = assessments.body;
+                    this.modelingAssessmentService.getAssessment(this.submission.id).subscribe(assessments => {
+                        this.assessmentResult = assessments;
                         this.initializeAssessmentInfo();
                     });
                 }
@@ -209,7 +209,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
             assessmentsDiv.scrollTop(apollonDiv.scrollTop());
             assessmentsDiv.scrollLeft(apollonDiv.scrollLeft());
 
-            apollonDiv.on('scroll', function() {
+            apollonDiv.on('scroll', function () {
                 assessmentsDiv.scrollTop(apollonDiv.scrollTop());
                 assessmentsDiv.scrollLeft(apollonDiv.scrollLeft());
             });
@@ -309,8 +309,8 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                         const participation = this.participation;
                         participation.results = [this.result];
                         this.participation = Object.assign({}, participation);
-                        this.modelingAssessmentService.find(this.participation.id, this.submission.id).subscribe(assessments => {
-                            this.assessmentResult = assessments.body;
+                        this.modelingAssessmentService.getAssessment(this.submission.id).subscribe(assessments => {
+                            this.assessmentResult = assessments;
                             this.initializeAssessmentInfo();
                         });
                         this.jhiAlertService.success('arTeMiSApp.modelingEditor.submitSuccessfulWithAssessment');

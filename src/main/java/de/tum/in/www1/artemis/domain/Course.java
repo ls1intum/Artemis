@@ -76,6 +76,24 @@ public class Course implements Serializable {
     @JsonIgnoreProperties("course")
     private Set<Exercise> exercises = new HashSet<>();
 
+    public Course() {
+    }
+
+    public Course(Long id, String title, String description, String shortName, String studentGroupName, String teachingAssistantGroupName, String instructorGroupName, ZonedDateTime startDate, ZonedDateTime endDate, Boolean onlineCourse, Integer maxComplaints, Set<Exercise> exercises) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.shortName = shortName;
+        this.studentGroupName = studentGroupName;
+        this.teachingAssistantGroupName = teachingAssistantGroupName;
+        this.instructorGroupName = instructorGroupName;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.onlineCourse = onlineCourse;
+        this.maxComplaints = maxComplaints;
+        this.exercises = exercises;
+    }
+
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
         return id;

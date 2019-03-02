@@ -47,7 +47,7 @@ public class TextAssessmentService extends AssessmentService {
         Result result = saveAssessment(resultId, textAssessment);
         Double calculatedScore = calculateTotalScore(textAssessment);
 
-        return prepareSubmission(result, textExercise, calculatedScore);
+        return submitResult(result, textExercise, calculatedScore);
     }
 
     /**

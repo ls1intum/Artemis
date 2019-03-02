@@ -481,7 +481,7 @@ public class BambooService implements ContinuousIntegrationService {
         //TODO: only save this result if it is newer (e.g. + 5s) than the last saved result for this participation --> this avoids saving exact same results multiple times
 
         Result result = new Result();
-        result.setRated(participation.getExercise().getDueDate() == null || ZonedDateTime.now().isBefore(participation.getExercise().getDueDate()));
+        result.setRatedIfNotExceeded(participation.getExercise().getDueDate(), ZonedDateTime.now());
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setSuccessful((boolean) buildResults.get("successful"));
         result.setResultString((String) buildResults.get("buildTestSummary"));
@@ -562,7 +562,7 @@ public class BambooService implements ContinuousIntegrationService {
             }
 
             Result result = new Result();
-            result.setRated(participation.getExercise().getDueDate() == null || ZonedDateTime.now().isBefore(participation.getExercise().getDueDate()));
+            result.setRatedIfNotExceeded(participation.getExercise().getDueDate(), ZonedDateTime.now());
             result.setAssessmentType(AssessmentType.AUTOMATIC);
             result.setSuccessful((Boolean) buildMap.get("successful"));
 

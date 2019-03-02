@@ -235,7 +235,7 @@ dependencies {
     testCompile "org.mockito:mockito-core:2.24.5"
     testCompile "com.mattbertolini:liquibase-slf4j"
     testCompile "org.hamcrest:hamcrest-library"
-    testCompile "com.h2database:h2"
+    testCompile group: 'com.h2database', name: 'h2', version: '1.4.198'
     //jhipster-needle-gradle-dependency - JHipster will add additional dependencies here
 }
 
