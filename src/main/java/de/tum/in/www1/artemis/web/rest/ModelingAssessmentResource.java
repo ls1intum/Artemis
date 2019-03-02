@@ -42,7 +42,6 @@ public class ModelingAssessmentResource extends AssessmentResource {
   private static final String PUT_SUBMIT_ASSESSMENT_200_REASON =
       "Given assessment has been saved and used for automatic assessment by Compass";
 
-  private final ResultService resultService;
   private final CompassService compassService;
   private final ModelingExerciseService modelingExerciseService;
   private final AuthorizationCheckService authCheckService;
@@ -53,7 +52,6 @@ public class ModelingAssessmentResource extends AssessmentResource {
   public ModelingAssessmentResource(
       AuthorizationCheckService authCheckService,
       UserService userService,
-      ResultService resultService,
       CompassService compassService,
       ModelingExerciseService modelingExerciseService,
       AuthorizationCheckService authCheckService1,
@@ -61,7 +59,6 @@ public class ModelingAssessmentResource extends AssessmentResource {
       ModelingAssessmentService modelingAssessmentService,
       ModelingSubmissionService modelingSubmissionService) {
     super(authCheckService, userService);
-    this.resultService = resultService;
     this.compassService = compassService;
     this.modelingExerciseService = modelingExerciseService;
     this.authCheckService = authCheckService1;
