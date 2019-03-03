@@ -28,38 +28,43 @@ import static org.assertj.core.api.Assertions.assertThat;
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
 public class ParticipationIntegrationTest {
-  @Autowired CourseRepository courseRepo;
-  @Autowired ExerciseRepository exerciseRepo;
-  @Autowired UserRepository userRepo;
-  @Autowired RequestUtilService request;
-  @Autowired DatabaseUtilService database;
+    @Autowired
+    CourseRepository courseRepo;
+    @Autowired
+    ExerciseRepository exerciseRepo;
+    @Autowired
+    UserRepository userRepo;
+    @Autowired
+    RequestUtilService request;
+    @Autowired
+    DatabaseUtilService database;
 
-  @Before
-  public void initTestCase() {
-    database.resetDatabase();
-    database.addUsers(2, 0);
-    database.addCourseWithModelingExercise();
-  }
+    @Before
+    public void initTestCase() {
+        database.resetDatabase();
+        database.addUsers(2, 0);
+        database.addCourseWithModelingExercise();
+    }
 
-  @Test
-  @WithMockUser(username = "student1", roles = "USER")
-  public void participateInExercise() throws Exception {
-    Course course = courseRepo.findAll().get(0);
-    Exercise exercise = exerciseRepo.findAll().get(0);
-    URI location =
-        request.post(
-            "/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/participations",
-            null,
-            HttpStatus.CREATED);
-    Participation participation =
-        request.get(location.getPath(), HttpStatus.OK, Participation.class);
-    assertThat(participation.getExercise())
-        .as("participated in correct exercise")
-        .isEqualTo(exercise);
-    assertThat(participation.getSubmissions()).as("no submissions on initialization").isEmpty();
-    assertThat(participation.getStudent()).as("Student got set").isNotNull();
-    assertThat(participation.getStudent().getLogin())
-        .as("Correct student got set")
-        .isEqualTo("student1");
-  }
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void participateInExercise() throws Exception {
+        Course course = courseRepo.findAll().get(0);
+        Exercise exercise = exerciseRepo.findAll().get(0);
+        URI location =
+            request.post(
+                "/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/participations",
+                null,
+                HttpStatus.CREATED);
+        Participation participation =
+            request.get(location.getPath(), HttpStatus.OK, Participation.class);
+        assertThat(participation.getExercise())
+            .as("participated in correct exercise")
+            .isEqualTo(exercise);
+        assertThat(participation.getSubmissions()).as("no submissions on initialization").isEmpty();
+        assertThat(participation.getStudent()).as("Student got set").isNotNull();
+        assertThat(participation.getStudent().getLogin())
+            .as("Correct student got set")
+            .isEqualTo("student1");
+    }
 }
