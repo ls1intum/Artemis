@@ -100,13 +100,13 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
                     this.jhiAlertService.info('arTeMiSApp.apollonDiagram.lock');
                 }
                 if (nextOptimal) {
-                    this.modelingAssessmentService.getPartialAssessment(exerciseId, submissionId).subscribe(res => {
-                        this.result = res.body;
+                    this.modelingAssessmentService.getPartialAssessment(submissionId).subscribe((result: Result) => {
+                        this.result = result;
                         this.initializeAssessments();
                         this.checkScoreBoundaries();
                     });
                 } else {
-                    if (this.result) {
+                    if (this.result && this.result.feedbacks) {
                         this.initializeAssessments();
                         this.checkScoreBoundaries();
                     }
@@ -218,7 +218,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
 
     saveAssessment() {
         this.checkScoreBoundaries();
-        this.modelingAssessmentService.save(this.result,this.submission.id).subscribe((result:Result) => {
+        this.modelingAssessmentService.save(this.result, this.submission.id).subscribe((result: Result) => {
             this.result = result;
             this.onNewResult.emit(this.result);
             this.jhiAlertService.success('arTeMiSApp.apollonDiagram.assessment.saveSuccessful');
@@ -241,7 +241,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
                 (error.error as Conflict[]).forEach(conflict => this.conflicts.set(conflict.elementInConflict.id, conflict));
                 this.highlightElementsWithConflict();
                 this.jhiAlertService.error('arTeMiSApp.apollonDiagram.assessment.submitFailedWithConflict');
-            }else{
+            } else {
                 this.jhiAlertService.error('arTeMiSApp.apollonDiagram.assessment.submitFailed');
             }
         });

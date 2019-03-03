@@ -12,15 +12,15 @@
             <span *ngIf="result && result.participation"><jhi-result
                 [participation]="result.participation"></jhi-result></span>
             <button class="btn btn-primary" (click)="saveAssessment()"
-                    [disabled]="!result.feedbacks || !assessmentsAreValid || (result?.assessor && result.assessor.id !== userId && !isAuthorized)"
+                    [disabled]="!result?.feedbacks || !assessmentsAreValid || (result?.assessor && result.assessor.id !== userId && !isAuthorized)"
                     [hidden]="result && result.rated">Save Assessment
             </button>
             <button class="btn btn-success" (click)="submit()"
-                    [disabled]="!result.feedbacks || !assessmentsAreValid || (result?.assessor && result.assessor.id !== userId && !isAuthorized)"
+                    [disabled]="!result?.feedbacks || !assessmentsAreValid || (result?.assessor && result.assessor.id !== userId && !isAuthorized)"
                     [hidden]="result && result.rated">Submit Assessment
             </button>
             <button class="btn btn-danger" (click)="submit()"
-                    [disabled]="!result.feedbacks || !assessmentsAreValid"
+                    [disabled]="!result?.feedbacks || !assessmentsAreValid"
                     [hidden]="!result || !result.rated">Override Assessment
             </button>
             <div *ngIf="conflicts && conflicts.size > 0" class="custom-control custom-switch">

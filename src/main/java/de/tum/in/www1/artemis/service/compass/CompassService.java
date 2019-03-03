@@ -228,8 +228,10 @@ public class CompassService {
                 // and give a slight advantage which makes 100% scores easier reachable
                 // see: https://confluencebruegge.in.tum.de/display/ArTEMiS/Feature+suggestions for more information
                 grade = roundGrades(grade);
+
                 // Save to database
                 List<Feedback> automaticFeedbackAssessments = engine.convertToFeedback(grade, modelId);
+                result.setFeedbacks(automaticFeedbackAssessments);
 
                 result.setRatedIfNotExceeded(modelingExercise.getDueDate(),modelingSubmission.get().getSubmissionDate());
                 result.setAssessmentType(AssessmentType.AUTOMATIC);
