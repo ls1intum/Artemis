@@ -272,35 +272,6 @@ public class ResultResource {
     }
 
     /**
-     * GET  /courses/:courseId/results : get all the results for a course
-     *
-     * @param courseId   the course we care for
-     * @return the ResponseEntity with status 200 (OK) and the list of results in body
-     */
-    @GetMapping(value = "/courses/{courseId}/all-results")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
-    public ResponseEntity<List<Result>> getAllResultsForCourse(@PathVariable Long courseId,
-                                                              @RequestParam(defaultValue = "false") boolean withAssessors) {
-        log.debug("REST request to get Results for course : {}", courseId);
-
-
-        Course course = courseService.findOne(courseId);
-
-        if (!userHasPermissions(course)) return forbidden();
-
-        List<Result> results = resultService.findByCourseId(courseId);
-
-        if (withAssessors) {
-            results.forEach(result -> {
-                Hibernate.initialize(result.getAssessor()); // eagerly load the association
-            });
-        }
-
-        return ResponseEntity.ok().body(results);
-    }
-
-    /**
      * GET  /courses/:courseId/exercises/:exerciseId/results : get the successful results for an exercise, ordered ascending by build completion date.
      *
      * @param courseId   only included for API consistency, not actually used

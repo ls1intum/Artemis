@@ -3,7 +3,7 @@ import {Component, OnInit} from '@angular/core';
 import {Course, CourseService, StatsForInstructorDashboard} from 'app/entities/course';
 import {ActivatedRoute} from '@angular/router';
 import {HttpErrorResponse, HttpResponse} from '@angular/common/http';
-import {InitializationState} from 'app/entities/participation';
+import {InitializationState, Participation} from 'app/entities/participation';
 import {getIcon, getIconTooltip} from 'app/entities/exercise';
 import {Result, ResultService} from 'app/entities/result';
 import {TutorLeaderboardData} from 'app/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.component';
@@ -40,41 +40,50 @@ export class InstructorCourseDashboardComponent implements OnInit {
             (res: HttpResponse<Course>) => {
                 this.course = res.body;
 
+                let numberOfSubmissions = 0;
+                let numberOfAssessments = 0;
+
                 for (const exercise of this.course.exercises) {
+                    const validParticipations: Participation[] = exercise.participations.filter(participation => participation.initializationState === InitializationState.FINISHED);
+                    for (const participation of validParticipations) {
+                        for (const result of participation.results) {
+                            if (result.rated) {
+                                const tutorId = result.assessor.id;
+                                if (!this.tutorLeaderboardData[tutorId]) {
+                                    this.tutorLeaderboardData[tutorId] = {
+                                        tutor: result.assessor,
+                                        nrOfAssessments: 0
+                                    };
+                                }
+
+                                this.tutorLeaderboardData[tutorId].nrOfAssessments++;
+                            }
+                        }
+                    }
+
                     exercise.participations = exercise.participations.filter(participation => participation.initializationState === InitializationState.FINISHED);
                     exercise.numberOfAssessments = exercise.participations.filter(participation => participation.results.filter(result => result.rated).length > 0).length;
+
+                    numberOfAssessments += exercise.numberOfAssessments;
+                    numberOfSubmissions += exercise.participations.length;
                 }
+
+                this.stats.numberOfAssessments = numberOfAssessments;
+                this.stats.numberOfSubmissions = numberOfSubmissions;
+
+                this.dataNumbersForPieChart = [
+                    numberOfSubmissions - numberOfAssessments,
+                    numberOfAssessments
+                ];
             },
             (response: HttpErrorResponse) => this.onError(response.message)
         );
 
         this.courseService.getStatsForInstructors(courseId).subscribe(
             (res: HttpResponse<StatsForInstructorDashboard>) => {
-                this.stats = res.body;
-                this.dataNumbersForPieChart = [
-                    res.body.numberOfSubmissions - res.body.numberOfAssessments,
-                    res.body.numberOfAssessments
-                ];
+                this.stats = Object.assign({}, this.stats, res.body);
             },
             (response: string) => this.onError(response)
-        );
-
-        this.resultService.findByCourseId(courseId, {withAssessors: true}).subscribe(
-            (res: HttpResponse<Result[]>) => {
-                const results = res.body;
-
-                for (const result of results) {
-                    const tutorId = result.assessor.id;
-                    if (!this.tutorLeaderboardData[tutorId]) {
-                        this.tutorLeaderboardData[tutorId] = {
-                            tutor: result.assessor,
-                            nrOfAssessments: 0
-                        };
-                    }
-
-                    this.tutorLeaderboardData[tutorId].nrOfAssessments++;
-                }
-            }
         );
     }
 

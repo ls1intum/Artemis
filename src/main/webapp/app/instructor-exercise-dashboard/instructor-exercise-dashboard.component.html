@@ -24,7 +24,7 @@
                             <li><b>Exercise due date:</b> {{exercise.dueDate | date: 'medium'}}</li>
                             <li><b>Submissions:</b> {{exercise.participations.length}}</li>
                             <li><b>Assessments due date:</b> {{exercise.assessmentDueDate | date: 'medium'}}</li>
-                            <li><b>Assessments:</b> 0 (0 open)</li>
+                            <li><b>Assessments:</b> {{numberOfAssessments}} ({{exercise.participations.length - numberOfAssessments}} open)</li>
                         </ul>
                     </div>
                 </div>

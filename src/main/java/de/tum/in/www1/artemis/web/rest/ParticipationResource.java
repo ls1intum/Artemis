@@ -172,14 +172,22 @@ public class ParticipationResource {
      */
     @GetMapping(value = "/exercise/{exerciseId}/participations")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<Participation>> getAllParticipationsForExercise(@PathVariable Long exerciseId) {
+    public ResponseEntity<List<Participation>> getAllParticipationsForExercise(@PathVariable Long exerciseId,
+                                                                               @RequestParam(defaultValue = "false") boolean withEagerResults) {
         log.debug("REST request to get all Participations for Exercise {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
         Course course = exercise.getCourse();
         if (!courseService.userHasAtLeastTAPermissions(course)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
-        List<Participation> participations = participationService.findByExerciseId(exerciseId);
+
+        List<Participation> participations;
+        if (withEagerResults) {
+            participations = participationService.findByExerciseIdWithEagerResults(exerciseId);
+        } else {
+            participations = participationService.findByExerciseId(exerciseId);
+        }
+
         return ResponseEntity.ok(participations);
     }
 

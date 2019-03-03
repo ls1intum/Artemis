@@ -430,12 +430,6 @@ public class CourseResource {
         long numberOfTutors = userService.countNumberOfTutorsForCourse(course);
         data.set("numberOfTutors", objectMapper.valueToTree(numberOfTutors));
 
-        long numberOfSubmissions = submissionService.countNumberOfSubmissions(courseId);
-        data.set("numberOfSubmissions", objectMapper.valueToTree(numberOfSubmissions));
-
-        long numberOfAssessments = textAssessmentService.countNumberOfAssessments(courseId);
-        data.set("numberOfAssessments", objectMapper.valueToTree(numberOfAssessments));
-
         long numberOfComplaints = 0; // TODO: when implementing the complaints implement this as well
         data.set("numberOfComplaints", objectMapper.valueToTree(numberOfComplaints));
 

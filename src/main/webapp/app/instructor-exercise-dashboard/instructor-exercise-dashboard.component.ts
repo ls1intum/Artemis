@@ -15,6 +15,7 @@ import {TutorLeaderboardData} from 'app/instructor-course-dashboard/tutor-leader
 export class InstructorExerciseDashboardComponent implements OnInit {
     exercise: Exercise;
     courseId: number;
+    numberOfAssessments: number;
 
     dataNumbersForPieChart: number[];
     tutorLeaderboardData: TutorLeaderboardData = {};
@@ -37,14 +38,15 @@ export class InstructorExerciseDashboardComponent implements OnInit {
             (res: HttpResponse<Exercise>) => {
                 this.exercise = res.body;
 
-                this.participationService.findAllParticipationsByExercise(this.exercise.id).subscribe((participationRes: HttpResponse<Participation[]>) => {
+                this.participationService.findAllParticipationsByExercise(this.exercise.id, {withEagerResults: true}).subscribe((participationRes: HttpResponse<Participation[]>) => {
                     this.exercise.participations = participationRes.body;
+                    this.numberOfAssessments = this.exercise.participations.filter(participation =>
+                        participation.results.filter(result => result.rated).length > 0
+                    ).length;
 
                     this.dataNumbersForPieChart = [
-                        this.exercise.participations.length,
-                        this.exercise.participations.filter(participation =>
-                            participation.results.filter(result => result.rated).length > 0
-                        ).length
+                        this.exercise.participations.length - this.numberOfAssessments,
+                        this.numberOfAssessments,
                     ];
                 });
             },
