@@ -9,10 +9,7 @@ import 'brace/theme/chrome';
 import 'brace/mode/markdown';
 import { ShortAnswerQuestionUtil } from 'app/components/util/short-answer-question-util.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-// for visual mode
-import { DropLocation } from '../../../entities/drop-location';
 import { DragAndDropMouseEvent } from '../../../entities/drag-item/drag-and-drop-mouse-event.class';
-import { DragState } from '../../../entities/drag-item/drag-state.enum';
 import * as TempID from 'app/quiz/edit/temp-id';
 
 @Component({
@@ -357,9 +354,6 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         this.numberOfSpot++;
         this.firstPressed++;
 
-        console.log(editor.getValue());
-        console.log(this.question.spots);
-        console.log(this.question.correctMappings);
         this.questionUpdated.emit();
     }
 
@@ -524,7 +518,6 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
             // Notify parent of changes
             this.questionUpdated.emit();
         }
-        console.log(this.question.correctMappings);
         this.questionEditorText = this.generateMarkdown();
     }
 
