@@ -64,16 +64,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     /*
     For visual mode
      */
-    questionText: string;
-    textWithoutSpots: string[];
-    textBeforeSpots: string[];
-    textAfterSpots: string[];
-
-    /**
-     * Keep track of what the current drag action is doing
-     * @type {number}
-     */
-    draggingState: number = DragState.NONE;
+    textParts: String [][];
 
     /**
      * Keep track of the currently dragged ShortAnswerSpot
@@ -88,8 +79,6 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     mouse: DragAndDropMouseEvent;
 
     dropAllowed = false;
-
-    dropLocationsForSpots: [DropLocation];
 
     constructor(
         private artemisMarkdown: ArtemisMarkdown,
@@ -141,7 +130,6 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     setupQuestionEditor(): void {
         // Sets the counter to the highest spotNr and generates solution options with their mapping (each spotNr)
         this.numberOfSpot = this.question.spots.length + 1;
-        this.setOptionsWithID();
 
         // Default editor settings for inline markup editor
         this.questionEditor.setTheme('chrome');
@@ -172,6 +160,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @desc Set up of all solution option with their mapping (spotNr)
      */
     setOptionsWithID() {
+        this.optionsWithID = [];
         for (const solution of this.question.solutions) {
             let spotsForSolution: ShortAnswerSpot[] = [];
             let option = '[-option ';
@@ -180,10 +169,10 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
 
             for (const spotForSolution of spotsForSolution) {
                 if (firstSolution) {
-                    option += this.question.spots.filter(spot => spot.id === spotForSolution.id)[0].spotNr;
+                    option += this.question.spots.filter(spot => this.shortAnswerQuestionUtil.isSameSpot(spot, spotForSolution))[0].spotNr;
                     firstSolution = false;
                 } else {
-                    option += ',' + this.question.spots.filter(spot => spot.id === spotForSolution.id)[0].spotNr;
+                    option += ',' + this.question.spots.filter(spot => this.shortAnswerQuestionUtil.isSameSpot(spot, spotForSolution))[0].spotNr;
                 }
             }
             option += ']';
@@ -199,6 +188,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * 3. For each solution: text is added using ArtemisMarkdown
      */
     generateMarkdown(): string {
+        this.setOptionsWithID();
         const markdownText =
             this.artemisMarkdown.generateTextHintExplanation(this.question) +
             '\n\n\n\n' +
@@ -335,22 +325,14 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * an option connected to the spot below the last visible row
      */
     addSpotAtCursorVisualMode(): void {
+
         const wrapperDiv = document.getElementById('test');
         const child = window.getSelection().baseNode;
 
         if (!wrapperDiv.contains(child)) {
             return
         }
-
         const markedText = window.getSelection().toString()
-/*
-        // Add solution to question
-        if (!this.question.solutions) {
-            this.question.solutions = [];
-        }
-        const solution = new ShortAnswerSolution();
-        solution.tempID = this.pseudoRandomLong();
-        solution.text = markedText; */
 
         const editor = this.questionEditor.getEditor();
         editor.find( markedText ,{
@@ -366,20 +348,29 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         this.numberOfSpot++;
         this.firstPressed++;
 
-        // is either '' or the question in the first line
-        this.questionText = this.shortAnswerQuestionUtil.firstLineOfQuestion(editor.getValue());
-        console.log(this.questionText);
-        this.textWithoutSpots = this.shortAnswerQuestionUtil.getTextWithoutSpots(editor.getValue().split(/\[-option /g)[0]);
+        //neue Idee den ganzen text auf in ein array von strings aufzuteilen (alles vor dem ersten  "[-option " tag)
+        const questionText = editor.getValue().split(/\[-option /g)[0].trim();
+        this.textParts = questionText.split(/\n+/g).map((t: String) => t.split(/\s+(?![^[]]*])/g));
+        console.log(this.textParts);
 
-        // separates the text into parts that come before the spot tag
-        this.textBeforeSpots = this.textWithoutSpots.slice(0, this.textWithoutSpots.length - 1);
-
-        // the last part that comes after the last spot tag
-        this.textAfterSpots = this.textWithoutSpots.slice(this.textWithoutSpots.length - 1);
+        console.log(editor.getValue());
 
         this.parseMarkdown(editor.getValue());
 
+        console.log(this.question.spots);
         this.questionUpdated.emit();
+    }
+
+    isInputField(text: string): boolean {
+        return !(text.search(/\[-spot/g) === -1);
+    }
+
+    getSpotNr(text: string): number {
+        return +text.split(/\[-spot/g).join('').split(']').join('').trim()
+    }
+
+    getSpot(spotNr: number): ShortAnswerSpot  {
+        return this.question.spots.filter(spot => spot.spotNr === spotNr)[0];
     }
 
     /**
@@ -458,173 +449,6 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * @function mouseMove
-     * @desc React to mousemove events on the entire page to update:
-     * - mouse object (always)
-     * - current solution spot (only while dragging)
-     * @param e {object} Mouse move event
-     */
-    mouseMove(e: any): void {
-        // Update mouse x and y value
-        const event: MouseEvent = e || window.event; // Moz || IE
-        const jQueryBackgroundElement = $('.click-layer-question-' + this.questionIndex);
-        const jQueryBackgroundOffset = jQueryBackgroundElement.offset();
-        const backgroundWidth = jQueryBackgroundElement.width();
-        const backgroundHeight = jQueryBackgroundElement.height();
-        if (event.pageX) {
-            // Moz
-            this.mouse.x = event.pageX - jQueryBackgroundOffset.left;
-            this.mouse.y = event.pageY - jQueryBackgroundOffset.top;
-        } else if (event.clientX) {
-            // IE
-            this.mouse.x = event.clientX - jQueryBackgroundOffset.left;
-            this.mouse.y = event.clientY - jQueryBackgroundOffset.top;
-        }
-        this.mouse.x = Math.min(Math.max(0, this.mouse.x), backgroundWidth);
-        this.mouse.y = Math.min(Math.max(0, this.mouse.y), backgroundHeight);
-
-        if (this.draggingState !== DragState.NONE) {
-            switch (this.draggingState) {
-                case DragState.CREATE:
-                case DragState.RESIZE_X:
-                    // Update current drop location's position and size (only x-axis)
-                    this.currentSpot.posX = Math.round((200 * Math.min(this.mouse.x, this.mouse.startX)) / backgroundWidth);
-                    this.currentSpot.width = Math.round((200 * Math.abs(this.mouse.x - this.mouse.startX)) / backgroundWidth);
-                    break;
-                case DragState.MOVE:
-                    // update current drop location's position
-                    this.currentSpot.posX = Math.round(
-                        Math.min(Math.max(0, (200 * (this.mouse.x + this.mouse.offsetX)) / backgroundWidth), 200 - this.currentSpot.width)
-                    );
-                    this.currentSpot.posY = Math.round(
-                        Math.min(
-                            Math.max(0, (200 * (this.mouse.y + this.mouse.offsetY)) / backgroundHeight),
-                            200 - /*this.spot.height*/ 50 //TODO: Change to actual spot height of SaSolutionsSpots (fix value)
-                        )
-                    );
-                    break;
-            }
-        }
-    }
-
-    /**
-     * @function mouseUp
-     * @desc React to mouseup events to finish dragging operations
-     */
-    mouseUp(): void {
-        if (this.draggingState !== DragState.NONE) {
-            switch (this.draggingState) {
-                case DragState.CREATE:
-                    const jQueryBackgroundElement = $('.click-layer-question-' + this.questionIndex);
-                    const backgroundWidth = jQueryBackgroundElement.width();
-                    const backgroundHeight = jQueryBackgroundElement.height();
-                    if ((this.currentSpot.width / 200) * backgroundWidth < 14) {
-                        // Remove drop Location if too small (assume it was an accidental click/drag),
-                        this.deleteSpot(this.currentSpot);
-                    } else {
-                        // Notify parent of new drop location
-                        this.questionUpdated.emit();
-                    }
-                    break;
-                case DragState.MOVE:
-                case DragState.RESIZE_X:
-                    // Notify parent of changed drop location
-                    this.questionUpdated.emit();
-                    break;
-            }
-        }
-        // Update state
-        this.draggingState = DragState.NONE;
-        this.currentSpot = null;
-    }
-
-    // FDE: Maybe create DropLocation and and afterwards create Spot
-    /**
-     * @function backgroundMouseDown
-     * @desc React to mouse down events on the background to start dragging
-     */
-    backgroundMouseDown(): void {
-        let number = 0;
-        for (let spot of this.question.spots) {
-            let dropLocation = new DropLocation();
-            dropLocation.height = 50;
-            dropLocation.posX = 125;
-            dropLocation.posY = 125;
-            dropLocation.width = 50;
-            dropLocation.id = number;
-            this.dropLocationsForSpots.push(dropLocation);
-            number++;
-        }
-    }
-
-    /**
-     * @function spotMouseDown
-     * @desc React to mousedown events on a spot to start moving it
-     * @param spot {object} the spot to move
-     */
-    spotMouseDown(spot: ShortAnswerSpot): void {
-        if (this.draggingState === DragState.NONE) {
-            const jQueryBackgroundElement = $('.click-layer-question-' + this.questionIndex);
-            const backgroundWidth = jQueryBackgroundElement.width();
-            const backgroundHeight = jQueryBackgroundElement.height();
-
-            const dropLocationX = (spot.posX / 200) * backgroundWidth;
-            const dropLocationY = (spot.posY / 200) * backgroundHeight;
-
-            // Save offset of mouse in drop location
-            this.mouse.offsetX = dropLocationX - this.mouse.x;
-            this.mouse.offsetY = dropLocationY - this.mouse.y;
-
-            // Update state
-            this.currentSpot = spot;
-            this.draggingState = DragState.MOVE;
-        }
-    }
-
-    /**
-     * @function deleteSpot
-     * @desc Delete the given spot
-     * @param spotToDelete {object} the spot to delete
-     */
-    deleteSpot(spotToDelete: ShortAnswerSpot): void {
-        this.question.spots = this.question.spots.filter(spot => spot !== spotToDelete);
-        this.deleteMappingsForSpot(spotToDelete);
-    }
-
-    /**
-     * @function resizeMouseDown
-     * @desc React to mousedown events on the resize handles to start resizing the spot
-     * @param spot {object} the spot that will be resized
-     * @param resizeLocationY {string} 'top', 'middle' or 'bottom'
-     * @param resizeLocationX {string} 'left', 'center' or 'right'
-     */
-    resizeMouseDown(spot: ShortAnswerSpot, resizeLocationX: string): void {
-        if (this.draggingState === DragState.NONE) {
-            const backgroundWidth = this.clickLayer.nativeElement.offsetWidth;
-            const backgroundHeight = this.clickLayer.nativeElement.offsetHeight;
-
-            // Update state
-            this.draggingState = DragState.RESIZE_X; // Default is both, will be overwritten later, if needed
-            this.currentSpot = spot;
-
-            switch (resizeLocationX) {
-                case 'left':
-                    // Use opposite end as startX
-                    this.mouse.startX = ((spot.posX + spot.width) / 200) * backgroundWidth;
-                    break;
-                case 'center':
-                    // Limit to y-axis, startX will not be used
-                    this.draggingState = DragState.RESIZE_Y; // Why resize_y and not resize_x
-                    break;
-                case 'right':
-                    // Use opposite end as startX
-                    this.mouse.startX = (spot.posX / 200) * backgroundWidth;
-                    break;
-            }
-        }
-    }
-
-    /**
      * @function addTextSolution
      * @desc Add an empty Text solution to the question
      */
@@ -648,6 +472,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     deleteSolution(solutionToDelete: ShortAnswerSolution): void {
         this.question.solutions = this.question.solutions.filter(solution => solution !== solutionToDelete);
         this.deleteMappingsForSolution(solutionToDelete);
+        this.questionEditorText = this.generateMarkdown();
     }
 
     /**
@@ -688,6 +513,8 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
             // Notify parent of changes
             this.questionUpdated.emit();
         }
+        console.log(this.question.correctMappings);
+        this.questionEditorText = this.generateMarkdown();
     }
 
     /**
@@ -787,6 +614,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
             this.question.correctMappings = [];
         }
         this.question.correctMappings = this.question.correctMappings.filter(mapping => mapping !== mappingToDelete);
+        this.questionEditorText = this.generateMarkdown();
     }
 
     /**
@@ -813,14 +641,9 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     togglePreview(): void {
        this.showPreview = !this.showPreview;
 
-        // is either '' or the question in the first line
-        this.questionText = this.shortAnswerQuestionUtil.firstLineOfQuestion(this.question.text);
-        this.textWithoutSpots = this.shortAnswerQuestionUtil.getTextWithoutSpots(this.question.text);
-
-        // separates the text into parts that come before the spot tag
-        this.textBeforeSpots = this.textWithoutSpots.slice(0, this.textWithoutSpots.length - 1);
-
-        // the last part that comes after the last spot tag
-        this.textAfterSpots = this.textWithoutSpots.slice(this.textWithoutSpots.length - 1);
+        //neue Idee den ganzen text auf in ein array von strings aufzuteilen (alles vor dem ersten  "[-option " tag)
+        let test: String [][] = this.question.text.split(/\n+/g).map(t => t.split(/\s+(?![^[]]*])/g));
+        this.textParts = test;
+        console.log(this.textParts);
     }
 }

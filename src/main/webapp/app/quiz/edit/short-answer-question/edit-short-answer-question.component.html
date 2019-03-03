@@ -62,17 +62,18 @@
                 <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.addSpot" (click)="addSpotAtCursorVisualMode()"></div>
                 <hr/>
                 <div id="test" class="sa-question" >
-                    <p *ngIf="questionText !== '' ">{{questionText}}</p>
-                    <div class="short-answer-question-display" *ngFor="let textPart of textBeforeSpots; let i = index">
-                        {{textPart}}
-                        <div style="position: relative; display: inline-block">
-                            <input dnd-droppable (onDropSuccess)="onDragDrop(question.spots[i], $event)" class="short-answer-question-input" disabled type="text" id="solution-{{i}}-{{question.id}}">
-                            <div [ngClass]="'mapping-number mapping-color-' + ((question.spots[i].spotNr) % 8)" >
-                                {{question.spots[i].spotNr}}
+                    <div *ngFor="let textPart of textParts; let i = index">
+                        <div class="short-answer-question-display" *ngFor="let element of textPart; let j = index">
+                            <span *ngIf="!isInputField(element)" id="element-{{i}}-{{j}}}">{{element}}</span>
+                            <div *ngIf="isInputField(element)" style="position: relative; display: inline-block">
+                                <input dnd-droppable (onDropSuccess)="onDragDrop(getSpot(getSpotNr(element)), $event)" class="short-answer-question-input" disabled type="text">
+                                <div [ngClass]="'mapping-number mapping-color-' + getSpot(getSpotNr(element)).spotNr % 8">
+                                    {{getSpotNr(element)}}
+                                </div>
                             </div>
+                            <span>&nbsp;</span>
                         </div>
                     </div>
-                    <span>{{textAfterSpots}}</span>
                 </div>
                 <hr/>
                 <div *ngIf="!question.solutions || !question.solutions.length" class="instructions">
