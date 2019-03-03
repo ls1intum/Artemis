@@ -1,9 +1,10 @@
 {
     "global": {
-        "title": "ArTEMiS",
+        "title": "Artemis",
         "browsehappy": "Sie benutzen einen <strong>veralteten</strong> Browser. Bitte <a href=\"http://browsehappy.com/?locale=de/\">aktualisieren Sie Ihren Browser</a>, um die Benutzerfreundlichkeit zu erhöhen.",
         "menu": {
             "home": "Startseite",
+            "overview": "Übersicht",
             "courses": "Kurse",
             "course": "Kursadministration",
             "jhipster-needle-menu-add-element": "JHipster will add additional menu entries here (do not translate!)",
@@ -103,8 +104,8 @@
             "info": {
                 "authenticated": {
                     "prefix": "Wenn Sie sich ",
-                    "link": "anmelden",
-                    "suffix": " möchten, versuchen Sie es mit <br/>- Administrator (Name=\"admin\" und Passwort=\"admin\")<br/>- Benutzer (Name=\"user\" und Passwort=\"user\")."
+                    "link": "melde",
+                    "suffix": " möchten, versuchen Sie es mit <br>- Administrator (Name=\"admin\" und Passwort=\"admin\")<br>- Benutzer (Name=\"user\" und Passwort=\"user\")."
                 },
                 "register": {
                     "noaccount": "Sie haben noch keinen Zugang?",
@@ -166,8 +167,11 @@
             "close": "Schließen",
             "import": "Import",
             "export": "Export",
-            "tutorCourseDashboard": "Tutor Kurse Dashboard",
-            "exerciseDashboard": "Exercise Dashboard"
+            "tutorCourseDashboard": "Tutor Kurs Dashboard",
+            "exerciseDashboard": "Übungs Dashboard",
+            "newResult": "Neues Ergebnis",
+            "cleanupBuildPlan": "Build Plan aufräumen",
+            "registerForCourse": "Für Kurs anmelden"
         },
         "detail": {
             "field": "Feld",
@@ -213,7 +217,12 @@
         "invalid.solution.repository.url": "Die Lösung Repository URL scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für ArTEMiS zugänglich ist.",
         "idnull": "Ungültige ID"
     },
-    "footer": "Du hast einen Fehler gefunden oder Feedback zu ArTEMiS? <a href=\"mailto:artemis.ase@in.tum.de\">Lass es uns bitte wissen!</a>!",
+    "footer": "Du hast einen Fehler gefunden oder Feedback zu ArTEMiS? <a href=\"mailto:artemis.ase@in.tum.de\">Lass es uns bitte wissen!</a>",
     "justNow": "gerade eben",
-    "pendingChanges": "WARNUNG: Du hast nicht gespeicherte Änderungen. Klicke Abbrechen, um zurück zu gehen und deine Änderungen zu speichern oder klicke OK, um die Änderungen zu verwerfen."
+    "pendingChanges": "WARNUNG: Du hast nicht gespeicherte Änderungen. Klicke Abbrechen, um zurück zu gehen und deine Änderungen zu speichern oder klicke OK, um die Änderungen zu verwerfen.",
+    "overview": {
+        "title": "Kursübersicht",
+        "course": "Kursdetails",
+        "statistics": "Kursstatistiken"
+    }
 }

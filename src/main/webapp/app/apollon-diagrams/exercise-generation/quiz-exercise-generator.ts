@@ -13,7 +13,7 @@ import {
     State
 } from '@ls1intum/apollon';
 import { convertRenderedSVGToPNG } from './svg-renderer';
-import * as TempID from './temp-id';
+import * as TempID from '../../quiz/edit/temp-id';
 import { Course } from '../../entities/course';
 import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
 import { FileUploaderService } from '../../shared/http/file-uploader.service';

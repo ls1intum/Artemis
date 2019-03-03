@@ -197,6 +197,7 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
      */
     @Override
     public void addUserToGroup(String username, String group) throws ArtemisAuthenticationException {
+        log.info("Add user " + username + " to group " + group + " in JIRA");
         HttpHeaders headers = HeaderUtil.createAuthorization(JIRA_USER, JIRA_PASSWORD);
         Map<String, Object> body = new HashMap<>();
         body.put("name", username);
@@ -249,6 +250,25 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
         return false;
     }
 
+    @Override
+    public void registerUserForCourse(User user, Course course) {
+        String courseStudentGroupName = course.getStudentGroupName();
+        if (!user.getGroups().contains(courseStudentGroupName)) {
+            List<String> groups = user.getGroups();
+            groups.add(courseStudentGroupName);
+            user.setGroups(groups);
+            userRepository.save(user);
+        }
+        try {
+            addUserToGroup(user.getLogin(), courseStudentGroupName);
+        } catch (ArtemisAuthenticationException e) {
+        /*
+            This might throw exceptions, for example if the group does not exist on the authentication service.
+            We can safely ignore them.
+        */
+        }
+    }
+
     /**
      * Checks if an JIRA user for the given email address exists.
      *
@@ -269,7 +289,7 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
                 ArrayList.class);
 
 
-            ArrayList results = authenticationResponse.getBody();
+            List results = authenticationResponse.getBody();
             if(results.size() == 0) {
                 // no result
                 return Optional.empty();

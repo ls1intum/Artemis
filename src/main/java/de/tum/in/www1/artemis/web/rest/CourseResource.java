@@ -13,6 +13,8 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.config.JHipsterConstants;
 import io.github.jhipster.web.util.ResponseUtil;
+import io.micrometer.core.annotation.Timed;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
@@ -32,6 +34,7 @@ import java.util.stream.Stream;
 
 import static de.tum.in.www1.artemis.config.Constants.shortNamePattern;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static java.time.ZonedDateTime.now;
 
 /**
  * REST controller for managing Course.
@@ -114,7 +117,6 @@ public class CourseResource {
             //a specified group does not exist, notify the client
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "groupNotFound", ex.getMessage())).body(null);
         }
-
     }
 
     /**
@@ -183,6 +185,30 @@ public class CourseResource {
                 throw new ArtemisAuthenticationException("Cannot save! The group " + course.getStudentGroupName() + " for students does not exist. Please double check the students group name!");
             }
         }
+    }
+
+    /**
+     * POST  /courses/{courseId}/register : Register for an existing course.
+     *
+     * This method registers the current user for the given course id in case the course has already started and not finished yet.
+     * The user is added to the course student group in the Authentication System and the course student group is added to the user's
+     * groups in the Artemis database.
+     *
+     */
+    @PostMapping("/courses/{courseId}/register")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<User> registerForCourse(@PathVariable Long courseId) throws URISyntaxException {
+        Course course = courseService.findOne(courseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+        log.debug("REST request to register {} for Course {}", user.getFirstName(), course.getTitle());
+        if (course.getStartDate() != null && course.getStartDate().isAfter(now())) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotStarted","The course has not yet started. Cannot register user")).body(null);
+        }
+        if (course.getEndDate() != null && course.getEndDate().isBefore(now())) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseAlreadyFinished","The course has already finished. Cannot register user")).body(null);
+        }
+        artemisAuthenticationProvider.get().registerUserForCourse(user, course);
+        return ResponseEntity.ok(user);
     }
 
     /**
@@ -272,7 +298,7 @@ public class CourseResource {
 
     /**
      * GET /courses/:id/stats-for-tutor-dashboard
-     * <p>
+     *
      * A collection of useful statistics for the tutor course dashboard, including:
      * - number of submissions to the course
      * - number of assessments
@@ -368,5 +394,48 @@ public class CourseResource {
         String title = course.getTitle();
         courseService.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, title)).build();
+    }
+
+    /**
+     * GET  /courses/:courseId/results : Returns all results of the exercises of a course for the currently logged in user
+     *
+     * @param courseId the id of the course to get the results from
+     * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
+     */
+    @GetMapping(value = "/courses/{courseId}/results")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<Course> getResultsForCurrentStudent(@PathVariable Long courseId) {
+        long start = System.currentTimeMillis();
+        log.debug("REST request to get Results for Course and current Studen : {}", courseId);
+
+        User student = userService.getUser();
+        Course course = courseService.findOne(courseId);
+
+        List<Exercise> exercises = exerciseService.findAllExercisesByCourseId(course, student);
+
+        for (Exercise exercise : exercises) {
+            List<Participation> participations = participationService.findByExerciseIdAndStudentIdWithEagerResults(exercise.getId(), student.getId());
+
+            exercise.setParticipations(new HashSet<>());
+
+            //Removing not needed properties
+            exercise.setCourse(null);
+
+            for (Participation participation : participations) {
+                //Removing not needed properties
+                participation.setStudent(null);
+
+                participation.setResults(participation.getResults());
+                exercise.addParticipation(participation);
+            }
+            course.addExercises(exercise);
+
+        }
+
+
+        log.debug("getResultsForCurrentStudent took " + (System.currentTimeMillis() - start) + "ms");
+
+        return ResponseEntity.ok().body(course);
     }
 }

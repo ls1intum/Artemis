@@ -32,19 +32,23 @@ describe('quiz-exercise', () => {
         await newCoursePage.setTitle(courseName);
         await newCoursePage.setShortName(courseName);
         await newCoursePage.setStudentGroupName('tumuser');
-        await newCoursePage.setInstructorGroupName('artemis-dev');
+        await newCoursePage.setTutorGroupName('artemis-dev');
+        await newCoursePage.setInstructorGroupName('ls1instructor');
         await newCoursePage.clickSave();
 
         browser.wait(ec.urlContains('/course'), 1000).then((result) => expect(result).to.be.true);
 
-        //TODO: signout as admin and login as instructor / teaching assistant
+        // Sign in with instructor account
+        await navBarPage.autoSignOut();
+        signInPage = await navBarPage.getSignInPage();
+        await signInPage.autoSignInUsing(process.env.bamboo_instructor_user, process.env.bamboo_instructor_password);
     });
 
     beforeEach(async () => {
     });
 
     it('navigate into quiz-exercise', async () => {
-
+        await navBarPage.clickOnCourseAdminMenu();
         courseId = await coursePage.navigateIntoLastCourseQuizzes();
 
         //TODO: this does not seem to work properly
@@ -165,13 +169,13 @@ describe('quiz-exercise', () => {
             element(by.id('answer-option-0-correct')).getText().then(text => {
                 expect(text).equals('Correct');
             }).catch(error => {
-                fail('first answer option not found as correct');
+                expect.fail('first answer option not found as correct');
             });
 
             element(by.id('answer-option-1-correct')).getText().then(text => {
                 expect(text).equals('Correct');
             }).catch(error => {
-                fail('second answer option not found as correct');
+                expect.fail('second answer option not found as correct');
             });
         });
 
@@ -228,6 +232,10 @@ describe('quiz-exercise', () => {
     });
 
     after(async () => {
+        await navBarPage.autoSignOut();
+        signInPage = await navBarPage.getSignInPage();
+        await signInPage.autoSignInUsing(process.env.bamboo_admin_user, process.env.bamboo_admin_password);
+
         await navBarPage.clickOnCourseAdminMenu();
         browser.waitForAngularEnabled(true);
         //Delete course
@@ -237,7 +245,7 @@ describe('quiz-exercise', () => {
         const deleteButton = rows.last().element(by.className('btn-danger'));
         await deleteButton.click();
 
-        const confirmDeleteButton = element(by.tagName('jhi-course-delete-dialog')).element(by.className('btn-danger'))
+        const confirmDeleteButton = element(by.tagName('jhi-course-delete-dialog')).element(by.className('btn-danger'));
         await confirmDeleteButton.click();
 
         rows = element.all(by.tagName('tbody')).all(by.tagName('tr'));

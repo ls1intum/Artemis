@@ -133,7 +133,7 @@ public class AutomaticAssessmentController {
 
 
     private CompassResult assessConnectable(UMLClass umlClass, AssessmentIndex index) {
-        HashMap<UMLElement, Score> scoreHashMap = new HashMap<>();
+        Map<UMLElement, Score> scoreHashMap = new HashMap<>();
 
         int missing = 0;
 

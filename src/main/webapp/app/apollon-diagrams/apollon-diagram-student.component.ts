@@ -4,7 +4,7 @@ import { ApollonDiagram, ApollonDiagramService } from '../entities/apollon-diagr
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import ApollonEditor, { State } from '@ls1intum/apollon';
 import { ActivatedRoute } from '@angular/router';
-import * as ApollonDiagramTitleFormatter from './apollonDiagramTitleFormatter';
+import * as ApollonDiagramTitleFormatter from './apollon-diagram-title-formatter';
 
 @Component({
     selector: 'jhi-apollon-diagram-student',

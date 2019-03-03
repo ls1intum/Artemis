@@ -7,11 +7,14 @@
                 "createLabel": "Create a new Participation",
                 "createOrEditLabel": "Create or edit a Participation"
             },
-            "created": "A new Participation is created with identifier {{ param }}",
-            "updated": "A Participation is updated with identifier {{ param }}",
-            "deleted": "A Participation is deleted with identifier {{ param }}",
+            "created": "A new participation is created with identifier {{ param }}",
+            "updated": "The Participation of {{ param }} was updated",
+            "deleted": "The Participation of {{ param }} was deleted",
             "delete": {
-                "question": "Are you sure you want to delete Participation {{ id }}?"
+                "question": "Are you sure you want to delete the participation of {{ student }}?"
+            },
+            "cleanupBuildPlan": {
+                "question": "Are you sure you want to delete the build plan of the participation of {{ student }}?"
             },
             "detail": {
                 "title": "Participation"

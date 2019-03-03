@@ -1,7 +1,7 @@
 # Artemis: Automated Assessment Management System 
-This application was generated using JHipster 5.8.1, you can find documentation and help at [http://www.jhipster.tech/documentation-archive/v5.8.1](http://www.jhipster.tech/documentation-archive/v5.8.1).
+This application was generated using JHipster 5.8.2, you can find documentation and help at [http://www.jhipster.tech/documentation-archive/v5.8.2](http://www.jhipster.tech/documentation-archive/v5.8.2).
 
-**Current version:** 2.4.0
+**Current version:** 2.5.0
 
 ## Main features
 Artemis supports the following exercises:
@@ -165,12 +165,10 @@ The Continuous Integration Server typically delegates the build jobs to local bu
 
 ## Data Model
 
-The Artemis application server used the following (initial) data model in the MySQL database. It supports multiple courses with multiple exercises. Each student in the participating student group can participate in the exercise by clicking the **Start Exercise** button. Then a repository and a build plan for the student (User) will be created and configured. The initialization state variable (Enum) helps to track the progress of this complex operation and allows to recover from errors. A student can submit multiple solutions by committing and pushing the source code changes to a given example code into the version control system. Each submission is automatically tested by the continuous integration server, which notifies the Artemis application server, when a new result exists. In addition, teaching assistants can assess student solutions and "manually" create results.
-The current data model is more complex and supports different types of exercises such as programming exercises, modeling exercises and quiz exercises.
+The Artemis application server used the following data model in the MySQL database.  It supports multiple courses with multiple exercises. Each student in the participating student group can participate in the exercise by clicking the **Start Exercise** button. Then a repository and a build plan for the student (User) will be created and configured. The initialization state variable (Enum) helps to track the progress of this complex operation and allows to recover from errors. A student can submit multiple solutions by committing and pushing the source code changes to a given example code into the version control system or using the user interface. Each submission is automatically tested by the continuous integration server, which notifies the Artemis application server, when a new result exists. In addition, teaching assistants can assess student solutions and "manually" create results.
+The current data model is more complex and supports different types of exercises such as programming exercises, modeling exercises, quiz, and text exercises.
 
 ![Data Model](doc/DataModel.png "Data Model")
-
-In the future, we want to allow different types of exercises, so expect multiple subclasses for programming, modeling and quiz exercises.
 
 
 ## Server Architecture
