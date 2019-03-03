@@ -76,15 +76,15 @@ public class ModelingSubmissionResource {
      * POST  /courses/{courseId}/exercises/{exerciseId}/modeling-submissions : Create a new modelingSubmission.
      * This is called when a student saves his model the first time after starting the exercise or starting a retry.
      *
-     * @param courseId       only included for API consistency, not actually used
-     * @param exerciseId     the id of the exercise for which to init a participation
-     * @param principal      the current user principal
+     * @param courseId           only included for API consistency, not actually used
+     * @param exerciseId         the id of the exercise for which to init a participation
+     * @param principal          the current user principal
      * @param modelingSubmission the modelingSubmission to create
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
     @PostMapping("/courses/{courseId}/exercises/{exerciseId}/modeling-submissions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRED)
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRED) //TODO MJ return 201 CREATED with location header instead of ModelingSubmission
     public ResponseEntity<ModelingSubmission> createModelingSubmission(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
         log.debug("REST request to create ModelingSubmission : {}", modelingSubmission.getModel());
         if (modelingSubmission.getId() != null) {
@@ -100,9 +100,9 @@ public class ModelingSubmissionResource {
      * This function is called by the modeling editor for saving and submitting modeling submissions.
      * The submit specific handling occurs in the ModelingSubmissionService.save() function.
      *
-     * @param courseId       only included for API consistency, not actually used
-     * @param exerciseId     the id of the exercise for which to init a participation
-     * @param principal      the current user principal
+     * @param courseId           only included for API consistency, not actually used
+     * @param exerciseId         the id of the exercise for which to init a participation
+     * @param principal          the current user principal
      * @param modelingSubmission the modelingSubmission to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated modelingSubmission,
      * or with status 400 (Bad Request) if the modelingSubmission is not valid,
@@ -122,7 +122,7 @@ public class ModelingSubmissionResource {
     }
 
     @NotNull
-    private ResponseEntity<ModelingSubmission> handleModelingSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
+    private ResponseEntity<ModelingSubmission> handleModelingSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {//TODO MJ move to ModelingSubmissionService?
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         ResponseEntity<ModelingSubmission> responseFailure = checkExerciseValidity(modelingExercise);
         if (responseFailure != null) return responseFailure;
@@ -215,10 +215,10 @@ public class ModelingSubmissionResource {
     /**
      * GET  /courses/{courseId}/exercises/{exerciseId}/modeling-submissions : Gets an existing modelingSubmission.
      *
-     * @param courseId       only included for API consistency, not actually used
-     * @param exerciseId     the id of the exercise for which to init a participation
-     * @param id             the id of the modelingSubmission to retrieve
-     * @param principal      the current user principal
+     * @param courseId   only included for API consistency, not actually used
+     * @param exerciseId the id of the exercise for which to init a participation
+     * @param id         the id of the modelingSubmission to retrieve
+     * @param principal  the current user principal
      * @return the ResponseEntity with status 200 (OK) and with body the updated modelingSubmission,
      * or with status 400 (Bad Request) if the modelingSubmission is not valid,
      * or with status 500 (Internal Server Error) if the modelingSubmission couldn't be updated
