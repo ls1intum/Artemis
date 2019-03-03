@@ -3,7 +3,7 @@ import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute} from '@angular/router';
 import {HttpResponse, HttpErrorResponse} from '@angular/common/http';
 import {Exercise, ExerciseService} from 'app/entities/exercise';
-import {Participation, ParticipationService} from 'app/entities/participation';
+import {InitializationState, Participation, ParticipationService} from 'app/entities/participation';
 import {Result, ResultService} from 'app/entities/result';
 import {TutorLeaderboardData} from 'app/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.component';
 
@@ -39,7 +39,7 @@ export class InstructorExerciseDashboardComponent implements OnInit {
                 this.exercise = res.body;
 
                 this.participationService.findAllParticipationsByExercise(this.exercise.id, {withEagerResults: true}).subscribe((participationRes: HttpResponse<Participation[]>) => {
-                    this.exercise.participations = participationRes.body;
+                    this.exercise.participations = participationRes.body.filter(participation => participation.initializationState === InitializationState.FINISHED);
                     this.numberOfAssessments = this.exercise.participations.filter(participation =>
                         participation.results.filter(result => result.rated).length > 0
                     ).length;
