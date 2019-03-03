@@ -60,7 +60,11 @@ export class TextAssessmentComponent implements OnInit, OnDestroy {
                 this.exercise = <TextExercise>this.participation.exercise;
                 this.assessments = [];
                 this.busy = false;
-            })
+
+                // Update the url with the new id, without reloading the page, to make the history consistent
+                const newUrl = window.location.hash.replace('#', '').replace('new', `${this.participation.id}`);
+                this.location.go(newUrl);
+            });
         } else {
             const submissionId = Number(submissionValue);
 
