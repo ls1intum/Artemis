@@ -168,6 +168,9 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
             spotsForSolution = this.shortAnswerQuestionUtil.getAllSpotsForSolutions(this.question.correctMappings, solution);
 
             for (const spotForSolution of spotsForSolution) {
+                if (spotForSolution === undefined) {
+                    break;
+                }
                 if (firstSolution) {
                     option += this.question.spots.filter(spot => this.shortAnswerQuestionUtil.isSameSpot(spot, spotForSolution))[0].spotNr;
                     firstSolution = false;
@@ -332,32 +335,28 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         if (!wrapperDiv.contains(child)) {
             return
         }
-        const markedText = window.getSelection().toString()
 
         const editor = this.questionEditor.getEditor();
-        editor.find( markedText ,{
-            caseSensitive: true,
-            wholeWord: true,
-            range: null,
-        });
-        editor.replace('[-spot ' + this.numberOfSpot + ']');
-
-        editor.moveCursorTo(editor.getLastVisibleRow() + this.numberOfSpot, Number.POSITIVE_INFINITY);
-        this.addOptionToSpot(editor, this.numberOfSpot, markedText, this.firstPressed);
-
-        this.numberOfSpot++;
-        this.firstPressed++;
+        const selectedTextRowColumn = window.getSelection().focusNode.parentElement.id.split('-').slice(1);
+        const markedText = this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]];
 
         //neue Idee den ganzen text auf in ein array von strings aufzuteilen (alles vor dem ersten  "[-option " tag)
         const questionText = editor.getValue().split(/\[-option /g)[0].trim();
         this.textParts = questionText.split(/\n+/g).map((t: String) => t.split(/\s+(?![^[]]*])/g));
-        console.log(this.textParts);
+        this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]] = '[-spot ' + this.numberOfSpot + ']';
+        this.question.text = this.textParts.map(textPart => textPart.join(' ')).join('\n');
+        editor.setValue(this.generateMarkdown());
 
-        console.log(editor.getValue());
-
+        editor.moveCursorTo(editor.getLastVisibleRow() + this.numberOfSpot, Number.POSITIVE_INFINITY);
+        this.addOptionToSpot(editor, this.numberOfSpot, markedText, this.firstPressed);
         this.parseMarkdown(editor.getValue());
 
+        this.numberOfSpot++;
+        this.firstPressed++;
+
+        console.log(editor.getValue());
         console.log(this.question.spots);
+        console.log(this.question.correctMappings);
         this.questionUpdated.emit();
     }
 

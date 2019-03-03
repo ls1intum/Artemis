@@ -64,7 +64,7 @@
                 <div id="test" class="sa-question" >
                     <div *ngFor="let textPart of textParts; let i = index">
                         <div class="short-answer-question-display" *ngFor="let element of textPart; let j = index">
-                            <span *ngIf="!isInputField(element)" id="element-{{i}}-{{j}}}">{{element}}</span>
+                            <span *ngIf="!isInputField(element)" id="element-{{i}}-{{j}}">{{element}}</span>
                             <div *ngIf="isInputField(element)" style="position: relative; display: inline-block">
                                 <input dnd-droppable (onDropSuccess)="onDragDrop(getSpot(getSpotNr(element)), $event)" class="short-answer-question-input" disabled type="text">
                                 <div [ngClass]="'mapping-number mapping-color-' + getSpot(getSpotNr(element)).spotNr % 8">
@@ -94,10 +94,12 @@
                             <fa-icon icon="bars" class="drag-handle" size="lg"></fa-icon>
                         </div>
                         <div class="mapping-numbers-wrapper">
-                            <div *ngFor="let mapping of getMappingsForSolution(solution)" [ngClass]="'mapping-number mapping-color-' + (mapping.spot.spotNr % 8)">
-                                {{mapping.spot.spotNr}}
-                                <div class="unlink-mapping" (click)="deleteMapping(mapping)">
-                                    <fa-icon icon="unlink" size="lg"></fa-icon>
+                            <div *ngFor="let mapping of getMappingsForSolution(solution)">
+                                <div *ngIf="mapping.spot !== undefined" [ngClass]="'mapping-number mapping-color-' + (mapping.spot.spotNr % 8)">
+                                    {{mapping.spot.spotNr}}
+                                    <div class="unlink-mapping" (click)="deleteMapping(mapping)">
+                                        <fa-icon icon="unlink" size="lg"></fa-icon>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -116,7 +118,6 @@
                         </div>
                     </ng-container>
                 </div>
-
            </div>
 
             <hr/>
