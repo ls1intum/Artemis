@@ -12,9 +12,12 @@ import { AceEditorComponent } from 'ng2-ace-editor';
 import * as $ from 'jquery';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
-import { Ace } from 'ace-builds';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import * as TempID from 'app/quiz/edit/temp-id';
+import { HintCommand } from 'app/markdown-editor/specialCommands/hint.command';
+import { ExplanationCommand } from 'app/markdown-editor/specialCommands/explanation.command';
+import { SpecialCommand } from 'app/markdown-editor/specialCommands/specialCommand';
+import { MarkdownEditorComponent } from 'app/markdown-editor';
 
 @Component({
     selector: 'jhi-edit-drag-and-drop-question',
@@ -26,6 +29,8 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
     private questionEditor: AceEditorComponent;
     @ViewChild('clickLayer')
     private clickLayer: ElementRef;
+    @ViewChild('markdownEditor')
+    private markdownEditor: MarkdownEditorComponent;
 
     @Input()
     question: DragAndDropQuestion;
@@ -84,6 +89,12 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
      */
     mouse: DragAndDropMouseEvent;
 
+    hintCommand = new HintCommand();
+    explanationCommand = new ExplanationCommand();
+
+    commandDragAndDropQuestions: SpecialCommand[] = [this.explanationCommand, this.hintCommand];
+
+
     constructor(
         private artemisMarkdown: ArtemisMarkdown,
         private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
@@ -137,28 +148,18 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
      * @desc Set up Question text editor
      */
     setupQuestionEditor(): void {
-        // Default editor settings for inline markup editor
-        this.questionEditor.setTheme('chrome');
-        this.questionEditor.getEditor().renderer.setShowGutter(false);
-        this.questionEditor.getEditor().renderer.setPadding(10);
-        this.questionEditor.getEditor().renderer.setScrollMargin(8, 8);
-        this.questionEditor.getEditor().setHighlightActiveLine(false);
-        this.questionEditor.getEditor().setShowPrintMargin(false);
-
-        // Generate markdown from question and show result in editor
         this.questionEditorText = this.artemisMarkdown.generateTextHintExplanation(this.question);
-        this.questionEditor.getEditor().clearSelection();
+    }
 
-        // Register the onBlur listener
-        this.questionEditor.getEditor().on(
-            'blur',
-            () => {
-                // Parse the markdown in the editor and update question accordingly
-                this.artemisMarkdown.parseTextHintExplanation(this.questionEditorText, this.question);
-                this.questionUpdated.emit();
-            },
-            this
-        );
+    specialCommandFound(textLine: string, specialCommand: SpecialCommand) {
+        if (specialCommand instanceof ExplanationCommand) {
+                this.question.explanation = textLine;
+            }
+         else if (specialCommand instanceof HintCommand) {
+                this.question.hint = textLine;
+            }
+        this.artemisMarkdown.parseTextHintExplanation(this.questionEditorText, this.question);
+        this.questionUpdated.emit();
     }
 
     /**
@@ -180,22 +181,6 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
      */
     drop(): void {
         this.dropAllowed = false;
-    }
-
-    /**
-     * @function addHintAtCursor
-     * @desc Add the markdown for a hint at the current cursor location
-     */
-    addHintAtCursor(): void {
-        this.artemisMarkdown.addHintAtCursor(this.questionEditor.getEditor());
-    }
-
-    /**
-     * @function addExplanationAtCursor
-     * @desc Add the markdown for an explanation at the current cursor location
-     */
-    addExplanationAtCursor(): void {
-        this.artemisMarkdown.addExplanationAtCursor(this.questionEditor.getEditor());
     }
 
     /**
@@ -840,5 +825,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
      */
     togglePreview(): void {
         this.showPreview = !this.showPreview;
+        this.markdownEditor.parse();
     }
+
 }

@@ -84,30 +84,20 @@
             </ng-container>
         </div>
         <div class="markupEditorArea">
-            <div class="toolbar" *ngIf="!reEvaluationInProgress">
-                <div class="btn-group">
-                    <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addHint" (click)="addHintAtCursor()"></div>
-                    <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addExplanation" (click)="addExplanationAtCursor()"></div>
-                </div>
-            </div>
             <div class="question-content" *ngIf="!reEvaluationInProgress">
-                <ace-editor #questionEditor
-                            [(text)]="questionEditorText"
-                            [mode]="questionEditorMode"
-                            [autoUpdateContent]="questionEditorAutoUpdate"
-                            style="display:block; min-height: 200px; width:100%; overflow: auto;"
-                            class="form-control">
-                </ace-editor>
+                <jhi-markdown-editor #markdownEditor [defaultText]="questionEditorText"
+                                     [specialCommands]="commandDragAndDropQuestions"
+                                     (textWithSpecialCommandFound)="specialCommandFound($event[0], $event[1])"
+                                     (triggerParsingInClient)="togglePreview()"
+                ></jhi-markdown-editor>
             </div>
             <div class="question-content" style="padding-bottom: 12px" *ngIf="reEvaluationInProgress">
                 <div class="input-group" style="height: 60px">
-                    <ace-editor #questionEditor
-                                [(text)]="questionEditorText"
-                                [mode]="questionEditorMode"
-                                [autoUpdateContent]="questionEditorAutoUpdate"
-                                style="display:block; min-height: 50px; width:90%; overflow: auto;"
-                                class="form-control">
-                    </ace-editor>
+                    <jhi-markdown-editor #markdownEditor [defaultText]="questionEditorText"
+                                         [specialCommands]="commandDragAndDropQuestions"
+                                         (textWithSpecialCommandFound)="specialCommandFound($event[0], $event[1])"
+                                         (triggerParsingInClient)="togglePreview()"
+                    ></jhi-markdown-editor>
                     <span class="input-group-btn" style="vertical-align: top">
                         <button class="btn btn-outline-secondary btn-lg" type="button" (click)="resetQuestionText()">
                             <fa-icon icon="undo"></fa-icon>

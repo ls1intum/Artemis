@@ -125,6 +125,13 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges {
     }
 
     specialCommandFound(textLine: string, specialCommand: SpecialCommand) {
+
+        if (specialCommand === null && textLine.length > 0){
+            this.question.text = textLine;
+            console.log(this.question.text);
+            console.log(textLine);
+        }
+
         if (specialCommand instanceof CorrectOptionCommand) {
                 this.currentAnswerOption = new AnswerOption();
                 this.currentAnswerOption.isCorrect = true;

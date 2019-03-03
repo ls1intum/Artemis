@@ -80,12 +80,20 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
             this.artemisMarkdown.htmlForMarkdown(this.defaultText);
             return;
         }
-        
+
         const text = this.defaultText;
         const textLines = text.split("\n");
         for (const textLine of textLines) {
 
+            //for the normal text without and commands
+            if (!textLine.includes('[') && textLine.length > 0){
+               this.textWithSpecialCommandFound.emit([textLine, null]);
+                console.log(textLine);
+            }
+
+            //if commands are contained
             for (const specialCommand of this.specialCommands) {
+
                 if (textLine.indexOf(specialCommand.getIdentifier()) != -1
                     || textLine.indexOf(specialCommand.getIdentifier().toLowerCase()) != -1
                     || textLine.indexOf(specialCommand.getIdentifier().toUpperCase()) != -1) {
@@ -94,6 +102,7 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
                     this.textWithSpecialCommandFound.emit(
                         [textLine.replace(specialCommand.getIdentifier(), ''), specialCommand]
                     );
+                    console.log(textLine)
                     break;
                 }
             }
