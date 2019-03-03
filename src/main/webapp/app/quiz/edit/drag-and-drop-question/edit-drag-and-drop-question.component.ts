@@ -18,6 +18,9 @@ import { HintCommand } from 'app/markdown-editor/specialCommands/hint.command';
 import { ExplanationCommand } from 'app/markdown-editor/specialCommands/explanation.command';
 import { SpecialCommand } from 'app/markdown-editor/specialCommands/specialCommand';
 import { MarkdownEditorComponent } from 'app/markdown-editor';
+import {CorrectOptionCommand} from 'app/markdown-editor/specialCommands/correctOptionCommand';
+import {AnswerOption} from 'app/entities/answer-option';
+import {IncorrectOptionCommand} from 'app/markdown-editor/specialCommands/incorrectOptionCommand';
 
 @Component({
     selector: 'jhi-edit-drag-and-drop-question',
@@ -151,16 +154,6 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
         this.questionEditorText = this.artemisMarkdown.generateTextHintExplanation(this.question);
     }
 
-    specialCommandFound(textLine: string, specialCommand: SpecialCommand) {
-        if (specialCommand instanceof ExplanationCommand) {
-                this.question.explanation = textLine;
-            }
-         else if (specialCommand instanceof HintCommand) {
-                this.question.hint = textLine;
-            }
-        this.artemisMarkdown.parseTextHintExplanation(this.questionEditorText, this.question);
-        this.questionUpdated.emit();
-    }
 
     /**
      * This function opens the modal for the help dialog.
@@ -828,4 +821,20 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
         this.markdownEditor.parse();
     }
 
+    specialCommandFound(textLine: string, specialCommand: SpecialCommand) {
+
+        if (specialCommand === null && textLine.length > 0){
+            this.question.text = textLine;
+            console.log(this.question.text);
+            console.log(textLine);
+        }
+
+        if (specialCommand instanceof ExplanationCommand) {
+                this.question.explanation = textLine;
+        } else if (specialCommand instanceof HintCommand) {
+                this.question.hint = textLine;
+            }
+        //this.artemisMarkdown.parseTextHintExplanation(this.questionEditorText, this.question);
+        // this.questionUpdated.emit();
+        }
 }
