@@ -1,0 +1,30 @@
+
+{
+    "arTeMiSApp": {
+        "result" : {
+            "home": {
+                "title": "Results",
+                "createLabel": "Create a new result",
+                "createOrEditLabel": "Create or edit a result"
+            },
+            "created": "A new result is created with identifier {{ param }}",
+            "updated": "A result is updated with identifier {{ param }}",
+            "deleted": "A result is deleted with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete the result with id {{ id }}?"
+            },
+            "detail": {
+                "title": "Result"
+            },
+            "noResult": "No results",
+            "resultString": "Result String",
+            "completionDate": "Completion Date",
+            "successful": "Successful",
+            "buildArtifact": "Build Artifact",
+            "score": "Score",
+            "submission": "Submission",
+            "feedbacks": "Feedbacks",
+            "participation": "Participation"
+        }
+    }
+}

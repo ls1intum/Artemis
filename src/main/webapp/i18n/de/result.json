@@ -16,6 +16,7 @@
             "detail": {
                 "title": "Result"
             },
+            "noResult": "Kein Ergebnis",
             "resultString": "Result String",
             "completionDate": "Completion Date",
             "successful": "Successful",

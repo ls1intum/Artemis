@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Result } from 'src/main/webapp/app/entities/result';
+import { Result } from 'app/entities/result';
 import { Participation } from 'app/entities/participation';
 import { Feedback } from 'app/entities/feedback';
 import * as moment from 'moment';
