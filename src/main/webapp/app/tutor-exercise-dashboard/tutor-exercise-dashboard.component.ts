@@ -101,7 +101,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
 
     private getSubmissions(): void {
         this.textSubmissionService
-            .getTextSubmissionsForExercise(this.exercise as TextExercise, {assessedByTutor: true})
+            .getTextSubmissionsForExercise(this.exerciseId, {assessedByTutor: true})
             .map((response: HttpResponse<TextSubmission[]>) =>
                 response.body.map((submission: TextSubmission) => {
                     if (submission.result) {

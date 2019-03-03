@@ -39,10 +39,10 @@ export class TextSubmissionService {
             .map((res: HttpResponse<TextSubmission>) => this.convertResponse(res));
     }
 
-    getTextSubmissionsForExercise(exercise: TextExercise, req: { submittedOnly?: boolean, assessedByTutor?: boolean }): Observable<HttpResponse<TextSubmission[]>> {
+    getTextSubmissionsForExercise(exerciseId: number, req: { submittedOnly?: boolean; assessedByTutor?: boolean }): Observable<HttpResponse<TextSubmission[]>> {
         const options = createRequestOption(req);
         return this.http
-            .get<TextSubmission[]>(`api/exercises/${exercise.id}/text-submissions`, {
+            .get<TextSubmission[]>(`api/exercises/${exerciseId}/text-submissions`, {
                 params: options,
                 observe: 'response'
             })
