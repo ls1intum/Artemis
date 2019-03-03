@@ -1,5 +1,7 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { JhiLanguageService } from 'ng-jhipster';
+import { JhiLanguageHelper } from 'app/core';
 
 import { ArTEMiSSharedModule } from '../../shared';
 import { JhiWebsocketService } from '../../core';
@@ -16,6 +18,7 @@ import { DragItemComponent } from './drag-and-drop-question/drag-item.component'
 import { AngularFittextModule } from 'angular-fittext';
 import { SecuredImageComponent } from '../../components/util/secured-image.component';
 import { DndModule } from 'ng2-dnd';
+import { QuizScoringInfoStudentModalComponent } from './quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
 
 const ENTITY_STATES = [...quizRoute];
 
@@ -25,12 +28,13 @@ const ENTITY_STATES = [...quizRoute];
         QuizComponent,
         MultipleChoiceQuestionComponent,
         DragAndDropQuestionComponent,
+        QuizScoringInfoStudentModalComponent,
         ShortAnswerQuestionComponent,
         DragItemComponent,
         SecuredImageComponent
     ],
     entryComponents: [HomeComponent, QuizComponent, JhiMainComponent],
-    providers: [RepositoryService, JhiWebsocketService, JhiAlertService],
+    providers: [RepositoryService, JhiWebsocketService, JhiAlertService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     exports: [
         MultipleChoiceQuestionComponent,
         DragAndDropQuestionComponent,
@@ -40,4 +44,12 @@ const ENTITY_STATES = [...quizRoute];
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
-export class ArTEMiSQuizModule {}
+export class ArTEMiSQuizModule {
+    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
+        this.languageHelper.language.subscribe((languageKey: string) => {
+            if (languageKey !== undefined) {
+                this.languageService.changeLanguage(languageKey);
+            }
+        });
+    }
+}

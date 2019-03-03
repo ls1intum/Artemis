@@ -8,6 +8,8 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
+import io.micrometer.core.annotation.Timed;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.InputStreamResource;
@@ -16,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.File;
@@ -41,25 +44,25 @@ public class ExerciseResource {
     private final ExerciseService exerciseService;
     private final UserService userService;
     private final CourseService courseService;
+    private final ParticipationService participationService;
     private final AuthorizationCheckService authCheckService;
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final Optional<VersionControlService> versionControlService;
-    private final ParticipationService participationService;
     private final TutorParticipationService tutorParticipationService;
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
-    public ExerciseResource(ExerciseRepository exerciseRepository, ExerciseService exerciseService,
+    public ExerciseResource(ExerciseRepository exerciseRepository, ExerciseService exerciseService, ParticipationService participationService,
                             UserService userService, CourseService courseService, AuthorizationCheckService authCheckService,
                             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-                            ParticipationService participationService, TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository) {
+                            TutorParticipationService tutorParticipationService, ExampleSubmissionRepository exampleSubmissionRepository) {
         this.exerciseRepository = exerciseRepository;
         this.exerciseService = exerciseService;
+        this.participationService = participationService;
         this.userService = userService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
-        this.participationService = participationService;
         this.tutorParticipationService = tutorParticipationService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
     }
@@ -248,5 +251,41 @@ public class ExerciseResource {
             .contentType(MediaType.APPLICATION_OCTET_STREAM)
             .header("filename", zipFile.getName())
             .body(resource);
+    }
+
+    /**
+     * GET  /exercises/:exerciseId/results : sends all results for a exercise and the logged in user
+     *
+     * @param exerciseId the id of the exercise to get the repos from
+     * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
+     */
+    @GetMapping(value = "/exercises/{exerciseId}/results")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<Exercise> getResultsForCurrentStudent(@PathVariable Long exerciseId) {
+        long start = System.currentTimeMillis();
+        log.debug("REST request to get Results for Course and current Studen : {}", exerciseId);
+
+        User student = userService.getUser();
+        Exercise exercise = exerciseService.findOne(exerciseId);
+
+        if (exercise != null) {
+            List<Participation> participations = participationService.findByExerciseIdAndStudentIdWithEagerResults(exercise.getId(), student.getId());
+
+            exercise.setParticipations(new HashSet<>());
+
+            for (Participation participation : participations) {
+                //Removing not needed properties
+                participation.setStudent(null);
+
+                participation.setResults(exercise.findResultsFilteredForStudents(participation));
+                exercise.addParticipation(participation);
+            }
+        }
+
+
+        log.debug("getResultsForCurrentStudent took " + (System.currentTimeMillis() - start) + "ms");
+
+        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(exercise));
     }
 }

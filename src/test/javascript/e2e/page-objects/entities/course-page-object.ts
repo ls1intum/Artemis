@@ -37,6 +37,7 @@ export class NewCoursePage {
     shortName = element(by.id('field_shortName'));
     studentGroupName = element(by.id('field_studentGroupName'));
     instructorGroupName = element(by.id('field_instructorGroupName'));
+    tutorGroupName = element(by.id('field_teachingAssistantGroupName'));
 
     async setTitle(title: string) {
         await this.title.sendKeys(title);
@@ -52,6 +53,10 @@ export class NewCoursePage {
 
     async setInstructorGroupName(instructorGroupName: string) {
         await this.instructorGroupName.sendKeys(instructorGroupName);
+    }
+
+    async setTutorGroupName(tutorGroupName: string) {
+        await this.tutorGroupName .sendKeys(tutorGroupName);
     }
 
     async clickSave() {

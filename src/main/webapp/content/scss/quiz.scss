@@ -324,7 +324,7 @@
         position: absolute;
         top: 20px;
         right: 20px;
-        max-width: 15%;
+        max-width: 20%;
 
         &.result {
             font-weight: bold;
@@ -996,6 +996,19 @@ table.answer-options-result {
 
 .colon-suffix:after {
     content: ':';
+    display: inline-block;
+}
+
+.show-explanation {
+    display: inline-block;
+}
+
+.questionright {
+    color: green
+}
+
+.questionwrong {
+    color: orange;
 }
 
 .align-text {

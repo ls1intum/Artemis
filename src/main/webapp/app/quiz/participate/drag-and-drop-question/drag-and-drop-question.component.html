@@ -8,7 +8,7 @@
         <span class="label label-info" [ngbPopover]="renderedHint" placement="right" triggers="mouseenter:mouseleave" *ngIf="question.hint">
             <fa-icon [icon]="['far', 'question-circle']"></fa-icon>
             <span jhiTranslate="arTeMiSApp.question.hint"></span>
-        </span></br>
+        </span><br>
         <ng-template #renderedExplanation>
             <div [innerHTML]="rendered.explanation"></div>
         </ng-template>
@@ -23,7 +23,12 @@
     </div>
     <div class="question-score result" *ngIf="showResult && !forceSampleSolution" [ngClass]="{incorrect: (score || 0) < question.score}">
         <span jhiTranslate="arTeMiSApp.question.yourScore" class="colon-suffix"></span>
-        <span>{{score || 0}}/{{question.score}}</span>
+        <span class="show-explanation">{{score || 0}}/{{question.score}}</span>
+        <span class="show-explanation">
+            <jhi-quiz-scoring-infostudent-modal [score]="score" [question]="question" [dragAndDropMapping]="mappings"
+                                                [correctlyMappedDragAndDropItems]="correctAnswer"
+                                                [questionIndex]="questionIndex"></jhi-quiz-scoring-infostudent-modal>
+        </span>
     </div>
     <div class="drag-and-drop-area">
         <div class="instructions" *ngIf="showResult">

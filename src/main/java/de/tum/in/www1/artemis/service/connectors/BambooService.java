@@ -645,28 +645,32 @@ public class BambooService implements ContinuousIntegrationService {
                 String className = (String)detail.get("className");
                 String methodName = (String)detail.get("methodName");
 
-                HashMap<String, Object> errorsMap = (HashMap<String, Object>) detail.get("errors");
-                List<HashMap<String, Object>> errors = (List<HashMap<String, Object>>)errorsMap.get("error");
+                Map<String, Object> errorsMap = (Map<String, Object>) detail.get("errors");
+                List<Map<String, Object>> errors = (List<Map<String, Object>>)errorsMap.get("error");
 
                 String errorMessageString = "";
-                for(HashMap<String, Object> error : errors) {
+                for(Map<String, Object> error : errors) {
                     //Splitting string at the first linebreak to only get the first line of the Exception
                     errorMessageString += ((String)error.get("message")).split("\\n", 2)[0] + "\n";
                 }
 
-                Feedback feedback = new Feedback();
-                feedback.setText(methodName);
-                feedback.setDetailText(errorMessageString);
-                feedback.setType(FeedbackType.AUTOMATIC);
-                feedback.setPositive(false);
-                feedback = feedbackRepository.save(feedback);
-                result.addFeedback(feedback);
+                createAutomaticFeedback(result, methodName, errorMessageString);
             }
         } catch(Exception failedToParse) {
             log.error("Parsing from bamboo to feedback failed" + failedToParse);
         }
 
         return result.getFeedbacks();
+    }
+
+    private void createAutomaticFeedback(Result result, String methodName, String errorMessageString) {
+        Feedback feedback = new Feedback();
+        feedback.setText(methodName);
+        feedback.setDetailText(errorMessageString);
+        feedback.setType(FeedbackType.AUTOMATIC);
+        feedback.setPositive(false);
+        feedback = feedbackRepository.save(feedback);
+        result.addFeedback(feedback);
     }
 
     /**
@@ -703,13 +707,7 @@ public class BambooService implements ContinuousIntegrationService {
 
                     log.debug("errorMSGString is {}", errorMessageString);
 
-                    Feedback feedback = new Feedback();
-                    feedback.setText(methodName);
-                    feedback.setDetailText(errorMessageString);
-                    feedback.setType(FeedbackType.AUTOMATIC);
-                    feedback.setPositive(false);
-                    feedback = feedbackRepository.save(feedback);
-                    result.addFeedback(feedback);
+                    createAutomaticFeedback(result, methodName, errorMessageString);
                 }
             }
 
@@ -849,10 +847,10 @@ public class BambooService implements ContinuousIntegrationService {
             log.error("HttpError while retrieving build result logs from Bamboo: " + e.getMessage());
         }
 
-        ArrayList logs = new ArrayList<BuildLogEntry>();
+        List logs = new ArrayList<BuildLogEntry>();
 
         if (response != null) {
-            for (HashMap<String, Object> logEntry : (List<HashMap>) ((Map) response.getBody().get("logEntries")).get("logEntry")) {
+            for (Map<String, Object> logEntry : (List<Map>) ((Map) response.getBody().get("logEntries")).get("logEntry")) {
                 String logString = (String) logEntry.get("log");
                 boolean compilationErrorFound = true;
 

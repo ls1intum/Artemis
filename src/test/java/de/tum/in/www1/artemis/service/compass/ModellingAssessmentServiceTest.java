@@ -26,9 +26,9 @@ public class ModellingAssessmentServiceTest {
     }
 
     @Parameterized.Parameters
-    public static ArrayList<Integer> input() {
+    public static List<Integer> input() {
         Random random = new Random();
-        ArrayList<Integer> values = new ArrayList<>();
+        List<Integer> values = new ArrayList<>();
         IntStream.range(0, NUMBER_OF_TESTCASES)
                 .forEach(
                         value -> {

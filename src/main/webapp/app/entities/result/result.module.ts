@@ -1,7 +1,11 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
-import { ArTEMiSSharedModule } from '../../shared';
+import { JhiLanguageService } from 'ng-jhipster';
+import { JhiLanguageHelper } from 'app/core';
+
+import { ArTEMiSSharedModule } from 'app/shared';
 import { ResultComponent, ResultDetailComponent, ResultService } from './';
 import { MomentModule } from 'angular2-moment';
+import { ResultHistoryComponent } from 'app/entities/result/result-history.component';
 
 @NgModule({
     imports: [
@@ -10,11 +14,13 @@ import { MomentModule } from 'angular2-moment';
     ],
     declarations: [
         ResultComponent,
-        ResultDetailComponent
+        ResultDetailComponent,
+        ResultHistoryComponent
     ],
     exports: [
         ResultComponent,
-        ResultDetailComponent
+        ResultDetailComponent,
+        ResultHistoryComponent
     ],
     entryComponents: [
         ResultComponent,
@@ -22,7 +28,16 @@ import { MomentModule } from 'angular2-moment';
     ],
     providers: [
         ResultService,
+        { provide: JhiLanguageService, useClass: JhiLanguageService }
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
-export class ArTEMiSResultModule {}
+export class ArTEMiSResultModule {
+    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
+        this.languageHelper.language.subscribe((languageKey: string) => {
+            if (languageKey !== undefined) {
+                this.languageService.changeLanguage(languageKey);
+            }
+        });
+    }
+}

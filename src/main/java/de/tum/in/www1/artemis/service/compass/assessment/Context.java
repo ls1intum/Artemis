@@ -2,9 +2,10 @@ package de.tum.in.www1.artemis.service.compass.assessment;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Set;
 
 public class Context {
-    private HashSet<Integer> contextElementIDs;
+    private Set<Integer> contextElementIDs;
 
     /**
      * Dummy context, placeholder if no context is available
@@ -15,11 +16,11 @@ public class Context {
         this.contextElementIDs = new HashSet<>(Collections.singletonList(contextElementID));
     }
 
-    public Context(HashSet<Integer> contextElementIDs) {
+    public Context(Set<Integer> contextElementIDs) {
         this.contextElementIDs = contextElementIDs;
     }
 
-    public HashSet<Integer> getContextElementIDs() {
+    public Set<Integer> getContextElementIDs() {
         return contextElementIDs;
     }
 

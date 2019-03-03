@@ -3,10 +3,10 @@
 <div class="table-responsive"><table class="table exercise-table" [hidden]="exercises.length === 0">
     <thead>
     <tr>
-        <th class="col-xs-3">Exercise</th>
-        <th class="col-xs-2">Due date</th>
-        <th class="col-xs-6">Results</th>
-        <th class="col-xs-1">Actions</th>
+        <th class="col-xs-3" jhiTranslate="arTeMiSApp.exercise.exercise">Exercise</th>
+        <th class="col-xs-2" jhiTranslate="arTeMiSApp.exercise.dueDate">Due date</th>
+        <th class="col-xs-6" jhiTranslate="arTeMiSApp.exercise.results">Results</th>
+        <th class="col-xs-1" jhiTranslate="arTeMiSApp.exercise.actions">Actions</th>
     </tr>
     </thead>
     <tbody>
@@ -38,7 +38,7 @@
                 <span placement="right" [hidden]="!exercise.dueDate" ngbTooltip="{{exercise.dueDate | date:'MMM d, y H:mm'}}">{{exercise.dueDate | amTimeAgo}}</span>
             </td>
             <td [ngSwitch]="exercise.participationStatus">
-                <span class="text-muted" *ngSwitchCase="'uninitialized'">You have not started this exercise yet.</span>
+                <span class="text-muted" *ngSwitchCase="'uninitialized'" jhiTranslate="arTeMiSApp.exercise.notStarted">You have not started this exercise yet.</span>
                 <span *ngSwitchCase="'initialized'"><jhi-result [participation]="exercise.participations[0]"></jhi-result></span>
                 <span *ngSwitchCase="'inactive'"><jhi-result [participation]="exercise.participations[0]"></jhi-result></span>
                 <span class="text-muted" *ngSwitchCase="'quiz-not-started'">The quiz hasn't started yet.</span>
@@ -63,7 +63,7 @@
                         (click)="resumeExercise(exercise)"
                         [disabled]="exercise.loading">
                     <span [hidden]="exercise.loading"><fa-icon icon="play-circle" [fixedWidth]="true"></fa-icon>&nbsp;<span class="d-none d-md-inline">Resume exercise</span></span>
-                    <fa-icon [hidden]="!exercise.loading" icon="circle-notch " [spin]="true"></fa-icon>
+                    <fa-icon icon="circle-notch" [spin]="true" [hidden]="!exercise.loading"></fa-icon>
                 </button>
                 <div *ngSwitchCase="'initialized'">
                     <div *ngIf="exercise.type === PROGRAMMING && exercise.participations && exercise.participations.length > 0">
