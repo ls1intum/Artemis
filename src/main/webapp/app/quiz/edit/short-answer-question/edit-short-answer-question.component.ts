@@ -470,6 +470,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         solution.tempID = TempID.generate();
         solution.text = 'Please enter here your text';
         this.question.solutions.push(solution);
+        this.questionEditorText = this.generateMarkdown();
         this.questionUpdated.emit();
     }
 
@@ -515,6 +516,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
                     this.shortAnswerQuestionUtil.isSameSolution(existingMapping.solution, dragItem)
             )
         ) {
+            this.deleteMapping(this.getMappingsForSolution(dragItem).filter(mapping => mapping.spot === undefined)[0]);
             // Mapping doesn't exit yet => add this mapping
             const saMapping = new ShortAnswerMapping(spot, dragItem);
             this.question.correctMappings.push(saMapping);
