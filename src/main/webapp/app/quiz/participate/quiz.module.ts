@@ -1,5 +1,7 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { JhiLanguageService } from 'ng-jhipster';
+import { JhiLanguageHelper } from 'app/core';
 
 import { ArTEMiSSharedModule } from '../../shared';
 import { JhiWebsocketService } from '../../core';
@@ -32,7 +34,7 @@ const ENTITY_STATES = [...quizRoute];
         SecuredImageComponent
     ],
     entryComponents: [HomeComponent, QuizComponent, JhiMainComponent],
-    providers: [RepositoryService, JhiWebsocketService, JhiAlertService],
+    providers: [RepositoryService, JhiWebsocketService, JhiAlertService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     exports: [
         MultipleChoiceQuestionComponent,
         DragAndDropQuestionComponent,
@@ -42,4 +44,12 @@ const ENTITY_STATES = [...quizRoute];
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
-export class ArTEMiSQuizModule {}
+export class ArTEMiSQuizModule {
+    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
+        this.languageHelper.language.subscribe((languageKey: string) => {
+            if (languageKey !== undefined) {
+                this.languageService.changeLanguage(languageKey);
+            }
+        });
+    }
+}
