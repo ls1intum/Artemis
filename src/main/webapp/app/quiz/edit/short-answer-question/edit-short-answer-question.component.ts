@@ -198,7 +198,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
             '\n\n\n\n' +
             this.question.solutions
                 .map((solution, index) => this.optionsWithID[index] + ' ' + solution.text.trim())
-                .join('\n\n');
+                .join('\n');
         return markdownText;
     }
 
@@ -324,27 +324,29 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * @function addSpotAtCursor
-     * @desc Add the markdown for a spot at the current cursor location and
-     * an option connected to the spot below the last visible row
+     * @function addSpotAtCursorVisualMode
+     * @desc Add a input field on the current selected location and add the solution option accordingly
      */
     addSpotAtCursorVisualMode(): void {
-
+        // check if selection is on the correct div
         const wrapperDiv = document.getElementById('test');
         const child = window.getSelection().baseNode;
 
         if (!wrapperDiv.contains(child)) {
-            return
+            return;
         }
 
         const editor = this.questionEditor.getEditor();
+        // ID 'element-row-column' is divided into array of [row, column]
         const selectedTextRowColumn = window.getSelection().focusNode.parentElement.id.split('-').slice(1);
         const markedText = this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]];
 
-        //neue Idee den ganzen text auf in ein array von strings aufzuteilen (alles vor dem ersten  "[-option " tag)
+        // split text before first option tag
         const questionText = editor.getValue().split(/\[-option /g)[0].trim();
+        // split on every whitespace. !!!only exception: [-spot 1] is not split!!!
         this.textParts = questionText.split(/\n+/g).map((t: String) => t.split(/\s+(?![^[]]*])/g));
         this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]] = '[-spot ' + this.numberOfSpot + ']';
+        // recreation of text from array
         this.question.text = this.textParts.map(textPart => textPart.join(' ')).join('\n');
         editor.setValue(this.generateMarkdown());
 
@@ -361,14 +363,26 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         this.questionUpdated.emit();
     }
 
+    /**
+     * checks if text is an input field (check for spot tag)
+     * @param text
+     */
     isInputField(text: string): boolean {
         return !(text.search(/\[-spot/g) === -1);
     }
 
+    /**
+     * gets just the spot number
+     * @param text
+     */
     getSpotNr(text: string): number {
-        return +text.split(/\[-spot/g).join('').split(']').join('').trim()
+        return +text.split(/\[-spot/g).join('').split(']').join('').trim();
     }
 
+    /**
+     * gets the spot for a specific spotNr
+     * @param spotNr
+     */
     getSpot(spotNr: number): ShortAnswerSpot  {
         return this.question.spots.filter(spot => spot.spotNr === spotNr)[0];
     }
@@ -399,9 +413,9 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     addOptionToSpot(editor: any, numberOfSpot: number, optionText: string, firstPressed: number) {
         let addedText: string;
         if (numberOfSpot === 1 && firstPressed === 1) {
-            addedText = '\n\n\n\n[-option ' + numberOfSpot + '] ' + optionText;
+            addedText = '\n\n\n[-option ' + numberOfSpot + '] ' + optionText;
         } else {
-            addedText = '\n\n[-option ' + numberOfSpot + '] ' + optionText;
+            addedText = '\n[-option ' + numberOfSpot + '] ' + optionText;
         }
         editor.focus();
         editor.clearSelection();
@@ -416,9 +430,9 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         const editor = this.questionEditor.getEditor();
         let addedText: string;
         if (this.firstPressed === 1) {
-            addedText = '\n\n\n\n[-option #] Please enter here one answer option and do not forget to replace # with a number';
+            addedText = '\n\n\n[-option #] Please enter here one answer option and do not forget to replace # with a number';
         } else {
-            addedText = '\n\n[-option #] Please enter here one answer option and do not forget to replace # with a number';
+            addedText = '\n[-option #] Please enter here one answer option and do not forget to replace # with a number';
         }
         editor.clearSelection();
         editor.moveCursorTo(editor.getLastVisibleRow(), Number.POSITIVE_INFINITY);
@@ -429,11 +443,6 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
 
         this.firstPressed++;
     }
-
-    /*
-    * For visual mode
-    * TODO FDE: visual mode
-    * */
 
     /**
      * Handles drag-available UI
@@ -458,7 +467,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
             this.question.solutions = [];
         }
         const solution = new ShortAnswerSolution();
-        solution.tempID = this.pseudoRandomLong();
+        solution.tempID = TempID.generate();
         solution.text = 'Please enter here your text';
         this.question.solutions.push(solution);
         this.questionUpdated.emit();
@@ -546,19 +555,6 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * @function getMappingsForSpot
-     * @desc Get all mappings that involve the given spot
-     * @param spot {object} the spot for which we want to get all mappings
-     * @return {Array} all mappings that belong to the given spot
-     */
-    getMappingsForSpot(spot: ShortAnswerSpot): ShortAnswerMapping[] {
-        if (!this.question.correctMappings) {
-            this.question.correctMappings = [];
-        }
-        return this.question.correctMappings.filter(mapping => this.shortAnswerQuestionUtil.isSameSpot(mapping.spot, spot));
-    }
-
-    /**
      * @function getMappingsForSolution
      * @desc Get all mappings that involve the given solution
      * @param solution {object} the solution for which we want to get all mappings
@@ -573,20 +569,6 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
                 .filter(mapping => this.shortAnswerQuestionUtil.isSameSolution(mapping.solution, solution))
                 /** Moved the sorting from the template to the function call*/
                 .sort((m1, m2) => this.getMappingIndex(m1) - this.getMappingIndex(m2))
-        );
-    }
-
-    /**
-     * @function deleteMappingsForSpot
-     * @desc Delete all mappings for the given spot
-     * @param spot {object} the spot for which we want to delete all mappings
-     */
-    deleteMappingsForSpot(spot: ShortAnswerSpot): void {
-        if (!this.question.correctMappings) {
-            this.question.correctMappings = [];
-        }
-        this.question.correctMappings = this.question.correctMappings.filter(
-            mapping => !this.shortAnswerQuestionUtil.isSameSpot(mapping.spot, spot)
         );
     }
 
@@ -626,24 +608,11 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * @function pseudoRandomLong
-     * @desc Creates a random long number value
-     * @return {number} The generated long number value
-     */
-    pseudoRandomLong(): number {
-        return Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
-    }
-
-    /**
      * @function togglePreview
      * @desc Toggles the preview in the template
      */
     togglePreview(): void {
        this.showPreview = !this.showPreview;
-
-        //neue Idee den ganzen text auf in ein array von strings aufzuteilen (alles vor dem ersten  "[-option " tag)
-        let test: String [][] = this.question.text.split(/\n+/g).map(t => t.split(/\s+(?![^[]]*])/g));
-        this.textParts = test;
-        console.log(this.textParts);
+       this.textParts = this.question.text.split(/\n+/g).map(t => t.split(/\s+(?![^[]]*])/g));
     }
 }
