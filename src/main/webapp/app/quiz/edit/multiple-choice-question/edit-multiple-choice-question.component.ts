@@ -1,11 +1,16 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewChild, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { MultipleChoiceQuestion } from 'app/entities/multiple-choice-question';
 import { AnswerOption } from 'app/entities/answer-option';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { MarkdownEditorComponent } from 'app/markdown-editor';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HintCommand } from 'app/markdown-editor/specialCommands/hint.command';
-import { CorrectOptionCommand, IncorrectOptionCommand, ExplanationCommand, SpecialCommand } from 'app/markdown-editor/specialCommands';
+import {
+    CorrectOptionCommand,
+    ExplanationCommand,
+    IncorrectOptionCommand,
+    SpecialCommand
+} from 'app/markdown-editor/specialCommands';
 import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
 
 @Component({
@@ -31,14 +36,13 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
 
     /** Ace Editor configuration constants **/
     questionEditorText = '';
-    questionEditorAutoUpdate = true;
 
     /** Status boolean for collapse status **/
     isQuestionCollapsed: boolean;
 
     currentAnswerOption: AnswerOption;
 
-    showPreview: boolean;
+    showPreview = false;
 
     hintCommand = new HintCommand();
     correctCommand = new CorrectOptionCommand();
@@ -47,19 +51,9 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
 
     commandMultipleChoiceQuestions: SpecialCommand[] = [this.correctCommand, this.incorrectCommand, this.explanationCommand, this.hintCommand];
 
-    constructor(private artemisMarkdown: ArtemisMarkdown, private modalService: NgbModal) {
-    }
+    constructor(private artemisMarkdown: ArtemisMarkdown, private modalService: NgbModal) {}
 
     ngOnInit(): void {
-        this.showPreview = false;
-        this.setupQuestionEditor();
-    }
-
-    /**
-     * @function setupQuestionEditor
-     * @desc Initializes the ace editor for the mc question
-     */
-    setupQuestionEditor(): void {
         this.questionEditorText = this.generateMarkdown();
     }
 
@@ -106,52 +100,54 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
      * @function togglePreview
      * @desc Toggles the preview in the template
      */
-    togglePreview(): void {
-        this.question.answerOptions.splice(0);
-        this.markdownEditor.parse();
-        this.showPreview = !this.showPreview;
+    togglePreview(showPreview: boolean): void {
+        this.showPreview = showPreview;
+        if (showPreview) {
+            this.prepareForSave();
+            console.log(this.question);
+        }
     }
 
     prepareForSave(): void {
-        console.log('Did call EditMultipleChoiceQuestionComponent.prepareForSave');
-        this.markdownEditor.parse();
-    }
+        // Reset Question Object
+        this.question.answerOptions = [];
+        this.question.text = null;
+        this.question.explanation = null;
+        this.question.hint = null;
 
-    toggleAntiPreview(): void {
-        this.showPreview = false;
+        // Remove Current Answer Option
+        this.currentAnswerOption = null;
+
+        // Parse Markdown
+        //this.markdownEditor.parse();
     }
 
     specialCommandFound(textLine: string, specialCommand: SpecialCommand) {
 
         if (specialCommand === null && textLine.length > 0) {
             this.question.text = textLine;
-            console.log(this.question.text);
-            console.log(textLine);
         }
 
-        if (specialCommand instanceof CorrectOptionCommand) {
-                this.currentAnswerOption = new AnswerOption();
-                this.currentAnswerOption.isCorrect = true;
-                this.currentAnswerOption.text = textLine;
-                this.question.answerOptions.push(this.currentAnswerOption);
-            } else if (specialCommand instanceof IncorrectOptionCommand) {
-                this.currentAnswerOption = new AnswerOption();
-                this.currentAnswerOption.isCorrect = false;
-                this.currentAnswerOption.text = textLine;
-                this.question.answerOptions.push(this.currentAnswerOption);
-            } else if (specialCommand instanceof ExplanationCommand) {
-                if (this.currentAnswerOption != null) {
-                    this.currentAnswerOption.explanation = textLine;
-                } else {
-                    this.question.explanation = textLine;
-                }
-            } else if (specialCommand instanceof HintCommand) {
-                if (this.currentAnswerOption != null) {
-                    this.currentAnswerOption.hint = textLine;
-                } else {
-                    this.question.hint = textLine;
-                }
-            }this.questionUpdated.emit();
+        if (specialCommand instanceof CorrectOptionCommand || specialCommand instanceof IncorrectOptionCommand) {
+            this.currentAnswerOption = new AnswerOption();
+            this.currentAnswerOption.isCorrect = (specialCommand instanceof CorrectOptionCommand);
+            this.currentAnswerOption.text = textLine;
+            this.question.answerOptions.push(this.currentAnswerOption);
+            console.log(this.currentAnswerOption);
+        } else if (specialCommand instanceof ExplanationCommand) {
+            if (this.currentAnswerOption != null) {
+                this.currentAnswerOption.explanation = textLine;
+            } else {
+                this.question.explanation = textLine;
+            }
+        } else if (specialCommand instanceof HintCommand) {
+            if (this.currentAnswerOption != null) {
+                this.currentAnswerOption.hint = textLine;
+            } else {
+                this.question.hint = textLine;
+            }
+        }
+        this.questionUpdated.emit();
     }
 
     /**

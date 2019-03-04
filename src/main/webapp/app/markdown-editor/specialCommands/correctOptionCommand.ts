@@ -19,6 +19,6 @@ export class CorrectOptionCommand extends SpecialCommand {
     }
 
     getIdentifier(): string {
-        return '[x]';
+        return '[X]';
     }
 }

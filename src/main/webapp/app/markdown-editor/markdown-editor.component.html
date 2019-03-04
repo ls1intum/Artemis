@@ -1,27 +1,41 @@
-<div>
+<!--Begin Editor-->
+<div [hidden]="previewMode">
     <div class="tool-bar">
         <ng-container *ngFor="let command of defaultCommands">
-            <div class="btn btn-group-sm btn-outline-secondary mr-1"
-                 (click)="command.execute()">
+            <div class="btn btn-group-sm btn-outline-secondary mr-1" (click)="command.execute()">
                 {{command.buttonTranslationString | translate}}
             </div>
         </ng-container>
     </div>
     <div class="tool-bar" *ngIf="specialCommands && specialCommands.length != 0">
         <ng-container *ngFor="let command of specialCommands">
-            <div class="btn btn-group-sm btn-outline-secondary mr-1"
-                 (click)="command.execute()">
+            <div class="btn btn-group-sm btn-outline-secondary mr-1" (click)="command.execute()">
                 {{command.buttonTranslationString | translate}}
             </div>
         </ng-container>
     </div>
-    <ace-editor #aceEditor [mode]="aseEditorOptions.mode" [autoUpdateContent]="aseEditorOptions.autoUpdateContent"
-                [(text)]="defaultText" style="min-height: 200px; width:100%; overflow: auto;"
-                class="form-control"></ace-editor>
-    <div class="toolbar">
-        <div class="btn btn-outline-secondary" (click)="togglePreview()">
-            <fa-icon icon="eye"></fa-icon>
-            <span jhiTranslate="entity.action.preview"></span>
-        </div>
+
+
+    <ace-editor #aceEditor [mode]="aseEditorOptions.mode"
+                [autoUpdateContent]="aseEditorOptions.autoUpdateContent" [(text)]="defaultText"
+                style="min-height: 200px; width:100%; overflow: auto;" class="form-control"></ace-editor>
+</div>
+<!--End Editor-->
+
+<!--Begin Preview-->
+<ng-container *ngIf="previewMode">
+    <ng-content></ng-content>
+    <div *ngIf="showDefaultPreview" [innerHTML]="previewTextAsHtml">
+        Preview
+    </div>
+</ng-container>
+<!--End Preview-->
+
+<!--Begin Edit/Preview Button-->
+<div class="toolbar">
+    <div class="btn btn-outline-secondary" (click)="togglePreview()">
+        <fa-icon [icon]="previewButtonIcon" class="mr-1"></fa-icon>
+        <span [jhiTranslate]="previewButtonTranslateString"></span>
     </div>
 </div>
+<!--End Edit/Preview Button-->

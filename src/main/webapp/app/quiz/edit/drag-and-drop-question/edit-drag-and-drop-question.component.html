@@ -88,7 +88,7 @@
                 <jhi-markdown-editor #markdownEditor [defaultText]="questionEditorText"
                                      [specialCommands]="commandDragAndDropQuestions"
                                      (textWithSpecialCommandFound)="specialCommandFound($event[0], $event[1])"
-                                     (triggerParsingInClient)="togglePreview()"
+                                     (previewModeChange)="togglePreview()"
                 ></jhi-markdown-editor>
             </div>
             <div class="question-content" style="padding-bottom: 12px" *ngIf="reEvaluationInProgress">
@@ -96,7 +96,7 @@
                     <jhi-markdown-editor #markdownEditor [defaultText]="questionEditorText"
                                          [specialCommands]="commandDragAndDropQuestions"
                                          (textWithSpecialCommandFound)="specialCommandFound($event[0], $event[1])"
-                                         (triggerParsingInClient)="togglePreview()"
+                                         (previewModeChange)="togglePreview()"
                     ></jhi-markdown-editor>
                     <span class="input-group-btn" style="vertical-align: top">
                         <button class="btn btn-outline-secondary btn-lg" type="button" (click)="resetQuestionText()">
