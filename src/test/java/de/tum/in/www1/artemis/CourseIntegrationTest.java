@@ -21,6 +21,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 @AutoConfigureTestDatabase
 public class CourseIntegrationTest {
     @Autowired
+    DatabaseUtilService database;
+
+    @Autowired
     RequestUtilService request;
 
     @Autowired
@@ -29,7 +32,7 @@ public class CourseIntegrationTest {
 
     @Before
     public void resetDatabase() {
-        courseRepo.deleteAll();
+        database.resetDatabase();
         assertThat(courseRepo.findAll()).as("Database got cleared before test").isEmpty();
     }
 
