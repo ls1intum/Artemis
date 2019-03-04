@@ -119,7 +119,9 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
         this.currentAnswerOption = null;
 
         // Parse Markdown
-        //this.markdownEditor.parse();
+        if(!this.showPreview){
+            this.markdownEditor.parse();
+        }
     }
 
     specialCommandFound(textLine: string, specialCommand: SpecialCommand) {
@@ -146,7 +148,6 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
                 this.question.hint = textLine;
             }
         }
-        this.questionUpdated.emit();
     }
 
     /**
