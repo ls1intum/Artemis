@@ -33,7 +33,6 @@ public class CourseIntegrationTest {
     @Before
     public void resetDatabase() {
         database.resetDatabase();
-        assertThat(courseRepo.findAll()).as("Database got cleared before test").isEmpty();
     }
 
 
