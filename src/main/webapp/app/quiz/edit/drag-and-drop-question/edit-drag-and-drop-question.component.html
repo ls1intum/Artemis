@@ -92,8 +92,8 @@
                                      (previewModeChange)="togglePreview()"
                 ></jhi-markdown-editor>
             </div>
-            <div class="question-content" style="padding-bottom: 12px" *ngIf="reEvaluationInProgress">
-                <div class="input-group" style="height: 60px">
+            <div class="markupEditorArea" *ngIf="reEvaluationInProgress">
+                <div class="question-content">
                     <jhi-markdown-editor #markdownEditor [defaultText]="questionEditorText"
                                          [specialCommands]="commandDragAndDropQuestions"
                                          (textWithSpecialCommandFound)="specialCommandFound($event[0], $event[1])"
