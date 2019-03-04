@@ -9,6 +9,7 @@ import { CourseService } from './course.service';
 import { CourseComponent } from './course.component';
 import { CourseDetailComponent } from './course-detail.component';
 import { CourseUpdateComponent } from './course-update.component';
+import { CourseExercisesOverviewComponent } from './course-exercises-overview.component';
 import { CourseDeletePopupComponent } from './course-delete-dialog.component';
 
 @Injectable({ providedIn: 'root' })
@@ -38,6 +39,18 @@ export const courseRoute: Routes = [
         canActivate: [UserRouteAccessService]
     },
     {
+        path: 'course/new',
+        component: CourseUpdateComponent,
+        resolve: {
+            course: CourseResolve
+        },
+        data: {
+            authorities: ['ROLE_ADMIN'],
+            pageTitle: 'arTeMiSApp.course.home.title'
+        },
+        canActivate: [UserRouteAccessService]
+    },
+    {
         path: 'course/:id/view',
         component: CourseDetailComponent,
         resolve: {
@@ -50,13 +63,13 @@ export const courseRoute: Routes = [
         canActivate: [UserRouteAccessService]
     },
     {
-        path: 'course/new',
-        component: CourseUpdateComponent,
+        path: 'course/:courseId',
+        component: CourseExercisesOverviewComponent,
         resolve: {
             course: CourseResolve
         },
         data: {
-            authorities: ['ROLE_ADMIN'],
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_TA', 'ROLE_ADMIN'],
             pageTitle: 'arTeMiSApp.course.home.title'
         },
         canActivate: [UserRouteAccessService]

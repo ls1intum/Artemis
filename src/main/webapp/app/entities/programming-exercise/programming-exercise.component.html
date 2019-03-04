@@ -1,6 +1,6 @@
 <div>
     <h4>
-        <span *ngIf="course">{{course.title}} - </span><span *ngIf="programmingExercises">{{programmingExercises.length}} </span>
+        <span *ngIf="course && !showHeading">{{course.title}} - </span><span *ngIf="programmingExercises && showHeading">{{programmingExercises.length}} </span>
         <span jhiTranslate="arTeMiSApp.programmingExercise.home.title">Programming Exercises</span>
         <button *ngIf="course" id="jh-link-entity" class="btn btn-primary float-right jh-link-entity link-programming-exercise mr-1" [routerLink]="['/', { outlets: { popup: ['course', course.id, 'programming-exercise-new'] } }]">
             <fa-icon [icon]="'plus'"></fa-icon>
@@ -8,14 +8,14 @@
             Link new Programming Exercise
             </span>
         </button>
-        <button *ngIf="course" id="jh-create-entity" class="btn btn-primary float-right jh-create-entity create-programming-exercise mr-1" [routerLink]="['new']">
+        <button *ngIf="course" id="jh-create-entity" class="btn btn-primary float-right jh-create-entity create-programming-exercise mr-1" [routerLink]="['/course', courseId, 'programming-exercise','new']">
             <fa-icon [icon]="'plus'"></fa-icon>
             <span class="hidden-sm-down" jhiTranslate="arTeMiSApp.programmingExercise.home.createLabel">
             Create new Programming Exercise
             </span>
         </button>
     </h4>
-    <jhi-alert></jhi-alert>
+    <jhi-alert *ngIf="showAlertHeading"></jhi-alert>
     <div class="row">
     </div>
     <br>
