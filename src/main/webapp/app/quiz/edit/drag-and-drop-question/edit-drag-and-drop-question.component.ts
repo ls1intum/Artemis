@@ -820,7 +820,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
      */
     togglePreview(): void {
         this.showPreview = !this.showPreview;
-        this.markdownEditor.parse();
+        this.prepareForSave();
     }
 
     specialCommandFound(textLine: string, specialCommand: SpecialCommand) {
@@ -834,10 +834,12 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
         } else if (specialCommand instanceof HintCommand) {
                 this.question.hint = textLine;
             }
-        this.questionUpdated.emit();
-        }
+    }
 
     prepareForSave(): void {
-        console.log('Did call EditDragAndDropQuestionComponent.prepareForSave');
+        this.question.text = null;
+        this.question.explanation = null;
+        this.question.hint = null;
+        this.markdownEditor.parse();
     }
 }

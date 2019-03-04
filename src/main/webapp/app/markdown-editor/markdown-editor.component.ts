@@ -151,7 +151,6 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
     togglePreview(): void {
         this.previewMode = !this.previewMode;
         this.previewModeChange.emit(this.previewMode);
-        this.parse();
     }
 
 }

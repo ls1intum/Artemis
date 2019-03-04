@@ -51,6 +51,7 @@
             <div class="question-content">
                 <jhi-markdown-editor #markdownEditor
                                      [defaultText]="questionEditorText"
+                                     [useMarkdownPreview]="true"
                                      [specialCommands]="commandMultipleChoiceQuestions"
                                      (textWithSpecialCommandFound)="specialCommandFound($event[0], $event[1])"
                                      (previewModeChange)="togglePreview($event)">
