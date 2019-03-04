@@ -15,10 +15,11 @@
             </div>
         </ng-container>
     </div>
-    <ace-editor #aceEditor [mode]="'markdown'" [autoUpdateContent]="questionEditorAutoUpdate" [(text)]="defaultText"
-                style="min-height: 200px; width:100%; overflow: auto;" class="form-control"></ace-editor>
+    <ace-editor #aceEditor [mode]="aseEditorOptions.mode" [autoUpdateContent]="aseEditorOptions.autoUpdateContent"
+                [(text)]="defaultText" style="min-height: 200px; width:100%; overflow: auto;"
+                class="form-control"></ace-editor>
     <div class="toolbar">
-        <div class="btn btn-outline-secondary"(click)="togglePreview()">
+        <div class="btn btn-outline-secondary" (click)="togglePreview()">
             <fa-icon icon="eye"></fa-icon>
             <span jhiTranslate="entity.action.preview"></span>
         </div>

@@ -19,28 +19,28 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit, OnChanges
     @ViewChild('aceEditor')
     aceEditorContainer: AceEditorComponent;
 
+    aseEditorOptions = {
+        autoUpdateContent: true,
+        mode: 'markdown',
+    };
+
     @Input() defaultText: string;
+
+    defaultCommands: Command[] = [new BoldCommand(), new ItalicCommand(), new UnderlineCommand()];
     @Input() specialCommands: SpecialCommand[];
 
     @Output() textWithSpecialCommandFound = new EventEmitter<[string, SpecialCommand]>();
     @Output() triggerParsingInClient = new EventEmitter();
 
-    questionEditorText = '';
-    questionEditorAutoUpdate = true;
-
-    showPreview: boolean;
-
     constructor(private artemisMarkdown: ArtemisMarkdown) {}
 
-    defaultCommands: Command[] = [new BoldCommand(), new ItalicCommand(), new UnderlineCommand()];
-    
     addCommand(command: Command) {
         this.defaultCommands.push(command);
     }
-    
+
     removeCommand(command: Command) {
         this.defaultCommands.forEach( (item, index) => {
-            if(item === command) this.defaultCommands.splice(index,1);
+            if (item === command) { this.defaultCommands.splice(index, 1); }
         });
     }
 
@@ -48,13 +48,12 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit, OnChanges
         console.log('change');
     }
 
-
     ngAfterViewInit(): void {
         requestAnimationFrame(this.setupMarkdownEditor.bind(this));
     }
 
     ngOnInit(): void {
-        [...this.defaultCommands, ...this.specialCommands].forEach(command => {
+        [...this.defaultCommands, ...this.specialCommands || []].forEach(command => {
             command.setEditor(this.aceEditorContainer.getEditor());
         });
     }
@@ -77,41 +76,32 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit, OnChanges
 
     // TODO this method should be invoked by the Preview button of the Markdown Editor (in case it is active) and the client should be able to invoke it
     parse(): void {
-        
         if (this.specialCommands == null || this.specialCommands.length === 0) {
-            // we are already done, TODO we just need to invoke the standard markdown --> html parser
             this.artemisMarkdown.htmlForMarkdown(this.defaultText);
             return;
         }
 
-        const text = this.defaultText;
-        const textLines = text.split("\n");
+        const textLines = this.defaultText.split('\n');
         for (const textLine of textLines) {
-
-            //for the normal text without and commands
-            //if (!textLine.includes('[') && textLine.length > 0){
-             //  this.textWithSpecialCommandFound.emit([textLine, null]);
-              //  console.log(textLine);
-            //}
-
-            let didEmit = false;
-            //if commands are contained
-            for (const specialCommand of this.specialCommands) {
-
-                if (textLine.indexOf(specialCommand.getIdentifier()) != -1
-                    || textLine.indexOf(specialCommand.getIdentifier().toLowerCase()) != -1
-                    || textLine.indexOf(specialCommand.getIdentifier().toUpperCase()) != -1) {
-
-                    // TODO one possible extension would be to search for opening and closing tags and send all text in-between (potentially multiple lines) into the emitter
-                    this.textWithSpecialCommandFound.emit(
-                        [textLine.replace(specialCommand.getIdentifier(), ''), specialCommand]
-                    );
-                    didEmit = true;
-                    console.log(textLine)
-                    break;
-                }
-            } if (!didEmit) {this.textWithSpecialCommandFound.emit([textLine, null])}
+            this.parseLine(textLine);
         }
+    }
+
+    private parseLine(textLine: string) {
+        for (const specialCommand of this.specialCommands) {
+            if (textLine.indexOf(specialCommand.getIdentifier()) !== -1
+                || textLine.indexOf(specialCommand.getIdentifier().toLowerCase()) !== -1
+                || textLine.indexOf(specialCommand.getIdentifier().toUpperCase()) !== -1) {
+
+                // TODO one possible extension would be to search for opening and closing tags and send all text in-between (potentially multiple lines) into the emitter
+                this.textWithSpecialCommandFound.emit([
+                    textLine.replace(specialCommand.getIdentifier(), ''),
+                    specialCommand
+                ]);
+                return;
+            }
+        }
+        this.textWithSpecialCommandFound.emit([textLine, null]);
     }
 
     /**

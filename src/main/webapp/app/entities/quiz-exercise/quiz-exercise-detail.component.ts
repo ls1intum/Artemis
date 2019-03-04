@@ -5,8 +5,8 @@ import { Subscription } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Course, CourseService } from 'app/entities/course';
 import { QuizExercise } from './quiz-exercise.model';
-import { DragAndDropQuestionUtil } from '../../components/util/drag-and-drop-question-util.service';
-import { ShortAnswerQuestionUtil } from '../../components/util/short-answer-question-util.service';
+import { DragAndDropQuestionUtil } from 'app/components/util/drag-and-drop-question-util.service';
+import { ShortAnswerQuestionUtil } from 'app/components/util/short-answer-question-util.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { Question, QuestionType, ScoringType } from '../../entities/question';
@@ -21,7 +21,12 @@ import { Moment } from 'moment';
 import { ComponentCanDeactivate } from 'app/shared';
 import { JhiAlertService } from 'ng-jhipster';
 import { Observable } from 'rxjs/Observable';
-import {EditMultipleChoiceQuestionComponent} from 'app/quiz/edit';
+import {
+    EditDragAndDropQuestionComponent,
+    EditMultipleChoiceQuestionComponent,
+    EditShortAnswerQuestionComponent
+} from 'app/quiz/edit';
+import {EditQuizQuestion} from 'app/quiz/edit/edit-quiz-question.interface';
 
 interface Reason {
     translateKey: string;
@@ -39,7 +44,14 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
     readonly SHORT_ANSWER = QuestionType.SHORT_ANSWER;
 
-    @ViewChildren(EditMultipleChoiceQuestionComponent) editMCQuestions: QueryList<EditMultipleChoiceQuestionComponent>;
+    @ViewChildren('editMultipleChoice')
+    editMultipleChoiceQuestionComponents: QueryList<EditMultipleChoiceQuestionComponent>;
+
+    @ViewChildren('editDragAndDrop')
+    editDragAndDropQuestionComponents: QueryList<EditDragAndDropQuestionComponent>;
+
+    @ViewChildren('editShortAnswer')
+    editShortAnswerQuestionComponents: QueryList<EditShortAnswerQuestionComponent>;
 
     course: Course;
     quizExercise: QuizExercise;
@@ -803,6 +815,12 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         }
     }
 
+    parseAllQuestions(): void {
+        const editQuestionComponents: EditQuizQuestion[] = [...this.editMultipleChoiceQuestionComponents.toArray(), ...this.editDragAndDropQuestionComponents.toArray(), ...this.editShortAnswerQuestionComponents.toArray()];
+        console.log(editQuestionComponents);
+        editQuestionComponents.forEach(component => component.prepareForSave());
+    }
+
     /**
      * @function save
      * @desc Save the quiz to the server and invoke callback functions depending of result
@@ -813,11 +831,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
             return;
         }
         this.isSaving = true;
-
-        //this.mcQuestionComponents.forEach(mcQuestionComponent => {
-          //  mcQuestionComponent.prepareForSave();
-      //  });
-
+        this.parseAllQuestions();
         if (this.quizExercise.id !== undefined) {
             this.quizExerciseService.update(this.quizExercise).subscribe(
                 (quizExerciseResponse: HttpResponse<QuizExercise>) => {

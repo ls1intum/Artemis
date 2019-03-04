@@ -1,32 +1,26 @@
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild, OnChanges, SimpleChanges } from '@angular/core';
-import { MultipleChoiceQuestion } from '../../../entities/multiple-choice-question';
-import { AnswerOption } from '../../../entities/answer-option';
-import { ArtemisMarkdown } from '../../../components/util/markdown.service';
-import { AceEditorComponent } from 'ng2-ace-editor';
-import 'brace/theme/chrome';
-import 'brace/mode/markdown';
+import { MultipleChoiceQuestion } from 'app/entities/multiple-choice-question';
+import { AnswerOption } from 'app/entities/answer-option';
+import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { MarkdownEditorComponent } from 'app/markdown-editor';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HintCommand } from 'app/markdown-editor/specialCommands/hint.command';
-import { CorrectOptionCommand } from 'app/markdown-editor/specialCommands/correctOptionCommand';
-import { IncorrectOptionCommand } from 'app/markdown-editor/specialCommands/incorrectOptionCommand';
-import { ExplanationCommand } from 'app/markdown-editor/specialCommands/explanation.command';
-import { SpecialCommand } from 'app/markdown-editor/specialCommands/specialCommand';
+import { CorrectOptionCommand, IncorrectOptionCommand, ExplanationCommand, SpecialCommand } from 'app/markdown-editor/specialCommands';
+import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
 
 @Component({
     selector: 'jhi-edit-multiple-choice-question',
     templateUrl: './edit-multiple-choice-question.component.html',
     providers: [ArtemisMarkdown]
 })
-export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges {
-    @ViewChild('questionEditor')
-    private questionEditor: AceEditorComponent;
+export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, EditQuizQuestion {
 
     @ViewChild('markdownEditor')
     private markdownEditor: MarkdownEditorComponent;
 
     @Input()
     question: MultipleChoiceQuestion;
+
     @Input()
     questionIndex: number;
 
@@ -37,7 +31,6 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges {
 
     /** Ace Editor configuration constants **/
     questionEditorText = '';
-    questionEditorMode = 'markdown';
     questionEditorAutoUpdate = true;
 
     /** Status boolean for collapse status **/
@@ -82,7 +75,6 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges {
         }
     }
 
-
     /**
      * @function generateMarkdown
      * @desc Generate the markdown text for this question
@@ -121,6 +113,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges {
     }
 
     prepareForSave(): void {
+        console.log('Did call EditMultipleChoiceQuestionComponent.prepareForSave');
         this.markdownEditor.parse();
     }
 
@@ -130,7 +123,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges {
 
     specialCommandFound(textLine: string, specialCommand: SpecialCommand) {
 
-        if (specialCommand === null && textLine.length > 0){
+        if (specialCommand === null && textLine.length > 0) {
             this.question.text = textLine;
             console.log(this.question.text);
             console.log(textLine);
@@ -140,12 +133,12 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges {
                 this.currentAnswerOption = new AnswerOption();
                 this.currentAnswerOption.isCorrect = true;
                 this.currentAnswerOption.text = textLine;
-                this.question.answerOptions.push(this.currentAnswerOption)
+                this.question.answerOptions.push(this.currentAnswerOption);
             } else if (specialCommand instanceof IncorrectOptionCommand) {
                 this.currentAnswerOption = new AnswerOption();
                 this.currentAnswerOption.isCorrect = false;
                 this.currentAnswerOption.text = textLine;
-                this.question.answerOptions.push(this.currentAnswerOption)
+                this.question.answerOptions.push(this.currentAnswerOption);
             } else if (specialCommand instanceof ExplanationCommand) {
                 if (this.currentAnswerOption != null) {
                     this.currentAnswerOption.explanation = textLine;

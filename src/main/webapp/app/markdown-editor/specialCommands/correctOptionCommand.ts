@@ -1,4 +1,4 @@
-import { SpecialCommand }  from 'app/markdown-editor/specialCommands/specialCommand';
+import { SpecialCommand } from 'app/markdown-editor/specialCommands/specialCommand';
 
 export class CorrectOptionCommand extends SpecialCommand {
 

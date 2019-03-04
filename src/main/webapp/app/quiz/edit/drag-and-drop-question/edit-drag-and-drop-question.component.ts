@@ -1,35 +1,39 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
-import { DragAndDropQuestion } from '../../../entities/drag-and-drop-question';
-import { ArtemisMarkdown } from '../../../components/util/markdown.service';
-import { DragAndDropQuestionUtil } from '../../../components/util/drag-and-drop-question-util.service';
-import { FileUploaderService } from '../../../shared/http/file-uploader.service';
-import { DropLocation } from '../../../entities/drop-location';
-import { DragItem } from '../../../entities/drag-item';
-import { DragAndDropMapping } from '../../../entities/drag-and-drop-mapping';
-import { DragAndDropMouseEvent } from '../../../entities/drag-item/drag-and-drop-mouse-event.class';
-import { DragState } from '../../../entities/drag-item/drag-state.enum';
-import { AceEditorComponent } from 'ng2-ace-editor';
+import {
+    AfterViewInit,
+    Component,
+    ElementRef,
+    EventEmitter,
+    Input,
+    OnChanges,
+    OnInit,
+    Output,
+    SimpleChanges,
+    ViewChild
+} from '@angular/core';
+import { DragAndDropQuestion } from 'app/entities/drag-and-drop-question';
+import { ArtemisMarkdown } from 'app/components/util/markdown.service';
+import { DragAndDropQuestionUtil } from 'app/components/util/drag-and-drop-question-util.service';
+import { FileUploaderService } from 'app/shared/http/file-uploader.service';
+import { DropLocation } from 'app/entities/drop-location';
+import { DragItem } from 'app/entities/drag-item';
+import { DragAndDropMapping } from 'app/entities/drag-and-drop-mapping';
+import { DragAndDropMouseEvent } from 'app/entities/drag-item/drag-and-drop-mouse-event.class';
+import { DragState } from 'app/entities/drag-item/drag-state.enum';
 import * as $ from 'jquery';
-import 'brace/theme/chrome';
-import 'brace/mode/markdown';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import * as TempID from 'app/quiz/edit/temp-id';
 import { HintCommand } from 'app/markdown-editor/specialCommands/hint.command';
 import { ExplanationCommand } from 'app/markdown-editor/specialCommands/explanation.command';
 import { SpecialCommand } from 'app/markdown-editor/specialCommands/specialCommand';
 import { MarkdownEditorComponent } from 'app/markdown-editor';
-import {CorrectOptionCommand} from 'app/markdown-editor/specialCommands/correctOptionCommand';
-import {AnswerOption} from 'app/entities/answer-option';
-import {IncorrectOptionCommand} from 'app/markdown-editor/specialCommands/incorrectOptionCommand';
+import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
 
 @Component({
     selector: 'jhi-edit-drag-and-drop-question',
     templateUrl: './edit-drag-and-drop-question.component.html',
     providers: [ArtemisMarkdown, DragAndDropQuestionUtil]
 })
-export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, AfterViewInit {
-    @ViewChild('questionEditor')
-    private questionEditor: AceEditorComponent;
+export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, AfterViewInit, EditQuizQuestion {
     @ViewChild('clickLayer')
     private clickLayer: ElementRef;
     @ViewChild('markdownEditor')
@@ -97,7 +101,6 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
 
     commandDragAndDropQuestions: SpecialCommand[] = [this.explanationCommand, this.hintCommand];
 
-
     constructor(
         private artemisMarkdown: ArtemisMarkdown,
         private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
@@ -153,7 +156,6 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
     setupQuestionEditor(): void {
         this.questionEditorText = this.artemisMarkdown.generateTextHintExplanation(this.question);
     }
-
 
     /**
      * This function opens the modal for the help dialog.
@@ -823,7 +825,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
 
     specialCommandFound(textLine: string, specialCommand: SpecialCommand) {
 
-        if (specialCommand === null && textLine.length > 0){
+        if (specialCommand === null && textLine.length > 0) {
             this.question.text = textLine;
             console.log(this.question.text);
             console.log(textLine);
@@ -836,4 +838,8 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
             }
         this.questionUpdated.emit();
         }
+
+    prepareForSave(): void {
+        console.log('Did call EditDragAndDropQuestionComponent.prepareForSave');
+    }
 }

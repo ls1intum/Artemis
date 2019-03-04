@@ -14,13 +14,14 @@ import { DropLocation } from '../../../entities/drop-location';
 import { DragAndDropMouseEvent } from '../../../entities/drag-item/drag-and-drop-mouse-event.class';
 import { DragState } from '../../../entities/drag-item/drag-state.enum';
 import * as TempID from 'app/quiz/edit/temp-id';
+import {EditQuizQuestion} from 'app/quiz/edit/edit-quiz-question.interface';
 
 @Component({
     selector: 'jhi-edit-short-answer-question',
     templateUrl: './edit-short-answer-question.component.html',
     providers: [ArtemisMarkdown]
 })
-export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, AfterViewInit {
+export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, AfterViewInit, EditQuizQuestion {
     @ViewChild('questionEditor')
     private questionEditor: AceEditorComponent;
     @ViewChild('clickLayer')
@@ -799,5 +800,9 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     togglePreview(): void {
         // just commented out to remove visual mode for the moment
        // this.showPreview = !this.showPreview;
+    }
+
+    prepareForSave(): void {
+        console.log('Did call EditShortAnswerQuestionComponent.prepareForSave');
     }
 }
