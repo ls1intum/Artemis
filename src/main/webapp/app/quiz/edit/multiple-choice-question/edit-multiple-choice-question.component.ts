@@ -119,7 +119,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
         this.currentAnswerOption = null;
 
         // Parse Markdown
-        this.markdownEditor.parse();
+        //this.markdownEditor.parse();
     }
 
     specialCommandFound(textLine: string, specialCommand: SpecialCommand) {
