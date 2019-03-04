@@ -4,28 +4,28 @@
     <div class="btn-group mr-2">
         <button jhi-exercise-action-button
                 buttonIcon="redo"
-                buttonLabel="Practice"
+                [buttonLabel]="'arTeMiSApp.exerciseActions.practice' | translate"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
                 *ngIf="isPracticeModeAvailable()"
                 [routerLink]="['/quiz', exercise.id, 'practice']"></button>
         <button jhi-exercise-action-button
                 buttonIcon="play-circle"
-                buttonLabel="Open Quiz"
+                [buttonLabel]="'arTeMiSApp.exerciseActions.openQuiz' | translate"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
                 *ngIf="participationStatus() === QUIZ_NOT_STARTED"
                 (click)="startExercise()"></button>
         <button jhi-exercise-action-button
                 buttonIcon="play-circle"
-                buttonLabel="Start Quiz"
+                [buttonLabel]="'arTeMiSApp.exerciseActions.startQuiz' | translate"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
                 *ngIf="participationStatus() === QUIZ_UNINITIALIZED"
                 (click)="startExercise()"></button>
         <button jhi-exercise-action-button
                 buttonIcon="play-circle"
-                buttonLabel="Resume Quiz"
+                [buttonLabel]="'arTeMiSApp.exerciseActions.resumeQuiz' | translate"
                 *ngIf="participationStatus() === QUIZ_ACTIVE"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
@@ -36,14 +36,14 @@
     <div class="btn-group" *ngIf="!actionsOnly">
         <button jhi-exercise-action-button
                 buttonIcon="eye"
-                buttonLabel="View Submission"
+                [buttonLabel]="'arTeMiSApp.exerciseActions.viewSubmissions' | translate"
                 outlined="true"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
                 (click)="startExercise()"></button>
         <button jhi-exercise-action-button
                 buttonIcon="eye"
-                buttonLabel="View Results"
+                [buttonLabel]="'arTeMiSApp.exerciseActions.viewResults' | translate"
                 outlined="true"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
@@ -51,7 +51,7 @@
         <button jhi-exercise-action-button
                 *ngIf="exercise.isAtLeastTutor"
                 buttonIcon="signal"
-                buttonLabel="Statistics"
+                [buttonLabel]="'arTeMiSApp.exerciseActions.statistics' | translate"
                 outlined="true"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
@@ -69,21 +69,21 @@
     <div class="btn-group mr-2">
         <button jhi-exercise-action-button
                 buttonIcon="play-circle"
-                buttonLabel="Start exercise"
+                [buttonLabel]="'arTeMiSApp.exerciseActions.startExercise' | translate"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
                 *ngIf="participationStatus() === UNINITIALIZED"
                 (click)="startExercise()"></button>
         <button jhi-exercise-action-button
                 buttonIcon="play-circle"
-                buttonLabel="Resume exercise"
+                [buttonLabel]="'arTeMiSApp.exerciseActions.resumeExercise' | translate"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
                 *ngIf="participationStatus() === INACTIVE"
                 (click)="resumeExercise()"></button>
         <button jhi-exercise-action-button
                 buttonIcon="folder-open"
-                buttonLabel="Open modeling editor"
+                [buttonLabel]="'arTeMiSApp.exerciseActions.openModelingEditor' | translate"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
                 *ngIf="exercise.participations && exercise.participations.length > 0 && exercise.participations[0].initializationState === 'INITIALIZED'"
@@ -95,7 +95,7 @@
         <div class="btn-group">
             <button jhi-exercise-action-button
                     buttonIcon="folder-open"
-                    buttonLabel="Show submission"
+                    [buttonLabel]="'arTeMiSApp.exerciseActions.viewSubmissions' | translate"
                     outlined="true"
                     [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
@@ -114,14 +114,14 @@
     <div class="btn-group">
         <button jhi-exercise-action-button
                 buttonIcon="folder-open"
-                buttonLabel="Open exercise"
+                [buttonLabel]="'arTeMiSApp.exerciseActions.openExercise' | translate"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
                 *ngIf="isOnlineEditorAllowed() && exercise.participations && exercise.participations.length > 0"
                 routerLink="/editor/{{exercise.participations[0].id}}"></button>
         <button jhi-exercise-action-button
                 buttonIcon="download"
-                buttonLabel="Clone repository"
+                [buttonLabel]="'arTeMiSApp.exerciseActions.cloneRepository' | translate"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
                 placement="right"
@@ -129,27 +129,25 @@
                 [ngbPopover]="popContent"
                 [autoClose]="'outside'"></button>
         <ng-template #popContent>
-            <p>Clone your personal repository for this exercise:</p>
+            <p>{{'arTeMiSApp.exerciseActions.clonePersonalRepository' | translate}}</p>
             <pre style="max-width: 100%;" ngxClipboard [cbContent]="exercise.participations[0].repositoryUrl"
                  (cbOnSuccess)="onCopySuccess()"
                  (cbOnError)="onCopyFailure()">{{exercise.participations[0].repositoryUrl}}</pre>
-            <p *ngIf="repositoryPassword">Your password is: <code class="password">{{repositoryPassword}}</code>
-                (hover to show)</p>
+            <p *ngIf="repositoryPassword">{{'arTeMiSApp.exerciseActions.repositoryPassword' | translate}} <code class="password">{{repositoryPassword}}</code>
+                {{'arTeMiSApp.exerciseActions.hoverToShow' | translate}}</p>
             <button ngxClipboard [cbContent]="exercise.participations[0].repositoryUrl"
                     (cbOnSuccess)="onCopySuccess()" (cbOnError)="onCopyFailure()"
                     [class.btn-success]="wasCopied"
                     class="btn btn-primary btn-sm mr-2" type="button" style="min-width: 90px;">{{ wasCopied ?
-                "Copied URL" : "Copy URL"}}
+                ('arTeMiSApp.exerciseActions.copiedUrl' | translate) : ('arTeMiSApp.exerciseActions.copyUrl' | translate)}}
             </button>
             <a class="btn btn-primary btn-sm mr-2"
-               [href]="buildSourceTreeUrl(exercise.participations[0].repositoryUrl) | safeUrl">Clone in
-                SourceTree</a>
-            <a href="http://www.sourcetreeapp.com" target="_blank">Atlassian SourceTree</a> is the free Git
-            client for Windows or Mac.
+               [href]="buildSourceTreeUrl(exercise.participations[0].repositoryUrl) | safeUrl">{{"arTeMiSApp.exerciseActions.cloneSourceTree" | translate}}</a>
+            <span [innerHTML]="'arTeMiSApp.exerciseActions.sourceTreeDescription' | translate"></span>
         </ng-template>
         <button jhi-exercise-action-button
-                buttonIcon="external-link"
-                buttonLabel="Go to build plan"
+                buttonIcon="external-link-alt"
+                [buttonLabel]="'arTeMiSApp.exerciseActions.goToBuildPlan' | translate"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
                 *ngIf="publishBuildPlanUrl() && exercise.participations && exercise.participations.length > 0"
@@ -166,14 +164,14 @@
     <div class="btn-group mr-2">
         <button jhi-exercise-action-button
                 buttonIcon="play-circle"
-                buttonLabel="Start exercise"
+                [buttonLabel]="'arTeMiSApp.exerciseActions.startExercise' | translate"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
                 *ngIf="participationStatus() === UNINITIALIZED"
                 (click)="startExercise()"></button>
         <button jhi-exercise-action-button
                 buttonIcon="folder-open"
-                buttonLabel="Open text editor"
+                [buttonLabel]="'arTeMiSApp.exerciseActions.openTextEditor' | translate"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
                 *ngIf="participationStatus() === TEXT_EXERCISE && exercise.participations && exercise.participations.length > 0"
@@ -184,7 +182,7 @@
     <div class="btn-group" *ngIf="!actionsOnly">
         <button jhi-exercise-action-button
                 buttonIcon="folder-open"
-                buttonLabel="Show submission"
+                [buttonLabel]="'arTeMiSApp.exerciseActions.viewSubmissions' | translate"
                 outlined="true"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
@@ -202,14 +200,14 @@
     <div class="btn-group">
         <button jhi-exercise-action-button
                 buttonIcon="play-circle"
-                buttonLabel="Start exercise"
+                [buttonLabel]="'arTeMiSApp.exerciseActions.startExercise' | translate"
                 [buttonLoading]="exercise.loading"
                 *ngIf="participationStatus() === UNINITIALIZED"
                 [smallButton]="smallButtons"
                 (click)="startExercise()"></button>
         <button jhi-exercise-action-button
                 buttonIcon="play-circle"
-                buttonLabel="Resume exercise"
+                [buttonLabel]="'arTeMiSApp.exerciseActions.resumeExercise' | translate"
                 [buttonLoading]="exercise.loading"
                 *ngIf="participationStatus() === INACTIVE && exercise.participations && exercise.participations.length > 0"
                 [smallButton]="smallButtons"

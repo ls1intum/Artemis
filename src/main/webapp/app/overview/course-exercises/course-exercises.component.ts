@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Course, CourseScoreCalculationService, CourseService } from 'app/entities/course';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
+import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
 import * as moment from 'moment';
 import { Exercise } from 'app/entities/exercise';
@@ -24,6 +25,7 @@ export class CourseExercisesComponent implements OnInit {
         private courseService: CourseService,
         private courseCalculationService: CourseScoreCalculationService,
         private courseServer: CourseService,
+        private translateService: TranslateService,
         private route: ActivatedRoute) {
     }
 
@@ -40,6 +42,11 @@ export class CourseExercisesComponent implements OnInit {
             });
         }
         this.groupExercises(this.DUE_DATE_DESC);
+
+        this.translateService.onLangChange.subscribe((event: LangChangeEvent) => {
+            this.groupExercises(this.DUE_DATE_DESC);
+
+        });
     }
 
     public groupExercises(selectedOrder: number): void {
@@ -78,14 +85,15 @@ export class CourseExercisesComponent implements OnInit {
             groupedExercises[dateIndex].exercises.push(exercise);
         });
         this.weeklyExercisesGrouped = {
+            ...groupedExercises,
             'noDate': {
-                label: `No date associated`,
+                label: this.translateService.instant('arTeMiSApp.courseOverview.exerciseList.noExerciseDate'),
                 isCollapsed: false,
                 isCurrentWeek: false,
                 exercises: notAssociatedExercises
-            }, ...groupedExercises
+            }
         };
-        this.weeklyIndexKeys = ['noDate', ...indexKeys];
+        this.weeklyIndexKeys = [...indexKeys, 'noDate'];
     }
 
     private sortExercises(exercises: Exercise[], selectedOrder: number) {
