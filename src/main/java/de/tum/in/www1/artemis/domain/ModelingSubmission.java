@@ -1,11 +1,9 @@
 package de.tum.in.www1.artemis.domain;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 
 import javax.persistence.*;
 import java.io.Serializable;
-import java.time.ZonedDateTime;
 import java.util.Objects;
 
 /**

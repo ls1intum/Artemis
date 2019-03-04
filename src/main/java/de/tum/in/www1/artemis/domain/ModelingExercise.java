@@ -1,14 +1,10 @@
 package de.tum.in.www1.artemis.domain;
 
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
-import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 
 import javax.persistence.*;
 import java.io.Serializable;
-import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * A ModelingExercise.
