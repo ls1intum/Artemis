@@ -25,14 +25,6 @@ public class ModelingSubmission extends Submission implements Serializable {
     @Lob
     private String explanationText;
 
-    public ModelingSubmission() {
-    }
-
-    public ModelingSubmission(Boolean submitted, String  model) {
-        super(submitted);
-        this.model = model;
-    }
-
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 
     public String getModel() {
