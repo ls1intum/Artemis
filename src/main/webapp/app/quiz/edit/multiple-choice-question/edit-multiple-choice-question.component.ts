@@ -120,6 +120,10 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges {
         this.showPreview = !this.showPreview;
     }
 
+    prepareForSave(): void {
+        this.markdownEditor.parse();
+    }
+
     toggleAntiPreview(): void {
         this.showPreview = false;
     }
@@ -154,7 +158,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges {
                 } else {
                     this.question.hint = textLine;
                 }
-            }
+            }this.questionUpdated.emit();
     }
 
     /**

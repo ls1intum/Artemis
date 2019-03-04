@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, ViewChild, Input, Output, EventEmitter, OnInit} from '@angular/core';
+import { Component, AfterViewInit, ViewChild, Input, Output, EventEmitter, OnInit,  SimpleChanges, OnChanges} from '@angular/core';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
@@ -15,7 +15,7 @@ import { SpecialCommand } from 'app/markdown-editor/specialCommands/specialComma
     providers: [ArtemisMarkdown],
     templateUrl: './markdown-editor.component.html'
 })
-export class MarkdownEditorComponent implements AfterViewInit, OnInit {
+export class MarkdownEditorComponent implements AfterViewInit, OnInit, OnChanges {
     @ViewChild('aceEditor')
     aceEditorContainer: AceEditorComponent;
 
@@ -43,7 +43,10 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
             if(item === command) this.defaultCommands.splice(index,1);
         });
     }
-    
+
+    ngOnChanges(changes: SimpleChanges): void {
+        console.log('change');
+    }
 
 
     ngAfterViewInit(): void {
@@ -86,11 +89,12 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
         for (const textLine of textLines) {
 
             //for the normal text without and commands
-            if (!textLine.includes('[') && textLine.length > 0){
-               this.textWithSpecialCommandFound.emit([textLine, null]);
-                console.log(textLine);
-            }
+            //if (!textLine.includes('[') && textLine.length > 0){
+             //  this.textWithSpecialCommandFound.emit([textLine, null]);
+              //  console.log(textLine);
+            //}
 
+            let didEmit = false;
             //if commands are contained
             for (const specialCommand of this.specialCommands) {
 
@@ -102,10 +106,11 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
                     this.textWithSpecialCommandFound.emit(
                         [textLine.replace(specialCommand.getIdentifier(), ''), specialCommand]
                     );
+                    didEmit = true;
                     console.log(textLine)
                     break;
                 }
-            }
+            } if (!didEmit) {this.textWithSpecialCommandFound.emit([textLine, null])}
         }
     }
 

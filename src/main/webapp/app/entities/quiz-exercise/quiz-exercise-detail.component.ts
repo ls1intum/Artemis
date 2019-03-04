@@ -1,4 +1,4 @@
-import { Component, HostListener, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import { Component, HostListener, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChildren, QueryList } from '@angular/core';
 import { QuizExerciseService } from './quiz-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -21,6 +21,7 @@ import { Moment } from 'moment';
 import { ComponentCanDeactivate } from 'app/shared';
 import { JhiAlertService } from 'ng-jhipster';
 import { Observable } from 'rxjs/Observable';
+import {EditMultipleChoiceQuestionComponent} from 'app/quiz/edit';
 
 interface Reason {
     translateKey: string;
@@ -37,6 +38,8 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
     readonly SHORT_ANSWER = QuestionType.SHORT_ANSWER;
+
+    @ViewChildren(EditMultipleChoiceQuestionComponent) editMCQuestions: QueryList<EditMultipleChoiceQuestionComponent>;
 
     course: Course;
     quizExercise: QuizExercise;
@@ -810,6 +813,11 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
             return;
         }
         this.isSaving = true;
+
+        //this.mcQuestionComponents.forEach(mcQuestionComponent => {
+          //  mcQuestionComponent.prepareForSave();
+      //  });
+
         if (this.quizExercise.id !== undefined) {
             this.quizExerciseService.update(this.quizExercise).subscribe(
                 (quizExerciseResponse: HttpResponse<QuizExercise>) => {

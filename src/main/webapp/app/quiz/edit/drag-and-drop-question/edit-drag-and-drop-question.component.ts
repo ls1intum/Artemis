@@ -834,7 +834,6 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
         } else if (specialCommand instanceof HintCommand) {
                 this.question.hint = textLine;
             }
-        //this.artemisMarkdown.parseTextHintExplanation(this.questionEditorText, this.question);
-        // this.questionUpdated.emit();
+        this.questionUpdated.emit();
         }
 }
