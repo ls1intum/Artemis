@@ -275,10 +275,14 @@ public class CourseResource {
 
         User user = userService.getUserWithGroupsAndAuthorities();
         List<Exercise> exercises = exerciseService.findAllForCourse(course, false, principal, user);
+
+        exercises = exercises.stream()
+            .filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise)
+            .collect(Collectors.toList());
+
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
 
         for (Exercise exercise : exercises) {
-//            TutorParticipation tutorParticipation = tutorParticipationService.findByExerciseAndTutor(exercise, user);
             TutorParticipation tutorParticipation = tutorParticipations.stream()
                 .filter(participation -> participation.getAssessedExercise().getId().equals(exercise.getId()))
                 .findFirst().orElseGet(() -> {
