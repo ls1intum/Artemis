@@ -113,6 +113,13 @@
     <!-- ACTION START -->
     <div class="btn-group">
         <button jhi-exercise-action-button
+                buttonIcon="play-circle"
+                [buttonLabel]="'arTeMiSApp.exerciseActions.startExercise' | translate"
+                [buttonLoading]="exercise.loading"
+                [smallButton]="smallButtons"
+                *ngIf="participationStatus() === UNINITIALIZED"
+                (click)="startExercise()"></button>
+        <button jhi-exercise-action-button
                 buttonIcon="folder-open"
                 [buttonLabel]="'arTeMiSApp.exerciseActions.openExercise' | translate"
                 [buttonLoading]="exercise.loading"
@@ -126,6 +133,7 @@
                 [smallButton]="smallButtons"
                 placement="right"
                 container="body"
+                *ngIf="exercise.participations && exercise.participations.length > 0"
                 [ngbPopover]="popContent"
                 [autoClose]="'outside'"></button>
         <ng-template #popContent>
