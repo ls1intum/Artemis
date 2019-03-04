@@ -827,8 +827,6 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
 
         if (specialCommand === null && textLine.length > 0) {
             this.question.text = textLine;
-            console.log(this.question.text);
-            console.log(textLine);
         }
 
         if (specialCommand instanceof ExplanationCommand) {

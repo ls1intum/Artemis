@@ -96,6 +96,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
         this.modalService.open(content, {size: 'lg'});
     }
 
+
     /**
      * @function togglePreview
      * @desc Toggles the preview in the template
@@ -104,7 +105,6 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
         this.showPreview = showPreview;
         if (showPreview) {
             this.prepareForSave();
-            console.log(this.question);
         }
     }
 
@@ -119,7 +119,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
         this.currentAnswerOption = null;
 
         // Parse Markdown
-        //this.markdownEditor.parse();
+        this.markdownEditor.parse();
     }
 
     specialCommandFound(textLine: string, specialCommand: SpecialCommand) {
@@ -133,7 +133,6 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
             this.currentAnswerOption.isCorrect = (specialCommand instanceof CorrectOptionCommand);
             this.currentAnswerOption.text = textLine;
             this.question.answerOptions.push(this.currentAnswerOption);
-            console.log(this.currentAnswerOption);
         } else if (specialCommand instanceof ExplanationCommand) {
             if (this.currentAnswerOption != null) {
                 this.currentAnswerOption.explanation = textLine;

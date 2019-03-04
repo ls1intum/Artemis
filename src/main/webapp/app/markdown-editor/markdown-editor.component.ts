@@ -31,16 +31,18 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
     };
 
     @Input() defaultText: string;
-    previewTextAsHtml: string;
-    @Output() html = new EventEmitter<string>();
-
-    defaultCommands: Command[] = [new BoldCommand(), new ItalicCommand(), new UnderlineCommand()];
     @Input() specialCommands: SpecialCommand[];
+
+    @Output() html = new EventEmitter<string>();
     @Output() textWithSpecialCommandFound = new EventEmitter<[string, SpecialCommand]>();
+    @Output() previewModeChange = new EventEmitter<boolean>();
 
     @ContentChild('preview') previewChild: ElementRef;
+
+
+    previewTextAsHtml: string;
     previewMode = false;
-    @Output() previewModeChange = new EventEmitter<boolean>();
+    defaultCommands: Command[] = [new BoldCommand(), new ItalicCommand(), new UnderlineCommand()];
 
     constructor(private artemisMarkdown: ArtemisMarkdown) {}
 
@@ -90,6 +92,14 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
         this.aceEditorContainer.getEditor().setHighlightActiveLine(false);
         this.aceEditorContainer.getEditor().setShowPrintMargin(false);
         this.aceEditorContainer.getEditor().clearSelection();
+        this.aceEditorContainer.getEditor().on(
+            "change",
+            () => {
+                console.log('ich parse');
+                this.parse();
+            },
+            this
+        );
     }
 
     /**
@@ -140,7 +150,7 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
     togglePreview(): void {
         this.previewMode = !this.previewMode;
         this.previewModeChange.emit(this.previewMode);
-        this.parse()
+        this.parse();
     }
 
 }

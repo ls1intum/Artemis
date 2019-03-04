@@ -815,9 +815,11 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         }
     }
 
+    /**
+     * @function triggers the parsing in the designated edit component
+     */
     parseAllQuestions(): void {
         const editQuestionComponents: EditQuizQuestion[] = [...this.editMultipleChoiceQuestionComponents.toArray(), ...this.editDragAndDropQuestionComponents.toArray(), ...this.editShortAnswerQuestionComponents.toArray()];
-        console.log(editQuestionComponents);
         editQuestionComponents.forEach(component => component.prepareForSave());
     }
 
