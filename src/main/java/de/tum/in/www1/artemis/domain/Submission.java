@@ -69,13 +69,6 @@ public abstract class Submission implements Serializable {
     @Column(name = "submission_date")
     private ZonedDateTime submissionDate;
 
-    public Submission() {
-    }
-
-    public Submission(Boolean submitted) {
-        this.submitted = submitted;
-    }
-
     @JsonView(QuizView.Before.class)
     public ZonedDateTime getSubmissionDate() {
         return submissionDate;
