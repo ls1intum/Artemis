@@ -86,6 +86,7 @@
         <div class="markupEditorArea">
             <div class="question-content" *ngIf="!reEvaluationInProgress">
                 <jhi-markdown-editor #markdownEditor [defaultText]="questionEditorText"
+                                     [useMarkdownPreview]="false"
                                      [specialCommands]="commandDragAndDropQuestions"
                                      (textWithSpecialCommandFound)="specialCommandFound($event[0], $event[1])"
                                      (previewModeChange)="togglePreview()"

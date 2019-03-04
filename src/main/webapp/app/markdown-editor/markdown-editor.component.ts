@@ -32,6 +32,7 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
 
     @Input() defaultText: string;
     @Input() specialCommands: SpecialCommand[];
+    @Input() useMarkdownPreview: boolean;
 
     @Output() html = new EventEmitter<string>();
     @Output() textWithSpecialCommandFound = new EventEmitter<[string, SpecialCommand]>();

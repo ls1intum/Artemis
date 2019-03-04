@@ -33,7 +33,7 @@
 
 <!--Begin Edit/Preview Button-->
 <div class="toolbar">
-    <div class="btn btn-outline-secondary" (click)="togglePreview()">
+    <div *ngIf="useMarkdownPreview" class="btn btn-outline-secondary" (click)="togglePreview()">
         <fa-icon [icon]="previewButtonIcon" class="mr-1"></fa-icon>
         <span [jhiTranslate]="previewButtonTranslateString"></span>
     </div>
