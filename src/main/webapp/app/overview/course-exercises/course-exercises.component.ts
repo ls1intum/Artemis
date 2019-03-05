@@ -16,7 +16,8 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     public readonly DUE_DATE_ASC = 1;
     public readonly DUE_DATE_DESC = -1;
     private courseId: number;
-    private subscription: Subscription;
+    private paramSubscription: Subscription;
+    private translateSubscription: Subscription;
     public course: Course;
     public weeklyIndexKeys: string[];
     public weeklyExercisesGrouped: object;
@@ -30,7 +31,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        this.subscription = this.route.parent.params.subscribe(params => {
+        this.paramSubscription = this.route.parent.params.subscribe(params => {
             this.courseId = parseInt(params['courseId'], 10);
         });
 
@@ -43,14 +44,15 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         }
         this.groupExercises(this.DUE_DATE_DESC);
 
-        this.translateService.onLangChange.subscribe((event: LangChangeEvent) => {
+        this.translateSubscription = this.translateService.onLangChange.subscribe((event: LangChangeEvent) => {
             this.groupExercises(this.DUE_DATE_DESC);
 
         });
     }
 
     ngOnDestroy(): void {
-        this.translateService.onLangChange.unsubscribe();
+        this.translateSubscription.unsubscribe();
+        this.paramSubscription.unsubscribe();
     }
 
     public groupExercises(selectedOrder: number): void {

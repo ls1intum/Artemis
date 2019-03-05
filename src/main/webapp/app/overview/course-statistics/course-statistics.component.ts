@@ -36,7 +36,8 @@ export interface CourseStatisticsDataSet {
 export class CourseStatisticsComponent implements OnInit, OnDestroy {
     private courseId: number;
     private courseExercises: Exercise[];
-    private subscription: Subscription;
+    private paramSubscription: Subscription;
+    private translationSubscription: Subscription;
     course: Course;
 
     // absolute score
@@ -155,7 +156,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        this.subscription = this.route.parent.params.subscribe(params => {
+        this.paramSubscription = this.route.parent.params.subscribe(params => {
             this.courseId = parseInt(params['courseId'], 10);
         });
 
@@ -179,7 +180,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
             this.groupExercisesByType();
         }
 
-        this.translateService.onLangChange.subscribe((event: LangChangeEvent) => {
+        this.translationSubscription = this.translateService.onLangChange.subscribe((event: LangChangeEvent) => {
             this.exerciseTitles = {
                 'quiz': {
                     'name': this.translateService.instant('arTeMiSApp.course.quizExercises'),
@@ -206,8 +207,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
-        this.subscription.unsubscribe();
-        this.translateService.onLangChange.unsubscribe();
+        this.paramSubscription.unsubscribe();
+        this.translationSubscription.unsubscribe();
     }
 
     groupExercisesByType() {
