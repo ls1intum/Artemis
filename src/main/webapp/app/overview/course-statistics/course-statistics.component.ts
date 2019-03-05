@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { HttpResponse } from '@angular/common/http';
+import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 
 import {
     ABSOLUTE_SCORE,
@@ -35,7 +36,8 @@ export interface CourseStatisticsDataSet {
 export class CourseStatisticsComponent implements OnInit, OnDestroy {
     private courseId: number;
     private courseExercises: Exercise[];
-    private subscription: Subscription;
+    private paramSubscription: Subscription;
+    private translationSubscription: Subscription;
     course: Course;
 
     // absolute score
@@ -56,23 +58,23 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
     public doughnutChartLabels: string[] = ['Quiz Points', 'Programming Points', 'Modeling Points', 'Text Points', 'File Upload Points', 'Missing Points'];
     public exerciseTitles: object = {
         'quiz': {
-            'name': 'Quiz Exercises',
+            'name': this.translateService.instant('arTeMiSApp.course.quizExercises'),
             'color': QUIZ_EXERCISE_COLOR,
         },
         'modeling': {
-            'name': 'Modeling Exercises',
+            'name': this.translateService.instant('arTeMiSApp.course.modelingExercises'),
             'color': MODELING_EXERCISE_COLOR,
         },
         'programming': {
-            'name': 'Programming Exercises',
+            'name': this.translateService.instant('arTeMiSApp.course.programmingExercises'),
             'color': PROGRAMMING_EXERCISE_COLOR,
         },
         'text': {
-            'name': 'Text Exercises',
+            'name': this.translateService.instant('arTeMiSApp.course.textExercises'),
             'color': TEXT_EXERCISE_COLOR,
         },
         'file-upload': {
-            'name': 'File Upload Exercises',
+            'name': this.translateService.instant('arTeMiSApp.course.fileUploadExercises'),
             'color': FILE_UPLOAD_EXERCISE_COLOR,
         }
     };
@@ -148,12 +150,13 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
         private courseService: CourseService,
         private courseCalculationService: CourseScoreCalculationService,
         private courseServer: CourseService,
+        private translateService: TranslateService,
         private route: ActivatedRoute
     ) {
     }
 
     ngOnInit() {
-        this.subscription = this.route.parent.params.subscribe(params => {
+        this.paramSubscription = this.route.parent.params.subscribe(params => {
             this.courseId = parseInt(params['courseId'], 10);
         });
 
@@ -176,10 +179,36 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
             this.calculateRelativeScores();
             this.groupExercisesByType();
         }
+
+        this.translationSubscription = this.translateService.onLangChange.subscribe((event: LangChangeEvent) => {
+            this.exerciseTitles = {
+                'quiz': {
+                    'name': this.translateService.instant('arTeMiSApp.course.quizExercises'),
+                    'color': QUIZ_EXERCISE_COLOR,
+                },
+                'modeling': {
+                    'name': this.translateService.instant('arTeMiSApp.course.modelingExercises'),
+                    'color': MODELING_EXERCISE_COLOR,
+                },
+                'programming': {
+                    'name': this.translateService.instant('arTeMiSApp.course.programmingExercises'),
+                    'color': PROGRAMMING_EXERCISE_COLOR,
+                },
+                'text': {
+                    'name': this.translateService.instant('arTeMiSApp.course.textExercises'),
+                    'color': TEXT_EXERCISE_COLOR,
+                },
+                'file-upload': {
+                    'name': this.translateService.instant('arTeMiSApp.course.fileUploadExercises'),
+                    'color': FILE_UPLOAD_EXERCISE_COLOR,
+                }
+            };
+        });
     }
 
     ngOnDestroy() {
-        this.subscription.unsubscribe();
+        this.paramSubscription.unsubscribe();
+        this.translationSubscription.unsubscribe();
     }
 
     groupExercisesByType() {

@@ -1,11 +1,15 @@
 <div *ngIf="course">
     <div class="course-info-bar">
         <h3>{{course.title}}</h3>
-        <h4>{{course.description || "No description available"}}</h4>
+        <h4>{{course.description || ("arTeMiSApp.courseOverview.noDescription"| translate)}}</h4>
     </div>
     <div class="tab-bar">
-        <div class="tab-item" routerLink="exercises" routerLinkActive="active"><b>Exercise</b></div>
-        <div class="tab-item" routerLink="statistics" routerLinkActive="active"><b>Statistics</b></div>
+        <div class="tab-item" routerLink="exercises" routerLinkActive="active">
+            <b jhiTranslate="arTeMiSApp.courseOverview.menu.exercises">Exercise</b>
+        </div>
+        <div class="tab-item" routerLink="statistics" routerLinkActive="active">
+            <b jhiTranslate="arTeMiSApp.courseOverview.menu.statistics">Statistics</b>
+        </div>
         <!--<div class="tab-item" routerLink="gradebook" routerLinkActive="active"><b>Gradebook</b></div>-->
     </div>
     <router-outlet></router-outlet>
