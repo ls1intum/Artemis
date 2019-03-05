@@ -36,15 +36,15 @@ public class TextSubmissionService {
     }
 
     /**
-     * Saves the given submission and the corresponding model and creates the result if necessary.
-     * Furthermore, the submission is added to the AutomaticSubmissionService if not submitted yet.
+     * Saves the given submission. Furthermore, the submission is added to the AutomaticSubmissionService,
+     * if not submitted yet.
      * Is used for creating and updating text submissions.
      * If it is used for a submit action, Compass is notified about the new model.
      * Rolls back if inserting fails - occurs for concurrent createTextSubmission() calls.
      *
      * @param textSubmission the submission to notifyCompass
      * @param textExercise   the exercise to notifyCompass in
-     * @param participation  the participation where the result should be saved
+     * @param participation  the participation
      * @return the textSubmission entity
      */
     @Transactional(rollbackFor = Exception.class)

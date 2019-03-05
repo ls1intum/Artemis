@@ -76,9 +76,6 @@ public class Result implements Serializable {
     @JsonView(QuizView.Before.class)
     private Boolean rated;
 
-    @Column(name = "hasFeedback")
-    private Boolean hasFeedback;
-
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(unique = true)
     @JsonView(QuizView.Before.class)
@@ -119,6 +116,11 @@ public class Result implements Serializable {
     @Transient
     @JsonProperty
     private Long submissionCount;
+
+    @Column(name = "hasFeedback")
+    public Boolean hasFeedback() {
+        return feedbacks != null && !feedbacks.isEmpty();
+    }
 
     public Long getSubmissionCount() {
         return submissionCount;
@@ -214,19 +216,6 @@ public class Result implements Serializable {
         return this;
     }
 
-    public void setHasFeedback(Boolean hasFeedback) {
-        this.hasFeedback = hasFeedback;
-    }
-
-    public Boolean getHasFeedback() {
-        return hasFeedback;
-    }
-
-    public Result hasFeedback(Boolean hasFeedback) {
-        this.hasFeedback = hasFeedback;
-        return this;
-    }
-
     /**
      * 1. set score
      * 2. set successful = true, if score is 100 or false if not
@@ -239,7 +228,7 @@ public class Result implements Serializable {
     }
 
     /**
-     * calculates and sets the score attribute and accordingly the successfull flag
+     * calculates and sets the score attribute and accordingly the successful flag
      *
      * @param totalScore total amount of scored points between 0 and maxScore
      * @param maxScore   maximum score reachable at corresponding exercise
@@ -386,7 +375,8 @@ public class Result implements Serializable {
         }
     }
 
-    public void evaluateFeedback(Double maxScore) {
+    // TODO CZ: not necessary - AssessmentService#submitResult could be used for calculating the score and setting the result string for modeling exercises instead/as well
+    public void evaluateFeedback(double maxScore) {
         double totalScore = calculateTotalScore();
         setScore(totalScore, maxScore);
         setResultString(totalScore, maxScore);
@@ -422,18 +412,19 @@ public class Result implements Serializable {
             ", buildArtifact='" + isBuildArtifact() + "'" +
             ", score=" + getScore() +
             ", rated='" + isRated() + "'" +
-            ", hasFeedback='" + getHasFeedback() + "'" +
+            ", hasFeedback='" + hasFeedback() + "'" +
             "}";
     }
 
     /**
      * @return sum of every feedback credit rounded to max two numbers after the comma
      */
-    public Double calculateTotalScore() {
+    // TODO CZ: not necessary - AssessmentService#submitResult could be used for calculating the score and setting the result string for modeling exercises instead/as well
+    private double calculateTotalScore() {
         double totalScore = 0.0;
         for (Feedback feedback : this.feedbacks) {
             totalScore += feedback.getCredits();
         }
-        return new BigDecimal(totalScore).setScale(2, ROUND_HALF_EVEN).doubleValue();
+        return new BigDecimal(totalScore).setScale(2, ROUND_HALF_EVEN).doubleValue(); // TODO CZ: does ROUND_HALF_EVEN make sense here? why not use ROUND_HALF_UP?
     }
 }

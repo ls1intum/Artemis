@@ -1,11 +1,21 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import com.google.gson.JsonObject;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ModelingExercise;
+import de.tum.in.www1.artemis.domain.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.Participation;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.CourseService;
+import de.tum.in.www1.artemis.service.ExerciseService;
+import de.tum.in.www1.artemis.service.ModelingExerciseService;
+import de.tum.in.www1.artemis.service.ModelingSubmissionService;
+import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -18,7 +28,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URISyntaxException;
 import java.security.Principal;
@@ -216,27 +233,20 @@ public class ModelingSubmissionResource {
      * GET  /courses/{courseId}/exercises/{exerciseId}/modeling-submissions : Gets an existing modelingSubmission.
      *
      * @param courseId       only included for API consistency, not actually used
-     * @param exerciseId     the id of the exercise for which to init a participation
+     * @param exerciseId     the id of the corresponding exercise - only included for API consistency, not actually used
      * @param id             the id of the modelingSubmission to retrieve
-     * @param principal      the current user principal
-     * @return the ResponseEntity with status 200 (OK) and with body the updated modelingSubmission,
-     * or with status 400 (Bad Request) if the modelingSubmission is not valid,
-     * or with status 500 (Internal Server Error) if the modelingSubmission couldn't be updated
-     * @throws URISyntaxException if the Location URI syntax is incorrect
+     * @return the ResponseEntity with status 200 (OK) and with body the modelingSubmission for the given id,
+     * or with status 404 (Not Found) if the modelingSubmission could not be found
      */
     @GetMapping("/courses/{courseId}/exercises/{exerciseId}/modeling-submissions/{id}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ModelingSubmission> getModelingSubmissionWithModel(@PathVariable Long courseId, @PathVariable Long exerciseId, @PathVariable Long id, Principal principal) {
+    public ResponseEntity<ModelingSubmission> getModelingSubmissionWithModel(@PathVariable Long courseId,
+                                                                             @PathVariable Long exerciseId,
+                                                                             @PathVariable Long id) {
         log.debug("REST request to get ModelingSubmission with model : {}", id);
         Optional<ModelingSubmission> modelingSubmission = modelingSubmissionRepository.findById(id);
-        if (modelingSubmission.isPresent()) {
-            Long studentId = userRepository.findUserIdBySubmissionId(id);
-            JsonObject model = modelingSubmissionService.getModel(exerciseId, studentId, id);
-            if (model != null) {
-                modelingSubmission.get().setModel(model.toString());
-            }
-            hideDetails(modelingSubmission.get());
-        }
+        // hide details of the modeling submission, if one was found
+        modelingSubmission.ifPresent(this::hideDetails);
         return ResponseUtil.wrapOrNotFound(modelingSubmission);
     }
 }

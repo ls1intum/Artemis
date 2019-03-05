@@ -4,16 +4,18 @@ import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ModelingExercise;
 import de.tum.in.www1.artemis.domain.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
-import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.compass.assessment.ModelElementAssessment;
 import de.tum.in.www1.artemis.service.compass.conflict.Conflict;
 import de.tum.in.www1.artemis.service.compass.grade.CompassGrade;
 import de.tum.in.www1.artemis.service.compass.grade.Grade;
-import de.tum.in.www1.artemis.service.compass.grade.GradeParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -21,13 +23,18 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.text.DecimalFormat;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class CompassService {
@@ -36,7 +43,7 @@ public class CompassService {
     private final ResultRepository resultRepository;
     private final ModelingExerciseRepository modelingExerciseRepository;
     private final ModelingSubmissionRepository modelingSubmissionRepository;
-    private final UserService userService;
+    private final ParticipationRepository participationRepository;
     /**
      * Map exerciseId to compass CalculationEngines
      */
@@ -63,11 +70,11 @@ public class CompassService {
     private final static int NUMBER_OF_OPTIMAL_MODELS = 10;
     private static Map<Long, Thread> optimalModelThreads = new ConcurrentHashMap<>();
 
-    public CompassService(ResultRepository resultRepository, ModelingExerciseRepository modelingExerciseRepository, ModelingSubmissionRepository modelingSubmissionRepository, UserService userService) {
+    public CompassService(ResultRepository resultRepository, ModelingExerciseRepository modelingExerciseRepository, ModelingSubmissionRepository modelingSubmissionRepository, ParticipationRepository participationRepository) {
         this.resultRepository = resultRepository;
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
-        this.userService = userService;
+        this.participationRepository = participationRepository;
     }
 
     /**
@@ -149,6 +156,7 @@ public class CompassService {
     }
 
     /**
+     * TODO CZ: do we still need this? it would involve the database now
      * If a valid result has already produced in the past load it, otherwise calculate a new result
      * <p>
      * Useful for testing as it does not involve the database
@@ -156,27 +164,27 @@ public class CompassService {
      * @return Result object for the specific model or null if not found, or the coverage or confidence is not high enough
      */
     @SuppressWarnings("unused")
-    public Grade getResultForModel(long exerciseId, long studentId, long modelId) {
-        if (!loadExerciseIfSuspended(exerciseId) || !modelRepository.exists(exerciseId, studentId, modelId)) { //TODO why null?
-            return null;
-        }
-
-        JsonObject previousAssessment = assessmentRepository.readAssessment(exerciseId, studentId, modelId, false);
-        CalculationEngine engine = compassCalculationEngines.get(exerciseId);
-
-        if (previousAssessment != null) {
-            return GradeParser.importFromJSON(previousAssessment);
-        }
-
-        Grade grade = engine.getResultForModel(modelId);
-
-        if (grade.getConfidence() >= CONFIDENCE_THRESHOLD && grade.getCoverage() >= COVERAGE_THRESHOLD) {
-            assessmentRepository.writeAssessment(exerciseId, studentId, modelId, false, engine.exportToJson(grade, modelId).toString());
-            return grade;
-        }
-
-        return null;
-    }
+//    public Grade getResultForSubmission(long exerciseId, long studentId, long submissionId) {
+//        Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionRepository.findById(submissionId);
+//        if (!loadExerciseIfSuspended(exerciseId) || !optionalModelingSubmission.isPresent()) { //TODO why null?
+//            return null;
+//        }
+//
+//        Result result = optionalModelingSubmission.get().getResult();
+//        if (result != null) {
+//            return GradeParser.importFromJSON(previousAssessment);
+//        }
+//
+//        CalculationEngine engine = compassCalculationEngines.get(exerciseId);
+//        Grade grade = engine.getResultForModel(submissionId);
+//
+//        if (grade.getConfidence() >= CONFIDENCE_THRESHOLD && grade.getCoverage() >= COVERAGE_THRESHOLD) {
+//            assessmentRepository.writeAssessment(exerciseId, studentId, submissionId, false, engine.exportToJson(grade, modelId).toString());
+//            return grade;
+//        }
+//
+//        return null;
+//    }
 
     /**
      * Add an assessment to an engine
@@ -291,37 +299,69 @@ public class CompassService {
         return (CompassCalculationEngine) compassCalculationEngines.get(exerciseId);
     }
 
+    /**
+     * Checks if a calculation engine for the given exerciseId already exists. If not, it tries to load a new engine.
+     *
+     * @param exerciseId the id of the exercise for which the calculation engine is checked/loaded
+     * @return true if a calculation engine for the exercise exists or could be loaded successfully, false otherwise
+     */
     private boolean loadExerciseIfSuspended(long exerciseId) {
         if (compassCalculationEngines.containsKey(exerciseId)) {
             return true;
         }
-        if (this.modelRepository.exerciseExists(exerciseId)) {
-            this.loadExercise(exerciseId);
+        if (participationRepository.existsByExerciseId(exerciseId)) {
+            this.loadCalculationEngineForExercise(exerciseId);
             return true;
         }
         return false;
     }
 
-    private void loadExercise(long exerciseId) {
+    /**
+     * Loads all the submissions of the given exercise from the database, creates a
+     * new calculation engine from the submissions and adds it to the list of calculation engines.
+     *
+     * @param exerciseId the exerciseId of the exercise for which the calculation engine should be loaded
+     */
+    private void loadCalculationEngineForExercise(long exerciseId) {
         if (compassCalculationEngines.containsKey(exerciseId)) {
             return;
         }
-        log.info("Compass calculation engine for exercise " + exerciseId + " has to be load from file system");
-        //TODO: in this case we need to retrieve all modeling submissions from the database for this exercise id
-        Map<Long, JsonObject> models = modelRepository.readModelsForExercise(exerciseId);
-        models.entrySet().removeIf(entry -> {
-            Optional<Result> result = resultRepository.findDistinctBySubmissionId(entry.getKey());
-            return !result.isPresent();
-        });
-        //TODO: above we should eagerly load the corresponding results
-        Map<Long, JsonObject> manualAssessments = assessmentRepository.readAssessmentsForExercise(exerciseId, true);
-        manualAssessments.entrySet().removeIf(entry -> !models.containsKey(entry.getKey()));
-        CalculationEngine calculationEngine = new CompassCalculationEngine(models, manualAssessments);
+        log.info("Loading Compass calculation engine for exercise " + exerciseId);
+        // get all the submissions for the given exercise that have a manual assessment
+        Set<ModelingSubmission> submissions = getSubmissionsWithManualAssessmentsForExercise(exerciseId);
+        // load new calculation engine with the submissions and add to list of engines
+        CalculationEngine calculationEngine = new CompassCalculationEngine(submissions);
         compassCalculationEngines.put(exerciseId, calculationEngine);
         // assess models after reload
         for (long id : calculationEngine.getModelIds()) {
             assessAutomatically(id, exerciseId);
         }
+    }
+
+    /**
+     * Get all the modeling submissions of all participations for this exercise
+     * and filter for those submissions that have a manual assessment/result
+     *
+     * @return the list of modeling submissions
+     */
+    // TODO CZ: test this
+    private Set<ModelingSubmission> getSubmissionsWithManualAssessmentsForExercise(long exerciseId) {
+        // get all participations for the given exercise from the database
+        List<Participation> participations = participationRepository.findByExerciseIdWithEagerSubmissions(exerciseId);
+
+        return participations.stream().flatMap(
+            participation ->
+                Optional.ofNullable(participation.getSubmissions()) // get the submission for each participation and check for null
+                    .map(Collection::stream)
+                    .orElseGet(Stream::empty)
+                    .filter( // filter for modeling submissions with existing manual assessments
+                        submission ->
+                            submission instanceof ModelingSubmission &&
+                            submission.getResult() != null &&
+                            submission.getResult().getAssessmentType() == AssessmentType.MANUAL
+                    )
+            .map(submission -> (ModelingSubmission)submission)
+        ).collect(Collectors.toSet());
     }
 
     /**

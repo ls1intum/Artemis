@@ -95,10 +95,6 @@ public class ResultService {
      * @param result
      */
     public void createNewResult(Result result) {
-        if (!result.getFeedbacks().isEmpty()) {
-            result.setHasFeedback(true);
-        }
-
         //TODO: in this case we do not have a submission. However, it would be good to create one, even if it might be "empty"
         User user = userService.getUserWithGroupsAndAuthorities();
 

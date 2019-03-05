@@ -102,6 +102,19 @@ public class Feedback implements Serializable {
 
     public void setReference(String reference) { this.reference = reference; }
 
+    /**
+     * For modeling submissions the reference looks like "<umlElementType>:<jsonElementId>". This function tries to
+     * split the reference string at ':' and returns the second part.
+     *
+     * @return the jsonElementId for modeling submissions or null if the reference string does not contain ':'
+     */
+    public String getReferenceElementId() {
+        if (!reference.contains(":")) {
+            return null;
+        }
+        return reference.split(":")[1];
+    }
+
     public Double getCredits() { return credits; }
 
     public Feedback credits(Double credits) {

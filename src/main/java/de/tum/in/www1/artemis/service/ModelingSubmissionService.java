@@ -1,9 +1,16 @@
 package de.tum.in.www1.artemis.service;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.ModelingExercise;
+import de.tum.in.www1.artemis.domain.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.Participation;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.service.scheduled.AutomaticSubmissionService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -94,25 +101,27 @@ public class ModelingSubmissionService {
     /**
      * //TODO I do not really understand this method. We should probably refactor it
      *
-     * Check if automatic assessment is available and set the result if found.
+     * Check if Compass could create an automatic assessment (i.e. Result). If an automatic assessment could be found,
+     * the corresponding Result and ModelingSubmission entities are updated accordingly.
      *
-     * @param modelingSubmission    the modeling submission, which contains the model and the submission status
+     * @param modelingSubmission    the modeling submission that should be updated with the automatic assessment
      */
     public void checkAutomaticResult(ModelingSubmission modelingSubmission) {
         Participation participation = modelingSubmission.getParticipation();
-        // create empty result in case submission couldn't be assessed automatically
-        //TODO: we need to check if an automatic Assessment is available, I guess we need to look into the result?
+        Optional<Result> optionalAutomaticResult = resultRepository.findDistinctBySubmissionId(modelingSubmission.getId());
+        // TODO CZ: This basically checks if an automatic assessment (i.e. result) is available. But do we really need to check the assessment type? IMO it shouldn't matter
+        boolean automaticAssessmentAvailable =
+            optionalAutomaticResult.isPresent() &&
+            optionalAutomaticResult.get().getAssessmentType().equals(AssessmentType.AUTOMATIC);
+
         if (modelingSubmission.getResult() == null && automaticAssessmentAvailable) {
             //use the automatic result if available
-            Optional<Result> optionalAutomaticResult = resultRepository.findDistinctBySubmissionId(modelingSubmission.getId());
-            if (optionalAutomaticResult.isPresent()) {
-                Result result = optionalAutomaticResult.get();
-                result.submission(modelingSubmission).participation(participation);
-                modelingSubmission.setResult(result);
-                participation.addResult(modelingSubmission.getResult());
-                resultRepository.save(result);
-                modelingSubmissionRepository.save(modelingSubmission);
-            }
+            Result result = optionalAutomaticResult.get();
+            result.submission(modelingSubmission).participation(participation); // TODO CZ: do we really need to update the result?
+            modelingSubmission.setResult(result);
+            participation.addResult(modelingSubmission.getResult()); // TODO CZ: does this even do anything?
+            resultRepository.save(result); // TODO CZ: is this necessary? isn't the result saved together with the modeling submission in the next line anyway?
+            modelingSubmissionRepository.save(modelingSubmission);
         }
     }
 }

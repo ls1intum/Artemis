@@ -98,10 +98,6 @@ public class UMLModel {
             umlRelation.similarity(referenceRelation)).max().orElse(0);
     }
 
-
-    // <editor-fold desc="getter">
-
-
     public String getName() {
         return "Model " + modelID;
     }
@@ -175,23 +171,23 @@ public class UMLModel {
     }
 
     /**
+     * Gets an UML element of the UML model with the given id.
      *
-     * @param jsonID an id retrieved from the json file
-     * @return the element corresponding to the id
+     * @param jsonElementId the id of the UML element
+     * @return the UML element if one could be found for the given id, null otherwise
      */
-    public UMLElement getElementByJSONID (String jsonID) {
+    public UMLElement getElementByJSONID (String jsonElementId) {
         UMLElement element;
 
-        for (UMLClass UMLConnectableElement : classList) {
-            element = UMLConnectableElement.getElementByJSONID(jsonID);
-
+        for (UMLClass umlClass : classList) {
+            element = umlClass.getElementByJSONID(jsonElementId);
             if (element != null) {
                 return element;
             }
         }
 
         for (UMLAssociation umlAssociation : associationList) {
-            if (umlAssociation.getJSONElementID().equals(jsonID)) {
+            if (umlAssociation.getJSONElementID().equals(jsonElementId)) {
                 return umlAssociation;
             }
         }
@@ -217,5 +213,13 @@ public class UMLModel {
         return associationList;
     }
 
-    // </editor-fold>
+    /**
+     * Checks if the model contains an element with the given elementId.
+     *
+     * @param jsonElementId the id of the UML element
+     * @return true if the element was found, false otherwise
+     */
+    public boolean containsElement(String jsonElementId) {
+        return getElementByJSONID(jsonElementId) != null;
+    }
 }

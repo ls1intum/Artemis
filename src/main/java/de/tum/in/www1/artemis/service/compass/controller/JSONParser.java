@@ -5,15 +5,23 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.service.compass.assessment.Score;
 import de.tum.in.www1.artemis.service.compass.grade.Grade;
-import de.tum.in.www1.artemis.service.compass.umlmodel.*;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLAssociation;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLAttribute;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLClass;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLMethod;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLModel;
 import de.tum.in.www1.artemis.service.compass.utils.JSONMapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class JSONParser {
 
@@ -149,109 +157,13 @@ public class JSONParser {
         return new UMLModel(new ArrayList<>(umlClassMap.values()), umlAssociationList, modelId);
     }
 
-
     /**
-     * Process a json object retrieved from a json formatted file containing assessments
+     * Generate a Feedback list from a given Grade and the corresponding UML model
      * TODO adapt the parser to support different UML diagrams
      *
-     * @param root the json object of an assessment
+     * @param grade the grade
      * @param model the corresponding UML model
-     * @return a map of elementIds to scores
-     */
-    public static Map<String, Score> getScoresFromJSON(JsonObject root, UMLModel model) {
-        Map<String, Score> scoreHashMap = new HashMap<>();
-
-        JsonArray assessmentArray;
-        try {
-            assessmentArray = root.getAsJsonArray(JSONMapping.assessments);
-        } catch (NullPointerException e) {
-            log.error(e.getMessage(), e);
-            return scoreHashMap;
-        }
-
-        for (JsonElement assessmentElement : assessmentArray) {
-            JsonObject jsonAssessment = assessmentElement.getAsJsonObject();
-
-            String jsonElementID = jsonAssessment.get(JSONMapping.assessmentElementID).getAsString();
-            String elementType = jsonAssessment.get(JSONMapping.assessmentElementType).getAsString();
-
-
-            // <editor-fold desc="check if element is in model">
-
-            boolean found = false;
-
-            switch (elementType) {
-                case JSONMapping.assessmentElementTypeClass:
-                    for (UMLClass umlClass : model.getClassList()) {
-                        if (umlClass.getJSONElementID().equals(jsonElementID)) {
-                            found = true;
-                            break;
-                        }
-                    }
-                    break;
-                case JSONMapping.assessmentElementTypeAttribute:
-                    for (UMLClass umlClass : model.getClassList()) {
-                        for (UMLAttribute umlAttribute : umlClass.getAttributes()) {
-                            if (umlAttribute.getJSONElementID().equals(jsonElementID)) {
-                                found = true;
-                                break;
-                            }
-                        }
-                    }
-                    break;
-                case JSONMapping.assessmentElementTypeMethod:
-                    for (UMLClass umlClass : model.getClassList()) {
-                        for (UMLMethod umlMethod : umlClass.getMethods()) {
-                            if (umlMethod.getJSONElementID().equals(jsonElementID)) {
-                                found = true;
-                                break;
-                            }
-                        }
-                    }
-                    break;
-                case JSONMapping.assessmentElementTypeRelationship:
-                    for (UMLAssociation umlAssociation : model.getAssociationList()) {
-                        if (umlAssociation.getJSONElementID().equals(jsonElementID)) {
-                            found = true;
-                            break;
-                        }
-                    }
-                    break;
-            }
-
-            if (!found) {
-                /*
-                 * This might happen if e.g. the user input was malformed and the compass model parser had to ignore the element
-                 */
-                log.warn("Element " + jsonElementID + " of type " + elementType + " not in model");
-                continue;
-            }
-
-            List<String> comment = new ArrayList<>();
-            if (jsonAssessment.has(JSONMapping.assessmentComment)) {
-                    comment.add(jsonAssessment.get(JSONMapping.assessmentComment).getAsString());
-            }
-
-            // Ignore misformatted score
-            try {
-                Score score = new Score(jsonAssessment.get(JSONMapping.assessmentPoints).getAsDouble(), comment, 1.0);
-                scoreHashMap.put(jsonElementID, score);
-            } catch (Exception e) {
-                log.error(e.getMessage(), e);
-            }
-        }
-
-        return scoreHashMap;
-    }
-
-
-    /**
-     * Export the grade to a json object which can be written to the file system
-     * TODO adapt the parser to support different UML diagrams
-     *
-     * @param grade the grade which should be exported
-     * @param model the corresponding UML model
-     * @return a json object representing
+     * @return a list of Feedback objects
      */
     //TODO: move into a different class/file
     public static List<Feedback> convertToFeedback (Grade grade, UMLModel model) {
@@ -269,6 +181,7 @@ public class JSONParser {
             }
 
             // TODO find cleaner solution
+            // TODO CZ: extract into e.g. buildReferenceString(UMLElement) method
             String type = umlElement.getClass().getSimpleName();
             switch (type) {
                 case "UMLClass":

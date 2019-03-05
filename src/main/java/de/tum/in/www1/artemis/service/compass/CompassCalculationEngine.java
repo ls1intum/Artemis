@@ -4,23 +4,41 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.ModelingSubmission;
 import de.tum.in.www1.artemis.service.compass.assessment.Assessment;
 import de.tum.in.www1.artemis.service.compass.assessment.CompassResult;
 import de.tum.in.www1.artemis.service.compass.assessment.ModelElementAssessment;
 import de.tum.in.www1.artemis.service.compass.assessment.Score;
 import de.tum.in.www1.artemis.service.compass.conflict.Conflict;
-import de.tum.in.www1.artemis.service.compass.controller.*;
+import de.tum.in.www1.artemis.service.compass.controller.AssessmentIndex;
+import de.tum.in.www1.artemis.service.compass.controller.AutomaticAssessmentController;
+import de.tum.in.www1.artemis.service.compass.controller.JSONParser;
+import de.tum.in.www1.artemis.service.compass.controller.ModelIndex;
+import de.tum.in.www1.artemis.service.compass.controller.ModelSelector;
+import de.tum.in.www1.artemis.service.compass.controller.SimilarityDetector;
 import de.tum.in.www1.artemis.service.compass.grade.CompassGrade;
 import de.tum.in.www1.artemis.service.compass.grade.Grade;
-import de.tum.in.www1.artemis.service.compass.umlmodel.*;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLAssociation;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLAttribute;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLClass;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLMethod;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLModel;
 import de.tum.in.www1.artemis.service.compass.utils.JSONMapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 
 public class CompassCalculationEngine implements CalculationEngine {
@@ -35,7 +53,7 @@ public class CompassCalculationEngine implements CalculationEngine {
     private LocalDateTime lastUsed;
 
 
-    CompassCalculationEngine(Map<Long, JsonObject> models, Map<Long, JsonObject> assessments) {
+    CompassCalculationEngine(Set<ModelingSubmission> submissions) {
         lastUsed = LocalDateTime.now();
         modelIndex = new ModelIndex();
         assessmentIndex = new AssessmentIndex();
@@ -43,12 +61,11 @@ public class CompassCalculationEngine implements CalculationEngine {
         automaticAssessmentController = new AutomaticAssessmentController();
         modelSelector = new ModelSelector(); //TODO MJ fix Bug where on load of exercise no modelsWaitingForAssessment are added ? No differentiation between submitted and saved assessments!
 
-        for (Map.Entry<Long, JsonObject> entry : models.entrySet()) {
-            buildModel(entry.getKey(), entry.getValue());
-        }
-        for (Map.Entry<Long, JsonObject> entry : assessments.entrySet()) {
-            buildAssessment(entry.getKey(), entry.getValue());
-            modelSelector.addAlreadyAssessedModel(entry.getKey());
+        for ( ModelingSubmission submission : submissions) {
+            String model = submission.getModel();
+            buildModel(submission.getId(), new JsonParser().parse(model).getAsJsonObject());
+            buildAssessment(submission);
+            modelSelector.addAlreadyAssessedModel(submission.getId());
         }
 
         assessModelsAutomatically();
@@ -90,14 +107,47 @@ public class CompassCalculationEngine implements CalculationEngine {
     }
 
 
-    private void buildAssessment(long id, JsonObject jsonAssessment) {
-        UMLModel model = modelIndex.getModelMap().get(id);
-        if (model == null) {
+    private void buildAssessment(ModelingSubmission submission) {
+        UMLModel model = modelIndex.getModelMap().get(submission.getId());
+        if (model == null || submission.getResult() == null || !submission.getResult().hasFeedback()) {
+            log.error("Could not build assessment for submission {}", submission.getId());
             return;
         }
-        Map<String, Score> scoreList = JSONParser.getScoresFromJSON(jsonAssessment, model);
-        this.addNewManualAssessment(scoreList, model);
+        Map<String, Score> scoreList = getScoresFromFeedbackList(submission.getResult().getFeedbacks(), model);
+        addNewManualAssessment(scoreList, model);
         modelSelector.removeModelWaitingForAssessment(model.getModelID());
+    }
+
+
+    /**
+     * Create a jsonModelId to Score mapping generated from the feedback list of a submission.
+     * TODO CZ: remove this method and replace Score with Feedback in general?
+     *
+     * @param feedbackList the feedbackList
+     * @param model the UML model
+     * @return a map of elementIds to scores
+     */
+    private Map<String, Score> getScoresFromFeedbackList(List<Feedback> feedbackList, UMLModel model) {
+        Map<String, Score> scoreHashMap = new HashMap<>();
+
+        for (Feedback feedback : feedbackList) {
+            String jsonElementId = feedback.getReferenceElementId();
+            if (!model.containsElement(jsonElementId)) {
+                // This might happen if e.g. the user input was malformed and the compass model parser had to ignore the element
+                log.warn("Element " + jsonElementId + " not found in model");
+                continue;
+            }
+
+            // Ignore misformatted score
+            try {
+                Score score = new Score(feedback.getCredits(), Collections.singletonList(feedback.getText()), 1.0);
+                scoreHashMap.put(jsonElementId, score);
+            } catch (Exception e) {
+                log.error(e.getMessage(), e);
+            }
+        }
+
+        return scoreHashMap;
     }
 
 
@@ -329,7 +379,7 @@ public class CompassCalculationEngine implements CalculationEngine {
      *
      * @param modelingAssessment the modeling assessment to create the score list of
      * @param model              UmlModel the modelingAssessment belongs to
-     * @return mapping of the jsonElementID of each ModelElement contained in the modellingAssessment to its corresponding score
+     * @return mapping of the jsonElementID of each ModelElement contained in the modelingAssessment to its corresponding score
      */
     private Map<String, Score> createScoreList(List<ModelElementAssessment> modelingAssessment, UMLModel model) {
         Map<String, Score> scoreHashMap = new HashMap<>();
