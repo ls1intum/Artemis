@@ -13,7 +13,7 @@ buildscript {
         classpath "io.spring.gradle:propdeps-plugin:0.0.10.RELEASE"
         classpath "org.openapitools:openapi-generator-gradle-plugin:3.3.0"
         classpath "gradle.plugin.com.gorylenko.gradle-git-properties:gradle-git-properties:2.0.0"
-        classpath "com.github.ben-manes:gradle-versions-plugin:0.20.0"
+        classpath "com.github.ben-manes:gradle-versions-plugin:0.21.0"
         // this allows us to find outdated dependencies via './gradlew dependencyUpdates'
         //jhipster-needle-gradle-buildscript-dependency - JHipster will add additional gradle build script plugins here
     }
@@ -24,10 +24,10 @@ plugins {
     id "net.ltgt.apt-eclipse" version "0.21"
     id "net.ltgt.apt-idea" version "0.21"
     id "net.ltgt.apt" version "0.21"
-    id "io.spring.dependency-management" version "1.0.6.RELEASE"
+    id "io.spring.dependency-management" version "1.0.7.RELEASE"
     id "com.moowork.node" version "1.2.0"
 //    id 'org.liquibase.gradle' version "2.0.1"
-    id "com.github.ben-manes.versions" version "0.20.0"
+    id "com.github.ben-manes.versions" version "0.21.0"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
 }
 
@@ -62,7 +62,7 @@ dependencyManagement {
 defaultTasks 'bootRun'
 
 group = 'de.tum.in.www1.artemis'
-version = '2.4.0'
+version = '2.5.0'
 description = 'Automated Assessment Management System for Interactive Learning'
 
 bootWar {
@@ -230,9 +230,9 @@ dependencies {
     }
     testCompile "org.springframework.security:spring-security-test"
     testCompile "org.springframework.boot:spring-boot-test"
-    testCompile "org.assertj:assertj-core:3.11.1"
+    testCompile "org.assertj:assertj-core:3.12.1"
     testCompile "junit:junit"
-    testCompile "org.mockito:mockito-core:2.24.0"
+    testCompile "org.mockito:mockito-core:2.24.5"
     testCompile "com.mattbertolini:liquibase-slf4j"
     testCompile "org.hamcrest:hamcrest-library"
     testCompile "com.h2database:h2"

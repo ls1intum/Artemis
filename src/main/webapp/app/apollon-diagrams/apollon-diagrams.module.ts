@@ -10,6 +10,8 @@ import { ArTEMiSSharedModule } from '../shared';
 import { ApollonDiagramStudentComponent } from './apollon-diagram-student.component';
 import { ApollonDiagramTutorComponent } from './apollon-diagram-tutor.component';
 import { ArTEMiSResultModule, ResultComponent } from '../entities/result';
+import { JhiLanguageService } from 'ng-jhipster';
+import { JhiLanguageHelper } from 'app/core';
 
 const ENTITY_STATES = [...apollonDiagramsRoutes];
 
@@ -33,7 +35,15 @@ const ENTITY_STATES = [...apollonDiagramsRoutes];
         ApollonQuizExerciseGenerationComponent,
         ResultComponent
     ],
-    providers: [JhiAlertService],
+    providers: [JhiAlertService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
-export class ArTEMiSApollonDiagramsModule {}
+export class ArTEMiSApollonDiagramsModule {
+    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
+        this.languageHelper.language.subscribe((languageKey: string) => {
+            if (languageKey !== undefined) {
+                this.languageService.changeLanguage(languageKey);
+            }
+        });
+    }
+}

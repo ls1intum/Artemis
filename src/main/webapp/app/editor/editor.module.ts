@@ -1,5 +1,8 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { JhiLanguageService } from 'ng-jhipster';
+import { JhiLanguageHelper } from 'app/core';
+
 import { ArTEMiSSharedModule } from '../shared';
 import { editorRoute } from './editor.route';
 import { JhiAlertService } from 'ng-jhipster';
@@ -61,8 +64,17 @@ const ENTITY_STATES = [
         RepositoryService,
         ResultService,
         ParticipationService,
-        EditorService
+        EditorService,
+        { provide: JhiLanguageService, useClass: JhiLanguageService }
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
-export class ArTEMiSEditorModule {}
+export class ArTEMiSEditorModule {
+    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
+        this.languageHelper.language.subscribe((languageKey: string) => {
+            if (languageKey !== undefined) {
+                this.languageService.changeLanguage(languageKey);
+            }
+        });
+    }
+}
