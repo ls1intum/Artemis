@@ -6,6 +6,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Question, QuestionType } from '../../entities/question';
 import { QuizReEvaluateWarningComponent } from './quiz-re-evaluate-warning.component';
 import { HttpResponse } from '@angular/common/http';
+import { Location } from '@angular/common';
 import * as moment from 'moment';
 
 @Component({
@@ -43,7 +44,8 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
         private route: ActivatedRoute,
         private routerC: Router,
         private modalServiceC: NgbModal,
-        private quizExercisePopupService: QuizExercisePopupService
+        private quizExercisePopupService: QuizExercisePopupService,
+        private location: Location
     ) {}
 
     ngOnInit(): void {
@@ -123,7 +125,7 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
      * @desc Navigate back to course
      */
     back(): void {
-        this.router.navigate(['/course', this.quizExercise.course.id, 'quiz-exercise']);
+        this.location.back();
     }
 
     /**

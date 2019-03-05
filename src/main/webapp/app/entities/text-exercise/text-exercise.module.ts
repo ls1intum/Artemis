@@ -41,7 +41,8 @@ const ENTITY_STATES = [...textExerciseRoute, ...textExercisePopupRoute];
         TextExerciseDeleteDialogComponent,
         TextExerciseDeletePopupComponent
     ],
-    providers: [TextExerciseService, TextExercisePopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
+  providers: [TextExerciseService, TextExercisePopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
+    exports: [TextExerciseComponent],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArTEMiSTextExerciseModule {

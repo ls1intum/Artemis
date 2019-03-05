@@ -1,117 +1,115 @@
-# ===================================================================
-# Spring Boot configuration.
-#
-# This configuration is used for unit/integration tests.
-#
-# More information on profiles: https://www.jhipster.tech/profiles/
-# More information on configuration properties: https://www.jhipster.tech/common-application-properties/
-# ===================================================================
+artemis:
+    repo-clone-path: ./repos/
+    encryption-password: <encrypt-password>     # arbitrary password for encrypting database values
+    result-retrieval-delay: 5000
+    jira:
+        url: https://jirabruegge.in.tum.de
+        user: <username>    # e.g. ga12abc
+        password: <password>
+        admin-group-name: tumuser
+    version-control:
+        url: https://repobruegge.in.tum.de
+        user: <username>    # e.g. ga12abc
+        secret: <password>
+    bamboo:
+        url: https://bamboobruegge.in.tum.de
+        bitbucket-application-link-id: de1bf2e0-eb40-3a2d-9494-93cbe2e22d08
+        user: <username>    # e.g. ga12abc
+        password: <password>
+        empty-commit-necessary: true
+        authentication-token: <secrettoken>
+    lti:
+        id: artemis_lti
+        oauth-key: artemis_lti_key
+        oauth-secret: <secret>    # only important for online courses on the edX platform, can typically be ignored
+        user-prefix: edx_
+        user-group-name: edx
+    git:
+        name: ArTEMiS
+        email: artemis@in.tum.de
 
-# ===================================================================
-# Standard Spring Boot properties.
-# Full reference is available at:
-# http://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html
-# ===================================================================
-
-eureka:
-    client:
-        enabled: false
-    instance:
-        appname: ArTEMiS
-        instanceId: ArTEMiS:${spring.application.instance-id:${random.value}}
+logging:
+    level:
+        ROOT: INFO
+        de.tum.in.www1.artemis: DEBUG
+        io.github.jhipster: INFO
 
 spring:
+    profiles:
+        active: bamboo
     application:
         name: ArTEMiS
-    cache:
-        type: simple
-    datasource:
-        type: com.zaxxer.hikari.HikariDataSource
-        url: jdbc:h2:mem:ArTEMiS;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-        name:
-        username:
-        password:
-        hikari:
-            auto-commit: false
-    jpa:
-        database-platform: io.github.jhipster.domain.util.FixedH2Dialect
-        database: H2
-        open-in-view: false
-        show-sql: false
-        hibernate:
-            ddl-auto: none
-            naming:
-                physical-strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
-                implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
-        properties:
-            hibernate.id.new_generator_mappings: true
-            hibernate.connection.provider_disables_autocommit: true
-            hibernate.cache.use_second_level_cache: false
-            hibernate.cache.use_query_cache: false
-            hibernate.generate_statistics: true
-            hibernate.hbm2ddl.auto: validate
+    devtools:
+        restart:
+            enabled: false
+        livereload:
+            enabled: false
+    jackson:
+        serialization:
+            indent-output: true
     liquibase:
-        contexts: test
+        contexts: tests
+        enabled: false
     mail:
         host: localhost
+        port: 25
+        username:
+        password:
     messages:
-        basename: i18n/messages
+        cache-duration: PT1S # 1 second, see the ISO 8601 standard
     mvc:
         favicon:
             enabled: false
     thymeleaf:
+        cache: false
         mode: HTML
-
+    sleuth:
+        sampler:
+            probability: 1 # report 100% of traces
+    zipkin: # Use the "zipkin" Maven profile to have the Spring Cloud Zipkin dependencies
+        base-url: http://localhost:9411
+        enabled: false
+        locator:
+            discovery:
+                enabled: true
 
 server:
-    port: 10344
-    address: localhost
-
-info:
-    project:
-        version: #project.version#
-
-# ===================================================================
-# JHipster specific properties
-#
-# Full reference is available at: https://www.jhipster.tech/common-application-properties/
-# ===================================================================
+    port: 8080
+    url: https://artemislocal.ase.in.tum.de
 
 jhipster:
-    async:
-        core-pool-size: 1
-        max-pool-size: 50
-        queue-capacity: 10000
-    # To test logstash appender
-    logging:
-        logstash:
-            enabled: true
-            host: localhost
-            port: 5000
-            queue-size: 512
-    mail:
-        from: test@localhost
-        base-url: http://127.0.0.1:8080
+    http:
+        version: V_1_1 # To use HTTP/2 you will need to activate TLS (see application-tls.yml)
+    cache: # Cache configuration
+        ehcache: # Ehcache configuration
+            time-to-live-seconds: 3600 # By default objects stay 1 hour in the cache
+            max-entries: 100 # Number of objects in each cache entry
+    # CORS is only enabled by default with the "dev" profile, so BrowserSync can access the API
+    cors:
+        allowed-origins: "*"
+        allowed-methods: "*"
+        allowed-headers: "*"
+        exposed-headers: "Authorization,Link,X-Total-Count"
+        allow-credentials: true
+        max-age: 1800
     security:
         authentication:
             jwt:
                 # This token must be encoded using Base64 (you can type `echo 'secret-key'|base64` on your command line)
-                base64-secret: ec6a94b26152dfa3450c291e774f82060362ca03
+                base64-secret: bXktc2VjcmV0LWtleS13aGljaC1zaG91bGQtYmUtY2hhbmdlZC1pbi1wcm9kdWN0aW9uLWFuZC1iZS1iYXNlNjQtZW5jb2RlZAo=
                 # Token is valid 24 hours
                 token-validity-in-seconds: 86400
-    metrics: # DropWizard Metrics configuration, used by MetricsConfiguration
-        jmx.enabled: true
-        logs: # Reports Dropwizard metrics in the logs
-            enabled: true
+                token-validity-in-seconds-for-remember-me: 2592000
+    mail: # specific JHipster mail property, for standard properties see MailProperties
+        from: ArTEMiS@localhost
+        base-url: http://127.0.0.1:8080
+    metrics:
+        logs: # Reports metrics in the logs
+            enabled: false
             report-frequency: 60 # in seconds
-
-# ===================================================================
-# Application specific properties
-# Add your own application properties here, see the ApplicationProperties class
-# to have type-safe configuration, like in the JHipsterProperties above
-#
-# More documentation is available at:
-# https://www.jhipster.tech/common-application-properties/
-# ===================================================================
-
-# application:
+    logging:
+        logstash: # Forward logs to logstash over a socket, used by LoggingConfiguration
+            enabled: false
+            host: localhost
+            port: 5000
+            queue-size: 512
