@@ -21,4 +21,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
 
     @Query("select distinct p from ProgrammingExercise as p left join fetch p.participations")
     List<ProgrammingExercise> findAllWithEagerParticipations();
+
+    ProgrammingExercise findOneByTemplateParticipationId(Long templateParticipationId);
+
+    ProgrammingExercise findOneBySolutionParticipationId(Long solutionParticipationId);
 }
