@@ -110,11 +110,16 @@ public class ProgrammingExerciseService {
         versionControlService.get().createRepository(projectKey, testRepoName, null); // Create tests repository
         versionControlService.get().createRepository(projectKey, solutionRepoName, null); // Create solution repository
 
-        // Save participations before saving programmingExercise to avoid an error where the programmingExercise could not be saved due to the missing participation
-        Participation templateParticipation = new Participation();
-        Participation solutionParticipation = new Participation();
-        programmingExercise.setTemplateParticipation(templateParticipation);
-        programmingExercise.setSolutionParticipation(solutionParticipation);
+        Participation templateParticipation = programmingExercise.getTemplateParticipation();
+        if (templateParticipation == null) {
+            templateParticipation = new Participation();
+            programmingExercise.setTemplateParticipation(templateParticipation);
+        }
+        Participation solutionParticipation = programmingExercise.getSolutionParticipation();
+        if (solutionParticipation == null) {
+            solutionParticipation = new Participation();
+            programmingExercise.setSolutionParticipation(solutionParticipation);
+        }
 
         solutionParticipation.setInitializationState(InitializationState.INITIALIZED);
         templateParticipation.setInitializationState(InitializationState.INITIALIZED);
