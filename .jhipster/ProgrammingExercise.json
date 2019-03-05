@@ -2,7 +2,7 @@
     "name": "ProgrammingExercise",
     "fields": [
         {
-            "fieldName": "baseRepositoryUrl",
+            "fieldName": "templateRepositoryUrl",
             "fieldType": "String"
         },
         {
@@ -10,7 +10,7 @@
             "fieldType": "String"
         },
         {
-            "fieldName": "baseBuildPlanId",
+            "fieldName": "templateBuildPlanId",
             "fieldType": "String"
         },
         {

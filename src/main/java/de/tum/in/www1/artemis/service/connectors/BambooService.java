@@ -227,16 +227,16 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
-    public String copyBuildPlan(String baseBuildPlanId, String wantedPlanKey) {
+    public String copyBuildPlan(String templateBuildPlanId, String wantedPlanKey) {
         wantedPlanKey = getCleanPlanKey(wantedPlanKey);
-        String projectKey = getProjectKeyFromBuildPlanId(baseBuildPlanId);
+        String projectKey = getProjectKeyFromBuildPlanId(templateBuildPlanId);
         try {
-            return clonePlan(projectKey, getPlanKeyFromBuildPlanId(baseBuildPlanId), projectKey, wantedPlanKey); // Save the new plan in the same project
+            return clonePlan(projectKey, getPlanKeyFromBuildPlanId(templateBuildPlanId), projectKey, wantedPlanKey); // Save the new plan in the same project
         }
         catch(BambooException bambooException) {
             if (bambooException.getMessage().contains("already exists")) {
                 log.info("Build Plan already exists. Going to recover build plan information...");
-                return getProjectKeyFromBuildPlanId(baseBuildPlanId) + "-" + wantedPlanKey;
+                return getProjectKeyFromBuildPlanId(templateBuildPlanId) + "-" + wantedPlanKey;
             }
             else throw bambooException;
         }
@@ -372,18 +372,18 @@ public class BambooService implements ContinuousIntegrationService {
     /**
      * Clones an existing Bamboo plan.
      *
-     * @param baseProject The Bamboo project in which the plan is contained.
-     * @param basePlan    The plan's name.
+     * @param templateProject The Bamboo project in which the plan is contained.
+     * @param templatePlan    The plan's name.
      * @param toProject   The Bamboo project in which the new plan should be contained.
      * @param name        The name to give the cloned plan.
      * @return            The name of the new build plan
      */
-    public String clonePlan(String baseProject, String basePlan, String toProject, String name) throws BambooException {
+    public String clonePlan(String templateProject, String templatePlan, String toProject, String name) throws BambooException {
 
         String toPlan = toProject + "-" + name;
         try {
-            log.info("Clone build plan " + baseProject + "-" + basePlan + " to " + toPlan);
-            String message = getBambooClient().getPlanHelper().clonePlan(baseProject + "-" + basePlan, toPlan, toPlan, "", "", true);
+            log.info("Clone build plan " + templateProject + "-" + templatePlan + " to " + toPlan);
+            String message = getBambooClient().getPlanHelper().clonePlan(templateProject + "-" + templatePlan, toPlan, toPlan, "", "", true);
             log.info("Clone build plan " + toPlan + " was successful." + message);
         } catch (CliClient.ClientException clientException) {
             log.error(clientException.getMessage(), clientException);
