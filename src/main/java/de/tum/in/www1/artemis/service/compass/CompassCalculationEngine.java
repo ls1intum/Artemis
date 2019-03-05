@@ -109,7 +109,7 @@ public class CompassCalculationEngine implements CalculationEngine {
 
     private void buildAssessment(ModelingSubmission submission) {
         UMLModel model = modelIndex.getModelMap().get(submission.getId());
-        if (model == null || submission.getResult() == null || !submission.getResult().hasFeedback()) {
+        if (model == null || submission.getResult() == null || !submission.getResult().getHasFeedback()) {
             log.error("Could not build assessment for submission {}", submission.getId());
             return;
         }

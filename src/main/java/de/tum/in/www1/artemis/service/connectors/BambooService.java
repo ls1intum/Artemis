@@ -652,6 +652,9 @@ public class BambooService implements ContinuousIntegrationService {
 
         try {
             List<Map<String, Object>> details = (List<Map<String, Object>>)buildResultDetails.get("details");
+            if(!details.isEmpty()) {
+                result.setHasFeedback(true);
+            }
             //breaking down the Bamboo API answer to get all the relevant details
             for(Map<String, Object> detail : details) {
                 String className = (String)detail.get("className");
@@ -702,6 +705,9 @@ public class BambooService implements ContinuousIntegrationService {
 
             for (Map<String, Object> failedJob : castedfailedJobs) {
                 List<Map<String, Object>> failedTests = (List<Map<String, Object>>) (Object) failedJob.get("failedTests");
+                if (!failedTests.isEmpty()) {
+                    result.setHasFeedback(true);
+                }
 
                 for (Map<String, Object> failedTest : failedTests) {
                     String className = (String) failedTest.get("className");

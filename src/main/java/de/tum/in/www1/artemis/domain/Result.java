@@ -76,6 +76,12 @@ public class Result implements Serializable {
     @JsonView(QuizView.Before.class)
     private Boolean rated;
 
+    // This explicit flag exists intentionally, as sometimes a Result is loaded from the database without
+    // loading it's Feedback list. In this case you still want to know, if Feedback for this Result exists
+    // without querying the server/database again.
+    @Column(name = "hasFeedback")
+    private Boolean hasFeedback;
+
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(unique = true)
     @JsonView(QuizView.Before.class)
@@ -116,11 +122,6 @@ public class Result implements Serializable {
     @Transient
     @JsonProperty
     private Long submissionCount;
-
-    @Column(name = "hasFeedback")
-    public Boolean hasFeedback() {
-        return feedbacks != null && !feedbacks.isEmpty();
-    }
 
     public Long getSubmissionCount() {
         return submissionCount;
@@ -213,6 +214,19 @@ public class Result implements Serializable {
 
     public Result score(Long score) {
         this.score = score;
+        return this;
+    }
+
+    public void setHasFeedback(Boolean hasFeedback) {
+        this.hasFeedback = hasFeedback;
+    }
+
+    public Boolean getHasFeedback() {
+        return hasFeedback;
+    }
+
+    public Result hasFeedback(Boolean hasFeedback) {
+        this.hasFeedback = hasFeedback;
         return this;
     }
 
@@ -412,7 +426,7 @@ public class Result implements Serializable {
             ", buildArtifact='" + isBuildArtifact() + "'" +
             ", score=" + getScore() +
             ", rated='" + isRated() + "'" +
-            ", hasFeedback='" + hasFeedback() + "'" +
+            ", hasFeedback='" + getHasFeedback() + "'" +
             "}";
     }
 
