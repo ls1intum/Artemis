@@ -111,26 +111,25 @@ public class ProgrammingExerciseService {
         versionControlService.get().createRepository(projectKey, solutionRepoName, null); // Create solution repository
 
         // Save participations before saving programmingExercise to avoid an error where the programmingExercise could not be saved due to the missing participation
-        programmingExercise.setSolutionParticipation(participationRepository.save(new Participation()));
-        programmingExercise.setTemplateParticipation(participationRepository.save(new Participation()));
-        Participation solutionParticipation = programmingExercise.getSolutionParticipation();
-        Participation templateParticipation = programmingExercise.getTemplateParticipation();
+        Participation templateParticipation = new Participation();
+        Participation solutionParticipation = new Participation();
+        programmingExercise.setTemplateParticipation(templateParticipation);
+        programmingExercise.setSolutionParticipation(solutionParticipation);
 
         solutionParticipation.setInitializationState(InitializationState.INITIALIZED);
         templateParticipation.setInitializationState(InitializationState.INITIALIZED);
         solutionParticipation.setInitializationDate(ZonedDateTime.now());
         templateParticipation.setInitializationDate(ZonedDateTime.now());
 
-        programmingExercise.setTemplateBuildPlanId(projectKey + "-BASE"); // Set build plan id to newly created BaseBuild plan
-        programmingExercise.setTemplateRepositoryUrl(versionControlService.get().getCloneURL(projectKey, exerciseRepoName).toString());
-        programmingExercise.setSolutionBuildPlanId(projectKey + "-SOLUTION");
-        programmingExercise.setSolutionRepositoryUrl(versionControlService.get().getCloneURL(projectKey, solutionRepoName).toString());
+        templateParticipation.setBuildPlanId(projectKey + "-BASE"); // Set build plan id to newly created BaseBuild plan
+        templateParticipation.setRepositoryUrl(versionControlService.get().getCloneURL(projectKey, exerciseRepoName).toString());
+        solutionParticipation.setBuildPlanId(projectKey + "-SOLUTION");
+        solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneURL(projectKey, solutionRepoName).toString());
         programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneURL(projectKey, testRepoName).toString());
 
         // The creation of the webhooks must occur before the initial push to ensure that the initial commit creates a result
-        versionControlService.get().addWebHook(solutionParticipation.getRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + solutionParticipation.getId(), "ArTEMiS WebHook");
         versionControlService.get().addWebHook(templateParticipation.getRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + templateParticipation.getId(), "ArTEMiS WebHook");
-
+        versionControlService.get().addWebHook(solutionParticipation.getRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + solutionParticipation.getId(), "ArTEMiS WebHook");
 
         URL exerciseRepoUrl = versionControlService.get().getCloneURL(projectKey, exerciseRepoName);
         URL testsRepoUrl = versionControlService.get().getCloneURL(projectKey, testRepoName);
@@ -170,12 +169,13 @@ public class ProgrammingExerciseService {
         continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, "BASE", exerciseRepoName, testRepoName); // plan for the exercise (students)
         continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, "SOLUTION", solutionRepoName, testRepoName); // plan for the solution (instructors) with solution repository
 
-
         // save to get the id required for the webhook
-        ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
+        participationRepository.save(templateParticipation);
+        participationRepository.save(solutionParticipation);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
         versionControlService.get().addWebHook(testsRepoUrl, ARTEMIS_BASE_URL + TEST_CASE_CHANGED_API_PATH + programmingExercise.getId(), "ArTEMiS Tests WebHook");
-        return result;
+        return programmingExercise;
     }
 
     // Copy template and push, if no file is in the directory
@@ -259,38 +259,19 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * This methods sets the values (repo-url and buildplanid) of the solution and the template participation
-     * It does *NOT* store the values in the participation repository.
+     * This methods sets the values (initialization date and initialization state) of the template and solution participation
      *
      * @param programmingExercise The programming exercise
-     * @param createParticipations Whether new participations should be created (this should be true when creating and false when updating a programming exercise)
      */
-    public void setParticipationValues(ProgrammingExercise programmingExercise, boolean createParticipations) {
-        // We have to save this values first as they would be overwritten when setting the new Participation
-        String templateRepoUrl = programmingExercise.getTemplateRepositoryUrl();
-        String solutionRepoUrl = programmingExercise.getSolutionRepositoryUrl() == null || programmingExercise.getSolutionRepositoryUrl().isEmpty() ? null : programmingExercise.getSolutionRepositoryUrl();
-        String templateBuildPlanId = programmingExercise.getTemplateBuildPlanId();
-        String solutionBuildPlanId = programmingExercise.getSolutionBuildPlanId() == null || programmingExercise.getSolutionBuildPlanId().isEmpty() ? null : programmingExercise.getSolutionBuildPlanId();
-
-        if (createParticipations) {
-            programmingExercise.setSolutionParticipation(participationRepository.save(new Participation()));
-            programmingExercise.setTemplateParticipation(participationRepository.save(new Participation()));
-        }
+    public void initParticipations(ProgrammingExercise programmingExercise) {
 
         Participation solutionParticipation = programmingExercise.getSolutionParticipation();
         Participation templateParticipation = programmingExercise.getTemplateParticipation();
 
-        if (createParticipations) {
-            solutionParticipation.setInitializationState(InitializationState.INITIALIZED);
-            templateParticipation.setInitializationState(InitializationState.INITIALIZED);
-            solutionParticipation.setInitializationDate(ZonedDateTime.now());
-            templateParticipation.setInitializationDate(ZonedDateTime.now());
-        }
-
-        solutionParticipation.setRepositoryUrl(solutionRepoUrl);
-        templateParticipation.setRepositoryUrl(templateRepoUrl);
-        solutionParticipation.setBuildPlanId(solutionBuildPlanId);
-        templateParticipation.setBuildPlanId(templateBuildPlanId);
+        solutionParticipation.setInitializationState(InitializationState.INITIALIZED);
+        templateParticipation.setInitializationState(InitializationState.INITIALIZED);
+        solutionParticipation.setInitializationDate(ZonedDateTime.now());
+        templateParticipation.setInitializationDate(ZonedDateTime.now());
     }
 
     /**
