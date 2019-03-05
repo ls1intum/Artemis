@@ -1,0 +1,65 @@
+{
+    "arTeMiSApp": {
+        "studentDashboard": {
+            "title": "Deine aktuellen Kurse",
+            "cardTitle": "Deine aktuelle Punktzahl:",
+            "cardNoExerciseLabel": "Keine Übung geplant",
+            "cardExerciseLabel": "Nächste Übung:"
+        },
+        "courseOverview": {
+            "noDescription": "Keine Beschreibung verfügbar",
+            "menu": {
+                "exercises": "Aufgaben",
+                "statistics": "Statistiken"
+            },
+            "exerciseList": {
+                "noExerciseDate": "Kein Datum zugeordnet",
+                "exerciseGroupHeader": "Aufgaben: {{ total }}",
+                "sortExercises": "Aufgaben sortieren",
+                "newFirst": "Neueste zuerst",
+                "oldFirst": "Älteste zuerst",
+                "noExercises": "Es gibt keine Aufgaben für diesen Kurs.",
+                "notReleased": "Nicht freigegeben",
+                "live": "Live",
+                "userNotStartedExercise":"Du hast mit der Aufgabe noch nicht angefangen.",
+                "quizNotStarted":"Das Quiz hat noch nicht begonnen.",
+                "userNotStartedQuiz":"Du hast mit dem Quiz noch nicht begonnen.",
+                "userNotParticipated":"Du hast bei diesem Live-Quiz nicht teilgenommen.",
+                "userParticipating":"Du nimmst gerade an diesem Quiz teil.",
+                "userSubmitted":"Du hast bereits abgegeben. Warte, bis das Quiz beendet ist, um die Ergebnisse zu sehen."
+            },
+            "statistics": {
+                "totalScore": "Gesamtpunktzahl",
+                "exerciseCount": "Anzahl an Aufgaben: {{ number }}",
+                "absoluteScore": "Absolute Punktzahl: {{ number }} Pts",
+                "maxScore": "Maximale Punktzahl: {{ number }} Pts",
+                "relativeScore": "Relative Punktzahl: {{ number }}%",
+                "noStatistics": "Es sind keine Statistiken für diesen Kurs vorhanden."
+            },
+            "exerciseDetails": {
+                "dueDate": "Abgabedatum:",
+                "exerciseType": "Aufgaben-Typ:",
+                "level": "Schwierigkeit:",
+                "exerciseStatus": "Aufgaben Status:",
+                "maxPoints": "Max. Punkte:",
+                "problemStatement": "Problemstellung:",
+                "noResults": "Du hast noch keine Ergebnisse",
+                "instructorActions": {
+                    "title": "Tutoraktionen:",
+                    "information": "Informationen",
+                    "assessments": "Bewertungen",
+                    "statistics": "Statistiken"
+                },
+                "notParticipated": "Nicht teilgenommen",
+                "yourResult": "Deine Ergebnisse:",
+                "recentResults": "Aktuelle Ergebnisse:",
+                "noRatedResult": "Du hast noch kein gewertetes Ergebnis.",
+                "otherResults": "Andere Ergebnisse:",
+                "hideResults": "Ergebnisse verbergen",
+                "showResults": "Alle Ergebnisse anzeigen",
+                "rated": "Bewertet",
+                "practice": "Übung"
+            }
+        }
+    }
+}

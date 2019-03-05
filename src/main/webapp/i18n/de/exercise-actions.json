@@ -1,0 +1,27 @@
+{
+    "arTeMiSApp": {
+        "exerciseActions": {
+            "practice": "Üben",
+            "openQuiz": "Quiz öffnen",
+            "startQuiz": "Quiz starten",
+            "resumeQuiz": "Quiz fortführen",
+            "viewSubmissions": "Abgaben ansehen",
+            "viewResults": "Ergebnisse ansehen",
+            "statistics": "Statistiken",
+            "startExercise": "Aufgabe starten",
+            "resumeExercise": "Aufgabe fortführen",
+            "openExercise": "Aufgabe öffnen",
+            "openModelingEditor": "Modelierungs-Editor öffnen",
+            "cloneRepository": "Repository klonen",
+            "clonePersonalRepository": "Klonen dein persönliches Repository für diese Übung:",
+            "repositoryPassword": "Dein Passwort lautet:",
+            "hoverToShow": "(hover um es anzuzeigen)",
+            "cloneSourceTree": "In SourceTree klonen",
+            "sourceTreeDescription": "<a href='http://www.sourcetreeapp.com' target='_blank'>Atlassian SourceTree</a> ist ein kostenloser GIT-Client für Mac und Windows.",
+            "goToBuildPlan": "Zum Build-Plan gehen",
+            "openTextEditor": "Text-Editor öffnen",
+            "copyUrl": "URL kopieren",
+            "copiedUrl": "URL kopiert"
+        }
+    }
+}

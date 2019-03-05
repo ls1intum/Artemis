@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Course, CourseScoreCalculationService, CourseService } from 'app/entities/course';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
+import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
 import * as moment from 'moment';
 import { Exercise } from 'app/entities/exercise';
@@ -11,11 +12,12 @@ import { Exercise } from 'app/entities/exercise';
     templateUrl: './course-exercises.component.html',
     styleUrls: ['../course-overview.scss']
 })
-export class CourseExercisesComponent implements OnInit {
+export class CourseExercisesComponent implements OnInit, OnDestroy {
     public readonly DUE_DATE_ASC = 1;
     public readonly DUE_DATE_DESC = -1;
     private courseId: number;
-    private subscription: Subscription;
+    private paramSubscription: Subscription;
+    private translateSubscription: Subscription;
     public course: Course;
     public weeklyIndexKeys: string[];
     public weeklyExercisesGrouped: object;
@@ -24,11 +26,12 @@ export class CourseExercisesComponent implements OnInit {
         private courseService: CourseService,
         private courseCalculationService: CourseScoreCalculationService,
         private courseServer: CourseService,
+        private translateService: TranslateService,
         private route: ActivatedRoute) {
     }
 
     ngOnInit() {
-        this.subscription = this.route.parent.params.subscribe(params => {
+        this.paramSubscription = this.route.parent.params.subscribe(params => {
             this.courseId = parseInt(params['courseId'], 10);
         });
 
@@ -40,6 +43,16 @@ export class CourseExercisesComponent implements OnInit {
             });
         }
         this.groupExercises(this.DUE_DATE_DESC);
+
+        this.translateSubscription = this.translateService.onLangChange.subscribe((event: LangChangeEvent) => {
+            this.groupExercises(this.DUE_DATE_DESC);
+
+        });
+    }
+
+    ngOnDestroy(): void {
+        this.translateSubscription.unsubscribe();
+        this.paramSubscription.unsubscribe();
     }
 
     public groupExercises(selectedOrder: number): void {
@@ -78,14 +91,15 @@ export class CourseExercisesComponent implements OnInit {
             groupedExercises[dateIndex].exercises.push(exercise);
         });
         this.weeklyExercisesGrouped = {
+            ...groupedExercises,
             'noDate': {
-                label: `No date associated`,
+                label: this.translateService.instant('arTeMiSApp.courseOverview.exerciseList.noExerciseDate'),
                 isCollapsed: false,
                 isCurrentWeek: false,
                 exercises: notAssociatedExercises
-            }, ...groupedExercises
+            }
         };
-        this.weeklyIndexKeys = ['noDate', ...indexKeys];
+        this.weeklyIndexKeys = [...indexKeys, 'noDate'];
     }
 
     private sortExercises(exercises: Exercise[], selectedOrder: number) {
