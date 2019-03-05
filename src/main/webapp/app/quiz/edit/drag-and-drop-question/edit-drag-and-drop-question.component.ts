@@ -33,7 +33,7 @@ import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
     templateUrl: './edit-drag-and-drop-question.component.html',
     providers: [ArtemisMarkdown, DragAndDropQuestionUtil]
 })
-export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, AfterViewInit, EditQuizQuestion {
+export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, EditQuizQuestion {
     @ViewChild('clickLayer')
     private clickLayer: ElementRef;
     @ViewChild('markdownEditor')
@@ -123,6 +123,8 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
         /** Initialize DropLocation and MouseEvent objects **/
         this.currentDropLocation = new DropLocation();
         this.mouse = new DragAndDropMouseEvent();
+
+        this.questionEditorText = this.artemisMarkdown.generateTextHintExplanation(this.question);
     }
 
     /**
@@ -139,22 +141,6 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
         if (changes.question && changes.question.currentValue != null) {
             this.backupQuestion = JSON.parse(JSON.stringify(this.question));
         }
-    }
-
-    /**
-     * @function ngAfterViewInit
-     * @desc Setup the question editor
-     */
-    ngAfterViewInit(): void {
-        requestAnimationFrame(this.setupQuestionEditor.bind(this));
-    }
-
-    /**
-     * @function setupQuestionEditor
-     * @desc Set up Question text editor
-     */
-    setupQuestionEditor(): void {
-        this.questionEditorText = this.artemisMarkdown.generateTextHintExplanation(this.question);
     }
 
     /**
@@ -755,7 +741,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
         this.question.text = this.backupQuestion.text;
         this.question.explanation = this.backupQuestion.explanation;
         this.question.hint = this.backupQuestion.hint;
-        this.setupQuestionEditor();
+        this.questionEditorText = this.artemisMarkdown.generateTextHintExplanation(this.question);
     }
 
     /**
@@ -821,6 +807,10 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
     togglePreview(): void {
         this.showPreview = !this.showPreview;
         this.prepareForSave();
+    }
+
+    private changesInMarkdown(value: boolean){
+        this.question.contentChanged = value;
     }
 
     specialCommandFound(textLine: string, specialCommand: SpecialCommand) {

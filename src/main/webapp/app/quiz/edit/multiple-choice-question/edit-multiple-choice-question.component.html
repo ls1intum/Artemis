@@ -54,6 +54,7 @@
                                      [useMarkdownPreview]="true"
                                      [specialCommands]="commandMultipleChoiceQuestions"
                                      (textWithSpecialCommandFound)="specialCommandFound($event[0], $event[1])"
+                                     (changesInMarkdown)="changesInMarkdown($event)"
                                      (previewModeChange)="togglePreview($event)">
                     <!-- Preview -->
                     <ng-container #preview>

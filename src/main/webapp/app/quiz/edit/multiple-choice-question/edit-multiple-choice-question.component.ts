@@ -124,7 +124,11 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
 
         // Remove Current Answer Option
         this.currentAnswerOption = null;
-        
+
+    }
+
+    private changesInMarkdown(value: boolean){
+        this.question.contentChanged = value;
     }
 
     specialCommandFound(textLine: string, specialCommand: SpecialCommand) {

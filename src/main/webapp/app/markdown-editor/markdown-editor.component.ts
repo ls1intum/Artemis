@@ -37,6 +37,7 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
     @Output() html = new EventEmitter<string>();
     @Output() textWithSpecialCommandFound = new EventEmitter<[string, SpecialCommand]>();
     @Output() previewModeChange = new EventEmitter<boolean>();
+    @Output() changesInMarkdown = new EventEmitter<boolean>();
 
     @ContentChild('preview') previewChild: ElementRef;
 
@@ -97,7 +98,8 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
             "change",
             () => {
                 console.log('ich parse');
-                this.parse();
+                this.changesInMarkdown.emit(true);
+                //this.parse();
             },
             this
         );
