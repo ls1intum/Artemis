@@ -156,37 +156,6 @@ public class CompassService {
     }
 
     /**
-     * TODO CZ: do we still need this? it would involve the database now
-     * If a valid result has already produced in the past load it, otherwise calculate a new result
-     * <p>
-     * Useful for testing as it does not involve the database
-     *
-     * @return Result object for the specific model or null if not found, or the coverage or confidence is not high enough
-     */
-    @SuppressWarnings("unused")
-//    public Grade getResultForSubmission(long exerciseId, long studentId, long submissionId) {
-//        Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionRepository.findById(submissionId);
-//        if (!loadExerciseIfSuspended(exerciseId) || !optionalModelingSubmission.isPresent()) { //TODO why null?
-//            return null;
-//        }
-//
-//        Result result = optionalModelingSubmission.get().getResult();
-//        if (result != null) {
-//            return GradeParser.importFromJSON(previousAssessment);
-//        }
-//
-//        CalculationEngine engine = compassCalculationEngines.get(exerciseId);
-//        Grade grade = engine.getResultForModel(submissionId);
-//
-//        if (grade.getConfidence() >= CONFIDENCE_THRESHOLD && grade.getCoverage() >= COVERAGE_THRESHOLD) {
-//            assessmentRepository.writeAssessment(exerciseId, studentId, submissionId, false, engine.exportToJson(grade, modelId).toString());
-//            return grade;
-//        }
-//
-//        return null;
-//    }
-
-    /**
      * Add an assessment to an engine
      *
      * @param exerciseId         the exerciseId
