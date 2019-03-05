@@ -121,10 +121,7 @@ public class ProgrammingExerciseService {
             programmingExercise.setSolutionParticipation(solutionParticipation);
         }
 
-        solutionParticipation.setInitializationState(InitializationState.INITIALIZED);
-        templateParticipation.setInitializationState(InitializationState.INITIALIZED);
-        solutionParticipation.setInitializationDate(ZonedDateTime.now());
-        templateParticipation.setInitializationDate(ZonedDateTime.now());
+        initParticipations(programmingExercise);
 
         templateParticipation.setBuildPlanId(projectKey + "-BASE"); // Set build plan id to newly created BaseBuild plan
         templateParticipation.setRepositoryUrl(versionControlService.get().getCloneURL(projectKey, exerciseRepoName).toString());
