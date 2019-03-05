@@ -9,7 +9,6 @@ import 'brace/theme/chrome';
 import 'brace/mode/markdown';
 import { ShortAnswerQuestionUtil } from 'app/components/util/short-answer-question-util.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { DragAndDropMouseEvent } from '../../../entities/drag-item/drag-and-drop-mouse-event.class';
 import * as TempID from 'app/quiz/edit/temp-id';
 
 @Component({
@@ -44,39 +43,21 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     questionEditorText = '';
     questionEditorMode = 'markdown';
     questionEditorAutoUpdate = true;
-    backupQuestion: ShortAnswerQuestion;
     showPreview: boolean;
 
     /** Status boolean for collapse status **/
     isQuestionCollapsed: boolean;
 
+    /** Variables needed for the setup of editorText **/
     // equals the highest spotNr
     numberOfSpot = 1;
     // defines the first gap between text and solutions when
     firstPressed = 1;
     // has all solution options with their mapping (each spotNr)
     optionsWithID: string [] = [];
-    // contains all spots with their spotNr
-    spotsWithID = new Map<string, ShortAnswerSpot>();
 
-    /*
-    For visual mode
-     */
+    /** For visual mode **/
     textParts: String [][];
-
-    /**
-     * Keep track of the currently dragged ShortAnswerSpot
-     * @type {ShortAnswerSpot}
-     */
-    currentSpot: ShortAnswerSpot;
-
-    /**
-     * Keep track of the current mouse location
-     * @type {DragAndDropMouseEvent}
-     */
-    mouse: DragAndDropMouseEvent;
-
-    dropAllowed = false;
 
     constructor(
         private artemisMarkdown: ArtemisMarkdown,
@@ -85,16 +66,9 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     ) {}
 
     ngOnInit(): void {
-        /** Create question backup for resets **/
-        this.backupQuestion = JSON.parse(JSON.stringify(this.question));
-
         /** Assign status booleans and strings **/
         this.showPreview = false;
         this.isQuestionCollapsed = false;
-
-        /** Initialize ShortAnswerSpot and MouseEvent objects **/
-        this.currentSpot = new ShortAnswerSpot();
-        this.mouse = new DragAndDropMouseEvent();
     }
 
     /**
@@ -106,10 +80,6 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         /** Check if previousValue wasn't null to avoid firing at component initialization **/
         if (changes.question && changes.question.previousValue != null) {
             this.questionUpdated.emit();
-        }
-        /** Update backupQuestion if the question changed **/
-        if (changes.question && changes.question.currentValue != null) {
-            this.backupQuestion = JSON.parse(JSON.stringify(this.question));
         }
     }
 
@@ -192,7 +162,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         this.setOptionsWithID();
         const markdownText =
             this.artemisMarkdown.generateTextHintExplanation(this.question) +
-            '\n\n\n\n' +
+            '\n\n\n' +
             this.question.solutions
                 .map((solution, index) => this.optionsWithID[index] + ' ' + solution.text.trim())
                 .join('\n');
@@ -253,7 +223,6 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
                 spot.id = existingSpotIDs[this.question.spots.length];
             }
             spot.spotNr = +spotID.trim();
-            this.spotsWithID.set(spotID.trim(), spot);
             this.question.spots.push(spot);
         }
 
@@ -321,6 +290,63 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     }
 
     /**
+     * @function addSpotAtCursor
+     * @desc Add the markdown for a spot at the current cursor location and
+     * an option connected to the spot below the last visible row
+     */
+    addSpotAtCursor(): void {
+        const editor = this.questionEditor.getEditor();
+        const optionText = editor.getCopyText();
+        const addedText = '[-spot ' + this.numberOfSpot + ']';
+        editor.focus();
+        editor.insert(addedText);
+        editor.moveCursorTo(editor.getLastVisibleRow() + this.numberOfSpot, Number.POSITIVE_INFINITY);
+        this.addOptionToSpot(editor, this.numberOfSpot, optionText, this.firstPressed);
+
+        this.numberOfSpot++;
+        this.firstPressed++;
+    }
+
+    /**
+     * add the markdown for a solution option below the last visible row, which is connected to a spot in the given editor
+     *
+     * @param editor {object} the editor into which the solution option markdown will be inserted
+     */
+    addOptionToSpot(editor: any, numberOfSpot: number, optionText: string, firstPressed: number) {
+        let addedText: string;
+        if (numberOfSpot === 1 && firstPressed === 1) {
+            addedText = '\n\n\n[-option ' + numberOfSpot + '] ' + optionText;
+        } else {
+            addedText = '\n[-option ' + numberOfSpot + '] ' + optionText;
+        }
+        editor.focus();
+        editor.clearSelection();
+        editor.insert(addedText);
+    }
+
+    /**
+     * @function addOption
+     * @desc Add the markdown for a solution option below the last visible row
+     */
+    addOption(): void {
+        const editor = this.questionEditor.getEditor();
+        let addedText: string;
+        if (this.firstPressed === 1) {
+            addedText = '\n\n\n[-option #] Please enter here one answer option and do not forget to replace # with a number';
+        } else {
+            addedText = '\n[-option #] Please enter here one answer option and do not forget to replace # with a number';
+        }
+        editor.clearSelection();
+        editor.moveCursorTo(editor.getLastVisibleRow(), Number.POSITIVE_INFINITY);
+        editor.insert(addedText);
+        const range = editor.selection.getRange();
+        range.setStart(range.start.row, 12);
+        editor.selection.setRange(range);
+
+        this.firstPressed++;
+    }
+
+    /**
      * @function addSpotAtCursorVisualMode
      * @desc Add a input field on the current selected location and add the solution option accordingly
      */
@@ -379,76 +405,6 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      */
     getSpot(spotNr: number): ShortAnswerSpot  {
         return this.question.spots.filter(spot => spot.spotNr === spotNr)[0];
-    }
-
-    /**
-     * @function addSpotAtCursor
-     * @desc Add the markdown for a spot at the current cursor location and
-     * an option connected to the spot below the last visible row
-     */
-    addSpotAtCursor(): void {
-        const editor = this.questionEditor.getEditor();
-        const optionText = editor.getCopyText();
-        const addedText = '[-spot ' + this.numberOfSpot + ']';
-        editor.focus();
-        editor.insert(addedText);
-        editor.moveCursorTo(editor.getLastVisibleRow() + this.numberOfSpot, Number.POSITIVE_INFINITY);
-        this.addOptionToSpot(editor, this.numberOfSpot, optionText, this.firstPressed);
-
-        this.numberOfSpot++;
-        this.firstPressed++;
-    }
-
-    /**
-     * add the markdown for a solution option below the last visible row, which is connected to a spot in the given editor
-     *
-     * @param editor {object} the editor into which the solution option markdown will be inserted
-     */
-    addOptionToSpot(editor: any, numberOfSpot: number, optionText: string, firstPressed: number) {
-        let addedText: string;
-        if (numberOfSpot === 1 && firstPressed === 1) {
-            addedText = '\n\n\n[-option ' + numberOfSpot + '] ' + optionText;
-        } else {
-            addedText = '\n[-option ' + numberOfSpot + '] ' + optionText;
-        }
-        editor.focus();
-        editor.clearSelection();
-        editor.insert(addedText);
-    }
-
-    /**
-     * @function addOption
-     * @desc Add the markdown for a solution option below the last visible row
-     */
-    addOption(): void {
-        const editor = this.questionEditor.getEditor();
-        let addedText: string;
-        if (this.firstPressed === 1) {
-            addedText = '\n\n\n[-option #] Please enter here one answer option and do not forget to replace # with a number';
-        } else {
-            addedText = '\n[-option #] Please enter here one answer option and do not forget to replace # with a number';
-        }
-        editor.clearSelection();
-        editor.moveCursorTo(editor.getLastVisibleRow(), Number.POSITIVE_INFINITY);
-        editor.insert(addedText);
-        const range = editor.selection.getRange();
-        range.setStart(range.start.row, 12);
-        editor.selection.setRange(range);
-
-        this.firstPressed++;
-    }
-
-    /**
-     * Handles drag-available UI
-     */
-    drag(): void {
-        this.dropAllowed = true;
-    }
-    /**
-     * Handles drag-available UI
-     */
-    drop(): void {
-        this.dropAllowed = false;
     }
 
     /**
@@ -609,5 +565,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     togglePreview(): void {
        this.showPreview = !this.showPreview;
        this.textParts = this.question.text.split(/\n+/g).map(t => t.split(/\s+(?![^[]]*])/g));
+       this.questionEditor.getEditor().setValue(this.generateMarkdown());
+       this.questionEditor.getEditor().clearSelection();
     }
 }
