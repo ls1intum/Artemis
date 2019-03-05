@@ -7,8 +7,6 @@ import de.tum.in.www1.artemis.domain.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.ExerciseService;
@@ -60,9 +58,7 @@ public class ModelingSubmissionResource {
     private final ModelingSubmissionService modelingSubmissionService;
     private final ModelingExerciseService modelingExerciseService;
     private final ParticipationService participationService;
-    private final ResultRepository resultRepository;
     private final ExerciseService exerciseService;
-    private final UserRepository userRepository;
     private final UserService userService;
     private final CourseService courseService;
     private final AuthorizationCheckService authCheckService;
@@ -71,9 +67,7 @@ public class ModelingSubmissionResource {
                                       ModelingSubmissionService modelingSubmissionService,
                                       ModelingExerciseService modelingExerciseService,
                                       ParticipationService participationService,
-                                      ResultRepository resultRepository,
                                       ExerciseService exerciseService,
-                                      UserRepository userRepository,
                                       UserService userService,
                                       CourseService courseService,
                                       AuthorizationCheckService authCheckService) {
@@ -81,9 +75,7 @@ public class ModelingSubmissionResource {
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseService = modelingExerciseService;
         this.participationService = participationService;
-        this.resultRepository = resultRepository;
         this.exerciseService = exerciseService;
-        this.userRepository = userRepository;
         this.userService = userService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
