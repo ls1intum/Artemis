@@ -110,10 +110,17 @@ public class ProgrammingExerciseResource {
             !authCheckService.isAdmin()) {
             return forbidden();
         }
+
+        programmingExerciseService.setParticipationValues(programmingExercise, true);
+
         ResponseEntity<ProgrammingExercise> errorResponse = checkProgrammingExerciseForError(programmingExercise);
         if(errorResponse != null) {
             return errorResponse;
         }
+
+        // Only save after checking for errors
+        programmingExerciseService.saveParticipations(programmingExercise);
+
         ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
         return ResponseEntity.created(new URI("/api/programming-exercises/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getTitle()))
@@ -255,10 +262,17 @@ public class ProgrammingExerciseResource {
             !authCheckService.isAdmin()) {
             return forbidden();
         }
+
+        programmingExerciseService.setParticipationValues(programmingExercise, false);
+
         ResponseEntity<ProgrammingExercise> errorResponse = checkProgrammingExerciseForError(programmingExercise);
         if(errorResponse != null) {
             return errorResponse;
         }
+
+        // Only save after checking for errors
+        programmingExerciseService.saveParticipations(programmingExercise);
+
         ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
         return ResponseEntity.ok()
             .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, programmingExercise.getTitle()))

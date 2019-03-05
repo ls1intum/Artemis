@@ -257,4 +257,52 @@ public class ProgrammingExerciseService {
     public ProgrammingExercise getExerciseForSolutionParticipation(Participation participation) {
         return programmingExerciseRepository.findOneBySolutionParticipationId(participation.getId());
     }
+
+    /**
+     * This methods sets the values (repo-url and buildplanid) of the solution and the template participation
+     * It does *NOT* store the values in the participation repository.
+     *
+     * @param programmingExercise The programming exercise
+     * @param createParticipations Whether new participations should be created (this should be true when creating and false when updating a programming exercise)
+     */
+    public void setParticipationValues(ProgrammingExercise programmingExercise, boolean createParticipations) {
+        // We have to save this values first as they would be overwritten when setting the new Participation
+        String templateRepoUrl = programmingExercise.getTemplateRepositoryUrl();
+        String solutionRepoUrl = programmingExercise.getSolutionRepositoryUrl() == null || programmingExercise.getSolutionRepositoryUrl().isEmpty() ? null : programmingExercise.getSolutionRepositoryUrl();
+        String templateBuildPlanId = programmingExercise.getTemplateBuildPlanId();
+        String solutionBuildPlanId = programmingExercise.getSolutionBuildPlanId() == null || programmingExercise.getSolutionBuildPlanId().isEmpty() ? null : programmingExercise.getSolutionBuildPlanId();
+
+        if (createParticipations) {
+            programmingExercise.setSolutionParticipation(participationRepository.save(new Participation()));
+            programmingExercise.setTemplateParticipation(participationRepository.save(new Participation()));
+        }
+
+        Participation solutionParticipation = programmingExercise.getSolutionParticipation();
+        Participation templateParticipation = programmingExercise.getTemplateParticipation();
+
+        if (createParticipations) {
+            solutionParticipation.setInitializationState(InitializationState.INITIALIZED);
+            templateParticipation.setInitializationState(InitializationState.INITIALIZED);
+            solutionParticipation.setInitializationDate(ZonedDateTime.now());
+            templateParticipation.setInitializationDate(ZonedDateTime.now());
+        }
+
+        solutionParticipation.setRepositoryUrl(solutionRepoUrl);
+        templateParticipation.setRepositoryUrl(templateRepoUrl);
+        solutionParticipation.setBuildPlanId(solutionBuildPlanId);
+        templateParticipation.setBuildPlanId(templateBuildPlanId);
+    }
+
+    /**
+     * This method saves the participations of the programming xercise
+     *
+     * @param programmingExercise The programming exercise
+     */
+    public void saveParticipations(ProgrammingExercise programmingExercise) {
+        Participation solutionParticipation = programmingExercise.getSolutionParticipation();
+        Participation templateParticipation = programmingExercise.getTemplateParticipation();
+
+        participationRepository.save(solutionParticipation);
+        participationRepository.save(templateParticipation);
+    }
 }
