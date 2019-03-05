@@ -18,6 +18,7 @@ import com.atlassian.bamboo.specs.api.builders.plan.configuration.ConcurrentBuil
 import com.atlassian.bamboo.specs.api.builders.project.Project;
 import com.atlassian.bamboo.specs.api.builders.repository.VcsChangeDetection;
 import com.atlassian.bamboo.specs.api.builders.repository.VcsRepositoryIdentifier;
+import com.atlassian.bamboo.specs.api.builders.requirement.Requirement;
 import com.atlassian.bamboo.specs.builders.notification.PlanCompletedNotification;
 import com.atlassian.bamboo.specs.builders.repository.bitbucket.server.BitbucketServerRepository;
 import com.atlassian.bamboo.specs.builders.repository.viewer.BitbucketServerRepositoryViewer;
@@ -158,79 +159,75 @@ public class BambooService implements ContinuousIntegrationService {
             .name(name);
     }
 
-    private Plan createPythonPlan(String planKey, String planName, String planDescription, String projectKey, String projectName,
-                                String vcsProjectKey, String vcsAssignmentRepositorySlug, String vcsTestRepositorySlug) {
-        @SuppressWarnings("unchecked")
-        final Plan plan = new Plan(createProject(projectName, projectKey), planName, planKey)
-            .description(planDescription)
-            .pluginConfigurations(new ConcurrentBuilds().useSystemWideDefault(true))
-            .planRepositories(
-                createBuildPlanRepository(ASSIGNMENT_REPO_NAME, vcsProjectKey, vcsAssignmentRepositorySlug),
-                createBuildPlanRepository(TEST_REPO_NAME, vcsProjectKey, vcsTestRepositorySlug))
-            .stages(new Stage("Default Stage")
-                .jobs(new Job("Default Job",
-                    new BambooKey("JOB1"))
-                    .tasks(new VcsCheckoutTask()
-                            .description("Checkout Default Repository")
-                            .checkoutItems(new CheckoutItem()
-                                    .repository(new VcsRepositoryIdentifier()
-                                        .name(ASSIGNMENT_REPO_NAME))
-                                    .path(ASSIGNMENT_REPO_PATH),	//NOTE: this path needs to be specified in the Maven pom.xml in the Tests Repo
-                                new CheckoutItem()
-                                    .repository(new VcsRepositoryIdentifier()
-                                        .name(TEST_REPO_NAME))),
-                                new ScriptTask()
-                                    .description("Builds and tests the code")
-                                    .inlineBody("pytest --junitxml=test-reports/results.xml\nexit 0"),
-                                new TestParserTask(TestParserTaskProperties.TestType.JUNIT)
-                                    .resultDirectories("test-reports/results.xml"))))
-            .triggers(new BitbucketServerTrigger())
-            .planBranchManagement(new PlanBranchManagement()
-                .delete(new BranchCleanup())
-                .notificationForCommitters())
-            .notifications(new Notification()
-                .type(new PlanCompletedNotification())
-                .recipients(new AnyNotificationRecipient(new AtlassianModule("de.tum.in.www1.bamboo-server:recipient.server"))
-                    .recipientString(SERVER_URL + NEW_RESULT_RESOURCE_API_PATH)));
-        return plan;
-    }
-
-
     private Plan createJavaPlan(String planKey, String planName, String planDescription, String projectKey, String projectName,
                                 String vcsProjectKey, String vcsAssignmentRepositorySlug, String vcsTestRepositorySlug) {
-        @SuppressWarnings("unchecked")
-        final Plan plan = new Plan(createProject(projectName, projectKey), planName, planKey)
-            .description(planDescription)
-            .pluginConfigurations(new ConcurrentBuilds().useSystemWideDefault(true))
-            .planRepositories(
-                createBuildPlanRepository(ASSIGNMENT_REPO_NAME, vcsProjectKey, vcsAssignmentRepositorySlug),
-                createBuildPlanRepository(TEST_REPO_NAME, vcsProjectKey, vcsTestRepositorySlug))
+
+        return createDefaultPlan(planKey, planName, planDescription, projectKey, projectName, vcsProjectKey, vcsAssignmentRepositorySlug, vcsTestRepositorySlug)
             .stages(new Stage("Default Stage")
                 .jobs(new Job("Default Job",
                     new BambooKey("JOB1"))
-                    .tasks(new VcsCheckoutTask()
-                            .description("Checkout Default Repository")
-                            .checkoutItems(new CheckoutItem()
-                                    .repository(new VcsRepositoryIdentifier()
-                                        .name(ASSIGNMENT_REPO_NAME))
-                                    .path(ASSIGNMENT_REPO_PATH),	//NOTE: this path needs to be specified in the Maven pom.xml in the Tests Repo
-                                new CheckoutItem()
-                                    .repository(new VcsRepositoryIdentifier()
-                                        .name(TEST_REPO_NAME))),
+                    .tasks(createCheckoutTask(),
                         new MavenTask()
                             .goal("clean test")
                             .jdk("JDK 1.8")
                             .executableLabel("Maven 3")
                             .hasTests(true))))
             .triggers(new BitbucketServerTrigger())
-            .planBranchManagement(new PlanBranchManagement()
-                .delete(new BranchCleanup())
-                .notificationForCommitters())
-            .notifications(new Notification()
-                .type(new PlanCompletedNotification())
-                .recipients(new AnyNotificationRecipient(new AtlassianModule("de.tum.in.www1.bamboo-server:recipient.server"))
-                    .recipientString(SERVER_URL + NEW_RESULT_RESOURCE_API_PATH)));
-        return plan;
+            .planBranchManagement(createPlanBranchManagement())
+            .notifications(createNotification());
+    }
+
+    private Plan createPythonPlan(String planKey, String planName, String planDescription, String projectKey, String projectName,
+                                String vcsProjectKey, String vcsAssignmentRepositorySlug, String vcsTestRepositorySlug) {
+        return createDefaultPlan(planKey, planName, planDescription, projectKey, projectName, vcsProjectKey, vcsAssignmentRepositorySlug, vcsTestRepositorySlug)
+            .stages(new Stage("Default Stage")
+                .jobs(new Job("Default Job",
+                    new BambooKey("JOB1"))
+                    .tasks(createCheckoutTask(),
+                            new ScriptTask()
+                                .description("Builds and tests the code")
+                                .inlineBody("pytest --junitxml=test-reports/results.xml\nexit 0"),
+                            new TestParserTask(TestParserTaskProperties.TestType.JUNIT)
+                                .resultDirectories("test-reports/results.xml"))
+                    .requirements(new Requirement("Python3"))))
+            .triggers(new BitbucketServerTrigger())
+            .planBranchManagement(createPlanBranchManagement())
+            .notifications(createNotification());
+    }
+
+    private Plan createDefaultPlan(String planKey, String planName, String planDescription, String projectKey, String projectName,
+                                   String vcsProjectKey, String vcsAssignmentRepositorySlug, String vcsTestRepositorySlug) {
+        return new Plan(createProject(projectName, projectKey), planName, planKey)
+            .description(planDescription)
+            .pluginConfigurations(new ConcurrentBuilds().useSystemWideDefault(true))
+            .planRepositories(
+                createBuildPlanRepository(ASSIGNMENT_REPO_NAME, vcsProjectKey, vcsAssignmentRepositorySlug),
+                createBuildPlanRepository(TEST_REPO_NAME, vcsProjectKey, vcsTestRepositorySlug));
+    }
+
+    private VcsCheckoutTask createCheckoutTask() {
+        return new VcsCheckoutTask()
+            .description("Checkout Default Repository")
+            .checkoutItems(new CheckoutItem()
+                    .repository(new VcsRepositoryIdentifier()
+                        .name(ASSIGNMENT_REPO_NAME))
+                    .path(ASSIGNMENT_REPO_PATH), //NOTE: this path needs to be specified in the Maven pom.xml in the Tests Repo
+                new CheckoutItem()
+                    .repository(new VcsRepositoryIdentifier()
+                        .name(TEST_REPO_NAME)));
+    }
+
+    private PlanBranchManagement createPlanBranchManagement() {
+        return new PlanBranchManagement()
+            .delete(new BranchCleanup())
+            .notificationForCommitters();
+    }
+
+    private Notification createNotification() {
+        return new Notification()
+            .type(new PlanCompletedNotification())
+            .recipients(new AnyNotificationRecipient(new AtlassianModule("de.tum.in.www1.bamboo-server:recipient.server"))
+                .recipientString(SERVER_URL + NEW_RESULT_RESOURCE_API_PATH));
     }
 
     private BitbucketServerRepository createBuildPlanRepository(String name, String vcsProjectKey, String repositorySlug) {
