@@ -104,11 +104,18 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
     togglePreview(showPreview: boolean): void {
         this.showPreview = showPreview;
         if (showPreview) {
-            this.prepareForSave();
+            this.cleanupQuestion();
         }
     }
 
     prepareForSave(): void {
+        this.cleanupQuestion();
+
+        // Parse Markdown
+        this.markdownEditor.parse();
+    }
+
+    private cleanupQuestion() {
         // Reset Question Object
         this.question.answerOptions = [];
         this.question.text = null;
@@ -117,9 +124,6 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
 
         // Remove Current Answer Option
         this.currentAnswerOption = null;
-
-        // Parse Markdown
-        //this.markdownEditor.parse();
     }
 
     specialCommandFound(textLine: string, specialCommand: SpecialCommand) {
