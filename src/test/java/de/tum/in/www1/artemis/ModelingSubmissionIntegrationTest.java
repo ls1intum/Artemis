@@ -86,8 +86,7 @@ public class ModelingSubmissionIntegrationTest {
         try {
             returnedSubmission =
                 performUpdateOnModelSubmission(course.getId(), exercise.getId(), submission);
-            database.checkSubmissionCorrectlyStored(
-                database.checkSubmissionCorrectlyStored(returnedSubmission.getId(), model);
+            database.checkSubmissionCorrectlyStored(returnedSubmission.getId(), model);
             Fail.fail("update on submitted ModelingSubmission worked");
         } catch (Exception e) {
         }

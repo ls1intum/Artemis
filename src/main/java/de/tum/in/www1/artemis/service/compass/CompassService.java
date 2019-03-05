@@ -349,6 +349,9 @@ public class CompassService {
         // get all participations for the given exercise from the database
         List<Participation> participations = participationRepository.findByExerciseIdWithEagerSubmissions(exerciseId);
 
+        //TODO: try to get the participations with eager results where the result exists and is of manual assessment type and make sure that result.submission is loaded eagerly as well
+        //use findByIdWithEagerResultsWithManualAssessment(...)
+
         return participations.stream().flatMap(
             participation ->
                 Optional.ofNullable(participation.getSubmissions()) // get the submission for each participation and check for null
