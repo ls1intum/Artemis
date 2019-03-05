@@ -207,6 +207,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.subscription.unsubscribe();
+        this.translateService.onLangChange.unsubscribe();
     }
 
     groupExercisesByType() {

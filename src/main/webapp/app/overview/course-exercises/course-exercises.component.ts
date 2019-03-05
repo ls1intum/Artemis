@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Course, CourseScoreCalculationService, CourseService } from 'app/entities/course';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
@@ -12,7 +12,7 @@ import { Exercise } from 'app/entities/exercise';
     templateUrl: './course-exercises.component.html',
     styleUrls: ['../course-overview.scss']
 })
-export class CourseExercisesComponent implements OnInit {
+export class CourseExercisesComponent implements OnInit, OnDestroy {
     public readonly DUE_DATE_ASC = 1;
     public readonly DUE_DATE_DESC = -1;
     private courseId: number;
@@ -47,6 +47,10 @@ export class CourseExercisesComponent implements OnInit {
             this.groupExercises(this.DUE_DATE_DESC);
 
         });
+    }
+
+    ngOnDestroy(): void {
+        this.translateService.onLangChange.unsubscribe();
     }
 
     public groupExercises(selectedOrder: number): void {
