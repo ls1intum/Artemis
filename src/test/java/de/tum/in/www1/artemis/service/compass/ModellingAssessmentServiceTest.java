@@ -30,13 +30,12 @@ public class ModellingAssessmentServiceTest {
         Random random = new Random();
         List<Integer> values = new ArrayList<>();
         IntStream.range(0, NUMBER_OF_TESTCASES)
-                .forEach(
-                        value -> {
-                            values.add(1 + random.nextInt(100));
-                        });
+            .forEach(
+                value -> {
+                    values.add(1 + random.nextInt(100));
+                });
         return values;
     }
-
 
     /**
      * Testing wether the sum of doubles isn't something like 0.999999
@@ -47,11 +46,11 @@ public class ModellingAssessmentServiceTest {
         BigDecimal totalScore = new BigDecimal(0.0).setScale(2, ROUND_HALF_EVEN);
         for (int i = 0; i < numberOfAssessments; i++) {
             BigDecimal credits =
-                    new BigDecimal(1.0 / (1.0 + random.nextInt(12))).setScale(2, ROUND_HALF_EVEN);
+                new BigDecimal(1.0 / (1.0 + random.nextInt(12))).setScale(2, ROUND_HALF_EVEN);
             totalScore = totalScore.add(credits);
             assessments.add(new ModelElementAssessment("", credits.doubleValue(), "", ""));
         }
         assertThat(ModelingAssessmentService.calculateTotalScore(assessments))
-                .isEqualTo(totalScore.doubleValue());
+            .isEqualTo(totalScore.doubleValue());
     }
 }

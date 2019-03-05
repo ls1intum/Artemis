@@ -316,6 +316,7 @@ public class ModelingExerciseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional
     //TODO: fix the REST URL
+    //TODO MJ Move into ModelingassessmentResource ??
     public ResponseEntity<ModelingSubmission> getDataForAssessmentEditor(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
         Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findById(exerciseId);
         if (!modelingExercise.isPresent()) {

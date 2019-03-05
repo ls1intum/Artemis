@@ -61,13 +61,20 @@ public abstract class Submission implements Serializable {
     /**
      * A submission can have a result and therefore, results are persisted and removed with a submission.
      */
-    @OneToOne(mappedBy = "submission", cascade={CascadeType.PERSIST, CascadeType.REMOVE}, fetch = FetchType.LAZY, orphanRemoval=true)
+    @OneToOne(mappedBy = "submission", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, fetch = FetchType.LAZY, orphanRemoval = true)
     @JsonIgnoreProperties({"submission", "participation"})
     @JoinColumn(unique = true)
     private Result result;
 
     @Column(name = "submission_date")
     private ZonedDateTime submissionDate;
+
+    public Submission() {
+    }
+
+    public Submission(Boolean submitted) {
+        this.submitted = submitted;
+    }
 
     @JsonView(QuizView.Before.class)
     public ZonedDateTime getSubmissionDate() {
