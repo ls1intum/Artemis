@@ -25,7 +25,6 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
 
     @Input()
     question: MultipleChoiceQuestion;
-
     @Input()
     questionIndex: number;
 
@@ -43,7 +42,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
     currentAnswerOption: AnswerOption;
 
     showPreview = false;
-
+    
     hintCommand = new HintCommand();
     correctCommand = new CorrectOptionCommand();
     incorrectCommand = new IncorrectOptionCommand();

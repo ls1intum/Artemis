@@ -89,6 +89,7 @@
                                      [defaultText]="questionEditorText"
                                      [useMarkdownPreview]="false"
                                      [specialCommands]="commandDragAndDropQuestions"
+                                     [parsingValue]="'value'"
                                      (changesInMarkdown)="changesInMarkdown($event)"
                                      (textWithSpecialCommandFound)="specialCommandFound($event[0], $event[1])"
                                      (previewModeChange)="togglePreview()"
@@ -99,6 +100,7 @@
                     <jhi-markdown-editor #markdownEditor
                                          [defaultText]="questionEditorText"
                                          [specialCommands]="commandDragAndDropQuestions"
+                                         [parsingValue]="'parse'"
                                          (changesInMarkdown)="changesInMarkdown($event)"
                                          (textWithSpecialCommandFound)="specialCommandFound($event[0], $event[1])"
                     ></jhi-markdown-editor>

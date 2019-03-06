@@ -53,6 +53,7 @@
                                      [defaultText]="questionEditorText"
                                      [useMarkdownPreview]="true"
                                      [specialCommands]="commandMultipleChoiceQuestions"
+                                     [parsingValue]="'value'"
                                      (textWithSpecialCommandFound)="specialCommandFound($event[0], $event[1])"
                                      (changesInMarkdown)="changesInMarkdown($event)"
                                      (previewModeChange)="togglePreview($event)">

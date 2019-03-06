@@ -33,6 +33,7 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
     @Input() defaultText: string;
     @Input() specialCommands: SpecialCommand[];
     @Input() useMarkdownPreview: boolean;
+    @Input() parsingValue: string;
 
     @Output() html = new EventEmitter<string>();
     @Output() textWithSpecialCommandFound = new EventEmitter<[string, SpecialCommand]>();
@@ -95,11 +96,16 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
         this.aceEditorContainer.getEditor().setShowPrintMargin(false);
         this.aceEditorContainer.getEditor().clearSelection();
         this.aceEditorContainer.getEditor().on(
-            "change",
+            "focus",
             () => {
-                console.log('ich parse');
-                this.changesInMarkdown.emit(true);
-                //this.parse();
+                if (this.parsingValue === 'parse'){
+                    console.log('ich parse');
+                    this.parse();
+                }
+                if (this.parsingValue === 'value'){
+                    console.log('ich emit value');
+                    this.changesInMarkdown.emit(true);
+                }
             },
             this
         );
