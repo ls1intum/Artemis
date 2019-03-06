@@ -1,5 +1,9 @@
-# The following method should take a strand as an argument and
-# return a complementary strand
+COMPLEMENTS = {
+    'A': 'T',
+    'T': 'A',
+    'C': 'G',
+    'G': 'C'
+}
 
 def complementary(strand):
-    pass
+    return ''.join(COMPLEMENTS[character] for character in strand.upper())
