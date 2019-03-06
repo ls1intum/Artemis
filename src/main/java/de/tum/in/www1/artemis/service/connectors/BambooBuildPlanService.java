@@ -104,7 +104,7 @@ public class BambooBuildPlanService {
             .stages(new Stage("Default Stage")
                 .jobs(new Job("Default Job",
                     new BambooKey("JOB1"))
-                    .tasks(createCheckoutTask(),
+                    .tasks(createCheckoutTask(ASSIGNMENT_REPO_PATH, ""),
                         new MavenTask()
                             .goal("clean test")
                             .jdk("JDK 1.8")
@@ -121,8 +121,7 @@ public class BambooBuildPlanService {
             .stages(new Stage("Default Stage")
                 .jobs(new Job("Default Job",
                     new BambooKey("JOB1"))
-                    //TODO: we want to have assignment repo in root folder and test repo in tests folder (see email)
-                    .tasks(createCheckoutTask(),
+                    .tasks(createCheckoutTask("", "tests"),
                         new ScriptTask()
                             .description("Builds and tests the code")
                             .inlineBody("pytest --junitxml=test-reports/results.xml\nexit 0"),
@@ -144,16 +143,17 @@ public class BambooBuildPlanService {
                 createBuildPlanRepository(TEST_REPO_NAME, vcsProjectKey, vcsTestRepositorySlug));
     }
 
-    private VcsCheckoutTask createCheckoutTask() {
+    private VcsCheckoutTask createCheckoutTask(String assignmentPath, String testPath) {
         return new VcsCheckoutTask()
             .description("Checkout Default Repository")
             .checkoutItems(new CheckoutItem()
                     .repository(new VcsRepositoryIdentifier()
                         .name(ASSIGNMENT_REPO_NAME))
-                    .path(ASSIGNMENT_REPO_PATH), //NOTE: this path needs to be specified in the Maven pom.xml in the Tests Repo
+                    .path(assignmentPath), //NOTE: this path needs to be specified in the Maven pom.xml in the Tests Repo
                 new CheckoutItem()
                     .repository(new VcsRepositoryIdentifier()
-                        .name(TEST_REPO_NAME)));
+                        .name(TEST_REPO_NAME))
+                    .path(testPath));
     }
 
     private PlanBranchManagement createPlanBranchManagement() {
