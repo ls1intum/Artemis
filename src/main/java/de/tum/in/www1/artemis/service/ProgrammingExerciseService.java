@@ -5,6 +5,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -139,7 +140,7 @@ public class ProgrammingExerciseService {
 
         String programmingLanguage = programmingExercise.getProgrammingLanguage().toString().toLowerCase();
 
-        String templatePath = "classpath:templates/java";
+        String templatePath = "classpath:templates/" + programmingLanguage;
         String exercisePath = templatePath + "/exercise/**/*.*";
         String solutionPath = templatePath + "/solution/**/*.*";
         String testPath = templatePath + "/test/**/*.*";
@@ -184,22 +185,26 @@ public class ProgrammingExerciseService {
     private void setupTemplateAndPush(Repository repository, Resource[] resources, String prefix, String templateName, ProgrammingExercise programmingExercise) throws Exception {
         if (gitService.listFiles(repository).size() == 0) { // Only copy template if repo is empty
             fileService.copyResources(resources, prefix, repository.getLocalPath().toAbsolutePath().toString());
-            fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageFolderName());
+            if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
+                fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageFolderName());
+            }
+            //there is no need in python to replace package names
 
             List<String> fileTargets = new ArrayList<>();
             List<String> fileReplacements = new ArrayList<>();
             // This is based on the correct order and assumes that boths lists have the same length, it replaces fileTargets.get(i) with fileReplacements.get(i)
 
-            fileTargets.add("${packageName}");
-            fileReplacements.add(programmingExercise.getPackageName());
+            if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
+                fileTargets.add("${packageName}");
+                fileReplacements.add(programmingExercise.getPackageName());
+            }
+            //there is no need in python to replace package names
 
             fileTargets.add("${exerciseNameCompact}");
             fileReplacements.add(programmingExercise.getShortName().toLowerCase()); // Used e.g. in artifactId
 
             fileTargets.add("${exerciseName}");
             fileReplacements.add(programmingExercise.getTitle());
-
-            //TODO: for some reason, this code does not replace the elements in the file test.json
 
             fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), fileTargets, fileReplacements);
 

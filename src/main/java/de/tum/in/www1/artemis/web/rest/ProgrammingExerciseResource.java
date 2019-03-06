@@ -4,6 +4,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -191,14 +192,17 @@ public class ProgrammingExerciseResource {
         }
 
         // Check if package name is set
-        if (programmingExercise.getPackageName() == null || programmingExercise.getPackageName().length() < 3) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The packagename is invalid", "packagenameInvalid")).body(null);
-        }
+        if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
+            // only Java needs a valid package name at the moment
+            if (programmingExercise.getPackageName() == null || programmingExercise.getPackageName().length() < 3) {
+                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The packagename is invalid", "packagenameInvalid")).body(null);
+            }
 
-        // Check if package name matches regex
-        Matcher packageNameMatcher = packageNamePattern.matcher(programmingExercise.getPackageName());
-        if (!packageNameMatcher.matches()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The packagename is invalid", "packagenameInvalid")).body(null);
+            // Check if package name matches regex
+            Matcher packageNameMatcher = packageNamePattern.matcher(programmingExercise.getPackageName());
+            if (!packageNameMatcher.matches()) {
+                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The packagename is invalid", "packagenameInvalid")).body(null);
+            }
         }
 
         // Check if max score is set
