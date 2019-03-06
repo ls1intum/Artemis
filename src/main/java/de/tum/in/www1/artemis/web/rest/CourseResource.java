@@ -9,6 +9,8 @@ import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.config.JHipsterConstants;
@@ -374,16 +376,18 @@ public class CourseResource {
      *
      * Get the "id" course, with text and modelling exercises and their participations
      *
-     * @param id the id of the course to retrieve
+     * @param courseId the id of the course to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
-    @GetMapping("/courses/{id}/with-exercises-and-relevant-participations")
+    @GetMapping("/courses/{courseId}/with-exercises-and-relevant-participations")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<Course> getCourseWithExercisesAndRelevantParticipations(@PathVariable Long id) {
-        log.debug("REST request to get Course with exercises and relevant participations : {}", id);
-        Course course = courseService.findOneWithExercises(id);
+    public ResponseEntity<Course> getCourseWithExercisesAndRelevantParticipations(@PathVariable Long courseId) throws AccessForbiddenException {
+        log.debug("REST request to get Course with exercises and relevant participations : {}", courseId);
+        Course course = courseService.findOneWithExercises(courseId);
 
-        if (!userHasPermission(course)) return forbidden();
+        if (!userHasPermission(course)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
 
         Set<Exercise> interestingExercises = course.getExercises().stream()
             .filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise)
@@ -391,13 +395,14 @@ public class CourseResource {
 
         course.setExercises(interestingExercises);
 
-        List<Participation> participations = this.participationService.findByCourseIdWithRelevantResults(course.getId());
+        List<Participation> participations = this.participationService.findByCourseIdWithRelevantResults(courseId);
 
-        for (Exercise exercise : course.getExercises()) {
-            Stream<Participation> participationsForExercise = participations.stream()
-                .filter(participation -> participation.getExercise().getId().equals(exercise.getId()));
+        for (Exercise exercise : interestingExercises) {
+            Set<Participation> participationsForExercise = participations.stream()
+                .filter(participation -> participation.getExercise().getId().equals(exercise.getId()))
+                .collect(Collectors.toSet());
 
-            exercise.setParticipations(participationsForExercise.collect(Collectors.toSet()));
+            exercise.setParticipations(participationsForExercise);
         }
 
         return ResponseUtil.wrapOrNotFound(Optional.of(course));
@@ -420,27 +425,22 @@ public class CourseResource {
      */
     @GetMapping("/courses/{courseId}/stats-for-instructor-dashboard")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<JsonNode> getStatsForInstructorDashboard(@PathVariable Long courseId) {
+    public ResponseEntity<StatsForInstructorDashboardDTO> getStatsForInstructorDashboard(@PathVariable Long courseId) throws AccessForbiddenException {
         log.debug("REST request /courses/{courseId}/stats-for-instructor-dashboard");
 
-        ObjectNode data = objectMapper.createObjectNode();
-
         Course course = courseService.findOne(courseId);
-        if (!userHasPermission(course)) return forbidden();
+        if (!userHasPermission(course)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
 
-        long numberOfStudents = userService.countNumberOfStudentsForCourse(course);
-        data.set("numberOfStudents", objectMapper.valueToTree(numberOfStudents));
+        StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
 
-        long numberOfTutors = userService.countNumberOfTutorsForCourse(course);
-        data.set("numberOfTutors", objectMapper.valueToTree(numberOfTutors));
+        stats.numberOfStudents = courseService.countNumberOfStudentsForCourse(course);
+        stats.numberOfTutors = courseService.countNumberOfTutorsForCourse(course);
+        stats.numberOfComplaints = 0; // TODO: when implementing the complaints implement this as well
+        stats.numberOfOpenComplaints = 0; // TODO: when implementing the complaints implement this as well
 
-        long numberOfComplaints = 0; // TODO: when implementing the complaints implement this as well
-        data.set("numberOfComplaints", objectMapper.valueToTree(numberOfComplaints));
-
-        long numberOfOpenComplaints = 0; // TODO: when implementing the complaints implement this as well
-        data.set("numberOfOpenComplaints", objectMapper.valueToTree(numberOfOpenComplaints));
-
-        return ResponseEntity.ok(data);
+        return ResponseEntity.ok(stats);
     }
 
     private boolean userHasPermission(Course course) {

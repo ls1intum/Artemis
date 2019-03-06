@@ -32,7 +32,7 @@
 
             <div class="col-md-4" *ngIf="exercise.participations.length > 0">
                 <canvas baseChart
-                        [data]="dataNumbersForPieChart"
+                        [data]="dataForAssessmentPieChart"
                         [labels]="['Open assessments', 'Completed assessments']"
                         chartType="pie">
                 </canvas>

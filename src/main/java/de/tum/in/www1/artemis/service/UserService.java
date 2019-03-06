@@ -392,28 +392,6 @@ public class UserService {
         return authorityRepository.findAll().stream().map(Authority::getName).collect(Collectors.toList());
     }
 
-    /**
-     * Given a Course object, it returns the number of users enrolled in the course
-     *
-     * @param course - the course object we are interested in
-     * @return the number of students for that course
-     */
-    public long countNumberOfStudentsForCourse(Course course) {
-        String groupName = course.getStudentGroupName();
-        return userRepository.countByGroupsIsContaining(Collections.singletonList(groupName));
-    }
-
-    /**
-     * Given a Course object, it returns the number of tutors assigned to the course
-     *
-     * @param course - the course object we are interested in
-     * @return the number of tutors for that course
-     */
-    public long countNumberOfTutorsForCourse(Course course) {
-        String groupName = course.getTeachingAssistantGroupName();
-        return userRepository.countByGroupsIsContaining(Collections.singletonList(groupName));
-    }
-
     private void clearUserCaches(User user) {
         cacheManager.getCache(UserRepository.USERS_CACHE).evict(user.getLogin());
     }

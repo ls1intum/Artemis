@@ -1,11 +1,11 @@
-import {JhiAlertService} from 'ng-jhipster';
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute} from '@angular/router';
-import {HttpResponse, HttpErrorResponse} from '@angular/common/http';
-import {Exercise, ExerciseService} from 'app/entities/exercise';
-import {InitializationState, Participation, ParticipationService} from 'app/entities/participation';
-import {Result, ResultService} from 'app/entities/result';
-import {TutorLeaderboardData} from 'app/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.component';
+import { JhiAlertService } from 'ng-jhipster';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
+import { Exercise, ExerciseService } from 'app/entities/exercise';
+import { InitializationState, Participation, ParticipationService } from 'app/entities/participation';
+import { Result, ResultService } from 'app/entities/result';
+import { TutorLeaderboardData } from 'app/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.component';
 
 @Component({
     selector: 'jhi-instructor-exercise-dashboard',
@@ -17,7 +17,7 @@ export class InstructorExerciseDashboardComponent implements OnInit {
     courseId: number;
     numberOfAssessments: number;
 
-    dataNumbersForPieChart: number[];
+    dataForAssessmentPieChart: number[];
     tutorLeaderboardData: TutorLeaderboardData = {};
 
     constructor(
@@ -30,7 +30,7 @@ export class InstructorExerciseDashboardComponent implements OnInit {
 
     ngOnInit(): void {
         this.courseId = +this.route.snapshot.paramMap.get('courseId');
-        this.loadExercise(Number(this.route.snapshot.paramMap.get('exerciseId')));
+        this.loadExercise(+this.route.snapshot.paramMap.get('exerciseId'));
     }
 
     private loadExercise(exerciseId: number) {
@@ -44,7 +44,7 @@ export class InstructorExerciseDashboardComponent implements OnInit {
                         participation.results.filter(result => result.rated).length > 0
                     ).length;
 
-                    this.dataNumbersForPieChart = [
+                    this.dataForAssessmentPieChart = [
                         this.exercise.participations.length - this.numberOfAssessments,
                         this.numberOfAssessments,
                     ];
@@ -62,11 +62,11 @@ export class InstructorExerciseDashboardComponent implements OnInit {
                     if (!this.tutorLeaderboardData[tutorId]) {
                         this.tutorLeaderboardData[tutorId] = {
                             tutor: result.assessor,
-                            nrOfAssessments: 0
+                            numberOfAssessments: 0
                         };
                     }
 
-                    this.tutorLeaderboardData[tutorId].nrOfAssessments++;
+                    this.tutorLeaderboardData[tutorId].numberOfAssessments++;
                 }
             }
         );

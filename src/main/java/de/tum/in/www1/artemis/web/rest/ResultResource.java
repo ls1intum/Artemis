@@ -51,7 +51,6 @@ public class ResultResource {
     private final FeedbackService feedbackService;
     private final UserService userService;
     private final ContinuousIntegrationService continuousIntegrationService;
-    private final CourseService courseService;
     private final ProgrammingExerciseService programmingExerciseService;
 
     public ResultResource(UserService userService,
@@ -62,8 +61,7 @@ public class ResultResource {
                           FeedbackService feedbackService,
                           ExerciseService exerciseService,
                           ContinuousIntegrationService continuousIntegrationService,
-                          ProgrammingExerciseService programmingExerciseService,
-                          CourseService courseService) {
+                          ProgrammingExerciseService programmingExerciseService) {
 
         this.userService = userService;
         this.resultRepository = resultRepository;
@@ -74,7 +72,6 @@ public class ResultResource {
         this.authCheckService = authCheckService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.programmingExerciseService = programmingExerciseService;
-        this.courseService = courseService;
     }
 
     /**

@@ -1,8 +1,8 @@
-import {User} from 'app/core';
-import {Component, Input} from '@angular/core';
+import { User } from 'app/core';
+import { Component, Input } from '@angular/core';
 
 export interface TutorLeaderboardData {
-    [key: string]: { tutor: User, nrOfAssessments: number };
+    [key: string]: { tutor: User, numberOfAssessments: number };
 }
 
 @Component({

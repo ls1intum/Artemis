@@ -1,12 +1,12 @@
-import {JhiAlertService} from 'ng-jhipster';
-import {Component, OnInit} from '@angular/core';
-import {Course, CourseService, StatsForInstructorDashboard} from 'app/entities/course';
-import {ActivatedRoute} from '@angular/router';
-import {HttpErrorResponse, HttpResponse} from '@angular/common/http';
-import {InitializationState, Participation} from 'app/entities/participation';
-import {getIcon, getIconTooltip} from 'app/entities/exercise';
-import {Result, ResultService} from 'app/entities/result';
-import {TutorLeaderboardData} from 'app/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.component';
+import { JhiAlertService } from 'ng-jhipster';
+import { Component, OnInit } from '@angular/core';
+import { Course, CourseService, StatsForInstructorDashboard } from 'app/entities/course';
+import { ActivatedRoute } from '@angular/router';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { InitializationState, Participation } from 'app/entities/participation';
+import { getIcon, getIconTooltip } from 'app/entities/exercise';
+import { ResultService } from 'app/entities/result';
+import { TutorLeaderboardData } from 'app/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.component';
 
 @Component({
     selector: 'jhi-instructor-course-dashboard',
@@ -20,9 +20,12 @@ export class InstructorCourseDashboardComponent implements OnInit {
     getIconTooltip = getIconTooltip;
 
     stats: StatsForInstructorDashboard;
-    dataNumbersForPieChart: number[];
+    dataForAssessmentPieChart: number[];
 
     tutorLeaderboardData: TutorLeaderboardData = {};
+
+    readonly MIN_POINTS_GREEN = 100;
+    readonly MIN_POINTS_ORANGE = 50;
 
     constructor(
         private courseService: CourseService,
@@ -52,11 +55,11 @@ export class InstructorCourseDashboardComponent implements OnInit {
                                 if (!this.tutorLeaderboardData[tutorId]) {
                                     this.tutorLeaderboardData[tutorId] = {
                                         tutor: result.assessor,
-                                        nrOfAssessments: 0
+                                        numberOfAssessments: 0
                                     };
                                 }
 
-                                this.tutorLeaderboardData[tutorId].nrOfAssessments++;
+                                this.tutorLeaderboardData[tutorId].numberOfAssessments++;
                             }
                         }
                     }
@@ -71,7 +74,7 @@ export class InstructorCourseDashboardComponent implements OnInit {
                 this.stats.numberOfAssessments = numberOfAssessments;
                 this.stats.numberOfSubmissions = numberOfSubmissions;
 
-                this.dataNumbersForPieChart = [
+                this.dataForAssessmentPieChart = [
                     numberOfSubmissions - numberOfAssessments,
                     numberOfAssessments
                 ];
@@ -92,15 +95,15 @@ export class InstructorCourseDashboardComponent implements OnInit {
             return 0;
         }
 
-        return Math.round( numerator / denominator * 100);
+        return Math.round(numerator / denominator * 100);
     }
 
     calculateClass(numberOfAssessments: number, length: number): string {
         const percentage = this.calculatePercentage(numberOfAssessments, length);
 
-        if (percentage < 50) {
+        if (percentage < this.MIN_POINTS_ORANGE) {
             return 'bg-danger';
-        } else if (percentage < 100) {
+        } else if (percentage < this.MIN_POINTS_GREEN) {
             return 'bg-warning';
         }
 
