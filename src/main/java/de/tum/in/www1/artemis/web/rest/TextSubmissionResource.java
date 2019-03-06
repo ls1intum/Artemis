@@ -4,10 +4,10 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
-import org.hibernate.Hibernate;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,11 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
@@ -184,9 +181,11 @@ public class TextSubmissionResource {
                                                                       @RequestParam(defaultValue = "false") boolean submittedOnly,
                                                                       @RequestParam(defaultValue = "false") boolean assessedByTutor) {
         log.debug("REST request to get all TextSubmissions");
-        Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
+        Exercise exercise = exerciseService.findOne(exerciseId);
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) return forbidden();
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
 
         if (assessedByTutor) {
             User user = userService.getUserWithGroupsAndAuthorities();
@@ -196,25 +195,7 @@ public class TextSubmissionResource {
             );
         }
 
-        List<Participation> participations = participationService.findByExerciseIdWithEagerSubmissions(exerciseId);
-        List<TextSubmission> textSubmissions = new ArrayList<>();
-
-        for (Participation participation : participations) {
-            TextSubmission textSubmission = participation.findLatestTextSubmission();
-
-            // if submittedOnly, need to check if submitted, else just continue (!submittedOnly == true)
-            if (textSubmission == null || (submittedOnly && !textSubmission.isSubmitted())) {
-                continue;
-            }
-
-            Hibernate.initialize(textSubmission.getResult()); // eagerly load the association
-            if (textSubmission.getResult() != null) {
-                Hibernate.initialize(textSubmission.getResult().getAssessor());
-                textSubmission.getResult().getAssessor().setGroups(null);
-            }
-
-            textSubmissions.add(textSubmission);
-        }
+        List<TextSubmission> textSubmissions = textSubmissionService.getTextSubmissionsByExerciseId(exerciseId, submittedOnly);
 
         return ResponseEntity.ok().body(textSubmissions);
     }

@@ -33,7 +33,6 @@ public class TextAssessmentResource extends AssessmentResource {
     private final TextExerciseService textExerciseService;
     private final TextSubmissionRepository textSubmissionRepository;
     private final ResultRepository resultRepository;
-    private final TextSubmissionService textSubmissionService;
 
     public TextAssessmentResource(AuthorizationCheckService authCheckService,
                                   ParticipationService participationService,
@@ -41,7 +40,6 @@ public class TextAssessmentResource extends AssessmentResource {
                                   TextAssessmentService textAssessmentService,
                                   TextExerciseService textExerciseService,
                                   TextSubmissionRepository textSubmissionRepository,
-                                  TextSubmissionService textSubmissionService,
                                   ResultRepository resultRepository,
                                   UserService userService) {
         super(authCheckService, userService);
@@ -52,7 +50,6 @@ public class TextAssessmentResource extends AssessmentResource {
         this.textExerciseService = textExerciseService;
         this.textSubmissionRepository = textSubmissionRepository;
         this.resultRepository = resultRepository;
-        this.textSubmissionService = textSubmissionService;
     }
 
     @PutMapping("/exercise/{exerciseId}/result/{resultId}")

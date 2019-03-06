@@ -57,4 +57,11 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
     //TODO: at the moment we don't want to consider online courses due to some legacy programming exercises where the VCS repo does not notify Artemis that there is a new submission). In the future we can deactivate the last part.
     @Query("select distinct participation from Participation participation left join fetch participation.results where participation.buildPlanId is not null and participation.exercise.course.onlineCourse = false")
     List<Participation> findAllWithBuildPlanId();
+
+    @Query("SELECT DISTINCT participation FROM Participation participation " +
+        "LEFT JOIN FETCH participation.submissions s " +
+        "LEFT JOIN FETCH s.result r " +
+        "LEFT JOIN FETCH r.assessor " +
+        "WHERE participation.exercise.id = :#{#exerciseId} AND s.submitted = :#{#submittedOnly}")
+    List<Participation> findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(long exerciseId, boolean submittedOnly);
 }

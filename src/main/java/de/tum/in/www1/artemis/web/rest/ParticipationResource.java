@@ -48,6 +48,7 @@ public class ParticipationResource {
 
     private static final String ENTITY_NAME = "participation";
     private final TextSubmissionService textSubmissionService;
+    private final ResultService resultService;
 
     public ParticipationResource(ParticipationService participationService,
                                  CourseService courseService,
@@ -56,7 +57,8 @@ public class ParticipationResource {
                                  AuthorizationCheckService authCheckService,
                                  Optional<ContinuousIntegrationService> continuousIntegrationService,
                                  Optional<VersionControlService> versionControlService,
-                                 TextSubmissionService textSubmissionService) {
+                                 TextSubmissionService textSubmissionService,
+                                 ResultService resultService) {
         this.participationService = participationService;
         this.quizExerciseService = quizExerciseService;
         this.exerciseService = exerciseService;
@@ -65,6 +67,7 @@ public class ParticipationResource {
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.textSubmissionService = textSubmissionService;
+        this.resultService = resultService;
     }
 
     /**
@@ -191,6 +194,7 @@ public class ParticipationResource {
      * GET /exercise/{exerciseId}/participation-without-assessment
      *
      * Given an exerciseId, retrieve a participation where the latest submission has no assessment, or returns 404
+     * If any, it creates the result and assign to the tutor, as a draft
      *
      * @param exerciseId the id of the exercise of which we want a submission
      * @return a student participation
@@ -200,11 +204,23 @@ public class ParticipationResource {
     public ResponseEntity<Participation> getParticipationForExerciseWithoutAssessment(@PathVariable Long exerciseId) {
         Optional<TextSubmission> textSubmission = this.textSubmissionService.textSubmissionWithoutResult(exerciseId);
 
+        Exercise exercise = exerciseService.findOne(exerciseId);
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+
         if (!textSubmission.isPresent()) {
             throw new EntityNotFoundException("No text Submission without assessment has been found");
         }
 
         Participation participation = textSubmission.get().getParticipation();
+
+        Result result = new Result();
+        result.setParticipation(participation);
+        result.setSubmission(textSubmission.get());
+        resultService.createNewResult(result);
+        participation.setResults(new HashSet<>());
+        participation.addResult(result);
 
         return ResponseEntity.ok(participation);
     }
