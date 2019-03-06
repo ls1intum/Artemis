@@ -1,7 +1,7 @@
 package ${packageName};
 
 import static org.junit.Assert.*;
-import de.tum.in.www1.testutils.*;
+import ${packageName}.testutils.*;
 import java.io.*;
 import java.net.URL;
 import java.util.*;

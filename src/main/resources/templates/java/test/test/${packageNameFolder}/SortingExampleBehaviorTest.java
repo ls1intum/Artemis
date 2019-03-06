@@ -32,14 +32,14 @@ public class SortingExampleBehaviorTest extends BehaviorTest {
 
     @Test(timeout = 1000)
     public void testBubbleSort() {
-        BubbleSort bubbleSort = (BubbleSort) newInstance("de.tum.in.www1.BubbleSort");
+        BubbleSort bubbleSort = new BubbleSort();
         bubbleSort.performSort(dates);
         assertEquals("Problem: BubbleSort does not sort correctly", datesWithCorrectOrder, dates);
     }
 
     @Test(timeout = 1000)
     public void testMergeSort() {
-        MergeSort mergeSort = (MergeSort) newInstance("de.tum.in.www1.MergeSort");
+        MergeSort mergeSort = new MergeSort();
         mergeSort.performSort(dates);
         assertEquals("Problem: MergeSort does not sort correctly", datesWithCorrectOrder, dates);
     }
@@ -59,19 +59,14 @@ public class SortingExampleBehaviorTest extends BehaviorTest {
     }
 
     private Object configurePolicyAndContext(List<Date> dates) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException, InstantiationException, ClassNotFoundException {
-        Class<?> contextClass = getClass("de.tum.in.www1.Context");
-        assertNotNull("Problem: Context class is not created yet", contextClass);
 
-        Object sortingContext = newInstance("de.tum.in.www1.Context");
-        invokeMethod(sortingContext, getMethod(contextClass, "setDates", List.class), dates);
+        Object context = newInstance("${packageName}.Context");
+        invokeMethod(context, getMethod(context, "setDates", List.class), dates);
 
-        Class<?> policyClass = getClass("de.tum.in.www1.Policy");
-        assertNotNull("Problem: Policy class is not created yet", policyClass);
+        Object policy = newInstance("${packageName}.Policy", context);
+        invokeMethod(policy, getMethod(policy, "configure"));
 
-        Object policy = newInstance("de.tum.in.www1.Policy", sortingContext);
-        invokeMethod(policy, getMethod(policyClass, "configure"));
-
-        Object chosenSortStrategy = invokeMethod(sortingContext, getMethod(contextClass, "getSortAlgorithm"));
+        Object chosenSortStrategy = invokeMethod(context, getMethod(context, "getSortAlgorithm"));
 
         return chosenSortStrategy;
     }

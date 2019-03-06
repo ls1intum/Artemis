@@ -40,14 +40,12 @@ public class ClassNameScanner {
 
     // The names of the classes observed in the project
     private final Map<String, List<String>> observedClasses;
-    private final Map<String, String> expectedClasses;
     private final ScanResult scanResult;
 
     public ClassNameScanner(String expectedClassName, String expectedPackageName, JSONArray structureOracleJSON) {
         this.expectedClassName = expectedClassName;
         this.expectedPackageName = expectedPackageName;
         this.observedClasses = retrieveObservedClasses();
-        this.expectedClasses = retrieveExpectedClasses(structureOracleJSON);
         this.scanResult = computeScanResult();
     }
 
@@ -67,7 +65,7 @@ public class ClassNameScanner {
      * @return An instance of ScanResult containing the result type and the feedback message.
      */
     private ScanResult computeScanResult() {
-        // Initialise the type and the message of the scan result.
+        // Initialize the type and the message of the scan result.
         ScanResultType scanResultType = ScanResultType.UNDEFINED;
         String scanResultMessage = "";
 
@@ -75,8 +73,8 @@ public class ClassNameScanner {
         boolean classIsCorrectlyPlaced;
         boolean classIsPresentMultipleTimes;
 
-        String foundObservedClassName;
-        String foundObservedPackageName;
+        String foundObservedClassName = null;
+        String foundObservedPackageName = null;
 
         if(classIsFound) {
             List<String> observedPackageNames = observedClasses.get(expectedClassName);
@@ -100,6 +98,9 @@ public class ClassNameScanner {
                 //The previous implementation
 //				boolean hasTypos = DiffUtils.levEditDistance(observedClassName, expectedClassName, 1) < Math.ceil(expectedClassName.length() / 4);
 
+                foundObservedClassName = observedClassName;
+                foundObservedPackageName = observedPackageNames.toString();
+
                 if(hasWrongCase) {
                     scanResultType = classIsPresentMultipleTimes ? ScanResultType.WRONGCASE_MULTIPLETIMESPRESENT :
                         (classIsCorrectlyPlaced ? ScanResultType.WRONGCASE_CORRECTPLACE : ScanResultType.WRONGCASE_MISPLACED);
@@ -111,9 +112,6 @@ public class ClassNameScanner {
                 } else {
                     scanResultType = ScanResultType.NOTFOUND;
                 }
-
-                foundObservedClassName = observedClassName;
-                foundObservedPackageName = observedPackageNames.toString();
             }
         }
 
@@ -155,29 +153,22 @@ public class ClassNameScanner {
                     + " Please check for typos in the class name.";
                 break;
             case TYPOS_MISPLACED:
-                scanResultMessage = "The exercise expects a class with the name " + expectedClassName + "in the package " + expectedPackageName
+                scanResultMessage = "The exercise expects a class with the name " + expectedClassName + " in the package " + expectedPackageName
                     + ". We found that you implemented a class " + foundObservedClassName + ", in the package " + foundObservedPackageName
                     + ", which deviates from the expectation."
                     + " Please check for typos in the class name and make sure you place it in the correct package.";
                 break;
             case TYPOS_MULTIPLETIMESPRESENT:
-                scanResultMessage = "The exercise expects a class with the name " + expectedClassName + "in the package " + expectedPackageName
+                scanResultMessage = "The exercise expects a class with the name " + expectedClassName + " in the package " + expectedPackageName
                     + ". We found that you implemented a class " + foundObservedClassName + ", in the packages " + observedClasses.get(foundObservedClassName).toString()
                     + ", which deviates from the expectation."
                     + " Please check for typos in the class name and make sure you place one class it in the correct package and remove any superfluous classes.";
                 break;
             case NOTFOUND:
-                scanResultMessage = "You have implemented " + foundObservedClassName + " in the package " + foundObservedPackageName
-                    + ". This class is not expected in the exercise."
-                    + "\n The assignment expects the following classes and in the according packages: \n";
-
-                // Append the expected classes and package names to the result message
-                for(String expectedClassName : expectedClasses.keySet()) {
-                    scanResultMessage += "Class: " + expectedClassName +
-                        ", package: " + expectedClasses.get(expectedClassName) +",\n";
-                }
+                scanResultMessage = "The exercise expects a class with the name " + expectedClassName + " in the package " + expectedPackageName
+                    + ". You did not implement the class in the exercise.";
                 break;
-            case UNDEFINED:
+            default:
                 scanResultMessage = "The class could not be scanned.";
                 break;
         }
@@ -251,24 +242,5 @@ public class ClassNameScanner {
                 walkProjectFileStructure(assignmentFolderName, new File(node, currentSubNode), foundTypes);
             }
         }
-    }
-
-    /**
-     * This method retrieves the expected type names and their packages from the JSON representation of the structure diff.
-     * @param structureDiffJSON: The JSON representation of the structure diff.
-     * @return The JSON object containing the type names as keys and the type packages as values.
-     */
-    private Map<String, String> retrieveExpectedClasses(JSONArray structureDiffJSON) {
-        Map<String, String> expectedTypes = new HashMap<String, String>();
-
-        for (int i = 0; i < structureDiffJSON.length(); i++) {
-            JSONObject currentTypeJSON = (JSONObject) structureDiffJSON.get(i);
-            JSONObject currentTypePropertiesJSON = currentTypeJSON.getJSONObject("class");
-            String expectedClassName = currentTypePropertiesJSON.getString("name");
-            String expectedPackageName = currentTypePropertiesJSON.getString("package");
-            expectedTypes.put(expectedClassName, expectedPackageName);
-        }
-
-        return expectedTypes;
     }
 }

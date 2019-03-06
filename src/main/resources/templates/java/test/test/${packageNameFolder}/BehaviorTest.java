@@ -108,7 +108,19 @@ public abstract class BehaviorTest {
     }
 
     /**
-     * Retrieve a method with arguments of a given class instance by its name.
+     * Helper method that retrieves a method with arguments of a given object by its name.
+     *
+     * @param object: instance of the class that defines the method.
+     * @param methodName: the name of the method.
+     * @param parameterTypes: The parameter types of this method. Do not include if the method has no parameters.
+     * @return The wanted method.
+     */
+    protected Method getMethod(Object object, String methodName, Class<?>... parameterTypes) {
+        return getMethod(object.getClass(), methodName, parameterTypes);
+    }
+
+    /**
+     * Retrieve a method with arguments of a given class by its name.
      * @param declaringClass: The class that declares this method.
      * @param methodName: The name of this method.
      * @param parameterTypes: The parameter types of this method. Do not include if the method has no parameters.
