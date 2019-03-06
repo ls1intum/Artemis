@@ -87,11 +87,6 @@ public class AttributeTest extends StructuralTest {
             String expectedTypeName= expectedAttribute.getString("type");
             JSONArray expectedModifiers = expectedAttribute.has("modifiers") ? expectedAttribute.getJSONArray("modifiers") : new JSONArray();
 
-            // Filter out any eventual enum values, which are of the same type as the class.
-            if(expectedTypeName.equals(observedClass.getName())) {
-                continue;
-            }
-
             // We check for each expected attribute if the name and the type is right.
             boolean nameIsRight = false;
             boolean typeIsRight = false;
@@ -103,6 +98,7 @@ public class AttributeTest extends StructuralTest {
 
                 // If the names don't match, then proceed to the next observed attribute
                 if(!expectedName.equals(observedName)) {
+                    //TODO: we should also take wrong case and typos into account
                     continue;
                 } else {
                     nameIsRight = true;

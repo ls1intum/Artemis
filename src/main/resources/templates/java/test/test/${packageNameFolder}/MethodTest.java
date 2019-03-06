@@ -91,6 +91,8 @@ public class MethodTest extends StructuralTest {
 
                 // If the names don't match, then proceed to the next observed method
                 if(!expectedName.equals(observedName)) {
+                    //TODO: we should also take wrong case and typos into account
+                    //TODO: check if overloading is supported properly
                     continue;
                 } else {
                     nameIsRight = true;
