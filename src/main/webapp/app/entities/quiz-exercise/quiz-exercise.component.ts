@@ -1,6 +1,5 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs/Subscription';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { QuizExercise } from './quiz-exercise.model';
@@ -8,15 +7,14 @@ import { QuizExerciseService } from './quiz-exercise.service';
 import { AccountService } from '../../core';
 import { ActivatedRoute } from '@angular/router';
 import * as moment from 'moment';
-import { Course, CourseService } from '../course';
+import { CourseService } from '../course';
+import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
 
 @Component({
     selector: 'jhi-quiz-exercise',
     templateUrl: './quiz-exercise.component.html'
 })
-export class QuizExerciseComponent implements OnInit, OnDestroy {
-    private subscription: Subscription;
-    private eventSubscriber: Subscription;
+export class QuizExerciseComponent extends ExerciseComponent {
 
     QuizStatus = {
         HIDDEN: 'Hidden',
@@ -26,64 +24,41 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
         OPEN_FOR_PRACTICE: 'Open for Practice'
     };
 
-    quizExercises: QuizExercise[];
-    course: Course;
-    predicate: string;
-    reverse: boolean;
-    courseId: number;
+    @Input() quizExercises: QuizExercise[] = [];
 
     constructor(
-        private courseService: CourseService,
+        courseService: CourseService,
         private quizExerciseService: QuizExerciseService,
         private jhiAlertService: JhiAlertService,
-        private eventManager: JhiEventManager,
+        eventManager: JhiEventManager,
         private accountService: AccountService,
-        private route: ActivatedRoute
+        route: ActivatedRoute
     ) {
-        this.predicate = 'id';
-        this.reverse = true;
+        super(courseService, route, eventManager);
+
     }
 
-    ngOnInit() {
-        this.load();
-        this.registerChangeInQuizExercises();
-    }
-
-    load() {
-        this.subscription = this.route.params.subscribe(params => {
-            this.courseId = params['courseId'];
-            this.loadForCourse(this.courseId);
-        });
-    }
-
-    loadForCourse(courseId: number) {
-        this.courseService.find(this.courseId).subscribe(courseResponse => {
-            this.course = courseResponse.body;
-            this.quizExerciseService.findForCourse(courseId).subscribe(
-                (res: HttpResponse<QuizExercise[]>) => {
-                    this.quizExercises = res.body;
-                    // reconnect exercise with course
-                    this.quizExercises.forEach(quizExercise => {
-                        quizExercise.course = this.course;
-                    });
-                    this.setQuizExercisesStatus();
-                },
-                (res: HttpErrorResponse) => this.onError(res)
-            );
-        });
-    }
-
-    ngOnDestroy() {
-        this.subscription.unsubscribe();
-        this.eventManager.destroy(this.eventSubscriber);
+    protected loadExercises(): void {
+        this.quizExerciseService.findForCourse(this.courseId).subscribe(
+            (res: HttpResponse<QuizExercise[]>) => {
+                this.quizExercises = res.body;
+                // reconnect exercise with course
+                this.quizExercises.forEach(quizExercise => {
+                    quizExercise.course = this.course;
+                });
+                this.emitExerciseCount(this.quizExercises.length);
+                this.setQuizExercisesStatus();
+            },
+            (res: HttpErrorResponse) => this.onError(res)
+        );
     }
 
     trackId(index: number, item: QuizExercise) {
         return item.id;
     }
 
-    registerChangeInQuizExercises() {
-        this.eventSubscriber = this.eventManager.subscribe('quizExerciseListModification', () => this.load());
+    protected getChangeEventName(): string {
+        return 'quizExerciseListModification';
     }
 
     private onError(error: HttpErrorResponse) {
@@ -132,7 +107,7 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
     }
 
     setQuizExercisesStatus() {
-        this.quizExercises.forEach(quizExercise => (quizExercise.status = this.statusForQuiz(quizExercise)));
+        this.quizExercises.forEach(quizExercise => (quizExercise.status = this.quizExerciseService.statusForQuiz(quizExercise)));
     }
 
     /**
@@ -141,24 +116,6 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
      */
     userIsInstructor() {
         return this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
-    }
-
-    /**
-     * Method for determining the current status of a quiz exercise
-     * @param quizExercise The quiz exercise we want to determine the status of
-     * @returns {string} The status as a string
-     */
-    statusForQuiz(quizExercise: QuizExercise) {
-        if (quizExercise.isPlannedToStart && quizExercise.remainingTime != null) {
-            if (quizExercise.remainingTime <= 0) {
-                // the quiz is over
-                return quizExercise.isOpenForPractice ? this.QuizStatus.OPEN_FOR_PRACTICE : this.QuizStatus.CLOSED;
-            } else {
-                return this.QuizStatus.ACTIVE;
-            }
-        }
-        // the quiz hasn't started yet
-        return quizExercise.isVisibleBeforeStart ? this.QuizStatus.VISIBLE : this.QuizStatus.HIDDEN;
     }
 
     /**
@@ -187,7 +144,7 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
         this.quizExerciseService.find(quizExerciseId).subscribe((res: HttpResponse<QuizExercise>) => {
             const index = this.quizExercises.findIndex(quizExercise => quizExercise.id === quizExerciseId);
             const exercise = res.body;
-            exercise.status = this.statusForQuiz(exercise);
+            exercise.status = this.quizExerciseService.statusForQuiz(exercise);
             if (index === -1) {
                 this.quizExercises.push(exercise);
             } else {

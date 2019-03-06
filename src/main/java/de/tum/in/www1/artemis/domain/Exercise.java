@@ -89,7 +89,7 @@ public abstract class Exercise implements Serializable {
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
     @JsonIgnoreProperties("exercise")
     private Set<Participation> participations = new HashSet<>();
-
+    
     @OneToMany(mappedBy = "assessedExercise")
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
     @JsonIgnoreProperties("assessedExercise")
