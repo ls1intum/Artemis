@@ -390,7 +390,7 @@ public class ProgrammingExerciseResource {
         }
 
         URL solutionRepoURL = programmingExercise.getSolutionRepositoryUrlAsUrl();
-        URL exerciseRepoURL = programmingExercise.getBaseRepositoryUrlAsUrl();
+        URL exerciseRepoURL = programmingExercise.getTemplateRepositoryUrlAsUrl();
         URL testRepoURL = programmingExercise.getTestRepositoryUrlAsUrl();
 
         try {
