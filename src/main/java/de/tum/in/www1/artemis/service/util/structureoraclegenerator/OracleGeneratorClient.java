@@ -156,8 +156,8 @@ public class OracleGeneratorClient {
     private static Map<JavaClass, JavaClass> generateSolutionToTemplateMapping(Path solutionProjectPath, Path templateProjectPath) {
         List<File> templateFiles = retrieveJavaSourceFiles(templateProjectPath);
         List<File> solutionFiles = retrieveJavaSourceFiles(solutionProjectPath);
-        log.info("Template Java Files " + templateFiles);
-        log.info("Solution Java Files " + solutionFiles);
+        log.debug("Template Java Files " + templateFiles);
+        log.debug("Solution Java Files " + solutionFiles);
         List<JavaClass> templateClasses = getClassesFromFiles(templateFiles);
         List<JavaClass> solutionClasses = getClassesFromFiles(solutionFiles);
 

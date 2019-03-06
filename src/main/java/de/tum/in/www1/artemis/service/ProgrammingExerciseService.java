@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-
 import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
