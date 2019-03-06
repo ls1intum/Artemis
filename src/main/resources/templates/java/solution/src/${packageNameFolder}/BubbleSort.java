@@ -1,8 +1,6 @@
 package ${packageName};
 
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 public class BubbleSort implements SortStrategy {
 
@@ -17,5 +15,6 @@ public class BubbleSort implements SortStrategy {
 				}
 			}
 		}
+
 	}
 }
