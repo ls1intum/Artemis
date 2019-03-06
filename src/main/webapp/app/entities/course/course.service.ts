@@ -6,7 +6,7 @@ import { map } from 'rxjs/operators';
 
 import { SERVER_API_URL } from 'app/app.constants';
 import { createRequestOption } from 'app/shared';
-import {Course, StatsForInstructorDashboard, StatsForTutorDashboard} from './course.model';
+import { Course, StatsForInstructorDashboard, StatsForTutorDashboard } from './course.model';
 import { ProgrammingExercise } from '../programming-exercise/programming-exercise.model';
 import { ModelingExercise } from '../modeling-exercise/modeling-exercise.model';
 import { Participation } from '../participation/participation.model';

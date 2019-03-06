@@ -9,7 +9,7 @@ import { instructorCourseDashboardRoute } from './instructor-course-dashboard.ro
 import { InstructorCourseDashboardComponent } from './instructor-course-dashboard.component';
 import { MomentModule } from 'angular2-moment';
 import { ClipboardModule } from 'ngx-clipboard';
-import {TutorLeaderboardComponent} from 'app/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.component';
+import { TutorLeaderboardComponent } from 'app/instructor-course-dashboard/tutor-leaderboard/tutor-leaderboard.component';
 
 const ENTITY_STATES = instructorCourseDashboardRoute;
 

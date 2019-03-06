@@ -1,5 +1,5 @@
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
-import {Exercise, ExerciseType, ParticipationStatus, getIcon, getIconTooltip} from 'app/entities/exercise';
+import { Exercise, ExerciseType, ParticipationStatus, getIcon, getIconTooltip } from 'app/entities/exercise';
 import { JhiAlertService } from 'ng-jhipster';
 import { QuizExercise } from 'app/entities/quiz-exercise';
 import { InitializationState, Participation, ParticipationService } from 'app/entities/participation';
