@@ -9,7 +9,7 @@ export const instructorExerciseDashboardRoute: Routes = [
         component: InstructorExerciseDashboardComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR'],
-            pageTitle: 'arTeMiSApp.instructorExerciseDashboard.home.title'
+            pageTitle: 'arTeMiSApp.instructorExerciseDashboard.title'
         },
         canActivate: [UserRouteAccessService]
     }

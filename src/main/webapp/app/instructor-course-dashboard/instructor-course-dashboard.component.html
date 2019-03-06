@@ -2,8 +2,8 @@
     <jhi-alert></jhi-alert>
 
     <div class="course-info-bar">
-        <h3>Instructor Course Dashboard for {{course.title}}</h3>
-        <h4>{{course.description || "No description available"}}</h4>
+        <h3>{{"arTeMiSApp.instructorCourseDashboard.pageHeader" | translate}} {{course.title}}</h3>
+        <h4>{{course.description || ("arTeMiSApp.instructorCourseDashboard.noDescription" | translate)}}</h4>
     </div>
 
     <div class="container-fluid">
@@ -11,17 +11,17 @@
             <div class="col-md-8">
                 <div class="card">
                     <div class="card-header bg-primary text-white">
-                        <h4 class="card-title">Information about the course</h4>
+                        <h4 class="card-title">{{"arTeMiSApp.instructorCourseDashboard.informationAboutCourse" | translate}}</h4>
                     </div>
                     <div class="card-body">
                         <ul>
-                            <li><b>Students:</b> {{stats.numberOfStudents}}</li>
-                            <li><b>Submissions:</b> {{stats.numberOfSubmissions}}</li>
-                            <li><b>Tutors:</b> {{stats.numberOfTutors}}</li>
-                            <li><b>Assessments:</b> {{stats.numberOfAssessments}}
-                                ({{stats.numberOfSubmissions - stats.numberOfAssessments}} open)
+                            <li><b>{{"arTeMiSApp.instructorCourseDashboard.students" | translate}}:</b> {{stats.numberOfStudents}}</li>
+                            <li><b>{{"arTeMiSApp.instructorCourseDashboard.submissions" | translate}}:</b> {{stats.numberOfSubmissions}}</li>
+                            <li><b>{{"arTeMiSApp.instructorCourseDashboard.tutors" | translate}}:</b> {{stats.numberOfTutors}}</li>
+                            <li><b>{{"arTeMiSApp.instructorCourseDashboard.assessments" | translate}}:</b> {{stats.numberOfAssessments}}
+                                ({{stats.numberOfSubmissions - stats.numberOfAssessments}} {{"arTeMiSApp.instructorCourseDashboard.open" | translate}})
                             </li>
-                            <li><b>Complaints:</b> {{stats.numberOfComplaints}} ({{stats.numberOfOpenComplaints}} open)
+                            <li><b>{{"arTeMiSApp.instructorCourseDashboard.complaints" | translate}}:</b> {{stats.numberOfComplaints}} ({{stats.numberOfOpenComplaints}} {{"arTeMiSApp.instructorCourseDashboard.open" | translate}})
                             </li>
                         </ul>
                     </div>
@@ -39,20 +39,20 @@
 
         <div class="row table-responsive mt-3">
             <div *ngIf="course.exercises.length === 0">
-                There isn't any exercise for this course
+                {{"arTeMiSApp.instructorCourseDashboard.noExercise" | translate}}
             </div>
 
             <table class="table" *ngIf="course.exercises.length >= 0">
                 <thead>
                 <tr>
                     <th>#</th>
-                    <th>Exercise</th>
-                    <th>Due date</th>
-                    <th>Assessment due date</th>
-                    <th>Submissions</th>
-                    <th>Complaints</th>
-                    <th>Completed assessments</th>
-                    <th>Action</th>
+                    <th>{{"arTeMiSApp.instructorCourseDashboard.exercise" | translate}}</th>
+                    <th>{{"arTeMiSApp.instructorCourseDashboard.dueDate" | translate}}</th>
+                    <th>{{"arTeMiSApp.instructorCourseDashboard.assessmentDueDate" | translate}}</th>
+                    <th>{{"arTeMiSApp.instructorCourseDashboard.submissions" | translate}}</th>
+                    <th>{{"arTeMiSApp.instructorCourseDashboard.complaints" | translate}}</th>
+                    <th>{{"arTeMiSApp.instructorCourseDashboard.completedAssessments" | translate}}</th>
+                    <th>{{"arTeMiSApp.instructorCourseDashboard.action" | translate}}</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -82,7 +82,7 @@
                     <td>
                         <button class="btn btn-primary"
                                 routerLink="/course/{{course.id}}/exercise/{{exercise.id}}/instructor-dashboard">
-                            Exercise dashboard
+                            {{"arTeMiSApp.instructorCourseDashboard.exerciseDashboard" | translate}}
                         </button>
                     </td>
                 </tr>
@@ -90,7 +90,7 @@
             </table>
         </div>
 
-        <h2>Tutor Course Leaderboard</h2>
+        <h2>{{"arTeMiSApp.instructorCourseDashboard.tutorLeaderboard.courseTitle" | translate}}</h2>
 
         <jhi-tutor-leaderboard [tutorsData]="tutorLeaderboardData"></jhi-tutor-leaderboard>
     </div>

@@ -1,8 +1,29 @@
 {
     "arTeMiSApp": {
         "instructorCourseDashboard": {
-            "home": {
-                "title": "Instructor Course Dashboard"
+            "title": "Instructor Course Dashboard",
+            "pageHeader": "Instructor Course Dashboard for",
+            "informationAboutCourse": "Information about the course",
+            "noDescription": "No description available",
+            "students": "Students",
+            "submissions": "Submissions",
+            "tutors": "Tutors",
+            "assessments": "Assessments",
+            "open": "open",
+            "noExercise": "There isn't any exercise for this course",
+            "exercise": "Exercise",
+            "dueDate": "Due date",
+            "assessmentDueDate": "Assessment due date",
+            "complaints": "Complaints",
+            "completedAssessments": "Completed assessments",
+            "action": "Action",
+            "exerciseDashboard": "Exercise dashboard",
+            "tutorLeaderboard": {
+                "courseTitle": "Tutor Course Leaderboard",
+                "name": "Name",
+                "username": "Username",
+                "numberOfAssessments": "Number of assessments",
+                "numberOfComplaints": "Number of complaints"
             }
         }
     }

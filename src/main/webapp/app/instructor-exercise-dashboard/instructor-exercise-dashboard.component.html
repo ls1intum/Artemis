@@ -2,14 +2,14 @@
 
 <div *ngIf="exercise">
     <div class="course-info-bar">
-        <h3>Instructor Exercise Dashboard for {{exercise.title}}</h3>
-        <h4>{{exercise.problemStatement || "No problem statement available"}}</h4>
+        <h3>{{"arTeMiSApp.instructorExerciseDashboard.pageHeader" | translate}} {{exercise.title}}</h3>
+        <h4>{{exercise.problemStatement || ("arTeMiSApp.instructorExerciseDashboard.noProblemStatement" | translate)}}</h4>
     </div>
 
     <div class="container-fluid">
         <div class="row">
             <div class="col-2">
-                <button class="btn btn-secondary" [routerLink]="'/course/' + courseId + '/instructor-dashboard'">&larr; Back</button>
+                <button class="btn btn-secondary" [routerLink]="'/course/' + courseId + '/instructor-dashboard'">&larr; {{"arTeMiSApp.instructorExerciseDashboard.pageHeader" | translate}}</button>
             </div>
         </div>
 
@@ -17,14 +17,14 @@
             <div class="col-md-8">
                 <div class="card">
                     <div class="card-header bg-primary text-white">
-                        <h4 class="card-title">Information about the exercise</h4>
+                        <h4 class="card-title">{{"arTeMiSApp.instructorExerciseDashboard.informationAboutExercise" | translate}}</h4>
                     </div>
                     <div class="card-body">
                         <ul>
-                            <li><b>Exercise due date:</b> {{exercise.dueDate | date: 'medium'}}</li>
-                            <li><b>Submissions:</b> {{exercise.participations.length}}</li>
-                            <li><b>Assessments due date:</b> {{exercise.assessmentDueDate | date: 'medium'}}</li>
-                            <li><b>Assessments:</b> {{numberOfAssessments}} ({{exercise.participations.length - numberOfAssessments}} open)</li>
+                            <li><b>{{"arTeMiSApp.instructorExerciseDashboard.exerciseDueDate" | translate}}:</b> {{exercise.dueDate | date: 'medium'}}</li>
+                            <li><b>{{"arTeMiSApp.instructorExerciseDashboard.submissions" | translate}}:</b> {{exercise.participations.length}}</li>
+                            <li><b>{{"arTeMiSApp.instructorExerciseDashboard.assessmentDueDate" | translate}}:</b> {{exercise.assessmentDueDate | date: 'medium'}}</li>
+                            <li><b>{{"arTeMiSApp.instructorExerciseDashboard.assessments" | translate}}:</b> {{numberOfAssessments}} ({{exercise.participations.length - numberOfAssessments}} {{"arTeMiSApp.instructorExerciseDashboard.open" | translate}})</li>
                         </ul>
                     </div>
                 </div>
@@ -39,7 +39,7 @@
             </div>
         </div>
 
-        <h2>Tutor Leaderboard for this Exercise</h2>
+        <h2>{{"arTeMiSApp.instructorExerciseDashboard.leaderboardTitle" | translate}}</h2>
 
         <jhi-tutor-leaderboard [tutorsData]="tutorLeaderboardData"></jhi-tutor-leaderboard>
     </div>
