@@ -161,11 +161,15 @@ public class TextSubmissionService {
      * @return a list of text submissions for the given exercise id
      */
     public List<TextSubmission> getTextSubmissionsByExerciseId(Long exerciseId, boolean submittedOnly) {
-        List<Participation> participations = participationRepository.findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(exerciseId, submittedOnly);
+        List<Participation> participations = participationRepository.findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(exerciseId);
         List<TextSubmission> textSubmissions = new ArrayList<>();
 
         for (Participation participation : participations) {
             TextSubmission textSubmission = participation.findLatestTextSubmission();
+
+            if (submittedOnly && textSubmission.isSubmitted() != Boolean.TRUE) {
+                continue;
+            }
 
             if (textSubmission.getResult() != null) {
                 textSubmission.getResult().getAssessor().setGroups(null);

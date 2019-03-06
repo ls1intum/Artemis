@@ -58,10 +58,6 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
     @Query("select distinct participation from Participation participation left join fetch participation.results where participation.buildPlanId is not null and participation.exercise.course.onlineCourse = false")
     List<Participation> findAllWithBuildPlanId();
 
-    @Query("SELECT DISTINCT participation FROM Participation participation " +
-        "LEFT JOIN FETCH participation.submissions s " +
-        "LEFT JOIN FETCH s.result r " +
-        "LEFT JOIN FETCH r.assessor " +
-        "WHERE participation.exercise.id = :#{#exerciseId} AND s.submitted = :#{#submittedOnly}")
-    List<Participation> findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(long exerciseId, boolean submittedOnly);
+    @Query("SELECT DISTINCT participation FROM Participation participation LEFT JOIN FETCH participation.submissions s LEFT JOIN FETCH s.result r LEFT JOIN FETCH r.assessor WHERE participation.exercise.id = :#{#exerciseId}")
+    List<Participation> findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(@Param("exerciseId") long exerciseId);
 }
