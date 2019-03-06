@@ -2,7 +2,10 @@ package de.tum.in.www1.artemis.service.util.structureoraclegenerator;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.thoughtworks.qdox.model.*;
+import com.thoughtworks.qdox.model.JavaClass;
+import com.thoughtworks.qdox.model.JavaConstructor;
+import com.thoughtworks.qdox.model.JavaField;
+import com.thoughtworks.qdox.model.JavaMethod;
 
 import java.util.HashSet;
 

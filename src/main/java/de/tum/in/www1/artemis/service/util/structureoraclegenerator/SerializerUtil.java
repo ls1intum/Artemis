@@ -2,9 +2,13 @@ package de.tum.in.www1.artemis.service.util.structureoraclegenerator;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import com.thoughtworks.qdox.model.*;
+import com.thoughtworks.qdox.model.JavaField;
+import com.thoughtworks.qdox.model.JavaMember;
+import com.thoughtworks.qdox.model.JavaMethod;
+import com.thoughtworks.qdox.model.JavaParameter;
 
-import java.util.*;
+import java.util.List;
+import java.util.Set;
 
 /**
  * This class contains helper methods for serializing information on structural elements that we deal with repeatedly
