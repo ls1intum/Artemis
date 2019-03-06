@@ -19,38 +19,31 @@ import {
 import { SortByModule } from 'app/components/pipes';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 
-const ENTITY_STATES = [
-    ...modelingExerciseRoute,
-    ...modelingExercisePopupRoute,
-];
+const ENTITY_STATES = [...modelingExerciseRoute, ...modelingExercisePopupRoute];
 
 @NgModule({
-    imports: [
-        ArTEMiSSharedModule,
-        RouterModule.forChild(ENTITY_STATES),
-        SortByModule,
-        FormDateTimePickerModule,
-    ],
+    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, FormDateTimePickerModule],
     declarations: [
         ModelingExerciseComponent,
         ModelingExerciseDetailComponent,
         ModelingExerciseDialogComponent,
         ModelingExerciseDeleteDialogComponent,
         ModelingExercisePopupComponent,
-        ModelingExerciseDeletePopupComponent,
+        ModelingExerciseDeletePopupComponent
     ],
     entryComponents: [
         ModelingExerciseComponent,
         ModelingExerciseDialogComponent,
         ModelingExercisePopupComponent,
         ModelingExerciseDeleteDialogComponent,
-        ModelingExerciseDeletePopupComponent,
+        ModelingExerciseDeletePopupComponent
     ],
-    providers: [
+  providers: [
         ModelingExerciseService,
         ModelingExercisePopupService,
         { provide: JhiLanguageService, useClass: JhiLanguageService }
-    ],
+  ],
+    exports: [ModelingExerciseComponent],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArTEMiSModelingExerciseModule {

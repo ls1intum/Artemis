@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis;
 
 import de.tum.in.www1.artemis.config.ApplicationProperties;
 import de.tum.in.www1.artemis.config.DefaultProfileUtil;
+import de.tum.in.www1.artemis.service.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.scheduled.AutomaticBuildPlanCleanupService;
 import de.tum.in.www1.artemis.service.scheduled.AutomaticSubmissionService;
 import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
@@ -31,12 +32,14 @@ public class ArTEMiSApp {
     private final QuizScheduleService quizScheduleService;
     private final AutomaticSubmissionService automaticSubmissionService;
     private final AutomaticBuildPlanCleanupService automaticBuildPlanCleanupService;
+    private final ProgrammingExerciseService programmingExerciseService;
 
-    public ArTEMiSApp(Environment env, QuizScheduleService quizScheduleService, AutomaticSubmissionService automaticSubmissionService, AutomaticBuildPlanCleanupService automaticBuildPlanCleanupService) {
+    public ArTEMiSApp(Environment env, QuizScheduleService quizScheduleService, AutomaticSubmissionService automaticSubmissionService, AutomaticBuildPlanCleanupService automaticBuildPlanCleanupService, ProgrammingExerciseService programmingExerciseService) {
         this.env = env;
         this.quizScheduleService = quizScheduleService;
         this.automaticSubmissionService = automaticSubmissionService;
         this.automaticBuildPlanCleanupService = automaticBuildPlanCleanupService;
+        this.programmingExerciseService = programmingExerciseService;
     }
 
     /**
@@ -57,6 +60,8 @@ public class ArTEMiSApp {
             log.error("You have misconfigured your application! It should not " +
                 "run with both the 'dev' and 'cloud' profiles at the same time.");
         }
+
+        programmingExerciseService.migrateAllProgrammingExercises();
 
         // activate Quiz Schedule Service
         quizScheduleService.startSchedule(3 * 1000);                          //every 3 seconds

@@ -4,6 +4,7 @@ import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
@@ -29,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
 import static de.tum.in.www1.artemis.config.Constants.TEST_CASE_CHANGED_API_PATH;
 
 @Service
@@ -109,6 +111,29 @@ public class ProgrammingExerciseService {
         versionControlService.get().createRepository(projectKey, testRepoName, null); // Create tests repository
         versionControlService.get().createRepository(projectKey, solutionRepoName, null); // Create solution repository
 
+        Participation templateParticipation = programmingExercise.getTemplateParticipation();
+        if (templateParticipation == null) {
+            templateParticipation = new Participation();
+            programmingExercise.setTemplateParticipation(templateParticipation);
+        }
+        Participation solutionParticipation = programmingExercise.getSolutionParticipation();
+        if (solutionParticipation == null) {
+            solutionParticipation = new Participation();
+            programmingExercise.setSolutionParticipation(solutionParticipation);
+        }
+
+        initParticipations(programmingExercise);
+
+        templateParticipation.setBuildPlanId(projectKey + "-BASE"); // Set build plan id to newly created BaseBuild plan
+        templateParticipation.setRepositoryUrl(versionControlService.get().getCloneURL(projectKey, exerciseRepoName).toString());
+        solutionParticipation.setBuildPlanId(projectKey + "-SOLUTION");
+        solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneURL(projectKey, solutionRepoName).toString());
+        programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneURL(projectKey, testRepoName).toString());
+
+        // The creation of the webhooks must occur before the initial push to ensure that the initial commit creates a result
+        versionControlService.get().addWebHook(templateParticipation.getRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + templateParticipation.getId(), "ArTEMiS WebHook");
+        versionControlService.get().addWebHook(solutionParticipation.getRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + solutionParticipation.getId(), "ArTEMiS WebHook");
+
         URL exerciseRepoUrl = versionControlService.get().getCloneURL(projectKey, exerciseRepoName);
         URL testsRepoUrl = versionControlService.get().getCloneURL(projectKey, testRepoName);
         URL solutionRepoUrl = versionControlService.get().getCloneURL(projectKey, solutionRepoName);
@@ -147,16 +172,13 @@ public class ProgrammingExerciseService {
         continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, "BASE", exerciseRepoName, testRepoName); // plan for the exercise (students)
         continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, "SOLUTION", solutionRepoName, testRepoName); // plan for the solution (instructors) with solution repository
 
-        programmingExercise.setBaseBuildPlanId(projectKey + "-BASE"); // Set build plan id to newly created BaseBuild plan
-        programmingExercise.setBaseRepositoryUrl(versionControlService.get().getCloneURL(projectKey, exerciseRepoName).toString());
-        programmingExercise.setSolutionBuildPlanId(projectKey + "-SOLUTION");
-        programmingExercise.setSolutionRepositoryUrl(versionControlService.get().getCloneURL(projectKey, solutionRepoName).toString());
-        programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneURL(projectKey, testRepoName).toString());
+        // save to get the id required for the webhook
+        participationRepository.save(templateParticipation);
+        participationRepository.save(solutionParticipation);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        //save to get the id required for the webhook
-        ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
         versionControlService.get().addWebHook(testsRepoUrl, ARTEMIS_BASE_URL + TEST_CASE_CHANGED_API_PATH + programmingExercise.getId(), "ArTEMiS Tests WebHook");
-        return result;
+        return programmingExercise;
     }
 
     // Copy template and push, if no file is in the directory
@@ -190,5 +212,85 @@ public class ProgrammingExerciseService {
             gitService.commitAndPush(repository, templateName + "-Template pushed by ArTEMiS");
             repository.setFiles(null); // Clear cache to avoid multiple commits when ArTEMiS server is not restarted between attempts
         }
+    }
+
+    /**
+     * migrates the programming exercises to use templateParticipation and solutionParticipation
+     */
+    public void migrateAllProgrammingExercises() {
+
+        List<ProgrammingExercise> allProgrammingExercises = programmingExerciseRepository.findAll();
+
+        for (ProgrammingExercise programmingExercise : allProgrammingExercises) {
+            if (programmingExercise.getTemplateParticipation() == null) {
+                Participation templateParticipation = new Participation();
+                templateParticipation.setRepositoryUrl(programmingExercise.getTemplateRepositoryUrlOld());
+                templateParticipation.setBuildPlanId(programmingExercise.getTemplateBuildPlanIdOld());
+                programmingExercise.setTemplateParticipation(templateParticipation);
+                programmingExercise.setTemplateRepositoryUrlOld(null);
+                programmingExercise.setTemplateBuildPlanIdOld(null);
+                participationRepository.save(templateParticipation);
+                programmingExerciseRepository.save(programmingExercise);
+            }
+            if (programmingExercise.getSolutionParticipation() == null) {
+                Participation solutionParticipation = new Participation();
+                solutionParticipation.setRepositoryUrl(programmingExercise.getSolutionRepositoryUrlOld());
+                solutionParticipation.setBuildPlanId(programmingExercise.getSolutionBuildPlanIdOld());
+                programmingExercise.setSolutionParticipation(solutionParticipation);
+                programmingExercise.setSolutionRepositoryUrlOld(null);
+                programmingExercise.setSolutionBuildPlanIdOld(null);
+                participationRepository.save(solutionParticipation);
+                programmingExerciseRepository.save(programmingExercise);
+            }
+        }
+    }
+
+    /**
+     * Find the ProgrammingExercise where the given Participation is the template Participation
+     *
+     * @param participation The template participation
+     * @return The ProgrammingExercise where the given Participation is the template Participation
+     */
+    public ProgrammingExercise getExerciseForTemplateParticipation(Participation participation) {
+        return programmingExerciseRepository.findOneByTemplateParticipationId(participation.getId());
+    }
+
+    /**
+     * Find the ProgrammingExercise where the given Participation is the solution Participation
+     *
+     * @param participation The solution participation
+     * @return The ProgrammingExercise where the given Participation is the solution Participation
+     */
+    public ProgrammingExercise getExerciseForSolutionParticipation(Participation participation) {
+        return programmingExerciseRepository.findOneBySolutionParticipationId(participation.getId());
+    }
+
+    /**
+     * This methods sets the values (initialization date and initialization state) of the template and solution participation
+     *
+     * @param programmingExercise The programming exercise
+     */
+    public void initParticipations(ProgrammingExercise programmingExercise) {
+
+        Participation solutionParticipation = programmingExercise.getSolutionParticipation();
+        Participation templateParticipation = programmingExercise.getTemplateParticipation();
+
+        solutionParticipation.setInitializationState(InitializationState.INITIALIZED);
+        templateParticipation.setInitializationState(InitializationState.INITIALIZED);
+        solutionParticipation.setInitializationDate(ZonedDateTime.now());
+        templateParticipation.setInitializationDate(ZonedDateTime.now());
+    }
+
+    /**
+     * This method saves the participations of the programming xercise
+     *
+     * @param programmingExercise The programming exercise
+     */
+    public void saveParticipations(ProgrammingExercise programmingExercise) {
+        Participation solutionParticipation = programmingExercise.getSolutionParticipation();
+        Participation templateParticipation = programmingExercise.getTemplateParticipation();
+
+        participationRepository.save(solutionParticipation);
+        participationRepository.save(templateParticipation);
     }
 }

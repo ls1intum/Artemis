@@ -106,7 +106,7 @@ public class ModelingSubmissionService {
     }
 
     /**
-     * Checks if zhe model for given exerciseId, studentId and model modelId exists and returns it if found.
+     * Checks if the model for given exerciseId, studentId and model modelId exists and returns it if found.
      *
      * @param exerciseId    the exercise modelId for which to find the model
      * @param studentId     the student modelId for which to find the model
