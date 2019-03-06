@@ -30,6 +30,10 @@ export class ProgrammingExerciseService {
             .map((res: EntityResponseType) => this.exerciseService.convertDateFromServer(res));
     }
 
+    generateStructureOracle(exerciseId: number) {
+        return this.http.get(this.resourceUrl + '/' + exerciseId + '/generate-tests', { responseType: 'text' });
+    }
+
     update(programmingExercise: ProgrammingExercise): Observable<EntityResponseType> {
         const copy = this.exerciseService.convertDateFromClient(programmingExercise);
         return this.http

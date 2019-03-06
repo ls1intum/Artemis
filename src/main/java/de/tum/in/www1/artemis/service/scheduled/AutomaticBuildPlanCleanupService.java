@@ -36,33 +36,6 @@ public class AutomaticBuildPlanCleanupService {
         this.participationService = participationService;
     }
 
-    //TODO: before we deploy this to production, we need to make sure the scheduler is deactivated
-    private static ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
-    static {
-        threadPoolTaskScheduler.setThreadNamePrefix("AutomaticBuildPlanCleanupService");
-        threadPoolTaskScheduler.setPoolSize(1);
-        threadPoolTaskScheduler.initialize();
-    }
-
-    private ScheduledFuture scheduledFuture;
-
-    /**
-     * start scheduler
-     */
-    public void startSchedule(long delayInMillis) {
-        log.info("AutomaticBuildPlanCleanupService was started to run repeatedly with {} second gaps.", delayInMillis / 1000.0);
-        scheduledFuture = threadPoolTaskScheduler.scheduleWithFixedDelay(this::cleanupBuildPlans, delayInMillis);
-    }
-
-    /**
-     * stop scheduler (doesn't interrupt if running)
-     */
-    public void stopSchedule() {
-        if (scheduledFuture != null) {
-            scheduledFuture.cancel(false);
-        }
-    }
-
     @Scheduled(cron="0 0 3 * * *") //execute this every night at 3:00:00 am
     @Transactional
     public void cleanupBuildPlans() {
@@ -85,6 +58,11 @@ public class AutomaticBuildPlanCleanupService {
         for (Participation participation : allParticipationsWithBuildPlanId) {
 
             if (participation.getBuildPlanId() == null) {
+                // already cleaned up
+                continue;
+            }
+            if (participation.getStudent() == null) {
+                // we only want to clean up build plans of students
                 continue;
             }
             Result result = participation.findLatestResult();
@@ -114,15 +92,20 @@ public class AutomaticBuildPlanCleanupService {
         }
         log.info("Found " + allParticipationsWithBuildPlanId.size() + " participations with build plans in " + (System.currentTimeMillis() - start) + " ms execution time");
         log.info("Found " + participationsWithBuildPlanToDelete.size() + " old build plans to delete");
-        log.info("Found " + countNoResultAfter14Days + " build plans without results 14 days after initialization");
-        log.info("Found " + countSuccessfulLatestResultAfter7Days + " build plans with successful latest result is older than 7 days");
-        log.info("Found " + countUnsuccessfulLatestResultAfter14Days + " build plans with unsuccessful latest result is older than 14 days");
+        log.info("  Found " + countNoResultAfter14Days + " build plans without results 14 days after initialization");
+        log.info("  Found " + countSuccessfulLatestResultAfter7Days + " build plans with successful latest result is older than 7 days");
+        log.info("  Found " + countUnsuccessfulLatestResultAfter14Days + " build plans with unsuccessful latest result is older than 14 days");
+
         List<String> buildPlanIds = participationsWithBuildPlanToDelete.stream().map(Participation::getBuildPlanId).collect(Collectors.toList());
         log.info("Build plans: " + buildPlanIds);
 
         for (Participation participation : participationsWithBuildPlanToDelete) {
-            //TODO: the actual cleanup is deactivated for now, we will activate it soon after some initial tests.
-//            participationService.cleanupBuildPlan(participation);
+            try {
+                participationService.cleanupBuildPlan(participation);
+            }
+            catch (Exception ex) {
+                log.error("Could not cleanup build plan in participation " + participation.getId(), ex);
+            }
         }
     }
 }
