@@ -37,6 +37,11 @@ public final class Constants {
 
     public static final double COMPASS_SCORE_EQUALITY_THRESHOLD = 0.0001;
 
+    //NOTE: the following values for programming exercises are hard-coded at the moment
+    public static final String TEST_REPO_NAME = "tests";
+    public static final String ASSIGNMENT_REPO_NAME = "Assignment";
+    public static final String ASSIGNMENT_REPO_PATH = "assignment";
+
     private Constants() {
     }
 }
