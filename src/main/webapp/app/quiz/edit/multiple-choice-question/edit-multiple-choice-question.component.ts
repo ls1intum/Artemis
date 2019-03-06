@@ -42,7 +42,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
     currentAnswerOption: AnswerOption;
 
     showPreview = false;
-    
+
     hintCommand = new HintCommand();
     correctCommand = new CorrectOptionCommand();
     incorrectCommand = new IncorrectOptionCommand();
@@ -126,7 +126,20 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
 
     }
 
+   checkIfQuestionHasOneCorrectOption(){
+       if (!this.question.answerOptions.some(answeroption => answeroption.isCorrect)){
+            this.question.hasCorrectOption = false;
+            console.log('ich habe nichts richtiges');
+            this.prepareForSave();
+       } else {
+           this.question.hasCorrectOption = true;
+           console.log('ich habe alles richtig');
+           this.prepareForSave();
+       }
+    }
+
     private changesInMarkdown(value: boolean){
+        this.checkIfQuestionHasOneCorrectOption();
         this.question.contentChanged = value;
     }
 

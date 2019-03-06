@@ -8,4 +8,6 @@ export class MultipleChoiceQuestion extends Question {
     constructor() {
         super(QuestionType.MULTIPLE_CHOICE);
     }
+
+    public hasCorrectOption: boolean;
 }

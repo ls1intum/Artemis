@@ -88,6 +88,8 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     isSaving = false;
     isTrue = true;
 
+    mcHasCorrectAnswerOption = false;
+
     /** Status Options **/
     statusOptionsVisible: Option[] = [new Option(false, 'Hidden'), new Option(true, 'Visible')];
     statusOptionsPractice: Option[] = [new Option(false, 'Closed'), new Option(true, 'Open for Practice')];
@@ -503,7 +505,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         const areAllQuestionsValid = this.quizExercise.questions.every(function(question) {
             if (question.type === QuestionType.MULTIPLE_CHOICE) {
                 const mcQuestion = question as MultipleChoiceQuestion;
-                return question.title && question.title !== '' && question.title.length < 250 && mcQuestion.answerOptions.some(answerOption => answerOption.isCorrect);
+                return question.title && question.title !== '' && question.title.length < 250 && !mcQuestion.hasCorrectOption;
             } else if (question.type === QuestionType.DRAG_AND_DROP) {
                 const dndQuestion = question as DragAndDropQuestion;
                 return (
@@ -598,7 +600,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
             }
             if (question.type === QuestionType.MULTIPLE_CHOICE) {
                 const mcQuestion = question as MultipleChoiceQuestion;
-                if (!mcQuestion.answerOptions.some(answerOption => answerOption.isCorrect)) {
+                if (mcQuestion.hasCorrectOption) {
                     reasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionCorrectAnswerOption',
                         translateValues: { index: index + 1 }
