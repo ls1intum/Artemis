@@ -92,7 +92,7 @@ public class OracleGeneratorClient {
 
             // Initialize the types diff containing various properties as well as methods.
             TypesDiff typesDiff = new TypesDiff(solutionType, templateType);
-            if(typesDiff.typesEqual) {
+            if(typesDiff.typesAreEqual()) {
                 continue;
             }
 
@@ -108,10 +108,9 @@ public class OracleGeneratorClient {
                 diffJSON.add("attributes", typesDiffSerializer.serializeAttributes());
             }
 
-            //TODO: handle enumValues and generate them as follows
-            //        "enumValues": [
-            //        	"Auto", "Lkw", "Panzer"
-            //        ],
+            if (!typesDiff.enumsDiff.isEmpty()) {
+                diffJSON.add("enumValues", typesDiffSerializer.serializeEnums());
+            }
 
             if(!typesDiff.constructorsDiff.isEmpty()) {
                 diffJSON.add("constructors", typesDiffSerializer.serializeConstructors());

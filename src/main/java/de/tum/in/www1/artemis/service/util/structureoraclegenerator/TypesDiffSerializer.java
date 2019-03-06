@@ -34,10 +34,10 @@ public class TypesDiffSerializer {
     public JsonObject serializeHierarchy() {
         JsonObject hierarchyJSON = new JsonObject();
 
-        hierarchyJSON.addProperty("name", typesDiff.name);
-        hierarchyJSON.addProperty("package", typesDiff.packageName);
+        hierarchyJSON.addProperty("name", typesDiff.getName());
+        hierarchyJSON.addProperty("package", typesDiff.getPackageName());
 
-        if(typesDiff.isInterface) {
+        if(typesDiff.isInterfaceDifferent) {
             hierarchyJSON.addProperty("isInterface", true);
         }
         if(typesDiff.isEnumDifferent) {
@@ -46,13 +46,13 @@ public class TypesDiffSerializer {
         if(typesDiff.isAbstractDifferent) {
             hierarchyJSON.addProperty("isAbstract", true);
         }
-        if(!typesDiff.superClassName.isEmpty()) {
-            hierarchyJSON.addProperty("superclass", typesDiff.superClassName);
+        if(!typesDiff.superClassNameDiff.isEmpty()) {
+            hierarchyJSON.addProperty("superclass", typesDiff.superClassNameDiff);
         }
-        if(typesDiff.superInterfaces.size() > 0) {
+        if(typesDiff.superInterfacesDiff.size() > 0) {
             JsonArray superInterfaces = new JsonArray();
 
-            for(JavaClass superInterface : typesDiff.superInterfaces) {
+            for(JavaClass superInterface : typesDiff.superInterfacesDiff) {
                 superInterfaces.add(superInterface.getSimpleName());
             }
             hierarchyJSON.add("interfaces", superInterfaces);
@@ -78,6 +78,20 @@ public class TypesDiffSerializer {
         }
 
         return attributesJSON;
+    }
+
+    /**
+     * This method is used to serialize the enums of a class into a JSON array containing each enum value:
+     * @return The JSON array consisting of JSON objects representation for each enum defined in the classes diff.
+     */
+    public JsonArray serializeEnums() {
+        JsonArray enumsJSON = new JsonArray();
+
+        for(JavaField javaEnum : typesDiff.enumsDiff) {
+            enumsJSON.add(javaEnum.getName());
+        }
+
+        return enumsJSON;
     }
 
     /**

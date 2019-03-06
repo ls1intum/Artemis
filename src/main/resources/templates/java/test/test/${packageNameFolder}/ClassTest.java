@@ -75,7 +75,7 @@ public class ClassTest extends StructuralTest {
                 (observedClass.isEnum()));
         }
 
-        if (expectedClassPropertiesJSON.has("isInterface")) {
+        if (expectedClassPropertiesJSON.has("isInterfaceDifferent")) {
             assertTrue("Problem: the type '" + expectedClassName + "' is not an interface as it is expected.",
                 Modifier.isInterface(observedClass.getModifiers()));
         }

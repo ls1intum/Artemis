@@ -120,7 +120,7 @@ public class AttributeTest extends StructuralTest {
                 }
             }
 
-            String expectedAttributeInformation = "the expected attribute'" + expectedName + "' of the class '" + expectedClassName;
+            String expectedAttributeInformation = "the expected attribute '" + expectedName + "' of the class '" + expectedClassName + "'";
 
             assertTrue("Problem: the name of " + expectedAttributeInformation + " is not implemented as expected.",
                 nameIsRight);

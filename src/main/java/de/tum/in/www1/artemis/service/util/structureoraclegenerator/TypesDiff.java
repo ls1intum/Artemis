@@ -25,34 +25,42 @@ public class TypesDiff {
 
     private JavaClass solutionClass;
     private JavaClass templateClass;
-    protected String name;
-	protected String packageName;
-	protected boolean isInterface;
-	protected boolean isEnumDifferent;
-	protected boolean isAbstractDifferent;
-	protected String superClassName;
+    private String name;
+    private String packageName;
 
-	protected List<JavaClass> superInterfaces;
-	protected List<JavaMethod> methodsDiff;
-    protected List<JavaField> attributesDiff;
-    protected List<JavaConstructor> constructorsDiff;
+    boolean isInterfaceDifferent;
+    boolean isEnumDifferent;
+    boolean isAbstractDifferent;
+    String superClassNameDiff;
 
-	protected boolean typesEqual;
+    List<JavaClass> superInterfacesDiff;
+    List<JavaMethod> methodsDiff;
+    List<JavaField> attributesDiff;
+    List<JavaField> enumsDiff;
+    List<JavaConstructor> constructorsDiff;
 
 	public TypesDiff(JavaClass solutionClass, JavaClass templateClass) {
 	    this.solutionClass = solutionClass;
 	    this.templateClass = templateClass;
         this.name = generateName();
 		this.packageName = generatePackageName();
-		this.isInterface = generateInterfaceStereotype();
-		this.isEnumDifferent = generateEnumStereotype();
-		this.isAbstractDifferent = generateAbstractModifier();
-		this.superClassName = generateSuperClassName();
-		this.superInterfaces = generateSuperInterfaces();
+		this.isInterfaceDifferent = isInterfaceDifferent();
+		this.isEnumDifferent = isEnumDifferent();
+		this.isAbstractDifferent = isAbstractDifferent();
+		this.superClassNameDiff = generateSuperClassName();
+		this.superInterfacesDiff = generateSuperInterfaces();
 		this.attributesDiff = generateAttributesDiff();
+		this.enumsDiff = generateEnumsDiff();
 		this.constructorsDiff = generateConstructorsDiff();
 		this.methodsDiff = generateMethodsDiff();
-		this.typesEqual = areTypesEqual();
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getPackageName() {
+        return packageName;
     }
 
     /**
@@ -79,7 +87,7 @@ public class TypesDiff {
      * @return True, if the solution type is an interface and the template is not, false if they are both interfaces
      * or not.
      */
-	private boolean generateInterfaceStereotype() {
+	private boolean isInterfaceDifferent() {
 	    return (templateClass == null ? solutionClass.isInterface() : (solutionClass.isInterface() && !templateClass.isInterface()));
 	}
 
@@ -89,7 +97,7 @@ public class TypesDiff {
      * @return True, if the solution type is an enum and the template is not, false if they are both enums
      * or not.
      */
-	private boolean generateEnumStereotype() {
+	private boolean isEnumDifferent() {
 	    return (templateClass == null ? solutionClass.isEnum() : (solutionClass.isEnum() && !templateClass.isEnum()));
 	}
 
@@ -99,7 +107,7 @@ public class TypesDiff {
      * @return True, if the solution type is abstract and the template is not, false if they are both abstract
      * or not abstract.
      */
-	private boolean generateAbstractModifier() {
+	private boolean isAbstractDifferent() {
 	    return (templateClass == null ? solutionClass.isAbstract() : (solutionClass.isAbstract() && !templateClass.isAbstract()));
 	}
 
@@ -146,8 +154,8 @@ public class TypesDiff {
      */
 	private List<JavaClass> generateSuperInterfaces() {
 
-        // Create an empty list of interfaces for the super interfaces diff and deep-copy the super interfaces of the solution type in it.
-        List<JavaClass> superInterfacesDiff = solutionClass.getInterfaces();
+        // Create an empty list of interfaces for the super interfaces diff
+        List<JavaClass> superInterfacesDiff = new ArrayList<>(solutionClass.getInterfaces());
 
 		if(templateClass != null) {
 
@@ -172,23 +180,41 @@ public class TypesDiff {
      * @return A set of attributes defined in the solution type but not in the template type.
      */
     private List<JavaField> generateAttributesDiff() {
-        // Create an empty set of attribute for the attributes diff and deep-copy the methods of the solution type in it.
-        List<JavaField> attributesDiff = solutionClass.getFields();
-        attributesDiff.removeIf(field -> field.getName().equals(solutionClass.getName()));
-
+        // Create an empty set of attribute for the attributes diff
+        List<JavaField> attributesDiff = new ArrayList<>(solutionClass.getFields());
+        // do not consider enum values as attributes
+        attributesDiff.removeIf(JavaField::isEnumConstant);
         // If the template is non-existent, then the attributes diff consists of all the attributes of the solution type.
-        if(templateClass != null) {
+        removeTemplateElements(attributesDiff);
+        return attributesDiff;
+    }
 
-            // Check all the attributes in the template type if they match to the ones in the solution type
+    /**
+     * This method generates the enums diff of the solution and template type, e.g. the enums defined in the
+     * solution type but not in the template type.
+     * @return A set of enums defined in the solution type but not in the template type.
+     */
+    private List<JavaField> generateEnumsDiff() {
+        // Create an empty set of enums for the enums diff
+        List<JavaField> enumsDiff = new ArrayList<>(solutionClass.getFields());
+        // do not consider non enum fields
+        enumsDiff.removeIf(field -> !field.isEnumConstant());
+        removeTemplateElements(enumsDiff);
+        return enumsDiff;
+    }
+
+    private void removeTemplateElements(List<JavaField> fieldDiff) {
+        // If the template is non-existent, then the enum diff consists of all the attributes of the solution type.
+        if (templateClass != null) {
+
+            // Check all the enums in the template type if they match to the ones in the solution type
             // and remove them from the diff, if that's the case.
-            for (JavaField templateAttribute : templateClass.getFields()) {
+            for (JavaField templateField : templateClass.getFields()) {
 
-                // The fields are uniquely identified by their names.
-                attributesDiff.removeIf(solutionAttribute -> solutionAttribute.getName().equals(templateAttribute.getName()));
+                // The enums are uniquely identified by their names.
+                fieldDiff.removeIf(solutionField -> solutionField.getName().equals(templateField.getName()));
             }
         }
-
-        return attributesDiff;
     }
 
     /**
@@ -198,7 +224,7 @@ public class TypesDiff {
      */
     private List<JavaConstructor> generateConstructorsDiff() {
 
-        List<JavaConstructor> constructorsDiff = solutionClass.getConstructors();
+        List<JavaConstructor> constructorsDiff = new ArrayList<>(solutionClass.getConstructors());
 
         // If the template is non-existent, then the constructors diff consists of all the constructors of the solution type.
         if(templateClass != null) {
@@ -221,7 +247,7 @@ public class TypesDiff {
      * @return A set of methods defined in the solution type but not in the template type.
      */
     private List<JavaMethod> generateMethodsDiff() {
-        List<JavaMethod> methodsDiff = solutionClass.getMethods();
+        List<JavaMethod> methodsDiff = new ArrayList<>(solutionClass.getMethods());
         methodsDiff.removeIf(method -> method.getName().equals("main"));
 
         if(templateClass != null) {
@@ -260,7 +286,7 @@ public class TypesDiff {
      * @param templateExecutable: The executable present in the template type.
      * @return True, if the parameter types are the same, false otherwise.
      */
-    public static boolean parameterTypesAreEqual(JavaExecutable solutionExecutable, JavaExecutable templateExecutable) {
+    private static boolean parameterTypesAreEqual(JavaExecutable solutionExecutable, JavaExecutable templateExecutable) {
         // Create lists containing only the parameter type names for both the executable.
         // This is done to work with them more easily, since types are uniquely identified only by their names.
         List<String> solutionParams = solutionExecutable.getParameters().stream().map(JavaParameter::getName).collect(Collectors.toList());
@@ -281,15 +307,14 @@ public class TypesDiff {
      * This method checks if the solution type is the same in structure as the template type.
      * @return True, if the solution type is the same in structure as the template type, false otherwise.
      */
-	private boolean areTypesEqual() {
-		return this.isInterface
-				&& !this.isEnumDifferent
-				&& !this.isAbstractDifferent
-				&& this.superClassName.isEmpty()
-				&& this.superInterfaces.isEmpty()
-                && this.attributesDiff.isEmpty()
-                && this.constructorsDiff.isEmpty()
-                && this.methodsDiff.isEmpty();
+    boolean typesAreEqual() {
+		return !this.isInterfaceDifferent
+            && !this.isEnumDifferent
+            && !this.isAbstractDifferent
+            &&  this.superClassNameDiff.isEmpty()
+            &&  this.superInterfacesDiff.isEmpty()
+            &&  this.attributesDiff.isEmpty()
+            &&  this.constructorsDiff.isEmpty()
+            &&  this.methodsDiff.isEmpty();
 	}
-
 }
