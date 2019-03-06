@@ -52,6 +52,7 @@ public class ResultResource {
     private final UserService userService;
     private final ContinuousIntegrationService continuousIntegrationService;
     private final CourseService courseService;
+    private final ProgrammingExerciseService programmingExerciseService;
 
     public ResultResource(UserService userService,
                           ResultRepository resultRepository,
@@ -61,6 +62,7 @@ public class ResultResource {
                           FeedbackService feedbackService,
                           ExerciseService exerciseService,
                           ContinuousIntegrationService continuousIntegrationService,
+                          ProgrammingExerciseService programmingExerciseService,
                           CourseService courseService) {
 
         this.userService = userService;
@@ -71,6 +73,7 @@ public class ResultResource {
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
         this.continuousIntegrationService = continuousIntegrationService;
+        this.programmingExerciseService = programmingExerciseService;
         this.courseService = courseService;
     }
 
@@ -145,13 +148,15 @@ public class ResultResource {
 
         try {
             String planKey = continuousIntegrationService.getPlanKey(requestBody);
-            if (planKey.equalsIgnoreCase("base") || planKey.equalsIgnoreCase("solution")) {
-                //TODO: In the future we also might want to save these results in the database
-                return ResponseEntity.ok().build();
-            }
-            Optional<Participation> participation = getParticipation(planKey);
-            if (participation.isPresent()) {
-                resultService.onResultNotifiedNew(participation.get(), requestBody);
+            Optional<Participation> optionalParticipation = getParticipation(planKey);
+            if (optionalParticipation.isPresent()) {
+                Participation participation = optionalParticipation.get();
+                if (planKey.toLowerCase().contains("-base")) { // TODO: transfer this into constants
+                    participation.setExercise(programmingExerciseService.getExerciseForTemplateParticipation(participation));
+                } else if (planKey.toLowerCase().contains("-solution")) { // TODO: transfer this into constants
+                    participation.setExercise(programmingExerciseService.getExerciseForSolutionParticipation(participation));
+                }
+                resultService.onResultNotifiedNew(participation, requestBody);
                 return ResponseEntity.ok().build();
             } else {
                 //return ok so that Bamboo does not think it was an error

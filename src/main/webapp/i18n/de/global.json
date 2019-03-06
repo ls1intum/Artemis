@@ -223,6 +223,7 @@
     "overview": {
         "title": "Kursübersicht",
         "course": "Kursdetails",
+        "exercise": "Aufgabendetails",
         "statistics": "Kursstatistiken"
     }
 }
