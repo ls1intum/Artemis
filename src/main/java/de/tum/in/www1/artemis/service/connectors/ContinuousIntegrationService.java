@@ -24,11 +24,11 @@ public interface ContinuousIntegrationService {
     /**
      * Copy the base build plan for the given user on the CI system.
      *
-     * @param baseBuildPlanId unique identifier for build plan on CI system
+     * @param templateBuildPlanId unique identifier for build plan on CI system
      * @param username        username of user for whom to copy build plan
      * @return unique identifier of the copied build plan
      */
-    public String copyBuildPlan(String baseBuildPlanId, String username);
+    public String copyBuildPlan(String templateBuildPlanId, String username);
 
     /**
      * Configure the build plan with the given participation on the CI system. Common configurations:

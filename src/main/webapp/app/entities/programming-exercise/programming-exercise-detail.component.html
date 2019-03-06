@@ -25,25 +25,25 @@
                 <dd>
                     <span>{{programmingExercise.maxScore}}</span>
                 </dd>
-                <dt><span jhiTranslate="arTeMiSApp.programmingExercise.baseRepositoryUrl">Base Repository Url</span></dt>
+                <dt><span jhiTranslate="arTeMiSApp.programmingExercise.templateRepositoryUrl">Template Repository Url</span></dt>
                 <dd>
-                    <span>{{programmingExercise.baseRepositoryUrl}}</span>
+                    <span>{{programmingExercise.templateParticipation.repositoryUrl}}</span>
                 </dd>
                 <dt><span jhiTranslate="arTeMiSApp.programmingExercise.solutionRepositoryUrl">Solution Repository Url</span></dt>
                 <dd>
-                    <span>{{programmingExercise.solutionRepositoryUrl}}</span>
+                    <span>{{programmingExercise.solutionParticipation.repositoryUrl}}</span>
                 </dd>
                 <dt><span jhiTranslate="arTeMiSApp.programmingExercise.testRepositoryUrl">Test Repository Url</span></dt>
                 <dd>
                     <span>{{programmingExercise.testRepositoryUrl}}</span>
                 </dd>
-                <dt><span jhiTranslate="arTeMiSApp.programmingExercise.baseBuildPlanId">Base Build Plan Id</span></dt>
+                <dt><span jhiTranslate="arTeMiSApp.programmingExercise.templateBuildPlanId">Template Build Plan Id</span></dt>
                 <dd>
-                    <span>{{programmingExercise.baseBuildPlanId}}</span>
+                    <span>{{programmingExercise.templateParticipation.buildPlanId}}</span>
                 </dd>
                 <dt><span jhiTranslate="arTeMiSApp.programmingExercise.solutionBuildPlanId">Solution Build Plan Id</span></dt>
                 <dd>
-                    <span>{{programmingExercise.solutionBuildPlanId}}</span>
+                    <span>{{programmingExercise.solutionParticipation.buildPlanId}}</span>
                 </dd>
                 <dt><span jhiTranslate="arTeMiSApp.programmingExercise.publishBuildPlanUrl">Publish Build Plan Url</span></dt>
                 <dd>
@@ -74,7 +74,7 @@
             </button>
 
             <button type="button"
-                    [routerLink]="['/programming-exercise', programmingExercise.id, 'edit']"
+                    [routerLink]="['/course', programmingExercise.course.id,'programming-exercise', programmingExercise.id, 'edit']"
                     class="btn btn-primary">
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
             </button>

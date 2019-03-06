@@ -94,7 +94,7 @@ public class ParticipationResource {
      * @param courseId   only included for API consistency, not actually used
      * @param exerciseId the id of the exercise for which to init a participation
      * @param principal  the current user principal
-     * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
+     * @return the ResponseEntity with status 201 (Created) and the participation within the body, or with status 404 (Not Found)
      */
     @PostMapping(value = "/courses/{courseId}/exercises/{exerciseId}/participations")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")

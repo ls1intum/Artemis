@@ -2,7 +2,7 @@
     <div class="row" *ngIf="course.exercises && course.exercises.length > 0">
 
         <div class="co-12 col-md-4 statistic-summary">
-            <h2 class="text-center">Your total score</h2>
+            <h2 class="text-center">{{"arTeMiSApp.courseOverview.statistics.totalScore" | translate}}</h2>
             <div class="chart-container">
                 <div class="chart-text">
                     <h2 class="text-center">{{totalRelativeScore}} %</h2>
@@ -35,17 +35,17 @@
                     ></canvas>
                 </div>
                 <div class="col-12 col-md-4 align-self-center" *ngIf="exerciseGroup">
-                    <h4>Number of Exercises: {{exerciseGroup.names.length}}</h4>
-                    <h4>Absolute Score: {{exerciseGroup.absoluteScore}} Pts</h4>
-                    <h4>Total Max Score: {{exerciseGroup.totalMaxScore}} Pts</h4>
-                    <h4>Relative Score: {{exerciseGroup.relativeScore}} %</h4>
+                    <h4>{{"arTeMiSApp.courseOverview.statistics.exerciseCount" | translate:{number: exerciseGroup.names.length} }}</h4>
+                    <h4>{{"arTeMiSApp.courseOverview.statistics.absoluteScore" | translate:{number: exerciseGroup.absoluteScore} }}</h4>
+                    <h4>{{"arTeMiSApp.courseOverview.statistics.maxScore" | translate:{number: exerciseGroup.totalMaxScore} }}</h4>
+                    <h4>{{"arTeMiSApp.courseOverview.statistics.relativeScore" | translate:{number: exerciseGroup.relativeScore} }}</h4>
                 </div>
             </div>
         </div>
     </div>
     <div class="row" *ngIf="!(course.exercises && course.exercises.length > 0)">
         <div class="col mt-3">
-            No statistics available for the course.
+            {{"arTeMiSApp.courseOverview.statistics.noStatistics"}}
         </div>
     </div>
 </div>

@@ -40,11 +40,8 @@ const ENTITY_STATES = [...fileUploadExerciseRoute, ...fileUploadExercisePopupRou
         FileUploadExerciseDeleteDialogComponent,
         FileUploadExerciseDeletePopupComponent
     ],
-    providers: [
-        FileUploadExerciseService,
-        FileUploadExercisePopupService,
-        { provide: JhiLanguageService, useClass: JhiLanguageService }
-    ],
+    exports: [FileUploadExerciseComponent],
+    providers: [FileUploadExerciseService, FileUploadExercisePopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArTEMiSFileUploadExerciseModule {
