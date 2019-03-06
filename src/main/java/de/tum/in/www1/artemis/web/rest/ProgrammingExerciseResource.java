@@ -13,6 +13,9 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
@@ -359,7 +362,7 @@ public class ProgrammingExerciseResource {
      * @param id The ID of the programming exercise for which the structure oracle should get generated
      * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the parameters are invalid
      */
-    @PutMapping("/programming-exercises/{id}/generate-tests")
+    @GetMapping(value = "/programming-exercises/{id}/generate-tests", produces = MediaType.TEXT_PLAIN_VALUE)
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<String> generateStructureOracleForExercise(@PathVariable Long id) {
         log.debug("REST request to generate the structure oracle for ProgrammingExercise with id: {}", id);
@@ -398,9 +401,9 @@ public class ProgrammingExerciseResource {
             boolean didGenerateOracle = programmingExerciseService.generateStructureOracleFile(solutionRepoURL, exerciseRepoURL, testRepoURL, testsPath);
 
             if(didGenerateOracle) {
-                return ResponseEntity
-                    .ok("Successfully generated the structure oracle for the exercise " + programmingExercise.getProjectName() + ". " +
-                        "The structure oracle file is in: " + testRepoURL.getPath() + testsPath);
+                HttpHeaders responseHeaders = new HttpHeaders();
+                responseHeaders.setContentType(MediaType.TEXT_PLAIN);
+                return new ResponseEntity<>("Successfully generated the structure oracle for the exercise " + programmingExercise.getProjectName(), responseHeaders, HttpStatus.OK);
             } else {
                 return ResponseEntity
                     .badRequest()

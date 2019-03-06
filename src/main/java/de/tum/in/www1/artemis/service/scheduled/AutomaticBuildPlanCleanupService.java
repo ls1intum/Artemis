@@ -58,6 +58,11 @@ public class AutomaticBuildPlanCleanupService {
         for (Participation participation : allParticipationsWithBuildPlanId) {
 
             if (participation.getBuildPlanId() == null) {
+                // already cleaned up
+                continue;
+            }
+            if (participation.getStudent() == null) {
+                // we only want to clean up build plans of students
                 continue;
             }
             Result result = participation.findLatestResult();
@@ -95,7 +100,12 @@ public class AutomaticBuildPlanCleanupService {
         log.info("Build plans: " + buildPlanIds);
 
         for (Participation participation : participationsWithBuildPlanToDelete) {
-            participationService.cleanupBuildPlan(participation);
+            try {
+                participationService.cleanupBuildPlan(participation);
+            }
+            catch (Exception ex) {
+                log.error("Could not cleanup build plan in participation " + participation.getId(), ex);
+            }
         }
     }
 }
