@@ -100,7 +100,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
             }
             groupedExercises[dateIndex].exercises.push(exercise);
             if (exercise.dueDate && moment().isSameOrBefore(exercise.dueDate, 'day')) {
-                upcomingExercises.push(exercise)
+                upcomingExercises.push(exercise);
             }
         });
         this.updateUpcomingExercises(upcomingExercises);
