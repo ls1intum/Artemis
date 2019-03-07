@@ -22,6 +22,7 @@
             "studentGroupName": "Student Group",
             "teachingAssistantGroupName": "Tutor Group",
             "instructorGroupName": "Instructor Group",
+            "description": "Course Description",
             "startDate": "Start",
             "endDate": "End",
             "onlineCourse": "Online Course",
