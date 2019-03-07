@@ -1,7 +1,7 @@
 {
     "name": "Artemis",
     "version": "2.5.0",
-    "description": "AuTomated assEssment Management System for Interactive Learning",
+    "description": "Automated Assessment Management System for Interactive Learning",
     "private": true,
     "license": "MIT",
     "cacheDirectories": [
@@ -20,7 +20,7 @@
         "@fortawesome/fontawesome-svg-core": "1.2.15",
         "@fortawesome/free-regular-svg-icons": "5.7.2",
         "@fortawesome/free-solid-svg-icons": "5.7.2",
-        "@ls1intum/apollon": "2.0.0-beta.5",
+        "@ls1intum/apollon": "2.0.0-beta.6",
         "@ng-bootstrap/ng-bootstrap": "4.1.0",
         "@nguniversal/express-engine": "7.1.1",
         "@ngx-translate/core": "11.0.1",
@@ -142,7 +142,7 @@
         "webpack-merge": "4.2.1",
         "webpack-notifier": "1.7.0",
         "webpack-visualizer-plugin": "0.1.11",
-        "workbox-webpack-plugin": "4.0.0",
+        "workbox-webpack-plugin": "4.1.0",
         "write-file-webpack-plugin": "4.5.0"
     },
     "engines": {
