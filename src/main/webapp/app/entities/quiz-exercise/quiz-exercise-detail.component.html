@@ -214,7 +214,7 @@
                         class="badge badge-success">
                     </span>
                     <span
-                        *ngIf="pendingChanges() && validQuiz() && !isSaving"
+                        *ngIf="pendingChanges() && isQuizValid && !isSaving"
                         jhiTranslate="arTeMiSApp.quizExercise.edit.pendingChanges"
                         class="badge badge-secondary">
                     </span>
@@ -230,7 +230,7 @@
                         </div>
                     </ng-template>
                     <span
-                        *ngIf="!validQuiz()"
+                        *ngIf="!isQuizValid"
                         class="badge badge-danger"
                         [ngbTooltip]="tooltipTranslate"
                         tooltip-placement="top-right"
@@ -251,9 +251,9 @@
                         id="quiz-save"
                         class="btn btn-success"
                         (click)="save()"
-                        [ngClass]="{disabled: !pendingChanges() || !validQuiz() || hasSavedQuizStarted() || isSaving}"
+                        [ngClass]="{disabled: !pendingChanges() || !isQuizValid || hasSavedQuizStarted() || isSaving}"
                         jhiTranslate="entity.action.save"
-                        [ngbTooltip]="validQuiz() ? '' : tooltipTranslate"
+                        [ngbTooltip]="isQuizValid ? '' : tooltipTranslate"
                         tooltip-placement="top-right"
                         tooltip-class="invalid-reasons-tooltip">
                     </button>

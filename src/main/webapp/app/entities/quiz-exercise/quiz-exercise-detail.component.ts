@@ -89,6 +89,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     isTrue = true;
 
     mcHasCorrectAnswerOption = false;
+    isQuizValid = false;
 
     /** Status Options **/
     statusOptionsVisible: Option[] = [new Option(false, 'Hidden'), new Option(true, 'Visible')];
@@ -144,6 +145,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
             }
         });
         this.courseRepository = this.courseService;
+        this.isQuizValid = this.validQuiz();
     }
 
     /**
@@ -173,6 +175,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
             this.quizExercise.course = this.course;
         }
         this.updateDuration();
+
     }
 
     ngOnChanges(changes: SimpleChanges): void {
@@ -431,6 +434,8 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      * @desc Handles the change of a question by replacing the array with a copy (allows for shallow comparison)
      */
     onQuestionUpdated(): void {
+        console.log('to do');
+        this.isQuizValid = this.validQuiz();
         this.quizExercise.questions = Array.from(this.quizExercise.questions);
     }
 
@@ -483,6 +488,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      * @returns {boolean} true if valid, false otherwise
      */
     validQuiz(): boolean {
+        console.log('quiz valid');
         if (!this.quizExercise) {
             return false;
         }
@@ -505,7 +511,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         const areAllQuestionsValid = this.quizExercise.questions.every(function(question) {
             if (question.type === QuestionType.MULTIPLE_CHOICE) {
                 const mcQuestion = question as MultipleChoiceQuestion;
-                return question.title && question.title !== '' && question.title.length < 250 && !mcQuestion.hasCorrectOption;
+                return question.title && question.title !== '' && question.title.length < 250 && mcQuestion.hasCorrectOption;
             } else if (question.type === QuestionType.DRAG_AND_DROP) {
                 const dndQuestion = question as DragAndDropQuestion;
                 return (
@@ -600,7 +606,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
             }
             if (question.type === QuestionType.MULTIPLE_CHOICE) {
                 const mcQuestion = question as MultipleChoiceQuestion;
-                if (mcQuestion.hasCorrectOption) {
+                if (!mcQuestion.hasCorrectOption) {
                     reasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionCorrectAnswerOption',
                         translateValues: { index: index + 1 }

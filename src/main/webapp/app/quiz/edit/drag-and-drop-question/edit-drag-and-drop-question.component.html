@@ -90,7 +90,7 @@
                                      [useMarkdownPreview]="false"
                                      [specialCommands]="commandDragAndDropQuestions"
                                      [parsingValue]="'value'"
-                                     (changesInMarkdown)="changesInMarkdown($event)"
+                                     (onChanges)="changesInMarkdown($event)"
                                      (textWithSpecialCommandFound)="specialCommandFound($event[0], $event[1])"
                                      (previewModeChange)="togglePreview()"
                 ></jhi-markdown-editor>
@@ -101,7 +101,7 @@
                                          [defaultText]="questionEditorText"
                                          [specialCommands]="commandDragAndDropQuestions"
                                          [parsingValue]="'parse'"
-                                         (changesInMarkdown)="changesInMarkdown($event)"
+                                         (onChanges)="changesInMarkdown($event)"
                                          (textWithSpecialCommandFound)="specialCommandFound($event[0], $event[1])"
                     ></jhi-markdown-editor>
                     <span class="input-group-btn" style="vertical-align: top">

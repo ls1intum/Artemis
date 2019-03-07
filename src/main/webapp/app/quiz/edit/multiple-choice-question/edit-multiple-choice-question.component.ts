@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild} from '@angular/core';
 import { MultipleChoiceQuestion } from 'app/entities/multiple-choice-question';
 import { AnswerOption } from 'app/entities/answer-option';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
@@ -68,6 +68,10 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
         }
     }
 
+    //ngAfterViewInit(): void {
+       // setTimeout(() => this.prepareForSave());
+    //}
+
     /**
      * @function generateMarkdown
      * @desc Generate the markdown text for this question
@@ -103,7 +107,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
     togglePreview(showPreview: boolean): void {
         this.showPreview = showPreview;
         if (showPreview) {
-            this.cleanupQuestion();
+            this.prepareForSave();
         }
     }
 
@@ -112,6 +116,9 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
 
         // Parse Markdown
         this.markdownEditor.parse();
+        console.log('pare');
+        this.questionUpdated.emit();
+        console.log('emit');
     }
 
     private cleanupQuestion() {
@@ -120,6 +127,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
         this.question.text = null;
         this.question.explanation = null;
         this.question.hint = null;
+        this.question.hasCorrectOption = false;
 
         // Remove Current Answer Option
         this.currentAnswerOption = null;
@@ -127,20 +135,21 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
     }
 
    checkIfQuestionHasOneCorrectOption(){
+       //this.question.hasCorrectOption = null;
        if (!this.question.answerOptions.some(answeroption => answeroption.isCorrect)){
-            this.question.hasCorrectOption = false;
             console.log('ich habe nichts richtiges');
             this.prepareForSave();
+            this.question.hasCorrectOption = false;
        } else {
-           this.question.hasCorrectOption = true;
            console.log('ich habe alles richtig');
            this.prepareForSave();
+           this.question.hasCorrectOption = true;
        }
     }
 
-    private changesInMarkdown(value: boolean){
-        this.checkIfQuestionHasOneCorrectOption();
-        this.question.contentChanged = value;
+    changesInMarkdown(){
+        console.log('ich werde aufgerufen');
+        this.prepareForSave();
     }
 
     specialCommandFound(textLine: string, specialCommand: SpecialCommand) {
@@ -151,7 +160,12 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
 
         if (specialCommand instanceof CorrectOptionCommand || specialCommand instanceof IncorrectOptionCommand) {
             this.currentAnswerOption = new AnswerOption();
-            this.currentAnswerOption.isCorrect = (specialCommand instanceof CorrectOptionCommand);
+            if (specialCommand instanceof CorrectOptionCommand) {
+                this.currentAnswerOption.isCorrect = true;
+                this.question.hasCorrectOption = true;
+            } else {
+                this.currentAnswerOption.isCorrect = false;
+            }
             this.currentAnswerOption.text = textLine;
             this.question.answerOptions.push(this.currentAnswerOption);
         } else if (specialCommand instanceof ExplanationCommand) {
@@ -167,6 +181,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
                 this.question.hint = textLine;
             }
         }
+
     }
 
     /**
