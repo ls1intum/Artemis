@@ -6,7 +6,6 @@ import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.TutorParticipationService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import javassist.NotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.security.InvalidParameterException;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
@@ -101,31 +99,14 @@ public class TutorParticipationResource {
             return forbidden();
         }
 
-        try {
-            TutorParticipation resultTutorParticipation = tutorParticipationService.addExampleSubmission(exercise, exampleSubmission);
+        TutorParticipation resultTutorParticipation = tutorParticipationService.addExampleSubmission(exercise, exampleSubmission);
 
-            // Avoid infinite recursion for JSON
-            resultTutorParticipation.getTrainedExampleSubmissions().forEach(t -> {
-                t.setTutorParticipation(null);
-                t.setExercise(null);
-            });
+        // Avoid infinite recursion for JSON
+        resultTutorParticipation.getTrainedExampleSubmissions().forEach(t -> {
+            t.setTutorParticipation(null);
+            t.setExercise(null);
+        });
 
-            return ResponseEntity.ok().body(resultTutorParticipation);
-        } catch (NotFoundException e) {
-            return ResponseEntity.notFound().build();
-        } catch (IllegalStateException e) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("tutorParticipations", "tutorParticipationInWrongStatus", "You cannot assess an example submission if you haven't read the grading instructions yet.")).body(null);
-        } catch (InvalidParameterException e) {
-            switch (e.getMessage()) {
-                case "tooLow":
-                    return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("result", "tooLow", "Your score is too different from the instructor's one")).body(null);
-                case "tooHigh":
-                    return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("result", "tooHigh", "Your score is too different from the instructor's one")).body(null);
-                case "alreadyAssessed":
-                    return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("tutorParticipation", "alreadyAssessed", "You have already assesed this example submission")).body(null);
-            }
-        }
-
-        return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("tutorParticipation", "unknownError", "An unknown error has happened")).body(null);
+        return ResponseEntity.ok().body(resultTutorParticipation);
     }
 }
