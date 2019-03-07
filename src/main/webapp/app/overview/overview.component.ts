@@ -31,7 +31,7 @@ export class OverviewComponent {
         let relevantExercise: Exercise = null;
         if (this.courses) {
             this.courses.forEach(course => {
-                let relevantExerciseForCourse = this.exerciseService.getNextExerciseForHours(course.exercises);
+                const relevantExerciseForCourse = this.exerciseService.getNextExerciseForHours(course.exercises);
                 if (relevantExerciseForCourse) {
                     if (!relevantExercise) {
                         relevantExercise = relevantExerciseForCourse;
