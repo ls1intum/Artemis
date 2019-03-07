@@ -6,7 +6,7 @@ import { map } from 'rxjs/operators';
 
 import { SERVER_API_URL } from 'app/app.constants';
 import { createRequestOption } from 'app/shared';
-import { Course } from './course.model';
+import { Course, StatsForInstructorDashboard, StatsForTutorDashboard } from './course.model';
 import { ProgrammingExercise } from '../programming-exercise/programming-exercise.model';
 import { ModelingExercise } from '../modeling-exercise/modeling-exercise.model';
 import { Participation } from '../participation/participation.model';
@@ -18,13 +18,6 @@ import { AccountService, User } from 'app/core';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
-
-export type StatsForTutorDashboard = {
-    numberOfAssessments: number;
-    numberOfTutorAssessments: number;
-    numberOfComplaints: number;
-    numberOfSubmissions: number;
-};
 
 @Injectable({ providedIn: 'root' })
 export class CourseService {
@@ -55,6 +48,12 @@ export class CourseService {
     findWithExercises(courseId: number): Observable<EntityResponseType> {
         return this.http
             .get<Course>(`${this.resourceUrl}/${courseId}/with-exercises`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+    }
+
+    findWithExercisesAndParticipations(courseId: number): Observable<EntityResponseType> {
+        return this.http
+            .get<Course>(`${this.resourceUrl}/${courseId}/with-exercises-and-relevant-participations`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
@@ -103,6 +102,11 @@ export class CourseService {
 
     delete(courseId: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/${courseId}`, { observe: 'response' });
+    }
+
+    getStatsForInstructors(id: number): Observable<HttpResponse<StatsForInstructorDashboard>> {
+        return this.http
+            .get<StatsForInstructorDashboard>(`${this.resourceUrl}/${id}/stats-for-instructor-dashboard`, { observe: 'response' });
     }
 
     protected convertDateFromClient(course: Course): Course {
