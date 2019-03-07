@@ -16,12 +16,12 @@ import static java.math.BigDecimal.ROUND_HALF_EVEN;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 @RunWith(Parameterized.class)
-public class ModellingAssessmentServiceTest {
+public class ModelingAssessmentServiceTest {
     private static final int NUMBER_OF_TESTCASES = 1000;
     private Random random = new Random();
     private int numberOfAssessments;
 
-    public ModellingAssessmentServiceTest(int numberOfAssessments) {
+    public ModelingAssessmentServiceTest(int numberOfAssessments) {
         this.numberOfAssessments = numberOfAssessments;
     }
 

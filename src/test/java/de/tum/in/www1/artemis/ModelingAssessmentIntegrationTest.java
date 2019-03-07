@@ -28,7 +28,7 @@ import java.util.List;
 @SpringBootTest
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
-public class ModellingAssessmentIntegrationTest {
+public class ModelingAssessmentIntegrationTest {
     @Autowired
     CourseRepository courseRepo;
     @Autowired

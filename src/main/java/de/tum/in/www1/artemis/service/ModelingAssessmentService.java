@@ -76,7 +76,7 @@ public class ModelingAssessmentService extends AssessmentService {
 
 
     /**
-     * TODO CZ: I added this function again due to a compile error in the ModellingAssessmentServiceTest
+     * TODO CZ: I added this function again due to a compile error in the ModelingAssessmentServiceTest
      *
      * @return sum of every modelingAssessments credit rounded to max two numbers after the comma
      */
