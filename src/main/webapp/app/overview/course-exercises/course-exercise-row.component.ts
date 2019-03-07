@@ -1,5 +1,5 @@
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
-import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise';
+import { Exercise, ExerciseType, ParticipationStatus, getIcon, getIconTooltip } from 'app/entities/exercise';
 import { JhiAlertService } from 'ng-jhipster';
 import { QuizExercise } from 'app/entities/quiz-exercise';
 import { InitializationState, Participation, ParticipationService } from 'app/entities/participation';
@@ -10,11 +10,6 @@ import { AccountService, WindowRef } from 'app/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { ProgrammingExercise } from 'app/entities/programming-exercise';
-
-export interface ExerciseIcon {
-    faIcon: string;
-    tooltip: string;
-}
 
 @Component({
     selector: 'jhi-course-exercise-row',
@@ -31,6 +26,9 @@ export class CourseExerciseRowComponent implements OnInit {
     @Input() exercise: Exercise;
     @Input() course: Course;
     @Input() extendedLink = false;
+
+    getIcon = getIcon;
+    getIconTooltip = getIconTooltip;
 
     constructor(private accountService: AccountService,
                 private jhiAlertService: JhiAlertService,
@@ -75,39 +73,6 @@ export class CourseExerciseRowComponent implements OnInit {
 
     asQuizExercise(exercise: Exercise): QuizExercise {
         return exercise as QuizExercise;
-    }
-
-    get exerciseIcon(): ExerciseIcon {
-        switch (this.exercise.type) {
-            case this.PROGRAMMING:
-                return {
-                    faIcon: 'keyboard',
-                    tooltip: 'This is a programming exercise'
-                };
-            case this.MODELING:
-                return {
-                    faIcon: 'project-diagram',
-                    tooltip: 'This is a modeling exercise'
-                };
-            case this.QUIZ:
-                return {
-                    faIcon: 'check-double',
-                    tooltip: 'This is a quiz exercise'
-                };
-            case this.TEXT:
-                return {
-                    faIcon: 'font',
-                    tooltip: 'This is a text exercise'
-                };
-            case this.FILE_UPLOAD:
-                return {
-                    faIcon: 'file-upload',
-                    tooltip: 'This is a file upload exercise'
-                };
-            default:
-                return;
-
-        }
     }
 
     isActiveQuiz(exercise: Exercise) {
