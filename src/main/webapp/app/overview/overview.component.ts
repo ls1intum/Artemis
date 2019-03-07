@@ -83,4 +83,8 @@ export class OverviewComponent {
             );
         }
     }
+
+    trackCourseById(index: number, item: Course) {
+        return item.id;
+    }
 }

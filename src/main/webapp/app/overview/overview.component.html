@@ -14,13 +14,13 @@
     </div>
     <div class="col-12 col-sm-auto" *ngIf="showCourseSelection && coursesToSelect.length > 0">
         <select class="form-control" id="field_course" name="course" [(ngModel)]="courseToRegister">
-            <option [ngValue]="null"></option>
+            <option disabled="true" [selected]="true" value="null">{{'arTeMiSApp.studentDashboard.register.pleaseSelectCourse' | translate}}</option>
             <option [ngValue]="course" *ngFor="let course of coursesToSelect; trackBy: trackCourseById">{{course.title}}</option>
         </select>
     </div>
     <div class="col-12 col-sm-auto" *ngIf="showCourseSelection && coursesToSelect.length > 0">
         <div class="btn-group">
-            <button class="btn btn-primary" (click)="registerForCourse()">
+            <button class="btn btn-primary" [disabled]="!courseToRegister" (click)="registerForCourse()">
                 {{"arTeMiSApp.studentDashboard.register.signUpForCourse" | translate}}
             </button>
             <button class="btn btn-default" (click)="cancelRegistration()">

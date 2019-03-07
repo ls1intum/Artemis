@@ -10,7 +10,8 @@
                 "registerSuccessful": "Anmeldung erfolgreich",
                 "signUpForCourse": "Für den ausgewählten Kurs anmelden",
                 "cancel": "Abbrechen",
-                "noCourse": "Keine Kurse für eine Registrierung verfügbar"
+                "noCourse": "Keine Kurse für eine Registrierung verfügbar",
+                "pleaseSelectCourse": "# Wähle einen Kurs aus"
             }
         },
         "courseOverview": {

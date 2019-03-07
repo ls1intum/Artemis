@@ -10,7 +10,8 @@
                 "registerSuccessful": "Register successful",
                 "signUpForCourse": "Sign up for selected course",
                 "cancel": "Cancel",
-                "noCourse": "No course available to register to"
+                "noCourse": "No course available to register to",
+                "pleaseSelectCourse": "# Select a course"
             }
         },
         "courseOverview": {
