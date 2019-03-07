@@ -4,7 +4,14 @@
             "title": "Deine aktuellen Kurse",
             "cardTitle": "Deine aktuelle Punktzahl:",
             "cardNoExerciseLabel": "Keine Übung geplant",
-            "cardExerciseLabel": "Nächste Übung:"
+            "cardExerciseLabel": "Nächste Übung:",
+            "register": {
+                "signUp": "Für einen Kurs anmelden",
+                "registerSuccessful": "Anmeldung erfolgreich",
+                "signUpForCourse": "Für den ausgewählten Kurs anmelden",
+                "cancel": "Abbrechen",
+                "noCourse": "Keine Kurse für eine Registrierung verfügbar"
+            }
         },
         "courseOverview": {
             "noDescription": "Keine Beschreibung verfügbar",

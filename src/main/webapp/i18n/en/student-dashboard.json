@@ -4,7 +4,14 @@
             "title": "Your current courses",
             "cardTitle": "Your current score:",
             "cardNoExerciseLabel": "No exercise planned",
-            "cardExerciseLabel": "Next Exercise:"
+            "cardExerciseLabel": "Next Exercise:",
+            "register": {
+                "signUp": "Sign up for a course",
+                "registerSuccessful": "Register successful",
+                "signUpForCourse": "Sign up for selected course",
+                "cancel": "Cancel",
+                "noCourse": "No course available to register to"
+            }
         },
         "courseOverview": {
             "noDescription": "No description available",
