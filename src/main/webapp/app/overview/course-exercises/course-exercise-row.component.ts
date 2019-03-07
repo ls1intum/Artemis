@@ -30,6 +30,7 @@ export class CourseExerciseRowComponent implements OnInit {
     @HostBinding('class') classes = 'exercise-row';
     @Input() exercise: Exercise;
     @Input() course: Course;
+    @Input() extendedLink = false;
 
     constructor(private accountService: AccountService,
                 private jhiAlertService: JhiAlertService,
@@ -174,7 +175,11 @@ export class CourseExerciseRowComponent implements OnInit {
 
     showDetails(event: any) {
         if (!(event.target.closest('jhi-exercise-details-student-actions') && event.target.closest('.btn'))) {
-            this.router.navigate([this.exercise.id], {relativeTo: this.route});
+            if (this.extendedLink) {
+                this.router.navigate(['overview', this.course.id, 'exercises', this.exercise.id]);
+            } else {
+                this.router.navigate([this.exercise.id], {relativeTo: this.route});
+            }
         }
     }
 }
