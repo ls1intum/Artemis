@@ -5,7 +5,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
 import * as moment from 'moment';
-import { Exercise } from 'app/entities/exercise';
+import { Exercise, ExerciseService } from 'app/entities/exercise';
 
 @Component({
     selector: 'jhi-course-exercises',
@@ -27,6 +27,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         private courseCalculationService: CourseScoreCalculationService,
         private courseServer: CourseService,
         private translateService: TranslateService,
+        private exerciseService: ExerciseService,
         private route: ActivatedRoute) {
     }
 
@@ -109,6 +110,10 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
 
             return selectedOrder * (aValue - bValue);
         });
+    }
+
+    get nextRelevantExercise(): Exercise {
+        return this.exerciseService.getNextExerciseForHours(this.course.exercises);
     }
 
 }
