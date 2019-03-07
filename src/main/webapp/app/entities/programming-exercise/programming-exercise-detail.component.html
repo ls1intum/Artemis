@@ -3,6 +3,7 @@
         <div *ngIf="programmingExercise">
             <h2><span jhiTranslate="arTeMiSApp.programmingExercise.detail.title">Programming Exercise</span> {{programmingExercise.id}}</h2>
             <hr>
+            <jhi-alert></jhi-alert>
             <jhi-alert-error></jhi-alert-error>
             <dl class="row-md jh-entity-details">
                 <dt><span jhiTranslate="arTeMiSApp.exercise.title">Title</span></dt>
@@ -25,25 +26,25 @@
                 <dd>
                     <span>{{programmingExercise.maxScore}}</span>
                 </dd>
-                <dt><span jhiTranslate="arTeMiSApp.programmingExercise.baseRepositoryUrl">Base Repository Url</span></dt>
+                <dt><span jhiTranslate="arTeMiSApp.programmingExercise.templateRepositoryUrl">Template Repository Url</span></dt>
                 <dd>
-                    <span>{{programmingExercise.baseRepositoryUrl}}</span>
+                    <span>{{programmingExercise.templateParticipation.repositoryUrl}}</span>
                 </dd>
                 <dt><span jhiTranslate="arTeMiSApp.programmingExercise.solutionRepositoryUrl">Solution Repository Url</span></dt>
                 <dd>
-                    <span>{{programmingExercise.solutionRepositoryUrl}}</span>
+                    <span>{{programmingExercise.solutionParticipation.repositoryUrl}}</span>
                 </dd>
                 <dt><span jhiTranslate="arTeMiSApp.programmingExercise.testRepositoryUrl">Test Repository Url</span></dt>
                 <dd>
                     <span>{{programmingExercise.testRepositoryUrl}}</span>
                 </dd>
-                <dt><span jhiTranslate="arTeMiSApp.programmingExercise.baseBuildPlanId">Base Build Plan Id</span></dt>
+                <dt><span jhiTranslate="arTeMiSApp.programmingExercise.templateBuildPlanId">Template Build Plan Id</span></dt>
                 <dd>
-                    <span>{{programmingExercise.baseBuildPlanId}}</span>
+                    <span>{{programmingExercise.templateParticipation.buildPlanId}}</span>
                 </dd>
                 <dt><span jhiTranslate="arTeMiSApp.programmingExercise.solutionBuildPlanId">Solution Build Plan Id</span></dt>
                 <dd>
-                    <span>{{programmingExercise.solutionBuildPlanId}}</span>
+                    <span>{{programmingExercise.solutionParticipation.buildPlanId}}</span>
                 </dd>
                 <dt><span jhiTranslate="arTeMiSApp.programmingExercise.publishBuildPlanUrl">Publish Build Plan Url</span></dt>
                 <dd>
@@ -75,9 +76,16 @@
 
             <button type="button"
                     [routerLink]="['/course', programmingExercise.course.id,'programming-exercise', programmingExercise.id, 'edit']"
-                    class="btn btn-primary">
+                    class="btn btn-primary mr-1">
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
             </button>
+
+            <button type="button" *ngIf="programmingExercise.programmingLanguage == JAVA"
+                    (click)="generateStructureOracle()"
+                    class="btn btn-secondary mr-1">
+                <span>Update Structure Test Oracle</span>
+            </button>
+
         </div>
     </div>
 </div>

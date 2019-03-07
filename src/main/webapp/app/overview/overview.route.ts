@@ -62,7 +62,7 @@ export const OVERVIEW_ROUTES: Routes = [
         component: CourseExerciseDetailsComponent,
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'overview.course'
+            pageTitle: 'overview.exercise'
         },
         canActivate: [UserRouteAccessService],
     }

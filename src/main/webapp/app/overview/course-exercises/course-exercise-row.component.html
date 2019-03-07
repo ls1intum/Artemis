@@ -11,14 +11,18 @@
                 <h4>{{exercise.title}}</h4>
             </div>
             <div class="col-sm-auto col-12" [ngSwitch]="exercise.participationStatus">
-                <span class="text-muted" *ngSwitchCase="'uninitialized'">You have not started this exercise yet.</span>
-                <span class="text-muted" *ngSwitchCase="'quiz-not-started'">The quiz hasn't started yet.</span>
-                <span class="text-muted" *ngSwitchCase="'quiz-uninitialized'">You have not started this quiz yet.</span>
                 <span class="text-muted"
-                      *ngSwitchCase="'quiz-not-participated'">You have not participated in this live quiz.</span>
+                      *ngSwitchCase="'uninitialized'">{{"arTeMiSApp.courseOverview.exerciseList.userNotStartedExercise" | translate}}</span>
                 <span class="text-muted"
-                      *ngSwitchCase="'quiz-active'">You are currently participating in this quiz.</span>
-                <span class="text-muted" *ngSwitchCase="'quiz-submitted'">You have already submitted. Wait for the quiz to end to see results.</span>
+                      *ngSwitchCase="'quiz-not-started'">{{"arTeMiSApp.courseOverview.exerciseList.quizNotStarted" | translate}}</span>
+                <span class="text-muted"
+                      *ngSwitchCase="'quiz-uninitialized'">{{"arTeMiSApp.courseOverview.exerciseList.userNotStartedQuiz" | translate}}</span>
+                <span class="text-muted"
+                      *ngSwitchCase="'quiz-not-participated'">{{"arTeMiSApp.courseOverview.exerciseList.userNotParticipated" | translate}}</span>
+                <span class="text-muted"
+                      *ngSwitchCase="'quiz-active'">{{"arTeMiSApp.courseOverview.exerciseList.userParticipating" | translate}}</span>
+                <span class="text-muted"
+                      *ngSwitchCase="'quiz-submitted'">{{"arTeMiSApp.courseOverview.exerciseList.userSubmitted" | translate}}</span>
                 <span *ngSwitchCase="'initialized'">
                     <jhi-result [participation]="exercise.participations[0]" short="true"></jhi-result>
                 </span>
@@ -37,24 +41,27 @@
             </div>
         </div>
         <div class="row">
-            <jhi-exercise-details-student-actions [actionsOnly]="true" [smallButtons]="true" [courseId]="course.id" [exercise]="exercise"></jhi-exercise-details-student-actions>
+            <jhi-exercise-details-student-actions [actionsOnly]="true" [smallButtons]="true" [courseId]="course.id"
+                                                  [exercise]="exercise"></jhi-exercise-details-student-actions>
             <div class="col d-flex">
                 <h4>
                     <span class="badge badge-warning" *ngIf="!asQuizExercise(exercise).visibleToStudents"
                           placement="right"
                           ngbTooltip="Only visible to teaching assistants and instructors. Release date: {{exercise.releaseDate | date:'MMM d, y H:mm'}}">
-                    Not Released</span>
+                    {{"arTeMiSApp.courseOverview.exerciseList.notReleased" | translate}}</span>
                 </h4>
                 <h4>
-                    <span class="badge badge-success" [hidden]="!asQuizExercise(exercise).isActiveQuiz">Live</span>
+                    <span class="badge badge-success"
+                          [hidden]="!asQuizExercise(exercise).isActiveQuiz">{{"arTeMiSApp.courseOverview.exerciseList.live" | translate}}</span>
                 </h4>
             </div>
             <div class="col-auto" *ngIf="exercise.dueDate || exercise.releaseDate; else noDate"
                  [ngClass]="getUrgentClass(exercise.dueDate ? exercise.dueDate : exercise.releaseDate)">{{(exercise.dueDate ? exercise.dueDate : exercise.releaseDate) |
                 date:'dd/MM/yy'}}
-                <span
-                    class="d-none d-sm-inline">({{(exercise.dueDate ? exercise.dueDate : exercise.releaseDate) | amTimeAgo}}
-                    )</span></div>
+                <span class="d-none d-sm-inline">
+                    ({{(exercise.dueDate ? exercise.dueDate : exercise.releaseDate) | amTimeAgo}})
+                </span>
+            </div>
             <ng-template #noDate>
                 <div class="col-auto">N/A</div>
             </ng-template>
