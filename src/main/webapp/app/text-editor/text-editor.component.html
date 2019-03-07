@@ -52,4 +52,23 @@
             </div>
         </ng-template>
     </div>
+
+    <div class="row" *ngIf="hasFeedback">
+        <div class="col-6">
+            <h3>Complaints</h3>
+            <p>You can submit a complaint if you feel like the assessment hasn't been fair: you will have the chance to describe what do you think is wrong, and why the submission should be reevaluated. The reevaluation will be performed by a different tutor.</p>
+
+            <button class="btn btn-warning" (click)="showComplaintForm = !showComplaintForm">Submit complaint</button>
+        </div>
+
+        <div class="col-6">
+            <h3>More feedback</h3>
+            <p>If something is not clear enough, or you need more explanations, request the tutor to give you more feedback</p>
+            <button class="btn btn-default">Request more feedback</button>
+        </div>
+    </div>
+
+    <div class="row" *ngIf="showComplaintForm">
+        Inject here the complaint form
+    </div>
 </div>
