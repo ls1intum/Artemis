@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -96,9 +97,7 @@ public class TextSubmissionService {
     public Optional<TextSubmission> textSubmissionWithoutResult(long exerciseId) {
         return this.participationService.findByExerciseIdWithEagerSubmissions(exerciseId)
             .stream()
-            .peek(participation -> {
-                participation.getExercise().setParticipations(null);
-            })
+            .peek(participation -> participation.getExercise().setParticipations(null))
 
             // Map to Latest Submission
             .map(Participation::findLatestTextSubmission)
@@ -151,5 +150,33 @@ public class TextSubmissionService {
      */
     public long countNumberOfSubmissions(Long courseId) {
         return textSubmissionRepository.countByParticipation_Exercise_Course_Id(courseId);
+    }
+
+    /**
+     * Given an exerciseId, returns all the submissions for that exercise, including their results.
+     * Submissions can be filtered to include only already submitted submissions
+     *
+     * @param exerciseId - the id of the exercise we are interested into
+     * @param submittedOnly - if true, it returns only submission with submitted flag set to true
+     * @return a list of text submissions for the given exercise id
+     */
+    public List<TextSubmission> getTextSubmissionsByExerciseId(Long exerciseId, boolean submittedOnly) {
+        List<Participation> participations = participationRepository.findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(exerciseId);
+        List<TextSubmission> textSubmissions = new ArrayList<>();
+
+        for (Participation participation : participations) {
+            TextSubmission textSubmission = participation.findLatestTextSubmission();
+
+            if (submittedOnly && textSubmission.isSubmitted() != Boolean.TRUE) {
+                continue;
+            }
+
+            if (textSubmission.getResult() != null) {
+                textSubmission.getResult().getAssessor().setGroups(null);
+            }
+
+            textSubmissions.add(textSubmission);
+        }
+        return textSubmissions;
     }
 }
