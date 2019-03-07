@@ -37,7 +37,8 @@
                     "totalFileUploadExercises": "Aufgaben mit Datei-Upload insgesamt:",
                     "startDate": "Start:",
                     "endDate": "Ende:",
-                    "upcomingDeadlines": "Bevorstehende Termine:"
+                    "upcomingDeadlines": "Bevorstehende Termine:",
+                    "noUpcomingExercises": "Aktuell gibt es keine anstehenden Übungen."
                 }
             },
             "statistics": {

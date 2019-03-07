@@ -37,7 +37,8 @@
                     "totalFileUploadExercises": "Total File Upload Exercises:",
                     "startDate": "Start Date:",
                     "endDate": "End Date:",
-                    "upcomingDeadlines": "Upcoming Deadlines:"
+                    "upcomingDeadlines": "Upcoming Deadlines:",
+                    "noUpcomingExercises": "There are no upcoming exercises."
                 }
             },
             "statistics": {
