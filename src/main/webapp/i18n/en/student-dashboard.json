@@ -21,12 +21,24 @@
                 "noExercises": "No exercises available for the course.",
                 "notReleased": "Not released",
                 "live": "Live",
-                "userNotStartedExercise":"You have not started this exercise yet.",
-                "quizNotStarted":"The quiz hasn't started yet.",
-                "userNotStartedQuiz":"You have not started this quiz yet.",
-                "userNotParticipated":"You have not participated in this live quiz.",
-                "userParticipating":"You are currently participating in this quiz.",
-                "userSubmitted":"You have already submitted. Wait for the quiz to end to see results."
+                "userNotStartedExercise": "You have not started this exercise yet.",
+                "quizNotStarted": "The quiz hasn't started yet.",
+                "userNotStartedQuiz": "You have not started this quiz yet.",
+                "userNotParticipated": "You have not participated in this live quiz.",
+                "userParticipating": "You are currently participating in this quiz.",
+                "userSubmitted": "You have already submitted. Wait for the quiz to end to see results.",
+                "details": {
+                    "courseInformation": "Course Information:",
+                    "totalExercises": "Total Exercises:",
+                    "totalQuizExercises": "Total Quiz Exercises:",
+                    "totalModelingExercises": "Total Modeling Exercises:",
+                    "totalProgrammingExercises": "Total Programming Exercises:",
+                    "totalTextExercises": "Total Text Exercises:",
+                    "totalFileUploadExercises": "Total File Upload Exercises:",
+                    "startDate": "Start Date:",
+                    "endDate": "End Date:",
+                    "upcomingDeadlines": "Upcoming Deadlines:"
+                }
             },
             "statistics": {
                 "totalScore": "Your total score",

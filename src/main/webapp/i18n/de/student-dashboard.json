@@ -21,12 +21,24 @@
                 "noExercises": "Es gibt keine Aufgaben für diesen Kurs.",
                 "notReleased": "Nicht freigegeben",
                 "live": "Live",
-                "userNotStartedExercise":"Du hast mit der Aufgabe noch nicht angefangen.",
-                "quizNotStarted":"Das Quiz hat noch nicht begonnen.",
-                "userNotStartedQuiz":"Du hast mit dem Quiz noch nicht begonnen.",
-                "userNotParticipated":"Du hast bei diesem Live-Quiz nicht teilgenommen.",
-                "userParticipating":"Du nimmst gerade an diesem Quiz teil.",
-                "userSubmitted":"Du hast bereits abgegeben. Warte, bis das Quiz beendet ist, um die Ergebnisse zu sehen."
+                "userNotStartedExercise": "Du hast mit der Aufgabe noch nicht angefangen.",
+                "quizNotStarted": "Das Quiz hat noch nicht begonnen.",
+                "userNotStartedQuiz": "Du hast mit dem Quiz noch nicht begonnen.",
+                "userNotParticipated": "Du hast bei diesem Live-Quiz nicht teilgenommen.",
+                "userParticipating": "Du nimmst gerade an diesem Quiz teil.",
+                "userSubmitted": "Du hast bereits abgegeben. Warte, bis das Quiz beendet ist, um die Ergebnisse zu sehen.",
+                "details": {
+                    "courseInformation": "Kurs Informationen:",
+                    "totalExercises": "Aufgaben insgesamt:",
+                    "totalQuizExercises": "Quiz Aufgaben insgesamt:",
+                    "totalModelingExercises": "Modelierungs Aufgaben insgesamt:",
+                    "totalProgrammingExercises": "Programmier Aufgaben insgesamt:",
+                    "totalTextExercises": "Text Aufgaben insgesamt:",
+                    "totalFileUploadExercises": "Aufgaben mit Datei-Upload insgesamt:",
+                    "startDate": "Start:",
+                    "endDate": "Ende:",
+                    "upcomingDeadlines": "Bevorstehende Termine:"
+                }
             },
             "statistics": {
                 "totalScore": "Gesamtpunktzahl",
