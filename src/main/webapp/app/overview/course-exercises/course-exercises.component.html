@@ -18,6 +18,15 @@
                     </div>
                 </div>
             </div>
+            <div class="exercise-row-container mb-3" *ngIf="nextRelevantExercise">
+                <h3 class="text-primary">
+                    {{"arTeMiSApp.courseOverview.exerciseList.currentExerciseGroupHeader" | translate:{
+                    date: (nextRelevantExercise.dueDate | date:'dd/MM/yy HH:MM')
+                } }}
+                </h3>
+                <jhi-course-exercise-row class="pb-1" [exercise]="nextRelevantExercise" [course]="course"></jhi-course-exercise-row>
+                <div class="collapsed"></div>
+            </div>
             <div class="exercise-row-container mb-3" *ngFor="let weekKey of weeklyIndexKeys">
                 <div class="control-label" [ngClass]="{'text-primary': weeklyExercisesGrouped[weekKey].isCurrentWeek}"
                     (click)="weeklyExercisesGrouped[weekKey].isCollapsed = !weeklyExercisesGrouped[weekKey].isCollapsed">

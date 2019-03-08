@@ -22,7 +22,7 @@
                     <div class="col-6">
                         <h5>
                             {{exercise.type | exerciseTypeLabel}}
-                            <fa-icon [icon]="exerciseIcon.faIcon" placement="right"></fa-icon>
+                            <fa-icon [icon]="getIcon(exercise.type)" placement="right"></fa-icon>
                         </h5>
                     </div>
                 </div>

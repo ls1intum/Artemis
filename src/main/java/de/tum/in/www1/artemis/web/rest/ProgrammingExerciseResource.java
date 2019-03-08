@@ -4,6 +4,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -12,13 +13,18 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -65,7 +71,6 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     *
      * @param exercise the exercise object we want to check for errors
      * @return the error message as response or null if everything is fine
      */
@@ -191,14 +196,17 @@ public class ProgrammingExerciseResource {
         }
 
         // Check if package name is set
-        if (programmingExercise.getPackageName() == null || programmingExercise.getPackageName().length() < 3) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The packagename is invalid", "packagenameInvalid")).body(null);
-        }
+        if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
+            // only Java needs a valid package name at the moment
+            if (programmingExercise.getPackageName() == null || programmingExercise.getPackageName().length() < 3) {
+                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The packagename is invalid", "packagenameInvalid")).body(null);
+            }
 
-        // Check if package name matches regex
-        Matcher packageNameMatcher = packageNamePattern.matcher(programmingExercise.getPackageName());
-        if (!packageNameMatcher.matches()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The packagename is invalid", "packagenameInvalid")).body(null);
+            // Check if package name matches regex
+            Matcher packageNameMatcher = packageNamePattern.matcher(programmingExercise.getPackageName());
+            if (!packageNameMatcher.matches()) {
+                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("The packagename is invalid", "packagenameInvalid")).body(null);
+            }
         }
 
         // Check if max score is set
@@ -285,8 +293,8 @@ public class ProgrammingExerciseResource {
         Course course = courseService.findOne(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-             !authCheckService.isInstructorInCourse(course, user) &&
-             !authCheckService.isAdmin()) {
+            !authCheckService.isInstructorInCourse(course, user) &&
+            !authCheckService.isAdmin()) {
             return forbidden();
         }
         List<ProgrammingExercise> exercises = programmingExerciseRepository.findByCourseId(courseId);
@@ -342,9 +350,72 @@ public class ProgrammingExerciseResource {
             String title = programmingExercise.get().getTitle();
             exerciseService.delete(programmingExercise.get(), deleteStudentReposBuildPlans, deleteBaseReposBuildPlans);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, title)).build();
-        }
-        else {
+        } else {
             return ResponseEntity.notFound().build();
         }
     }
+
+    /**
+     * PUT  /programming-exercises/{id}/generate-tests : Makes a call to StructureOracleGenerator to generate the
+     * structure oracle aka the test.json file
+     *
+     * @param id The ID of the programming exercise for which the structure oracle should get generated
+     * @return The ResponseEntity with status 201 (Created) or with status 400 (Bad Request) if the parameters are invalid
+     */
+    @GetMapping(value = "/programming-exercises/{id}/generate-tests", produces = MediaType.TEXT_PLAIN_VALUE)
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<String> generateStructureOracleForExercise(@PathVariable Long id) {
+        log.debug("REST request to generate the structure oracle for ProgrammingExercise with id: {}", id);
+
+        if (id == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("programmingExerciseNotFound", "The programming exercise does not exist")).body(null);
+        }
+        Optional<ProgrammingExercise> programmingExerciseOptional = programmingExerciseRepository.findById(id);
+        if (!programmingExerciseOptional.isPresent()) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("programmingExerciseNotFound", "The programming exercise does not exist")).body(null);
+        }
+
+        ProgrammingExercise programmingExercise = programmingExerciseOptional.get();
+        Course course = courseService.findOne(programmingExercise.getCourse().getId());
+        if (course == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert("courseNotFound", "The course belonging to this programming exercise does not exist")).body(null);
+        }
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isInstructorInCourse(course, user) &&
+            !authCheckService.isAdmin()) {
+            return forbidden();
+        }
+        if (programmingExercise.getPackageName() == null || programmingExercise.getPackageName().length() < 3) {
+            return ResponseEntity
+                .badRequest()
+                .headers(HeaderUtil.createAlert("This is a linked exercise and generating the structure oracle for this exercise is not possible.", "couldNotGenerateStructureOracle"))
+                .body(null);
+        }
+
+        URL solutionRepoURL = programmingExercise.getSolutionRepositoryUrlAsUrl();
+        URL exerciseRepoURL = programmingExercise.getTemplateRepositoryUrlAsUrl();
+        URL testRepoURL = programmingExercise.getTestRepositoryUrlAsUrl();
+
+        try {
+            String testsPath = "test" + File.separator + programmingExercise.getPackageFolderName();
+            boolean didGenerateOracle = programmingExerciseService.generateStructureOracleFile(solutionRepoURL, exerciseRepoURL, testRepoURL, testsPath);
+
+            if(didGenerateOracle) {
+                HttpHeaders responseHeaders = new HttpHeaders();
+                responseHeaders.setContentType(MediaType.TEXT_PLAIN);
+                return new ResponseEntity<>("Successfully generated the structure oracle for the exercise " + programmingExercise.getProjectName(), responseHeaders, HttpStatus.OK);
+            } else {
+                return ResponseEntity
+                    .badRequest()
+                    .headers(HeaderUtil.createAlert("Did not update the oracle because there have not been any changes to it.", "didNotGenerateStructureOracle"))
+                    .body(null);
+            }
+        } catch (Exception e) {
+            return ResponseEntity
+                .badRequest()
+                .headers(HeaderUtil.createAlert("An error occurred while generating the structure oracle for the exercise " + programmingExercise.getProjectName() + ": \n" + e.getMessage(), "errorStructureOracleGeneration"))
+                .body(null);
+        }
+    }
+
 }

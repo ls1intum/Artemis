@@ -1,83 +1,139 @@
 [
     {
-        "package": "${packageName}",
-        "class": "Policy",
-        "constructors": [ {
-                "modifiers": [ "public" ],
-                "parameters": [ "Context" ]
+        "class": {
+            "name": "Policy",
+            "package": "${packageName}"
+        },
+        "attributes": [
+            {
+                "name": "context",
+                "modifiers": [
+                    "private"
+                ],
+                "type": "Context"
             }
         ],
-        "attributes": {
-            "context": {
-                "type": "Context",
-                "modifiers": [ "private" ]
+        "constructors": [
+            {
+                "modifiers": [
+                    "public"
+                ],
+                "parameters": [
+                    "Context"
+                ]
             }
-        },
-        "methods": {
-            "configure": {
-                "modifiers": [ "public" ],
+        ],
+        "methods": [
+            {
+                "name": "configure",
+                "modifiers": [
+                    "public"
+                ],
                 "returnType": "void"
             }
-        }
+        ]
     },
     {
-        "package": "${packageName}",
-        "class": "Context",
-        "attributes": {
-            "sortAlgorithm": {
-                "type": "SortStrategy",
-                "modifiers": [ "private" ]
-            },
-            "dates": {
-                "type": "List",
-                "modifiers": [ "private" ]
-            }
+        "class": {
+            "name": "Context",
+            "package": "${packageName}"
         },
-        "methods": {
-            "setDates": {
-                "modifiers": [ "public" ],
-                "parameters": [ "List" ],
-                "returnType": "void"
+        "attributes": [
+            {
+                "name": "sortAlgorithm",
+                "modifiers": [
+                    "private"
+                ],
+                "type": "SortStrategy"
             },
-            "getDates": {
-                "modifiers": [ "public" ],
-                "returnType": "List"
-            },
-            "setSortAlgorithm": {
-                "modifiers": [ "public" ],
-                "parameters": [ "SortStrategy" ],
-                "returnType": "void"
-            },
-            "getSortAlgorithm": {
-                "modifiers": [ "public" ],
+            {
+                "name": "dates",
+                "modifiers": [
+                    "private"
+                ],
+                "type": "List"
+            }
+        ],
+        "methods": [
+            {
+                "name": "getSortAlgorithm",
+                "modifiers": [
+                    "public"
+                ],
                 "returnType": "SortStrategy"
             },
-            "sort": {
-                "modifiers": [ "public" ],
+            {
+                "name": "setSortAlgorithm",
+                "modifiers": [
+                    "public"
+                ],
+                "parameters": [
+                    "SortStrategy"
+                ],
+                "returnType": "void"
+            },
+            {
+                "name": "sort",
+                "modifiers": [
+                    "public"
+                ],
+                "returnType": "void"
+            },
+            {
+                "name": "getDates",
+                "modifiers": [
+                    "public"
+                ],
+                "returnType": "List"
+            },
+            {
+                "name": "setDates",
+                "modifiers": [
+                    "public"
+                ],
+                "parameters": [
+                    "List"
+                ],
                 "returnType": "void"
             }
+        ]
+    },
+    {
+        "class": {
+            "name": "SortStrategy",
+            "package": "${packageName}",
+            "isInterface": true
+        },
+        "methods": [
+            {
+                "name": "performSort",
+                "modifiers": [
+                    "public",
+                    "abstract"
+                ],
+                "parameters": [
+                    "List"
+                ],
+                "returnType": "void"
+            }
+        ]
+    },
+    {
+        "class": {
+            "name": "BubbleSort",
+            "package": "${packageName}",
+            "interfaces": [
+                "SortStrategy"
+            ]
         }
     },
     {
-        "package": "${packageName}",
-        "class": "SortStrategy",
-        "methods": {
-            "performSort": {
-                "modifiers": [ "public" ],
-                "parameters": [ "List" ],
-                "returnType": "void"
-            }
-        },
-        "isInterface": "true"
-    },
-    {
-        "package": "${packageName}",
-        "class": "BubbleSort",
-        "interfaces": [ "SortStrategy" ]
-    },
-    {
-        "package": "${packageName}",
-        "class": "MergeSort",
-        "interfaces": [ "SortStrategy" ]
+        "class": {
+            "name": "MergeSort",
+            "package": "${packageName}",
+            "interfaces": [
+                "SortStrategy"
+            ]
+        }
     }
 ]

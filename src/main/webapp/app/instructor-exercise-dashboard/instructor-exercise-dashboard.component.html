@@ -1,0 +1,46 @@
+<jhi-alert></jhi-alert>
+
+<div *ngIf="exercise">
+    <div class="course-info-bar">
+        <h3>{{"arTeMiSApp.instructorExerciseDashboard.pageHeader" | translate}} {{exercise.title}}</h3>
+        <h4>{{exercise.problemStatement || ("arTeMiSApp.instructorExerciseDashboard.noProblemStatement" | translate)}}</h4>
+    </div>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-2">
+                <button class="btn btn-secondary" [routerLink]="'/course/' + courseId + '/instructor-dashboard'">&larr; {{"arTeMiSApp.instructorExerciseDashboard.pageHeader" | translate}}</button>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="card-title">{{"arTeMiSApp.instructorExerciseDashboard.informationAboutExercise" | translate}}</h4>
+                    </div>
+                    <div class="card-body">
+                        <ul>
+                            <li><b>{{"arTeMiSApp.instructorExerciseDashboard.exerciseDueDate" | translate}}:</b> {{exercise.dueDate | date: 'medium'}}</li>
+                            <li><b>{{"arTeMiSApp.instructorExerciseDashboard.submissions" | translate}}:</b> {{exercise.participations.length}}</li>
+                            <li><b>{{"arTeMiSApp.instructorExerciseDashboard.assessmentDueDate" | translate}}:</b> {{exercise.assessmentDueDate | date: 'medium'}}</li>
+                            <li><b>{{"arTeMiSApp.instructorExerciseDashboard.assessments" | translate}}:</b> {{numberOfAssessments}} ({{exercise.participations.length - numberOfAssessments}} {{"arTeMiSApp.instructorExerciseDashboard.open" | translate}})</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4" *ngIf="exercise.participations.length > 0">
+                <canvas baseChart
+                        [data]="dataForAssessmentPieChart"
+                        [labels]="['Open assessments', 'Completed assessments']"
+                        chartType="pie">
+                </canvas>
+            </div>
+        </div>
+
+        <h2>{{"arTeMiSApp.instructorExerciseDashboard.leaderboardTitle" | translate}}</h2>
+
+        <jhi-tutor-leaderboard [tutorsData]="tutorLeaderboardData"></jhi-tutor-leaderboard>
+    </div>
+</div>

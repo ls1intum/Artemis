@@ -69,8 +69,8 @@ public class ArTEMiSApp {
         // activate Automatic Submission Service
         automaticSubmissionService.startSchedule(10 * 1000);                  //every 10 seconds
 
-        // activate Automatic Submission Service
-        automaticBuildPlanCleanupService.startSchedule(12 * 60 * 60 * 1000);       //every 12 hours
+        // execute it once during startup (mainly for testing purposes if this feature works as intended)
+        automaticBuildPlanCleanupService.cleanupBuildPlans();
     }
 
     /**
