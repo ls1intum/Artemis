@@ -69,15 +69,20 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         this.isAuthorized = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
         this.route.params.subscribe(params => {
             const submissionId = Number(params['submissionId']);
-            const exerciseId = Number(params['exerciseId']);
             let nextOptimal: boolean;
             this.route.queryParams.subscribe(query => {
                 nextOptimal = query['optimal'] === 'true';
             });
 
-            this.modelingAssessmentService.getDataForEditor(exerciseId, submissionId).subscribe(res => {
-                this.submission = res.body;
+            this.modelingSubmissionService.getSubmission(submissionId).subscribe(res => {
+                this.submission = res;
                 this.modelingExercise = this.submission.participation.exercise as ModelingExercise;
+                this.result = this.submission.result;
+                if (!this.result.feedbacks) { // TODO CZ: should this be taken care of by the server?
+                    this.result.feedbacks = [];
+                }
+                this.submission.participation.results = [this.result];
+                this.result.participation = this.submission.participation;
                 /**
                  * set diagramType to class diagram if exercise is null, use case or communication
                  * apollon does not support use case and communication yet
@@ -94,8 +99,6 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
                 } else {
                     this.jhiAlertService.error(`No model could be found for this submission.`);
                 }
-                this.submission.result.participation.results = [this.submission.result];
-                this.result = this.submission.result;
                 if ((this.result.assessor == null || this.result.assessor.id === this.userId) && !this.result.rated) {
                     this.jhiAlertService.info('arTeMiSApp.apollonDiagram.lock');
                 }
@@ -167,7 +170,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
      * The default score is 0.
      */
     initializeAssessments() {
-        if (!this.apollonEditor) {
+        if (!this.apollonEditor || !this.result || !this.result.feedbacks) {
             return;
         }
         const editorState = this.apollonEditor.getState();
@@ -218,6 +221,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
 
     saveAssessment() {
         this.checkScoreBoundaries();
+        this.removeCircularDependencies();
         this.modelingAssessmentService.save(this.result, this.submission.id).subscribe((result: Result) => {
             this.result = result;
             this.onNewResult.emit(this.result);
@@ -229,6 +233,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
 
     submit() {
         this.checkScoreBoundaries();
+        this.removeCircularDependencies();
         this.modelingAssessmentService.save(this.result, this.submission.id, true, this.ignoreConflicts).subscribe((result: Result) => {
             result.participation.results = [result];
             this.result = result;
@@ -272,6 +277,15 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         this.totalScore = totalScore;
         this.assessmentsAreValid = true;
         this.invalidError = '';
+    }
+
+    /**
+     * Removes the circular dependencies in the nested objects.
+     * Otherwise, we would get a JSON error when trying to send the submission to the server.
+     */
+    removeCircularDependencies() {
+        this.submission.result.participation = null;
+        this.submission.result.submission = null;
     }
 
     setAssessmentsNames() {

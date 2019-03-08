@@ -1,14 +1,19 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.gson.JsonObject;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ModelingExercise;
+import de.tum.in.www1.artemis.domain.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.Participation;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.CourseService;
+import de.tum.in.www1.artemis.service.ModelingExerciseService;
+import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -18,12 +23,17 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashSet;
@@ -49,38 +59,26 @@ public class ModelingExerciseResource {
     private final CourseService courseService;
     private final AuthorizationCheckService authCheckService;
     private final ParticipationService participationService;
-    private final ModelingSubmissionService modelingSubmissionService;
-    private final ModelingSubmissionRepository modelingSubmissionRepository;
     private final ResultRepository resultRepository;
-    private final ObjectMapper objectMapper;
     private final ModelingExerciseService modelingExerciseService;
     private final CompassService compassService;
-    private final ModelingAssessmentService modelingAssessmentService;
 
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository,
                                     UserService userService,
                                     AuthorizationCheckService authCheckService,
                                     CourseService courseService,
                                     ParticipationService participationService,
-                                    ModelingSubmissionService modelingSubmissionService,
-                                    ModelingSubmissionRepository modelingSubmissionRepository,
                                     ResultRepository resultRepository,
-                                    MappingJackson2HttpMessageConverter springMvcJacksonConverter,
                                     ModelingExerciseService modelingExerciseService,
-                                    CompassService compassService,
-                                    ModelingAssessmentService modelingAssessmentService) {
+                                    CompassService compassService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingExerciseService = modelingExerciseService;
         this.userService = userService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.participationService = participationService;
-        this.modelingSubmissionService = modelingSubmissionService;
-        this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.resultRepository = resultRepository;
-        this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.compassService = compassService;
-        this.modelingAssessmentService = modelingAssessmentService;
     }
 
     //TODO: most of these calls should be done in the context of a course
@@ -115,10 +113,7 @@ public class ModelingExerciseResource {
         if (course == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this modeling exercise does not exist")).body(null);
         }
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-            !authCheckService.isInstructorInCourse(course, user) &&
-            !authCheckService.isAdmin()) {
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
             return forbidden();
         }
         return null;
@@ -162,9 +157,7 @@ public class ModelingExerciseResource {
         log.debug("REST request to get all ModelingExercises for the course with id : {}", courseId);
         Course course = courseService.findOne(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-            !authCheckService.isInstructorInCourse(course, user) &&
-            !authCheckService.isAdmin()) {
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return forbidden();
         }
         List<ModelingExercise> exercises = modelingExerciseRepository.findByCourseId(courseId);
@@ -190,11 +183,7 @@ public class ModelingExerciseResource {
         if (!modelingExercise.isPresent()) {
             return notFound();
         }
-        Course course = modelingExercise.get().getCourse();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-            !authCheckService.isInstructorInCourse(course, user) &&
-            !authCheckService.isAdmin()) {
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
             return forbidden();
         }
         return ResponseEntity.ok(compassService.getStatistics(exerciseId).toString());
@@ -209,15 +198,11 @@ public class ModelingExerciseResource {
      */
     @GetMapping("/modeling-exercises/{id}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ModelingExercise> getProgrammingExercise(@PathVariable Long id) {
+    public ResponseEntity<ModelingExercise> getModelingExercise(@PathVariable Long id) {
         log.debug("REST request to get ModelingExercise : {}", id);
         Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findById(id);
         if (modelingExercise.isPresent()) {
-            Course course = modelingExercise.get().getCourse();
-            User user = userService.getUserWithGroupsAndAuthorities();
-            if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-                !authCheckService.isInstructorInCourse(course, user) &&
-                !authCheckService.isAdmin()) {
+            if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
                 return forbidden();
             }
         }
@@ -235,10 +220,7 @@ public class ModelingExerciseResource {
     public ResponseEntity<Void> deleteModelingExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to delete ModelingExercise : {}", exerciseId);
         ModelingExercise modelingExercise = modelingExerciseRepository.findById(exerciseId).get();
-        Course course = modelingExercise.getCourse();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isInstructorInCourse(course, user) &&
-            !authCheckService.isAdmin()) {
+        if (!authCheckService.isAtLeastInstructorForExercise(modelingExercise)) {
             return forbidden();
         }
         modelingExerciseService.delete(exerciseId);
@@ -301,62 +283,6 @@ public class ModelingExerciseResource {
         if (modelingSubmission.getResult() instanceof HibernateProxy) {
             modelingSubmission.setResult((Result) Hibernate.unproxy(modelingSubmission.getResult()));
         }
-        return ResponseEntity.ok(modelingSubmission);
-    }
-
-    /**
-     * Returns the data needed for the assessment editor, which includes the modelingExercise, result, modelingSubmission
-     * and the assessments if the submission was already submitted.
-     *
-     * @param exerciseId the participationId for which to find the data for the modeling editor
-     * @param submissionId the participationId for which to find the data for the modeling editor
-     * @return the ResponseEntity with json as body
-     */
-    @GetMapping("/assessment-editor/{exerciseId}/{submissionId}")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional
-    //TODO: fix the REST URL
-    //TODO MJ Move into ModelingassessmentResource ??
-    public ResponseEntity<ModelingSubmission> getDataForAssessmentEditor(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
-        Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findById(exerciseId);
-        if (!modelingExercise.isPresent()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("modelingExercise", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
-        }
-
-        Course course = modelingExercise.get().getCourse();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-            !authCheckService.isInstructorInCourse(course, user) &&
-            !authCheckService.isAdmin()) {
-            return forbidden();
-        }
-
-        Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionRepository.findById(submissionId);
-        if (!optionalModelingSubmission.isPresent()) {
-            return notFound();
-        }
-        ModelingSubmission modelingSubmission = optionalModelingSubmission.get();
-        Result result = resultRepository.findDistinctBySubmissionId(submissionId).orElse(null);
-        if (result == null) {
-            result = new Result();
-            result.setSubmission(modelingSubmission);
-            modelingSubmission.setResult(result);
-            modelingSubmission.getParticipation().addResult(result);
-            result = resultRepository.save(result);
-            modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
-        }
-
-        if (result.getAssessor() == null) {
-            compassService.removeModelWaitingForAssessment(exerciseId, submissionId);
-            result.setAssessor(user);
-            Result savedResult = resultRepository.save(result);
-            log.debug("Assessment locked with result id: " + savedResult.getId() + " for assessor: " + savedResult.getAssessor().getFirstName());
-        }
-        if (result.getAssessor() instanceof HibernateProxy) {
-            result.setAssessor((User) Hibernate.unproxy(result.getAssessor()));
-        }
-        //Make sure the exercise is connected to the participation in the json response
-        modelingSubmission.getParticipation().setExercise(modelingExercise.get());
         return ResponseEntity.ok(modelingSubmission);
     }
 }

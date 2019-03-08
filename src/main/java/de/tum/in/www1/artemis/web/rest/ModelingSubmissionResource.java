@@ -5,8 +5,9 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.ModelingExercise;
 import de.tum.in.www1.artemis.domain.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.Participation;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.ExerciseService;
@@ -14,9 +15,9 @@ import de.tum.in.www1.artemis.service.ModelingExerciseService;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.UserService;
+import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import io.github.jhipster.web.util.ResponseUtil;
 import org.hibernate.Hibernate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +43,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 /**
  * REST controller for managing ModelingSubmission.
@@ -55,6 +57,7 @@ public class ModelingSubmissionResource {
     private static final String ENTITY_NAME = "modelingSubmission";
 
     private final ModelingSubmissionRepository modelingSubmissionRepository;
+    private final ResultRepository resultRepository;
     private final ModelingSubmissionService modelingSubmissionService;
     private final ModelingExerciseService modelingExerciseService;
     private final ParticipationService participationService;
@@ -62,16 +65,20 @@ public class ModelingSubmissionResource {
     private final UserService userService;
     private final CourseService courseService;
     private final AuthorizationCheckService authCheckService;
+    private final CompassService compassService;
 
     public ModelingSubmissionResource(ModelingSubmissionRepository modelingSubmissionRepository,
+                                      ResultRepository resultRepository,
                                       ModelingSubmissionService modelingSubmissionService,
                                       ModelingExerciseService modelingExerciseService,
                                       ParticipationService participationService,
                                       ExerciseService exerciseService,
                                       UserService userService,
                                       CourseService courseService,
-                                      AuthorizationCheckService authCheckService) {
+                                      AuthorizationCheckService authCheckService,
+                                      CompassService compassService) {
         this.modelingSubmissionRepository = modelingSubmissionRepository;
+        this.resultRepository = resultRepository;
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseService = modelingExerciseService;
         this.participationService = participationService;
@@ -79,6 +86,7 @@ public class ModelingSubmissionResource {
         this.userService = userService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
+        this.compassService = compassService;
     }
 
     /**
@@ -189,11 +197,7 @@ public class ModelingSubmissionResource {
                                                                               @RequestParam(defaultValue = "false") boolean submittedOnly) {
         log.debug("REST request to get all ModelingSubmissions");
         Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
-        Course course = exercise.getCourse();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-            !authCheckService.isInstructorInCourse(course, user) &&
-            !authCheckService.isAdmin()) {
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
         }
         List<Participation> participations = participationService.findByExerciseIdWithEagerSubmissions(exerciseId);
@@ -221,24 +225,47 @@ public class ModelingSubmissionResource {
         return ResponseEntity.ok().body(submissions);
     }
 
+
     /**
-     * GET  /courses/{courseId}/exercises/{exerciseId}/modeling-submissions : Gets an existing modelingSubmission.
+     * GET  /modeling-submissions/{submissionId} : Gets an existing modelingSubmission with result. If no result
+     * exists for this submission a new Result object is created and assigned to the submission.
      *
-     * @param courseId   only included for API consistency, not actually used
-     * @param exerciseId the id of the corresponding exercise - only included for API consistency, not actually used
-     * @param id         the id of the modelingSubmission to retrieve
+     * @param submissionId  the id of the modelingSubmission to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the modelingSubmission for the given id,
      * or with status 404 (Not Found) if the modelingSubmission could not be found
      */
-    @GetMapping("/courses/{courseId}/exercises/{exerciseId}/modeling-submissions/{id}")
+    @GetMapping("/modeling-submissions/{submissionId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ModelingSubmission> getModelingSubmissionWithModel(@PathVariable Long courseId,
-                                                                             @PathVariable Long exerciseId,
-                                                                             @PathVariable Long id) {
-        log.debug("REST request to get ModelingSubmission with model : {}", id);
-        Optional<ModelingSubmission> modelingSubmission = modelingSubmissionRepository.findById(id);
-        // hide details of the modeling submission, if one was found
-        modelingSubmission.ifPresent(this::hideDetails);
-        return ResponseUtil.wrapOrNotFound(modelingSubmission);
+    @Transactional
+    public ResponseEntity<ModelingSubmission> getModelingSubmission(@PathVariable Long submissionId) {
+        log.debug("REST request to get ModelingSubmission with id: {}", submissionId);
+        Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionRepository.findByIdWithEagerResult(submissionId);
+        if (!optionalModelingSubmission.isPresent()) {
+            return notFound();
+        }
+        ModelingSubmission modelingSubmission = optionalModelingSubmission.get();
+
+        Exercise exercise = modelingSubmission.getParticipation().getExercise();
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+            return forbidden();
+        }
+
+        Result result = modelingSubmission.getResult();
+        if (result == null) {
+            result = new Result();
+            modelingSubmission.setResult(result);
+            modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
+        }
+        if (result.getAssessor() == null) {
+            compassService.removeModelWaitingForAssessment(exercise.getId(), submissionId);
+            result.setAssessor(userService.getUserWithGroupsAndAuthorities());
+            Result savedResult = resultRepository.save(result);
+            log.debug("Assessment locked with result id: " + savedResult.getId() + " for assessor: " + savedResult.getAssessor().getFirstName());
+        }
+
+        //Make sure the exercise is connected to the participation in the json response
+        modelingSubmission.getParticipation().setExercise(exercise);
+        hideDetails(modelingSubmission);
+        return ResponseEntity.ok(modelingSubmission);
     }
 }

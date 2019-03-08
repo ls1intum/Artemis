@@ -65,7 +65,7 @@
             <div class="assessments">
                 <div class="assessments__container">
                     <div class="assessments__canvas">
-                        <ng-container *ngIf="result.feedbacks && positions">
+                        <ng-container *ngIf="result?.feedbacks && positions">
                             <div *ngFor="let feedback of result.feedbacks"
                                  [style.top.px]="positions[feedback.referenceId].y"
                                  [style.left.px]="positions[feedback.referenceId].x">
@@ -84,7 +84,7 @@
                 Select an element to grade the element.
             </div>
             <ng-container>
-                <div *ngFor="let feedback of result.feedbacks" [hidden]="!isSelected(feedback.referenceId, feedback.referenceType)">
+                <div *ngFor="let feedback of result?.feedbacks" [hidden]="!isSelected(feedback.referenceId, feedback.referenceType)">
                     <div class="card">
                         <div class="card-header" [class.conflict]="conflicts && conflicts.get(feedback.referenceId)">
                             <h4 class="card-title"
