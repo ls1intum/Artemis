@@ -258,6 +258,7 @@ public class ModelingSubmissionResource {
         }
         if (result.getAssessor() == null) {
             compassService.removeModelWaitingForAssessment(exercise.getId(), submissionId);
+            //we set the assessor and save the result to soft lock the assessment (so that it cannot be edited by another tutor)
             result.setAssessor(userService.getUserWithGroupsAndAuthorities());
             Result savedResult = resultRepository.save(result);
             log.debug("Assessment locked with result id: " + savedResult.getId() + " for assessor: " + savedResult.getAssessor().getFirstName());
