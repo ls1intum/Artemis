@@ -66,6 +66,23 @@ Course Info Bar
     right: -14px;
 }
 
+.course-information {
+    padding-top: 29px;
+
+    .exercise-panel {
+        .row {
+            cursor: pointer;
+            border-radius: 3px;
+            &:hover {
+                background-color: $light-background-color;
+                .icon {
+                    color: $primary;
+                }
+            }
+        }
+    }
+}
+
 .exercise-divider {
     height: 0;
     width: 100%;

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Course, CourseScoreCalculationService, CourseService } from 'app/entities/course';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
@@ -22,6 +22,10 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     public weeklyIndexKeys: string[];
     public weeklyExercisesGrouped: object;
 
+    public upcomingExercises: Exercise[];
+
+    public exerciseCountMap: Map<string, number>;
+
     constructor(
         private courseService: CourseService,
         private courseCalculationService: CourseScoreCalculationService,
@@ -32,6 +36,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
+        this.exerciseCountMap = new Map<string, number>();
         this.paramSubscription = this.route.parent.params.subscribe(params => {
             this.courseId = parseInt(params['courseId'], 10);
         });
@@ -49,6 +54,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
             this.groupExercises(this.DUE_DATE_DESC);
 
         });
+
     }
 
     ngOnDestroy(): void {
@@ -64,8 +70,10 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         const courseExercises = [...this.course.exercises];
         const sortedExercises = this.sortExercises(courseExercises, selectedOrder);
         const notAssociatedExercises: Exercise[] = [];
+        const upcomingExercises: Exercise[] = [];
         sortedExercises.forEach(exercise => {
             const dateValue = exercise.dueDate ? exercise.dueDate : exercise.releaseDate;
+            this.increaseExerciseCounter(exercise);
             if (!dateValue) {
                 notAssociatedExercises.push(exercise);
                 return;
@@ -90,7 +98,11 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
                 }
             }
             groupedExercises[dateIndex].exercises.push(exercise);
+            if (exercise.dueDate && moment().isSameOrBefore(exercise.dueDate, 'day')) {
+                upcomingExercises.push(exercise);
+            }
         });
+        this.updateUpcomingExercises(upcomingExercises);
         this.weeklyExercisesGrouped = {
             ...groupedExercises,
             'noDate': {
@@ -110,6 +122,25 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
 
             return selectedOrder * (aValue - bValue);
         });
+    }
+
+    private increaseExerciseCounter(exercise: Exercise) {
+        if (!this.exerciseCountMap.has(exercise.type)) {
+            this.exerciseCountMap.set(exercise.type, 1);
+        } else {
+            let exerciseCount = this.exerciseCountMap.get(exercise.type);
+            this.exerciseCountMap.set(exercise.type, ++exerciseCount);
+        }
+    }
+
+    private updateUpcomingExercises(upcomingExercises: Exercise[]) {
+        if (upcomingExercises.length < 5) {
+            this.upcomingExercises = this.sortExercises(upcomingExercises, this.DUE_DATE_ASC);
+        } else {
+            const numberOfExercises = upcomingExercises.length;
+            upcomingExercises = upcomingExercises.slice(numberOfExercises - 5, numberOfExercises);
+            this.upcomingExercises = this.sortExercises(upcomingExercises, this.DUE_DATE_ASC);
+        }
     }
 
     get nextRelevantExercise(): Exercise {
