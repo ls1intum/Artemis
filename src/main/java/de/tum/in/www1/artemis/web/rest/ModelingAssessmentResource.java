@@ -136,7 +136,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
             response = Conflict.class,
             responseContainer = "List")
     })
-    @PutMapping("/submissions/{submissionId}/modeling-assessment")
+    @PutMapping("/modeling-submissions/{submissionId}/feedback")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     // TODO MJ changing submitted assessment always produces Conflict
     // TODO: in this case we should already send the feedback items in the Result object
@@ -144,11 +144,12 @@ public class ModelingAssessmentResource extends AssessmentResource {
         @PathVariable Long submissionId,
         @RequestParam(value = "ignoreConflicts", defaultValue = "false") boolean ignoreConflict,
         @RequestParam(value = "submit", defaultValue = "false") boolean submit,
-        @RequestBody Result result) {
+        @RequestBody List<Feedback> feedbacks) {
         ModelingSubmission submission = modelingSubmissionService.findOne(submissionId);
         long exerciseId = submission.getParticipation().getExercise().getId();
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         checkAuthorization(modelingExercise);
+        Result result = submission.getResult();
         modelingAssessmentService.saveManualAssessment(result);
         if (submit) {
             List<Conflict> conflicts =
