@@ -1,3 +1,17 @@
+<div class="row mb-1" *ngIf="nextRelevantExercise">
+    <div class="col">
+        <h3> {{"arTeMiSApp.studentDashboard.exerciseTitle" | translate:{
+            date: (nextRelevantExercise.dueDate | date:'dd/MM/yy HH:MM'),
+            course: nextRelevantCourse.title
+        } }}</h3>
+    </div>
+</div>
+<div class="row mb-3" *ngIf="nextRelevantExercise">
+    <div class="col-12 pl-4 pr-4">
+        <jhi-course-exercise-row class="pb-1" [exercise]="nextRelevantExercise" [course]="nextRelevantCourse"
+            [extendedLink]="true"></jhi-course-exercise-row>
+    </div>
+</div>
 <div class="row mb-3 align-items-center">
     <div class="col-12 col-sm">
         <h3 jhiTranslate="arTeMiSApp.studentDashboard.title">Your current courses</h3>

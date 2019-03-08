@@ -2,6 +2,7 @@
     "arTeMiSApp": {
         "studentDashboard": {
             "title": "Deine aktuellen Kurse",
+            "exerciseTitle": "Aktuelle Übung von \"{{ course }}\" aktiv bis {{ date }}:",
             "cardTitle": "Deine aktuelle Punktzahl:",
             "cardNoExerciseLabel": "Keine Übung geplant",
             "cardExerciseLabel": "Nächste Übung:",
@@ -23,6 +24,7 @@
             "exerciseList": {
                 "noExerciseDate": "Kein Datum zugeordnet",
                 "exerciseGroupHeader": "Aufgaben: {{ total }}",
+                "currentExerciseGroupHeader": "Aktuelle Übung aktiv bis {{ date }}:",
                 "sortExercises": "Aufgaben sortieren",
                 "newFirst": "Neueste zuerst",
                 "oldFirst": "Älteste zuerst",

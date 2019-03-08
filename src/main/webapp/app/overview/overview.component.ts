@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { Course, CourseScoreCalculationService, CourseService } from 'app/entities/course';
 import { HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
+import { Exercise, ExerciseService } from 'app/entities/exercise';
 
 @Component({
     selector: 'jhi-overview',
@@ -10,13 +11,14 @@ import { JhiAlertService } from 'ng-jhipster';
 })
 export class OverviewComponent {
     public courses: Course[];
+    public nextRelevantCourse: Course;
     public coursesToSelect: Course[];
     public courseToRegister: Course;
     showCourseSelection = false;
     addedSuccessful = false;
     loading = false;
 
-    constructor(private courseService: CourseService, private jhiAlertService: JhiAlertService, private courseScoreCalculationService: CourseScoreCalculationService) {
+    constructor(private courseService: CourseService, private exerciseService: ExerciseService, private jhiAlertService: JhiAlertService, private courseScoreCalculationService: CourseScoreCalculationService) {
         this.loadAndFilterCourses();
 
     }
@@ -87,4 +89,24 @@ export class OverviewComponent {
     trackCourseById(index: number, item: Course) {
         return item.id;
     }
+
+    get nextRelevantExercise(): Exercise {
+        let relevantExercise: Exercise = null;
+        if (this.courses) {
+            this.courses.forEach(course => {
+                const relevantExerciseForCourse = this.exerciseService.getNextExerciseForHours(course.exercises);
+                if (relevantExerciseForCourse) {
+                    if (!relevantExercise) {
+                        relevantExercise = relevantExerciseForCourse;
+                        this.nextRelevantCourse = course;
+                    } else if (relevantExerciseForCourse.dueDate.isBefore(relevantExercise.dueDate)) {
+                        relevantExercise = relevantExerciseForCourse;
+                        this.nextRelevantCourse = course;
+                    }
+                }
+            });
+        }
+        return relevantExercise;
+    }
+
 }

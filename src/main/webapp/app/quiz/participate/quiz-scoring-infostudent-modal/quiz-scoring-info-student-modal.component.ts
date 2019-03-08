@@ -1,13 +1,13 @@
-import {Component, OnInit, Input} from '@angular/core';
-import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
-import {Question, QuestionType, ScoringType} from 'app/entities/question';
-import {DragAndDropMapping} from '../../../entities/drag-and-drop-mapping';
-import {AnswerOption} from '../../../entities/answer-option';
-import {MultipleChoiceQuestion} from '../../../entities/multiple-choice-question';
-import {DragAndDropQuestion} from '../../../entities/drag-and-drop-question';
-import {ShortAnswerQuestion} from '../../../entities/short-answer-question';
-import {ShortAnswerSubmittedText} from 'app/entities/short-answer-submitted-text';
-import {TranslateService} from '@ngx-translate/core';
+import { Component, OnInit, Input } from '@angular/core';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { Question, QuestionType, ScoringType } from 'app/entities/question';
+import { DragAndDropMapping } from '../../../entities/drag-and-drop-mapping';
+import { AnswerOption } from '../../../entities/answer-option';
+import { MultipleChoiceQuestion } from '../../../entities/multiple-choice-question';
+import { DragAndDropQuestion } from '../../../entities/drag-and-drop-question';
+import { ShortAnswerQuestion } from '../../../entities/short-answer-question';
+import { ShortAnswerSubmittedText } from 'app/entities/short-answer-submitted-text';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-quiz-scoring-infostudent-modal',
