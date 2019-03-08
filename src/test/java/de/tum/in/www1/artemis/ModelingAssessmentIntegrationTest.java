@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.util.*;
 @SpringBootTest
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
-public class ModellingAssessmentIntegrationTest {
+public class ModelingAssessmentIntegrationTest {
     @Autowired
     CourseRepository courseRepo;
     @Autowired

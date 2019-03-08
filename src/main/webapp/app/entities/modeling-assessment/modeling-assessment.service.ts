@@ -4,15 +4,24 @@ import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from '../../app.constants';
 
 import { Result } from '../result';
-import { ENTITY_KIND_HEIGHT, ENTITY_MEMBER_HEIGHT, ENTITY_MEMBER_LIST_VERTICAL_PADDING, ENTITY_NAME_HEIGHT, EntityKind, Point, RectEdge, RelationshipKind, State } from '@ls1intum/apollon';
-import { ModelingSubmission } from 'app/entities/modeling-submission';
+import {
+    ENTITY_KIND_HEIGHT,
+    ENTITY_MEMBER_HEIGHT,
+    ENTITY_MEMBER_LIST_VERTICAL_PADDING,
+    ENTITY_NAME_HEIGHT,
+    EntityKind,
+    Point,
+    RectEdge,
+    RelationshipKind,
+    State
+} from '@ls1intum/apollon';
 import { ModelElementType } from 'app/entities/modeling-assessment/uml-element.model';
 
 export type EntityResponseType = HttpResponse<Result>;
 
 @Injectable({providedIn: 'root'})
 export class ModelingAssessmentService {
-    private resourceUrl = SERVER_API_URL + 'api/';
+    private resourceUrl = SERVER_API_URL + 'api';
 
     constructor(private http: HttpClient) {
     }
@@ -39,10 +48,6 @@ export class ModelingAssessmentService {
     getPartialAssessment(submissionId: number): Observable<Result> {
         return this.http
             .get<Result>(`${this.resourceUrl}/submissions/${submissionId}/partial-assessment`,);
-    }
-
-    getDataForEditor(exerciseId: number, submissionId: number): Observable<HttpResponse<ModelingSubmission>> {
-        return this.http.get<ModelingSubmission>(`api/assessment-editor/${exerciseId}/${submissionId}`, {observe: 'response'});
     }
 
     resetOptimality(exerciseId: number): Observable<HttpResponse<void>> {

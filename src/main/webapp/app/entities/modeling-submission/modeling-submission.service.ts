@@ -43,6 +43,10 @@ export class ModelingSubmissionService {
             .map((res: HttpResponse<ModelingSubmission[]>) => this.convertArrayResponse(res));
     }
 
+    getSubmission(submissionId: number): Observable<ModelingSubmission> {
+        return this.http.get<ModelingSubmission>(`api/submissions/${submissionId}`);
+    }
+
     private convertResponse(res: EntityResponseType): EntityResponseType {
         const body: ModelingSubmission = this.convertItemFromServer(res.body);
         return res.clone({ body });
