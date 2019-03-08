@@ -1,28 +1,21 @@
 package de.tum.in.www1.artemis.util;
 
+import java.io.File;
+import java.io.*;
+import java.nio.file.*;
+import java.time.ZonedDateTime;
+import java.util.*;
+import org.apache.commons.io.FileUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.util.ResourceUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ModelingSubmissionService;
 import de.tum.in.www1.artemis.service.compass.assessment.ModelElementAssessment;
-import org.apache.commons.io.FileUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.util.ResourceUtils;
-
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -51,6 +44,7 @@ public class DatabaseUtilService {
     private static ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(1);
     private static ZonedDateTime futureFututreTimestamp = ZonedDateTime.now().plusDays(2);
 
+
     public void resetDatabase() {
         participationRepo.deleteAll();
         exerciseRepo.deleteAll();
@@ -61,10 +55,12 @@ public class DatabaseUtilService {
         assertThat(userRepo.findAll()).as("user data has been cleared").isEmpty();
     }
 
+
     public void resetFileStorage() throws IOException {
         Path path = Paths.get(Constants.FILEPATH_COMPASS + File.separator);
         FileUtils.cleanDirectory(new File(path.toUri()));
     }
+
 
     /**
      * Adds the provided number of students and tutors into the user repository. Students login is a
@@ -92,6 +88,7 @@ public class DatabaseUtilService {
             .containsAnyOf(usersToAdd.toArray(new User[0]));
     }
 
+
     /**
      * Stores participation of the user with the given login for the given exercise
      *
@@ -116,6 +113,7 @@ public class DatabaseUtilService {
             .findByIdWithEagerSubmissionsAndEagerResultsAndEagerAssessors(storedParticipation.getId())
             .get();
     }
+
 
     public void addCourseWithModelingExercise() {
         Course course =
@@ -145,6 +143,7 @@ public class DatabaseUtilService {
             .isTrue();
     }
 
+
     /**
      * Stores for the given model a submission of the user and initiates the corresponding Result
      *
@@ -153,7 +152,7 @@ public class DatabaseUtilService {
      * @param login    of the user the submission belongs to
      * @return submission stored in the modelingSubmissionRepository
      */
-    public ModelingSubmission addModelingSubmissionForAssessment(
+    public ModelingSubmission addModelingSubmission(
         ModelingExercise exercise, String model, String login) {
         Participation participation = addParticipationForExercise(exercise, login);
         ModelingSubmission submission = new ModelingSubmission(true, model);
@@ -167,6 +166,15 @@ public class DatabaseUtilService {
         return submission;
     }
 
+
+    public ModelingSubmission addModelingSubmissionFromResources(ModelingExercise exercise, String path, String login) throws Exception {
+        String model = loadFileFromResources(path);
+        ModelingSubmission submission = addModelingSubmission(exercise, model, login);
+        checkSubmissionCorrectlyStored(submission.getId(), model);
+        return submission;
+    }
+
+
     public void checkSubmissionCorrectlyStored(Long submissionId, String sentModel) throws Exception {
         String storedModel = modelSubmissionService.findOne(submissionId).getModel();
         JsonParser parser = new JsonParser();
@@ -174,6 +182,7 @@ public class DatabaseUtilService {
         JsonObject storedModelObject = parser.parse(storedModel).getAsJsonObject();
         assertThat(storedModelObject).as("model correctly stored").isEqualTo(sentModelObject);
     }
+
 
     /**
      * @param path path relative to the test resources folder
@@ -188,12 +197,22 @@ public class DatabaseUtilService {
         return builder.toString();
     }
 
-    public List<ModelElementAssessment> loadAssessmentFomRessources(String path) throws Exception {
+
+    public List<Feedback> loadAssessmentFomResources(String path) throws Exception {
         String fileContent = loadFileFromResources(path);
         fileContent = fileContent.replaceFirst("\\{\"assessments\":", "");
         fileContent = fileContent.substring(0, fileContent.length() - 1);
-        return mapper.readValue(
+        List<ModelElementAssessment> elementAssessments = mapper.readValue(
             fileContent,
             mapper.getTypeFactory().constructCollectionType(List.class, ModelElementAssessment.class));
+        List<Feedback> feedbacks = new ArrayList<>(elementAssessments.size());
+        elementAssessments.forEach(assessment -> {
+            Feedback feedback = new Feedback();
+            feedback.setCredits(assessment.getCredits());
+            feedback.setReference(assessment.getId());
+            feedback.setText(assessment.getCommment());
+            feedbacks.add(feedback);
+        });
+        return feedbacks;
     }
 }
