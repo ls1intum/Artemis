@@ -5,7 +5,15 @@
             "exerciseTitle": "Aktuelle Übung von \"{{ course }}\" aktiv bis {{ date }}:",
             "cardTitle": "Deine aktuelle Punktzahl:",
             "cardNoExerciseLabel": "Keine Übung geplant",
-            "cardExerciseLabel": "Nächste Übung:"
+            "cardExerciseLabel": "Nächste Übung:",
+            "register": {
+                "signUp": "Für einen Kurs anmelden",
+                "registerSuccessful": "Anmeldung erfolgreich",
+                "signUpForCourse": "Für den ausgewählten Kurs anmelden",
+                "cancel": "Abbrechen",
+                "noCourse": "Keine Kurse für eine Registrierung verfügbar",
+                "pleaseSelectCourse": "# Wähle einen Kurs aus"
+            }
         },
         "courseOverview": {
             "noDescription": "Keine Beschreibung verfügbar",
