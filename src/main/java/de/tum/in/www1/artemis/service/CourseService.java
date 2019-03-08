@@ -71,9 +71,9 @@ public class CourseService {
      * @return the list of entities
      */
     @Transactional(readOnly = true)
-    public List<Course> findAllCurrentlyActive() {
+    public List<Course> findAllCurrentlyActiveAndNotOnline() {
         log.debug("Request to get all Courses which are active");
-        return courseRepository.findAllCurrentlyActive();
+        return courseRepository.findAllCurrentlyActiveAndNotOnline();
     }
 
     /**

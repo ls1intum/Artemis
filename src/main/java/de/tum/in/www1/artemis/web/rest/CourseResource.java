@@ -238,8 +238,8 @@ public class CourseResource {
     @GetMapping("/courses/to-register")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public List<Course> getAllCoursesToRegister() {
-        log.debug("REST request to get all Courses");
-        return courseService.findAllCurrentlyActive();
+        log.debug("REST request to get all currently active Courses that are not online courses");
+        return courseService.findAllCurrentlyActiveAndNotOnline();
     }
 
     /**
