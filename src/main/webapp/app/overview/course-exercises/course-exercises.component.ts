@@ -1,11 +1,11 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Course, CourseScoreCalculationService, CourseService } from 'app/entities/course';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
 import * as moment from 'moment';
-import { Exercise, ExerciseType } from 'app/entities/exercise';
+import { Exercise } from 'app/entities/exercise';
 
 @Component({
     selector: 'jhi-course-exercises',
@@ -24,11 +24,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
 
     public upcomingExercises: Exercise[];
 
-    public numberOfQuizExercises = 0;
-    public numberOfModelingExercises = 0;
-    public numberOfProgrammingExercises = 0;
-    public numberOfTextExercises = 0;
-    public numberOfFileUploadExercises = 0;
+    public exerciseCountMap: Map<string, number>;
 
     constructor(
         private courseService: CourseService,
@@ -39,6 +35,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
+        this.exerciseCountMap = new Map<string, number>();
         this.paramSubscription = this.route.parent.params.subscribe(params => {
             this.courseId = parseInt(params['courseId'], 10);
         });
@@ -56,6 +53,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
             this.groupExercises(this.DUE_DATE_DESC);
 
         });
+
     }
 
     ngOnDestroy(): void {
@@ -126,22 +124,11 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     }
 
     private increaseExerciseCounter(exercise: Exercise) {
-        switch (exercise.type) {
-            case ExerciseType.PROGRAMMING:
-                this.numberOfProgrammingExercises++;
-                break;
-            case ExerciseType.MODELING:
-                this.numberOfModelingExercises++;
-                break;
-            case ExerciseType.QUIZ:
-                this.numberOfQuizExercises++;
-                break;
-            case ExerciseType.TEXT:
-                this.numberOfTextExercises++;
-                break;
-            case ExerciseType.FILE_UPLOAD:
-                this.numberOfFileUploadExercises++;
-                break;
+        if(!this.exerciseCountMap.has(exercise.type)) {
+            this.exerciseCountMap.set(exercise.type, 1);
+        } else {
+            let exerciseCount = this.exerciseCountMap.get(exercise.type);
+            this.exerciseCountMap.set(exercise.type, ++exerciseCount);
         }
     }
 

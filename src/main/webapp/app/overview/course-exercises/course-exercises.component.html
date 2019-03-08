@@ -48,25 +48,9 @@
                 <div class="col-8">{{"arTeMiSApp.courseOverview.exerciseList.details.totalExercises" | translate}}</div>
                 <div class="col-4">{{course.exercises.length}}</div>
             </div>
-            <div class="row mb-1">
-                <div class="col-8">{{"arTeMiSApp.courseOverview.exerciseList.details.totalQuizExercises" | translate}}</div>
-                <div class="col-4">{{numberOfQuizExercises}}</div>
-            </div>
-            <div class="row mb-1">
-                <div class="col-8">{{"arTeMiSApp.courseOverview.exerciseList.details.totalModelingExercises" | translate}}</div>
-                <div class="col-4">{{numberOfModelingExercises}}</div>
-            </div>
-            <div class="row mb-1">
-                <div class="col-8">{{"arTeMiSApp.courseOverview.exerciseList.details.totalProgrammingExercises" | translate}}</div>
-                <div class="col-4">{{numberOfProgrammingExercises}}</div>
-            </div>
-            <div class="row mb-1">
-                <div class="col-8">{{"arTeMiSApp.courseOverview.exerciseList.details.totalTextExercises" | translate}}</div>
-                <div class="col-4">{{numberOfTextExercises}}</div>
-            </div>
-            <div class="row mb-1">
-                <div class="col-8">{{"arTeMiSApp.courseOverview.exerciseList.details.totalFileUploadExercises" | translate}}</div>
-                <div class="col-4">{{numberOfFileUploadExercises}}</div>
+            <div class="row mb-1" *ngFor="let exerciseCount of exerciseCountMap | keyvalue">
+                <div class="col-8">{{"arTeMiSApp.courseOverview.exerciseList.details." + exerciseCount.key + "Total" | translate}}</div>
+                <div class="col-4">{{exerciseCount.value}}</div>
             </div>
             <div class="row mb-1" *ngIf="course.startDate">
                 <div class="col-8">{{"arTeMiSApp.courseOverview.exerciseList.details.startDate" | translate}}</div>
