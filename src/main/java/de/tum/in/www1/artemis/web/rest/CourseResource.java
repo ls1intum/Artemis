@@ -230,6 +230,19 @@ public class CourseResource {
     }
 
     /**
+     * GET  /courses : get all courses that the current user can register to.
+     * Decided by the start and end date
+     *
+     * @return the list of courses which are active)
+     */
+    @GetMapping("/courses/to-register")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public List<Course> getAllCoursesToRegister() {
+        log.debug("REST request to get all currently active Courses that are not online courses");
+        return courseService.findAllCurrentlyActiveAndNotOnline();
+    }
+
+    /**
      * GET /courses/for-dashboard
      *
      * @param principal the current user principal
