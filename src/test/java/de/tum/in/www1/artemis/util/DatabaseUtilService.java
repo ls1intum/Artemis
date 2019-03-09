@@ -159,7 +159,7 @@ public class DatabaseUtilService {
     public ModelingSubmission addModelingSubmission(
         ModelingExercise exercise, String model, String login) {
         Participation participation = addParticipationForExercise(exercise, login);
-        ModelingSubmission submission = new ModelingSubmission(true, model);
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(model, true);
         submission = modelSubmissionService.save(submission, exercise, participation);
         Result result = new Result();
         result.setSubmission(submission);

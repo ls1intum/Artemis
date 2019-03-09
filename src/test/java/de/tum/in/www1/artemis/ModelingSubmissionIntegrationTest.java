@@ -1,8 +1,18 @@
 package de.tum.in.www1.artemis;
 
-import java.util.List;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ModelingExercise;
+import de.tum.in.www1.artemis.domain.ModelingSubmission;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.util.RequestUtilService;
 import org.assertj.core.api.Fail;
-import org.junit.*;
+import org.junit.Before;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -11,10 +21,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit4.SpringRunner;
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.util.*;
+
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(SpringRunner.class)
@@ -62,12 +71,12 @@ public class ModelingSubmissionIntegrationTest {
     @WithMockUser(value = "student1", roles = "USER")
     public void modelingSubmissionOfStudent() throws Exception {
         database.addParticipationForExercise(exercise, "student1");
-        ModelingSubmission submission = new ModelingSubmission(false, emptyModel);
+        ModelingSubmission submission = generateUnsubmittedSubmission();
         ModelingSubmission returnedSubmission =
             performInitialModelSubmission(course.getId(), exercise.getId(), submission);
         database.checkSubmissionCorrectlyStored(returnedSubmission.getId(), emptyModel);
 
-        submission = new ModelingSubmission(false, validModel);
+        submission = generateUnsubmittedSubmission();
         returnedSubmission =
             performUpdateOnModelSubmission(course.getId(), exercise.getId(), submission);
         database.checkSubmissionCorrectlyStored(returnedSubmission.getId(), validModel);
@@ -99,12 +108,12 @@ public class ModelingSubmissionIntegrationTest {
     @WithMockUser(value = "student2", roles = "USER")
     public void updateModelSubmissionAfterSubmit() throws Exception {
         database.addParticipationForExercise(exercise, "student2");
-        ModelingSubmission submission = new ModelingSubmission(true, emptyModel);
+        ModelingSubmission submission = generateSubmittedSubmission();
         ModelingSubmission returnedSubmission =
             performInitialModelSubmission(course.getId(), exercise.getId(), submission);
         database.checkSubmissionCorrectlyStored(returnedSubmission.getId(), emptyModel);
 
-        submission = new ModelingSubmission(true, validModel);
+        submission = generateSubmittedSubmission();
         try {
             returnedSubmission =
                 performUpdateOnModelSubmission(course.getId(), exercise.getId(), submission);
