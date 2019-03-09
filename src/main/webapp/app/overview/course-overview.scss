@@ -3,20 +3,6 @@
 /* ==========================================================================
 Course Info Bar
 ========================================================================== */
-.course-info-bar {
-    background-color: $artemis-dark;
-    padding: 1em 1em;
-    margin: -1.25rem -1.25rem 0 -1.25rem;
-    min-height: 160px;
-    display: flex;
-    color: #FFFFFF;
-    flex-direction: column;
-    justify-content: center;
-}
-
-/* ==========================================================================
-Course Info Bar
-========================================================================== */
 .tab-bar {
     display: flex;
     min-height: 60px;
@@ -78,6 +64,23 @@ Course Info Bar
     position: absolute;
     top: -64px;
     right: -14px;
+}
+
+.course-information {
+    padding-top: 29px;
+
+    .exercise-panel {
+        .row {
+            cursor: pointer;
+            border-radius: 3px;
+            &:hover {
+                background-color: $light-background-color;
+                .icon {
+                    color: $primary;
+                }
+            }
+        }
+    }
 }
 
 .exercise-divider {

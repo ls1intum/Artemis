@@ -55,9 +55,9 @@ describe('Service Tests', () => {
             it('should update a ProgrammingExercise', async () => {
                 const returnedFromService = Object.assign(
                     {
-                        baseRepositoryUrl: 'BBBBBB',
+                        templateRepositoryUrl: 'BBBBBB',
                         solutionRepositoryUrl: 'BBBBBB',
-                        baseBuildPlanId: 'BBBBBB',
+                        templateBuildPlanId: 'BBBBBB',
                         publishBuildPlanUrl: true,
                         allowOnlineEditor: true
                     },
@@ -76,9 +76,9 @@ describe('Service Tests', () => {
             it('should return a list of ProgrammingExercise', async () => {
                 const returnedFromService = Object.assign(
                     {
-                        baseRepositoryUrl: 'BBBBBB',
+                        templateRepositoryUrl: 'BBBBBB',
                         solutionRepositoryUrl: 'BBBBBB',
-                        baseBuildPlanId: 'BBBBBB',
+                        templateBuildPlanId: 'BBBBBB',
                         publishBuildPlanUrl: true,
                         allowOnlineEditor: true
                     },

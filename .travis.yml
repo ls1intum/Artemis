@@ -1,15 +1,24 @@
-language: java
-jdk: openjdk8
+jobs:
+    include:
+      - stage: test
+        language: java
+        jdk: openjdk8
+        env: NODE_VERSION=10.15.0
+        cache:
+          yarn: true
+          directories:
+            - $HOME/.m2
+            - $HOME/.gradle
 
-env: NODE_VERSION=10.15.0
+        before_install: nvm install $NODE_VERSION
 
-
-cache:
-  yarn: true
-  directories:
-    - $HOME/.m2
-    - $HOME/.gradle
-
-before_install: nvm install $NODE_VERSION
-
-script: ./gradlew -Pprod bootWar
+        script: ./gradlew -Pprod bootWar
+      - stage: test
+        language: node_js
+        node_js:
+            - 10
+        cache:
+            yarn: true
+        before_install: cd src/main/webapp
+        install: yarn
+        script: yarn run lint

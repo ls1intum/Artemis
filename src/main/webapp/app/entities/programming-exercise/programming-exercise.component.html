@@ -1,6 +1,6 @@
 <div>
     <h4>
-        <span *ngIf="course">{{course.title}} - </span><span *ngIf="programmingExercises">{{programmingExercises.length}} </span>
+        <span *ngIf="course && !showHeading">{{course.title}} - </span><span *ngIf="programmingExercises && showHeading">{{programmingExercises.length}} </span>
         <span jhiTranslate="arTeMiSApp.programmingExercise.home.title">Programming Exercises</span>
         <button *ngIf="course" id="jh-link-entity" class="btn btn-primary float-right jh-link-entity link-programming-exercise mr-1" [routerLink]="['/', { outlets: { popup: ['course', course.id, 'programming-exercise-new'] } }]">
             <fa-icon [icon]="'plus'"></fa-icon>
@@ -8,14 +8,14 @@
             Link new Programming Exercise
             </span>
         </button>
-        <button *ngIf="course" id="jh-create-entity" class="btn btn-primary float-right jh-create-entity create-programming-exercise mr-1" [routerLink]="['new']">
+        <button *ngIf="course" id="jh-create-entity" class="btn btn-primary float-right jh-create-entity create-programming-exercise mr-1" [routerLink]="['/course', courseId, 'programming-exercise','new']">
             <fa-icon [icon]="'plus'"></fa-icon>
             <span class="hidden-sm-down" jhiTranslate="arTeMiSApp.programmingExercise.home.createLabel">
             Create new Programming Exercise
             </span>
         </button>
     </h4>
-    <jhi-alert></jhi-alert>
+    <jhi-alert *ngIf="showAlertHeading"></jhi-alert>
     <div class="row">
     </div>
     <br>
@@ -29,8 +29,8 @@
                     <th jhiSortBy="releaseDate"><span jhiTranslate="arTeMiSApp.exercise.releaseDate">Release Date</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
                     <th jhiSortBy="dueDate"><span jhiTranslate="arTeMiSApp.exercise.dueDate">Due Date</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
                     <th jhiSortBy="maxScore"><span jhiTranslate="arTeMiSApp.exercise.maxScore">Max Score</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
-                    <th jhiSortBy="baseRepositoryUrl"><span jhiTranslate="arTeMiSApp.programmingExercise.repositories">Repositories</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
-                    <th jhiSortBy="baseBuildPlanId"><span jhiTranslate="arTeMiSApp.programmingExercise.buildplans">Build Plans</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
+                    <th jhiSortBy="templateRepositoryUrl"><span jhiTranslate="arTeMiSApp.programmingExercise.repositories">Repositories</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
+                    <th jhiSortBy="templateBuildPlanId"><span jhiTranslate="arTeMiSApp.programmingExercise.buildplans">Build Plans</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
                     <th jhiSortBy="publishBuildPlanUrl"><span jhiTranslate="arTeMiSApp.programmingExercise.publishBuildPlanUrl">Publish Build Plan Url</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
                     <th jhiSortBy="allowOnlineEditor"><span jhiTranslate="arTeMiSApp.programmingExercise.allowOnlineEditor">Allow Online Editor</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
                     <th></th>
@@ -44,13 +44,13 @@
                 <td>{{programmingExercise.dueDate | date:'medium'}}</td>
                 <td>{{programmingExercise.maxScore}}</td>
                 <td>
-                    <span *ngIf="programmingExercise.baseRepositoryUrl != null"><a href="{{programmingExercise.baseRepositoryUrl}}" target="_blank">Template</a></span><br>
-                    <span *ngIf="programmingExercise.solutionRepositoryUrl != null"><a href="{{programmingExercise.solutionRepositoryUrl}}" target="_blank">Solution</a></span><br>
+                    <span *ngIf="programmingExercise.templateParticipation.repositoryUrl != null"><a href="{{programmingExercise.templateParticipation.repositoryUrl}}" target="_blank">Template</a></span><br>
+                    <span *ngIf="programmingExercise.solutionParticipation.repositoryUrl != null"><a href="{{programmingExercise.solutionParticipation.repositoryUrl}}" target="_blank">Solution</a></span><br>
                     <span *ngIf="programmingExercise.testRepositoryUrl != null"><a href="{{programmingExercise.testRepositoryUrl}}" target="_blank">Test</a></span><br>
                 </td>
                 <td><!-- TODO get the correct URL from the server instead of hardcoding Bamboo here -->
-                    <span *ngIf="programmingExercise.baseBuildPlanId != null"><a href="https://bamboobruegge.in.tum.de/browse/{{programmingExercise.baseBuildPlanId}}" target="_blank">Template</a></span><br>
-                    <span *ngIf="programmingExercise.solutionBuildPlanId != null"><a href="https://bamboobruegge.in.tum.de/browse/{{programmingExercise.solutionBuildPlanId}}" target="_blank">Solution</a></span><br>
+                    <span *ngIf="programmingExercise.templateParticipation.buildPlanId != null"><a href="https://bamboobruegge.in.tum.de/browse/{{programmingExercise.templateParticipation.buildPlanId}}" target="_blank">Template</a></span><br>
+                    <span *ngIf="programmingExercise.solutionParticipation.buildPlanId != null"><a href="https://bamboobruegge.in.tum.de/browse/{{programmingExercise.solutionParticipation.buildPlanId}}" target="_blank">Solution</a></span><br>
                 <td>{{programmingExercise.publishBuildPlanUrl}}</td>
                 <td>{{programmingExercise.allowOnlineEditor}}</td>
                 <td class="text-right">

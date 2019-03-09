@@ -79,10 +79,7 @@ entity FileUploadExercise {         //extends Exercise
 }
 
 entity ProgrammingExercise {        //extends Exercise
-    baseRepositoryUrl String,
-    solutionRepositoryUrl String,
-    baseBuildPlanId String,
-    solutionBuildPlanId String,
+    testRepositoryUrl String,
     publishBuildPlanUrl Boolean,
     allowOnlineEditor Boolean,
     programmingLanguage ProgrammingLanguage,
@@ -378,7 +375,9 @@ relationship OneToOne {
     ComplaintResponse{complaint} to Complaint,
     Complaint{student} to User,
     ComplaintResponse{reviewer} to User,
-    ExampleSubmission{submission} to Submission
+    ExampleSubmission{submission} to Submission,
+    ProgrammingExercise{templateParticipation} to Participation,
+    ProgrammingExercise{solutionParticipation} to Participation,
 }
 
 relationship ManyToOne {

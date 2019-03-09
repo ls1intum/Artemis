@@ -232,17 +232,17 @@ public class ExerciseService {
         participationService.deleteAllByExerciseId(exercise.getId(), deleteStudentReposBuildPlans, deleteStudentReposBuildPlans);
         if (exercise instanceof ProgrammingExercise && deleteBaseReposBuildPlans) {
             ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
-            if (programmingExercise.getBaseBuildPlanId() != null) {
-                continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getBaseBuildPlanId());
+            if (programmingExercise.getTemplateBuildPlanId() != null) {
+                continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getTemplateBuildPlanId());
             }
             if (programmingExercise.getSolutionBuildPlanId() != null) {
                 continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getSolutionBuildPlanId());
             }
             continuousIntegrationService.get().deleteProject(programmingExercise.getProjectKey());
 
-            if (programmingExercise.getBaseRepositoryUrl() != null) {
-                versionControlService.get().deleteRepository(programmingExercise.getBaseRepositoryUrlAsUrl());
-                gitService.get().deleteLocalRepository(programmingExercise.getBaseRepositoryUrlAsUrl());
+            if (programmingExercise.getTemplateRepositoryUrl() != null) {
+                versionControlService.get().deleteRepository(programmingExercise.getTemplateRepositoryUrlAsUrl());
+                gitService.get().deleteLocalRepository(programmingExercise.getTemplateRepositoryUrlAsUrl());
             }
             if (programmingExercise.getSolutionRepositoryUrl() != null) {
                 versionControlService.get().deleteRepository(programmingExercise.getSolutionRepositoryUrlAsUrl());

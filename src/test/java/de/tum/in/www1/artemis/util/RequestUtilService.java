@@ -20,10 +20,12 @@ public class RequestUtilService {
     private MockMvc mvc;
     private ObjectMapper mapper;
 
+
     public RequestUtilService(MockMvc mvc, ObjectMapper mapper) {
         this.mvc = mvc;
         this.mapper = mapper;
     }
+
 
     public <T> URI post(String path, T body, HttpStatus expectedStatus) throws Exception {
         String jsonBody = mapper.writeValueAsString(body);
@@ -45,6 +47,7 @@ public class RequestUtilService {
         return new URI(res.getResponse().getHeader("location"));
     }
 
+
     public <T, R> R postWithResponseBody(
         String path, T body, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
         String jsonBody = mapper.writeValueAsString(body);
@@ -65,6 +68,7 @@ public class RequestUtilService {
         return mapper.readValue(res.getResponse().getContentAsString(), responseType);
     }
 
+
     public <T, R> R putWithResponseBody(
         String path, T body, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
         String jsonBody = mapper.writeValueAsString(body);
@@ -80,6 +84,7 @@ public class RequestUtilService {
         return mapper.readValue(res.getResponse().getContentAsString(), responseType);
     }
 
+
     public <T> void put(String path, T body, HttpStatus expectedStatus) throws Exception {
         String jsonBody = mapper.writeValueAsString(body);
         mvc.perform(
@@ -89,6 +94,7 @@ public class RequestUtilService {
                 .with(csrf()))
             .andExpect(status().is(expectedStatus.value()));
     }
+
 
     public <T> T get(String path, HttpStatus expectedStatus, Class<T> responseType) throws Exception {
         MvcResult res =
@@ -103,6 +109,7 @@ public class RequestUtilService {
         }
         return mapper.readValue(res.getResponse().getContentAsString(), responseType);
     }
+
 
     public <T> List<T> getList(String path, HttpStatus expectedStatus, Class<T> listElementType)
         throws Exception {
@@ -121,6 +128,7 @@ public class RequestUtilService {
             res.getResponse().getContentAsString(),
             mapper.getTypeFactory().constructCollectionType(List.class, listElementType));
     }
+
 
     public void delete(String path, HttpStatus expectedStatus) throws Exception {
         mvc.perform(MockMvcRequestBuilders.delete(new URI(path)).with(csrf()))

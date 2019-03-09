@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import org.junit.Before;
@@ -26,16 +27,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 @AutoConfigureTestDatabase
 public class CourseIntegrationTest {
     @Autowired
+    DatabaseUtilService database;
+
+    @Autowired
     RequestUtilService request;
 
     @Autowired
     CourseRepository courseRepo;
 
+
     @Before
     public void resetDatabase() {
-        courseRepo.deleteAll();
-        assertThat(courseRepo.findAll()).as("Database got cleared before test").isEmpty();
+        database.resetDatabase();
     }
+
 
     @Test
     @WithMockUser(roles = "ADMIN")
@@ -52,6 +57,7 @@ public class CourseIntegrationTest {
             .contains(repoContent.toArray(new Course[0]));
     }
 
+
     @Test
     @WithMockUser(roles = "USER")
     public void createCourseWithoutPermission() throws Exception {
@@ -60,11 +66,13 @@ public class CourseIntegrationTest {
         assertThat(courseRepo.findAll().size()).as("Course got stored").isEqualTo(0);
     }
 
+
     @Test
     @WithMockUser(roles = "USER")
     public void getCourseWithoutPermission() throws Exception {
         request.getList("/api/courses", HttpStatus.FORBIDDEN, Course.class);
     }
+
 
     public void loadInitialCourses() {
         Course course = ModelFactory.generateCourse(1L, null, null, new HashSet<>());

@@ -24,6 +24,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @Service
 public class DatabaseUtilService {
+    private static ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(1);
+    private static ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(1);
+    private static ZonedDateTime futureFututreTimestamp = ZonedDateTime.now().plusDays(2);
     @Autowired
     CourseRepository courseRepo;
     @Autowired
@@ -40,10 +43,6 @@ public class DatabaseUtilService {
     ModelingSubmissionService modelSubmissionService;
     @Autowired
     ObjectMapper mapper;
-
-    private static ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(1);
-    private static ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(1);
-    private static ZonedDateTime futureFututreTimestamp = ZonedDateTime.now().plusDays(2);
 
 
     public void resetDatabase() {

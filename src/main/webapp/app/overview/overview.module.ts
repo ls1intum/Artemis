@@ -8,6 +8,7 @@ import { ClipboardModule } from 'ngx-clipboard';
 import { MomentModule } from 'angular2-moment';
 import { ArTEMiSSharedModule } from 'app/shared';
 import { ExerciseTypePipe } from 'app/entities/exercise/';
+import { SidePanelComponent } from 'app/components/side-panel/side-panel.component';
 
 import {
     CourseExerciseRowComponent,
@@ -48,7 +49,8 @@ const ENTITY_STATES = [
         ExerciseActionButtonComponent,
         CourseGradeBookComponent,
         ExerciseDetailsStudentActionsComponent,
-        ExerciseTypePipe
+        ExerciseTypePipe,
+        SidePanelComponent
     ],
     entryComponents: [],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],

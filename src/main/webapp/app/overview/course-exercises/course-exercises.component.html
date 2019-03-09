@@ -1,37 +1,89 @@
-<div class="mt-3 position-relative" *ngIf="course">
-    <div class="exercise-controls d-none d-sm-block" *ngIf="course.exercises.length > 0">
-        <div ngbDropdown placement="bottom-right" class="d-inline-block">
-            <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>Sort Exercises</button>
-            <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
-                <button class="dropdown-item" (click)="groupExercises(DUE_DATE_DESC)">
-                    <fa-icon [icon]="'sort-amount-up'"></fa-icon>
-                    Newest first
-                </button>
-                <button class="dropdown-item" (click)="groupExercises(DUE_DATE_ASC)">
-                    <fa-icon [icon]="'sort-amount-down'"></fa-icon>
-                    Oldest first
-                </button>
+<div class="row">
+    <div class="col-12 col-md-8">
+        <div class="mt-3 position-relative" *ngIf="course">
+            <div class="exercise-controls d-none d-sm-block" *ngIf="course.exercises.length > 0">
+                <div ngbDropdown placement="bottom-right" class="d-inline-block">
+                    <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>
+                        {{"arTeMiSApp.courseOverview.exerciseList.sortExercises" | translate}}
+                    </button>
+                    <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+                        <button class="dropdown-item" (click)="groupExercises(DUE_DATE_DESC)">
+                            <fa-icon [icon]="'sort-amount-up'"></fa-icon>
+                            {{"arTeMiSApp.courseOverview.exerciseList.newFirst" | translate}}
+                        </button>
+                        <button class="dropdown-item" (click)="groupExercises(DUE_DATE_ASC)">
+                            <fa-icon [icon]="'sort-amount-down'"></fa-icon>
+                            {{"arTeMiSApp.courseOverview.exerciseList.oldFirst" | translate}}
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="exercise-row-container mb-3" *ngIf="nextRelevantExercise">
+                <h3 class="text-primary">
+                    {{"arTeMiSApp.courseOverview.exerciseList.currentExerciseGroupHeader" | translate:{
+                    date: (nextRelevantExercise.dueDate | date:'dd/MM/yy HH:MM')
+                } }}
+                </h3>
+                <jhi-course-exercise-row class="pb-1" [exercise]="nextRelevantExercise" [course]="course"></jhi-course-exercise-row>
+                <div class="collapsed"></div>
+            </div>
+            <div class="exercise-row-container mb-3" *ngFor="let weekKey of weeklyIndexKeys">
+                <div class="control-label" [ngClass]="{'text-primary': weeklyExercisesGrouped[weekKey].isCurrentWeek}"
+                    (click)="weeklyExercisesGrouped[weekKey].isCollapsed = !weeklyExercisesGrouped[weekKey].isCollapsed">
+                    <fa-icon class="pr-3" [icon]="weeklyExercisesGrouped[weekKey].isCollapsed ? 'angle-down' : 'angle-up'"></fa-icon>
+                    <span [innerHtml]="weeklyExercisesGrouped[weekKey].label"></span>
+                    <span class="ml-2" jhiTranslate="arTeMiSApp.courseOverview.exerciseList.exerciseGroupHeader"
+                        [translateValues]="{total: weeklyExercisesGrouped[weekKey].exercises.length}">
+                        Exercises: {{weeklyExercisesGrouped[weekKey].exercises.length}}
+                    </span>
+                </div>
+                <div *ngIf="!weeklyExercisesGrouped[weekKey].isCollapsed">
+                    <jhi-course-exercise-row class="pb-1" [exercise]="exercise" [course]="course" *ngFor="let exercise of weeklyExercisesGrouped[weekKey].exercises"></jhi-course-exercise-row>
+                </div>
+                <div class="collapsed"></div>
+            </div>
+            <div *ngIf="course.exercises.length === 0">
+                <div class="row">
+                    <div class="col">
+                        {{"arTeMiSApp.courseOverview.exerciseList.noExercises" | translate}}
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="exercise-row-container mb-3" *ngFor="let weekKey of weeklyIndexKeys">
-        <div class="control-label" [ngClass]="weeklyExercisesGrouped[weekKey].isCurrentWeek ? 'text-primary': ''"
-              (click)="weeklyExercisesGrouped[weekKey].isCollapsed = !weeklyExercisesGrouped[weekKey].isCollapsed">
-            <fa-icon class="pr-3" [icon]="weeklyExercisesGrouped[weekKey].isCollapsed ? 'angle-down' : 'angle-up'"></fa-icon>
-            <span [innerHtml]="weeklyExercisesGrouped[weekKey].label"></span>
-            <span class="ml-2">Exercises: {{weeklyExercisesGrouped[weekKey].exercises.length}}</span>
-        </div>
-        <div *ngIf="!weeklyExercisesGrouped[weekKey].isCollapsed">
-            <jhi-course-exercise-row class="pb-1" [exercise]="exercise" [course]="course"
-                                     *ngFor="let exercise of weeklyExercisesGrouped[weekKey].exercises"></jhi-course-exercise-row>
-        </div>
-        <div class="collapsed"></div>
-    </div>
-    <div *ngIf="course.exercises.length === 0">
-        <div class="row">
-            <div class="col">
-                No exercises available for the course.
+    <div class="col-12 col-md-4 course-information">
+        <jhi-side-panel [panelHeader]="('arTeMiSApp.courseOverview.exerciseList.details.courseInformation' | translate)">
+            <div class="row mb-1">
+                <div class="col-8">{{"arTeMiSApp.courseOverview.exerciseList.details.totalExercises" | translate}}</div>
+                <div class="col-4">{{course.exercises.length}}</div>
             </div>
+            <div class="row mb-1" *ngFor="let exerciseCount of exerciseCountMap | keyvalue">
+                <div class="col-8">{{"arTeMiSApp.courseOverview.exerciseList.details." + exerciseCount.key + "Total" | translate}}</div>
+                <div class="col-4">{{exerciseCount.value}}</div>
+            </div>
+            <div class="row mb-1" *ngIf="course.startDate">
+                <div class="col-8">{{"arTeMiSApp.courseOverview.exerciseList.details.startDate" | translate}}</div>
+                <div class="col-4">{{course.startDate | date:'dd/MM/yy'}}</div>
+            </div>
+            <div class="row" *ngIf="course.endDate">
+                <div class="col-8">{{"arTeMiSApp.courseOverview.exerciseList.details.endDate" | translate}}</div>
+                <div class="col-4">{{course.endDate | date:'dd/MM/yy'}}</div>
+            </div>
+        </jhi-side-panel>
+        <div class="exercise-panel mt-3">
+            <jhi-side-panel [panelHeader]="('arTeMiSApp.courseOverview.exerciseList.details.upcomingDeadlines' | translate)">
+                <div class="row mb-1 align-items-center" *ngFor="let exercise of upcomingExercises" [routerLink]="[exercise.id]">
+                    <div class="col-5">{{exercise.dueDate | date:'dd/MM/yy HH:mm'}}</div>
+                    <div class="col-5">{{exercise.title}}</div>
+                    <div class="col-2 icon">
+                        <fa-icon icon="play-circle"></fa-icon>
+                    </div>
+                </div>
+                <div class="row mb-1 align-items-center" *ngIf="upcomingExercises.length === 0">
+                    <div class="col">{{"arTeMiSApp.courseOverview.exerciseList.details.noUpcomingExercises" | translate}}</div>
+                </div>
+            </jhi-side-panel>
         </div>
     </div>
+</div>
 </div>

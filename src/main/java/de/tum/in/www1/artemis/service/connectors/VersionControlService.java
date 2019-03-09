@@ -7,7 +7,7 @@ import java.net.URL;
 
 public interface VersionControlService {
 
-    public URL copyRepository(URL baseRepositoryUrl, String username);
+    public URL copyRepository(URL templateRepositoryUrl, String username);
 
     public void configureRepository(URL repositoryUrl, String username);
 

@@ -39,12 +39,14 @@ public class ParticipationIntegrationTest {
     @Autowired
     DatabaseUtilService database;
 
+
     @Before
     public void initTestCase() {
         database.resetDatabase();
         database.addUsers(2, 0);
         database.addCourseWithModelingExercise();
     }
+
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")

@@ -89,6 +89,7 @@ public abstract class Exercise implements Serializable {
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
     @JsonIgnoreProperties("exercise")
     private Set<Participation> participations = new HashSet<>();
+
     @OneToMany(mappedBy = "assessedExercise")
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
     @JsonIgnoreProperties("assessedExercise")
@@ -102,29 +103,6 @@ public abstract class Exercise implements Serializable {
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
     @JsonIgnoreProperties("exercise")
     private Set<ExampleSubmission> exampleSubmissions = new HashSet<>();
-
-
-    public Exercise() {
-    }
-
-
-    public Exercise(String title, String shortName, ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, Double maxScore, String problemStatement, String gradingInstructions, List<String> categories, DifficultyLevel difficulty, Set<Participation> participations, Set<TutorParticipation> tutorParticipations, Course course, Set<ExampleSubmission> exampleSubmissions) {
-        this.title = title;
-        this.shortName = shortName;
-        this.releaseDate = releaseDate;
-        this.dueDate = dueDate;
-        this.assessmentDueDate = assessmentDueDate;
-        this.maxScore = maxScore;
-        this.problemStatement = problemStatement;
-        this.gradingInstructions = gradingInstructions;
-        this.categories = categories;
-        this.difficulty = difficulty;
-        this.participations = participations;
-        this.tutorParticipations = tutorParticipations;
-        this.course = course;
-        this.exampleSubmissions = exampleSubmissions;
-    }
-
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {

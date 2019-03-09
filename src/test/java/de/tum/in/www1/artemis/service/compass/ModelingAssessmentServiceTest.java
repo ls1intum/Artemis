@@ -21,9 +21,11 @@ public class ModelingAssessmentServiceTest {
     private Random random = new Random();
     private int numberOfAssessments;
 
+
     public ModelingAssessmentServiceTest(int numberOfAssessments) {
         this.numberOfAssessments = numberOfAssessments;
     }
+
 
     @Parameterized.Parameters
     public static List<Integer> input() {
@@ -36,6 +38,7 @@ public class ModelingAssessmentServiceTest {
                 });
         return values;
     }
+
 
     /**
      * Testing wether the sum of doubles isn't something like 0.999999
