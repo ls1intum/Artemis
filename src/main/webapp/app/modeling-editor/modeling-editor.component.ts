@@ -45,7 +45,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
      */
     submissionState: State;
 
-    //TODO: rename
+    // TODO: rename
     assessmentResult: Result;
     assessmentsNames: Map<string, Map<string, string>>;
     totalScore: number;
@@ -209,7 +209,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
             assessmentsDiv.scrollTop(apollonDiv.scrollTop());
             assessmentsDiv.scrollLeft(apollonDiv.scrollLeft());
 
-            apollonDiv.on('scroll', function () {
+            apollonDiv.on('scroll', function() {
                 assessmentsDiv.scrollTop(apollonDiv.scrollTop());
                 assessmentsDiv.scrollLeft(apollonDiv.scrollLeft());
             });
@@ -365,7 +365,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
     initializeAssessmentInfo() {
         if (this.assessmentResult && this.submission && this.submission.model) {
             this.submissionState = JSON.parse(this.submission.model);
-            //TODO: use Result instead of ModelingAssessment
+            // TODO: use Result instead of ModelingAssessment
             this.assessmentsNames = this.modelingAssessmentService.getNamesForAssessments(this.assessmentResult, this.submissionState);
             this.positions = this.modelingAssessmentService.getElementPositions(this.assessmentResult, this.submissionState);
             let totalScore = 0;
@@ -377,7 +377,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
     }
 
     getElementPositions() {
-        //TODO: use Result instead of ModelingAssessment
+        // TODO: use Result instead of ModelingAssessment
         this.positions = this.modelingAssessmentService.getElementPositions(this.assessmentResult, this.apollonEditor.getState());
     }
 

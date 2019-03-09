@@ -28,9 +28,9 @@ export class ModelingAssessmentService {
 
     save(result: Result, submissionId: number, submit = false, ignoreConflicts = false): Observable<any> {
         let url = `${this.resourceUrl}/submissions/${submissionId}/modeling-assessment`;
-        if(submit){
+        if (submit) {
             url += '?submit=true';
-            if(ignoreConflicts){
+            if (ignoreConflicts) {
                 url += '&ignoreConflicts=true';
             }
         }
@@ -47,7 +47,7 @@ export class ModelingAssessmentService {
 
     getPartialAssessment(submissionId: number): Observable<Result> {
         return this.http
-            .get<Result>(`${this.resourceUrl}/submissions/${submissionId}/partial-assessment`,);
+            .get<Result>(`${this.resourceUrl}/submissions/${submissionId}/partial-assessment`);
     }
 
     resetOptimality(exerciseId: number): Observable<HttpResponse<void>> {
@@ -57,9 +57,9 @@ export class ModelingAssessmentService {
     private convertResponse(res: EntityResponseType): EntityResponseType {
         const body: Result = this.convertItemFromServer(res.body);
         for (const feedback of body.feedbacks) {
-            //TODO: does this work?
-            feedback.referenceType = feedback.reference.split(":")[0] as ModelElementType;
-            feedback.referenceId = feedback.reference.split(":")[1];
+            // TODO: does this work?
+            feedback.referenceType = feedback.reference.split(':')[0] as ModelElementType;
+            feedback.referenceId = feedback.reference.split(':')[1];
         }
         return res.clone({body});
     }

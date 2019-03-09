@@ -26,6 +26,6 @@ export class Feedback implements BaseEntity {
         this.referenceType = referenceType;
         this.reference = referenceType + ':' + referenceId;
         this.credits = credits;
-        this.text = text
+        this.text = text;
     }
 }
