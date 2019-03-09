@@ -1,14 +1,9 @@
 package de.tum.in.www1.artemis.util;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.ModelingExercise;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
-import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
-
 import java.time.ZonedDateTime;
 import java.util.*;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 
 public class ModelFactory {
 
@@ -34,6 +29,7 @@ public class ModelFactory {
         return exercise;
     }
 
+
     public static LinkedList<User> generateActivatedUsers(
         String loginPrefix, String[] groups, int amount) {
         LinkedList<User> generatedUsers = new LinkedList<>();
@@ -44,6 +40,7 @@ public class ModelFactory {
         }
         return generatedUsers;
     }
+
 
     public static User generateActivatedUser(String login) {
         User user = new User();
@@ -60,6 +57,7 @@ public class ModelFactory {
         return user;
     }
 
+
     public static Course generateCourse(
         Long id, ZonedDateTime startDate, ZonedDateTime endDate, Set<Exercise> exercises) {
         return generateCourse(
@@ -71,6 +69,18 @@ public class ModelFactory {
             UUID.randomUUID().toString(),
             UUID.randomUUID().toString());
     }
+
+
+    public static ModelingSubmission generateModelingSubmission(String model, boolean submitted) {
+        ModelingSubmission submission = new ModelingSubmission();
+        submission.setModel(model);
+        submission.setSubmitted(submitted);
+        if (submitted) {
+            submission.setSubmissionDate(ZonedDateTime.now().minusDays(1));
+        }
+        return submission;
+    }
+
 
     public static Course generateCourse(
         Long id,

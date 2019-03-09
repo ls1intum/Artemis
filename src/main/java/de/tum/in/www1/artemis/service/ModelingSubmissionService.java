@@ -14,13 +14,14 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.service.scheduled.AutomaticSubmissionService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZonedDateTime;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @Transactional
@@ -41,6 +42,32 @@ public class ModelingSubmissionService {
         this.compassService = compassService;
         this.participationRepository = participationRepository;
     }
+
+    @Transactional
+    public List<ModelingSubmission> getModelingSubmissions(Long exerciseId, boolean submittedOnly){
+       List<Participation> participations = participationRepository.findByExerciseIdWithEagerSubmissions(exerciseId);
+        List<ModelingSubmission> submissions = new ArrayList<>();
+        for (Participation participation : participations) {
+            ModelingSubmission submission = participation.findLatestModelingSubmission();
+            if (submission != null) {
+                if (submittedOnly && !submission.isSubmitted()) {
+                    //filter out non submitted submissions if the flag is set to true
+                    continue;
+                }
+                submissions.add(submission);
+            }
+            //avoid infinite recursion
+            participation.getExercise().setParticipations(null);
+        }
+        submissions.forEach(submission -> {
+            Hibernate.initialize(submission.getResult()); // eagerly load the association
+            if (submission.getResult() != null) {
+                Hibernate.initialize(submission.getResult().getAssessor());
+            }
+        });
+        return submissions;
+    }
+
 
     /**
      * Saves the given submission and the corresponding model and creates the result if necessary.

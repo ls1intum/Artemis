@@ -1,47 +1,20 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.ModelingExercise;
-import de.tum.in.www1.artemis.domain.ModelingSubmission;
-import de.tum.in.www1.artemis.domain.Participation;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.CourseService;
-import de.tum.in.www1.artemis.service.ExerciseService;
-import de.tum.in.www1.artemis.service.ModelingExerciseService;
-import de.tum.in.www1.artemis.service.ModelingSubmissionService;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.UserService;
+import java.net.URISyntaxException;
+import java.security.Principal;
+import java.util.*;
+import org.jetbrains.annotations.*;
+import org.slf4j.*;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.*;
+import org.springframework.web.bind.annotation.*;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import org.hibernate.Hibernate;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.net.URISyntaxException;
-import java.security.Principal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
@@ -61,11 +34,12 @@ public class ModelingSubmissionResource {
     private final ModelingSubmissionService modelingSubmissionService;
     private final ModelingExerciseService modelingExerciseService;
     private final ParticipationService participationService;
-    private final ExerciseService exerciseService;
+    //    private final ExerciseService exerciseService;
     private final UserService userService;
     private final CourseService courseService;
     private final AuthorizationCheckService authCheckService;
     private final CompassService compassService;
+
 
     public ModelingSubmissionResource(ModelingSubmissionRepository modelingSubmissionRepository,
                                       ResultRepository resultRepository,
@@ -82,12 +56,13 @@ public class ModelingSubmissionResource {
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseService = modelingExerciseService;
         this.participationService = participationService;
-        this.exerciseService = exerciseService;
+//        this.exerciseService = exerciseService;
         this.userService = userService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.compassService = compassService;
     }
+
 
     /**
      * POST  /courses/{courseId}/exercises/{exerciseId}/modeling-submissions : Create a new modelingSubmission.
@@ -101,7 +76,8 @@ public class ModelingSubmissionResource {
      */
     @PostMapping("/courses/{courseId}/exercises/{exerciseId}/modeling-submissions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRED) //TODO MJ return 201 CREATED with location header instead of ModelingSubmission
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRED)
+    //TODO MJ return 201 CREATED with location header instead of ModelingSubmission
     public ResponseEntity<ModelingSubmission> createModelingSubmission(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
         log.debug("REST request to create ModelingSubmission : {}", modelingSubmission.getModel());
         if (modelingSubmission.getId() != null) {
@@ -138,11 +114,14 @@ public class ModelingSubmissionResource {
         return handleModelingSubmission(exerciseId, principal, modelingSubmission);
     }
 
+
     @NotNull
     private ResponseEntity<ModelingSubmission> handleModelingSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {//TODO MJ move to ModelingSubmissionService?
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         ResponseEntity<ModelingSubmission> responseFailure = checkExerciseValidity(modelingExercise);
-        if (responseFailure != null) return responseFailure;
+        if (responseFailure != null) {
+            return responseFailure;
+        }
 
         Participation participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(modelingExercise.getId(), principal.getName());
 
@@ -151,6 +130,7 @@ public class ModelingSubmissionResource {
         hideDetails(modelingSubmission);
         return ResponseEntity.ok(modelingSubmission);
     }
+
 
     private void hideDetails(@RequestBody ModelingSubmission modelingSubmission) {
         //do not send old submissions or old results to the client
@@ -166,6 +146,7 @@ public class ModelingSubmissionResource {
             }
         }
     }
+
 
     @Nullable
     private ResponseEntity<ModelingSubmission> checkExerciseValidity(ModelingExercise modelingExercise) {
@@ -196,33 +177,12 @@ public class ModelingSubmissionResource {
                                                                               @PathVariable Long exerciseId,
                                                                               @RequestParam(defaultValue = "false") boolean submittedOnly) {
         log.debug("REST request to get all ModelingSubmissions");
-        Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
+        Exercise exercise = modelingExerciseService.findOne(exerciseId);
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
         }
-        List<Participation> participations = participationService.findByExerciseIdWithEagerSubmissions(exerciseId);
-        List<ModelingSubmission> submissions = new ArrayList<>();
-        for (Participation participation : participations) {
-            ModelingSubmission submission = participation.findLatestModelingSubmission();
-            if (submission != null) {
-                if (submittedOnly && !submission.isSubmitted()) {
-                    //filter out non submitted submissions if the flag is set to true
-                    continue;
-                }
-                submissions.add(submission);
-            }
-            //avoid infinite recursion
-            participation.getExercise().setParticipations(null);
-        }
-
-        submissions.forEach(submission -> {
-            Hibernate.initialize(submission.getResult()); // eagerly load the association
-            if (submission.getResult() != null) {
-                Hibernate.initialize(submission.getResult().getAssessor());
-            }
-        });
-
-        return ResponseEntity.ok().body(submissions);
+        List<ModelingSubmission> submissions = modelingSubmissionService.getModelingSubmissions(exerciseId, submittedOnly);
+        return ResponseEntity.ok(submissions);
     }
 
 
@@ -230,7 +190,7 @@ public class ModelingSubmissionResource {
      * GET  /modeling-submissions/{submissionId} : Gets an existing modelingSubmission with result. If no result
      * exists for this submission a new Result object is created and assigned to the submission.
      *
-     * @param submissionId  the id of the modelingSubmission to retrieve
+     * @param submissionId the id of the modelingSubmission to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the modelingSubmission for the given id,
      * or with status 404 (Not Found) if the modelingSubmission could not be found
      */

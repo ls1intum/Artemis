@@ -8,6 +8,7 @@ import java.util.*;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ResourceUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.*;
@@ -97,6 +98,10 @@ public class DatabaseUtilService {
      * @return eagerly loaded representation of the participation object stored in the database
      */
     public Participation addParticipationForExercise(Exercise exercise, String login) {
+        Participation storedParticipation = participationRepo.findOneByExerciseIdAndStudentLogin(exercise.getId(), login);
+        if (storedParticipation != null) {
+            return storedParticipation;
+        }
         User user =
             userRepo
                 .findOneByLogin(login)
@@ -106,7 +111,7 @@ public class DatabaseUtilService {
         participation.setStudent(user);
         participation.setExercise(exercise);
         participationRepo.save(participation);
-        Participation storedParticipation =
+        storedParticipation =
             participationRepo.findOneByExerciseIdAndStudentLogin(exercise.getId(), login);
         assertThat(storedParticipation).isNotNull();
         return participationRepo
@@ -163,6 +168,23 @@ public class DatabaseUtilService {
         submission.getParticipation().addResult(result);
         resultRepo.save(result);
         modelingSubmissionRepo.save(submission);
+        return submission;
+    }
+
+
+    @Transactional
+    public ModelingSubmission addModelingSubmission(
+        ModelingExercise exercise, ModelingSubmission submission, String login) {
+        Participation participation = addParticipationForExercise(exercise, login);
+        participation.addSubmissions(submission);
+        Result result = new Result();
+        result.setSubmission(submission);
+        submission.setParticipation(participation);
+        submission.setResult(result);
+        submission.getParticipation().addResult(result);
+        modelingSubmissionRepo.save(submission);
+        resultRepo.save(result);
+        participationRepo.save(participation);
         return submission;
     }
 
