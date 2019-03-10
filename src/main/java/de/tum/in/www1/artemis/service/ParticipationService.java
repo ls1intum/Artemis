@@ -43,6 +43,7 @@ public class ParticipationService {
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final Optional<VersionControlService> versionControlService;
 
+
     public ParticipationService(ParticipationRepository participationRepository,
                                 ExerciseRepository exerciseRepository,
                                 ResultRepository resultRepository,
@@ -63,6 +64,7 @@ public class ParticipationService {
         this.versionControlService = versionControlService;
     }
 
+
     /**
      * Save a participation.
      *
@@ -74,6 +76,7 @@ public class ParticipationService {
         log.debug("Request to save Participation : {}", participation);
         return participationRepository.saveAndFlush(participation);
     }
+
 
     /**
      * This method should only be invoked for programming exercises, not for other exercises
@@ -133,6 +136,7 @@ public class ParticipationService {
         participation = save(participation);
         return participation;
     }
+
 
     /**
      * Get a participation for the given quiz and username
@@ -210,6 +214,7 @@ public class ParticipationService {
         return participation;
     }
 
+
     /**
      * Service method to resume inactive participation (with previously deleted build plan)
      *
@@ -229,6 +234,7 @@ public class ParticipationService {
         return participation;
     }
 
+
     private Participation copyRepository(Participation participation, ProgrammingExercise exercise) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED)) {
             URL repositoryUrl = versionControlService.get().copyRepository(exercise.getTemplateRepositoryUrlAsUrl(), participation.getStudent().getLogin());
@@ -242,6 +248,7 @@ public class ParticipationService {
         }
     }
 
+
     private Participation configureRepository(Participation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
             versionControlService.get().configureRepository(participation.getRepositoryUrlAsUrl(), participation.getStudent().getLogin());
@@ -251,6 +258,7 @@ public class ParticipationService {
             return participation;
         }
     }
+
 
     private Participation copyBuildPlan(Participation participation, ProgrammingExercise exercise) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.BUILD_PLAN_COPIED)) {
@@ -263,6 +271,7 @@ public class ParticipationService {
         }
     }
 
+
     private Participation configureBuildPlan(Participation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.BUILD_PLAN_CONFIGURED)) {
             continuousIntegrationService.get().configureBuildPlan(participation);
@@ -273,6 +282,7 @@ public class ParticipationService {
         }
     }
 
+
     private Participation configureRepositoryWebHook(Participation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
             versionControlService.get().addWebHook(participation.getRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participation.getId(), "ArTEMiS WebHook");
@@ -281,6 +291,7 @@ public class ParticipationService {
             return participation;
         }
     }
+
 
     /**
      * Get all the participations.
@@ -293,6 +304,7 @@ public class ParticipationService {
         return participationRepository.findAll();
     }
 
+
     /**
      * Get all the participations.
      *
@@ -304,6 +316,7 @@ public class ParticipationService {
         log.debug("Request to get all Participations");
         return participationRepository.findAll(pageable);
     }
+
 
     /**
      * Get one participation by id.
@@ -321,6 +334,7 @@ public class ParticipationService {
         return participation.get();
     }
 
+
     /**
      * Get one participation by id including all results.
      *
@@ -337,6 +351,7 @@ public class ParticipationService {
         return participation.get();
     }
 
+
     /**
      * Get one participation by id including all submissions.
      *
@@ -352,6 +367,7 @@ public class ParticipationService {
         }
         return participation.get();
     }
+
 
     /**
      * Get one participation by id including all results and submissions.
@@ -404,6 +420,7 @@ public class ParticipationService {
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + username + " in exercise " + exerciseId));
     }
 
+
     /**
      * Get all participations for the given student including all results
      *
@@ -415,31 +432,37 @@ public class ParticipationService {
         return participationRepository.findByStudentUsernameWithEagerResults(username);
     }
 
+
     @Transactional(readOnly = true)
     public List<Participation> findByBuildPlanIdAndInitializationState(String buildPlanId, InitializationState state) {
         log.debug("Request to get Participation for build plan id: {}", buildPlanId);
         return participationRepository.findByBuildPlanIdAndInitializationState(buildPlanId, state);
     }
 
+
     @Transactional(readOnly = true)
     public List<Participation> findByExerciseId(Long exerciseId) {
         return participationRepository.findByExerciseId(exerciseId);
     }
+
 
     @Transactional(readOnly = true)
     public List<Participation> findByExerciseIdWithEagerResults(Long exerciseId) {
         return participationRepository.findByExerciseIdWithEagerResults(exerciseId);
     }
 
+
     @Transactional(readOnly = true)
     public List<Participation> findByExerciseIdAndStudentIdWithEagerResults(Long exerciseId, Long studentId) {
         return participationRepository.findByExerciseIdAndStudentIdWithEagerResults(exerciseId, studentId);
     }
 
+
     @Transactional(readOnly = true)
     public List<Participation> findByExerciseIdWithEagerSubmissions(Long exerciseId) {
         return participationRepository.findByExerciseIdWithEagerSubmissions(exerciseId);
     }
+
 
     @Transactional(readOnly = true)
     public List<Participation> findByCourseIdWithRelevantResults(Long courseId) {
@@ -494,6 +517,7 @@ public class ParticipationService {
         return participations;
     }
 
+
     /**
      * Deletes the build plan on the continuous integration server and sets the initialization state of the participation to inactive
      * This means the participation can be resumed in the future
@@ -509,6 +533,7 @@ public class ParticipationService {
             save(participation);
         }
     }
+
 
     /**
      * NOTICE: be careful with this method because it deletes the students code on the version control server
@@ -585,6 +610,7 @@ public class ParticipationService {
         exerciseRepository.save(exercise);
         participationRepository.delete(participation);
     }
+
 
     /**
      * Delete all participations belonging to the given exercise

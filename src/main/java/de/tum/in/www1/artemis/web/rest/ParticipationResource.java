@@ -1,33 +1,22 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import com.google.common.collect.Sets;
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.connectors.VersionControlService;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import java.net.*;
+import java.security.Principal;
+import java.util.*;
+import org.slf4j.*;
+import org.springframework.http.*;
 import org.springframework.http.converter.json.MappingJacksonValue;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
-
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.security.Principal;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import org.springframework.web.server.ResponseStatusException;
+import com.google.common.collect.Sets;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.connectors.*;
+import de.tum.in.www1.artemis.web.rest.errors.*;
+import de.tum.in.www1.artemis.web.rest.util.*;
 
 /**
  * REST controller for managing Participation.
@@ -50,6 +39,7 @@ public class ParticipationResource {
     private final TextSubmissionService textSubmissionService;
     private final ResultService resultService;
 
+
     public ParticipationResource(ParticipationService participationService,
                                  CourseService courseService,
                                  QuizExerciseService quizExerciseService,
@@ -69,6 +59,7 @@ public class ParticipationResource {
         this.textSubmissionService = textSubmissionService;
         this.resultService = resultService;
     }
+
 
     /**
      * POST  /participations : Create a new participation.
@@ -91,6 +82,7 @@ public class ParticipationResource {
             .body(result);
     }
 
+
     /**
      * POST  /courses/:courseId/exercises/:exerciseId/participations : start the "id" exercise for the current user.
      *
@@ -108,14 +100,17 @@ public class ParticipationResource {
         if (!courseService.userHasAtLeastStudentPermissions(course)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
-        if (participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName()) != null) {
-            // participation already exists
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("participation", "participationAlreadyExists", "There is already a participation for the given exercise and user.")).body(null);
+        try {
+            participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
+            return ResponseEntity.badRequest()
+                .headers(HeaderUtil.createFailureAlert("participation", "participationAlreadyExists", "There is already a participation for the given exercise and user."))
+                .body(null);
+        } catch (ResponseStatusException e) {
+            Participation participation = participationService.startExercise(exercise, principal.getName());
+            return ResponseEntity.created(new URI("/api/participations/" + participation.getId())).body(participation);
         }
-        Participation participation = participationService.startExercise(exercise, principal.getName());
-        return ResponseEntity.created(new URI("/api/participations/" + participation.getId()))
-            .body(participation);
     }
+
 
     /**
      * POST  /courses/:courseId/exercises/:exerciseId/resume-participation: resume the participation of the current user in the exercise identified by id
@@ -144,6 +139,7 @@ public class ParticipationResource {
         return ResponseEntity.ok().body(participation);
     }
 
+
     /**
      * PUT  /participations : Updates an existing participation.
      *
@@ -169,6 +165,7 @@ public class ParticipationResource {
             .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, participation.getStudent().getFirstName()))
             .body(result);
     }
+
 
     /**
      * GET  /exercise/:exerciseId/participations : get all the participations for an exercise
@@ -233,6 +230,7 @@ public class ParticipationResource {
         return ResponseEntity.ok(participation);
     }
 
+
     /**
      * GET  /courses/:courseId/participations : get all the participations for a course
      *
@@ -254,6 +252,7 @@ public class ParticipationResource {
         return ResponseEntity.ok().body(participations);
     }
 
+
     /**
      * GET  /participations/:id : get the "id" participation.
      *
@@ -274,6 +273,7 @@ public class ParticipationResource {
         participation.setResults(results);
         return new ResponseEntity<>(participation, HttpStatus.OK);
     }
+
 
     /**
      * GET  /participations/:id : get the "id" participation.
@@ -305,6 +305,7 @@ public class ParticipationResource {
             .orElse(ResponseUtil.notFound());
     }
 
+
     @GetMapping(value = "/participations/{id}/buildPlanWebUrl")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<String> getParticipationBuildPlanWebUrl(@PathVariable Long id) {
@@ -312,7 +313,7 @@ public class ParticipationResource {
         Participation participation = participationService.findOne(id);
         Course course = participation.getExercise().getCourse();
         if (!authCheckService.isOwnerOfParticipation(participation)) {
-            if(!courseService.userHasAtLeastTAPermissions(course)) {
+            if (!courseService.userHasAtLeastTAPermissions(course)) {
                 throw new AccessForbiddenException("You are not allowed to access this resource");
             }
         } else if (!courseService.userHasAtLeastTAPermissions(course)) {
@@ -348,6 +349,7 @@ public class ParticipationResource {
      *
      * Please note: 'courseId' is only included in the call for API consistency, it is not actually used
      * //TODO remove courseId from the URL
+     *
      * @param exerciseId the id of the exercise for which to retrieve the participation
      * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
      */
@@ -357,9 +359,6 @@ public class ParticipationResource {
     public ResponseEntity<MappingJacksonValue> getParticipation(@PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to get Participation for Exercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
-        if (exercise == null) {
-            throw new EntityNotFoundException("Exercise with " + exerciseId + " does not exist");
-        }
         Course course = exercise.getCourse();
         if (!courseService.userHasAtLeastStudentPermissions(course)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
@@ -369,10 +368,8 @@ public class ParticipationResource {
             response = participationForQuizExercise((QuizExercise) exercise, principal.getName());
         } else if (exercise instanceof ModelingExercise) {
             Participation participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
-            if (participation != null) {
-                participation.getResults().size(); // eagerly load the association
-            }
-            response = participation == null ? null : new MappingJacksonValue(participation);
+            participation.getResults().size(); // eagerly load the association
+            response = new MappingJacksonValue(participation);
         } else {
             Participation participation = participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName());
             response = participation == null ? null : new MappingJacksonValue(participation);
@@ -383,6 +380,7 @@ public class ParticipationResource {
             return new ResponseEntity<>(response, HttpStatus.OK);
         }
     }
+
 
     private MappingJacksonValue participationForQuizExercise(QuizExercise quizExercise, String username) {
         if (!quizExercise.isStarted()) {
@@ -416,6 +414,7 @@ public class ParticipationResource {
         }
     }
 
+
     /**
      * GET  /participations/:id/status: get build status of the user's participation for the "id" participation.
      *
@@ -439,6 +438,7 @@ public class ParticipationResource {
         return ResponseEntity.unprocessableEntity().build();
     }
 
+
     /**
      * DELETE  /participations/:id : delete the "id" participation.
      *
@@ -457,6 +457,7 @@ public class ParticipationResource {
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("participation", username)).build();
     }
 
+
     /**
      * DELETE  /participations/:id : delete the "id" participation.
      *
@@ -473,12 +474,14 @@ public class ParticipationResource {
         return ResponseEntity.ok().body(participation);
     }
 
+
     private void checkAccessPermissionAtLeastTA(Participation participation) {
         Course course = participation.getExercise().getCourse();
         if (!courseService.userHasAtLeastTAPermissions(course)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
     }
+
 
     private void checkAccessPermissionOwner(Participation participation) {
         Course course = participation.getExercise().getCourse();
