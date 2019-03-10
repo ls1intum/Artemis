@@ -1,10 +1,13 @@
 package de.tum.in.www1.artemis.service;
 
+import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ModelingExercise;
 import de.tum.in.www1.artemis.domain.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.compass.assessment.ModelElementAssessment;
@@ -25,13 +28,16 @@ public class ModelingAssessmentService extends AssessmentService {
 
     private final UserService userService;
     private final ModelingSubmissionRepository modelingSubmissionRepository;
+    private final FeedbackRepository feedbackRepository;
 
     public ModelingAssessmentService(ResultRepository resultRepository,
                                      UserService userService,
-                                     ModelingSubmissionRepository modelingSubmissionRepository) {
+                                     ModelingSubmissionRepository modelingSubmissionRepository,
+                                     FeedbackRepository feedbackRepository) {
         super(resultRepository);
         this.userService = userService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
+        this.feedbackRepository = feedbackRepository;
     }
 
 
@@ -72,6 +78,43 @@ public class ModelingAssessmentService extends AssessmentService {
             modelingSubmissionRepository.save(modelingSubmission);
         }
         resultRepository.save(result);
+    }
+
+    /**
+     * This function is used for saving a manual assessment/result. It sets the assessment type to MANUAL
+     * and sets the assessor attribute. Furthermore, it saves the result in the database.
+     *
+     * @param modelingSubmission
+     * @param feedbacks
+     */
+    @Transactional
+    public Result saveManualAssessment(ModelingSubmission modelingSubmission, List<Feedback> feedbacks) {
+        Result result = modelingSubmission.getResult();
+        if (result == null) {
+            result = new Result();
+        }
+
+        result.setAssessmentType(AssessmentType.MANUAL);
+        User user = userService.getUser();
+        result.setAssessor(user);
+
+        // delete old feedback from the database for this result
+        feedbackRepository.deleteByResult(result);
+        result.getFeedbacks().clear();
+        for (Feedback feedback : feedbacks) {
+            feedback.setType(FeedbackType.MANUAL);
+            result.addFeedback(feedback);
+        }
+        feedbackRepository.saveAll(feedbacks);
+        result.setHasFeedback(true);
+
+        if (result.getSubmission() == null) {
+            result.setSubmission(modelingSubmission);
+            // TODO CZ: is setting the result and saving the submission really necessary here? setting the submission of the result should be enough as the relationship is owned by the result
+            modelingSubmission.setResult(result);
+            modelingSubmissionRepository.save(modelingSubmission);
+        }
+        return resultRepository.save(result);
     }
 
 

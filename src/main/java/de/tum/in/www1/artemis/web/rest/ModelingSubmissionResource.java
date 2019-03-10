@@ -16,7 +16,6 @@ import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
 /**
  * REST controller for managing ModelingSubmission.
@@ -199,11 +198,7 @@ public class ModelingSubmissionResource {
     @Transactional
     public ResponseEntity<ModelingSubmission> getModelingSubmission(@PathVariable Long submissionId) {
         log.debug("REST request to get ModelingSubmission with id: {}", submissionId);
-        Optional<ModelingSubmission> optionalModelingSubmission = modelingSubmissionRepository.findByIdWithEagerResult(submissionId);
-        if (!optionalModelingSubmission.isPresent()) {
-            return notFound();
-        }
-        ModelingSubmission modelingSubmission = optionalModelingSubmission.get();
+        ModelingSubmission modelingSubmission = modelingSubmissionService.findOne(submissionId);
 
         Exercise exercise = modelingSubmission.getParticipation().getExercise();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
@@ -213,7 +208,10 @@ public class ModelingSubmissionResource {
         Result result = modelingSubmission.getResult();
         if (result == null) {
             result = new Result();
+            result.setSubmission(modelingSubmission);
             modelingSubmission.setResult(result);
+            modelingSubmission.getParticipation().addResult(result);
+            result = resultRepository.save(result);
             modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
         }
         if (result.getAssessor() == null) {

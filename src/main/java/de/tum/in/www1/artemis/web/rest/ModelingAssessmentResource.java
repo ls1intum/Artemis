@@ -9,13 +9,12 @@ import de.tum.in.www1.artemis.service.compass.conflict.Conflict;
 import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-import org.hibernate.Hibernate;
-import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -96,9 +95,6 @@ public class ModelingAssessmentResource extends AssessmentResource {
         ModelingExercise modelingExercise =
             modelingExerciseService.findOne(participation.getExercise().getId());
         checkAuthorization(modelingExercise);
-        if (submission.getResult() instanceof HibernateProxy) {
-            submission.setResult((Result) Hibernate.unproxy(submission.getResult()));
-        }
         List<Feedback> partialFeedbackAssessment = compassService.getPartialAssessment(participation.getExercise().getId(), submissionId);
         Result result = submission.getResult();
         result.setFeedbacks(partialFeedbackAssessment);
@@ -113,9 +109,6 @@ public class ModelingAssessmentResource extends AssessmentResource {
         if (!courseService.userHasAtLeastStudentPermissions(participation.getExercise().getCourse())
             || !authCheckService.isOwnerOfParticipation(participation)) {
             return forbidden();
-        }
-        if (submission.getResult() instanceof HibernateProxy) {
-            submission.setResult((Result) Hibernate.unproxy(submission.getResult()));
         }
         Result result = submission.getResult();
         if (result != null) {
@@ -139,18 +132,18 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @PutMapping("/modeling-submissions/{submissionId}/feedback")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     // TODO MJ changing submitted assessment always produces Conflict
-    // TODO: in this case we should already send the feedback items in the Result object
+    @Transactional // TODO CZ: transactional really necessary here?
     public ResponseEntity<Object> submitModelingAssessment(
         @PathVariable Long submissionId,
         @RequestParam(value = "ignoreConflicts", defaultValue = "false") boolean ignoreConflict,
         @RequestParam(value = "submit", defaultValue = "false") boolean submit,
         @RequestBody List<Feedback> feedbacks) {
-        ModelingSubmission submission = modelingSubmissionService.findOne(submissionId);
-        long exerciseId = submission.getParticipation().getExercise().getId();
+        ModelingSubmission modelingSubmission = modelingSubmissionService.findOne(submissionId);
+        long exerciseId = modelingSubmission.getParticipation().getExercise().getId();
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         checkAuthorization(modelingExercise);
-        Result result = submission.getResult();
-        modelingAssessmentService.saveManualAssessment(result);
+        Result result = modelingAssessmentService.saveManualAssessment(modelingSubmission, feedbacks);
+        // TODO CZ: move submit logic to modeling assessment service
         if (submit) {
             List<Conflict> conflicts =
                 compassService.getConflicts(exerciseId, submissionId, result.getFeedbacks());

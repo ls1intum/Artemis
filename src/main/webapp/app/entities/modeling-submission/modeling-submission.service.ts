@@ -44,7 +44,7 @@ export class ModelingSubmissionService {
     }
 
     getSubmission(submissionId: number): Observable<ModelingSubmission> {
-        return this.http.get<ModelingSubmission>(`api/submissions/${submissionId}`);
+        return this.http.get<ModelingSubmission>(`api/modeling-submissions/${submissionId}`);
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {

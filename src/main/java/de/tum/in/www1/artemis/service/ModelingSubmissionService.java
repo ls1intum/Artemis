@@ -121,8 +121,9 @@ public class ModelingSubmissionService {
     }
 
     public ModelingSubmission findOne (Long id){
-        return  modelingSubmissionRepository.findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("Exercise with id: \"" + id + "\" does not exist"));
+        // TODO CZ: load submission also with eager feedbacks
+        return  modelingSubmissionRepository.findByIdWithEagerResult(id)
+            .orElseThrow(() -> new EntityNotFoundException("Modeling submission with id \"" + id + "\" does not exist"));
     }
 
     /**

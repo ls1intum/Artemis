@@ -222,7 +222,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
     saveAssessment() {
         this.checkScoreBoundaries();
         this.removeCircularDependencies();
-        this.modelingAssessmentService.save(this.result, this.submission.id).subscribe((result: Result) => {
+        this.modelingAssessmentService.save(this.result.feedbacks, this.submission.id).subscribe((result: Result) => {
             this.result = result;
             this.onNewResult.emit(this.result);
             this.jhiAlertService.success('arTeMiSApp.apollonDiagram.assessment.saveSuccessful');
@@ -234,7 +234,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
     submit() {
         this.checkScoreBoundaries();
         this.removeCircularDependencies();
-        this.modelingAssessmentService.save(this.result, this.submission.id, true, this.ignoreConflicts).subscribe((result: Result) => {
+        this.modelingAssessmentService.save(this.result.feedbacks, this.submission.id, true, this.ignoreConflicts).subscribe((result: Result) => {
             result.participation.results = [result];
             this.result = result;
             this.jhiAlertService.success('arTeMiSApp.apollonDiagram.assessment.submitSuccessful');
