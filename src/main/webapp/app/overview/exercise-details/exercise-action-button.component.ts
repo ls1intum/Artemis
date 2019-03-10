@@ -1,7 +1,8 @@
 import { Component, HostBinding, Input } from '@angular/core';
 
 @Component({
-    selector: '[jhi-exercise-action-button]',
+    /* tslint:disable-next-line component-selector */
+    selector: 'button[jhi-exercise-action-button]',
     templateUrl: './exercise-action-button.component.html',
     styleUrls: ['../course-overview.scss']
 })

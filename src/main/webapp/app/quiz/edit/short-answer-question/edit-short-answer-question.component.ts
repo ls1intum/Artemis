@@ -9,10 +9,6 @@ import 'brace/theme/chrome';
 import 'brace/mode/markdown';
 import { ShortAnswerQuestionUtil } from 'app/components/util/short-answer-question-util.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-// for visual mode
-import { DropLocation } from '../../../entities/drop-location';
-import { DragAndDropMouseEvent } from '../../../entities/drag-item/drag-and-drop-mouse-event.class';
-import { DragState } from '../../../entities/drag-item/drag-state.enum';
 import * as TempID from 'app/quiz/edit/temp-id';
 
 @Component({
@@ -47,45 +43,21 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     questionEditorText = '';
     questionEditorMode = 'markdown';
     questionEditorAutoUpdate = true;
-    backupQuestion: ShortAnswerQuestion;
     showPreview: boolean;
 
     /** Status boolean for collapse status **/
     isQuestionCollapsed: boolean;
 
+    /** Variables needed for the setup of editorText **/
     // equals the highest spotNr
     numberOfSpot = 1;
     // defines the first gap between text and solutions when
     firstPressed = 1;
     // has all solution options with their mapping (each spotNr)
     optionsWithID: string [] = [];
-    // contains all spots with their spotNr
-    spotsWithID = new Map<string, ShortAnswerSpot>();
 
-    /*
-    For visual mode
-     */
-    /**
-     * Keep track of what the current drag action is doing
-     * @type {number}
-     */
-    draggingState: number = DragState.NONE;
-
-    /**
-     * Keep track of the currently dragged ShortAnswerSpot
-     * @type {ShortAnswerSpot}
-     */
-    currentSpot: ShortAnswerSpot;
-
-    /**
-     * Keep track of the current mouse location
-     * @type {DragAndDropMouseEvent}
-     */
-    mouse: DragAndDropMouseEvent;
-
-    dropAllowed = false;
-
-    dropLocationsForSpots: [DropLocation];
+    /** For visual mode **/
+    textParts: String [][];
 
     constructor(
         private artemisMarkdown: ArtemisMarkdown,
@@ -94,16 +66,9 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     ) {}
 
     ngOnInit(): void {
-        /** Create question backup for resets **/
-        this.backupQuestion = JSON.parse(JSON.stringify(this.question));
-
         /** Assign status booleans and strings **/
         this.showPreview = false;
         this.isQuestionCollapsed = false;
-
-        /** Initialize ShortAnswerSpot and MouseEvent objects **/
-        this.currentSpot = new ShortAnswerSpot();
-        this.mouse = new DragAndDropMouseEvent();
     }
 
     /**
@@ -115,10 +80,6 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         /** Check if previousValue wasn't null to avoid firing at component initialization **/
         if (changes.question && changes.question.previousValue != null) {
             this.questionUpdated.emit();
-        }
-        /** Update backupQuestion if the question changed **/
-        if (changes.question && changes.question.currentValue != null) {
-            this.backupQuestion = JSON.parse(JSON.stringify(this.question));
         }
     }
 
@@ -137,7 +98,6 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     setupQuestionEditor(): void {
         // Sets the counter to the highest spotNr and generates solution options with their mapping (each spotNr)
         this.numberOfSpot = this.question.spots.length + 1;
-        this.setOptionsWithID();
 
         // Default editor settings for inline markup editor
         this.questionEditor.setTheme('chrome');
@@ -168,6 +128,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @desc Set up of all solution option with their mapping (spotNr)
      */
     setOptionsWithID() {
+        this.optionsWithID = [];
         for (const solution of this.question.solutions) {
             let spotsForSolution: ShortAnswerSpot[] = [];
             let option = '[-option ';
@@ -175,11 +136,14 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
             spotsForSolution = this.shortAnswerQuestionUtil.getAllSpotsForSolutions(this.question.correctMappings, solution);
 
             for (const spotForSolution of spotsForSolution) {
+                if (spotForSolution === undefined) {
+                    break;
+                }
                 if (firstSolution) {
-                    option += this.question.spots.filter(spot => spot.id === spotForSolution.id)[0].spotNr;
+                    option += this.question.spots.filter(spot => this.shortAnswerQuestionUtil.isSameSpot(spot, spotForSolution))[0].spotNr;
                     firstSolution = false;
                 } else {
-                    option += ',' + this.question.spots.filter(spot => spot.id === spotForSolution.id)[0].spotNr;
+                    option += ',' + this.question.spots.filter(spot => this.shortAnswerQuestionUtil.isSameSpot(spot, spotForSolution))[0].spotNr;
                 }
             }
             option += ']';
@@ -195,12 +159,13 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * 3. For each solution: text is added using ArtemisMarkdown
      */
     generateMarkdown(): string {
+        this.setOptionsWithID();
         const markdownText =
             this.artemisMarkdown.generateTextHintExplanation(this.question) +
-            '\n\n\n\n' +
+            '\n\n\n' +
             this.question.solutions
                 .map((solution, index) => this.optionsWithID[index] + ' ' + solution.text.trim())
-                .join('\n\n');
+                .join('\n');
         return markdownText;
     }
 
@@ -258,7 +223,6 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
                 spot.id = existingSpotIDs[this.question.spots.length];
             }
             spot.spotNr = +spotID.trim();
-            this.spotsWithID.set(spotID.trim(), spot);
             this.question.spots.push(spot);
         }
 
@@ -351,9 +315,9 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     addOptionToSpot(editor: any, numberOfSpot: number, optionText: string, firstPressed: number) {
         let addedText: string;
         if (numberOfSpot === 1 && firstPressed === 1) {
-            addedText = '\n\n\n\n[-option ' + numberOfSpot + '] ' + optionText;
+            addedText = '\n\n\n[-option ' + numberOfSpot + '] ' + optionText;
         } else {
-            addedText = '\n\n[-option ' + numberOfSpot + '] ' + optionText;
+            addedText = '\n[-option ' + numberOfSpot + '] ' + optionText;
         }
         editor.focus();
         editor.clearSelection();
@@ -368,9 +332,9 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         const editor = this.questionEditor.getEditor();
         let addedText: string;
         if (this.firstPressed === 1) {
-            addedText = '\n\n\n\n[-option #] Please enter here one answer option and do not forget to replace # with a number';
+            addedText = '\n\n\n[-option #] Please enter here one answer option and do not forget to replace # with a number';
         } else {
-            addedText = '\n\n[-option #] Please enter here one answer option and do not forget to replace # with a number';
+            addedText = '\n[-option #] Please enter here one answer option and do not forget to replace # with a number';
         }
         editor.clearSelection();
         editor.moveCursorTo(editor.getLastVisibleRow(), Number.POSITIVE_INFINITY);
@@ -382,216 +346,94 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         this.firstPressed++;
     }
 
-    /*
-    * For visual mode
-    * TODO FDE: visual mode
-    * */
+    /**
+     * @function addSpotAtCursorVisualMode
+     * @desc Add a input field on the current selected location and add the solution option accordingly
+     */
+    addSpotAtCursorVisualMode(): void {
+        // check if selection is on the correct div
+        const wrapperDiv = document.getElementById('test');
+        const child = window.getSelection().baseNode;
+
+        if (!wrapperDiv.contains(child)) {
+            return;
+        }
+
+        const editor = this.questionEditor.getEditor();
+        // ID 'element-row-column' is divided into array of [row, column]
+        const selectedTextRowColumn = window.getSelection().focusNode.parentElement.id.split('-').slice(1);
+        const markedText = this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]];
+
+        // split text before first option tag
+        const questionText = editor.getValue().split(/\[-option /g)[0].trim();
+        // split on every whitespace. !!!only exception: [-spot 1] is not split!!!
+        this.textParts = questionText.split(/\n+/g).map((t: String) => t.split(/\s+(?![^[]]*])/g));
+        this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]] = '[-spot ' + this.numberOfSpot + ']';
+        // recreation of text from array
+        this.question.text = this.textParts.map(textPart => textPart.join(' ')).join('\n');
+        editor.setValue(this.generateMarkdown());
+
+        editor.moveCursorTo(editor.getLastVisibleRow() + this.numberOfSpot, Number.POSITIVE_INFINITY);
+        this.addOptionToSpot(editor, this.numberOfSpot, markedText, this.firstPressed);
+        this.parseMarkdown(editor.getValue());
+
+        this.numberOfSpot++;
+        this.firstPressed++;
+
+        this.questionUpdated.emit();
+    }
 
     /**
-     * Handles drag-available UI
+     * checks if text is an input field (check for spot tag)
+     * @param text
      */
-    // drag(): void {
-    //     this.dropAllowed = true;
-    // }
-    /**
-     * Handles drag-available UI
-     */
-    /*drop(): void {
-        this.dropAllowed = false;
-    }*/
+    isInputField(text: string): boolean {
+        return !(text.search(/\[-spot/g) === -1);
+    }
 
     /**
-     * @function mouseMove
-     * @desc React to mousemove events on the entire page to update:
-     * - mouse object (always)
-     * - current solution spot (only while dragging)
-     * @param e {object} Mouse move event
+     * gets just the spot number
+     * @param text
      */
-    // mouseMove(e: any): void {
-    //     // Update mouse x and y value
-    //     const event: MouseEvent = e || window.event; // Moz || IE
-    //     const jQueryBackgroundElement = $('.click-layer-question-' + this.questionIndex);
-    //     const jQueryBackgroundOffset = jQueryBackgroundElement.offset();
-    //     const backgroundWidth = jQueryBackgroundElement.width();
-    //     const backgroundHeight = jQueryBackgroundElement.height();
-    //     if (event.pageX) {
-    //         // Moz
-    //         this.mouse.x = event.pageX - jQueryBackgroundOffset.left;
-    //         this.mouse.y = event.pageY - jQueryBackgroundOffset.top;
-    //     } else if (event.clientX) {
-    //         // IE
-    //         this.mouse.x = event.clientX - jQueryBackgroundOffset.left;
-    //         this.mouse.y = event.clientY - jQueryBackgroundOffset.top;
-    //     }
-    //     this.mouse.x = Math.min(Math.max(0, this.mouse.x), backgroundWidth);
-    //     this.mouse.y = Math.min(Math.max(0, this.mouse.y), backgroundHeight);
-    //
-    //     if (this.draggingState !== DragState.NONE) {
-    //         switch (this.draggingState) {
-    //             case DragState.CREATE:
-    //             case DragState.RESIZE_X:
-    //                 // Update current drop location's position and size (only x-axis)
-    //                 this.currentSpot.posX = Math.round((200 * Math.min(this.mouse.x, this.mouse.startX)) / backgroundWidth);
-    //                 this.currentSpot.width = Math.round((200 * Math.abs(this.mouse.x - this.mouse.startX)) / backgroundWidth);
-    //                 break;
-    //             case DragState.MOVE:
-    //                 // update current drop location's position
-    //                 this.currentSpot.posX = Math.round(
-    //                     Math.min(Math.max(0, (200 * (this.mouse.x + this.mouse.offsetX)) / backgroundWidth), 200 - this.currentSpot.width)
-    //                 );
-    //                 this.currentSpot.posY = Math.round(
-    //                     Math.min(
-    //                         Math.max(0, (200 * (this.mouse.y + this.mouse.offsetY)) / backgroundHeight),
-    //                         200 - /*this.spot.height*/ 50 //TODO: Change to actual spot height of SaSolutionsSpots (fix value)
-    //                     )
-    //                 );
-    //                 break;
-    //         }
-    //     }
-    // }
+    getSpotNr(text: string): number {
+        return +text.split(/\[-spot/g).join('').split(']').join('').trim();
+    }
 
     /**
-     * @function mouseUp
-     * @desc React to mouseup events to finish dragging operations
+     * gets the spot for a specific spotNr
+     * @param spotNr
      */
-    // mouseUp(): void {
-    //     if (this.draggingState !== DragState.NONE) {
-    //         switch (this.draggingState) {
-    //             case DragState.CREATE:
-    //                 const jQueryBackgroundElement = $('.click-layer-question-' + this.questionIndex);
-    //                 const backgroundWidth = jQueryBackgroundElement.width();
-    //                 const backgroundHeight = jQueryBackgroundElement.height();
-    //                 if ((this.currentSpot.width / 200) * backgroundWidth < 14) {
-    //                     // Remove drop Location if too small (assume it was an accidental click/drag),
-    //                     this.deleteSpot(this.currentSpot);
-    //                 } else {
-    //                     // Notify parent of new drop location
-    //                     this.questionUpdated.emit();
-    //                 }
-    //                 break;
-    //             case DragState.MOVE:
-    //             case DragState.RESIZE_X:
-    //                 // Notify parent of changed drop location
-    //                 this.questionUpdated.emit();
-    //                 break;
-    //         }
-    //     }
-    //     // Update state
-    //     this.draggingState = DragState.NONE;
-    //     this.currentSpot = null;
-    // }
-
-    // FDE: Maybe create DropLocation and and afterwards create Spot
-    /**
-     * @function backgroundMouseDown
-     * @desc React to mouse down events on the background to start dragging
-     */
-    // backgroundMouseDown(): void {
-    //     let number = 0;
-    //     for (let spot of this.question.spots) {
-    //         let dropLocation = new DropLocation();
-    //         dropLocation.height = 50;
-    //         dropLocation.posX = 125;
-    //         dropLocation.posY = 125;
-    //         dropLocation.width = 50;
-    //         dropLocation.id = number;
-    //         this.dropLocationsForSpots.push(dropLocation);
-    //         number++;
-    //     }
-    // }
-
-    /**
-     * @function spotMouseDown
-     * @desc React to mousedown events on a spot to start moving it
-     * @param spot {object} the spot to move
-     */
-    // spotMouseDown(spot: ShortAnswerSpot): void {
-    //     if (this.draggingState === DragState.NONE) {
-    //         const jQueryBackgroundElement = $('.click-layer-question-' + this.questionIndex);
-    //         const backgroundWidth = jQueryBackgroundElement.width();
-    //         const backgroundHeight = jQueryBackgroundElement.height();
-    //
-    //         const dropLocationX = (spot.posX / 200) * backgroundWidth;
-    //         const dropLocationY = (spot.posY / 200) * backgroundHeight;
-    //
-    //         // Save offset of mouse in drop location
-    //         this.mouse.offsetX = dropLocationX - this.mouse.x;
-    //         this.mouse.offsetY = dropLocationY - this.mouse.y;
-    //
-    //         // Update state
-    //         this.currentSpot = spot;
-    //         this.draggingState = DragState.MOVE;
-    //     }
-    // }
-
-    /**
-     * @function deleteSpot
-     * @desc Delete the given spot
-     * @param spotToDelete {object} the spot to delete
-     */
-    // deleteSpot(spotToDelete: ShortAnswerSpot): void {
-    //     this.question.spots = this.question.spots.filter(spot => spot !== spotToDelete);
-    //     this.deleteMappingsForSpot(spotToDelete);
-    // }
-
-    /**
-     * @function resizeMouseDown
-     * @desc React to mousedown events on the resize handles to start resizing the spot
-     * @param spot {object} the spot that will be resized
-     * @param resizeLocationY {string} 'top', 'middle' or 'bottom'
-     * @param resizeLocationX {string} 'left', 'center' or 'right'
-     */
-    // resizeMouseDown(spot: ShortAnswerSpot, resizeLocationX: string): void {
-    //     if (this.draggingState === DragState.NONE) {
-    //         const backgroundWidth = this.clickLayer.nativeElement.offsetWidth;
-    //         const backgroundHeight = this.clickLayer.nativeElement.offsetHeight;
-    //
-    //         // Update state
-    //         this.draggingState = DragState.RESIZE_X; // Default is both, will be overwritten later, if needed
-    //         this.currentSpot = spot;
-    //
-    //         switch (resizeLocationX) {
-    //             case 'left':
-    //                 // Use opposite end as startX
-    //                 this.mouse.startX = ((spot.posX + spot.width) / 200) * backgroundWidth;
-    //                 break;
-    //             case 'center':
-    //                 // Limit to y-axis, startX will not be used
-    //                 this.draggingState = DragState.RESIZE_Y; // Why resize_y and not resize_x
-    //                 break;
-    //             case 'right':
-    //                 // Use opposite end as startX
-    //                 this.mouse.startX = (spot.posX / 200) * backgroundWidth;
-    //                 break;
-    //         }
-    //     }
-    // }
+    getSpot(spotNr: number): ShortAnswerSpot  {
+        return this.question.spots.filter(spot => spot.spotNr === spotNr)[0];
+    }
 
     /**
      * @function addTextSolution
      * @desc Add an empty Text solution to the question
      */
-    // addTextSolution(): void {
-    //     // Add drag item to question
-    //     if (!this.question.solutions) {
-    //         this.question.solutions = [];
-    //     }
-    //     const solution = new ShortAnswerSolution();
-    //     solution.tempID = TempID.generate();
-    //     solution.text = 'Text';
-    //     this.question.solutions.push(solution);
-    //     this.questionUpdated.emit();
-    // }
+    addTextSolution(): void {
+        // Add solution to question
+        if (!this.question.solutions) {
+            this.question.solutions = [];
+        }
+        const solution = new ShortAnswerSolution();
+        solution.tempID = TempID.generate();
+        solution.text = 'Please enter here your text';
+        this.question.solutions.push(solution);
+        this.questionEditorText = this.generateMarkdown();
+        this.questionUpdated.emit();
+    }
 
     /**
      * @function deleteSolution
      * @desc Delete the solution from the question
      * @param solutionToDelete {object} the solution that should be deleted
      */
-    // deleteSolution(solutionToDelete: ShortAnswerSolution): void {
-    //     this.question.solutions = this.question.solutions.filter(solution => solution !== solutionToDelete);
-    //     this.deleteMappingsForSolution(solutionToDelete);
-    // }
+    deleteSolution(solutionToDelete: ShortAnswerSolution): void {
+        this.question.solutions = this.question.solutions.filter(solution => solution !== solutionToDelete);
+        this.deleteMappingsForSolution(solutionToDelete);
+        this.questionEditorText = this.generateMarkdown();
+    }
 
     /**
      * @function onDragDrop
@@ -599,38 +441,41 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @param spot {object} the spot involved
      * @param dragEvent {object} the solution involved (may be a copy at this point)
      */
-    // onDragDrop(spot: ShortAnswerSpot, dragEvent: any): void {
-    //     let dragItem = dragEvent.dragData;
-    //     // Replace dragItem with original (because it may be a copy)
-    //     dragItem = this.question.solutions.find(originalDragItem =>
-    //         dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.id === dragItem.tempID
-    //     );
-    //
-    //     if (!dragItem) {
-    //         // Drag item was not found in question => do nothing
-    //         return;
-    //     }
-    //
-    //     if (!this.question.correctMappings) {
-    //         this.question.correctMappings = [];
-    //     }
-    //
-    //     // Check if this mapping already exists
-    //     if (
-    //         !this.question.correctMappings.some(
-    //             existingMapping =>
-    //                 this.shortAnswerQuestionUtil.isSameSpot(existingMapping.spot, spot) &&
-    //                 this.shortAnswerQuestionUtil.isSameSolution(existingMapping.solution, dragItem)
-    //         )
-    //     ) {
-    //         // Mapping doesn't exit yet => add this mapping
-    //         const saMapping = new ShortAnswerMapping(spot, dragItem);
-    //         this.question.correctMappings.push(saMapping);
-    //
-    //         // Notify parent of changes
-    //         this.questionUpdated.emit();
-    //     }
-    // }
+    onDragDrop(spot: ShortAnswerSpot, dragEvent: any): void {
+
+        let dragItem = dragEvent.dragData;
+        // Replace dragItem with original (because it may be a copy)
+        dragItem = this.question.solutions.find(originalDragItem =>
+            dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.tempID === dragItem.tempID
+        );
+
+        if (!dragItem) {
+            // Drag item was not found in question => do nothing
+            return;
+        }
+
+        if (!this.question.correctMappings) {
+            this.question.correctMappings = [];
+        }
+
+        // Check if this mapping already exists
+        if (
+            !this.question.correctMappings.some(
+                existingMapping =>
+                    this.shortAnswerQuestionUtil.isSameSpot(existingMapping.spot, spot) &&
+                    this.shortAnswerQuestionUtil.isSameSolution(existingMapping.solution, dragItem)
+            )
+        ) {
+            this.deleteMapping(this.getMappingsForSolution(dragItem).filter(mapping => mapping.spot === undefined)[0]);
+            // Mapping doesn't exit yet => add this mapping
+            const saMapping = new ShortAnswerMapping(spot, dragItem);
+            this.question.correctMappings.push(saMapping);
+
+            // Notify parent of changes
+            this.questionUpdated.emit();
+        }
+        this.questionEditorText = this.generateMarkdown();
+    }
 
     /**
      * @function getMappingIndex
@@ -638,40 +483,27 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @param mapping {object} the mapping we want to get an index for
      * @return {number} the index of the mapping (starting with 1), or 0 if unassigned
      */
-    // getMappingIndex(mapping: ShortAnswerMapping): number {
-    //     const visitedSpots: ShortAnswerSpot[] = [];
-    //     // Save reference to this due to nested some calls
-    //     const that = this;
-    //     if (
-    //         this.question.correctMappings.some(function(correctMapping) {
-    //             if (
-    //                 !visitedSpots.some((spot: ShortAnswerSpot) => {
-    //                     return that.shortAnswerQuestionUtil.isSameSpot(spot, correctMapping.spot);
-    //                 })
-    //             ) {
-    //                 visitedSpots.push(correctMapping.spot);
-    //             }
-    //             return that.shortAnswerQuestionUtil.isSameSpot(correctMapping.spot, mapping.spot);
-    //         })
-    //     ) {
-    //         return visitedSpots.length;
-    //     } else {
-    //         return 0;
-    //     }
-    // }
-
-    /**
-     * @function getMappingsForSpot
-     * @desc Get all mappings that involve the given spot
-     * @param spot {object} the spot for which we want to get all mappings
-     * @return {Array} all mappings that belong to the given spot
-     */
-    /*getMappingsForSpot(spot: ShortAnswerSpot): ShortAnswerMapping[] {
-        if (!this.question.correctMappings) {
-            this.question.correctMappings = [];
+    getMappingIndex(mapping: ShortAnswerMapping): number {
+        const visitedSpots: ShortAnswerSpot[] = [];
+        // Save reference to this due to nested some calls
+        const that = this;
+        if (
+            this.question.correctMappings.some(function(correctMapping) {
+                if (
+                    !visitedSpots.some((spot: ShortAnswerSpot) => {
+                        return that.shortAnswerQuestionUtil.isSameSpot(spot, correctMapping.spot);
+                    })
+                ) {
+                    visitedSpots.push(correctMapping.spot);
+                }
+                return that.shortAnswerQuestionUtil.isSameSpot(correctMapping.spot, mapping.spot);
+            })
+        ) {
+            return visitedSpots.length;
+        } else {
+            return 0;
         }
-        return this.question.correctMappings.filter(mapping => this.shortAnswerQuestionUtil.isSameSpot(mapping.spot, spot));
-    }*/
+    }
 
     /**
      * @function getMappingsForSolution
@@ -679,76 +511,44 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @param solution {object} the solution for which we want to get all mappings
      * @return {Array} all mappings that belong to the given solution
      */
-    // getMappingsForSolution(solution: ShortAnswerSolution): ShortAnswerMapping[] {
-    //     if (!this.question.correctMappings) {
-    //         this.question.correctMappings = [];
-    //     }
-    //     return (
-    //         this.question.correctMappings
-    //             .filter(mapping => this.shortAnswerQuestionUtil.isSameSolution(mapping.solution, solution))
-    //             /** Moved the sorting from the template to the function call*/
-    //             .sort((m1, m2) => this.getMappingIndex(m1) - this.getMappingIndex(m2))
-    //     );
-    // }
-
-    /**
-     * @function deleteMappingsForSpot
-     * @desc Delete all mappings for the given spot
-     * @param spot {object} the spot for which we want to delete all mappings
-     */
-    /*deleteMappingsForSpot(spot: ShortAnswerSpot): void {
+    getMappingsForSolution(solution: ShortAnswerSolution): ShortAnswerMapping[] {
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
-        this.question.correctMappings = this.question.correctMappings.filter(
-            mapping => !this.shortAnswerQuestionUtil.isSameSpot(mapping.spot, spot)
+        return (
+            this.question.correctMappings
+                .filter(mapping => this.shortAnswerQuestionUtil.isSameSolution(mapping.solution, solution))
+                /** Moved the sorting from the template to the function call*/
+                .sort((m1, m2) => this.getMappingIndex(m1) - this.getMappingIndex(m2))
         );
-    }*/
+    }
 
     /**
      * @function deleteMappingsForSolution
      * @desc Delete all mappings for the given solution
      * @param solution {object} the solution for which we want to delete all mappings
      */
-    /*deleteMappingsForSolution(solution: ShortAnswerSolution): void {
+    deleteMappingsForSolution(solution: ShortAnswerSolution): void {
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
         this.question.correctMappings = this.question.correctMappings.filter(
             mapping => !this.shortAnswerQuestionUtil.isSameSolution(mapping.solution, solution)
         );
-    }*/
+    }
 
     /**
      * @function deleteMapping
      * @desc Delete the given mapping from the question
      * @param mappingToDelete {object} the mapping to delete
      */
-    /*deleteMapping(mappingToDelete: ShortAnswerMapping): void {
+    deleteMapping(mappingToDelete: ShortAnswerMapping): void {
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
         this.question.correctMappings = this.question.correctMappings.filter(mapping => mapping !== mappingToDelete);
-    }*/
-
-    /*
-    * Todo reevaluate
-    * */
-    /**
-     * @function moveUpQuestion
-     * @desc Move this question one position up
-     */
-    /*moveUpQuestion(): void {
-        this.questionMoveUp.emit();
-    }*/
-
-    /**
-     * @function moveDownQuestion
-     * @desc Move this question one position down
-     */
-    /*moveDownQuestion(): void {
-        this.questionMoveDown.emit();
-    }*/
+        this.questionEditorText = this.generateMarkdown();
+    }
 
     /**
      * @function deleteQuestion
@@ -759,45 +559,13 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * @function resetQuestionTitle
-     * @desc Resets the question title
-     */
-    /*resetQuestionTitle(): void {
-        this.question.title = this.backupQuestion.title;
-    }*/
-
-    /**
-     * @function resetQuestionText
-     * @desc Resets the question text
-     */
-    /*resetQuestionText(): void {
-        this.question.text = this.backupQuestion.text;
-        this.question.explanation = this.backupQuestion.explanation;
-        this.question.hint = this.backupQuestion.hint;
-        this.setupQuestionEditor();
-    } */
-
-    /**
-     * @function resetQuestion
-     * @desc Resets the whole question
-     */
-    /*resetQuestion(): void {
-        this.question.title = this.backupQuestion.title;
-        this.question.invalid = this.backupQuestion.invalid;
-        this.question.randomizeOrder = this.backupQuestion.randomizeOrder;
-        this.question.scoringType = this.backupQuestion.scoringType;
-        this.question.spots = JSON.parse(JSON.stringify(this.backupQuestion.spots));
-        this.question.solutions = JSON.parse(JSON.stringify(this.backupQuestion.solutions));
-        this.question.correctMappings = JSON.parse(JSON.stringify(this.backupQuestion.correctMappings));
-        this.resetQuestionText();
-    }*/
-
-    /**
      * @function togglePreview
      * @desc Toggles the preview in the template
      */
     togglePreview(): void {
-        // just commented out to remove visual mode for the moment
-       // this.showPreview = !this.showPreview;
+       this.showPreview = !this.showPreview;
+       this.textParts = this.question.text.split(/\n+/g).map(t => t.split(/\s+(?![^[]]*])/g));
+       this.questionEditor.getEditor().setValue(this.generateMarkdown());
+       this.questionEditor.getEditor().clearSelection();
     }
 }

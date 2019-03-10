@@ -37,35 +37,10 @@
                 <td>{{course.onlineCourse}}</td>
                 <td class="text-right">
                     <div class="btn-group flex-btn-group-container">
-                        <div class="d-inline-block" ngbDropdown>
-                            <button id="exercises-button-{{course.id}}" class="btn btn-primary btn-sm mr-1" ngbDropdownToggle>
-                                <fa-icon [icon]="'list-alt'"></fa-icon>
-                                <span class="hidden-xs hidden-sm" jhiTranslate="arTeMiSApp.course.exercises"></span>
-                                <span class="caret"></span>
-                            </button>
-                            <div ngbDropdownMenu class="dropdown-menu">
-                                <button id="programming-exercises-button-{{course.id}}" class="dropdown-item"
-                                        routerLink="{{course.id}}/programming-exercise"
-                                        jhiTranslate="arTeMiSApp.course.programmingExercises"
-                                ></button>
-                                <button id="quiz-exercises-button-{{course.id}}" class="dropdown-item"
-                                        routerLink="{{course.id}}/quiz-exercise"
-                                        jhiTranslate="arTeMiSApp.course.quizExercises"
-                                ></button>
-                                <button id="modeling-exercises-button-{{course.id}}" class="dropdown-item"
-                                        routerLink="{{course.id}}/modeling-exercise"
-                                        jhiTranslate="arTeMiSApp.course.modelingExercises"
-                                ></button>
-                                <button class="dropdown-item"
-                                        routerLink="{{course.id}}/text-exercise"
-                                        jhiTranslate="arTeMiSApp.course.textExercises"
-                                ></button>
-<!--                                <button class="dropdown-item"
-                                        routerLink="{{course.id}}/file-upload-exercise"
-                                        jhiTranslate="arTeMiSApp.course.fileUploadExercises"
-                                ></button>-->
-                            </div>
-                        </div>
+                        <button type="submit" [routerLink]="['/course', course.id ]" class="btn btn-primary btn-sm mr-1">
+                            <fa-icon [icon]="'list-alt'"></fa-icon>
+                            <span class="d-none d-md-inline">Exercises</span>
+                        </button>
                         <button type="submit" [routerLink]="['/course', course.id, 'dashboard' ]" class="btn btn-info btn-sm mr-1">
                             <fa-icon [icon]="'eye'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.dashboard">Student Dashboard</span>
@@ -77,6 +52,9 @@
                         <button type="submit" [routerLink]="['/course', course.id, 'view' ]" class="btn btn-info btn-sm mr-1">
                             <fa-icon [icon]="'eye'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
+                        </button>
+                        <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [routerLink]="['/course', course.id, 'instructor-dashboard']" class="btn btn-primary btn-sm mr-1">
+                            <span class="d-none d-md-inline" jhiTranslate="arTeMiSApp.course.instructorDashboard">Instructor dashboard</span>
                         </button>
                         <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [routerLink]="['/course', course.id, 'edit']" class="btn btn-primary btn-sm mr-1">
                             <fa-icon [icon]="'pencil-alt'"></fa-icon>

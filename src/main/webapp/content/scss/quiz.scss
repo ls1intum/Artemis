@@ -396,8 +396,8 @@
     }
 }
 
-.edit-dnd-question,
-.dnd-question {
+.edit-dnd-question,.edit-sa-question,
+.dnd-question, .sa-question {
     .background-area {
         position: relative;
 
@@ -455,7 +455,7 @@
     }
 }
 
-.edit-dnd-question {
+.edit-dnd-question, .edit-sa-question {
     .markupEditorArea {
         margin-bottom: 14px;
 
@@ -689,7 +689,7 @@
     }
 }
 
-.dnd-question {
+.dnd-question, .sa-question {
     .background-area {
         .click-layer {
             .drop-location {

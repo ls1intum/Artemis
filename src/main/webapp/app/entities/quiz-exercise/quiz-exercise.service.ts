@@ -14,6 +14,16 @@ export type EntityArrayResponseType = HttpResponse<QuizExercise[]>;
 export class QuizExerciseService {
     private resourceUrl = SERVER_API_URL + 'api/quiz-exercises';
 
+    QuizStatus = {
+        HIDDEN: 'Hidden',
+        VISIBLE: 'Visible',
+        ACTIVE: 'Active',
+        CLOSED: 'Closed',
+        OPEN_FOR_PRACTICE: 'Open for Practice'
+    };
+
+    quizExercises: QuizExercise[];
+
     constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
 
     create(quizExercise: QuizExercise): Observable<EntityResponseType> {
@@ -131,4 +141,22 @@ export class QuizExerciseService {
             document.body.removeChild(anchor);
         }
     }
+    /**
+     * Start the given quiz-exercise immediately
+     *
+     * @param quizExerciseId the quiz exercise id to start
+     */
+    statusForQuiz(quizExercise: QuizExercise) {
+        if (quizExercise.isPlannedToStart && quizExercise.remainingTime != null) {
+            if (quizExercise.remainingTime <= 0) {
+                // the quiz is over
+                return quizExercise.isOpenForPractice ? this.QuizStatus.OPEN_FOR_PRACTICE : this.QuizStatus.CLOSED;
+            } else {
+                return this.QuizStatus.ACTIVE;
+            }
+        }
+        // the quiz hasn't started yet
+        return quizExercise.isVisibleBeforeStart ? this.QuizStatus.VISIBLE : this.QuizStatus.HIDDEN;
+    }
+
 }

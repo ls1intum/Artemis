@@ -1,10 +1,53 @@
-<div class="row mb-3">
+<div class="row mb-1" *ngIf="nextRelevantExercise">
     <div class="col">
-        <h3>Your current courses</h3>
+        <h3> {{"arTeMiSApp.studentDashboard.exerciseTitle" | translate:{
+            date: (nextRelevantExercise.dueDate | date:'dd/MM/yy HH:MM'),
+            course: nextRelevantCourse.title
+        } }}</h3>
+    </div>
+</div>
+<div class="row mb-3" *ngIf="nextRelevantExercise">
+    <div class="col-12 pl-4 pr-4">
+        <jhi-course-exercise-row class="pb-1" [exercise]="nextRelevantExercise" [course]="nextRelevantCourse"
+            [extendedLink]="true"></jhi-course-exercise-row>
+    </div>
+</div>
+<div class="row mb-3 align-items-center">
+    <div class="col-12 col-sm">
+        <h3 jhiTranslate="arTeMiSApp.studentDashboard.title">Your current courses</h3>
+    </div>
+    <div class="col-12 col-sm-auto" *ngIf="!showCourseSelection && !addedSuccessful">
+        <button class="btn btn-primary" [disabled]="loading" (click)="startRegistration()">
+            <span *ngIf="!loading">{{"arTeMiSApp.studentDashboard.register.signUp" | translate}}</span>
+            <fa-icon icon="spinner" [spin]="true" *ngIf="loading"></fa-icon>
+        </button>
+    </div>
+    <div class="col-12 col-sm-auto text-success" *ngIf="addedSuccessful">
+        <fa-icon icon="check-circle"></fa-icon>
+        {{"arTeMiSApp.studentDashboard.register.registerSuccessful" | translate}}
+    </div>
+    <div class="col-12 col-sm-auto" *ngIf="showCourseSelection && coursesToSelect.length > 0">
+        <select class="form-control" id="field_course" name="course" [(ngModel)]="courseToRegister">
+            <option disabled="true" [selected]="true" value="null">{{'arTeMiSApp.studentDashboard.register.pleaseSelectCourse' | translate}}</option>
+            <option [ngValue]="course" *ngFor="let course of coursesToSelect; trackBy: trackCourseById">{{course.title}}</option>
+        </select>
+    </div>
+    <div class="col-12 col-sm-auto" *ngIf="showCourseSelection && coursesToSelect.length > 0">
+        <div class="btn-group">
+            <button class="btn btn-primary" [disabled]="!courseToRegister" (click)="registerForCourse()">
+                {{"arTeMiSApp.studentDashboard.register.signUpForCourse" | translate}}
+            </button>
+            <button class="btn btn-default" (click)="cancelRegistration()">
+                {{"arTeMiSApp.studentDashboard.register.cancel" | translate}}
+            </button>
+        </div>
+    </div>
+    <div class="col-12 col-sm-auto text-warning" *ngIf="showCourseSelection && coursesToSelect.length === 0">
+        {{"arTeMiSApp.studentDashboard.register.noCourse" | translate}}
     </div>
 </div>
 <div class="row">
     <div class="col-12 col-md-6 col-lg-3 pr-2 pl-2 mb-2" *ngFor="let course of courses">
-        <jhi-overview-course-card [course]="course"> </jhi-overview-course-card>
+        <jhi-overview-course-card [course]="course"></jhi-overview-course-card>
     </div>
 </div>

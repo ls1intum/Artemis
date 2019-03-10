@@ -25,3 +25,19 @@ export class Course implements BaseEntity {
 
     constructor() {}
 }
+
+export type StatsForInstructorDashboard = {
+    numberOfStudents: number;
+    numberOfSubmissions: number;
+    numberOfTutors: number;
+    numberOfAssessments: number;
+    numberOfComplaints: number;
+    numberOfOpenComplaints: number;
+};
+
+export type StatsForTutorDashboard = {
+    numberOfAssessments: number;
+    numberOfTutorAssessments: number;
+    numberOfComplaints: number;
+    numberOfSubmissions: number;
+};

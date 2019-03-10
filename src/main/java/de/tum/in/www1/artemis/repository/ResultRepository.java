@@ -69,4 +69,6 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     Long countByAssessorIsNotNullAndParticipation_Exercise_CourseId(long courseId);
 
     Long countByAssessor_IdAndParticipation_Exercise_CourseId(long assessorId, long courseId);
+
+    List<Result> findAllByParticipation_Exercise_CourseId(Long courseId);
 }

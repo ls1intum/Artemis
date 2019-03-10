@@ -227,6 +227,7 @@
     "overview": {
         "title": "Course overview",
         "course": "Course details",
+        "exercise": "Exercise details",
         "statistics": "Course statistics"
     }
 }

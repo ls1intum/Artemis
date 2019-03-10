@@ -52,8 +52,8 @@ public class BitbucketService implements VersionControlService {
 
 
     @Override
-    public URL copyRepository(URL baseRepositoryUrl, String username) {
-        Map<String, String> result = this.forkRepository(getProjectKeyFromUrl(baseRepositoryUrl), getRepositorySlugFromUrl(baseRepositoryUrl), username);
+    public URL copyRepository(URL templateRepositoryUrl, String username) {
+        Map<String, String> result = this.forkRepository(getProjectKeyFromUrl(templateRepositoryUrl), getRepositorySlugFromUrl(templateRepositoryUrl), username);
         try {
             return new URL(result.get("cloneUrl"));
         } catch (MalformedURLException e) {

@@ -14,6 +14,7 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -127,5 +128,9 @@ public class ResultService {
             messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
             ltiService.onNewBuildResult(savedResult.getParticipation());
         }
+    }
+
+    public List<Result> findByCourseId(Long courseId) {
+        return resultRepository.findAllByParticipation_Exercise_CourseId(courseId);
     }
 }

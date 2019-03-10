@@ -39,9 +39,9 @@
             </select>
         </div>
         <div class="form-group-narrow">
-            <label class="label-narrow" jhiTranslate="arTeMiSApp.programmingExercise.baseRepositoryUrl" for="field_baseRepositoryUrl">Template Repository Url</label>
-            <input required type="text" class="form-control" name="baseRepositoryUrl" id="field_baseRepositoryUrl"
-                   [(ngModel)]="programmingExercise.baseRepositoryUrl" />
+            <label class="label-narrow" jhiTranslate="arTeMiSApp.programmingExercise.templateRepositoryUrl" for="field_templateRepositoryUrl">Template Repository Url</label>
+            <input required type="text" class="form-control" name="templateRepositoryUrl" id="field_templateRepositoryUrl"
+                   [(ngModel)]="programmingExercise.templateParticipation.repositoryUrl" />
         </div>
         <div class="form-group-narrow">
             <label class="label-narrow" jhiTranslate="arTeMiSApp.programmingExercise.testRepositoryUrl" for="field_testRepositoryUrl">Test Repository Url (optional)</label>
@@ -51,17 +51,17 @@
         <div class="form-group-narrow">
             <label class="label-narrow" jhiTranslate="arTeMiSApp.programmingExercise.solutionRepositoryUrl" for="field_solutionRepositoryUrl">Solution Repository Url (optional)</label>
             <input type="text" class="form-control" name="solutionRepositoryUrl" id="field_solutionRepositoryUrl"
-                   [(ngModel)]="programmingExercise.solutionRepositoryUrl" />
+                   [(ngModel)]="programmingExercise.solutionParticipation.repositoryUrl" />
         </div>
         <div class="form-group-narrow">
-            <label class="label-narrow" jhiTranslate="arTeMiSApp.programmingExercise.baseBuildPlanId" for="field_baseBuildPlanId">Template Build Plan Id</label>
-            <input required type="text" class="form-control" name="baseBuildPlanId" id="field_baseBuildPlanId"
-                   [(ngModel)]="programmingExercise.baseBuildPlanId" />
+            <label class="label-narrow" jhiTranslate="arTeMiSApp.programmingExercise.templateBuildPlanId" for="field_templateBuildPlanId">Template Build Plan Id</label>
+            <input required type="text" class="form-control" name="templateBuildPlanId" id="field_templateBuildPlanId"
+                   [(ngModel)]="programmingExercise.templateParticipation.buildPlanId" />
         </div>
         <div class="form-group-narrow">
             <label class="label-narrow" jhiTranslate="arTeMiSApp.programmingExercise.solutionBuildPlanId" for="field_solutionBuildPlanId">Solution Build Plan Id (optional)</label>
             <input type="text" class="form-control" name="solutionBuildPlanId" id="field_solutionBuildPlanId"
-                   [(ngModel)]="programmingExercise.solutionBuildPlanId" />
+                   [(ngModel)]="programmingExercise.solutionParticipation.buildPlanId" />
         </div>
         <div class="form-group-narrow">
             <div class="form-check">
