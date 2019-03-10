@@ -87,8 +87,9 @@ public class ModelingAssessmentResource extends AssessmentResource {
         return ResponseEntity.ok(response.toString());
     }
 
-    @GetMapping("submissions/{submissionId}/partial-assessment")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @GetMapping("/modeling-submissions/{submissionId}/partial-assessment")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")//TODO MJ better path "/modeling-submissions/{submissionId}/result"?
+    //TODO MJ merge with getAssessmentBySubmissionId() ?
     public ResponseEntity<Result> getPartialAssessment(@PathVariable Long submissionId) {
         ModelingSubmission submission = modelingSubmissionService.findOne(submissionId);
         Participation participation = submission.getParticipation();
@@ -101,7 +102,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
         return ResponseEntity.ok(result);
     }
 
-    @GetMapping("/submissions/{submissionId}/modeling-assessment")
+    @GetMapping("/modeling-submissions/{submissionId}/result")//TODO MJ better path "/modeling-submissions/{submissionId}/result"?
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> getAssessmentBySubmissionId(@PathVariable Long submissionId) {
         ModelingSubmission submission = modelingSubmissionService.findOne(submissionId);

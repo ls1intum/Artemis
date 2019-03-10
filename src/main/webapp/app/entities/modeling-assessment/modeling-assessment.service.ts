@@ -35,12 +35,12 @@ export class ModelingAssessmentService {
                 url += '&ignoreConflicts=true';
             }
         }
-        return this.http.put<Result>(url, feedbacks);
+        return this.http.put<Feedback[]>(url, feedbacks);
     }
 
     getAssessment(submissionId: number): Observable<Result> {
         return this.http
-            .get<Result>(`${this.resourceUrl}/submissions/${submissionId}/modeling-assessment`)
+            .get<Result>(`${this.resourceUrl}/modeling-submissions/${submissionId}/result`)
             .map( res => this.convertResponse(res));
     }
 
@@ -51,7 +51,7 @@ export class ModelingAssessmentService {
 
     getPartialAssessment(submissionId: number): Observable<Result> {
         return this.http
-            .get<Result>(`${this.resourceUrl}/submissions/${submissionId}/partial-assessment`)
+            .get<Result>(`${this.resourceUrl}/modeling-submissions/${submissionId}/partial-assessment`)
             .map( res => this.convertResponse(res));
     }
 
