@@ -1,16 +1,12 @@
 package de.tum.in.www1.artemis.util;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.stereotype.Service;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-
 import java.net.URI;
 import java.util.List;
-
+import org.springframework.http.*;
+import org.springframework.stereotype.Service;
+import org.springframework.test.web.servlet.*;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -63,6 +59,23 @@ public class RequestUtilService {
             assertThat(res.getResponse().containsHeader("location"))
                 .as("no location header on failed request")
                 .isFalse();
+            return null;
+        }
+        return mapper.readValue(res.getResponse().getContentAsString(), responseType);
+    }
+
+
+    public <T, R> R postWithResponseBody(
+        String path, T body, Class<R> responseType) throws Exception {
+        String jsonBody = mapper.writeValueAsString(body);
+        MvcResult res =
+            mvc.perform(
+                MockMvcRequestBuilders.post(new URI(path))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(jsonBody)
+                    .with(csrf()))
+                .andReturn();
+        if (res.getResponse().getStatus() >= 299) {
             return null;
         }
         return mapper.readValue(res.getResponse().getContentAsString(), responseType);

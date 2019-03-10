@@ -49,6 +49,7 @@ public class DatabaseUtilService {
         participationRepo.deleteAll();
         exerciseRepo.deleteAll();
         courseRepo.deleteAll();
+        resultRepo.deleteAll();
         userRepo.deleteAll();
         assertThat(courseRepo.findAll()).as("course data has been cleared").isEmpty();
         assertThat(exerciseRepo.findAll()).as("exercise data has been cleared").isEmpty();
@@ -97,9 +98,9 @@ public class DatabaseUtilService {
      * @return eagerly loaded representation of the participation object stored in the database
      */
     public Participation addParticipationForExercise(Exercise exercise, String login) {
-        Participation storedParticipation = participationRepo.findOneByExerciseIdAndStudentLogin(exercise.getId(), login);
-        if (storedParticipation != null) {
-            return storedParticipation;
+        Optional<Participation> storedParticipation = participationRepo.findOneByExerciseIdAndStudentLogin(exercise.getId(), login);
+        if (storedParticipation.isPresent()) {
+            return storedParticipation.get();
         }
         User user =
             userRepo
@@ -110,11 +111,10 @@ public class DatabaseUtilService {
         participation.setStudent(user);
         participation.setExercise(exercise);
         participationRepo.save(participation);
-        storedParticipation =
-            participationRepo.findOneByExerciseIdAndStudentLogin(exercise.getId(), login);
-        assertThat(storedParticipation).isNotNull();
+        storedParticipation = participationRepo.findOneByExerciseIdAndStudentLogin(exercise.getId(), login);
+        assertThat(storedParticipation).isPresent();
         return participationRepo
-            .findByIdWithEagerSubmissionsAndEagerResultsAndEagerAssessors(storedParticipation.getId())
+            .findByIdWithEagerSubmissionsAndEagerResultsAndEagerAssessors(storedParticipation.get().getId())
             .get();
     }
 
@@ -197,7 +197,7 @@ public class DatabaseUtilService {
 
 
     public void checkSubmissionCorrectlyStored(Long submissionId, String sentModel) throws Exception {
-        String storedModel = modelSubmissionService.findOne(submissionId).getModel();
+        String storedModel = modelingSubmissionRepo.findById(submissionId).get().getModel();
         JsonParser parser = new JsonParser();
         JsonObject sentModelObject = parser.parse(sentModel).getAsJsonObject();
         JsonObject storedModelObject = parser.parse(storedModel).getAsJsonObject();
