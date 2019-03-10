@@ -1,23 +1,23 @@
-import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs/Subscription';
-import { DiagramType, ModelingExercise } from '../entities/modeling-exercise';
-import { Participation } from '../entities/participation';
-import { ApollonDiagramService } from '../entities/apollon-diagram/apollon-diagram.service';
-import ApollonEditor, { ApollonOptions, Point, State } from '@ls1intum/apollon';
-import { JhiAlertService } from 'ng-jhipster';
-import { Result } from '../entities/result';
-import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
-import { ModelingAssessmentService } from '../entities/modeling-assessment';
+import {Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {ActivatedRoute, Router} from '@angular/router';
+import {Subscription} from 'rxjs/Subscription';
+import {DiagramType, ModelingExercise} from '../entities/modeling-exercise';
+import {Participation} from '../entities/participation';
+import {ApollonDiagramService} from '../entities/apollon-diagram/apollon-diagram.service';
+import ApollonEditor, {ApollonOptions, Point, State} from '@ls1intum/apollon';
+import {JhiAlertService} from 'ng-jhipster';
+import {Result} from '../entities/result';
+import {ModelingSubmission, ModelingSubmissionService} from '../entities/modeling-submission';
+import {ModelingAssessmentService} from '../entities/modeling-assessment';
 import * as $ from 'jquery';
-import { ModelingEditorService } from './modeling-editor.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ComponentCanDeactivate } from '../shared';
-import { JhiWebsocketService } from '../core';
-import { Observable } from 'rxjs/Observable';
-import { TranslateService } from '@ngx-translate/core';
+import {ModelingEditorService} from './modeling-editor.service';
+import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
+import {ComponentCanDeactivate} from '../shared';
+import {JhiWebsocketService} from '../core';
+import {Observable} from 'rxjs/Observable';
+import {TranslateService} from '@ngx-translate/core';
 import * as moment from 'moment';
-import { ModelElementType } from 'app/entities/modeling-assessment/uml-element.model';
+import {ModelElementType} from 'app/entities/modeling-assessment/uml-element.model';
 
 @Component({
     selector: 'jhi-modeling-editor',
@@ -209,7 +209,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
             assessmentsDiv.scrollTop(apollonDiv.scrollTop());
             assessmentsDiv.scrollLeft(apollonDiv.scrollLeft());
 
-            apollonDiv.on('scroll', function() {
+            apollonDiv.on('scroll', function () {
                 assessmentsDiv.scrollTop(apollonDiv.scrollTop());
                 assessmentsDiv.scrollLeft(apollonDiv.scrollLeft());
             });
@@ -248,7 +248,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         this.autoSaveTimer = 0;
 
         if (this.submission.id) {
-            this.modelingSubmissionService.update(this.submission, this.modelingExercise.course.id, this.modelingExercise.id).subscribe(
+            this.modelingSubmissionService.update(this.submission, this.modelingExercise.id).subscribe(
                 response => {
                     this.submission = response.body;
                     this.result = this.submission.result;
@@ -264,7 +264,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                 }
             );
         } else {
-            this.modelingSubmissionService.create(this.submission, this.modelingExercise.course.id, this.modelingExercise.id).subscribe(
+            this.modelingSubmissionService.create(this.submission, this.modelingExercise.id).subscribe(
                 submission => {
                     this.submission = submission.body;
                     this.result = this.submission.result;
@@ -300,7 +300,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
 
         if (confirmSubmit) {
             this.submission.submitted = true;
-            this.modelingSubmissionService.update(this.submission, this.modelingExercise.course.id, this.modelingExercise.id).subscribe(
+            this.modelingSubmissionService.update(this.submission, this.modelingExercise.id).subscribe(
                 response => {
                     this.submission = response.body;
                     this.result = this.submission.result;
@@ -412,7 +412,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
      * This function opens the modal for the help dialog.
      */
     open(content: any) {
-        this.modalService.open(content, { size: 'lg' });
+        this.modalService.open(content, {size: 'lg'});
     }
 
     // function to check whether there are pending changes

@@ -1,33 +1,34 @@
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
-import { SERVER_API_URL } from '../../app.constants';
+import {Injectable} from '@angular/core';
+import {HttpClient, HttpResponse} from '@angular/common/http';
+import {Observable} from 'rxjs/Observable';
+import {SERVER_API_URL} from '../../app.constants';
 
-import { ModelingSubmission } from './modeling-submission.model';
-import { createRequestOption } from '../../shared';
+import {ModelingSubmission} from './modeling-submission.model';
+import {createRequestOption} from '../../shared';
 
 export type EntityResponseType = HttpResponse<ModelingSubmission>;
 
-@Injectable({ providedIn: 'root' })
+@Injectable({providedIn: 'root'})
 export class ModelingSubmissionService {
     private courseResourceUrl = SERVER_API_URL + 'api/courses';
     private resourceUrl = SERVER_API_URL + 'api';
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient) {
+    }
 
-    create(modelingSubmission: ModelingSubmission, courseId: number, exerciseId: number): Observable<EntityResponseType> {
+    create(modelingSubmission: ModelingSubmission, exerciseId: number): Observable<EntityResponseType> {
         const copy = this.convert(modelingSubmission);
         return this.http
-            .post<ModelingSubmission>(`api/courses/${courseId}/exercises/${exerciseId}/modeling-submissions`, copy, {
+            .post<ModelingSubmission>(`api/exercises/${exerciseId}/modeling-submissions`, copy, {
                 observe: 'response'
             })
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
-    update(modelingSubmission: ModelingSubmission, courseId: number, exerciseId: number): Observable<EntityResponseType> {
+    update(modelingSubmission: ModelingSubmission, exerciseId: number): Observable<EntityResponseType> {
         const copy = this.convert(modelingSubmission);
         return this.http
-            .put<ModelingSubmission>(`api/courses/${courseId}/exercises/${exerciseId}/modeling-submissions`, copy, {
+            .put<ModelingSubmission>(`api/exercises/${exerciseId}/modeling-submissions`, copy, {
                 observe: 'response'
             })
             .map((res: EntityResponseType) => this.convertResponse(res));
@@ -51,7 +52,7 @@ export class ModelingSubmissionService {
 
     private convertResponse(res: EntityResponseType): EntityResponseType {
         const body: ModelingSubmission = this.convertItemFromServer(res.body);
-        return res.clone({ body });
+        return res.clone({body});
     }
 
     private convertArrayResponse(res: HttpResponse<ModelingSubmission[]>): HttpResponse<ModelingSubmission[]> {
@@ -60,7 +61,7 @@ export class ModelingSubmissionService {
         for (let i = 0; i < jsonResponse.length; i++) {
             body.push(this.convertItemFromServer(jsonResponse[i]));
         }
-        return res.clone({ body });
+        return res.clone({body});
     }
 
     /**

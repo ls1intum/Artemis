@@ -50,6 +50,13 @@ public class ResultService {
     }
 
 
+    public void setAssessor(Result result){
+        User currentUser = userService.getUserWithGroupsAndAuthorities();
+        result.setAssessor(currentUser);
+        resultRepository.save(result);
+        log.debug("Assessment locked with result id: " + result.getId() + " for assessor: " + result.getAssessor().getFirstName());
+    }
+
     /**
      * Perform async operations after we were notified about new results.
      *

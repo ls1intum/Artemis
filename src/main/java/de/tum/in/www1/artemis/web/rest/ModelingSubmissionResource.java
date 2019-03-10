@@ -2,19 +2,16 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.net.URISyntaxException;
 import java.security.Principal;
-import java.util.*;
-import org.jetbrains.annotations.*;
+import java.util.List;
 import org.slf4j.*;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.*;
 import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.web.rest.errors.*;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.swagger.annotations.*;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
@@ -31,33 +28,21 @@ public class ModelingSubmissionResource {
     private static final String GET_200_SUBMISSIONS_REASON = "";
 
 
-    private final ModelingSubmissionRepository modelingSubmissionRepository;
-    private final ResultRepository resultRepository;
     private final ModelingSubmissionService modelingSubmissionService;
     private final ModelingExerciseService modelingExerciseService;
     private final ParticipationService participationService;
-    private final UserService userService;
     private final CourseService courseService;
+    private final ResultService resultService;
     private final AuthorizationCheckService authCheckService;
     private final CompassService compassService;
 
 
-    public ModelingSubmissionResource(ModelingSubmissionRepository modelingSubmissionRepository,
-                                      ResultRepository resultRepository,
-                                      ModelingSubmissionService modelingSubmissionService,
-                                      ModelingExerciseService modelingExerciseService,
-                                      ParticipationService participationService,
-                                      UserService userService,
-                                      CourseService courseService,
-                                      AuthorizationCheckService authCheckService,
-                                      CompassService compassService) {
-        this.modelingSubmissionRepository = modelingSubmissionRepository;
-        this.resultRepository = resultRepository;
+    public ModelingSubmissionResource(ModelingSubmissionService modelingSubmissionService, ModelingExerciseService modelingExerciseService, ParticipationService participationService, CourseService courseService, ResultService resultService, AuthorizationCheckService authCheckService, CompassService compassService) {
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseService = modelingExerciseService;
         this.participationService = participationService;
-        this.userService = userService;
         this.courseService = courseService;
+        this.resultService = resultService;
         this.authCheckService = authCheckService;
         this.compassService = compassService;
     }
@@ -67,23 +52,29 @@ public class ModelingSubmissionResource {
      * POST  /courses/{courseId}/exercises/{exerciseId}/modeling-submissions : Create a new modelingSubmission.
      * This is called when a student saves his model the first time after starting the exercise or starting a retry.
      *
-     * @param courseId           only included for API consistency, not actually used
      * @param exerciseId         the id of the exercise for which to init a participation
      * @param principal          the current user principal
      * @param modelingSubmission the modelingSubmission to create
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
-    @PostMapping("/courses/{courseId}/exercises/{exerciseId}/modeling-submissions")
+    @PostMapping("/exercises/{exerciseId}/modeling-submissions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRED)
     //TODO MJ return 201 CREATED with location header instead of ModelingSubmission
-    public ResponseEntity<ModelingSubmission> createModelingSubmission(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
+    //TODO MJ merge with update
+    public ResponseEntity<ModelingSubmission> createModelingSubmission(@PathVariable Long exerciseId,
+                                                                       Principal principal,
+                                                                       @RequestBody ModelingSubmission modelingSubmission) {
         log.debug("REST request to create ModelingSubmission : {}", modelingSubmission.getModel());
         if (modelingSubmission.getId() != null) {
             throw new BadRequestAlertException("A new modelingSubmission cannot already have an ID", ENTITY_NAME, "idexists");
         }
-
-        return handleModelingSubmission(exerciseId, principal, modelingSubmission);
+        ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
+        Participation participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
+        checkAuthorization(modelingExercise);
+        modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, participation);
+        hideDetails(modelingSubmission);
+        return ResponseEntity.ok(modelingSubmission);
     }
 
 
@@ -92,7 +83,6 @@ public class ModelingSubmissionResource {
      * This function is called by the modeling editor for saving and submitting modeling submissions.
      * The submit specific handling occurs in the ModelingSubmissionService.save() function.
      *
-     * @param courseId           only included for API consistency, not actually used
      * @param exerciseId         the id of the exercise for which to init a participation
      * @param principal          the current user principal
      * @param modelingSubmission the modelingSubmission to update
@@ -101,62 +91,21 @@ public class ModelingSubmissionResource {
      * or with status 500 (Internal Server Error) if the modelingSubmission couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("/courses/{courseId}/exercises/{exerciseId}/modeling-submissions")
+    @PutMapping("/exercises/{exerciseId}/modeling-submissions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional
-    public ResponseEntity<ModelingSubmission> updateModelingSubmission(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
+    public ResponseEntity<ModelingSubmission> updateModelingSubmission(@PathVariable Long exerciseId,
+                                                                       Principal principal,
+                                                                       @RequestBody ModelingSubmission modelingSubmission) {
         log.debug("REST request to update ModelingSubmission : {}", modelingSubmission.getModel());
         if (modelingSubmission.getId() == null) {
-            return createModelingSubmission(courseId, exerciseId, principal, modelingSubmission);
+            return createModelingSubmission(exerciseId, principal, modelingSubmission);
         }
-
-        return handleModelingSubmission(exerciseId, principal, modelingSubmission);
-    }
-
-
-    @NotNull
-    private ResponseEntity<ModelingSubmission> handleModelingSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {//TODO MJ move to ModelingSubmissionService?
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        ResponseEntity<ModelingSubmission> responseFailure = checkExerciseValidity(modelingExercise);
-        if (responseFailure != null) {
-            return responseFailure;
-        }
-
-        Participation participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(modelingExercise.getId(), principal.getName());
-
-        // update and save submission
+        Participation participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
         modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, participation);
         hideDetails(modelingSubmission);
         return ResponseEntity.ok(modelingSubmission);
-    }
-
-
-    private void hideDetails(@RequestBody ModelingSubmission modelingSubmission) {
-        //do not send old submissions or old results to the client
-        if (modelingSubmission.getParticipation() != null) {
-            modelingSubmission.getParticipation().setSubmissions(null);
-            modelingSubmission.getParticipation().setResults(null);
-
-            if (modelingSubmission.getParticipation().getExercise() != null && modelingSubmission.getParticipation().getExercise() instanceof ModelingExercise) {
-                //make sure the solution is not sent to the client
-                ModelingExercise modelingExerciseForClient = (ModelingExercise) modelingSubmission.getParticipation().getExercise();
-                modelingExerciseForClient.setSampleSolutionExplanation(null);
-                modelingExerciseForClient.setSampleSolutionModel(null);
-            }
-        }
-    }
-
-
-    @Nullable
-    private ResponseEntity<ModelingSubmission> checkExerciseValidity(ModelingExercise modelingExercise) {
-        Course course = modelingExercise.getCourse();
-        if (course == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this modeling exercise does not exist")).body(null);
-        }
-        if (!courseService.userHasAtLeastStudentPermissions(course)) {
-            return forbidden();
-        }
-        return null;
     }
 
 
@@ -194,32 +143,45 @@ public class ModelingSubmissionResource {
     public ResponseEntity<ModelingSubmission> getModelingSubmission(@PathVariable Long submissionId) {
         log.debug("REST request to get ModelingSubmission with id: {}", submissionId);
         ModelingSubmission modelingSubmission = modelingSubmissionService.findOne(submissionId);
-
         Exercise exercise = modelingSubmission.getParticipation().getExercise();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
         }
-
-        Result result = modelingSubmission.getResult();
-        if (result == null) {
-            result = new Result();
-            result.setSubmission(modelingSubmission);
-            modelingSubmission.setResult(result);
-            modelingSubmission.getParticipation().addResult(result);
-            result = resultRepository.save(result);
-            modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
+        if (modelingSubmission.getResult() == null) {
+            modelingSubmissionService.setResult(modelingSubmission);
         }
-        if (result.getAssessor() == null) {
+        if (modelingSubmission.getResult().getAssessor() == null) {
             compassService.removeModelWaitingForAssessment(exercise.getId(), submissionId);
             //we set the assessor and save the result to soft lock the assessment (so that it cannot be edited by another tutor)
-            result.setAssessor(userService.getUserWithGroupsAndAuthorities());
-            Result savedResult = resultRepository.save(result);
-            log.debug("Assessment locked with result id: " + savedResult.getId() + " for assessor: " + savedResult.getAssessor().getFirstName());
+            resultService.setAssessor(modelingSubmission.getResult());
         }
-
         //Make sure the exercise is connected to the participation in the json response
         modelingSubmission.getParticipation().setExercise(exercise);
         hideDetails(modelingSubmission);
         return ResponseEntity.ok(modelingSubmission);
+    }
+
+
+    private void hideDetails(ModelingSubmission modelingSubmission) {
+        //do not send old submissions or old results to the client
+        if (modelingSubmission.getParticipation() != null) {
+            modelingSubmission.getParticipation().setSubmissions(null);
+            modelingSubmission.getParticipation().setResults(null);
+
+            if (modelingSubmission.getParticipation().getExercise() != null && modelingSubmission.getParticipation().getExercise() instanceof ModelingExercise) {
+                //make sure the solution is not sent to the client
+                ModelingExercise modelingExerciseForClient = (ModelingExercise) modelingSubmission.getParticipation().getExercise();
+                modelingExerciseForClient.setSampleSolutionExplanation(null);
+                modelingExerciseForClient.setSampleSolutionModel(null);
+            }
+        }
+    }
+
+
+    private void checkAuthorization(ModelingExercise exercise) throws AccessForbiddenException {
+        Course course = courseService.findOne(exercise.getCourse().getId());
+        if (!courseService.userHasAtLeastStudentPermissions(course)) {
+            throw new AccessForbiddenException("Insufficient permission for course: " + exercise.getCourse().getTitle());
+        }
     }
 }
