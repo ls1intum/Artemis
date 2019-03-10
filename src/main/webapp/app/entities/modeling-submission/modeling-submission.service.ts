@@ -11,6 +11,7 @@ export type EntityResponseType = HttpResponse<ModelingSubmission>;
 @Injectable({ providedIn: 'root' })
 export class ModelingSubmissionService {
     private courseResourceUrl = SERVER_API_URL + 'api/courses';
+    private resourceUrl = SERVER_API_URL + 'api';
 
     constructor(private http: HttpClient) {}
 
@@ -33,10 +34,11 @@ export class ModelingSubmissionService {
     }
 
     // TODO: move this into a separate submission service
-    getModelingSubmissionsForExercise(courseId: number, exerciseId: number, req?: any): Observable<HttpResponse<ModelingSubmission[]>> {
+    // TODO MJ why?
+    getModelingSubmissionsForExercise(exerciseId: number, req?: any): Observable<HttpResponse<ModelingSubmission[]>> {
         const options = createRequestOption(req);
         return this.http
-            .get<ModelingSubmission[]>(`${this.courseResourceUrl}/${courseId}/exercises/${exerciseId}/modeling-submissions`, {
+            .get<ModelingSubmission[]>(`${this.resourceUrl}/exercises/${exerciseId}/modeling-submissions`, {
                 params: options,
                 observe: 'response'
             })

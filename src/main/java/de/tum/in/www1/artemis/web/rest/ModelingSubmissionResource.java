@@ -5,7 +5,7 @@ import java.security.Principal;
 import java.util.*;
 import org.jetbrains.annotations.*;
 import org.slf4j.*;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.*;
 import org.springframework.web.bind.annotation.*;
@@ -13,8 +13,9 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.*;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import io.swagger.annotations.*;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 /**
@@ -27,13 +28,14 @@ public class ModelingSubmissionResource {
     private final Logger log = LoggerFactory.getLogger(ModelingSubmissionResource.class);
 
     private static final String ENTITY_NAME = "modelingSubmission";
+    private static final String GET_200_SUBMISSIONS_REASON = "";
+
 
     private final ModelingSubmissionRepository modelingSubmissionRepository;
     private final ResultRepository resultRepository;
     private final ModelingSubmissionService modelingSubmissionService;
     private final ModelingExerciseService modelingExerciseService;
     private final ParticipationService participationService;
-    //    private final ExerciseService exerciseService;
     private final UserService userService;
     private final CourseService courseService;
     private final AuthorizationCheckService authCheckService;
@@ -45,7 +47,6 @@ public class ModelingSubmissionResource {
                                       ModelingSubmissionService modelingSubmissionService,
                                       ModelingExerciseService modelingExerciseService,
                                       ParticipationService participationService,
-                                      ExerciseService exerciseService,
                                       UserService userService,
                                       CourseService courseService,
                                       AuthorizationCheckService authCheckService,
@@ -55,7 +56,6 @@ public class ModelingSubmissionResource {
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseService = modelingExerciseService;
         this.participationService = participationService;
-//        this.exerciseService = exerciseService;
         this.userService = userService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
@@ -160,16 +160,15 @@ public class ModelingSubmissionResource {
     }
 
 
-    /**
-     * GET  /modeling-submissions : get all the modelingSubmissions.
-     *
-     * @return the ResponseEntity with status 200 (OK) and the list of modelingSubmissions in body
-     */
-    @GetMapping(value = "/courses/{courseId}/exercises/{exerciseId}/modeling-submissions")
+    @ResponseStatus(HttpStatus.OK)
+    @ApiResponses({
+        @ApiResponse(code = 200, message = GET_200_SUBMISSIONS_REASON, response = ModelingSubmission.class, responseContainer = "List"),
+        @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON),
+        @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON),
+    })
+    @GetMapping(value = "/exercises/{exerciseId}/modeling-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
-    public ResponseEntity<List<ModelingSubmission>> getAllModelingSubmissions(@PathVariable Long courseId,
-                                                                              @PathVariable Long exerciseId,
+    public ResponseEntity<List<ModelingSubmission>> getAllModelingSubmissions(@PathVariable Long exerciseId,
                                                                               @RequestParam(defaultValue = "false") boolean submittedOnly) {
         log.debug("REST request to get all ModelingSubmissions");
         Exercise exercise = modelingExerciseService.findOne(exerciseId);

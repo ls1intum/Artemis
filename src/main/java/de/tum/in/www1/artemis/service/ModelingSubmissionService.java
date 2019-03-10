@@ -43,7 +43,7 @@ public class ModelingSubmissionService {
         this.participationRepository = participationRepository;
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public List<ModelingSubmission> getModelingSubmissions(Long exerciseId, boolean submittedOnly){
        List<Participation> participations = participationRepository.findByExerciseIdWithEagerSubmissions(exerciseId);
         List<ModelingSubmission> submissions = new ArrayList<>();
