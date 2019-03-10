@@ -149,10 +149,6 @@ public class ModelingSubmissionResource {
 
     @Nullable
     private ResponseEntity<ModelingSubmission> checkExerciseValidity(ModelingExercise modelingExercise) {
-        if (modelingExercise == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
-        }
-
         Course course = modelingExercise.getCourse();
         if (course == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this modeling exercise does not exist")).body(null);
