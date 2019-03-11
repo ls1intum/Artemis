@@ -459,6 +459,12 @@ public class ParticipationService {
         List<Participation> participations = participationRepository.findByCourseIdWithEagerResults(courseId);
         //filter all irrelevant results, i.e. rated = false or before exercise due date
         for (Participation participation : participations) {
+            // Filter out participations without Students
+            // These participations are used e.g. to store template and solution build plans in programming exercises
+            if (participation.getStudent() == null) {
+                continue;
+            }
+
             List<Result> relevantResults = new ArrayList<Result>();
 
             //search for the relevant result by filtering out irrelevant results using the continue keyword

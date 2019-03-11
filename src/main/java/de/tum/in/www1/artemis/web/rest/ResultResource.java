@@ -303,7 +303,8 @@ public class ResultResource {
         List<Participation> participations = participationService.findByExerciseIdWithEagerResults(exerciseId);
 
         for (Participation participation : participations) {
-
+            // Filter out participations without Students
+            // These participations are used e.g. to store template and solution build plans in programming exercises
             if (participation.getStudent() == null) {
                 continue;
             }
