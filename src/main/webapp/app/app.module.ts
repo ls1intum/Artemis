@@ -40,6 +40,8 @@ import { ArTEMiSStatisticModule } from './quiz-statistics/quiz-statistic.module'
 import { ArTEMiSModelingEditorModule } from './modeling-editor/modeling-editor.module';
 import { QuizExerciseExportComponent } from './entities/quiz-exercise/quiz-exercise-export.component';
 import { PendingChangesGuard } from './shared/guard/pending-changes.guard';
+import { ArTEMiSInstructorCourseStatsDashboardModule } from 'app/instructor-course-dashboard';
+import { ArTEMiSInstructorExerciseStatsDashboardModule } from 'app/instructor-exercise-dashboard';
 import { ParticipationDataProvider } from './course-list/exercise-list/participation-data-provider';
 import { ArTEMiSTutorCourseDashboardModule } from 'app/tutor-course-dashboard';
 import { ArTEMiSTutorExerciseDashboardModule } from 'app/tutor-exercise-dashboard';
@@ -86,6 +88,8 @@ import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor/markdown-editor
         ArTEMiSModelingStatisticsModule,
         ArTEMiSTextModule,
         ArTEMiSTextAssessmentModule,
+        ArTEMiSInstructorCourseStatsDashboardModule,
+        ArTEMiSInstructorExerciseStatsDashboardModule,
         ArTEMiSTutorCourseDashboardModule,
         ArTEMiSTutorExerciseDashboardModule,
         ArTEMiSExampleSubmissionModule

@@ -28,11 +28,11 @@
                     <label class="label-narrow" jhiTranslate="arTeMiSApp.programmingExercise.programmingLanguage" for="field_programmingLanguage">Programming Language</label>
                     <select required class="form-control" [(ngModel)]="programmingExercise.programmingLanguage" name="programmingLanguage" id="field_programmingLanguage" [disabled]="programmingExercise.id">
                         <option value="JAVA">Java</option>
-<!-- not supported yet  <option value="PYTHON">Python</option>-->
+                        <option value="PYTHON">Python</option>
                     </select>
                 </div>
 
-                <div class="form-group-narrow">
+                <div class="form-group-narrow" *ngIf="programmingExercise.programmingLanguage === JAVA">
                     <label class="label-narrow" jhiTranslate="arTeMiSApp.programmingExercise.packageName" for="field_packageName">Package Name</label>
                     <input required type="text" [pattern]="packageNamePattern" class="form-control" name="packageName" id="field_packageName"
                            [(ngModel)]="programmingExercise.packageName" [readonly]="programmingExercise.id"/>

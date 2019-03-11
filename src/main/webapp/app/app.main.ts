@@ -9,6 +9,6 @@ if (module['hot']) {
 }
 
 platformBrowserDynamic()
-    .bootstrapModule(ArTeMiSAppModule)
+    .bootstrapModule(ArTeMiSAppModule, { preserveWhitespaces: true })
     .then(platformRef => {})
     .catch(err => console.error(err));

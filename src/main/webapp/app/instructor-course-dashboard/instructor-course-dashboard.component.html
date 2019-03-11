@@ -1,0 +1,97 @@
+<div *ngIf="course">
+    <jhi-alert></jhi-alert>
+
+    <div class="course-info-bar">
+        <h3>{{"arTeMiSApp.instructorCourseDashboard.pageHeader" | translate}} {{course.title}}</h3>
+        <h4>{{course.description || ("arTeMiSApp.instructorCourseDashboard.noDescription" | translate)}}</h4>
+    </div>
+
+    <div class="container-fluid">
+        <div class="row mt-3" *ngIf="stats">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="card-title">{{"arTeMiSApp.instructorCourseDashboard.informationAboutCourse" | translate}}</h4>
+                    </div>
+                    <div class="card-body">
+                        <ul>
+                            <li><b>{{"arTeMiSApp.instructorCourseDashboard.students" | translate}}:</b> {{stats.numberOfStudents}}</li>
+                            <li><b>{{"arTeMiSApp.instructorCourseDashboard.submissions" | translate}}:</b> {{stats.numberOfSubmissions}}</li>
+                            <li><b>{{"arTeMiSApp.instructorCourseDashboard.tutors" | translate}}:</b> {{stats.numberOfTutors}}</li>
+                            <li><b>{{"arTeMiSApp.instructorCourseDashboard.assessments" | translate}}:</b> {{stats.numberOfAssessments}}
+                                ({{stats.numberOfSubmissions - stats.numberOfAssessments}} {{"arTeMiSApp.instructorCourseDashboard.open" | translate}})
+                            </li>
+                            <li><b>{{"arTeMiSApp.instructorCourseDashboard.complaints" | translate}}:</b> {{stats.numberOfComplaints}} ({{stats.numberOfOpenComplaints}} {{"arTeMiSApp.instructorCourseDashboard.open" | translate}})
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4" *ngIf="stats">
+                <canvas baseChart
+                        [data]="dataForAssessmentPieChart"
+                        [labels]="['Open assessments', 'Completed assessments']"
+                        chartType="pie">
+                </canvas>
+            </div>
+        </div>
+
+        <div class="row table-responsive mt-3">
+            <div *ngIf="course.exercises.length === 0">
+                {{"arTeMiSApp.instructorCourseDashboard.noExercise" | translate}}
+            </div>
+
+            <table class="table" *ngIf="course.exercises.length >= 0">
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>{{"arTeMiSApp.instructorCourseDashboard.exercise" | translate}}</th>
+                    <th>{{"arTeMiSApp.instructorCourseDashboard.dueDate" | translate}}</th>
+                    <th>{{"arTeMiSApp.instructorCourseDashboard.assessmentDueDate" | translate}}</th>
+                    <th>{{"arTeMiSApp.instructorCourseDashboard.submissions" | translate}}</th>
+                    <th>{{"arTeMiSApp.instructorCourseDashboard.complaints" | translate}}</th>
+                    <th>{{"arTeMiSApp.instructorCourseDashboard.completedAssessments" | translate}}</th>
+                    <th>{{"arTeMiSApp.instructorCourseDashboard.action" | translate}}</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr *ngFor="let exercise of course.exercises">
+                    <td>
+                        {{exercise.id}}
+                        <fa-icon [icon]="getIcon(exercise.type)" placement="right"
+                                 [ngbTooltip]="getIconTooltip(exercise.type)" container="body"></fa-icon>
+                    </td>
+                    <td>{{exercise.title}}</td>
+                    <td>{{exercise.dueDate | date:'medium'}}</td>
+                    <td>{{exercise.assessmentDueDate | date:'medium'}}</td>
+                    <td>{{exercise.participations.length}}</td>
+                    <td><!--{{exercise.complaints.length}}-->0</td>
+                    <td class="text-center">
+                        <div class="progress position-relative">
+                            <div class="progress-bar" role="progressbar"
+                                 [ngClass]="calculateClass(exercise.numberOfAssessments, exercise.participations.length)"
+                                 [style.width]="calculatePercentage(exercise.numberOfAssessments, exercise.participations.length) + '%'"
+                                 attr.aria-valuenow="{{calculatePercentage(exercise.numberOfAssessments, exercise.participations.length)}}"
+                                 aria-valuemin="0" aria-valuemax="100">
+                                <span
+                                    class="justify-content-center d-flex position-absolute w-100 text-dark">{{exercise.numberOfAssessments}}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <button class="btn btn-primary"
+                                routerLink="/course/{{course.id}}/exercise/{{exercise.id}}/instructor-dashboard">
+                            {{"arTeMiSApp.instructorCourseDashboard.exerciseDashboard" | translate}}
+                        </button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h2>{{"arTeMiSApp.instructorCourseDashboard.tutorLeaderboard.courseTitle" | translate}}</h2>
+
+        <jhi-tutor-leaderboard [tutorsData]="tutorLeaderboardData"></jhi-tutor-leaderboard>
+    </div>
+</div>

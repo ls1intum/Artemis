@@ -18,6 +18,7 @@ import { Duration, Option } from './quiz-exercise-interfaces';
 import { NgbDate, NgbDateStruct, NgbTimeStruct } from '@ng-bootstrap/ng-bootstrap';
 import * as moment from 'moment';
 import { Moment } from 'moment';
+import { Location } from '@angular/common';
 import { ComponentCanDeactivate } from 'app/shared';
 import { JhiAlertService } from 'ng-jhipster';
 import { Observable } from 'rxjs/Observable';
@@ -105,7 +106,8 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         private router: Router,
         private translateService: TranslateService,
         private fileUploaderService: FileUploaderService,
-        private jhiAlertService: JhiAlertService
+        private jhiAlertService: JhiAlertService,
+        private location: Location
     ) {}
 
     ngOnInit(): void {
@@ -981,5 +983,9 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     ngOnDestroy(): void {
         /** Unsubscribe from route params **/
         this.paramSub.unsubscribe();
+    }
+
+    back(): void {
+        this.location.back();
     }
 }

@@ -1,27 +1,27 @@
 <div>
     <h4>
-        <span *ngIf="course">{{course.title}} - </span><span *ngIf="quizExercises">{{quizExercises.length}} </span>
+        <span *ngIf="course && !showHeading">{{course.title}} - </span><span *ngIf="quizExercises && showHeading">{{quizExercises.length}} </span>
         <span jhiTranslate="arTeMiSApp.quizExercise.home.title">Quiz Exercises</span>
-        <button id="create-quiz-button" *ngIf="courseId" class="btn mr-2 btn-primary float-right jh-create-entity create-quiz-exercise" [routerLink]="['new']">
+        <button class="btn mr-2 btn-primary float-right jh-create-entity create-quiz-exercise" [routerLink]="['/course', courseId, 'quiz-exercise', 'new']">
             <fa-icon icon="plus"></fa-icon>
             <span jhiTranslate="arTeMiSApp.quizExercise.home.createLabel">
-                Create Quiz
+                Create new Quiz
             </span>
         </button>
-        <button *ngIf="courseId" class="btn mr-2 btn-primary float-right jh-create-entity create-quiz-exercise" [routerLink]="['export']">
+        <button class="btn mr-2 btn-primary float-right jh-create-entity create-quiz-exercise" [routerLink]="['/course', courseId, 'quiz-exercise', 'export']">
             <fa-icon icon="plus"></fa-icon>
             <span jhiTranslate="arTeMiSApp.quizExercise.home.exportLabel">
                 Export Quiz Exercises
             </span>
         </button>
-        <button *ngIf="courseId" class="btn mr-2 btn-primary float-right" [routerLink]="['/apollon-diagrams']">
+        <button class="btn mr-2 btn-primary float-right" [routerLink]="['/apollon-diagrams']">
             <fa-icon icon="plus"></fa-icon>
             <span jhiTranslate="arTeMiSApp.quizExercise.home.createModelDragAndDrop">
                 Create new Drag and Drop Model Quiz
             </span>
         </button>
     </h4>
-    <jhi-alert></jhi-alert>
+    <jhi-alert *ngIf="showAlertHeading"></jhi-alert>
     <div class="row">
     </div>
     <br>
@@ -125,7 +125,7 @@
                             <button type="submit"
                                     [hidden]="quizIsOver(quizExercise) && userIsInstructor()"
                                     [disabled]="quizExercise.status === QuizStatus.ACTIVE || (quizIsOver(quizExercise) && !userIsInstructor())"
-                                    [routerLink]="['edit', quizExercise.id]"
+                                    [routerLink]="['/course', quizExercise.course.id, 'quiz-exercise','edit', quizExercise.id]"
                                     class="btn btn-primary btn-sm mr-1 mb-1">
                                 <fa-icon icon="pencil-alt"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>

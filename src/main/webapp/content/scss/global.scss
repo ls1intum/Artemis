@@ -18,7 +18,7 @@ h4 {
 }
 
 a {
-    color: #533f03;
+    color: $primary;
     font-weight: bold;
 }
 
@@ -31,7 +31,7 @@ a {
 }
 
 a:not(.btn):hover {
-    color: #533f03;
+    color: $primary;
     font-weight: bold;
     /* make sure browsers use the pointer cursor for anchors, even with no href */
     cursor: pointer;
@@ -503,4 +503,18 @@ code.password:hover {
 // This puts the owl-datetime-picker on top of the ngbootstrap modal
 .cdk-overlay-container {
     z-index: 1060;
+}
+
+/* ==========================================================================
+Course Info Bar
+========================================================================== */
+.course-info-bar {
+    background-color: $artemis-dark;
+    padding: 1em 1em;
+    margin: -1.25rem -1.25rem 0 -1.25rem;
+    min-height: 160px;
+    display: flex;
+    color: #FFFFFF;
+    flex-direction: column;
+    justify-content: center;
 }
