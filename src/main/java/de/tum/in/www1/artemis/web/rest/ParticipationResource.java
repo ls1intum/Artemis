@@ -28,6 +28,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * REST controller for managing Participation.
@@ -193,6 +194,7 @@ public class ParticipationResource {
         } else {
             participations = participationService.findByExerciseId(exerciseId);
         }
+        participations = participations.stream().filter(participation -> participation.getStudent() != null).collect(Collectors.toList());
 
         return ResponseEntity.ok(participations);
     }
