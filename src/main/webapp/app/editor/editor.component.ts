@@ -11,6 +11,8 @@ import { Result } from '../entities/result';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import * as $ from 'jquery';
 import { Interactable } from 'interactjs';
+import { AceAnnotation } from '../entities/ace-editor';
+import { BuildLogEntry } from 'app/entities/build-log';
 
 @Component({
     selector: 'jhi-editor',
@@ -19,12 +21,15 @@ import { Interactable } from 'interactjs';
 })
 export class EditorComponent implements OnInit, OnChanges, OnDestroy {
     /** Dependencies as defined by the Editor component */
+    errorLogRegex = /\[(ERROR)\].*\/(src\/.+):\[(\d+),(\d+)\]\s(.*$)/;
+
     participation: Participation;
     repository: RepositoryService;
     file: string;
     paramSub: Subscription;
     repositoryFiles: string[];
     latestResult: Result;
+    buildLogErrors: { [fileName: string]: AceAnnotation };
     saveStatusLabel: string;
     saveStatusIcon: { spin: boolean; icon: string; class: string };
 
@@ -143,6 +148,20 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
     updateLatestResult($event: any) {
         this.isBuilding = false;
         this.latestResult = $event.newResult;
+    }
+
+    updateLatestBuildLogs(buildLogs: BuildLogEntry[]) {
+        this.buildLogErrors = buildLogs
+            .map(({ log }) => log && log.match(this.errorLogRegex))
+            .filter(log => !!log && log.length === 6 && log[1] === 'ERROR')
+            .map(([, , fileName, row, column, text]) => ({
+                type: 'error',
+                fileName,
+                row: Math.max(parseInt(row, 10) - 1, 0),
+                column: Math.max(parseInt(column, 10) - 1, 0),
+                text
+            }))
+            .reduce((acc, { fileName, ...rest }) => ({ ...acc, [fileName]: [...(acc[fileName] || []), rest] }), {});
     }
 
     /**

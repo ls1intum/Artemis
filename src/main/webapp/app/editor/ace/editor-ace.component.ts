@@ -14,6 +14,7 @@ import 'brace/mode/java';
 import 'brace/mode/python';
 import 'brace/mode/javascript';
 import 'brace/mode/markdown';
+import { AceAnnotation } from '../../entities/ace-editor';
 // TODO: consider adding any modes we might need
 
 @Component({
@@ -43,6 +44,8 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
     participation: Participation;
     @Input()
     fileName: string;
+    @Input()
+    buildLogErrors: AceAnnotation;
     @Output()
     saveStatusChange = new EventEmitter<object>();
 
@@ -89,6 +92,7 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
             // Current file has changed
             this.loadFile(this.fileName);
         }
+        this.editor.getEditor().getSession().setAnnotations(this.buildLogErrors);
     }
 
     onSaveStatusChange(statusChange: object) {
@@ -216,6 +220,8 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
             // Trigger file save
             this.saveFile(this.fileName);
             this.updateSaveStatusLabel();
+        } else {
+            this.editor.getEditor().getSession().setAnnotations(this.buildLogErrors);
         }
     }
 }

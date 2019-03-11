@@ -35,6 +35,7 @@
         <div class="editor-center">
             <jhi-editor-ace [participation]="participation"
                             [fileName]="file"
+                            [buildLogErrors]="buildLogErrors ? buildLogErrors[file] : []"
                             (saveStatusChange)="updateSaveStatusLabel($event)">
             </jhi-editor-ace>
         </div>
@@ -50,7 +51,8 @@
     <div class="editor-bottom">
         <jhi-editor-build-output
             [participation]="participation"
-            [isBuilding]="isBuilding">
+            [isBuilding]="isBuilding"
+            (buildLogChange)="updateLatestBuildLogs($event)">
         </jhi-editor-build-output>
     </div>
 
