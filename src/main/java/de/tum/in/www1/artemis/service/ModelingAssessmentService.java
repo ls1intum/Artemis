@@ -10,17 +10,13 @@ import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.service.compass.assessment.ModelElementAssessment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.ZonedDateTime;
 import java.util.List;
-
-import static java.math.BigDecimal.ROUND_HALF_EVEN;
 
 @Service
 public class ModelingAssessmentService extends AssessmentService {
@@ -59,27 +55,6 @@ public class ModelingAssessmentService extends AssessmentService {
         return result;
     }
 
-
-    /**
-     * This function is used for saving a manual assessment/result. It sets the assessment type to MANUAL
-     * and sets the assessor attribute. Furthermore, it saves the result in the database.
-     *
-     * @param result the result the assessment belongs to
-     */
-    @Transactional
-    public void saveManualAssessment(Result result) {
-        result.setAssessmentType(AssessmentType.MANUAL);
-        User user = userService.getUser();
-        result.setAssessor(user);
-
-        if (result.getSubmission() instanceof ModelingSubmission && result.getSubmission().getResult() == null) {
-            ModelingSubmission modelingSubmission = (ModelingSubmission) result.getSubmission();
-            modelingSubmission.setResult(result);
-            modelingSubmissionRepository.save(modelingSubmission);
-        }
-        resultRepository.save(result);
-    }
-
     /**
      * This function is used for saving a manual assessment/result. It sets the assessment type to MANUAL
      * and sets the assessor attribute. Furthermore, it saves the result in the database.
@@ -115,19 +90,5 @@ public class ModelingAssessmentService extends AssessmentService {
             modelingSubmissionRepository.save(modelingSubmission);
         }
         return resultRepository.save(result);
-    }
-
-
-    /**
-     * TODO CZ: I added this function again due to a compile error in the ModelingAssessmentServiceTest
-     *
-     * @return sum of every modelingAssessments credit rounded to max two numbers after the comma
-     */
-    public static Double calculateTotalScore(List<ModelElementAssessment> modelingAssessment) {
-        double totalScore = 0.0;
-        for (ModelElementAssessment assessment : modelingAssessment) {
-            totalScore += assessment.getCredits();
-        }
-        return new BigDecimal(totalScore).setScale(2, ROUND_HALF_EVEN).doubleValue();
     }
 }

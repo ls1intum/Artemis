@@ -7,7 +7,6 @@ import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ModelingSubmission;
 import de.tum.in.www1.artemis.service.compass.assessment.Assessment;
 import de.tum.in.www1.artemis.service.compass.assessment.CompassResult;
-import de.tum.in.www1.artemis.service.compass.assessment.ModelElementAssessment;
 import de.tum.in.www1.artemis.service.compass.assessment.Score;
 import de.tum.in.www1.artemis.service.compass.conflict.Conflict;
 import de.tum.in.www1.artemis.service.compass.controller.AssessmentIndex;
@@ -230,7 +229,7 @@ public class CompassCalculationEngine implements CalculationEngine {
 
 
     @Override
-    public void notifyNewAssessment(List<ModelElementAssessment> modelingAssessment, long submissionId) {
+    public void notifyNewAssessment(List<Feedback> modelingAssessment, long submissionId) {
         lastUsed = LocalDateTime.now();
         modelSelector.addAlreadyAssessedModel(submissionId);
         UMLModel model = modelIndex.getModel(submissionId);
@@ -365,8 +364,8 @@ public class CompassCalculationEngine implements CalculationEngine {
         return jsonObject;
     }
 
-    private void addNewManualAssessment(List<ModelElementAssessment> modelingAssessment, UMLModel model) {
-        Map<String, Score> scoreList = createScoreList(modelingAssessment,model);
+    private void addNewManualAssessment(List<Feedback> modelingAssessment, UMLModel model) {
+        Map<String, Score> scoreList = createScoreList(modelingAssessment, model);
         try {
             automaticAssessmentController.addScoresToAssessment(assessmentIndex, scoreList, model);
         } catch (IOException e) {
@@ -375,78 +374,94 @@ public class CompassCalculationEngine implements CalculationEngine {
     }
 
     /**
-     * checks and logs if each ModelElementAssessment corresponds to a element in the UMLModel. And returns a mapping from each jsonElementID in the Assessment to its Score
+     * Checks if each Feedback corresponds to an element in the UMLModel and returns a mapping from each
+     * jsonElementID in the Assessment to its Score.
      *
      * @param modelingAssessment the modeling assessment to create the score list of
-     * @param model              UmlModel the modelingAssessment belongs to
+     * @param model              the UmlModel the modelingAssessment belongs to
      * @return mapping of the jsonElementID of each ModelElement contained in the modelingAssessment to its corresponding score
      */
-    private Map<String, Score> createScoreList(List<ModelElementAssessment> modelingAssessment, UMLModel model) {
+    private Map<String, Score> createScoreList(List<Feedback> modelingAssessment, UMLModel model) {
         Map<String, Score> scoreHashMap = new HashMap<>();
-        for (ModelElementAssessment assessment : modelingAssessment) {
-            String jsonElementID = assessment.getId();
-            boolean found = false;
 
-            switch (assessment.getType()) {
-                case JSONMapping.assessmentElementTypeClass:
-                    for (UMLClass umlClass : model.getClassList()) {
-                        if (umlClass.getJSONElementID().equals(jsonElementID)) {
-                            found = true;
-                            break;
-                        }
-                    }
-                    break;
-                case JSONMapping.assessmentElementTypeAttribute:
-                    for (UMLClass umlClass : model.getClassList()) {
-                        for (UMLAttribute umlAttribute : umlClass.getAttributes()) {
-                            if (umlAttribute.getJSONElementID().equals(jsonElementID)) {
-                                found = true;
-                                break;
-                            }
-                        }
-                    }
-                    break;
-                case JSONMapping.assessmentElementTypeMethod:
-                    for (UMLClass umlClass : model.getClassList()) {
-                        for (UMLMethod umlMethod : umlClass.getMethods()) {
-                            if (umlMethod.getJSONElementID().equals(jsonElementID)) {
-                                found = true;
-                                break;
-                            }
-                        }
-                    }
-                    break;
-                case JSONMapping.assessmentElementTypeRelationship:
-                    for (UMLAssociation umlAssociation : model.getAssociationList()) {
-                        if (umlAssociation.getJSONElementID().equals(jsonElementID)) {
-                            found = true;
-                            break;
-                        }
-                    }
-                    break;
-            }
-
-            if (!found) {
+        for (Feedback feedback : modelingAssessment) {
+            String jsonElementID = feedback.getReferenceElementId();
+            String umlElementType = feedback.getReferenceElementType();
+            if (!elementExistsInModel(jsonElementID, umlElementType, model)) {
                 /*
                  * This might happen if e.g. the user input was malformed and the compass model parser had to ignore the element
                  */
-                log.warn("Element " + jsonElementID + " of type " + assessment.getType() + " not in model");
+                log.warn("Element " + jsonElementID + " of type " + umlElementType + " not in model");
                 continue;
             }
+
             List<String> comment = new ArrayList<>();
-            if (assessment.getCommment() != null && !assessment.getCommment().equals("")) {
-                comment.add(assessment.getCommment());
+            String feedbackText = feedback.getText();
+            if (feedbackText != null && !feedbackText.trim().isEmpty()) {
+                comment.add(feedbackText);
             }
 
-            // Ignore misformatted score
+            // Ignore malformed score
             try {
-                Score score = new Score(assessment.getCredits(), comment, 1.0);
+                Score score = new Score(feedback.getCredits(), comment, 1.0);
                 scoreHashMap.put(jsonElementID, score);
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }
         }
         return scoreHashMap;
+    }
+
+    /**
+     * Checks if an element with the given id and of the given type exists in the given UML model.
+     *
+     * @param jsonElementID  the JSON id of the UML element
+     * @param umlElementType the type of the UML element
+     * @param model          the model to check
+     * @return if the element could be found in the given model
+     */
+    private boolean elementExistsInModel(String jsonElementID, String umlElementType, UMLModel model) {
+        boolean elementExists = false;
+
+        switch (umlElementType) {
+            case JSONMapping.assessmentElementTypeClass:
+                for (UMLClass umlClass : model.getClassList()) {
+                    if (umlClass.getJSONElementID().equals(jsonElementID)) {
+                        elementExists = true;
+                        break;
+                    }
+                }
+                break;
+            case JSONMapping.assessmentElementTypeAttribute:
+                for (UMLClass umlClass : model.getClassList()) {
+                    for (UMLAttribute umlAttribute : umlClass.getAttributes()) {
+                        if (umlAttribute.getJSONElementID().equals(jsonElementID)) {
+                            elementExists = true;
+                            break;
+                        }
+                    }
+                }
+                break;
+            case JSONMapping.assessmentElementTypeMethod:
+                for (UMLClass umlClass : model.getClassList()) {
+                    for (UMLMethod umlMethod : umlClass.getMethods()) {
+                        if (umlMethod.getJSONElementID().equals(jsonElementID)) {
+                            elementExists = true;
+                            break;
+                        }
+                    }
+                }
+                break;
+            case JSONMapping.assessmentElementTypeRelationship:
+                for (UMLAssociation umlAssociation : model.getAssociationList()) {
+                    if (umlAssociation.getJSONElementID().equals(jsonElementID)) {
+                        elementExists = true;
+                        break;
+                    }
+                }
+                break;
+        }
+        return elementExists;
     }
 
 

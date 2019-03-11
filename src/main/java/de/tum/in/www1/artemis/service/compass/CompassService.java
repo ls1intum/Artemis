@@ -12,7 +12,6 @@ import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.service.compass.assessment.ModelElementAssessment;
 import de.tum.in.www1.artemis.service.compass.conflict.Conflict;
 import de.tum.in.www1.artemis.service.compass.grade.CompassGrade;
 import de.tum.in.www1.artemis.service.compass.grade.Grade;
@@ -156,11 +155,12 @@ public class CompassService {
     }
 
     /**
-     * Add an assessment to an engine
+     * Update the engine for the given exercise with a new manual assessment. Check for every model if new automatic
+     * assessments could be created with the new information.
      *
-     * @param exerciseId         the exerciseId
-     * @param submissionId       the corresponding modelId
-     * @param modelingAssessment the new assessment as raw string
+     * @param exerciseId         the id of the exercise to which the assessed submission belongs
+     * @param submissionId       the id of the submission for which a new assessment is added
+     * @param modelingAssessment the new assessment as a list of Feedback
      */
     public void addAssessment(long exerciseId, long submissionId, List<Feedback> modelingAssessment) {
         log.info("Add assessment for exercise" + exerciseId + " and model " + submissionId);
@@ -180,6 +180,14 @@ public class CompassService {
         return engine.getConflicts(submissionId, modelingAssessment);
     }
 
+    /**
+     * Get the assessment for a given model from the calculation engine. If the confidence and coverage is high enough
+     * the assessment is added it to the corresponding result and the result is saved in the database.
+     * This is done only if the submission is not assessed already (check for result.getAssessmentType() == null).
+     *
+     * @param modelId the id of the model/submission that should be updated with an automatic assessment
+     * @param exerciseId the id of the corresponding exercise
+     */
     private void assessAutomatically(long modelId, long exerciseId) {
         CalculationEngine engine = compassCalculationEngines.get(exerciseId);
         Optional<ModelingSubmission> modelingSubmission = modelingSubmissionRepository.findById(modelId);
@@ -187,13 +195,16 @@ public class CompassService {
             log.error("No modeling submission with ID {} could be found.", modelId);
             return;
         }
-        Result result = resultRepository.findDistinctBySubmissionId(modelId).orElse(new Result().submission(modelingSubmission.get()).participation(modelingSubmission.get().getParticipation()));
+        Result result = resultRepository.findDistinctBySubmissionId(modelId).orElse(
+            new Result().submission(modelingSubmission.get()).participation(modelingSubmission.get().getParticipation())
+        );
         // only automatically assess when there is not yet an assessment.
         if (result.getAssessmentType() == null) {
             Grade grade = engine.getResultForModel(modelId);
             // automatic assessment holds confidence and coverage threshold
             if (grade.getConfidence() >= CONFIDENCE_THRESHOLD && grade.getCoverage() >= COVERAGE_THRESHOLD) {
-                ModelingExercise modelingExercise = modelingExerciseRepository.findById(result.getParticipation().getExercise().getId()).get();
+                ModelingExercise modelingExercise = modelingExerciseRepository
+                    .findById(result.getParticipation().getExercise().getId()).get();
                 /*
                  * Workaround for ignoring automatic assessments of unsupported modeling exercise types
                  * TODO remove this after adapting compass
@@ -210,7 +221,7 @@ public class CompassService {
                 List<Feedback> automaticFeedbackAssessments = engine.convertToFeedback(grade, modelId);
                 result.setFeedbacks(automaticFeedbackAssessments);
 
-                result.setRatedIfNotExceeded(modelingExercise.getDueDate(),modelingSubmission.get().getSubmissionDate());
+                result.setRatedIfNotExceeded(modelingExercise.getDueDate(), modelingSubmission.get().getSubmissionDate());
                 result.setAssessmentType(AssessmentType.AUTOMATIC);
                 double maxPoints = modelingExercise.getMaxScore();
                 // biased points

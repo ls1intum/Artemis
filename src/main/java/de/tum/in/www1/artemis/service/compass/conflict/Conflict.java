@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service.compass.conflict;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.service.compass.assessment.ModelElementAssessment;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.service.compass.assessment.Score;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
