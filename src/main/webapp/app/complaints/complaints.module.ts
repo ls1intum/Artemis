@@ -12,14 +12,14 @@ import { ClipboardModule } from 'ngx-clipboard';
 @NgModule({
     imports: [BrowserModule, ArTEMiSSharedModule, MomentModule, ClipboardModule],
     declarations: [ComplaintsComponent],
-    exports: [],
-    providers: [,
+    exports: [ComplaintsComponent],
+    providers: [
         JhiAlertService,
         { provide: JhiLanguageService, useClass: JhiLanguageService }
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
-export class ComplaintsModule {
+export class ArTEMiSComplaintsModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
         this.languageHelper.language.subscribe((languageKey: string) => {
             if (languageKey !== undefined) {

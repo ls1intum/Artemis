@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
 
 @Component({
@@ -7,6 +7,9 @@ import { JhiAlertService } from 'ng-jhipster';
     providers: [JhiAlertService]
 })
 export class ComplaintsComponent implements OnInit {
+    complaintText = '';
+    @Input() resultId: number;
+
     constructor(
         private jhiAlertService: JhiAlertService
     ) { }

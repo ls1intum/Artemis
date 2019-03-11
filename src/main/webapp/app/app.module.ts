@@ -46,6 +46,7 @@ import { ParticipationDataProvider } from './course-list/exercise-list/participa
 import { ArTEMiSTutorCourseDashboardModule } from 'app/tutor-course-dashboard';
 import { ArTEMiSTutorExerciseDashboardModule } from 'app/tutor-exercise-dashboard';
 import { ArTEMiSExampleSubmissionModule } from 'app/example-text-submission';
+import { ArTEMiSComplaintsModule } from 'app/complaints';
 
 @NgModule({
     imports: [
@@ -90,7 +91,8 @@ import { ArTEMiSExampleSubmissionModule } from 'app/example-text-submission';
         ArTEMiSInstructorExerciseStatsDashboardModule,
         ArTEMiSTutorCourseDashboardModule,
         ArTEMiSTutorExerciseDashboardModule,
-        ArTEMiSExampleSubmissionModule
+        ArTEMiSExampleSubmissionModule,
+        ArTEMiSComplaintsModule
         // jhipster-needle-angular-add-module JHipster will add new module here
     ],
     declarations: [

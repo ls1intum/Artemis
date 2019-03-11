@@ -1,91 +1,23 @@
-<div *ngIf="course">
-    <jhi-alert></jhi-alert>
+<div class="col">
+    <h2>Complaints form</h2>
+    <p>
+        Please try to be as descriptive as possible, including which parts of the submission you think we need to
+        re-evaluate. If you don't have any complaint, but you think the feedback is not clear enough, just press the
+        relative button.
+    </p>
 
-    <div class="header-container  bg-primary text-white">
-        <h4 class="card-header">
-            <strong>Tutor Course Dashboard for course {{course.title}}</strong>
-            &nbsp;
-            <a class="text-primary card-link" *ngIf="course.isAtLeastTutor"
-               routerLink="/course/{{course.id}}/dashboard" routerLinkActive="active">
-                <fa-icon icon="info-circle" [fixedWidth]="true" style="color:white;"></fa-icon>
-            </a>
-        </h4>
-    </div>
+    <textarea [(ngModel)]="complaintText" style="width: 100%; height: 50vh;"></textarea>
 
-    <div class="row mt-3 justify-content-around">
-        <div class="col-4 text-center">
-            <p class="h3">Your assessments:</p>
-            <p class="font-weight-bold">{{numberOfTutorAssessments}}</p>
+    <div class="row">
+        <div class="col-6">
+            <button [disabled]="complaintText.length <= 0">Submit a complaint</button>
         </div>
-        <div class="col-4 text-center">
-            <p class="h3">Total assessments:</p>
-            <p class="font-weight-bold">{{numberOfAssessments}} / {{numberOfSubmissions}}
-                ({{numberOfAssessments / numberOfSubmissions * 100}}%)</p>
-        </div>
-    </div>
 
-    <div class="row justify-content-around">
-        <div class="col-4 text-center">
-            <p class="h3">Complaints about your assessments:</p>
-            <p class="font-weight-bold">{{numberOfTutorComplaints}}</p>
+        <div class="col-6">
+            <button>Request more feedback</button>
         </div>
-        <div class="col-4 text-center">
-            <p class="h3">Total complaints:</p>
-            <p class="font-weight-bold">{{numberOfComplaints}}</p>
-        </div>
-    </div>
-
-    <div class="table-responsive">
-        <div class="form-check col-6 align-baseline">
-            <input type="checkbox" name="showFinishedExercise" id="field_showFinishedExercise"
-                   [ngModel]="showFinishedExercises" (ngModelChange)="triggerFinishedExercises()"/>
-            <label class="form-check-label" for="field_showFinishedExercise">Show finished exercise</label>
-        </div>
-        <table class="table exercise-table" [hidden]="exercises.length === 0">
-            <thead>
-            <tr>
-                <th class="col-xs-3">Exercise</th>
-                <th class="col-xs-4">Your status</th>
-                <th class="col-xs-2">Exercise due date</th>
-                <th class="col-xs-2">Assessments due date</th>
-                <th class="col-xs-1">Actions</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr *ngFor="let exercise of exercises">
-                <td>
-                    <span>{{exercise.title}}</span>
-                    <span class="badge badge-warning" *ngIf="!exercise.visibleToStudents" placement="right"
-                          ngbTooltip="Only visible to teaching assistants and instructors. Release date: {{exercise.releaseDate | date:'MMM d, y H:mm'}}">
-                    Not Released</span>
-                    <span class="badge badge-success" [hidden]="!exercise.isActiveQuiz">Live</span>
-                </td>
-                <td>
-                    <jhi-tutor-participation-graph [tutorParticipation]="exercise.tutorParticipations[0]">
-
-                    </jhi-tutor-participation-graph>
-                </td>
-                <td>
-                    <span placement="right" [hidden]="!exercise.dueDate"
-                          ngbTooltip="{{exercise.dueDate | date:'MMM d, y H:mm'}}">
-                        {{exercise.dueDate | amTimeAgo}}
-                    </span>
-                </td>
-                <td>
-                    <span placement="right" [hidden]="!exercise.assessmentDueDate"
-                          ngbTooltip="{{exercise.assessmentDueDate | date:'MMM d, y H:mm'}}">
-                        {{exercise.assessmentDueDate | amTimeAgo}}
-                    </span>
-                </td>
-
-                <td class="text-center">
-                    <button routerLink="/course/{{course.id}}/exercise/{{exercise.id}}/tutor-dashboard"
-                            class="btn btn-info btn-sm mr-1">
-                        <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise dashboard</span>
-                    </button>
-                </td>
-            </tr>
-            </tbody>
-        </table>
     </div>
 </div>
+
+
+
