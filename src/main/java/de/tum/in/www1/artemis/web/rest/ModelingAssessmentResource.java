@@ -152,7 +152,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
                 return ResponseEntity.status(HttpStatus.CONFLICT).body(conflicts);
             } else {
                 modelingAssessmentService.submitManualAssessment(result, modelingExercise);
-//                compassService.addAssessment(exerciseId, submissionId, modelingAssessment);
+                compassService.addAssessment(exerciseId, submissionId, feedbacks);
             }
         }
         return ResponseEntity.ok(result);

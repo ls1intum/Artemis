@@ -5,7 +5,7 @@ import { Feedback } from 'app/entities/feedback';
 
 export class Conflict {
     elementInConflict: UMLElement;
-    conflictingAssessment: Feedback;
+    conflictingFeedback: Feedback;
     scoresInConflict: Score[];
     initiator: User;
     id: string;

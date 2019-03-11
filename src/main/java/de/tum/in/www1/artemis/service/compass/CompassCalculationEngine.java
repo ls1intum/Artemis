@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 
 public class CompassCalculationEngine implements CalculationEngine {
@@ -78,20 +79,19 @@ public class CompassCalculationEngine implements CalculationEngine {
      */
     public List<Conflict> getConflicts(long submissionId, List<Feedback> modelingAssessment) {
         List<Conflict> conflicts = new ArrayList<>();
-//        TODO adapt to new assessment model
-//        UMLModel model = modelIndex.getModel(submissionId);
-//        modelingAssessment.forEach(currentElementAssessment -> {
-//            UMLElement currentElement = model.getElementByJSONID(currentElementAssessment.getId()); //TODO MJ return Optional ad throw Exception if no UMLElement found?
-//            assessmentIndex.getAssessment(currentElement.getElementID()).ifPresent(assessment -> {
-//                List<Score> scores = assessment.getScores(currentElement.getContext());
-//                List<Score> scoresInConflict = scores.stream()
-//                    .filter(score -> !scoresAreConsideredEqual(score.getPoints(), currentElementAssessment.getCredits()))
-//                    .collect(Collectors.toList());
-//                if (!scoresInConflict.isEmpty()) {
-//                    conflicts.add(new Conflict(currentElement, currentElementAssessment, scoresInConflict));
-//                }
-//            });
-//        });
+        UMLModel model = modelIndex.getModel(submissionId);
+        modelingAssessment.forEach(currentFeedback -> {
+            UMLElement currentElement = model.getElementByJSONID(currentFeedback.getReferenceElementId()); //TODO MJ return Optional ad throw Exception if no UMLElement found?
+            assessmentIndex.getAssessment(currentElement.getElementID()).ifPresent(assessment -> {
+                List<Score> scores = assessment.getScores(currentElement.getContext());
+                List<Score> scoresInConflict = scores.stream()
+                    .filter(score -> !scoresAreConsideredEqual(score.getPoints(), currentFeedback.getCredits()))
+                    .collect(Collectors.toList());
+                if (!scoresInConflict.isEmpty()) {
+                    conflicts.add(new Conflict(currentElement, currentFeedback, scoresInConflict));
+                }
+            });
+        });
         return conflicts;
     }
 
