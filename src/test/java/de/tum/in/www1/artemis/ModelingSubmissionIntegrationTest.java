@@ -130,6 +130,16 @@ public class ModelingSubmissionIntegrationTest {
 
 
     @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    public void getAllSubmissionsOfExerciseAsStudent() throws Exception {
+        ModelingSubmission submission1 = database.addModelingSubmission(exercise, submittedSubmission, "student1");
+        ModelingSubmission submission2 = database.addModelingSubmission(exercise, unsubmittedSubmission, "student2");
+        request.getList("/api/exercises/" + exercise.getId() + "/modeling-submissions", HttpStatus.FORBIDDEN, ModelingSubmission.class);
+        request.getList("/api/exercises/" + exercise.getId() + "/modeling-submissions?submittedOnly=true", HttpStatus.FORBIDDEN, ModelingSubmission.class);
+    }
+
+
+    @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getAllSubmittedSubmissionsOfExercise() throws Exception {
         ModelingSubmission submission1 = database.addModelingSubmission(exercise, unsubmittedSubmission, "student1");
@@ -141,7 +151,7 @@ public class ModelingSubmissionIntegrationTest {
 
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "USER")
+    @WithMockUser(value = "tutor1")
     public void getModelSubmission() throws Exception {
         User user = userRepo.findOneByLogin("tutor1").get();
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
@@ -150,6 +160,14 @@ public class ModelingSubmissionIntegrationTest {
         assertThat(storedSubmission.getResult()).as("result has been set").isNotNull();
         assertThat(storedSubmission.getResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
         checkDetailsHidden(storedSubmission);
+    }
+
+    @Test
+    @WithMockUser(value = "student1")
+    public void getModelSubmissionAsStudent() throws Exception {
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
+        submission = database.addModelingSubmission(exercise, submission, "student1");
+        request.get("/api/modeling-submissions/" + submission.getId(), HttpStatus.FORBIDDEN, ModelingSubmission.class);
     }
 
 

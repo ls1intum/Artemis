@@ -115,9 +115,9 @@ public class RequestUtilService {
                 .andExpect(status().is(expectedStatus.value()))
                 .andReturn();
         if (!expectedStatus.is2xxSuccessful()) {
-            assertThat(res.getResponse().getContentAsString())
-                .as("problem description instead of result")
-                .isEqualTo("application/problem+json"); // TODO MJ more sufficient check?
+            if (res.getResponse().getContentType() != null && !res.getResponse().getContentType().equals("application/problem+json")) {
+                assertThat(res.getResponse().getContentAsString()).isNullOrEmpty();
+            }
             return null;
         }
         return mapper.readValue(res.getResponse().getContentAsString(), responseType);
@@ -131,9 +131,9 @@ public class RequestUtilService {
                 .andExpect(status().is(expectedStatus.value()))
                 .andReturn();
         if (!expectedStatus.is2xxSuccessful()) {
-            assertThat(res.getResponse().getContentType())
-                .as("problem description instead of result")
-                .isEqualTo("application/problem+json"); // TODO MJ more sufficient check?
+            if (res.getResponse().getContentType() != null && !res.getResponse().getContentType().equals("application/problem+json")) {
+                assertThat(res.getResponse().getContentAsString()).isNullOrEmpty();
+            }
             return null;
         }
 
