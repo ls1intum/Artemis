@@ -1,0 +1,30 @@
+{
+    "arTeMiSApp": {
+        "instructorCourseDashboard": {
+            "title": "Instructor Kurs Dashboard",
+            "pageHeader": "Instructor Kurs Dashboard für",
+            "informationAboutCourse": "Informationen zum Kurs",
+            "noDescription": "Keine Beschreibung vorhanden",
+            "students": "Studenten",
+            "submissions": "Einreichungen",
+            "tutors": "Tutoren",
+            "assessments": "Assessments",
+            "open": "offen",
+            "noExercise": "Für diesen Kurs gibt es keine Übung.",
+            "exercise": "Übung",
+            "dueDate": "zwei Termine",
+            "assessmentDueDate": "Assessment zwei Termine",
+            "complaints": "Reklamationen",
+            "completedAssessments": "Komplette Assessments",
+            "action": "Aktion",
+            "exerciseDashboard": "Übungs-Dashboard",
+            "tutorLeaderboard": {
+                "courseTitle": "Tutor Kurs Bestenliste",
+                "name": "Name",
+                "username": "Benutzername",
+                "numberOfAssessments": "Anzahl der Assessments",
+                "numberOfComplaints": "Anzahl der Reklamationen"
+            }
+        }
+    }
+}

@@ -1,0 +1,15 @@
+@import '../../../content/scss/artemis-variables';
+
+.panel-wrapper {
+    border: 1px solid $primary;
+    border-radius: 3px;
+    .panel-body{
+        padding: 8px 15px;
+    }
+    .panel-header {
+        padding: 15px;
+        background-color: $primary;
+        color: #FFFFFF;
+    }
+
+}

@@ -97,7 +97,7 @@ public class AutomaticBuildPlanCleanupService {
         log.info("  Found " + countUnsuccessfulLatestResultAfter14Days + " build plans with unsuccessful latest result is older than 14 days");
 
         List<String> buildPlanIds = participationsWithBuildPlanToDelete.stream().map(Participation::getBuildPlanId).collect(Collectors.toList());
-        log.info("Build plans: " + buildPlanIds);
+        log.info("Build plans to cleanup: " + buildPlanIds);
 
         for (Participation participation : participationsWithBuildPlanToDelete) {
             try {
@@ -107,5 +107,6 @@ public class AutomaticBuildPlanCleanupService {
                 log.error("Could not cleanup build plan in participation " + participation.getId(), ex);
             }
         }
+        log.info("Build plans have been cleaned");
     }
 }

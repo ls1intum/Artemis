@@ -60,9 +60,10 @@ export class ParticipationService {
             });
     }
 
-    findAllParticipationsByExercise(exerciseId: number): Observable<EntityArrayResponseType> {
+    findAllParticipationsByExercise(exerciseId: number, req?: any): Observable<EntityArrayResponseType> {
+        const options = createRequestOption(req);
         return this.http
-            .get<Participation[]>(SERVER_API_URL + `api/exercise/${exerciseId}/participations`, { observe: 'response' })
+            .get<Participation[]>(SERVER_API_URL + `api/exercise/${exerciseId}/participations`, { params: options, observe: 'response' })
             .map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res));
     }
 
