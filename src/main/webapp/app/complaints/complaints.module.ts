@@ -8,6 +8,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { ComplaintsComponent } from './complaints.component';
 import { MomentModule } from 'angular2-moment';
 import { ClipboardModule } from 'ngx-clipboard';
+import { ComplaintService } from 'app/entities/complaint/complaint.service';
 
 @NgModule({
     imports: [BrowserModule, ArTEMiSSharedModule, MomentModule, ClipboardModule],
@@ -15,6 +16,7 @@ import { ClipboardModule } from 'ngx-clipboard';
     exports: [ComplaintsComponent],
     providers: [
         JhiAlertService,
+        ComplaintService,
         { provide: JhiLanguageService, useClass: JhiLanguageService }
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]

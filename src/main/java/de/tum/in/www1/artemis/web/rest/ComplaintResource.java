@@ -88,4 +88,18 @@ public class ComplaintResource {
         Optional<Complaint> complaint = complaintRepository.findById(id);
         return ResponseUtil.wrapOrNotFound(complaint);
     }
+
+    /**
+     * Get /complaints/result/:id get a complaint associated with the result "id"
+     *
+     * @param resultId the id of the result for which we want to find a linked complaint
+     * @return the ResponseEntity with status 200 (OK) and with body the complaint, or with status 404 (Not Found)
+     */
+    @GetMapping("/complaints/result/{resultId")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Complaint> getComplaintByResultId(@PathVariable Long resultId) {
+        log.debug("REST request to get Complaint associated to result : {}", resultId);
+        Optional<Complaint> complaint = complaintRepository.findByResult_Id(resultId);
+        return ResponseUtil.wrapOrNotFound(complaint);
+    }
 }
