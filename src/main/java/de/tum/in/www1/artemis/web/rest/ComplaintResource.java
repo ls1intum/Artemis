@@ -35,6 +35,12 @@ public class ComplaintResource {
     private ResultRepository resultRepository;
     private UserRepository userRepository;
 
+    public ComplaintResource(ComplaintRepository complaintRepository, ResultRepository resultRepository, UserRepository userRepository) {
+        this.complaintRepository = complaintRepository;
+        this.resultRepository = resultRepository;
+        this.userRepository = userRepository;
+    }
+
     /**
      * POST /complaint: create a new complaint
      *
@@ -42,7 +48,7 @@ public class ComplaintResource {
      * @return the ResponseEntity with status 201 (Created) and with body the new complaints
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/complaint")
+    @PostMapping("/complaints")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Complaint> createComplaint(@RequestBody Complaint complaint, Principal principal) throws URISyntaxException {
         log.debug("REST request to save Complaint: {}", complaint);
@@ -51,28 +57,38 @@ public class ComplaintResource {
         }
 
         if (complaint.getResult() == null || complaint.getResult().getId() == null) {
-            throw new BadRequestAlertException("A complaint can be only associated to a result", ENTITY_NAME, "noresult");
+            throw new BadRequestAlertException("A complaint can be only associated to a result", ENTITY_NAME, "noresultid");
         }
 
+        Long resultId = complaint.getResult().getId();
         String submissorName = principal.getName();
-        User originalSubmissor = userRepository.findUserIdByResultId(complaint.getResult().getId());
+        User originalSubmissor = userRepository.findUserByResultId(resultId);
 
         if (!originalSubmissor.getLogin().equals(submissorName)) {
             throw new BadRequestAlertException("You can create a complaint only about a result you submitted", ENTITY_NAME, "differentuser");
         }
 
         // Do not trust user input
-        Result originalResult = resultRepository.getOne(complaint.getResult().getId());
+        Optional<Result> originalResultOptional = resultRepository.findById(resultId);
+
+        if (!originalResultOptional.isPresent()) {
+            throw new BadRequestAlertException("The result you are referring to does not exist", ENTITY_NAME, "noresult");
+        }
+
+        Result originalResult = originalResultOptional.get();
+        originalResult.setHasComplaint(true);
 
         complaint.setSubmittedTime(ZonedDateTime.now());
         complaint.setStudent(originalSubmissor);
         complaint.setResult(originalResult);
         complaint.setResultBeforeComplaint(originalResult.getResultString());
 
-        Complaint result = complaintRepository.save(complaint);
-        return ResponseEntity.created(new URI("/api/complaints/" + result.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
-            .body(result);
+        resultRepository.save(originalResult);
+
+        Complaint savedComplaint = complaintRepository.save(complaint);
+        return ResponseEntity.created(new URI("/api/complaints/" + savedComplaint.getId()))
+            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, savedComplaint.getId().toString()))
+            .body(savedComplaint);
     }
 
     /**
@@ -95,7 +111,7 @@ public class ComplaintResource {
      * @param resultId the id of the result for which we want to find a linked complaint
      * @return the ResponseEntity with status 200 (OK) and with body the complaint, or with status 404 (Not Found)
      */
-    @GetMapping("/complaints/result/{resultId")
+    @GetMapping("/complaints/result/{resultId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Complaint> getComplaintByResultId(@PathVariable Long resultId) {
         log.debug("REST request to get Complaint associated to result : {}", resultId);

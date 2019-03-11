@@ -4,6 +4,7 @@ import { ComplaintService } from 'app/entities/complaint/complaint.service';
 import { Complaint } from 'app/entities/complaint';
 import { Result } from 'app/entities/result';
 import { HttpErrorResponse } from '@angular/common/http';
+import { Moment } from 'moment';
 
 @Component({
     selector: 'jhi-complaint-form',
@@ -11,8 +12,10 @@ import { HttpErrorResponse } from '@angular/common/http';
     providers: [JhiAlertService]
 })
 export class ComplaintsComponent implements OnInit {
-    complaintText = '';
     @Input() resultId: number;
+    complaintText = '';
+    alreadySubmitted: boolean;
+    submittedDate: Moment;
 
     constructor(
         private complaintService: ComplaintService,
@@ -23,6 +26,8 @@ export class ComplaintsComponent implements OnInit {
         this.complaintService.findByResultId(this.resultId).subscribe(
             res => {
                 this.complaintText = res.body.complaintText;
+                this.alreadySubmitted = true;
+                this.submittedDate = res.body.submittedTime;
             },
             (err: HttpErrorResponse) => {
                 // We can ignore 404, it simply means that there isn't a complain (yet!) associate with this result
@@ -41,7 +46,9 @@ export class ComplaintsComponent implements OnInit {
 
         this.complaintService.create(complaint).subscribe(
             res => {
-                console.log(res);
+                this.jhiAlertService.success('Your complaint has been submitted!');
+                this.submittedDate = res.body.submittedTime;
+                this.alreadySubmitted = true;
             },
             (err: HttpErrorResponse) => {
                 this.onError(err.message);

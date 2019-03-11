@@ -36,7 +36,7 @@ export class ComplaintService {
 
     private convertDateFromClient(complaint: Complaint): Complaint {
         return Object.assign({}, complaint, {
-            releaseDate: complaint.submittedTime !== null && moment(complaint.submittedTime).isValid ? complaint.submittedTime.toJSON() : null
+            submittedTime: complaint.submittedTime != null && moment(complaint.submittedTime).isValid ? complaint.submittedTime.toJSON() : null
         });
     }
 

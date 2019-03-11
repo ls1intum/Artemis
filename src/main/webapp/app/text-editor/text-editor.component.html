@@ -54,21 +54,10 @@
     </div>
 
     <div class="row" *ngIf="hasFeedback">
-        <div class="col-6">
-            <h3>Complaints</h3>
-            <p>You can submit a complaint if you feel like the assessment hasn't been fair: you will have the chance to describe what do you think is wrong, and why the submission should be reevaluated. The reevaluation will be performed by a different tutor.</p>
-
-            <button class="btn btn-warning" (click)="showComplaintForm = !showComplaintForm">Submit complaint</button>
-        </div>
-
-        <div class="col-6">
-            <h3>More feedback</h3>
-            <p>If something is not clear enough, or you need more explanations, request the tutor to give you more feedback</p>
-            <button class="btn btn-default">Request more feedback</button>
-        </div>
+            <button class="btn btn-primary" (click)="showComplaintForm = !showComplaintForm">Submit complaint or ask for more feedback</button>
     </div>
 
     <div class="row" *ngIf="showComplaintForm">
-        <jhi-complaint-form></jhi-complaint-form>
+        <jhi-complaint-form [resultId]="result.id" class="col-12"></jhi-complaint-form>
     </div>
 </div>
