@@ -304,6 +304,10 @@ public class ResultResource {
 
         for (Participation participation : participations) {
 
+            if (participation.getStudent() == null) {
+                continue;
+            }
+
             Result relevantResult;
             if (ratedOnly == true) {
                 relevantResult = exercise.findLatestRatedResultWithCompletionDate(participation);
