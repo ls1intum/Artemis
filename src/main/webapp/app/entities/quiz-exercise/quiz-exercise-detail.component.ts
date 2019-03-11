@@ -157,7 +157,15 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     init(): void {
         if (this.quizExercise) {
             this.entity = this.quizExercise;
-        } else {
+            this.quizExercise.questions.forEach(function (question) {
+                if (question.type === QuestionType.MULTIPLE_CHOICE) {
+                    const mcQuestion = question as MultipleChoiceQuestion;
+                    if (mcQuestion.answerOptions.some(answerOption => answerOption.isCorrect )){
+                        mcQuestion.hasCorrectOption = true;
+                    }
+            },this})
+        }
+            else {
             this.entity = new QuizExercise();
             this.entity.title = '';
             this.entity.duration = 600;
@@ -177,8 +185,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
             this.quizExercise.course = this.course;
         }
         this.updateDuration();
-        this.validQuiz();
-
     }
 
     ngOnChanges(changes: SimpleChanges): void {
@@ -438,8 +444,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      * @desc Handles the change of a question by replacing the array with a copy (allows for shallow comparison)
      */
     onQuestionUpdated(): void {
-        console.log('to do');
-        this.isQuizValid = this.validQuiz();
+        this.validQuiz();
         this.quizExercise.questions = Array.from(this.quizExercise.questions);
     }
 
@@ -492,6 +497,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      * @returns {boolean} true if valid, false otherwise
      */
     validQuiz(): boolean {
+        console.log('start the validtiy');
         if (!this.quizExercise) {
             return false;
         }
@@ -515,7 +521,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
             if (question.type === QuestionType.MULTIPLE_CHOICE) {
                 const mcQuestion = question as MultipleChoiceQuestion;
                 return question.title && question.title !== '' && question.title.length < 250 && mcQuestion.hasCorrectOption;
-                console.log(mcQuestion.hasCorrectOption);
             } else if (question.type === QuestionType.DRAG_AND_DROP) {
                 const dndQuestion = question as DragAndDropQuestion;
                 return (

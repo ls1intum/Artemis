@@ -68,10 +68,6 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
         }
     }
 
-    //ngAfterViewInit(): void {
-       // setTimeout(() => this.prepareForSave());
-    //}
-
     /**
      * @function generateMarkdown
      * @desc Generate the markdown text for this question
