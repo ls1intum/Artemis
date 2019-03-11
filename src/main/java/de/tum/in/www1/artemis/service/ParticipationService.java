@@ -1,22 +1,46 @@
 package de.tum.in.www1.artemis.service;
 
-import java.net.URL;
-import java.time.ZonedDateTime;
-import java.util.*;
-import javax.validation.constraints.NotNull;
-import org.slf4j.*;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.*;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
-import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.connectors.*;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ModelingExercise;
+import de.tum.in.www1.artemis.domain.Participation;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.QuizExercise;
+import de.tum.in.www1.artemis.domain.QuizSubmission;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
+import javax.validation.constraints.NotNull;
+import java.net.URL;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+
 import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
 import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.FINISHED;
 import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.INITIALIZED;
@@ -466,55 +490,60 @@ public class ParticipationService {
 
     @Transactional(readOnly = true)
     public List<Participation> findByCourseIdWithRelevantResults(Long courseId) {
-        List<Participation> participations = participationRepository.findByCourseIdWithEagerResults(courseId);
-        //filter all irrelevant results, i.e. rated = false or before exercise due date
-        for (Participation participation : participations) {
-            List<Result> relevantResults = new ArrayList<Result>();
+        return participationRepository.findByCourseIdWithEagerResults(courseId).stream()
 
-            //search for the relevant result by filtering out irrelevant results using the continue keyword
-            //this for loop is optimized for performance and thus not very easy to understand ;)
-            for (Result result : participation.getResults()) {
-                if (result.isRated() == Boolean.FALSE) {
-                    // we are only interested in results with rated == null (for compatibility) and rated == Boolean.TRUE
-                    //TODO: for compatibility reasons, we include rated == null, in the future we can remove this
-                    continue;
-                }
-                if (result.getCompletionDate() == null || result.getScore() == null) {
-                    // we are only interested in results with completion date and with score
-                    continue;
-                }
-                if (participation.getExercise() instanceof QuizExercise) {
-                    //in quizzes we take all rated results, because we only have one! (independent of later checks)
-                } else if (participation.getExercise().getDueDate() != null) {
-                    if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise) {
-                        if (result.getSubmission() != null && result.getSubmission().getSubmissionDate() != null
-                            && result.getSubmission().getSubmissionDate().isAfter(participation.getExercise().getDueDate())) {
-                            //Filter out late results using the submission date, because in this exercise types, the
-                            //difference between submissionDate and result.completionDate can be significant due to manual assessment
-                            continue;
-                        }
-                    } else {
-                        //For all other exercises the result completion date is the same as the submission date
-                        if (result.getCompletionDate().isAfter(participation.getExercise().getDueDate())) {
-                            //and we continue (i.e. dismiss the result) if the result completion date is after the exercise due date
-                            continue;
+            // Filter out participations without Students
+            // These participations are used e.g. to store template and solution build plans in programming exercises
+            .filter(participation -> participation.getStudent() != null)
+
+            //filter all irrelevant results, i.e. rated = false or before exercise due date
+            .peek(participation -> {
+                List<Result> relevantResults = new ArrayList<Result>();
+
+                //search for the relevant result by filtering out irrelevant results using the continue keyword
+                //this for loop is optimized for performance and thus not very easy to understand ;)
+                for (Result result : participation.getResults()) {
+                    if (result.isRated() == Boolean.FALSE) {
+                        // we are only interested in results with rated == null (for compatibility) and rated == Boolean.TRUE
+                        //TODO: for compatibility reasons, we include rated == null, in the future we can remove this
+                        continue;
+                    }
+                    if (result.getCompletionDate() == null || result.getScore() == null) {
+                        // we are only interested in results with completion date and with score
+                        continue;
+                    }
+                    if (participation.getExercise() instanceof QuizExercise) {
+                        //in quizzes we take all rated results, because we only have one! (independent of later checks)
+                    } else if (participation.getExercise().getDueDate() != null) {
+                        if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise) {
+                            if (result.getSubmission() != null && result.getSubmission().getSubmissionDate() != null
+                                && result.getSubmission().getSubmissionDate().isAfter(participation.getExercise().getDueDate())) {
+                                //Filter out late results using the submission date, because in this exercise types, the
+                                //difference between submissionDate and result.completionDate can be significant due to manual assessment
+                                continue;
+                            }
+                        } else {
+                            //For all other exercises the result completion date is the same as the submission date
+                            if (result.getCompletionDate().isAfter(participation.getExercise().getDueDate())) {
+                                //and we continue (i.e. dismiss the result) if the result completion date is after the exercise due date
+                                continue;
+                            }
                         }
                     }
+                    relevantResults.add(result);
                 }
-                relevantResults.add(result);
-            }
-            if (!relevantResults.isEmpty()) {
-                //make sure to take the latest result
-                relevantResults.sort((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate()));
-                Result correctResult = relevantResults.get(0);
-                relevantResults.clear();
-                relevantResults.add(correctResult);
-            }
-            participation.setResults(new HashSet<>(relevantResults));
-            //remove unnecessary elements
-            participation.getExercise().setCourse(null);
-        }
-        return participations;
+                if (!relevantResults.isEmpty()) {
+                    //make sure to take the latest result
+                    relevantResults.sort((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate()));
+                    Result correctResult = relevantResults.get(0);
+                    relevantResults.clear();
+                    relevantResults.add(correctResult);
+                }
+                participation.setResults(new HashSet<>(relevantResults));
+                //remove unnecessary elements
+                participation.getExercise().setCourse(null);
+            })
+            .collect(Collectors.toList());
     }
 
 
