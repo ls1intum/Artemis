@@ -811,6 +811,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
 
     private changesInMarkdown(value: boolean){
         this.question.contentChanged = value;
+        this.prepareForSave();
     }
 
     specialCommandFound(textLine: string, specialCommand: SpecialCommand) {

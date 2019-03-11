@@ -127,24 +127,11 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
         this.question.text = null;
         this.question.explanation = null;
         this.question.hint = null;
-        this.question.hasCorrectOption = false;
+        this.question.hasCorrectOption = null;
 
         // Remove Current Answer Option
         this.currentAnswerOption = null;
 
-    }
-
-   checkIfQuestionHasOneCorrectOption(){
-       //this.question.hasCorrectOption = null;
-       if (!this.question.answerOptions.some(answeroption => answeroption.isCorrect)){
-            console.log('ich habe nichts richtiges');
-            this.prepareForSave();
-            this.question.hasCorrectOption = false;
-       } else {
-           console.log('ich habe alles richtig');
-           this.prepareForSave();
-           this.question.hasCorrectOption = true;
-       }
     }
 
     changesInMarkdown(){

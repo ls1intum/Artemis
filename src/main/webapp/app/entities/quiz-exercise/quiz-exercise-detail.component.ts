@@ -147,7 +147,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
             }
         });
         this.courseRepository = this.courseService;
-        this.isQuizValid = this.validQuiz();
+        this.validQuiz();
     }
 
     /**
@@ -177,6 +177,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
             this.quizExercise.course = this.course;
         }
         this.updateDuration();
+        this.validQuiz();
 
     }
 
@@ -242,6 +243,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         mcQuestion.scoringType = ScoringType.ALL_OR_NOTHING; // explicit default value for multiple questions
         mcQuestion.randomizeOrder = true;
         mcQuestion.score = 1;
+        mcQuestion.hasCorrectOption = true;
 
         const correctSampleAnswerOption = new AnswerOption();
         correctSampleAnswerOption.isCorrect = true;
@@ -490,7 +492,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      * @returns {boolean} true if valid, false otherwise
      */
     validQuiz(): boolean {
-        console.log('quiz valid');
         if (!this.quizExercise) {
             return false;
         }
@@ -514,6 +515,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
             if (question.type === QuestionType.MULTIPLE_CHOICE) {
                 const mcQuestion = question as MultipleChoiceQuestion;
                 return question.title && question.title !== '' && question.title.length < 250 && mcQuestion.hasCorrectOption;
+                console.log(mcQuestion.hasCorrectOption);
             } else if (question.type === QuestionType.DRAG_AND_DROP) {
                 const dndQuestion = question as DragAndDropQuestion;
                 return (
