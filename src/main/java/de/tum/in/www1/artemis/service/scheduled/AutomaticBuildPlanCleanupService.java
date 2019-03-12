@@ -99,10 +99,10 @@ public class AutomaticBuildPlanCleanupService {
         List<String> buildPlanIds = participationsWithBuildPlanToDelete.stream().map(Participation::getBuildPlanId).collect(Collectors.toList());
         log.info("Build plans to cleanup: " + buildPlanIds);
 
-        //For testing purposes, we only take the first 10 build plans for now
-        //TODO: in the future: increase this number to 100 and then to 1000
+        //For testing purposes, we only take the first 100 build plans for now
+        //TODO: in the future: increase this number to 1000
 
-        for (Participation participation : participationsWithBuildPlanToDelete.stream().limit(10).collect(Collectors.toList())) {
+        for (Participation participation : participationsWithBuildPlanToDelete.stream().limit(100).collect(Collectors.toList())) {
             try {
                 participationService.cleanupBuildPlan(participation);
             }
