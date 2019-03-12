@@ -13,6 +13,7 @@ import * as $ from 'jquery';
 import { Interactable } from 'interactjs';
 import { AceAnnotation, SaveStatusChange } from '../entities/ace-editor';
 import { BuildLogEntry } from 'app/entities/build-log';
+import { safeUnescape } from 'app/shared';
 
 @Component({
     selector: 'jhi-editor',
@@ -159,7 +160,7 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
                 fileName,
                 row: Math.max(parseInt(row, 10) - 1, 0),
                 column: Math.max(parseInt(column, 10) - 1, 0),
-                text
+                text: safeUnescape(text)
             }))
             .reduce((acc, { fileName, ...rest }) => ({ ...acc, [fileName]: [...(acc[fileName] || []), rest] }), {});
     }

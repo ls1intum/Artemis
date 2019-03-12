@@ -210,6 +210,7 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
         if (this.editorFileSessions[this.selectedFile] && this.editorFileSessions[this.selectedFile].code !== code) {
             // Assign received code to our session
             this.editorFileSessions = {
+                ...this.editorFileSessions,
                 [this.selectedFile]: {
                     ...this.editorFileSessions[this.selectedFile],
                     code,
