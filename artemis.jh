@@ -350,6 +350,7 @@ entity QuestionAnswer {
 
 entity Notification {
     type NotificationType,
+    title String,
     text String,                       // LONGTEXT --> lob
     notificationDate Date,
     expireDate Date,
@@ -357,7 +358,8 @@ entity Notification {
 }
 
 enum NotificationType {
-    SYSTEM,
+    SYSTEM_WARNING,
+    SYSTEM_INFO,
     SINGLE_USER,
     INSTRUCTOR,
     TUTOR,
@@ -368,7 +370,7 @@ entity Lecture {
     title String,
     description String,               // LONGTEXT --> lob
     startDate Date,
-    endDate Date,
+    endDate Date
 }
 
 entity Attachment {
