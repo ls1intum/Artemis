@@ -74,7 +74,7 @@ public class Result implements Serializable {
      */
     @Column(name = "rated")
     @JsonView(QuizView.Before.class)
-    private Boolean rated;
+    private Boolean rated = false;
 
     // This explicit flag exists intentionally, as sometimes a Result is loaded from the database without
     // loading it's Feedback list. In this case you still want to know, if Feedback for this Result exists

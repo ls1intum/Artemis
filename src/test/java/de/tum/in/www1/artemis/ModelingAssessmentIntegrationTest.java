@@ -58,7 +58,6 @@ public class ModelingAssessmentIntegrationTest {
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void manualAssessmentSubmitAsStudent() throws Exception {
-        User assessor = userRepo.findOneByLogin("tutor1").get();
         ModelingSubmission submission = database.addModelingSubmissionFromResources(exercise, "test-data/model-submission/model.54727.json", "student1");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
         request.put(
