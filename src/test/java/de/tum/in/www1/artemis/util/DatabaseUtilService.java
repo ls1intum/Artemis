@@ -217,22 +217,13 @@ public class DatabaseUtilService {
         return builder.toString();
     }
 
-    // TODO CZ: enable again after file format of assessments has been changed to new feedback format
-//    public List<Feedback> loadAssessmentFomResources(String path) throws Exception {
-//        String fileContent = loadFileFromResources(path);
-//        fileContent = fileContent.replaceFirst("\\{\"assessments\":", "");
-//        fileContent = fileContent.substring(0, fileContent.length() - 1);
-//        List<ModelElementAssessment> elementAssessments = mapper.readValue(
-//            fileContent,
-//            mapper.getTypeFactory().constructCollectionType(List.class, ModelElementAssessment.class));
-//        List<Feedback> feedbacks = new ArrayList<>(elementAssessments.size());
-//        elementAssessments.forEach(assessment -> {
-//            Feedback feedback = new Feedback();
-//            feedback.setCredits(assessment.getCredits());
-//            feedback.setReference(assessment.getId());
-//            feedback.setText(assessment.getCommment());
-//            feedbacks.add(feedback);
-//        });
-//        return feedbacks;
-//    }
+    // TODO CZ: tests currently fail, test if this works correctly
+    public List<Feedback> loadAssessmentFomResources(String path) throws Exception {
+        String fileContent = loadFileFromResources(path);
+        List<Feedback> modelingAssessment = mapper.readValue(
+            fileContent,
+            mapper.getTypeFactory().constructCollectionType(List.class, Feedback.class)
+        );
+        return modelingAssessment;
+    }
 }

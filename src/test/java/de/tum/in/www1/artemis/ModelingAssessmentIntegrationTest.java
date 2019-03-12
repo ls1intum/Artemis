@@ -56,72 +56,69 @@ public class ModelingAssessmentIntegrationTest {
     }
 
 
-    // TODO CZ: enable again after file format of assessments has been changed to new feedback format
-//    @Test
-//    @WithMockUser(username = "tutor1", roles = "TA")
-//    public void manualAssessmentSave() throws Exception {
-//        ModelingSubmission submission = database.addModelingSubmissionFromResources(exercise, "test-data/model-submission/model.54727.json", "student1");
-//        Result result = submission.getResult();
-//        List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
-//        result.setFeedbacks(feedbacks);
-//        request.put(
-//            "/api/modeling-submissions/"
-//                + submission.getId() + "/feedback",
-//            feedbacks,
-//            HttpStatus.OK);
-//        ModelingSubmission storedSubmission = modelingSubmissionRepo.findById(submission.getId()).get();
-//        Result storedResult = resultRepo.findByIdWithEagerFeedbacks(storedSubmission.getResult().getId()).get();
-//        assertThat(storedResult.getFeedbacks()).as("feedback has been stored").isEqualTo(feedbacks);
-//        assertThat(storedResult.isRated()).as("rated has not been set").isFalse();
-//        assertThat(storedResult.getScore()).as("score hasnt been calculated").isNull();
-//        assertThat(storedResult.getAssessor()).as("Assessor has been set").isNotNull();
-//        assertThat(storedResult.getResultString()).as("result string has been set").isNull();
-//    }
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void manualAssessmentSave() throws Exception {
+        ModelingSubmission submission = database.addModelingSubmissionFromResources(exercise, "test-data/model-submission/model.54727.json", "student1");
+        Result result = submission.getResult();
+        List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
+        result.setFeedbacks(feedbacks);
+        request.put(
+            "/api/modeling-submissions/"
+                + submission.getId() + "/feedback",
+            feedbacks,
+            HttpStatus.OK);
+        ModelingSubmission storedSubmission = modelingSubmissionRepo.findById(submission.getId()).get();
+        Result storedResult = resultRepo.findByIdWithEagerFeedbacks(storedSubmission.getResult().getId()).get();
+        assertThat(storedResult.getFeedbacks()).as("feedback has been stored").isEqualTo(feedbacks);
+        assertThat(storedResult.isRated()).as("rated has not been set").isFalse();
+        assertThat(storedResult.getScore()).as("score hasnt been calculated").isNull();
+        assertThat(storedResult.getAssessor()).as("Assessor has been set").isNotNull();
+        assertThat(storedResult.getResultString()).as("result string has been set").isNull();
+    }
 
 
-    // TODO CZ: enable again after file format of assessments has been changed to new feedback format
-//    @Test
-//    @WithMockUser(username = "tutor1", roles = "TA")
-//    public void manualAssessmentSubmit() throws Exception {
-//        ModelingSubmission submission = database.addModelingSubmissionFromResources(exercise, "test-data/model-submission/model.54727.json", "student1");
-//        Result result = submission.getResult();
-//        List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
-//        result.setFeedbacks(feedbacks);
-//        request.put(
-//            "/api/modeling-submissions/"
-//                + submission.getId() + "/feedback?submit=true",
-//            feedbacks,
-//            HttpStatus.OK);
-//        ModelingSubmission storedSubmission = modelingSubmissionRepo.findById(submission.getId()).get();
-//        Result storedResult = resultRepo.findByIdWithEagerFeedbacks(storedSubmission.getResult().getId()).get();
-//        assertThat(storedResult.getFeedbacks()).as("feedback has been stored").isEqualTo(feedbacks);
-//        assertThat(storedResult.isRated()).as("rated has been set").isTrue();
-//        assertThat(storedResult.getScore()).as("score has been calculated").isNotNull();
-//        assertThat(storedResult.getAssessor()).as("Assessor has been set").isNotNull();
-//        assertThat(storedResult.getResultString()).as("result string has been set").isNotNull().isNotEqualTo("");
-//    }
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void manualAssessmentSubmit() throws Exception {
+        ModelingSubmission submission = database.addModelingSubmissionFromResources(exercise, "test-data/model-submission/model.54727.json", "student1");
+        Result result = submission.getResult();
+        List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
+        result.setFeedbacks(feedbacks);
+        request.put(
+            "/api/modeling-submissions/"
+                + submission.getId() + "/feedback?submit=true",
+            feedbacks,
+            HttpStatus.OK);
+        ModelingSubmission storedSubmission = modelingSubmissionRepo.findById(submission.getId()).get();
+        Result storedResult = resultRepo.findByIdWithEagerFeedbacks(storedSubmission.getResult().getId()).get();
+        assertThat(storedResult.getFeedbacks()).as("feedback has been stored").isEqualTo(feedbacks);
+        assertThat(storedResult.isRated()).as("rated has been set").isTrue();
+        assertThat(storedResult.getScore()).as("score has been calculated").isNotNull();
+        assertThat(storedResult.getAssessor()).as("Assessor has been set").isNotNull();
+        assertThat(storedResult.getResultString()).as("result string has been set").isNotNull().isNotEqualTo("");
+    }
 
 
-    // TODO CZ: enable again after file format of assessments has been changed to new feedback format
-//    @Test
-//    @WithMockUser(username = "tutor1", roles = "TA")
-//    public void automaticAssessment() throws Exception {
-//        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(exercise, "test-data/model-submission/model.54727.json", "student1");
-//        ModelingSubmission submission2 = database.addModelingSubmissionFromResources(exercise, "test-data/model-submission/model.54727.json", "student2");
-//        List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
-//        request.put(
-//            "/api/modeling-submissions/"
-//                + submission1.getId() + "/feedback?submit=true",
-//            feedbacks,
-//            HttpStatus.OK);
-//        ModelingSubmission storedSubmission1 = modelingSubmissionRepo.findById(submission1.getId()).get();
-//        Result storedResult1 = storedSubmission1.getResult();
-//        await().atMost(10, TimeUnit.SECONDS).alias("2nd submission has been automatically assessed").until(submissionHasBeenAssessed(submission2.getId()));
-//        ModelingSubmission storedSubmission2 = modelingSubmissionRepo.findById(submission1.getId()).get();
-//        Result storedResult2 = storedSubmission2.getResult();
-//        assertThat(storedResult1.getScore()).as("identical model got assessed equally").isEqualTo(storedResult2.getScore());
-//        assertThat(storedResult2.getAssessmentType()).as("got assessed automatically").isEqualTo(AssessmentType.AUTOMATIC);
-//    }
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void automaticAssessment() throws Exception {
+        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(exercise, "test-data/model-submission/model.54727.json", "student1");
+        ModelingSubmission submission2 = database.addModelingSubmissionFromResources(exercise, "test-data/model-submission/model.54727.json", "student2");
+        List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
+        request.put(
+            "/api/modeling-submissions/"
+                + submission1.getId() + "/feedback?submit=true",
+            feedbacks,
+            HttpStatus.OK);
+        ModelingSubmission storedSubmission1 = modelingSubmissionRepo.findById(submission1.getId()).get();
+        Result storedResult1 = storedSubmission1.getResult();
+        await().atMost(10, TimeUnit.SECONDS).alias("2nd submission has been automatically assessed").until(submissionHasBeenAssessed(submission2.getId()));
+        ModelingSubmission storedSubmission2 = modelingSubmissionRepo.findById(submission1.getId()).get();
+        Result storedResult2 = storedSubmission2.getResult();
+        assertThat(storedResult1.getScore()).as("identical model got assessed equally").isEqualTo(storedResult2.getScore());
+        assertThat(storedResult2.getAssessmentType()).as("got assessed automatically").isEqualTo(AssessmentType.AUTOMATIC);
+    }
 
 
     private Callable<Boolean> submissionHasBeenAssessed(Long id) {

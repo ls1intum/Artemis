@@ -1,1 +1,107 @@
-{"assessments":[{"id":"d83a8d0c-52b5-4ac4-b7c0-2051c3bd57c0","type":"class","credits":0.5,"comment":"Correct"},{"id":"1d842153-ee27-434e-b8b1-1a5996db2cbd","type":"class","credits":0,"comment":"Correct, but you are missing the accessInternet() method and a wifiAvailable attribute"},{"id":"22d11657-04dc-4385-983e-0c0f2de7bb0d","type":"method","credits":0.5,"comment":"Correct"},{"id":"f49e6a7e-59c1-44aa-994e-03f70198909d","type":"class","credits":0.5,"comment":"Correct"},{"id":"89f760ff-5676-43df-a61b-38db88469d0c","type":"method","credits":0.5,"comment":"Correct"},{"id":"8f79b134-aa9c-4a5a-b9d6-00517a8eaf5b","type":"class","credits":0.5,"comment":"Correct"},{"id":"7e18d46f-2d9f-4b30-8df5-1e7418984d9f","type":"method","credits":0,"comment":"The method should have the same name as the interface :)"},{"id":"41c3d6da-2c68-431a-8c42-73fef2f5b148","type":"class","credits":0.5,"comment":"Correct"},{"id":"40ecb386-b902-456b-95ea-d4826c0aae50","type":"method","credits":0,"comment":"You forgot to name this method"},{"id":"f0008e87-165a-4992-94e0-889d5e2a3b0e","type":"class","credits":0.5,"comment":"Correct"},{"id":"87fd4ab0-842c-4cf5-8fb2-2cc3b5709f71","type":"relationship","credits":0.5,"comment":""},{"id":"8c90fa0b-d64a-4820-b5cd-c2aaaa8ddc1d","type":"relationship","credits":0.5,"comment":""},{"id":"79a7d53b-b48d-436d-8d8e-48726e4ed504","type":"relationship","credits":0.5,"comment":""},{"id":"8fc8880c-1f95-46e0-9e20-088296f0e275","type":"relationship","credits":0.5,"comment":""},{"id":"3eb12740-566f-425b-9427-d6d98b9eb5d8","type":"relationship","credits":0.5,"comment":""}]}
+[
+  {
+    "referenceId": "d83a8d0c-52b5-4ac4-b7c0-2051c3bd57c0",
+    "referenceType": "class",
+    "reference": "class:d83a8d0c-52b5-4ac4-b7c0-2051c3bd57c0",
+    "credits": 0.5,
+    "text": "Correct"
+  },
+  {
+    "referenceId": "1d842153-ee27-434e-b8b1-1a5996db2cbd",
+    "referenceType": "class",
+    "reference": "class:1d842153-ee27-434e-b8b1-1a5996db2cbd",
+    "credits": 0,
+    "text": "Correct, but you are missing the accessInternet() method and a wifiAvailable attribute"
+  },
+  {
+    "referenceId": "22d11657-04dc-4385-983e-0c0f2de7bb0d",
+    "referenceType": "method",
+    "reference": "method:22d11657-04dc-4385-983e-0c0f2de7bb0d",
+    "credits": 0.5,
+    "text": "Correct"
+  },
+  {
+    "referenceId": "f49e6a7e-59c1-44aa-994e-03f70198909d",
+    "referenceType": "class",
+    "reference": "class:f49e6a7e-59c1-44aa-994e-03f70198909d",
+    "credits": 0.5,
+    "text": "Correct"
+  },
+  {
+    "referenceId": "89f760ff-5676-43df-a61b-38db88469d0c",
+    "referenceType": "method",
+    "reference": "method:89f760ff-5676-43df-a61b-38db88469d0c",
+    "credits": 0.5,
+    "text": "Correct"
+  },
+  {
+    "referenceId": "8f79b134-aa9c-4a5a-b9d6-00517a8eaf5b",
+    "referenceType": "class",
+    "reference": "class:8f79b134-aa9c-4a5a-b9d6-00517a8eaf5b",
+    "credits": 0.5,
+    "text": "Correct"
+  },
+  {
+    "referenceId": "7e18d46f-2d9f-4b30-8df5-1e7418984d9f",
+    "referenceType": "method",
+    "reference": "method:7e18d46f-2d9f-4b30-8df5-1e7418984d9f",
+    "credits": 0,
+    "text": "The method should have the same name as the interface :)"
+  },
+  {
+    "referenceId": "41c3d6da-2c68-431a-8c42-73fef2f5b148",
+    "referenceType": "class",
+    "reference": "class:41c3d6da-2c68-431a-8c42-73fef2f5b148",
+    "credits": 0.5,
+    "text": "Correct"
+  },
+  {
+    "referenceId": "40ecb386-b902-456b-95ea-d4826c0aae50",
+    "referenceType": "method",
+    "reference": "method:40ecb386-b902-456b-95ea-d4826c0aae50",
+    "credits": 0,
+    "text": "You forgot to name this method"
+  },
+  {
+    "referenceId": "f0008e87-165a-4992-94e0-889d5e2a3b0e",
+    "referenceType": "class",
+    "reference": "class:f0008e87-165a-4992-94e0-889d5e2a3b0e",
+    "credits": 0.5,
+    "text": "Correct"
+  },
+  {
+    "referenceId": "87fd4ab0-842c-4cf5-8fb2-2cc3b5709f71",
+    "referenceType": "relationship",
+    "reference": "relationship:87fd4ab0-842c-4cf5-8fb2-2cc3b5709f71",
+    "credits": 0.5,
+    "text": ""
+  },
+  {
+    "referenceId": "8c90fa0b-d64a-4820-b5cd-c2aaaa8ddc1d",
+    "referenceType": "relationship",
+    "reference": "relationship:8c90fa0b-d64a-4820-b5cd-c2aaaa8ddc1d",
+    "credits": 0.5,
+    "text": ""
+  },
+  {
+    "referenceId": "79a7d53b-b48d-436d-8d8e-48726e4ed504",
+    "referenceType": "relationship",
+    "reference": "relationship:79a7d53b-b48d-436d-8d8e-48726e4ed504",
+    "credits": 0.5,
+    "text": ""
+  },
+  {
+    "referenceId": "8fc8880c-1f95-46e0-9e20-088296f0e275",
+    "referenceType": "relationship",
+    "reference": "relationship:8fc8880c-1f95-46e0-9e20-088296f0e275",
+    "credits": 0.5,
+    "text": ""
+  },
+  {
+    "referenceId": "3eb12740-566f-425b-9427-d6d98b9eb5d8",
+    "referenceType": "relationship",
+    "reference": "relationship:3eb12740-566f-425b-9427-d6d98b9eb5d8",
+    "credits": 0.5,
+    "text": ""
+  }
+]
