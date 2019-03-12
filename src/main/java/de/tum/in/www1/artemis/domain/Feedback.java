@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
@@ -108,6 +109,7 @@ public class Feedback implements Serializable {
      *
      * @return the jsonElementId for modeling submissions or null if the reference string does not contain ':'
      */
+    @JsonIgnore
     public String getReferenceElementId() {
         if (!reference.contains(":")) {
             return null;
@@ -121,6 +123,7 @@ public class Feedback implements Serializable {
      *
      * @return the umlElementType for modeling submissions or null if the reference string does not contain ':'
      */
+    @JsonIgnore
     public String getReferenceElementType() {
         if (!reference.contains(":")) {
             return null;
