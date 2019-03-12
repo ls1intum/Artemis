@@ -55,6 +55,7 @@ public class ModelingAssessmentIntegrationTest {
         exercise = (ModelingExercise) exerciseRepo.findAll().get(0);
     }
 
+
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void manualAssessmentSubmitAsStudent() throws Exception {
@@ -68,7 +69,7 @@ public class ModelingAssessmentIntegrationTest {
         ModelingSubmission storedSubmission = modelingSubmissionRepo.findById(submission.getId()).get();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacks(storedSubmission.getResult().getId()).get();
         assertThat(storedResult.getFeedbacks()).as("feedback has not been set").isNullOrEmpty();
-        assertThat(storedResult.isRated()).as("rated has not been set").isFalse();
+        assertThat(storedResult.isRated() == null || !storedResult.isRated()).as("rated has not been set").isTrue();
         assertThat(storedResult.getScore()).as("score hasnt been calculated").isNull();
         assertThat(storedResult.getAssessor()).as("Assessor has been set").isNull();
         assertThat(storedResult.getResultString()).as("result string has not been set").isNull();
@@ -169,7 +170,7 @@ public class ModelingAssessmentIntegrationTest {
 
 
     private void checkResultAfterSave(Result storedResult, User assessor) {
-        assertThat(storedResult.isRated()).as("rated has not been set").isFalse();
+        assertThat(storedResult.isRated() == null || !storedResult.isRated()).as("rated has not been set").isTrue();
         assertThat(storedResult.getScore()).as("score hasnt been calculated").isNull();
         assertThat(storedResult.getAssessor().getId()).as("Assessor has been set").isEqualTo(assessor.getId());
         assertThat(storedResult.getResultString()).as("result string has not been set").isNull();
