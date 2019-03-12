@@ -49,7 +49,8 @@ entity Course (course) {
     endDate ZonedDateTime,
     onlineCourse Boolean,
     maxComplaints Integer,
-    color String
+    color String,
+    courseIcon String
 }
 
 entity Exercise (exercise) {        //abstract
@@ -337,36 +338,48 @@ enum TutorParticipationStatus {
 }
 
 entity StudentQuestion {
-    question String,
+    questionText String,               // VarChar(1000)
     upVotes Integer,
-    downVotes Integer
+    downVotes Integer,
+    visibleForStudents Boolean
 }
 
 entity QuestionAnswer {
-    answer String,
+    answerText String,                 // LONGTEXT --> lob
 }
 
 entity Notification {
     type NotificationType,
-    text String,
+    text String,                       // LONGTEXT --> lob
     expireDate Date,
-    action String
+    target String
 }
 
 enum NotificationType {
     SYSTEM,
-    STUDENT,
-    INSTRUCTOR
+    SINGLE_USER,
+    INSTRUCTOR,
+    TUTOR,
+    STUDENT
 }
 
 entity Lecture {
     title String,
-    date Date
+    description String,               // LONGTEXT --> lob
+    startDate Date,
+    endDate Date,
 }
 
-entity LectureAttachment {
+entity Attachment {
     name String,
-    attachment String
+    link String,
+    releaseDate Date,
+    attachmentType AttachmentType
+}
+
+enum AttachmentType {
+    FILE,
+    URL
 }
 
 relationship OneToMany {
@@ -375,6 +388,7 @@ relationship OneToMany {
     DragAndDropQuestionStatistic{DropLocationCounters} to DropLocationCounter{DragAndDropQuestionStatistic},
     ShortAnswerQuestionStatistic{ShortAnswerSpotCounters} to ShortAnswerSpotCounter{ShortAnswerQuestionStatistic},
     Course{exercises} to Exercise{course},
+    Course{lectures} to Lecture{course},
     Exercise{participations} to Participation{exercise},
     Exercise{tutorParticipations} to TutorParticipation{assessedExercise},
     Participation{results} to ExerciseResult{participation},
@@ -393,6 +407,9 @@ relationship OneToMany {
     ShortAnswerSubmittedAnswer{submittedTexts} to ShortAnswerSubmittedText{submittedAnswer},
     TutorParticipation{trainedExampleSubmissions} to ExampleSubmission,
     Exercise{exampleSubmissions} to ExampleSubmission{exercise}
+    StudentQuestion{answers} to QuestionAnswer{question},
+    Lecture{attachments} to Attachment,
+    Exercise{attachments} to Attachment
 }
 
 relationship OneToOne {
@@ -409,7 +426,6 @@ relationship OneToOne {
     ComplaintResponse{complaint} to Complaint,
     Complaint{student} to User,
     ComplaintResponse{reviewer} to User,
-    QuestionAnswer{question} to StudentQuestion,
     ExampleSubmission{submission} to Submission,
     ProgrammingExercise{templateParticipation} to Participation,
     ProgrammingExercise{solutionParticipation} to Participation,
@@ -427,10 +443,11 @@ relationship ManyToOne {
     TutorParticipation{tutor} to User,
     StudentQuestion{author} to User,
     StudentQuestion{exercise} to Exercise,
+    StudentQuestion{lecture} to Lecture,
     QuestionAnswer{author} to User,
     Notification{author} to User,
-    Notification{recipient} to User
-    LectureAttachment{lecture} to Lecture
+    Notification{recipient} to User,
+    Notification{course} to Course,
 }
 
 relationship ManyToMany {
