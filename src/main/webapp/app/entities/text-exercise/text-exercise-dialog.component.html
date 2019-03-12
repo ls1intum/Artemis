@@ -15,6 +15,10 @@
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.title" for="field_title">Title</label>
             <input required minlength="3" type="text" class="form-control" name="title" id="field_title" [(ngModel)]="textExercise.title" />
         </div>
+        <div class="form-group position-relative">
+            <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.categories">Categories</label>
+            <jhi-category-selector [exerciseCategories]="exerciseCategories" [existingCategories]="existingCategories" (selectedCategories)="updateCategories($event)"></jhi-category-selector>
+        </div>
         <div class="d-flex">
             <div class="form-group flex-grow-1">
                 <jhi-date-time-picker labelName="Release Date" [(ngModel)]="textExercise.releaseDate" name="releaseDate"></jhi-date-time-picker>

@@ -1,0 +1,28 @@
+.tag-input {
+    padding: 0 0.5rem;
+
+    ::ng-deep {
+        .ng2-tag-input.bootstrap {
+            border: none !important;
+            padding: 0 !important;
+
+
+            .ng2-tag-input__text-input {
+                height: 34px;
+            }
+        }
+
+        tag {
+            padding: 0;
+            height: 30px;
+            border-radius: .25rem !important;
+            background: transparent !important;
+
+            .custom-tag {
+                padding: 0 .45rem;
+                background: #cccccc;
+                border-radius: .25rem;
+            }
+        }
+    }
+}

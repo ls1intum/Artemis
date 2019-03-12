@@ -18,11 +18,12 @@ import {
 } from './';
 import { SortByModule } from 'app/components/pipes';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
+import { ArTEMiSCategorySelectorModule } from 'app/components/category-selector/category-selector.module';
 
 const ENTITY_STATES = [...modelingExerciseRoute, ...modelingExercisePopupRoute];
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, FormDateTimePickerModule],
+    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, FormDateTimePickerModule, ArTEMiSCategorySelectorModule],
     declarations: [
         ModelingExerciseComponent,
         ModelingExerciseDetailComponent,

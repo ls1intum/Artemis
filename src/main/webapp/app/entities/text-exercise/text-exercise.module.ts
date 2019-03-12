@@ -19,11 +19,12 @@ import {
 } from './';
 import { SortByModule } from 'app/components/pipes';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
+import { ArTEMiSCategorySelectorModule } from 'app/components/category-selector/category-selector.module';
 
 const ENTITY_STATES = [...textExerciseRoute, ...textExercisePopupRoute];
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, FormDateTimePickerModule],
+    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, FormDateTimePickerModule, ArTEMiSCategorySelectorModule],
     declarations: [
         TextExerciseComponent,
         TextExerciseDetailComponent,
@@ -41,7 +42,7 @@ const ENTITY_STATES = [...textExerciseRoute, ...textExercisePopupRoute];
         TextExerciseDeleteDialogComponent,
         TextExerciseDeletePopupComponent
     ],
-  providers: [TextExerciseService, TextExercisePopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
+    providers: [TextExerciseService, TextExercisePopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     exports: [TextExerciseComponent],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

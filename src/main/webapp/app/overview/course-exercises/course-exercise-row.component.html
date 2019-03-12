@@ -54,6 +54,10 @@
                     <span class="badge badge-success"
                           [hidden]="!asQuizExercise(exercise).isActiveQuiz">{{"arTeMiSApp.courseOverview.exerciseList.live" | translate}}</span>
                 </h4>
+                <h4 *ngFor="let category of exerciseCategories">
+                    <span class="badge text-white mr-1" [ngStyle]="{backgroundColor: category.color}">{{category.category}}</span>
+                </h4>
+
             </div>
             <div class="col-auto" *ngIf="exercise.dueDate || exercise.releaseDate; else noDate"
                  [ngClass]="getUrgentClass(exercise.dueDate ? exercise.dueDate : exercise.releaseDate)">{{(exercise.dueDate ? exercise.dueDate : exercise.releaseDate) |

@@ -78,7 +78,7 @@ public abstract class Exercise implements Serializable {
     @Lob
     private String gradingInstructions;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     private List<String> categories = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)

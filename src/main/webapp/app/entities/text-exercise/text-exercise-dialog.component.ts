@@ -12,6 +12,7 @@ import { TextExerciseService } from './text-exercise.service';
 import { Course, CourseService } from '../course';
 
 import { Subscription } from 'rxjs/Subscription';
+import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 
 @Component({
     selector: 'jhi-text-exercise-dialog',
@@ -21,6 +22,8 @@ export class TextExerciseDialogComponent implements OnInit {
     textExercise: TextExercise;
     isSaving: boolean;
     maxScorePattern = '^[1-9]{1}[0-9]{0,4}$'; // make sure max score is a positive natural integer and not too large
+    exerciseCategories: ExerciseCategory[];
+    existingCategories: ExerciseCategory[];
 
     courses: Course[];
 
@@ -28,6 +31,7 @@ export class TextExerciseDialogComponent implements OnInit {
         public activeModal: NgbActiveModal,
         private jhiAlertService: JhiAlertService,
         private textExerciseService: TextExerciseService,
+        private exerciseService: ExerciseService,
         private courseService: CourseService,
         private eventManager: JhiEventManager,
         private router: Router
@@ -47,10 +51,21 @@ export class TextExerciseDialogComponent implements OnInit {
                 this.activeModal.close();
             }
         });
+        this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.textExercise);
+        this.courseService.findAllCategoriesOfCourse(this.textExercise.course.id).subscribe(
+            (res: HttpResponse<string[]>) => {
+                this.existingCategories = [...new Set(this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body))];
+            },
+            (res: HttpErrorResponse) => this.onError(res)
+        );
     }
 
     clear() {
         this.activeModal.dismiss('cancel');
+    }
+
+    updateCategories(categories: ExerciseCategory[]) {
+        this.textExercise.categories = categories.map(el => JSON.stringify(el));
     }
 
     save() {
@@ -70,7 +85,7 @@ export class TextExerciseDialogComponent implements OnInit {
     }
 
     private onSaveSuccess(result: TextExercise) {
-        this.eventManager.broadcast({ name: 'textExerciseListModification', content: 'OK' });
+        this.eventManager.broadcast({name: 'textExerciseListModification', content: 'OK'});
         this.isSaving = false;
         this.activeModal.dismiss(result);
     }
