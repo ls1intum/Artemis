@@ -1,0 +1,110 @@
+{
+    "version": "1.0",
+    "entities": {
+        "allIds": [
+            "66912b2d-0c8e-4663-af39-f69acb9350e1",
+            "77f659ca-670f-4942-beb1-5b257971fc27"
+        ],
+        "byId": {
+            "66912b2d-0c8e-4663-af39-f69acb9350e1": {
+                "id": "66912b2d-0c8e-4663-af39-f69acb9350e1",
+                "kind": "CLASS",
+                "name": "Drink",
+                "position": {
+                    "x": 720,
+                    "y": 630
+                },
+                "size": {
+                    "width": 200,
+                    "height": 70
+                },
+                "attributes": [],
+                "methods": [
+                    {
+                        "id": "6e47db46-9343-4fc9-96bd-37342991bdc5",
+                        "name": "drink()"
+                    }
+                ],
+                "renderMode": {
+                    "showAttributes": true,
+                    "showMethods": true
+                }
+            },
+            "77f659ca-670f-4942-beb1-5b257971fc27": {
+                "id": "77f659ca-670f-4942-beb1-5b257971fc27",
+                "kind": "CLASS",
+                "name": "Tea",
+                "position": {
+                    "x": 720,
+                    "y": 840
+                },
+                "size": {
+                    "width": 200,
+                    "height": 100
+                },
+                "attributes": [
+                    {
+                        "id": "594ab1eb-2f79-4573-a9a7-4806f631c5fe",
+                        "name": "temperature"
+                    }
+                ],
+                "methods": [
+                    {
+                        "id": "62db30c6-520e-4346-b841-4cf98857d784",
+                        "name": "boil()"
+                    }
+                ],
+                "renderMode": {
+                    "showAttributes": true,
+                    "showMethods": true
+                }
+            }
+        }
+    },
+    "relationships": {
+        "allIds": [
+            "0749e2c9-1abc-4460-a28d-b6ffdd52b026"
+        ],
+        "byId": {
+            "0749e2c9-1abc-4460-a28d-b6ffdd52b026": {
+                "id": "0749e2c9-1abc-4460-a28d-b6ffdd52b026",
+                "name": "Relationship",
+                "selected": false,
+                "bounds": {
+                    "x": 0,
+                    "y": 0,
+                    "width": 0,
+                    "height": 0
+                },
+                "kind": "INHERITANCE",
+                "source": {
+                    "entityId": "77f659ca-670f-4942-beb1-5b257971fc27",
+                    "multiplicity": null,
+                    "role": null,
+                    "edge": "TOP",
+                    "edgeOffset": 0.5
+                },
+                "target": {
+                    "entityId": "66912b2d-0c8e-4663-af39-f69acb9350e1",
+                    "multiplicity": null,
+                    "role": null,
+                    "edge": "BOTTOM",
+                    "edgeOffset": 0.5
+                },
+                "straightLine": false,
+                "owner": null,
+                "interactive": false
+            }
+        }
+    },
+    "interactiveElements": {
+        "allIds": []
+    },
+    "editor": {
+        "canvasSize": {
+            "width": 1600,
+            "height": 1600
+        },
+        "gridSize": 10
+    }
+}

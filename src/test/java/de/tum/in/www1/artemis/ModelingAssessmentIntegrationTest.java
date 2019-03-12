@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.compass.conflict.Conflict;
 import de.tum.in.www1.artemis.util.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -158,6 +159,34 @@ public class ModelingAssessmentIntegrationTest {
         Result storedResult2 = storedSubmission2.getResult();
         assertThat(storedResult1.getScore()).as("identical model got assessed equally").isEqualTo(storedResult2.getScore());
         assertThat(storedResult2.getAssessmentType()).as("got assessed automatically").isEqualTo(AssessmentType.AUTOMATIC);
+    }
+
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void testConflictDetection() throws Exception {
+        User assessor = userRepo.findOneByLogin("tutor1").get();
+        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(exercise, "test-data/model-submission/model.conflict.1.json", "student1");
+        ModelingSubmission submission2 = database.addModelingSubmissionFromResources(exercise, "test-data/model-submission/model.conflict.2.json", "student2");
+        List<Feedback> feedbacks1 = database.loadAssessmentFomResources("test-data/model-assessment/assessment.conflict.1.json");
+        List<Feedback> feedbacks2 = database.loadAssessmentFomResources("test-data/model-assessment/assessment.conflict.2.json");
+        Result returnedResult = request.putWithResponseBody(
+            "/api/modeling-submissions/"
+                + submission1.getId() + "/feedback?submit=true",
+            feedbacks1,
+            Result.class,
+            HttpStatus.OK);
+        List<Conflict> conflicts = request.putWithResponseBodyList(
+            "/api/modeling-submissions/"
+                + submission2.getId() + "/feedback?submit=true",
+            feedbacks2,
+            Conflict.class,
+            HttpStatus.CONFLICT);
+        ModelingSubmission storedSubmission = modelingSubmissionRepo.findById(submission2.getId()).get();
+        Result storedResult = resultRepo.findByIdWithEagerFeedbacks(storedSubmission.getResult().getId()).get();
+        checkFeedbackCorrectlyStored(feedbacks2, storedResult.getFeedbacks());
+        checkResultAfterSave(storedResult, assessor);
+        assertThat(conflicts.size()).as("both conflicts got detected").isEqualTo(2);
     }
 
 

@@ -98,6 +98,24 @@ public class RequestUtilService {
     }
 
 
+    public <T, R> List<R> putWithResponseBodyList(
+        String path, T body, Class<R> listElementType, HttpStatus expectedStatus) throws Exception {
+        String jsonBody = mapper.writeValueAsString(body);
+        MvcResult res =
+            mvc.perform(
+                MockMvcRequestBuilders.put(new URI(path))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(jsonBody)
+                    .with(csrf()))
+                .andExpect(status().is(expectedStatus.value()))
+                .andReturn();
+
+        return mapper.readValue(
+            res.getResponse().getContentAsString(),
+            mapper.getTypeFactory().constructCollectionType(List.class, listElementType));
+    }
+
+
     public <T> void put(String path, T body, HttpStatus expectedStatus) throws Exception {
         String jsonBody = mapper.writeValueAsString(body);
         mvc.perform(
