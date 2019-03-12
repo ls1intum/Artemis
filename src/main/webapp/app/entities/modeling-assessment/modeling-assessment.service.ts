@@ -27,7 +27,7 @@ export class ModelingAssessmentService {
     constructor(private http: HttpClient) {
     }
 
-    save(feedbacks: Feedback[], submissionId: number, submit = false, ignoreConflicts = false): Observable<any> {
+    save(feedbacks: Feedback[], submissionId: number, submit = false, ignoreConflicts = false): Observable<Result> {
         let url = `${this.resourceUrl}/modeling-submissions/${submissionId}/feedback`;
         if (submit) {
             url += '?submit=true';
@@ -35,7 +35,9 @@ export class ModelingAssessmentService {
                 url += '&ignoreConflicts=true';
             }
         }
-        return this.http.put<Feedback[]>(url, feedbacks);
+        return this.http
+            .put<Result>(url, feedbacks)
+            .map( res => this.convertResponse(res));
     }
 
     getAssessment(submissionId: number): Observable<Result> {
@@ -60,24 +62,16 @@ export class ModelingAssessmentService {
             .delete<void>(`${this.resourceUrl}/exercises/${exerciseId}/optimal-model-submissions`, {observe: 'response'});
     }
 
-    // TODO CZ: test this
+    /**
+     * Iterates over all feedback elements of a response and converts the reference field of the feedback into
+     * separate referenceType and referenceId fields. The reference field is of the form <referenceType>:<referenceId>.
+     */
     private convertResponse(result: Result): Result {
-        // const body: Result = this.convertItemFromServer(result);
         for (const feedback of result.feedbacks) {
-            // TODO: does this work?
             feedback.referenceType = feedback.reference.split(':')[0] as ModelElementType;
             feedback.referenceId = feedback.reference.split(':')[1];
         }
         return result;
-    }
-
-    /**
-     * Convert a returned JSON object to Result.
-     */
-    // TODO CZ: remove
-    private convertItemFromServer(result: Result): Result {
-        const copy: Result = Object.assign({}, result);
-        return copy;
     }
 
     /**

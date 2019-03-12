@@ -5,7 +5,7 @@
         <div class="col">
             <h2>
                 Assessment <span
-                *ngIf="result">for Submission: {{result.participation.student.firstName}} {{result.participation.student.lastName}}</span>
+                *ngIf="result && result.participation">for Submission: {{result.participation.student.firstName}} {{result.participation.student.lastName}}</span>
             </h2>
         </div>
         <div class="col text-right">
