@@ -339,18 +339,19 @@ enum TutorParticipationStatus {
 
 entity StudentQuestion {
     questionText String,               // VarChar(1000)
-    upVotes Integer,
-    downVotes Integer,
+    creationDate Date,
     visibleForStudents Boolean
 }
 
 entity QuestionAnswer {
     answerText String,                 // LONGTEXT --> lob
+    answerDate Date
 }
 
 entity Notification {
     type NotificationType,
     text String,                       // LONGTEXT --> lob
+    notificationDate Date,
     expireDate Date,
     target String
 }

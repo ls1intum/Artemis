@@ -14,6 +14,7 @@ import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.*;
 
 /**
@@ -77,6 +78,9 @@ public class User extends AbstractAuditingEntity implements Serializable {
 
     @Column(name = "reset_date")
     private Instant resetDate = null;
+
+    @Column(name = "last_notification_read")
+    private ZonedDateTime lastNotificationRead = null;
 
     @ElementCollection
     private List<String> groups = new ArrayList<>();
