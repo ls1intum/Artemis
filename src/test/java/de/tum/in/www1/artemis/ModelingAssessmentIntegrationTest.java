@@ -12,7 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit4.SpringRunner;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.util.*;
@@ -55,14 +55,33 @@ public class ModelingAssessmentIntegrationTest {
         exercise = (ModelingExercise) exerciseRepo.findAll().get(0);
     }
 
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void manualAssessmentSubmitAsStudent() throws Exception {
+        User assessor = userRepo.findOneByLogin("tutor1").get();
+        ModelingSubmission submission = database.addModelingSubmissionFromResources(exercise, "test-data/model-submission/model.54727.json", "student1");
+        List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
+        request.put(
+            "/api/modeling-submissions/"
+                + submission.getId() + "/feedback?submit=true",
+            feedbacks,
+            HttpStatus.FORBIDDEN);
+        ModelingSubmission storedSubmission = modelingSubmissionRepo.findById(submission.getId()).get();
+        Result storedResult = resultRepo.findByIdWithEagerFeedbacks(storedSubmission.getResult().getId()).get();
+        assertThat(storedResult.getFeedbacks()).as("feedback has not been set").isNullOrEmpty();
+        assertThat(storedResult.isRated()).as("rated has not been set").isFalse();
+        assertThat(storedResult.getScore()).as("score hasnt been calculated").isNull();
+        assertThat(storedResult.getAssessor()).as("Assessor has been set").isNull();
+        assertThat(storedResult.getResultString()).as("result string has not been set").isNull();
+    }
+
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void manualAssessmentSave() throws Exception {
+        User assessor = userRepo.findOneByLogin("tutor1").get();
         ModelingSubmission submission = database.addModelingSubmissionFromResources(exercise, "test-data/model-submission/model.54727.json", "student1");
-        Result result = submission.getResult();
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
-        result.setFeedbacks(feedbacks);
         request.put(
             "/api/modeling-submissions/"
                 + submission.getId() + "/feedback",
@@ -70,21 +89,17 @@ public class ModelingAssessmentIntegrationTest {
             HttpStatus.OK);
         ModelingSubmission storedSubmission = modelingSubmissionRepo.findById(submission.getId()).get();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacks(storedSubmission.getResult().getId()).get();
-        assertThat(storedResult.getFeedbacks()).as("feedback has been stored").isEqualTo(feedbacks);
-        assertThat(storedResult.isRated()).as("rated has not been set").isFalse();
-        assertThat(storedResult.getScore()).as("score hasnt been calculated").isNull();
-        assertThat(storedResult.getAssessor()).as("Assessor has been set").isNotNull();
-        assertThat(storedResult.getResultString()).as("result string has been set").isNull();
+        checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks());
+        checkResultAfterSave(storedResult, assessor);
     }
 
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void manualAssessmentSubmit() throws Exception {
+        User assessor = userRepo.findOneByLogin("tutor1").get();
         ModelingSubmission submission = database.addModelingSubmissionFromResources(exercise, "test-data/model-submission/model.54727.json", "student1");
-        Result result = submission.getResult();
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
-        result.setFeedbacks(feedbacks);
         request.put(
             "/api/modeling-submissions/"
                 + submission.getId() + "/feedback?submit=true",
@@ -92,11 +107,36 @@ public class ModelingAssessmentIntegrationTest {
             HttpStatus.OK);
         ModelingSubmission storedSubmission = modelingSubmissionRepo.findById(submission.getId()).get();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacks(storedSubmission.getResult().getId()).get();
-        assertThat(storedResult.getFeedbacks()).as("feedback has been stored").isEqualTo(feedbacks);
-        assertThat(storedResult.isRated()).as("rated has been set").isTrue();
-        assertThat(storedResult.getScore()).as("score has been calculated").isNotNull();
-        assertThat(storedResult.getAssessor()).as("Assessor has been set").isNotNull();
-        assertThat(storedResult.getResultString()).as("result string has been set").isNotNull().isNotEqualTo("");
+        checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks());
+        checkResultAfterSubmit(storedResult, assessor);
+    }
+
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void manualAssessmentSaveAndSubmit() throws Exception {
+        User assessor = userRepo.findOneByLogin("tutor1").get();
+        ModelingSubmission submission = database.addModelingSubmissionFromResources(exercise, "test-data/model-submission/model.54727.json", "student1");
+        List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
+        request.put(
+            "/api/modeling-submissions/"
+                + submission.getId() + "/feedback",
+            feedbacks,
+            HttpStatus.OK);
+        ModelingSubmission storedSubmission = modelingSubmissionRepo.findById(submission.getId()).get();
+        Result storedResult = resultRepo.findByIdWithEagerFeedbacks(storedSubmission.getResult().getId()).get();
+        checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks());
+        checkResultAfterSave(storedResult, assessor);
+        feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.v2.json");
+        request.put(
+            "/api/modeling-submissions/"
+                + submission.getId() + "/feedback?submit=true",
+            feedbacks,
+            HttpStatus.OK);
+        storedSubmission = modelingSubmissionRepo.findById(submission.getId()).get();
+        storedResult = resultRepo.findByIdWithEagerFeedbacks(storedSubmission.getResult().getId()).get();
+        checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks());
+        checkResultAfterSubmit(storedResult, assessor);
     }
 
 
@@ -126,6 +166,39 @@ public class ModelingAssessmentIntegrationTest {
             Result result = modelingSubmissionRepo.findById(id).get().getResult();
             return result.getScore() != null;
         };
+    }
+
+
+    private void checkResultAfterSave(Result storedResult, User assessor) {
+        assertThat(storedResult.isRated()).as("rated has not been set").isFalse();
+        assertThat(storedResult.getScore()).as("score hasnt been calculated").isNull();
+        assertThat(storedResult.getAssessor().getId()).as("Assessor has been set").isEqualTo(assessor.getId());
+        assertThat(storedResult.getResultString()).as("result string has not been set").isNull();
+    }
+
+
+    private void checkResultAfterSubmit(Result storedResult, User assessor) {
+        assertThat(storedResult.isRated()).as("rated has been set").isTrue();
+        assertThat(storedResult.getScore()).as("score has been calculated").isNotNull();
+        assertThat(storedResult.getAssessor().getId()).as("Assessor has been set").isEqualTo(assessor.getId());
+        assertThat(storedResult.getResultString()).as("result string has been set").isNotNull().isNotEqualTo("");
+    }
+
+
+    private void checkFeedbackCorrectlyStored(List<Feedback> sentFeedback, List<Feedback> storedFeedback) {
+        assertThat(sentFeedback.size()).as("contains the same amount of feedback").isEqualTo(storedFeedback.size());
+        Result storedFeedbackResult = new Result();
+        Result sentFeedbackResult = new Result();
+        storedFeedbackResult.setFeedbacks(storedFeedback);
+        sentFeedbackResult.setFeedbacks(sentFeedback);
+        storedFeedbackResult.evaluateFeedback(20);
+        sentFeedbackResult.evaluateFeedback(20);
+        assertThat(storedFeedbackResult.getScore())
+            .as("stored feedback evaluates to the same score as sent feedback")
+            .isEqualTo(sentFeedbackResult.getScore());
+        storedFeedback.forEach(feedback -> {
+            assertThat(feedback.getType()).as("type has been set to MANUAL").isEqualTo(FeedbackType.MANUAL);
+        });
     }
 
 }

@@ -39,6 +39,8 @@ public class DatabaseUtilService {
     @Autowired
     ModelingSubmissionRepository modelingSubmissionRepo;
     @Autowired
+    FeedbackRepository feedbackRepo;
+    @Autowired
     ModelingSubmissionService modelSubmissionService;
     @Autowired
     ObjectMapper mapper;
@@ -48,7 +50,9 @@ public class DatabaseUtilService {
         participationRepo.deleteAll();
         exerciseRepo.deleteAll();
         courseRepo.deleteAll();
+        feedbackRepo.deleteAll();
         resultRepo.deleteAll();
+        modelingSubmissionRepo.deleteAll();
         userRepo.deleteAll();
         assertThat(courseRepo.findAll()).as("course data has been cleared").isEmpty();
         assertThat(exerciseRepo.findAll()).as("exercise data has been cleared").isEmpty();
