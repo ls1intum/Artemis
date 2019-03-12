@@ -59,11 +59,12 @@ public class ModelingAssessmentService extends AssessmentService {
      * This function is used for saving a manual assessment/result. It sets the assessment type to MANUAL
      * and sets the assessor attribute. Furthermore, it saves the result in the database.
      *
-     * @param modelingSubmission
-     * @param feedbacks
+     * @param modelingSubmission the modeling submission to which the feedback belongs to
+     * @param modelingAssessment the assessment as a feedback list that should be added to the result of the
+     *                           corresponding submission
      */
     @Transactional
-    public Result saveManualAssessment(ModelingSubmission modelingSubmission, List<Feedback> feedbacks) {
+    public Result saveManualAssessment(ModelingSubmission modelingSubmission, List<Feedback> modelingAssessment) {
         Result result = modelingSubmission.getResult();
         if (result == null) {
             result = new Result();
@@ -73,14 +74,13 @@ public class ModelingAssessmentService extends AssessmentService {
         User user = userService.getUser();
         result.setAssessor(user);
 
-        // delete old feedback from the database for this result
-        feedbackRepository.deleteByResult(result);
+        // Note: If there is old feedback that gets removed here and not added again in the for-loop, it will also be
+        //       deleted in the database because of the 'orphanRemoval = true' flag.
         result.getFeedbacks().clear();
-        for (Feedback feedback : feedbacks) {
+        for (Feedback feedback : modelingAssessment) {
             feedback.setType(FeedbackType.MANUAL);
             result.addFeedback(feedback);
         }
-        feedbackRepository.saveAll(feedbacks);
         result.setHasFeedback(true);
 
         if (result.getSubmission() == null) {
@@ -89,6 +89,7 @@ public class ModelingAssessmentService extends AssessmentService {
             modelingSubmission.setResult(result);
             modelingSubmissionRepository.save(modelingSubmission);
         }
+        // Note: This also saves the feedback objects in the database because of the 'cascade = CascadeType.ALL' option.
         return resultRepository.save(result);
     }
 }

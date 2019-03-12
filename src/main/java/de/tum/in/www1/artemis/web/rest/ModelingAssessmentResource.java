@@ -134,7 +134,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @PutMapping("/modeling-submissions/{submissionId}/feedback")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     // TODO MJ changing submitted assessment always produces Conflict
-    @Transactional // TODO CZ: transactional really necessary here?
+    @Transactional
     public ResponseEntity<Object> submitModelingAssessment(
         @PathVariable Long submissionId,
         @RequestParam(value = "ignoreConflicts", defaultValue = "false") boolean ignoreConflict,
