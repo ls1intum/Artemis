@@ -1,20 +1,23 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Participation } from 'app/entities/participation';
-import { RepositoryFileService } from 'app/entities/repository';
-import { WindowRef, JhiWebsocketService } from 'app/core';
-import { EditorComponent } from '../editor.component';
-import { JhiAlertService } from 'ng-jhipster';
-import { AceEditorComponent } from 'ng2-ace-editor';
-import * as ace from 'brace';
-import 'brace/theme/dreamweaver';
-import 'brace/ext/modelist';
 import 'brace/ext/language_tools';
+import 'brace/ext/modelist';
 import 'brace/mode/java';
-import 'brace/mode/python';
 import 'brace/mode/javascript';
 import 'brace/mode/markdown';
-import { AceAnnotation } from '../../entities/ace-editor';
+import 'brace/mode/python';
+import 'brace/theme/dreamweaver';
+
+import { AceEditorComponent } from 'ng2-ace-editor';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { JhiAlertService } from 'ng-jhipster';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+
+import { Participation } from 'app/entities/participation';
+import { RepositoryFileService } from 'app/entities/repository';
+import { WindowRef } from 'app/core';
+import * as ace from 'brace';
+
+import { AceAnnotation, SaveStatusChange } from '../../entities/ace-editor';
+
 // TODO: consider adding any modes we might need
 
 @Component({
@@ -30,11 +33,8 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
     readonly aceModeList = ace.acequire('ace/ext/modelist');
 
     /** Ace Editor Options **/
-    editorText = '';
-    editorFileSessions: object = {};
+    editorFileSessions: {[fileName: string]: {code: string, unsavedChanges: boolean}} = {};
     editorMode = this.aceModeList.getModeForPath('Test.java').name; // String or mode object
-    editorAutoUpdate = true; // change content when editor text changes
-    editorDurationBeforeCallback = 800; // wait 0,8s before callback 'textChanged' sends new value
 
     /** Callback timing variables **/
     updateFilesDebounceTime = 3000;
@@ -43,15 +43,13 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
     @Input()
     participation: Participation;
     @Input()
-    fileName: string;
+    selectedFile: string;
     @Input()
     buildLogErrors: AceAnnotation;
     @Output()
-    saveStatusChange = new EventEmitter<object>();
+    saveStatusChange = new EventEmitter<SaveStatusChange>();
 
     constructor(
-        private parent: EditorComponent,
-        private jhiWebsocketService: JhiWebsocketService,
         private repositoryFileService: RepositoryFileService,
         public modalService: NgbModal
     ) {
@@ -88,14 +86,14 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
         if (changes.participation && this.participation) {
             this.updateSaveStatusLabel();
         }
-        if (changes.fileName && this.fileName) {
+        if (changes.selectedFile && this.selectedFile) {
             // Current file has changed
-            this.loadFile(this.fileName);
+            this.loadFile(this.selectedFile);
         }
         this.editor.getEditor().getSession().setAnnotations(this.buildLogErrors);
     }
 
-    onSaveStatusChange(statusChange: object) {
+    onSaveStatusChange(statusChange: SaveStatusChange) {
         this.saveStatusChange.emit(statusChange);
     }
 
@@ -140,22 +138,19 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
         this.repositoryFileService.get(this.participation.id, fileName).subscribe(
             fileObj => {
                 if (!this.editorFileSessions[fileName]) {
-                    this.editorFileSessions[fileName] = {};
-                    this.editorFileSessions[fileName].code = fileObj.fileContent;
-                    this.editorFileSessions[fileName].fileName = fileName;
+                    this.editorFileSessions[fileName] = {code: fileObj.fileContent, unsavedChanges: false};
                 }
                 /**
                  * Assign the obtained file content to the editor and set the ace mode
                  * Additionally, we resize the editor window and set focus to it
                  */
-                this.editorText = fileObj.fileContent;
                 this.editorMode = this.aceModeList.getModeForPath(fileName).name;
                 this.editor.setMode(this.editorMode);
                 this.editor.getEditor().resize();
-                this.editor._editor.focus();
+                this.editor.getEditor().focus();
             },
             err => {
-                console.log('There was an error while getting file', this.fileName, err);
+                console.log('There was an error while getting file', this.selectedFile, err);
             }
         );
     }
@@ -199,7 +194,7 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
                                 saveStatusLabel: '<span class="text-danger"> Failed to save file.</span>'
                             });
                         }
-                        console.log('There was an error while saving file', this.fileName, err);
+                        console.log('There was an error while saving file', this.selectedFile, err);
                     }
                 );
         }, this.saveFileDelayTime);
@@ -212,13 +207,18 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
      */
     onFileTextChanged(code: string) {
         /** Is the code different to what we have on our session? This prevents us from saving when a file is loaded **/
-        if (this.editorFileSessions[this.fileName] && this.editorFileSessions[this.fileName].code !== code) {
+        if (this.editorFileSessions[this.selectedFile] && this.editorFileSessions[this.selectedFile].code !== code) {
             // Assign received code to our session
-            this.editorFileSessions[this.fileName].code = code;
-            this.editorFileSessions[this.fileName].unsavedChanges = true;
+            this.editorFileSessions = {
+                [this.selectedFile]: {
+                    ...this.editorFileSessions[this.selectedFile],
+                    code,
+                    unsavedChanges: true
+                }
+            };
 
             // Trigger file save
-            this.saveFile(this.fileName);
+            this.saveFile(this.selectedFile);
             this.updateSaveStatusLabel();
         } else {
             this.editor.getEditor().getSession().setAnnotations(this.buildLogErrors);

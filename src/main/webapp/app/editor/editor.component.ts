@@ -11,7 +11,7 @@ import { Result } from '../entities/result';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import * as $ from 'jquery';
 import { Interactable } from 'interactjs';
-import { AceAnnotation } from '../entities/ace-editor';
+import { AceAnnotation, SaveStatusChange } from '../entities/ace-editor';
 import { BuildLogEntry } from 'app/entities/build-log';
 
 @Component({
@@ -25,7 +25,7 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
 
     participation: Participation;
     repository: RepositoryService;
-    file: string;
+    selectedFile: string;
     paramSub: Subscription;
     repositoryFiles: string[];
     latestResult: Result;
@@ -131,7 +131,7 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
      * @desc Callback function for a save status changes of files
      * @param $event Event object which contains information regarding the save status of files
      */
-    updateSaveStatusLabel($event: any) {
+    updateSaveStatusLabel($event: SaveStatusChange) {
         this.isSaved = $event.isSaved;
         if (!this.isSaved) {
             this.isCommitted = false;
@@ -170,7 +170,7 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
      * @param $event Event object which contains the new file name
      */
     updateSelectedFile($event: any) {
-        this.file = $event.fileName;
+        this.selectedFile = $event.fileName;
     }
 
     /**
@@ -187,7 +187,7 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
                 this.repositoryFiles = files.filter(value => value !== 'README.md');
                 // Select newly created file
                 if ($event.mode === 'create') {
-                    this.file = $event.file;
+                    this.selectedFile = $event.file;
                 }
             },
             (error: HttpErrorResponse) => {
