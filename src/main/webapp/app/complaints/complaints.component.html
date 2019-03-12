@@ -1,32 +1,30 @@
 <div class="col-12 mt-4">
     <div class="row">
         <div class="col-6">
-            <h3>Complaints</h3>
-            <p>You can submit a complaint if you feel like the assessment hasn't been fair: you will have the chance to describe what do you think is wrong, and why the submission should be reevaluated. The reevaluation will be performed by a different tutor.</p>
+            <h3>{{'arTeMiSApp.complaint.complaints' | translate}}</h3>
+            <p>{{'arTeMiSApp.complaint.description' | translate}}</p>
         </div>
 
         <div class="col-6">
-            <h3>More feedback</h3>
-            <p>If something is not clear enough, or you need more explanations, request the tutor to give you more feedback</p>
-            <button class="btn btn-default" [disabled]="true" (click)="requestMoreFeedback()">Request more feedback</button>
+            <h3>{{'arTeMiSApp.complaint.moreFeedback' | translate}}</h3>
+            <p>{{'arTeMiSApp.complaint.moreFeedbackDescription' | translate}}</p>
+            <button class="btn btn-default" [disabled]="true" (click)="requestMoreFeedback()">{{'arTeMiSApp.complaint.moreFeedbackButton' | translate}}</button>
         </div>
     </div>
 
     <p *ngIf="!alreadySubmitted" class="mt-4">
-        Please try to be as descriptive as possible, including which parts of the submission you think we need to
-        re-evaluate. If you don't have any complaint, but you think the feedback is not clear enough, just press the
-        relative button.
+        {{'arTeMiSApp.complaint.beDescriptive' | translate}}
     </p>
 
     <p *ngIf="alreadySubmitted" class="mt-4">
-        You have already submitted a complaint at {{submittedDate}}.
+        {{'arTeMiSApp.complaint.alreadySubmitted' | translate}} {{submittedDate}}.
     </p>
 
     <textarea class="col-12" [(ngModel)]="complaintText" [readOnly]="alreadySubmitted" [disabled]="alreadySubmitted" style="height: 50vh;"></textarea>
 
     <div class="row" *ngIf="!alreadySubmitted">
         <div class="col-6">
-            <button class="btn btn-primary" [disabled]="complaintText.length <= 0" (click)="createComplaint()" >Submit a complaint</button>
+            <button class="btn btn-primary" [disabled]="complaintText.length <= 0" (click)="createComplaint()" >{{'arTeMiSApp.complaint.submit' | translate}}</button>
         </div>
     </div>
 </div>

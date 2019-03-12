@@ -54,7 +54,7 @@
     </div>
 
     <div class="row" *ngIf="hasFeedback">
-            <button class="btn btn-primary" (click)="showComplaintForm = !showComplaintForm">Submit complaint or ask for more feedback</button>
+            <button class="btn btn-primary" (click)="showComplaintForm = !showComplaintForm">{{'arTeMiSApp.complaint.moreInfo' | translate}}</button>
     </div>
 
     <div class="row" *ngIf="showComplaintForm">

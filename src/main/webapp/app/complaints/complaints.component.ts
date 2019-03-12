@@ -46,7 +46,7 @@ export class ComplaintsComponent implements OnInit {
 
         this.complaintService.create(complaint).subscribe(
             res => {
-                this.jhiAlertService.success('Your complaint has been submitted!');
+                this.jhiAlertService.success('arTeMiSApp.complaint.submitted');
                 this.submittedDate = res.body.submittedTime;
                 this.alreadySubmitted = true;
             },
