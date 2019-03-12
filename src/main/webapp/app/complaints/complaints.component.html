@@ -20,7 +20,7 @@
         {{'arTeMiSApp.complaint.alreadySubmitted' | translate}} {{submittedDate}}.
     </p>
 
-    <textarea class="col-12" [(ngModel)]="complaintText" [readOnly]="alreadySubmitted" [disabled]="alreadySubmitted" style="height: 50vh;"></textarea>
+    <textarea class="col-6" [(ngModel)]="complaintText" [readOnly]="alreadySubmitted" [disabled]="alreadySubmitted" style="height: 10vh;"></textarea>
 
     <div class="row" *ngIf="!alreadySubmitted">
         <div class="col-6">
