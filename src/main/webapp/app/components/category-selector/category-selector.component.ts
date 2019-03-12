@@ -17,7 +17,7 @@ const DEFAULT_COLORS = ['#6ae8ac', '#9dca53', '#94a11c', '#691b0b', '#ad5658', '
 
 export class CategorySelectorComponent implements OnChanges {
     @ViewChild(ColorSelectorComponent) colorSelector: ColorSelectorComponent;
-    categoryColors = ['#6ae8ac', '#9dca53', '#94a11c', '#691b0b', '#ad5658', '#1b97ca', '#0d3cc2', '#0ab84f'];
+    categoryColors = DEFAULT_COLORS;
     selectedCategory: ExerciseCategory;
     @Input() exerciseCategories: ExerciseCategory[];
     @Input() existingCategories: ExerciseCategory[];
@@ -46,7 +46,6 @@ export class CategorySelectorComponent implements OnChanges {
     }
 
     onItemAdded(exerciseCategory: ExerciseCategory) {
-        console.log(exerciseCategory)
         if (!exerciseCategory.color) {
             const randomIndex = Math.floor(Math.random() * this.categoryColors.length);
             exerciseCategory.color = this.categoryColors[randomIndex];

@@ -7,6 +7,7 @@ import { ProgrammingExercise, ProgrammingLanguage } from './programming-exercise
 import { ProgrammingExerciseService } from './programming-exercise.service';
 import { Course, CourseService } from 'app/entities/course';
 import { JhiAlertService } from 'ng-jhipster';
+import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -23,12 +24,15 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     maxScorePattern = '^[1-9]{1}[0-9]{0,4}$'; // make sure max score is a positive natural integer and not too large
     packageNamePattern = '^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)+[0-9a-z_]$'; // package name must have at least 1 dot and must not start with a number
     shortNamePattern = '^[a-zA-Z][a-zA-Z0-9]*'; // must start with a letter and cannot contain special characters
+    exerciseCategories: ExerciseCategory[];
+    existingCategories: ExerciseCategory[];
     courses: Course[];
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
         private courseService: CourseService,
         private jhiAlertService: JhiAlertService,
+        private exerciseService: ExerciseService,
         private activatedRoute: ActivatedRoute
     ) {}
 
@@ -43,6 +47,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 this.courseService.find(courseId).subscribe(res => {
                     const course = res.body;
                     this.programmingExercise.course = course;
+                    this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.programmingExercise);
+                    this.courseService.findAllCategoriesOfCourse(this.programmingExercise.course.id).subscribe(
+                        (res: HttpResponse<string[]>) => {
+                            this.existingCategories = [...new Set(this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body))];
+                        },
+                        (res: HttpErrorResponse) => this.onError(res)
+                    );
                 });
             }
         });
@@ -56,6 +67,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     previousState() {
         window.history.back();
+    }
+
+    updateCategories(categories: ExerciseCategory[]) {
+        this.programmingExercise.categories = categories.map(el => JSON.stringify(el));
     }
 
     save() {

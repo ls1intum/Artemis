@@ -12,6 +12,7 @@ import { ProgrammingExerciseService } from './programming-exercise.service';
 import { Course, CourseService } from '../course';
 
 import { Subscription } from 'rxjs/Subscription';
+import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 
 @Component({
     selector: 'jhi-programming-exercise-dialog',
@@ -23,12 +24,15 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
     maxScorePattern = '^[1-9]{1}[0-9]{0,4}$'; // make sure max score is a positive natural integer and not too large
 
     courses: Course[];
+    exerciseCategories: ExerciseCategory[];
+    existingCategories: ExerciseCategory[];
 
     constructor(
         public activeModal: NgbActiveModal,
         private jhiAlertService: JhiAlertService,
         private programmingExerciseService: ProgrammingExerciseService,
         private courseService: CourseService,
+        private exerciseService: ExerciseService,
         private eventManager: JhiEventManager
     ) {}
 
@@ -40,10 +44,21 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
             },
             (res: HttpErrorResponse) => this.onError(res)
         );
+        this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.programmingExercise);
+        this.courseService.findAllCategoriesOfCourse(this.programmingExercise.course.id).subscribe(
+            (res: HttpResponse<string[]>) => {
+                this.existingCategories = [...new Set(this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body))];
+            },
+            (res: HttpErrorResponse) => this.onError(res)
+        );
     }
 
     clear() {
         this.activeModal.dismiss('cancel');
+    }
+
+    updateCategories(categories: ExerciseCategory[]) {
+        this.programmingExercise.categories = categories.map(el => JSON.stringify(el));
     }
 
     save() {
