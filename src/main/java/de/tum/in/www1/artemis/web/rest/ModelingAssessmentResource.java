@@ -150,7 +150,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     public ResponseEntity<Result> saveModelingAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody List<ModelElementAssessment> modelingAssessment) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         checkAuthorization(modelingExercise);
-        Result result = resultService.findOne(resultId);
+        Result result = resultService.findOneWithSubmission(resultId);
         modelingAssessmentService.saveManualAssessment(result, exerciseId, modelingAssessment);
         return ResponseEntity.ok(result);
     }
@@ -172,7 +172,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
                                                            @RequestBody List<ModelElementAssessment> modelingAssessment) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         checkAuthorization(modelingExercise);
-        Result result = resultService.findOne(resultId);
+        Result result = resultService.findOneWithSubmission(resultId);
         Long submissionId = result.getSubmission().getId();
         List<Conflict> conflicts = compassService.getConflicts(exerciseId, submissionId, modelingAssessment);
         if (!conflicts.isEmpty() && !ignoreConflict) {
