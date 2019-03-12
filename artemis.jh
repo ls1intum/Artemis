@@ -48,7 +48,8 @@ entity Course (course) {
     startDate ZonedDateTime,
     endDate ZonedDateTime,
     onlineCourse Boolean,
-    maxComplaints Integer
+    maxComplaints Integer,
+    color String
 }
 
 entity Exercise (exercise) {        //abstract
@@ -335,6 +336,39 @@ enum TutorParticipationStatus {
     COMPLETED
 }
 
+entity StudentQuestion {
+    question String,
+    upVotes Integer,
+    downVotes Integer
+}
+
+entity QuestionAnswer {
+    answer String,
+}
+
+entity Notification {
+    type NotificationType,
+    text String,
+    expireDate Date,
+    action String
+}
+
+enum NotificationType {
+    SYSTEM,
+    STUDENT,
+    INSTRUCTOR
+}
+
+entity Lecture {
+    title String,
+    date Date
+}
+
+entity LectureAttachment {
+    name String,
+    attachment String
+}
+
 relationship OneToMany {
     QuizPointStatistic{PointCounters} to PointCounter{quizPointStatistic},
     MultipleChoiceQuestionStatistic{AnswerCounters} to AnswerCounter{MultipleChoiceQuestionStatistic},
@@ -375,6 +409,7 @@ relationship OneToOne {
     ComplaintResponse{complaint} to Complaint,
     Complaint{student} to User,
     ComplaintResponse{reviewer} to User,
+    QuestionAnswer{question} to StudentQuestion,
     ExampleSubmission{submission} to Submission,
     ProgrammingExercise{templateParticipation} to Participation,
     ProgrammingExercise{solutionParticipation} to Participation,
@@ -390,6 +425,12 @@ relationship ManyToOne {
     ShortAnswerMapping{solution} to ShortAnswerSolution,
     ShortAnswerMapping{spot} to ShortAnswerSpot,
     TutorParticipation{tutor} to User,
+    StudentQuestion{author} to User,
+    StudentQuestion{exercise} to Exercise,
+    QuestionAnswer{author} to User,
+    Notification{author} to User,
+    Notification{recipient} to User
+    LectureAttachment{lecture} to Lecture
 }
 
 relationship ManyToMany {
