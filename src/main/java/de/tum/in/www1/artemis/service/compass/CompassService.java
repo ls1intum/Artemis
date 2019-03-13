@@ -6,6 +6,7 @@ import de.tum.in.www1.artemis.domain.ModelingExercise;
 import de.tum.in.www1.artemis.domain.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
@@ -140,18 +141,17 @@ public class CompassService {
      * Use this if you want to reduce the effort of manual assessments
      *
      * @param exerciseId the exerciseId
-     * @param modelId    the model id
-     * @return an partial assessment for model elements where an automatic assessment is already possible,
-     * other model elements have to be assessed by the assessor
+     * @param submission the submission
+     * @return an partial assessment for model elements of the given submission where an automatic assessment
+     * is already possible, other model elements have to be assessed by the assessor
      */
-    public List<Feedback> getPartialAssessment(long exerciseId, long modelId) {
+    public List<Feedback> getPartialAssessment(long exerciseId, Submission submission) {
         if (!loadExerciseIfSuspended(exerciseId)) {
             return null;
         }
-
         CalculationEngine engine = compassCalculationEngines.get(exerciseId);
-
-        return engine.convertToFeedback(engine.getResultForModel(modelId), modelId);
+        long modelId = submission.getId();
+        return engine.convertToFeedback(engine.getResultForModel(modelId), modelId, submission.getResult());
     }
 
     /**
@@ -218,7 +218,7 @@ public class CompassService {
                 grade = roundGrades(grade);
 
                 // Save to database
-                List<Feedback> automaticFeedbackAssessments = engine.convertToFeedback(grade, modelId);
+                List<Feedback> automaticFeedbackAssessments = engine.convertToFeedback(grade, modelId, result);
                 result.setFeedbacks(automaticFeedbackAssessments);
 
                 result.setRatedIfNotExceeded(modelingExercise.getDueDate(), modelingSubmission.get().getSubmissionDate());

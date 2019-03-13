@@ -4,12 +4,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.service.compass.grade.Grade;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLAssociation;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLAttribute;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLClass;
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLMethod;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLModel;
 import de.tum.in.www1.artemis.service.compass.utils.JSONMapping;
@@ -155,65 +152,6 @@ public class JSONParser {
         // </editor-fold>
 
         return new UMLModel(new ArrayList<>(umlClassMap.values()), umlAssociationList, modelId);
-    }
-
-    /**
-     * Generate a Feedback list from a given Grade and the corresponding UML model
-     * TODO adapt the parser to support different UML diagrams
-     *
-     * @param grade the grade
-     * @param model the corresponding UML model
-     * @return a list of Feedback objects
-     */
-    //TODO: move into a different class/file
-    public static List<Feedback> convertToFeedback (Grade grade, UMLModel model) {
-        List<Feedback> feedbackList = new ArrayList<>();
-
-        for (Map.Entry<String, Double> gradePointsEntry : grade.getJsonIdPointsMapping().entrySet()) {
-            Feedback feedback = new Feedback();
-
-            String jsonElementID = gradePointsEntry.getKey();
-            UMLElement umlElement = model.getElementByJSONID(jsonElementID);
-
-            if (umlElement == null) {
-                log.error("Element " + gradePointsEntry.getKey() + " was not found in Model");
-                continue;
-            }
-
-            // TODO find cleaner solution
-            // TODO CZ: extract into e.g. buildReferenceString(UMLElement) method
-            String type = umlElement.getClass().getSimpleName();
-            switch (type) {
-                case "UMLClass":
-                    type = JSONMapping.assessmentElementTypeClass;
-                    break;
-                case "UMLAttribute":
-                    type = JSONMapping.assessmentElementTypeAttribute;
-                    break;
-                case "UMLAssociation":
-                    type = JSONMapping.assessmentElementTypeRelationship;
-                    break;
-                case "UMLMethod":
-                    type = JSONMapping.assessmentElementTypeMethod;
-                    break;
-                default:
-                    type = "";
-            }
-
-            feedback.setCredits(gradePointsEntry.getValue());
-            feedback.setPositive(feedback.getCredits() >= 0);
-            feedback.setText(grade.getJsonIdCommentsMapping().getOrDefault(jsonElementID, ""));
-            feedback.setReference(type + ":" + jsonElementID);
-            //assessment.addProperty(JSONMapping.assessmentMode, JSONMapping.assessmentModeAutomatic);
-
-            feedbackList.add(feedback);
-        }
-
-        //TODO: in the future we want to store this information as well, but for now we ignore it.
-//        jsonObject.addProperty(JSONMapping.assessmentElementConfidence, grade.getConfidence());
-//        jsonObject.addProperty(JSONMapping.assessmentElementCoverage, grade.getCoverage());
-
-        return feedbackList;
     }
 }
 

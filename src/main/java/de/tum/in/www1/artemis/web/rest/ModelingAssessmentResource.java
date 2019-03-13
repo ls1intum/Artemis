@@ -97,7 +97,8 @@ public class ModelingAssessmentResource extends AssessmentResource {
         ModelingExercise modelingExercise =
             modelingExerciseService.findOne(participation.getExercise().getId());
         checkAuthorization(modelingExercise);
-        List<Feedback> partialFeedbackAssessment = compassService.getPartialAssessment(participation.getExercise().getId(), submissionId);
+        List<Feedback> partialFeedbackAssessment =
+            compassService.getPartialAssessment(participation.getExercise().getId(), submission);
         Result result = submission.getResult();
         result.setFeedbacks(partialFeedbackAssessment);
         return ResponseEntity.ok(result);
