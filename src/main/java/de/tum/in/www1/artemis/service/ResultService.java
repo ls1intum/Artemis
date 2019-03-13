@@ -49,6 +49,11 @@ public class ResultService {
             .orElseThrow(() -> new EntityNotFoundException("Result with id: \"" + id + "\" does not exist"));
     }
 
+    public Result findOneWithSubmission(long id) {
+        log.debug("Request to get Result: {}", id);
+        return resultRepository.findByIdWithSubmission(id)
+            .orElseThrow(() -> new EntityNotFoundException("Result with id: \"" + id + "\" does not exist"));
+    }
 
     public void setAssessor(Result result){
         User currentUser = userService.getUserWithGroupsAndAuthorities();

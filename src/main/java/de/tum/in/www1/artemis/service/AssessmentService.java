@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZonedDateTime;
 
