@@ -1,12 +1,9 @@
 package de.tum.in.www1.artemis.service.compass.conflict;
 
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.User;
+import java.util.*;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.service.compass.assessment.Score;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-
-import java.util.List;
-import java.util.UUID;
 
 public class Conflict {
     public UMLElement elementInConflict;
@@ -29,13 +26,30 @@ public class Conflict {
     }
 
 
+    public UMLElement getElementInConflict() {
+        return elementInConflict;
+    }
+
+
+    public Feedback getConflictingFeedback() {
+        return conflictingFeedback;
+    }
+
+
+    public List<Score> getScoresInConflict() {
+        return scoresInConflict;
+    }
+
+
     public User getInitiator() {
         return initiator;
     }
 
+
     public void setInitiator(User initiator) {
         this.initiator = initiator;
     }
+
 
     public String getId() {
         return id;

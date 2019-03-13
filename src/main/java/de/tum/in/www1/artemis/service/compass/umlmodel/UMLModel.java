@@ -15,6 +15,11 @@ public class UMLModel {
 
     private CompassResult lastAssessmentCompassResult = null;
 
+
+    public UMLModel() {
+    }
+
+
     public UMLModel(List<UMLClass> classList, List<UMLAssociation> associationList, long modelID) {
         this.classList = classList;
         this.associationList = associationList;

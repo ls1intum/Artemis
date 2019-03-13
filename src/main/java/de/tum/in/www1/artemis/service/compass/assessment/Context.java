@@ -12,6 +12,11 @@ public class Context {
      */
     public static final Context NO_CONTEXT = new Context(-1);
 
+
+    public Context() {
+    }
+
+
     public Context(int contextElementID) {
         this.contextElementIDs = new HashSet<>(Collections.singletonList(contextElementID));
     }
