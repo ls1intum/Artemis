@@ -34,7 +34,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
     @Output()
     questionDeleted = new EventEmitter();
     @Output()
-    questionMcUpdate = new EventEmitter<boolean>();
+    questionMcUpdate = new EventEmitter<[boolean, boolean]>();
 
     /** Ace Editor configuration constants **/
     questionEditorText = '';
@@ -43,7 +43,8 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
     isQuestionCollapsed: boolean;
 
     currentAnswerOption: AnswerOption;
-    tempValue: boolean;
+    containsCorrectOption: boolean;
+    containsAllExplanations: boolean;
 
     showPreview = false;
 
@@ -116,10 +117,12 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
 
         // Parse Markdown
         this.markdownEditor.parse();
-        this.tempValue = this.mcQuestionHasCorrectAnswer();
-        this.questionMcUpdate.emit(this.tempValue);
+        this.containsCorrectOption = this.mcQuestionHasCorrectAnswer();
+        this.containsAllExplanations = this.checkAmountOfExplanation();
+        this.questionMcUpdate.emit([this.containsCorrectOption, this.containsAllExplanations]);
         this.questionUpdated.emit();
     }
+
 
     private cleanupQuestion() {
         // Reset Question Object
@@ -180,4 +183,9 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
     mcQuestionHasCorrectAnswer(): boolean {
        return this.question.answerOptions.some(answeroption => answeroption.isCorrect);
     }
+
+    checkAmountOfExplanation(): boolean {
+        return this.question.answerOptions.every(answeroption => answeroption.explanation !== '');
+    }
+
 }

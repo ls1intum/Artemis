@@ -34,6 +34,11 @@ interface Reason {
     translateValues: {};
 }
 
+interface Warnings {
+    translateKey: string;
+    translateValues: {};
+}
+
 @Component({
     selector: 'jhi-quiz-exercise-detail',
     templateUrl: './quiz-exercise-detail.component.html',
@@ -90,6 +95,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     isTrue = true;
 
     mcQuestionHasCorrectAnswerOption = true;
+    mcHasAllExplanations: boolean;
 
     /** Status Options **/
     statusOptionsVisible: Option[] = [new Option(false, 'Hidden'), new Option(true, 'Visible')];
@@ -439,8 +445,9 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
 
     }
 
-    onMcQuestionUpdate(value: boolean): void {
-        this.mcQuestionHasCorrectAnswerOption = value;
+    onMcQuestionUpdate(correctOption: boolean, explanation: boolean): void {
+        this.mcQuestionHasCorrectAnswerOption = correctOption;
+        this.mcHasAllExplanations = explanation;
     }
 
     /**
@@ -548,6 +555,39 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         return isGenerallyValid && areAllQuestionsValid;
     }
 
+    warningQuiz(): boolean {
+       let isWithoutWarning = false;
+       this.quizExercise.questions.forEach(function(question: Question, index: number) {
+       if (question.type === QuestionType.MULTIPLE_CHOICE) {
+           const mcQuestion = question as MultipleChoiceQuestion;
+           if (!(mcQuestion.answerOptions.every(answeroption => answeroption.explanation !== ''))){
+           isWithoutWarning = true;
+           }
+       }
+       },this);
+       return isWithoutWarning;
+    }
+
+
+    invalidWarnings(): Warnings[]{
+        const warnings = new Array<Warnings>();
+        if (!this.quizExercise) {
+            return;
+        }
+
+        this.quizExercise.questions.forEach(function(question: Question, index: number) {
+            if (question.type === QuestionType.MULTIPLE_CHOICE) {
+                const mcQuestion = question as MultipleChoiceQuestion;
+
+                if (mcQuestion.answerOptions.every(answeroption => answeroption.explanation !== '')){
+                    warnings.push({
+                        translateKey: 'arTeMiSApp.quizExercise.invalidReasons.explanationIsMissing',
+                        translateValues: { index: index + 1 }
+                    });
+                }
+            }
+        }, this); return warnings;
+    }
     /**
      * @function invalidReasons
      * @desc Get the reasons, why the quiz is invalid
@@ -613,6 +653,12 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                 if (!this.mcQuestionHasCorrectAnswerOption) {
                     reasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionCorrectAnswerOption',
+                        translateValues: { index: index + 1 }
+                    });
+                }
+                if (!mcQuestion.answerOptions.every(answeroption => answeroption.explanation !== '')){
+                    reasons.push({
+                        translateKey: 'arTeMiSApp.quizExercise.invalidReasons.explanationIsMissing',
                         translateValues: { index: index + 1 }
                     });
                 }

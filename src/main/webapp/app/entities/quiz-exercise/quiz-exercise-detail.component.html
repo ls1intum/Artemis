@@ -113,7 +113,7 @@
                     [questionIndex]="i + 1"
                     (questionDeleted)="deleteQuestion(question)"
                     (questionUpdated)="onQuestionUpdated()"
-                    (questionMcUpdate)= "onMcQuestionUpdate($event)">
+                    (questionMcUpdate)= "onMcQuestionUpdate($event[0], $event[1])">
                 </jhi-edit-multiple-choice-question>
             </div>
             <div *ngIf="question.type === DRAG_AND_DROP">
@@ -230,6 +230,12 @@
                             <p *ngIf="(reason.translateValues | json) == '{}'" jhiTranslate="{{reason.translateKey}}"></p>
                         </div>
                     </ng-template>
+                    <ng-template #warningTranslate>
+                        <div *ngFor="let warning of invalidWarnings()">
+                            <p *ngIf="(warning.translateValues | json) != '{}'" jhiTranslate="{{warning.translateKey}}" [translateValues]="{index: warning.translateValues.index}"></p>
+                            <p *ngIf="(warning.translateValues | json) == '{}'" jhiTranslate="{{warning.translateKey}}"></p>
+                        </div>
+                    </ng-template>
                     <span
                         *ngIf="!this.validQuiz()"
                         class="badge badge-danger"
@@ -239,6 +245,15 @@
                         <fa-icon icon="exclamation-circle"></fa-icon>
                         <span jhiTranslate="arTeMiSApp.quizExercise.edit.invalidInput"></span>
                         <span>({{invalidReasons().length}})</span>
+                    </span>
+                    <span
+                        *ngIf="!this.warningQuiz()"
+                        class="badge badge-warning"
+                        [ngbTooltip]="warningTranslate"
+                        tooltip-placement="top-right"
+                        tooltip-class="invalid-reasons-tooltip">
+                        <span jhiTranslate="arTeMiSApp.quizExercise.edit.warning"></span>
+                        <span>({{invalidWarnings().length}})</span>
                     </span>
                     <button
                         id="quiz-cancel-back-button"
