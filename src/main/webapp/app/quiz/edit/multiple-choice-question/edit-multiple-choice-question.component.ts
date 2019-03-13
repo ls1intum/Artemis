@@ -12,6 +12,7 @@ import {
     SpecialCommand
 } from 'app/markdown-editor/specialCommands';
 import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
+import {QuestionType} from 'app/entities/question';
 
 @Component({
     selector: 'jhi-edit-multiple-choice-question',
@@ -32,6 +33,8 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
     questionUpdated = new EventEmitter();
     @Output()
     questionDeleted = new EventEmitter();
+    @Output()
+    questionMcUpdate = new EventEmitter<boolean>();
 
     /** Ace Editor configuration constants **/
     questionEditorText = '';
@@ -40,6 +43,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
     isQuestionCollapsed: boolean;
 
     currentAnswerOption: AnswerOption;
+    tempValue: boolean;
 
     showPreview = false;
 
@@ -112,9 +116,9 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
 
         // Parse Markdown
         this.markdownEditor.parse();
-        console.log('pare');
+        this.tempValue = this.mcQuestionHasCorrectAnswer();
+        this.questionMcUpdate.emit(this.tempValue);
         this.questionUpdated.emit();
-        console.log('emit');
     }
 
     private cleanupQuestion() {
@@ -131,12 +135,10 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
     }
 
     changesInMarkdown(){
-        console.log('ich werde aufgerufen');
         this.prepareForSave();
     }
 
     specialCommandFound(textLine: string, specialCommand: SpecialCommand) {
-
         if (specialCommand === null && textLine.length > 0) {
             this.question.text = textLine;
         }
@@ -145,7 +147,6 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
             this.currentAnswerOption = new AnswerOption();
             if (specialCommand instanceof CorrectOptionCommand) {
                 this.currentAnswerOption.isCorrect = true;
-                this.question.hasCorrectOption = true;
             } else {
                 this.currentAnswerOption.isCorrect = false;
             }
@@ -173,5 +174,10 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
      */
     deleteQuestion(): void {
         this.questionDeleted.emit();
+    }
+
+
+    mcQuestionHasCorrectAnswer(): boolean {
+       return this.question.answerOptions.some(answeroption => answeroption.isCorrect);
     }
 }

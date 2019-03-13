@@ -112,7 +112,8 @@
                     [question]="question"
                     [questionIndex]="i + 1"
                     (questionDeleted)="deleteQuestion(question)"
-                    (questionUpdated)="onQuestionUpdated()">
+                    (questionUpdated)="onQuestionUpdated()"
+                    (questionMcUpdate)= "onMcQuestionUpdate($event)">
                 </jhi-edit-multiple-choice-question>
             </div>
             <div *ngIf="question.type === DRAG_AND_DROP">
@@ -253,7 +254,7 @@
                         (click)="save()"
                         [ngClass]="{disabled: !pendingChanges() || !this.validQuiz() || hasSavedQuizStarted() || isSaving}"
                         jhiTranslate="entity.action.save"
-                        [ngbTooltip]="isQuizValid ? '' : tooltipTranslate"
+                        [ngbTooltip]="this.validQuiz()? '' : tooltipTranslate"
                         tooltip-placement="top-right"
                         tooltip-class="invalid-reasons-tooltip">
                     </button>
