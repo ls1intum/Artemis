@@ -145,7 +145,7 @@ public class ModelingAssessmentIntegrationTest {
     @WithMockUser(username = "tutor1", roles = "TA")
     public void automaticAssessment() throws Exception {
         ModelingSubmission submission1 = database.addModelingSubmissionFromResources(exercise, "test-data/model-submission/model.54727.json", "student1");
-        ModelingSubmission submission2 = database.addModelingSubmissionFromResources(exercise, "test-data/model-submission/model.54727.json", "student2");
+        ModelingSubmission submission2 = database.addModelingSubmissionFromResources(exercise, "test-data/model-submission/model.54727.cpy.json", "student2");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
         request.put(
             "/api/modeling-submissions/"
@@ -155,7 +155,7 @@ public class ModelingAssessmentIntegrationTest {
         ModelingSubmission storedSubmission1 = modelingSubmissionRepo.findById(submission1.getId()).get();
         Result storedResult1 = storedSubmission1.getResult();
         await().atMost(10, TimeUnit.SECONDS).alias("2nd submission has been automatically assessed").until(submissionHasBeenAssessed(submission2.getId()));
-        ModelingSubmission storedSubmission2 = modelingSubmissionRepo.findById(submission1.getId()).get();
+        ModelingSubmission storedSubmission2 = modelingSubmissionRepo.findById(submission2.getId()).get();
         Result storedResult2 = storedSubmission2.getResult();
         assertThat(storedResult1.getScore()).as("identical model got assessed equally").isEqualTo(storedResult2.getScore());
         assertThat(storedResult2.getAssessmentType()).as("got assessed automatically").isEqualTo(AssessmentType.AUTOMATIC);
