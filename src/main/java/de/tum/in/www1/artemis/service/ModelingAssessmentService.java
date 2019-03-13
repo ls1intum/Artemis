@@ -78,6 +78,7 @@ public class ModelingAssessmentService extends AssessmentService {
         //       deleted in the database because of the 'orphanRemoval = true' flag.
         result.getFeedbacks().clear();
         for (Feedback feedback : modelingAssessment) {
+            feedback.setPositive(feedback.getCredits() >= 0);
             feedback.setType(FeedbackType.MANUAL);
             result.addFeedback(feedback);
         }

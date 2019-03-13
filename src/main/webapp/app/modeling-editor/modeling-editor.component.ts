@@ -270,7 +270,8 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                     this.result = this.submission.result;
                     this.isSaving = false;
                     this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
-                    this.isActive = this.modelingExercise.dueDate == null || new Date() <= this.modelingExercise.dueDate.toDate();
+                    this.isActive =
+                        this.modelingExercise.dueDate == null || new Date() <= moment(this.modelingExercise.dueDate).toDate();
                     this.subscribeToWebsocket();
                 },
                 error => {
