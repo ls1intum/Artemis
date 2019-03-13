@@ -22,7 +22,7 @@
                 "methods": [
                     {
                         "id": "6e47db46-9343-4fc9-96bd-37342991bdc5",
-                        "name": "drink()"
+                        "name": "trinken()"
                     }
                 ],
                 "renderMode": {

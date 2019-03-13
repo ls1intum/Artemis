@@ -170,11 +170,10 @@ public class ModelingAssessmentIntegrationTest {
         ModelingSubmission submission2 = database.addModelingSubmissionFromResources(exercise, "test-data/model-submission/model.conflict.2.json", "student2");
         List<Feedback> feedbacks1 = database.loadAssessmentFomResources("test-data/model-assessment/assessment.conflict.1.json");
         List<Feedback> feedbacks2 = database.loadAssessmentFomResources("test-data/model-assessment/assessment.conflict.2.json");
-        Result returnedResult = request.putWithResponseBody(
+        request.put(
             "/api/modeling-submissions/"
                 + submission1.getId() + "/feedback?submit=true",
             feedbacks1,
-            Result.class,
             HttpStatus.OK);
         List<Conflict> conflicts = request.putWithResponseBodyList(
             "/api/modeling-submissions/"
