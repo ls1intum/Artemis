@@ -247,7 +247,7 @@
                         <span>({{invalidReasons().length}})</span>
                     </span>
                     <span
-                        *ngIf="!this.warningQuiz()"
+                        *ngIf="this.warningQuiz()"
                         class="badge badge-warning"
                         [ngbTooltip]="warningTranslate"
                         tooltip-placement="top-right"

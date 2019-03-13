@@ -522,7 +522,9 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         const areAllQuestionsValid = this.quizExercise.questions.every(function(question) {
             if (question.type === QuestionType.MULTIPLE_CHOICE) {
                 const mcQuestion = question as MultipleChoiceQuestion;
-                return question.title && question.title !== '' && question.title.length < 250 && this.mcQuestionHasCorrectAnswerOption;
+                if (mcQuestion.answerOptions.some(answeroption => answeroption.isCorrect)){
+                    return question.title && question.title !== '' && question.title.length < 250;
+                }
             } else if (question.type === QuestionType.DRAG_AND_DROP) {
                 const dndQuestion = question as DragAndDropQuestion;
                 return (
@@ -556,18 +558,19 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     }
 
     warningQuiz(): boolean {
-       let isWithoutWarning = false;
-       this.quizExercise.questions.forEach(function(question: Question, index: number) {
-       if (question.type === QuestionType.MULTIPLE_CHOICE) {
-           const mcQuestion = question as MultipleChoiceQuestion;
-           if (!(mcQuestion.answerOptions.every(answeroption => answeroption.explanation !== ''))){
-           isWithoutWarning = true;
-           }
-       }
-       },this);
-       return isWithoutWarning;
-    }
+        for ( const question of this.quizExercise.questions){
+            if (question.type === QuestionType.MULTIPLE_CHOICE) {
+                const mcQuestion = question as MultipleChoiceQuestion;
+                  for ( const answeroption of mcQuestion.answerOptions ){
+                      if (answeroption.explanation === null){
+                          return true;
+                          break;
+                      }
+                  }
+            }
+        }
 
+    }
 
     invalidWarnings(): Warnings[]{
         const warnings = new Array<Warnings>();
@@ -579,14 +582,15 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
             if (question.type === QuestionType.MULTIPLE_CHOICE) {
                 const mcQuestion = question as MultipleChoiceQuestion;
 
-                if (mcQuestion.answerOptions.every(answeroption => answeroption.explanation !== '')){
+                if (mcQuestion.answerOptions.some(answeroption => answeroption.explanation === null )){
                     warnings.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.explanationIsMissing',
                         translateValues: { index: index + 1 }
                     });
                 }
             }
-        }, this); return warnings;
+        }, this);
+        return warnings;
     }
     /**
      * @function invalidReasons
@@ -641,6 +645,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                 }
             }
         }
+
         this.quizExercise.questions.forEach(function(question: Question, index: number) {
             if (!question.title || question.title === '') {
                 reasons.push({
@@ -650,13 +655,13 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
             }
             if (question.type === QuestionType.MULTIPLE_CHOICE) {
                 const mcQuestion = question as MultipleChoiceQuestion;
-                if (!this.mcQuestionHasCorrectAnswerOption) {
+                if (! (mcQuestion.answerOptions.some(answeroption => answeroption.isCorrect))) {
                     reasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionCorrectAnswerOption',
                         translateValues: { index: index + 1 }
                     });
                 }
-                if (!mcQuestion.answerOptions.every(answeroption => answeroption.explanation !== '')){
+                if (!(mcQuestion.answerOptions.every(answeroption => answeroption.explanation !== ''))) {
                     reasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.explanationIsMissing',
                         translateValues: { index: index + 1 }
@@ -669,23 +674,24 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                     translateValues: {index: index + 1}
                 });
             }
+
             if (question.type === QuestionType.DRAG_AND_DROP) {
                 const dndQuestion = question as DragAndDropQuestion;
                 if (!dndQuestion.correctMappings || dndQuestion.correctMappings.length === 0) {
                     reasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionCorrectMapping',
-                        translateValues: { index: index + 1 }
+                        translateValues: {index: index + 1}
                     });
                 } else if (this.dragAndDropQuestionUtil.solve(dndQuestion, []).length === 0) {
                     reasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionUnsolvable',
-                        translateValues: { index: index + 1 }
+                        translateValues: {index: index + 1}
                     });
                 }
                 if (!this.dragAndDropQuestionUtil.validateNoMisleadingCorrectMapping(dndQuestion)) {
                     reasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.misleadingCorrectMapping',
-                        translateValues: { index: index + 1 }
+                        translateValues: {index: index + 1}
                     });
                 }
             }
