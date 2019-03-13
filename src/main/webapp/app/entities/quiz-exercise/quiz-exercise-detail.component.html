@@ -112,8 +112,7 @@
                     [question]="question"
                     [questionIndex]="i + 1"
                     (questionDeleted)="deleteQuestion(question)"
-                    (questionUpdated)="onQuestionUpdated()"
-                    (questionMcUpdate)= "onMcQuestionUpdate($event[0], $event[1])">
+                    (questionUpdated)="onQuestionUpdated()">
                 </jhi-edit-multiple-choice-question>
             </div>
             <div *ngIf="question.type === DRAG_AND_DROP">

@@ -33,9 +33,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
     questionUpdated = new EventEmitter();
     @Output()
     questionDeleted = new EventEmitter();
-    @Output()
-    questionMcUpdate = new EventEmitter<[boolean, boolean]>();
-
+   
     /** Ace Editor configuration constants **/
     questionEditorText = '';
 
