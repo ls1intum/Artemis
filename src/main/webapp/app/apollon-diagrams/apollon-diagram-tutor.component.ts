@@ -78,7 +78,9 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
                 this.submission = res;
                 this.modelingExercise = this.submission.participation.exercise as ModelingExercise;
                 this.result = this.submission.result;
-                if (!this.result.feedbacks) { // TODO CZ: should this be taken care of by the server?
+                if (this.result.feedbacks) {
+                    this.result = this.modelingAssessmentService.convertResult(this.result);
+                } else {
                     this.result.feedbacks = [];
                 }
                 this.submission.participation.results = [this.result];

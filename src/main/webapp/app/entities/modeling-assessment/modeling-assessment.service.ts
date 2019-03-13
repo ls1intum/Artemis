@@ -37,13 +37,13 @@ export class ModelingAssessmentService {
         }
         return this.http
             .put<Result>(url, feedbacks)
-            .map( res => this.convertResponse(res));
+            .map( res => this.convertResult(res));
     }
 
     getAssessment(submissionId: number): Observable<Result> {
         return this.http
             .get<Result>(`${this.resourceUrl}/modeling-submissions/${submissionId}/result`)
-            .map( res => this.convertResponse(res));
+            .map( res => this.convertResult(res));
     }
 
     getOptimalSubmissions(exerciseId: number): Observable<HttpResponse<any>> {
@@ -54,7 +54,7 @@ export class ModelingAssessmentService {
     getPartialAssessment(submissionId: number): Observable<Result> {
         return this.http
             .get<Result>(`${this.resourceUrl}/modeling-submissions/${submissionId}/partial-assessment`)
-            .map( res => this.convertResponse(res));
+            .map( res => this.convertResult(res));
     }
 
     resetOptimality(exerciseId: number): Observable<HttpResponse<void>> {
@@ -66,7 +66,7 @@ export class ModelingAssessmentService {
      * Iterates over all feedback elements of a response and converts the reference field of the feedback into
      * separate referenceType and referenceId fields. The reference field is of the form <referenceType>:<referenceId>.
      */
-    private convertResponse(result: Result): Result {
+    convertResult(result: Result): Result {
         for (const feedback of result.feedbacks) {
             feedback.referenceType = feedback.reference.split(':')[0] as ModelElementType;
             feedback.referenceId = feedback.reference.split(':')[1];

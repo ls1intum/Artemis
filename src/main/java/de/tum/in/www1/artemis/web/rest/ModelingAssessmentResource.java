@@ -92,7 +92,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")//TODO MJ better path "/modeling-submissions/{submissionId}/result"?
     //TODO MJ merge with getAssessmentBySubmissionId() ?
     public ResponseEntity<Result> getPartialAssessment(@PathVariable Long submissionId) {
-        ModelingSubmission submission = modelingSubmissionService.findOne(submissionId);
+        ModelingSubmission submission = modelingSubmissionService.findOneWithEagerResult(submissionId);
         Participation participation = submission.getParticipation();
         ModelingExercise modelingExercise =
             modelingExerciseService.findOne(participation.getExercise().getId());
@@ -103,10 +103,10 @@ public class ModelingAssessmentResource extends AssessmentResource {
         return ResponseEntity.ok(result);
     }
 
-    @GetMapping("/modeling-submissions/{submissionId}/result")//TODO MJ better path "/modeling-submissions/{submissionId}/result"?
+    @GetMapping("/modeling-submissions/{submissionId}/result")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> getAssessmentBySubmissionId(@PathVariable Long submissionId) {
-        ModelingSubmission submission = modelingSubmissionService.findOne(submissionId);
+        ModelingSubmission submission = modelingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
         Participation participation = submission.getParticipation();
         if (!courseService.userHasAtLeastStudentPermissions(participation.getExercise().getCourse())
             || !authCheckService.isOwnerOfParticipation(participation)) {
@@ -135,12 +135,12 @@ public class ModelingAssessmentResource extends AssessmentResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     // TODO MJ changing submitted assessment always produces Conflict
     @Transactional
-    public ResponseEntity<Object> submitModelingAssessment(
+    public ResponseEntity<Object> saveModelingAssessment(
         @PathVariable Long submissionId,
         @RequestParam(value = "ignoreConflicts", defaultValue = "false") boolean ignoreConflict,
         @RequestParam(value = "submit", defaultValue = "false") boolean submit,
         @RequestBody List<Feedback> feedbacks) {
-        ModelingSubmission modelingSubmission = modelingSubmissionService.findOne(submissionId);
+        ModelingSubmission modelingSubmission = modelingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
         long exerciseId = modelingSubmission.getParticipation().getExercise().getId();
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         checkAuthorization(modelingExercise);

@@ -124,9 +124,13 @@ public class ModelingSubmissionService {
     }
 
 
-    public ModelingSubmission findOne(Long id) {
-        // TODO CZ: load submission also with eager feedbacks
+    public ModelingSubmission findOneWithEagerResult(Long id) {
         return modelingSubmissionRepository.findByIdWithEagerResult(id)
+            .orElseThrow(() -> new EntityNotFoundException("Modeling submission with id \"" + id + "\" does not exist"));
+    }
+
+    public ModelingSubmission findOneWithEagerResultAndFeedback(Long id) {
+        return modelingSubmissionRepository.findByIdWithEagerResultAndFeedback(id)
             .orElseThrow(() -> new EntityNotFoundException("Modeling submission with id \"" + id + "\" does not exist"));
     }
 

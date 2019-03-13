@@ -142,7 +142,7 @@ public class ModelingSubmissionResource {
     @Transactional
     public ResponseEntity<ModelingSubmission> getModelingSubmission(@PathVariable Long submissionId) {
         log.debug("REST request to get ModelingSubmission with id: {}", submissionId);
-        ModelingSubmission modelingSubmission = modelingSubmissionService.findOne(submissionId);
+        ModelingSubmission modelingSubmission = modelingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
         Exercise exercise = modelingSubmission.getParticipation().getExercise();
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             return forbidden();
