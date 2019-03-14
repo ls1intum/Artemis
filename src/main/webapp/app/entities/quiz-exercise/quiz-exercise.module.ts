@@ -19,11 +19,13 @@ import {
 import { SortByModule } from 'app/components/pipes';
 import { ArTEMiSQuizEditModule } from 'app/quiz/edit';
 import { ArTEMiSQuizReEvaluateModule } from 'app/quiz/re-evaluate';
+import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
+import { ArTEMiSCategorySelectorModule } from 'app/components/category-selector/category-selector.module';
 
 const ENTITY_STATES = [...quizExerciseRoute, ...quizExercisePopupRoute];
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, ArTEMiSQuizEditModule, ArTEMiSQuizReEvaluateModule],
+    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, ArTEMiSQuizEditModule, ArTEMiSQuizReEvaluateModule, FormDateTimePickerModule, ArTEMiSCategorySelectorModule],
     exports: [QuizExerciseComponent],
     declarations: [QuizExerciseComponent, QuizExerciseDeleteDialogComponent, QuizExerciseDeletePopupComponent, QuizExerciseResetDialogComponent, QuizExerciseResetPopupComponent, QuizExerciseDetailComponent],
     entryComponents: [

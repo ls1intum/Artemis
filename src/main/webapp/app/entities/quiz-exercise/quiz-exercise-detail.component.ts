@@ -22,6 +22,7 @@ import { Location } from '@angular/common';
 import { ComponentCanDeactivate } from 'app/shared';
 import { JhiAlertService } from 'ng-jhipster';
 import { Observable } from 'rxjs/Observable';
+import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 
 interface Reason {
     translateKey: string;
@@ -79,6 +80,9 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     statusOptionsPractice: Option[] = [new Option(false, 'Closed'), new Option(true, 'Open for Practice')];
     statusOptionsActive: Option[] = [new Option(true, 'Active')];
 
+    exerciseCategories: ExerciseCategory[];
+    existingCategories: ExerciseCategory[];
+
     constructor(
         private route: ActivatedRoute,
         private courseService: CourseService,
@@ -88,6 +92,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         private router: Router,
         private translateService: TranslateService,
         private fileUploaderService: FileUploaderService,
+        private exerciseService: ExerciseService,
         private jhiAlertService: JhiAlertService,
         private location: Location
     ) {}
@@ -124,11 +129,11 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
             if (params['id']) {
                 this.quizExerciseService.find(params['id']).subscribe((response: HttpResponse<QuizExercise>) => {
                     this.quizExercise = response.body;
+                    this.courseRepository = this.courseService;
                     this.init();
                 });
             }
         });
-        this.courseRepository = this.courseService;
     }
 
     /**
@@ -157,6 +162,13 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         if (!this.quizExercise.course) {
             this.quizExercise.course = this.course;
         }
+        this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.quizExercise);
+        this.courseService.findAllCategoriesOfCourse(this.quizExercise.course.id).subscribe(
+            (res: HttpResponse<string[]>) => {
+                this.existingCategories = [...new Set(this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body))];
+            },
+            (res: HttpErrorResponse) => this.onError(res)
+        );
         this.updateDuration();
     }
 
@@ -164,6 +176,10 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         if (changes.course || changes.quizExercise) {
             this.init();
         }
+    }
+
+    updateCategories(categories: ExerciseCategory[]) {
+        this.quizExercise.categories = categories.map(el => JSON.stringify(el));
     }
 
     /**
@@ -807,7 +823,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      * @desc Save the quiz to the server and invoke callback functions depending of result
      */
     save(): void {
-        this.onDateTimeChange();
         if (this.hasSavedQuizStarted() || !this.pendingChanges() || !this.validQuiz()) {
             return;
         }
@@ -890,25 +905,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
             minute: moment(this.quizExercise.releaseDate).minutes(),
             second: 0
         };
-    }
-
-    /**
-     * @function onDateTimeChange
-     * @desc Reach to changes of time inputs by updating model and ui
-     */
-    onDateTimeChange(newTimeValue?: NgbTimeStruct): void {
-        // We have to explicitly assign the new start time here since it hasn't been updated yet
-        if (newTimeValue != null) {
-            this.startTime = newTimeValue;
-        }
-        // If the Start Date is valid, we process it, otherwise we set Release Date null
-        if (this.startDate && this.startDate.isValid()) {
-            // We then set the hours and minutes of our dateTime to the respective time values from our time picker
-            this.dateTime = this.startDate.hours(this.startTime.hour).minutes(this.startTime.minute);
-            this.quizExercise.releaseDate = this.dateTime;
-        } else {
-            this.quizExercise.releaseDate = null;
-        }
     }
 
     /**

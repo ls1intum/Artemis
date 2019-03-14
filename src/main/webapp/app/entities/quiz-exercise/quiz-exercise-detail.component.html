@@ -20,91 +20,87 @@
 
     <div class="edit-quiz">
         <jhi-alert></jhi-alert>
-        <input
-            id="quiz-title"
-            class="form-control"
-            [(ngModel)]="quizExercise.title"
-            placeholder="Quiz Title"/>
-        <div class="form-inline quiz-options">
-            <div class="form-group">
-                <span
-                    jhiTranslate="arTeMiSApp.quizExercise.duration"
-                    class="colon-suffix">
-                </span>
-                <input
-                    id="quiz-duration-minutes"
-                    style="width: 56px;"
-                    class="form-control mb-2 mr-sm-2"
-                    title="Duration"
-                    type="number"
-                    min="0"
-                    max="999"
-                    (ngModelChange)="onDurationChange()"
-                    [(ngModel)]="duration.minutes"
-                    (blur)="onDurationChange()"/>
-                <span jhiTranslate="arTeMiSApp.quizExercise.minutes"></span>
-                <input
-                    id="quiz-duration-seconds"
-                    style="width: 56px;"
-                    class="form-control mb-2 mr-sm-2"
-                    title="Duration"
-                    type="number"
-                    max="999"
-                    min="-99"
-                    (ngModelChange)="onDurationChange()"
-                    [(ngModel)]="duration.seconds"
-                    (blur)="onDurationChange()"/>
-                <span jhiTranslate="arTeMiSApp.quizExercise.seconds"></span>
-            </div>
-            <div class="form-group form-check custom-control custom-checkbox">
-                <input type="checkbox"
-                       id="cbRandomizeOrder"
-                       class="form-check-input custom-control-input"
-                       [(ngModel)]="quizExercise.randomizeQuestionOrder"/>
-                <label class="form-check-label custom-control-label" for="cbRandomizeOrder"
-                       jhiTranslate="arTeMiSApp.quizExercise.randomizeQuestionOrder">
-                </label>
-            </div>
-            <div class="form-group">
-                <div class="form-check custom-control custom-checkbox">
+        <div class="row col-12">
+            <div class="col-12 col-sm-6">
+                <div class="form-group">
+                    <label for="quiz-title" jhiTranslate="arTeMiSApp.exercise.title">Title</label>
                     <input
-                        type="checkbox"
-                        id="cbPlannedToStart"
-                        class="form-check-input custom-control-input"
-                        [(ngModel)]="quizExercise.isPlannedToStart"/>
-                    <label class="form-check-label custom-control-label" for="cbPlannedToStart"
-                           jhiTranslate="arTeMiSApp.quizExercise.startTime">
-                    </label>
+                        id="quiz-title"
+                        name="quiz-title"
+                        class="form-control"
+                        [(ngModel)]="quizExercise.title"
+                        placeholder="Quiz Title"/>
                 </div>
-                <form class="form-inline">
-                    <div class="form-group">
-                        <div class="input-group">
-                            <input class="form-control datepicker-input" placeholder="yyyy-mm-dd"
-                                   [disabled]="!quizExercise.isPlannedToStart"
-                                   name="dp" [(ngModel)]="startDate"
-                                   (ngModelChange)="onDateTimeChange()"
-                                   (change)="onDateTimeChange()"
-                                   [minDate]="minDate"
-                                   [markDisabled]="isDateInPast"
-                                   ngbDatepicker #d="ngbDatepicker">
-                            <button [disabled]="!quizExercise.isPlannedToStart"
-                                    class="btn btn-outline-secondary"
-                                    (click)="d.toggle()"
-                                    type="button" style="cursor: pointer;">
-                                <fa-icon icon="calendar-alt"></fa-icon>
-                            </button>
+                <div class="form-group position-relative">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.categories">Categories</label>
+                    <jhi-category-selector [exerciseCategories]="exerciseCategories" [existingCategories]="existingCategories" (selectedCategories)="updateCategories($event)"></jhi-category-selector>
+                </div>
+            </div>
+            <div class="col-12 col-sm-6">
+                <div class="form-group">
+                    <label jhiTranslate="arTeMiSApp.quizExercise.duration">Duration</label>
+                    <div class="d-flex align-items-center">
+                        <input
+                            id="quiz-duration-minutes"
+                            style="width: 56px;"
+                            class="form-control mb-2 mr-2"
+                            title="Duration"
+                            type="number"
+                            min="0"
+                            max="999"
+                            (ngModelChange)="onDurationChange()"
+                            [(ngModel)]="duration.minutes"
+                            (blur)="onDurationChange()"/>
+                        <span jhiTranslate="arTeMiSApp.quizExercise.minutes"></span>
+                        <input
+                            id="quiz-duration-seconds"
+                            style="width: 56px;"
+                            class="form-control mb-2 mr-2 ml-2"
+                            title="Duration"
+                            type="number"
+                            max="999"
+                            min="-99"
+                            (ngModelChange)="onDurationChange()"
+                            [(ngModel)]="duration.seconds"
+                            (blur)="onDurationChange()"/>
+                        <span jhiTranslate="arTeMiSApp.quizExercise.seconds"></span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label jhiTranslate="arTeMiSApp.quizExercise.options">Options</label>
+                    <div class="form-check custom-control custom-checkbox">
+                        <input type="checkbox"
+                               id="cbRandomizeOrder"
+                               class="form-check-input custom-control-input"
+                               [(ngModel)]="quizExercise.randomizeQuestionOrder"/>
+                        <label class="form-check-label custom-control-label" for="cbRandomizeOrder"
+                               jhiTranslate="arTeMiSApp.quizExercise.randomizeQuestionOrder">
+                        </label>
+                    </div>
+                    <div class="form-check custom-control custom-checkbox">
+                        <input
+                            type="checkbox"
+                            id="cbPlannedToStart"
+                            class="form-check-input custom-control-input"
+                            [(ngModel)]="quizExercise.isPlannedToStart"/>
+                        <label class="form-check-label custom-control-label" for="cbPlannedToStart"
+                               jhiTranslate="arTeMiSApp.quizExercise.startTime">
+                        </label>
+                    </div>
+                    <div class="mt-1 d-flex align-items-center" *ngIf="quizExercise.isPlannedToStart">
+                        <div class="flex-grow-1">
+                            <jhi-date-time-picker  [disabled]="!quizExercise.isPlannedToStart" [(ngModel)]="quizExercise.releaseDate" name="releaseDate"></jhi-date-time-picker>
                         </div>
                     </div>
-                </form>
-                <div class="time-picker">
-                    <ngb-timepicker
-                        (ngModelChange)="onDateTimeChange($event)"
-                        [disabled]="!quizExercise.isPlannedToStart"
-                        [(ngModel)]="startTime"
-                        (change)="onDateTimeChange()">
-                    </ngb-timepicker>
                 </div>
             </div>
+        </div>
+        <div class="col-12 text-left mt-2 mb-2">
+            <h4>
+                <span
+                    jhiTranslate="arTeMiSApp.quizExercise.questions">
+                </span>
+            </h4>
         </div>
         <div class="question card" *ngFor="let question of quizExercise.questions; let i = index">
             <div *ngIf="question.type === MULTIPLE_CHOICE">
