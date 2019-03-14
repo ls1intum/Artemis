@@ -1,6 +1,6 @@
 import { Participation } from '../../entities/participation';
 import { JhiAlertService } from 'ng-jhipster';
-import { AfterViewInit, Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { AfterViewInit, EventEmitter, Component, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { WindowRef } from '../../core/websocket/window.service';
 import { RepositoryService } from '../../entities/repository/repository.service';
 import { EditorComponent } from '../editor.component';
@@ -28,6 +28,8 @@ export class EditorBuildOutputComponent implements AfterViewInit, OnChanges {
     participation: Participation;
     @Input()
     isBuilding: boolean;
+    @Output()
+    buildLogChange = new EventEmitter<BuildLogEntry[]>();
 
     constructor(
         private parent: EditorComponent,
@@ -56,7 +58,7 @@ export class EditorBuildOutputComponent implements AfterViewInit, OnChanges {
                 },
                 inertia: true
             })
-            .on('resizemove', function(event) {
+            .on('resizemove', function(event: any) {
                 const target = event.target;
                 // Update element height
                 target.style.height = event.rect.height + 'px';
@@ -105,6 +107,7 @@ export class EditorBuildOutputComponent implements AfterViewInit, OnChanges {
         this.repositoryService.buildlogs(this.participation.id).subscribe(buildLogs => {
             this.buildLogs = buildLogs;
             $('.buildoutput').scrollTop($('.buildoutput')[0].scrollHeight);
+            this.buildLogChange.emit(buildLogs);
         });
     }
 
@@ -116,6 +119,7 @@ export class EditorBuildOutputComponent implements AfterViewInit, OnChanges {
                     this.getBuildLogs();
                 } else {
                     this.buildLogs = [];
+                    this.buildLogChange.emit([]);
                 }
             });
         }
