@@ -17,10 +17,10 @@ import { safeUnescape } from 'app/shared';
 
 @Component({
     selector: 'jhi-editor',
-    templateUrl: './editor.component.html',
+    templateUrl: './code-editor.component.html',
     providers: [JhiAlertService, WindowRef, CourseService, RepositoryFileService]
 })
-export class EditorComponent implements OnInit, OnChanges, OnDestroy {
+export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
     /** Dependencies as defined by the Editor component */
     errorLogRegex = /\[(ERROR)\].*\/(src\/.+):\[(\d+),(\d+)\]\s(.*$)/;
 
@@ -40,7 +40,7 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
     isCommitted: boolean;
 
     /**
-     * @constructor EditorComponent
+     * @constructor CodeEditorComponent
      * @param {ActivatedRoute} route
      * @param {WindowRef} $window
      * @param {ParticipationService} participationService

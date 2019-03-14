@@ -3,18 +3,18 @@ import { AfterViewInit, Component, EventEmitter, Input, OnChanges, Output, Simpl
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Participation } from 'app/entities/participation';
 import { JhiWebsocketService, WindowRef } from 'app/core';
-import { EditorComponent, EditorFileBrowserCreateComponent, EditorFileBrowserDeleteComponent } from 'app/editor';
+import { CodeEditorComponent, CodeEditorFileBrowserCreateComponent, CodeEditorFileBrowserDeleteComponent } from 'app/code-editor';
 import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem } from 'ngx-treeview';
 import { HttpErrorResponse } from '@angular/common/http';
 import * as interact from 'interactjs';
 import { Interactable } from 'interactjs';
 
 @Component({
-    selector: 'jhi-editor-file-browser',
-    templateUrl: './editor-file-browser.component.html',
+    selector: 'jhi-code-editor-file-browser',
+    templateUrl: './code-editor-file-browser.component.html',
     providers: [NgbModal, RepositoryFileService, WindowRef]
 })
-export class EditorFileBrowserComponent implements OnChanges, AfterViewInit {
+export class CodeEditorFileBrowserComponent implements OnChanges, AfterViewInit {
     @Input()
     participation: Participation;
     @Input()
@@ -48,7 +48,7 @@ export class EditorFileBrowserComponent implements OnChanges, AfterViewInit {
     interactResizable: Interactable;
 
     constructor(
-        private parent: EditorComponent,
+        private parent: CodeEditorComponent,
         private $window: WindowRef,
         private jhiWebsocketService: JhiWebsocketService,
         private repositoryFileService: RepositoryFileService,
@@ -307,7 +307,7 @@ export class EditorFileBrowserComponent implements OnChanges, AfterViewInit {
      * @desc Opens a popup to create a new repository file
      */
     openCreateFileModal() {
-        const modalRef = this.modalService.open(EditorFileBrowserCreateComponent, { keyboard: true, size: 'lg' });
+        const modalRef = this.modalService.open(CodeEditorFileBrowserCreateComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.participation = this.participation;
         modalRef.componentInstance.parent = this;
         if (this.folder) {
@@ -324,7 +324,7 @@ export class EditorFileBrowserComponent implements OnChanges, AfterViewInit {
          * We only open the modal if the user has a file selected
          */
         if (this.fileName) {
-            const modalRef = this.modalService.open(EditorFileBrowserDeleteComponent, { keyboard: true, size: 'lg' });
+            const modalRef = this.modalService.open(CodeEditorFileBrowserDeleteComponent, { keyboard: true, size: 'lg' });
             modalRef.componentInstance.participation = this.participation;
             modalRef.componentInstance.parent = this;
             modalRef.componentInstance.fileNameToDelete = this.fileName;

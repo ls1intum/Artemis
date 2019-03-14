@@ -3,7 +3,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { AfterViewInit, EventEmitter, Component, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { WindowRef } from '../../core/websocket/window.service';
 import { RepositoryService } from '../../entities/repository/repository.service';
-import { EditorComponent } from '../editor.component';
+import { CodeEditorComponent } from '../code-editor.component';
 import { JhiWebsocketService } from '../../core';
 import { Result, ResultService } from '../../entities/result';
 import * as $ from 'jquery';
@@ -12,11 +12,11 @@ import { Interactable } from 'interactjs';
 import { BuildLogEntry } from '../../entities/build-log';
 
 @Component({
-    selector: 'jhi-editor-build-output',
-    templateUrl: './editor-build-output.component.html',
+    selector: 'jhi-code-editor-build-output',
+    templateUrl: './code-editor-build-output.component.html',
     providers: [JhiAlertService, WindowRef, RepositoryService, ResultService]
 })
-export class EditorBuildOutputComponent implements AfterViewInit, OnChanges {
+export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges {
     buildLogs: BuildLogEntry[] = [];
 
     /** Resizable constants **/
@@ -32,7 +32,7 @@ export class EditorBuildOutputComponent implements AfterViewInit, OnChanges {
     buildLogChange = new EventEmitter<BuildLogEntry[]>();
 
     constructor(
-        private parent: EditorComponent,
+        private parent: CodeEditorComponent,
         private $window: WindowRef,
         private jhiWebsocketService: JhiWebsocketService,
         private repositoryService: RepositoryService,
@@ -112,7 +112,7 @@ export class EditorBuildOutputComponent implements AfterViewInit, OnChanges {
     }
 
     toggleBuildLogs(results: Result[]) {
-        // TODO: can we use the result in editor-instructions.component.ts?
+        // TODO: can we use the result in code-editor-instructions.component.ts?
         if (results && results[0]) {
             this.resultService.getFeedbackDetailsForResult(results[0].id).subscribe(details => {
                 if (details.body.length === 0) {
