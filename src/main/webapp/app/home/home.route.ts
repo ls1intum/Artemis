@@ -11,7 +11,7 @@ export const HOME_ROUTES: Routes = [
             authorities: [],
             pageTitle: 'home.title'
         }
-    },{
+    }, {
         path: 'login',
         component: JhiLoginComponent,
         data: {
