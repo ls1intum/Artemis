@@ -455,7 +455,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         );
     }
 
-    areCategoriesIdentical(categoriesUsed: ExerciseCategory[], categoriesSaved: ExerciseCategory[]): boolean {
+    areCategoriesIdentical(categoriesUsed: string[], categoriesSaved: string[]): boolean {
         return JSON.stringify(categoriesUsed).toLowerCase() === JSON.stringify(categoriesSaved).toLowerCase();
     }
 
