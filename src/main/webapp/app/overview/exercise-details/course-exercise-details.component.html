@@ -13,7 +13,13 @@
                     <span *ngIf="exercise.dueDate" [ngClass]="exerciseStatusBadge" class="badge"
                           exercise.dueDate>{{exercise.dueDate | amTimeAgo}}</span>
                 </h4>
-                <!--<h4>Categories: Homework, Group exercise</h4>-->
+                <div class="d-md-flex">
+                    <h4 class="mr-1">{{"arTeMiSApp.courseOverview.exerciseDetails.categories" | translate}}</h4>
+                    <h4 *ngFor="let category of exerciseCategories">
+                        <span class="badge text-white mr-1"
+                              [ngStyle]="{backgroundColor: category.color}">{{category.category}}</span>
+                    </h4>
+                </div>
             </div>
             <div class="col-4 d-none d-md-inline">
                 <div class="row">

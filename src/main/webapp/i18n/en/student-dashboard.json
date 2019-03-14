@@ -61,6 +61,7 @@
             },
             "exerciseDetails": {
                 "dueDate": "Due date:",
+                "categories": "Categories:",
                 "exerciseType": "Exercise Type:",
                 "level": "Level:",
                 "exerciseStatus": "Exercise status:",

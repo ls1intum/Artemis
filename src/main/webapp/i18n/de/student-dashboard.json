@@ -61,6 +61,7 @@
             },
             "exerciseDetails": {
                 "dueDate": "Abgabedatum:",
+                "categories": "Kategorien:",
                 "exerciseType": "Aufgaben-Typ:",
                 "level": "Schwierigkeit:",
                 "exerciseStatus": "Aufgaben Status:",

@@ -42,16 +42,17 @@
         </div>
         <div class="row">
             <jhi-exercise-details-student-actions [actionsOnly]="true" [smallButtons]="true" [courseId]="course.id"
+                                                  [smallColumns]="true" [equalColumns]="false"
                                                   [exercise]="exercise"></jhi-exercise-details-student-actions>
-            <div class="col d-flex">
+            <div class="col d-md-flex justify-content-center">
                 <h4>
-                    <span class="badge badge-warning" *ngIf="!asQuizExercise(exercise).visibleToStudents"
+                    <span class="badge badge-warning mr-1" *ngIf="!asQuizExercise(exercise).visibleToStudents"
                           placement="right"
                           ngbTooltip="Only visible to teaching assistants and instructors. Release date: {{exercise.releaseDate | date:'MMM d, y H:mm'}}">
                     {{"arTeMiSApp.courseOverview.exerciseList.notReleased" | translate}}</span>
                 </h4>
                 <h4>
-                    <span class="badge badge-success"
+                    <span class="badge badge-success mr-1"
                           [hidden]="!asQuizExercise(exercise).isActiveQuiz">{{"arTeMiSApp.courseOverview.exerciseList.live" | translate}}</span>
                 </h4>
                 <h4 *ngFor="let category of exerciseCategories">
