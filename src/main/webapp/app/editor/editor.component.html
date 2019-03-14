@@ -24,7 +24,7 @@
     <div class="editor-main">
         <div class="editor-sidebar-left">
             <jhi-editor-file-browser [participation]="participation"
-                                     [fileName]="file"
+                                     [fileName]="selectedFile"
                                      [repositoryFiles]="repositoryFiles"
                                      (selectedFile)="updateSelectedFile($event)"
                                      (createdFile)="updateRepositoryCommitStatus($event)"
@@ -34,7 +34,8 @@
 
         <div class="editor-center">
             <jhi-editor-ace [participation]="participation"
-                            [fileName]="file"
+                            [selectedFile]="selectedFile"
+                            [buildLogErrors]="buildLogErrors ? buildLogErrors[selectedFile] : []"
                             (saveStatusChange)="updateSaveStatusLabel($event)">
             </jhi-editor-ace>
         </div>
@@ -50,7 +51,8 @@
     <div class="editor-bottom">
         <jhi-editor-build-output
             [participation]="participation"
-            [isBuilding]="isBuilding">
+            [isBuilding]="isBuilding"
+            (buildLogChange)="updateLatestBuildLogs($event)">
         </jhi-editor-build-output>
     </div>
 

@@ -6,6 +6,7 @@ export * from './auth/has-any-authority.directive';
 export * from './language/find-language-from-key.pipe';
 export * from './login/login.component';
 export * from './util/request-util';
+export * from './util/security-util';
 export * from './model/base-entity';
 export * from './pipes/safe-html.pipe';
 export * from './pipes/safe-url.pipe';
