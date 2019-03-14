@@ -450,8 +450,13 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         return (
             keysToCompare.some(key => this.quizExercise[key] !== this.savedEntity[key]) ||
             !this.areDatesIdentical(this.quizExercise.releaseDate, this.savedEntity.releaseDate) ||
+            !this.areCategoriesIdentical(this.quizExercise.categories, this.savedEntity.categories) ||
             !this.areQuizExerciseEntityQuestionsIdentical(this.quizExercise.questions, this.savedEntity.questions)
         );
+    }
+
+    areCategoriesIdentical(categoriesUsed: ExerciseCategory[], categoriesSaved: ExerciseCategory[]): boolean {
+        return JSON.stringify(categoriesUsed).toLowerCase() === JSON.stringify(categoriesSaved).toLowerCase();
     }
 
     /**
