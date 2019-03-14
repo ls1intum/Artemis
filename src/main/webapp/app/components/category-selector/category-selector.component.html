@@ -12,7 +12,7 @@
                         <span (click)="openColorSelector($event, item)">
                             {{ item.category }}
                         </span>
-            <delete-icon (click)="categoryInput.removeItem(item, index)"></delete-icon>
+            <delete-icon (click)="categoryInput.onRemoveRequested(item, index)"></delete-icon>
         </div>
     </ng-template>
 </tag-input>
