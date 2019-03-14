@@ -1,6 +1,7 @@
 {
     "home": {
         "title": "Willkommen zu Artemis!",
+        "login": "Login",
         "subtitle": "Interaktives Lernen mit einem automatischen Bewertungs Management System",
         "please": "Bitte",
         "usingTUMcredentials": "dich mit deinem TUM Account an",
