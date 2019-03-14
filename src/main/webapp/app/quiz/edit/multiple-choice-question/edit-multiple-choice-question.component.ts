@@ -13,7 +13,7 @@ import {
 } from 'app/markdown-editor/specialCommands';
 import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
 import { CodeCommand } from 'app/markdown-editor/commands';
-import {Question} from 'app/entities/question';
+
 
 @Component({
     selector: 'jhi-edit-multiple-choice-question',
@@ -103,25 +103,11 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
         this.modalService.open(content, {size: 'lg'});
     }
 
-
-    /**
-     * @function togglePreview
-     * @desc Toggles the preview in the template
-     */
-    togglePreview(showPreview: boolean): void {
-        this.showPreview = showPreview;
-        if (showPreview) {
-            this.prepareForSave();
-        }
-    }
-
     prepareForSave(): void {
         this.cleanupQuestion();
 
         // Parse Markdown
         this.markdownEditor.parse();
-        this.containsCorrectOption = this.mcQuestionHasCorrectAnswer();
-        this.containsAllExplanations = this.checkAmountOfExplanation();
         this.questionUpdated.emit();
     }
 
@@ -142,14 +128,9 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
 
     }
 
-    changesInMarkdown(){
-        this.prepareForSave();
-    }
-
     specialCommandsFound(specialCommands: [string, SpecialCommand][]): void {
         this.cleanupQuestion();
         specialCommands.forEach(command => this.specialCommandFound(command[0], command[1]));
-        console.log(this.question);
     }
 
     private specialCommandFound(textLine: string, specialCommand: SpecialCommand) {
@@ -189,14 +170,4 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
     deleteQuestion(): void {
         this.questionDeleted.emit();
     }
-
-
-    mcQuestionHasCorrectAnswer(): boolean {
-       return this.question.answerOptions.some(answeroption => answeroption.isCorrect);
-    }
-
-    checkAmountOfExplanation(): boolean {
-        return this.question.answerOptions.every(answeroption => answeroption.explanation !== '');
-    }
-
 }

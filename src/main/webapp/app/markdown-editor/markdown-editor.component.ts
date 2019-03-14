@@ -107,7 +107,6 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
      * Otherwise, markdown is parsed to HTML and emitted. Result is displayed using default preview.
      */
     parse(): void {
-        console.log(this.defaultText);
         // Only generate HTML if no Special Commands are defined.
         // Special Commands require special parsing by the client.
         if (this.specialCommands == null || this.specialCommands.length === 0) {
@@ -131,7 +130,6 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
     }
 
     private parseLineForSpecialCommand = (textLine: string): [string, SpecialCommand] => {
-        console.log('parseLinie');
         for (const specialCommand of this.specialCommands) {
             const possibleCommandIdentifier = [specialCommand.getIdentifier(), specialCommand.getIdentifier().toLowerCase(), specialCommand.getIdentifier().toUpperCase()];
             if (possibleCommandIdentifier.some(identifier => textLine.indexOf(identifier) !== -1))  {

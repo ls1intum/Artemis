@@ -209,12 +209,12 @@
                 </div>
                 <div class="form-group">
                     <span
-                        *ngIf="!pendingChanges() && !isSaving"
+                        *ngIf="!pendingChangesCache && !isSaving"
                         jhiTranslate="arTeMiSApp.quizExercise.edit.saved"
                         class="badge badge-success">
                     </span>
                     <span
-                        *ngIf="pendingChanges() && this.validQuiz() && !isSaving"
+                        *ngIf="pendingChangesCache && this.validQuizCache && !isSaving"
                         jhiTranslate="arTeMiSApp.quizExercise.edit.pendingChanges"
                         class="badge badge-secondary">
                     </span>
@@ -236,21 +236,19 @@
                         </div>
                     </ng-template>
                     <span
-                        *ngIf="!this.validQuiz()"
+                        *ngIf="!this.validQuizCache"
                         class="badge badge-danger"
                         [ngbTooltip]="tooltipTranslate"
-                        tooltip-placement="top-right"
-                        tooltip-class="invalid-reasons-tooltip">
+                        tooltip-placement="top-right">
                         <fa-icon icon="exclamation-circle"></fa-icon>
                         <span jhiTranslate="arTeMiSApp.quizExercise.edit.invalidInput"></span>
                         <span>({{invalidReasons().length}})</span>
                     </span>
                     <span
-                        *ngIf="this.warningQuiz()"
+                        *ngIf="this.warningQuizCache"
                         class="badge badge-warning"
                         [ngbTooltip]="warningTranslate"
-                        tooltip-placement="top-right"
-                        tooltip-class="invalid-reasons-tooltip">
+                        tooltip-placement="top-right">
                         <span jhiTranslate="arTeMiSApp.quizExercise.edit.warning"></span>
                         <span>({{invalidWarnings().length}})</span>
                     </span>
@@ -258,17 +256,17 @@
                         id="quiz-cancel-back-button"
                         *ngIf="quizExercise.course"
                         class="btn btn-default"
-                        [ngClass]="{'btn-secondary': !pendingChanges(), 'btn-danger': pendingChanges()}"
+                        [ngClass]="{'btn-secondary': !pendingChangesCache, 'btn-danger': pendingChangesCache}"
                         (click)="back()"
-                        jhiTranslate="{{pendingChanges() ? 'entity.action.cancel' : 'entity.action.back'}}">
+                        jhiTranslate="{{pendingChangesCache ? 'entity.action.cancel' : 'entity.action.back'}}">
                     </button>
                     <button
                         id="quiz-save"
                         class="btn btn-success"
                         (click)="save()"
-                        [ngClass]="{disabled: !pendingChanges() || !this.validQuiz() || hasSavedQuizStarted() || isSaving}"
+                        [ngClass]="{disabled: !pendingChangesCache || !this.validQuizCache || hasSavedQuizStarted() || isSaving}"
                         jhiTranslate="entity.action.save"
-                        [ngbTooltip]="this.validQuiz()? '' : tooltipTranslate"
+                        [ngbTooltip]="this.validQuizCache? '' : tooltipTranslate"
                         tooltip-placement="top-right"
                         tooltip-class="invalid-reasons-tooltip">
                     </button>

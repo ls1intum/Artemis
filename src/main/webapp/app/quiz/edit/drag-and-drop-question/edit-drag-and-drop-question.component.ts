@@ -809,9 +809,14 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
         this.prepareForSave();
     }
 
-    changesInMarkdown(value: boolean){
-        this.question.contentChanged = value;
+    changesInMarkdown(){
+        this.questionMoveDown.emit();
         this.prepareForSave();
+    }
+
+    specialCommandsFound(specialCommands: [string, SpecialCommand][]): void {
+        this.cleanupQuestion();
+        specialCommands.forEach(command => this.specialCommandFound(command[0], command[1]));
     }
 
     specialCommandFound(textLine: string, specialCommand: SpecialCommand) {
@@ -827,10 +832,14 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
             }
     }
 
-    prepareForSave(): void {
+    private cleanupQuestion() {
         this.question.text = null;
         this.question.explanation = null;
         this.question.hint = null;
+    }
+
+    prepareForSave(): void {
+        this.cleanupQuestion();
         this.markdownEditor.parse();
     }
 }

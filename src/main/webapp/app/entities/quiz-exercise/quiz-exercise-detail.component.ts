@@ -1,4 +1,4 @@
-import { Component, HostListener, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChildren, QueryList } from '@angular/core';
+import { Component, HostListener, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChildren, QueryList, ChangeDetectorRef } from '@angular/core';
 import { QuizExerciseService } from './quiz-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -97,6 +97,10 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     mcQuestionHasCorrectAnswerOption = true;
     mcHasAllExplanations: boolean;
 
+    validQuizCache: boolean;
+    warningQuizCache: boolean;
+    pendingChangesCache: boolean;
+
     /** Status Options **/
     statusOptionsVisible: Option[] = [new Option(false, 'Hidden'), new Option(true, 'Visible')];
     statusOptionsPractice: Option[] = [new Option(false, 'Closed'), new Option(true, 'Open for Practice')];
@@ -112,7 +116,8 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         private translateService: TranslateService,
         private fileUploaderService: FileUploaderService,
         private jhiAlertService: JhiAlertService,
-        private location: Location
+        private location: Location,
+        private changeDetector: ChangeDetectorRef,
     ) {}
 
     ngOnInit(): void {
@@ -182,6 +187,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
             this.quizExercise.course = this.course;
         }
         this.updateDuration();
+        this.cacheValidation();
     }
 
     ngOnChanges(changes: SimpleChanges): void {
@@ -436,19 +442,23 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         this.quizExercise.questions = this.quizExercise.questions.filter(question => question !== questionToDelete);
     }
 
+    private cacheValidation(): void {
+        this.validQuizCache = this.validQuiz();
+        this.warningQuizCache = this.warnings();
+        this.pendingChangesCache = this.pendingChanges();
+        this.changeDetector.detectChanges();
+    }
+
+
     /**
      * @function onQuestionUpdated
      * @desc Handles the change of a question by replacing the array with a copy (allows for shallow comparison)
      */
     onQuestionUpdated(): void {
         this.quizExercise.questions = Array.from(this.quizExercise.questions);
-
+        this.cacheValidation();
     }
 
-    onMcQuestionUpdate(correctOption: boolean, explanation: boolean): void {
-        this.mcQuestionHasCorrectAnswerOption = correctOption;
-        this.mcHasAllExplanations = explanation;
-    }
 
     /**
      * @function pendingChanges
@@ -556,40 +566,39 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         return isGenerallyValid && areAllQuestionsValid;
     }
 
-    warningQuiz(): boolean {
-        console.log('wird aufgerufen');
-        for ( const question of this.quizExercise.questions){
+    warnings(): boolean {
+        let value = false;
+        this.quizExercise.questions.forEach((question: Question, index: number) => {
             if (question.type === QuestionType.MULTIPLE_CHOICE) {
                 const mcQuestion = question as MultipleChoiceQuestion;
-                  for ( const answeroption of mcQuestion.answerOptions ){
-                      if (answeroption.explanation === null){
-                          return true;
-                          break;
-                      }
-                  }
-            }
-        }
 
+                if (mcQuestion.answerOptions.some(answerOption => !answerOption.explanation)){
+                  value = true;
+                }
+            }
+        }); return value;
     }
 
     invalidWarnings(): Warnings[]{
         const warnings = new Array<Warnings>();
         if (!this.quizExercise) {
-            return;
+            return [];
         }
 
-        this.quizExercise.questions.forEach(function(question: Question, index: number) {
+        this.quizExercise.questions.forEach((question: Question, index: number) => {
             if (question.type === QuestionType.MULTIPLE_CHOICE) {
                 const mcQuestion = question as MultipleChoiceQuestion;
 
-                if (mcQuestion.answerOptions.some(answeroption => answeroption.explanation === null )){
+                if (mcQuestion.answerOptions.some(answerOption => !answerOption.explanation)){
                     warnings.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.explanationIsMissing',
                         translateValues: { index: index + 1 }
                     });
                 }
             }
-        }, this);
+        });
+
+        console.log(warnings);
         return warnings;
     }
     /**
