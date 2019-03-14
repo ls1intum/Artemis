@@ -97,6 +97,7 @@
                 <div class="question-content">
                     <jhi-markdown-editor #markdownEditor
                                          [defaultText]="questionEditorText"
+                                         [useMarkdownPreview]="false"
                                          [specialCommands]="commandDragAndDropQuestions"
                                          (onChanges)="changesInMarkdown()"
                                          (textWithSpecialCommandFound)="specialCommandsFound($event)"
