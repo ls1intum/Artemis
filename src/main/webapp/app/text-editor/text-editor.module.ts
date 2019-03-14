@@ -9,13 +9,14 @@ import { textEditorRoute } from './text-editor.route';
 import { TextEditorComponent } from './text-editor.component';
 import { TextEditorScoreCardComponent } from './text-editor-score-card/text-editor-score-card.component';
 import { TextSharedModule } from 'app/text-shared/text-shared.module';
+import { ArTEMiSComplaintsModule } from 'app/complaints';
 
 const ENTITY_STATES = [...textEditorRoute];
 
 @NgModule({
     declarations: [TextEditorComponent, TextEditorScoreCardComponent],
     entryComponents: [TextEditorComponent],
-    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), ArTEMiSResultModule, TextSharedModule],
+    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), ArTEMiSResultModule, TextSharedModule, ArTEMiSComplaintsModule],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }]
 })
 export class ArTEMiSTextModule {
