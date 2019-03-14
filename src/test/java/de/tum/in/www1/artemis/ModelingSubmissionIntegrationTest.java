@@ -39,7 +39,6 @@ public class ModelingSubmissionIntegrationTest {
     @Autowired
     ModelingSubmissionRepository modelingSubmissionRepo;
 
-    private Course course;
     private ModelingExercise exercise;
     ModelingSubmission submittedSubmission;
     ModelingSubmission unsubmittedSubmission;
@@ -53,7 +52,6 @@ public class ModelingSubmissionIntegrationTest {
         database.resetDatabase();
         database.addUsers(2, 1);
         database.addCourseWithModelingExercise();
-        course = courseRepo.findAll().get(0);
         exercise = (ModelingExercise) exerciseRepo.findAll().get(0);
         emptyModel = database.loadFileFromResources("test-data/model-submission/empty-model.json");
         validModel = database.loadFileFromResources("test-data/model-submission/model.54727.json");
