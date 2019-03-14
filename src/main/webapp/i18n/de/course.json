@@ -16,11 +16,13 @@
             "detail": {
                 "title": "Kurs"
             },
+            "totalScore": "Gesamtergebnis:",
             "title": "Titel",
             "shortName": "Kurzname",
             "studentGroupName": "Studenten Gruppe",
             "teachingAssistantGroupName": "Tutor Gruppe",
             "instructorGroupName": "Instructor Gruppe",
+            "description": "Kurs Beschreibung",
             "startDate": "Start",
             "endDate": "End",
             "onlineCourse": "Online Kurs",

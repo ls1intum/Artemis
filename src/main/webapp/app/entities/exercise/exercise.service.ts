@@ -17,7 +17,8 @@ export type EntityArrayResponseType = HttpResponse<Exercise[]>;
 export class ExerciseService {
     public resourceUrl = SERVER_API_URL + 'api/exercises';
 
-    constructor(private http: HttpClient, private participationService: ParticipationService) {}
+    constructor(private http: HttpClient, private participationService: ParticipationService) {
+    }
 
     create(exercise: Exercise): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(exercise);
@@ -57,7 +58,26 @@ export class ExerciseService {
     }
 
     exportRepos(id: number, students: string[]): Observable<HttpResponse<Blob>> {
-        return this.http.get(`${this.resourceUrl}/${id}/participations/${students}`, { observe: 'response', responseType: 'blob' });
+        return this.http.get(`${this.resourceUrl}/${id}/participations/${students}`, {
+            observe: 'response',
+            responseType: 'blob'
+        });
+    }
+
+    findResultsForExercise(id: number): Observable<Exercise> {
+        return this.http.get<Exercise>(`${this.resourceUrl}/${id}/results`);
+    }
+
+    getNextExerciseForDays(exercises: Exercise[], delayInDays = 7): Exercise {
+        return exercises.find(exercise => {
+            return moment().isBefore(exercise.dueDate) && moment().add(delayInDays, 'day').isSameOrAfter(exercise.dueDate);
+        });
+    }
+
+    getNextExerciseForHours(exercises: Exercise[], delayInHours = 12): Exercise {
+        return exercises.find(exercise => {
+            return moment().isBefore(exercise.dueDate) && moment().add(delayInHours, 'hours').isSameOrAfter(exercise.dueDate);
+        });
     }
 
     convertExerciseDateFromServer(exercise: Exercise): Exercise {
@@ -116,7 +136,8 @@ export class ExerciseService {
 export class ExerciseLtiConfigurationService {
     private resourceUrl = SERVER_API_URL + 'api/lti/configuration';
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient) {
+    }
 
     find(id: number): Observable<HttpResponse<LtiConfiguration>> {
         return this.http.get<LtiConfiguration>(`${this.resourceUrl}/${id}`, { observe: 'response' });

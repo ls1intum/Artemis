@@ -1,0 +1,88 @@
+{
+    "arTeMiSApp": {
+        "studentDashboard": {
+            "title": "Your current courses",
+            "exerciseTitle": "Current exercise of \"{{ course }}\" active till {{ date }}:",
+            "cardTitle": "Your current score:",
+            "cardNoExerciseLabel": "No exercise planned",
+            "cardExerciseLabel": "Next Exercise:",
+            "register": {
+                "signUp": "Sign up for a course",
+                "registerSuccessful": "Register successful",
+                "signUpForCourse": "Sign up for selected course",
+                "cancel": "Cancel",
+                "noCourse": "No course available to register to",
+                "pleaseSelectCourse": "# Select a course"
+            }
+        },
+        "courseOverview": {
+            "noDescription": "No description available",
+            "menu": {
+                "exercises": "Exercises",
+                "statistics": "Statistics"
+            },
+            "exerciseList": {
+                "noExerciseDate": "No date associated",
+                "exerciseGroupHeader": "Exercises: {{ total }}",
+                "currentExerciseGroupHeader": "Current exercise active till {{ date }}:",
+                "sortExercises": "Sort exercises",
+                "newFirst": "Newest first",
+                "oldFirst": "Oldest first",
+                "noExercises": "No exercises available for the course.",
+                "notReleased": "Not released",
+                "live": "Live",
+                "userNotStartedExercise": "You have not started this exercise yet.",
+                "quizNotStarted": "The quiz hasn't started yet.",
+                "userNotStartedQuiz": "You have not started this quiz yet.",
+                "userNotParticipated": "You have not participated in this live quiz.",
+                "userParticipating": "You are currently participating in this quiz.",
+                "userSubmitted": "You have already submitted. Wait for the quiz to end to see results.",
+                "details": {
+                    "courseInformation": "Course Information:",
+                    "totalExercises": "Total Exercises:",
+                    "quizTotal": "Total Quiz Exercises:",
+                    "modelingTotal": "Total Modeling Exercises:",
+                    "programmingTotal": "Total Programming Exercises:",
+                    "textTotal": "Total Text Exercises:",
+                    "file-uploadTotal": "Total File Upload Exercises:",
+                    "startDate": "Start Date:",
+                    "endDate": "End Date:",
+                    "upcomingDeadlines": "Upcoming Deadlines:",
+                    "noUpcomingExercises": "There are no upcoming exercises."
+                }
+            },
+            "statistics": {
+                "totalScore": "Your total score",
+                "exerciseCount": "Number of exercises: {{ number }}",
+                "absoluteScore": "Absolute score: {{ number }} Pts",
+                "maxScore": "Total max score: {{ number }} Pts",
+                "relativeScore": "Relative score: {{ number }}%",
+                "noStatistics": "No statistics available for the course."
+            },
+            "exerciseDetails": {
+                "dueDate": "Due date:",
+                "exerciseType": "Exercise Type:",
+                "level": "Level:",
+                "exerciseStatus": "Exercise status:",
+                "maxPoints": "Max. points:",
+                "problemStatement": "Problem statement:",
+                "noResults": "You have no results yet",
+                "instructorActions": {
+                    "title": "Instructor actions:",
+                    "information": "Information",
+                    "assessments": "Assessments",
+                    "statistics": "Statistics"
+                },
+                "notParticipated": "Not participated",
+                "yourResult": "Your result:",
+                "recentResults": "Recent results:",
+                "noRatedResult": "You have no rated result.",
+                "otherResults": "Other results:",
+                "hideResults": "Hide results",
+                "showResults": "Show all results",
+                "rated": "Rated",
+                "practice": "Practice"
+            }
+        }
+    }
+}

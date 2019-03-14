@@ -11,7 +11,7 @@
         <ace-editor #editor
                     [(text)]="editorText"
                     [mode]="editorMode"
-                    [readOnly]="editorReadOnly"
+                    [readOnly]=false
                     [autoUpdateContent]="editorAutoUpdate"
                     [durationBeforeCallback]="editorDurationBeforeCallback"
                     (textChanged)="onFileTextChanged($event)"

@@ -1,0 +1,19 @@
+<div class="result-history-wrapper ml-3">
+    <div class="result-history-element previous-history-element" *ngIf="showPreviousDivider">
+        <div class="result-divider"></div>
+    </div>
+    <div class="result-history-element" *ngFor="let result of results">
+        <div class="result-score">
+            <div class="result-score-icon" [ngClass]="resultClass(result)">
+                <fa-icon [icon]="resultIcon(result)" placement="top"
+                         ngbTooltip="{{result.score}}%" container="body"></fa-icon>
+            </div>
+            <div class="result-score-info text-center">
+                <div>{{absoluteResult(result)}} of {{maxScore}} pts.</div>
+                <div>{{result.completionDate | date: 'dd/MM/yy'}}</div>
+            </div>
+        </div>
+        <div class="result-divider"></div>
+    </div>
+
+</div>

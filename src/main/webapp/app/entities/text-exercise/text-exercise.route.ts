@@ -8,15 +8,6 @@ import { TextExerciseDeletePopupComponent } from './text-exercise-delete-dialog.
 
 export const textExerciseRoute: Routes = [
     {
-        path: 'text-exercise',
-        component: TextExerciseComponent,
-        data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
-            pageTitle: 'arTeMiSApp.textExercise.home.title'
-        },
-        canActivate: [UserRouteAccessService]
-    },
-    {
         path: 'text-exercise/:id',
         component: TextExerciseDetailComponent,
         data: {

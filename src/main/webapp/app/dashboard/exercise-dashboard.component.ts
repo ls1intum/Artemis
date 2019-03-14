@@ -13,11 +13,12 @@ import { ResultDetailComponent } from '../entities/result/result-detail.componen
 import { ModelingAssessmentService } from '../entities/modeling-assessment/modeling-assessment.service';
 import { HttpResponse } from '@angular/common/http';
 import { Moment } from 'moment';
+import { SourceTreeService } from 'app/components/util/sourceTree.service';
 
 @Component({
     selector: 'jhi-instructor-dashboard',
     templateUrl: './exercise-dashboard.component.html',
-    providers: [JhiAlertService, ModelingAssessmentService]
+    providers: [JhiAlertService, ModelingAssessmentService, SourceTreeService]
 })
 export class ExerciseDashboardComponent implements OnInit, OnDestroy {
     // make constants available to html for comparison
@@ -43,6 +44,7 @@ export class ExerciseDashboardComponent implements OnInit, OnDestroy {
         private resultService: ResultService,
         private modelingAssessmentService: ModelingAssessmentService,
         private participationService: ParticipationService,
+        private sourceTreeService: SourceTreeService,
         private modalService: NgbModal,
         private eventManager: JhiEventManager
     ) {
@@ -109,9 +111,7 @@ export class ExerciseDashboardComponent implements OnInit, OnDestroy {
     }
 
     goToBuildPlan(result: Result) {
-        this.participationService.buildPlanWebUrl(result.participation.id).subscribe(res => {
-            window.open(res.url);
-        });
+        this.sourceTreeService.goToBuildPlan(result.participation);
     }
 
     goToRepository(result: Result) {

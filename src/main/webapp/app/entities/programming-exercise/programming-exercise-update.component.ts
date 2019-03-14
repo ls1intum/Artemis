@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-import { ProgrammingExercise } from './programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage } from './programming-exercise.model';
 import { ProgrammingExerciseService } from './programming-exercise.service';
 import { Course, CourseService } from 'app/entities/course';
 import { JhiAlertService } from 'ng-jhipster';
@@ -13,6 +13,10 @@ import { JhiAlertService } from 'ng-jhipster';
     templateUrl: './programming-exercise-update.component.html'
 })
 export class ProgrammingExerciseUpdateComponent implements OnInit {
+
+    readonly JAVA = ProgrammingLanguage.JAVA;
+    readonly PYTHON = ProgrammingLanguage.PYTHON;
+
     programmingExercise: ProgrammingExercise;
     isSaving: boolean;
 

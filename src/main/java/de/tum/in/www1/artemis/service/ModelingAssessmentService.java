@@ -83,8 +83,7 @@ public class ModelingAssessmentService extends AssessmentService {
      * @return the ResponseEntity with result as body
      */
     @Transactional
-    public Result submitManualAssessment(
-        Result result, ModelingExercise exercise, List<ModelElementAssessment> modelingAssessment) {
+    public Result submitManualAssessment(Result result, ModelingExercise exercise, List<ModelElementAssessment> modelingAssessment) {
         saveManualAssessment(result, exercise.getId(), modelingAssessment);
         Double calculatedScore = calculateTotalScore(modelingAssessment);
         return prepareSubmission(result, exercise, calculatedScore);
@@ -101,8 +100,7 @@ public class ModelingAssessmentService extends AssessmentService {
      * @param modelingAssessment List of assessed model elements
      */
     @Transactional
-    public void saveManualAssessment(
-        Result result, Long exerciseId, List<ModelElementAssessment> modelingAssessment) {
+    public void saveManualAssessment(Result result, Long exerciseId, List<ModelElementAssessment> modelingAssessment) {
         result.setAssessmentType(AssessmentType.MANUAL);
         User user = userService.getUser();
         result.setAssessor(user);

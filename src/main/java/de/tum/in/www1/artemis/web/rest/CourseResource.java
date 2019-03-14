@@ -9,6 +9,8 @@ import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.web.rest.dto.StatsForInstructorDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.config.JHipsterConstants;
@@ -58,7 +60,6 @@ public class CourseResource {
     private final TutorParticipationService tutorParticipationService;
     private final ObjectMapper objectMapper;
     private final TextAssessmentService textAssessmentService;
-
 
     public CourseResource(Environment env,
                           UserService userService,
@@ -229,6 +230,19 @@ public class CourseResource {
     }
 
     /**
+     * GET  /courses : get all courses that the current user can register to.
+     * Decided by the start and end date
+     *
+     * @return the list of courses which are active)
+     */
+    @GetMapping("/courses/to-register")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public List<Course> getAllCoursesToRegister() {
+        log.debug("REST request to get all currently active Courses that are not online courses");
+        return courseService.findAllCurrentlyActiveAndNotOnline();
+    }
+
+    /**
      * GET /courses/for-dashboard
      *
      * @param principal the current user principal
@@ -273,10 +287,14 @@ public class CourseResource {
 
         User user = userService.getUserWithGroupsAndAuthorities();
         List<Exercise> exercises = exerciseService.findAllForCourse(course, false, principal, user);
+
+        exercises = exercises.stream()
+            .filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise)
+            .collect(Collectors.toList());
+
         List<TutorParticipation> tutorParticipations = tutorParticipationService.findAllByCourseAndTutor(course, user);
 
         for (Exercise exercise : exercises) {
-//            TutorParticipation tutorParticipation = tutorParticipationService.findByExerciseAndTutor(exercise, user);
             TutorParticipation tutorParticipation = tutorParticipations.stream()
                 .filter(participation -> participation.getAssessedExercise().getId().equals(exercise.getId()))
                 .findFirst().orElseGet(() -> {
@@ -364,6 +382,78 @@ public class CourseResource {
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(course));
     }
 
+    /**
+     * GET  /courses/:id/with-exercises-and-relevant-participations
+     *
+     * Get the "id" course, with text and modelling exercises and their participations
+     *
+     * @param courseId the id of the course to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
+     */
+    @GetMapping("/courses/{courseId}/with-exercises-and-relevant-participations")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Course> getCourseWithExercisesAndRelevantParticipations(@PathVariable Long courseId) throws AccessForbiddenException {
+        log.debug("REST request to get Course with exercises and relevant participations : {}", courseId);
+        Course course = courseService.findOneWithExercises(courseId);
+
+        if (!userHasPermission(course)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+
+        Set<Exercise> interestingExercises = course.getExercises().stream()
+            .filter(exercise -> exercise instanceof TextExercise || exercise instanceof ModelingExercise)
+            .collect(Collectors.toSet());
+
+        course.setExercises(interestingExercises);
+
+        List<Participation> participations = this.participationService.findByCourseIdWithRelevantResults(courseId);
+
+        for (Exercise exercise : interestingExercises) {
+            Set<Participation> participationsForExercise = participations.stream()
+                .filter(participation -> participation.getExercise().getId().equals(exercise.getId()))
+                .collect(Collectors.toSet());
+
+            exercise.setParticipations(participationsForExercise);
+        }
+
+        return ResponseUtil.wrapOrNotFound(Optional.of(course));
+    }
+
+    /**
+     * GET /courses/:id/stats-for-instructor-dashboard
+     * <p>
+     * A collection of useful statistics for the instructor course dashboard, including:
+     * - number of students
+     * - number of instructors
+     * - number of submissions
+     * - number of assessments
+     * - number of complaints
+     * - number of open complaints
+     *
+     * @param courseId the id of the course to retrieve
+     * @return data about a course including all exercises, plus some data for the tutor
+     * as tutor status for assessment
+     */
+    @GetMapping("/courses/{courseId}/stats-for-instructor-dashboard")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<StatsForInstructorDashboardDTO> getStatsForInstructorDashboard(@PathVariable Long courseId) throws AccessForbiddenException {
+        log.debug("REST request /courses/{courseId}/stats-for-instructor-dashboard");
+
+        Course course = courseService.findOne(courseId);
+        if (!userHasPermission(course)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+
+        StatsForInstructorDashboardDTO stats = new StatsForInstructorDashboardDTO();
+
+        stats.numberOfStudents = courseService.countNumberOfStudentsForCourse(course);
+        stats.numberOfTutors = courseService.countNumberOfTutorsForCourse(course);
+        stats.numberOfComplaints = 0; // TODO: when implementing the complaints implement this as well
+        stats.numberOfOpenComplaints = 0; // TODO: when implementing the complaints implement this as well
+
+        return ResponseEntity.ok(stats);
+    }
+
     private boolean userHasPermission(Course course) {
         User user = userService.getUserWithGroupsAndAuthorities();
         return authCheckService.isTeachingAssistantInCourse(course, user) ||
@@ -392,5 +482,48 @@ public class CourseResource {
         String title = course.getTitle();
         courseService.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, title)).build();
+    }
+
+    /**
+     * GET  /courses/:courseId/results : Returns all results of the exercises of a course for the currently logged in user
+     *
+     * @param courseId the id of the course to get the results from
+     * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
+     */
+    @GetMapping(value = "/courses/{courseId}/results")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<Course> getResultsForCurrentStudent(@PathVariable Long courseId) {
+        long start = System.currentTimeMillis();
+        log.debug("REST request to get Results for Course and current Studen : {}", courseId);
+
+        User student = userService.getUser();
+        Course course = courseService.findOne(courseId);
+
+        List<Exercise> exercises = exerciseService.findAllExercisesByCourseId(course, student);
+
+        for (Exercise exercise : exercises) {
+            List<Participation> participations = participationService.findByExerciseIdAndStudentIdWithEagerResults(exercise.getId(), student.getId());
+
+            exercise.setParticipations(new HashSet<>());
+
+            //Removing not needed properties
+            exercise.setCourse(null);
+
+            for (Participation participation : participations) {
+                //Removing not needed properties
+                participation.setStudent(null);
+
+                participation.setResults(participation.getResults());
+                exercise.addParticipation(participation);
+            }
+            course.addExercises(exercise);
+
+        }
+
+
+        log.debug("getResultsForCurrentStudent took " + (System.currentTimeMillis() - start) + "ms");
+
+        return ResponseEntity.ok().body(course);
     }
 }

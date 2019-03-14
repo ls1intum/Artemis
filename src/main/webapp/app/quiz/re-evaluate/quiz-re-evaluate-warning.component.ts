@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiEventManager } from 'ng-jhipster';
-
 import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
 import { QuizReEvaluateService } from './quiz-re-evaluate.service';
 import { Question, QuestionType } from '../../entities/question';
@@ -215,9 +214,9 @@ export class QuizReEvaluateWarningComponent implements OnInit {
 
     /**
      * @function close
-     * @desc Close modal and go back to QuizExercise-Overview
+     * @desc Close modal
      */
     close(): void {
-        this.activeModal.close('re-evaluate');
+        this.activeModal.close();
     }
 }

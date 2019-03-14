@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService } from 'ng-jhipster';
-import * as ApollonDiagramTitleFormatter from './apollonDiagramTitleFormatter';
+import * as ApollonDiagramTitleFormatter from './apollon-diagram-title-formatter';
 import { ApollonDiagram, ApollonDiagramService } from '../entities/apollon-diagram';
 import { ApollonDiagramCreateFormComponent } from './apollon-diagram-create-form.component';
 

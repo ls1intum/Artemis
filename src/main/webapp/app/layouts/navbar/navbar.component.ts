@@ -8,6 +8,7 @@ import { ProfileService } from '../profiles/profile.service';
 import { AccountService, JhiLanguageHelper, LoginService, User } from '../../core';
 
 import { VERSION } from '../../app.constants';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-navbar',
@@ -52,6 +53,7 @@ export class NavbarComponent implements OnInit {
     changeLanguage(languageKey: string) {
         this.sessionStorage.store('locale', languageKey);
         this.languageService.changeLanguage(languageKey);
+        moment.locale(languageKey);
     }
 
     collapseNavbar() {

@@ -1,20 +1,20 @@
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Participation } from '../../entities/participation';
-import { RepositoryFileService } from '../../entities/repository/repository.service';
-import { WindowRef } from '../../core/websocket/window.service';
-import { JhiAlertService } from 'ng-jhipster';
-import { JhiWebsocketService } from '../../core';
+import { Participation } from 'app/entities/participation';
+import { RepositoryFileService } from 'app/entities/repository';
+import { WindowRef, JhiWebsocketService } from 'app/core';
 import { EditorComponent } from '../editor.component';
+import { JhiAlertService } from 'ng-jhipster';
 import { AceEditorComponent } from 'ng2-ace-editor';
+import * as ace from 'brace';
 import 'brace/theme/dreamweaver';
 import 'brace/ext/modelist';
+import 'brace/ext/language_tools';
 import 'brace/mode/java';
+import 'brace/mode/python';
 import 'brace/mode/javascript';
 import 'brace/mode/markdown';
 // TODO: consider adding any modes we might need
-
-declare let ace: any;
 
 @Component({
     selector: 'jhi-editor-ace',
@@ -25,11 +25,13 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
     @ViewChild('editor')
     editor: AceEditorComponent;
 
+    // This fetches a list of all supported editor modes and matches it afterwards against the file extension
+    readonly aceModeList = ace.acequire('ace/ext/modelist');
+
     /** Ace Editor Options **/
     editorText = '';
     editorFileSessions: object = {};
-    editorMode = 'java'; // String or mode object
-    editorReadOnly = false;
+    editorMode = this.aceModeList.getModeForPath('Test.java').name; // String or mode object
     editorAutoUpdate = true; // change content when editor text changes
     editorDurationBeforeCallback = 800; // wait 0,8s before callback 'textChanged' sends new value
 
@@ -49,7 +51,8 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
         private jhiWebsocketService: JhiWebsocketService,
         private repositoryFileService: RepositoryFileService,
         public modalService: NgbModal
-    ) {}
+    ) {
+    }
 
     /**
      * @function ngOnInit
@@ -64,10 +67,11 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
      * @desc Sets the theme and other editor options
      */
     ngAfterViewInit(): void {
-        ace.acequire('ace/ext/language_tools');
         this.editor.setTheme('dreamweaver');
         this.editor.getEditor().setOptions({
-            animatedScroll: true
+            animatedScroll: true,
+            enableBasicAutocompletion: true,
+            enableLiveAutocompletion: true
         });
     }
 
@@ -127,10 +131,6 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
      * @param fileName: Name of the file to be opened in the editor
      */
     loadFile(fileName: string) {
-        // This fetches a list of all supported editor modes and matches it afterwards against the file extension
-        const aceModeList = ace.acequire('ace/ext/modelist');
-        const fileNameSplit = fileName ? fileName.split('/') : '';
-        const aceMode = aceModeList.getModeForPath(fileNameSplit[fileNameSplit.length - 1]);
 
         /** Query the repositoryFileService for the specified file in the repository */
         this.repositoryFileService.get(this.participation.id, fileName).subscribe(
@@ -145,7 +145,8 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
                  * Additionally, we resize the editor window and set focus to it
                  */
                 this.editorText = fileObj.fileContent;
-                this.editor.setMode(aceMode);
+                this.editorMode = this.aceModeList.getModeForPath(fileName).name;
+                this.editor.setMode(this.editorMode);
                 this.editor.getEditor().resize();
                 this.editor._editor.focus();
             },

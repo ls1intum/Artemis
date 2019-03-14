@@ -18,6 +18,7 @@ import { ArTEMiSSharedModule } from './shared';
 import { ArTEMiSCoreModule } from 'app/core';
 import { ArTEMiSAppRoutingModule } from './app-routing.module';
 import { ArTEMiSHomeModule } from './home';
+import { ArTEMiSOverviewModule } from './overview';
 import { ArTEMiSAccountModule } from './account/account.module';
 import { ArTEMiSCourseListModule } from './course-list';
 import { ArTEMiSEntityModule } from './entities/entity.module';
@@ -39,6 +40,8 @@ import { ArTEMiSStatisticModule } from './quiz-statistics/quiz-statistic.module'
 import { ArTEMiSModelingEditorModule } from './modeling-editor/modeling-editor.module';
 import { QuizExerciseExportComponent } from './entities/quiz-exercise/quiz-exercise-export.component';
 import { PendingChangesGuard } from './shared/guard/pending-changes.guard';
+import { ArTEMiSInstructorCourseStatsDashboardModule } from 'app/instructor-course-dashboard';
+import { ArTEMiSInstructorExerciseStatsDashboardModule } from 'app/instructor-exercise-dashboard';
 import { ParticipationDataProvider } from './course-list/exercise-list/participation-data-provider';
 import { ArTEMiSTutorCourseDashboardModule } from 'app/tutor-course-dashboard';
 import { ArTEMiSTutorExerciseDashboardModule } from 'app/tutor-exercise-dashboard';
@@ -68,6 +71,7 @@ import { ArTEMiSExampleSubmissionModule } from 'app/example-text-submission';
         ArTEMiSSharedModule.forRoot(),
         ArTEMiSCoreModule,
         ArTEMiSHomeModule,
+        ArTEMiSOverviewModule,
         ArTEMiSAccountModule,
         ArTEMiSEntityModule,
         ArTEMiSApollonDiagramsModule,
@@ -82,6 +86,8 @@ import { ArTEMiSExampleSubmissionModule } from 'app/example-text-submission';
         ArTEMiSModelingStatisticsModule,
         ArTEMiSTextModule,
         ArTEMiSTextAssessmentModule,
+        ArTEMiSInstructorCourseStatsDashboardModule,
+        ArTEMiSInstructorExerciseStatsDashboardModule,
         ArTEMiSTutorCourseDashboardModule,
         ArTEMiSTutorExerciseDashboardModule,
         ArTEMiSExampleSubmissionModule

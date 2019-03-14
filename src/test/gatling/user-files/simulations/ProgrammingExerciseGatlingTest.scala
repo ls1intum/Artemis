@@ -72,9 +72,9 @@ class ProgrammingExerciseGatlingTest extends Simulation {
             .headers(headers_http_authenticated)
             .body(StringBody("""{
                 "id":null
-                , "baseRepositoryUrl":"SAMPLE_TEXT"
+                , "templateRepositoryUrl":"SAMPLE_TEXT"
                 , "solutionRepositoryUrl":"SAMPLE_TEXT"
-                , "baseBuildPlanId":"SAMPLE_TEXT"
+                , "templateBuildPlanId":"SAMPLE_TEXT"
                 , "publishBuildPlanUrl":null
                 , "allowOnlineEditor":null
                 }""")).asJSON

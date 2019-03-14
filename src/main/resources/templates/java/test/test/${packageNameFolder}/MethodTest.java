@@ -1,112 +1,137 @@
 package ${packageName};
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.lang.reflect.*;
+import java.util.*;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
+import org.json.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 /**
  * @author Stephan Krusche (krusche@in.tum.de)
- * @version 1.3 (19.11.2018)
+ * @version 2.0 (24.02.2019)
  *
- * This tests evaluates the declared methods including their access modifiers,
- * parameters and return type based on the definitions in test.json. It is only
- * invoked if methods are specified in test.json.
- *
+ * This test evaluates if the specified methods in the structure oracle
+ * are correctly implemented with the expected name, return type, parameter types
+ * and visibility modifiers (in case these are specified).
  */
 @RunWith(Parameterized.class)
 public class MethodTest extends StructuralTest {
 
-	// Each parameter (see below) is placed as an argument here.
-	// Every time the test runner triggers, it will pass the arguments
-	// from parameters we defined in the static findClasses() method
-	public MethodTest(String expectedClassName, String expectedPackageName, JSONObject expectedClassJson) {
-		super(expectedClassName, expectedPackageName, expectedClassJson);
-	}
+    public MethodTest(String expectedClassName, String expectedPackageName, JSONObject expectedClassJSON) {
+        super(expectedClassName, expectedPackageName, expectedClassJSON);
+    }
 
-	@Parameterized.Parameters(name = "{0}")
-	public static Collection<Object[]> findClasses() throws IOException {
-		List<Object[]> testData = new ArrayList<Object[]>();
-		String jsonString = toString(StructuralTest.class.getResource("test.json"));
-		if (jsonString != null) {
-			JSONArray expectedClassesArray = new JSONArray(jsonString);
-			for (int i = 0; i < expectedClassesArray.length(); i++) {
-				JSONObject expectedClassJson = (JSONObject) expectedClassesArray.get(i);
-				//only test the hierarchy if the it was specified
-				if (expectedClassJson.has("class") && expectedClassJson.has("methods")) {
-					String expectedClassName = expectedClassJson.getString("class");
-					String expectedPackageName = expectedClassJson.getString("package");
-					testData.add(new Object[] { expectedClassName, expectedPackageName, expectedClassJson });
-				}
-			}
-		}
-		return testData;
-	}
+    /**
+     * This method collects the classes in the structure oracle file for which methods are specified.
+     * These classes are packed into a list, which represents the test data.
+     * @return A list of arrays containing each class' name, package and the respective JSON object defined in the structure oracle.
+     */
+    @Parameterized.Parameters(name = "{0}")
+    public static Collection<Object[]> findClasses() throws IOException {
+        List<Object[]> testData = new ArrayList<Object[]>();
 
-	@Test(timeout = 1000)
-	public void testMethods() {
-		Class<?> actualClass = findClassForTestType("method");
-		if (expectedClassJson.has("methods")) {
-			JSONObject jsonMethods = expectedClassJson.getJSONObject("methods");
-			checkMethods(actualClass, jsonMethods);
-		}
-	}
+        for (int i = 0; i < structureOracleJSON.length(); i++) {
+            JSONObject expectedClassJSON = structureOracleJSON.getJSONObject(i);
 
-	private void checkMethods(Class<?> actualClass, JSONObject jsonMethods) {
-		Iterator<?> methodsIterator = jsonMethods.keys();
-		while (methodsIterator.hasNext()) {
-			String expectedMethodName = (String) methodsIterator.next();
-			JSONObject expectedMethod = jsonMethods.getJSONObject(expectedMethodName);
+            // Only test the classes that have methods defined in the structure oracle.
+            if (expectedClassJSON.has("class") && expectedClassJSON.has("methods")) {
+                JSONObject expectedClassPropertiesJSON = expectedClassJSON.getJSONObject("class");
+                String expectedClassName = expectedClassPropertiesJSON.getString("name");
+                String expectedPackageName = expectedClassPropertiesJSON.getString("package");
+                testData.add(new Object[] { expectedClassName, expectedPackageName, expectedClassJSON });
+            }
+        }
+        return testData;
+    }
 
-			Method actualMethod = null;
-			for (Method declaredMethod : actualClass.getDeclaredMethods()) {
-				if (declaredMethod.getName().equals(expectedMethodName)) {
-					if (actualMethod != null)
-					{
-						//TODO - Task (low priority): implement support for overloading
-						fail("Problem: the method '" + expectedMethodName + "' in the class '" + expectedClassName + "' is overloaded, i.e. implemented multiple times with different parameters. This is NOT supported in this exercise. Please make sure to implement this method only once.");
-					}
-					actualMethod = declaredMethod;
-				}
-			}
+    /**
+     * This test loops over the list of the test data generated by the method findClasses(), checks if each class is found
+     * at all in the assignment and then proceeds to check its methods.
+     */
+    @Test(timeout = 1000)
+    public void testMethods() {
+        Class<?> observedClass = findClassForTestType("method");
 
-			if (actualMethod == null) {
-				fail("Problem: the class '" + expectedClassName + "' does NOT include the expected method '" + expectedMethodName + "'.");
-			}
+        if (expectedClassJSON.has("methods")) {
+            JSONArray methodsJSON = expectedClassJSON.getJSONArray("methods");
 
-			String actualMethodName = actualMethod.getName();
+            checkMethods(observedClass, methodsJSON);
+        }
+    }
 
-			if (expectedMethod.has("modifiers")) {
-				JSONArray expectedModifiers = expectedMethod.getJSONArray("modifiers");
-				checkModifiers(actualMethod.getModifiers(), expectedModifiers, "method", actualMethod.getName());
-			}
+    /**
+     * This method checks if a observed class' methods match the expected ones defined in the structure oracle.
+     * @param observedClass: The class that needs to be checked as a Class object.
+     * @param expectedMethods: The information on the expected methods contained in a JSON array. This information consists
+     * of the name, parameter types, return type and the visibility modifiers of each method.
+     */
+    private void checkMethods(Class<?> observedClass, JSONArray expectedMethods) {
+        for(int i = 0; i < expectedMethods.length(); i++) {
+            JSONObject expectedMethod = expectedMethods.getJSONObject(i);
+            String expectedName = expectedMethod.getString("name");
+            JSONArray expectedParameters = expectedMethod.has("parameters") ? expectedMethod.getJSONArray("parameters") : new JSONArray();
+            JSONArray expectedModifiers = expectedMethod.has("modifiers") ? expectedMethod.getJSONArray("modifiers") : new JSONArray();
+            String expectedReturnType = expectedMethod.getString("returnType");
 
-			if (expectedMethod.has("parameters")) {
-				JSONArray expectedParameters = (JSONArray) expectedMethod.get("parameters");
-				Class<?>[] actualParameterTypes = actualMethod.getParameterTypes();
+            boolean nameIsRight = false;
+            boolean parametersAreRight = false;
+            boolean modifiersAreRight = false;
+            boolean returnTypeIsRight = false;
 
-				assertEquals("Problem: the method '" + actualMethodName + "' in the class '" + expectedClassName + "' does NOT have the expected number of parameters.", expectedParameters.length(), actualParameterTypes.length);
+            for(Method observedMethod : observedClass.getDeclaredMethods()) {
+                String observedName = observedMethod.getName();
+                Class<?>[] observedParameters = observedMethod.getParameterTypes();
+                String[] observedModifiers = Modifier.toString(observedMethod.getModifiers()).split(" ");
+                String observedReturntype = observedMethod.getReturnType().getSimpleName();
 
-				for (int j = 0; j < actualParameterTypes.length; j++) {
-					String expectedParameterType = expectedParameters.getString(j);
-					String actualParameterType = actualParameterTypes[j].getSimpleName();
-					assertEquals("Problem: the " + j + ". parameter type '" + actualParameterType + "' of the method '" + actualMethodName + "' in the class '" + expectedClassName + "' is NOT defined as expected.", expectedParameterType, actualParameterType);
-				}
-				String expectedReturnType = expectedMethod.getString("returnType");
-				String actualReturnType = actualMethod.getReturnType().getSimpleName();
-				assertEquals("Problem: the return type '" + actualReturnType + "' of the method '" + actualMethodName + "' in the class '" + expectedClassName + "' is NOT defined as expected.", expectedReturnType, actualReturnType);
-			}
-		}
-	}
+                // If the names don't match, then proceed to the next observed method
+                if(!expectedName.equals(observedName)) {
+                    //TODO: we should also take wrong case and typos into account
+                    //TODO: check if overloading is supported properly
+                    continue;
+                } else {
+                    nameIsRight = true;
+                }
+
+                // Then check the parameters
+                parametersAreRight = checkParameters(observedParameters, expectedParameters);
+
+                // Then the modifiers
+                modifiersAreRight = checkModifiers(observedModifiers, expectedModifiers);
+
+                // And then the return type
+                returnTypeIsRight = expectedReturnType.equals(observedReturntype);
+
+                // If all are correct, then we found our method and we can break the loop
+                if(nameIsRight && parametersAreRight && modifiersAreRight && returnTypeIsRight) {
+                    break;
+                }
+            }
+
+            String expectedMethodInformation = "the expected method '" + expectedName + "' of the class '" + expectedClassName + "' with "
+                + ((expectedParameters.length() == 0) ? "no parameters" : "the parameters: " + expectedParameters.toString());
+
+            assertTrue("Problem: " + expectedMethodInformation + " was not found or is named wrongly.",
+                nameIsRight);
+
+            assertTrue("Problem: the parameters of " + expectedMethodInformation + " are not implemented as expected.",
+                parametersAreRight);
+
+            assertTrue("Problem: the access modifiers of " + expectedMethodInformation + " are not implemented as expected.",
+                modifiersAreRight);
+
+            assertTrue("Problem: the return type of " + expectedMethodInformation + " is not implemented as expected.",
+                returnTypeIsRight);
+
+            assertTrue(
+                "Problem: the method '" + expectedName + "' of the class " + expectedClassName + " is not implemented as expected.",
+                nameIsRight && parametersAreRight && modifiersAreRight && returnTypeIsRight);
+        }
+    }
+
 }

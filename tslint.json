@@ -92,7 +92,8 @@
             "check-decl",
             "check-operator",
             "check-separator",
-            "check-type"
+            "check-type",
+            "check-module"
         ],
         "prefer-const": true,
         "arrow-parens": [true, "ban-single-arg-parens"],

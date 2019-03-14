@@ -25,7 +25,9 @@
                 "addSpot": "[-spot #] Add Spot",
                 "addOption": "[-option #] Add Answer Option",
                 "text": "Text",
-                "visual": "Visual"
+                "visual": "Visual",
+                "visualModeHeadline": "Visual Mode",
+                "visualModeExplanation": "Please highlight one word an click on the Add Spot button to create one spot with the corresponding solution"
             }
         }
     }
