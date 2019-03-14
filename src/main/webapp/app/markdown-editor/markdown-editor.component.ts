@@ -12,9 +12,10 @@ import {
 import {AceEditorComponent} from 'ng2-ace-editor';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
-import {Command, BoldCommand, ItalicCommand, UnderlineCommand} from 'app/markdown-editor/commands';
+import {Command, BoldCommand, ItalicCommand, UnderlineCommand, HeadingCommand} from 'app/markdown-editor/commands';
 import {ArtemisMarkdown} from 'app/components/util/markdown.service';
 import {SpecialCommand} from 'app/markdown-editor/specialCommands';
+import {ReferenceCommand} from 'app/markdown-editor/commands/reference.command';
 
 @Component({
     selector: 'jhi-markdown-editor',
@@ -45,7 +46,7 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
 
     previewTextAsHtml: string;
     previewMode = false;
-    defaultCommands: Command[] = [new BoldCommand(), new ItalicCommand(), new UnderlineCommand()];
+    defaultCommands: Command[] = [new BoldCommand(), new ItalicCommand(), new UnderlineCommand(), new ReferenceCommand(), new HeadingCommand()];
 
     constructor(private artemisMarkdown: ArtemisMarkdown) {}
 
@@ -150,7 +151,7 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
     togglePreview(): void {
         this.previewMode = !this.previewMode;
         this.previewModeChange.emit(this.previewMode);
-        this.parse();
+        //this.parse();
     }
 
 }

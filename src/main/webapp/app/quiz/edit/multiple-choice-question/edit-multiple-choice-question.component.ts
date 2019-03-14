@@ -33,7 +33,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
     questionUpdated = new EventEmitter();
     @Output()
     questionDeleted = new EventEmitter();
-   
+
     /** Ace Editor configuration constants **/
     questionEditorText = '';
 
@@ -117,7 +117,6 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
         this.markdownEditor.parse();
         this.containsCorrectOption = this.mcQuestionHasCorrectAnswer();
         this.containsAllExplanations = this.checkAmountOfExplanation();
-        this.questionMcUpdate.emit([this.containsCorrectOption, this.containsAllExplanations]);
         this.questionUpdated.emit();
     }
 

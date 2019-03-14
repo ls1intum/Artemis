@@ -2,7 +2,8 @@ import { Command } from './command';
 
 export class BoldCommand extends Command {
 
-    buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.bold';
+        buttonIcon =  'bold';
+        buttonTitle = 'arTeMiSApp.multipleChoiceQuestion.editor.bold';
 
     execute(): void {
         const chosenText = this.editor.getSelectedText();

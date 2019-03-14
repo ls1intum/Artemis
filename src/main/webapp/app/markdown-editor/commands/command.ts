@@ -1,5 +1,6 @@
 export abstract class Command {
 
+    buttonIcon: string;
     buttonTranslationString: string;
     protected editor: any;
 
