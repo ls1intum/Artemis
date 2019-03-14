@@ -29,7 +29,6 @@ export class DifficultyBadgeComponent implements OnInit, OnDestroy {
         this.translateSubscription.unsubscribe();
     }
 
-
     private setBadgeAttributes() {
         switch (this.exercise.difficulty) {
             case DifficultyLevel.EASY:
