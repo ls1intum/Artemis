@@ -51,9 +51,9 @@ export class DifficultyBadgeComponent implements OnInit, OnDestroy {
                 this.badgeClass = 'badge-success';
                 break;
             case DifficultyLevel.MEDIUM:
-                this.badgeClass = 'badge-warining';
+                this.badgeClass = 'badge-warning';
                 break;
-            case DifficultyLevel.MEDIUM:
+            case DifficultyLevel.HARD:
                 this.badgeClass = 'badge-danger';
                 break;
             default:
@@ -72,7 +72,7 @@ export class DifficultyBadgeComponent implements OnInit, OnDestroy {
             case DifficultyLevel.MEDIUM:
                 this.translatedDifficulty = this.translateService.instant('arTeMiSApp.exercise.medium');
                 break;
-            case DifficultyLevel.MEDIUM:
+            case DifficultyLevel.HARD:
                 this.translatedDifficulty = this.translateService.instant('arTeMiSApp.exercise.hard');
                 break;
             default:
