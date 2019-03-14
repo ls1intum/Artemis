@@ -19,6 +19,6 @@ public interface ModelingSubmissionRepository extends JpaRepository<ModelingSubm
     @Query("select distinct submission from Submission submission left join fetch submission.result r left join fetch r.assessor where submission.id = :#{#submissionId}")
     Optional<ModelingSubmission> findByIdWithEagerResult(@Param("submissionId") Long submissionId);
 
-    @Query("select distinct submission from Submission submission left join fetch submission.result r left join fetch r.feedbacks where submission.id = :#{#submissionId}")
+    @Query("select distinct submission from Submission submission left join fetch submission.result r left join fetch r.feedbacks left join fetch r.assessor where submission.id = :#{#submissionId}")
     Optional<ModelingSubmission> findByIdWithEagerResultAndFeedback(@Param("submissionId") Long submissionId);
 }
