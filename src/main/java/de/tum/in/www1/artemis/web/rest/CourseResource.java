@@ -528,10 +528,10 @@ public class CourseResource {
     }
 
     /**
-     * GET  /courses/:courseId/results : Returns all results of the exercises of a course for the currently logged in user
+     * GET  /courses/:courseId/categories : Returns all categories used in a course
      *
-     * @param courseId the id of the course to get the results from
-     * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
+     * @param courseId the id of the course to get the categories from
+     * @return the ResponseEntity with status 200 (OK) and the list of categories or with status 404 (Not Found)
      */
     @GetMapping(value = "/courses/{courseId}/categories")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
