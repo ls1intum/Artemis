@@ -103,7 +103,11 @@ public class ModelingSubmissionService {
     }
 
 
-    public void setResult (ModelingSubmission submission){
+    /**
+     * Creates and sets new Result object in given submission and stores changes to the database.
+     * @param submission
+     */
+    public void setNewResult(ModelingSubmission submission){
         Result result = new Result();
         result.setSubmission(submission);
         submission.setResult(result);

@@ -148,7 +148,7 @@ public class ModelingSubmissionResource {
             return forbidden();
         }
         if (modelingSubmission.getResult() == null) {
-            modelingSubmissionService.setResult(modelingSubmission);
+            modelingSubmissionService.setNewResult(modelingSubmission);
         }
         if (modelingSubmission.getResult().getAssessor() == null) {
             compassService.removeModelWaitingForAssessment(exercise.getId(), submissionId);
