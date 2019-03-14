@@ -4,28 +4,28 @@ import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
 
 import { ArTEMiSSharedModule } from '../shared';
-import { editorRoute } from './editor.route';
+import { codeEditorRoute } from './code-editor.route';
 import { JhiAlertService } from 'ng-jhipster';
-import { EditorComponent } from './editor.component';
-import { EditorService } from './editor.service';
+import { CodeEditorComponent } from './code-editor.component';
+import { CodeEditorService } from './code-editor.service';
 import { RepositoryService } from '../entities/repository';
 import { ArTEMiSResultModule, ResultComponent, ResultService } from '../entities/result';
 import { HomeComponent } from '../home';
 import { ParticipationService } from '../entities/participation';
 import { MomentModule } from 'angular2-moment';
 import { JhiMainComponent } from '../layouts';
-import { EditorAceComponent } from './ace/editor-ace.component';
+import { CodeEditorAceComponent } from './ace/code-editor-ace.component';
 import { AceEditorModule } from 'ng2-ace-editor';
 import { TreeviewModule } from 'ngx-treeview';
-import { EditorFileBrowserComponent } from './file-browser/editor-file-browser.component';
-import { EditorBuildOutputComponent } from './build-output/editor-build-output.component';
-import { EditorFileBrowserCreateComponent } from './file-browser/editor-file-browser-create';
-import { EditorFileBrowserDeleteComponent } from './file-browser/editor-file-browser-delete';
-import { EditorInstructionsComponent } from './instructions/editor-instructions.component';
-import { EditorInstructionsResultDetailComponent } from './instructions/editor-instructions-result-detail';
+import { CodeEditorFileBrowserComponent } from './file-browser/code-editor-file-browser.component';
+import { CodeEditorBuildOutputComponent } from './build-output/code-editor-build-output.component';
+import { CodeEditorFileBrowserCreateComponent } from './file-browser/code-editor-file-browser-create';
+import { CodeEditorFileBrowserDeleteComponent } from './file-browser/code-editor-file-browser-delete';
+import { CodeEditorInstructionsComponent } from './instructions/code-editor-instructions.component';
+import { EditorInstructionsResultDetailComponent } from './instructions/code-editor-instructions-result-detail';
 
 const ENTITY_STATES = [
-    ...editorRoute
+    ...codeEditorRoute
 ];
 
 @NgModule({
@@ -38,24 +38,24 @@ const ENTITY_STATES = [
         RouterModule.forChild(ENTITY_STATES)
     ],
     declarations: [
-        EditorComponent,
-        EditorAceComponent,
-        EditorFileBrowserComponent,
-        EditorFileBrowserCreateComponent,
-        EditorFileBrowserDeleteComponent,
-        EditorBuildOutputComponent,
-        EditorInstructionsComponent,
+        CodeEditorComponent,
+        CodeEditorAceComponent,
+        CodeEditorFileBrowserComponent,
+        CodeEditorFileBrowserCreateComponent,
+        CodeEditorFileBrowserDeleteComponent,
+        CodeEditorBuildOutputComponent,
+        CodeEditorInstructionsComponent,
         EditorInstructionsResultDetailComponent
     ],
     exports: [
-        EditorComponent
+        CodeEditorComponent
     ],
     entryComponents: [
         HomeComponent,
-        EditorComponent,
+        CodeEditorComponent,
         JhiMainComponent,
-        EditorFileBrowserCreateComponent,
-        EditorFileBrowserDeleteComponent,
+        CodeEditorFileBrowserCreateComponent,
+        CodeEditorFileBrowserDeleteComponent,
         EditorInstructionsResultDetailComponent,
         ResultComponent
     ],
@@ -64,12 +64,12 @@ const ENTITY_STATES = [
         RepositoryService,
         ResultService,
         ParticipationService,
-        EditorService,
+        CodeEditorService,
         { provide: JhiLanguageService, useClass: JhiLanguageService }
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
-export class ArTEMiSEditorModule {
+export class ArTEMiSCodeEditorModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
         this.languageHelper.language.subscribe((languageKey: string) => {
             if (languageKey !== undefined) {

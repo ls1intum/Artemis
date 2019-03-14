@@ -18,14 +18,12 @@ import * as ace from 'brace';
 
 import { AceAnnotation, SaveStatusChange } from '../../entities/ace-editor';
 
-// TODO: consider adding any modes we might need
-
 @Component({
-    selector: 'jhi-editor-ace',
-    templateUrl: './editor-ace.component.html',
+    selector: 'jhi-code-editor-ace',
+    templateUrl: './code-editor-ace.component.html',
     providers: [JhiAlertService, WindowRef, NgbModal, RepositoryFileService]
 })
-export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
+export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges {
     @ViewChild('editor')
     editor: AceEditorComponent;
 

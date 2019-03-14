@@ -4,12 +4,12 @@ import { TranslateService } from '@ngx-translate/core';
 import { AfterViewInit, Component, ElementRef, Input, OnChanges, OnDestroy, Renderer2, SimpleChanges } from '@angular/core';
 import { WindowRef } from '../../core/websocket/window.service';
 import { RepositoryFileService, RepositoryService } from '../../entities/repository/repository.service';
-import { EditorComponent } from '../editor.component';
-import { EditorService } from '../editor.service';
+import { CodeEditorComponent } from '../code-editor.component';
+import { CodeEditorService } from '../code-editor.service';
 import { JhiWebsocketService } from '../../core';
 import { Result, ResultService } from '../../entities/result';
 import { Feedback } from '../../entities/feedback';
-import { EditorInstructionsResultDetailComponent } from './editor-instructions-result-detail';
+import { EditorInstructionsResultDetailComponent } from './code-editor-instructions-result-detail';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import * as interact from 'interactjs';
 import { Interactable } from 'interactjs';
@@ -21,11 +21,11 @@ interface Step {
 }
 
 @Component({
-    selector: 'jhi-editor-instructions',
-    templateUrl: './editor-instructions.component.html',
-    providers: [JhiAlertService, WindowRef, RepositoryService, ResultService, EditorService]
+    selector: 'jhi-code-editor-instructions',
+    templateUrl: './code-editor-instructions.component.html',
+    providers: [JhiAlertService, WindowRef, RepositoryService, ResultService, CodeEditorService]
 })
-export class EditorInstructionsComponent implements AfterViewInit, OnChanges, OnDestroy {
+export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges, OnDestroy {
     isLoadingResults = false;
     haveDetailsBeenLoaded = false;
     markDown: Remarkable;
@@ -49,14 +49,14 @@ export class EditorInstructionsComponent implements AfterViewInit, OnChanges, On
     latestResult: Result;
 
     constructor(
-        private parent: EditorComponent,
+        private parent: CodeEditorComponent,
         private $window: WindowRef,
         private jhiWebsocketService: JhiWebsocketService,
         private translateService: TranslateService,
         private repositoryService: RepositoryService,
         private repositoryFileService: RepositoryFileService,
         private resultService: ResultService,
-        private editorService: EditorService,
+        private editorService: CodeEditorService,
         private modalService: NgbModal,
         private elementRef: ElementRef,
         private renderer: Renderer2
