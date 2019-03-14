@@ -40,13 +40,13 @@ public class ModelingSubmissionService {
         List<Participation> participations = participationRepository.findByExerciseIdWithEagerSubmissions(exerciseId);
         List<ModelingSubmission> submissions = new ArrayList<>();
         for (Participation participation : participations) {
-            ModelingSubmission submission = participation.findLatestModelingSubmission();
-            if (submission != null) {
-                if (submittedOnly && !submission.isSubmitted()) {
+            Optional<ModelingSubmission> submission = participation.findLatestModelingSubmission();
+            if (submission.isPresent()) {
+                if (submittedOnly && !submission.get().isSubmitted()) {
                     //filter out non submitted submissions if the flag is set to true
                     continue;
                 }
-                submissions.add(submission);
+                submissions.add(submission.get());
             }
             //avoid infinite recursion
             participation.getExercise().setParticipations(null);
@@ -95,7 +95,10 @@ public class ModelingSubmissionService {
         }
         Participation savedParticipation = participationRepository.save(participation);
         if (modelingSubmission.getId() == null) {
-            modelingSubmission = savedParticipation.findLatestModelingSubmission();
+            Optional<ModelingSubmission> optionalModelingSubmission = savedParticipation.findLatestModelingSubmission();
+            if (optionalModelingSubmission.isPresent()) {
+                modelingSubmission = optionalModelingSubmission.get();
+            }
         }
 
         log.debug("return model: " + modelingSubmission.getModel());
