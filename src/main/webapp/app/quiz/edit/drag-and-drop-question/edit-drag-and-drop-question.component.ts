@@ -809,7 +809,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
         this.prepareForSave();
     }
 
-    private changesInMarkdown(value: boolean){
+    changesInMarkdown(value: boolean){
         this.question.contentChanged = value;
         this.prepareForSave();
     }

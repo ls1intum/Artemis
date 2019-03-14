@@ -32,13 +32,12 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
     };
 
     @Input() defaultText: string;
+    @Input() defaultTextChange = new EventEmitter<string>();
     @Input() specialCommands: SpecialCommand[];
-    @Input() useMarkdownPreview: boolean;
-    @Input() parsingValue: string;
+    @Input() useMarkdownPreview: boolean = true;
 
     @Output() html = new EventEmitter<string>();
-    @Output() textWithSpecialCommandFound = new EventEmitter<[string, SpecialCommand]>();
-    @Output() previewModeChange = new EventEmitter<boolean>();
+    @Output() textWithSpecialCommandFound = new EventEmitter<[string, SpecialCommand][]>();
     @Output() onChanges = new EventEmitter<boolean>();
 
     @ContentChild('preview') previewChild: ElementRef;
@@ -108,6 +107,7 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
      * Otherwise, markdown is parsed to HTML and emitted. Result is displayed using default preview.
      */
     parse(): void {
+        console.log(this.defaultText);
         // Only generate HTML if no Special Commands are defined.
         // Special Commands require special parsing by the client.
         if (this.specialCommands == null || this.specialCommands.length === 0) {
@@ -124,25 +124,25 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
             return;
         }
 
-        const textLines = this.defaultText.split('\n');
-        for (const textLine of textLines) {
-            this.parseLineForSpecialCommand(textLine);
-        }
+        const parseArray = this.defaultText
+            .split('\n')
+            .map(this.parseLineForSpecialCommand);
+        this.textWithSpecialCommandFound.emit(parseArray);
     }
 
-    private parseLineForSpecialCommand(textLine: string) {
+    private parseLineForSpecialCommand = (textLine: string): [string, SpecialCommand] => {
+        console.log('parseLinie');
         for (const specialCommand of this.specialCommands) {
             const possibleCommandIdentifier = [specialCommand.getIdentifier(), specialCommand.getIdentifier().toLowerCase(), specialCommand.getIdentifier().toUpperCase()];
             if (possibleCommandIdentifier.some(identifier => textLine.indexOf(identifier) !== -1))  {
 
                 // TODO one possible extension would be to search for opening and closing tags and send all text in-between (potentially multiple lines) into the emitter
                 const trimmedLineWithoutIdentifier = possibleCommandIdentifier.reduce((line, identifier) => line.replace(identifier, ''), textLine).trim();
-                this.textWithSpecialCommandFound.emit([trimmedLineWithoutIdentifier, specialCommand]);
-                return;
+                return [trimmedLineWithoutIdentifier, specialCommand];
             }
         }
-        this.textWithSpecialCommandFound.emit([textLine.trim(), null]);
-    }
+        return [textLine.trim(), null];
+    };
 
     /**
      * @function togglePreview
@@ -150,8 +150,7 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
      */
     togglePreview(): void {
         this.previewMode = !this.previewMode;
-        this.previewModeChange.emit(this.previewMode);
-        //this.parse();
+        this.parse();
     }
 
 }

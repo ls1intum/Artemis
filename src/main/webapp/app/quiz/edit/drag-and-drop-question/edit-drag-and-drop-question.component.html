@@ -89,10 +89,8 @@
                                      [defaultText]="questionEditorText"
                                      [useMarkdownPreview]="false"
                                      [specialCommands]="commandDragAndDropQuestions"
-                                     [parsingValue]="'value'"
                                      (onChanges)="changesInMarkdown($event)"
                                      (textWithSpecialCommandFound)="specialCommandFound($event[0], $event[1])"
-                                     (previewModeChange)="togglePreview()"
                 ></jhi-markdown-editor>
             </div>
             <div class="markupEditorArea" *ngIf="reEvaluationInProgress">
@@ -100,7 +98,6 @@
                     <jhi-markdown-editor #markdownEditor
                                          [defaultText]="questionEditorText"
                                          [specialCommands]="commandDragAndDropQuestions"
-                                         [parsingValue]="'parse'"
                                          (onChanges)="changesInMarkdown($event)"
                                          (textWithSpecialCommandFound)="specialCommandFound($event[0], $event[1])"
                     ></jhi-markdown-editor>

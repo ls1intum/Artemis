@@ -1,4 +1,4 @@
-<form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
+<form name="editForm" role="form" novalidate #editForm="ngForm">
 
     <div class="modal-header">
         <h4 class="modal-title" id="myModelingExerciseLabel" jhiTranslate="arTeMiSApp.modelingExercise.home.createOrEditLabel">Create or edit a Modeling Exercise</h4>
@@ -51,10 +51,9 @@
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.problemStatement" for="field_problemStatement">Problem Statement</label>
             <div class="question-content">
             <jhi-markdown-editor #markdownEditor
-                                 [defaultText]="modelingExercise.problemStatement"
-                                 [parsingValue]="'parse'"
-                                 (onChanges)="changesInMarkdown($event)"
-            ></jhi-markdown-editor>
+                                 [(defaultText)]="modelingExercise.problemStatement"
+                                 (onChanges)="changesInMarkdown($event)">
+            </jhi-markdown-editor>
         </div>
         </div>
     </div>
@@ -62,7 +61,7 @@
         <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">
             <fa-icon icon="ban"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
-        <button type="submit" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
+        <button type="button" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
             <fa-icon icon="save"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
         </button>
     </div>

@@ -53,10 +53,7 @@
                                      [defaultText]="questionEditorText"
                                      [useMarkdownPreview]="true"
                                      [specialCommands]="commandMultipleChoiceQuestions"
-                                     [parsingValue]="'value'"
-                                     (textWithSpecialCommandFound)="specialCommandFound($event[0], $event[1])"
-                                     (onChanges)="changesInMarkdown()"
-                                     (previewModeChange)="togglePreview($event)">
+                                     (textWithSpecialCommandFound)="specialCommandsFound($event)">
                     <!-- Preview -->
                     <ng-container #preview>
                         <jhi-multiple-choice-question *ngIf="showPreview"

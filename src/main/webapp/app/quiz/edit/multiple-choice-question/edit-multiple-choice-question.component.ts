@@ -1,25 +1,26 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild} from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { MultipleChoiceQuestion } from 'app/entities/multiple-choice-question';
 import { AnswerOption } from 'app/entities/answer-option';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { MarkdownEditorComponent } from 'app/markdown-editor';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { HintCommand } from 'app/markdown-editor/specialCommands/hint.command';
 import {
     CorrectOptionCommand,
     ExplanationCommand,
     IncorrectOptionCommand,
-    SpecialCommand
+    SpecialCommand,
+    HintCommand,
 } from 'app/markdown-editor/specialCommands';
 import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
-import {QuestionType} from 'app/entities/question';
+import { CodeCommand } from 'app/markdown-editor/commands';
+import {Question} from 'app/entities/question';
 
 @Component({
     selector: 'jhi-edit-multiple-choice-question',
     templateUrl: './edit-multiple-choice-question.component.html',
     providers: [ArtemisMarkdown]
 })
-export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, EditQuizQuestion {
+export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, EditQuizQuestion, AfterViewInit {
 
     @ViewChild('markdownEditor')
     private markdownEditor: MarkdownEditorComponent;
@@ -53,7 +54,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
 
     commandMultipleChoiceQuestions: SpecialCommand[] = [this.correctCommand, this.incorrectCommand, this.explanationCommand, this.hintCommand];
 
-    constructor(private artemisMarkdown: ArtemisMarkdown, private modalService: NgbModal) {}
+    constructor(private artemisMarkdown: ArtemisMarkdown, private modalService: NgbModal, private changeDetector: ChangeDetectorRef) {}
 
     ngOnInit(): void {
         this.questionEditorText = this.generateMarkdown();
@@ -69,6 +70,10 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
         if (changes.question && changes.question.previousValue != null) {
             this.questionUpdated.emit();
         }
+    }
+
+    ngAfterViewInit(): void {
+        this.markdownEditor.removeCommand(CodeCommand);
     }
 
     /**
@@ -122,6 +127,9 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
 
 
     private cleanupQuestion() {
+        this.showPreview = false;
+        this.changeDetector.detectChanges();
+        this.showPreview = true;
         // Reset Question Object
         this.question.answerOptions = [];
         this.question.text = null;
@@ -138,7 +146,13 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
         this.prepareForSave();
     }
 
-    specialCommandFound(textLine: string, specialCommand: SpecialCommand) {
+    specialCommandsFound(specialCommands: [string, SpecialCommand][]): void {
+        this.cleanupQuestion();
+        specialCommands.forEach(command => this.specialCommandFound(command[0], command[1]));
+        console.log(this.question);
+    }
+
+    private specialCommandFound(textLine: string, specialCommand: SpecialCommand) {
         if (specialCommand === null && textLine.length > 0) {
             this.question.text = textLine;
         }

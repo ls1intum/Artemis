@@ -557,6 +557,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     }
 
     warningQuiz(): boolean {
+        console.log('wird aufgerufen');
         for ( const question of this.quizExercise.questions){
             if (question.type === QuestionType.MULTIPLE_CHOICE) {
                 const mcQuestion = question as MultipleChoiceQuestion;

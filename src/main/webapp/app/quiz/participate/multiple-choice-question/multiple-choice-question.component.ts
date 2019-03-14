@@ -57,6 +57,7 @@ export class MultipleChoiceQuestionComponent implements OnChanges {
             renderedAnswerOption.explanation = artemisMarkdown.htmlForMarkdown(answerOption.explanation);
             return renderedAnswerOption;
         });
+        console.log(this.rendered);
     }
 
     toggleSelection(answerOption: AnswerOption) {
