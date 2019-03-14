@@ -2,11 +2,6 @@ import { Component, Output, EventEmitter, Input, OnChanges, SimpleChanges, ViewC
 import { ExerciseCategory } from 'app/entities/exercise';
 import { ColorSelectorComponent } from 'app/components/color-selector/color-selector.component';
 
-export interface Coordinates {
-    left: number;
-    top: number;
-}
-
 const DEFAULT_COLORS = ['#6ae8ac', '#9dca53', '#94a11c', '#691b0b', '#ad5658', '#1b97ca', '#0d3cc2', '#0ab84f'];
 
 @Component({

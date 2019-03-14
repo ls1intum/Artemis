@@ -1,0 +1,24 @@
+<div class="btn-group">
+    <div class="btn"
+         [ngClass]="{'btn-primary': !exercise.difficulty,
+                            'btn-default': exercise.difficulty}"
+         (click)="exercise.difficulty = undefined">
+        {{"arTeMiSApp.exercise.noLevel" | translate}}
+    </div>
+    <div class="btn"
+         [ngClass]="{'btn-primary': exercise.difficulty === EASY,
+                            'btn-default': exercise.difficulty !== EASY}"
+         (click)="exercise.difficulty = EASY">
+        {{"arTeMiSApp.exercise.easy" | translate}}
+    </div>
+    <div class="btn btn-default" [ngClass]="{'btn-primary': exercise.difficulty === MEDIUM,
+                            'btn-default': exercise.difficulty !== MEDIUM}"
+         (click)="exercise.difficulty = MEDIUM">
+        {{"arTeMiSApp.exercise.medium" | translate}}
+    </div>
+    <div class="btn btn-default" [ngClass]="{'btn-primary': exercise.difficulty === HARD,
+                            'btn-default': exercise.difficulty !== HARD}"
+         (click)="exercise.difficulty = HARD">
+        {{"arTeMiSApp.exercise.hard" | translate}}
+    </div>
+</div>

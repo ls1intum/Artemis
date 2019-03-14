@@ -22,6 +22,12 @@
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.categories">Categories</label>
             <jhi-category-selector [exerciseCategories]="exerciseCategories" [existingCategories]="existingCategories" (selectedCategories)="updateCategories($event)"></jhi-category-selector>
         </div>
+        <div class="form-group-narrow">
+            <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.difficulty">Difficulty</label>
+            <div>
+                <jhi-difficulty-picker [exercise]="programmingExercise"></jhi-difficulty-picker>
+            </div>
+        </div>
         <div class="d-flex">
             <div class="form-group-narrow flex-grow-1">
                 <jhi-date-time-picker labelName="Release Date" [(ngModel)]="programmingExercise.releaseDate" name="releaseDate"></jhi-date-time-picker>
