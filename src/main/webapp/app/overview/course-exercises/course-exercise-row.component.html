@@ -56,7 +56,11 @@
                           [hidden]="!asQuizExercise(exercise).isActiveQuiz">{{"arTeMiSApp.courseOverview.exerciseList.live" | translate}}</span>
                 </h4>
                 <h4 *ngFor="let category of exerciseCategories">
-                    <span class="badge text-white mr-1" [ngStyle]="{backgroundColor: category.color}">{{category.category}}</span>
+                    <span class="badge text-white mr-1"
+                          [ngStyle]="{backgroundColor: category.color}">{{category.category}}</span>
+                </h4>
+                <h4>
+                    <jhi-difficulty-badge [exercise]="exercise" [showNoLevel]="false"></jhi-difficulty-badge>
                 </h4>
 
             </div>
