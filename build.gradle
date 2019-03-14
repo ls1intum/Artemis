@@ -56,6 +56,9 @@ idea {
 spotless {
     java {
         googleJavaFormat()
+        indentWithTabs(2)
+        indentWithSpaces(4)
+        paddedCell()
     }
 }
 
