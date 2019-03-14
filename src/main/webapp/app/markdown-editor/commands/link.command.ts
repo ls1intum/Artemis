@@ -1,9 +1,9 @@
 import { Command } from './command';
 
-export class HeadingCommand extends Command {
+export class LinkCommand extends Command {
 
-    buttonIcon = 'heading';
-    buttonTitle = 'Heading';
+    buttonIcon = 'link';
+    buttonTitle = 'Link';
 
     execute(): void {
         if (!this.editor) return;
@@ -12,8 +12,8 @@ export class HeadingCommand extends Command {
         let startSize = 2;
         let initText: string = '';
         let range = this.editor.selection.getRange();
-        initText = 'Heading';
-        selectedText = `# ${selectedText || initText}`;
+        selectedText = `[](http://)`;
+        startSize = 1;
         this.editor.session.replace(range, selectedText);
         if (!isSelected) {
             range.start.column += startSize;

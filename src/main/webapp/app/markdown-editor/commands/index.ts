@@ -4,3 +4,5 @@ export { ItalicCommand } from './italic.command';
 export { UnderlineCommand } from './underline.command';
 export { HeadingCommand } from './heading.command';
 export { ReferenceCommand } from './reference.command';
+export { LinkCommand } from './link.command';
+export { CodeCommand } from './code.command';

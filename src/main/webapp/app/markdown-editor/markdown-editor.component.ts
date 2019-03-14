@@ -12,7 +12,7 @@ import {
 import {AceEditorComponent} from 'ng2-ace-editor';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
-import {Command, BoldCommand, ItalicCommand, UnderlineCommand, HeadingCommand} from 'app/markdown-editor/commands';
+import {Command, BoldCommand, ItalicCommand, UnderlineCommand, HeadingCommand, CodeCommand, LinkCommand} from 'app/markdown-editor/commands';
 import {ArtemisMarkdown} from 'app/components/util/markdown.service';
 import {SpecialCommand} from 'app/markdown-editor/specialCommands';
 import {ReferenceCommand} from 'app/markdown-editor/commands/reference.command';
@@ -46,7 +46,7 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
 
     previewTextAsHtml: string;
     previewMode = false;
-    defaultCommands: Command[] = [new BoldCommand(), new ItalicCommand(), new UnderlineCommand(), new ReferenceCommand(), new HeadingCommand()];
+    defaultCommands: Command[] = [new BoldCommand(), new ItalicCommand(), new UnderlineCommand(), new ReferenceCommand(), new HeadingCommand(), new CodeCommand(), new LinkCommand()];
 
     constructor(private artemisMarkdown: ArtemisMarkdown) {}
 

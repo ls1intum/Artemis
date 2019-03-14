@@ -2,8 +2,8 @@ import { Command } from './command';
 
 export class UnderlineCommand extends Command {
 
-    buttonIcon: 'fas fa-underline';
-    buttonTitle: 'Underline';
+    buttonIcon = 'underline';
+    buttonTitle = 'Underline';
 
     execute(): void {
         const chosenText = this.editor.getSelectedText();

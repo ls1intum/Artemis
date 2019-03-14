@@ -499,7 +499,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      * @returns {boolean} true if valid, false otherwise
      */
     validQuiz(): boolean {
-        console.log('start the validtiy');
         if (!this.quizExercise) {
             return false;
         }

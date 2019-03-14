@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 
@@ -12,12 +12,16 @@ import { ModelingExerciseService } from './modeling-exercise.service';
 import { Course, CourseService } from '../course';
 
 import { Subscription } from 'rxjs/Subscription';
+import { MarkdownEditorComponent } from 'app/markdown-editor';
 
 @Component({
     selector: 'jhi-modeling-exercise-dialog',
     templateUrl: './modeling-exercise-dialog.component.html'
 })
 export class ModelingExerciseDialogComponent implements OnInit {
+    @ViewChild('markdownEditor')
+    private markdownEditor: MarkdownEditorComponent;
+
     modelingExercise: ModelingExercise;
     isSaving: boolean;
     maxScorePattern = '^[1-9]{1}[0-9]{0,4}$'; // make sure max score is a positive natural integer and not too large
@@ -44,6 +48,10 @@ export class ModelingExerciseDialogComponent implements OnInit {
 
     clear() {
         this.activeModal.dismiss('cancel');
+    }
+
+    changesInMarkdown(){
+
     }
 
     save() {

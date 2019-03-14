@@ -2,8 +2,8 @@ import { Command } from './command';
 
 export class ReferenceCommand extends Command {
 
-    buttonIcon: 'fas fa-quote-left';
-    buttonTitle: 'Reference';
+    buttonIcon = 'quote-left';
+    buttonTitle = 'Quote';
 
     execute(): void {
         if (!this.editor) return;

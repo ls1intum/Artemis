@@ -3,7 +3,7 @@
     <div class="tool-bar">
         <ng-container *ngFor="let command of defaultCommands">
             <button class="btn btn-sm btn-default mr-1" (click)="command.execute()">
-                <fa-icon [icon]="fa-bold" size="lg" ></fa-icon>
+                <fa-icon [icon]="command.buttonIcon" ></fa-icon>
             </button>
         </ng-container>
     </div>

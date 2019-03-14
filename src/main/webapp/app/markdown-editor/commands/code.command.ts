@@ -1,9 +1,9 @@
 import { Command } from './command';
 
-export class HeadingCommand extends Command {
+export class CodeCommand extends Command {
 
-    buttonIcon = 'heading';
-    buttonTitle = 'Heading';
+    buttonIcon =  'code';
+    buttonTitle = 'Code';
 
     execute(): void {
         if (!this.editor) return;
@@ -12,8 +12,9 @@ export class HeadingCommand extends Command {
         let startSize = 2;
         let initText: string = '';
         let range = this.editor.selection.getRange();
-        initText = 'Heading';
-        selectedText = `# ${selectedText || initText}`;
+        initText = 'Source Code';
+        selectedText = "```language\r\n" + (selectedText || initText) + "\r\n```";
+        startSize = 3;
         this.editor.session.replace(range, selectedText);
         if (!isSelected) {
             range.start.column += startSize;

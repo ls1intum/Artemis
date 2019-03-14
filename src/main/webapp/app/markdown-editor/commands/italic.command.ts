@@ -2,8 +2,8 @@ import { Command } from './command';
 
 export class ItalicCommand extends Command {
 
-    buttonIcon: 'fas fa-italic';
-    buttonTitle: 'Italic';
+    buttonIcon = 'italic';
+    buttonTitle = 'Italic';
 
     execute(): void {
         const chosenText = this.editor.getSelectedText();
