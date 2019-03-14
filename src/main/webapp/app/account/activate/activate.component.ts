@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 
 import { ActivateService } from './activate.service';
 
@@ -13,7 +13,7 @@ export class ActivateComponent implements OnInit {
     success: string;
     modalRef: NgbModalRef;
 
-    constructor(private activateService: ActivateService, private router: Router, private route: ActivatedRoute) {}
+    constructor(private activateService: ActivateService, private route: ActivatedRoute) {}
 
     ngOnInit() {
         this.route.queryParams.subscribe(params => {

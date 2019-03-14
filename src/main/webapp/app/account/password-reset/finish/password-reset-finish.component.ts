@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, ElementRef, OnInit, Renderer } from '@angular/core';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 
 import { PasswordResetFinishService } from './password-reset-finish.service';
 
@@ -20,7 +20,6 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
 
     constructor(
         private passwordResetFinishService: PasswordResetFinishService,
-        private router: Router,
         private route: ActivatedRoute,
         private elementRef: ElementRef,
         private renderer: Renderer

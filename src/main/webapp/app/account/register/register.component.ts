@@ -1,5 +1,4 @@
 import { AfterViewInit, Component, ElementRef, OnInit, Renderer } from '@angular/core';
-import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { JhiLanguageService } from 'ng-jhipster';
@@ -24,7 +23,6 @@ export class RegisterComponent implements OnInit, AfterViewInit {
 
     constructor(
         private languageService: JhiLanguageService,
-        private router: Router,
         private registerService: Register,
         private elementRef: ElementRef,
         private renderer: Renderer
