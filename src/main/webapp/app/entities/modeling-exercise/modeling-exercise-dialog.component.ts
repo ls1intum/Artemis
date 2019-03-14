@@ -51,7 +51,7 @@ export class ModelingExerciseDialogComponent implements OnInit {
     }
 
     changesInMarkdown(){
-
+        this.modelingExercise.problemStatement = this.markdownEditor.defaultText;
     }
 
     save() {
