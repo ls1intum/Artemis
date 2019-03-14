@@ -55,6 +55,12 @@ public class ResultService {
             .orElseThrow(() -> new EntityNotFoundException("Result with id: \"" + id + "\" does not exist"));
     }
 
+
+    /**
+     * Sets the assessor field of the given result with the current user and stores these changes to the database.
+     * The User object set as assessor gets Groups and Authorities eagerly loaded.
+     * @param result
+     */
     public void setAssessor(Result result){
         User currentUser = userService.getUserWithGroupsAndAuthorities();
         result.setAssessor(currentUser);
