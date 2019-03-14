@@ -94,9 +94,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     isSaving = false;
     isTrue = true;
 
-    mcQuestionHasCorrectAnswerOption = true;
-    mcHasAllExplanations: boolean;
-
     validQuizCache: boolean;
     warningQuizCache: boolean;
     pendingChangesCache: boolean;
@@ -457,6 +454,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     onQuestionUpdated(): void {
         this.quizExercise.questions = Array.from(this.quizExercise.questions);
         this.cacheValidation();
+        console.log('changes');
     }
 
 
@@ -466,6 +464,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      * @returns {boolean} true if there are any pending changes, false otherwise
      */
     pendingChanges(): boolean {
+        console.log('pendingchanges');
         if (!this.quizExercise || !this.savedEntity) {
             return false;
         }

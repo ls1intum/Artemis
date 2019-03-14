@@ -8,7 +8,8 @@ import {
     OnInit,
     Output,
     SimpleChanges,
-    ViewChild
+    ViewChild,
+    ChangeDetectorRef
 } from '@angular/core';
 import { DragAndDropQuestion } from 'app/entities/drag-and-drop-question';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
@@ -105,7 +106,8 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
         private artemisMarkdown: ArtemisMarkdown,
         private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
         private modalService: NgbModal,
-        private fileUploaderService: FileUploaderService
+        private fileUploaderService: FileUploaderService,
+        private changeDetector: ChangeDetectorRef
     ) {}
 
     ngOnInit(): void {
@@ -810,7 +812,9 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
     }
 
     changesInMarkdown(){
-        this.questionMoveDown.emit();
+        console.log('markdown');
+        this.changeDetector.detectChanges();
+        this.questionUpdated.emit();
         this.prepareForSave();
     }
 

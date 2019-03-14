@@ -256,15 +256,15 @@
                         id="quiz-cancel-back-button"
                         *ngIf="quizExercise.course"
                         class="btn btn-default"
-                        [ngClass]="{'btn-secondary': !pendingChangesCache, 'btn-danger': pendingChangesCache}"
+                        [ngClass]="{'btn-secondary': !pendingChanges(), 'btn-danger': pendingChanges()}"
                         (click)="back()"
-                        jhiTranslate="{{pendingChangesCache ? 'entity.action.cancel' : 'entity.action.back'}}">
+                        jhiTranslate="{{pendingChanges() ? 'entity.action.cancel' : 'entity.action.back'}}">
                     </button>
                     <button
                         id="quiz-save"
                         class="btn btn-success"
                         (click)="save()"
-                        [ngClass]="{disabled: !pendingChangesCache || !this.validQuizCache || hasSavedQuizStarted() || isSaving}"
+                        [ngClass]="{disabled: !pendingChanges() || !this.validQuizCache || hasSavedQuizStarted() || isSaving}"
                         jhiTranslate="entity.action.save"
                         [ngbTooltip]="this.validQuizCache? '' : tooltipTranslate"
                         tooltip-placement="top-right"
