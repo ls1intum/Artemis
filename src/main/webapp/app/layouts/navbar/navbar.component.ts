@@ -73,10 +73,6 @@ export class NavbarComponent implements OnInit {
         return this.accountService.isAuthenticated();
     }
 
-    login() {
-        this.router.navigate(['login']);
-    }
-
     logout() {
         this.currAccount = null;
         this.collapseNavbar();

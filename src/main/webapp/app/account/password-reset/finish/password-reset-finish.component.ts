@@ -57,8 +57,4 @@ export class PasswordResetFinishComponent implements OnInit, AfterViewInit {
             );
         }
     }
-
-    login() {
-        this.router.navigate(['login']);
-    }
 }
