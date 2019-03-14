@@ -87,7 +87,10 @@ public class ModelingSubmissionService {
         }
         Participation savedParticipation = participationRepository.save(participation);
         if (modelingSubmission.getId() == null) {
-            modelingSubmission = savedParticipation.findLatestModelingSubmission();
+            Optional<ModelingSubmission> optionalModelingSubmission = savedParticipation.findLatestModelingSubmission();
+            if (optionalModelingSubmission.isPresent()) {
+                modelingSubmission = optionalModelingSubmission.get();
+            }
         }
 
         log.debug("return model: " + modelingSubmission.getModel());
