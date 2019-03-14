@@ -33,7 +33,7 @@ export class CategorySelectorComponent implements OnChanges {
         });
     }
 
-    openColorSelector(event: any, tagItem: ExerciseCategory) {
+    openColorSelector(event: MouseEvent, tagItem: ExerciseCategory) {
         this.selectedCategory = tagItem;
         this.colorSelector.openColorSelector(event);
     }

@@ -23,8 +23,8 @@ export class ColorSelectorComponent implements OnInit {
         this.colorSelectorPosition = {left: 0, top: 0};
     }
 
-    openColorSelector(event: any) {
-        const parentElement = event.target.closest('.ng-trigger');
+    openColorSelector(event: MouseEvent) {
+        const parentElement = (event.target as Element).closest('.ng-trigger') as HTMLElement;
         this.colorSelectorPosition.left = parentElement ? parentElement.offsetLeft : 0;
         this.colorSelectorPosition.top = 65;
         this.showColorSelector = true;

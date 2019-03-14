@@ -14,46 +14,34 @@ export class DifficultyBadgeComponent implements OnInit, OnDestroy {
     public badgeClass: string;
     private translateSubscription: Subscription;
 
-    @HostBinding('class.badge-easy')
-    public get isEasy(): boolean {
-        return this.exercise.difficulty === DifficultyLevel.EASY;
-    }
-
-    @HostBinding('class.badge-medium')
-    public get isMedium(): boolean {
-        return this.exercise.difficulty === DifficultyLevel.MEDIUM;
-    }
-
-    @HostBinding('class.badge-hard')
-    public get isHard(): boolean {
-        return this.exercise.difficulty === DifficultyLevel.HARD;
-    }
-
     constructor(private translateService: TranslateService) {
 
     }
 
     ngOnInit(): void {
         this.translateSubscription = this.translateService.onLangChange.subscribe((event: LangChangeEvent) => {
-            this.translateBadge();
+            this.setBadgeAttributes();
         });
-        this.translateBadge();
-        this.setBadgeColor();
+        this.setBadgeAttributes();
     }
 
     ngOnDestroy(): void {
         this.translateSubscription.unsubscribe();
     }
 
-    private setBadgeColor() {
+
+    private setBadgeAttributes() {
         switch (this.exercise.difficulty) {
             case DifficultyLevel.EASY:
+                this.translatedDifficulty = this.translateService.instant('arTeMiSApp.exercise.easy');
                 this.badgeClass = 'badge-success';
                 break;
             case DifficultyLevel.MEDIUM:
+                this.translatedDifficulty = this.translateService.instant('arTeMiSApp.exercise.medium');
                 this.badgeClass = 'badge-warning';
                 break;
             case DifficultyLevel.HARD:
+                this.translatedDifficulty = this.translateService.instant('arTeMiSApp.exercise.hard');
                 this.badgeClass = 'badge-danger';
                 break;
             default:
@@ -62,24 +50,5 @@ export class DifficultyBadgeComponent implements OnInit, OnDestroy {
                     this.translatedDifficulty = this.translateService.instant('arTeMiSApp.exercise.noLevel');
                 }
         }
-    }
-
-    private translateBadge() {
-        switch (this.exercise.difficulty) {
-            case DifficultyLevel.EASY:
-                this.translatedDifficulty = this.translateService.instant('arTeMiSApp.exercise.easy');
-                break;
-            case DifficultyLevel.MEDIUM:
-                this.translatedDifficulty = this.translateService.instant('arTeMiSApp.exercise.medium');
-                break;
-            case DifficultyLevel.HARD:
-                this.translatedDifficulty = this.translateService.instant('arTeMiSApp.exercise.hard');
-                break;
-            default:
-                if (this.showNoLevel) {
-                    this.translatedDifficulty = this.translateService.instant('arTeMiSApp.exercise.noLevel');
-                }
-        }
-
     }
 }
