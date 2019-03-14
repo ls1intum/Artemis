@@ -40,7 +40,6 @@ export interface ExerciseCategory {
     color: string;
 }
 
-
 export abstract class Exercise implements BaseEntity {
     public id: number;
     public problemStatement: string;

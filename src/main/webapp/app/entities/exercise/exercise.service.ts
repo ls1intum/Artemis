@@ -126,7 +126,7 @@ export class ExerciseService {
     }
 
     convertExerciseCategoriesFromServer(exercise: Exercise): ExerciseCategory[] {
-        if(!exercise.categories) {
+        if (!exercise.categories) {
             return [];
         }
         return exercise.categories.map(el => JSON.parse(el));

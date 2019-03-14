@@ -165,7 +165,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.quizExercise);
         this.courseService.findAllCategoriesOfCourse(this.quizExercise.course.id).subscribe(
             (res: HttpResponse<string[]>) => {
-                this.existingCategories = [...new Set(this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body))];
+                this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body);
             },
             (res: HttpErrorResponse) => this.onError(res)
         );

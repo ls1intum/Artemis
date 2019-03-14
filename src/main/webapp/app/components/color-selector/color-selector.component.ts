@@ -18,7 +18,7 @@ export class ColorSelectorComponent implements OnInit {
     showColorSelector = false;
     @Input() tagColors: string[] = DEFAULT_COLORS;
     @Output() selectedColor = new EventEmitter<string>();
-    
+
     ngOnInit(): void {
         this.colorSelectorPosition = {left: 0, top: 0};
     }

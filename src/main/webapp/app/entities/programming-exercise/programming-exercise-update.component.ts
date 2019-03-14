@@ -49,10 +49,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                     this.programmingExercise.course = course;
                     this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.programmingExercise);
                     this.courseService.findAllCategoriesOfCourse(this.programmingExercise.course.id).subscribe(
-                        (res: HttpResponse<string[]>) => {
-                            this.existingCategories = [...new Set(this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body))];
+                        (categoryRes: HttpResponse<string[]>) => {
+                            this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body);
                         },
-                        (res: HttpErrorResponse) => this.onError(res)
+                        (categoryRes: HttpErrorResponse) => this.onError(categoryRes)
                     );
                 });
             }

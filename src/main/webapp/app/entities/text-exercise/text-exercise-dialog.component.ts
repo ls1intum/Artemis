@@ -54,7 +54,7 @@ export class TextExerciseDialogComponent implements OnInit {
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.textExercise);
         this.courseService.findAllCategoriesOfCourse(this.textExercise.course.id).subscribe(
             (res: HttpResponse<string[]>) => {
-                this.existingCategories = [...new Set(this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body))];
+                this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body);
             },
             (res: HttpErrorResponse) => this.onError(res)
         );

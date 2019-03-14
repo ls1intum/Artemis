@@ -20,7 +20,9 @@ export class CategorySelectorComponent implements OnChanges {
     uniqueCategories: ExerciseCategory[] = [];
 
     ngOnChanges(changes: SimpleChanges) {
-        if (!this.existingCategories) return;
+        if (!this.existingCategories) {
+            return;
+        }
         this.existingCategories.forEach(category => {
             const categoryIsInArray = (el: ExerciseCategory, index: number, categories: ExerciseCategory[]): boolean => {
                 return el.category === category.category;
@@ -45,7 +47,7 @@ export class CategorySelectorComponent implements OnChanges {
             const randomIndex = Math.floor(Math.random() * this.categoryColors.length);
             exerciseCategory.color = this.categoryColors[randomIndex];
         }
-        this.exerciseCategories.push(exerciseCategory)
+        this.exerciseCategories.push(exerciseCategory);
         this.selectedCategories.emit(this.exerciseCategories);
     }
 
