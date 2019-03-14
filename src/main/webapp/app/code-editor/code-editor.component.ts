@@ -30,7 +30,7 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
     paramSub: Subscription;
     repositoryFiles: string[];
     latestResult: Result;
-    buildLogErrors: { [fileName: string]: AceAnnotation };
+    buildLogErrors: { [fileName: string]: AceAnnotation[] };
     saveStatusLabel: string;
     saveStatusIcon: { spin: boolean; icon: string; class: string };
 
