@@ -50,7 +50,8 @@ entity Course (course) {
     onlineCourse Boolean,
     maxComplaints Integer,
     color String,
-    courseIcon String
+    courseIcon String,
+    registrationEnabled Boolean
 }
 
 entity Exercise (exercise) {        //abstract
