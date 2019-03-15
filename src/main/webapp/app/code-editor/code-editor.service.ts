@@ -4,7 +4,7 @@ import { HttpClient, HttpParameterCodec, HttpParams } from '@angular/common/http
 import { Cacheable } from 'ngx-cacheable';
 
 @Injectable({ providedIn: 'root' })
-export class EditorService {
+export class CodeEditorService {
     private resourceUrl = SERVER_API_URL + 'api/plantuml';
     private encoder: HttpParameterCodec;
 

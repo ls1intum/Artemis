@@ -76,7 +76,10 @@ public class TextSubmissionService {
             }
             Participation savedParticipation = participationRepository.save(participation);
             if (textSubmission.getId() == null) {
-                textSubmission = savedParticipation.findLatestTextSubmission();
+                Optional<TextSubmission> optionalTextSubmission = savedParticipation.findLatestTextSubmission();
+                if (optionalTextSubmission.isPresent()) {
+                    textSubmission = optionalTextSubmission.get();
+                }
             }
         }
 
@@ -101,11 +104,10 @@ public class TextSubmissionService {
 
             // Map to Latest Submission
             .map(Participation::findLatestTextSubmission)
-            .filter(Objects::nonNull)
-
+            .filter(Optional::isPresent)
+            .map(Optional::get)
             // It needs to be submitted to be ready for assessment
             .filter(Submission::isSubmitted)
-
             .filter(textSubmission -> {
                 Result result = resultRepository.findDistinctBySubmissionId(textSubmission.getId()).orElse(null);
                 return result == null;
@@ -165,17 +167,21 @@ public class TextSubmissionService {
         List<TextSubmission> textSubmissions = new ArrayList<>();
 
         for (Participation participation : participations) {
-            TextSubmission textSubmission = participation.findLatestTextSubmission();
+            Optional<TextSubmission> optionalTextSubmission = participation.findLatestTextSubmission();
 
-            if (submittedOnly && textSubmission.isSubmitted() != Boolean.TRUE) {
+            if (!optionalTextSubmission.isPresent()) {
                 continue;
             }
 
-            if (textSubmission.getResult() != null) {
-                textSubmission.getResult().getAssessor().setGroups(null);
+            if (submittedOnly && optionalTextSubmission.get().isSubmitted() != Boolean.TRUE) {
+                continue;
             }
 
-            textSubmissions.add(textSubmission);
+            if (optionalTextSubmission.get().getResult() != null) {
+                optionalTextSubmission.get().getResult().getAssessor().setGroups(null);
+            }
+
+            textSubmissions.add(optionalTextSubmission.get());
         }
         return textSubmissions;
     }

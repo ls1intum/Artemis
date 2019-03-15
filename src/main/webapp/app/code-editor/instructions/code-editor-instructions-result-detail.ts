@@ -6,7 +6,7 @@ import { BuildLogEntry } from 'app/entities/build-log';
 
 // Modal -> Result details view
 @Component({
-    selector: 'jhi-editor-instructions-result-detail',
+    selector: 'jhi-code-editor-instructions-result-detail',
     // This popup references the result detail html template, so make sure the constant names match
     templateUrl: '../../entities/result/result-detail.component.html'
 })

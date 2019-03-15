@@ -288,14 +288,15 @@ public class ModelingExerciseResource {
             participation.setResults(new HashSet<>(results));
         }
 
-        ModelingSubmission modelingSubmission = participation.findLatestModelingSubmission();
-        if (modelingSubmission == null) {
+        Optional<ModelingSubmission> optionalModelingSubmission = participation.findLatestModelingSubmission();
+        ModelingSubmission modelingSubmission = null;
+        if (!optionalModelingSubmission.isPresent()) {
             modelingSubmission = new ModelingSubmission();  //NOTE: this object is not yet persisted
             modelingSubmission.setParticipation(participation);
         }
         else {
             //only try to get and set the model if the modelingSubmission existed before
-            modelingSubmission = modelingSubmissionService.getAndSetModel(modelingSubmission);
+            modelingSubmission = modelingSubmissionService.getAndSetModel(optionalModelingSubmission.get());
         }
 
         //make sure only the latest submission and latest result is sent to the client

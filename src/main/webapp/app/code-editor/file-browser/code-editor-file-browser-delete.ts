@@ -2,17 +2,17 @@ import { Component, Input, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { RepositoryFileService } from 'app/entities/repository';
 import { Participation } from 'app/entities/participation';
-import { EditorFileBrowserComponent } from 'app/editor';
+import { CodeEditorFileBrowserComponent } from 'app/code-editor';
 
 // Modal -> Delete repository file
 @Component({
-    selector: 'jhi-editor-file-browser-delete',
-    templateUrl: './editor-file-browser-delete.html'
+    selector: 'jhi-code-editor-file-browser-delete',
+    templateUrl: './code-editor-file-browser-delete.html'
 })
-export class EditorFileBrowserDeleteComponent implements OnInit {
+export class CodeEditorFileBrowserDeleteComponent implements OnInit {
     @Input() participation: Participation;
     @Input() fileNameToDelete: string;
-    @Input() parent: EditorFileBrowserComponent;
+    @Input() parent: CodeEditorFileBrowserComponent;
 
     isLoading: boolean;
 

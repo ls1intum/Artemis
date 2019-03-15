@@ -189,7 +189,7 @@ public class CompassService {
      * @param modelingAssessment the new assessment as raw string
      */
     public void addAssessment(long exerciseId, long submissionId, List<ModelElementAssessment> modelingAssessment) {
-        log.info("Add assessment for exercise" + exerciseId + " and model " + submissionId);
+        log.info("Add assessment for exercise " + exerciseId + " and model " + submissionId);
         if (!loadExerciseIfSuspended(exerciseId)) { //TODO rewordk after distinguishing between saved and submitted assessments on filesystem
             return;
         }
