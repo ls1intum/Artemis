@@ -2,13 +2,16 @@
     <div class="col-md-8 offset-md-2 text-center">
         <h1 jhiTranslate="home.title">Welcome to Artemis!</h1>
         <p class="lead" jhiTranslate="home.subtitle">Interactive Learning with an AuTomated assEssment Management System</p>
+        <div class="lead" jhiTranslate="home.pleaseSignIn">
+            Please sign in using your TUM credentials.
+        </div>
     </div>
 </div>
 <div class="row">
     <div class="col-md-6 offset-md-3">
         <div class="modal-body">
             <div class="row justify-content-center">
-                <div class="col-md-12">
+                <div class="col-12">
                     <div class="alert alert-danger" *ngIf="authenticationError && !captchaRequired" jhiTranslate="home.errors.failedToLogin">
                         <span class="bold">Failed to sign in!</span> Please check your username and password and try again.
                     </div>
@@ -25,7 +28,9 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-12">
+            </div>
+            <div class="row">
+                <div class="col-12 col-lg-6 offset-lg-3">
                     <form name="loginForm" class="form" role="form" (ngSubmit)="login()">
                         <div class="form-group">
                             <label for="username" jhiTranslate="global.form.username">Login</label>

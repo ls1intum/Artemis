@@ -4,6 +4,7 @@
         "login": "Login",
         "subtitle": "Interactive Learning with an Automated Assessment Management System",
         "please": "Please",
+        "pleaseSignIn": "Please sign in using your TUM credentials.",
         "usingTUMcredentials": "using your TUM credentials",
         "logged": {
             "message": "You are logged in as user \"{{username}}\". Go to your <a class=\"alert-link\" routerLink=\"courses\">courses</a> to get started."
