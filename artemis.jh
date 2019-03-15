@@ -492,7 +492,7 @@ relationship ManyToOne {
 }
 
 relationship ManyToMany {
-    TutorGroup{students} to User
+    TutorGroup{students} to User    //Note: there should be a constraint that per course a student can only be in one tutor group at the same time
 	MultipleChoiceSubmittedAnswer{selectedOptions} to AnswerOption
 }
 
