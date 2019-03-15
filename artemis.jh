@@ -450,7 +450,9 @@ relationship OneToMany {
     Exercise{exampleSubmissions} to ExampleSubmission{exercise}
     StudentQuestion{answers} to QuestionAnswer{question},
     Lecture{attachments} to Attachment{lecture},
-    Exercise{attachments} to Attachment{exercise}
+    Exercise{attachments} to Attachment{exercise},
+    Exercise{studentQuestions} to StudentQuestion{exercise},
+    Lecture{studentQuestions} to StudentQuestion{lecture},
 }
 
 relationship OneToOne {
@@ -484,8 +486,6 @@ relationship ManyToOne {
     ShortAnswerMapping{spot} to ShortAnswerSpot,
     TutorParticipation{tutor} to User,
     StudentQuestion{author} to User,
-    StudentQuestion{exercise} to Exercise{studentQuestions},
-    StudentQuestion{lecture} to Lecture{studentQuestions},
     QuestionAnswer{author} to User,
     Notification{author} to User,
     SingleUserNotification{recipient} to User,
