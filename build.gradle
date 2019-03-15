@@ -242,6 +242,10 @@ task cleanResources(type: Delete) {
     delete 'build/resources'
 }
 
+task executeTests (type: Exec) {
+ commandLine './gradlew', 'test', '-x', 'webpackBuildDev'
+}
+
 wrapper {
     gradleVersion = '5.2.1'
 }
