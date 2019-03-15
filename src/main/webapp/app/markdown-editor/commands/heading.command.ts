@@ -6,12 +6,12 @@ export class HeadingCommand extends Command {
     buttonTitle = 'Heading';
 
     execute(): void {
-        if (!this.editor) return;
+        if (!this.editor) { return; }
         let selectedText = this.editor.getSelectedText();
-        let isSelected = !!selectedText;
-        let startSize = 2;
-        let initText: string = '';
-        let range = this.editor.selection.getRange();
+        const isSelected = !!selectedText;
+        const startSize = 2;
+        let initText = '';
+        const range = this.editor.selection.getRange();
         initText = 'Heading';
         selectedText = `# ${selectedText || initText}`;
         this.editor.session.replace(range, selectedText);

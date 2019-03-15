@@ -50,7 +50,6 @@ import { ArTEMiSExampleSubmissionModule } from 'app/example-text-submission';
 import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor/markdown-editor.module';
 import { ArTEMiSComplaintsModule } from 'app/complaints';
 
-
 @NgModule({
     imports: [
         BrowserModule,

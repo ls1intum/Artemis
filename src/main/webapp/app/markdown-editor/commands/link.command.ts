@@ -6,12 +6,12 @@ export class LinkCommand extends Command {
     buttonTitle = 'Link';
 
     execute(): void {
-        if (!this.editor) return;
+        if (!this.editor) { return; }
         let selectedText = this.editor.getSelectedText();
-        let isSelected = !!selectedText;
+        const isSelected = !!selectedText;
         let startSize = 2;
-        let initText: string = '';
-        let range = this.editor.selection.getRange();
+        const initText = '';
+        const range = this.editor.selection.getRange();
         selectedText = `[](http://)`;
         startSize = 1;
         this.editor.session.replace(range, selectedText);

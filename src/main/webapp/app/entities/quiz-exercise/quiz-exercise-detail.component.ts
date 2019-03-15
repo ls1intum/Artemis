@@ -400,7 +400,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                 }
             }
         }
-        this.cacheValidation()
+        this.cacheValidation();
     }
 
     /**
@@ -445,6 +445,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         this.cacheValidation();
     }
 
+
     private cacheValidation(): void {
         console.log("cache", new Date());
         this.warningQuizCache = false;
@@ -455,7 +456,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         this.changeDetector.detectChanges();
     }
 
-
     /**
      * @function onQuestionUpdated
      * @desc Handles the change of a question by replacing the array with a copy (allows for shallow comparison)
@@ -464,7 +464,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         // this.quizExercise.questions = Array.from(this.quizExercise.questions);
         this.cacheValidation();
     }
-
 
     /**
      * @function pendingChanges

@@ -5,9 +5,9 @@ export class MultipleChoiceQuestion extends Question {
 
     public answerOptions?: AnswerOption[];
 
+    public hasCorrectOption: boolean;
+
     constructor() {
         super(QuestionType.MULTIPLE_CHOICE);
     }
-
-    public hasCorrectOption: boolean;
 }

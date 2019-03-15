@@ -6,14 +6,14 @@ export class CodeCommand extends Command {
     buttonTitle = 'Code';
 
     execute(): void {
-        if (!this.editor) return;
+        if (!this.editor) { return; }
         let selectedText = this.editor.getSelectedText();
-        let isSelected = !!selectedText;
+        const isSelected = !!selectedText;
         let startSize = 2;
-        let initText: string = '';
-        let range = this.editor.selection.getRange();
+        let initText = '';
+        const range = this.editor.selection.getRange();
         initText = 'Source Code';
-        selectedText = "```language\r\n" + (selectedText || initText) + "\r\n```";
+        selectedText = '```language\r\n' + (selectedText || initText) + '\r\n```';
         startSize = 3;
         this.editor.session.replace(range, selectedText);
         if (!isSelected) {
