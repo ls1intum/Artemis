@@ -388,11 +388,11 @@ public class ShortAnswerQuestion extends QuizQuestion implements Serializable {
          return updateNecessary;
      }
 
-
      @Override
      public void filterForStudentsDuringQuiz() {
          super.filterForStudentsDuringQuiz();
          setCorrectMappings(null);
+         setSolutions(null);
      }
 
      @Override

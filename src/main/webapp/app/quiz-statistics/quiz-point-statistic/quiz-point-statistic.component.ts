@@ -72,10 +72,6 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
                 this.quizExerciseService.find(params['quizId']).subscribe(res => {
                     this.loadQuizSuccess(res.body);
                 });
-            } else {
-                this.quizExerciseService.findForStudent(params['quizId']).subscribe(res => {
-                    this.loadQuizSuccess(res.body);
-                });
             }
 
             // subscribe websocket for new statistical data

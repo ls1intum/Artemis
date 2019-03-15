@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.domain;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.Weekday;
 import org.hibernate.annotations.Cache;
@@ -19,6 +20,7 @@ import java.util.Set;
 @Entity
 @Table(name = "tutor_group")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TutorGroup implements Serializable {
 
     private static final long serialVersionUID = 1L;

@@ -85,10 +85,6 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
                 this.quizExerciseService.find(params['quizId']).subscribe(res => {
                     this.loadQuiz(res.body, false);
                 });
-            } else {
-                this.quizExerciseService.findForStudent(params['quizId']).subscribe(res => {
-                    this.loadQuiz(res.body, false);
-                });
             }
 
             // subscribe websocket for new statistical data
@@ -144,7 +140,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
         if (this.question === null) {
             this.router.navigateByUrl('courses');
         }
-        this.questionStatistic = this.question.questionStatistic as DragAndDropQuestionStatistic;
+        this.questionStatistic = this.question.quizQuestionStatistic as DragAndDropQuestionStatistic;
 
         // load Layout only at the opening (not if the websocket refreshed the data)
         if (!refresh) {

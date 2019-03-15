@@ -106,7 +106,8 @@ export class QuizExerciseService {
         const questions: QuizQuestion[] = [];
         for (const question of quizQuestions) {
             if (exportAll === true || question.exportQuiz === true) {
-                delete question.questionStatistic;
+                delete question.quizQuestionStatistic;
+                delete question.exercise
                 questions.push(question);
             }
         }

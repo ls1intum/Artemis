@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.domain;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -18,6 +19,7 @@ import java.util.Set;
 @Entity
 @Table(name = "lecture")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Lecture implements Serializable {
 
     private static final long serialVersionUID = 1L;

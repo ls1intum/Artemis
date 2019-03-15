@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.annotation.JsonView;
+import com.fasterxml.jackson.annotation.*;
 import de.tum.in.www1.artemis.domain.enumeration.ScoringType;
 import de.tum.in.www1.artemis.domain.scoring.ScoringStrategyFactory;
 import de.tum.in.www1.artemis.domain.view.QuizView;
@@ -32,6 +29,7 @@ import java.util.Objects;
     @JsonSubTypes.Type(value = DragAndDropQuestion.class, name = "drag-and-drop"),
     @JsonSubTypes.Type(value = ShortAnswerQuestion.class, name = "short-answer")
 })
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class QuizQuestion implements Serializable {
 
     private static final long serialVersionUID = 1L;

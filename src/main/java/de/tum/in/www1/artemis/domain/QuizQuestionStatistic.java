@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import org.hibernate.annotations.Proxy;
 
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
@@ -17,12 +18,12 @@ import java.util.Objects;
 @Entity
 @DiscriminatorValue(value="Q")
 @JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property="type")
-
 @JsonSubTypes({
     @JsonSubTypes.Type(value=MultipleChoiceQuestionStatistic.class, name="multiple-choice"),
     @JsonSubTypes.Type(value=DragAndDropQuestionStatistic.class, name="drag-and-drop"),
     @JsonSubTypes.Type(value=ShortAnswerQuestionStatistic.class, name="short-answer")
 })
+@Proxy(lazy = false)
 public abstract class QuizQuestionStatistic extends QuizStatistic implements Serializable {
 
     private static final long serialVersionUID = 1L;

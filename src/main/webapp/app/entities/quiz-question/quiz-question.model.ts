@@ -31,7 +31,7 @@ export abstract class QuizQuestion implements BaseEntity, MarkDownElement {
     public scoringType: ScoringType;
     public randomizeOrder = true; // default value
     public invalid = false; // default value
-    public questionStatistic: QuizQuestionStatistic;
+    public quizQuestionStatistic: QuizQuestionStatistic;
     public exercise: Exercise;
     public exportQuiz = false; // default value
     public type: QuizQuestionType;

@@ -159,7 +159,7 @@ public class QuizStatisticService {
             quizExercise.getQuizPointStatistic().addResult(result.getScore(), result.isRated());
             for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
                 // update QuestionStatistics with the result
-                if (quizQuestion.getQuizQuestionStatistic() != null && quizSubmission instanceof QuizSubmission) {
+                if (quizQuestion.getQuizQuestionStatistic() != null && quizSubmission != null) {
                     quizQuestion.getQuizQuestionStatistic().addResult(quizSubmission.getSubmittedAnswerForQuestion(quizQuestion), result.isRated());
                 }
             }

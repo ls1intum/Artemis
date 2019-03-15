@@ -329,9 +329,13 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                     for (const quizExercise of quizExercises) {
                         this.quizExerciseService.find(quizExercise.id).subscribe((response: HttpResponse<QuizExercise>) => {
                             const quizExerciseResponse = response.body;
-                            for (const question of quizExerciseResponse.quizQuestions) {
-                                question.exercise = quizExercise;
-                                this.allExistingQuestions.push(question);
+                            if (quizExerciseResponse.quizQuestions != null && quizExerciseResponse.quizQuestions.length > 0) {
+                                for (const question of quizExerciseResponse.quizQuestions) {
+                                    question.exercise = quizExercise;
+                                    this.allExistingQuestions.push(question);
+                                }
+                            } else {
+                                console.log('The quiz ' + quizExerciseResponse.title + ' does not contain questions!');
                             }
                             this.applyFilter();
                         });
@@ -723,9 +727,10 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      */
     async addQuestions(questions: QuizQuestion[]) {
         // To make sure all questions are duplicated (new resources are created), we need to remove some fields from the input questions,
-        // This contains removing all ids, duplicating images in case of dnd questions,
+        // This contains removing all ids, duplicating images in case of dnd questions, the question statistic and the exercise
         for (const question of questions) {
-            delete question.questionStatistic;
+            delete question.quizQuestionStatistic;
+            delete question.exercise;
             delete question.id;
             if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                 const mcQuestion = question as MultipleChoiceQuestion;

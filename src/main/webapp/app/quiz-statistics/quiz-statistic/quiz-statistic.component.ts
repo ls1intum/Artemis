@@ -186,10 +186,6 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
                 this.quizExerciseService.find(params['quizId']).subscribe((res: HttpResponse<QuizExercise>) => {
                     this.loadQuizSuccess(res.body);
                 });
-            } else {
-                this.quizExerciseService.findForStudent(params['quizId']).subscribe(res => {
-                    this.loadQuizSuccess(res.body);
-                });
             }
 
             // subscribe websocket for new statistical data
@@ -200,10 +196,6 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
             this.jhiWebsocketService.receive(this.websocketChannelForData).subscribe(() => {
                 if (this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
                     this.quizExerciseService.find(params['quizId']).subscribe(res => {
-                        this.loadQuizSuccess(res.body);
-                    });
-                } else {
-                    this.quizExerciseService.findForStudent(params['quizId']).subscribe(res => {
                         this.loadQuizSuccess(res.body);
                     });
                 }
@@ -277,14 +269,14 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
         for (let i = 0; i < this.quizExercise.quizQuestions.length; i++) {
             this.label.push(i + 1 + '.');
             this.backgroundColor.push('#5bc0de');
-            this.ratedData.push(this.quizExercise.quizQuestions[i].questionStatistic.ratedCorrectCounter);
-            this.unratedData.push(this.quizExercise.quizQuestions[i].questionStatistic.unRatedCorrectCounter);
+            this.ratedData.push(this.quizExercise.quizQuestions[i].quizQuestionStatistic.ratedCorrectCounter);
+            this.unratedData.push(this.quizExercise.quizQuestions[i].quizQuestionStatistic.unRatedCorrectCounter);
             this.ratedAverage =
                 this.ratedAverage +
-                this.quizExercise.quizQuestions[i].questionStatistic.ratedCorrectCounter * this.quizExercise.quizQuestions[i].score;
+                this.quizExercise.quizQuestions[i].quizQuestionStatistic.ratedCorrectCounter * this.quizExercise.quizQuestions[i].score;
             this.unratedAverage =
                 this.unratedAverage +
-                this.quizExercise.quizQuestions[i].questionStatistic.unRatedCorrectCounter * this.quizExercise.quizQuestions[i].score;
+                this.quizExercise.quizQuestions[i].quizQuestionStatistic.unRatedCorrectCounter * this.quizExercise.quizQuestions[i].score;
         }
 
         // set Background for invalid questions = grey

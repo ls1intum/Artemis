@@ -28,10 +28,11 @@ import java.util.Objects;
 // However, the "type" property will be automatically added by Jackson when an object is serialized
 @JsonTypeInfo(use=JsonTypeInfo.Id.NAME, property="type")
 @JsonSubTypes({
-    @JsonSubTypes.Type(value=MultipleChoiceSubmittedAnswer.class, name="multiple-choice"),
-    @JsonSubTypes.Type(value=DragAndDropSubmittedAnswer.class, name="drag-and-drop"),
+    @JsonSubTypes.Type(value = MultipleChoiceSubmittedAnswer.class, name="multiple-choice"),
+    @JsonSubTypes.Type(value = DragAndDropSubmittedAnswer.class, name="drag-and-drop"),
     @JsonSubTypes.Type(value = ShortAnswerSubmittedAnswer.class, name = "short-answer")
 })
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class SubmittedAnswer implements Serializable {
 
     private static final long serialVersionUID = 1L;

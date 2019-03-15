@@ -77,10 +77,6 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
                 this.quizExerciseService.find(params['quizId']).subscribe(res => {
                     this.loadQuiz(res.body, false);
                 });
-            } else {
-                this.quizExerciseService.findForStudent(params['quizId']).subscribe(res => {
-                    this.loadQuiz(res.body, false);
-                });
             }
 
             // subscribe websocket for new statistical data
@@ -136,7 +132,7 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
         if (this.question === null) {
             this.router.navigateByUrl('courses');
         }
-        this.questionStatistic = this.question.questionStatistic as MultipleChoiceQuestionStatistic;
+        this.questionStatistic = this.question.quizQuestionStatistic as MultipleChoiceQuestionStatistic;
 
         // load Layout only at the opening (not if the websocket refreshed the data)
         if (!refresh) {
