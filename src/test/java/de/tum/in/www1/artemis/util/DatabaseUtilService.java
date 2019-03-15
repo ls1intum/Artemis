@@ -221,7 +221,7 @@ public class DatabaseUtilService {
         return builder.toString();
     }
 
-    // TODO CZ: tests currently fail, test if this works correctly
+
     public List<Feedback> loadAssessmentFomResources(String path) throws Exception {
         String fileContent = loadFileFromResources(path);
         List<Feedback> modelingAssessment = mapper.readValue(

@@ -122,7 +122,6 @@ public class CompassCalculationEngine implements CalculationEngine {
 
     /**
      * Create a jsonModelId to Score mapping generated from the feedback list of a submission.
-     * TODO CZ: remove this method and replace Score with Feedback in general?
      *
      * @param feedbackList the feedbackList
      * @param model the UML model

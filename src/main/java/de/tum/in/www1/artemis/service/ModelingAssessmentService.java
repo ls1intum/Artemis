@@ -86,7 +86,6 @@ public class ModelingAssessmentService extends AssessmentService {
 
         if (result.getSubmission() == null) {
             result.setSubmission(modelingSubmission);
-            // TODO CZ: is setting the result and saving the submission really necessary here? setting the submission of the result should be enough as the relationship is owned by the result
             modelingSubmission.setResult(result);
             modelingSubmissionRepository.save(modelingSubmission);
         }
