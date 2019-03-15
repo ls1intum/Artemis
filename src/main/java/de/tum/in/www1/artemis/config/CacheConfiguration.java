@@ -127,7 +127,21 @@ public class CacheConfiguration {
             cm.createCache(de.tum.in.www1.artemis.domain.ExampleSubmission.class.getName(), jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.ExampleSubmission.class.getName() + ".exercises", jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.Exercise.class.getName() + ".tutorParticipations", jcacheConfiguration);
-
+            cm.createCache(de.tum.in.www1.artemis.domain.Course.class.getName() + ".lectures", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.Course.class.getName() + ".tutorGroups", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.Exercise.class.getName() + ".attachments", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.StudentQuestion.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.StudentQuestion.class.getName() + ".answers", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.QuestionAnswer.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.TutorGroup.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.TutorGroup.class.getName() + ".students", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.Notification.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.SystemNotification.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.GroupNotification.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.SingleUserNotification.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.Lecture.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.Lecture.class.getName() + ".attachments", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.Attachment.class.getName(), jcacheConfiguration);
 
             // jhipster-needle-ehcache-add-entry
             cm.createCache("files", jcacheConfiguration);
