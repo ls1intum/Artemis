@@ -18,6 +18,7 @@ import { ArTEMiSSharedModule } from './shared';
 import { ArTEMiSCoreModule } from 'app/core';
 import { ArTEMiSAppRoutingModule } from './app-routing.module';
 import { ArTEMiSHomeModule } from './home';
+import { ArTEMiSLegalModule } from './legal';
 import { ArTEMiSOverviewModule } from './overview';
 import { ArTEMiSAccountModule } from './account/account.module';
 import { ArTEMiSCourseListModule } from './course-list';
@@ -72,6 +73,7 @@ import { ArTEMiSComplaintsModule } from 'app/complaints';
         ArTEMiSSharedModule.forRoot(),
         ArTEMiSCoreModule,
         ArTEMiSHomeModule,
+        ArTEMiSLegalModule,
         ArTEMiSOverviewModule,
         ArTEMiSAccountModule,
         ArTEMiSEntityModule,
