@@ -320,17 +320,14 @@ public class Participation implements Serializable {
         if (submissions == null || submissions.size() == 0) {
             return Optional.empty();
         }
-        if (submissions.size() == 1) {
-            return Optional.of(submissions.iterator().next());
-        }
 
-        return submissions.stream().min((s1, s2) -> {
+        return submissions.stream().max((s1, s2) -> {
             if (s1.getSubmissionDate() == null || s2.getSubmissionDate() == null) {
                 //this case should not happen, but in the rare case we can compare the ids
                 //newer ids are typically later
-                return s2.getId().compareTo(s1.getId());
+                return s1.getId().compareTo(s2.getId());
             }
-            return s2.getSubmissionDate().compareTo(s1.getSubmissionDate());
+            return s1.getSubmissionDate().compareTo(s2.getSubmissionDate());
         });
     }
 

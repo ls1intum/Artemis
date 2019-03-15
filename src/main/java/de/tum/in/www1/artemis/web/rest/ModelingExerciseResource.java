@@ -271,7 +271,7 @@ public class ModelingExerciseResource {
         }
 
         Optional<ModelingSubmission> optionalModelingSubmission = participation.findLatestModelingSubmission();
-        ModelingSubmission modelingSubmission = null;
+        ModelingSubmission modelingSubmission;
         if (!optionalModelingSubmission.isPresent()) {
             modelingSubmission = new ModelingSubmission();  //NOTE: this object is not yet persisted
             modelingSubmission.setParticipation(participation);
