@@ -349,22 +349,57 @@ entity QuestionAnswer {
     answerDate Date
 }
 
+entity TutorGroup {
+    name String,
+    capacity Integer,
+    weekday Weekday,
+    timeSlot String,
+    language Language,
+    room String
+}
+
+enum Weekday {
+    MONDAY,
+    TUESDAY,
+    WEDNESDAY,
+    THURSDAY,
+    FRIDAY
+}
+
+enum Language {
+    ENGLISH,
+    GERMAN
+}
+
 entity Notification {
-    type NotificationType,
     title String,
     text String,                       // LONGTEXT --> lob
     notificationDate Date,
-    expireDate Date,
     target String
 }
 
-enum NotificationType {
-    SYSTEM_WARNING,
-    SYSTEM_INFO,
-    SINGLE_USER,
+entity SystemNotification {             // extends Notification
+    expireDate Date,
+    type SystemNotificationType,
+}
+
+entity GroupNotification {             // extends Notification
+    type GroupNotificationType
+}
+
+entity SingleUserNotification {        // extends Notification
+
+}
+
+enum GroupNotificationType {
     INSTRUCTOR,
-    TUTOR,
+    TA,
     STUDENT
+}
+
+enum SystemNotificationType {
+    WARNING,
+    INFO,
 }
 
 entity Lecture {
@@ -393,6 +428,7 @@ relationship OneToMany {
     ShortAnswerQuestionStatistic{ShortAnswerSpotCounters} to ShortAnswerSpotCounter{ShortAnswerQuestionStatistic},
     Course{exercises} to Exercise{course},
     Course{lectures} to Lecture{course},
+    Course{tutorGroups} to TutorGroup{course},
     Exercise{participations} to Participation{exercise},
     Exercise{tutorParticipations} to TutorParticipation{assessedExercise},
     Participation{results} to ExerciseResult{participation},
@@ -436,6 +472,7 @@ relationship OneToOne {
 }
 
 relationship ManyToOne {
+    TutorGroup{tutor} to User,
     Participation{student} to User,
     LtiOutcomeUrl{user} to User,
     LtiOutcomeUrl{exercise} to Exercise,
@@ -450,11 +487,12 @@ relationship ManyToOne {
     StudentQuestion{lecture} to Lecture,
     QuestionAnswer{author} to User,
     Notification{author} to User,
-    Notification{recipient} to User,
-    Notification{course} to Course,
+    SingleUserNotification{recipient} to User,
+    GroupNotification{course} to Course,
 }
 
 relationship ManyToMany {
+    TutorGroup{students} to User
 	MultipleChoiceSubmittedAnswer{selectedOptions} to AnswerOption
 }
 
