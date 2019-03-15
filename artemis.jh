@@ -344,7 +344,7 @@ entity StudentQuestion {
     visibleForStudents Boolean
 }
 
-entity QuestionAnswer {
+entity StudentQuestionAnswer {
     answerText String,                 // LONGTEXT --> lob
     answerDate ZonedDateTime,
     verified Boolean
@@ -448,7 +448,7 @@ relationship OneToMany {
     ShortAnswerSubmittedAnswer{submittedTexts} to ShortAnswerSubmittedText{submittedAnswer},
     TutorParticipation{trainedExampleSubmissions} to ExampleSubmission,
     Exercise{exampleSubmissions} to ExampleSubmission{exercise}
-    StudentQuestion{answers} to QuestionAnswer{question},
+    StudentQuestion{answers} to StudentQuestionAnswer{question},
     Lecture{attachments} to Attachment{lecture},
     Exercise{attachments} to Attachment{exercise},
     Exercise{studentQuestions} to StudentQuestion{exercise},
@@ -486,7 +486,7 @@ relationship ManyToOne {
     ShortAnswerMapping{spot} to ShortAnswerSpot,
     TutorParticipation{tutor} to User,
     StudentQuestion{author} to User,
-    QuestionAnswer{author} to User,
+    StudentQuestionAnswer{author} to User,
     Notification{author} to User,
     SingleUserNotification{recipient} to User,
     GroupNotification{course} to Course,

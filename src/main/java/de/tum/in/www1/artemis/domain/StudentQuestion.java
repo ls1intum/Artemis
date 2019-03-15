@@ -6,6 +6,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -26,6 +27,7 @@ public class StudentQuestion implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Size(max = 1000)
     @Column(name = "question_text")
     private String questionText;
 
@@ -37,7 +39,7 @@ public class StudentQuestion implements Serializable {
 
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private Set<QuestionAnswer> answers = new HashSet<>();
+    private Set<StudentQuestionAnswer> answers = new HashSet<>();
 
     @ManyToOne
     @JsonIgnoreProperties("studentQuestions")
@@ -99,29 +101,29 @@ public class StudentQuestion implements Serializable {
         this.visibleForStudents = visibleForStudents;
     }
 
-    public Set<QuestionAnswer> getAnswers() {
+    public Set<StudentQuestionAnswer> getAnswers() {
         return answers;
     }
 
-    public StudentQuestion answers(Set<QuestionAnswer> questionAnswers) {
-        this.answers = questionAnswers;
+    public StudentQuestion answers(Set<StudentQuestionAnswer> studentQuestionAnswers) {
+        this.answers = studentQuestionAnswers;
         return this;
     }
 
-    public StudentQuestion addAnswers(QuestionAnswer questionAnswer) {
-        this.answers.add(questionAnswer);
-        questionAnswer.setQuestion(this);
+    public StudentQuestion addAnswers(StudentQuestionAnswer studentQuestionAnswer) {
+        this.answers.add(studentQuestionAnswer);
+        studentQuestionAnswer.setQuestion(this);
         return this;
     }
 
-    public StudentQuestion removeAnswers(QuestionAnswer questionAnswer) {
-        this.answers.remove(questionAnswer);
-        questionAnswer.setQuestion(null);
+    public StudentQuestion removeAnswers(StudentQuestionAnswer studentQuestionAnswer) {
+        this.answers.remove(studentQuestionAnswer);
+        studentQuestionAnswer.setQuestion(null);
         return this;
     }
 
-    public void setAnswers(Set<QuestionAnswer> questionAnswers) {
-        this.answers = questionAnswers;
+    public void setAnswers(Set<StudentQuestionAnswer> studentQuestionAnswers) {
+        this.answers = studentQuestionAnswers;
     }
 
     public User getAuthor() {

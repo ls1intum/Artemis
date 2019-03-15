@@ -1,6 +1,6 @@
 <?xml version="1.1" encoding="UTF-8" standalone="no"?>
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
-    <changeSet author="krusche" id="1552660169234">
+    <changeSet author="krusche" id="1552664538429">
         <createTable tableName="attachment">
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints primaryKey="true" primaryKeyName="attachmentPK"/>
@@ -16,7 +16,7 @@
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints primaryKey="true" primaryKeyName="lecturePK"/>
             </column>
-            <column name="description" type="VARCHAR(255)"/>
+            <column name="description" type="LONGTEXT"/>
             <column name="end_date" type="datetime"/>
             <column name="start_date" type="datetime"/>
             <column name="title" type="VARCHAR(255)"/>
@@ -31,7 +31,7 @@
             </column>
             <column name="notification_date" type="datetime"/>
             <column name="target" type="VARCHAR(255)"/>
-            <column name="text" type="VARCHAR(255)"/>
+            <column name="text" type="LONGTEXT"/>
             <column name="title" type="VARCHAR(255)"/>
             <column name="expire_date" type="datetime"/>
             <column name="jhi_type" type="VARCHAR(255)"/>
@@ -39,26 +39,26 @@
             <column name="recipient_id" type="BIGINT"/>
             <column name="course_id" type="BIGINT"/>
         </createTable>
-        <createTable tableName="question_answer">
-            <column autoIncrement="true" name="id" type="BIGINT">
-                <constraints primaryKey="true" primaryKeyName="question_answerPK"/>
-            </column>
-            <column name="answer_date" type="datetime"/>
-            <column name="answer_text" type="VARCHAR(255)"/>
-            <column name="verified" type="BIT"/>
-            <column name="author_id" type="BIGINT"/>
-            <column name="question_id" type="BIGINT"/>
-        </createTable>
         <createTable tableName="student_question">
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints primaryKey="true" primaryKeyName="student_questionPK"/>
             </column>
             <column name="creation_date" type="datetime"/>
-            <column name="question_text" type="VARCHAR(255)"/>
+            <column name="question_text" type="VARCHAR(1000)"/>
             <column name="visible_for_students" type="BIT"/>
             <column name="author_id" type="BIGINT"/>
             <column name="exercise_id" type="BIGINT"/>
             <column name="lecture_id" type="BIGINT"/>
+        </createTable>
+        <createTable tableName="student_question_answer">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints primaryKey="true" primaryKeyName="student_question_answerPK"/>
+            </column>
+            <column name="answer_date" type="datetime"/>
+            <column name="answer_text" type="LONGTEXT"/>
+            <column name="verified" type="BIT"/>
+            <column name="author_id" type="BIGINT"/>
+            <column name="question_id" type="BIGINT"/>
         </createTable>
         <createTable tableName="tutor_group">
             <column autoIncrement="true" name="id" type="BIGINT">
@@ -97,18 +97,18 @@
         <addForeignKeyConstraint baseColumnNames="tutor_group_id" baseTableName="tutor_group_students" constraintName="FK2cvxih0qjqys4ld9gdol39ngj" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="tutor_group"/>
         <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="notification" constraintName="FK2qvynpew0iu557b4qk9go0u0c" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="course"/>
         <addForeignKeyConstraint baseColumnNames="students_id" baseTableName="tutor_group_students" constraintName="FK3kx69s41qyv7k9s10ia5im91n" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user"/>
-        <addForeignKeyConstraint baseColumnNames="author_id" baseTableName="question_answer" constraintName="FK437vm4hwgqfpg8bynm7kt1sxx" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user"/>
         <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="student_question" constraintName="FK6kgo0sse7sait8q665s16wynf" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="exercise"/>
         <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="attachment" constraintName="FK840kdpn5r9l2wyhq83gl6sx2g" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="exercise"/>
         <addForeignKeyConstraint baseColumnNames="lecture_id" baseTableName="attachment" constraintName="FKa6apwe76xlljxtm3nimrlvppf" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="lecture"/>
         <addForeignKeyConstraint baseColumnNames="tutor_id" baseTableName="tutor_group" constraintName="FKcf8nhxegaw4eemea12s6q6p5j" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user"/>
         <addForeignKeyConstraint baseColumnNames="lecture_id" baseTableName="student_question" constraintName="FKcu2dpdk9qef0yaithkxcjebwg" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="lecture"/>
         <addForeignKeyConstraint baseColumnNames="recipient_id" baseTableName="notification" constraintName="FKf3ah8uajs8wfda872mvl56hq4" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user"/>
+        <addForeignKeyConstraint baseColumnNames="question_id" baseTableName="student_question_answer" constraintName="FKfe9vnvra5xx2kulv4h27seksa" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="student_question"/>
         <addForeignKeyConstraint baseColumnNames="author_id" baseTableName="notification" constraintName="FKg8sxrh7ha8nl46lbljs12mtxy" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user"/>
+        <addForeignKeyConstraint baseColumnNames="author_id" baseTableName="student_question_answer" constraintName="FKgdd6qiyjtlrjgf2dsse32r8y5" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user"/>
         <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="tutor_group" constraintName="FKhlflc2uq6jxpt1ajaru95ud2c" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="course"/>
         <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="lecture" constraintName="FKjoc9yetfohpygdvx5wv385vwb" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="course"/>
         <addForeignKeyConstraint baseColumnNames="author_id" baseTableName="student_question" constraintName="FKjpgnpph3i2h0n8xekqiytaers" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user"/>
-        <addForeignKeyConstraint baseColumnNames="question_id" baseTableName="question_answer" constraintName="FKq60gjqumjwxksowb2b627uwgd" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="student_question"/>
         <dropColumn columnName="model" tableName="submission"/>
     </changeSet>
 </databaseChangeLog>

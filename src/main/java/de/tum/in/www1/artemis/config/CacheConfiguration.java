@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.config;
 
+import de.tum.in.www1.artemis.domain.StudentQuestionAnswer;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import io.github.jhipster.config.JHipsterProperties;
 import io.github.jhipster.config.jcache.BeanClassLoaderAwareJCacheRegionFactory;
@@ -132,7 +133,7 @@ public class CacheConfiguration {
             cm.createCache(de.tum.in.www1.artemis.domain.Exercise.class.getName() + ".attachments", jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.StudentQuestion.class.getName(), jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.StudentQuestion.class.getName() + ".answers", jcacheConfiguration);
-            cm.createCache(de.tum.in.www1.artemis.domain.QuestionAnswer.class.getName(), jcacheConfiguration);
+            cm.createCache(StudentQuestionAnswer.class.getName(), jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.TutorGroup.class.getName(), jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.TutorGroup.class.getName() + ".students", jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.Notification.class.getName(), jcacheConfiguration);

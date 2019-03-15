@@ -11,12 +11,12 @@ import java.time.ZonedDateTime;
 import java.util.Objects;
 
 /**
- * A QuestionAnswer.
+ * A StudentQuestionAnswer.
  */
 @Entity
-@Table(name = "question_answer")
+@Table(name = "student_question_answer")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-public class QuestionAnswer implements Serializable {
+public class StudentQuestionAnswer implements Serializable {
 
     private static final long serialVersionUID = 1L;
     
@@ -24,6 +24,7 @@ public class QuestionAnswer implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Lob
     @Column(name = "answer_text")
     private String answerText;
 
@@ -54,7 +55,7 @@ public class QuestionAnswer implements Serializable {
         return answerText;
     }
 
-    public QuestionAnswer answerText(String answerText) {
+    public StudentQuestionAnswer answerText(String answerText) {
         this.answerText = answerText;
         return this;
     }
@@ -67,7 +68,7 @@ public class QuestionAnswer implements Serializable {
         return answerDate;
     }
 
-    public QuestionAnswer answerDate(ZonedDateTime answerDate) {
+    public StudentQuestionAnswer answerDate(ZonedDateTime answerDate) {
         this.answerDate = answerDate;
         return this;
     }
@@ -80,7 +81,7 @@ public class QuestionAnswer implements Serializable {
         return verified;
     }
 
-    public QuestionAnswer verified(Boolean verified) {
+    public StudentQuestionAnswer verified(Boolean verified) {
         this.verified = verified;
         return this;
     }
@@ -94,7 +95,7 @@ public class QuestionAnswer implements Serializable {
         return author;
     }
 
-    public QuestionAnswer author(User user) {
+    public StudentQuestionAnswer author(User user) {
         this.author = user;
         return this;
     }
@@ -107,7 +108,7 @@ public class QuestionAnswer implements Serializable {
         return question;
     }
 
-    public QuestionAnswer question(StudentQuestion studentQuestion) {
+    public StudentQuestionAnswer question(StudentQuestion studentQuestion) {
         this.question = studentQuestion;
         return this;
     }
@@ -125,11 +126,11 @@ public class QuestionAnswer implements Serializable {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        QuestionAnswer questionAnswer = (QuestionAnswer) o;
-        if (questionAnswer.getId() == null || getId() == null) {
+        StudentQuestionAnswer studentQuestionAnswer = (StudentQuestionAnswer) o;
+        if (studentQuestionAnswer.getId() == null || getId() == null) {
             return false;
         }
-        return Objects.equals(getId(), questionAnswer.getId());
+        return Objects.equals(getId(), studentQuestionAnswer.getId());
     }
 
     @Override
@@ -139,7 +140,7 @@ public class QuestionAnswer implements Serializable {
 
     @Override
     public String toString() {
-        return "QuestionAnswer{" +
+        return "StudentQuestionAnswer{" +
             "id=" + getId() +
             ", answerText='" + getAnswerText() + "'" +
             ", answerDate='" + getAnswerDate() + "'" +

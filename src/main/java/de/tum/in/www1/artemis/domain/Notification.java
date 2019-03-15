@@ -45,6 +45,7 @@ public abstract class Notification implements Serializable {
     @Column(name = "title")
     private String title;
 
+    @Lob
     @Column(name = "text")
     private String text;
 
