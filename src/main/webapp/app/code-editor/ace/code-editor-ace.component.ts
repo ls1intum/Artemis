@@ -6,6 +6,8 @@ import 'brace/mode/markdown';
 import 'brace/mode/python';
 import 'brace/theme/dreamweaver';
 
+import { fromEvent, Subscription } from 'rxjs';
+
 import { AceEditorComponent } from 'ng2-ace-editor';
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
@@ -33,6 +35,8 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges 
     /** Ace Editor Options **/
     editorFileSessions: {[fileName: string]: {code: string, errors: AceAnnotation[], unsavedChanges: boolean}} = {};
     editorMode = this.aceModeList.getModeForPath('Test.java').name; // String or mode object
+
+    annotationChange: Subscription;
 
     /** Callback timing variables **/
     updateFilesDebounceTime = 3000;
@@ -86,6 +90,9 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges 
         }
         // Current file has changed
         if (changes.selectedFile && this.selectedFile) {
+            if (this.annotationChange) {
+                this.annotationChange.unsubscribe();
+            }
             this.loadFile(this.selectedFile);
         } else if (changes.buildLogErrors && this.editorFileSessions[this.selectedFile]) {
             this.editorFileSessions = Object.entries(this.editorFileSessions).map(([fileName, session]: any) => [fileName, {
@@ -104,7 +111,8 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges 
             const sign = action === 'remove' ? -1 : 1;
             const updateRowDiff = sign * (rowEnd - rowStart);
             const updateColDiff = sign * (columnEnd - columnStart);
-            const updatedAnnotations = this.editorFileSessions[this.selectedFile].errors.map(({row, column, ...rest}) => {
+            const updatedAnnotations = this.editorFileSessions[this.selectedFile].errors
+                .map(({row, column, ...rest}) => {
                 return {
                     ...rest,
                     row: row >= rowStart ? row + updateRowDiff : row,
@@ -246,9 +254,10 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges 
             this.saveFile(this.selectedFile);
             this.updateSaveStatusLabel();
         } else if (this.editorFileSessions[this.selectedFile]) {
-            this.editor.getEditor().getSession().setAnnotations(this.editorFileSessions[this.selectedFile].errors);
-            this.editor.getEditor().getSession().off('change', this.recalculateAnnotationPositions);
-            this.editor.getEditor().getSession().on('change', this.recalculateAnnotationPositions);
+            this.editor.getEditor().getSession()
+                .setAnnotations(this.editorFileSessions[this.selectedFile].errors);
+            this.annotationChange = fromEvent(this.editor.getEditor().getSession(), 'change')
+                .subscribe(([change]) => this.recalculateAnnotationPositions(change));
         }
     }
 }
