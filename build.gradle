@@ -243,7 +243,7 @@ task cleanResources(type: Delete) {
 }
 
 task executeTests (type: Exec) {
- commandLine './gradlew', 'test', '-x', 'webpackBuildDev'
+ commandLine './gradlew', 'test', '-x', 'webpackBuildDev', '-x', 'webpack'
 }
 
 wrapper {
