@@ -222,38 +222,7 @@ public class ProgrammingExerciseService {
         }
     }
 
-    /**
-     * migrates the programming exercises to use templateParticipation and solutionParticipation
-     */
-    public void migrateAllProgrammingExercises() {
-
-        List<ProgrammingExercise> allProgrammingExercises = programmingExerciseRepository.findAll();
-
-        for (ProgrammingExercise programmingExercise : allProgrammingExercises) {
-            if (programmingExercise.getTemplateParticipation() == null) {
-                Participation templateParticipation = new Participation();
-                templateParticipation.setRepositoryUrl(programmingExercise.getTemplateRepositoryUrlOld());
-                templateParticipation.setBuildPlanId(programmingExercise.getTemplateBuildPlanIdOld());
-                programmingExercise.setTemplateParticipation(templateParticipation);
-                programmingExercise.setTemplateRepositoryUrlOld(null);
-                programmingExercise.setTemplateBuildPlanIdOld(null);
-                participationRepository.save(templateParticipation);
-                programmingExerciseRepository.save(programmingExercise);
-            }
-            if (programmingExercise.getSolutionParticipation() == null) {
-                Participation solutionParticipation = new Participation();
-                solutionParticipation.setRepositoryUrl(programmingExercise.getSolutionRepositoryUrlOld());
-                solutionParticipation.setBuildPlanId(programmingExercise.getSolutionBuildPlanIdOld());
-                programmingExercise.setSolutionParticipation(solutionParticipation);
-                programmingExercise.setSolutionRepositoryUrlOld(null);
-                programmingExercise.setSolutionBuildPlanIdOld(null);
-                participationRepository.save(solutionParticipation);
-                programmingExerciseRepository.save(programmingExercise);
-            }
-        }
-    }
-
-    /**
+   /**
      * Find the ProgrammingExercise where the given Participation is the template Participation
      *
      * @param participation The template participation

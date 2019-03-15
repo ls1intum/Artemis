@@ -26,7 +26,7 @@ import { ArTEMiSInstructorCourseDashboardModule, ArTEMiSInstructorDashboardModul
 import { ArTEMiSAssessmentDashboardModule } from './assessment-dashboard';
 import { PaginationConfig } from './blocks/config/uib-pagination.config';
 import { DifferencePipe, MomentModule } from 'angular2-moment';
-import { ArTEMiSEditorModule } from './editor';
+import { ArTEMiSCodeEditorModule } from './code-editor';
 import { RepositoryInterceptor, RepositoryService } from './entities/repository';
 import { ArTEMiSQuizModule } from './quiz/participate';
 import { ArTEMiSTextModule } from './text-editor';
@@ -46,7 +46,10 @@ import { ParticipationDataProvider } from './course-list/exercise-list/participa
 import { ArTEMiSTutorCourseDashboardModule } from 'app/tutor-course-dashboard';
 import { ArTEMiSTutorExerciseDashboardModule } from 'app/tutor-exercise-dashboard';
 import { ArTEMiSExampleSubmissionModule } from 'app/example-text-submission';
+
 import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor/markdown-editor.module';
+import { ArTEMiSComplaintsModule } from 'app/complaints';
+
 
 @NgModule({
     imports: [
@@ -77,7 +80,7 @@ import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor/markdown-editor
         ArTEMiSEntityModule,
         ArTEMiSApollonDiagramsModule,
         ArTEMiSCourseListModule,
-        ArTEMiSEditorModule,
+        ArTEMiSCodeEditorModule,
         ArTEMiSQuizModule,
         ArTEMiSInstructorCourseDashboardModule,
         ArTEMiSInstructorDashboardModule,
@@ -92,7 +95,8 @@ import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor/markdown-editor
         ArTEMiSInstructorExerciseStatsDashboardModule,
         ArTEMiSTutorCourseDashboardModule,
         ArTEMiSTutorExerciseDashboardModule,
-        ArTEMiSExampleSubmissionModule
+        ArTEMiSExampleSubmissionModule,
+        ArTEMiSComplaintsModule
         // jhipster-needle-angular-add-module JHipster will add new module here
     ],
     declarations: [

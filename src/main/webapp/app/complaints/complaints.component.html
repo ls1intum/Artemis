@@ -1,0 +1,33 @@
+<div class="col-12 mt-4">
+    <div class="row">
+        <div class="col-6">
+            <h3>{{'arTeMiSApp.complaint.complaints' | translate}}</h3>
+            <p>{{'arTeMiSApp.complaint.description' | translate}}</p>
+        </div>
+
+        <div class="col-6">
+            <h3>{{'arTeMiSApp.complaint.moreFeedback' | translate}}</h3>
+            <p>{{'arTeMiSApp.complaint.moreFeedbackDescription' | translate}}</p>
+            <button class="btn btn-default" [disabled]="true" (click)="requestMoreFeedback()">{{'arTeMiSApp.complaint.moreFeedbackButton' | translate}}</button>
+        </div>
+    </div>
+
+    <p *ngIf="!alreadySubmitted" class="mt-4">
+        {{'arTeMiSApp.complaint.beDescriptive' | translate}}
+    </p>
+
+    <p *ngIf="alreadySubmitted" class="mt-4">
+        {{'arTeMiSApp.complaint.alreadySubmitted' | translate}} {{submittedDate}}.
+    </p>
+
+    <textarea class="col-6" [(ngModel)]="complaintText" [readOnly]="alreadySubmitted" [disabled]="alreadySubmitted" style="height: 10vh;"></textarea>
+
+    <div class="row" *ngIf="!alreadySubmitted">
+        <div class="col-6">
+            <button class="btn btn-primary" [disabled]="complaintText.length <= 0" (click)="createComplaint()" >{{'arTeMiSApp.complaint.submit' | translate}}</button>
+        </div>
+    </div>
+</div>
+
+
+

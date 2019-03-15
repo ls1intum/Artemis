@@ -61,8 +61,6 @@ public class ArTEMiSApp {
                 "run with both the 'dev' and 'cloud' profiles at the same time.");
         }
 
-        programmingExerciseService.migrateAllProgrammingExercises();
-
         // activate Quiz Schedule Service
         quizScheduleService.startSchedule(3 * 1000);                          //every 3 seconds
 

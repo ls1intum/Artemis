@@ -2,17 +2,17 @@ import { Component, Input, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { RepositoryFileService } from 'app/entities/repository';
 import { Participation } from 'app/entities/participation';
-import { EditorFileBrowserComponent } from 'app/editor';
+import { CodeEditorFileBrowserComponent } from 'app/code-editor';
 import { TranslateService } from '@ngx-translate/core';
 
 // Modal -> Create new repository file
 @Component({
-    selector: 'jhi-editor-file-browser-create',
-    templateUrl: './editor-file-browser-create.html'
+    selector: 'jhi-code-editor-file-browser-create',
+    templateUrl: './code-editor-file-browser-create.html'
 })
-export class EditorFileBrowserCreateComponent implements OnInit {
+export class CodeEditorFileBrowserCreateComponent implements OnInit {
     @Input() participation: Participation;
-    @Input() parent: EditorFileBrowserComponent;
+    @Input() parent: CodeEditorFileBrowserComponent;
     @Input() folder: string;
 
     isLoading: boolean;
