@@ -12,7 +12,7 @@
             "failedToLogin": "<span class='bold'>Fehler bei der Anmeldung!</span> Bitte überprüfe deinen Benutzernamen und dein Passwort und versuche es erneut.",
             "tumWarning": "<p class='text-primary small'>Wenn du ein TUM-Student bist, sollte deine Benutzerkennung das Format <b>ab12xyz</b> haben.<br>Füge <b>weder</b> '<b>@mytum.de</b>' noch '<b>@tum.de</b>' hinzu.</p>",
             "jiraWaning": "<span class='bold'>Du hast dein Passwort zu oft falsch eingegeben. :-(</span><br>Bitte besuche <a href='https://jirabruegge.in.tum.de/login.jsp' target='_blank'>JIRA</a>: <a href='https://jirabruegge.in.tum.de/login.jsp' target='_blank'>https://jirabruegge.in.tum.de/login.jsp</a>.Melde dich dort mit deinem Konto an und löse das <a href='https://jirabruegge.in.tum.de/login.jsp' target='_blank'>CAPTCHA</a>. Nachdem du das <a href='https://jirabruegge.in.tum.de/login.jsp' target='_blank'>CAPTCHA</a> gelöst hast, versuche es hier erneut.",
-            "loginWarning": "Seems like you are having issues signing in :-( Please go to <a href='https://jirabruegge.in.tum.de'>JIRA</a> and try to sign in there.<br>After that, try again here."
+            "loginWarning": "Scheint so, als hättest du Probleme bei der Anmeldung :-( Bitte besuche <a href='https://jirabruegge.in.tum.de'>JIRA</a> und versuche dich dort anzumelden.<br>Danach versuche es hier noch einmal."
         }
     }
 }
