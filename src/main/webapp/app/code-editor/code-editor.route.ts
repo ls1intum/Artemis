@@ -1,12 +1,12 @@
 import { Routes } from '@angular/router';
 
 import { UserRouteAccessService } from '../core';
-import { EditorComponent } from './editor.component';
+import { CodeEditorComponent } from './code-editor.component';
 
-export const editorRoute: Routes = [
+export const codeEditorRoute: Routes = [
     {
         path: 'editor/:participationId',
-        component: EditorComponent,
+        component: CodeEditorComponent,
         data: {
             authorities: ['ROLE_USER'],
             pageTitle: 'arTeMiSApp.editor.home.title',

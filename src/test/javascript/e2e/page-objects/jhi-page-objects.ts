@@ -68,8 +68,6 @@ export class NavBarPage {
     }
 
     async getSignInPage() {
-        await this.clickOnAccountMenu();
-        await this.clickOnSignIn();
         return new SignInPage();
     }
     async getPasswordPage() {
@@ -87,11 +85,6 @@ export class NavBarPage {
     async goToEntity(entityName: string) {
         await this.clickOnEntityMenu();
         await this.clickOnEntity(entityName);
-    }
-
-    async goToSignInPage() {
-        await this.clickOnAccountMenu();
-        await this.clickOnSignIn();
     }
 
     async goToPasswordMenu() {
