@@ -104,16 +104,21 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges 
             const buildLogEntry = changes.buildLogErrors.currentValue && Object.values(changes.buildLogErrors.currentValue).flat().find(({ts}: any) => ts);
             if (!_isEmpty(this.session) && (!buildLogEntry || buildLogEntry.ts < this.session.ts)) {
                 const fileNames = _union(Object.keys(this.session.errors), Object.keys(this.editorFileSessions));
-                this.editorFileSessions = fileNames 
+                this.editorFileSessions = fileNames
                     .reduce((acc, fileName) => ({
-                        ...acc, [fileName]: {...this.editorFileSessions[fileName], errors: this.session.errors[fileName]}
+                        ...acc,
+                        [fileName]: {...this.editorFileSessions[fileName], errors: this.session.errors[fileName]}
                     }), {});
             } else {
                 const fileNames = _union(Object.keys(this.buildLogErrors), Object.keys(this.editorFileSessions));
-                this.editorFileSessions = fileNames 
+                this.editorFileSessions = fileNames
                     .reduce((acc, fileName) => ({
-                        ...acc, [fileName]: {...this.editorFileSessions[fileName], errors: changes.buildLogErrors.currentValue[fileName] ? changes.buildLogErrors.currentValue[fileName].map(({ts, ...rest}) => rest) : []}
-                }), {});
+                        ...acc,
+                        [fileName]: {
+                            ...this.editorFileSessions[fileName],
+                            errors: changes.buildLogErrors.currentValue[fileName] ? changes.buildLogErrors.currentValue[fileName].map(({ts, ...rest}: AceAnnotation) => rest) : []
+                        }
+                    }), {});
             }
             this.editor.getEditor().getSession()
                 .setAnnotations(this.editorFileSessions[this.selectedFile] ? this.editorFileSessions[this.selectedFile].errors : []);
