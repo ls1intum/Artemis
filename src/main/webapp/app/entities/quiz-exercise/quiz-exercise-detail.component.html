@@ -24,6 +24,7 @@
             id="quiz-title"
             class="form-control"
             [(ngModel)]="quizExercise.title"
+            (ngModelChange)="cacheValidation()"
             placeholder="Quiz Title"/>
         <div class="form-inline quiz-options">
             <div class="form-group">
@@ -60,7 +61,8 @@
                 <input type="checkbox"
                        id="cbRandomizeOrder"
                        class="form-check-input custom-control-input"
-                       [(ngModel)]="quizExercise.randomizeQuestionOrder"/>
+                       [(ngModel)]="quizExercise.randomizeQuestionOrder"
+                       (ngModelChange)="cacheValidation()"/>
                 <label class="form-check-label custom-control-label" for="cbRandomizeOrder"
                        jhiTranslate="arTeMiSApp.quizExercise.randomizeQuestionOrder">
                 </label>
@@ -71,7 +73,8 @@
                         type="checkbox"
                         id="cbPlannedToStart"
                         class="form-check-input custom-control-input"
-                        [(ngModel)]="quizExercise.isPlannedToStart"/>
+                        [(ngModel)]="quizExercise.isPlannedToStart"
+                        (ngModelChange)="cacheValidation()"/>
                     <label class="form-check-label custom-control-label" for="cbPlannedToStart"
                            jhiTranslate="arTeMiSApp.quizExercise.startTime">
                     </label>
@@ -182,7 +185,7 @@
                 <div class="form-group">
                     <span jhiTranslate="arTeMiSApp.quizExercise.status" class="colon-suffix"></span>
                     <select
-                        *ngIf="showDropdown() === 'isOpenForPractice'"
+                        *ngIf="showDropdown === 'isOpenForPractice'"
                         class="form-control"
                         [(ngModel)]="quizExercise.isOpenForPractice"
                         title="status">
@@ -190,7 +193,7 @@
                         </option>
                     </select>
                     <select
-                        *ngIf="showDropdown() === 'isVisibleBeforeStart'"
+                        *ngIf="showDropdown === 'isVisibleBeforeStart'"
                         class="form-control"
                         [(ngModel)]="quizExercise.isVisibleBeforeStart"
                         title="status">
@@ -198,9 +201,8 @@
                         </option>
                     </select>
                     <select
-                        *ngIf="showDropdown() === 'active'"
+                        *ngIf="showDropdown === 'active'"
                         class="form-control"
-                        [(ngModel)]="isTrue"
                         title="status"
                         disabled>
                         <option *ngFor="let option of statusOptionsActive" [value]="option.key">{{option.label}}
@@ -208,65 +210,62 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <span
-                        *ngIf="!pendingChangesCache && !isSaving"
+                    <span *ngIf="!pendingChangesCache && !isSaving"
                         jhiTranslate="arTeMiSApp.quizExercise.edit.saved"
                         class="badge badge-success">
                     </span>
-                    <span
-                        *ngIf="pendingChangesCache && this.validQuizCache && !isSaving"
+                    <span *ngIf="pendingChangesCache && quizIsValid && !isSaving"
                         jhiTranslate="arTeMiSApp.quizExercise.edit.pendingChanges"
                         class="badge badge-secondary">
                     </span>
-                    <span
-                        *ngIf="isSaving"
+                    <span *ngIf="isSaving"
                         jhiTranslate="arTeMiSApp.quizExercise.edit.saving"
                         class="badge badge-secondary">
                     </span>
                     <ng-template #tooltipTranslate>
-                        <div *ngFor="let reason of invalidReasons()">
+                        <div *ngFor="let reason of invalidReasons">
                             <p *ngIf="(reason.translateValues | json) != '{}'" jhiTranslate="{{reason.translateKey}}" [translateValues]="{index: reason.translateValues.index}"></p>
                             <p *ngIf="(reason.translateValues | json) == '{}'" jhiTranslate="{{reason.translateKey}}"></p>
                         </div>
                     </ng-template>
                     <ng-template #warningTranslate>
-                        <div *ngFor="let warning of invalidWarnings()">
+                        <div *ngFor="let warning of invalidWarnings">
                             <p *ngIf="(warning.translateValues | json) != '{}'" jhiTranslate="{{warning.translateKey}}" [translateValues]="{index: warning.translateValues.index}"></p>
                             <p *ngIf="(warning.translateValues | json) == '{}'" jhiTranslate="{{warning.translateKey}}"></p>
                         </div>
                     </ng-template>
                     <span
-                        *ngIf="!this.validQuizCache"
+                        *ngIf="!quizIsValid"
                         class="badge badge-danger"
                         [ngbTooltip]="tooltipTranslate"
                         tooltip-placement="top-right">
                         <fa-icon icon="exclamation-circle"></fa-icon>
                         <span jhiTranslate="arTeMiSApp.quizExercise.edit.invalidInput"></span>
-                        <span>({{invalidReasons().length}})</span>
+                        <span>({{invalidReasons.length}})</span>
                     </span>
                     <span
-                        *ngIf="this.warningQuizCache"
+                        *ngIf="warningQuizCache"
                         class="badge badge-warning"
                         [ngbTooltip]="warningTranslate"
                         tooltip-placement="top-right">
                         <span jhiTranslate="arTeMiSApp.quizExercise.edit.warning"></span>
-                        <span>({{invalidWarnings().length}})</span>
+                        <span>({{invalidWarnings.length}})</span>
                     </span>
                     <button
                         id="quiz-cancel-back-button"
                         *ngIf="quizExercise.course"
                         class="btn btn-default"
-                        [ngClass]="{'btn-secondary': !pendingChanges(), 'btn-danger': pendingChanges()}"
+                        [ngClass]="{'btn-secondary': !pendingChangesCache, 'btn-danger': pendingChangesCache}"
                         (click)="back()"
-                        jhiTranslate="{{pendingChanges() ? 'entity.action.cancel' : 'entity.action.back'}}">
+                        jhiTranslate="{{pendingChangesCache ? 'entity.action.cancel' : 'entity.action.back'}}">
                     </button>
                     <button
                         id="quiz-save"
                         class="btn btn-success"
                         (click)="save()"
-                        [ngClass]="{disabled: !pendingChanges() || !this.validQuizCache || hasSavedQuizStarted() || isSaving}"
+                        [ngClass]="{disabled: !pendingChangesCache || !quizIsValid || hasSavedQuizStarted || isSaving}"
                         jhiTranslate="entity.action.save"
-                        [ngbTooltip]="this.validQuizCache? '' : tooltipTranslate"
+                        [ngbTooltip]="quizIsValid? '' : tooltipTranslate"
                         tooltip-placement="top-right"
                         tooltip-class="invalid-reasons-tooltip">
                     </button>
@@ -275,7 +274,7 @@
         </div>
     </div>
 </div>
-<div *ngIf="hasSavedQuizStarted()">
+<div *ngIf="hasSavedQuizStarted">
     <div class="quiz-is-active-background"></div>
     <div class="quiz-is-active-overlay alert alert-warning">
         <span jhiTranslate="arTeMiSApp.quizExercise.edit.quizHasStarted"></span>

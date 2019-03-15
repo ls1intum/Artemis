@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, AfterViewInit, ChangeDetectorRef } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild, AfterViewInit, ChangeDetectorRef } from '@angular/core';
 import { MultipleChoiceQuestion } from 'app/entities/multiple-choice-question';
 import { AnswerOption } from 'app/entities/answer-option';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
@@ -14,13 +14,12 @@ import {
 import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
 import { CodeCommand } from 'app/markdown-editor/commands';
 
-
 @Component({
     selector: 'jhi-edit-multiple-choice-question',
     templateUrl: './edit-multiple-choice-question.component.html',
     providers: [ArtemisMarkdown]
 })
-export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, EditQuizQuestion, AfterViewInit {
+export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQuestion, AfterViewInit {
 
     @ViewChild('markdownEditor')
     private markdownEditor: MarkdownEditorComponent;
@@ -45,7 +44,8 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
     containsCorrectOption: boolean;
     containsAllExplanations: boolean;
 
-    showPreview = false;
+    get showPreview(): boolean { return this.markdownEditor.previewMode; }
+    showMultipleChoiceQuestionPreview = true;
 
     hintCommand = new HintCommand();
     correctCommand = new CorrectOptionCommand();
@@ -58,18 +58,6 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
 
     ngOnInit(): void {
         this.questionEditorText = this.generateMarkdown();
-    }
-
-    /**
-     * @function ngOnChanges
-     * @desc Watch for any changes to the question model and notify listener
-     * @param changes {SimpleChanges}
-     */
-    ngOnChanges(changes: SimpleChanges): void {
-        /** Check if previousValue wasn't null to avoid firing at component initialization **/
-        if (changes.question && changes.question.previousValue != null) {
-            this.questionUpdated.emit();
-        }
     }
 
     ngAfterViewInit(): void {
@@ -111,11 +99,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
         this.questionUpdated.emit();
     }
 
-
     private cleanupQuestion() {
-        this.showPreview = false;
-        this.changeDetector.detectChanges();
-        this.showPreview = true;
         // Reset Question Object
         this.question.answerOptions = [];
         this.question.text = null;
@@ -131,6 +115,14 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, E
     specialCommandsFound(specialCommands: [string, SpecialCommand][]): void {
         this.cleanupQuestion();
         specialCommands.forEach(command => this.specialCommandFound(command[0], command[1]));
+        this.resetMultipleChoicePreview();
+    }
+
+    private resetMultipleChoicePreview() {
+        this.showMultipleChoiceQuestionPreview = false;
+        this.changeDetector.detectChanges();
+        this.showMultipleChoiceQuestionPreview = true;
+        this.changeDetector.detectChanges();
     }
 
     private specialCommandFound(textLine: string, specialCommand: SpecialCommand) {

@@ -9,13 +9,13 @@ import {
     Output,
     ViewChild
 } from '@angular/core';
-import {AceEditorComponent} from 'ng2-ace-editor';
+import { AceEditorComponent } from 'ng2-ace-editor';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
-import {Command, BoldCommand, ItalicCommand, UnderlineCommand, HeadingCommand, CodeCommand, LinkCommand} from 'app/markdown-editor/commands';
-import {ArtemisMarkdown} from 'app/components/util/markdown.service';
-import {SpecialCommand} from 'app/markdown-editor/specialCommands';
-import {ReferenceCommand} from 'app/markdown-editor/commands/reference.command';
+import { Command, BoldCommand, ItalicCommand, UnderlineCommand, HeadingCommand, CodeCommand, LinkCommand } from 'app/markdown-editor/commands';
+import { ArtemisMarkdown } from 'app/components/util/markdown.service';
+import { SpecialCommand } from 'app/markdown-editor/specialCommands';
+import { ReferenceCommand } from 'app/markdown-editor/commands/reference.command';
 
 @Component({
     selector: 'jhi-markdown-editor',
@@ -31,23 +31,21 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
         mode: 'markdown',
     };
 
-    @Input() defaultText: string;
-    @Input() defaultTextChange = new EventEmitter<string>();
-    @Input() specialCommands: SpecialCommand[];
-    @Input() useMarkdownPreview: boolean = true;
-
+    @Input() markdown: string;
+    @Output() markdownChange = new EventEmitter<string>();
     @Output() html = new EventEmitter<string>();
+
+    defaultCommands: Command[] = [new BoldCommand(), new ItalicCommand(), new UnderlineCommand(), new ReferenceCommand(), new HeadingCommand(), new CodeCommand(), new LinkCommand()];
+    @Input() specialCommands: SpecialCommand[];
     @Output() textWithSpecialCommandFound = new EventEmitter<[string, SpecialCommand][]>();
-    @Output() onChanges = new EventEmitter<boolean>();
 
-    @ContentChild('preview') previewChild: ElementRef;
-
-
+    @Input() showPreviewButton = true;
     previewTextAsHtml: string;
     previewMode = false;
-    defaultCommands: Command[] = [new BoldCommand(), new ItalicCommand(), new UnderlineCommand(), new ReferenceCommand(), new HeadingCommand(), new CodeCommand(), new LinkCommand()];
+    @ContentChild('preview') previewChild: ElementRef;
 
-    constructor(private artemisMarkdown: ArtemisMarkdown) {}
+    constructor(private artemisMarkdown: ArtemisMarkdown) {
+    }
 
     get previewButtonTranslateString(): string {
         return this.previewMode ? 'entity.action.edit' : 'entity.action.preview';
@@ -95,11 +93,6 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
         this.aceEditorContainer.getEditor().setHighlightActiveLine(false);
         this.aceEditorContainer.getEditor().setShowPrintMargin(false);
         this.aceEditorContainer.getEditor().clearSelection();
-        this.aceEditorContainer.getEditor().on(
-            "blur",
-            () => this.onChanges.emit(),
-            this
-        );
     }
 
     /**
@@ -107,23 +100,27 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
      * Otherwise, markdown is parsed to HTML and emitted. Result is displayed using default preview.
      */
     parse(): void {
+        const defaultHtmlPreviewRequired = this.showDefaultPreview || this.html.observers.length > 0;
+
         // Only generate HTML if no Special Commands are defined.
         // Special Commands require special parsing by the client.
         if (this.specialCommands == null || this.specialCommands.length === 0) {
-            const htmlForPreview = this.artemisMarkdown.htmlForMarkdown(this.defaultText);
 
-            // Only store HTML is default preview is used.
-            if (this.showDefaultPreview) {
-                this.previewTextAsHtml = htmlForPreview;
+            if (defaultHtmlPreviewRequired) {
+                this.previewTextAsHtml = this.artemisMarkdown.htmlForMarkdown(this.markdown);
+
+                // Emit to Clients
+                this.html.emit(this.previewTextAsHtml);
             }
-
-            // Emit to Clients
-            this.html.emit(htmlForPreview);
 
             return;
         }
 
-        const parseArray = this.defaultText
+        if (defaultHtmlPreviewRequired) {
+            throw new Error(`Cannot generate HTML when using Domain Commands. You supplied ${this.specialCommands.length} Domain Commands to the Markdown Editor.`);
+        }
+
+        const parseArray = this.markdown
             .split('\n')
             .map(this.parseLineForSpecialCommand);
         this.textWithSpecialCommandFound.emit(parseArray);
@@ -132,7 +129,7 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
     private parseLineForSpecialCommand = (textLine: string): [string, SpecialCommand] => {
         for (const specialCommand of this.specialCommands) {
             const possibleCommandIdentifier = [specialCommand.getIdentifier(), specialCommand.getIdentifier().toLowerCase(), specialCommand.getIdentifier().toUpperCase()];
-            if (possibleCommandIdentifier.some(identifier => textLine.indexOf(identifier) !== -1))  {
+            if (possibleCommandIdentifier.some(identifier => textLine.indexOf(identifier) !== -1)) {
 
                 // TODO one possible extension would be to search for opening and closing tags and send all text in-between (potentially multiple lines) into the emitter
                 const trimmedLineWithoutIdentifier = possibleCommandIdentifier.reduce((line, identifier) => line.replace(identifier, ''), textLine).trim();

@@ -86,20 +86,20 @@
         <div class="markupEditorArea">
             <div class="question-content" *ngIf="!reEvaluationInProgress">
                 <jhi-markdown-editor #markdownEditor
-                                     [defaultText]="questionEditorText"
-                                     [useMarkdownPreview]="false"
+                                     [markdown]="questionEditorText"
+                                     [showPreviewButton]="false"
                                      [specialCommands]="commandDragAndDropQuestions"
-                                     (onChanges)="changesInMarkdown()"
+                                     (markdownChange)="changesInMarkdown()"
                                      (textWithSpecialCommandFound)="specialCommandsFound($event)"
                 ></jhi-markdown-editor>
             </div>
             <div class="markupEditorArea" *ngIf="reEvaluationInProgress">
                 <div class="question-content">
                     <jhi-markdown-editor #markdownEditor
-                                         [defaultText]="questionEditorText"
-                                         [useMarkdownPreview]="false"
+                                         [markdown]="questionEditorText"
+                                         [showPreviewButton]="false"
                                          [specialCommands]="commandDragAndDropQuestions"
-                                         (onChanges)="changesInMarkdown()"
+                                         (markdownChange)="changesInMarkdown()"
                                          (textWithSpecialCommandFound)="specialCommandsFound($event)"
                     ></jhi-markdown-editor>
                     <span class="input-group-btn" style="vertical-align: top">
