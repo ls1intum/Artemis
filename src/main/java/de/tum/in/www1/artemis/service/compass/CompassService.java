@@ -220,6 +220,7 @@ public class CompassService {
                 // Save to database
                 List<Feedback> automaticFeedbackAssessments = engine.convertToFeedback(grade, modelId, result);
                 result.getFeedbacks().addAll(automaticFeedbackAssessments);
+                result.setHasFeedback(true);
 
                 result.setRatedIfNotExceeded(modelingExercise.getDueDate(), modelingSubmission.get().getSubmissionDate());
                 result.setAssessmentType(AssessmentType.AUTOMATIC);
