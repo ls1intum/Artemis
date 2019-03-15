@@ -346,7 +346,8 @@ entity StudentQuestion {
 
 entity QuestionAnswer {
     answerText String,                 // LONGTEXT --> lob
-    answerDate ZonedDateTime
+    answerDate ZonedDateTime,
+    verified Boolean
 }
 
 entity TutorGroup {
@@ -448,8 +449,8 @@ relationship OneToMany {
     TutorParticipation{trainedExampleSubmissions} to ExampleSubmission,
     Exercise{exampleSubmissions} to ExampleSubmission{exercise}
     StudentQuestion{answers} to QuestionAnswer{question},
-    Lecture{attachments} to Attachment,
-    Exercise{attachments} to Attachment
+    Lecture{attachments} to Attachment{lecture},
+    Exercise{attachments} to Attachment{exercise}
 }
 
 relationship OneToOne {
@@ -483,8 +484,8 @@ relationship ManyToOne {
     ShortAnswerMapping{spot} to ShortAnswerSpot,
     TutorParticipation{tutor} to User,
     StudentQuestion{author} to User,
-    StudentQuestion{exercise} to Exercise,
-    StudentQuestion{lecture} to Lecture,
+    StudentQuestion{exercise} to Exercise{studentQuestions},
+    StudentQuestion{lecture} to Lecture{studentQuestions},
     QuestionAnswer{author} to User,
     Notification{author} to User,
     SingleUserNotification{recipient} to User,
