@@ -9,7 +9,6 @@ export * from './language/language.constants';
 export * from './user/account.model';
 export * from './user/user.model';
 export * from './auth/user-route-access-service';
-export * from './login/login-modal.service';
 export * from './login/login.service';
 export * from './user/user.service';
 export * from './core.module';
