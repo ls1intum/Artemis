@@ -24,8 +24,6 @@ describe('account', () => {
         const expect2 = 'Failed to sign in! Please check your username and password and try again.';
         const value2 = await element(by.className('alert-danger')).getText();
         expect(value2).to.eq(expect2);
-
-        await signInPage.dismiss();
     });
 
     it('should login successfully with admin account', async () => {
