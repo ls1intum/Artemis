@@ -6,7 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { QuizExerciseService } from './quiz-exercise.service';
 import { QuizExercise } from './quiz-exercise.model';
 import { JhiAlertService } from 'ng-jhipster';
-import { Question } from '../question';
+import { QuizQuestion } from '../quiz-question';
 import { Course, CourseService } from '../course';
 
 @Component({
@@ -14,7 +14,7 @@ import { Course, CourseService } from '../course';
     templateUrl: './quiz-exercise-export.component.html'
 })
 export class QuizExerciseExportComponent implements OnInit {
-    questions: Question[] = new Array(0);
+    questions: QuizQuestion[] = new Array(0);
     courseId: number;
     course: Course;
 

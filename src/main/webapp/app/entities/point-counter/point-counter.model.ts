@@ -1,7 +1,7 @@
-import { StatisticCounter } from '../statistic-counter';
+import { QuizStatisticCounter } from '../quiz-statistic-counter';
 import { QuizPointStatistic } from '../quiz-point-statistic';
 
-export class PointCounter extends StatisticCounter {
+export class PointCounter extends QuizStatisticCounter {
 
     public points: number;
     public quizPointStatistic: QuizPointStatistic;

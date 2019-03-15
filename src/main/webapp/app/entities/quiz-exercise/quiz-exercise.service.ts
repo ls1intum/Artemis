@@ -5,7 +5,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 
 import { QuizExercise } from './quiz-exercise.model';
 import { ExerciseService } from 'app/entities/exercise';
-import { Question } from 'app/entities/question';
+import { QuizQuestion } from 'app/entities/quiz-question';
 
 export type EntityResponseType = HttpResponse<QuizExercise>;
 export type EntityArrayResponseType = HttpResponse<QuizExercise[]>;
@@ -101,9 +101,9 @@ export class QuizExerciseService {
      * @param quizQuestions Quiz questions we want to export
      * @param exportAll If true exports all questions, else exports only those whose export flag is true
      */
-    exportQuiz(quizQuestions: Question[], exportAll: boolean) {
+    exportQuiz(quizQuestions: QuizQuestion[], exportAll: boolean) {
         // Make list of questions which we need to export,
-        const questions: Question[] = [];
+        const questions: QuizQuestion[] = [];
         for (const question of quizQuestions) {
             if (exportAll === true || question.exportQuiz === true) {
                 delete question.questionStatistic;

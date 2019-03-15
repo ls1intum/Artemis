@@ -3,7 +3,7 @@ import { Duration, Option, QuizExercise, QuizExercisePopupService, QuizExerciseS
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Question, QuestionType } from '../../entities/question';
+import { QuizQuestion, QuizQuestionType } from '../../entities/quiz-question';
 import { QuizReEvaluateWarningComponent } from './quiz-re-evaluate-warning.component';
 import { HttpResponse } from '@angular/common/http';
 import { Location } from '@angular/common';
@@ -16,8 +16,8 @@ import * as moment from 'moment';
 })
 export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     // Make constants available to html for comparison
-    readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
-    readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
+    readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
+    readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
 
     private subscription: Subscription;
 
@@ -76,9 +76,9 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     /**
      * @function deleteQuestion
      * @desc Remove question from the quiz
-     * @param questionToBeDeleted {Question} the question to remove
+     * @param questionToBeDeleted {QuizQuestion} the question to remove
      */
-    deleteQuestion(questionToBeDeleted: Question): void {
+    deleteQuestion(questionToBeDeleted: QuizQuestion): void {
         this.quizExercise.questions = this.quizExercise.questions.filter(question => question !== questionToBeDeleted);
     }
 
@@ -193,14 +193,14 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     /**
      * @function moveUp
      * @desc Move the question one position up
-     * @param question {Question} the question to move
+     * @param question {QuizQuestion} the question to move
      */
-    moveUp(question: Question): void {
+    moveUp(question: QuizQuestion): void {
         const index = this.quizExercise.questions.indexOf(question);
         if (index === 0) {
             return;
         }
-        const questionToMove: Question = Object.assign({}, this.quizExercise.questions[index]);
+        const questionToMove: QuizQuestion = Object.assign({}, this.quizExercise.questions[index]);
         /**
          * The splice() method adds/removes items to/from an array, and returns the removed item(s).
          * We create a copy of the question we want to move and remove it from the questions array.
@@ -213,14 +213,14 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     /**
      * @function moveDown
      * @desc Move the question one position down
-     * @param question {Question} the question to move
+     * @param question {QuizQuestion} the question to move
      */
-    moveDown(question: Question): void {
+    moveDown(question: QuizQuestion): void {
         const index = this.quizExercise.questions.indexOf(question);
         if (index === this.quizExercise.questions.length - 1) {
             return;
         }
-        const questionToMove: Question = Object.assign({}, this.quizExercise.questions[index]);
+        const questionToMove: QuizQuestion = Object.assign({}, this.quizExercise.questions[index]);
         /**
          * The splice() method adds/removes items to/from an array, and returns the removed item(s).
          * We create a copy of the question we want to move and remove it from the questions array.

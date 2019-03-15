@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory
 import scala.concurrent.duration._
 
 /**
- * Performance test for the StatisticCounter entity.
+ * Performance test for the QuizStatisticCounter entity.
  */
 class StatisticCounterGatlingTest extends Simulation {
 
@@ -43,7 +43,7 @@ class StatisticCounterGatlingTest extends Simulation {
         "Authorization" -> "${access_token}"
     )
 
-    val scn = scenario("Test the StatisticCounter entity")
+    val scn = scenario("Test the QuizStatisticCounter entity")
         .exec(http("First unauthenticated request")
         .get("/api/account")
         .headers(headers_http)

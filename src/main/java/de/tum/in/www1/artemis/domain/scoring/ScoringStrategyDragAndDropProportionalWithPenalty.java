@@ -13,15 +13,15 @@ import java.util.Set;
  */
 public class ScoringStrategyDragAndDropProportionalWithPenalty implements ScoringStrategy {
     @Override
-    public double calculateScore(Question question, SubmittedAnswer submittedAnswer) {
-        //check if the question is invalid: if true: -> return with full points
-        if (question.isInvalid()) {
-            return question.getScore();
+    public double calculateScore(QuizQuestion quizQuestion, SubmittedAnswer submittedAnswer) {
+        //check if the quizQuestion is invalid: if true: -> return with full points
+        if (quizQuestion.isInvalid()) {
+            return quizQuestion.getScore();
         }
 
-        if (submittedAnswer instanceof DragAndDropSubmittedAnswer && question instanceof DragAndDropQuestion) {
+        if (submittedAnswer instanceof DragAndDropSubmittedAnswer && quizQuestion instanceof DragAndDropQuestion) {
             DragAndDropSubmittedAnswer dndAnswer = (DragAndDropSubmittedAnswer) submittedAnswer;
-            DragAndDropQuestion dndQuestion = (DragAndDropQuestion) question;
+            DragAndDropQuestion dndQuestion = (DragAndDropQuestion) quizQuestion;
 
             double mappedDropLocations = 0;
             double correctMappings = 0;
@@ -63,9 +63,9 @@ public class ScoringStrategyDragAndDropProportionalWithPenalty implements Scorin
             double fraction = ((correctMappings / mappedDropLocations) - (incorrectMappings / mappedDropLocations));
 
             // end result is maxScore * fraction, but at least 0
-            return Math.max(0, question.getScore() * fraction);
+            return Math.max(0, quizQuestion.getScore() * fraction);
         }
-        // the submitted answer's type doesn't fit the question's type => it cannot be correct
+        // the submitted answer's type doesn't fit the quizQuestion's type => it cannot be correct
         return 0.0;
     }
 }

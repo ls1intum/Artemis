@@ -1,4 +1,4 @@
-import { Question } from '../question';
+import { QuizQuestion } from '../quiz-question';
 import { QuizPointStatistic } from '../quiz-point-statistic';
 import { Exercise, ExerciseType } from '../exercise';
 import { Moment } from 'moment';
@@ -13,7 +13,7 @@ export class QuizExercise extends Exercise {
     public isPlannedToStart = false;        // default value
     public duration: number;
     public quizPointStatistic: QuizPointStatistic;
-    public questions: Question[];
+    public questions: QuizQuestion[];
     public status: string;
     public isActiveQuiz = false;            // default value
     public isPracticeModeAvailable = true;  // default value

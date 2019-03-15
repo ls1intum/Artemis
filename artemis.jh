@@ -1,4 +1,4 @@
-entity Statistic (statistic) {      //abstract
+entity Statistic (quizStatistic) {      //abstract
     participantsRated Integer,
     participantsUnrated Integer
 }
@@ -6,21 +6,21 @@ entity Statistic (statistic) {      //abstract
 entity QuizPointStatistic (quizPointStatistic) { //extends Statistic
 }
 
-entity QuestionStatistic (questionStatistic) {   //extends Statistic, abstract
+entity QuizQuestionStatistic (quizQuestionStatistic) {   //extends Statistic, abstract
     ratedCorrectCounter Integer,
     unRatedCorrectCounter Integer,
 }
 
-entity MultipleChoiceQuestionStatistic (mcQuestionStatistic) {   //extends QuestionStatistic
+entity MultipleChoiceQuestionStatistic (mcQuestionStatistic) {   //extends QuizQuestionStatistic
 }
 
-entity DragAndDropQuestionStatistic (dndQuestionStatistic) {   //extends QuestionStatistic
+entity DragAndDropQuestionStatistic (dndQuestionStatistic) {   //extends QuizQuestionStatistic
 }
 
-entity ShortAnswerQuestionStatistic (saQuestionStatistic) {   //extends QuestionStatistic
+entity ShortAnswerQuestionStatistic (saQuestionStatistic) {   //extends QuizQuestionStatistic
 }
 
-entity StatisticCounter(statisticCounter) { //abstract
+entity StatisticCounter(quizStatisticCounter) { //abstract
     ratedCounter Integer,
     UnRatedCounter Integer
 }
@@ -127,7 +127,7 @@ entity SubmittedAnswer {            //abstract
     scoreInPoints Double
 }
 
-entity Question {                   //abstract
+entity QuizQuestion {                   //abstract
 	title String,
     text String,
     hint String,
@@ -144,7 +144,7 @@ enum ScoringType {
     TRUE_FALSE_NEUTRAL
 }
 
-entity MultipleChoiceQuestion {             //extends Question
+entity MultipleChoiceQuestion {             //extends QuizQuestion
 
 }
 
@@ -160,7 +160,7 @@ entity MultipleChoiceSubmittedAnswer (mcSubmittedAnswer) {      //extends Submit
 
 }
 
-entity DragAndDropQuestion {          //extends Question
+entity DragAndDropQuestion {          //extends QuizQuestion
 	backgroundFilePath String
 }
 
@@ -178,7 +178,7 @@ entity DragItem {
     invalid Boolean
 }
 
-entity ShortAnswerQuestion {          //extends Question
+entity ShortAnswerQuestion {          //extends QuizQuestion
 
 }
 
@@ -435,20 +435,20 @@ relationship OneToMany {
     Participation{results} to ExerciseResult{participation},
     Participation{submissions} to Submission{participation},
     ExerciseResult{feedbacks} to Feedback{result},
-    QuizExercise{questions} to Question{exercise},
-    MultipleChoiceQuestion{answerOptions} to AnswerOption{question},
-    DragAndDropQuestion{dropLocations} to DropLocation{question},
-    DragAndDropQuestion{dragItems} to DragItem{question},
-    ShortAnswerQuestion{spots} to ShortAnswerSpot{question},
-    ShortAnswerQuestion{solutions} to ShortAnswerSolution{question},
+    QuizExercise{quizQuestions} to QuizQuestion{exercise},
+    MultipleChoiceQuestion{answerOptions} to AnswerOption{quizQuestion},
+    DragAndDropQuestion{dropLocations} to DropLocation{quizQuestion},
+    DragAndDropQuestion{dragItems} to DragItem{quizQuestion},
+    ShortAnswerQuestion{spots} to ShortAnswerSpot{quizQuestion},
+    ShortAnswerQuestion{solutions} to ShortAnswerSolution{quizQuestion},
     QuizSubmission{submittedAnswers} to SubmittedAnswer{submission},
     DragAndDropSubmittedAnswer{mappings} to DragAndDropMapping{submittedAnswer},
-    DragAndDropQuestion{correctMappings} to DragAndDropMapping{question},
-    ShortAnswerQuestion{correctMappings} to ShortAnswerMapping{question}
+    DragAndDropQuestion{correctMappings} to DragAndDropMapping{quizQuestion},
+    ShortAnswerQuestion{correctMappings} to ShortAnswerMapping{quizQuestion}
     ShortAnswerSubmittedAnswer{submittedTexts} to ShortAnswerSubmittedText{submittedAnswer},
     TutorParticipation{trainedExampleSubmissions} to ExampleSubmission,
     Exercise{exampleSubmissions} to ExampleSubmission{exercise}
-    StudentQuestion{answers} to StudentQuestionAnswer{question},
+    StudentQuestion{answers} to StudentQuestionAnswer{quizQuestion},
     Lecture{attachments} to Attachment{lecture},
     Exercise{attachments} to Attachment{exercise},
     Exercise{studentQuestions} to StudentQuestion{exercise},
@@ -457,7 +457,7 @@ relationship OneToMany {
 
 relationship OneToOne {
     QuizExercise{quizPointStatistic} to QuizPointStatistic{quiz},
-    Question{questionStatistic} to QuestionStatistic{question},
+    QuizQuestion{quizQuestionStatistic} to QuizQuestionStatistic{quizQuestion},
     AnswerCounter{answer} to AnswerOption,
     DropLocationCounter{dropLocation} to DropLocation,
     ShortAnswerSpotCounter{spot} to ShortAnswerSpot,
@@ -479,7 +479,7 @@ relationship ManyToOne {
     Participation{student} to User,
     LtiOutcomeUrl{user} to User,
     LtiOutcomeUrl{exercise} to Exercise,
-    SubmittedAnswer{question} to Question
+    SubmittedAnswer{quizQuestion} to QuizQuestion
     DragAndDropMapping{dragItem} to DragItem,
     DragAndDropMapping{dropLocation} to DropLocation,
     ShortAnswerMapping{solution} to ShortAnswerSolution,

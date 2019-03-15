@@ -8,7 +8,7 @@ import { DragAndDropQuestionUtil } from '../../components/util/drag-and-drop-que
 import { ArtemisMarkdown } from '../../components/util/markdown.service';
 import { DragAndDropQuestion } from '../../entities/drag-and-drop-question';
 import { DragAndDropQuestionStatistic } from '../../entities/drag-and-drop-question-statistic';
-import { QuestionType } from '../../entities/question';
+import { QuizQuestionType } from '../../entities/quiz-question';
 import { DropLocation } from '../../entities/drop-location';
 import { ChartOptions } from 'chart.js';
 import { createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
@@ -28,9 +28,9 @@ interface BackgroundColorConfig {
 })
 export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
     // make constants available to html for comparison
-    readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
-    readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
-    readonly SHORT_ANSWER = QuestionType.SHORT_ANSWER;
+    readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
+    readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
+    readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
 
     quizExercise: QuizExercise;
     question: DragAndDropQuestion;
@@ -372,16 +372,16 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
     }
 
     /**
-     * got to the Template with the previous Statistic
-     * if first QuestionStatistic -> go to the Quiz-Statistic
+     * got to the Template with the previous QuizStatistic
+     * if first QuizQuestionStatistic -> go to the Quiz-QuizStatistic
      */
     previousStatistic() {
         this.quizStatisticUtil.previousStatistic(this.quizExercise, this.question);
     }
 
     /**
-     * got to the Template with the next Statistic
-     * if last QuestionStatistic -> go to the Quiz-Point-Statistic
+     * got to the Template with the next QuizStatistic
+     * if last QuizQuestionStatistic -> go to the Quiz-Point-QuizStatistic
      */
     nextStatistic() {
         this.quizStatisticUtil.nextStatistic(this.quizExercise, this.question);

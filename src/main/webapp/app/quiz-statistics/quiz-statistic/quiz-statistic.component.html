@@ -39,7 +39,7 @@
             </div>
         </div>
     </div>
-    <div class="statistic-footer">
+    <div class="quizStatistic-footer">
         <div class="container">
             <div class="edit-quiz-footer-content">
                 <div class="form-group">
@@ -51,26 +51,26 @@
                         </button>
                         <div ngbDropdownMenu>
                             <button class="dropdown-item"
-                                    routerLink="/quiz/{{quizExercise.id}}/quiz-point-statistic"
+                                    routerLink="/quiz/{{quizExercise.id}}/quiz-point-quizStatistic"
                                     jhiTranslate="showStatistic.quizPointStatisticTitle"
                             ></button>
                             <button class="dropdown-item"
-                                    routerLink="/quiz/{{quizExercise.id}}/quiz-statistic"
+                                    routerLink="/quiz/{{quizExercise.id}}/quiz-quizStatistic"
                                     jhiTranslate="showStatistic.quizStatisticTitle"
                             ></button>
                             <div *ngIf="quizExercise.questions">
                                 <div *ngFor="let question of quizExercise.questions; let i = index">
                                     <button *ngIf="question.type === MULTIPLE_CHOICE"
                                             class="dropdown-item"
-                                            routerLink="/quiz/{{quizExercise.id}}/multiple-choice-question-statistic/{{question.id}}"
+                                            routerLink="/quiz/{{quizExercise.id}}/multiple-choice-question-quizStatistic/{{question.id}}"
                                     >{{i + 1}}. {{question.title.truncateOnWord(25)}}</button>
                                     <button *ngIf="question.type === DRAG_AND_DROP"
                                             class="dropdown-item"
-                                            routerLink="/quiz/{{quizExercise.id}}/drag-and-drop-question-statistic/{{question.id}}"
+                                            routerLink="/quiz/{{quizExercise.id}}/drag-and-drop-question-quizStatistic/{{question.id}}"
                                     >{{i + 1}}. {{question.title.truncateOnWord(25)}}</button>
                                     <button *ngIf="question.type === SHORT_ANSWER"
                                             class="dropdown-item"
-                                            routerLink="/quiz/{{quizExercise.id}}/short-answer-question-statistic/{{question.id}}"
+                                            routerLink="/quiz/{{quizExercise.id}}/short-answer-question-quizStatistic/{{question.id}}"
                                     >{{i + 1}}. {{question.title.truncateOnWord(25)}}</button>
                                 </div>
                             </div>
@@ -79,7 +79,7 @@
                 </div>
                 <div class="form-group">
                     <div class="btn-group flex-btn-group-container">
-                        <button routerLink="/quiz/{{quizExercise.id}}/quiz-point-statistic"
+                        <button routerLink="/quiz/{{quizExercise.id}}/quiz-point-quizStatistic"
                                 jhiTranslate="showStatistic.previousStatistic"
                                 class="btn btn-default">></button>
                         <button (click)=nextStatistic()

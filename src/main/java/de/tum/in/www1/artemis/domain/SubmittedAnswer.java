@@ -48,7 +48,7 @@ public abstract class SubmittedAnswer implements Serializable {
     @ManyToOne(cascade = CascadeType.REMOVE)
     @JsonIgnoreProperties({"questionStatistic", "exercise"})
     @JsonView(QuizView.Before.class)
-    private Question question;
+    private QuizQuestion quizQuestion;
 
     @ManyToOne
     @JsonIgnore
@@ -75,17 +75,17 @@ public abstract class SubmittedAnswer implements Serializable {
         this.scoreInPoints = scoreInPoints;
     }
 
-    public Question getQuestion() {
-        return question;
+    public QuizQuestion getQuizQuestion() {
+        return quizQuestion;
     }
 
-    public SubmittedAnswer question(Question question) {
-        this.question = question;
+    public SubmittedAnswer question(QuizQuestion quizQuestion) {
+        this.quizQuestion = quizQuestion;
         return this;
     }
 
-    public void setQuestion(Question question) {
-        this.question = question;
+    public void setQuizQuestion(QuizQuestion quizQuestion) {
+        this.quizQuestion = quizQuestion;
     }
 
     public QuizSubmission getSubmission() {
@@ -130,7 +130,7 @@ public abstract class SubmittedAnswer implements Serializable {
     }
 
     /**
-     * Delete all references to question and question-elements if the quiz was changed
+     * Delete all references to quizQuestion and quizQuestion-elements if the quiz was changed
      *
      * @param quizExercise the changed quizExercise-object
      */

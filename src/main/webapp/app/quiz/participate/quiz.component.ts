@@ -16,7 +16,7 @@ import { ShortAnswerQuestion } from '../../entities/short-answer-question';
 import { MultipleChoiceSubmittedAnswer } from '../../entities/multiple-choice-submitted-answer';
 import { DragAndDropSubmittedAnswer } from '../../entities/drag-and-drop-submitted-answer';
 import { ShortAnswerSubmittedAnswer } from '../../entities/short-answer-submitted-answer';
-import { QuestionType } from '../../entities/question';
+import { QuizQuestionType } from '../../entities/quiz-question';
 import { MultipleChoiceQuestionComponent } from 'app/quiz/participate/multiple-choice-question/multiple-choice-question.component';
 import { DragAndDropQuestionComponent } from 'app/quiz/participate/drag-and-drop-question/drag-and-drop-question.component';
 import { ShortAnswerQuestionComponent } from 'app/quiz/participate/short-answer-question/short-answer-question.component';
@@ -32,9 +32,9 @@ import * as smoothscroll from 'smoothscroll-polyfill';
 })
 export class QuizComponent implements OnInit, OnDestroy {
     // make constants available to html for comparison
-    readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
-    readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
-    readonly SHORT_ANSWER = QuestionType.SHORT_ANSWER;
+    readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
+    readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
+    readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
 
     @ViewChildren(MultipleChoiceQuestionComponent)
     mcQuestionComponents: QueryList<MultipleChoiceQuestionComponent>;
@@ -410,13 +410,13 @@ export class QuizComponent implements OnInit, OnDestroy {
 
         if (this.quizExercise.questions) {
             this.quizExercise.questions.forEach(question => {
-                if (question.type === QuestionType.MULTIPLE_CHOICE) {
+                if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                     // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     this.selectedAnswerOptions[question.id] = [];
-                } else if (question.type === QuestionType.DRAG_AND_DROP) {
+                } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
                     // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     this.dragAndDropMappings[question.id] = [];
-                } else if (question.type === QuestionType.SHORT_ANSWER) {
+                } else if (question.type === QuizQuestionType.SHORT_ANSWER) {
                     // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     this.shortAnswerSubmittedTexts[question.id] = [];
                 } else {
@@ -449,15 +449,15 @@ export class QuizComponent implements OnInit, OnDestroy {
                       })
                     : null;
 
-                if (question.type === QuestionType.MULTIPLE_CHOICE) {
+                if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                     // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     this.selectedAnswerOptions[question.id] = submittedAnswer
                         ? (submittedAnswer as MultipleChoiceSubmittedAnswer).selectedOptions
                         : [];
-                } else if (question.type === QuestionType.DRAG_AND_DROP) {
+                } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
                     // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     this.dragAndDropMappings[question.id] = submittedAnswer ? (submittedAnswer as DragAndDropSubmittedAnswer).mappings : [];
-                } else if (question.type === QuestionType.SHORT_ANSWER) {
+                } else if (question.type === QuizQuestionType.SHORT_ANSWER) {
                     // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     this.shortAnswerSubmittedTexts[question.id] = submittedAnswer
                         ? (submittedAnswer as ShortAnswerSubmittedAnswer).submittedTexts
@@ -641,7 +641,7 @@ export class QuizComponent implements OnInit, OnDestroy {
             if (fullQuestionFromServer) {
                 clientQuestion.explanation = fullQuestionFromServer.explanation;
 
-                if (clientQuestion.type === QuestionType.MULTIPLE_CHOICE) {
+                if (clientQuestion.type === QuizQuestionType.MULTIPLE_CHOICE) {
                     const mcClientQuestion = clientQuestion as MultipleChoiceQuestion;
                     const mcFullQuestionFromServer = fullQuestionFromServer as MultipleChoiceQuestion;
 
@@ -655,12 +655,12 @@ export class QuizComponent implements OnInit, OnDestroy {
                             clientAnswerOption.isCorrect = fullAnswerOptionFromServer.isCorrect;
                         }
                     });
-                } else if (clientQuestion.type === QuestionType.DRAG_AND_DROP) {
+                } else if (clientQuestion.type === QuizQuestionType.DRAG_AND_DROP) {
                     const dndClientQuestion = clientQuestion as DragAndDropQuestion;
                     const dndFullQuestionFromServer = fullQuestionFromServer as DragAndDropQuestion;
 
                     dndClientQuestion.correctMappings = dndFullQuestionFromServer.correctMappings;
-                } else if (clientQuestion.type === QuestionType.SHORT_ANSWER) {
+                } else if (clientQuestion.type === QuizQuestionType.SHORT_ANSWER) {
                     const shortAnswerClientQuestion = clientQuestion as ShortAnswerQuestion;
                     const shortAnswerFullQuestionFromServer = fullQuestionFromServer as ShortAnswerQuestion;
                     shortAnswerClientQuestion.correctMappings = shortAnswerFullQuestionFromServer.correctMappings;
@@ -723,11 +723,11 @@ export class QuizComponent implements OnInit, OnDestroy {
             // shuffle answerOptions / dragItems within questions
             quizExercise.questions.forEach(question => {
                 if (question.randomizeOrder) {
-                    if (question.type === QuestionType.MULTIPLE_CHOICE) {
+                    if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                         this.shuffle((question as MultipleChoiceQuestion).answerOptions);
-                    } else if (question.type === QuestionType.DRAG_AND_DROP) {
+                    } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
                         this.shuffle((question as DragAndDropQuestion).dragItems);
-                    } else if (question.type === QuestionType.SHORT_ANSWER) {
+                    } else if (question.type === QuizQuestionType.SHORT_ANSWER) {
                     } else {
                         console.log('Unknown question type: ' + question);
                     }
@@ -833,15 +833,15 @@ export class QuizComponent implements OnInit, OnDestroy {
      */
     areAllQuestionsAnswered(): boolean {
         for (const question of this.quizExercise.questions) {
-            if (question.type === QuestionType.MULTIPLE_CHOICE) {
+            if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                 if (this.selectedAnswerOptions[question.id] >= 0) {
                     return false;
                 }
-            } else if (question.type === QuestionType.DRAG_AND_DROP) {
+            } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
                 if (this.dragAndDropMappings[question.id] >= 0) {
                     return false;
                 }
-            } else if (question.type === QuestionType.SHORT_ANSWER) {
+            } else if (question.type === QuizQuestionType.SHORT_ANSWER) {
                 if (this.shortAnswerSubmittedTexts[question.id] >= 0) {
                     return false;
                 }

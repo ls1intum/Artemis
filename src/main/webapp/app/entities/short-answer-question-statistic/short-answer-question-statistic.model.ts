@@ -1,7 +1,7 @@
 import { ShortAnswerSpotCounter } from '../short-answer-spot-counter';
-import { QuestionStatistic } from '../question-statistic';
+import { QuizQuestionStatistic } from '../quiz-question-statistic';
 
-export class ShortAnswerQuestionStatistic extends QuestionStatistic {
+export class ShortAnswerQuestionStatistic extends QuizQuestionStatistic {
     public shortAnswerSpotCounters: ShortAnswerSpotCounter[];
 
     constructor() {
