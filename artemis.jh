@@ -340,13 +340,13 @@ enum TutorParticipationStatus {
 
 entity StudentQuestion {
     questionText String,               // VarChar(1000)
-    creationDate Date,
+    creationDate ZonedDateTime,
     visibleForStudents Boolean
 }
 
 entity QuestionAnswer {
     answerText String,                 // LONGTEXT --> lob
-    answerDate Date
+    answerDate ZonedDateTime
 }
 
 entity TutorGroup {
@@ -374,12 +374,12 @@ enum Language {
 entity Notification {
     title String,
     text String,                       // LONGTEXT --> lob
-    notificationDate Date,
+    notificationDate ZonedDateTime,
     target String
 }
 
 entity SystemNotification {             // extends Notification
-    expireDate Date,
+    expireDate ZonedDateTime,
     type SystemNotificationType,
 }
 
@@ -399,20 +399,20 @@ enum GroupNotificationType {
 
 enum SystemNotificationType {
     WARNING,
-    INFO,
+    INFO
 }
 
 entity Lecture {
     title String,
     description String,               // LONGTEXT --> lob
-    startDate Date,
-    endDate Date
+    startDate ZonedDateTime,
+    endDate ZonedDateTime
 }
 
 entity Attachment {
     name String,
     link String,
-    releaseDate Date,
+    releaseDate ZonedDateTime,
     attachmentType AttachmentType
 }
 
