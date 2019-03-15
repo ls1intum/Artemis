@@ -443,25 +443,37 @@ export class QuizComponent implements OnInit, OnDestroy {
             // iterate through all questions of this quiz
             this.quizExercise.quizQuestions.forEach(question => {
                 // find the submitted answer that belongs to this question, only when submitted answers already exist
-                const submittedAnswer = this.submission.submittedAnswers
-                    ? this.submission.submittedAnswers.find(answer => {
+                const submittedAnswer = this.submission.submittedAnswers ? this.submission.submittedAnswers.find(answer => {
                           return answer.quizQuestion.id === question.id;
-                      })
-                    : null;
+                      }) : null;
 
                 if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                     // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                    this.selectedAnswerOptions[question.id] = submittedAnswer
-                        ? (submittedAnswer as MultipleChoiceSubmittedAnswer).selectedOptions
-                        : [];
+                    if (submittedAnswer) {
+                        const selectedOptions = (submittedAnswer as MultipleChoiceSubmittedAnswer).selectedOptions;
+                        this.selectedAnswerOptions[question.id] = selectedOptions ? selectedOptions : [];
+                    } else {
+                        // not found, set to empty array
+                        this.selectedAnswerOptions[question.id] = [];
+                    }
                 } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
                     // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                    this.dragAndDropMappings[question.id] = submittedAnswer ? (submittedAnswer as DragAndDropSubmittedAnswer).mappings : [];
+                    if (submittedAnswer) {
+                        const mappings = (submittedAnswer as DragAndDropSubmittedAnswer).mappings;
+                        this.dragAndDropMappings[question.id] = mappings ? mappings : [];
+                    } else {
+                        // not found, set to empty array
+                        this.dragAndDropMappings[question.id] = [];
+                    }
                 } else if (question.type === QuizQuestionType.SHORT_ANSWER) {
                     // add the array of submitted texts to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                    this.shortAnswerSubmittedTexts[question.id] = submittedAnswer
-                        ? (submittedAnswer as ShortAnswerSubmittedAnswer).submittedTexts
-                        : [];
+                    if (submittedAnswer) {
+                        const submittedTexts = (submittedAnswer as ShortAnswerSubmittedAnswer).submittedTexts;
+                        this.shortAnswerSubmittedTexts[question.id] = submittedTexts ? submittedTexts : [];
+                    } else {
+                        // not found, set to empty array
+                        this.shortAnswerSubmittedTexts[question.id] = [];
+                    }
                 } else {
                     console.error('Unknown question type: ' + question);
                 }

@@ -82,8 +82,17 @@ public class QuizSubmissionResource {
         // update and save submission
         Result result = quizSubmissionService.submitForPractice(quizSubmission, quizExercise, participation);
 
+        // remove some redundant or unnecessary data that is not needed on client side
+        for (SubmittedAnswer answer: quizSubmission.getSubmittedAnswers()) {
+            answer.getQuizQuestion().setQuizQuestionStatistic(null);
+        }
+
+        //TODO: the solution is missing in this case, we have to provide because we removed it when loading the practive mode
+
+        quizExercise.setQuizPointStatistic(null);
+        quizExercise.setCourse(null);
+
         // return quizSubmission
-        quizSubmission.setSubmissionDate(result.getCompletionDate());
         return ResponseEntity.ok(result);
     }
 
