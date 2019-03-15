@@ -5,8 +5,8 @@
             <div class="row">
                 <div class="col-md-4 text-left">
                     <h4>Quiz-description?</h4>
-                    <ol *ngIf="quizExercise.questions">
-                        <li style="font-size: 15px" *ngFor="let question of quizExercise.questions"><p><span>{{question.title}}&nbsp; <span style="color:red;" *ngIf="question.invalid" jhiTranslate="showStatistic.invalid"></span> &nbsp;({{question.score}}P)</span></p></li>
+                    <ol *ngIf="quizExercise.quizQuestions">
+                        <li style="font-size: 15px" *ngFor="let question of quizExercise.quizQuestions"><p><span>{{question.title}}&nbsp; <span style="color:red;" *ngIf="question.invalid" jhiTranslate="showStatistic.invalid"></span> &nbsp;({{question.score}}P)</span></p></li>
                     </ol>
 
                 </div>
@@ -58,8 +58,8 @@
                                     routerLink="/quiz/{{quizExercise.id}}/quiz-quizStatistic"
                                     jhiTranslate="showStatistic.quizStatisticTitle"
                             ></button>
-                            <div *ngIf="quizExercise.questions">
-                                <div *ngFor="let question of quizExercise.questions; let i = index">
+                            <div *ngIf="quizExercise.quizQuestions">
+                                <div *ngFor="let question of quizExercise.quizQuestions; let i = index">
                                     <button *ngIf="question.type === MULTIPLE_CHOICE"
                                             class="dropdown-item"
                                             routerLink="/quiz/{{quizExercise.id}}/multiple-choice-question-quizStatistic/{{question.id}}"

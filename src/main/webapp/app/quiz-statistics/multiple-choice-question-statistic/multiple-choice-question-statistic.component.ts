@@ -128,7 +128,7 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
         }
         // search selected question in quizExercise based on questionId
         this.quizExercise = quiz;
-        const updatedQuestion = this.quizExercise.questions.filter(question => this.questionIdParam === question.id)[0];
+        const updatedQuestion = this.quizExercise.quizQuestions.filter(question => this.questionIdParam === question.id)[0];
         this.question = updatedQuestion as MultipleChoiceQuestion;
         // if the Anyone finds a way to the Website,
         // with an wrong combination of QuizId and QuestionId

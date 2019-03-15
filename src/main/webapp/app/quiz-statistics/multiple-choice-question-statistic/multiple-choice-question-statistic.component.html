@@ -65,8 +65,8 @@
                                     routerLink="/quiz/{{quizExercise.id}}/quiz-quizStatistic"
                                     jhiTranslate="showStatistic.quizStatisticTitle"
                             ></button>
-                            <div *ngIf="quizExercise.questions">
-                                <div *ngFor="let question of quizExercise.questions; let i = index">
+                            <div *ngIf="quizExercise.quizQuestions">
+                                <div *ngFor="let question of quizExercise.quizQuestions; let i = index">
                                     <button *ngIf="question.type === MULTIPLE_CHOICE"
                                             class="dropdown-item"
                                             routerLink="/quiz/{{quizExercise.id}}/multiple-choice-question-quizStatistic/{{question.id}}"

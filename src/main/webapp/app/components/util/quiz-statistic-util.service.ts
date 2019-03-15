@@ -16,7 +16,7 @@ export class QuizStatisticUtil {
      */
     previousStatistic(quizExercise: QuizExercise, question: QuizQuestion) {
         // find position in quiz
-        const index = quizExercise.questions.findIndex(function(quiz) {
+        const index = quizExercise.quizQuestions.findIndex(function(quiz) {
             return quiz.id === question.id;
         });
         // go to quiz-QuizStatistic if the position = 0
@@ -24,7 +24,7 @@ export class QuizStatisticUtil {
             this.router.navigateByUrl('/quiz/' + quizExercise.id + '/quiz-statistic');
         } else {
             // go to previous Question-statistic
-            const previousQuestion = quizExercise.questions[index - 1];
+            const previousQuestion = quizExercise.quizQuestions[index - 1];
             if (previousQuestion.type === QuizQuestionType.MULTIPLE_CHOICE) {
                 this.router.navigateByUrl('/quiz/' + quizExercise.id + '/multiple-choice-question-statistic/' + previousQuestion.id);
             } else if (previousQuestion.type === QuizQuestionType.DRAG_AND_DROP) {
@@ -44,15 +44,15 @@ export class QuizStatisticUtil {
      */
     nextStatistic(quizExercise: QuizExercise, question: QuizQuestion) {
         // find position in quiz
-        const index = quizExercise.questions.findIndex(function(quiz) {
+        const index = quizExercise.quizQuestions.findIndex(function(quiz) {
             return quiz.id === question.id;
         });
         // go to quiz-QuizStatistic if the position = last position
-        if (index === quizExercise.questions.length - 1) {
+        if (index === quizExercise.quizQuestions.length - 1) {
             this.router.navigateByUrl('/quiz/' + quizExercise.id + '/quiz-point-statistic');
         } else {
             // go to next Question-statistic
-            const nextQuestion = quizExercise.questions[index + 1];
+            const nextQuestion = quizExercise.quizQuestions[index + 1];
             if (nextQuestion.type === QuizQuestionType.MULTIPLE_CHOICE) {
                 this.router.navigateByUrl('/quiz/' + quizExercise.id + '/multiple-choice-question-statistic/' + nextQuestion.id);
             } else if (nextQuestion.type === QuizQuestionType.DRAG_AND_DROP) {

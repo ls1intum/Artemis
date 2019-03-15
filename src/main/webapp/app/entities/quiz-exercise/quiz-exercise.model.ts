@@ -13,7 +13,7 @@ export class QuizExercise extends Exercise {
     public isPlannedToStart = false;        // default value
     public duration: number;
     public quizPointStatistic: QuizPointStatistic;
-    public questions: QuizQuestion[];
+    public quizQuestions: QuizQuestion[];
     public status: string;
     public isActiveQuiz = false;            // default value
     public isPracticeModeAvailable = true;  // default value

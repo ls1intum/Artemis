@@ -234,7 +234,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
     calculateMaxScore() {
         let result = 0;
 
-        this.quizExercise.questions.forEach(function(question) {
+        this.quizExercise.quizQuestions.forEach(function(question) {
             result = result + question.score;
         });
         return result;
@@ -327,10 +327,10 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
      * if there is no QuizQuestionStatistic -> go to QuizStatistic
      */
     previousStatistic() {
-        if (this.quizExercise.questions === null || this.quizExercise.questions.length === 0) {
+        if (this.quizExercise.quizQuestions === null || this.quizExercise.quizQuestions.length === 0) {
             this.router.navigateByUrl('/quiz/' + this.quizExercise.id + '/quiz-statistic');
         } else {
-            const previousQuestion = this.quizExercise.questions[this.quizExercise.questions.length - 1];
+            const previousQuestion = this.quizExercise.quizQuestions[this.quizExercise.quizQuestions.length - 1];
             if (previousQuestion.type === QuizQuestionType.MULTIPLE_CHOICE) {
                 this.router.navigateByUrl('/quiz/' + this.quizExercise.id + '/multiple-choice-question-statistic/' + previousQuestion.id);
             } else if (previousQuestion.type === QuizQuestionType.DRAG_AND_DROP) {

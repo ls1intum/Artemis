@@ -4,6 +4,9 @@
         <renameTable oldTableName="question" newTableName="quiz_question"/>
         <renameTable oldTableName="statistic" newTableName="quiz_statistic"/>
         <renameTable oldTableName="statistic_counter" newTableName="quiz_statistic_counter"/>
+        <renameColumn tableName="quiz_question" oldColumnName="question_order" newColumnName="quiz_question_order"/>
+        <renameColumn tableName="quiz_question" oldColumnName="question_statistic_id" newColumnName="quiz_question_statistic_id"/>
+        <renameColumn tableName="submitted_answer" oldColumnName="question_id" newColumnName="quiz_question_id"/>
         <createTable tableName="attachment">
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints primaryKey="true" primaryKeyName="attachmentPK"/>

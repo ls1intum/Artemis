@@ -397,8 +397,8 @@ export class QuizComponent implements OnInit, OnDestroy {
      */
     initQuiz() {
         // calculate score
-        this.totalScore = this.quizExercise.questions
-            ? this.quizExercise.questions.reduce(function(score, question) {
+        this.totalScore = this.quizExercise.quizQuestions
+            ? this.quizExercise.quizQuestions.reduce(function(score, question) {
                   return score + question.score;
               }, 0)
             : 0;
@@ -408,8 +408,8 @@ export class QuizComponent implements OnInit, OnDestroy {
         this.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
         this.shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
-        if (this.quizExercise.questions) {
-            this.quizExercise.questions.forEach(question => {
+        if (this.quizExercise.quizQuestions) {
+            this.quizExercise.quizQuestions.forEach(question => {
                 if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                     // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     this.selectedAnswerOptions[question.id] = [];
@@ -439,13 +439,13 @@ export class QuizComponent implements OnInit, OnDestroy {
         this.dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
         this.shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
-        if (this.quizExercise.questions) {
+        if (this.quizExercise.quizQuestions) {
             // iterate through all questions of this quiz
-            this.quizExercise.questions.forEach(question => {
+            this.quizExercise.quizQuestions.forEach(question => {
                 // find the submitted answer that belongs to this question, only when submitted answers already exist
                 const submittedAnswer = this.submission.submittedAnswers
                     ? this.submission.submittedAnswers.find(answer => {
-                          return answer.question.id === question.id;
+                          return answer.quizQuestion.id === question.id;
                       })
                     : null;
 
@@ -485,7 +485,7 @@ export class QuizComponent implements OnInit, OnDestroy {
         // for multiple-choice questions
         Object.keys(this.selectedAnswerOptions).forEach(questionID => {
             // find the question object for the given question id
-            const question = this.quizExercise.questions.find(function(selectedQuestion) {
+            const question = this.quizExercise.quizQuestions.find(function(selectedQuestion) {
                 return selectedQuestion.id === Number(questionID);
             });
             if (!question) {
@@ -494,7 +494,7 @@ export class QuizComponent implements OnInit, OnDestroy {
             }
             // generate the submittedAnswer object
             const mcSubmittedAnswer = new MultipleChoiceSubmittedAnswer();
-            mcSubmittedAnswer.question = question;
+            mcSubmittedAnswer.quizQuestion = question;
             mcSubmittedAnswer.selectedOptions = this.selectedAnswerOptions[questionID];
             this.submission.submittedAnswers.push(mcSubmittedAnswer);
         }, this);
@@ -502,7 +502,7 @@ export class QuizComponent implements OnInit, OnDestroy {
         // for drag-and-drop questions
         Object.keys(this.dragAndDropMappings).forEach(questionID => {
             // find the question object for the given question id
-            const question = this.quizExercise.questions.find(function(localQuestion) {
+            const question = this.quizExercise.quizQuestions.find(function(localQuestion) {
                 return localQuestion.id === Number(questionID);
             });
             if (!question) {
@@ -511,14 +511,14 @@ export class QuizComponent implements OnInit, OnDestroy {
             }
             // generate the submittedAnswer object
             const dndSubmittedAnswer = new DragAndDropSubmittedAnswer();
-            dndSubmittedAnswer.question = question;
+            dndSubmittedAnswer.quizQuestion = question;
             dndSubmittedAnswer.mappings = this.dragAndDropMappings[questionID];
             this.submission.submittedAnswers.push(dndSubmittedAnswer);
         }, this);
         // for short-answer questions
         Object.keys(this.shortAnswerSubmittedTexts).forEach(questionID => {
             // find the question object for the given question id
-            const question = this.quizExercise.questions.find(function(localQuestion) {
+            const question = this.quizExercise.quizQuestions.find(function(localQuestion) {
                 return localQuestion.id === Number(questionID);
             });
             if (!question) {
@@ -527,7 +527,7 @@ export class QuizComponent implements OnInit, OnDestroy {
             }
             // generate the submittedAnswer object
             const shortAnswerSubmittedAnswer = new ShortAnswerSubmittedAnswer();
-            shortAnswerSubmittedAnswer.question = question;
+            shortAnswerSubmittedAnswer.quizQuestion = question;
             shortAnswerSubmittedAnswer.submittedTexts = this.shortAnswerSubmittedTexts[questionID];
             this.submission.submittedAnswers.push(shortAnswerSubmittedAnswer);
         }, this);
@@ -633,9 +633,9 @@ export class QuizComponent implements OnInit, OnDestroy {
      * @param fullQuizExerciseFromServer {object} the quizExercise containing additional information
      */
     transferInformationToQuizExercise(fullQuizExerciseFromServer: QuizExercise) {
-        this.quizExercise.questions.forEach(function(clientQuestion) {
+        this.quizExercise.quizQuestions.forEach(function(clientQuestion) {
             // find updated question
-            const fullQuestionFromServer = fullQuizExerciseFromServer.questions.find(function(fullQuestion) {
+            const fullQuestionFromServer = fullQuizExerciseFromServer.quizQuestions.find(function(fullQuestion) {
                 return clientQuestion.id === fullQuestion.id;
             });
             if (fullQuestionFromServer) {
@@ -701,7 +701,7 @@ export class QuizComponent implements OnInit, OnDestroy {
             this.questionScores = {};
             this.submission.submittedAnswers.forEach(submittedAnswer => {
                 // limit decimal places to 2
-                this.questionScores[submittedAnswer.question.id] = Math.round(submittedAnswer.scoreInPoints * 100) / 100;
+                this.questionScores[submittedAnswer.quizQuestion.id] = Math.round(submittedAnswer.scoreInPoints * 100) / 100;
             }, this);
         }
     }
@@ -714,14 +714,14 @@ export class QuizComponent implements OnInit, OnDestroy {
      * @param quizExercise {object} the quizExercise to randomize elements in
      */
     randomizeOrder(quizExercise: QuizExercise) {
-        if (quizExercise.questions) {
+        if (quizExercise.quizQuestions) {
             // shuffle questions
             if (quizExercise.randomizeQuestionOrder) {
-                this.shuffle(quizExercise.questions);
+                this.shuffle(quizExercise.quizQuestions);
             }
 
             // shuffle answerOptions / dragItems within questions
-            quizExercise.questions.forEach(question => {
+            quizExercise.quizQuestions.forEach(question => {
                 if (question.randomizeOrder) {
                     if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                         this.shuffle((question as MultipleChoiceQuestion).answerOptions);
@@ -832,7 +832,7 @@ export class QuizComponent implements OnInit, OnDestroy {
      * @return {boolean} true when student interacted with every question, false when not with every questions has an interaction
      */
     areAllQuestionsAnswered(): boolean {
-        for (const question of this.quizExercise.questions) {
+        for (const question of this.quizExercise.quizQuestions) {
             if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                 if (this.selectedAnswerOptions[question.id] >= 0) {
                     return false;

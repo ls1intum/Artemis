@@ -1,6 +1,6 @@
 {
     "arTeMiSApp": {
-        "questionStatistic" : {
+        "quizQuestionStatistic" : {
             "home": {
                 "title": "Question Statistics",
                 "createLabel": "Create a new Question Statistic",

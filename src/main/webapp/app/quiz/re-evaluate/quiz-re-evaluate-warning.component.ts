@@ -67,12 +67,12 @@ export class QuizReEvaluateWarningComponent implements OnInit {
      */
     loadQuizSuccess(quiz: QuizExercise): void {
         // question deleted?
-        this.questionDeleted = this.backUpQuiz.questions.length !== this.quizExercise.questions.length;
+        this.questionDeleted = this.backUpQuiz.quizQuestions.length !== this.quizExercise.quizQuestions.length;
 
         // check each question
-        this.quizExercise.questions.forEach(question => {
+        this.quizExercise.quizQuestions.forEach(question => {
             // find same question in backUp (necessary if the order has been changed)
-            const backUpQuestion = this.backUpQuiz.questions.find(questionBackUp => {
+            const backUpQuestion = this.backUpQuiz.quizQuestions.find(questionBackUp => {
                 return question.id === questionBackUp.id;
             });
 

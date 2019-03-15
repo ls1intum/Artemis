@@ -1,6 +1,6 @@
 {
     "arTeMiSApp": {
-        "statisticCounter" : {
+        "quizStatisticCounter" : {
             "home": {
                 "title": "Statistic Counters",
                 "createLabel": "Statistic Counter erstellen",

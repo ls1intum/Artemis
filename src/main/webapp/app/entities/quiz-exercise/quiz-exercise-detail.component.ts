@@ -147,7 +147,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
             this.entity.isPlannedToStart = false;
             this.entity.releaseDate = moment();
             this.entity.randomizeQuestionOrder = true;
-            this.entity.questions = [];
+            this.entity.quizQuestions = [];
             this.quizExercise = this.entity;
         }
         this.prepareEntity(this.entity);
@@ -232,7 +232,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         incorrectSampleAnswerOption.text = 'Enter an incorrect answer option here';
 
         mcQuestion.answerOptions = [correctSampleAnswerOption, incorrectSampleAnswerOption];
-        this.quizExercise.questions.push(mcQuestion);
+        this.quizExercise.quizQuestions.push(mcQuestion);
     }
 
     /**
@@ -253,7 +253,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         dndQuestion.dropLocations = [];
         dndQuestion.dragItems = [];
         dndQuestion.correctMappings = [];
-        this.quizExercise.questions.push(dndQuestion);
+        this.quizExercise.quizQuestions.push(dndQuestion);
     }
 
     /**
@@ -274,7 +274,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         shortAnswerQuestion.spots = [];
         shortAnswerQuestion.solutions = [];
         shortAnswerQuestion.correctMappings = [];
-        this.quizExercise.questions.push(shortAnswerQuestion);
+        this.quizExercise.quizQuestions.push(shortAnswerQuestion);
     }
     /**
      * @function calculateMaxExerciseScore
@@ -282,7 +282,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      */
     calculateMaxExerciseScore(): number {
         let scoreSum = 0;
-        this.quizExercise.questions.forEach(question => (scoreSum += question.score));
+        this.quizExercise.quizQuestions.forEach(question => (scoreSum += question.score));
         return scoreSum;
     }
 
@@ -329,7 +329,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                     for (const quizExercise of quizExercises) {
                         this.quizExerciseService.find(quizExercise.id).subscribe((response: HttpResponse<QuizExercise>) => {
                             const quizExerciseResponse = response.body;
-                            for (const question of quizExerciseResponse.questions) {
+                            for (const question of quizExerciseResponse.quizQuestions) {
                                 question.exercise = quizExercise;
                                 this.allExistingQuestions.push(question);
                             }
@@ -408,7 +408,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      * @param questionToDelete {QuizQuestion} the question to remove
      */
     deleteQuestion(questionToDelete: QuizQuestion): void {
-        this.quizExercise.questions = this.quizExercise.questions.filter(question => question !== questionToDelete);
+        this.quizExercise.quizQuestions = this.quizExercise.quizQuestions.filter(question => question !== questionToDelete);
     }
 
     /**
@@ -416,7 +416,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      * @desc Handles the change of a question by replacing the array with a copy (allows for shallow comparison)
      */
     onQuestionUpdated(): void {
-        this.quizExercise.questions = Array.from(this.quizExercise.questions);
+        this.quizExercise.quizQuestions = Array.from(this.quizExercise.quizQuestions);
     }
 
     /**
@@ -434,7 +434,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         return (
             keysToCompare.some(key => this.quizExercise[key] !== this.savedEntity[key]) ||
             !this.areDatesIdentical(this.quizExercise.releaseDate, this.savedEntity.releaseDate) ||
-            !this.areQuizExerciseEntityQuestionsIdentical(this.quizExercise.questions, this.savedEntity.questions)
+            !this.areQuizExerciseEntityQuestionsIdentical(this.quizExercise.quizQuestions, this.savedEntity.quizQuestions)
         );
     }
 
@@ -485,9 +485,9 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
             this.quizExercise.title.length < 250 &&
             this.quizExercise.duration &&
             releaseDateValidAndNotInPastCondition &&
-            this.quizExercise.questions &&
-            !!this.quizExercise.questions.length;
-        const areAllQuestionsValid = this.quizExercise.questions.every(function(question) {
+            this.quizExercise.quizQuestions &&
+            !!this.quizExercise.quizQuestions.length;
+        const areAllQuestionsValid = this.quizExercise.quizQuestions.every(function(question) {
             if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                 const mcQuestion = question as MultipleChoiceQuestion;
                 return question.title && question.title !== '' && question.title.length < 250 && mcQuestion.answerOptions.some(answerOption => answerOption.isCorrect);
@@ -552,7 +552,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                 translateValues: {}
             });
         }
-        if (!this.quizExercise.questions || this.quizExercise.questions.length === 0) {
+        if (!this.quizExercise.quizQuestions || this.quizExercise.quizQuestions.length === 0) {
             reasons.push({
                 translateKey: 'arTeMiSApp.quizExercise.invalidReasons.noQuestion',
                 translateValues: {}
@@ -576,7 +576,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                 }
             }
         }
-        this.quizExercise.questions.forEach(function(question: QuizQuestion, index: number) {
+        this.quizExercise.quizQuestions.forEach(function(question: QuizQuestion, index: number) {
             if (!question.title || question.title === '') {
                 reasons.push({
                     translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionTitle',
@@ -732,7 +732,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                 for (const answerOption of mcQuestion.answerOptions) {
                     delete answerOption.id;
                 }
-                this.quizExercise.questions = this.quizExercise.questions.concat([question]);
+                this.quizExercise.quizQuestions = this.quizExercise.quizQuestions.concat([question]);
             } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
                 const dndQuestion = question as DragAndDropQuestion;
                 // Get image from the old question and duplicate it on the backend and then save new image to the question,
@@ -771,7 +771,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                     correctMapping.dropLocation.tempID = correctMapping.dropLocation.id;
                     delete correctMapping.dropLocation.id;
                 }
-                this.quizExercise.questions = this.quizExercise.questions.concat([question]);
+                this.quizExercise.quizQuestions = this.quizExercise.quizQuestions.concat([question]);
             } else if (question.type === QuizQuestionType.SHORT_ANSWER) {
                 const shortAnswerQuestion = question as ShortAnswerQuestion;
 
@@ -797,7 +797,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                     correctMapping.spot.tempID = correctMapping.spot.id;
                     delete correctMapping.spot.id;
                 }
-                this.quizExercise.questions = this.quizExercise.questions.concat([question]);
+                this.quizExercise.quizQuestions = this.quizExercise.quizQuestions.concat([question]);
             }
         }
     }

@@ -56,7 +56,7 @@ export class QuizExerciseExportComponent implements OnInit {
                         quizExercise.course = this.course;
                         this.quizExerciseService.find(quizExercise.id).subscribe((response: HttpResponse<QuizExercise>) => {
                             const quizExerciseResponse = response.body;
-                            for (const question of quizExerciseResponse.questions) {
+                            for (const question of quizExerciseResponse.quizQuestions) {
                                 question.exercise = quizExercise;
                                 this.questions.push(question);
                             }

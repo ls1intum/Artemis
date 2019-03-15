@@ -255,7 +255,7 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
     calculateMaxScore() {
         let result = 0;
 
-        this.quizExercise.questions.forEach(function(question) {
+        this.quizExercise.quizQuestions.forEach(function(question) {
             result = result + question.score;
         });
         return result;
@@ -274,22 +274,22 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
         this.unratedAverage = 0;
 
         // set data based on the CorrectCounters in the QuestionStatistics
-        for (let i = 0; i < this.quizExercise.questions.length; i++) {
+        for (let i = 0; i < this.quizExercise.quizQuestions.length; i++) {
             this.label.push(i + 1 + '.');
             this.backgroundColor.push('#5bc0de');
-            this.ratedData.push(this.quizExercise.questions[i].questionStatistic.ratedCorrectCounter);
-            this.unratedData.push(this.quizExercise.questions[i].questionStatistic.unRatedCorrectCounter);
+            this.ratedData.push(this.quizExercise.quizQuestions[i].questionStatistic.ratedCorrectCounter);
+            this.unratedData.push(this.quizExercise.quizQuestions[i].questionStatistic.unRatedCorrectCounter);
             this.ratedAverage =
                 this.ratedAverage +
-                this.quizExercise.questions[i].questionStatistic.ratedCorrectCounter * this.quizExercise.questions[i].score;
+                this.quizExercise.quizQuestions[i].questionStatistic.ratedCorrectCounter * this.quizExercise.quizQuestions[i].score;
             this.unratedAverage =
                 this.unratedAverage +
-                this.quizExercise.questions[i].questionStatistic.unRatedCorrectCounter * this.quizExercise.questions[i].score;
+                this.quizExercise.quizQuestions[i].questionStatistic.unRatedCorrectCounter * this.quizExercise.quizQuestions[i].score;
         }
 
         // set Background for invalid questions = grey
-        for (let j = 0; j < this.quizExercise.questions.length; j++) {
-            if (this.quizExercise.questions[j].invalid) {
+        for (let j = 0; j < this.quizExercise.quizQuestions.length; j++) {
+            if (this.quizExercise.quizQuestions[j].invalid) {
                 this.backgroundColor[j] = '#949494';
             }
         }
@@ -355,7 +355,7 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
      * if there is no QuizQuestionStatistic -> go to QuizPointStatistic
      */
     nextStatistic() {
-        if (this.quizExercise.questions === null || this.quizExercise.questions.length === 0) {
+        if (this.quizExercise.quizQuestions === null || this.quizExercise.quizQuestions.length === 0) {
             this.router.navigate([
                 '/quiz/:quizExerciseId/quiz-point-statistic',
                 {
@@ -363,7 +363,7 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
                 }
             ]);
         } else {
-            const nextQuestion = this.quizExercise.questions[0];
+            const nextQuestion = this.quizExercise.quizQuestions[0];
             if (nextQuestion.type === QuizQuestionType.MULTIPLE_CHOICE) {
                 this.router.navigate([
                     'quiz/:quizId/multiple-choice-question-statistic/:questionId',
