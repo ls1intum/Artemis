@@ -18,7 +18,7 @@ import {
 } from './';
 import { SortByModule } from 'app/components/pipes';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
-import {ArTEMiSMarkdownEditorModule} from 'app/markdown-editor';
+import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor';
 
 const ENTITY_STATES = [...modelingExerciseRoute, ...modelingExercisePopupRoute];
 

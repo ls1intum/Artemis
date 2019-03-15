@@ -10,7 +10,7 @@ import 'brace/mode/markdown';
 import { ShortAnswerQuestionUtil } from 'app/components/util/short-answer-question-util.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import * as TempID from 'app/quiz/edit/temp-id';
-import {EditQuizQuestion} from 'app/quiz/edit/edit-quiz-question.interface';
+import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
 
 @Component({
     selector: 'jhi-edit-short-answer-question',

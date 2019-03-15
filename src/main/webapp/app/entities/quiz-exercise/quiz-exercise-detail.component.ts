@@ -400,7 +400,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                 }
             }
         }
-        this.cacheValidation()
+        this.cacheValidation();
     }
 
     /**
@@ -454,7 +454,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         this.changeDetector.detectChanges();
     }
 
-
     /**
      * @function onQuestionUpdated
      * @desc Handles the change of a question by replacing the array with a copy (allows for shallow comparison)
@@ -463,7 +462,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         this.quizExercise.questions = Array.from(this.quizExercise.questions);
         this.cacheValidation();
     }
-
 
     /**
      * @function pendingChanges
@@ -537,10 +535,10 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             switch (question.type) {
                 case QuestionType.MULTIPLE_CHOICE:
                     const mcQuestion = question as MultipleChoiceQuestion;
-                    if (mcQuestion.answerOptions.some(answerOption => !answerOption.explanation)){
+                    if (mcQuestion.answerOptions.some(answerOption => !answerOption.explanation)) {
                         this.warningQuizCache = true;
                     }
-                    if (mcQuestion.answerOptions.some(answeroption => answeroption.isCorrect)){
+                    if (mcQuestion.answerOptions.some(answeroption => answeroption.isCorrect)) {
                         return question.title && question.title !== '' && question.title.length < 250;
                     }
                     return false;

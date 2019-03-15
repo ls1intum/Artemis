@@ -811,7 +811,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
         this.prepareForSave();
     }
 
-    changesInMarkdown(){
+    changesInMarkdown() {
         console.log('markdown');
         this.changeDetector.detectChanges();
         this.questionUpdated.emit();

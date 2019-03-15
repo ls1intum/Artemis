@@ -36,9 +36,9 @@ export abstract class Question implements BaseEntity, MarkDownElement {
     public exportQuiz = false; // default value
     public type: QuestionType;
 
+    public contentChanged: boolean;
+
     protected constructor(type: QuestionType) {
         this.type = type;
     }
-
-    public contentChanged: boolean;
 }
