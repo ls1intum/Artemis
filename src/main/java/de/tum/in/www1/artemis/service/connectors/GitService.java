@@ -198,6 +198,12 @@ public class GitService {
         git.close();
     }
 
+    public void stageFile(Repository repo, String fileName) throws GitAPIException {
+        Git git = new Git(repo);
+        git.add().addFilepattern(fileName).call();
+        git.close();
+    }
+
     /**
      * Pulls from remote repository.
      *

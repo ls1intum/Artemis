@@ -89,7 +89,7 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
             this.repositoryFileService.query(params['participationId']).subscribe(
                 files => {
                     // do not display the README.md, because students should not edit it
-                    this.repositoryFiles = files.filter(value => value !== 'README.md');
+                    this.repositoryFiles = files.filter(value => value !== 'README.md' && value !== 'session.json');
                     this.checkIfRepositoryIsClean();
                 },
                 (error: HttpErrorResponse) => {
@@ -153,14 +153,15 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
 
     updateLatestBuildLogs(buildLogs: BuildLogEntry[]) {
         this.buildLogErrors = buildLogs
-            .map(({ log }) => log && log.match(this.errorLogRegex))
-            .filter(log => !!log && log.length === 6 && log[1] === 'ERROR')
-            .map(([, , fileName, row, column, text]) => ({
+            .map(({ log, time }) => log && {log: log.match(this.errorLogRegex), time})
+            .filter(({log}) => !!log && log.length === 6 && log[1] === 'ERROR')
+            .map(({ log: [, , fileName, row, column, text], time }) => ({
                 type: 'error',
                 fileName,
                 row: Math.max(parseInt(row, 10) - 1, 0),
                 column: Math.max(parseInt(column, 10) - 1, 0),
-                text: safeUnescape(text)
+                text: safeUnescape(text),
+                ts: Date.parse(time)
             }))
             .reduce((acc, { fileName, ...rest }) => ({ ...acc, [fileName]: [...(acc[fileName] || []), rest] }), {});
     }
@@ -185,7 +186,7 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
         this.repositoryFileService.query(this.participation.id).subscribe(
             files => {
                 // do not display the README.md, because students should not edit it
-                this.repositoryFiles = files.filter(value => value !== 'README.md');
+                this.repositoryFiles = files.filter(value => value !== 'README.md' && value !== 'session.json');
                 // Select newly created file
                 if ($event.mode === 'create') {
                     this.selectedFile = $event.file;
