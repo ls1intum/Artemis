@@ -320,32 +320,15 @@ public class CompassService {
     }
 
     /**
-     * Get all the modeling submissions of all participations for this exercise
-     * and filter for those submissions that have a manual assessment/result
+     * Get all the modeling submissions of the given exercise that have a manual assessment
      *
-     * @return the list of modeling submissions
+     * @param exerciseId the id of the exercise for
+     * @return the list of modeling submissions with manual assessment
      */
-    // TODO CZ: test this
     private Set<ModelingSubmission> getSubmissionsWithManualAssessmentsForExercise(long exerciseId) {
-        // get all participations for the given exercise from the database
-        List<Participation> participations = participationRepository.findByExerciseIdWithEagerSubmissions(exerciseId);
-
-        //TODO: try to get the participations with eager results where the result exists and is of manual assessment type and make sure that result.submission is loaded eagerly as well
-        //use findByIdWithEagerResultsWithManualAssessment(...)
-
-        return participations.stream().flatMap(
-            participation ->
-                Optional.ofNullable(participation.getSubmissions()) // get the submission for each participation and check for null
-                    .map(Collection::stream)
-                    .orElseGet(Stream::empty)
-                    .filter( // filter for modeling submissions with existing manual assessments
-                        submission ->
-                            submission instanceof ModelingSubmission &&
-                            submission.getResult() != null &&
-                            submission.getResult().getAssessmentType() == AssessmentType.MANUAL
-                    )
-            .map(submission -> (ModelingSubmission)submission)
-        ).collect(Collectors.toSet());
+        List<ModelingSubmission> submissions =
+            modelingSubmissionRepository.findByExerciseIdWithEagerResultsWithManualAssessment(exerciseId);
+        return new HashSet<>(submissions);
     }
 
     /**

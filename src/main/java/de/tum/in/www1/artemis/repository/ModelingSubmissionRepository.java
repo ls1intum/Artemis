@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 
@@ -21,4 +22,7 @@ public interface ModelingSubmissionRepository extends JpaRepository<ModelingSubm
 
     @Query("select distinct submission from Submission submission left join fetch submission.result r left join fetch r.feedbacks left join fetch r.assessor where submission.id = :#{#submissionId}")
     Optional<ModelingSubmission> findByIdWithEagerResultAndFeedback(@Param("submissionId") Long submissionId);
+
+    @Query("select distinct submission from Submission submission left join fetch submission.participation p left join fetch submission.result r where p.exercise.id = :#{#exerciseId} and r.assessmentType = 'MANUAL'")
+    List<ModelingSubmission> findByExerciseIdWithEagerResultsWithManualAssessment(@Param("exerciseId") Long exerciseId);
 }
