@@ -50,10 +50,7 @@
         <div class="form-group" name="problemStatement" id="field_problemStatement">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.problemStatement" for="field_problemStatement">Problem Statement</label>
             <div class="question-content">
-            <jhi-markdown-editor #markdownEditor
-                                 [(defaultText)]="modelingExercise.problemStatement"
-                                 (onChanges)="changesInMarkdown()">
-            </jhi-markdown-editor>
+            <jhi-markdown-editor [(markdown)]="modelingExercise.problemStatement"></jhi-markdown-editor>
             </div>
         </div>
     </div>

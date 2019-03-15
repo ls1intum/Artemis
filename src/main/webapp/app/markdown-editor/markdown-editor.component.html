@@ -17,8 +17,8 @@
 
 
     <ace-editor #aceEditor [mode]="aseEditorOptions.mode"
-                [autoUpdateContent]="aseEditorOptions.autoUpdateContent" [(text)]="defaultText"
-                (textChange)="defaultTextChange.emit($event)"
+                [autoUpdateContent]="aseEditorOptions.autoUpdateContent" [(text)]="markdown"
+                (textChange)="markdownChange.emit($event)"
                 style="min-height: 200px; width:100%; overflow: auto;" class="form-control"></ace-editor>
 </div>
 <!--End Editor-->
@@ -34,7 +34,7 @@
 
 <!--Begin Edit/Preview Button-->
 <div class="toolbar">
-    <div *ngIf="useMarkdownPreview" class="btn btn-outline-secondary" (click)="togglePreview()">
+    <div *ngIf="showPreviewButton" class="btn btn-outline-secondary" (click)="togglePreview()">
         <fa-icon [icon]="previewButtonIcon" class="mr-1"></fa-icon>
         <span [jhiTranslate]="previewButtonTranslateString"></span>
     </div>
