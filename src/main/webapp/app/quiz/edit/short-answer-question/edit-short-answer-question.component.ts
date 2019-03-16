@@ -59,6 +59,8 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     /** For visual mode **/
     textParts: String [][];
 
+    backupQuestion: ShortAnswerQuestion;
+
     constructor(
         private artemisMarkdown: ArtemisMarkdown,
         private shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
@@ -66,6 +68,10 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     ) {}
 
     ngOnInit(): void {
+        /** Create question backup for resets **/
+        this.backupQuestion = JSON.parse(JSON.stringify(this.question));
+        this.textParts = this.question.text.split(/\n+/g).map(t => t.split(/\s+(?![^[]]*])/g));
+
         /** Assign status booleans and strings **/
         this.showPreview = false;
         this.isQuestionCollapsed = false;
@@ -80,6 +86,10 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         /** Check if previousValue wasn't null to avoid firing at component initialization **/
         if (changes.question && changes.question.previousValue != null) {
             this.questionUpdated.emit();
+        }
+        /** Update backupQuestion if the question changed **/
+        if (changes.question && changes.question.currentValue != null) {
+            this.backupQuestion = JSON.parse(JSON.stringify(this.question));
         }
     }
 
@@ -347,6 +357,10 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     }
 
     /**
+     * For Visual Mode
+     */
+
+    /**
      * @function addSpotAtCursorVisualMode
      * @desc Add a input field on the current selected location and add the solution option accordingly
      */
@@ -567,5 +581,133 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
        this.textParts = this.question.text.split(/\n+/g).map(t => t.split(/\s+(?![^[]]*])/g));
        this.questionEditor.getEditor().setValue(this.generateMarkdown());
        this.questionEditor.getEditor().clearSelection();
+    }
+
+    /**
+     * For Re-evaluate
+     */
+
+    /**
+     * @function moveUp
+     * @desc Move this question one position up
+     */
+    moveUp() {
+        this.questionMoveUp.emit();
+    }
+
+    /**
+     * @function moveDown
+     * @desc Move this question one position down
+     */
+    moveDown() {
+        this.questionMoveDown.emit();
+    }
+
+    /**
+     * @function
+     * @desc Resets the question title
+     */
+    resetQuestionTitle() {
+        this.question.title = this.backupQuestion.title;
+    }
+
+    /**
+     * @function resetQuestionText
+     * @desc Resets the question text
+     */
+    resetQuestionText() {
+        this.question.text = this.backupQuestion.text;
+        this.question.explanation = this.backupQuestion.explanation;
+        this.question.hint = this.backupQuestion.hint;
+        this.setupQuestionEditor();
+    }
+
+    /**
+     * @function resetQuestion
+     * @desc Resets the whole question
+     */
+    resetQuestion() {
+        this.resetQuestionTitle();
+        this.question.invalid = this.backupQuestion.invalid;
+        this.question.randomizeOrder = this.backupQuestion.randomizeOrder;
+        this.question.scoringType = this.backupQuestion.scoringType;
+        this.question.solutions = JSON.parse(JSON.stringify(this.backupQuestion.solutions));
+        this.question.correctMappings = JSON.parse(JSON.stringify(this.backupQuestion.correctMappings));
+        this.question.spots = JSON.parse(JSON.stringify(this.backupQuestion.spots));
+        this.resetQuestionText();
+    }
+
+    /**
+     * @function resetDropLocation
+     * @desc Resets the dropLocation
+     * @param dropLocation {dropLocation} the dropLocation, which will be reset
+     */
+    resetSpot(spot: ShortAnswerSpot): void {
+        // Find matching DropLocation in backupQuestion
+        const backupSpot = this.backupQuestion.spots.find(currentSpot => currentSpot.id === spot.id);
+        // Find current index of our DropLocation
+        const spotIndex = this.question.spots.indexOf(spot);
+        // Remove current DropLocation at given index and insert the backup at the same position
+        this.question.spots.splice(spotIndex, 1);
+        this.question.spots.splice(spotIndex, 0, backupSpot);
+    }
+
+    /**
+     * @function resetSolution
+     * @desc Resets the whole solution
+     * @param solution {ShortAnswerSolution} the solution, which will be reset
+     */
+    resetSolution(solution: ShortAnswerSolution) {
+        // Find matching solution in backupQuestion
+        const backupSolution = this.backupQuestion.solutions.find(solutionBackup => solution.id === solutionBackup.id);
+        // Find current index of our solution
+        const solutionIndex = this.question.solutions.indexOf(solution);
+        // Remove current solution at given index and insert the backup at the same position
+        this.question.solutions.splice(solutionIndex, 1);
+        this.question.solutions.splice(solutionIndex, 0, backupSolution);
+    }
+
+    /**
+     * @function setSolutionInvalid
+     * @desc Set the solution invalid
+     * @param  solution {ShortAnswerSolution} the solution which should be deleted
+     */
+    setSolutionInvalid(solution: ShortAnswerSolution) {
+        this.question.solutions[this.question.solutions.indexOf(solution)].invalid = true;
+        this.questionUpdated.emit();
+    }
+
+    /**
+     * @function isSolutionInvalid
+     * @desc Checks if the given solution is invalid
+     * @param  solution {ShortAnswerSolution} the solution which should be checked
+     * @return {boolean} true if the answer is invalid
+     */
+    isSolutionInvalid(solution: ShortAnswerSolution) {
+        return solution.invalid;
+    }
+
+    /**
+     * @function deleteDropLocation
+     * @desc Delete the given drop location
+     * @param dropLocationToDelete {object} the drop location to delete
+     */
+    deleteSpot(spotToDelete: ShortAnswerSpot): void {
+        this.question.spots = this.question.spots.filter(spot => spot !== spotToDelete);
+        this.deleteMappingsForSpot(spotToDelete);
+    }
+
+    /**
+     * @function deleteMappingsForDropLocation
+     * @desc Delete all mappings for the given drop location
+     * @param dropLocation {object} the drop location for which we want to delete all mappings
+     */
+    deleteMappingsForSpot(spot: ShortAnswerSpot): void {
+        if (!this.question.correctMappings) {
+            this.question.correctMappings = [];
+        }
+        this.question.correctMappings = this.question.correctMappings.filter(
+            mapping => !this.shortAnswerQuestionUtil.isSameSpot(mapping.spot, spot)
+        );
     }
 }
