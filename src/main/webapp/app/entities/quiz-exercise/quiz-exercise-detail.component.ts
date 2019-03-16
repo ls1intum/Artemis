@@ -446,7 +446,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
 
-    private cacheValidation(): void {
+  cacheValidation(): void {
         //console.log("cache", new Date());
         this.warningQuizCache = false;
         this.quizIsValid = this.validQuiz();
