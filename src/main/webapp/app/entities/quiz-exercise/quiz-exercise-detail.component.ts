@@ -896,16 +896,16 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * @desc Save the quiz to the server and invoke callback functions depending of result
      */
 
+
     save(): void {
         this.onDateTimeChange();
 
-        if (this.hasSavedQuizStarted || !this.pendingChanges() || !this.validQuiz()) {
+        if (this.hasSavedQuizStarted || !this.pendingChangesCache|| !this.quizIsValid) {
             return;
         }
 
         this.isSaving = true;
         this.parseAllQuestions();
-        this.changeDetector.detectChanges();
 
         if (this.quizExercise.id !== undefined) {
             this.quizExerciseService.update(this.quizExercise).subscribe(
@@ -918,6 +918,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                 },
                 (res: HttpErrorResponse) => this.onSaveError(res)
             );
+            this.pendingChangesCache = false;
         } else {
             this.quizExerciseService.create(this.quizExercise).subscribe(
                 (quizExerciseResponse: HttpResponse<QuizExercise>) => {
@@ -929,6 +930,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                 },
                 (res: HttpErrorResponse) => this.onSaveError(res)
             );
+            this.pendingChangesCache = false;
         }
     }
 

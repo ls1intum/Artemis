@@ -28,13 +28,14 @@ import { ExplanationCommand } from 'app/markdown-editor/specialCommands/explanat
 import { SpecialCommand } from 'app/markdown-editor/specialCommands/specialCommand';
 import { MarkdownEditorComponent } from 'app/markdown-editor';
 import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
+import {CodeCommand} from 'app/markdown-editor/commands';
 
 @Component({
     selector: 'jhi-edit-drag-and-drop-question',
     templateUrl: './edit-drag-and-drop-question.component.html',
     providers: [ArtemisMarkdown, DragAndDropQuestionUtil]
 })
-export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, EditQuizQuestion {
+export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, EditQuizQuestion, AfterViewInit {
     @ViewChild('clickLayer')
     private clickLayer: ElementRef;
     @ViewChild('markdownEditor')
@@ -59,8 +60,6 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
 
     /** Ace Editor configuration constants **/
     questionEditorText = '';
-    questionEditorMode = 'markdown';
-    questionEditorAutoUpdate = true;
 
     backupQuestion: DragAndDropQuestion;
 
@@ -138,12 +137,16 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
         /** Check if previousValue wasn't null to avoid firing at component initialization **/
         if (changes.question && changes.question.previousValue != null) {
             this.questionUpdated.emit();
-            this.changeDetector.detectChanges();
+            //this.changeDetector.detectChanges();
         }
         /** Update backupQuestion if the question changed **/
         if (changes.question && changes.question.currentValue != null) {
             this.backupQuestion = JSON.parse(JSON.stringify(this.question));
         }
+    }
+
+    ngAfterViewInit(): void {
+        this.markdownEditor.removeCommand(CodeCommand);
     }
 
     /**
@@ -814,8 +817,8 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
 
     changesInMarkdown() {
         console.log('markdown');
-        this.changeDetector.detectChanges();
         this.questionUpdated.emit();
+        this.changeDetector.detectChanges();
         this.prepareForSave();
     }
 
