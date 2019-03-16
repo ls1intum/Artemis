@@ -12,7 +12,7 @@ export class OrderedlistCommand extends Command {
         let startSize = 2;
         const initText = '';
         const range = this.editor.selection.getRange();
-        selectedText = `1. ${selectedText || initText}`
+        selectedText = `1. ${selectedText || initText}`;
         startSize = 3;
         this.editor.session.replace(range, selectedText);
         if (!isSelected) {
