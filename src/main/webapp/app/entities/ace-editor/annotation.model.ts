@@ -1,1 +1,1 @@
-export type AceAnnotation = { row: string; column: string; text: string; type: string; ts: number };
+export type AceAnnotation = { row: number; column: number; text: string; type: string; ts: number };

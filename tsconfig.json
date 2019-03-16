@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
         "allowJs": false,
-        "target": "esnext",
+        "target": "es2018",
         "module": "es2015",
         "moduleResolution": "node",
         "sourceMap": true,
@@ -12,7 +12,7 @@
         "suppressImplicitAnyIndexErrors": true,
         "skipLibCheck": true,
         "outDir": "build/www/app",
-        "lib": ["esnext", "dom"],
+        "lib": ["es2018", "dom"],
         "typeRoots": [
             "node_modules/@types"
         ],

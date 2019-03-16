@@ -198,6 +198,12 @@ public class GitService {
         git.close();
     }
 
+    /**
+     * Stage a single file by fileName.
+     * @param repo
+     * @param fileName
+     * @throws GitAPIException
+     */
     public void stageFile(Repository repo, String fileName) throws GitAPIException {
         Git git = new Git(repo);
         git.add().addFilepattern(fileName).call();

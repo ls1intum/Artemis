@@ -35,7 +35,8 @@
         <div class="editor-center">
             <jhi-code-editor-ace [participation]="participation"
                                  [selectedFile]="selectedFile"
-                                 [buildLogErrors]="buildLogErrors"
+                                 [repositoryFiles]="repositoryFiles"
+                                 [buildLogErrors]="buildLogErrors ? buildLogErrors.errors : {}"
                                  (saveStatusChange)="updateSaveStatusLabel($event)">
             </jhi-code-editor-ace>
         </div>

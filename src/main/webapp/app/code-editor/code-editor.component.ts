@@ -11,7 +11,7 @@ import { Result } from '../entities/result';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import * as $ from 'jquery';
 import { Interactable } from 'interactjs';
-import { AceAnnotation, SaveStatusChange } from '../entities/ace-editor';
+import { AceAnnotation, SaveStatusChange, Session } from '../entities/ace-editor';
 import { BuildLogEntry } from 'app/entities/build-log';
 import { safeUnescape } from 'app/shared';
 
@@ -29,8 +29,9 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
     selectedFile: string;
     paramSub: Subscription;
     repositoryFiles: string[];
+    session: Session;
     latestResult: Result;
-    buildLogErrors: { [fileName: string]: AceAnnotation[] };
+    buildLogErrors: { errors: { [fileName: string]: AceAnnotation[] }; ts: number };
     saveStatusLabel: string;
     saveStatusIcon: { spin: boolean; icon: string; class: string };
 
@@ -91,6 +92,7 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
                     // do not display the README.md, because students should not edit it
                     this.repositoryFiles = files.filter(value => value !== 'README.md' && value !== 'session.json');
                     this.checkIfRepositoryIsClean();
+                    this.loadSession();
                 },
                 (error: HttpErrorResponse) => {
                     console.log('There was an error while getting files: ' + error.message + ': ' + error.error);
@@ -151,19 +153,27 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
         this.latestResult = $event.newResult;
     }
 
+    /**
+     * Check if the received build logs are recent and format them for use in the ace-editor
+     * @param buildLogs
+     */
     updateLatestBuildLogs(buildLogs: BuildLogEntry[]) {
-        this.buildLogErrors = buildLogs
-            .map(({ log, time }) => log && {log: log.match(this.errorLogRegex), time})
-            .filter(({log}) => !!log && log.length === 6 && log[1] === 'ERROR')
-            .map(({ log: [, , fileName, row, column, text], time }) => ({
-                type: 'error',
-                fileName,
-                row: Math.max(parseInt(row, 10) - 1, 0),
-                column: Math.max(parseInt(column, 10) - 1, 0),
-                text: safeUnescape(text),
-                ts: Date.parse(time)
-            }))
-            .reduce((acc, { fileName, ...rest }) => ({ ...acc, [fileName]: [...(acc[fileName] || []), rest] }), {});
+        const ts = buildLogs.length ? Date.parse(buildLogs[0].time) : 0;
+        if (!this.buildLogErrors || ts > this.buildLogErrors.ts) {
+            const errors = buildLogs
+                .map(({ log, time }) => log && {log: log.match(this.errorLogRegex), time})
+                .filter(({log}) => !!log && log.length === 6 && log[1] === 'ERROR')
+                .map(({ log: [, , fileName, row, column, text], time }) => ({
+                    type: 'error',
+                    fileName,
+                    row: Math.max(parseInt(row, 10) - 1, 0),
+                    column: Math.max(parseInt(column, 10) - 1, 0),
+                    text: safeUnescape(text),
+                    ts: Date.parse(time)
+                }))
+                .reduce((acc, { fileName, ...rest }) => ({ ...acc, [fileName]: [...(acc[fileName] || []), rest] }), {});
+            this.buildLogErrors = {errors, ts};
+        }
     }
 
     /**
@@ -196,6 +206,28 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
                 console.log('There was an error while getting files: ' + error.message + ': ' + error.error);
             }
         );
+    }
+
+    /**
+     * @function loadSession
+     * @desc Gets the session.json file from our repository to load editor settings
+     */
+    loadSession() {
+        // Only do this if we already received a participation object from parent
+        if (this.participation) {
+            this.repositoryFileService.get(this.participation.id, 'session.json').subscribe(
+                fileObj => {
+                    this.session = JSON.parse(fileObj.fileContent || '{}');
+                    if (!this.buildLogErrors || this.session.ts > this.buildLogErrors.ts) {
+                        this.buildLogErrors = { errors: this.session.errors, ts: this.session.ts };
+                    }
+                },
+                err => {
+                    // TODO: handle the case that there is no README.md file
+                    console.log('Error while getting session.json file!', err);
+                }
+            );
+        }
     }
 
     /**
@@ -241,7 +273,7 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
         target.blur();
         this.isBuilding = true;
         this.repository.commit(this.participation.id).subscribe(
-            res => {
+            () => {
                 this.isCommitted = true;
             },
             err => {
