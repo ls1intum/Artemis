@@ -138,6 +138,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
         /** Check if previousValue wasn't null to avoid firing at component initialization **/
         if (changes.question && changes.question.previousValue != null) {
             this.questionUpdated.emit();
+            this.changeDetector.detectChanges();
         }
         /** Update backupQuestion if the question changed **/
         if (changes.question && changes.question.currentValue != null) {

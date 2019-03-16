@@ -41,8 +41,6 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
     isQuestionCollapsed: boolean;
 
     currentAnswerOption: AnswerOption;
-    containsCorrectOption: boolean;
-    containsAllExplanations: boolean;
 
     get showPreview(): boolean { return this.markdownEditor.previewMode; }
     showMultipleChoiceQuestionPreview = true;

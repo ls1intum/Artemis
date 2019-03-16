@@ -447,7 +447,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
 
 
     private cacheValidation(): void {
-        console.log("cache", new Date());
+        //console.log("cache", new Date());
         this.warningQuizCache = false;
         this.quizIsValid = this.validQuiz();
         this.pendingChangesCache = this.pendingChanges();
@@ -895,27 +895,41 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * @function save
      * @desc Save the quiz to the server and invoke callback functions depending of result
      */
+
     save(): void {
         this.onDateTimeChange();
+
         if (this.hasSavedQuizStarted || !this.pendingChanges() || !this.validQuiz()) {
             return;
         }
+
         this.isSaving = true;
-        this.changeDetector.detectChanges();
         this.parseAllQuestions();
+        this.changeDetector.detectChanges();
 
-        // Decide if quiz needs to be saved or updated
-        const saveQuiz = (this.quizExercise.id !== undefined)
-            ? this.quizExerciseService.update
-            : this.quizExerciseService.create;
-
-        saveQuiz(this.quizExercise).subscribe((quizExerciseResponse: HttpResponse<QuizExercise>) => {
-            if (quizExerciseResponse.body) {
-                this.onSaveSuccess(quizExerciseResponse.body);
-            } else {
-                this.onSaveError();
-            }
-        }, this.onSaveError);
+        if (this.quizExercise.id !== undefined) {
+            this.quizExerciseService.update(this.quizExercise).subscribe(
+                (quizExerciseResponse: HttpResponse<QuizExercise>) => {
+                    if (quizExerciseResponse.body) {
+                        this.onSaveSuccess(quizExerciseResponse.body);
+                    } else {
+                        this.onSaveError();
+                    }
+                },
+                (res: HttpErrorResponse) => this.onSaveError(res)
+            );
+        } else {
+            this.quizExerciseService.create(this.quizExercise).subscribe(
+                (quizExerciseResponse: HttpResponse<QuizExercise>) => {
+                    if (quizExerciseResponse.body) {
+                        this.onSaveSuccess(quizExerciseResponse.body);
+                    } else {
+                        this.onSaveError();
+                    }
+                },
+                (res: HttpErrorResponse) => this.onSaveError(res)
+            );
+        }
     }
 
     /**

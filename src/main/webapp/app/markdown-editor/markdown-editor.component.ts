@@ -100,25 +100,21 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
      * Otherwise, markdown is parsed to HTML and emitted. Result is displayed using default preview.
      */
     parse(): void {
-        const defaultHtmlPreviewRequired = this.showDefaultPreview || this.html.observers.length > 0;
+        //const defaultHtmlPreviewRequired = this.html.observers.length > 0;
 
         // Only generate HTML if no Special Commands are defined.
         // Special Commands require special parsing by the client.
         if (this.specialCommands == null || this.specialCommands.length === 0) {
-
-            if (defaultHtmlPreviewRequired) {
                 this.previewTextAsHtml = this.artemisMarkdown.htmlForMarkdown(this.markdown);
 
                 // Emit to Clients
                 this.html.emit(this.previewTextAsHtml);
-            }
-
             return;
         }
 
-        if (defaultHtmlPreviewRequired) {
-            throw new Error(`Cannot generate HTML when using Domain Commands. You supplied ${this.specialCommands.length} Domain Commands to the Markdown Editor.`);
-        }
+        //if (defaultHtmlPreviewRequired) {
+        //    throw new Error(`Cannot generate HTML when using Domain Commands. You supplied ${this.specialCommands.length} Domain Commands to the Markdown Editor.`);
+        //}
 
         const parseArray = this.markdown
             .split('\n')
