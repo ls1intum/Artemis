@@ -119,7 +119,8 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges 
                     this.getBuildLogs();
                 } else {
                     this.buildLogs = [];
-                    this.buildLogChange.emit([]);
+                    // If there are no compile errors, send recent timestamp
+                    this.buildLogChange.emit([{time: new Date(Date.now()), log: ''}]);
                 }
             });
         }
