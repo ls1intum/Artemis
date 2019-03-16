@@ -12,7 +12,7 @@ import {
 import { AceEditorComponent } from 'ng2-ace-editor';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
-import { Command, BoldCommand, ItalicCommand, UnderlineCommand, HeadingCommand, CodeCommand, LinkCommand } from 'app/markdown-editor/commands';
+import { Command, BoldCommand, ItalicCommand, UnderlineCommand, HeadingCommand, CodeCommand, LinkCommand, PictureuploadCommand, OrderedlistCommand, UnorderedlistCommand} from 'app/markdown-editor/commands';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { SpecialCommand } from 'app/markdown-editor/specialCommands';
 import { ReferenceCommand } from 'app/markdown-editor/commands/reference.command';
@@ -35,7 +35,18 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
     @Output() markdownChange = new EventEmitter<string>();
     @Output() html = new EventEmitter<string>();
 
-    defaultCommands: Command[] = [new BoldCommand(), new ItalicCommand(), new UnderlineCommand(), new ReferenceCommand(), new HeadingCommand(), new CodeCommand(), new LinkCommand()];
+    defaultCommands: Command[] = [
+        new BoldCommand(),
+        new ItalicCommand(),
+        new UnderlineCommand(),
+        new ReferenceCommand(),
+        new HeadingCommand(),
+        new CodeCommand(),
+        new LinkCommand(),
+        new PictureuploadCommand(),
+        new OrderedlistCommand(),
+        new UnorderedlistCommand(),
+    ];
     @Input() specialCommands: SpecialCommand[];
     @Output() textWithSpecialCommandFound = new EventEmitter<[string, SpecialCommand][]>();
 

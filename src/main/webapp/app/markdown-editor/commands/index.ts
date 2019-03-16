@@ -6,3 +6,6 @@ export { HeadingCommand } from './heading.command';
 export { ReferenceCommand } from './reference.command';
 export { LinkCommand } from './link.command';
 export { CodeCommand } from './code.command';
+export { OrderedlistCommand } from './orderedlist.command';
+export { UnorderedlistCommand } from './unorderedlist.command';
+export { PictureuploadCommand } from './pictureupload.command';

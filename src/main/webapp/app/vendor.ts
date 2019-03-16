@@ -96,6 +96,9 @@ import {
     faQuoteLeft,
     faCode,
     faCopy,
+    faListOl,
+    faListUl,
+    faImage,
 } from '@fortawesome/free-solid-svg-icons';
 
 import {
@@ -204,6 +207,9 @@ library.add(faLink);
 library.add(faHeading);
 library.add(faCode);
 library.add(faCopy);
+library.add(faListUl);
+library.add(faListOl);
+library.add(faImage);
 
 library.add(farQuestionCircle);
 library.add(farCheckCircle);
