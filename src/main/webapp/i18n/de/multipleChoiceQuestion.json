@@ -26,7 +26,14 @@
                 "addExplanation": "[-e] Explanation",
                 "bold": "Bold",
                 "italic": "Italic",
-                "underline": "Underline"
+                "underline": "Underline",
+                "unorderedList": "Unordered List",
+                "heading": "Heading",
+                "quote": "Quote",
+                "link": "Link",
+                "orderedList": "Ordered List",
+                "imageUpload": "Image Upload",
+                "code": "Code"
             }
         }
     }

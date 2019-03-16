@@ -2,9 +2,12 @@
 <div [hidden]="previewMode">
     <div class="tool-bar">
         <ng-container *ngFor="let command of defaultCommands">
-            <button class="btn btn-sm btn-default mr-1" (click)="command.execute()">
+            <button class="btn btn-sm btn-default mr-1"
+                    (click)="command.execute()"
+                    [ngbTooltip]="buttontitle">
                 <fa-icon [icon]="command.buttonIcon" ></fa-icon>
             </button>
+            <ng-template #buttontitle>{{command.buttonTranslationString | translate}}</ng-template>
         </ng-container>
     </div>
     <div class="tool-bar" *ngIf="specialCommands && specialCommands.length != 0">
