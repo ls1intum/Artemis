@@ -3,7 +3,7 @@ import { Command } from './command';
 export class UnderlineCommand extends Command {
 
     buttonIcon = 'underline';
-    buttonTitle = 'Underline';
+    buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.underline';
 
     execute(): void {
         const chosenText = this.editor.getSelectedText();

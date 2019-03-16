@@ -3,7 +3,7 @@ import { Command } from './command';
 export class HeadingCommand extends Command {
 
     buttonIcon = 'heading';
-    buttonTitle = 'Heading';
+    buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.heading';
 
     execute(): void {
         if (!this.editor) { return; }

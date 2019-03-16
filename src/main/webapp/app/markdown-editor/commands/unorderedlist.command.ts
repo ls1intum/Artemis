@@ -3,7 +3,7 @@ import { Command } from './command';
 export class UnorderedlistCommand extends Command {
 
     buttonIcon = 'list-ul';
-    buttonTitle = 'Link';
+    buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.unorderedList';
 
     execute(): void {
         if (!this.editor) { return; }

@@ -3,7 +3,7 @@ import { Command } from './command';
 export class ItalicCommand extends Command {
 
     buttonIcon = 'italic';
-    buttonTitle =  'Italic';
+    buttonTranslationString =  'arTeMiSApp.multipleChoiceQuestion.editor.italic';
 
     execute(): void {
         const chosenText = this.editor.getSelectedText();

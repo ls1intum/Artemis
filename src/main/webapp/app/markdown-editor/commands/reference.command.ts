@@ -3,7 +3,7 @@ import { Command } from './command';
 export class ReferenceCommand extends Command {
 
     buttonIcon = 'quote-left';
-    buttonTitle = 'Quote';
+    buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.quote';
 
     execute(): void {
         if (!this.editor) { return; }

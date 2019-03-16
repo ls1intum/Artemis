@@ -3,7 +3,7 @@ import { Command } from './command';
 export class OrderedlistCommand extends Command {
 
     buttonIcon = 'list-ol';
-    buttonTitle = 'Link';
+    buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.orderedList';
 
     execute(): void {
         if (!this.editor) { return; }

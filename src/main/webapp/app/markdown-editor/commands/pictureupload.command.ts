@@ -3,7 +3,7 @@ import { Command } from './command';
 export class PictureuploadCommand extends Command {
 
     buttonIcon = 'image';
-    buttonTitle = 'Link';
+    buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.imageUpload';
 
     execute(): void {
         if (!this.editor) { return; }
