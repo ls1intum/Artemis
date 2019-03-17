@@ -3,6 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { JhiEventManager } from 'ng-jhipster';
 import { Course, CourseService } from 'app/entities/course';
+import { TranslateService } from '@ngx-translate/core';
 
 export abstract class ExerciseComponent implements OnInit, OnDestroy {
     private eventSubscriber: Subscription;
@@ -15,7 +16,8 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
     predicate: string;
     reverse: boolean;
 
-    protected constructor(private courseService: CourseService, private route: ActivatedRoute, private eventManager: JhiEventManager) {
+    protected constructor(private courseService: CourseService, private translateService : TranslateService,
+                          private route: ActivatedRoute, private eventManager: JhiEventManager) {
         this.predicate = 'id';
         this.reverse = true;
     }
@@ -46,6 +48,14 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
             this.course = courseResponse.body;
             this.loadExercises();
         });
+    }
+
+    protected getAmountOfExercisesString<T>(exercises: Array<T> ): string {
+        if (exercises.length === 0) {
+            return this.translateService.instant('arTeMiSApp.createExercise.noExercises');
+        } else {
+            return exercises.length.toString();
+        }
     }
 
     protected abstract loadExercises(): void;
