@@ -199,18 +199,6 @@ public class GitService {
     }
 
     /**
-     * Stage a single file by fileName.
-     * @param repo
-     * @param fileName
-     * @throws GitAPIException
-     */
-    public void stageFile(Repository repo, String fileName) throws GitAPIException {
-        Git git = new Git(repo);
-        git.add().addFilepattern(fileName).call();
-        git.close();
-    }
-
-    /**
      * Pulls from remote repository.
      *
      * @param repo Local Repository Object.

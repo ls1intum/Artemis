@@ -8,7 +8,6 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import org.apache.commons.io.IOUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
@@ -156,7 +155,6 @@ public class RepositoryResource {
 
         InputStream inputStream = request.getInputStream();
         Files.copy(inputStream, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
-
         repository.setFiles(null); // invalidate cache
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert("file", filename)).build();
@@ -173,7 +171,7 @@ public class RepositoryResource {
      * @throws IOException
      */
     @PutMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> updateFile(@PathVariable Long participationId, @RequestParam("file")  String filename, @RequestParam("session") String session, HttpServletRequest request) throws IOException, GitAPIException, InterruptedException {
+    public ResponseEntity<Void> updateFile(@PathVariable Long participationId, @RequestParam("file")  String filename, HttpServletRequest request) throws IOException, InterruptedException {
         log.debug("REST request to update file {} for Participation : {}", filename, participationId);
 
         Participation participation = participationService.findOne(participationId);
@@ -186,15 +184,6 @@ public class RepositoryResource {
 
         InputStream inputStream = request.getInputStream();
         Files.copy(inputStream, file.get().toPath(), StandardCopyOption.REPLACE_EXISTING);
-
-        // Update session file
-        InputStream settingsStream = IOUtils.toInputStream(session, "UTF-8");
-        File sessionFile = new File(new java.io.File(repository.getLocalPath() + File.separator + "session.json"), repository);
-        Files.copy(settingsStream, sessionFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        gitService.get().stageFile(repository, "session.json");
-
-        repository.setFiles(null); // invalidate cache
-
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert("file", filename)).build();
     }
 

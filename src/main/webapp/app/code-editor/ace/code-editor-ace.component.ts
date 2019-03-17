@@ -272,11 +272,18 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
                 }), {});
 
             this.repositoryFileService
-                .update(this.participation.id, fileName, this.editorFileSessions[fileName].code, sessionAnnotations)
+                .update(this.participation.id, fileName, this.editorFileSessions[fileName].code)
                 .debounceTime(this.updateFilesDebounceTime)
                 .distinctUntilChanged()
                 .subscribe(
                     () => {
+                        // update session file
+                        this.repositoryFileService
+                            .update(this.participation.id, 'session.json', JSON.stringify({errors: sessionAnnotations, ts: Date.now()}))
+                            .subscribe(
+                                () => {},
+                                err => console.log('There was an error while saving the session file', err)
+                            );
                         this.editorFileSessions[fileName].unsavedChanges = false;
                         this.updateSaveStatusLabel();
                     },

@@ -1,11 +1,9 @@
-import { HttpClient, HttpEvent, HttpHandler, HttpInterceptor, HttpParams, HttpRequest } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Observable } from 'rxjs/Observable';
-
-import { AceAnnotation } from '../ace-editor';
-import { BuildLogEntry } from '../../entities/build-log';
+import { HttpClient, HttpEvent, HttpHandler, HttpInterceptor, HttpParams, HttpRequest } from '@angular/common/http';
 import { SERVER_API_URL } from '../../app.constants';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { BuildLogEntry } from '../../entities/build-log';
 
 @Injectable({ providedIn: 'root' })
 export class RepositoryService {
@@ -46,9 +44,9 @@ export class RepositoryFileService {
             .map(data => ({ fileContent: data }));
     }
 
-    update(participationId: number, fileName: string, fileContent: string, errors: {[fileName: string]: AceAnnotation[]}): Observable<any> {
+    update(participationId: number, fileName: string, fileContent: string): Observable<any> {
         return this.http.put(`${this.resourceUrl}/${participationId}/file`, fileContent, {
-            params: new HttpParams().set('file', fileName).set('session', JSON.stringify({errors, ts: Date.now()}))
+            params: new HttpParams().set('file', fileName)
         });
     }
 
