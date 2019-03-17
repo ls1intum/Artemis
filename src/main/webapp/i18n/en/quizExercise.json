@@ -155,7 +155,7 @@
                 "shortAnswerQuestionDuplicateMapping": "Question {{index}}: At least one mapping ist duplicated.",
                 "questionTitleLength": "Question {{index}}: Please shorten your question title. Currently it contains more than 250 signs.",
                 "quizTitleLength": "Quiz: The title is too long. Currently it contains more than 250 signs.",
-                "explanationIsMissing": "Question {{index}}: Please insert an explanation for this answer option."
+                "explanationIsMissing": "Question {{index}}: Not every answer option contains an explanation. Please add an explanation!"
             },
             "scoringType": {
                 "all_or_nothing": "All or Nothing",
