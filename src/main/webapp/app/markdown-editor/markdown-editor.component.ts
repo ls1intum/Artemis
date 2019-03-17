@@ -12,10 +12,9 @@ import {
 import { AceEditorComponent } from 'ng2-ace-editor';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
-import { Command, BoldCommand, ItalicCommand, UnderlineCommand, HeadingCommand, CodeCommand, LinkCommand, PictureuploadCommand, OrderedlistCommand, UnorderedlistCommand} from 'app/markdown-editor/commands';
+import { Command, BoldCommand, ItalicCommand, UnderlineCommand, HeadingCommand, CodeCommand, LinkCommand, PictureuploadCommand, OrderedlistCommand, UnorderedlistCommand, ReferenceCommand} from 'app/markdown-editor/commands';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { SpecialCommand } from 'app/markdown-editor/specialCommands';
-import { ReferenceCommand } from 'app/markdown-editor/commands/reference.command';
 
 @Component({
     selector: 'jhi-markdown-editor',

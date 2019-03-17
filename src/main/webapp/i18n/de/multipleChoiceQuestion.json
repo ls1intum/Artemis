@@ -27,12 +27,12 @@
                 "bold": "Bold",
                 "italic": "Italic",
                 "underline": "Underline",
-                "unorderedList": "Unordered List",
-                "heading": "Heading",
+                "unorderedList": "Ungeordnete List",
+                "heading": "Überschrift",
                 "quote": "Quote",
                 "link": "Link",
-                "orderedList": "Ordered List",
-                "imageUpload": "Image Upload",
+                "orderedList": "Geordnete List",
+                "imageUpload": "Anhang",
                 "code": "Code"
             }
         }

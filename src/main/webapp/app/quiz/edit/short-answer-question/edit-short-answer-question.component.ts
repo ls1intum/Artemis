@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { ShortAnswerQuestion } from '../../../entities/short-answer-question';
 import { ShortAnswerSpot } from '../../../entities/short-answer-spot';
 import { ShortAnswerSolution } from '../../../entities/short-answer-solution';
@@ -63,7 +63,8 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     constructor(
         private artemisMarkdown: ArtemisMarkdown,
         private shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
-        private modalService: NgbModal
+        private modalService: NgbModal,
+        private changeDetector: ChangeDetectorRef
     ) {}
 
     ngOnInit(): void {
@@ -122,6 +123,8 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
             },
             this
         );
+
+        this.changeDetector.detectChanges();
     }
 
     /**

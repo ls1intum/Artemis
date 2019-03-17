@@ -50,6 +50,7 @@
                             [(text)]="questionEditorText"
                             [mode]="questionEditorMode"
                             [autoUpdateContent]="questionEditorAutoUpdate"
+                            (textChange)="questionUpdated.emit()"
                             style="min-height: 200px; width:100%; overflow: auto;"
                             class="form-control">
                 </ace-editor>
