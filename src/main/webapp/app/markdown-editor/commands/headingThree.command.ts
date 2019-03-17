@@ -10,7 +10,7 @@ export class HeadingThreeCommand extends Heading {
         let selectedText = this.editor.getSelectedText();
         const isSelected = !!selectedText;
         const startSize = 2;
-        let initText = '';
+        const initText = '';
         const range = this.editor.selection.getRange();
         selectedText = `### ${selectedText || initText}`;
         this.editor.session.replace(range, selectedText);

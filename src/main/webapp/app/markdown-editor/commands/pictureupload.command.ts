@@ -9,7 +9,7 @@ export class PictureuploadCommand extends Command {
         if (!this.editor) { return; }
         let selectedText = this.editor.getSelectedText();
         const isSelected = !!selectedText;
-        let startSize = 2;
+        const startSize = 2;
         const initText = '';
         const range = this.editor.selection.getRange();
         selectedText = `![](http://)`;

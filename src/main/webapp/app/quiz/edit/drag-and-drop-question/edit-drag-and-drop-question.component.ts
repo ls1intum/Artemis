@@ -28,7 +28,7 @@ import { ExplanationCommand } from 'app/markdown-editor/specialCommands/explanat
 import { SpecialCommand } from 'app/markdown-editor/specialCommands/specialCommand';
 import { MarkdownEditorComponent } from 'app/markdown-editor';
 import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
-import {CodeCommand} from 'app/markdown-editor/commands';
+import { CodeCommand } from 'app/markdown-editor/commands';
 
 @Component({
     selector: 'jhi-edit-drag-and-drop-question',
@@ -137,7 +137,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
         /** Check if previousValue wasn't null to avoid firing at component initialization **/
         if (changes.question && changes.question.previousValue != null) {
             this.questionUpdated.emit();
-            //this.changeDetector.detectChanges();
+            // this.changeDetector.detectChanges();
         }
         /** Update backupQuestion if the question changed **/
         if (changes.question && changes.question.currentValue != null) {

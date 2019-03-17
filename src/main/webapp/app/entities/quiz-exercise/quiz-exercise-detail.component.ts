@@ -445,9 +445,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         this.cacheValidation();
     }
 
-
   cacheValidation(): void {
-        //console.log("cache", new Date());
         this.warningQuizCache = false;
         this.quizIsValid = this.validQuiz();
         this.pendingChangesCache = this.pendingChanges();
@@ -537,10 +535,10 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             switch (question.type) {
                 case QuestionType.MULTIPLE_CHOICE:
                     const mcQuestion = question as MultipleChoiceQuestion;
-                    if (mcQuestion.answerOptions.some(answerOption => !answerOption.explanation)){
+                    if (mcQuestion.answerOptions.some(answerOption => !answerOption.explanation)) {
                         this.warningQuizCache = true;
                     }
-                    if (mcQuestion.answerOptions.some(answeroption => answeroption.isCorrect)){
+                    if (mcQuestion.answerOptions.some(answeroption => answeroption.isCorrect)) {
                         return question.title && question.title !== '' && question.title.length < 250;
                     }
                     return false;
@@ -895,19 +893,17 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * @function save
      * @desc Save the quiz to the server and invoke callback functions depending of result
      */
-
-
     save(): void {
         this.onDateTimeChange();
 
-        if (this.hasSavedQuizStarted || !this.pendingChangesCache|| !this.quizIsValid) {
+        if (this.hasSavedQuizStarted || !this.pendingChangesCache || !this.quizIsValid) {
             return;
         }
 
         this.isSaving = true;
         this.parseAllQuestions();
 
-        if (this.quizExercise.id !== undefined) {
+        if ( this.quizExercise.id !== undefined) {
             this.quizExerciseService.update(this.quizExercise).subscribe(
                 (quizExerciseResponse: HttpResponse<QuizExercise>) => {
                     if (quizExerciseResponse.body) {
