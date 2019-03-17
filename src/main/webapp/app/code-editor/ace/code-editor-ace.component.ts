@@ -168,8 +168,8 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
                 .map(({row, column, ...rest}) => {
                     return {
                         ...rest,
-                        row: row >= rowStart ? row + updateRowDiff : row,
-                        column: column >= columnStart ? column + updateColDiff : column
+                        row: row > rowStart ? row + updateRowDiff : row,
+                        column: column > columnStart ? column + updateColDiff : column
                     };
                 });
             this.editorFileSessions[this.selectedFile].errors = updatedAnnotations;
