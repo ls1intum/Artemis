@@ -90,7 +90,9 @@ public class ModelingAssessmentResource extends AssessmentResource {
 
     @GetMapping("/modeling-submissions/{submissionId}/partial-assessment")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")//TODO MJ better path "/modeling-submissions/{submissionId}/result"?
-    //TODO MJ merge with getAssessmentBySubmissionId() ?
+    // TODO MJ merge with getAssessmentBySubmissionId() ?
+    // Note: This endpoint is currently not used and not fully tested after migrating UML models and modeling
+    //       submissions from file system to database.
     public ResponseEntity<Result> getPartialAssessment(@PathVariable Long submissionId) {
         ModelingSubmission submission = modelingSubmissionService.findOneWithEagerResult(submissionId);
         Participation participation = submission.getParticipation();
@@ -100,8 +102,13 @@ public class ModelingAssessmentResource extends AssessmentResource {
         List<Feedback> partialFeedbackAssessment =
             compassService.getPartialAssessment(participation.getExercise().getId(), submission);
         Result result = submission.getResult();
-        result.setFeedbacks(partialFeedbackAssessment);
-        return ResponseEntity.ok(result);
+        if (result != null) {
+            result.getFeedbacks().clear();
+            result.getFeedbacks().addAll(partialFeedbackAssessment);
+            return ResponseEntity.ok(result);
+        } else {
+            return notFound();
+        }
     }
 
     @GetMapping("/modeling-submissions/{submissionId}/result")
