@@ -8,7 +8,7 @@ import ApollonEditor, { ApollonOptions, Point, State } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
 import { Result } from '../entities/result';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
-import { ModelElementType, ModelingAssessment, ModelingAssessmentService } from '../entities/modeling-assessment';
+import { ModelingAssessmentService } from '../entities/modeling-assessment';
 import * as $ from 'jquery';
 import { ModelingEditorService } from './modeling-editor.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -17,6 +17,7 @@ import { JhiWebsocketService } from '../core';
 import { Observable } from 'rxjs/Observable';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
+import { ModelElementType } from 'app/entities/modeling-assessment/uml-element.model';
 
 @Component({
     selector: 'jhi-modeling-editor',
@@ -58,7 +59,8 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
      */
     submissionState: State;
 
-    assessments: ModelingAssessment[];
+    // TODO: rename
+    assessmentResult: Result;
     assessmentsNames: Map<string, Map<string, string>>;
     totalScore: number;
 
@@ -121,13 +123,13 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                         this.initializeEditor();
                         if (this._submission && this._submission.submitted && this.result && this.result.completionDate) {
                             if (this.result.assessments) {
-                                this.assessments = JSON.parse(this.result.assessments);
+                                this.assessmentResult = JSON.parse(this.result.assessments);
                                 this.initializeAssessmentInfo();
                             } else {
                                 this.modelingAssessmentService
-                                    .find(params['participationId'], this._submission.id)
+                                    .getAssessment(this._submission.id)
                                     .subscribe(assessments => {
-                                        this.assessments = assessments.body;
+                                        this.assessmentResult = assessments;
                                         this.initializeAssessmentInfo();
                                     });
                             }
@@ -168,10 +170,10 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         this.jhiWebsocketService.subscribe(this.websocketChannel);
         this.jhiWebsocketService.receive(this.websocketChannel).subscribe(submission => {
             if (submission.submitted) {
-                this._submission = submission;
-                if (this._submission.result && this._submission.result.rated) {
-                    this.modelingAssessmentService.find(this._submission.participation.id, this._submission.id).subscribe(assessments => {
-                        this.assessments = assessments.body;
+                this.submission = submission;
+                if (this.submission.result && this.submission.result.rated) {
+                    this.modelingAssessmentService.getAssessment(this._submission.id).subscribe(assessments => {
+                        this.assessmentResult = assessments;
                         this.initializeAssessmentInfo();
                     });
                 }
@@ -277,8 +279,8 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         this.isSaving = true;
         this.autoSaveTimer = 0;
 
-        if (this._submission.id) {
-            this.modelingSubmissionService.update(this._submission, this._modelingExercise.course.id, this._modelingExercise.id).subscribe(
+        if (this.submission.id) {
+            this.modelingSubmissionService.update(this._submission, this._modelingExercise.id).subscribe(
                 response => {
                     this._submission = response.body;
                     this.result = this._submission.result;
@@ -294,13 +296,14 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                 }
             );
         } else {
-            this.modelingSubmissionService.create(this._submission, this._modelingExercise.course.id, this._modelingExercise.id).subscribe(
+            this.modelingSubmissionService.create(this._submission, this._modelingExercise.id).subscribe(
                 submission => {
                     this._submission = submission.body;
                     this.result = this._submission.result;
                     this.isSaving = false;
                     this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
-                    this.isActive = this._modelingExercise.dueDate == null || new Date() <= this._modelingExercise.dueDate.toDate();
+                    this.isActive = this._modelingExercise.dueDate == null ||
+                        new Date() <= moment(this._modelingExercise.dueDate).toDate();
                     this.subscribeToWebsocket();
                 },
                 error => {
@@ -329,8 +332,8 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         }
 
         if (confirmSubmit) {
-            this._submission.submitted = true;
-            this.modelingSubmissionService.update(this._submission, this._modelingExercise.course.id, this._modelingExercise.id).subscribe(
+            this.submission.submitted = true;
+            this.modelingSubmissionService.update(this._submission, this._modelingExercise.id).subscribe(
                 response => {
                     this._submission = response.body;
                     this.result = this._submission.result;
@@ -339,8 +342,8 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                         const participation = this.participation;
                         participation.results = [this.result];
                         this.participation = Object.assign({}, participation);
-                        this.modelingAssessmentService.find(this.participation.id, this._submission.id).subscribe(assessments => {
-                            this.assessments = assessments.body;
+                        this.modelingAssessmentService.getAssessment(this._submission.id).subscribe(assessments => {
+                            this.assessmentResult = assessments;
                             this.initializeAssessmentInfo();
                         });
                         this.jhiAlertService.success('arTeMiSApp.modelingEditor.submitSuccessfulWithAssessment');
@@ -396,20 +399,21 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
      * Retrieves names and positions for displaying the assessment and calculates the total score
      */
     initializeAssessmentInfo() {
-        if (this.assessments && this._submission && this._submission.model) {
+        if (this.assessmentResult && this._submission && this._submission.model) {
             this.submissionState = JSON.parse(this._submission.model);
-            this.assessmentsNames = this.modelingAssessmentService.getNamesForAssessments(this.assessments, this.submissionState);
-            this.positions = this.modelingAssessmentService.getElementPositions(this.assessments, this.submissionState);
+            this.assessmentsNames = this.modelingAssessmentService.getNamesForAssessments(this.assessmentResult, this.submissionState);
+            this.positions = this.modelingAssessmentService.getElementPositions(this.assessmentResult, this.submissionState);
             let totalScore = 0;
-            for (const assessment of this.assessments) {
-                totalScore += assessment.credits;
+            for (const feedback of this.assessmentResult.feedbacks) {
+                totalScore += feedback.credits;
             }
             this.totalScore = totalScore;
         }
     }
 
     getElementPositions() {
-        this.positions = this.modelingAssessmentService.getElementPositions(this.assessments, this.apollonEditor.getState());
+        // TODO: use Result instead of ModelingAssessment
+        this.positions = this.modelingAssessmentService.getElementPositions(this.assessmentResult, this.apollonEditor.getState());
     }
 
     /**
@@ -443,7 +447,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
      * Opens the modal for the help dialog.
      */
     open(content: any) {
-        this.modalService.open(content, { size: 'lg' });
+        this.modalService.open(content, {size: 'lg'});
     }
 
     /**
@@ -484,7 +488,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         const currentModel = this._submission.model;
         this._submission = new ModelingSubmission();
         this._submission.model = currentModel;
-        this.assessments = [];
+        this.assessmentResult = null;
         this.result = null; // TODO: think about how we could visualize old results and assessments after retry
 
         clearInterval(this.autoSaveInterval);

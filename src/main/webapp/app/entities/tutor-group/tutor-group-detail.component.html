@@ -1,0 +1,63 @@
+<div class="row justify-content-center">
+    <div class="col-8">
+        <div *ngIf="tutorGroup">
+            <h2><span jhiTranslate="artemisApp.tutorGroup.detail.title">Tutor Group</span> {{tutorGroup.id}}</h2>
+            <hr>
+            <jhi-alert-error></jhi-alert-error>
+            <dl class="row-md jh-entity-details">
+                <dt><span jhiTranslate="artemisApp.tutorGroup.name">Name</span></dt>
+                <dd>
+                    <span>{{tutorGroup.name}}</span>
+                </dd>
+                <dt><span jhiTranslate="artemisApp.tutorGroup.capacity">Capacity</span></dt>
+                <dd>
+                    <span>{{tutorGroup.capacity}}</span>
+                </dd>
+                <dt><span jhiTranslate="artemisApp.tutorGroup.weekday">Weekday</span></dt>
+                <dd>
+                    <span jhiTranslate="{{'artemisApp.Weekday.' + tutorGroup.weekday}}">{{tutorGroup.weekday}}</span>
+                </dd>
+                <dt><span jhiTranslate="artemisApp.tutorGroup.timeSlot">Time Slot</span></dt>
+                <dd>
+                    <span>{{tutorGroup.timeSlot}}</span>
+                </dd>
+                <dt><span jhiTranslate="artemisApp.tutorGroup.language">Language</span></dt>
+                <dd>
+                    <span jhiTranslate="{{'artemisApp.Language.' + tutorGroup.language}}">{{tutorGroup.language}}</span>
+                </dd>
+                <dt><span jhiTranslate="artemisApp.tutorGroup.room">Room</span></dt>
+                <dd>
+                    <span>{{tutorGroup.room}}</span>
+                </dd>
+                <dt><span jhiTranslate="artemisApp.tutorGroup.tutor">Tutor</span></dt>
+                <dd>
+                    {{tutorGroup.tutor?.id}}
+                </dd>
+                <dt><span jhiTranslate="artemisApp.tutorGroup.students">Students</span></dt>
+                <dd>
+                    <span *ngFor="let students of tutorGroup.students; let last = last">
+                        {{students.id}}{{last ? '' : ', '}}
+                    </span>
+                </dd>
+                <dt><span jhiTranslate="artemisApp.tutorGroup.course">Course</span></dt>
+                <dd>
+                    <div *ngIf="tutorGroup.course">
+                        <a [routerLink]="['/course', tutorGroup.course?.id, 'view']">{{tutorGroup.course?.id}}</a>
+                    </div>
+                </dd>
+            </dl>
+
+            <button type="submit"
+                    (click)="previousState()"
+                    class="btn btn-info">
+                <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
+            </button>
+
+            <button type="button"
+                    [routerLink]="['/tutor-group', tutorGroup.id, 'edit']"
+                    class="btn btn-primary">
+                <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+            </button>
+        </div>
+    </div>
+</div>

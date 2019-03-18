@@ -1,8 +1,9 @@
 package de.tum.in.www1.artemis.domain;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.Entity;
+import javax.persistence.Lob;
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -15,8 +16,8 @@ public class ModelingSubmission extends Submission implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @Transient
-    @JsonProperty
+    @Column(name = "model")
+    @Lob
     private String model;
 
     @Column(name = "explanation_text")

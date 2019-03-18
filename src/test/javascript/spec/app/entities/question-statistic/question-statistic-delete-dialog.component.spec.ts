@@ -5,8 +5,8 @@ import { Observable, of } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
 
 import { ArTeMiSTestModule } from '../../../test.module';
-import { QuestionStatisticDeleteDialogComponent } from 'app/entities/question-statistic/question-statistic-delete-dialog.component';
-import { QuestionStatisticService } from 'app/entities/question-statistic/question-statistic.service';
+import { QuestionStatisticDeleteDialogComponent } from 'app/entities/quiz-question-statistic/question-statistic-delete-dialog.component';
+import { QuestionStatisticService } from 'app/entities/quiz-question-statistic/quiz-question-statistic.service';
 
 describe('Component Tests', () => {
     describe('QuestionStatistic Management Delete Component', () => {

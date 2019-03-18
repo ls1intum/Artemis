@@ -4,8 +4,8 @@ import { Observable, of } from 'rxjs';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 
 import { ArTeMiSTestModule } from '../../../test.module';
-import { QuestionStatisticComponent } from 'app/entities/question-statistic/question-statistic.component';
-import { QuestionStatisticService } from 'app/entities/question-statistic/question-statistic.service';
+import { QuestionStatisticComponent } from 'app/entities/quiz-question-statistic/question-statistic.component';
+import { QuestionStatisticService } from 'app/entities/quiz-question-statistic/quiz-question-statistic.service';
 import { QuestionStatistic } from 'app/shared/model/question-statistic.model';
 
 describe('Component Tests', () => {

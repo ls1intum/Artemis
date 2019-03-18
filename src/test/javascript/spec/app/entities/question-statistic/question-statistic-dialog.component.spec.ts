@@ -6,17 +6,17 @@ import { Observable } from 'rxjs/Observable';
 import { JhiEventManager } from 'ng-jhipster';
 
 import { ArTEMiSTestModule } from '../../../test.module';
-import { QuestionStatisticDialogComponent } from '../../../../../../main/webapp/app/entities/question-statistic/question-statistic-dialog.component';
-import { QuestionStatisticService } from '../../../../../../main/webapp/app/entities/question-statistic/question-statistic.service';
-import { QuestionStatistic } from '../../../../../../main/webapp/app/entities/question-statistic/question-statistic.model';
-import { QuestionService } from '../../../../../../main/webapp/app/entities/question';
+import { QuestionStatisticDialogComponent } from '../../../../../../main/webapp/app/entities/quiz-question-statistic/question-statistic-dialog.component';
+import { QuizQuestionStatisticService } from '../../../../../../main/webapp/app/entities/quiz-question-statistic/quiz-question-statistic.service';
+import { QuizQuestionStatistic } from '../../../../../../main/webapp/app/entities/quiz-question-statistic/quiz-question-statistic.model';
+import { QuestionService } from '../../../../../../main/webapp/app/entities/quiz-question';
 
 describe('Component Tests', () => {
 
     describe('QuestionStatistic Management Dialog Component', () => {
         let comp: QuestionStatisticDialogComponent;
         let fixture: ComponentFixture<QuestionStatisticDialogComponent>;
-        let service: QuestionStatisticService;
+        let service: QuizQuestionStatisticService;
         let mockEventManager: any;
         let mockActiveModal: any;
 
@@ -26,7 +26,7 @@ describe('Component Tests', () => {
                 declarations: [QuestionStatisticDialogComponent],
                 providers: [
                     QuestionService,
-                    QuestionStatisticService
+                    QuizQuestionStatisticService
                 ]
             })
             .overrideTemplate(QuestionStatisticDialogComponent, '')
@@ -36,7 +36,7 @@ describe('Component Tests', () => {
         beforeEach(() => {
             fixture = TestBed.createComponent(QuestionStatisticDialogComponent);
             comp = fixture.componentInstance;
-            service = fixture.debugElement.injector.get(QuestionStatisticService);
+            service = fixture.debugElement.injector.get(QuizQuestionStatisticService);
             mockEventManager = fixture.debugElement.injector.get(JhiEventManager);
             mockActiveModal = fixture.debugElement.injector.get(NgbActiveModal);
         });
@@ -46,7 +46,7 @@ describe('Component Tests', () => {
                 inject([],
                     fakeAsync(() => {
                         // GIVEN
-                        const entity = new QuestionStatistic(123);
+                        const entity = new QuizQuestionStatistic(123);
                         spyOn(service, 'update').and.returnValue(Observable.of(new HttpResponse({body: entity})));
                         comp.questionStatistic = entity;
                         // WHEN
@@ -66,7 +66,7 @@ describe('Component Tests', () => {
                 inject([],
                     fakeAsync(() => {
                         // GIVEN
-                        const entity = new QuestionStatistic();
+                        const entity = new QuizQuestionStatistic();
                         spyOn(service, 'create').and.returnValue(Observable.of(new HttpResponse({body: entity})));
                         comp.questionStatistic = entity;
                         // WHEN

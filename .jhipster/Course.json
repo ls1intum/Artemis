@@ -6,6 +6,10 @@
             "fieldType": "String"
         },
         {
+            "fieldName": "description",
+            "fieldType": "String"
+        },
+        {
             "fieldName": "shortName",
             "fieldType": "String"
         },
@@ -32,17 +36,45 @@
         {
             "fieldName": "onlineCourse",
             "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "maxComplaints",
+            "fieldType": "Integer"
+        },
+        {
+            "fieldName": "color",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "courseIcon",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "registrationEnabled",
+            "fieldType": "Boolean"
         }
     ],
     "relationships": [
         {
             "relationshipType": "one-to-many",
-            "relationshipName": "exercises",
             "otherEntityName": "exercise",
-            "otherEntityRelationshipName": "course"
+            "otherEntityRelationshipName": "course",
+            "relationshipName": "exercises"
+        },
+        {
+            "relationshipType": "one-to-many",
+            "otherEntityName": "lecture",
+            "otherEntityRelationshipName": "course",
+            "relationshipName": "lectures"
+        },
+        {
+            "relationshipType": "one-to-many",
+            "otherEntityName": "tutorGroup",
+            "otherEntityRelationshipName": "course",
+            "relationshipName": "tutorGroups"
         }
     ],
-    "changelogDate": "20180927081351",
+    "changelogDate": "20190315161910",
     "entityTableName": "course",
     "dto": "no",
     "pagination": "no",

@@ -10,6 +10,14 @@
             "fieldType": "String"
         },
         {
+            "fieldName": "reference",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "credits",
+            "fieldType": "Double"
+        },
+        {
             "fieldName": "positive",
             "fieldType": "Boolean"
         },
@@ -22,12 +30,13 @@
     "relationships": [
         {
             "relationshipType": "many-to-one",
-            "relationshipName": "result",
             "otherEntityName": "exerciseResult",
+            "otherEntityRelationshipName": "feedbacks",
+            "relationshipName": "result",
             "otherEntityField": "id"
         }
     ],
-    "changelogDate": "20180927081410",
+    "changelogDate": "20190315161932",
     "entityTableName": "feedback",
     "dto": "no",
     "pagination": "no",

@@ -321,10 +321,14 @@ public class Participation implements Serializable {
             return Optional.empty();
         }
 
-        //TODO: what happens if the submissionDate is null?
-        return Optional.of(submissions.stream()
-            .min((r1, r2) -> r2.getSubmissionDate().compareTo(r1.getSubmissionDate()))
-            .orElse(null));
+        return submissions.stream().max((s1, s2) -> {
+            if (s1.getSubmissionDate() == null || s2.getSubmissionDate() == null) {
+                //this case should not happen, but in the rare case we can compare the ids
+                //newer ids are typically later
+                return s1.getId().compareTo(s2.getId());
+            }
+            return s1.getSubmissionDate().compareTo(s2.getSubmissionDate());
+        });
     }
 
     private <T extends Submission> Optional<T> findLatestSubmissionOfType(Class<T> submissionType) {

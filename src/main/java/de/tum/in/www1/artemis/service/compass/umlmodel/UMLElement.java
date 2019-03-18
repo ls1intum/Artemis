@@ -7,20 +7,19 @@ import de.tum.in.www1.artemis.service.compass.assessment.Context;
 
 import java.util.Objects;
 
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")//Mapping to ModelElementTypes in Client
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = UMLClass.class, name = "class"),
+    @JsonSubTypes.Type(value = UMLAttribute.class, name = "attribute"),
+    @JsonSubTypes.Type(value = UMLMethod.class, name = "method"),
+    @JsonSubTypes.Type(value = UMLAssociation.class, name = "relationship")
+})
 public abstract class UMLElement {
 
     int elementID; //id of similarity set the element belongs to
     @JsonProperty("id")
     String jsonElementID; // unique element id //TODO rename into uniqueId?
     private Context context;
-
-    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")//Mapping to ModelElementTypes in Client
-    @JsonSubTypes({
-        @JsonSubTypes.Type(value = UMLClass.class, name = "class"),
-        @JsonSubTypes.Type(value = UMLAttribute.class, name = "attribute"),
-        @JsonSubTypes.Type(value = UMLMethod.class, name = "method"),
-        @JsonSubTypes.Type(value = UMLAssociation.class, name = "relationship")
-    })
 
     /**
      * Compare this with another element to calculate the similarity

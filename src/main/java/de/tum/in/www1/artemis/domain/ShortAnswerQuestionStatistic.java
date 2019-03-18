@@ -16,7 +16,7 @@ import java.util.Set;
 @Entity
 @DiscriminatorValue(value="SA")
 @JsonTypeName("short-answer")
-public class ShortAnswerQuestionStatistic extends QuestionStatistic implements Serializable {
+public class ShortAnswerQuestionStatistic extends QuizQuestionStatistic implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -162,7 +162,7 @@ public class ShortAnswerQuestionStatistic extends QuestionStatistic implements S
                 }
             }
             // change rated correctCounter if answer is complete correct
-            if(getQuestion().isAnswerCorrect(shortAnswerSubmittedAnswer)) {
+            if(getQuizQuestion().isAnswerCorrect(shortAnswerSubmittedAnswer)) {
                 setRatedCorrectCounter(getRatedCorrectCounter() + change);
             }
         }
@@ -191,7 +191,7 @@ public class ShortAnswerQuestionStatistic extends QuestionStatistic implements S
                 }
             }
             // change unrated correctCounter if answer is complete correct
-            if(getQuestion().isAnswerCorrect(shortAnswerSubmittedAnswer)) {
+            if(getQuizQuestion().isAnswerCorrect(shortAnswerSubmittedAnswer)) {
                 setUnRatedCorrectCounter(getUnRatedCorrectCounter() + change);
             }
         }

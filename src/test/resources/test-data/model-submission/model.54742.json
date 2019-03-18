@@ -1,0 +1,319 @@
+{
+  "version": "1.0",
+  "entities": {
+    "allIds": [
+      "210b8694-a197-4c1c-a705-e528a58cb1fe",
+      "769cf61e-776f-4af1-8612-14dc0a7f9394",
+      "9683914b-e983-4501-b33b-d700556c8f3d",
+      "611c2a2c-549f-427c-8ffa-f4906b3368ac",
+      "8750effc-2803-43be-9913-8a7b215c865a",
+      "434d588e-2648-4387-b99b-900f6fa7736b"
+    ],
+    "byId": {
+      "210b8694-a197-4c1c-a705-e528a58cb1fe": {
+        "id": "210b8694-a197-4c1c-a705-e528a58cb1fe",
+        "kind": "INTERFACE",
+        "name": "AccessStrategy",
+        "position": {
+          "x": 780,
+          "y": 200
+        },
+        "size": {
+          "width": 200,
+          "height": 80
+        },
+        "attributes": [],
+        "methods": [
+          {
+            "id": "7e0a1117-e4ee-4143-a046-c9425ef45cf0",
+            "name": "+ connectToInternet()"
+          }
+        ],
+        "renderMode": {
+          "showAttributes": true,
+          "showMethods": true
+        }
+      },
+      "769cf61e-776f-4af1-8612-14dc0a7f9394": {
+        "id": "769cf61e-776f-4af1-8612-14dc0a7f9394",
+        "kind": "CLASS",
+        "name": "WiFi",
+        "position": {
+          "x": 590,
+          "y": 360
+        },
+        "size": {
+          "width": 200,
+          "height": 70
+        },
+        "attributes": [],
+        "methods": [
+          {
+            "id": "c741ffa1-74a0-4f58-bad3-7cb3e877f548",
+            "name": "+ connectToInternet()"
+          }
+        ],
+        "renderMode": {
+          "showAttributes": true,
+          "showMethods": true
+        }
+      },
+      "9683914b-e983-4501-b33b-d700556c8f3d": {
+        "id": "9683914b-e983-4501-b33b-d700556c8f3d",
+        "kind": "CLASS",
+        "name": "MobileData",
+        "position": {
+          "x": 960,
+          "y": 360
+        },
+        "size": {
+          "width": 200,
+          "height": 70
+        },
+        "attributes": [],
+        "methods": [
+          {
+            "id": "30f7f87d-e28d-4c5f-b75d-daf956f4cf9d",
+            "name": "+ connectTotInternet()"
+          }
+        ],
+        "renderMode": {
+          "showAttributes": true,
+          "showMethods": true
+        }
+      },
+      "611c2a2c-549f-427c-8ffa-f4906b3368ac": {
+        "id": "611c2a2c-549f-427c-8ffa-f4906b3368ac",
+        "kind": "CLASS",
+        "name": "Browser",
+        "position": {
+          "x": 280,
+          "y": 60
+        },
+        "size": {
+          "width": 200,
+          "height": 40
+        },
+        "attributes": [],
+        "methods": [],
+        "renderMode": {
+          "showAttributes": true,
+          "showMethods": true
+        }
+      },
+      "8750effc-2803-43be-9913-8a7b215c865a": {
+        "id": "8750effc-2803-43be-9913-8a7b215c865a",
+        "kind": "CLASS",
+        "name": "Context",
+        "position": {
+          "x": 460,
+          "y": 190
+        },
+        "size": {
+          "width": 200,
+          "height": 100
+        },
+        "attributes": [],
+        "methods": [
+          {
+            "id": "c0a87a50-5d94-4732-9277-90affbd8cd35",
+            "name": "+ connect()"
+          },
+          {
+            "id": "d3cbdad5-00b0-4d49-b275-bf893ae41606",
+            "name": "+ selectConnectionType()"
+          }
+        ],
+        "renderMode": {
+          "showAttributes": true,
+          "showMethods": true
+        }
+      },
+      "434d588e-2648-4387-b99b-900f6fa7736b": {
+        "id": "434d588e-2648-4387-b99b-900f6fa7736b",
+        "kind": "CLASS",
+        "name": "Policy",
+        "position": {
+          "x": 650,
+          "y": 60
+        },
+        "size": {
+          "width": 200,
+          "height": 40
+        },
+        "attributes": [],
+        "methods": [],
+        "renderMode": {
+          "showAttributes": true,
+          "showMethods": true
+        }
+      }
+    }
+  },
+  "relationships": {
+    "allIds": [
+      "65c7bf6c-0e1a-4199-82a6-2564a4db6e0e",
+      "749b1793-620e-47fa-af3e-816c0c5ff590",
+      "9a610b75-3e16-4a71-8521-2ba4b24ac568",
+      "dbdb6056-5120-4ca5-b4bb-6a56a2185f19",
+      "d60eb3ed-ca8a-432f-8e9d-fec93594ea16"
+    ],
+    "byId": {
+      "65c7bf6c-0e1a-4199-82a6-2564a4db6e0e": {
+        "id": "65c7bf6c-0e1a-4199-82a6-2564a4db6e0e",
+        "name": "Relationship",
+        "selected": false,
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "kind": "ASSOCIATION_BIDIRECTIONAL",
+        "source": {
+          "entityId": "769cf61e-776f-4af1-8612-14dc0a7f9394",
+          "multiplicity": null,
+          "role": null,
+          "edge": "TOP",
+          "edgeOffset": 0.5
+        },
+        "target": {
+          "entityId": "210b8694-a197-4c1c-a705-e528a58cb1fe",
+          "multiplicity": null,
+          "role": null,
+          "edge": "BOTTOM",
+          "edgeOffset": 0.5
+        },
+        "straightLine": false,
+        "owner": null,
+        "interactive": false
+      },
+      "749b1793-620e-47fa-af3e-816c0c5ff590": {
+        "id": "749b1793-620e-47fa-af3e-816c0c5ff590",
+        "name": "Relationship",
+        "selected": false,
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "kind": "INHERITANCE",
+        "source": {
+          "entityId": "9683914b-e983-4501-b33b-d700556c8f3d",
+          "multiplicity": null,
+          "role": null,
+          "edge": "TOP",
+          "edgeOffset": 0.5
+        },
+        "target": {
+          "entityId": "210b8694-a197-4c1c-a705-e528a58cb1fe",
+          "multiplicity": null,
+          "role": null,
+          "edge": "BOTTOM",
+          "edgeOffset": 0.5
+        },
+        "straightLine": false,
+        "owner": null,
+        "interactive": false
+      },
+      "9a610b75-3e16-4a71-8521-2ba4b24ac568": {
+        "id": "9a610b75-3e16-4a71-8521-2ba4b24ac568",
+        "name": "Relationship",
+        "selected": false,
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "kind": "DEPENDENCY",
+        "source": {
+          "entityId": "611c2a2c-549f-427c-8ffa-f4906b3368ac",
+          "multiplicity": null,
+          "role": null,
+          "edge": "BOTTOM",
+          "edgeOffset": 0.5
+        },
+        "target": {
+          "entityId": "8750effc-2803-43be-9913-8a7b215c865a",
+          "multiplicity": null,
+          "role": null,
+          "edge": "TOP",
+          "edgeOffset": 0.5
+        },
+        "straightLine": false,
+        "owner": null,
+        "interactive": false
+      },
+      "dbdb6056-5120-4ca5-b4bb-6a56a2185f19": {
+        "id": "dbdb6056-5120-4ca5-b4bb-6a56a2185f19",
+        "name": "Relationship",
+        "selected": false,
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "kind": "DEPENDENCY",
+        "source": {
+          "entityId": "434d588e-2648-4387-b99b-900f6fa7736b",
+          "multiplicity": null,
+          "role": null,
+          "edge": "BOTTOM",
+          "edgeOffset": 0.5
+        },
+        "target": {
+          "entityId": "8750effc-2803-43be-9913-8a7b215c865a",
+          "multiplicity": null,
+          "role": null,
+          "edge": "TOP",
+          "edgeOffset": 0.5
+        },
+        "straightLine": false,
+        "owner": null,
+        "interactive": false
+      },
+      "d60eb3ed-ca8a-432f-8e9d-fec93594ea16": {
+        "id": "d60eb3ed-ca8a-432f-8e9d-fec93594ea16",
+        "name": "Relationship",
+        "selected": false,
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "kind": "ASSOCIATION_UNIDIRECTIONAL",
+        "source": {
+          "entityId": "8750effc-2803-43be-9913-8a7b215c865a",
+          "multiplicity": null,
+          "role": null,
+          "edge": "RIGHT",
+          "edgeOffset": 0.5
+        },
+        "target": {
+          "entityId": "210b8694-a197-4c1c-a705-e528a58cb1fe",
+          "multiplicity": null,
+          "role": null,
+          "edge": "LEFT",
+          "edgeOffset": 0.5
+        },
+        "straightLine": false,
+        "owner": null,
+        "interactive": false
+      }
+    }
+  },
+  "interactiveElements": {
+    "allIds": []
+  },
+  "editor": {
+    "canvasSize": {
+      "width": 1600,
+      "height": 1600
+    },
+    "gridSize": 10
+  }
+}

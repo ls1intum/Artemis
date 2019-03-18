@@ -1,0 +1,210 @@
+{
+    "version": "1.0",
+    "entities": {
+        "allIds": [
+            "6aba5764-d102-4740-9675-b2bd0a4f2681",
+            "f96984a2-2ce0-46f6-9211-ec389b19512b",
+            "1d10b2d1-2e6e-4579-9298-ba68618c6928",
+            "2bc2367e-e300-4512-9f6c-08f8e51d38ae"
+        ],
+        "byId": {
+            "6aba5764-d102-4740-9675-b2bd0a4f2681": {
+                "id": "6aba5764-d102-4740-9675-b2bd0a4f2681",
+                "kind": "CLASS",
+                "name": "Strategy1",
+                "position": {
+                    "x": 660,
+                    "y": 510
+                },
+                "size": {
+                    "width": 200,
+                    "height": 70
+                },
+                "attributes": [],
+                "methods": [
+                    {
+                        "id": "c39d6521-e7a1-43bf-8ca2-9c9a1b716569",
+                        "name": "+ connect()"
+                    }
+                ],
+                "renderMode": {
+                    "showAttributes": true,
+                    "showMethods": true
+                }
+            },
+            "f96984a2-2ce0-46f6-9211-ec389b19512b": {
+                "id": "f96984a2-2ce0-46f6-9211-ec389b19512b",
+                "kind": "CLASS",
+                "name": "Strategy2",
+                "position": {
+                    "x": 1000,
+                    "y": 510
+                },
+                "size": {
+                    "width": 200,
+                    "height": 70
+                },
+                "attributes": [],
+                "methods": [
+                    {
+                        "id": "ec697b17-d33d-4c85-b181-7c3f0901e9a7",
+                        "name": "+ connect()"
+                    }
+                ],
+                "renderMode": {
+                    "showAttributes": true,
+                    "showMethods": true
+                }
+            },
+            "1d10b2d1-2e6e-4579-9298-ba68618c6928": {
+                "id": "1d10b2d1-2e6e-4579-9298-ba68618c6928",
+                "kind": "ABSTRACT_CLASS",
+                "name": "AbstractStrategy",
+                "position": {
+                    "x": 830,
+                    "y": 340
+                },
+                "size": {
+                    "width": 200,
+                    "height": 70
+                },
+                "attributes": [],
+                "methods": [
+                    {
+                        "id": "84fdf0a9-4f52-4114-a8f3-eae08ccd4a6a",
+                        "name": "+ connect()"
+                    }
+                ],
+                "renderMode": {
+                    "showAttributes": true,
+                    "showMethods": true
+                }
+            },
+            "2bc2367e-e300-4512-9f6c-08f8e51d38ae": {
+                "id": "2bc2367e-e300-4512-9f6c-08f8e51d38ae",
+                "kind": "CLASS",
+                "name": "Client",
+                "position": {
+                    "x": 450,
+                    "y": 310
+                },
+                "size": {
+                    "width": 200,
+                    "height": 40
+                },
+                "attributes": [],
+                "methods": [],
+                "renderMode": {
+                    "showAttributes": true,
+                    "showMethods": true
+                }
+            }
+        }
+    },
+    "relationships": {
+        "allIds": [
+            "eb2392c6-c87d-40b0-8867-26c27575a6ae",
+            "593f9a18-9563-4e8f-86bc-d6f77734f692",
+            "858f8bcc-876e-4e64-ac6f-f8894f54a5ee"
+        ],
+        "byId": {
+            "eb2392c6-c87d-40b0-8867-26c27575a6ae": {
+                "id": "eb2392c6-c87d-40b0-8867-26c27575a6ae",
+                "name": "Relationship",
+                "selected": false,
+                "bounds": {
+                    "x": 0,
+                    "y": 0,
+                    "width": 0,
+                    "height": 0
+                },
+                "kind": "INHERITANCE",
+                "source": {
+                    "entityId": "f96984a2-2ce0-46f6-9211-ec389b19512b",
+                    "multiplicity": null,
+                    "role": null,
+                    "edge": "TOP",
+                    "edgeOffset": 0.5
+                },
+                "target": {
+                    "entityId": "1d10b2d1-2e6e-4579-9298-ba68618c6928",
+                    "multiplicity": null,
+                    "role": null,
+                    "edge": "BOTTOM",
+                    "edgeOffset": 0.5
+                },
+                "straightLine": false,
+                "owner": null,
+                "interactive": false
+            },
+            "593f9a18-9563-4e8f-86bc-d6f77734f692": {
+                "id": "593f9a18-9563-4e8f-86bc-d6f77734f692",
+                "name": "Relationship",
+                "selected": false,
+                "bounds": {
+                    "x": 0,
+                    "y": 0,
+                    "width": 0,
+                    "height": 0
+                },
+                "kind": "INHERITANCE",
+                "source": {
+                    "entityId": "6aba5764-d102-4740-9675-b2bd0a4f2681",
+                    "multiplicity": null,
+                    "role": null,
+                    "edge": "TOP",
+                    "edgeOffset": 0.5
+                },
+                "target": {
+                    "entityId": "1d10b2d1-2e6e-4579-9298-ba68618c6928",
+                    "multiplicity": null,
+                    "role": null,
+                    "edge": "BOTTOM",
+                    "edgeOffset": 0.5
+                },
+                "straightLine": false,
+                "owner": null,
+                "interactive": false
+            },
+            "858f8bcc-876e-4e64-ac6f-f8894f54a5ee": {
+                "id": "858f8bcc-876e-4e64-ac6f-f8894f54a5ee",
+                "name": "Relationship",
+                "selected": false,
+                "bounds": {
+                    "x": 0,
+                    "y": 0,
+                    "width": 0,
+                    "height": 0
+                },
+                "kind": "ASSOCIATION_UNIDIRECTIONAL",
+                "source": {
+                    "entityId": "2bc2367e-e300-4512-9f6c-08f8e51d38ae",
+                    "multiplicity": null,
+                    "role": null,
+                    "edge": "RIGHT",
+                    "edgeOffset": 0.5
+                },
+                "target": {
+                    "entityId": "1d10b2d1-2e6e-4579-9298-ba68618c6928",
+                    "multiplicity": null,
+                    "role": null,
+                    "edge": "LEFT",
+                    "edgeOffset": 0.5
+                },
+                "straightLine": false,
+                "owner": null,
+                "interactive": false
+            }
+        }
+    },
+    "interactiveElements": {
+        "allIds": []
+    },
+    "editor": {
+        "canvasSize": {
+            "width": 1600,
+            "height": 1600
+        },
+        "gridSize": 10
+    }
+}

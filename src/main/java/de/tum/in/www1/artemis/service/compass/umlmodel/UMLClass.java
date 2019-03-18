@@ -30,6 +30,11 @@ public class UMLClass extends UMLElement {
     private List<UMLAttribute> attributes;
     private List<UMLMethod> methods;
 
+
+    public UMLClass() {
+    }
+
+
     public UMLClass(String name, List<UMLAttribute> attributes, List<UMLMethod> methodList, String jsonElementID, String type) {
         this.name = name;
         this.attributes = attributes;

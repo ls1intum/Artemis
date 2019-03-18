@@ -3,98 +3,87 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from '../../app.constants';
 
-import { ModelElementType, ModelingAssessment } from './modeling-assessment.model';
 import { Result } from '../result';
-import { ENTITY_KIND_HEIGHT, ENTITY_MEMBER_HEIGHT, ENTITY_MEMBER_LIST_VERTICAL_PADDING, ENTITY_NAME_HEIGHT, EntityKind, Point, RectEdge, RelationshipKind, State } from '@ls1intum/apollon';
+import {
+    ENTITY_KIND_HEIGHT,
+    ENTITY_MEMBER_HEIGHT,
+    ENTITY_MEMBER_LIST_VERTICAL_PADDING,
+    ENTITY_NAME_HEIGHT,
+    EntityKind,
+    Point,
+    RectEdge,
+    RelationshipKind,
+    State
+} from '@ls1intum/apollon';
+import { ModelElementType } from 'app/entities/modeling-assessment/uml-element.model';
+import { Feedback } from 'app/entities/feedback';
 
 export type EntityResponseType = HttpResponse<Result>;
 
 @Injectable({providedIn: 'root'})
 export class ModelingAssessmentService {
-    private resourceUrl = SERVER_API_URL + 'api/modeling-assessments';
+    private resourceUrl = SERVER_API_URL + 'api';
 
     constructor(private http: HttpClient) {
     }
 
-    save(modelingAssessment: ModelingAssessment[], exerciseId: number, resultId: number): Observable<EntityResponseType> {
-        return this.http
-            .put<Result>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}`, modelingAssessment, {observe: 'response'})
-            .map((res: EntityResponseType) => this.convertResponse(res));
-    }
-
-    submit(modelingAssessment: ModelingAssessment[], exerciseId: number, resultId: number, ignoreConflicts = false): Observable<any> {
-        let url = `${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}/submit`;
-        if (ignoreConflicts) {
-            url += '?ignoreConflict=true';
+    save(feedbacks: Feedback[], submissionId: number, submit = false, ignoreConflicts = false): Observable<Result> {
+        let url = `${this.resourceUrl}/modeling-submissions/${submissionId}/feedback`;
+        if (submit) {
+            url += '?submit=true';
+            if (ignoreConflicts) {
+                url += '&ignoreConflicts=true';
+            }
         }
-        return this.http.put<any>(url, modelingAssessment);
+        return this.http
+            .put<Result>(url, feedbacks)
+            .map( res => this.convertResult(res));
     }
 
-    find(participationId: number, submissionId: number): Observable<HttpResponse<ModelingAssessment[]>> {
+    getAssessment(submissionId: number): Observable<Result> {
         return this.http
-            .get<ModelingAssessment[]>(`${this.resourceUrl}/participation/${participationId}/submission/${submissionId}`, {
-                observe: 'response'
-            })
-            .map(res => this.convertArrayResponse(res));
+            .get<Result>(`${this.resourceUrl}/modeling-submissions/${submissionId}/result`)
+            .map( res => this.convertResult(res));
     }
 
     getOptimalSubmissions(exerciseId: number): Observable<HttpResponse<any>> {
-        return this.http.get(`${this.resourceUrl}/exercise/${exerciseId}/optimal-model-submissions`, {observe: 'response'});
-    }
-
-    getPartialAssessment(exerciseId: number, submissionId: number): Observable<HttpResponse<ModelingAssessment[]>> {
         return this.http
-            .get<ModelingAssessment[]>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}/partial-assessment`, {
-                observe: 'response'
-            })
-            .map(res => this.convertArrayResponse(res));
+            .get(`${this.resourceUrl}/exercises/${exerciseId}/optimal-model-submissions`, {observe: 'response'});
     }
 
-    getDataForEditor(exerciseId: number, submissionId: number): Observable<any> {
-        return this.http.get(`api/assessment-editor/${exerciseId}/${submissionId}`, {responseType: 'json'});
+    getPartialAssessment(submissionId: number): Observable<Result> {
+        return this.http
+            .get<Result>(`${this.resourceUrl}/modeling-submissions/${submissionId}/partial-assessment`)
+            .map( res => this.convertResult(res));
     }
 
     resetOptimality(exerciseId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/exercise/${exerciseId}/optimal-model-submissions`, {observe: 'response'});
-    }
-
-    private convertResponse(res: EntityResponseType): EntityResponseType {
-        const body: Result = this.convertItemFromServer(res.body);
-        return res.clone({body});
+        return this.http
+            .delete<void>(`${this.resourceUrl}/exercises/${exerciseId}/optimal-model-submissions`, {observe: 'response'});
     }
 
     /**
-     * Convert a returned JSON object to Result.
+     * Iterates over all feedback elements of a response and converts the reference field of the feedback into
+     * separate referenceType and referenceId fields. The reference field is of the form <referenceType>:<referenceId>.
      */
-    private convertItemFromServer(result: Result): Result {
-        const copy: Result = Object.assign({}, result);
-        return copy;
-    }
-
-    private convertAssessmentFromServer(assessment: ModelingAssessment): ModelingAssessment {
-        const copy: ModelingAssessment = Object.assign({}, assessment);
-        return copy;
-    }
-
-    private convertArrayResponse(res: HttpResponse<ModelingAssessment[]>): HttpResponse<ModelingAssessment[]> {
-        const jsonResponse: ModelingAssessment[] = res.body;
-        const body: ModelingAssessment[] = [];
-        if (jsonResponse) {
-            for (let i = 0; i < jsonResponse.length; i++) {
-                body.push(this.convertAssessmentFromServer(jsonResponse[i]));
-            }
+    convertResult(result: Result): Result {
+        for (const feedback of result.feedbacks) {
+            feedback.referenceType = feedback.reference.split(':')[0] as ModelElementType;
+            feedback.referenceId = feedback.reference.split(':')[1];
         }
-        return res.clone({body});
+        return result;
     }
 
     /**
      * Creates the labels for the assessment elements for displaying them in the modeling and assessment editor.
      */
-    getNamesForAssessments(assessments: ModelingAssessment[], model: State): Map<string, Map<string, string>> {
+    getNamesForAssessments(result: Result, model: State): Map<string, Map<string, string>> {
         const assessmentsNames = new Map<string, Map<string, string>>();
-        for (const assessment of assessments) {
-            if (assessment.type === ModelElementType.CLASS) {
-                const classElement = model.entities.byId[assessment.id];
+        for (const feedback of result.feedbacks) {
+            const referencedModelType = feedback.referenceType;
+            const referencedModelId = feedback.referenceId;
+            if (referencedModelType === ModelElementType.CLASS) {
+                const classElement = model.entities.byId[referencedModelId];
                 const className = classElement.name;
                 let type: string;
                 switch (classElement.kind) {
@@ -118,31 +107,31 @@ export class ModelingAssessmentService {
                         type = 'merge node';
                         break;
                     default:
-                        type = assessment.type;
+                        type = referencedModelType;
                         break;
                 }
-                assessmentsNames[assessment.id] = {type, name: className};
-            } else if (assessment.type === ModelElementType.ATTRIBUTE) {
+                assessmentsNames[referencedModelId] = {type, name: className};
+            } else if (referencedModelType === ModelElementType.ATTRIBUTE) {
                 for (const entityId of model.entities.allIds) {
                     for (const att of model.entities.byId[entityId].attributes) {
-                        if (att.id === assessment.id) {
-                            assessmentsNames[assessment.id] = {type: assessment.type, name: att.name};
+                        if (att.id === referencedModelId) {
+                            assessmentsNames[referencedModelId] = {type: referencedModelType, name: att.name};
                         }
                     }
                 }
-            } else if (assessment.type === ModelElementType.METHOD) {
+            } else if (referencedModelType === ModelElementType.METHOD) {
                 for (const entityId of model.entities.allIds) {
                     for (const method of model.entities.byId[entityId].methods) {
-                        if (method.id === assessment.id) {
-                            assessmentsNames[assessment.id] = {type: assessment.type, name: method.name};
+                        if (method.id === referencedModelId) {
+                            assessmentsNames[referencedModelId] = {type: referencedModelType, name: method.name};
                         }
                     }
                 }
-            } else if (assessment.type === ModelElementType.RELATIONSHIP) {
-                const relationship = model.relationships.byId[assessment.id];
+            } else if (referencedModelType === ModelElementType.RELATIONSHIP) {
+                const relationship = model.relationships.byId[referencedModelId];
                 const source = model.entities.byId[relationship.source.entityId].name;
                 const target = model.entities.byId[relationship.target.entityId].name;
-                const kind: RelationshipKind = model.relationships.byId[assessment.id].kind;
+                const kind: RelationshipKind = model.relationships.byId[referencedModelId].kind;
                 let type = 'association';
                 let relation: string;
                 switch (kind) {
@@ -171,9 +160,9 @@ export class ModelingAssessmentService {
                     default:
                         relation = ' --- ';
                 }
-                assessmentsNames[assessment.id] = {type, name: source + relation + target};
+                assessmentsNames[referencedModelId] = {type, name: source + relation + target};
             } else {
-                assessmentsNames[assessment.id] = {type: assessment.type, name: ''};
+                assessmentsNames[referencedModelId] = {type: referencedModelType, name: ''};
             }
         }
         return assessmentsNames;
@@ -183,26 +172,28 @@ export class ModelingAssessmentService {
      * Calculates the positions for the symbols used for visualizing the scores of the assessment.
      * For associations the symbol is positioned at the source entity of the association.
      */
-    getElementPositions(assessments: ModelingAssessment[], model: State): Map<string, Point> {
+    getElementPositions(result: Result, model: State): Map<string, Point> {
         const SYMBOL_HEIGHT = 31;
         const SYMBOL_WIDTH = 65;
         const positions = new Map<string, Point>();
-        for (const assessment of assessments) {
+        for (const feedback of result.feedbacks) {
+            const referencedModelType = feedback.referenceType;
+            const referencedModelId = feedback.referenceId;
             const elemPosition: Point = {x: 0, y: 0};
-            if (assessment.type === ModelElementType.CLASS) {
-                if (model.entities.byId[assessment.id]) {
-                    const entity = model.entities.byId[assessment.id];
+            if (referencedModelType === ModelElementType.CLASS) {
+                if (model.entities.byId[referencedModelId]) {
+                    const entity = model.entities.byId[referencedModelId];
                     elemPosition.x = entity.position.x + entity.size.width;
                     if (entity.kind === EntityKind.ActivityControlInitialNode || entity.kind === EntityKind.ActivityControlFinalNode) {
                         elemPosition.x = entity.position.x;
                     }
                     elemPosition.y = entity.position.y;
                 }
-            } else if (assessment.type === ModelElementType.ATTRIBUTE) {
+            } else if (referencedModelType === ModelElementType.ATTRIBUTE) {
                 for (const entityId of model.entities.allIds) {
                     const entity = model.entities.byId[entityId];
                     entity.attributes.forEach((attribute, index) => {
-                        if (attribute.id === assessment.id) {
+                        if (attribute.id === referencedModelId) {
                             elemPosition.x = entity.position.x + entity.size.width;
                             elemPosition.y = entity.position.y + ENTITY_NAME_HEIGHT + ENTITY_MEMBER_LIST_VERTICAL_PADDING;
                             if (entity.kind === EntityKind.Interface || entity.kind === EntityKind.Enumeration) {
@@ -214,11 +205,11 @@ export class ModelingAssessmentService {
                         }
                     });
                 }
-            } else if (assessment.type === ModelElementType.METHOD) {
+            } else if (referencedModelType === ModelElementType.METHOD) {
                 for (const entityId of model.entities.allIds) {
                     const entity = model.entities.byId[entityId];
                     entity.methods.forEach((method, index) => {
-                        if (method.id === assessment.id) {
+                        if (method.id === referencedModelId) {
                             elemPosition.x = entity.position.x + entity.size.width;
                             elemPosition.y = entity.position.y + ENTITY_NAME_HEIGHT + ENTITY_MEMBER_LIST_VERTICAL_PADDING;
                             if (entity.kind === EntityKind.Interface || entity.kind === EntityKind.Enumeration) {
@@ -233,9 +224,9 @@ export class ModelingAssessmentService {
                         }
                     });
                 }
-            } else if (assessment.type === ModelElementType.RELATIONSHIP) {
-                if (model.relationships.byId[assessment.id]) {
-                    const relationship = model.relationships.byId[assessment.id];
+            } else if (referencedModelType === ModelElementType.RELATIONSHIP) {
+                if (model.relationships.byId[referencedModelId]) {
+                    const relationship = model.relationships.byId[referencedModelId];
                     const kind: RelationshipKind = relationship.kind;
                     const sourceEntity = model.entities.byId[relationship.source.entityId];
                     const destEntity = model.entities.byId[relationship.target.entityId];
@@ -289,7 +280,7 @@ export class ModelingAssessmentService {
                     }
                 }
             }
-            positions[assessment.id] = elemPosition;
+            positions[referencedModelId] = elemPosition;
         }
 
         return positions;
