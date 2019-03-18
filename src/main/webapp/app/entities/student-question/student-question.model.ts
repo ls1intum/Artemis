@@ -10,7 +10,7 @@ export class StudentQuestion implements BaseEntity {
     public id: number;
     public questionText: string;
     public creationDate: Moment;
-    public visibleForStudents = true; //default value
+    public visibleForStudents = true; // default value
     public answers: StudentQuestionAnswer[];
     public author: User;
     public exercise: Exercise;

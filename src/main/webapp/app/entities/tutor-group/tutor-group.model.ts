@@ -29,4 +29,3 @@ export class TutorGroup implements BaseEntity {
 
     constructor() {}
 }
-
