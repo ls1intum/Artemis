@@ -25,6 +25,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
     questionDeleted = false;
     questionInvalid = false;
     scoringChanged = false;
+    solutionAdded = false;
 
     quizExercise: QuizExercise;
     backUpQuiz: QuizExercise;
@@ -207,12 +208,16 @@ export class QuizReEvaluateWarningComponent implements OnInit {
      */
     checkShortAnswerQuestion(question: ShortAnswerQuestion, backUpQuestion: ShortAnswerQuestion): void {
         // check if a spot or solution was deleted
-        if (
-            question.solutions.length !== backUpQuestion.solutions.length ||
-            question.spots.length !== backUpQuestion.spots.length
-        ) {
+        if (question.solutions.length < backUpQuestion.solutions.length
+            || question.spots.length < backUpQuestion.spots.length) {
             this.questionElementDeleted = true;
         }
+
+        if (question.solutions.length > backUpQuestion.solutions.length
+            || question.spots.length > backUpQuestion.spots.length) {
+            this.solutionAdded = true;
+        }
+
         // check if the correct Mappings has changed
         if (JSON.stringify(question.correctMappings).toLowerCase() !== JSON.stringify(backUpQuestion.correctMappings).toLowerCase()) {
             this.questionCorrectness = true;
@@ -224,17 +229,21 @@ export class QuizReEvaluateWarningComponent implements OnInit {
                 const backUpSolution = backUpQuestion.solutions.find(solutionBackUp => {
                     return solutionBackUp.id === solution.id;
                 });
+                // check if a solution was added
+                if (this.solutionAdded && backUpSolution === undefined) {
+                    return;
+                }
                 // solution set invalid?
                 if (backUpSolution !== null && solution.invalid !== backUpSolution.invalid) {
                     this.questionElementInvalid = true;
                 }
             });
-            // check each dropLocation
+            // check each spot
             question.spots.forEach(spot => {
                 const backUpSpot = backUpQuestion.spots.find(spotBackUp => {
                     return spotBackUp.id === spot.id;
                 });
-                // dropLocation set invalid?
+                // spot set invalid?
                 if (backUpSpot !== null && spot.invalid !== backUpSpot.invalid) {
                     this.questionElementInvalid = true;
                 }
