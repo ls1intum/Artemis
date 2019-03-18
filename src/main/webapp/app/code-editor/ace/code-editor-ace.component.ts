@@ -20,6 +20,7 @@ import {
   OnDestroy
 } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
+import { LocalStorageService } from 'ngx-webstorage';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { difference as _difference, differenceWith as _differenceWith } from 'lodash';
 import {
@@ -73,6 +74,7 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
 
     constructor(
         private repositoryFileService: RepositoryFileService,
+        private localStorageService: LocalStorageService,
         public modalService: NgbModal
     ) {
     }
@@ -117,8 +119,9 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
                 this.editor.getEditor().getSession().clearAnnotations();
             }
             this.loadFile(this.selectedFile);
-        // If both a session file and buildLogErrors exists, decide by time which are newer
-        } else if (changes.repositoryFiles) {
+        }
+        // Update editor file session object to include new files and remove old files
+        if (changes.repositoryFiles) {
             const newFiles = _difference(
                 changes.repositoryFiles.currentValue,
                 changes.repositoryFiles.previousValue
@@ -137,8 +140,9 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
                 fromPairs,
                 unionBy('[0]', newEntries)
             )(filteredEntries);
+        }
         // If there are new errors, update the existing file sessions accordingly
-        } else if (changes.buildLogErrors) {
+        if (changes.buildLogErrors) {
             this.editorFileSessions = compose(
                 fromPairs,
                 map(([fileName, {errors, ...session}]) => [fileName, {
@@ -277,13 +281,7 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
                 .distinctUntilChanged()
                 .subscribe(
                     () => {
-                        // update session file
-                        this.repositoryFileService
-                            .update(this.participation.id, 'session.json', JSON.stringify({errors: sessionAnnotations, ts: Date.now()}))
-                            .subscribe(
-                                () => {},
-                                err => console.log('There was an error while saving the session file', err)
-                            );
+                        this.localStorageService.store('sessions', JSON.stringify({[this.participation.id]: {errors: sessionAnnotations, ts: Date.now()}}));
                         this.editorFileSessions[fileName].unsavedChanges = false;
                         this.updateSaveStatusLabel();
                     },

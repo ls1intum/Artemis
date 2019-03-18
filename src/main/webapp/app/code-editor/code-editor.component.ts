@@ -14,6 +14,7 @@ import { Interactable } from 'interactjs';
 import { AceAnnotation, SaveStatusChange, Session } from '../entities/ace-editor';
 import { BuildLogEntry } from 'app/entities/build-log';
 import { safeUnescape } from 'app/shared';
+import { LocalStorageService } from 'ngx-webstorage';
 
 @Component({
     selector: 'jhi-editor',
@@ -55,7 +56,8 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
         private participationService: ParticipationService,
         private participationDataProvider: ParticipationDataProvider,
         private repositoryService: RepositoryService,
-        private repositoryFileService: RepositoryFileService
+        private repositoryFileService: RepositoryFileService,
+        private localStorageService: LocalStorageService
     ) {}
 
     /**
@@ -90,7 +92,7 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
             this.repositoryFileService.query(params['participationId']).subscribe(
                 files => {
                     // do not display the README.md, because students should not edit it
-                    this.repositoryFiles = files.filter(value => value !== 'README.md' && value !== 'session.json');
+                    this.repositoryFiles = files.filter(value => value !== 'README.md');
                     this.checkIfRepositoryIsClean();
                     this.loadSession();
                 },
@@ -161,8 +163,8 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
         const ts = buildLogs.length ? Date.parse(buildLogs[0].time) : 0;
         if (!this.buildLogErrors || ts > this.buildLogErrors.ts) {
             const errors = buildLogs
-                .map(({ log, time }) => log && {log: log.match(this.errorLogRegex), time})
-                .filter(({log}) => !!log && log.length === 6 && log[1] === 'ERROR')
+                .map(({ log, time }) => log && { log: log.match(this.errorLogRegex), time })
+                .filter(({ log }) => !!log && log.length === 6 && log[1] === 'ERROR')
                 .map(({ log: [, , fileName, row, column, text], time }) => ({
                     type: 'error',
                     fileName,
@@ -172,7 +174,7 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
                     ts: Date.parse(time)
                 }))
                 .reduce((acc, { fileName, ...rest }) => ({ ...acc, [fileName]: [...(acc[fileName] || []), rest] }), {});
-            this.buildLogErrors = {errors, ts};
+            this.buildLogErrors = { errors, ts };
         }
     }
 
@@ -196,7 +198,7 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
         this.repositoryFileService.query(this.participation.id).subscribe(
             files => {
                 // do not display the README.md, because students should not edit it
-                this.repositoryFiles = files.filter(value => value !== 'README.md' && value !== 'session.json');
+                this.repositoryFiles = files.filter(value => value !== 'README.md');
                 // Select newly created file
                 if ($event.mode === 'create') {
                     this.selectedFile = $event.file;
@@ -210,23 +212,16 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
 
     /**
      * @function loadSession
-     * @desc Gets the session.json file from our repository to load editor settings
+     * @desc Gets the user's session data from localStorage to load editor settings
      */
     loadSession() {
         // Only do this if we already received a participation object from parent
         if (this.participation) {
-            this.repositoryFileService.get(this.participation.id, 'session.json').subscribe(
-                fileObj => {
-                    this.session = JSON.parse(fileObj.fileContent || '{}');
-                    if (!this.buildLogErrors || this.session.ts > this.buildLogErrors.ts) {
-                        this.buildLogErrors = { errors: this.session.errors, ts: this.session.ts };
-                    }
-                },
-                err => {
-                    // TODO: handle the case that there is no README.md file
-                    console.log('Error while getting session.json file!', err);
-                }
-            );
+            const sessions = JSON.parse(this.localStorageService.retrieve('sessions') || '{}');
+            this.session = sessions[this.participation.id];
+            if (!this.buildLogErrors || this.session && this.session.ts > this.buildLogErrors.ts) {
+                this.buildLogErrors = { errors: this.session.errors, ts: this.session.ts };
+            }
         }
     }
 
