@@ -48,16 +48,15 @@ class FileSubmission implements Serializable {
 }
 
 @Entity
-class FileSubmissionError implements Serializable {
+class FileSubmissionError extends WebsocketError implements Serializable {
     @Id
     private Long participationId;
     private String fileName;
-    private String error;
 
     FileSubmissionError(Long participationId, String fileName, String error) {
+        super(error);
         this.participationId = participationId;
         this.fileName = fileName;
-        this.error = error;
     }
 
     public Long getParticipationId() {
@@ -137,23 +136,38 @@ public class RepositoryWebsocketService {
      * @param submission
      * @param principal
      * @return
-     * @throws IOException
      */
     @MessageMapping("/topic/repository/{participationId}/file")
-    public void updateFile(@DestinationVariable Long participationId, @Payload FileSubmission submission, Principal principal) throws IOException, InterruptedException {
+    public void updateFile(@DestinationVariable Long participationId, @Payload FileSubmission submission, Principal principal) {
         Participation participation = participationService.findOne(participationId);
         if (checkParticipation(participation, principal)) {
-            Repository repository = gitService.get().getOrCheckoutRepository(participation);
-            Optional<File> file = gitService.get().getFileByName(repository, submission.getFileName());
+            Repository repository;
+            Optional<File> file;
+
+            try {
+                repository = gitService.get().getOrCheckoutRepository(participation);
+                file = gitService.get().getFileByName(repository, submission.getFileName());
+            } catch (IOException | InterruptedException ex) {
+                messagingTemplate.convertAndSendToUser(principal.getName(), "/topic/repository/" + participationId + "/file", ex.getMessage());
+                return;
+            }
+
             if(!file.isPresent()) {
                 FileSubmissionError error = new FileSubmissionError(participationId, submission.getFileName(), "File could not be found.");
                 messagingTemplate.convertAndSendToUser(principal.getName(), "/topic/repository/" + participationId + "/file", error);
+                return;
             }
 
-            InputStream inputStream = new ByteArrayInputStream(submission.getFileContent().getBytes(StandardCharsets.UTF_8));
-            Files.copy(inputStream, file.get().toPath(), StandardCopyOption.REPLACE_EXISTING);
+            try {
+                InputStream inputStream = new ByteArrayInputStream(submission.getFileContent().getBytes(StandardCharsets.UTF_8));
+                Files.copy(inputStream, file.get().toPath(), StandardCopyOption.REPLACE_EXISTING);
+            } catch(IOException ex) {
+                messagingTemplate.convertAndSendToUser(principal.getName(), "/topic/repository/" + participationId + "/file", ex.getMessage());
+                return;
+            }
 
             messagingTemplate.convertAndSendToUser(principal.getName(), "/topic/repository/" + participationId + "/file", submission);
+
         } else {
             FileSubmissionError error = new FileSubmissionError(participationId, submission.getFileName(), "User does not have the necessary permissions.");
             messagingTemplate.convertAndSendToUser(principal.getName(), "/topic/repository/" + participationId + "/file", error);

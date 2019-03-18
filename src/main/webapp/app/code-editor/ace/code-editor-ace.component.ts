@@ -176,29 +176,28 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
             .distinctUntilChanged()
             .subscribe(
                 res => {
-                    if (!res.error) {
-                        const sessionAnnotations = Object.entries(this.editorFileSessions)
-                            .reduce((acc, [file, {errors}]) => ({
-                                ...acc,
-                                [file]: errors
-                            }), {});
-                        this.localStorageService.store('sessions', JSON.stringify({[this.participation.id]: {errors: sessionAnnotations, ts: Date.now()}}));
-                        this.editorFileSessions[res.fileName].unsavedChanges = false;
-                        this.updateSaveStatusLabel();
-                    } else {
-                        if (this.onSaveStatusChange) {
-                            this.onSaveStatusChange({
-                                isSaved: false,
-                                saveStatusIcon: {
-                                    spin: false,
-                                    icon: 'times-circle',
-                                    class: 'text-danger'
-                                },
-                                saveStatusLabel: '<span class="text-danger"> Failed to save file.</span>'
-                            });
-                        }
-                        console.log('There was an error while saving file', res.fileName, res.error);
+                    const sessionAnnotations = Object.entries(this.editorFileSessions)
+                        .reduce((acc, [file, {errors}]) => ({
+                            ...acc,
+                            [file]: errors
+                        }), {});
+                    this.localStorageService.store('sessions', JSON.stringify({[this.participation.id]: {errors: sessionAnnotations, ts: Date.now()}}));
+                    this.editorFileSessions[res.fileName].unsavedChanges = false;
+                    this.updateSaveStatusLabel();
+                },
+                err => {
+                    if (this.onSaveStatusChange) {
+                        this.onSaveStatusChange({
+                            isSaved: false,
+                            saveStatusIcon: {
+                                spin: false,
+                                icon: 'times-circle',
+                                class: 'text-danger'
+                            },
+                            saveStatusLabel: '<span class="text-danger"> Failed to save file.</span>'
+                        });
                     }
+                    console.log('There was an error while saving file', err.fileName, err.error);
                 }
             );
     }
@@ -313,12 +312,6 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
                 },
                 saveStatusLabel: '<span class="text-info">Saving file.</span>'
             });
-
-            const sessionAnnotations = Object.entries(this.editorFileSessions)
-                .reduce((acc, [file, {errors}]) => ({
-                    ...acc,
-                    [file]: errors
-                }), {});
 
             this.jhiWebsocketService.send(this.updateFileChannel, {fileName, fileContent: this.editorFileSessions[fileName].code});
         }, this.saveFileDelayTime);
