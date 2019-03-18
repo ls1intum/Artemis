@@ -288,14 +288,15 @@ public class ModelingExerciseResource {
             participation.setResults(new HashSet<>(results));
         }
 
-        ModelingSubmission modelingSubmission = participation.findLatestModelingSubmission();
-        if (modelingSubmission == null) {
+        Optional<ModelingSubmission> optionalModelingSubmission = participation.findLatestModelingSubmission();
+        ModelingSubmission modelingSubmission = null;
+        if (!optionalModelingSubmission.isPresent()) {
             modelingSubmission = new ModelingSubmission();  //NOTE: this object is not yet persisted
             modelingSubmission.setParticipation(participation);
         }
         else {
             //only try to get and set the model if the modelingSubmission existed before
-            modelingSubmission = modelingSubmissionService.getAndSetModel(modelingSubmission);
+            modelingSubmission = modelingSubmissionService.getAndSetModel(optionalModelingSubmission.get());
         }
 
         //make sure only the latest submission and latest result is sent to the client
@@ -328,6 +329,7 @@ public class ModelingExerciseResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional
     //TODO: return a proper object here, e.g. modelingSubmission and fix the REST URL
+    //TODO MJ Move into ModelingassessmentResource ??
     public ResponseEntity<JsonNode> getDataForAssessmentEditor(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
         Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findById(exerciseId);
         if (!modelingExercise.isPresent()) {

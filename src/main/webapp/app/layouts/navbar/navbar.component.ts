@@ -5,9 +5,10 @@ import { JhiLanguageService } from 'ng-jhipster';
 import { SessionStorageService } from 'ngx-webstorage';
 
 import { ProfileService } from '../profiles/profile.service';
-import { AccountService, JhiLanguageHelper, LoginModalService, LoginService, User } from '../../core';
+import { AccountService, JhiLanguageHelper, LoginService, User } from '../../core';
 
 import { VERSION } from '../../app.constants';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-navbar',
@@ -28,7 +29,6 @@ export class NavbarComponent implements OnInit {
         private languageHelper: JhiLanguageHelper,
         private sessionStorage: SessionStorageService,
         private accountService: AccountService,
-        private loginModalService: LoginModalService,
         private profileService: ProfileService,
         private router: Router
     ) {
@@ -53,6 +53,7 @@ export class NavbarComponent implements OnInit {
     changeLanguage(languageKey: string) {
         this.sessionStorage.store('locale', languageKey);
         this.languageService.changeLanguage(languageKey);
+        moment.locale(languageKey);
     }
 
     collapseNavbar() {
@@ -70,10 +71,6 @@ export class NavbarComponent implements OnInit {
 
     isAuthenticated() {
         return this.accountService.isAuthenticated();
-    }
-
-    login() {
-        this.modalRef = this.loginModalService.open();
     }
 
     logout() {

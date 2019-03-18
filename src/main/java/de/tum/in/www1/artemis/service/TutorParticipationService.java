@@ -4,7 +4,8 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
-import javassist.NotFoundException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -26,6 +26,8 @@ public class TutorParticipationService {
 
     private final Logger log = LoggerFactory.getLogger(TutorParticipationService.class);
     private final ExampleSubmissionRepository exampleSubmissionRepository;
+
+    private final static String ENTITY_NAME = "TutorParticipation";
 
     @Value("${server.url}")
     private String ARTEMIS_BASE_URL;
@@ -150,14 +152,11 @@ public class TutorParticipationService {
      * argument, if it is valid (e.g: if it is an example submission used for review, we check the result is close
      * enough to the one of the instructor)
      *
-     * TODO @rpadovani: after https://github.com/ls1intum/ArTEMiS/pull/160 has been merged, move to that kind of
-     *      exceptions
-     *
      * @param exercise - the exercise we are referring to
      * @param exampleSubmission - the example submission to add
      * @return the updated tutor participation
      */
-    public TutorParticipation addExampleSubmission(Exercise exercise, ExampleSubmission exampleSubmission) throws NotFoundException, IllegalStateException, InvalidParameterException {
+    public TutorParticipation addExampleSubmission(Exercise exercise, ExampleSubmission exampleSubmission) throws EntityNotFoundException, BadRequestAlertException {
         User user = userService.getUserWithGroupsAndAuthorities();
 
         TutorParticipation existingTutorParticipation = this.findByExerciseAndTutor(exercise, user);
@@ -165,13 +164,13 @@ public class TutorParticipationService {
         Optional<ExampleSubmission> exampleSubmissionFromDatabase = exampleSubmissionService.get(exampleSubmission.getId());
 
         if (existingTutorParticipation == null || !exampleSubmissionFromDatabase.isPresent()) {
-            throw new NotFoundException("There isn't such example submission, or there isn't any tutor participation for this exercise");
+            throw new EntityNotFoundException("There isn't such example submission, or there isn't any tutor participation for this exercise");
         }
 
         ExampleSubmission originalExampleSubmission = exampleSubmissionFromDatabase.get();
 
         if (existingTutorParticipation.getStatus() != TutorParticipationStatus.REVIEWED_INSTRUCTIONS) {
-            throw new IllegalStateException();
+            throw new BadRequestAlertException("The tutor needs review the instructions before assessing example submissions", ENTITY_NAME, "wrongStatus");
         }
 
         // Check if it is a tutorial or not
@@ -191,11 +190,11 @@ public class TutorParticipationService {
             float tutorScore = calculateTotalScore(exampleSubmission.getSubmission().getResult().getFeedbacks());
 
             if (lowerInstructorScore > tutorScore) {
-                throw new InvalidParameterException("tooLow");
+                throw new BadRequestAlertException("tooLow", ENTITY_NAME, "tooLow");
             }
 
             if (tutorScore > higherInstructorScore) {
-                throw new InvalidParameterException("tooHigh");
+                throw new BadRequestAlertException("tooHigh", ENTITY_NAME, "tooHigh");
             }
         }
 
@@ -203,7 +202,7 @@ public class TutorParticipationService {
 
         // If the example submission was already assessed, we do not assess it again
         if (alreadyAssessedSubmissions.contains(exampleSubmission)) {
-            throw new InvalidParameterException("alreadyAssessed");
+            throw new BadRequestAlertException("The tutor has already assessed this example submission", ENTITY_NAME, "tooHigh");
         }
 
         int numberOfExampleSubmissions = this.exampleSubmissionRepository.findAllByExerciseId(exercise.getId()).size();

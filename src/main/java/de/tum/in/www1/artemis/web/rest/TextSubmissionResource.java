@@ -4,10 +4,10 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
-import org.hibernate.Hibernate;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,9 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
@@ -171,7 +169,8 @@ public class TextSubmissionResource {
     }
 
     /**
-     * GET  /text-submissions : get all the textSubmissions.
+     * GET  /text-submissions : get all the textSubmissions for an exercise. It is possible to filter, to receive only
+     * the one that have been already submitted, or only the one assessed by the tutor who is doing the call
      *
      * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
      */
@@ -179,60 +178,26 @@ public class TextSubmissionResource {
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional(readOnly = true)
     public ResponseEntity<List<TextSubmission>> getAllTextSubmissions(@PathVariable Long exerciseId,
-                                                                      @RequestParam(defaultValue = "false") boolean submittedOnly) {
+                                                                      @RequestParam(defaultValue = "false") boolean submittedOnly,
+                                                                      @RequestParam(defaultValue = "false") boolean assessedByTutor) {
         log.debug("REST request to get all TextSubmissions");
-        Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
+        Exercise exercise = exerciseService.findOne(exerciseId);
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) return forbidden();
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
 
-        // TODO @rpadovani: refactor to remove all the hidden DB calls, and merge with the other two methods
+        if (assessedByTutor) {
+            User user = userService.getUserWithGroupsAndAuthorities();
 
-        return ResponseEntity.ok().body(
+            return ResponseEntity.ok().body(
+                textSubmissionService.getAllTextSubmissionsByTutorForExercise(exerciseId, user.getId())
+            );
+        }
 
-            // Participations for Exercise
-            participationService.findByExerciseIdWithEagerSubmissions(exerciseId)
-                .stream()
-                .peek(participation -> participation.getExercise().setParticipations(null))
+        List<TextSubmission> textSubmissions = textSubmissionService.getTextSubmissionsByExerciseId(exerciseId, submittedOnly);
 
-                // Map to Latest Submission
-                .map(Participation::findLatestTextSubmission)
-                .filter(Objects::nonNull)
-
-                // if submittedOnly, need to check if submitted, else just continue (!submittedOnly == true)
-                .filter(submission -> !submittedOnly || submission.isSubmitted())
-
-                // Load Result for Submission
-                .peek(textSubmission -> {
-                    Hibernate.initialize(textSubmission.getResult()); // eagerly load the association
-                    if (textSubmission.getResult() != null) {
-                        Hibernate.initialize(textSubmission.getResult().getAssessor());
-                        textSubmission.getResult().getAssessor().setGroups(null);
-                    }
-                })
-
-                // Convert Stream to List to Match Return Type
-                .collect(Collectors.toList())
-        );
-    }
-
-    /**
-     * GET  /text-submissions-assessed-by-tutor : get all the textSubmissions assessed by the current tutor.
-     *
-     * @return the ResponseEntity with status 200 (OK) and the list of textSubmissions in body
-     */
-    @GetMapping(value = "/exercises/{exerciseId}/text-submissions-assessed-by-tutor")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
-    public ResponseEntity<List<TextSubmission>> getAllTextSubmissionsByTutor(@PathVariable Long exerciseId) {
-        log.debug("REST request to get all TextSubmissions filtered by assessed by tutor");
-        Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
-
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) return forbidden();
-
-        return ResponseEntity.ok().body(
-            textSubmissionService.getAllTextSubmissionsByTutorForExercise(exerciseId, user.getId())
-        );
+        return ResponseEntity.ok().body(textSubmissions);
     }
 
     /**

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { SERVER_API_URL } from 'app/app.constants';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Result } from 'src/main/webapp/app/entities/result';
+import { Result } from 'app/entities/result';
 import { Participation } from 'app/entities/participation';
 import { Feedback } from 'app/entities/feedback';
 import * as moment from 'moment';
@@ -35,6 +35,10 @@ export class TextAssessmentsService {
 
     public getExampleAssessment(exerciseId: number, submissionId: number): Observable<Result> {
         return this.http.get<Result>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}/exampleAssessment`);
+    }
+
+    getParticipationForSubmissionWithoutAssessment(exerciseId: number) {
+        return this.http.get<Participation>(`${SERVER_API_URL}api/exercise/${exerciseId}/participation-without-assessment`);
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {

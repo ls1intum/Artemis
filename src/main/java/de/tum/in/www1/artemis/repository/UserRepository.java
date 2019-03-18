@@ -43,4 +43,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT r.participation.student.id FROM Result r WHERE r.submission.id = :#{#submissionId}")
     Long findUserIdBySubmissionId(@Param("submissionId") Long submissionId);
+
+    @Query("SELECT r.participation.student FROM Result r WHERE r.id = :#{#resultId}")
+    User findUserByResultId(@Param("resultId") Long resultId);
+
+    Long countByGroupsIsContaining(List<String> groups);
 }

@@ -28,6 +28,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * REST controller for managing Participation.
@@ -47,6 +48,8 @@ public class ParticipationResource {
     private final Optional<VersionControlService> versionControlService;
 
     private static final String ENTITY_NAME = "participation";
+    private final TextSubmissionService textSubmissionService;
+    private final ResultService resultService;
 
     public ParticipationResource(ParticipationService participationService,
                                  CourseService courseService,
@@ -54,7 +57,9 @@ public class ParticipationResource {
                                  ExerciseService exerciseService,
                                  AuthorizationCheckService authCheckService,
                                  Optional<ContinuousIntegrationService> continuousIntegrationService,
-                                 Optional<VersionControlService> versionControlService) {
+                                 Optional<VersionControlService> versionControlService,
+                                 TextSubmissionService textSubmissionService,
+                                 ResultService resultService) {
         this.participationService = participationService;
         this.quizExerciseService = quizExerciseService;
         this.exerciseService = exerciseService;
@@ -62,6 +67,8 @@ public class ParticipationResource {
         this.authCheckService = authCheckService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
+        this.textSubmissionService = textSubmissionService;
+        this.resultService = resultService;
     }
 
     /**
@@ -91,7 +98,7 @@ public class ParticipationResource {
      * @param courseId   only included for API consistency, not actually used
      * @param exerciseId the id of the exercise for which to init a participation
      * @param principal  the current user principal
-     * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
+     * @return the ResponseEntity with status 201 (Created) and the participation within the body, or with status 404 (Not Found)
      */
     @PostMapping(value = "/courses/{courseId}/exercises/{exerciseId}/participations")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
@@ -172,15 +179,60 @@ public class ParticipationResource {
      */
     @GetMapping(value = "/exercise/{exerciseId}/participations")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<List<Participation>> getAllParticipationsForExercise(@PathVariable Long exerciseId) {
+    public ResponseEntity<List<Participation>> getAllParticipationsForExercise(@PathVariable Long exerciseId,
+                                                                               @RequestParam(defaultValue = "false") boolean withEagerResults) {
         log.debug("REST request to get all Participations for Exercise {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
         Course course = exercise.getCourse();
         if (!courseService.userHasAtLeastTAPermissions(course)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
-        List<Participation> participations = participationService.findByExerciseId(exerciseId);
+
+        List<Participation> participations;
+        if (withEagerResults) {
+            participations = participationService.findByExerciseIdWithEagerResults(exerciseId);
+        } else {
+            participations = participationService.findByExerciseId(exerciseId);
+        }
+        participations = participations.stream().filter(participation -> participation.getStudent() != null).collect(Collectors.toList());
+
         return ResponseEntity.ok(participations);
+    }
+
+
+    /**
+     * GET /exercise/{exerciseId}/participation-without-assessment
+     *
+     * Given an exerciseId, retrieve a participation where the latest submission has no assessment, or returns 404
+     * If any, it creates the result and assign to the tutor, as a draft
+     *
+     * @param exerciseId the id of the exercise of which we want a submission
+     * @return a student participation
+     */
+    @GetMapping(value = "/exercise/{exerciseId}/participation-without-assessment")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<Participation> getParticipationForExerciseWithoutAssessment(@PathVariable Long exerciseId) {
+        Optional<TextSubmission> textSubmission = this.textSubmissionService.textSubmissionWithoutResult(exerciseId);
+
+        Exercise exercise = exerciseService.findOne(exerciseId);
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+            throw new AccessForbiddenException("You are not allowed to access this resource");
+        }
+
+        if (!textSubmission.isPresent()) {
+            throw new EntityNotFoundException("No text Submission without assessment has been found");
+        }
+
+        Participation participation = textSubmission.get().getParticipation();
+
+        Result result = new Result();
+        result.setParticipation(participation);
+        result.setSubmission(textSubmission.get());
+        resultService.createNewResult(result);
+        participation.setResults(new HashSet<>());
+        participation.addResult(result);
+
+        return ResponseEntity.ok(participation);
     }
 
     /**

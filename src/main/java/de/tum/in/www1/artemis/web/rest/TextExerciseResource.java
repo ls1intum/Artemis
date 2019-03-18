@@ -259,22 +259,22 @@ public class TextExerciseResource {
             participation.setResults(new HashSet<>(results));
         }
 
-        TextSubmission textSubmission = participation.findLatestTextSubmission();
+        Optional<TextSubmission> textSubmission = participation.findLatestTextSubmission();
         participation.setSubmissions(new HashSet<>());
 
         participation.getExercise().filterSensitiveInformation();
 
-        if (textSubmission != null) {
+        if (textSubmission.isPresent()) {
             // set reference to participation to null, since we are already inside a participation
-            textSubmission.setParticipation(null);
+            textSubmission.get().setParticipation(null);
 
-            Result result = textSubmission.getResult();
-            if (textSubmission.isSubmitted() && result != null && result.getCompletionDate() != null) {
+            Result result = textSubmission.get().getResult();
+            if (textSubmission.get().isSubmitted() && result != null && result.getCompletionDate() != null) {
                 List<Feedback> assessments = textAssessmentService.getAssessmentsForResult(result);
                 result.setFeedbacks(assessments);
             }
 
-            participation.addSubmissions(textSubmission);
+            participation.addSubmissions(textSubmission.get());
         }
 
 

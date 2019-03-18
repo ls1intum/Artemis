@@ -89,7 +89,7 @@ public abstract class Exercise implements Serializable {
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
     @JsonIgnoreProperties("exercise")
     private Set<Participation> participations = new HashSet<>();
-
+    
     @OneToMany(mappedBy = "assessedExercise")
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
     @JsonIgnoreProperties("assessedExercise")
@@ -383,6 +383,18 @@ public abstract class Exercise implements Serializable {
             }
         }
         return latestResult;
+    }
+
+    /**
+     * Returns all results of an exercise for give participation.
+     * If the exercise is restricted like {@link QuizExercise} please override this function with the respective filter.
+     * (relevancy depends on Exercise type => this should be overridden by subclasses if necessary)
+     *
+     * @param participation the participation whose results we are considering
+     * @return all results of given participation, or null, if none exist
+     */
+    public Set<Result> findResultsFilteredForStudents(Participation participation) {
+        return participation.getResults();
     }
 
     /**

@@ -3,7 +3,6 @@ import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute } from '@angular/router';
 
 import { ActivateService } from './activate.service';
-import { LoginModalService } from '../../core';
 
 @Component({
     selector: 'jhi-activate',
@@ -14,7 +13,7 @@ export class ActivateComponent implements OnInit {
     success: string;
     modalRef: NgbModalRef;
 
-    constructor(private activateService: ActivateService, private loginModalService: LoginModalService, private route: ActivatedRoute) {}
+    constructor(private activateService: ActivateService, private route: ActivatedRoute) {}
 
     ngOnInit() {
         this.route.queryParams.subscribe(params => {
@@ -29,9 +28,5 @@ export class ActivateComponent implements OnInit {
                 }
             );
         });
-    }
-
-    login() {
-        this.modalRef = this.loginModalService.open();
     }
 }

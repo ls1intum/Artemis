@@ -87,7 +87,10 @@ public class ModelingSubmissionService {
         }
         Participation savedParticipation = participationRepository.save(participation);
         if (modelingSubmission.getId() == null) {
-            modelingSubmission = savedParticipation.findLatestModelingSubmission();
+            Optional<ModelingSubmission> optionalModelingSubmission = savedParticipation.findLatestModelingSubmission();
+            if (optionalModelingSubmission.isPresent()) {
+                modelingSubmission = optionalModelingSubmission.get();
+            }
         }
 
         log.debug("return model: " + modelingSubmission.getModel());
@@ -106,7 +109,7 @@ public class ModelingSubmissionService {
     }
 
     /**
-     * Checks if zhe model for given exerciseId, studentId and model modelId exists and returns it if found.
+     * Checks if the model for given exerciseId, studentId and model modelId exists and returns it if found.
      *
      * @param exerciseId    the exercise modelId for which to find the model
      * @param studentId     the student modelId for which to find the model

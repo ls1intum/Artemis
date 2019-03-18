@@ -1,0 +1,27 @@
+{
+    "arTeMiSApp": {
+        "exerciseActions": {
+            "practice": "Practice",
+            "openQuiz": "Open quiz",
+            "startQuiz": "Start quiz",
+            "resumeQuiz": "Resume quiz",
+            "viewSubmissions": "View submissions",
+            "viewResults": "View results",
+            "statistics": "Statistics",
+            "startExercise": "Start exercise",
+            "resumeExercise": "Resume exercise",
+            "openCodeEditor": "Open code editor",
+            "openModelingEditor": "Open modeling editor",
+            "cloneRepository": "Clone Repository",
+            "clonePersonalRepository": "Clone your personal repository for this exercise:",
+            "repositoryPassword": "Your Password is:",
+            "hoverToShow": "(hover to show)",
+            "cloneSourceTree": "Clone in SourceTree",
+            "sourceTreeDescription": "<a href='http://www.sourcetreeapp.com' target='_blank'>Atlassian SourceTree</a> is the free Git client for Windows or Mac.",
+            "goToBuildPlan": "Go to build plan",
+            "openTextEditor": "Open text editor",
+            "copyUrl": "Copy URL",
+            "copiedUrl": "Copied URL"
+        }
+    }
+}

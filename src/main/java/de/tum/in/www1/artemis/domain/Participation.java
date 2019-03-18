@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
@@ -263,6 +264,7 @@ public class Participation implements Serializable {
         return this;
     }
 
+    @JsonIgnore
     public URL getRepositoryUrlAsUrl() {
         if (repositoryUrl == null) {
             return null;
@@ -313,26 +315,34 @@ public class Participation implements Serializable {
      *
      * @return the latest submission or null
      */
-    public Submission findLatestSubmission() {
+    public Optional<Submission> findLatestSubmission() {
         Set<Submission> submissions = this.submissions;
         if (submissions == null || submissions.size() == 0) {
-            return null;
+            return Optional.empty();
         }
 
         //TODO: what happens if the submissionDate is null?
-        return submissions.stream()
+        return Optional.of(submissions.stream()
             .min((r1, r2) -> r2.getSubmissionDate().compareTo(r1.getSubmissionDate()))
-            .orElse(null);
+            .orElse(null));
     }
 
-    private <T extends Submission> T findLatestSubmissionOfType(Class<T> submissionType) {
-        Submission submission = findLatestSubmission();
-        submission = (Submission) Hibernate.unproxy(submission);
+    private <T extends Submission> Optional<T> findLatestSubmissionOfType(Class<T> submissionType) {
+        Optional<Submission> optionalSubmission = findLatestSubmission();
+        if (!optionalSubmission.isPresent()) {
+            return Optional.empty();
+        }
+
+        Submission submission = optionalSubmission.get();
+        if (!Hibernate.isInitialized(optionalSubmission.get())) {
+            //TODO Why do we need to unproxy here?
+            submission = (Submission) Hibernate.unproxy(submission);
+        }
 
         if (submissionType.isInstance(submission)) {
-            return submissionType.cast(submission);
+            return Optional.of(submissionType.cast(submission));
         } else {
-            return null;
+            return Optional.empty();
         }
     }
 
@@ -342,7 +352,7 @@ public class Participation implements Serializable {
      *
      * @return the latest modeling submission or null
      */
-    public ModelingSubmission findLatestModelingSubmission() {
+    public Optional<ModelingSubmission> findLatestModelingSubmission() {
         return findLatestSubmissionOfType(ModelingSubmission.class);
     }
 
@@ -352,7 +362,7 @@ public class Participation implements Serializable {
      *
      * @return the latest text submission or null
      */
-    public TextSubmission findLatestTextSubmission() {
+    public Optional<TextSubmission> findLatestTextSubmission() {
         return findLatestSubmissionOfType(TextSubmission.class);
     }
 

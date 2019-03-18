@@ -38,6 +38,7 @@ export class CourseUpdateComponent implements OnInit {
             studentGroupName: new FormControl(this.course.studentGroupName, [Validators.required]),
             teachingAssistantGroupName: new FormControl(this.course.teachingAssistantGroupName),
             instructorGroupName: new FormControl(this.course.instructorGroupName, [Validators.required]),
+            description: new FormControl(this.course.description),
             startDate: new FormControl(this.course.startDate),
             endDate: new FormControl(this.course.endDate),
             onlineCourse: new FormControl(this.course.onlineCourse)

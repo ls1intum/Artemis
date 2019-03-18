@@ -61,7 +61,7 @@ public abstract class Submission implements Serializable {
     /**
      * A submission can have a result and therefore, results are persisted and removed with a submission.
      */
-    @OneToOne(mappedBy = "submission", cascade={CascadeType.PERSIST, CascadeType.REMOVE}, fetch = FetchType.LAZY, orphanRemoval=true)
+    @OneToOne(mappedBy = "submission", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, fetch = FetchType.LAZY, orphanRemoval = true)
     @JsonIgnoreProperties({"submission", "participation"})
     @JoinColumn(unique = true)
     private Result result;
