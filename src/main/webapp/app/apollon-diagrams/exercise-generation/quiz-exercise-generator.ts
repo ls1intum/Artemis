@@ -21,7 +21,7 @@ import { DragAndDropQuestion } from '../../entities/drag-and-drop-question';
 import { DropLocation } from '../../entities/drop-location';
 import { DragAndDropMapping } from '../../entities/drag-and-drop-mapping';
 import { DragItem } from '../../entities/drag-item';
-import { ScoringType } from '../../entities/question';
+import { ScoringType } from '../../entities/quiz-question';
 import * as moment from 'moment';
 
 // Drop locations in quiz exercises are relatively positioned and sized
@@ -69,7 +69,7 @@ export async function generateDragAndDropQuizExercise(
     quizExercise.releaseDate = moment();
     quizExercise.randomizeQuestionOrder = true;
     quizExercise.course = course;
-    quizExercise.questions = [dragAndDropQuestion];
+    quizExercise.quizQuestions = [dragAndDropQuestion];
 
     // Create the quiz exercise
     await quizExerciseService.create(quizExercise).toPromise();

@@ -4,8 +4,8 @@ import { Observable, of } from 'rxjs';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 
 import { ArTEMiSTestModule } from '../../../test.module';
-import { QuestionComponent } from 'app/entities/question/question.component';
-import { QuestionService } from 'app/entities/question/question.service';
+import { QuestionComponent } from 'app/entities/quiz-question/question.component';
+import { QuestionService } from 'app/entities/quiz-question/question.service';
 import { Question } from 'app/shared/model/question.model';
 
 describe('Component Tests', () => {

@@ -4,20 +4,21 @@
     "relationships": [
         {
             "relationshipType": "one-to-one",
-            "relationshipName": "dropLocation",
             "otherEntityName": "dropLocation",
+            "otherEntityRelationshipName": "dropLocationCounter",
+            "relationshipName": "dropLocation",
             "otherEntityField": "id",
-            "ownerSide": true,
-            "otherEntityRelationshipName": "dropLocationCounter"
+            "ownerSide": true
         },
         {
             "relationshipType": "many-to-one",
-            "relationshipName": "dragAndDropQuestionStatistic",
             "otherEntityName": "dragAndDropQuestionStatistic",
+            "otherEntityRelationshipName": "dropLocationCounters",
+            "relationshipName": "dragAndDropQuestionStatistic",
             "otherEntityField": "id"
         }
     ],
-    "changelogDate": "20180927081350",
+    "changelogDate": "20190315161908",
     "entityTableName": "drop_location_counter",
     "dto": "no",
     "pagination": "no",

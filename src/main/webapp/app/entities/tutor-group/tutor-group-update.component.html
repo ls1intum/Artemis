@@ -1,0 +1,81 @@
+<div class="row justify-content-center">
+    <div class="col-8">
+        <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
+            <h2 id="jhi-tutor-group-heading" jhiTranslate="artemisApp.tutorGroup.home.createOrEditLabel">Create or edit a Tutor Group</h2>
+            <div>
+                <jhi-alert-error></jhi-alert-error>
+                <div class="form-group" [hidden]="!tutorGroup.id">
+                    <label for="id" jhiTranslate="global.field.id">ID</label>
+                    <input type="text" class="form-control" id="id" name="id"
+                        [(ngModel)]="tutorGroup.id" readonly />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="artemisApp.tutorGroup.name" for="field_name">Name</label>
+                    <input type="text" class="form-control" name="name" id="field_name"
+                        [(ngModel)]="tutorGroup.name" />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="artemisApp.tutorGroup.capacity" for="field_capacity">Capacity</label>
+                    <input type="number" class="form-control" name="capacity" id="field_capacity"
+                        [(ngModel)]="tutorGroup.capacity" />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="artemisApp.tutorGroup.weekday" for="field_weekday">Weekday</label>
+                    <select class="form-control" name="weekday" [(ngModel)]="tutorGroup.weekday" id="field_weekday" >
+                        <option value="MONDAY">{{'artemisApp.Weekday.MONDAY' | translate}}</option>
+                        <option value="TUESDAY">{{'artemisApp.Weekday.TUESDAY' | translate}}</option>
+                        <option value="WEDNESDAY">{{'artemisApp.Weekday.WEDNESDAY' | translate}}</option>
+                        <option value="THURSDAY">{{'artemisApp.Weekday.THURSDAY' | translate}}</option>
+                        <option value="FRIDAY">{{'artemisApp.Weekday.FRIDAY' | translate}}</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="artemisApp.tutorGroup.timeSlot" for="field_timeSlot">Time Slot</label>
+                    <input type="text" class="form-control" name="timeSlot" id="field_timeSlot"
+                        [(ngModel)]="tutorGroup.timeSlot" />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="artemisApp.tutorGroup.language" for="field_language">Language</label>
+                    <select class="form-control" name="language" [(ngModel)]="tutorGroup.language" id="field_language" >
+                        <option value="ENGLISH">{{'artemisApp.Language.ENGLISH' | translate}}</option>
+                        <option value="GERMAN">{{'artemisApp.Language.GERMAN' | translate}}</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="artemisApp.tutorGroup.room" for="field_room">Room</label>
+                    <input type="text" class="form-control" name="room" id="field_room"
+                        [(ngModel)]="tutorGroup.room" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="artemisApp.tutorGroup.tutor" for="field_tutor">Tutor</label>
+                    <select class="form-control" id="field_tutor" name="tutor" [(ngModel)]="tutorGroup.tutor" >
+                        <option [ngValue]="null"></option>
+                        <option [ngValue]="userOption.id === tutorGroup.tutor?.id ? tutorGroup.tutor : userOption" *ngFor="let userOption of users; trackBy: trackUserById">{{userOption.id}}</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label jhiTranslate="artemisApp.tutorGroup.students" for="field_students">Students</label>
+                    <select class="form-control" id="field_students" multiple name="students" [(ngModel)]="tutorGroup.students">
+                        <option [ngValue]="getSelected(tutorGroup.students, userOption)" *ngFor="let userOption of users; trackBy: trackUserById">{{userOption.id}}</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="artemisApp.tutorGroup.course" for="field_course">Course</label>
+                    <select class="form-control" id="field_course" name="course" [(ngModel)]="tutorGroup.course" >
+                        <option [ngValue]="null"></option>
+                        <option [ngValue]="courseOption.id === tutorGroup.course?.id ? tutorGroup.course : courseOption" *ngFor="let courseOption of courses; trackBy: trackCourseById">{{courseOption.id}}</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <button type="button" id="cancel-save" class="btn btn-secondary"  (click)="previousState()">
+                    <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                </button>
+                <button type="submit" id="save-entity" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
+                    <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

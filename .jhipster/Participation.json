@@ -26,30 +26,32 @@
     "relationships": [
         {
             "relationshipType": "one-to-many",
-            "relationshipName": "results",
             "otherEntityName": "exerciseResult",
-            "otherEntityRelationshipName": "participation"
+            "otherEntityRelationshipName": "participation",
+            "relationshipName": "results"
         },
         {
             "relationshipType": "one-to-many",
-            "relationshipName": "submissions",
             "otherEntityName": "submission",
-            "otherEntityRelationshipName": "participation"
+            "otherEntityRelationshipName": "participation",
+            "relationshipName": "submissions"
         },
         {
             "relationshipType": "many-to-one",
-            "relationshipName": "student",
             "otherEntityName": "user",
-            "otherEntityField": "login"
+            "otherEntityRelationshipName": "participation",
+            "relationshipName": "student",
+            "otherEntityField": "id"
         },
         {
             "relationshipType": "many-to-one",
-            "relationshipName": "exercise",
             "otherEntityName": "exercise",
-            "otherEntityField": "title"
+            "otherEntityRelationshipName": "participations",
+            "relationshipName": "exercise",
+            "otherEntityField": "id"
         }
     ],
-    "changelogDate": "20180927081407",
+    "changelogDate": "20190315161929",
     "entityTableName": "participation",
     "dto": "no",
     "pagination": "no",

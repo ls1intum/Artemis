@@ -1,0 +1,33 @@
+
+{
+    "arTeMiSApp": {
+        "quizQuestion" : {
+            "home": {
+                "title": "Questions",
+                "createLabel": "Question erstellen",
+                "createOrEditLabel": "Question erstellen oder bearbeiten"
+            },
+            "created": "Question erstellt mit ID {{ param }}",
+            "updated": "Question aktualisiert mit ID {{ param }}",
+            "deleted": "Question gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Question {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Question"
+            },
+            "title": "Title",
+            "text": "Text",
+            "hint": "Hint",
+            "explanation": "Explanation",
+            "score": "Score",
+            "scoringType": "Scoring Type",
+            "randomizeOrder": "Randomize Order",
+            "questionStatistic": "Question Statistic",
+            "exercise": "Exercise",
+            "yourScore": "Erreichte Punktzahl",
+            "invalid": "Ungültig",
+            "invalidText": "Diese Frage ist ungültig und wird daher als komplett richtig gelöst bewertet"
+        }
+    }
+}

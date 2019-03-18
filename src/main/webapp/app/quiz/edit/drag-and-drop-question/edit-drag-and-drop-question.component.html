@@ -237,7 +237,7 @@
                     <fa-icon icon="bars" class="drag-handle" size="lg"></fa-icon>
                 </div>
                 <div class="dimensions" *ngIf="reEvaluationInProgress">
-                    <span style="color:red" *ngIf="dragItem.invalid" jhiTranslate="arTeMiSApp.question.invalid"></span>
+                    <span style="color:red" *ngIf="dragItem.invalid" jhiTranslate="arTeMiSApp.quizQuestion.invalid"></span>
                 </div>
                 <div class="mapping-numbers-wrapper">
                     <div *ngFor="let mapping of getMappingsForDragItem(dragItem)" [ngClass]="'mapping-number mapping-color-' + (getMappingIndex(mapping) % 8)">

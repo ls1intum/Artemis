@@ -17,7 +17,7 @@ import java.util.*;
 @DiscriminatorValue(value = "MC")
 //@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeName("multiple-choice")
-public class MultipleChoiceQuestion extends Question implements Serializable {
+public class MultipleChoiceQuestion extends QuizQuestion implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -51,7 +51,7 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
         this.answerOptions.add(answerOption);
         answerOption.setQuestion(this);
         //if an answerOption was added then add the associated AnswerCounter implicitly
-        ((MultipleChoiceQuestionStatistic)getQuestionStatistic()).addAnswerOption(answerOption);
+        ((MultipleChoiceQuestionStatistic) getQuizQuestionStatistic()).addAnswerOption(answerOption);
         return this;
     }
 
@@ -65,8 +65,8 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
      */
     public MultipleChoiceQuestion removeAnswerOptions(AnswerOption answerOption) {
         //if an answerOption was removed then remove the associated AnswerCounter implicitly
-        if (getQuestionStatistic() instanceof MultipleChoiceQuestionStatistic) {
-            MultipleChoiceQuestionStatistic mcStatistic = (MultipleChoiceQuestionStatistic) getQuestionStatistic();
+        if (getQuizQuestionStatistic() instanceof MultipleChoiceQuestionStatistic) {
+            MultipleChoiceQuestionStatistic mcStatistic = (MultipleChoiceQuestionStatistic) getQuizQuestionStatistic();
             AnswerCounter answerCounterToDelete = null;
             for (AnswerCounter answerCounter : mcStatistic.getAnswerCounters()) {
                 if (answerOption.equals(answerCounter.getAnswer())) {
@@ -93,18 +93,18 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
      */
     public void setAnswerOptions(List<AnswerOption> answerOptions) {
         MultipleChoiceQuestionStatistic mcStatistic;
-        if (getQuestionStatistic() instanceof MultipleChoiceQuestionStatistic) {
-            mcStatistic = (MultipleChoiceQuestionStatistic)getQuestionStatistic();
+        if (getQuizQuestionStatistic() instanceof MultipleChoiceQuestionStatistic) {
+            mcStatistic = (MultipleChoiceQuestionStatistic) getQuizQuestionStatistic();
         }
         else{
             mcStatistic = new MultipleChoiceQuestionStatistic();
-            setQuestionStatistic(mcStatistic);
+            setQuizQuestionStatistic(mcStatistic);
         }
         this.answerOptions = answerOptions;
 
         //if an answerOption was added then add the associated AnswerCounter implicitly
         for (AnswerOption answerOption : getAnswerOptions()) {
-            ((MultipleChoiceQuestionStatistic) getQuestionStatistic()).addAnswerOption(answerOption);
+            ((MultipleChoiceQuestionStatistic) getQuizQuestionStatistic()).addAnswerOption(answerOption);
         }
 
         //if an answerOption was removed then remove the associated AnswerCounters implicitly
@@ -144,13 +144,13 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
     /**
      * undo all answer-changes which are not allowed ( adding Answers)
      *
-     * @param originalQuestion the original Question-object, which will be compared with this question
+     * @param originalQuizQuestion the original QuizQuestion-object, which will be compared with this question
      *
      */
-    public void undoUnallowedChanges (Question originalQuestion) {
+    public void undoUnallowedChanges (QuizQuestion originalQuizQuestion) {
 
-        if (originalQuestion instanceof MultipleChoiceQuestion) {
-            MultipleChoiceQuestion mcOriginalQuestion = (MultipleChoiceQuestion) originalQuestion;
+        if (originalQuizQuestion instanceof MultipleChoiceQuestion) {
+            MultipleChoiceQuestion mcOriginalQuestion = (MultipleChoiceQuestion) originalQuizQuestion;
             undoUnallowedAnswerChanges(mcOriginalQuestion);
         }
     }
@@ -190,13 +190,13 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
     /**
      * check if an update of the Results and Statistics is necessary
      *
-     * @param originalQuestion the original Question-object, which will be compared with this question
+     * @param originalQuizQuestion the original QuizQuestion-object, which will be compared with this question
      *
      * @return a boolean which is true if the answer-changes make an update necessary and false if not
      */
-    public boolean isUpdateOfResultsAndStatisticsNecessary(Question originalQuestion) {
-        if (originalQuestion instanceof MultipleChoiceQuestion){
-            MultipleChoiceQuestion mcOriginalQuestion = (MultipleChoiceQuestion) originalQuestion;
+    public boolean isUpdateOfResultsAndStatisticsNecessary(QuizQuestion originalQuizQuestion) {
+        if (originalQuizQuestion instanceof MultipleChoiceQuestion){
+            MultipleChoiceQuestion mcOriginalQuestion = (MultipleChoiceQuestion) originalQuizQuestion;
             return checkAnswersIfRecalculationIsNecessary(mcOriginalQuestion);
         }
         return false;
@@ -319,10 +319,10 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
      * 1. generate associated MultipleChoiceQuestionStatistic implicitly
      */
     public MultipleChoiceQuestion() {
-        //create associated Statistic implicitly
+        //create associated QuizStatistic implicitly
         MultipleChoiceQuestionStatistic mcStatistic = new MultipleChoiceQuestionStatistic();
-        setQuestionStatistic(mcStatistic);
-        mcStatistic.setQuestion(this);
+        setQuizQuestionStatistic(mcStatistic);
+        mcStatistic.setQuizQuestion(this);
 
     }
 }

@@ -54,9 +54,9 @@ public class CacheConfiguration {
             cm.createCache(de.tum.in.www1.artemis.domain.ProgrammingExercise.class.getName(), jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.ModelingExercise.class.getName(), jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.QuizExercise.class.getName(), jcacheConfiguration);
-            cm.createCache(de.tum.in.www1.artemis.domain.QuizExercise.class.getName() + ".questions", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.QuizExercise.class.getName() + ".quizQuestions", jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.SubmittedAnswer.class.getName(), jcacheConfiguration);
-            cm.createCache(de.tum.in.www1.artemis.domain.Question.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.QuizQuestion.class.getName(), jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.MultipleChoiceQuestion.class.getName(), jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.MultipleChoiceQuestion.class.getName() + ".answerOptions", jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.AnswerOption.class.getName(), jcacheConfiguration);
@@ -76,12 +76,12 @@ public class CacheConfiguration {
             cm.createCache(de.tum.in.www1.artemis.domain.TextSubmission.class.getName(), jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.FileUploadSubmission.class.getName(), jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.DragAndDropSubmittedAnswer.class.getName(), jcacheConfiguration);
-            cm.createCache(de.tum.in.www1.artemis.domain.Question.class.getName() + ".quizExercises", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.QuizQuestion.class.getName() + ".quizExercises", jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.Result.class.getName() + ".feedbacks", jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.Feedback.class.getName(), jcacheConfiguration);
-            cm.createCache(de.tum.in.www1.artemis.domain.Statistic.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.QuizStatistic.class.getName(), jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.QuizPointStatistic.class.getName(), jcacheConfiguration);
-            cm.createCache(de.tum.in.www1.artemis.domain.QuestionStatistic.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.QuizQuestionStatistic.class.getName(), jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.AnswerCounter.class.getName(), jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.DropLocationCounter.class.getName(), jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.QuizPointStatistic.class.getName() + ".ratedPointCounters", jcacheConfiguration);
@@ -92,7 +92,7 @@ public class CacheConfiguration {
             cm.createCache(de.tum.in.www1.artemis.domain.DragAndDropQuestionStatistic.class.getName(), jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.DragAndDropQuestionStatistic.class.getName() + ".ratedDropLocationCounters", jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.DragAndDropQuestionStatistic.class.getName() + ".unRatedDropLocationCounters", jcacheConfiguration);
-            cm.createCache(de.tum.in.www1.artemis.domain.StatisticCounter.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.QuizStatisticCounter.class.getName(), jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.PointCounter.class.getName(), jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.QuizPointStatistic.class.getName() + ".pointCounters", jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.MultipleChoiceQuestionStatistic.class.getName() + ".answerCounters", jcacheConfiguration);
@@ -127,7 +127,23 @@ public class CacheConfiguration {
             cm.createCache(de.tum.in.www1.artemis.domain.ExampleSubmission.class.getName(), jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.ExampleSubmission.class.getName() + ".exercises", jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.Exercise.class.getName() + ".tutorParticipations", jcacheConfiguration);
-
+            cm.createCache(de.tum.in.www1.artemis.domain.Course.class.getName() + ".lectures", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.Course.class.getName() + ".tutorGroups", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.Exercise.class.getName() + ".attachments", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.StudentQuestion.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.StudentQuestion.class.getName() + ".answers", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.StudentQuestionAnswer.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.TutorGroup.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.TutorGroup.class.getName() + ".students", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.Notification.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.SystemNotification.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.GroupNotification.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.SingleUserNotification.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.Lecture.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.Lecture.class.getName() + ".attachments", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.Attachment.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.Exercise.class.getName() + ".studentQuestions", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.Lecture.class.getName() + ".studentQuestions", jcacheConfiguration);
 
             // jhipster-needle-ehcache-add-entry
             cm.createCache("files", jcacheConfiguration);

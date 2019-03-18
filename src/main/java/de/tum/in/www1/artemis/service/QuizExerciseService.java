@@ -70,13 +70,13 @@ public class QuizExerciseService {
         log.debug("Request to save QuizExercise : {}", quizExercise);
 
         // fix references in all drag and drop and short answer questions  (step 1/2)
-        for (Question question : quizExercise.getQuestions()) {
-            if (question instanceof DragAndDropQuestion) {
-                DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
+        for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
+            if (quizQuestion instanceof DragAndDropQuestion) {
+                DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) quizQuestion;
                 // save references as index to prevent Hibernate Persistence problem
                 saveCorrectMappingsInIndices(dragAndDropQuestion);
-            } else if (question instanceof ShortAnswerQuestion){
-                ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) question;
+            } else if (quizQuestion instanceof ShortAnswerQuestion){
+                ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) quizQuestion;
                 // save references as index to prevent Hibernate Persistence problem
                 saveCorrectMappingsInIndicesShortAnswer(shortAnswerQuestion);
             }
@@ -88,13 +88,13 @@ public class QuizExerciseService {
         QuizExercise result = quizExerciseRepository.save(quizExercise);
 
         // fix references in all drag and drop questions and short answer questions (step 2/2)
-        for (Question question : result.getQuestions()) {
-            if (question instanceof DragAndDropQuestion) {
-                DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
+        for (QuizQuestion quizQuestion : result.getQuizQuestions()) {
+            if (quizQuestion instanceof DragAndDropQuestion) {
+                DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) quizQuestion;
                 // restore references from index after save
                 restoreCorrectMappingsFromIndices(dragAndDropQuestion);
-            } else if (question instanceof ShortAnswerQuestion) {
-                ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) question;
+            } else if (quizQuestion instanceof ShortAnswerQuestion) {
+                ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) quizQuestion;
                 // restore references from index after save
                 restoreCorrectMappingsFromIndicesShortAnswer(shortAnswerQuestion);
             }
@@ -160,7 +160,7 @@ public class QuizExerciseService {
         Optional<QuizExercise> quizExercise = quizExerciseRepository.findById(id);
         log.debug("    loaded quiz after {} ms", System.currentTimeMillis() - start);
         if (quizExercise.isPresent()) {
-            quizExercise.get().getQuestions().size();
+            quizExercise.get().getQuizQuestions().size();
             log.debug("    loaded questions after {} ms", System.currentTimeMillis() - start);
             return quizExercise.get();
         }
@@ -180,12 +180,12 @@ public class QuizExerciseService {
         Optional<QuizExercise> optionalQuizExercise = quizExerciseRepository.findById(id);
         if (optionalQuizExercise.isPresent()) {
             QuizExercise quizExercise = optionalQuizExercise.get();
-            quizExercise.getQuestions().size();
+            quizExercise.getQuizQuestions().size();
             log.debug("    loaded questions after {} ms", System.currentTimeMillis() - start);
             quizExercise.getQuizPointStatistic().getPointCounters().size();
             log.debug("    loaded quiz point statistic after {} ms", System.currentTimeMillis() - start);
-            for (Question question : quizExercise.getQuestions()) {
-                question.getQuestionStatistic().getRatedCorrectCounter();
+            for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
+                quizQuestion.getQuizQuestionStatistic().getRatedCorrectCounter();
             }
             log.debug("    loaded question statistics after {} ms", System.currentTimeMillis() - start);
             return quizExercise;
@@ -224,7 +224,7 @@ public class QuizExerciseService {
     public List<QuizExercise> findAllPlannedToStartInTheFutureWithQuestions() {
         List<QuizExercise> quizExercises = quizExerciseRepository.findByIsPlannedToStartAndReleaseDateIsAfter(true, ZonedDateTime.now());
         for (QuizExercise quizExercise : quizExercises) {
-            quizExercise.getQuestions().size();
+            quizExercise.getQuizQuestions().size();
         }
         return quizExercises;
     }
@@ -260,7 +260,7 @@ public class QuizExerciseService {
             for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
                 // Delete all references to question and question-elements if the question was changed
                 submittedAnswer.checkAndDeleteReferences(quizExercise);
-                if (!quizExercise.getQuestions().contains(submittedAnswer.getQuestion())) {
+                if (!quizExercise.getQuizQuestions().contains(submittedAnswer.getQuizQuestion())) {
                     submittedAnswersToDelete.add(submittedAnswer);
                 }
             }

@@ -1,0 +1,64 @@
+{
+    "name": "QuizQuestion",
+    "fields": [
+        {
+            "fieldName": "title",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "text",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "hint",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "explanation",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "score",
+            "fieldType": "Integer"
+        },
+        {
+            "fieldName": "scoringType",
+            "fieldType": "ScoringType",
+            "fieldValues": "ALL_OR_NOTHING,PROPORTIONAL_CORRECT_OPTIONS,TRUE_FALSE_NEUTRAL"
+        },
+        {
+            "fieldName": "randomizeOrder",
+            "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "invalid",
+            "fieldType": "Boolean"
+        }
+    ],
+    "relationships": [
+        {
+            "relationshipType": "one-to-one",
+            "otherEntityName": "questionStatistic",
+            "otherEntityRelationshipName": "quizQuestion",
+            "relationshipName": "questionStatistic",
+            "otherEntityField": "id",
+            "ownerSide": true
+        },
+        {
+            "relationshipType": "many-to-one",
+            "otherEntityName": "quizExercise",
+            "otherEntityRelationshipName": "quizQuestions",
+            "relationshipName": "exercise",
+            "otherEntityField": "id"
+        }
+    ],
+    "changelogDate": "20190315161919",
+    "entityTableName": "quiz_question",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no",
+    "jpaMetamodelFiltering": false,
+    "fluentMethods": true,
+    "clientRootFolder": "",
+    "applications": "*"
+}

@@ -1,11 +1,11 @@
 import { ShortAnswerSubmittedText } from '../short-answer-submitted-text';
 import { SubmittedAnswer } from '../submitted-answer';
-import { QuestionType } from 'app/entities/question';
+import { QuizQuestionType } from 'app/entities/quiz-question';
 
 export class ShortAnswerSubmittedAnswer extends SubmittedAnswer {
     public submittedTexts: ShortAnswerSubmittedText[];
 
     constructor() {
-        super(QuestionType.SHORT_ANSWER);
+        super(QuizQuestionType.SHORT_ANSWER);
     }
 }
