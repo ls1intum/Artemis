@@ -98,7 +98,9 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @desc Setup the question editor
      */
     ngAfterViewInit(): void {
-        requestAnimationFrame(this.setupQuestionEditor.bind(this));
+        if (!this.reEvaluationInProgress) {
+            requestAnimationFrame(this.setupQuestionEditor.bind(this));
+        }
     }
 
     /**
@@ -617,9 +619,10 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      */
     resetQuestionText() {
         this.question.text = this.backupQuestion.text;
+        this.question.spots = JSON.parse(JSON.stringify(this.backupQuestion.spots));
+        this.textParts = this.question.text.split(/\n+/g).map(t => t.split(/\s+(?![^[]]*])/g));
         this.question.explanation = this.backupQuestion.explanation;
         this.question.hint = this.backupQuestion.hint;
-        this.setupQuestionEditor();
     }
 
     /**
@@ -693,8 +696,23 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @param dropLocationToDelete {object} the drop location to delete
      */
     deleteSpot(spotToDelete: ShortAnswerSpot): void {
+        console.log("spots before:" );
+        console.log(this.question.spots);
+        console.log("mappings before:");
+        console.log(this.question.correctMappings);
+
         this.question.spots = this.question.spots.filter(spot => spot !== spotToDelete);
         this.deleteMappingsForSpot(spotToDelete);
+
+        this.textParts = this.question.text.split(/\n+/g).map(t => t.split(/\s+(?![^[]]*])/g));
+        this.textParts = this.textParts.map(part => part.filter(text => text !== '[-spot ' + spotToDelete.spotNr + ']'));
+
+        this.question.text = this.textParts.map(textPart => textPart.join(' ')).join('\n');
+
+        console.log("spots after:" );
+        console.log(this.question.spots);
+        console.log("mappings after:");
+        console.log(this.question.correctMappings);
     }
 
     /**
@@ -709,5 +727,12 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         this.question.correctMappings = this.question.correctMappings.filter(
             mapping => !this.shortAnswerQuestionUtil.isSameSpot(mapping.spot, spot)
         );
+    }
+
+    setQuestionText(id: string):void {
+        const rowColumn: string [] = id.split('-').slice(1);
+        this.textParts[rowColumn[0]][rowColumn[1]] = (<HTMLInputElement>document.getElementById(id)).value;
+        this.question.text = this.textParts.map(textPart => textPart.join(' ')).join('\n');
+        this.textParts = this.question.text.split(/\n+/g).map(t => t.split(/\s+(?![^[]]*])/g));
     }
 }
