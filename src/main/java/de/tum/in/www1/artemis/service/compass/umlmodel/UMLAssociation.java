@@ -76,6 +76,11 @@ public class UMLAssociation extends UMLElement {
 
     private UMLRelationType type;
 
+
+    public UMLAssociation() {
+    }
+
+
     public UMLAssociation(UMLClass source, UMLClass target, String type, String jsonElementID, String sourceRole, String targetRole,
                           String sourceMultiplicity, String targetMultiplicity) {
         this.source = source;

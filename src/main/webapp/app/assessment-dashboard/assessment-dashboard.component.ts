@@ -96,7 +96,7 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
      */
     getSubmissions(forceReload: boolean) {
         this.modelingSubmissionService
-            .getModelingSubmissionsForExercise(this.exercise.course.id, this.exercise.id, { submittedOnly: true })
+            .getModelingSubmissionsForExercise(this.exercise.id, { submittedOnly: true })
             .subscribe((res: HttpResponse<ModelingSubmission[]>) => {
                 // only use submissions that have already been submitted (this makes sure that unsubmitted submissions are not shown
                 // the server should have filtered these submissions alreadyart
