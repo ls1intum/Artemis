@@ -8,14 +8,14 @@ import de.tum.in.www1.artemis.domain.*;
  */
 public class ScoringStrategyDragAndDropAllOrNothing implements ScoringStrategy {
     @Override
-    public double calculateScore(Question question, SubmittedAnswer submittedAnswer) {
-        // return maximal Score if the question is invalid
-        if (question.isInvalid()) {
-            return question.getScore();
+    public double calculateScore(QuizQuestion quizQuestion, SubmittedAnswer submittedAnswer) {
+        // return maximal Score if the quizQuestion is invalid
+        if (quizQuestion.isInvalid()) {
+            return quizQuestion.getScore();
         }
-        if (submittedAnswer instanceof DragAndDropSubmittedAnswer && question instanceof DragAndDropQuestion) {
+        if (submittedAnswer instanceof DragAndDropSubmittedAnswer && quizQuestion instanceof DragAndDropQuestion) {
             DragAndDropSubmittedAnswer dndAnswer = (DragAndDropSubmittedAnswer) submittedAnswer;
-            DragAndDropQuestion dndQuestion = (DragAndDropQuestion) question;
+            DragAndDropQuestion dndQuestion = (DragAndDropQuestion) quizQuestion;
             // iterate through each drop location and compare its correct mappings with the answer's mapping
             for (DropLocation dropLocation : dndQuestion.getDropLocations()) {
                 DragItem selectedDragItem = dndAnswer.getSelectedDragItemForDropLocation(dropLocation);
@@ -29,7 +29,7 @@ public class ScoringStrategyDragAndDropAllOrNothing implements ScoringStrategy {
             // the user wasn't wrong about a single drop location => the answer is 100% correct
             return dndQuestion.getScore();
         }
-        // the submitted answer's type doesn't fit the question's type => it cannot be correct
+        // the submitted answer's type doesn't fit the quizQuestion's type => it cannot be correct
         return 0.0;
     }
 }

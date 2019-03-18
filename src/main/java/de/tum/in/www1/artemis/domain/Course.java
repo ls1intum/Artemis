@@ -71,10 +71,29 @@ public class Course implements Serializable {
     @JsonView(QuizView.Before.class)
     private Integer maxComplaints;
 
-    @OneToMany(mappedBy = "course")
+    @Column(name = "color")
+    private String color;
+
+    @Column(name = "course_icon")
+    private String courseIcon;
+
+    @Column(name = "registration_enabled")
+    private Boolean registrationEnabled;
+
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("course")
     private Set<Exercise> exercises = new HashSet<>();
+
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonIgnoreProperties("course")
+    private Set<Lecture> lectures = new HashSet<>();
+
+    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonIgnoreProperties("course")
+    private Set<TutorGroup> tutorGroups = new HashSet<>();
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -215,6 +234,45 @@ public class Course implements Serializable {
         this.maxComplaints = maxComplaints;
     }
 
+    public String getColor() {
+        return color;
+    }
+
+    public Course color(String color) {
+        this.color = color;
+        return this;
+    }
+
+    public void setColor(String color) {
+        this.color = color;
+    }
+
+    public String getCourseIcon() {
+        return courseIcon;
+    }
+
+    public Course courseIcon(String courseIcon) {
+        this.courseIcon = courseIcon;
+        return this;
+    }
+
+    public void setCourseIcon(String courseIcon) {
+        this.courseIcon = courseIcon;
+    }
+
+    public Boolean isRegistrationEnabled() {
+        return registrationEnabled;
+    }
+
+    public Course registrationEnabled(Boolean registrationEnabled) {
+        this.registrationEnabled = registrationEnabled;
+        return this;
+    }
+
+    public void setRegistrationEnabled(Boolean registrationEnabled) {
+        this.registrationEnabled = registrationEnabled;
+    }
+
     public Set<Exercise> getExercises() {
         return exercises;
     }
@@ -239,6 +297,57 @@ public class Course implements Serializable {
     public void setExercises(Set<Exercise> exercises) {
         this.exercises = exercises;
     }
+
+    public Set<Lecture> getLectures() {
+        return lectures;
+    }
+
+    public Course lectures(Set<Lecture> lectures) {
+        this.lectures = lectures;
+        return this;
+    }
+
+    public Course addLectures(Lecture lecture) {
+        this.lectures.add(lecture);
+        lecture.setCourse(this);
+        return this;
+    }
+
+    public Course removeLectures(Lecture lecture) {
+        this.lectures.remove(lecture);
+        lecture.setCourse(null);
+        return this;
+    }
+
+    public void setLectures(Set<Lecture> lectures) {
+        this.lectures = lectures;
+    }
+
+    public Set<TutorGroup> getTutorGroups() {
+        return tutorGroups;
+    }
+
+    public Course tutorGroups(Set<TutorGroup> tutorGroups) {
+        this.tutorGroups = tutorGroups;
+        return this;
+    }
+
+    public Course addTutorGroups(TutorGroup tutorGroup) {
+        this.tutorGroups.add(tutorGroup);
+        tutorGroup.setCourse(this);
+        return this;
+    }
+
+    public Course removeTutorGroups(TutorGroup tutorGroup) {
+        this.tutorGroups.remove(tutorGroup);
+        tutorGroup.setCourse(null);
+        return this;
+    }
+
+    public void setTutorGroups(Set<TutorGroup> tutorGroups) {
+        this.tutorGroups = tutorGroups;
+    }
+
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     @Override
@@ -274,6 +383,9 @@ public class Course implements Serializable {
             ", startDate='" + getStartDate() + "'" +
             ", endDate='" + getEndDate() + "'" +
             ", onlineCourse='" + isOnlineCourse() + "'" +
+            ", color='" + getColor() + "'" +
+            ", courseIcon='" + getCourseIcon() + "'" +
+            ", registrationEnabled='" + isRegistrationEnabled() + "'" +
             "}";
     }
 }

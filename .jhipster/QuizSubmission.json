@@ -9,12 +9,12 @@
     "relationships": [
         {
             "relationshipType": "one-to-many",
-            "relationshipName": "submittedAnswers",
             "otherEntityName": "submittedAnswer",
-            "otherEntityRelationshipName": "submission"
+            "otherEntityRelationshipName": "submission",
+            "relationshipName": "submittedAnswers"
         }
     ],
-    "changelogDate": "20180927081413",
+    "changelogDate": "20190315161935",
     "entityTableName": "quiz_submission",
     "dto": "no",
     "pagination": "no",

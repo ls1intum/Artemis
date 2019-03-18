@@ -1,0 +1,80 @@
+<div>
+    <h2 id="page-heading">
+        <span jhiTranslate="artemisApp.tutorGroup.home.title">Tutor Groups</span>
+        <button id="jh-create-entity" class="btn btn-primary float-right jh-create-entity create-tutor-group" [routerLink]="['/tutor-group/new']">
+            <fa-icon [icon]="'plus'"></fa-icon>
+            <span  jhiTranslate="artemisApp.tutorGroup.home.createLabel">
+            Create new Tutor Group
+            </span>
+        </button>
+    </h2>
+    <jhi-alert></jhi-alert>
+    <br/>
+    <div class="table-responsive" *ngIf="tutorGroups">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+            <th><span jhiTranslate="global.field.id">ID</span></th>
+            <th><span jhiTranslate="artemisApp.tutorGroup.name">Name</span></th>
+            <th><span jhiTranslate="artemisApp.tutorGroup.capacity">Capacity</span></th>
+            <th><span jhiTranslate="artemisApp.tutorGroup.weekday">Weekday</span></th>
+            <th><span jhiTranslate="artemisApp.tutorGroup.timeSlot">Time Slot</span></th>
+            <th><span jhiTranslate="artemisApp.tutorGroup.language">Language</span></th>
+            <th><span jhiTranslate="artemisApp.tutorGroup.room">Room</span></th>
+            <th><span jhiTranslate="artemisApp.tutorGroup.tutor">Tutor</span></th>
+            <th><span jhiTranslate="artemisApp.tutorGroup.students">Students</span></th>
+            <th><span jhiTranslate="artemisApp.tutorGroup.course">Course</span></th>
+            <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr *ngFor="let tutorGroup of tutorGroups ;trackBy: trackId">
+                <td><a [routerLink]="['/tutor-group', tutorGroup.id, 'view' ]">{{tutorGroup.id}}</a></td>
+                <td>{{tutorGroup.name}}</td>
+                <td>{{tutorGroup.capacity}}</td>
+                <td jhiTranslate="{{'artemisApp.Weekday.' + tutorGroup.weekday}}">{{tutorGroup.weekday}}</td>
+                <td>{{tutorGroup.timeSlot}}</td>
+                <td jhiTranslate="{{'artemisApp.Language.' + tutorGroup.language}}">{{tutorGroup.language}}</td>
+                <td>{{tutorGroup.room}}</td>
+                <td>
+                    {{tutorGroup.tutor?.id}}
+                </td>
+                <td>
+                    <span *ngFor="let students of tutorGroup.students; let last = last">
+                            {{students.id}}{{last ? '' : ', '}}
+                        </span>
+                </td>
+                <td>
+                    <div *ngIf="tutorGroup.course">
+                        <a [routerLink]="['../course', tutorGroup.course?.id, 'view' ]" >{{tutorGroup.course?.id}}</a>
+                    </div>
+                </td>
+                <td class="text-right">
+                    <div class="btn-group flex-btn-group-container">
+                        <button type="submit"
+                                [routerLink]="['/tutor-group', tutorGroup.id, 'view' ]"
+                                class="btn btn-info btn-sm">
+                            <fa-icon [icon]="'eye'"></fa-icon>
+                            <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
+                        </button>
+                        <button type="submit"
+                                [routerLink]="['/tutor-group', tutorGroup.id, 'edit']"
+                                class="btn btn-primary btn-sm">
+                            <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                            <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                        </button>
+                        <button type="submit"
+                                [routerLink]="['/', 'tutor-group', { outlets: { popup: tutorGroup.id + '/delete'} }]"
+                                replaceUrl="true"
+                                queryParamsHandling="merge"
+                                class="btn btn-danger btn-sm">
+                            <fa-icon [icon]="'times'"></fa-icon>
+                            <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

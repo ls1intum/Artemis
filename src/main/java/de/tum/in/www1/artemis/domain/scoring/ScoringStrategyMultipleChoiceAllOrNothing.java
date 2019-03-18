@@ -8,15 +8,15 @@ import de.tum.in.www1.artemis.domain.*;
  */
 public class ScoringStrategyMultipleChoiceAllOrNothing implements ScoringStrategy {
     @Override
-    public double calculateScore(Question question, SubmittedAnswer submittedAnswer) {
-        //check if the question is invalid: if true: -> return with full points
-        if (question.isInvalid()) {
-            return question.getScore();
+    public double calculateScore(QuizQuestion quizQuestion, SubmittedAnswer submittedAnswer) {
+        //check if the quizQuestion is invalid: if true: -> return with full points
+        if (quizQuestion.isInvalid()) {
+            return quizQuestion.getScore();
         }
 
-        if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer && question instanceof MultipleChoiceQuestion) {
+        if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer && quizQuestion instanceof MultipleChoiceQuestion) {
             MultipleChoiceSubmittedAnswer mcAnswer = (MultipleChoiceSubmittedAnswer) submittedAnswer;
-            MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) question;
+            MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) quizQuestion;
             // iterate through each answer option and compare its correctness with the answer's selection
             for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {
                 boolean isSelected = mcAnswer.isSelected(answerOption);
@@ -32,7 +32,7 @@ public class ScoringStrategyMultipleChoiceAllOrNothing implements ScoringStrateg
             // the user wasn't wrong about a single answer option => the answer is 100% correct
             return mcQuestion.getScore();
         }
-        // the submitted answer's type doesn't fit the question's type => it cannot be correct
+        // the submitted answer's type doesn't fit the quizQuestion's type => it cannot be correct
         return 0.0;
     }
 }

@@ -11,7 +11,7 @@ import java.util.Objects;
  */
 @Entity
 @DiscriminatorValue(value="AC")
-public class AnswerCounter extends StatisticCounter implements Serializable {
+public class AnswerCounter extends QuizStatisticCounter implements Serializable {
 
     private static final long serialVersionUID = 1L;
 

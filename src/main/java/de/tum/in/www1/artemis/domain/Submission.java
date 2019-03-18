@@ -5,6 +5,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.Proxy;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -34,6 +35,7 @@ import java.util.Objects;
     @JsonSubTypes.Type(value = FileUploadSubmission.class, name = "file-upload"),
 })
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@Proxy(lazy = false)
 public abstract class Submission implements Serializable {
 
     private static final long serialVersionUID = 1L;
