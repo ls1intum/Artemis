@@ -38,6 +38,7 @@ import { WindowRef } from 'app/core';
 import * as ace from 'brace';
 
 import { AceAnnotation, TextChange, SaveStatusChange } from '../../entities/ace-editor';
+import { JhiWebsocketService } from '../../core';
 
 @Component({
     selector: 'jhi-code-editor-ace',
@@ -72,7 +73,11 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
     @Output()
     saveStatusChange = new EventEmitter<SaveStatusChange>();
 
+    updateFileChannel: string;
+    receiveFileUpdatesChannel: string;
+
     constructor(
+        private jhiWebsocketService: JhiWebsocketService,
         private repositoryFileService: RepositoryFileService,
         private localStorageService: LocalStorageService,
         public modalService: NgbModal
@@ -107,6 +112,11 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
      * @param {SimpleChanges} changes
      */
     ngOnChanges(changes: SimpleChanges): void {
+        if (changes.participation && changes.participation.currentValue) {
+            this.updateFileChannel = `/topic/repository/${this.participation.id}/file`;
+            this.receiveFileUpdatesChannel = `/user${this.updateFileChannel}`;
+            this.setUpReceiveFileUpdates();
+        }
         if (changes.participation && this.participation) {
             this.updateSaveStatusLabel();
         }
@@ -156,6 +166,41 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
                     .setAnnotations(this.editorFileSessions[this.selectedFile].errors);
             }
         }
+    }
+
+    setUpReceiveFileUpdates() {
+        this.jhiWebsocketService.unsubscribe(this.receiveFileUpdatesChannel);
+        this.jhiWebsocketService.subscribe(this.receiveFileUpdatesChannel);
+        this.jhiWebsocketService.receive(this.receiveFileUpdatesChannel)
+            .debounceTime(this.updateFilesDebounceTime)
+            .distinctUntilChanged()
+            .subscribe(
+                res => {
+                    if (!res.error) {
+                        const sessionAnnotations = Object.entries(this.editorFileSessions)
+                            .reduce((acc, [file, {errors}]) => ({
+                                ...acc,
+                                [file]: errors
+                            }), {});
+                        this.localStorageService.store('sessions', JSON.stringify({[this.participation.id]: {errors: sessionAnnotations, ts: Date.now()}}));
+                        this.editorFileSessions[res.fileName].unsavedChanges = false;
+                        this.updateSaveStatusLabel();
+                    } else {
+                        if (this.onSaveStatusChange) {
+                            this.onSaveStatusChange({
+                                isSaved: false,
+                                saveStatusIcon: {
+                                    spin: false,
+                                    icon: 'times-circle',
+                                    class: 'text-danger'
+                                },
+                                saveStatusLabel: '<span class="text-danger"> Failed to save file.</span>'
+                            });
+                        }
+                        console.log('There was an error while saving file', res.fileName, res.error);
+                    }
+                }
+            );
     }
 
     /**
@@ -275,31 +320,7 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
                     [file]: errors
                 }), {});
 
-            this.repositoryFileService
-                .update(this.participation.id, fileName, this.editorFileSessions[fileName].code)
-                .debounceTime(this.updateFilesDebounceTime)
-                .distinctUntilChanged()
-                .subscribe(
-                    () => {
-                        this.localStorageService.store('sessions', JSON.stringify({[this.participation.id]: {errors: sessionAnnotations, ts: Date.now()}}));
-                        this.editorFileSessions[fileName].unsavedChanges = false;
-                        this.updateSaveStatusLabel();
-                    },
-                    err => {
-                        if (this.onSaveStatusChange) {
-                            this.onSaveStatusChange({
-                                isSaved: false,
-                                saveStatusIcon: {
-                                    spin: false,
-                                    icon: 'times-circle',
-                                    class: 'text-danger'
-                                },
-                                saveStatusLabel: '<span class="text-danger"> Failed to save file.</span>'
-                            });
-                        }
-                        console.log('There was an error while saving file', this.selectedFile, err);
-                    }
-                );
+            this.jhiWebsocketService.send(this.updateFileChannel, {fileName, fileContent: this.editorFileSessions[fileName].code});
         }, this.saveFileDelayTime);
     }
 
@@ -332,5 +353,6 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
 
     ngOnDestroy() {
         this.annotationChange.unsubscribe();
+        this.jhiWebsocketService.unsubscribe(this.receiveFileUpdatesChannel);
     }
 }
