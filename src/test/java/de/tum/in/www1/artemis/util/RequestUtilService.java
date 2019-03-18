@@ -65,6 +65,23 @@ public class RequestUtilService {
     }
 
 
+    public <T, R> R postWithResponseBody(
+        String path, T body, Class<R> responseType) throws Exception {
+        String jsonBody = mapper.writeValueAsString(body);
+        MvcResult res =
+            mvc.perform(
+                MockMvcRequestBuilders.post(new URI(path))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(jsonBody)
+                    .with(csrf()))
+                .andReturn();
+        if (res.getResponse().getStatus() >= 299) {
+            return null;
+        }
+        return mapper.readValue(res.getResponse().getContentAsString(), responseType);
+    }
+
+
     public <T, R> R putWithResponseBody(
         String path, T body, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
         String jsonBody = mapper.writeValueAsString(body);
@@ -78,6 +95,24 @@ public class RequestUtilService {
                 .andReturn();
 
         return mapper.readValue(res.getResponse().getContentAsString(), responseType);
+    }
+
+
+    public <T, R> List<R> putWithResponseBodyList(
+        String path, T body, Class<R> listElementType, HttpStatus expectedStatus) throws Exception {
+        String jsonBody = mapper.writeValueAsString(body);
+        MvcResult res =
+            mvc.perform(
+                MockMvcRequestBuilders.put(new URI(path))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(jsonBody)
+                    .with(csrf()))
+                .andExpect(status().is(expectedStatus.value()))
+                .andReturn();
+
+        return mapper.readValue(
+            res.getResponse().getContentAsString(),
+            mapper.getTypeFactory().constructCollectionType(List.class, listElementType));
     }
 
 
@@ -98,9 +133,9 @@ public class RequestUtilService {
                 .andExpect(status().is(expectedStatus.value()))
                 .andReturn();
         if (!expectedStatus.is2xxSuccessful()) {
-            assertThat(res.getResponse().getContentAsString())
-                .as("problem description instead of result")
-                .isEqualTo("application/problem+json"); // TODO MJ more sufficient check?
+            if (res.getResponse().getContentType() != null && !res.getResponse().getContentType().equals("application/problem+json")) {
+                assertThat(res.getResponse().getContentAsString()).isNullOrEmpty();
+            }
             return null;
         }
         return mapper.readValue(res.getResponse().getContentAsString(), responseType);
@@ -114,9 +149,9 @@ public class RequestUtilService {
                 .andExpect(status().is(expectedStatus.value()))
                 .andReturn();
         if (!expectedStatus.is2xxSuccessful()) {
-            assertThat(res.getResponse().getContentType())
-                .as("problem description instead of result")
-                .isEqualTo("application/problem+json"); // TODO MJ more sufficient check?
+            if (res.getResponse().getContentType() != null && !res.getResponse().getContentType().equals("application/problem+json")) {
+                assertThat(res.getResponse().getContentAsString()).isNullOrEmpty();
+            }
             return null;
         }
 

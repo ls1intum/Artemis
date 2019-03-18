@@ -12,6 +12,11 @@ public class UMLMethod extends UMLElement {
     private String returnType;
     private List<String> parameters;
 
+
+    public UMLMethod() {
+    }
+
+
     public UMLMethod(String completeName, String name, String returnType, List<String> parameter, String jsonElementID) {
         this.completeName = completeName;
         this.name = name;
