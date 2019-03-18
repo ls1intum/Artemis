@@ -87,12 +87,10 @@ public class QuizSubmissionResource {
             answer.getQuizQuestion().setQuizQuestionStatistic(null);
         }
 
-        //TODO: the solution is missing in this case, we have to provide because we removed it when loading the practive mode
-
         quizExercise.setQuizPointStatistic(null);
         quizExercise.setCourse(null);
 
-        // return quizSubmission
+        // return result with quizSubmission, participation and quiz exercise (including the solution)
         return ResponseEntity.ok(result);
     }
 

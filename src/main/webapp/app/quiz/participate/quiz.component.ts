@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
-import { JhiWebsocketService } from '../../core';
+import { JhiWebsocketService } from 'app/core';
 import * as moment from 'moment';
 import * as _ from 'lodash';
 import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
@@ -9,14 +9,14 @@ import { ActivatedRoute } from '@angular/router';
 import { JhiAlertService } from 'ng-jhipster';
 import { QuizSubmission, QuizSubmissionService } from '../../entities/quiz-submission';
 import { Participation, ParticipationService } from '../../entities/participation';
-import { Result } from '../../entities/result';
-import { DragAndDropQuestion } from '../../entities/drag-and-drop-question';
-import { MultipleChoiceQuestion } from '../../entities/multiple-choice-question';
-import { ShortAnswerQuestion } from '../../entities/short-answer-question';
-import { MultipleChoiceSubmittedAnswer } from '../../entities/multiple-choice-submitted-answer';
-import { DragAndDropSubmittedAnswer } from '../../entities/drag-and-drop-submitted-answer';
-import { ShortAnswerSubmittedAnswer } from '../../entities/short-answer-submitted-answer';
-import { QuizQuestionType } from '../../entities/quiz-question';
+import { Result } from 'app/entities/result';
+import { DragAndDropQuestion } from 'app/entities/drag-and-drop-question';
+import { MultipleChoiceQuestion } from 'app/entities/multiple-choice-question';
+import { ShortAnswerQuestion } from 'app/entities/short-answer-question';
+import { MultipleChoiceSubmittedAnswer } from 'app/entities/multiple-choice-submitted-answer';
+import { DragAndDropSubmittedAnswer } from 'app/entities/drag-and-drop-submitted-answer';
+import { ShortAnswerSubmittedAnswer } from 'app/entities/short-answer-submitted-answer';
+import { QuizQuestionType } from 'app/entities/quiz-question';
 import { MultipleChoiceQuestionComponent } from 'app/quiz/participate/multiple-choice-question/multiple-choice-question.component';
 import { DragAndDropQuestionComponent } from 'app/quiz/participate/drag-and-drop-question/drag-and-drop-question.component';
 import { ShortAnswerQuestionComponent } from 'app/quiz/participate/short-answer-question/short-answer-question.component';
@@ -563,7 +563,7 @@ export class QuizComponent implements OnInit, OnDestroy {
 
             if (participation.results[0].resultString && this.quizExercise.ended) {
                 // quiz has ended and results are available
-                this.showResult(participation.results);
+                this.showResult(participation.results[0]);
             }
         } else {
             this.submission = new QuizSubmission();
@@ -632,7 +632,7 @@ export class QuizComponent implements OnInit, OnDestroy {
             this.updateSubmissionTime();
             this.transferInformationToQuizExercise(quizExercise);
             this.applySubmission();
-            this.showResult(participation.results);
+            this.showResult(participation.results[0]);
         }
     }
 
@@ -695,11 +695,11 @@ export class QuizComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Display results of quiz
-     * @param results
+     * Display results of the quiz for the user
+     * @param result
      */
-    showResult(results: Result[]) {
-        this.result = results[0];
+    showResult(result: Result) {
+        this.result = result;
         if (this.result) {
             this.showingResult = true;
 
@@ -921,8 +921,11 @@ export class QuizComponent implements OnInit, OnDestroy {
     onSubmitPracticeOrPreviewSuccess(result: Result) {
         this.isSubmitting = false;
         this.submission = result.submission as QuizSubmission;
+        // make sure the additional information (explanations, correct answers) is available
+        const quizExercise = result.participation.exercise as QuizExercise;
+        this.transferInformationToQuizExercise(quizExercise);
         this.applySubmission();
-        this.showResult([result]);
+        this.showResult(result);
     }
 
     /**
