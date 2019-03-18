@@ -82,7 +82,7 @@ export class ModelingAssessmentService {
         for (const feedback of result.feedbacks) {
             const referencedModelType = feedback.referenceType;
             const referencedModelId = feedback.referenceId;
-            if (feedback.reference === ModelElementType.CLASS) {
+            if (referencedModelType === ModelElementType.CLASS) {
                 const classElement = model.entities.byId[referencedModelId];
                 const className = classElement.name;
                 let type: string;
