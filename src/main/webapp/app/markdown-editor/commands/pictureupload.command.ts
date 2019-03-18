@@ -6,20 +6,17 @@ export class PictureuploadCommand extends Command {
     buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.imageUpload';
 
     execute(): void {
-        if (!this.editor) { return; }
         let selectedText = this.editor.getSelectedText();
-        const isSelected = !!selectedText;
-        const startSize = 2;
-        const initText = '';
-        const range = this.editor.selection.getRange();
-        selectedText = `![](http://)`;
-        this.editor.session.replace(range, selectedText);
-        if (!isSelected) {
-            range.start.column += startSize;
-            range.end.column = range.start.column + initText.length;
-            this.editor.selection.setRange(range);
-        }
-        this.editor.focus();
+        let textToAdd = '';
 
+        if (selectedText.includes('![](http://)')) {
+            textToAdd = selectedText.slice(10);
+            this.editor.insert(textToAdd);
+        } else {
+            const range = this.editor.selection.getRange();
+            selectedText = `![](http://)`;
+            this.editor.session.replace(range, selectedText);
+            this.editor.focus();
+        }
     }
 }

@@ -1,25 +1,26 @@
-import { Heading } from 'app/markdown-editor/commands/heading.command';
+import { Command } from 'app/markdown-editor/commands/command';
 
-export class HeadingThreeCommand extends Heading {
+export class HeadingThreeCommand extends Command {
 
     buttonIcon = 'heading3';
     buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.headingThree';
 
     execute(): void {
-        if (!this.editor) { return; }
         let selectedText = this.editor.getSelectedText();
-        const isSelected = !!selectedText;
-        const startSize = 2;
-        const initText = '';
-        const range = this.editor.selection.getRange();
-        selectedText = `### ${selectedText || initText}`;
-        this.editor.session.replace(range, selectedText);
-        if (!isSelected) {
-            range.start.column += startSize;
-            range.end.column = range.start.column + initText.length;
-            this.editor.selection.setRange(range);
-        }
-        this.editor.focus();
+        let textToAdd = '';
 
+            if (selectedText.includes('###') && !selectedText.includes('Heading 3')) {
+                textToAdd = selectedText.slice(3);
+                this.editor.insert(textToAdd);
+            } else if (selectedText.includes('###') && selectedText.includes('Heading 3')) {
+                textToAdd = selectedText.slice(3, -9);
+                this.editor.insert(textToAdd);
+            } else {
+                const initText = 'Heading 3';
+                const range = this.editor.selection.getRange();
+                selectedText = `### ${selectedText || initText}`;
+                this.editor.session.replace(range, selectedText);
+                this.editor.focus();
+        }
     }
 }

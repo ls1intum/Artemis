@@ -6,21 +6,18 @@ export class UnorderedlistCommand extends Command {
     buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.unorderedList';
 
     execute(): void {
-        if (!this.editor) { return; }
         let selectedText = this.editor.getSelectedText();
-        const isSelected = !!selectedText;
-        let startSize = 2;
-        const initText = '';
-        const range = this.editor.selection.getRange();
-        selectedText = `- ${selectedText || initText}`;
-        startSize = 1;
-        this.editor.session.replace(range, selectedText);
-        if (!isSelected) {
-            range.start.column += startSize;
-            range.end.column = range.start.column + initText.length;
-            this.editor.selection.setRange(range);
-        }
-        this.editor.focus();
+        let textToAdd = '';
 
+        if (selectedText.includes('-')) {
+            textToAdd = selectedText.slice(2);
+            this.editor.insert(textToAdd);
+        } else {
+            const initText = '';
+            const range = this.editor.selection.getRange();
+            selectedText = `- ${selectedText || initText}`;
+            this.editor.session.replace(range, selectedText);
+            this.editor.focus();
+        }
     }
 }

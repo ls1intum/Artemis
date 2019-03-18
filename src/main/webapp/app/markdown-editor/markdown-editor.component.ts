@@ -52,15 +52,19 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
         new ItalicCommand(),
         new UnderlineCommand(),
         new ReferenceCommand(),
-        new HeadingOneCommand(),
-        // new HeadingTwoCommand(),
-        // new HeadingThreeCommand(),
         new CodeCommand(),
         new LinkCommand(),
         new PictureuploadCommand(),
         new OrderedlistCommand(),
         new UnorderedlistCommand(),
     ];
+
+    headerCommands: Command[] = [
+        new HeadingOneCommand(),
+        new HeadingTwoCommand(),
+        new HeadingThreeCommand(),
+    ];
+
     @Input() specialCommands: SpecialCommand[];
     @Output() textWithSpecialCommandFound = new EventEmitter<[string, SpecialCommand][]>();
 
@@ -99,7 +103,7 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
     }
 
     ngOnInit(): void {
-        [...this.defaultCommands, ...this.specialCommands || []].forEach(command => {
+        [...this.defaultCommands, ...this.specialCommands, ...this.headerCommands|| []].forEach(command => {
             command.setEditor(this.aceEditorContainer.getEditor());
         });
     }

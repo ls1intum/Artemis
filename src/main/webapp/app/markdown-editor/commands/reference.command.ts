@@ -6,21 +6,21 @@ export class ReferenceCommand extends Command {
     buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.quote';
 
     execute(): void {
-        if (!this.editor) { return; }
         let selectedText = this.editor.getSelectedText();
-        const isSelected = !!selectedText;
-        const startSize = 2;
-        let initText = '';
-        const range = this.editor.selection.getRange();
-        initText = 'Refrence';
-        selectedText = `> ${selectedText || initText}`;
-        this.editor.session.replace(range, selectedText);
-        if (!isSelected) {
-            range.start.column += startSize;
-            range.end.column = range.start.column + initText.length;
-            this.editor.selection.setRange(range);
-        }
-        this.editor.focus();
+        let textToAdd = '';
 
+        if (selectedText.includes('>') && !selectedText.includes('Reference')) {
+            textToAdd = selectedText.slice(2);
+            this.editor.insert(textToAdd);
+        } else if (selectedText.includes('>') && selectedText.includes('Reference')) {
+            textToAdd = selectedText.slice(2, -9);
+            this.editor.insert(textToAdd);
+        } else {
+            const range = this.editor.selection.getRange();
+            let initText = 'Reference';
+            selectedText = `> ${selectedText || initText}`;
+            this.editor.session.replace(range, selectedText);
+            this.editor.focus();
+        }
     }
 }

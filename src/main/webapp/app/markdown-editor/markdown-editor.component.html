@@ -1,8 +1,9 @@
 <!--Begin Editor-->
 <div [hidden]="previewMode">
-    <div class="tool-bar">
+    <div class="tool-bar row">
+    <div class="col-xs-6" style="margin-left: 14px">
         <ng-container *ngFor="let command of defaultCommands">
-            <button class="btn btn-sm btn-default mr-1"
+            <button class="btn btn-outline-secondary mr-1"
                     (click)="command.execute()"
                     [ngbTooltip]="buttontitle">
                 <fa-icon [icon]="command.buttonIcon" ></fa-icon>
@@ -10,7 +11,16 @@
             <ng-template #buttontitle>{{command.buttonTranslationString | translate}}</ng-template>
         </ng-container>
     </div>
-    <div class="tool-bar" *ngIf="specialCommands && specialCommands.length != 0">
+        <div class="btn-group col-xs-6" ngbDropdown role="group" aria-label="Button group with nested dropdown">
+            <button class="btn btn-outline-secondary mr-1" id="dropdownBasic1" ngbDropdownToggle>Style</button>
+            <div  *ngFor="let command of headerCommands" class="dropdown-menu" ngbDropdownMenu>
+                <button class="dropdown-item" (click)="command.execute()">{{command.buttonIcon}}</button>
+                <button class="dropdown-item" (click)="command.execute()">{{command.buttonIcon}}</button>
+                <button class="dropdown-item" (click)="command.execute()">{{command.buttonIcon}}</button>
+            </div>
+        </div>
+    </div>
+    <div class="tool-bar" *ngIf="specialCommands && specialCommands.length != 0" style="margin-top: 3px" >
         <ng-container *ngFor="let command of specialCommands">
             <div class="btn btn-group-sm btn-outline-secondary mr-1" (click)="command.execute()">
                 {{command.buttonTranslationString | translate}}

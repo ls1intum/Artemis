@@ -6,22 +6,21 @@ export class CodeCommand extends Command {
     buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.code';
 
     execute(): void {
-        if (!this.editor) { return; }
         let selectedText = this.editor.getSelectedText();
-        const isSelected = !!selectedText;
-        let startSize = 2;
-        let initText = '';
-        const range = this.editor.selection.getRange();
-        initText = 'Source Code';
-        selectedText = '```language\r\n' + (selectedText || initText) + '\r\n```';
-        startSize = 3;
-        this.editor.session.replace(range, selectedText);
-        if (!isSelected) {
-            range.start.column += startSize;
-            range.end.column = range.start.column + initText.length;
-            this.editor.selection.setRange(range);
-        }
-        this.editor.focus();
+        let textToAdd = '';
 
+        if (selectedText.includes('```language ') && !selectedText.includes('Source Code')) {
+            textToAdd = selectedText.slice(12, -3);
+            this.editor.insert(textToAdd);
+        } else if (selectedText.includes('```language ') && selectedText.includes('Source Code') ) {
+            textToAdd = selectedText.slice(23, -3);
+            this.editor.insert(textToAdd);
+        } else {
+            const range = this.editor.selection.getRange();
+            let initText = 'Source Code';
+            selectedText = '```language ' + (selectedText || initText) + '```';
+            this.editor.session.replace(range, selectedText);
+            this.editor.focus();
+        }
     }
 }
