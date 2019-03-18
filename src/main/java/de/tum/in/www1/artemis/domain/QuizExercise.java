@@ -17,9 +17,9 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 /**
- * A QuizExercise contains multiple quiz questions, which can be either multiple choice or drag and drop.
+ * A QuizExercise contains multiple quiz quizQuestions, which can be either multiple choice or drag and drop.
  * ArTEMiS supports live quizzes with a start and end time which are rated. Within this time, students can participate in the quiz
- * and select their answers to the given questions. After the end time, the quiz is automatically evaluated
+ * and select their answers to the given quizQuestions. After the end time, the quiz is automatically evaluated
  *
  * Instructors can choose to open the quiz for practice so that students can participate arbitrarily often with an unrated result
  */
@@ -72,7 +72,7 @@ public class QuizExercise extends Exercise implements Serializable {
     @JoinColumn(name="exercise_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonView(QuizView.During.class)
-    private List<Question> questions = new ArrayList<>();
+    private List<QuizQuestion> quizQuestions = new ArrayList<>();
 
     public Boolean isRandomizeQuestionOrder() {
         return randomizeQuestionOrder;
@@ -235,7 +235,7 @@ public class QuizExercise extends Exercise implements Serializable {
 
     /**
      * Check if the quiz is valid. This means, the quiz needs a title, a valid duration,
-     * at least one question, and all questions must be valid
+     * at least one question, and all quizQuestions must be valid
      *
      * @return true if the quiz is valid, otherwise false
      */
@@ -251,12 +251,12 @@ public class QuizExercise extends Exercise implements Serializable {
             return false;
         }
 
-        // check questions
-        if (getQuestions() == null || getQuestions().isEmpty()) {
+        // check quizQuestions
+        if (getQuizQuestions() == null || getQuizQuestions().isEmpty()) {
             return false;
         }
-        for (Question question : getQuestions()) {
-            if (!question.isValid()) {
+        for (QuizQuestion quizQuestion : getQuizQuestions()) {
+            if (!quizQuestion.isValid()) {
                 return false;
             }
         }
@@ -265,65 +265,65 @@ public class QuizExercise extends Exercise implements Serializable {
         return true;
     }
 
-    public List<Question> getQuestions() {
-        return questions;
+    public List<QuizQuestion> getQuizQuestions() {
+        return quizQuestions;
     }
 
     /**
-     * 1. replace the old Question-List with the new one
+     * 1. replace the old QuizQuestion-List with the new one
      * 2. recalculate the PointCounters in quizPointStatistic
      *
-     * @param questions the List of Question objects which will be set
+     * @param quizQuestions the List of QuizQuestion objects which will be set
      * @return this QuizExercise-object
      */
-    public QuizExercise questions(List<Question> questions) {
-        this.questions = questions;
+    public QuizExercise questions(List<QuizQuestion> quizQuestions) {
+        this.quizQuestions = quizQuestions;
         //correct the associated quizPointStatistic implicitly
         recalculatePointCounters();
         return this;
     }
 
     /**
-     * 1. add the new Question object to the Question-List
-     * 2. add backward relation in the question-object
+     * 1. add the new QuizQuestion object to the QuizQuestion-List
+     * 2. add backward relation in the quizQuestion-object
      * 3. recalculate the PointCounters in quizPointStatistic
      *
-     * @param question the new Question object which will be added
+     * @param quizQuestion the new QuizQuestion object which will be added
      * @return this QuizExercise-object
      */
-    public QuizExercise addQuestions(Question question) {
-        this.questions.add(question);
-        question.setExercise(this);
+    public QuizExercise addQuestions(QuizQuestion quizQuestion) {
+        this.quizQuestions.add(quizQuestion);
+        quizQuestion.setExercise(this);
         //correct the associated quizPointStatistic implicitly
         recalculatePointCounters();
         return this;
     }
 
     /**
-     * 1. remove the given Question object in the Question-List
-     * 2. remove backward relation in the question-object
+     * 1. remove the given QuizQuestion object in the QuizQuestion-List
+     * 2. remove backward relation in the quizQuestion-object
      * 3. recalculate the PointCounters in quizPointStatistic
      *
-     * @param question the Question object which should be removed
+     * @param quizQuestion the QuizQuestion object which should be removed
      * @return this QuizExercise-object
      */
-    public QuizExercise removeQuestions(Question question) {
-        this.questions.remove(question);
-        question.setExercise(null);
+    public QuizExercise removeQuestions(QuizQuestion quizQuestion) {
+        this.quizQuestions.remove(quizQuestion);
+        quizQuestion.setExercise(null);
         //correct the associated quizPointStatistic implicitly
         recalculatePointCounters();
         return this;
     }
 
     /**
-     * 1. replace the old Question-List with the new one
+     * 1. replace the old QuizQuestion-List with the new one
      * 2. recalculate the PointCounters in quizPointStatistic
      *
-     * @param questions the List of Question objects which will be set
+     * @param quizQuestions the List of QuizQuestion objects which will be set
      */
-    public void setQuestions(List<Question> questions) {
-        this.questions = questions;
-        if (questions != null) {
+    public void setQuizQuestions(List<QuizQuestion> quizQuestions) {
+        this.quizQuestions = quizQuestions;
+        if (quizQuestions != null) {
             recalculatePointCounters();
         }
     }
@@ -350,7 +350,7 @@ public class QuizExercise extends Exercise implements Serializable {
     @Override
     public void filterSensitiveInformation() {
         setQuizPointStatistic(null);
-        setQuestions(new ArrayList<>());
+        setQuizQuestions(new ArrayList<>());
         super.filterSensitiveInformation();
     }
 
@@ -362,9 +362,9 @@ public class QuizExercise extends Exercise implements Serializable {
         setQuizPointStatistic(null);
 
         // filter out statistics, explanations, and any information about correct answers
-        // from all questions (so students can't find them in the JSON while answering the quiz)
-        for (Question question : this.getQuestions()) {
-            question.filterForStudentsDuringQuiz();
+        // from all quizQuestions (so students can't find them in the JSON while answering the quiz)
+        for (QuizQuestion quizQuestion : this.getQuizQuestions()) {
+            quizQuestion.filterForStudentsDuringQuiz();
         }
     }
 
@@ -374,9 +374,9 @@ public class QuizExercise extends Exercise implements Serializable {
     public void filterForStatisticWebsocket() {
 
         // filter out  explanations, and any information about correct answers
-        // from all questions (so students can't find them in the JSON while answering the quiz)
-        for (Question question : this.getQuestions()) {
-            question.filterForStatisticWebsocket();
+        // from all quizQuestions (so students can't find them in the JSON while answering the quiz)
+        for (QuizQuestion quizQuestion : this.getQuizQuestions()) {
+            quizQuestion.filterForStatisticWebsocket();
         }
     }
 
@@ -401,12 +401,12 @@ public class QuizExercise extends Exercise implements Serializable {
      */
     public Double getScoreInPointsForSubmission(QuizSubmission quizSubmission) {
         double score = 0.0;
-        // iterate through all questions of this quiz
-        for (Question question : getQuestions()) {
-            // search for submitted answer for this question
-            SubmittedAnswer submittedAnswer = quizSubmission.getSubmittedAnswerForQuestion(question);
+        // iterate through all quizQuestions of this quiz
+        for (QuizQuestion quizQuestion : getQuizQuestions()) {
+            // search for submitted answer for this quizQuestion
+            SubmittedAnswer submittedAnswer = quizSubmission.getSubmittedAnswerForQuestion(quizQuestion);
             if (submittedAnswer != null) {
-                score += question.scoreForAnswer(submittedAnswer);
+                score += quizQuestion.scoreForAnswer(submittedAnswer);
             }
         }
         return score;
@@ -418,14 +418,14 @@ public class QuizExercise extends Exercise implements Serializable {
      * @param questionId the ID of the question, which should be found
      * @return the question with the given ID, or null if the question is not contained in the quizExercise
      */
-    public Question findQuestionById (Long questionId) {
+    public QuizQuestion findQuestionById (Long questionId) {
 
         if (questionId != null) {
-            // iterate through all questions of this quiz
-            for (Question question : questions) {
-                // return question if the IDs are equal
-                if (question.getId().equals(questionId)) {
-                    return question;
+            // iterate through all quizQuestions of this quiz
+            for (QuizQuestion quizQuestion : quizQuestions) {
+                // return quizQuestion if the IDs are equal
+                if (quizQuestion.getId().equals(questionId)) {
+                    return quizQuestion;
                 }
             }
         }
@@ -484,34 +484,34 @@ public class QuizExercise extends Exercise implements Serializable {
         this.setReleaseDate(originalQuizExercise.getReleaseDate());
 
         //remove added Questions, which are not allowed to be added
-        Set<Question> addedQuestions = new HashSet<>();
+        Set<QuizQuestion> addedQuizQuestions = new HashSet<>();
 
         //check every question
-        for (Question question : questions) {
-            //check if the question were already in the originalQuizExercise -> if not it's an added question
-            if (originalQuizExercise.getQuestions().contains(question)) {
-                // find original unchanged question
-                Question originalQuestion = originalQuizExercise.findQuestionById(question.getId());
+        for (QuizQuestion quizQuestion : quizQuestions) {
+            //check if the quizQuestion were already in the originalQuizExercise -> if not it's an added quizQuestion
+            if (originalQuizExercise.getQuizQuestions().contains(quizQuestion)) {
+                // find original unchanged quizQuestion
+                QuizQuestion originalQuizQuestion = originalQuizExercise.findQuestionById(quizQuestion.getId());
                 //reset score (not allowed to change)
-                question.setScore(originalQuestion.getScore());
+                quizQuestion.setScore(originalQuizQuestion.getScore());
                 //correct invalid = null to invalid = false
-                if (question.isInvalid() == null) {
-                    question.setInvalid(false);
+                if (quizQuestion.isInvalid() == null) {
+                    quizQuestion.setInvalid(false);
                 }
-                //reset invalid if the question is already invalid
-                question.setInvalid(question.isInvalid()
-                    || (originalQuestion.isInvalid() != null && originalQuestion.isInvalid()));
+                //reset invalid if the quizQuestion is already invalid
+                quizQuestion.setInvalid(quizQuestion.isInvalid()
+                    || (originalQuizQuestion.isInvalid() != null && originalQuizQuestion.isInvalid()));
 
-                //undo all not allowed changes in the answers of the Question
-                question.undoUnallowedChanges(originalQuestion);
+                //undo all not allowed changes in the answers of the QuizQuestion
+                quizQuestion.undoUnallowedChanges(originalQuizQuestion);
 
             } else {
-                // question is added (not allowed), mark question for remove
-                addedQuestions.add(question);
+                // quizQuestion is added (not allowed), mark quizQuestion for remove
+                addedQuizQuestions.add(quizQuestion);
             }
         }
-        // remove all added questions
-        questions.removeAll(addedQuestions);
+        // remove all added quizQuestions
+        quizQuestions.removeAll(addedQuizQuestions);
     }
 
     /**
@@ -526,27 +526,27 @@ public class QuizExercise extends Exercise implements Serializable {
         boolean updateOfResultsAndStatisticsNecessary = false;
 
         //check every question
-        for (Question question : questions) {
-            //check if the question were already in the originalQuizExercise
-            if (originalQuizExercise.getQuestions().contains(question)) {
-                // find original unchanged question
-                Question originalQuestion = originalQuizExercise.findQuestionById(question.getId());
+        for (QuizQuestion quizQuestion : quizQuestions) {
+            //check if the quizQuestion were already in the originalQuizExercise
+            if (originalQuizExercise.getQuizQuestions().contains(quizQuestion)) {
+                // find original unchanged quizQuestion
+                QuizQuestion originalQuizQuestion = originalQuizExercise.findQuestionById(quizQuestion.getId());
 
-                // check if a question is set invalid or if the scoringType has changed
+                // check if a quizQuestion is set invalid or if the scoringType has changed
                 // if true an update of the Statistics and Results is necessary
                 updateOfResultsAndStatisticsNecessary = updateOfResultsAndStatisticsNecessary ||
-                    (question.isInvalid() && originalQuestion.isInvalid() == null) ||
-                    (question.isInvalid() && !originalQuestion.isInvalid()) ||
-                    !question.getScoringType().equals(originalQuestion.getScoringType());
+                    (quizQuestion.isInvalid() && originalQuizQuestion.isInvalid() == null) ||
+                    (quizQuestion.isInvalid() && !originalQuizQuestion.isInvalid()) ||
+                    !quizQuestion.getScoringType().equals(originalQuizQuestion.getScoringType());
 
-                // check if the question-changes make an update of the statistics and results necessary
+                // check if the quizQuestion-changes make an update of the statistics and results necessary
                 updateOfResultsAndStatisticsNecessary = updateOfResultsAndStatisticsNecessary ||
-                    question.isUpdateOfResultsAndStatisticsNecessary(originalQuestion);
+                    quizQuestion.isUpdateOfResultsAndStatisticsNecessary(originalQuizQuestion);
             }
         }
         // check if an question was deleted (not allowed added quistions are not relevant)
         // if true an update of the Statistics and Results is necessary
-        if (questions.size() != originalQuizExercise.getQuestions().size()) {
+        if (quizQuestions.size() != originalQuizExercise.getQuizQuestions().size()) {
             updateOfResultsAndStatisticsNecessary = true;
         }
         return updateOfResultsAndStatisticsNecessary;
@@ -555,15 +555,15 @@ public class QuizExercise extends Exercise implements Serializable {
     /**
      * Get the maximum total score for this quiz
      *
-     * @return the sum of all the questions' maximum scores
+     * @return the sum of all the quizQuestions' maximum scores
      */
     @JsonIgnore
     public Integer getMaxTotalScore() {
         int maxScore = 0;
-        // iterate through all questions of this quiz and add up the score
-        if (questions != null && Hibernate.isInitialized(questions)) {
-            for (Question question : getQuestions()) {
-                maxScore += question.getScore();
+        // iterate through all quizQuestions of this quiz and add up the score
+        if (quizQuestions != null && Hibernate.isInitialized(quizQuestions)) {
+            for (QuizQuestion quizQuestion : getQuizQuestions()) {
+                maxScore += quizQuestion.getScore();
             }
         }
         return maxScore;
@@ -576,7 +576,7 @@ public class QuizExercise extends Exercise implements Serializable {
         if (score != null) {
             return score;
         }
-        else if (questions != null && Hibernate.isInitialized(questions)) {
+        else if (quizQuestions != null && Hibernate.isInitialized(quizQuestions)) {
             return getMaxTotalScore().doubleValue();
         }
         return null;
@@ -648,7 +648,7 @@ public class QuizExercise extends Exercise implements Serializable {
         Set<PointCounter> pointCounterToDelete = new HashSet<>();
         for (PointCounter pointCounter : quizPointStatistic.getPointCounters()) {
             if (pointCounter.getId() != null) {                                                                                        // for variable ScoreSteps add:
-                if(pointCounter.getPoints() > quizScore || pointCounter.getPoints() < 0 || questions == null  || questions.isEmpty()/*|| (pointCounter.getPoints()% scoreStep) != 0*/) {
+                if(pointCounter.getPoints() > quizScore || pointCounter.getPoints() < 0 || quizQuestions == null  || quizQuestions.isEmpty()/*|| (pointCounter.getPoints()% scoreStep) != 0*/) {
                     pointCounterToDelete.add(pointCounter);
                     pointCounter.setQuizPointStatistic(null);
                 }
@@ -662,20 +662,20 @@ public class QuizExercise extends Exercise implements Serializable {
      *
      */
     public void reconnectJSONIgnoreAttributes() {
-        // iterate through questions to add missing pointer back to quizExercise
+        // iterate through quizQuestions to add missing pointer back to quizExercise
         // Note: This is necessary because of the @IgnoreJSON in question and answerOption
         //       that prevents infinite recursive JSON serialization.
-        for (Question question : getQuestions()) {
-            if (question.getId() != null) {
-                question.setExercise(this);
+        for (QuizQuestion quizQuestion : getQuizQuestions()) {
+            if (quizQuestion.getId() != null) {
+                quizQuestion.setExercise(this);
                 //reconnect QuestionStatistics
-                if (question.getQuestionStatistic() != null) {
-                    question.getQuestionStatistic().setQuestion(question);
+                if (quizQuestion.getQuizQuestionStatistic() != null) {
+                    quizQuestion.getQuizQuestionStatistic().setQuizQuestion(quizQuestion);
                 }
-                // do the same for answerOptions (if question is multiple choice)
-                if (question instanceof MultipleChoiceQuestion) {
-                    MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) question;
-                    MultipleChoiceQuestionStatistic mcStatistic = (MultipleChoiceQuestionStatistic) mcQuestion.getQuestionStatistic();
+                // do the same for answerOptions (if quizQuestion is multiple choice)
+                if (quizQuestion instanceof MultipleChoiceQuestion) {
+                    MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) quizQuestion;
+                    MultipleChoiceQuestionStatistic mcStatistic = (MultipleChoiceQuestionStatistic) mcQuestion.getQuizQuestionStatistic();
                     //reconnect answerCounters
                     for (AnswerCounter answerCounter : mcStatistic.getAnswerCounters()) {
                         if (answerCounter.getId() != null) {
@@ -689,9 +689,9 @@ public class QuizExercise extends Exercise implements Serializable {
                         }
                     }
                 }
-                if (question instanceof DragAndDropQuestion) {
-                    DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
-                    DragAndDropQuestionStatistic dragAndDropStatistic = (DragAndDropQuestionStatistic) dragAndDropQuestion.getQuestionStatistic();
+                if (quizQuestion instanceof DragAndDropQuestion) {
+                    DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) quizQuestion;
+                    DragAndDropQuestionStatistic dragAndDropStatistic = (DragAndDropQuestionStatistic) dragAndDropQuestion.getQuizQuestionStatistic();
                     // reconnect dropLocations
                     for (DropLocation dropLocation : dragAndDropQuestion.getDropLocations()) {
                         if (dropLocation.getId() != null) {
@@ -718,9 +718,9 @@ public class QuizExercise extends Exercise implements Serializable {
                         }
                     }
                 }
-                if (question instanceof ShortAnswerQuestion) {
-                    ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) question;
-                    ShortAnswerQuestionStatistic shortAnswerStatistic = (ShortAnswerQuestionStatistic) shortAnswerQuestion.getQuestionStatistic();
+                if (quizQuestion instanceof ShortAnswerQuestion) {
+                    ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) quizQuestion;
+                    ShortAnswerQuestionStatistic shortAnswerStatistic = (ShortAnswerQuestionStatistic) shortAnswerQuestion.getQuizQuestionStatistic();
                     // reconnect spots
                     for (ShortAnswerSpot spot : shortAnswerQuestion.getSpots()) {
                         if (spot.getId() != null) {

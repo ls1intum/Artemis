@@ -25,12 +25,13 @@
     "relationships": [
         {
             "relationshipType": "many-to-one",
-            "relationshipName": "question",
             "otherEntityName": "multipleChoiceQuestion",
+            "otherEntityRelationshipName": "answerOptions",
+            "relationshipName": "quizQuestion",
             "otherEntityField": "id"
         }
     ],
-    "changelogDate": "20180927081402",
+    "changelogDate": "20190315161921",
     "entityTableName": "answer_option",
     "dto": "no",
     "pagination": "no",

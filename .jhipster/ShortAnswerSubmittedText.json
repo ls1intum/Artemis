@@ -4,25 +4,30 @@
         {
             "fieldName": "text",
             "fieldType": "String"
+        },
+        {
+            "fieldName": "isCorrect",
+            "fieldType": "Boolean"
         }
     ],
     "relationships": [
         {
             "relationshipType": "one-to-one",
-            "relationshipName": "spot",
             "otherEntityName": "shortAnswerSpot",
+            "otherEntityRelationshipName": "shortAnswerSubmittedText",
+            "relationshipName": "spot",
             "otherEntityField": "id",
-            "ownerSide": true,
-            "otherEntityRelationshipName": "shortAnswerSubmittedText"
+            "ownerSide": true
         },
         {
             "relationshipType": "many-to-one",
-            "relationshipName": "submittedAnswer",
             "otherEntityName": "shortAnswerSubmittedAnswer",
+            "otherEntityRelationshipName": "submittedTexts",
+            "relationshipName": "submittedAnswer",
             "otherEntityField": "id"
         }
     ],
-    "changelogDate": "20181107093826",
+    "changelogDate": "20190315161943",
     "entityTableName": "short_answer_submitted_text",
     "dto": "no",
     "pagination": "no",

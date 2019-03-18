@@ -8,7 +8,7 @@ import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
-import de.tum.in.www1.artemis.service.StatisticService;
+import de.tum.in.www1.artemis.service.QuizStatisticService;
 import de.tum.in.www1.artemis.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +46,7 @@ public class QuizScheduleService {
     private final QuizSubmissionRepository quizSubmissionRepository;
     private final UserService userService;
     private final QuizExerciseService quizExerciseService;
-    private final StatisticService statisticService;
+    private final QuizStatisticService quizStatisticService;
 
 
     public QuizScheduleService(SimpMessageSendingOperations messagingTemplate,
@@ -55,14 +55,14 @@ public class QuizScheduleService {
                                QuizSubmissionRepository quizSubmissionRepository,
                                UserService userService,
                                QuizExerciseService quizExerciseService,
-                               StatisticService statisticService) {
+                               QuizStatisticService quizStatisticService) {
         this.messagingTemplate = messagingTemplate;
         this.participationRepository = participationRepository;
         this.resultRepository = resultRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.userService = userService;
         this.quizExerciseService = quizExerciseService;
-        this.statisticService = statisticService;
+        this.quizStatisticService = quizStatisticService;
     }
 
 
@@ -313,7 +313,7 @@ public class QuizScheduleService {
 
                 // update statistic with all results of the quizExercise
                 try {
-                    statisticService.updateStatistics(resultHashMap.remove(quizId), quizExercise);
+                    quizStatisticService.updateStatistics(resultHashMap.remove(quizId), quizExercise);
                     log.debug("Updated statistics after {} ms for quiz {}", System.currentTimeMillis() - start, quizExercise.getTitle());
                 } catch (Exception e) {
                     log.error("Exception in StatisticService.updateStatistics():\n{}", e.getMessage());

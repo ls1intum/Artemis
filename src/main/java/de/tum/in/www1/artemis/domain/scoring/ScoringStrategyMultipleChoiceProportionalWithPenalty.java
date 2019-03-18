@@ -11,15 +11,15 @@ import de.tum.in.www1.artemis.domain.*;
  */
 public class ScoringStrategyMultipleChoiceProportionalWithPenalty implements ScoringStrategy {
     @Override
-    public double calculateScore(Question question, SubmittedAnswer submittedAnswer) {
-        //check if the question is invalid: if true: -> return with full points
-        if (question.isInvalid()) {
-            return question.getScore();
+    public double calculateScore(QuizQuestion quizQuestion, SubmittedAnswer submittedAnswer) {
+        //check if the quizQuestion is invalid: if true: -> return with full points
+        if (quizQuestion.isInvalid()) {
+            return quizQuestion.getScore();
         }
 
-        if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer && question instanceof MultipleChoiceQuestion) {
+        if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer && quizQuestion instanceof MultipleChoiceQuestion) {
             MultipleChoiceSubmittedAnswer mcAnswer = (MultipleChoiceSubmittedAnswer) submittedAnswer;
-            MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) question;
+            MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) quizQuestion;
 
             double totalOptions = mcQuestion.getAnswerOptions().size();
             double correctSelections = 0;
@@ -42,9 +42,9 @@ public class ScoringStrategyMultipleChoiceProportionalWithPenalty implements Sco
             double fraction = ((correctSelections / totalOptions) - (incorrectSelections / totalOptions));
 
             // end result is maxScore * fraction, but at least 0
-            return Math.max(0, question.getScore() * fraction);
+            return Math.max(0, quizQuestion.getScore() * fraction);
         }
-        // the submitted answer's type doesn't fit the question's type => it cannot be correct
+        // the submitted answer's type doesn't fit the quizQuestion's type => it cannot be correct
         return 0.0;
     }
 }
