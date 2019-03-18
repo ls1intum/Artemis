@@ -6,13 +6,13 @@ import { Observable } from 'rxjs/Observable';
 import { JhiEventManager } from 'ng-jhipster';
 
 import { ArTEMiSTestModule } from '../../../test.module';
-import { StatisticDialogComponent } from '../../../../../../main/webapp/app/entities/statistic/statistic-dialog.component';
-import { StatisticService } from '../../../../../../main/webapp/app/entities/statistic/statistic.service';
-import { Statistic } from '../../../../../../main/webapp/app/entities/statistic/statistic.model';
+import { StatisticDialogComponent } from '../../../../../../main/webapp/app/entities/quiz-statistic/statistic-dialog.component';
+import { StatisticService } from '../../../../../../main/webapp/app/entities/quiz-statistic/statistic.service';
+import { QuizStatistic } from '../../../../../../main/webapp/app/entities/quiz-statistic/quiz-statistic.model';
 
 describe('Component Tests', () => {
 
-    describe('Statistic Management Dialog Component', () => {
+    describe('QuizStatistic Management Dialog Component', () => {
         let comp: StatisticDialogComponent;
         let fixture: ComponentFixture<StatisticDialogComponent>;
         let service: StatisticService;
@@ -44,7 +44,7 @@ describe('Component Tests', () => {
                 inject([],
                     fakeAsync(() => {
                         // GIVEN
-                        const entity = new Statistic(123);
+                        const entity = new QuizStatistic(123);
                         spyOn(service, 'update').and.returnValue(Observable.of(new HttpResponse({body: entity})));
                         comp.statistic = entity;
                         // WHEN
@@ -64,7 +64,7 @@ describe('Component Tests', () => {
                 inject([],
                     fakeAsync(() => {
                         // GIVEN
-                        const entity = new Statistic();
+                        const entity = new QuizStatistic();
                         spyOn(service, 'create').and.returnValue(Observable.of(new HttpResponse({body: entity})));
                         comp.statistic = entity;
                         // WHEN

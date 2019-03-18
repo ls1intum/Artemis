@@ -5,7 +5,7 @@ import { AccountService, JhiWebsocketService } from '../../core';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
 import { Chart, ChartAnimationOptions, ChartOptions } from 'chart.js';
-import { QuestionType } from '../../entities/question';
+import { QuizQuestionType } from '../../entities/quiz-question';
 import { Subscription } from 'rxjs/Subscription';
 
 const Sugar = require('sugar');
@@ -140,9 +140,9 @@ export interface DataSetProvider {
 })
 export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
     // make constants available to html for comparison
-    readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
-    readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
-    readonly SHORT_ANSWER = QuestionType.SHORT_ANSWER;
+    readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
+    readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
+    readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
 
     quizExercise: QuizExercise;
     private sub: Subscription;
@@ -186,10 +186,6 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
                 this.quizExerciseService.find(params['quizId']).subscribe((res: HttpResponse<QuizExercise>) => {
                     this.loadQuizSuccess(res.body);
                 });
-            } else {
-                this.quizExerciseService.findForStudent(params['quizId']).subscribe(res => {
-                    this.loadQuizSuccess(res.body);
-                });
             }
 
             // subscribe websocket for new statistical data
@@ -200,10 +196,6 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
             this.jhiWebsocketService.receive(this.websocketChannelForData).subscribe(() => {
                 if (this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
                     this.quizExerciseService.find(params['quizId']).subscribe(res => {
-                        this.loadQuizSuccess(res.body);
-                    });
-                } else {
-                    this.quizExerciseService.findForStudent(params['quizId']).subscribe(res => {
                         this.loadQuizSuccess(res.body);
                     });
                 }
@@ -255,7 +247,7 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
     calculateMaxScore() {
         let result = 0;
 
-        this.quizExercise.questions.forEach(function(question) {
+        this.quizExercise.quizQuestions.forEach(function(question) {
             result = result + question.score;
         });
         return result;
@@ -274,22 +266,22 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
         this.unratedAverage = 0;
 
         // set data based on the CorrectCounters in the QuestionStatistics
-        for (let i = 0; i < this.quizExercise.questions.length; i++) {
+        for (let i = 0; i < this.quizExercise.quizQuestions.length; i++) {
             this.label.push(i + 1 + '.');
             this.backgroundColor.push('#5bc0de');
-            this.ratedData.push(this.quizExercise.questions[i].questionStatistic.ratedCorrectCounter);
-            this.unratedData.push(this.quizExercise.questions[i].questionStatistic.unRatedCorrectCounter);
+            this.ratedData.push(this.quizExercise.quizQuestions[i].quizQuestionStatistic.ratedCorrectCounter);
+            this.unratedData.push(this.quizExercise.quizQuestions[i].quizQuestionStatistic.unRatedCorrectCounter);
             this.ratedAverage =
                 this.ratedAverage +
-                this.quizExercise.questions[i].questionStatistic.ratedCorrectCounter * this.quizExercise.questions[i].score;
+                this.quizExercise.quizQuestions[i].quizQuestionStatistic.ratedCorrectCounter * this.quizExercise.quizQuestions[i].score;
             this.unratedAverage =
                 this.unratedAverage +
-                this.quizExercise.questions[i].questionStatistic.unRatedCorrectCounter * this.quizExercise.questions[i].score;
+                this.quizExercise.quizQuestions[i].quizQuestionStatistic.unRatedCorrectCounter * this.quizExercise.quizQuestions[i].score;
         }
 
         // set Background for invalid questions = grey
-        for (let j = 0; j < this.quizExercise.questions.length; j++) {
-            if (this.quizExercise.questions[j].invalid) {
+        for (let j = 0; j < this.quizExercise.quizQuestions.length; j++) {
+            if (this.quizExercise.quizQuestions[j].invalid) {
                 this.backgroundColor[j] = '#949494';
             }
         }
@@ -351,11 +343,11 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
     }
 
     /**
-     * got to the Template with the next Statistic -> the first QuestionStatistic
-     * if there is no QuestionStatistic -> go to QuizPointStatistic
+     * got to the Template with the next QuizStatistic -> the first QuizQuestionStatistic
+     * if there is no QuizQuestionStatistic -> go to QuizPointStatistic
      */
     nextStatistic() {
-        if (this.quizExercise.questions === null || this.quizExercise.questions.length === 0) {
+        if (this.quizExercise.quizQuestions === null || this.quizExercise.quizQuestions.length === 0) {
             this.router.navigate([
                 '/quiz/:quizExerciseId/quiz-point-statistic',
                 {
@@ -363,8 +355,8 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
                 }
             ]);
         } else {
-            const nextQuestion = this.quizExercise.questions[0];
-            if (nextQuestion.type === QuestionType.MULTIPLE_CHOICE) {
+            const nextQuestion = this.quizExercise.quizQuestions[0];
+            if (nextQuestion.type === QuizQuestionType.MULTIPLE_CHOICE) {
                 this.router.navigate([
                     'quiz/:quizId/multiple-choice-question-statistic/:questionId',
                     {
@@ -372,7 +364,7 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
                         questionId: nextQuestion.id
                     }
                 ]);
-            } else if (nextQuestion.type === QuestionType.DRAG_AND_DROP) {
+            } else if (nextQuestion.type === QuizQuestionType.DRAG_AND_DROP) {
                 this.router.navigate([
                     'quiz/:quizId/drag-and-drop-question-statistic/:questionId',
                     {
@@ -380,7 +372,7 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
                         questionId: nextQuestion.id
                     }
                 ]);
-            } else if (nextQuestion.type === QuestionType.SHORT_ANSWER) {
+            } else if (nextQuestion.type === QuizQuestionType.SHORT_ANSWER) {
                 this.router.navigate([
                     'quiz/:quizId/short-answer-question-statistic/:questionId',
                     {

@@ -9,14 +9,14 @@
     "relationships": [
         {
             "relationshipType": "one-to-one",
-            "relationshipName": "user",
             "otherEntityName": "user",
+            "otherEntityRelationshipName": "ltiUserId",
+            "relationshipName": "user",
             "otherEntityField": "id",
-            "ownerSide": true,
-            "otherEntityRelationshipName": "ltiUserId"
+            "ownerSide": true
         }
     ],
-    "changelogDate": "20180927081408",
+    "changelogDate": "20190315161930",
     "entityTableName": "lti_user_id",
     "dto": "no",
     "pagination": "no",

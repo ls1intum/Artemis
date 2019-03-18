@@ -11,7 +11,7 @@
             <input class="form-control" [(ngModel)]="question.title" placeholder="Short Question Title"/>
         </div>
         <div class="form-group col-lg-2 col-md-3 col-sm-7 col-xs-8">
-            <span jhiTranslate="arTeMiSApp.question.score" class="colon-suffix"></span>
+            <span jhiTranslate="arTeMiSApp.quizQuestion.score" class="colon-suffix"></span>
             <input class="form-control" title="score" type="number" min="0" max="9999" [(ngModel)]="question.score"/>
         </div>
         <div class="col-lg-1 col-md-2 col-sm-4 col-xs-4"><h3><span class="badge badge-warning align-text-top">DnD</span></h3></div>
@@ -48,7 +48,7 @@
         </div>
         <div class="question-options">
             <div class="form-group">
-                <span jhiTranslate="arTeMiSApp.question.scoringType" class="colon-suffix no-flex-shrink"></span>
+                <span jhiTranslate="arTeMiSApp.quizQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
                 <select class="form-control" [(ngModel)]="question.scoringType" title="scoring type">
                     <option value="ALL_OR_NOTHING">{{'arTeMiSApp.quizExercise.scoringType.all_or_nothing' | translate}}</option>
                     <option value="PROPORTIONAL_WITH_PENALTY">{{'arTeMiSApp.quizExercise.scoringType.proportional_with_penalty' | translate}}</option>
@@ -243,7 +243,7 @@
                     <fa-icon icon="bars" class="drag-handle" size="lg"></fa-icon>
                 </div>
                 <div class="dimensions" *ngIf="reEvaluationInProgress">
-                    <span style="color:red" *ngIf="dragItem.invalid" jhiTranslate="arTeMiSApp.question.invalid"></span>
+                    <span style="color:red" *ngIf="dragItem.invalid" jhiTranslate="arTeMiSApp.quizQuestion.invalid"></span>
                 </div>
                 <div class="mapping-numbers-wrapper">
                     <div *ngFor="let mapping of getMappingsForDragItem(dragItem)" [ngClass]="'mapping-number mapping-color-' + (getMappingIndex(mapping) % 8)">

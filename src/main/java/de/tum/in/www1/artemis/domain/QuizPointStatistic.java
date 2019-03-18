@@ -15,7 +15,7 @@ import java.util.Set;
  */
 @Entity
 @DiscriminatorValue(value = "QP")
-public class QuizPointStatistic extends Statistic implements Serializable {
+public class QuizPointStatistic extends QuizStatistic implements Serializable {
 
     private static final long serialVersionUID = 1L;
 

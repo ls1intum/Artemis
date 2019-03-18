@@ -1,6 +1,6 @@
 import { BaseEntity } from 'app/shared';
 import { MultipleChoiceQuestion } from '../multiple-choice-question';
-import { MarkDownElement } from '../../entities/question';
+import { MarkDownElement } from '../quiz-question';
 
 export class AnswerOption implements BaseEntity, MarkDownElement {
     public id: number;

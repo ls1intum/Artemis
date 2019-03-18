@@ -4,12 +4,12 @@ import { Observable, of } from 'rxjs';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 
 import { ArTeMiSTestModule } from '../../../test.module';
-import { StatisticComponent } from 'app/entities/statistic/statistic.component';
-import { StatisticService } from 'app/entities/statistic/statistic.service';
+import { StatisticComponent } from 'app/entities/quiz-statistic/statistic.component';
+import { StatisticService } from 'app/entities/quiz-statistic/statistic.service';
 import { Statistic } from 'app/shared/model/statistic.model';
 
 describe('Component Tests', () => {
-    describe('Statistic Management Component', () => {
+    describe('QuizStatistic Management Component', () => {
         let comp: StatisticComponent;
         let fixture: ComponentFixture<StatisticComponent>;
         let service: StatisticService;
