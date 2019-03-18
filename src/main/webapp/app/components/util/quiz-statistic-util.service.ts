@@ -9,7 +9,7 @@ export class QuizStatisticUtil {
 
     /**
      * go to the Template with the previous QuizStatistic
-     * if first QuizQuestionStatistic -> go to the Quiz-QuizStatistic
+     * if first QuizQuestionStatistic -> go to the quiz-statistic
      *
      * @param quizExercise: the quizExercise with all statistics
      * @param question: the question of the current statistic
@@ -19,7 +19,7 @@ export class QuizStatisticUtil {
         const index = quizExercise.quizQuestions.findIndex(function(quiz) {
             return quiz.id === question.id;
         });
-        // go to quiz-QuizStatistic if the position = 0
+        // go to quiz-statistic if the position = 0
         if (index === 0) {
             this.router.navigateByUrl('/quiz/' + quizExercise.id + '/quiz-statistic');
         } else {
@@ -37,7 +37,7 @@ export class QuizStatisticUtil {
 
     /**
      * go to the Template with the next QuizStatistic
-     * if last QuizQuestionStatistic -> go to the Quiz-Point-QuizStatistic
+     * if last QuizQuestionStatistic -> go to the Quiz-point-statistic
      *
      * @param quizExercise: the quizExercise with all statistics
      * @param question: the question of the current statistic
@@ -47,7 +47,7 @@ export class QuizStatisticUtil {
         const index = quizExercise.quizQuestions.findIndex(function(quiz) {
             return quiz.id === question.id;
         });
-        // go to quiz-QuizStatistic if the position = last position
+        // go to quiz-statistic if the position = last position
         if (index === quizExercise.quizQuestions.length - 1) {
             this.router.navigateByUrl('/quiz/' + quizExercise.id + '/quiz-point-statistic');
         } else {

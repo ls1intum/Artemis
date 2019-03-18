@@ -391,7 +391,7 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
 
     /**
      * got to the Template with the previous QuizStatistic
-     * if first QuizQuestionStatistic -> go to the Quiz-QuizStatistic
+     * if first QuizQuestionStatistic -> go to the quiz-statistic
      */
     previousStatistic() {
         this.quizStatisticUtil.previousStatistic(this.quizExercise, this.question);
@@ -399,7 +399,7 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
 
     /**
      * got to the Template with the next QuizStatistic
-     * if last QuizQuestionStatistic -> go to the Quiz-Point-QuizStatistic
+     * if last QuizQuestionStatistic -> go to the Quiz-point-statistic
      */
     nextStatistic() {
         this.quizStatisticUtil.nextStatistic(this.quizExercise, this.question);
