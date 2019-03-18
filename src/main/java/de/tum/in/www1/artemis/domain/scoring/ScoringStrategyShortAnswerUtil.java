@@ -25,7 +25,7 @@ public class ScoringStrategyShortAnswerUtil {
         for (ShortAnswerSpot spot : shortAnswerQuestion.getSpots()) {
             if(spot.isInvalid()) {
                 correctSolutionsCount++;
-                break;
+                continue;
             }
 
             Set<ShortAnswerSolution> solutionsForSpot = shortAnswerQuestion.getCorrectSolutionForSpot(spot);

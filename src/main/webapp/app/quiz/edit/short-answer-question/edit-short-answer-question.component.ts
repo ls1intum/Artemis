@@ -677,6 +677,11 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      */
     setSolutionInvalid(solution: ShortAnswerSolution) {
         this.question.solutions[this.question.solutions.indexOf(solution)].invalid = true;
+        //solution needs to be updated in correctMappings aswell
+        this.question.correctMappings.find(
+            mapping =>
+                mapping.solution.id === this.question.solutions[this.question.solutions.indexOf(solution)].id)
+            .solution = this.question.solutions[this.question.solutions.indexOf(solution)];
         this.questionUpdated.emit();
     }
 
