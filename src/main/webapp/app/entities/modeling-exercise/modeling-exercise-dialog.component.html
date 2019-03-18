@@ -55,7 +55,7 @@
         </div>
     </div>
     <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">
+        <button id="modeling-back-cancel-button" type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">
             <fa-icon icon="ban"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
         <button type="button" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary" (click)="save()">

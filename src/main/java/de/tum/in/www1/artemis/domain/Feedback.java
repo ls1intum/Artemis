@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
@@ -101,6 +102,34 @@ public class Feedback implements Serializable {
     }
 
     public void setReference(String reference) { this.reference = reference; }
+
+    /**
+     * For modeling submissions the reference looks like "<umlElementType>:<jsonElementId>". This function tries to
+     * split the reference string at ':' and returns the second part (i.e. the jsonElementId).
+     *
+     * @return the jsonElementId for modeling submissions or null if the reference string does not contain ':'
+     */
+    @JsonIgnore
+    public String getReferenceElementId() {
+        if (!reference.contains(":")) {
+            return null;
+        }
+        return reference.split(":")[1];
+    }
+
+    /**
+     * For modeling submissions the reference looks like "<umlElementType>:<jsonElementId>". This function tries to
+     * split the reference string at ':' and returns the first part (i.e. the umlElementType).
+     *
+     * @return the umlElementType for modeling submissions or null if the reference string does not contain ':'
+     */
+    @JsonIgnore
+    public String getReferenceElementType() {
+        if (!reference.contains(":")) {
+            return null;
+        }
+        return reference.split(":")[0];
+    }
 
     public Double getCredits() { return credits; }
 

@@ -101,12 +101,12 @@
             <div class="assessments">
                 <div class="assessments__container">
                     <div class="assessments__canvas">
-                        <ng-container *ngIf="result?.rated && assessments && positions">
-                            <div *ngFor="let assessment of assessments"
-                                 [style.top.px]="positions[assessment.id].y"
-                                 [style.left.px]="positions[assessment.id].x">
-                                <fa-icon [icon]="{'check': assessment.credits > 0, 'times': assessment.credits < 0}" *ngFor="let i of numberToArray(assessment.credits, 0)"></fa-icon>
-                                <fa-icon class="half" [icon]="{'check': assessment.credits > 0, 'times': assessment.credits < 0}" *ngIf="assessment.credits % 1 !== 0"></fa-icon>
+                        <ng-container *ngIf="result?.rated && assessmentResult && positions">
+                            <div *ngFor="let feedback of assessmentResult.feedbacks"
+                                 [style.top.px]="positions[feedback.referenceId].y"
+                                 [style.left.px]="positions[feedback.referenceId].x">
+                                <fa-icon [icon]="{'check': feedback.credits > 0, 'times': feedback.credits < 0}" *ngFor="let i of numberToArray(feedback.credits, 0)"></fa-icon>
+                                <fa-icon class="half" [icon]="{'check': feedback.credits > 0, 'times': feedback.credits < 0}" *ngIf="feedback.credits % 1 !== 0"></fa-icon>
                             </div>
                         </ng-container>
                     </div>
@@ -115,8 +115,8 @@
         </div>
         <div class="col-3" *ngIf="submission?.submitted">
             <h4>Assessment</h4>
-            <p *ngIf="!assessments || assessments?.length === 0">There is no assessment available yet.</p>
-            <ng-container *ngIf="assessments?.length > 0">
+            <p *ngIf="!assessmentResult || assessmentResult?.feedbacks.length === 0">There is no assessment available yet.</p>
+            <ng-container *ngIf="assessmentResult?.feedbacks.length > 0">
                 <p>Select entities and/or associations in the editor to filter the assessment.</p>
                 <table class="table">
                     <thead class="thead-light">
@@ -126,13 +126,13 @@
                         </tr>
                     </thead>
                     <tbody *ngIf="assessmentsNames">
-                        <tr *ngFor="let assessment of assessments" [hidden]="(assessment.credits === 0 && !assessment.comment) || !isSelected(assessment.id, assessment.type)">
+                        <tr *ngFor="let feedback of assessmentResult.feedbacks" [hidden]="(feedback.credits === 0 && !feedback.text) || !isSelected(feedback.referenceId, feedback.referenceType)">
                             <td>
-                                <span>{{assessmentsNames[assessment.id]['type']}} </span>
-                                <code class="text-primary">{{assessmentsNames[assessment.id]['name']}}</code><br>
-                                <span *ngIf="assessment.comment" [ngClass]="{'text-success': assessment.credits > 0, 'text-danger': assessment.credits < 0}"><strong>Feedback:</strong> {{assessment.comment}}</span>
+                                <span>{{assessmentsNames[feedback.referenceId]['type']}} </span>
+                                <code class="text-primary">{{assessmentsNames[feedback.referenceId]['name']}}</code><br>
+                                <span *ngIf="feedback.text" [ngClass]="{'text-success': feedback.credits > 0, 'text-danger': feedback.credits < 0}"><strong>Feedback:</strong> {{feedback.text}}</span>
                             </td>
-                            <td class="text-center">{{assessment.credits | number:'1.0-1'}}</td>
+                            <td class="text-center">{{feedback.credits | number:'1.0-1'}}</td>
                         </tr>
                     </tbody>
                 </table>
