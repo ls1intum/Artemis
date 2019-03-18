@@ -378,17 +378,17 @@ public class QuizExerciseResource {
         //adjust existing results if an answer or and question was deleted and recalculate them
         quizExerciseService.adjustResultsOnQuizChanges(quizExercise);
 
-        QuizExercise result = quizExerciseService.saveWithNoNewEntities(quizExercise);
+        //QuizExercise result = quizExerciseService.saveWithNoNewEntities(quizExercise);
+        // needed in case the instructor adds a new solution to the question, the quizExercise has to be saved again so that no PersistencyExceptions can appear
+        QuizExercise result = quizExerciseService.save(quizExercise);
 
         if (updateOfResultsAndStatisticsNecessary) {
             // update Statistics
-            statisticService.recalculateStatistics(quizExercise);
+            statisticService.recalculateStatistics(result);
         }
-
 
         return ResponseEntity.ok()
             .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, quizExercise.getId().toString()))
             .body(result);
     }
-
 }

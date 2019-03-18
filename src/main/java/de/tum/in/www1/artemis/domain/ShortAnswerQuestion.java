@@ -238,7 +238,7 @@ public class ShortAnswerQuestion extends Question implements Serializable {
     public void undoUnallowedChanges(Question originalQuestion) {
         if (originalQuestion instanceof ShortAnswerQuestion) {
             ShortAnswerQuestion shortAnswerOriginalQuestion = (ShortAnswerQuestion) originalQuestion;
-            undoUnallowedSolutionChanges(shortAnswerOriginalQuestion);
+            // undoUnallowedSolutionChanges(shortAnswerOriginalQuestion);
             undoUnallowedSpotChanges(shortAnswerOriginalQuestion);
         }
     }
