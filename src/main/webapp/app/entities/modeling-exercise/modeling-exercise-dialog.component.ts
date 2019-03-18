@@ -94,12 +94,10 @@ export class ModelingExercisePopupComponent implements OnInit, OnDestroy {
         this.routeSub = this.route.params.subscribe(params => {
             if (params['id']) {
                 this.modelingExercisePopupService.open(ModelingExerciseDialogComponent as Component, params['id']);
+            } else if (params['courseId']) {
+                this.modelingExercisePopupService.open(ModelingExerciseDialogComponent as Component, undefined, params['courseId']);
             } else {
-                if (params['courseId']) {
-                    this.modelingExercisePopupService.open(ModelingExerciseDialogComponent as Component, undefined, params['courseId']);
-                } else {
-                    this.modelingExercisePopupService.open(ModelingExerciseDialogComponent as Component);
-                }
+                this.modelingExercisePopupService.open(ModelingExerciseDialogComponent as Component);
             }
         });
     }

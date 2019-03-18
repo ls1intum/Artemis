@@ -75,13 +75,15 @@ export class ExampleModelingSubmissionComponent implements OnInit, AfterViewInit
             this.exampleSubmissionId = +exampleSubmissionId;
         }
 
+        this.exampleSubmission.usedForTutorial = false;
+
         this.loadAll();
     }
 
     private loadAll(): void {
         this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<ModelingExercise>) => {
             this.exercise = exerciseResponse.body;
-            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course); // TODO: do we need this?
+            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course); // TODO CZ: do we need this?
             if (this.modelingEditor) {
                 this.modelingEditor.modelingExercise = this.exercise;
             }
@@ -144,7 +146,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, AfterViewInit
     }
 
     private createNewExampleModelingSubmission(): void {
-        const newExampleSubmission = new ExampleSubmission();
+        const newExampleSubmission = this.exampleSubmission;
         newExampleSubmission.submission = this.modelingEditor.getCurrentState();
         newExampleSubmission.submission.exampleSubmission = true;
         newExampleSubmission.exercise = this.exercise;

@@ -209,17 +209,12 @@ public class ModelingExerciseResource {
      */
     @GetMapping("/modeling-exercises/{id}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ModelingExercise> getProgrammingExercise(@PathVariable Long id) {
+    public ResponseEntity<ModelingExercise> getModelingExercise(@PathVariable Long id) {
         log.debug("REST request to get ModelingExercise : {}", id);
-        Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findById(id);
-        if (modelingExercise.isPresent()) {
-            Course course = modelingExercise.get().getCourse();
-            User user = userService.getUserWithGroupsAndAuthorities();
-            if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-                !authCheckService.isInstructorInCourse(course, user) &&
-                !authCheckService.isAdmin()) {
-                return forbidden();
-            }
+        Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findByIdWithEagerExampleSubmissions(id);
+//        Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findById(id);
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
+            return forbidden();
         }
         return ResponseUtil.wrapOrNotFound(modelingExercise);
     }
