@@ -543,13 +543,13 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         const areAllQuestionsValid = this.quizExercise.quizQuestions.every(function(question) {
             if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                 const mcQuestion = question as MultipleChoiceQuestion;
-                if (mcQuestion.answerOptions.some(answerOption => !answerOption.explanation)) {
-                    this.warningQuizCache = true;
-                }
+                //if (mcQuestion.answerOptions.some(answerOption => !answerOption.explanation)) {
+                  //  this.warningQuizCache = true;
+                //}
                 if (mcQuestion.answerOptions.some(answeroption => answeroption.isCorrect)) {
                     return question.title && question.title !== '' && question.title.length < 250;
                 }
-                return false;
+                //return false;
             } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
                 const dndQuestion = question as DragAndDropQuestion;
                 return (

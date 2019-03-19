@@ -13,10 +13,8 @@
     </div>
         <div class="btn-group col-xs-6" ngbDropdown role="group" aria-label="Button group with nested dropdown">
             <button class="btn btn-outline-secondary mr-1" id="dropdownBasic1" ngbDropdownToggle>Style</button>
-            <div  *ngFor="let command of headerCommands" class="dropdown-menu" ngbDropdownMenu>
-                <button class="dropdown-item" (click)="command.execute()">{{command.buttonIcon}}</button>
-                <button class="dropdown-item" (click)="command.execute()">{{command.buttonIcon}}</button>
-                <button class="dropdown-item" (click)="command.execute()">{{command.buttonIcon}}</button>
+            <div class="dropdown-menu" ngbDropdownMenu>
+                <ng-container *ngFor="let command of headerCommands" ><button class="dropdown-item" (click)="command.execute()">{{command.buttonTranslationString | translate}}</button></ng-container>
             </div>
         </div>
     </div>
