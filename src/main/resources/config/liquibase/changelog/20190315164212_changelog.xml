@@ -99,6 +99,9 @@
         <addColumn tableName="course">
             <column name="registration_enabled" type="bit"/>
         </addColumn>
+        <addColumn tableName="submission">
+            <column name="model" type="longtext"/>
+        </addColumn>
         <addPrimaryKey columnNames="tutor_group_id, students_id" tableName="tutor_group_students"/>
         <addForeignKeyConstraint baseColumnNames="tutor_group_id" baseTableName="tutor_group_students" constraintName="FK2cvxih0qjqys4ld9gdol39ngj" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="tutor_group"/>
         <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="notification" constraintName="FK2qvynpew0iu557b4qk9go0u0c" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="course"/>
@@ -115,6 +118,5 @@
         <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="tutor_group" constraintName="FKhlflc2uq6jxpt1ajaru95ud2c" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="course"/>
         <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="lecture" constraintName="FKjoc9yetfohpygdvx5wv385vwb" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="course"/>
         <addForeignKeyConstraint baseColumnNames="author_id" baseTableName="student_question" constraintName="FKjpgnpph3i2h0n8xekqiytaers" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user"/>
-        <dropColumn columnName="model" tableName="submission"/>
     </changeSet>
 </databaseChangeLog>
