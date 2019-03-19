@@ -1,17 +1,15 @@
 package de.tum.in.www1.artemis.service;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.slf4j.*;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 
 /**
@@ -27,17 +25,21 @@ public class CourseService {
     private final UserService userService;
     private final ExerciseService exerciseService;
     private final AuthorizationCheckService authCheckService;
+    private final UserRepository userRepository;
 
 
     public CourseService(CourseRepository courseRepository,
                          UserService userService,
                          ExerciseService exerciseService,
-                         AuthorizationCheckService authCheckService) {
+                         AuthorizationCheckService authCheckService,
+                         UserRepository userRepository) {
         this.courseRepository = courseRepository;
         this.userService = userService;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
+        this.userRepository = userRepository;
     }
+
 
     /**
      * Save a course.
@@ -50,6 +52,7 @@ public class CourseService {
         return courseRepository.save(course);
     }
 
+
     /**
      * Get all the courses.
      *
@@ -60,6 +63,19 @@ public class CourseService {
         log.debug("Request to get all Courses");
         return courseRepository.findAll();
     }
+
+
+    /**
+     * Get all the courses.
+     *
+     * @return the list of entities
+     */
+    @Transactional(readOnly = true)
+    public List<Course> findAllCurrentlyActiveAndNotOnline() {
+        log.debug("Request to get all Courses which are active");
+        return courseRepository.findAllCurrentlyActiveAndNotOnline();
+    }
+
 
     /**
      * Check if the current user has at least Student-level permissions for the given course
@@ -75,6 +91,7 @@ public class CourseService {
             authCheckService.isAdmin();
     }
 
+
     /**
      * Check if the current user has at least TA-level permissions for the given course
      *
@@ -88,6 +105,7 @@ public class CourseService {
             authCheckService.isAdmin();
     }
 
+
     /**
      * Check if the current user has at least Instructor-level permissions for the given course
      *
@@ -100,6 +118,7 @@ public class CourseService {
             authCheckService.isAdmin();
     }
 
+
     /**
      * Get all the courses with exercises.
      *
@@ -110,6 +129,7 @@ public class CourseService {
         log.debug("Request to get all Courses with Exercises");
         return courseRepository.findAllWithEagerExercises();
     }
+
 
     /**
      * Get all courses with exercises (filtered for given user)
@@ -165,6 +185,7 @@ public class CourseService {
         }
     }
 
+
     /**
      * Get one course by id.
      *
@@ -174,12 +195,10 @@ public class CourseService {
     @Transactional(readOnly = true)
     public Course findOne(Long courseId) {
         log.debug("Request to get Course : {}", courseId);
-        Optional<Course> course = courseRepository.findById(courseId);
-        if (!course.isPresent()) {
-            throw new EntityNotFoundException("Course with id " + courseId + " does not exist!");
-        }
-        return course.get();
+        return courseRepository.findById(courseId)
+            .orElseThrow(() -> new EntityNotFoundException("Course with id: \"" + courseId + "\" does not exist"));
     }
+
 
     /**
      * Get one course by id with all its exercises.
@@ -193,6 +212,7 @@ public class CourseService {
         return courseRepository.findOneWithEagerExercises(courseId);
     }
 
+
     /**
      * Delete the  course by id.
      *
@@ -203,15 +223,18 @@ public class CourseService {
         courseRepository.deleteById(id);
     }
 
+
     public List<String> getAllTeachingAssistantGroupNames() {
         List<Course> courses = courseRepository.findAll();
         return courses.stream().map(Course::getTeachingAssistantGroupName).collect(Collectors.toList());
     }
 
+
     public List<String> getAllInstructorGroupNames() {
         List<Course> courses = courseRepository.findAll();
         return courses.stream().map(Course::getInstructorGroupName).collect(Collectors.toList());
     }
+
 
     /**
      * Getting a Collection of Results in which the average Score of a course is returned as a result
@@ -258,6 +281,7 @@ public class CourseService {
         return allOverallScores;
     }
 
+
     /**
      * Find the best Result in a Participation
      *
@@ -301,5 +325,29 @@ public class CourseService {
         chosenResult.setParticipation(participation);
 
         return chosenResult;
+    }
+
+
+    /**
+     * Given a Course object, it returns the number of users enrolled in the course
+     *
+     * @param course - the course object we are interested in
+     * @return the number of students for that course
+     */
+    public long countNumberOfStudentsForCourse(Course course) {
+        String groupName = course.getStudentGroupName();
+        return userRepository.countByGroupsIsContaining(Collections.singletonList(groupName));
+    }
+
+
+    /**
+     * Given a Course object, it returns the number of tutors assigned to the course
+     *
+     * @param course - the course object we are interested in
+     * @return the number of tutors for that course
+     */
+    public long countNumberOfTutorsForCourse(Course course) {
+        String groupName = course.getTeachingAssistantGroupName();
+        return userRepository.countByGroupsIsContaining(Collections.singletonList(groupName));
     }
 }

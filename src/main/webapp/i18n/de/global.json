@@ -1,9 +1,10 @@
 {
     "global": {
-        "title": "ArTEMiS",
+        "title": "Artemis",
         "browsehappy": "Sie benutzen einen <strong>veralteten</strong> Browser. Bitte <a href=\"http://browsehappy.com/?locale=de/\">aktualisieren Sie Ihren Browser</a>, um die Benutzerfreundlichkeit zu erhöhen.",
         "menu": {
             "home": "Startseite",
+            "overview": "Übersicht",
             "courses": "Kurse",
             "course": "Kursadministration",
             "jhipster-needle-menu-add-element": "JHipster will add additional menu entries here (do not translate!)",
@@ -18,7 +19,7 @@
                 "quizExercise": "Quiz Exercise",
                 "ltiOutcomeUrl": "Lti Outcome Url",
                 "submittedAnswer": "Submitted Answer",
-                "question": "Question",
+                "quizQuestion": "Question",
                 "multipleChoiceQuestion": "Multiple Choice Question",
                 "answerOption": "Answer Option",
                 "multipleChoiceSubmittedAnswer": "Multiple Choice Submitted Answer",
@@ -37,12 +38,12 @@
                 "fileUploadSubmission": "File Upload Submission",
                 "dragAndDropSubmittedAnswer": "Drag And Drop Submitted Answer",
                 "dragAndDropAssignment": "Drag And Drop Assignment",
-                "statistic": "Statistic",
+                "quizStatistic": "Statistic",
                 "quizPointStatistic": "Quiz Point Statistic",
-                "questionStatistic": "Question Statistic",
+                "quizQuestionStatistic": "Question Statistic",
                 "multipleChoiceQuestionStatistic": "Multiple Choice Question Statistic",
                 "dragAndDropQuestionStatistic": "Drag And Drop Question Statistic",
-                "statisticCounter": "Statistic Counter",
+                "quizStatisticCounter": "Statistic Counter",
                 "pointCounter": "Point Counter",
                 "answerCounter": "Answer Counter",
                 "dropLocationCounter": "Drop Location Counter",
@@ -103,7 +104,7 @@
             "info": {
                 "authenticated": {
                     "prefix": "Wenn Sie sich ",
-                    "link": "anmelden",
+                    "link": "melde",
                     "suffix": " möchten, versuchen Sie es mit <br>- Administrator (Name=\"admin\" und Passwort=\"admin\")<br>- Benutzer (Name=\"user\" und Passwort=\"user\")."
                 },
                 "register": {
@@ -216,7 +217,13 @@
         "invalid.solution.repository.url": "Die Lösung Repository URL scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für ArTEMiS zugänglich ist.",
         "idnull": "Ungültige ID"
     },
-    "footer": "Du hast einen Fehler gefunden oder Feedback zu ArTEMiS? <a href=\"mailto:artemis.ase@in.tum.de\">Lass es uns bitte wissen!</a>!",
+    "footer": "Du hast einen Fehler gefunden oder Feedback zu ArTEMiS? <a href=\"mailto:artemis.ase@in.tum.de\">Lass es uns bitte wissen!</a>",
     "justNow": "gerade eben",
-    "pendingChanges": "WARNUNG: Du hast nicht gespeicherte Änderungen. Klicke Abbrechen, um zurück zu gehen und deine Änderungen zu speichern oder klicke OK, um die Änderungen zu verwerfen."
+    "pendingChanges": "WARNUNG: Du hast nicht gespeicherte Änderungen. Klicke Abbrechen, um zurück zu gehen und deine Änderungen zu speichern oder klicke OK, um die Änderungen zu verwerfen.",
+    "overview": {
+        "title": "Kursübersicht",
+        "course": "Kursdetails",
+        "exercise": "Aufgabendetails",
+        "statistics": "Kursstatistiken"
+    }
 }

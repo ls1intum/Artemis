@@ -5,6 +5,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.Proxy;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -61,7 +62,7 @@ public abstract class Submission implements Serializable {
     /**
      * A submission can have a result and therefore, results are persisted and removed with a submission.
      */
-    @OneToOne(mappedBy = "submission", cascade={CascadeType.PERSIST, CascadeType.REMOVE}, fetch = FetchType.LAZY, orphanRemoval=true)
+    @OneToOne(mappedBy = "submission", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, fetch = FetchType.LAZY, orphanRemoval = true)
     @JsonIgnoreProperties({"submission", "participation"})
     @JoinColumn(unique = true)
     private Result result;

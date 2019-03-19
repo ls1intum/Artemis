@@ -5,7 +5,7 @@ import { SERVER_API_URL } from 'app/app.constants';
 
 import { QuizExercise } from './quiz-exercise.model';
 import { ExerciseService } from 'app/entities/exercise';
-import { Question } from 'app/entities/question';
+import { QuizQuestion } from 'app/entities/quiz-question';
 
 export type EntityResponseType = HttpResponse<QuizExercise>;
 export type EntityArrayResponseType = HttpResponse<QuizExercise[]>;
@@ -13,6 +13,16 @@ export type EntityArrayResponseType = HttpResponse<QuizExercise[]>;
 @Injectable({ providedIn: 'root' })
 export class QuizExerciseService {
     private resourceUrl = SERVER_API_URL + 'api/quiz-exercises';
+
+    QuizStatus = {
+        HIDDEN: 'Hidden',
+        VISIBLE: 'Visible',
+        ACTIVE: 'Active',
+        CLOSED: 'Closed',
+        OPEN_FOR_PRACTICE: 'Open for Practice'
+    };
+
+    quizExercises: QuizExercise[];
 
     constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
 
@@ -91,12 +101,13 @@ export class QuizExerciseService {
      * @param quizQuestions Quiz questions we want to export
      * @param exportAll If true exports all questions, else exports only those whose export flag is true
      */
-    exportQuiz(quizQuestions: Question[], exportAll: boolean) {
+    exportQuiz(quizQuestions: QuizQuestion[], exportAll: boolean) {
         // Make list of questions which we need to export,
-        const questions: Question[] = [];
+        const questions: QuizQuestion[] = [];
         for (const question of quizQuestions) {
             if (exportAll === true || question.exportQuiz === true) {
-                delete question.questionStatistic;
+                delete question.quizQuestionStatistic;
+                delete question.exercise;
                 questions.push(question);
             }
         }
@@ -131,4 +142,22 @@ export class QuizExerciseService {
             document.body.removeChild(anchor);
         }
     }
+    /**
+     * Start the given quiz-exercise immediately
+     *
+     * @param quizExerciseId the quiz exercise id to start
+     */
+    statusForQuiz(quizExercise: QuizExercise) {
+        if (quizExercise.isPlannedToStart && quizExercise.remainingTime != null) {
+            if (quizExercise.remainingTime <= 0) {
+                // the quiz is over
+                return quizExercise.isOpenForPractice ? this.QuizStatus.OPEN_FOR_PRACTICE : this.QuizStatus.CLOSED;
+            } else {
+                return this.QuizStatus.ACTIVE;
+            }
+        }
+        // the quiz hasn't started yet
+        return quizExercise.isVisibleBeforeStart ? this.QuizStatus.VISIBLE : this.QuizStatus.HIDDEN;
+    }
+
 }

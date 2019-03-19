@@ -16,11 +16,13 @@
             "detail": {
                 "title": "Course"
             },
+            "totalScore": "Total Score:",
             "title": "Title",
             "shortName": "Short Name",
             "studentGroupName": "Student Group",
             "teachingAssistantGroupName": "Tutor Group",
             "instructorGroupName": "Instructor Group",
+            "description": "Course Description",
             "startDate": "Start",
             "endDate": "End",
             "onlineCourse": "Online Course",
@@ -35,7 +37,8 @@
                     "minlength": "Short Name must have a length of 3 or more characters.",
                     "forbidden": "Short Name must start with a letter and cannot contain special characters."
                 }
-            }
+            },
+            "instructorDashboard": "Instructor Dashboard"
         }
     }
 }

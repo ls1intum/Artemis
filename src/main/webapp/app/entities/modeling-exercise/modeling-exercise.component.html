@@ -1,15 +1,15 @@
 <div>
     <h4>
-        <span *ngIf="course">{{course.title}} - </span><span *ngIf="modelingExercises">{{modelingExercises.length}} </span>
+        <span *ngIf="course && !showHeading">{{course.title}} - </span><span *ngIf="modelingExercises && showHeading">{{modelingExercises.length}} </span>
         <span jhiTranslate="arTeMiSApp.modelingExercise.home.title">Modeling Exercises</span>
-        <button *ngIf="course" class="btn btn-primary float-right jh-create-entity create-modeling-exercise" [routerLink]="['/', { outlets: { popup: ['course', course.id, 'modeling-exercise-new'] } }]">
+        <button id="modeling-exercise-create-button" *ngIf="course" class="btn btn-primary float-right jh-create-entity create-modeling-exercise" [routerLink]="['/', { outlets: { popup: ['course', course.id, 'modeling-exercise-new'] } }]">
             <fa-icon icon="plus"></fa-icon>
             <span  jhiTranslate="arTeMiSApp.modelingExercise.home.createLabel">
             Create Modeling Exercise
             </span>
         </button>
     </h4>
-    <jhi-alert></jhi-alert>
+    <jhi-alert *ngIf="showAlertHeading"></jhi-alert>
     <div class="row">
     </div>
     <br>
@@ -28,7 +28,7 @@
             </thead>
             <tbody>
             <tr *ngFor="let modelingExercise of modelingExercises | sortBy: predicate: reverse ;trackBy: trackId">
-                <td><a [routerLink]="['../modeling-exercise', modelingExercise.id ]">{{modelingExercise.id}}</a></td>
+                <td><a [routerLink]="['/course', modelingExercise.course.id,'modeling-exercise', modelingExercise.id ]">{{modelingExercise.id}}</a></td>
                 <td>{{modelingExercise.title}}</td>
                 <td>{{modelingExercise.releaseDate | date:'medium'}}</td>
                 <td>{{modelingExercise.dueDate | date:'medium'}}</td>
@@ -49,7 +49,7 @@
                             <span class="d-none d-md-inline" jhiTranslate="arTeMiSApp.exercise.participations">Participations</span>
                         </button>
                         <button type="submit"
-                                [routerLink]="['../modeling-exercise', modelingExercise.id ]"
+                                [routerLink]="['/modeling-exercise', modelingExercise.id ]"
                                 class="btn btn-info btn-sm mr-1">
                             <fa-icon icon="eye"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>

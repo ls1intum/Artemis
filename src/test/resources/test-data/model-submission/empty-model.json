@@ -1,0 +1,21 @@
+{
+  "version": "1.0",
+  "entities": {
+    "allIds": [],
+    "byId": {}
+  },
+  "relationships": {
+    "allIds": [],
+    "byId": {}
+  },
+  "interactiveElements": {
+    "allIds": []
+  },
+  "editor": {
+    "canvasSize": {
+      "width": 1600,
+      "height": 1600
+    },
+    "gridSize": 10
+  }
+}

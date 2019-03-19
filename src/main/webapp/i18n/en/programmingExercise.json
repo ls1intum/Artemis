@@ -18,10 +18,10 @@
             "detail": {
                 "title": "Programming Exercise"
             },
-            "baseRepositoryUrl": "Template Repository Url",
+            "templateRepositoryUrl": "Template Repository Url",
             "testRepositoryUrl": "Test Repository Url (optional)",
             "solutionRepositoryUrl": "Solution Repository Url (optional)",
-            "baseBuildPlanId": "Template Build Plan Id",
+            "templateBuildPlanId": "Template Build Plan Id",
             "solutionBuildPlanId": "Solution Build Plan Id (optional)",
             "repositories": "Repositories",
             "buildplans": "Build Plans",

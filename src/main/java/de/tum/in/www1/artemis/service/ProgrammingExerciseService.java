@@ -4,6 +4,8 @@ import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -12,6 +14,9 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationUpdateService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import de.tum.in.www1.artemis.service.util.structureoraclegenerator.OracleGeneratorClient;
+import org.apache.commons.lang3.ArrayUtils;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,12 +27,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
 import static de.tum.in.www1.artemis.config.Constants.TEST_CASE_CHANGED_API_PATH;
 
 @Service
@@ -108,13 +119,36 @@ public class ProgrammingExerciseService {
         versionControlService.get().createRepository(projectKey, testRepoName, null); // Create tests repository
         versionControlService.get().createRepository(projectKey, solutionRepoName, null); // Create solution repository
 
+        Participation templateParticipation = programmingExercise.getTemplateParticipation();
+        if (templateParticipation == null) {
+            templateParticipation = new Participation();
+            programmingExercise.setTemplateParticipation(templateParticipation);
+        }
+        Participation solutionParticipation = programmingExercise.getSolutionParticipation();
+        if (solutionParticipation == null) {
+            solutionParticipation = new Participation();
+            programmingExercise.setSolutionParticipation(solutionParticipation);
+        }
+
+        initParticipations(programmingExercise);
+
+        templateParticipation.setBuildPlanId(projectKey + "-BASE"); // Set build plan id to newly created BaseBuild plan
+        templateParticipation.setRepositoryUrl(versionControlService.get().getCloneURL(projectKey, exerciseRepoName).toString());
+        solutionParticipation.setBuildPlanId(projectKey + "-SOLUTION");
+        solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneURL(projectKey, solutionRepoName).toString());
+        programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneURL(projectKey, testRepoName).toString());
+
+        // The creation of the webhooks must occur before the initial push to ensure that the initial commit creates a result
+        versionControlService.get().addWebHook(templateParticipation.getRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + templateParticipation.getId(), "ArTEMiS WebHook");
+        versionControlService.get().addWebHook(solutionParticipation.getRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + solutionParticipation.getId(), "ArTEMiS WebHook");
+
         URL exerciseRepoUrl = versionControlService.get().getCloneURL(projectKey, exerciseRepoName);
         URL testsRepoUrl = versionControlService.get().getCloneURL(projectKey, testRepoName);
         URL solutionRepoUrl = versionControlService.get().getCloneURL(projectKey, solutionRepoName);
 
         String programmingLanguage = programmingExercise.getProgrammingLanguage().toString().toLowerCase();
 
-        String templatePath = "classpath:templates/java";
+        String templatePath = "classpath:templates/" + programmingLanguage;
         String exercisePath = templatePath + "/exercise/**/*.*";
         String solutionPath = templatePath + "/solution/**/*.*";
         String testPath = templatePath + "/test/**/*.*";
@@ -146,30 +180,33 @@ public class ProgrammingExerciseService {
         continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, "BASE", exerciseRepoName, testRepoName); // plan for the exercise (students)
         continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, "SOLUTION", solutionRepoName, testRepoName); // plan for the solution (instructors) with solution repository
 
-        programmingExercise.setBaseBuildPlanId(projectKey + "-BASE"); // Set build plan id to newly created BaseBuild plan
-        programmingExercise.setBaseRepositoryUrl(versionControlService.get().getCloneURL(projectKey, exerciseRepoName).toString());
-        programmingExercise.setSolutionBuildPlanId(projectKey + "-SOLUTION");
-        programmingExercise.setSolutionRepositoryUrl(versionControlService.get().getCloneURL(projectKey, solutionRepoName).toString());
-        programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneURL(projectKey, testRepoName).toString());
+        // save to get the id required for the webhook
+        participationRepository.save(templateParticipation);
+        participationRepository.save(solutionParticipation);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        //save to get the id required for the webhook
-        ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
         versionControlService.get().addWebHook(testsRepoUrl, ARTEMIS_BASE_URL + TEST_CASE_CHANGED_API_PATH + programmingExercise.getId(), "ArTEMiS Tests WebHook");
-        return result;
+        return programmingExercise;
     }
 
     // Copy template and push, if no file is in the directory
     private void setupTemplateAndPush(Repository repository, Resource[] resources, String prefix, String templateName, ProgrammingExercise programmingExercise) throws Exception {
         if (gitService.listFiles(repository).size() == 0) { // Only copy template if repo is empty
             fileService.copyResources(resources, prefix, repository.getLocalPath().toAbsolutePath().toString());
-            fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageFolderName());
+            if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
+                fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}", programmingExercise.getPackageFolderName());
+            }
+            //there is no need in python to replace package names
 
             List<String> fileTargets = new ArrayList<>();
             List<String> fileReplacements = new ArrayList<>();
             // This is based on the correct order and assumes that boths lists have the same length, it replaces fileTargets.get(i) with fileReplacements.get(i)
 
-            fileTargets.add("${packageName}");
-            fileReplacements.add(programmingExercise.getPackageName());
+            if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA) {
+                fileTargets.add("${packageName}");
+                fileReplacements.add(programmingExercise.getPackageName());
+            }
+            //there is no need in python to replace package names
 
             fileTargets.add("${exerciseNameCompact}");
             fileReplacements.add(programmingExercise.getShortName().toLowerCase()); // Used e.g. in artifactId
@@ -177,13 +214,122 @@ public class ProgrammingExerciseService {
             fileTargets.add("${exerciseName}");
             fileReplacements.add(programmingExercise.getTitle());
 
-            //TODO: for some reason, this code does not replace the elements in the file test.json
-
             fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), fileTargets, fileReplacements);
 
             gitService.stageAllChanges(repository);
             gitService.commitAndPush(repository, templateName + "-Template pushed by ArTEMiS");
             repository.setFiles(null); // Clear cache to avoid multiple commits when ArTEMiS server is not restarted between attempts
+        }
+    }
+
+   /**
+     * Find the ProgrammingExercise where the given Participation is the template Participation
+     *
+     * @param participation The template participation
+     * @return The ProgrammingExercise where the given Participation is the template Participation
+     */
+    public ProgrammingExercise getExerciseForTemplateParticipation(Participation participation) {
+        return programmingExerciseRepository.findOneByTemplateParticipationId(participation.getId());
+    }
+
+    /**
+     * Find the ProgrammingExercise where the given Participation is the solution Participation
+     *
+     * @param participation The solution participation
+     * @return The ProgrammingExercise where the given Participation is the solution Participation
+     */
+    public ProgrammingExercise getExerciseForSolutionParticipation(Participation participation) {
+        return programmingExerciseRepository.findOneBySolutionParticipationId(participation.getId());
+    }
+
+    /**
+     * This methods sets the values (initialization date and initialization state) of the template and solution participation
+     *
+     * @param programmingExercise The programming exercise
+     */
+    public void initParticipations(ProgrammingExercise programmingExercise) {
+
+        Participation solutionParticipation = programmingExercise.getSolutionParticipation();
+        Participation templateParticipation = programmingExercise.getTemplateParticipation();
+
+        solutionParticipation.setInitializationState(InitializationState.INITIALIZED);
+        templateParticipation.setInitializationState(InitializationState.INITIALIZED);
+        solutionParticipation.setInitializationDate(ZonedDateTime.now());
+        templateParticipation.setInitializationDate(ZonedDateTime.now());
+    }
+
+    /**
+     * This method saves the participations of the programming xercise
+     *
+     * @param programmingExercise The programming exercise
+     */
+    public void saveParticipations(ProgrammingExercise programmingExercise) {
+        Participation solutionParticipation = programmingExercise.getSolutionParticipation();
+        Participation templateParticipation = programmingExercise.getTemplateParticipation();
+
+        participationRepository.save(solutionParticipation);
+        participationRepository.save(templateParticipation);
+    }
+
+    /**
+     * This method calls the StructureOracleGenerator, generates the string out of the JSON representation of the structure
+     * oracle of the programming exercise and returns true if the file was updated or generated, false otherwise.
+     * This can happen if the contents of the file have not changed.
+     * @param solutionRepoURL The URL of the solution repository.
+     * @param exerciseRepoURL The URL of the exercise repository.
+     * @param testRepoURL The URL of the tests repository.
+     * @param testsPath The path to the tests folder, e.g. the path inside the repository where the structure oracle file will be saved in.
+     * @return True, if the structure oracle was successfully generated or updated, false if no changes to the file were made.
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public boolean generateStructureOracleFile(URL solutionRepoURL, URL exerciseRepoURL, URL testRepoURL, String testsPath) throws IOException, InterruptedException {
+        Repository solutionRepository = gitService.getOrCheckoutRepository(solutionRepoURL);
+        Repository exerciseRepository = gitService.getOrCheckoutRepository(exerciseRepoURL);
+        Repository testRepository = gitService.getOrCheckoutRepository(testRepoURL);
+
+        gitService.pull(solutionRepository);
+        gitService.pull(exerciseRepository);
+        gitService.pull(testRepository);
+
+        Path solutionRepositoryPath = solutionRepository.getLocalPath().toRealPath();
+        Path exerciseRepositoryPath = exerciseRepository.getLocalPath().toRealPath();
+        Path structureOraclePath = Paths.get(testRepository.getLocalPath().toRealPath().toString(), testsPath, "test.json");
+
+        String structureOracleJSON = OracleGeneratorClient.generateStructureOracleJSON(solutionRepositoryPath, exerciseRepositoryPath);
+
+        // If the oracle file does not already exist, then save the generated string to the file.
+        // If it does, check if the contents of the existing file are the same as the generated one.
+        // If they are, do not push anything and inform the user about it.
+        // If not, then update the oracle file by rewriting it and push  the changes.
+        if(!Files.exists(structureOraclePath)) {
+            try {
+                Files.write(structureOraclePath, structureOracleJSON.getBytes());
+                gitService.stageAllChanges(testRepository);
+                gitService.commitAndPush(testRepository, "Generate the structure oracle file.");
+                return true;
+            } catch (GitAPIException e) {
+                log.error("An exception occurred while pushing the structure oracle file to the test repository.", e);
+                return false;
+            }
+        } else {
+            Byte[] existingContents = ArrayUtils.toObject(Files.readAllBytes(structureOraclePath));
+            Byte[] newContents = ArrayUtils.toObject(structureOracleJSON.getBytes());
+
+            if(Arrays.deepEquals(existingContents, newContents)) {
+                log.info("No changes to the oracle detected.");
+                return false;
+            } else {
+                try {
+                    Files.write(structureOraclePath, structureOracleJSON.getBytes());
+                    gitService.stageAllChanges(testRepository);
+                    gitService.commitAndPush(testRepository, "Update the structure oracle file.");
+                    return true;
+                } catch (GitAPIException e) {
+                    log.error("An exception occurred while pushing the structure oracle file to the test repository.", e);
+                    return false;
+                }
+            }
         }
     }
 }

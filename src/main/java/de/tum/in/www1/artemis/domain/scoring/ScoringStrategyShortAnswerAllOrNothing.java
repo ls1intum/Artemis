@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.domain.scoring;
 
-import de.tum.in.www1.artemis.domain.Question;
+import de.tum.in.www1.artemis.domain.QuizQuestion;
 import de.tum.in.www1.artemis.domain.ShortAnswerQuestion;
 import de.tum.in.www1.artemis.domain.ShortAnswerSubmittedAnswer;
 import de.tum.in.www1.artemis.domain.SubmittedAnswer;
@@ -11,14 +11,14 @@ import de.tum.in.www1.artemis.domain.SubmittedAnswer;
  */
 public class ScoringStrategyShortAnswerAllOrNothing implements ScoringStrategy {
     @Override
-    public double calculateScore(Question question, SubmittedAnswer submittedAnswer) {
-        // return maximal Score if the question is invalid
-        if (question.isInvalid()) {
-            return question.getScore();
+    public double calculateScore(QuizQuestion quizQuestion, SubmittedAnswer submittedAnswer) {
+        // return maximal Score if the quizQuestion is invalid
+        if (quizQuestion.isInvalid()) {
+            return quizQuestion.getScore();
         }
-        if (submittedAnswer instanceof ShortAnswerSubmittedAnswer && question instanceof ShortAnswerQuestion) {
+        if (submittedAnswer instanceof ShortAnswerSubmittedAnswer && quizQuestion instanceof ShortAnswerQuestion) {
             ShortAnswerSubmittedAnswer shortAnswerAnswer = (ShortAnswerSubmittedAnswer) submittedAnswer;
-            ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) question;
+            ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) quizQuestion;
 
             int[] values = ScoringStrategyShortAnswerUtil.getCorrectAndIncorrectSolutionCount(shortAnswerQuestion, shortAnswerAnswer);
             int correctSolutionsCount = values[0];
@@ -29,7 +29,7 @@ public class ScoringStrategyShortAnswerAllOrNothing implements ScoringStrategy {
                 return 0.0;
             }
         }
-        // the submitted answer's type doesn't fit the question's type => it cannot be correct
+        // the submitted answer's type doesn't fit the quizQuestion's type => it cannot be correct
         return 0.0;
     }
 }

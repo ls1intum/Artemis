@@ -1,17 +1,64 @@
 <div class="row">
     <div class="col-md-8 offset-md-2 text-center">
-        <h1 jhiTranslate="home.title">Welcome to ArTEMiS!</h1>
-        <p class="lead" translate="home.subtitle">Interactive Learning with an AuTomated assEssment Management System</p>
-        <div [ngSwitch]="isAuthenticated()">
-            <div class="alert alert-success" *ngSwitchCase="true">
-                <span *ngIf="account">
-                    You are logged in as user "{{account.login}}". Go to your <a class="alert-link" routerLink="courses">courses</a> to get started.
-                </span>
+        <h1 jhiTranslate="home.title">Welcome to Artemis!</h1>
+        <p class="lead" jhiTranslate="home.subtitle">Interactive Learning with an AuTomated assEssment Management System</p>
+        <div class="lead" jhiTranslate="home.pleaseSignIn">
+            Please sign in using your TUM credentials.
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+        <div class="modal-body">
+            <div class="row justify-content-center">
+                <div class="col-12">
+                    <div class="alert alert-danger" *ngIf="authenticationError && !captchaRequired" jhiTranslate="home.errors.failedToLogin">
+                        <span class="bold">Failed to sign in!</span> Please check your username and password and try again.
+                    </div>
+                    <div class="alert alert-info" *ngIf="authenticationAttempts >= 3 && !captchaRequired" jhiTranslate="home.errors.loginWarning">
+                        Seems like you are having issues signing in :-( Please go to <a href="https://jirabruegge.in.tum.de">JIRA</a> and try to sign in there.
+                        After that, try again here.
+                    </div>
+                    <div class="alert alert-danger" *ngIf="captchaRequired">
+                        <div jhiTranslate="home.errors.jiraWaning">
+                            <span class="bold">You have entered your password too often incorrectly :-(</span><br>
+                            Please go to <a href="https://jirabruegge.in.tum.de/login.jsp" target="_blank">JIRA</a>: <a href="https://jirabruegge.in.tum.de/login.jsp" target="_blank">https://jirabruegge.in.tum.de/login.jsp</a>.
+                            Sign in with your account there and solve the <a href="https://jirabruegge.in.tum.de/login.jsp" target="_blank">CAPTCHA</a>.<br>
+                            After you have solved the <a href="https://jirabruegge.in.tum.de/login.jsp" target="_blank">CAPTCHA</a>, try again here.
+                        </div>
+                    </div>
+                </div>
             </div>
-
-            <div class="lead" *ngSwitchCase="false">
-                Please <a class="alert-link" (click)="login()" jhiTranslate="global.messages.info.authenticated.link">sign in</a> using your TUM credentials.
+            <div class="row">
+                <div class="col-12 col-lg-6 offset-lg-3">
+                    <form name="loginForm" class="form" role="form" (ngSubmit)="login()">
+                        <div class="form-group">
+                            <label for="username" jhiTranslate="global.form.username">Login</label>
+                            <input type="text" class="form-control" autocomplete="username" name="username" id="username" placeholder="{{'global.form.username.placeholder' | translate}}"
+                                   pattern="^([a-z]{2}\d{2}[a-z]{3})$" [(ngModel)]="username" #usernameForm="ngModel" [ngModelOptions]="{updateOn: 'blur'}">
+                            <div class="help-block" *ngIf="usernameForm.errors && (usernameForm.dirty || usernameForm.touched)" jhiTranslate="home.errors.tumWarning">
+                                <p class="text-primary small">If you are a TUM student, your username should have the format <b>ab12xyz</b>.<br>
+                                    Do <b>not</b> include '<b>@mytum.de</b>' or '<b>@tum.de</b>'.</p>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="password" jhiTranslate="login.form.password">Password</label>
+                            <input type="password" class="form-control" autocomplete="password" name="password" id="password" placeholder="{{'login.form.password.placeholder' | translate}}"
+                                   [(ngModel)]="password">
+                        </div>
+                        <div class="form-group">
+                            <div class="form-check">
+                                <label class="form-check-label" for="rememberMe">
+                                    <input class="form-check-input" type="checkbox" name="rememberMe" id="rememberMe" [(ngModel)]="rememberMe" checked>
+                                    <span jhiTranslate="login.form.rememberme">Remember me</span>
+                                </label>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" jhiTranslate="login.form.button">Sign in</button>
+                    </form>
+                </div>
             </div>
         </div>
+
     </div>
 </div>

@@ -1,0 +1,39 @@
+<div *ngIf="exercises">
+    <div class="row mt-3">
+        <div class="col-12 col-lg-6 pr-2 pl-2  mb-2" *ngFor="let exercise of exercises">
+            <div class="result-card">
+                <div class="row justify-content-between">
+                    <div class="col-auto">
+                        <fa-icon [icon]="'font'"></fa-icon>
+                        {{exercise.title}}
+                    </div>
+                    <div class="col-4 text-right">
+                        <fa-icon [icon]="'calendar-alt'"></fa-icon>
+                        {{exercise.dueDate | date:'dd/MM/yy'}}
+                    </div>
+                </div>
+                <div *ngFor="let participation of exercise.participations">
+                    <div *ngFor="let result of participation.results">
+                        <div class="row justify-content-between">
+                            <div class="col-auto">
+                                <span class="badge badge-success" *ngIf="result.rated">RATED</span>
+                                <span class="badge badge-info" *ngIf="!result.rated">PRACTICE</span>
+                            </div>
+                            <div class="col-auto">
+                                <span>{{result.resultString}}</span>
+                            </div>
+                            <div class="col-auto">
+                                <span>{{result.score}}%</span>
+                            </div>
+                            <div class="col text-right">
+                                <span>{{result.completionDate | date: 'dd/MM/yy'}}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center" *ngIf="!exercise.participations">You have not participated in this exercise</div>
+            </div>
+        </div>
+    </div>
+</div>
+

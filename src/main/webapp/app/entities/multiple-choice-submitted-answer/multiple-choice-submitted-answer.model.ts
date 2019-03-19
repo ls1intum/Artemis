@@ -1,12 +1,12 @@
 import { SubmittedAnswer } from '../submitted-answer';
 import { AnswerOption } from '../answer-option';
-import { QuestionType } from '../question';
+import { QuizQuestionType } from '../quiz-question';
 
 export class MultipleChoiceSubmittedAnswer extends SubmittedAnswer {
 
     public selectedOptions: AnswerOption[];
 
     constructor() {
-        super(QuestionType.MULTIPLE_CHOICE);
+        super(QuizQuestionType.MULTIPLE_CHOICE);
     }
 }

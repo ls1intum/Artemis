@@ -1,5 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { JhiLanguageService } from 'ng-jhipster';
+import { JhiLanguageHelper } from 'app/core';
 
 import { ArTEMiSSharedModule } from '../shared';
 import { UserRouteAccessService } from '../core';
@@ -23,6 +25,15 @@ const ENTITY_STATES = [
 @NgModule({
     imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), NgbModule],
     declarations: [ModelingStatisticsComponent],
-    entryComponents: [HomeComponent, ModelingStatisticsComponent, JhiMainComponent]
+    entryComponents: [HomeComponent, ModelingStatisticsComponent, JhiMainComponent],
+    providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }]
 })
-export class ArTEMiSModelingStatisticsModule {}
+export class ArTEMiSModelingStatisticsModule {
+    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
+        this.languageHelper.language.subscribe((languageKey: string) => {
+            if (languageKey !== undefined) {
+                this.languageService.changeLanguage(languageKey);
+            }
+        });
+    }
+}

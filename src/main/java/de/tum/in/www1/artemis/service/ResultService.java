@@ -14,6 +14,7 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -48,6 +49,24 @@ public class ResultService {
             .orElseThrow(() -> new EntityNotFoundException("Result with id: \"" + id + "\" does not exist"));
     }
 
+    public Result findOneWithSubmission(long id) {
+        log.debug("Request to get Result: {}", id);
+        return resultRepository.findByIdWithSubmission(id)
+            .orElseThrow(() -> new EntityNotFoundException("Result with id: \"" + id + "\" does not exist"));
+    }
+
+
+    /**
+     * Sets the assessor field of the given result with the current user and stores these changes to the database.
+     * The User object set as assessor gets Groups and Authorities eagerly loaded.
+     * @param result
+     */
+    public void setAssessor(Result result){
+        User currentUser = userService.getUserWithGroupsAndAuthorities();
+        result.setAssessor(currentUser);
+        resultRepository.save(result);
+        log.debug("Assessment locked with result id: " + result.getId() + " for assessor: " + result.getAssessor().getFirstName());
+    }
 
     /**
      * Perform async operations after we were notified about new results.
@@ -127,5 +146,9 @@ public class ResultService {
             messagingTemplate.convertAndSend("/topic/participation/" + result.getParticipation().getId() + "/newResults", result);
             ltiService.onNewBuildResult(savedResult.getParticipation());
         }
+    }
+
+    public List<Result> findByCourseId(Long courseId) {
+        return resultRepository.findAllByParticipation_Exercise_CourseId(courseId);
     }
 }

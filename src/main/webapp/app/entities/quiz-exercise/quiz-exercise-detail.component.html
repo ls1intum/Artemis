@@ -106,7 +106,7 @@
                 </div>
             </div>
         </div>
-        <div class="question card" *ngFor="let question of quizExercise.questions; let i = index">
+        <div class="question card" *ngFor="let question of quizExercise.quizQuestions; let i = index">
             <div *ngIf="question.type === MULTIPLE_CHOICE">
                 <jhi-edit-multiple-choice-question
                     [question]="question"
@@ -244,7 +244,7 @@
                         *ngIf="quizExercise.course"
                         class="btn btn-default"
                         [ngClass]="{'btn-secondary': !pendingChanges(), 'btn-danger': pendingChanges()}"
-                        [routerLink]="['/course', quizExercise.course.id, 'quiz-exercise']"
+                        (click)="back()"
                         jhiTranslate="{{pendingChanges() ? 'entity.action.cancel' : 'entity.action.back'}}">
                     </button>
                     <button

@@ -1,13 +1,13 @@
-import {Component, OnInit, Input} from '@angular/core';
-import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
-import {Question, QuestionType, ScoringType} from 'app/entities/question';
-import {DragAndDropMapping} from '../../../entities/drag-and-drop-mapping';
-import {AnswerOption} from '../../../entities/answer-option';
-import {MultipleChoiceQuestion} from '../../../entities/multiple-choice-question';
-import {DragAndDropQuestion} from '../../../entities/drag-and-drop-question';
-import {ShortAnswerQuestion} from '../../../entities/short-answer-question';
-import {ShortAnswerSubmittedText} from 'app/entities/short-answer-submitted-text';
-import {TranslateService} from '@ngx-translate/core';
+import { Component, OnInit, Input } from '@angular/core';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { QuizQuestion, QuizQuestionType, ScoringType } from 'app/entities/quiz-question';
+import { DragAndDropMapping } from '../../../entities/drag-and-drop-mapping';
+import { AnswerOption } from '../../../entities/answer-option';
+import { MultipleChoiceQuestion } from '../../../entities/multiple-choice-question';
+import { DragAndDropQuestion } from '../../../entities/drag-and-drop-question';
+import { ShortAnswerQuestion } from '../../../entities/short-answer-question';
+import { ShortAnswerSubmittedText } from 'app/entities/short-answer-submitted-text';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-quiz-scoring-infostudent-modal',
@@ -15,16 +15,16 @@ import {TranslateService} from '@ngx-translate/core';
     styles: []
 })
 export class QuizScoringInfoStudentModalComponent implements OnInit {
-    readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
-    readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
-    readonly SHORT_ANSWER = QuestionType.SHORT_ANSWER;
+    readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
+    readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
+    readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
 
     readonly ALL_OR_NOTHING = ScoringType.ALL_OR_NOTHING;
     readonly PROPORTIONAL_WITH_PENALTY = ScoringType.PROPORTIONAL_WITH_PENALTY;
 
     @Input() score: number; // Score of the student that has been achieved
     @Input() questionIndex: number; // Question Index of the question
-    @Input() question: Question;
+    @Input() question: QuizQuestion;
     @Input() dragAndDropMapping = new Array<DragAndDropMapping>();
     @Input() multipleChoiceMapping = new Array<AnswerOption>();
     @Input() shortAnswerText = new Array<ShortAnswerSubmittedText>();
@@ -69,13 +69,13 @@ export class QuizScoringInfoStudentModalComponent implements OnInit {
     ngOnInit() {
         this.checkForSingleOrPluralPoints();
         switch (this.question.type) {
-            case QuestionType.MULTIPLE_CHOICE:
+            case QuizQuestionType.MULTIPLE_CHOICE:
                 this.countMultipleChoice();
                 break;
-            case QuestionType.DRAG_AND_DROP:
+            case QuizQuestionType.DRAG_AND_DROP:
                 this.countDragAndDrop();
                 break;
-            case QuestionType.SHORT_ANSWER:
+            case QuizQuestionType.SHORT_ANSWER:
                 this.countShortAnswer();
                 break;
         }

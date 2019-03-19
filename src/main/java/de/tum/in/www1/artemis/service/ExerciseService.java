@@ -47,7 +47,7 @@ public class ExerciseService {
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final Optional<VersionControlService> versionControlService;
     private final Optional<GitService> gitService;
-    private final StatisticService statisticService;
+    private final QuizStatisticService quizStatisticService;
     private final QuizScheduleService quizScheduleService;
 
     public ExerciseService(ExerciseRepository exerciseRepository,
@@ -57,7 +57,7 @@ public class ExerciseService {
                            Optional<ContinuousIntegrationService> continuousIntegrationService,
                            Optional<VersionControlService> versionControlService,
                            Optional<GitService> gitService,
-                           StatisticService statisticService,
+                           QuizStatisticService quizStatisticService,
                            QuizScheduleService quizScheduleService) {
         this.exerciseRepository = exerciseRepository;
         this.userService = userService;
@@ -66,7 +66,7 @@ public class ExerciseService {
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.gitService = gitService;
-        this.statisticService = statisticService;
+        this.quizStatisticService = quizStatisticService;
         this.quizScheduleService = quizScheduleService;
     }
 
@@ -157,7 +157,7 @@ public class ExerciseService {
         if (exercise.get() instanceof QuizExercise) {
             QuizExercise quizExercise = (QuizExercise) exercise.get();
             //eagerly load questions and statistic
-            quizExercise.getQuestions().size();
+            quizExercise.getQuizQuestions().size();
             quizExercise.getQuizPointStatistic().getId();
         }
         return exercise.get();
@@ -214,7 +214,7 @@ public class ExerciseService {
             quizScheduleService.clearQuizData(quizExercise.getId());
 
             // clean up the statistics
-            statisticService.recalculateStatistics(quizExercise);
+            quizStatisticService.recalculateStatistics(quizExercise);
         }
     }
 
@@ -232,17 +232,17 @@ public class ExerciseService {
         participationService.deleteAllByExerciseId(exercise.getId(), deleteStudentReposBuildPlans, deleteStudentReposBuildPlans);
         if (exercise instanceof ProgrammingExercise && deleteBaseReposBuildPlans) {
             ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
-            if (programmingExercise.getBaseBuildPlanId() != null) {
-                continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getBaseBuildPlanId());
+            if (programmingExercise.getTemplateBuildPlanId() != null) {
+                continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getTemplateBuildPlanId());
             }
             if (programmingExercise.getSolutionBuildPlanId() != null) {
                 continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getSolutionBuildPlanId());
             }
             continuousIntegrationService.get().deleteProject(programmingExercise.getProjectKey());
 
-            if (programmingExercise.getBaseRepositoryUrl() != null) {
-                versionControlService.get().deleteRepository(programmingExercise.getBaseRepositoryUrlAsUrl());
-                gitService.get().deleteLocalRepository(programmingExercise.getBaseRepositoryUrlAsUrl());
+            if (programmingExercise.getTemplateRepositoryUrl() != null) {
+                versionControlService.get().deleteRepository(programmingExercise.getTemplateRepositoryUrlAsUrl());
+                gitService.get().deleteLocalRepository(programmingExercise.getTemplateRepositoryUrlAsUrl());
             }
             if (programmingExercise.getSolutionRepositoryUrl() != null) {
                 versionControlService.get().deleteRepository(programmingExercise.getSolutionRepositoryUrlAsUrl());

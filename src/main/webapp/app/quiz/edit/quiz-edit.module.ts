@@ -1,4 +1,6 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { JhiLanguageService } from 'ng-jhipster';
+import { JhiLanguageHelper } from 'app/core';
 
 import { ArTEMiSSharedModule } from '../../shared';
 import { JhiAlertService } from 'ng-jhipster';
@@ -33,8 +35,16 @@ import { QuizScoringInfoModalComponent } from './quiz-scoring-info-modal/quiz-sc
         EditDragAndDropQuestionComponent,
         EditShortAnswerQuestionComponent
     ],
-    providers: [RepositoryService, JhiAlertService],
+    providers: [RepositoryService, JhiAlertService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     exports: [EditMultipleChoiceQuestionComponent, EditDragAndDropQuestionComponent, EditShortAnswerQuestionComponent],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
-export class ArTEMiSQuizEditModule {}
+export class ArTEMiSQuizEditModule {
+    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
+        this.languageHelper.language.subscribe((languageKey: string) => {
+            if (languageKey !== undefined) {
+                this.languageService.changeLanguage(languageKey);
+            }
+        });
+    }
+}

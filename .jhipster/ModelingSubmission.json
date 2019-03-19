@@ -11,7 +11,7 @@
         }
     ],
     "relationships": [],
-    "changelogDate": "20180927081412",
+    "changelogDate": "20190315161934",
     "entityTableName": "modeling_submission",
     "dto": "no",
     "pagination": "no",

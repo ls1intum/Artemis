@@ -16,7 +16,7 @@ import java.util.Set;
 @Entity
 @DiscriminatorValue(value="DD")
 @JsonTypeName("drag-and-drop")
-public class DragAndDropQuestionStatistic extends QuestionStatistic implements Serializable {
+public class DragAndDropQuestionStatistic extends QuizQuestionStatistic implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -155,7 +155,7 @@ public class DragAndDropQuestionStatistic extends QuestionStatistic implements S
                 }
             }
             // change rated correctCounter if answer is complete correct
-            if(getQuestion().isAnswerCorrect(ddSubmittedAnswer)) {
+            if(getQuizQuestion().isAnswerCorrect(ddSubmittedAnswer)) {
                 setRatedCorrectCounter(getRatedCorrectCounter() + change);
             }
         }
@@ -173,7 +173,7 @@ public class DragAndDropQuestionStatistic extends QuestionStatistic implements S
                 }
             }
             // change unrated correctCounter if answer is complete correct
-            if(getQuestion().isAnswerCorrect(ddSubmittedAnswer)) {
+            if(getQuizQuestion().isAnswerCorrect(ddSubmittedAnswer)) {
                 setUnRatedCorrectCounter(getUnRatedCorrectCounter() + change);
             }
         }

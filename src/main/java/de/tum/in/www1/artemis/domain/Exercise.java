@@ -27,7 +27,6 @@ import java.util.*;
 @DiscriminatorValue(value = "E")
 // NOTE: Use strict cache to prevent lost updates when updating statistics in semaphore (see StatisticService.java)
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
-
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 // Annotation necessary to distinguish between concrete implementations of Exercise when deserializing from JSON
 @JsonSubTypes({
@@ -85,24 +84,35 @@ public abstract class Exercise implements Serializable {
     @Column(name = "difficulty")
     private DifficultyLevel difficulty;
 
-    @OneToMany(mappedBy = "exercise")
-    @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
-    @JsonIgnoreProperties("exercise")
-    private Set<Participation> participations = new HashSet<>();
-
-    @OneToMany(mappedBy = "assessedExercise")
-    @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
-    @JsonIgnoreProperties("assessedExercise")
-    private Set<TutorParticipation> tutorParticipations = new HashSet<>();
-
     @ManyToOne
     @JsonView(QuizView.Before.class)
     private Course course;
 
-    @OneToMany(mappedBy = "exercise")
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+    @JsonIgnoreProperties("exercise")
+    private Set<Participation> participations = new HashSet<>();
+    
+    @OneToMany(mappedBy = "assessedExercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+    @JsonIgnoreProperties("assessedExercise")
+    private Set<TutorParticipation> tutorParticipations = new HashSet<>();
+
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
     @JsonIgnoreProperties("exercise")
     private Set<ExampleSubmission> exampleSubmissions = new HashSet<>();
+
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonIgnoreProperties("exercise")
+    private Set<Attachment> attachments = new HashSet<>();
+
+    @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonIgnoreProperties("exercise")
+    private Set<StudentQuestion> studentQuestions = new HashSet<>();
+
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -302,6 +312,56 @@ public abstract class Exercise implements Serializable {
         this.exampleSubmissions = exampleSubmissions;
     }
 
+    public Set<Attachment> getAttachments() {
+        return attachments;
+    }
+
+    public Exercise attachments(Set<Attachment> attachments) {
+        this.attachments = attachments;
+        return this;
+    }
+
+    public Exercise addAttachment(Attachment attachment) {
+        this.attachments.add(attachment);
+        attachment.setExercise(this);
+        return this;
+    }
+
+    public Exercise removeAttachment(Attachment attachment) {
+        this.attachments.remove(attachment);
+        attachment.setExercise(null);
+        return this;
+    }
+
+    public void setAttachments(Set<Attachment> attachments) {
+        this.attachments = attachments;
+    }
+
+    public Set<StudentQuestion> getStudentQuestions() {
+        return studentQuestions;
+    }
+
+    public Exercise studentQuestions(Set<StudentQuestion> studentQuestions) {
+        this.studentQuestions = studentQuestions;
+        return this;
+    }
+
+    public Exercise addStudentQuestions(StudentQuestion studentQuestion) {
+        this.studentQuestions.add(studentQuestion);
+        studentQuestion.setExercise(this);
+        return this;
+    }
+
+    public Exercise removeStudentQuestions(StudentQuestion studentQuestion) {
+        this.studentQuestions.remove(studentQuestion);
+        studentQuestion.setExercise(null);
+        return this;
+    }
+
+    public void setStudentQuestions(Set<StudentQuestion> studentQuestions) {
+        this.studentQuestions = studentQuestions;
+    }
+
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     public Boolean isEnded() {
@@ -383,6 +443,18 @@ public abstract class Exercise implements Serializable {
             }
         }
         return latestResult;
+    }
+
+    /**
+     * Returns all results of an exercise for give participation.
+     * If the exercise is restricted like {@link QuizExercise} please override this function with the respective filter.
+     * (relevancy depends on Exercise type => this should be overridden by subclasses if necessary)
+     *
+     * @param participation the participation whose results we are considering
+     * @return all results of given participation, or null, if none exist
+     */
+    public Set<Result> findResultsFilteredForStudents(Participation participation) {
+        return participation.getResults();
     }
 
     /**

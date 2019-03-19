@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,20 +23,8 @@ public class ProgrammingExercise extends Exercise implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @Column(name = "base_repository_url")
-    private String baseRepositoryUrl;
-
-    @Column(name = "solution_repository_url")
-    private String solutionRepositoryUrl;
-
     @Column(name = "test_repository_url")
     private String testRepositoryUrl;
-
-    @Column(name = "base_build_plan_id")
-    private String baseBuildPlanId;
-
-    @Column(name = "solution_build_plan_id")
-    private String solutionBuildPlanId;
 
     @Column(name = "publish_build_plan_url")
     private Boolean publishBuildPlanUrl;
@@ -50,27 +39,49 @@ public class ProgrammingExercise extends Exercise implements Serializable {
     @Column(name = "package_name")
     private String packageName;
 
+    @OneToOne(orphanRemoval=true)
+    @JoinColumn(unique = true)
+    @JsonIgnoreProperties("exercise")
+    private Participation templateParticipation;
+
+    @OneToOne
+    @JoinColumn(unique = true)
+    @JsonIgnoreProperties("exercise")
+    private Participation solutionParticipation;
+
     // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
-    public String getBaseRepositoryUrl() {
-        return baseRepositoryUrl;
+    @JsonIgnore // we now store it in templateParticipation --> this is just a convenience getter
+    public String getTemplateRepositoryUrl() {
+        if (templateParticipation != null) {
+            return templateParticipation.getRepositoryUrl();
+        }
+        return null;
     }
 
-    public ProgrammingExercise baseRepositoryUrl(String baseRepositoryUrl) {
-        this.baseRepositoryUrl = baseRepositoryUrl;
+    public ProgrammingExercise templateRepositoryUrl(String templateRepositoryUrl) {
+        this.templateParticipation.setRepositoryUrl(templateRepositoryUrl);
         return this;
     }
 
-    public void setBaseRepositoryUrl(String baseRepositoryUrl) {
-        this.baseRepositoryUrl = baseRepositoryUrl;
+    public void setTemplateRepositoryUrl(String templateRepositoryUrl) {
+        this.templateParticipation.setRepositoryUrl(templateRepositoryUrl);
     }
 
+    @JsonIgnore // we now store it in solutionParticipation --> this is just a convenience getter
     public String getSolutionRepositoryUrl() {
-        return solutionRepositoryUrl;
+        if (solutionParticipation!= null) {
+            return solutionParticipation.getRepositoryUrl();
+        }
+        return null;
     }
 
     public ProgrammingExercise solutionRepositoryUrl(String solutionRepositoryUrl) {
-        this.solutionRepositoryUrl = solutionRepositoryUrl;
+        this.solutionParticipation.setRepositoryUrl(solutionRepositoryUrl);
         return this;
+    }
+
+    public void setSolutionRepositoryUrl(String solutionRepositoryUrl) {
+        this.solutionParticipation.setRepositoryUrl(solutionRepositoryUrl);
     }
 
     public void setTestRepositoryUrl(String testRepositoryUrl) {
@@ -86,34 +97,38 @@ public class ProgrammingExercise extends Exercise implements Serializable {
         return this;
     }
 
-    public void setSolutionRepositoryUrl(String solutionRepositoryUrl) {
-        this.solutionRepositoryUrl = solutionRepositoryUrl;
+    @JsonIgnore // we now store it in templateParticipation --> this is just a convenience getter
+    public String getTemplateBuildPlanId() {
+        if (templateParticipation != null) {
+            return templateParticipation.getBuildPlanId();
+        }
+        return null;
     }
 
-    public String getBaseBuildPlanId() {
-        return baseBuildPlanId;
-    }
-
-    public ProgrammingExercise baseBuildPlanId(String baseBuildPlanId) {
-        this.baseBuildPlanId = baseBuildPlanId;
+    public ProgrammingExercise templateBuildPlanId(String templateBuildPlanId) {
+        this.templateParticipation.setBuildPlanId(templateBuildPlanId);
         return this;
     }
 
-    public void setBaseBuildPlanId(String baseBuildPlanId) {
-        this.baseBuildPlanId = baseBuildPlanId;
+    public void setTemplateBuildPlanId(String templateBuildPlanId) {
+        this.templateParticipation.setBuildPlanId(templateBuildPlanId);
     }
 
+    @JsonIgnore // we now store it in solutionParticipation --> this is just a convenience getter
     public String getSolutionBuildPlanId() {
-        return solutionBuildPlanId;
+        if (solutionParticipation != null) {
+            return solutionParticipation.getBuildPlanId();
+        }
+        return null;
     }
 
     public ProgrammingExercise solutionBuildPlanId(String solutionBuildPlanId) {
-        this.solutionBuildPlanId = solutionBuildPlanId;
+        this.solutionParticipation.setBuildPlanId(solutionBuildPlanId);
         return this;
     }
 
     public void setSolutionBuildPlanId(String solutionBuildPlanId) {
-        this.solutionBuildPlanId = solutionBuildPlanId;
+        this.solutionParticipation.setBuildPlanId(solutionBuildPlanId);
     }
 
     public Boolean isPublishBuildPlanUrl() {
@@ -168,21 +183,41 @@ public class ProgrammingExercise extends Exercise implements Serializable {
         this.packageName = packageName;
     }
 
+    public Participation getTemplateParticipation() {
+        return templateParticipation;
+    }
+
+    public void setTemplateParticipation(Participation templateParticipation) {
+        this.templateParticipation = templateParticipation;
+    }
+
+    public Participation getSolutionParticipation() {
+        return solutionParticipation;
+    }
+
+    public void setSolutionParticipation(Participation solutionParticipation) {
+        this.solutionParticipation = solutionParticipation;
+    }
+
     // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
-    public URL getBaseRepositoryUrlAsUrl() {
-        if (baseRepositoryUrl == null || baseRepositoryUrl.isEmpty()) {
+    @JsonIgnore
+    public URL getTemplateRepositoryUrlAsUrl() {
+        String templateRepositoryUrl = getTemplateRepositoryUrl();
+        if (templateRepositoryUrl == null || templateRepositoryUrl.isEmpty()) {
             return null;
         }
         try {
-            return new URL(baseRepositoryUrl);
+            return new URL(templateRepositoryUrl);
         } catch (MalformedURLException e) {
-            log.warn("Cannot create URL for baseRepositoryUrl: " + baseRepositoryUrl + " due to the following error: " + e.getMessage());
+            log.warn("Cannot create URL for templateRepositoryUrl: " + templateRepositoryUrl + " due to the following error: " + e.getMessage());
         }
         return null;
     }
 
+    @JsonIgnore
     public URL getSolutionRepositoryUrlAsUrl() {
+        String solutionRepositoryUrl = getSolutionRepositoryUrl();
         if (solutionRepositoryUrl == null || solutionRepositoryUrl.isEmpty()) {
             return null;
         }
@@ -194,6 +229,7 @@ public class ProgrammingExercise extends Exercise implements Serializable {
         return null;
     }
 
+    @JsonIgnore
     public URL getTestRepositoryUrlAsUrl() {
         if (testRepositoryUrl == null || testRepositoryUrl.isEmpty()) {
             return null;
@@ -229,10 +265,10 @@ public class ProgrammingExercise extends Exercise implements Serializable {
      */
     @Override
     public void filterSensitiveInformation() {
-        setBaseRepositoryUrl(null);
+        setTemplateRepositoryUrl(null);
         setSolutionRepositoryUrl(null);
         setTestRepositoryUrl(null);
-        setBaseBuildPlanId(null);
+        setTemplateBuildPlanId(null);
         setSolutionBuildPlanId(null);
         super.filterSensitiveInformation();
     }
@@ -261,9 +297,9 @@ public class ProgrammingExercise extends Exercise implements Serializable {
     public String toString() {
         return "ProgrammingExercise{" +
             "id=" + getId() +
-            ", baseRepositoryUrl='" + getBaseRepositoryUrl() + "'" +
+            ", templateRepositoryUrl='" + getTemplateRepositoryUrl() + "'" +
             ", solutionRepositoryUrl='" + getSolutionRepositoryUrl() + "'" +
-            ", baseBuildPlanId='" + getBaseBuildPlanId() + "'" +
+            ", templateBuildPlanId='" + getTemplateBuildPlanId() + "'" +
             ", solutionBuildPlanId='" + getSolutionBuildPlanId() + "'" +
             ", publishBuildPlanUrl='" + isPublishBuildPlanUrl() + "'" +
             ", allowOnlineEditor='" + isAllowOnlineEditor() + "'" +

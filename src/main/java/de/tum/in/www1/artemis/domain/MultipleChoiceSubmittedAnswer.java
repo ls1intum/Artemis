@@ -99,15 +99,15 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer implements Se
      */
     public void checkAndDeleteReferences (QuizExercise quizExercise) {
 
-        if (!quizExercise.getQuestions().contains(getQuestion())) {
-            setQuestion(null);
+        if (!quizExercise.getQuizQuestions().contains(getQuizQuestion())) {
+            setQuizQuestion(null);
             selectedOptions = null;
         } else {
-            // find same question in quizExercise
-            Question question = quizExercise.findQuestionById(getQuestion().getId());
+            // find same quizQuestion in quizExercise
+            QuizQuestion quizQuestion = quizExercise.findQuestionById(getQuizQuestion().getId());
 
             // Check if an answerOption was deleted and delete reference to in selectedOptions
-            checkAndDeleteSelectedOptions((MultipleChoiceQuestion) question);
+            checkAndDeleteSelectedOptions((MultipleChoiceQuestion) quizQuestion);
         }
     }
 

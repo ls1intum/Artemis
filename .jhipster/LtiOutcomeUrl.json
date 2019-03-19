@@ -13,18 +13,20 @@
     "relationships": [
         {
             "relationshipType": "many-to-one",
-            "relationshipName": "user",
             "otherEntityName": "user",
+            "otherEntityRelationshipName": "ltiOutcomeUrl",
+            "relationshipName": "user",
             "otherEntityField": "id"
         },
         {
             "relationshipType": "many-to-one",
-            "relationshipName": "exercise",
             "otherEntityName": "exercise",
+            "otherEntityRelationshipName": "ltiOutcomeUrl",
+            "relationshipName": "exercise",
             "otherEntityField": "id"
         }
     ],
-    "changelogDate": "20180927081358",
+    "changelogDate": "20190315161917",
     "entityTableName": "lti_outcome_url",
     "dto": "no",
     "pagination": "no",

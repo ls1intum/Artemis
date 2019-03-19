@@ -19,12 +19,14 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
 
     List<Participation> findByExerciseId(@Param("exerciseId") Long exerciseId);
 
+    boolean existsByExerciseId(@Param("exerciseId") Long exerciseId);
+
     long countByExerciseId(@Param("exerciseId") Long exerciseId);
 
     @Query("select distinct participation from Participation participation left join fetch participation.results where participation.exercise.course.id = :courseId")
     List<Participation> findByCourseIdWithEagerResults(@Param("courseId") Long courseId);
 
-    Participation findOneByExerciseIdAndStudentLogin(Long exerciseId, String username);
+    Optional<Participation> findOneByExerciseIdAndStudentLogin(Long exerciseId, String username);
 
     Participation findOneByExerciseIdAndStudentLoginAndInitializationState(Long exerciseId, String username, InitializationState state);
 
@@ -39,6 +41,9 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
     @Query("select distinct participation from Participation participation left join fetch participation.results where participation.exercise.id = :#{#exerciseId}")
     List<Participation> findByExerciseIdWithEagerResults(@Param("exerciseId") Long exerciseId);
 
+    @Query("select distinct participation from Participation participation left join fetch participation.results where participation.exercise.id = :#{#exerciseId} and participation.student.id = :#{#studentId}")
+    List<Participation> findByExerciseIdAndStudentIdWithEagerResults(@Param("exerciseId") Long exerciseId, @Param("studentId") Long studentId);
+
     @Query("select distinct participation from Participation participation left join fetch participation.submissions where participation.exercise.id = :#{#exerciseId}")
     List<Participation> findByExerciseIdWithEagerSubmissions(@Param("exerciseId") Long exerciseId);
 
@@ -52,6 +57,9 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
     Optional<Participation> findByIdWithEagerSubmissionsAndEagerResultsAndEagerAssessors(@Param("participationId") Long participationId);
 
     //TODO: at the moment we don't want to consider online courses due to some legacy programming exercises where the VCS repo does not notify Artemis that there is a new submission). In the future we can deactivate the last part.
-    @Query("select distinct participation from Participation participation left join fetch participation.results where participation.buildPlanId is not null and participation.exercise.course.onlineCourse = false")
+    @Query("select distinct participation from Participation participation left join fetch participation.results where participation.buildPlanId is not null and participation.student is not null and participation.exercise.course.onlineCourse = false")
     List<Participation> findAllWithBuildPlanId();
+
+    @Query("SELECT DISTINCT participation FROM Participation participation LEFT JOIN FETCH participation.submissions s LEFT JOIN FETCH s.result r LEFT JOIN FETCH r.assessor WHERE participation.exercise.id = :#{#exerciseId}")
+    List<Participation> findAllByExerciseIdWithEagerSubmissionsAndEagerResultsAndEagerAssessor(@Param("exerciseId") long exerciseId);
 }

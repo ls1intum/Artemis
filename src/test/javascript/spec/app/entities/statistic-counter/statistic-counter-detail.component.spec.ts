@@ -4,11 +4,11 @@ import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 
 import { ArTeMiSTestModule } from '../../../test.module';
-import { StatisticCounterDetailComponent } from 'app/entities/statistic-counter/statistic-counter-detail.component';
+import { StatisticCounterDetailComponent } from 'app/entities/quiz-statistic-counter/statistic-counter-detail.component';
 import { StatisticCounter } from 'app/shared/model/statistic-counter.model';
 
 describe('Component Tests', () => {
-    describe('StatisticCounter Management Detail Component', () => {
+    describe('QuizStatisticCounter Management Detail Component', () => {
         let comp: StatisticCounterDetailComponent;
         let fixture: ComponentFixture<StatisticCounterDetailComponent>;
         const route = ({ data: of({ statisticCounter: new StatisticCounter(123) }) } as any) as ActivatedRoute;

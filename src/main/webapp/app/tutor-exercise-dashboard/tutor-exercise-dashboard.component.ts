@@ -10,6 +10,7 @@ import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-pa
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TextSubmission, TextSubmissionService } from 'app/entities/text-submission';
 import { ExampleSubmission } from 'app/entities/example-submission';
+import { TextExercise } from 'app/entities/text-exercise';
 
 @Component({
     selector: 'jhi-courses',
@@ -100,7 +101,7 @@ export class TutorExerciseDashboardComponent implements OnInit {
 
     private getSubmissions(): void {
         this.textSubmissionService
-            .getTextSubmissionsForExerciseAssessedByTutor(this.exerciseId)
+            .getTextSubmissionsForExercise(this.exerciseId, {assessedByTutor: true})
             .map((response: HttpResponse<TextSubmission[]>) =>
                 response.body.map((submission: TextSubmission) => {
                     if (submission.result) {

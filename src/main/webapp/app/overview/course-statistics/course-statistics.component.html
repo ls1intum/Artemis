@@ -1,0 +1,51 @@
+<div *ngIf="course">
+    <div class="row" *ngIf="course.exercises && course.exercises.length > 0">
+
+        <div class="co-12 col-md-4 quizStatistic-summary">
+            <h2 class="text-center">{{"arTeMiSApp.courseOverview.statistics.totalScore" | translate}}</h2>
+            <div class="chart-container">
+                <div class="chart-text">
+                    <h2 class="text-center">{{totalRelativeScore}} %</h2>
+                    <h4 class="text-center">{{totalScore}} Pts</h4>
+                </div>
+                <canvas baseChart height="200" width="200"
+                        [legend]="false"
+                        [datasets]="doughnutChartData"
+                        [options]="totalScoreOptions"
+                        [colors]="doughnutChartColors"
+                        [labels]="doughnutChartLabels"
+                        [chartType]="doughnutChartType"></canvas>
+            </div>
+        </div>
+        <div class="col-12 col-md-8">
+            <div class="row mt-3" *ngFor="let exerciseGroup of groupedExercises">
+                <div class="col-12 mb-1 d-flex align-items-center">
+                    <div class="color-indicator" [style.background]="exerciseTitles[exerciseGroup.type].color"></div>
+                    <h2>{{exerciseTitles[exerciseGroup.type].name}}</h2>
+                </div>
+                <div class="col-12 col-md-8">
+                    <canvas baseChart height="250"
+                            [datasets]="exerciseGroup.values"
+                            [labels]="exerciseGroup.names"
+                            [colors]="chartColors"
+                            [options]="barChartOptions"
+                            [legend]="false"
+                            [chartType]="barChartType"
+
+                    ></canvas>
+                </div>
+                <div class="col-12 col-md-4 align-self-center" *ngIf="exerciseGroup">
+                    <h4>{{"arTeMiSApp.courseOverview.statistics.exerciseCount" | translate:{number: exerciseGroup.names.length} }}</h4>
+                    <h4>{{"arTeMiSApp.courseOverview.statistics.absoluteScore" | translate:{number: exerciseGroup.absoluteScore} }}</h4>
+                    <h4>{{"arTeMiSApp.courseOverview.statistics.maxScore" | translate:{number: exerciseGroup.totalMaxScore} }}</h4>
+                    <h4>{{"arTeMiSApp.courseOverview.statistics.relativeScore" | translate:{number: exerciseGroup.relativeScore} }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row" *ngIf="!(course.exercises && course.exercises.length > 0)">
+        <div class="col mt-3">
+            {{"arTeMiSApp.courseOverview.statistics.noStatistics"}}
+        </div>
+    </div>
+</div>

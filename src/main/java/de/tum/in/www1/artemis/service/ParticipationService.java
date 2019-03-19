@@ -1,6 +1,15 @@
 package de.tum.in.www1.artemis.service;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ModelingExercise;
+import de.tum.in.www1.artemis.domain.Participation;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.QuizExercise;
+import de.tum.in.www1.artemis.domain.QuizSubmission;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
@@ -18,16 +27,20 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
+import javax.validation.constraints.NotNull;
 import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static de.tum.in.www1.artemis.config.Constants.PROGRAMMING_SUBMISSION_RESOURCE_API_PATH;
 import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.FINISHED;
@@ -55,6 +68,7 @@ public class ParticipationService {
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final Optional<VersionControlService> versionControlService;
 
+
     public ParticipationService(ParticipationRepository participationRepository,
                                 ExerciseRepository exerciseRepository,
                                 ResultRepository resultRepository,
@@ -75,6 +89,7 @@ public class ParticipationService {
         this.versionControlService = versionControlService;
     }
 
+
     /**
      * Save a participation.
      *
@@ -86,6 +101,7 @@ public class ParticipationService {
         log.debug("Request to save Participation : {}", participation);
         return participationRepository.saveAndFlush(participation);
     }
+
 
     /**
      * This method should only be invoked for programming exercises, not for other exercises
@@ -99,7 +115,7 @@ public class ParticipationService {
 
         // common for all exercises
         // Check if participation already exists
-        Participation participation = participationRepository.findOneByExerciseIdAndStudentLogin(exercise.getId(), username);
+        Participation participation = findOneByExerciseIdAndStudentLogin(exercise.getId(), username);
         if (participation == null ||
             (exercise instanceof ProgrammingExercise && participation.getInitializationState() == InitializationState.FINISHED)) {
             // create a new participation only if it was finished before (only for programming exercises)
@@ -111,8 +127,7 @@ public class ParticipationService {
                 participation.setStudent(user.get());
             }
             participation = save(participation);
-        }
-        else {
+        } else {
             //make sure participation and exercise are connected
             participation.setExercise(exercise);
         }
@@ -147,6 +162,7 @@ public class ParticipationService {
         return participation;
     }
 
+
     /**
      * Get a participation for the given quiz and username
      *
@@ -156,7 +172,7 @@ public class ParticipationService {
      * and construct one if none was found
      *
      * @param quizExercise the quiz exercise to attach to the participation
-     * @param username the username of the user that the participation belongs to
+     * @param username     the username of the user that the participation belongs to
      * @return the found or created participation
      */
 
@@ -165,25 +181,23 @@ public class ParticipationService {
         if (quizExercise.isEnded()) {
             // try getting participation from database first
             Participation participation = findOneByExerciseIdAndStudentLoginAnyState(quizExercise.getId(), username);
-            if (participation != null) {
-                // add exercise
-                participation.setExercise(quizExercise);
+            // add exercise
+            participation.setExercise(quizExercise);
 
-                // add the appropriate result
-                Result result = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true).orElse(null);
+            // add the appropriate result
+            Result result = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true).orElse(null);
 
-                participation.setResults(new HashSet<>());
+            participation.setResults(new HashSet<>());
 
-                if (result != null) {
-                    participation.addResult(result);
-                    if (result.getSubmission() == null) {
-                        Submission submission = quizSubmissionService.findOne(result.getSubmission().getId());
-                        result.setSubmission(submission);
-                    }
+            if (result != null) {
+                participation.addResult(result);
+                if (result.getSubmission() == null) {
+                    Submission submission = quizSubmissionService.findOne(result.getSubmission().getId());
+                    result.setSubmission(submission);
                 }
-
-                return participation;
             }
+
+            return participation;
         }
 
         // Look for Participation in ParticipationHashMap first
@@ -225,6 +239,7 @@ public class ParticipationService {
         return participation;
     }
 
+
     /**
      * Service method to resume inactive participation (with previously deleted build plan)
      *
@@ -244,9 +259,10 @@ public class ParticipationService {
         return participation;
     }
 
+
     private Participation copyRepository(Participation participation, ProgrammingExercise exercise) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED)) {
-            URL repositoryUrl = versionControlService.get().copyRepository(exercise.getBaseRepositoryUrlAsUrl(), participation.getStudent().getLogin());
+            URL repositoryUrl = versionControlService.get().copyRepository(exercise.getTemplateRepositoryUrlAsUrl(), participation.getStudent().getLogin());
             if (Optional.ofNullable(repositoryUrl).isPresent()) {
                 participation.setRepositoryUrl(repositoryUrl.toString());
                 participation.setInitializationState(InitializationState.REPO_COPIED);
@@ -256,6 +272,7 @@ public class ParticipationService {
             return participation;
         }
     }
+
 
     private Participation configureRepository(Participation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
@@ -267,9 +284,10 @@ public class ParticipationService {
         }
     }
 
+
     private Participation copyBuildPlan(Participation participation, ProgrammingExercise exercise) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.BUILD_PLAN_COPIED)) {
-            String buildPlanId = continuousIntegrationService.get().copyBuildPlan(exercise.getBaseBuildPlanId(), participation.getStudent().getLogin());
+            String buildPlanId = continuousIntegrationService.get().copyBuildPlan(exercise.getTemplateBuildPlanId(), participation.getStudent().getLogin());
             participation.setBuildPlanId(buildPlanId);
             participation.setInitializationState(InitializationState.BUILD_PLAN_COPIED);
             return save(participation);
@@ -277,6 +295,7 @@ public class ParticipationService {
             return participation;
         }
     }
+
 
     private Participation configureBuildPlan(Participation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.BUILD_PLAN_CONFIGURED)) {
@@ -288,6 +307,7 @@ public class ParticipationService {
         }
     }
 
+
     private Participation configureRepositoryWebHook(Participation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
             versionControlService.get().addWebHook(participation.getRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participation.getId(), "ArTEMiS WebHook");
@@ -296,6 +316,7 @@ public class ParticipationService {
             return participation;
         }
     }
+
 
     /**
      * Get all the participations.
@@ -308,6 +329,7 @@ public class ParticipationService {
         return participationRepository.findAll();
     }
 
+
     /**
      * Get all the participations.
      *
@@ -319,6 +341,7 @@ public class ParticipationService {
         log.debug("Request to get all Participations");
         return participationRepository.findAll(pageable);
     }
+
 
     /**
      * Get one participation by id.
@@ -336,6 +359,7 @@ public class ParticipationService {
         return participation.get();
     }
 
+
     /**
      * Get one participation by id including all results.
      *
@@ -345,12 +369,13 @@ public class ParticipationService {
     @Transactional(readOnly = true)
     public Participation findOneWithEagerResults(Long id) {
         log.debug("Request to get Participation : {}", id);
-        Optional<Participation> participation =  participationRepository.findByIdWithEagerResults(id);
+        Optional<Participation> participation = participationRepository.findByIdWithEagerResults(id);
         if (!participation.isPresent()) {
             throw new EntityNotFoundException("Participation with " + id + " was not found!");
         }
         return participation.get();
     }
+
 
     /**
      * Get one participation by id including all submissions.
@@ -361,12 +386,13 @@ public class ParticipationService {
     @Transactional(readOnly = true)
     public Participation findOneWithEagerSubmissions(Long id) {
         log.debug("Request to get Participation : {}", id);
-        Optional<Participation> participation =  participationRepository.findByIdWithEagerSubmissions(id);
+        Optional<Participation> participation = participationRepository.findByIdWithEagerSubmissions(id);
         if (!participation.isPresent()) {
             throw new EntityNotFoundException("Participation with " + id + " was not found!");
         }
         return participation.get();
     }
+
 
     /**
      * Get one participation by id including all results and submissions.
@@ -377,7 +403,7 @@ public class ParticipationService {
     @Transactional(readOnly = true)
     public Participation findOneWithEagerResultsAndSubmissions(Long id) {
         log.debug("Request to get Participation : {}", id);
-        Optional<Participation> participation =  participationRepository.findByIdWithEagerSubmissionsAndEagerResultsAndEagerAssessors(id);
+        Optional<Participation> participation = participationRepository.findByIdWithEagerSubmissionsAndEagerResultsAndEagerAssessors(id);
         if (!participation.isPresent()) {
             throw new EntityNotFoundException("Participation with " + id + " was not found!");
         }
@@ -397,11 +423,12 @@ public class ParticipationService {
         log.debug("Request to get initialized/inactive Participation for User {} for Exercise with id: {}", username, exerciseId);
 
         Participation participation = participationRepository.findOneByExerciseIdAndStudentLoginAndInitializationState(exerciseId, username, INITIALIZED);
-        if(participation == null) {
+        if (participation == null) {
             participation = participationRepository.findOneByExerciseIdAndStudentLoginAndInitializationState(exerciseId, username, InitializationState.INACTIVE);
         }
         return participation;
     }
+
 
     /**
      * Get one participation (in any state) by its student and exercise.
@@ -410,12 +437,14 @@ public class ParticipationService {
      * @param username   the username of the student
      * @return the entity
      */
+    @NotNull
     @Transactional(readOnly = true)
     public Participation findOneByExerciseIdAndStudentLoginAnyState(Long exerciseId, String username) {
         log.debug("Request to get Participation for User {} for Exercise with id: {}", username, exerciseId);
-        Participation participation = participationRepository.findOneByExerciseIdAndStudentLogin(exerciseId, username);
-        return participation;
+        return participationRepository.findOneByExerciseIdAndStudentLogin(exerciseId, username)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + username + " in exercise " + exerciseId));
     }
+
 
     /**
      * Get all participations for the given student including all results
@@ -428,81 +457,96 @@ public class ParticipationService {
         return participationRepository.findByStudentUsernameWithEagerResults(username);
     }
 
+
     @Transactional(readOnly = true)
     public List<Participation> findByBuildPlanIdAndInitializationState(String buildPlanId, InitializationState state) {
         log.debug("Request to get Participation for build plan id: {}", buildPlanId);
         return participationRepository.findByBuildPlanIdAndInitializationState(buildPlanId, state);
     }
 
+
     @Transactional(readOnly = true)
     public List<Participation> findByExerciseId(Long exerciseId) {
         return participationRepository.findByExerciseId(exerciseId);
     }
+
 
     @Transactional(readOnly = true)
     public List<Participation> findByExerciseIdWithEagerResults(Long exerciseId) {
         return participationRepository.findByExerciseIdWithEagerResults(exerciseId);
     }
 
+
+    @Transactional(readOnly = true)
+    public List<Participation> findByExerciseIdAndStudentIdWithEagerResults(Long exerciseId, Long studentId) {
+        return participationRepository.findByExerciseIdAndStudentIdWithEagerResults(exerciseId, studentId);
+    }
+
+
     @Transactional(readOnly = true)
     public List<Participation> findByExerciseIdWithEagerSubmissions(Long exerciseId) {
         return participationRepository.findByExerciseIdWithEagerSubmissions(exerciseId);
     }
 
+
     @Transactional(readOnly = true)
     public List<Participation> findByCourseIdWithRelevantResults(Long courseId) {
-        List<Participation> participations = participationRepository.findByCourseIdWithEagerResults(courseId);
-        //filter all irrelevant results, i.e. rated = false or before exercise due date
-        for (Participation participation : participations) {
-            List<Result> relevantResults = new ArrayList<Result>();
+        return participationRepository.findByCourseIdWithEagerResults(courseId).stream()
 
-            //search for the relevant result by filtering out irrelevant results using the continue keyword
-            //this for loop is optimized for performance and thus not very easy to understand ;)
-            for (Result result : participation.getResults()) {
-                if (result.isRated() == Boolean.FALSE) {
-                    // we are only interested in results with rated == null (for compatibility) and rated == Boolean.TRUE
-                    //TODO: for compatibility reasons, we include rated == null, in the future we can remove this
-                    continue;
-                }
-                if (result.getCompletionDate() == null || result.getScore() == null) {
-                    // we are only interested in results with completion date and with score
-                    continue;
-                }
-                if (participation.getExercise() instanceof QuizExercise) {
-                    //in quizzes we take all rated results, because we only have one! (independent of later checks)
-                }
-                else if (participation.getExercise().getDueDate() != null) {
-                    if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise) {
-                        if (result.getSubmission() != null && result.getSubmission().getSubmissionDate() != null
-                            && result.getSubmission().getSubmissionDate().isAfter(participation.getExercise().getDueDate())) {
-                            //Filter out late results using the submission date, because in this exercise types, the
-                            //difference between submissionDate and result.completionDate can be significant due to manual assessment
-                            continue;
+            // Filter out participations without Students
+            // These participations are used e.g. to store template and solution build plans in programming exercises
+            .filter(participation -> participation.getStudent() != null)
+
+            //filter all irrelevant results, i.e. rated = false or before exercise due date
+            .peek(participation -> {
+                List<Result> relevantResults = new ArrayList<Result>();
+
+                //search for the relevant result by filtering out irrelevant results using the continue keyword
+                //this for loop is optimized for performance and thus not very easy to understand ;)
+                for (Result result : participation.getResults()) {
+                    if (result.isRated() == Boolean.FALSE) {
+                        // we are only interested in results with rated == null (for compatibility) and rated == Boolean.TRUE
+                        //TODO: for compatibility reasons, we include rated == null, in the future we can remove this
+                        continue;
+                    }
+                    if (result.getCompletionDate() == null || result.getScore() == null) {
+                        // we are only interested in results with completion date and with score
+                        continue;
+                    }
+                    if (participation.getExercise() instanceof QuizExercise) {
+                        //in quizzes we take all rated results, because we only have one! (independent of later checks)
+                    } else if (participation.getExercise().getDueDate() != null) {
+                        if (participation.getExercise() instanceof ModelingExercise || participation.getExercise() instanceof TextExercise) {
+                            if (result.getSubmission() != null && result.getSubmission().getSubmissionDate() != null
+                                && result.getSubmission().getSubmissionDate().isAfter(participation.getExercise().getDueDate())) {
+                                //Filter out late results using the submission date, because in this exercise types, the
+                                //difference between submissionDate and result.completionDate can be significant due to manual assessment
+                                continue;
+                            }
+                        } else {
+                            //For all other exercises the result completion date is the same as the submission date
+                            if (result.getCompletionDate().isAfter(participation.getExercise().getDueDate())) {
+                                //and we continue (i.e. dismiss the result) if the result completion date is after the exercise due date
+                                continue;
+                            }
                         }
                     }
-                    else {
-                        //For all other exercises the result completion date is the same as the submission date
-                        if (result.getCompletionDate().isAfter(participation.getExercise().getDueDate())) {
-                            //and we continue (i.e. dismiss the result) if the result completion date is after the exercise due date
-                            continue;
-                        }
-                    }
+                    relevantResults.add(result);
                 }
-                relevantResults.add(result);
-            }
-            if (!relevantResults.isEmpty()) {
-                //make sure to take the latest result
-                relevantResults.sort((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate()));
-                Result correctResult = relevantResults.get(0);
-                relevantResults.clear();
-                relevantResults.add(correctResult);
-            }
-            participation.setResults(new HashSet<>(relevantResults));
-            //remove unnecessary elements
-            participation.getExercise().setCourse(null);
-        }
-        return participations;
+                if (!relevantResults.isEmpty()) {
+                    //make sure to take the latest result
+                    relevantResults.sort((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate()));
+                    Result correctResult = relevantResults.get(0);
+                    relevantResults.clear();
+                    relevantResults.add(correctResult);
+                }
+                participation.setResults(new HashSet<>(relevantResults));
+                //remove unnecessary elements
+                participation.getExercise().setCourse(null);
+            })
+            .collect(Collectors.toList());
     }
+
 
     /**
      * Deletes the build plan on the continuous integration server and sets the initialization state of the participation to inactive
@@ -519,6 +563,7 @@ public class ParticipationService {
             save(participation);
         }
     }
+
 
     /**
      * NOTICE: be careful with this method because it deletes the students code on the version control server
@@ -539,15 +584,14 @@ public class ParticipationService {
     }
 
 
-
     /**
      * Delete the participation by id.
      *
-     * @param id the id of the entity
-     * @param deleteBuildPlan determines whether the corresponding build plan should be deleted as well
+     * @param id               the id of the entity
+     * @param deleteBuildPlan  determines whether the corresponding build plan should be deleted as well
      * @param deleteRepository determines whether the corresponding repository should be deleted as well
      */
-    @Transactional(noRollbackFor={Throwable.class})
+    @Transactional(noRollbackFor = {Throwable.class})
     public void delete(Long id, boolean deleteBuildPlan, boolean deleteRepository) {
         Participation participation = participationRepository.findById(id).get();
         log.debug("Request to delete Participation : {}", participation);
@@ -559,8 +603,7 @@ public class ParticipationService {
             if (deleteRepository && participation.getRepositoryUrl() != null) {
                 try {
                     versionControlService.get().deleteRepository(participation.getRepositoryUrlAsUrl());
-                }
-                catch(Exception ex) {
+                } catch (Exception ex) {
                     log.error("Could not delete repository: " + ex.getMessage());
                 }
             }
@@ -597,6 +640,7 @@ public class ParticipationService {
         exerciseRepository.save(exercise);
         participationRepository.delete(participation);
     }
+
 
     /**
      * Delete all participations belonging to the given exercise
