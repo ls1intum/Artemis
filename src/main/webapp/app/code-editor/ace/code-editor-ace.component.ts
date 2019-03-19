@@ -124,7 +124,9 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
         if (changes.selectedFile && this.selectedFile) {
             if (this.annotationChange) {
                 // Unsubscribe, otherwise the event of changing the whole text will be received
-                this.annotationChange.unsubscribe();
+                if (this.annotationChange) {
+                    this.annotationChange.unsubscribe();
+                }
                 this.editor.getEditor().getSession().off('change', this.recalculateAnnotationPositions);
                 this.editor.getEditor().getSession().clearAnnotations();
             }
@@ -345,7 +347,11 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
     }
 
     ngOnDestroy() {
-        this.annotationChange.unsubscribe();
-        this.jhiWebsocketService.unsubscribe(this.receiveFileUpdatesChannel);
+        if (this.annotationChange) {
+            this.annotationChange.unsubscribe();
+        }
+        if (this.jhiWebsocketService) {
+            this.jhiWebsocketService.unsubscribe(this.receiveFileUpdatesChannel);
+        }
     }
 }
