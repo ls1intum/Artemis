@@ -22,8 +22,8 @@ import { Command,
         CodeCommand,
         LinkCommand,
         PictureuploadCommand,
-        OrderedlistCommand,
-        UnorderedlistCommand,
+        OrderedListCommand,
+        UnorderedListCommand,
         ReferenceCommand,
 } from 'app/markdown-editor/commands';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
@@ -55,8 +55,8 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
         new CodeCommand(),
         new LinkCommand(),
         new PictureuploadCommand(),
-        new OrderedlistCommand(),
-        new UnorderedlistCommand(),
+        new OrderedListCommand(),
+        new UnorderedListCommand(),
     ];
 
     headerCommands: Command[] = [
