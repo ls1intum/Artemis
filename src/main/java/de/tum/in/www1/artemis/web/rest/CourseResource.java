@@ -239,7 +239,7 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public List<Course> getAllCoursesToRegister() {
         log.debug("REST request to get all currently active Courses that are not online courses");
-        return courseService.findAllCurrentlyActiveAndNotOnline();
+        return courseService.findAllCurrentlyActiveAndNotOnlineAndEnabled();
     }
 
     /**
