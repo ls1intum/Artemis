@@ -8,28 +8,27 @@ import { apollonDiagramsRoutes } from './apollon-diagrams.route';
 import { ApollonQuizExerciseGenerationComponent } from './exercise-generation/apollon-quiz-exercise-generation.component';
 import { ArTEMiSSharedModule } from '../shared';
 import { ApollonDiagramStudentComponent } from './apollon-diagram-student.component';
-import { ApollonDiagramTutorComponent } from './apollon-diagram-tutor.component';
 import { ArTEMiSResultModule, ResultComponent } from '../entities/result';
 import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
-import { ApollonDiagramAssessmentComponent } from './apollon-diagram-assessment/apollon-diagram-assessment.component';
+import { ApollonDiagramAssessmentComponent } from 'app/apollon-diagrams/apollon-diagram-assessment.component';
+import { ApollonDiagramTutorComponent } from './apollon-diagram-tutor/apollon-diagram-tutor.component';
+import { AssessmentInstructionsComponent } from './assessment-instructions/assessment-instructions.component';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 
 const ENTITY_STATES = [...apollonDiagramsRoutes];
 
 @NgModule({
-    imports: [
-        ArTEMiSSharedModule,
-        RouterModule.forChild(ENTITY_STATES),
-        ArTEMiSResultModule
-    ],
+    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), ArTEMiSResultModule, DragDropModule],
     declarations: [
         ApollonDiagramCreateFormComponent,
         ApollonDiagramDetailComponent,
         ApollonDiagramListComponent,
         ApollonQuizExerciseGenerationComponent,
         ApollonDiagramStudentComponent,
+        ApollonDiagramAssessmentComponent,
         ApollonDiagramTutorComponent,
-        ApollonDiagramAssessmentComponent
+        AssessmentInstructionsComponent
     ],
     entryComponents: [
         ApollonDiagramCreateFormComponent,

@@ -26,6 +26,9 @@
                 "submitFailedWithConflict": "Submission failed! Conflict with existing Assessments detected",
                 "resultDismissed": "Your assessment was dismissed because another tutor already rated this model."
             },
+            "submission": {
+                "noModel": "No model could be found for this submission."
+            },
             "lock": "You do now have the lock on this submission. Only you can assess this model. Please assess this model before opening other submissions."
         }
     }

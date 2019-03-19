@@ -1,0 +1,21 @@
+.instructions-container {
+    display: flex;
+    .card {
+        width: 100%;
+        min-width: 200px;
+        .card-header{
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            .card-title{
+                display: flex;
+            }
+        }
+    }
+    .draggable-left{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 15px;
+    }
+}
