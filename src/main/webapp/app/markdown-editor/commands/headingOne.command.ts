@@ -10,7 +10,7 @@ export class HeadingOneCommand extends Command {
         let textToAdd = '';
 
         if (selectedText.includes('#')) {
-            textToAdd = selectedText.slice(3,0);
+            textToAdd = selectedText.slice(3);
             this.editor.insert(textToAdd);
         } else {
             const initText = 'Heading 1';

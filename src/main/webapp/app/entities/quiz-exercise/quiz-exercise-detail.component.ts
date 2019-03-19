@@ -88,10 +88,8 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     /** Status constants **/
     isSaving = false;
     quizIsValid: boolean;
-    warningQuizCache: boolean;
+    warningQuizCache = false;
     pendingChangesCache: boolean;
-    invalidReasons: Reason[];
-    invalidWarnings: Warnings[];
 
     /** Status Options **/
     statusOptionsVisible: Option[] = [new Option(false, 'Hidden'), new Option(true, 'Visible')];
@@ -102,8 +100,8 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         private route: ActivatedRoute,
         private courseService: CourseService,
         private quizExerciseService: QuizExerciseService,
-        private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
-        private shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
+        public dragAndDropQuestionUtil: DragAndDropQuestionUtil,
+        public shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
         private router: Router,
         private translateService: TranslateService,
         private fileUploaderService: FileUploaderService,
@@ -243,7 +241,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         mcQuestion.scoringType = ScoringType.ALL_OR_NOTHING; // explicit default value for multiple questions
         mcQuestion.randomizeOrder = true;
         mcQuestion.score = 1;
-        mcQuestion.hasCorrectOption = true;
+        //mcQuestion.hasCorrectOption = true;
 
         const correctSampleAnswerOption = new AnswerOption();
         correctSampleAnswerOption.isCorrect = true;
@@ -442,14 +440,8 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         this.cacheValidation();
     }
 
-    /**
-     * @function deleteQuestion
-     * @desc Remove question from the quiz
-     * @param questionToDelete {QuizQuestion} the question to remove
-     */
-
-  cacheValidation(): void {
-        this.warningQuizCache = false;
+    cacheValidation(): void {
+        this.warningQuizCache = this.computeInvalidWarnings().length > 0;
         this.quizIsValid = this.validQuiz();
         this.pendingChangesCache = this.pendingChanges();
         this.computeInvalidReasons();
@@ -457,6 +449,11 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         this.changeDetector.detectChanges();
     }
 
+    /**
+     * @function deleteQuestion
+     * @desc Remove question from the quiz
+     * @param questionToDelete {QuizQuestion} the question to remove
+     */
     deleteQuestion(questionToDelete: QuizQuestion): void {
         this.quizExercise.quizQuestions = this.quizExercise.quizQuestions.filter(question => question !== questionToDelete);
         this.cacheValidation();
@@ -467,7 +464,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * @desc Handles the change of a question by replacing the array with a copy (allows for shallow comparison)
      */
     onQuestionUpdated(): void {
-        // this.quizExercise.questions = Array.from(this.quizExercise.questions);
         this.cacheValidation();
         this.quizExercise.quizQuestions = Array.from(this.quizExercise.quizQuestions);
     }
@@ -520,18 +516,19 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * @desc Check if the current inputs are valid
      * @returns {boolean} true if valid, false otherwise
      */
+
     private validQuiz(): boolean {
         if (!this.quizExercise) {
             return false;
         }
         // Release date is valid if it's not null and a valid date; Precondition: isPlannedToStart is set
-        // Release date should also not be in the pas
-
+        // Release date should also not be in the past
         const releaseDateValidAndNotInPastCondition: boolean =
             !this.quizExercise.isPlannedToStart ||
             (this.quizExercise.releaseDate != null &&
                 moment(this.quizExercise.releaseDate).isValid() &&
                 moment(this.quizExercise.releaseDate).isAfter(moment()));
+
         const isGenerallyValid: boolean =
             this.quizExercise.title &&
             this.quizExercise.title !== '' &&
@@ -543,13 +540,9 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         const areAllQuestionsValid = this.quizExercise.quizQuestions.every(function(question) {
             if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                 const mcQuestion = question as MultipleChoiceQuestion;
-                //if (mcQuestion.answerOptions.some(answerOption => !answerOption.explanation)) {
-                  //  this.warningQuizCache = true;
-                //}
-                if (mcQuestion.answerOptions.some(answeroption => answeroption.isCorrect)) {
+                if (mcQuestion.answerOptions.some(answerOption => answerOption.isCorrect)) {
                     return question.title && question.title !== '' && question.title.length < 250;
                 }
-                //return false;
             } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
                 const dndQuestion = question as DragAndDropQuestion;
                 return (
@@ -577,28 +570,29 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                 console.log('Unknown question type: ' + question);
                 return question.title && question.title !== '';
             }
-        });
+        }, this);
 
         return isGenerallyValid && areAllQuestionsValid;
     }
 
-    computeInvalidWarnings(): void {
+
+    computeInvalidWarnings(): Warnings[] {
+        let invalidWarnings = new Array<Warnings>();
         if (!this.quizExercise) {
-            this.invalidWarnings = [];
+            invalidWarnings = [];
             return;
         }
 
-        this.invalidWarnings = this.quizExercise.quizQuestions.map((question: QuizQuestion, index: number) => {
+        this.quizExercise.quizQuestions.forEach(function(question: QuizQuestion, index: number) {
             if (question.type === QuizQuestionType.MULTIPLE_CHOICE
                 && (<MultipleChoiceQuestion>question).answerOptions.some(option => !option.explanation)) {
-                return {
+                invalidWarnings.push({
                     translateKey: 'arTeMiSApp.quizExercise.invalidReasons.explanationIsMissing',
-                    translateValues: { index: index + 1 }
-                };
+                    translateValues: {index: index + 1}
+                });
             }
-
-            return null;
-        }).filter(elem => elem !== null);
+        });
+            return invalidWarnings;
     }
 
     /**
@@ -606,32 +600,32 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * @desc Get the reasons, why the quiz is invalid
      * @returns {Array} array of objects with fields 'translateKey' and 'translateValues'
      */
-    private computeInvalidReasons(): void {
-        this.invalidReasons = [];
+    private computeInvalidReasons(): Reason[] {
+        const invalidReasons = new Array<Reason>();
         if (!this.quizExercise) {
             return;
         }
 
         if (!this.quizExercise.title || this.quizExercise.title === '') {
-            this.invalidReasons.push({
+            invalidReasons.push({
                 translateKey: 'arTeMiSApp.quizExercise.invalidReasons.quizTitle',
                 translateValues: {}
             });
         }
         if (this.quizExercise.title.length >= 250) {
-            this.invalidReasons.push({
+            invalidReasons.push({
                 translateKey: 'arTeMiSApp.quizExercise.invalidReasons.quizTitleLength',
                 translateValues: {}
             });
         }
         if (!this.quizExercise.duration) {
-            this.invalidReasons.push({
+            invalidReasons.push({
                 translateKey: 'arTeMiSApp.quizExercise.invalidReasons.quizDuration',
                 translateValues: {}
             });
         }
         if (!this.quizExercise.quizQuestions || this.quizExercise.quizQuestions.length === 0) {
-            this.invalidReasons.push({
+            invalidReasons.push({
                 translateKey: 'arTeMiSApp.quizExercise.invalidReasons.noQuestion',
                 translateValues: {}
             });
@@ -639,7 +633,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         /** We only verify the releaseDate if the checkbox is activated **/
         if (this.quizExercise.isPlannedToStart) {
             if (this.quizExercise.releaseDate == null || !moment(this.quizExercise.releaseDate).isValid()) {
-                this.invalidReasons.push({
+                invalidReasons.push({
                     translateKey: 'arTeMiSApp.quizExercise.invalidReasons.invalidStartTime',
                     translateValues: {}
                 });
@@ -647,7 +641,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             // Release Date valid but lies in the past
             if (this.quizExercise.releaseDate && moment(this.quizExercise.releaseDate).isValid()) {
                 if (moment(this.quizExercise.releaseDate).isBefore(moment())) {
-                    this.invalidReasons.push({
+                    invalidReasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.startTimeInPast',
                         translateValues: {}
                     });
@@ -657,7 +651,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
 
         this.quizExercise.quizQuestions.forEach(function(question: QuizQuestion, index: number) {
             if (!question.title || question.title === '') {
-                this.invalidReasons.push({
+                invalidReasons.push({
                     translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionTitle',
                     translateValues: { index: index + 1 }
                 });
@@ -665,20 +659,20 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                 const mcQuestion = question as MultipleChoiceQuestion;
                 if (! (mcQuestion.answerOptions.some(answeroption => answeroption.isCorrect))) {
-                    this.invalidReasons.push({
+                    invalidReasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionCorrectAnswerOption',
                         translateValues: { index: index + 1 }
                     });
                 }
                 if (!(mcQuestion.answerOptions.every(answeroption => answeroption.explanation !== ''))) {
-                    this.invalidReasons.push({
+                    invalidReasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.explanationIsMissing',
                         translateValues: { index: index + 1 }
                     });
                 }
             }
             if (question.title.length >= 250) {
-                this.invalidReasons.push({
+                invalidReasons.push({
                     translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionTitleLength',
                     translateValues: {index: index + 1}
                 });
@@ -687,18 +681,18 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             if (question.type === QuizQuestionType.DRAG_AND_DROP) {
                 const dndQuestion = question as DragAndDropQuestion;
                 if (!dndQuestion.correctMappings || dndQuestion.correctMappings.length === 0) {
-                    this.invalidReasons.push({
+                    invalidReasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionCorrectMapping',
                         translateValues: {index: index + 1}
                     });
                 } else if (this.dragAndDropQuestionUtil.solve(dndQuestion, []).length === 0) {
-                    this.invalidReasons.push({
+                    invalidReasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionUnsolvable',
                         translateValues: {index: index + 1}
                     });
                 }
                 if (!this.dragAndDropQuestionUtil.validateNoMisleadingCorrectMapping(dndQuestion)) {
-                    this.invalidReasons.push({
+                    invalidReasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.misleadingCorrectMapping',
                         translateValues: {index: index + 1}
                     });
@@ -707,7 +701,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             if (question.type === QuizQuestionType.SHORT_ANSWER) {
                 const shortAnswerQuestion = question as ShortAnswerQuestion;
                 if (!shortAnswerQuestion.correctMappings || shortAnswerQuestion.correctMappings.length === 0) {
-                    this.invalidReasons.push({
+                    invalidReasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionCorrectMapping',
                         translateValues: { index: index + 1 }
                     });
@@ -718,43 +712,43 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                     });
                 } */
                 if (!this.shortAnswerQuestionUtil.validateNoMisleadingCorrectShortAnswerMapping(shortAnswerQuestion)) {
-                    this.invalidReasons.push({
+                    invalidReasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.misleadingCorrectMapping',
                         translateValues: { index: index + 1 }
                     });
                 }
                 if (!this.shortAnswerQuestionUtil.everySpotHasASolution(shortAnswerQuestion.correctMappings, shortAnswerQuestion.spots)) {
-                    this.invalidReasons.push({
+                    invalidReasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.shortAnswerQuestionEverySpotHasASolution',
                         translateValues: { index: index + 1 }
                     });
                 }
                 if (!this.shortAnswerQuestionUtil.everyMappedSolutionHasASpot(shortAnswerQuestion.correctMappings)) {
-                    this.invalidReasons.push({
+                    invalidReasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.shortAnswerQuestionEveryMappedSolutionHasASpot',
                         translateValues: { index: index + 1 }
                     });
                 }
                 if (!(shortAnswerQuestion.solutions.filter(solution => solution.text.trim() === '').length === 0)) {
-                    this.invalidReasons.push({
+                    invalidReasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.shortAnswerQuestionSolutionHasNoValue',
                         translateValues: { index: index + 1 }
                     });
                 }
                 if (this.shortAnswerQuestionUtil.hasMappingDuplicateValues(shortAnswerQuestion.correctMappings)) {
-                    this.invalidReasons.push({
+                    invalidReasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.shortAnswerQuestionDuplicateMapping',
                         translateValues: { index: index + 1 }
                     });
                 }
                 if (!this.shortAnswerQuestionUtil.atLeastAsManySolutionsAsSpots(shortAnswerQuestion)) {
-                    this.invalidReasons.push({
+                    invalidReasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.shortAnswerQuestionUnsolvable',
                         translateValues: { index: index + 1 }
                     });
                 }
             }
-        });
+        }, this); return invalidReasons;
     }
 
     /**
@@ -765,7 +759,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     invalidReasonsHTML(): string {
         const translate = this.translateService;
         let reasonString = '';
-        for (const reason of this.invalidReasons) {
+        for (const reason of this.computeInvalidReasons()) {
             translate.get(reason['translateKey'], reason['translateValues']).subscribe((res: string) => {
                 reasonString += res + '   -   ';
             });
