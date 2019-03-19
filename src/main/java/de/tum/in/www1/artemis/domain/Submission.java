@@ -35,7 +35,6 @@ import java.util.Objects;
     @JsonSubTypes.Type(value = FileUploadSubmission.class, name = "file-upload"),
 })
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-@Proxy(lazy = false)
 public abstract class Submission implements Serializable {
 
     private static final long serialVersionUID = 1L;

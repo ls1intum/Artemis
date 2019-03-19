@@ -23,7 +23,6 @@ import java.util.Objects;
     @JsonSubTypes.Type(value=DragAndDropQuestionStatistic.class, name="drag-and-drop"),
     @JsonSubTypes.Type(value=ShortAnswerQuestionStatistic.class, name="short-answer")
 })
-@Proxy(lazy = false)
 public abstract class QuizQuestionStatistic extends QuizStatistic implements Serializable {
 
     private static final long serialVersionUID = 1L;
