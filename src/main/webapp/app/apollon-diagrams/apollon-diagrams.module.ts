@@ -10,6 +10,7 @@ import { ArTEMiSSharedModule } from '../shared';
 import { ApollonDiagramStudentComponent } from './apollon-diagram-student.component';
 import { ApollonDiagramTutorComponent } from './apollon-diagram-tutor.component';
 import { ArTEMiSResultModule, ResultComponent } from '../entities/result';
+import { ApollonDiagramAssessmentComponent } from './apollon-diagram-assessment/apollon-diagram-assessment.component';
 
 const ENTITY_STATES = [...apollonDiagramsRoutes];
 
@@ -25,7 +26,8 @@ const ENTITY_STATES = [...apollonDiagramsRoutes];
         ApollonDiagramListComponent,
         ApollonQuizExerciseGenerationComponent,
         ApollonDiagramStudentComponent,
-        ApollonDiagramTutorComponent
+        ApollonDiagramTutorComponent,
+        ApollonDiagramAssessmentComponent
     ],
     entryComponents: [
         ApollonDiagramCreateFormComponent,
