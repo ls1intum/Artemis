@@ -9,10 +9,10 @@ export class HeadingOneCommand extends Command {
         let selectedText = this.editor.getSelectedText();
         let textToAdd = '';
 
-        if (selectedText.includes('###') && !selectedText.includes('Heading 1')) {
+        if (selectedText.includes('#') && !selectedText.includes('Heading 1')) {
             textToAdd = selectedText.slice(2);
             this.editor.insert(textToAdd);
-        } else if (selectedText.includes('###') && selectedText.includes('Heading 1')) {
+        } else if (selectedText.includes('#') && selectedText.includes('Heading 1')) {
             textToAdd = selectedText.slice(2, -9);
             this.editor.insert(textToAdd);
         } else {
