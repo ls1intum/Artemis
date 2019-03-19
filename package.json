@@ -1,6 +1,6 @@
 {
     "name": "Artemis",
-    "version": "2.5.0",
+    "version": "2.6.0",
     "description": "Automated Assessment Management System for Interactive Learning",
     "private": true,
     "license": "MIT",
@@ -44,7 +44,7 @@
         "ng2-ace-editor": "0.3.9",
         "ng2-charts": "2.0.3",
         "ng2-dnd": "5.0.2",
-        "ngx-cacheable": "1.0.9",
+        "ngx-cacheable": "1.1.2",
         "ngx-clipboard": "12.0.0",
         "ngx-cookie": "4.1.2",
         "ngx-infinite-scroll": "7.1.0",
@@ -65,7 +65,7 @@
         "zone.js": "0.8.29"
     },
     "devDependencies": {
-        "@angular/cdk": "7.3.4",
+        "@angular/cdk": "7.3.5",
         "@angular/cli": "7.3.6",
         "@angular/compiler-cli": "7.2.9",
         "@ngtools/webpack": "7.3.6",
@@ -74,7 +74,7 @@
         "@types/chai": "4.1.7",
         "@types/chai-string": "1.4.1",
         "@types/chart.js": "2.7.48",
-        "@types/jasmine": "3.3.9",
+        "@types/jasmine": "3.3.11",
         "@types/jest": "24.0.11",
         "@types/jquery": "3.3.29",
         "@types/lodash": "4.14.123",
@@ -122,7 +122,7 @@
         "protractor": "5.4.2",
         "proxy-middleware": "0.15.0",
         "rimraf": "2.6.3",
-        "sass": "1.17.2",
+        "sass": "1.17.3",
         "sass-loader": "7.1.0",
         "simple-progress-webpack-plugin": "1.1.2",
         "sourcemap-istanbul-instrumenter-loader": "0.2.0",
@@ -137,12 +137,12 @@
         "tslint-loader": "3.6.0",
         "typescript": "3.2.4",
         "webpack": "4.29.6",
-        "webpack-cli": "3.2.3",
+        "webpack-cli": "3.3.0",
         "webpack-dev-server": "3.2.1",
         "webpack-merge": "4.2.1",
         "webpack-notifier": "1.7.0",
         "webpack-visualizer-plugin": "0.1.11",
-        "workbox-webpack-plugin": "4.1.0",
+        "workbox-webpack-plugin": "4.1.1",
         "write-file-webpack-plugin": "4.5.0"
     },
     "engines": {
