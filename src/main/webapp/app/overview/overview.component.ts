@@ -34,7 +34,7 @@ export class OverviewComponent implements OnInit {
 
     ngOnInit(): void {
         this.accountService.identity().then(user => {
-            this.isTumStudent = !!user.login.match(TUM_REGEX)
+            this.isTumStudent = !!user.login.match(TUM_REGEX);
         });
 
     }
