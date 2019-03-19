@@ -103,9 +103,15 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
     }
 
     ngOnInit(): void {
-        [...this.defaultCommands, ...this.specialCommands, ...this.headerCommands|| []].forEach(command => {
+        if (this.specialCommands == null || this.specialCommands.length === 0) {
+        [...this.defaultCommands, ...this.headerCommands|| []].forEach(command => {
             command.setEditor(this.aceEditorContainer.getEditor());
-        });
+        });}
+        else {
+            [...this.defaultCommands, ...this.specialCommands, ...this.headerCommands|| []].forEach(command => {
+                command.setEditor(this.aceEditorContainer.getEditor());
+            });
+        }
     }
 
     /**
@@ -138,16 +144,12 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
                 // Emit to Clients
                 this.html.emit(this.previewTextAsHtml);
             return;
-        }
-
-        // if (defaultHtmlPreviewRequired) {
-        //    throw new Error(`Cannot generate HTML when using Domain Commands. You supplied ${this.specialCommands.length} Domain Commands to the Markdown Editor.`);
-        // }
-
-        const parseArray = this.markdown
+        } else {
+            const parseArray = this.markdown
             .split('\n')
             .map(this.parseLineForSpecialCommand);
-        this.textWithSpecialCommandFound.emit(parseArray);
+            this.textWithSpecialCommandFound.emit(parseArray);
+        }
     }
 
     private parseLineForSpecialCommand = (textLine: string): [string, SpecialCommand] => {
