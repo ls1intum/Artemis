@@ -1,132 +1,95 @@
 package de.tum.in.www1.artemis.service;
 
-import com.google.gson.JsonObject;
+import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ModelingExercise;
 import de.tum.in.www1.artemis.domain.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.repository.JsonAssessmentRepository;
+import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.service.compass.assessment.ModelElementAssessment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
+import java.time.ZonedDateTime;
 import java.util.List;
-
-import static java.math.BigDecimal.ROUND_HALF_EVEN;
 
 @Service
 public class ModelingAssessmentService extends AssessmentService {
     private final Logger log = LoggerFactory.getLogger(ModelingAssessmentService.class);
 
-    private final JsonAssessmentRepository jsonAssessmentRepository;
-    private final ResultRepository resultRepository;
     private final UserService userService;
-    private final ModelingExerciseService modelingExerciseService;
     private final ModelingSubmissionRepository modelingSubmissionRepository;
+    private final FeedbackRepository feedbackRepository;
 
-
-    public ModelingAssessmentService(JsonAssessmentRepository jsonAssessmentRepository,
-                                     ResultRepository resultRepository,
+    public ModelingAssessmentService(ResultRepository resultRepository,
                                      UserService userService,
-                                     ModelingExerciseService modelingExerciseService,
-                                     ModelingSubmissionRepository modelingSubmissionRepository) {
+                                     ModelingSubmissionRepository modelingSubmissionRepository,
+                                     FeedbackRepository feedbackRepository) {
         super(resultRepository);
-
-        this.jsonAssessmentRepository = jsonAssessmentRepository;
-        this.resultRepository = resultRepository;
         this.userService = userService;
-        this.modelingExerciseService = modelingExerciseService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
+        this.feedbackRepository = feedbackRepository;
     }
 
 
     /**
-     * Find latest assessment for given exerciseId, studentId and modelId. First checks for existence of manual
-     * assessment, then of automatic assessment.
+     * This function is used for submitting a manual assessment/result. It updates the completion date, sets the
+     * assessment type to MANUAL and sets the assessor attribute. Furthermore, it saves the result in the database.
      *
-     * @param exerciseId
-     * @param studentId
-     * @param modelId
-     * @return
-     */
-    public String findLatestAssessment(Long exerciseId, Long studentId, Long modelId) {
-        JsonObject assessmentJson = null;
-        if (jsonAssessmentRepository.exists(exerciseId, studentId, modelId, true)) {
-            // the modelingSubmission was graded manually
-            assessmentJson = jsonAssessmentRepository.readAssessment(exerciseId, studentId, modelId, true);
-        } else if (jsonAssessmentRepository.exists(exerciseId, studentId, modelId, false)) {
-            // the modelingSubmission was graded automatically
-            assessmentJson = jsonAssessmentRepository.readAssessment(exerciseId, studentId, modelId, false);
-        }
-
-        if (assessmentJson != null) {
-            return assessmentJson.get("assessments").toString();
-        }
-        return null;
-    }
-
-
-    /**
-     * This function is used for manually assessed results. It updates the completion date, sets the
-     * assessment type to MANUAL and sets the assessor attribute. Furthermore, it saves the assessment
-     * in the file system the total score is calculated and set in the result.
-     *
-     * @param result             the result the assessment belongs to
-     * @param exercise           the exercise the assessment belongs to
-     * @param modelingAssessment the assessments as string
+     * @param result   the result the assessment belongs to
+     * @param exercise the exercise the assessment belongs to
      * @return the ResponseEntity with result as body
      */
     @Transactional
-    public Result submitManualAssessment(Result result, ModelingExercise exercise, List<ModelElementAssessment> modelingAssessment) {
-        saveManualAssessment(result, exercise.getId(), modelingAssessment);
-        Double calculatedScore = calculateTotalScore(modelingAssessment);
-        return prepareSubmission(result, exercise, calculatedScore);
+    public Result submitManualAssessment(Result result, ModelingExercise exercise) {
+        // TODO CZ: use AssessmentService#submitResult() function instead
+        result.setRatedIfNotExceeded(exercise.getDueDate(), result.getSubmission().getSubmissionDate());
+        result.setCompletionDate(ZonedDateTime.now());
+        result.evaluateFeedback(exercise.getMaxScore()); // TODO CZ: move to AssessmentService class, as it's the same for modeling and text exercises (i.e. total score is sum of feedback credits)
+        resultRepository.save(result);
+        return result;
     }
 
-
     /**
-     * This function is used for manually assessed results. It updates the completion date, sets the
-     * assessment type to MANUAL and sets the assessor attribute. Furthermore, it saves the assessment
-     * in the file system the total score is calculated and set in the result.
+     * This function is used for saving a manual assessment/result. It sets the assessment type to MANUAL
+     * and sets the assessor attribute. Furthermore, it saves the result in the database.
      *
-     * @param result             the result the assessment belongs to
-     * @param exerciseId         the exerciseId the assessment belongs to
-     * @param modelingAssessment List of assessed model elements
+     * @param modelingSubmission the modeling submission to which the feedback belongs to
+     * @param modelingAssessment the assessment as a feedback list that should be added to the result of the
+     *                           corresponding submission
      */
     @Transactional
-    public void saveManualAssessment(Result result, Long exerciseId, List<ModelElementAssessment> modelingAssessment) {
+    public Result saveManualAssessment(ModelingSubmission modelingSubmission, List<Feedback> modelingAssessment) {
+        Result result = modelingSubmission.getResult();
+        if (result == null) {
+            result = new Result();
+        }
+
         result.setAssessmentType(AssessmentType.MANUAL);
         User user = userService.getUser();
         result.setAssessor(user);
 
-        Long studentId = result.getParticipation().getStudent().getId();
-        Long submissionId = result.getSubmission().getId();
+        // Note: If there is old feedback that gets removed here and not added again in the for-loop, it will also be
+        //       deleted in the database because of the 'orphanRemoval = true' flag.
+        result.getFeedbacks().clear();
+        for (Feedback feedback : modelingAssessment) {
+            feedback.setPositive(feedback.getCredits() >= 0);
+            feedback.setType(FeedbackType.MANUAL);
+            result.addFeedback(feedback);
+        }
+        result.setHasFeedback(true);
 
-        if (result.getSubmission() instanceof ModelingSubmission && result.getSubmission().getResult() == null) {
-            ModelingSubmission modelingSubmission = (ModelingSubmission) result.getSubmission();
+        if (result.getSubmission() == null) {
+            result.setSubmission(modelingSubmission);
             modelingSubmission.setResult(result);
             modelingSubmissionRepository.save(modelingSubmission);
         }
-        // write assessment to file system
-        jsonAssessmentRepository.writeAssessment(exerciseId, studentId, submissionId, true, modelingAssessment);
-        resultRepository.save(result);
-    }
-
-
-    /**
-     * @return sum of every modelingAssessments credit rounded to max two numbers after the comma
-     */
-    public static Double calculateTotalScore(List<ModelElementAssessment> modelingAssessment) {
-        double totalScore = 0.0;
-        for (ModelElementAssessment assessment : modelingAssessment) {
-            totalScore += assessment.getCredits();
-        }
-        return new BigDecimal(totalScore).setScale(2, ROUND_HALF_EVEN).doubleValue();
+        // Note: This also saves the feedback objects in the database because of the 'cascade = CascadeType.ALL' option.
+        return resultRepository.save(result);
     }
 }

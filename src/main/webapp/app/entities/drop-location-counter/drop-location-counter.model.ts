@@ -1,8 +1,8 @@
 import { DropLocation } from '../drop-location';
 import { DragAndDropQuestionStatistic } from '../drag-and-drop-question-statistic';
-import { StatisticCounter } from '../statistic-counter';
+import { QuizStatisticCounter } from '../quiz-statistic-counter';
 
-export class DropLocationCounter extends StatisticCounter {
+export class DropLocationCounter extends QuizStatisticCounter {
 
     public dropLocation: DropLocation;
     public dragAndDropQuestionStatistic: DragAndDropQuestionStatistic;

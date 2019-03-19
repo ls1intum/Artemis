@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.domain.scoring;
 
-import de.tum.in.www1.artemis.domain.Question;
+import de.tum.in.www1.artemis.domain.QuizQuestion;
 import de.tum.in.www1.artemis.domain.ShortAnswerQuestion;
 import de.tum.in.www1.artemis.domain.ShortAnswerSubmittedAnswer;
 import de.tum.in.www1.artemis.domain.SubmittedAnswer;
@@ -14,15 +14,15 @@ import de.tum.in.www1.artemis.domain.SubmittedAnswer;
  */
 public class ScoringStrategyShortAnswerProportionalWithPenalty implements ScoringStrategy{
     @Override
-    public double calculateScore(Question question, SubmittedAnswer submittedAnswer) {
-        // check if the question is invalid: if true: -> return with full points
-        if (question.isInvalid()) {
-            return question.getScore();
+    public double calculateScore(QuizQuestion quizQuestion, SubmittedAnswer submittedAnswer) {
+        // check if the quizQuestion is invalid: if true: -> return with full points
+        if (quizQuestion.isInvalid()) {
+            return quizQuestion.getScore();
         }
 
-        if (submittedAnswer instanceof ShortAnswerSubmittedAnswer && question instanceof ShortAnswerQuestion) {
+        if (submittedAnswer instanceof ShortAnswerSubmittedAnswer && quizQuestion instanceof ShortAnswerQuestion) {
             ShortAnswerSubmittedAnswer shortAnswerAnswer = (ShortAnswerSubmittedAnswer) submittedAnswer;
-            ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) question;
+            ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) quizQuestion;
             double totalSolutionsCount = shortAnswerQuestion.getSpots().size();
 
             int[] values = ScoringStrategyShortAnswerUtil.getCorrectAndIncorrectSolutionCount(shortAnswerQuestion,shortAnswerAnswer);
@@ -35,9 +35,9 @@ public class ScoringStrategyShortAnswerProportionalWithPenalty implements Scorin
             double fraction = ((correctSolutionsCount / totalSolutionsCount) - (incorrectSolutionsCount / totalSolutionsCount));
 
             // end result is maxScore * fraction, but at least 0
-            return Math.max(0, question.getScore() * fraction);
+            return Math.max(0, quizQuestion.getScore() * fraction);
         }
-        // the submitted answer's type doesn't fit the question's type => it cannot be correct
+        // the submitted answer's type doesn't fit the quizQuestion's type => it cannot be correct
         return 0.0;
     }
 }

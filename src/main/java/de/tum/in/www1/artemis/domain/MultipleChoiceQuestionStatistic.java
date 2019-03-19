@@ -16,7 +16,7 @@ import java.util.Set;
 @Entity
 @DiscriminatorValue(value = "MC")
 @JsonTypeName("multiple-choice")
-public class MultipleChoiceQuestionStatistic extends QuestionStatistic implements Serializable {
+public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -157,7 +157,7 @@ public class MultipleChoiceQuestionStatistic extends QuestionStatistic implement
                 }
             }
             // change rated correctCounter if answer is complete correct
-            if (getQuestion().isAnswerCorrect(mcSubmittedAnswer)) {
+            if (getQuizQuestion().isAnswerCorrect(mcSubmittedAnswer)) {
                 setRatedCorrectCounter(getRatedCorrectCounter() + change);
             }
         }
@@ -176,7 +176,7 @@ public class MultipleChoiceQuestionStatistic extends QuestionStatistic implement
             }
 
             // change unrated correctCounter if answer is complete correct
-            if (getQuestion().isAnswerCorrect(mcSubmittedAnswer)) {
+            if (getQuizQuestion().isAnswerCorrect(mcSubmittedAnswer)) {
                 setUnRatedCorrectCounter(getUnRatedCorrectCounter() + change);
             }
         }

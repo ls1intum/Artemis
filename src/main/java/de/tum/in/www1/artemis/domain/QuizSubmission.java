@@ -69,14 +69,14 @@ public class QuizSubmission extends Submission implements Serializable {
     }
 
     /**
-     * Get the submitted answer to the given question
+     * Get the submitted answer to the given quizQuestion
      *
-     * @param question the question that the answer should belong to
-     * @return the submitted answer for this question (null if this question wasn't answered by this submission)
+     * @param quizQuestion the quizQuestion that the answer should belong to
+     * @return the submitted answer for this quizQuestion (null if this quizQuestion wasn't answered by this submission)
      */
-    public SubmittedAnswer getSubmittedAnswerForQuestion(Question question) {
+    public SubmittedAnswer getSubmittedAnswerForQuestion(QuizQuestion quizQuestion) {
         for (SubmittedAnswer submittedAnswer : getSubmittedAnswers()) {
-            if (question.equals(submittedAnswer.getQuestion())) {
+            if (quizQuestion.equals(submittedAnswer.getQuizQuestion())) {
                 return submittedAnswer;
             }
         }
@@ -90,11 +90,11 @@ public class QuizSubmission extends Submission implements Serializable {
      */
     public void calculateAndUpdateScores(QuizExercise quizExercise) {
         // set scores for all questions
-        for (Question question : quizExercise.getQuestions()) {
-            // search for submitted answer for this question
-            SubmittedAnswer submittedAnswer = getSubmittedAnswerForQuestion(question);
+        for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
+            // search for submitted answer for this quizQuestion
+            SubmittedAnswer submittedAnswer = getSubmittedAnswerForQuestion(quizQuestion);
             if (submittedAnswer != null) {
-                submittedAnswer.setScoreInPoints(question.scoreForAnswer(submittedAnswer));
+                submittedAnswer.setScoreInPoints(quizQuestion.scoreForAnswer(submittedAnswer));
             }
         }
         // set total score

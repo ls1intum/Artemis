@@ -4,15 +4,21 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
-import de.tum.in.www1.artemis.service.compass.assessment.Score;
-import de.tum.in.www1.artemis.service.compass.grade.Grade;
-import de.tum.in.www1.artemis.service.compass.umlmodel.*;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLAssociation;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLAttribute;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLClass;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLMethod;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLModel;
 import de.tum.in.www1.artemis.service.compass.utils.JSONMapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class JSONParser {
 
@@ -146,160 +152,6 @@ public class JSONParser {
         // </editor-fold>
 
         return new UMLModel(new ArrayList<>(umlClassMap.values()), umlAssociationList, modelId);
-    }
-
-
-    /**
-     * Process a json object retrieved from a json formatted file containing assessments
-     * TODO adapt the parser to support different UML diagrams
-     *
-     * @param root the json object of an assessment
-     * @param model the corresponding UML model
-     * @return a map of elementIds to scores
-     */
-    public static Map<String, Score> getScoresFromJSON(JsonObject root, UMLModel model) {
-        Map<String, Score> scoreHashMap = new HashMap<>();
-
-        JsonArray assessmentArray;
-        try {
-            assessmentArray = root.getAsJsonArray(JSONMapping.assessments);
-        } catch (NullPointerException e) {
-            log.error(e.getMessage(), e);
-            return scoreHashMap;
-        }
-
-        for (JsonElement assessmentElement : assessmentArray) {
-            JsonObject jsonAssessment = assessmentElement.getAsJsonObject();
-
-            String jsonElementID = jsonAssessment.get(JSONMapping.assessmentElementID).getAsString();
-            String elementType = jsonAssessment.get(JSONMapping.assessmentElementType).getAsString();
-
-
-            // <editor-fold desc="check if element is in model">
-
-            boolean found = false;
-
-            switch (elementType) {
-                case JSONMapping.assessmentElementTypeClass:
-                    for (UMLClass umlClass : model.getClassList()) {
-                        if (umlClass.getJSONElementID().equals(jsonElementID)) {
-                            found = true;
-                            break;
-                        }
-                    }
-                    break;
-                case JSONMapping.assessmentElementTypeAttribute:
-                    for (UMLClass umlClass : model.getClassList()) {
-                        for (UMLAttribute umlAttribute : umlClass.getAttributes()) {
-                            if (umlAttribute.getJSONElementID().equals(jsonElementID)) {
-                                found = true;
-                                break;
-                            }
-                        }
-                    }
-                    break;
-                case JSONMapping.assessmentElementTypeMethod:
-                    for (UMLClass umlClass : model.getClassList()) {
-                        for (UMLMethod umlMethod : umlClass.getMethods()) {
-                            if (umlMethod.getJSONElementID().equals(jsonElementID)) {
-                                found = true;
-                                break;
-                            }
-                        }
-                    }
-                    break;
-                case JSONMapping.assessmentElementTypeRelationship:
-                    for (UMLAssociation umlAssociation : model.getAssociationList()) {
-                        if (umlAssociation.getJSONElementID().equals(jsonElementID)) {
-                            found = true;
-                            break;
-                        }
-                    }
-                    break;
-            }
-
-            if (!found) {
-                /*
-                 * This might happen if e.g. the user input was malformed and the compass model parser had to ignore the element
-                 */
-                log.warn("Element " + jsonElementID + " of type " + elementType + " not in model");
-                continue;
-            }
-
-            List<String> comment = new ArrayList<>();
-            if (jsonAssessment.has(JSONMapping.assessmentComment)) {
-                    comment.add(jsonAssessment.get(JSONMapping.assessmentComment).getAsString());
-            }
-
-            // Ignore misformatted score
-            try {
-                Score score = new Score(jsonAssessment.get(JSONMapping.assessmentPoints).getAsDouble(), comment, 1.0);
-                scoreHashMap.put(jsonElementID, score);
-            } catch (Exception e) {
-                log.error(e.getMessage(), e);
-            }
-        }
-
-        return scoreHashMap;
-    }
-
-
-    /**
-     * Export the grade to a json object which can be written to the file system
-     * TODO adapt the parser to support different UML diagrams
-     *
-     * @param result the grade which should be exported
-     * @param model the corresponding UML model
-     * @return a json object representing
-     */
-    public static JsonObject exportToJSON (Grade result, UMLModel model) {
-        JsonObject jsonObject = new JsonObject();
-        JsonArray assessments = new JsonArray();
-
-        for (Map.Entry<String, Double> entry : result.getJsonIdPointsMapping().entrySet()) {
-            JsonObject assessment = new JsonObject();
-
-            String jsonElementID = entry.getKey();
-            UMLElement umlElement = model.getElementByJSONID(jsonElementID);
-
-            if (umlElement == null) {
-                log.error("Element " + entry.getKey() + " was not found in Model");
-                continue;
-            }
-
-            // TODO find cleaner solution
-            String type = umlElement.getClass().getSimpleName();
-            switch (type) {
-                case "UMLClass":
-                    type = JSONMapping.assessmentElementTypeClass;
-                    break;
-                case "UMLAttribute":
-                    type = JSONMapping.assessmentElementTypeAttribute;
-                    break;
-                case "UMLAssociation":
-                    type = JSONMapping.assessmentElementTypeRelationship;
-                    break;
-                case "UMLMethod":
-                    type = JSONMapping.assessmentElementTypeMethod;
-                    break;
-                default:
-                    type = "";
-            }
-
-            //assessment.addProperty(JSONMapping.assessmentMode, JSONMapping.assessmentModeAutomatic);
-            assessment.addProperty(JSONMapping.assessmentElementID, jsonElementID);
-            assessment.addProperty(JSONMapping.assessmentElementType, type);
-            assessment.addProperty(JSONMapping.assessmentPoints, entry.getValue());
-            assessment.addProperty(JSONMapping.assessmentComment, result.getJsonIdCommentsMapping().getOrDefault(jsonElementID, ""));
-
-            assessments.add(assessment);
-        }
-
-        jsonObject.add(JSONMapping.assessments, assessments);
-        jsonObject.addProperty(JSONMapping.assessmentElementConfidence, result.getConfidence());
-        jsonObject.addProperty(JSONMapping.assessmentElementCoverage, result.getCoverage());
-
-        return jsonObject;
     }
 }
 

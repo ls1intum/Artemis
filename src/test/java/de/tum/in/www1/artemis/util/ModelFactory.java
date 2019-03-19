@@ -6,8 +6,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 
 public class ModelFactory {
-    public static ZonedDateTime currentDate = ZonedDateTime.now();
-
 
     public static ModelingExercise generateModelingExercise(
         ZonedDateTime releaseDate,
@@ -44,17 +42,6 @@ public class ModelFactory {
     }
 
 
-    public static ModelingSubmission generateModelingSubmission(boolean submitted, String model) {
-        ModelingSubmission submission = new ModelingSubmission();
-        submission.setModel(model);
-        submission.setSubmitted(submitted);
-        if (submitted) {
-            submission.setSubmissionDate(currentDate);
-        }
-        return submission;
-    }
-
-
     public static User generateActivatedUser(String login) {
         User user = new User();
         user.setLogin(login);
@@ -81,6 +68,17 @@ public class ModelFactory {
             UUID.randomUUID().toString(),
             UUID.randomUUID().toString(),
             UUID.randomUUID().toString());
+    }
+
+
+    public static ModelingSubmission generateModelingSubmission(String model, boolean submitted) {
+        ModelingSubmission submission = new ModelingSubmission();
+        submission.setModel(model);
+        submission.setSubmitted(submitted);
+        if (submitted) {
+            submission.setSubmissionDate(ZonedDateTime.now().minusDays(1));
+        }
+        return submission;
     }
 
 

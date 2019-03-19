@@ -4,12 +4,12 @@
     "relationships": [
         {
             "relationshipType": "one-to-many",
-            "relationshipName": "shortAnswerSpotCounters",
             "otherEntityName": "shortAnswerSpotCounter",
-            "otherEntityRelationshipName": "shortAnswerQuestionStatistic"
+            "otherEntityRelationshipName": "shortAnswerQuestionStatistic",
+            "relationshipName": "shortAnswerSpotCounters"
         }
     ],
-    "changelogDate": "20181107093748",
+    "changelogDate": "20190315161904",
     "entityTableName": "sa_question_statistic",
     "dto": "no",
     "pagination": "no",

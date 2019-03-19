@@ -2,19 +2,7 @@
     "name": "ProgrammingExercise",
     "fields": [
         {
-            "fieldName": "templateRepositoryUrl",
-            "fieldType": "String"
-        },
-        {
-            "fieldName": "solutionRepositoryUrl",
-            "fieldType": "String"
-        },
-        {
-            "fieldName": "templateBuildPlanId",
-            "fieldType": "String"
-        },
-        {
-            "fieldName": "solutionBuildPlanId",
+            "fieldName": "testRepositoryUrl",
             "fieldType": "String"
         },
         {
@@ -35,8 +23,25 @@
             "fieldType": "String"
         }
     ],
-    "relationships": [],
-    "changelogDate": "20180927081355",
+    "relationships": [
+        {
+            "relationshipType": "one-to-one",
+            "otherEntityName": "participation",
+            "otherEntityRelationshipName": "programmingExercise",
+            "relationshipName": "templateParticipation",
+            "otherEntityField": "id",
+            "ownerSide": true
+        },
+        {
+            "relationshipType": "one-to-one",
+            "otherEntityName": "participation",
+            "otherEntityRelationshipName": "programmingExercise",
+            "relationshipName": "solutionParticipation",
+            "otherEntityField": "id",
+            "ownerSide": true
+        }
+    ],
+    "changelogDate": "20190315161914",
     "entityTableName": "programming_exercise",
     "dto": "no",
     "pagination": "no",

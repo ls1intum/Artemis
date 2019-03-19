@@ -4,6 +4,8 @@ import { Participation } from '../participation';
 import { Moment } from 'moment';
 import { ExampleSubmission } from '../example-submission';
 import { TutorParticipation } from 'app/entities/tutor-participation';
+import { Attachment } from 'app/entities/attachment';
+import { StudentQuestion } from 'app/entities/student-question';
 
 export const enum DifficultyLevel {
     EASY = 'EASY',
@@ -58,8 +60,9 @@ export abstract class Exercise implements BaseEntity {
     public tutorParticipations: TutorParticipation[];
     public course: Course;
     public participationStatus: ParticipationStatus;
-
     public exampleSubmissions: ExampleSubmission[];
+    public attachments: Attachment[];
+    public studentQuestions: StudentQuestion[];
 
     // helper attributes
     public isAtLeastTutor: boolean;
