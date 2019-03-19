@@ -62,7 +62,7 @@ dependencyManagement {
 defaultTasks 'bootRun'
 
 group = 'de.tum.in.www1.artemis'
-version = '2.5.0'
+version = '2.6.0'
 description = 'Automated Assessment Management System for Interactive Learning'
 
 bootWar {
@@ -153,7 +153,7 @@ dependencies {
 
     compile fileTree(dir: 'libs', include: '*.jar')
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
-    compile group: 'org.eclipse.jgit', name: 'org.eclipse.jgit', version: '5.2.1.201812262042-r'
+    compile group: 'org.eclipse.jgit', name: 'org.eclipse.jgit', version: '5.3.0.201903130848-r'
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
     compile group: 'net.sourceforge.plantuml', name: 'plantuml', version: '8059'
     compile "org.imsglobal:basiclti-util:1.2.0"
