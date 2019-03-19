@@ -106,7 +106,7 @@
                 </div>
             </div>
         </div>
-        <div class="question card" *ngFor="let question of quizExercise.questions; let i = index">
+        <div class="question card" *ngFor="let question of quizExercise.quizQuestions; let i = index">
             <div *ngIf="question.type === MULTIPLE_CHOICE">
                 <jhi-edit-multiple-choice-question
                     [question]="question"

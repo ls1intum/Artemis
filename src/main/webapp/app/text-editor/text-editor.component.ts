@@ -24,6 +24,7 @@ export class TextEditorComponent implements OnInit, OnDestroy {
     isSaving: boolean;
     answer: string;
     isExampleSubmission = false;
+    showComplaintForm = false;
 
     public getColorForIndex = HighlightColors.forIndex;
     private submissionConfirmationText: string;

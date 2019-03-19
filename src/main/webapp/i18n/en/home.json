@@ -1,11 +1,19 @@
 {
     "home": {
         "title": "Welcome to Artemis!",
+        "login": "Login",
         "subtitle": "Interactive Learning with an Automated Assessment Management System",
         "please": "Please",
+        "pleaseSignIn": "Please sign in using your TUM credentials.",
         "usingTUMcredentials": "using your TUM credentials",
         "logged": {
             "message": "You are logged in as user \"{{username}}\". Go to your <a class=\"alert-link\" routerLink=\"courses\">courses</a> to get started."
+        },
+        "errors": {
+            "failedToLogin": "<span class='bold'>Failed to sign in!</span> Please check your username and password and try again.",
+            "tumWarning": "<p class='text-primary small'>If you are a TUM student, your username should have the format <b>ab12xyz</b>.<br>Do <b>not</b> include '<b>@mytum.de</b>' or '<b>@tum.de</b>'.</p>",
+            "jiraWaning": "<span class='bold'>You have entered your password too often incorrectly :-(</span><br>Please go to <a href='https://jirabruegge.in.tum.de/login.jsp' target='_blank'>JIRA</a>: <a href='https://jirabruegge.in.tum.de/login.jsp' target='_blank'>https://jirabruegge.in.tum.de/login.jsp</a>. Sign in with your account there and solve the <a href='https://jirabruegge.in.tum.de/login.jsp' target='_blank'>CAPTCHA</a>.<br> After you have solved the <a href='https://jirabruegge.in.tum.de/login.jsp' target='_blank'>CAPTCHA</a>, try again here.",
+            "loginWarning": "Seems like you are having issues signing in :-( Please go to <a href='https://jirabruegge.in.tum.de'>JIRA</a> and try to sign in there.<br>After that, try again here."
         }
     }
 }

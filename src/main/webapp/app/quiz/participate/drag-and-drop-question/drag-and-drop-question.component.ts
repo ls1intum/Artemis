@@ -165,14 +165,17 @@ export class DragAndDropQuestionComponent implements OnChanges {
      */
     dragItemForDropLocation(dropLocation: DropLocation) {
         const that = this;
-        const mapping = this.mappings.find(localMapping =>
-            that.dragAndDropQuestionUtil.isSameDropLocation(localMapping.dropLocation, dropLocation)
-        );
-        if (mapping) {
-            return mapping.dragItem;
-        } else {
-            return null;
+        if (this.mappings) {
+            const mapping = this.mappings.find(localMapping =>
+                that.dragAndDropQuestionUtil.isSameDropLocation(localMapping.dropLocation, dropLocation)
+            );
+            if (mapping) {
+                return mapping.dragItem;
+            } else {
+                return null;
+            }
         }
+        return null;
     }
 
     invalidDragItemForDropLocation(dropLocation: DropLocation) {

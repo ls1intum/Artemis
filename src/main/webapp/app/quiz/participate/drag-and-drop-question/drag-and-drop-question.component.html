@@ -1,28 +1,28 @@
 <div class="dnd-question" [ngClass]="{disabled: clickDisabled && !showResult, result: showResult && !forceSampleSolution, incorrect: (score || 0) < question.score && !forceSampleSolution}">
     <h4 class="question-title-display"><span>{{questionIndex}})</span> {{question.title}}</h4>
-    <p [innerHTML]="rendered.text"></p><span style="color:red;" *ngIf="question.invalid" jhiTranslate="arTeMiSApp.question.invalidText"></span>
+    <p [innerHTML]="rendered.text"></p><span style="color:red;" *ngIf="question.invalid" jhiTranslate="arTeMiSApp.quizQuestion.invalidText"></span>
     <div class="hint" *ngIf="question.hint || (question.explanation && showResult)">
         <ng-template #renderedHint>
             <div [innerHTML]="rendered.hint"></div>
         </ng-template>
         <span class="label label-info" [ngbPopover]="renderedHint" placement="right" triggers="mouseenter:mouseleave" *ngIf="question.hint">
             <fa-icon [icon]="['far', 'question-circle']"></fa-icon>
-            <span jhiTranslate="arTeMiSApp.question.hint"></span>
+            <span jhiTranslate="arTeMiSApp.quizQuestion.hint"></span>
         </span><br>
         <ng-template #renderedExplanation>
             <div [innerHTML]="rendered.explanation"></div>
         </ng-template>
         <span class="label label-primary" [ngbPopover]="renderedExplanation" placement="right" triggers="mouseenter:mouseleave" *ngIf="question.explanation && showResult">
             <fa-icon icon="exclamation-circle"></fa-icon>
-            <span jhiTranslate="arTeMiSApp.question.explanation"></span>
+            <span jhiTranslate="arTeMiSApp.quizQuestion.explanation"></span>
         </span>
     </div>
     <div class="question-score" *ngIf="!showResult || forceSampleSolution">
-        <span jhiTranslate="arTeMiSApp.question.score" class="colon-suffix"></span>
+        <span jhiTranslate="arTeMiSApp.quizQuestion.score" class="colon-suffix"></span>
         <span>{{question.score}}</span>
     </div>
     <div class="question-score result" *ngIf="showResult && !forceSampleSolution" [ngClass]="{incorrect: (score || 0) < question.score}">
-        <span jhiTranslate="arTeMiSApp.question.yourScore" class="colon-suffix"></span>
+        <span jhiTranslate="arTeMiSApp.quizQuestion.yourScore" class="colon-suffix"></span>
         <span class="show-explanation">{{score || 0}}/{{question.score}}</span>
         <span class="show-explanation">
             <jhi-quiz-scoring-infostudent-modal [score]="score" [question]="question" [dragAndDropMapping]="mappings"
@@ -62,7 +62,7 @@
                                 <span *ngIf="!dropLocation.invalid && invalidDragItemForDropLocation(dropLocation) && !question.invalid"
                                       jhiTranslate="arTeMiSApp.dragAndDropQuestion.invalid.dragItem"></span>
                                 <span *ngIf="(dropLocation.invalid && invalidDragItemForDropLocation(dropLocation)) || question.invalid"
-                                      jhiTranslate="arTeMiSApp.question.invalid"></span>
+                                      jhiTranslate="arTeMiSApp.quizQuestion.invalid"></span>
                                 <fa-icon ngbTooltip="Invalid Drop Locations and invalid Drag Items will be assessed as correct."
                                            placement="top"
                                            style="color:black;"
@@ -91,7 +91,7 @@
                         <span *ngIf="dropLocation.invalid && !invalidDragItemForDropLocation(dropLocation) && !question.invalid"
                               jhiTranslate="arTeMiSApp.dragAndDropQuestion.invalid.dropLocation"></span>
                                 <span *ngIf="(dropLocation.invalid && invalidDragItemForDropLocation(dropLocation)) || question.invalid"
-                                      jhiTranslate="arTeMiSApp.question.invalid"></span>
+                                      jhiTranslate="arTeMiSApp.quizQuestion.invalid"></span>
                                 <fa-icon ngbTooltip="Invalid Drop Locations and invalid Drag Items will be assessed as correct."
                                            placement="top"
                                            style="color:black;"

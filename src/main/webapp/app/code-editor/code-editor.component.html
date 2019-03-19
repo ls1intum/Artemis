@@ -1,0 +1,59 @@
+<div class="editor-wrapper">
+
+    <nav class="navbar navbar-light navbar-expand-md jh-navbar">
+        <div class="jh-logo-container float-left editor-top-left">
+            <span class="navbar-title">Online Code Editor for Exercise:</span> <span>{{participation?.exercise.title}}</span>
+        </div>
+        <div class="navbar-collapse collapse editor-top-right">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item dropdown pointer">
+                    <jhi-result [participation]="participation"
+                                [isBuilding]="isBuilding"
+                                (newResult)="updateLatestResult($event)"
+                                [hidden]="isBuilding">
+                    </jhi-result>
+                    <button type="button" class="btn btn-primary navbar-btn" [disabled]="!isSaved || isBuilding" (click)="commit($event)" data-toggle="tooltip" data-placement="left" title="Stage, commit, push, build and test your changes.">
+                        <span *ngIf="isBuilding"><fa-icon icon="circle-notch" [spin]="true"></fa-icon> Building</span>
+                        <span *ngIf="!isBuilding"><fa-icon [icon]="['far', 'play-circle']"></fa-icon> Commit & Run Tests</span>
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="editor-main">
+        <div class="editor-sidebar-left">
+            <jhi-code-editor-file-browser [participation]="participation"
+                                          [fileName]="selectedFile"
+                                          [repositoryFiles]="repositoryFiles"
+                                          (selectedFile)="updateSelectedFile($event)"
+                                          (createdFile)="updateRepositoryCommitStatus($event)"
+                                          (deletedFile)="updateRepositoryCommitStatus($event)">
+            </jhi-code-editor-file-browser>
+        </div>
+
+        <div class="editor-center">
+            <jhi-code-editor-ace [participation]="participation"
+                                 [selectedFile]="selectedFile"
+                                 [buildLogErrors]="buildLogErrors ? buildLogErrors[selectedFile] : []"
+                                 (saveStatusChange)="updateSaveStatusLabel($event)">
+            </jhi-code-editor-ace>
+        </div>
+
+        <div class="editor-sidebar-right">
+            <jhi-code-editor-instructions *ngIf="repositoryFiles"
+                                          [participation]="participation"
+                                          [latestResult]="latestResult">
+            </jhi-code-editor-instructions>
+        </div>
+    </div>
+
+    <div class="editor-bottom">
+        <jhi-code-editor-build-output
+            [participation]="participation"
+            [isBuilding]="isBuilding"
+            (buildLogChange)="updateLatestBuildLogs($event)">
+        </jhi-code-editor-build-output>
+    </div>
+
+</div>

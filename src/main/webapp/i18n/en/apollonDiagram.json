@@ -20,7 +20,9 @@
             "jsonRepresentation": "JSON Representation",
             "assessment": {
                 "saveSuccessful": "Your assessment was saved successfully!",
+                "saveFailed": "Saving your assessment failed!",
                 "submitSuccessful": "Your assessment was submitted successfully!",
+                "submitFailed": "Submitting your assessment failed!",
                 "submitFailedWithConflict": "Submission failed! Conflict with existing Assessments detected",
                 "resultDismissed": "Your assessment was dismissed because another tutor already rated this model."
             },

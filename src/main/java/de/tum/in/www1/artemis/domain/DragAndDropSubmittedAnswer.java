@@ -100,15 +100,15 @@ public class DragAndDropSubmittedAnswer extends SubmittedAnswer implements Seria
     public void checkAndDeleteReferences (QuizExercise quizExercise) {
 
         // Delete all references to question, dropLocations and dragItem if the question was deleted
-        if (!quizExercise.getQuestions().contains(getQuestion())) {
-            setQuestion(null);
+        if (!quizExercise.getQuizQuestions().contains(getQuizQuestion())) {
+            setQuizQuestion(null);
             mappings = null;
         } else {
-            // find same question in quizExercise
-            Question question = quizExercise.findQuestionById(getQuestion().getId());
+            // find same quizQuestion in quizExercise
+            QuizQuestion quizQuestion = quizExercise.findQuestionById(getQuizQuestion().getId());
 
             // Check if a dragItem or dropLocation was deleted and delete the mappings with it
-            checkAndDeleteMappings((DragAndDropQuestion) question);
+            checkAndDeleteMappings((DragAndDropQuestion) quizQuestion);
         }
     }
 

@@ -37,15 +37,15 @@ public class TextSubmissionService {
     }
 
     /**
-     * Saves the given submission and the corresponding model and creates the result if necessary.
-     * Furthermore, the submission is added to the AutomaticSubmissionService if not submitted yet.
+     * Saves the given submission. Furthermore, the submission is added to the AutomaticSubmissionService,
+     * if not submitted yet.
      * Is used for creating and updating text submissions.
      * If it is used for a submit action, Compass is notified about the new model.
      * Rolls back if inserting fails - occurs for concurrent createTextSubmission() calls.
      *
      * @param textSubmission the submission to notifyCompass
      * @param textExercise   the exercise to notifyCompass in
-     * @param participation  the participation where the result should be saved
+     * @param participation  the participation
      * @return the textSubmission entity
      */
     @Transactional(rollbackFor = Exception.class)
@@ -76,7 +76,10 @@ public class TextSubmissionService {
             }
             Participation savedParticipation = participationRepository.save(participation);
             if (textSubmission.getId() == null) {
-                textSubmission = savedParticipation.findLatestTextSubmission();
+                Optional<TextSubmission> optionalTextSubmission = savedParticipation.findLatestTextSubmission();
+                if (optionalTextSubmission.isPresent()) {
+                    textSubmission = optionalTextSubmission.get();
+                }
             }
         }
 
@@ -101,11 +104,10 @@ public class TextSubmissionService {
 
             // Map to Latest Submission
             .map(Participation::findLatestTextSubmission)
-            .filter(Objects::nonNull)
-
+            .filter(Optional::isPresent)
+            .map(Optional::get)
             // It needs to be submitted to be ready for assessment
             .filter(Submission::isSubmitted)
-
             .filter(textSubmission -> {
                 Result result = resultRepository.findDistinctBySubmissionId(textSubmission.getId()).orElse(null);
                 return result == null;
@@ -165,17 +167,21 @@ public class TextSubmissionService {
         List<TextSubmission> textSubmissions = new ArrayList<>();
 
         for (Participation participation : participations) {
-            TextSubmission textSubmission = participation.findLatestTextSubmission();
+            Optional<TextSubmission> optionalTextSubmission = participation.findLatestTextSubmission();
 
-            if (submittedOnly && textSubmission.isSubmitted() != Boolean.TRUE) {
+            if (!optionalTextSubmission.isPresent()) {
                 continue;
             }
 
-            if (textSubmission.getResult() != null) {
-                textSubmission.getResult().getAssessor().setGroups(null);
+            if (submittedOnly && optionalTextSubmission.get().isSubmitted() != Boolean.TRUE) {
+                continue;
             }
 
-            textSubmissions.add(textSubmission);
+            if (optionalTextSubmission.get().getResult() != null) {
+                optionalTextSubmission.get().getResult().getAssessor().setGroups(null);
+            }
+
+            textSubmissions.add(optionalTextSubmission.get());
         }
         return textSubmissions;
     }

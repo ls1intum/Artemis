@@ -111,6 +111,7 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
      * Display a sample solution instead of the student's answer
      */
     showSampleSolution() {
+        // TODO: the question is not yet available
         this.sampleSolutions = this.shortAnswerQuestionUtil.getSampleSolution(this.question);
         this.showingSampleSolution = true;
     }

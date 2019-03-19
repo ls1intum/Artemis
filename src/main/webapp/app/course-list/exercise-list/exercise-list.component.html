@@ -69,7 +69,7 @@
                     <div *ngIf="exercise.type === PROGRAMMING && exercise.participations && exercise.participations.length > 0">
                         <a routerLink="/editor/{{exercise.participations[0].id}}" routerLinkActive="active"
                            class="btn btn-primary btn-sm btn-block" id="btn-online-editor" *ngIf="exercise.allowOnlineEditor">
-                            <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;<span class="d-none d-md-inline">Open exercise</span></a>
+                            <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;<span class="d-none d-md-inline">Open code editor</span></a>
                         <ng-template #popContent>
                             <p>Clone your personal repository for this exercise:</p>
                             <pre style="max-width: 100%;" ngxClipboard [cbContent]="exercise.participations[0].repositoryUrl" (cbOnSuccess)="onCopySuccess()" (cbOnError)="onCopyFailure()">{{exercise.participations[0].repositoryUrl}}</pre>
@@ -159,7 +159,7 @@
                             *ngIf="exercise.isAtLeastTutor"
                             routerLink="/quiz/{{exercise.id}}/quiz-point-statistic" routerLinkActive="active">
                         <fa-icon icon="signal"></fa-icon>
-                        <span class="d-none d-md-inline" jhiTranslate="global.menu.entities.statistic">Statistic</span>
+                        <span class="d-none d-md-inline" jhiTranslate="global.menu.entities.quizStatistic">Statistic</span>
                     </button>
                 </div>
             </td>

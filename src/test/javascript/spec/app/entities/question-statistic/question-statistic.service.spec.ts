@@ -4,7 +4,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { take, map } from 'rxjs/operators';
-import { QuestionStatisticService } from 'app/entities/question-statistic/question-statistic.service';
+import { QuestionStatisticService } from 'app/entities/quiz-question-statistic/quiz-question-statistic.service';
 import { IQuestionStatistic, QuestionStatistic } from 'app/shared/model/question-statistic.model';
 
 describe('Service Tests', () => {

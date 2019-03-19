@@ -6,7 +6,7 @@ This application was generated using JHipster 5.8.2, you can find documentation 
 ## Main features
 Artemis supports the following exercises:
 1. **Programming exercises** with version control and automatic assessment with test cases and continuous integration
-2. **Quiz exercises** with multiple choice, drag and drop and short answer questions 
+2. **Quiz exercises** with multiple choice, drag and drop and short answer quiz questions 
 3. **Modeling exercises** with semi-automatic assessment using machine learning concepts
 4. **Text exercises** with manual assessment (beta)
 

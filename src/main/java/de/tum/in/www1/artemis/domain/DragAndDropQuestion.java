@@ -18,7 +18,7 @@ import java.util.*;
 @Entity
 @DiscriminatorValue(value = "DD")
 @JsonTypeName("drag-and-drop")
-public class DragAndDropQuestion extends Question implements Serializable {
+public class DragAndDropQuestion extends QuizQuestion implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -88,7 +88,7 @@ public class DragAndDropQuestion extends Question implements Serializable {
         this.dropLocations.add(dropLocation);
         dropLocation.setQuestion(this);
         //if an answerOption was added then add the associated AnswerCounter implicitly
-        ((DragAndDropQuestionStatistic)getQuestionStatistic()).addDropLocation(dropLocation);
+        ((DragAndDropQuestionStatistic) getQuizQuestionStatistic()).addDropLocation(dropLocation);
         return this;
     }
 
@@ -102,8 +102,8 @@ public class DragAndDropQuestion extends Question implements Serializable {
      */
     public DragAndDropQuestion removeDropLocations(DropLocation dropLocation) {
         //if an answerOption was removed then remove the associated AnswerCounter implicitly
-        if (getQuestionStatistic() instanceof DragAndDropQuestionStatistic) {
-            DragAndDropQuestionStatistic ddStatistic = (DragAndDropQuestionStatistic) getQuestionStatistic();
+        if (getQuizQuestionStatistic() instanceof DragAndDropQuestionStatistic) {
+            DragAndDropQuestionStatistic ddStatistic = (DragAndDropQuestionStatistic) getQuizQuestionStatistic();
             DropLocationCounter dropLocationCounterToDelete = null;
             for (DropLocationCounter dropLocationCounter : ddStatistic.getDropLocationCounters()) {
                 if (dropLocation.equals(dropLocationCounter.getDropLocation())) {
@@ -129,12 +129,12 @@ public class DragAndDropQuestion extends Question implements Serializable {
      */
     public void setDropLocations(List<DropLocation> dropLocations) {
         DragAndDropQuestionStatistic ddStatistic;
-        if (getQuestionStatistic() instanceof DragAndDropQuestionStatistic) {
-            ddStatistic = (DragAndDropQuestionStatistic)getQuestionStatistic();
+        if (getQuizQuestionStatistic() instanceof DragAndDropQuestionStatistic) {
+            ddStatistic = (DragAndDropQuestionStatistic) getQuizQuestionStatistic();
         }
         else{
             ddStatistic = new DragAndDropQuestionStatistic();
-            setQuestionStatistic(ddStatistic);
+            setQuizQuestionStatistic(ddStatistic);
         }
         this.dropLocations = dropLocations;
 
@@ -341,13 +341,13 @@ public class DragAndDropQuestion extends Question implements Serializable {
     /**
      * undo all dragItem- and dropLocation-changes which are not allowed ( adding them)
      *
-     * @param originalQuestion the original Question-object, which will be compared with this question
+     * @param originalQuizQuestion the original QuizQuestion-object, which will be compared with this question
      *
      */
-    public void undoUnallowedChanges (Question originalQuestion) {
+    public void undoUnallowedChanges (QuizQuestion originalQuizQuestion) {
 
-        if (originalQuestion instanceof DragAndDropQuestion) {
-            DragAndDropQuestion dndOriginalQuestion = (DragAndDropQuestion) originalQuestion;
+        if (originalQuizQuestion instanceof DragAndDropQuestion) {
+            DragAndDropQuestion dndOriginalQuestion = (DragAndDropQuestion) originalQuizQuestion;
             //undo unallowed dragItemChanges
             undoUnallowedDragItemChanges(dndOriginalQuestion);
             //undo unallowed dragItemChanges
@@ -422,13 +422,13 @@ public class DragAndDropQuestion extends Question implements Serializable {
     /**
      * check if an update of the Results and Statistics is necessary
      *
-     * @param originalQuestion the original Question-object, which will be compared with this question
+     * @param originalQuizQuestion the original QuizQuestion-object, which will be compared with this question
      *
      * @return a boolean which is true if the dragItem and dropLocation-changes make an update necessary and false if not
      */
-    public boolean isUpdateOfResultsAndStatisticsNecessary(Question originalQuestion) {
-        if (originalQuestion instanceof DragAndDropQuestion){
-            DragAndDropQuestion dndOriginalQuestion = (DragAndDropQuestion) originalQuestion;
+    public boolean isUpdateOfResultsAndStatisticsNecessary(QuizQuestion originalQuizQuestion) {
+        if (originalQuizQuestion instanceof DragAndDropQuestion){
+            DragAndDropQuestion dndOriginalQuestion = (DragAndDropQuestion) originalQuizQuestion;
             return checkDragItemsIfRecalculationIsNecessary(dndOriginalQuestion) ||
                 checkDropLocationsIfRecalculationIsNecessary(dndOriginalQuestion) ||
                 !getCorrectMappings().equals(dndOriginalQuestion.getCorrectMappings());
@@ -550,9 +550,9 @@ public class DragAndDropQuestion extends Question implements Serializable {
      * 1. generate associated DragAndDropQuestionStatistic implicitly
      */
     public DragAndDropQuestion() {
-        //create associated Statistic implicitly
+        //create associated QuizStatistic implicitly
         DragAndDropQuestionStatistic ddStatistic = new DragAndDropQuestionStatistic();
-        setQuestionStatistic(ddStatistic);
-        ddStatistic.setQuestion(this);
+        setQuizQuestionStatistic(ddStatistic);
+        ddStatistic.setQuizQuestion(this);
     }
 }

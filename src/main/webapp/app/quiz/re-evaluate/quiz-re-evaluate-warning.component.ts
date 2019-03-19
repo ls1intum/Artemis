@@ -3,7 +3,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiEventManager } from 'ng-jhipster';
 import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
 import { QuizReEvaluateService } from './quiz-re-evaluate.service';
-import { Question, QuestionType } from '../../entities/question';
+import { QuizQuestion, QuizQuestionType } from '../../entities/quiz-question';
 import { MultipleChoiceQuestion } from '../../entities/multiple-choice-question';
 import { DragAndDropQuestion } from '../../entities/drag-and-drop-question';
 import { ShortAnswerQuestion } from '../../entities/short-answer-question';
@@ -69,12 +69,12 @@ export class QuizReEvaluateWarningComponent implements OnInit {
      */
     loadQuizSuccess(quiz: QuizExercise): void {
         // question deleted?
-        this.questionDeleted = this.backUpQuiz.questions.length !== this.quizExercise.questions.length;
+        this.questionDeleted = this.backUpQuiz.quizQuestions.length !== this.quizExercise.quizQuestions.length;
 
         // check each question
-        this.quizExercise.questions.forEach(question => {
+        this.quizExercise.quizQuestions.forEach(question => {
             // find same question in backUp (necessary if the order has been changed)
-            const backUpQuestion = this.backUpQuiz.questions.find(questionBackUp => {
+            const backUpQuestion = this.backUpQuiz.quizQuestions.find(questionBackUp => {
                 return question.id === questionBackUp.id;
             });
 
@@ -91,7 +91,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
      * @param question changed question
      * @param backUpQuestion original not changed question
      */
-    checkQuestion(question: Question, backUpQuestion: Question): void {
+    checkQuestion(question: QuizQuestion, backUpQuestion: QuizQuestion): void {
         if (backUpQuestion !== null) {
             // question set invalid?
             if (question.invalid !== backUpQuestion.invalid) {
@@ -102,11 +102,11 @@ export class QuizReEvaluateWarningComponent implements OnInit {
                 this.scoringChanged = true;
             }
             // check MultipleChoiceQuestions
-            if (question.type === QuestionType.MULTIPLE_CHOICE) {
+            if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                 this.checkMultipleChoiceQuestion(question as MultipleChoiceQuestion, backUpQuestion as MultipleChoiceQuestion);
             }
             // check DragAndDropQuestions
-            if (question.type === QuestionType.DRAG_AND_DROP) {
+            if (question.type === QuizQuestionType.DRAG_AND_DROP) {
                 this.checkDragAndDropQuestion(question as DragAndDropQuestion, backUpQuestion as DragAndDropQuestion);
             }
             // check ShortAnswerQuestions

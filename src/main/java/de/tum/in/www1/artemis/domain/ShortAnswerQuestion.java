@@ -16,7 +16,7 @@ import java.util.*;
 @Entity
 @DiscriminatorValue(value = "SA")
 @JsonTypeName("short-answer")
-public class ShortAnswerQuestion extends Question implements Serializable {
+public class ShortAnswerQuestion extends QuizQuestion implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -56,14 +56,14 @@ public class ShortAnswerQuestion extends Question implements Serializable {
         this.spots.add(shortAnswerSpot);
         shortAnswerSpot.setQuestion(this);
         // if a spot was added then add the associated AnswerCounter implicitly
-        ((ShortAnswerQuestionStatistic)getQuestionStatistic()).addSpot(shortAnswerSpot);
+        ((ShortAnswerQuestionStatistic) getQuizQuestionStatistic()).addSpot(shortAnswerSpot);
         return this;
     }
 
     public ShortAnswerQuestion removeSpots(ShortAnswerSpot shortAnswerSpot) {
         // if an spot was removed then remove the associated SpotCounter implicitly
-        if (getQuestionStatistic() instanceof ShortAnswerQuestionStatistic) {
-            ShortAnswerQuestionStatistic shortAnswerStatistic = (ShortAnswerQuestionStatistic) getQuestionStatistic();
+        if (getQuizQuestionStatistic() instanceof ShortAnswerQuestionStatistic) {
+            ShortAnswerQuestionStatistic shortAnswerStatistic = (ShortAnswerQuestionStatistic) getQuizQuestionStatistic();
             ShortAnswerSpotCounter spotCounterToDelete = null;
             for (ShortAnswerSpotCounter spotCounter : shortAnswerStatistic.getShortAnswerSpotCounters()) {
                 if (shortAnswerSpot.equals(spotCounter.getSpot())) {
@@ -80,12 +80,12 @@ public class ShortAnswerQuestion extends Question implements Serializable {
 
     public void setSpots(List<ShortAnswerSpot> shortAnswerSpots) {
         ShortAnswerQuestionStatistic shortAnswerStatistic;
-        if (getQuestionStatistic() instanceof ShortAnswerQuestionStatistic) {
-            shortAnswerStatistic = (ShortAnswerQuestionStatistic)getQuestionStatistic();
+        if (getQuizQuestionStatistic() instanceof ShortAnswerQuestionStatistic) {
+            shortAnswerStatistic = (ShortAnswerQuestionStatistic) getQuizQuestionStatistic();
         }
         else{
             shortAnswerStatistic = new ShortAnswerQuestionStatistic();
-            setQuestionStatistic(shortAnswerStatistic);
+            setQuizQuestionStatistic(shortAnswerStatistic);
         }
         this.spots = shortAnswerSpots;
 
@@ -231,14 +231,14 @@ public class ShortAnswerQuestion extends Question implements Serializable {
      /**
       * undo all solution- and spot-changes which are not allowed ( adding them)
       *
-      * @param originalQuestion the original Question-object, which will be compared with this question
+      * @param originalQuizQuestion the original QuizQuestion-object, which will be compared with this question
       *
       */
     @Override
-    public void undoUnallowedChanges(Question originalQuestion) {
-        if (originalQuestion instanceof ShortAnswerQuestion) {
-            ShortAnswerQuestion shortAnswerOriginalQuestion = (ShortAnswerQuestion) originalQuestion;
-            // undoUnallowedSolutionChanges(shortAnswerOriginalQuestion);
+    public void undoUnallowedChanges(QuizQuestion originalQuizQuestion) {
+        if (originalQuizQuestion instanceof ShortAnswerQuestion) {
+            ShortAnswerQuestion shortAnswerOriginalQuestion = (ShortAnswerQuestion) originalQuizQuestion;
+            //undoUnallowedSolutionChanges(shortAnswerOriginalQuestion);
             undoUnallowedSpotChanges(shortAnswerOriginalQuestion);
         }
     }
@@ -310,9 +310,9 @@ public class ShortAnswerQuestion extends Question implements Serializable {
 
 
      @Override
-    public boolean isUpdateOfResultsAndStatisticsNecessary(Question originalQuestion) {
-        if (originalQuestion instanceof ShortAnswerQuestion){
-             ShortAnswerQuestion shortAnswerOriginalQuestion = (ShortAnswerQuestion) originalQuestion;
+    public boolean isUpdateOfResultsAndStatisticsNecessary(QuizQuestion originalQuizQuestion) {
+        if (originalQuizQuestion instanceof ShortAnswerQuestion){
+             ShortAnswerQuestion shortAnswerOriginalQuestion = (ShortAnswerQuestion) originalQuizQuestion;
              return checkSolutionsIfRecalculationIsNecessary(shortAnswerOriginalQuestion) ||
                  checkSpotsIfRecalculationIsNecessary(shortAnswerOriginalQuestion) ||
                  !getCorrectMappings().equals(shortAnswerOriginalQuestion.getCorrectMappings());
@@ -388,11 +388,11 @@ public class ShortAnswerQuestion extends Question implements Serializable {
          return updateNecessary;
      }
 
-
      @Override
      public void filterForStudentsDuringQuiz() {
          super.filterForStudentsDuringQuiz();
          setCorrectMappings(null);
+         setSolutions(null);
      }
 
      @Override
@@ -434,9 +434,9 @@ public class ShortAnswerQuestion extends Question implements Serializable {
       * 1. generate associated ShortAnswerQuestionStatistic implicitly
       */
      public ShortAnswerQuestion() {
-         // create associated Statistic implicitly
+         // create associated QuizStatistic implicitly
          ShortAnswerQuestionStatistic shortAnswerStatistic = new ShortAnswerQuestionStatistic();
-         setQuestionStatistic(shortAnswerStatistic);
-         shortAnswerStatistic.setQuestion(this);
+         setQuizQuestionStatistic(shortAnswerStatistic);
+         shortAnswerStatistic.setQuizQuestion(this);
      }
 }

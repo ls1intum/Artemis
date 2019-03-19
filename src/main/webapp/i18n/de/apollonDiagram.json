@@ -20,7 +20,9 @@
             "jsonRepresentation": "JSON-Repräsentation",
             "assessment": {
                 "saveSuccessful": "Deine Bewertung wurde erfolgreich gespeichert!",
+                "saveFailed": "Das Speichern deiner Bewertung ist gescheitert!",
                 "submitSuccessful": "Deine Bewertung wurde erfolgreich abgesendet!",
+                "submitFailed": "Absenden deiner Bewertung ist gescheitert!",
                 "submitFailedWithConflict": "Abgabe der Bewertung fehlgeschlagen! Konflikt mit bestehender Bewertung wurde erkannt",
                 "resultDismissed": "Deine Bewertung wurde nicht übernommen, da ein anderer Tutor bereits bewertet hat."
             },

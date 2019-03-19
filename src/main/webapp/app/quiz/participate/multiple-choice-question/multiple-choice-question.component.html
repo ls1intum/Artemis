@@ -1,6 +1,6 @@
 <div class="mc-question" [ngClass]="{disabled: clickDisabled && !showResult, result: showResult && !forceSampleSolution, incorrect: (score || 0) < question.score && !forceSampleSolution}">
     <h4 class="question-title-display"><span>{{questionIndex}})</span> {{question.title}}</h4>
-    <p [innerHTML]="rendered.text"></p><span style="color:red;" *ngIf="question.invalid" jhiTranslate="arTeMiSApp.question.invalidText"></span>
+    <p [innerHTML]="rendered.text"></p><span style="color:red;" *ngIf="question.invalid" jhiTranslate="arTeMiSApp.quizQuestion.invalidText"></span>
     <h6>Please choose all correct answer options</h6>
     <div class="hint" *ngIf="question.hint || (question.explanation && showResult)">
         <ng-template #renderedHint>
@@ -8,22 +8,22 @@
         </ng-template>
         <span class="label label-info" [ngbPopover]="renderedHint" placement="right" triggers="mouseenter:mouseleave" *ngIf="question.hint">
             <fa-icon [icon]="['far', 'question-circle']"></fa-icon>
-            <span jhiTranslate="arTeMiSApp.question.hint"></span>
+            <span jhiTranslate="arTeMiSApp.quizQuestion.hint"></span>
         </span> <br>
         <ng-template #renderedExplanation>
             <div [innerHTML]="rendered.explanation"></div>
         </ng-template>
         <span class="label label-primary" [ngbPopover]="renderedExplanation" placement="right" triggers="mouseenter:mouseleave" *ngIf="question.explanation && showResult">
             <fa-icon icon="exclamation-circle"></fa-icon>
-            <span jhiTranslate="arTeMiSApp.question.explanation"></span>
+            <span jhiTranslate="arTeMiSApp.quizQuestion.explanation"></span>
         </span>
     </div>
     <div class="question-score" *ngIf="!showResult || forceSampleSolution">
-        <span jhiTranslate="arTeMiSApp.question.score" class="colon-suffix"></span>
+        <span jhiTranslate="arTeMiSApp.quizQuestion.score" class="colon-suffix"></span>
         <span>{{question.score}}</span>
     </div>
     <div class="question-score result" *ngIf="showResult && !forceSampleSolution" [ngClass]="{incorrect: (score || 0) < question.score}">
-        <span jhiTranslate="arTeMiSApp.question.yourScore" class="colon-suffix"></span>
+        <span jhiTranslate="arTeMiSApp.quizQuestion.yourScore" class="colon-suffix"></span>
         <span class="show-explanation">{{score || 0}}/{{question.score}}</span>
         <span class="show-explanation">
             <jhi-quiz-scoring-infostudent-modal [score]="score" [question]="question"
@@ -41,7 +41,7 @@
                     </ng-template>
                     <span class="label label-info" [ngbPopover]="renderedAnswerOptionsHint" placement="top" triggers="mouseenter:mouseleave" *ngIf="answerOption.hint">
                         <fa-icon [icon]="['far', 'question-circle']"></fa-icon>
-                        <span jhiTranslate="arTeMiSApp.question.hint"></span>
+                        <span jhiTranslate="arTeMiSApp.quizQuestion.hint"></span>
                     </span>
                 </div>
             </div>
@@ -67,21 +67,21 @@
                     </ng-template>
                     <span class="label label-info" [ngbPopover]="renderedAnswerOptionsHint2" placement="top" triggers="mouseenter:mouseleave" *ngIf="answerOption.hint">
                         <fa-icon [icon]="['far', 'question-circle']"></fa-icon>
-                        <span jhiTranslate="arTeMiSApp.question.hint"></span>
+                        <span jhiTranslate="arTeMiSApp.quizQuestion.hint"></span>
                     </span>
                     <ng-template #renderedAnswerOptionsExplanation>
                         <div [innerHTML]="rendered.answerOptions[i].explanation"></div>
                     </ng-template>
                     <span class="label label-primary" [ngbPopover]="renderedAnswerOptionsExplanation" placement="top" triggers="mouseenter:mouseleave" *ngIf="answerOption.explanation">
                         <fa-icon icon="exclamation-circle"></fa-icon>
-                        <span jhiTranslate="arTeMiSApp.question.explanation"></span>
+                        <span jhiTranslate="arTeMiSApp.quizQuestion.explanation"></span>
                     </span>
                 </div>
             </td>
             <td class="solution">
                 <span id="answer-option-{{i}}-correct" *ngIf="!answerOption.invalid && !question.invalid && answerOption.isCorrect" class="correct">Correct</span>
                 <span id="answer-option-{{i}}-wrong" *ngIf="!answerOption.invalid && !question.invalid && !answerOption.isCorrect" class="wrong">Wrong</span>
-                <span id="answer-option-{{i}}-invalid" *ngIf="answerOption.invalid || question.invalid" class="wrong" jhiTranslate="arTeMiSApp.question.invalid"></span>
+                <span id="answer-option-{{i}}-invalid" *ngIf="answerOption.invalid || question.invalid" class="wrong" jhiTranslate="arTeMiSApp.quizQuestion.invalid"></span>
                 <fa-icon ngbTooltip="Invalid answers will be assessed as correct."
                            placement="top"
                            style="color:black;"

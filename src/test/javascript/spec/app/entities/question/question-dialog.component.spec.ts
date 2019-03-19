@@ -6,10 +6,10 @@ import { Observable } from 'rxjs/Observable';
 import { JhiEventManager } from 'ng-jhipster';
 
 import { ArTEMiSTestModule } from '../../../test.module';
-import { QuestionDialogComponent } from '../../../../../../main/webapp/app/entities/question/question-dialog.component';
-import { QuestionService } from '../../../../../../main/webapp/app/entities/question/question.service';
-import { Question } from '../../../../../../main/webapp/app/entities/question/question.model';
-import { QuestionStatisticService } from '../../../../../../main/webapp/app/entities/question-statistic';
+import { QuestionDialogComponent } from '../../../../../../main/webapp/app/entities/quiz-question/question-dialog.component';
+import { QuestionService } from '../../../../../../main/webapp/app/entities/quiz-question/question.service';
+import { QuizQuestion } from '../../../../../../main/webapp/app/entities/quiz-question/quiz-question.model';
+import { QuizQuestionStatisticService } from '../../../../../../main/webapp/app/entities/quiz-question-statistic';
 import { QuizExerciseService } from '../../../../../../main/webapp/app/entities/quiz-exercise';
 
 describe('Component Tests', () => {
@@ -26,7 +26,7 @@ describe('Component Tests', () => {
                 imports: [ArTEMiSTestModule],
                 declarations: [QuestionDialogComponent],
                 providers: [
-                    QuestionStatisticService,
+                    QuizQuestionStatisticService,
                     QuizExerciseService,
                     QuestionService
                 ]
@@ -48,7 +48,7 @@ describe('Component Tests', () => {
                 inject([],
                     fakeAsync(() => {
                         // GIVEN
-                        const entity = new Question(123);
+                        const entity = new QuizQuestion(123);
                         spyOn(service, 'update').and.returnValue(Observable.of(new HttpResponse({body: entity})));
                         comp.question = entity;
                         // WHEN
@@ -68,7 +68,7 @@ describe('Component Tests', () => {
                 inject([],
                     fakeAsync(() => {
                         // GIVEN
-                        const entity = new Question();
+                        const entity = new QuizQuestion();
                         spyOn(service, 'create').and.returnValue(Observable.of(new HttpResponse({body: entity})));
                         comp.question = entity;
                         // WHEN

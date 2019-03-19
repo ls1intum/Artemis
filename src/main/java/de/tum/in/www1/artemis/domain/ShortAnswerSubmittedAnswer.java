@@ -64,15 +64,15 @@ public class ShortAnswerSubmittedAnswer extends SubmittedAnswer implements Seria
     @Override
     public void checkAndDeleteReferences(QuizExercise quizExercise) {
         // Delete all references to question, spots and solutions if the question was deleted
-        if (!quizExercise.getQuestions().contains(getQuestion())) {
-            setQuestion(null);
+        if (!quizExercise.getQuizQuestions().contains(getQuizQuestion())) {
+            setQuizQuestion(null);
             submittedTexts = null;
         } else {
-            // find same question in quizExercise
-            Question question = quizExercise.findQuestionById(getQuestion().getId());
+            // find same quizQuestion in quizExercise
+            QuizQuestion quizQuestion = quizExercise.findQuestionById(getQuizQuestion().getId());
 
             // Check if a solution or spot was deleted and delete the mappings with it
-            checkAndDeleteSubmittedTexts((ShortAnswerQuestion) question);
+            checkAndDeleteSubmittedTexts((ShortAnswerQuestion) quizQuestion);
         }
     }
 
