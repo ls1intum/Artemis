@@ -10,10 +10,10 @@ export class HeadingThreeCommand extends Command {
         let textToAdd = '';
 
             if (selectedText.includes('###') && !selectedText.includes('Heading 3')) {
-                textToAdd = selectedText.slice(3);
+                textToAdd = selectedText.slice(4);
                 this.editor.insert(textToAdd);
             } else if (selectedText.includes('###') && selectedText.includes('Heading 3')) {
-                textToAdd = selectedText.slice(3, -9);
+                textToAdd = selectedText.slice(4, -9);
                 this.editor.insert(textToAdd);
             } else {
                 const initText = 'Heading 3';

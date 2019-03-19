@@ -241,7 +241,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         mcQuestion.scoringType = ScoringType.ALL_OR_NOTHING; // explicit default value for multiple questions
         mcQuestion.randomizeOrder = true;
         mcQuestion.score = 1;
-        //mcQuestion.hasCorrectOption = true;
 
         const correctSampleAnswerOption = new AnswerOption();
         correctSampleAnswerOption.isCorrect = true;
@@ -302,6 +301,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         this.quizExercise.quizQuestions.push(shortAnswerQuestion);
         this.cacheValidation();
     }
+
     /**
      * @function calculateMaxExerciseScore
      * @desc Iterates over the questions of the quizExercise and calculates the sum of all question scores
@@ -440,6 +440,10 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         this.cacheValidation();
     }
 
+    /**
+     * @function cacheValidation
+     * @desc Check the validity of the quiz on change
+     */
     cacheValidation(): void {
         this.warningQuizCache = this.computeInvalidWarnings().length > 0;
         this.quizIsValid = this.validQuiz();
@@ -516,7 +520,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * @desc Check if the current inputs are valid
      * @returns {boolean} true if valid, false otherwise
      */
-
     private validQuiz(): boolean {
         if (!this.quizExercise) {
             return false;
@@ -575,7 +578,11 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         return isGenerallyValid && areAllQuestionsValid;
     }
 
-
+    /**
+     * @function computeInvalidWarnings
+     * @desc Get the reasons, why the quiz needs warnings
+     * @returns {Array} array of objects with fields 'translateKey' and 'translateValues'
+     */
     computeInvalidWarnings(): Warnings[] {
         let invalidWarnings = new Array<Warnings>();
         if (!this.quizExercise) {

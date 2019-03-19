@@ -17,7 +17,7 @@ export class ReferenceCommand extends Command {
             this.editor.insert(textToAdd);
         } else {
             const range = this.editor.selection.getRange();
-            let initText = 'Reference';
+            const initText = 'Reference';
             selectedText = `> ${selectedText || initText}`;
             this.editor.session.replace(range, selectedText);
             this.editor.focus();

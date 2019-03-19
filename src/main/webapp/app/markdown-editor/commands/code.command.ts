@@ -17,7 +17,7 @@ export class CodeCommand extends Command {
             this.editor.insert(textToAdd);
         } else {
             const range = this.editor.selection.getRange();
-            let initText = 'Source Code';
+            const initText = 'Source Code';
             selectedText = '```language ' + (selectedText || initText) + '```';
             this.editor.session.replace(range, selectedText);
             this.editor.focus();

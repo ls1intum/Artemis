@@ -9,11 +9,14 @@ export class HeadingTwoCommand extends Command {
         let selectedText = this.editor.getSelectedText();
         let textToAdd = '';
 
-        if (selectedText.includes('##')) {
-            textToAdd = selectedText.slice(2);
+        if (selectedText.includes('###') && !selectedText.includes('Heading 2')) {
+            textToAdd = selectedText.slice(3);
+            this.editor.insert(textToAdd);
+        } else if (selectedText.includes('###') && selectedText.includes('Heading 2')) {
+            textToAdd = selectedText.slice(3, -9);
             this.editor.insert(textToAdd);
         } else {
-            const initText = 'Heading Two';
+            const initText = 'Heading 2';
             const range = this.editor.selection.getRange();
             selectedText = `## ${selectedText || initText}`;
             this.editor.session.replace(range, selectedText);

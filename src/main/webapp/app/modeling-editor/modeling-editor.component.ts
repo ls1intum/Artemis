@@ -20,7 +20,6 @@ import * as moment from 'moment';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { ModelElementType } from 'app/entities/modeling-assessment/uml-element.model';
 
-
 @Component({
     selector: 'jhi-modeling-editor',
     templateUrl: './modeling-editor.component.html',

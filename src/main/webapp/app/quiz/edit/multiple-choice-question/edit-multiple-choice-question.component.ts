@@ -13,7 +13,6 @@ import {
 } from 'app/markdown-editor/specialCommands';
 import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
 
-
 @Component({
     selector: 'jhi-edit-multiple-choice-question',
     templateUrl: './edit-multiple-choice-question.component.html',
