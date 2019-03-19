@@ -3,7 +3,8 @@ import { DifficultyLevel, Exercise } from 'app/entities/exercise';
 
 @Component({
     selector: 'jhi-difficulty-picker',
-    templateUrl: './difficulty-picker.component.html'
+    templateUrl: './difficulty-picker.component.html',
+    styles: ['div { cursor: pointer; }']
 })
 
 export class DifficultyPickerComponent {

@@ -28,6 +28,12 @@
                     <jhi-category-selector [exerciseCategories]="exerciseCategories" [existingCategories]="existingCategories" (selectedCategories)="updateCategories($event)"></jhi-category-selector>
                 </div>
                 <div class="form-group-narrow">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.difficulty">Difficulty</label>
+                    <div>
+                        <jhi-difficulty-picker [exercise]="programmingExercise"></jhi-difficulty-picker>
+                    </div>
+                </div>
+                <div class="form-group-narrow">
                     <label class="label-narrow" jhiTranslate="arTeMiSApp.programmingExercise.programmingLanguage" for="field_programmingLanguage">Programming Language</label>
                     <select required class="form-control" [(ngModel)]="programmingExercise.programmingLanguage" name="programmingLanguage" id="field_programmingLanguage" [disabled]="programmingExercise.id">
                         <option value="JAVA">Java</option>
