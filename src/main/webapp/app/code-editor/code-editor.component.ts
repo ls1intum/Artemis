@@ -219,7 +219,7 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
         if (this.participation) {
             const sessions = JSON.parse(this.localStorageService.retrieve('sessions') || '{}');
             this.session = sessions[this.participation.id];
-            if (!this.buildLogErrors || this.session && this.session.ts > this.buildLogErrors.ts) {
+            if (this.session && (!this.buildLogErrors || this.session.ts > this.buildLogErrors.ts)) {
                 this.buildLogErrors = { errors: this.session.errors, ts: this.session.ts };
             }
         }
