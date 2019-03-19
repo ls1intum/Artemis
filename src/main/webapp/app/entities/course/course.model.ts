@@ -15,6 +15,7 @@ export class Course implements BaseEntity {
     public startDate: Moment;
     public endDate: Moment;
     public onlineCourse = false; // default value
+    public registrationEnabled = false; // default value
     public maxComplaints: number;
 
     public exercises: Exercise[];
