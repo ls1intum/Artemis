@@ -1,4 +1,4 @@
-<div class="container" *ngIf="quizExercise">
+<div class="container-fluid" *ngIf="quizExercise">
     <h4>
         <span *ngIf="quizExercise.id && quizExercise.course" jhiTranslate="arTeMiSApp.quizExercise.edit.title"
             [translateValues]="{param: quizExercise.course.title}">
@@ -94,23 +94,31 @@
                 </jhi-edit-short-answer-question>
             </div>
         </div>
-        <div class="btn-group" role="group">
-            <button id="quiz-add-mc-question" class="btn btn-success mr-2" (click)="addMultipleChoiceQuestion()">
-                <fa-icon icon="plus"></fa-icon>
-                <span jhiTranslate="arTeMiSApp.quizExercise.addMultipleChoiceQuestion">Add Multiplce-Choice Question</span>
-            </button>
-            <button class="btn btn-success mr-2" (click)="addDragAndDropQuestion()">
-                <fa-icon icon="plus"></fa-icon>
-                <span jhiTranslate="arTeMiSApp.quizExercise.addDragAndDropQuestion"></span>
-            </button>
-            <button class="btn btn-success mr-2" (click)="addShortAnswerQuestion()">
-                <fa-icon icon="plus"></fa-icon>
-                <span jhiTranslate="arTeMiSApp.quizExercise.addShortAnswerQuestion"></span>
-            </button>
-            <button class="btn mr-2" (click)="showHideExistingQuestions()" [ngClass]="{'btn-primary': showExistingQuestions, 'btn-success': !showExistingQuestions}">
-                <fa-icon icon="plus"></fa-icon>
-                <span jhiTranslate="arTeMiSApp.quizExercise.addExistingQuestions"></span>
-            </button>
+        <div class="row w-100">
+            <div class="col-12 col-sm-6 col-xl-3 mb-2">
+                <button id="quiz-add-mc-question" class="btn btn-block btn-success" (click)="addMultipleChoiceQuestion()">
+                    <fa-icon icon="plus"></fa-icon>
+                    <span jhiTranslate="arTeMiSApp.quizExercise.addMultipleChoiceQuestion">Add Multiplce-Choice Question</span>
+                </button>
+            </div>
+            <div class="col-12 col-sm-6 col-xl-3 mb-2">
+                <button class="btn btn-block btn-success" (click)="addDragAndDropQuestion()">
+                    <fa-icon icon="plus"></fa-icon>
+                    <span jhiTranslate="arTeMiSApp.quizExercise.addDragAndDropQuestion"></span>
+                </button>
+            </div>
+            <div class="col-12 col-sm-6 col-xl-3 mb-2">
+                <button class="btn btn-block btn-success" (click)="addShortAnswerQuestion()">
+                    <fa-icon icon="plus"></fa-icon>
+                    <span jhiTranslate="arTeMiSApp.quizExercise.addShortAnswerQuestion"></span>
+                </button>
+            </div>
+            <div class="col-12 col-sm-6 col-xl-3 mb-2">
+                <button class="btn btn-block" (click)="showHideExistingQuestions()" [ngClass]="{'btn-primary': showExistingQuestions, 'btn-success': !showExistingQuestions}">
+                    <fa-icon icon="plus"></fa-icon>
+                    <span jhiTranslate="arTeMiSApp.quizExercise.addExistingQuestions"></span>
+                </button>
+            </div>
         </div>
         <!--Integrate the template for existingQuestions if the button is clicked-->
         <ng-container *ngIf="showExistingQuestions; then existingQuestionsTemplate"></ng-container>

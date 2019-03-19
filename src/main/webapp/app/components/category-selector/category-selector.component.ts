@@ -42,6 +42,13 @@ export class CategorySelectorComponent implements OnChanges {
         this.selectedCategory.color = selectedColor;
     }
 
+    onBlur(categoryName: string) {
+        if(!categoryName) return;
+        this.onItemAdded({
+            category: categoryName
+        } as ExerciseCategory);
+    }
+
     onItemAdded(exerciseCategory: ExerciseCategory) {
         if (!exerciseCategory.color) {
             const randomIndex = Math.floor(Math.random() * this.categoryColors.length);

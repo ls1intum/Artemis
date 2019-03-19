@@ -1,6 +1,7 @@
 <tag-input #categoryInput [ngModel]="exerciseCategories" theme='bootstrap' class="form-control tag-input"
            name="categories" identifyBy="category" displayBy="category" [maxItems]='2' id="field_categories"
            (onAdd)="onItemAdded($event)"
+           (onBlur)="onBlur($event)"
            (onRemove)="onItemRemove($event)">
     <tag-input-dropdown [focusFirstElement]="true"
                         identifyBy="category"

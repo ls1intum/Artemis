@@ -32,6 +32,7 @@
             "easy": "Leicht",
             "medium": "Mittel",
             "hard": "Schwer",
+            "categories": "Kategorien",
             "participations": "Teilnahmen",
             "exportNames": "Namen exportieren",
             "exportResults": "Ergebnisse exportieren",
