@@ -42,8 +42,6 @@ export class ExampleModelingSubmissionComponent implements OnInit, AfterViewInit
     readOnly: boolean;
     toComplete: boolean;
 
-    // public getColorForIndex = HighlightColors.forIndex;
-
     private exampleSubmissionId: number;
 
     constructor(
@@ -62,7 +60,6 @@ export class ExampleModelingSubmissionComponent implements OnInit, AfterViewInit
 
     ngOnInit(): void {
         console.log('from example modeling submission component');
-        // (+) converts string 'id' to a number
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         const exampleSubmissionId = this.route.snapshot.paramMap.get('exampleSubmissionId');
         this.readOnly = !!this.route.snapshot.paramMap.get('readOnly');
@@ -72,6 +69,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, AfterViewInit
             this.isNewSubmission = true;
             this.exampleSubmissionId = -1;
         } else {
+            // (+) converts string 'id' to a number
             this.exampleSubmissionId = +exampleSubmissionId;
         }
 
@@ -150,6 +148,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, AfterViewInit
         newExampleSubmission.submission = this.modelingEditor.getCurrentState();
         newExampleSubmission.submission.exampleSubmission = true;
         newExampleSubmission.exercise = this.exercise;
+
         this.exampleSubmissionService.create(newExampleSubmission, this.exerciseId)
             .subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
                 this.exampleSubmission = exampleSubmissionResponse.body;
@@ -162,73 +161,18 @@ export class ExampleModelingSubmissionComponent implements OnInit, AfterViewInit
         }, this.onError);
     }
 
-    // private createNewExampleModelingSubmissionOld() {
-    //     const newSubmission = this.modelingEditor.getCurrentState();
-    //     newSubmission.exampleSubmission = true;
-    //
-    //     this.modelingSubmissionService.create(newSubmission, this.exercise.course.id, this.exerciseId)
-    //         .subscribe((submissionResponse: HttpResponse<ModelingSubmission>) => {
-    //             this.modelingSubmission = submissionResponse.body;
-    //
-    //             const newExampleSubmission = this.exampleSubmission;
-    //             newExampleSubmission.submission = this.modelingSubmission;
-    //             newExampleSubmission.exercise = this.exercise;
-    //
-    //             let bothCompleted = false;
-    //
-    //             this.assessmentsService.getExampleAssessment(this.exerciseId, this.modelingSubmission.id).subscribe(result => {
-    //                 this.result = result;
-    //                 this.assessments = this.result.feedbacks || [];
-    //                 this.checkScoreBoundaries();
-    //
-    //                 if (bothCompleted) {
-    //                     this.jhiAlertService.success('arTeMiSApp.exampleSubmission.submitSuccessful');
-    //                 }
-    //                 bothCompleted = true;
-    //             }, this.onError);
-    //
-    //             this.exampleSubmissionService.create(newExampleSubmission, this.exerciseId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
-    //                 this.exampleSubmission = exampleSubmissionResponse.body;
-    //                 this.exampleSubmissionId = this.exampleSubmission.id;
-    //                 this.isNewSubmission = false;
-    //
-    //                 // Update the url with the new id, without reloading the page, to make the history consistent
-    //                 const newUrl = window.location.hash.replace('#', '').replace('new', `${this.exampleSubmissionId}`);
-    //                 this.location.go(newUrl);
-    //
-    //                 if (bothCompleted) {
-    //                     this.jhiAlertService.success('arTeMiSApp.exampleSubmission.submitSuccessful');
-    //                 }
-    //                 bothCompleted = true;
-    //             }, this.onError);
-    //         }, this.onError);
-    // }
-
     private updateExampleModelingSubmission() {
-        this.modelingSubmission.exampleSubmission = true;
+        const exampleSubmission = this.exampleSubmission;
+        exampleSubmission.submission = this.modelingEditor.getCurrentState();
+        exampleSubmission.submission.exampleSubmission = true;
+        exampleSubmission.exercise = this.exercise;
 
-        let hasOneFinished = false;
-
-        this.modelingSubmissionService.update(this.modelingSubmission, this.exercise.course.id, this.exerciseId)
-            .subscribe((submissionResponse: HttpResponse<ModelingSubmission>) => {
-                this.modelingSubmission = submissionResponse.body;
-
-                if (hasOneFinished) {
-                    this.jhiAlertService.success('arTeMiSApp.exampleSubmission.saveSuccessful');
-                } else {
-                    hasOneFinished = true;
-                }
+        this.exampleSubmissionService.update(exampleSubmission, this.exerciseId)
+            .subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
+                this.exampleSubmission = exampleSubmissionResponse.body;
+                this.exampleSubmissionId = this.exampleSubmission.id;
+                this.isNewSubmission = false;
             }, this.onError);
-
-        this.exampleSubmissionService.update(this.exampleSubmission, this.exerciseId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
-            this.exampleSubmission = exampleSubmissionResponse.body;
-
-            if (hasOneFinished) {
-                this.jhiAlertService.success('arTeMiSApp.exampleSubmission.saveSuccessful');
-            } else {
-                hasOneFinished = true;
-            }
-        }, this.onError);
     }
 
     public addAssessment(assessmentText: string): void {
@@ -289,6 +233,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, AfterViewInit
         if (this.readOnly || this.toComplete) {
             this.router.navigate([`/course/${courseId}/exercise/${this.exerciseId}/tutor-dashboard`]);
         } else {
+            // TODO CZ: this loads the modeling exercise overview for the course which is not accessible otherwise -> change to load the overview of all exercises for the course
             await this.router.navigate([`/course/${courseId}/modeling-exercise/`]);
             this.router.navigate(['/', {outlets: {popup: 'modeling-exercise/' + this.exerciseId + '/edit'}}]);
         }

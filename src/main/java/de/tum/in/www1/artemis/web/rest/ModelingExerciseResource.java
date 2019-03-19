@@ -139,6 +139,12 @@ public class ModelingExerciseResource {
         ResponseEntity<ModelingExercise> responseFailure = checkModelingExercise(modelingExercise);
         if (responseFailure != null) return responseFailure;
 
+        // As persisting is cascaded for example submissions we have to set the reference to the exercise in the
+        // example submissions. Otherwise the connection between exercise and example submissions would be lost.
+        if (modelingExercise.getExampleSubmissions() != null) {
+            modelingExercise.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setExercise(modelingExercise));
+        }
+
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
         return ResponseEntity.ok()
             .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, modelingExercise.getId().toString()))

@@ -16,11 +16,11 @@
                 <div class="form-check col-6 align-baseline">
                     <input type="checkbox" name="usedForTutorial" id="field_usedForTutorial"
                            [(ngModel)]="exampleSubmission.usedForTutorial"/>
-                    <label class="form-check-label" for="field_usedForTutorial">&nbsp;Used for tutorial</label>
+                    <label class="form-check-label" for="field_usedForTutorial">Used for tutorial</label>
                 </div>
 
                 <button (click)="upsertExampleModelingSubmission()" class="btn btn-primary col-6">
-                    <fa-icon icon="save"></fa-icon>&nbsp;
+                    <fa-icon icon="save"></fa-icon>
                     <span *ngIf="isNewSubmission">Create new modeling submission</span>
                     <span *ngIf="!isNewSubmission">Update modeling submission</span>
                 </button>

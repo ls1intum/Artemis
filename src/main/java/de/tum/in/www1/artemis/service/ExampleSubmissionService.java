@@ -29,21 +29,23 @@ public class ExampleSubmissionService {
     }
 
     /**
-     * Saves the given example submission.
+     * First saves the corresponding modeling submission with the exampleSubmission flag. Then the example submission
+     * itself is saved.
      * Rolls back if inserting fails - occurs for concurrent createExampleSubmission() calls.
      *
-     * @param exampleSubmission the submission to save
+     * @param exampleSubmission the example submission to save
      * @return the exampleSubmission entity
      */
     @Transactional(rollbackFor = Exception.class)
     public ExampleSubmission save(ExampleSubmission exampleSubmission) {
-        if (exampleSubmission.getSubmission() != null)
+        // TODO CZ: throw BadRequestException when submission or exercise is null? does it still work for text exercises then?
+        Submission submission = exampleSubmission.getSubmission();
+        if (submission != null)
         {
-            // first save the contained submission
-            submissionRepository.save(exampleSubmission.getSubmission());
+            submission.setExampleSubmission(true); // don't trust the client
+            submissionRepository.save(submission);
         }
-        // then save the example submission
-        return exampleSubmissionRepository.saveAndFlush(exampleSubmission);
+        return exampleSubmissionRepository.save(exampleSubmission);
     }
 
     /**
