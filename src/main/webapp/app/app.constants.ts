@@ -9,3 +9,5 @@ export const BUILD_TIMESTAMP = process.env.BUILD_TIMESTAMP;
 
 export const MIN_POINTS_GREEN = 80;
 export const MIN_POINTS_ORANGE = 40;
+
+export const TUM_REGEX = /^([a-z]{2}\d{2}[a-z]{3})$/;

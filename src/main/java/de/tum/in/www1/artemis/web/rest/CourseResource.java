@@ -231,7 +231,7 @@ public class CourseResource {
 
     /**
      * GET  /courses : get all courses that the current user can register to.
-     * Decided by the start and end date
+     * Decided by the start and end date and if the registrationEnabled flag is set correctly
      *
      * @return the list of courses which are active)
      */
@@ -239,7 +239,7 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public List<Course> getAllCoursesToRegister() {
         log.debug("REST request to get all currently active Courses that are not online courses");
-        return courseService.findAllCurrentlyActiveAndNotOnline();
+        return courseService.findAllCurrentlyActiveAndNotOnlineAndEnabled();
     }
 
     /**

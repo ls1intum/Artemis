@@ -26,6 +26,7 @@
             "startDate": "Start",
             "endDate": "End",
             "onlineCourse": "Online Kurs",
+            "registrationEnabled": "Registrierung aktiviert",
             "exercises": "Aufgaben",
             "programmingExercises": "Programmieraufgaben",
             "quizExercises": "Quizaufgaben",
