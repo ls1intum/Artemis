@@ -292,6 +292,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         shortAnswerQuestion.correctMappings = [];
         this.quizExercise.quizQuestions.push(shortAnswerQuestion);
     }
+
     /**
      * @function calculateMaxExerciseScore
      * @desc Iterates over the questions of the quizExercise and calculates the sum of all question scores
@@ -460,10 +461,10 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     }
 
     areCategoriesIdentical(categoriesUsed: string[], categoriesSaved: string[]): boolean {
-        if(!categoriesUsed) {
+        if (!categoriesUsed) {
             categoriesUsed = [];
         }
-        if(!categoriesSaved) {
+        if (!categoriesSaved) {
             categoriesSaved = [];
         }
         return JSON.stringify(categoriesUsed).toLowerCase() === JSON.stringify(categoriesSaved).toLowerCase();

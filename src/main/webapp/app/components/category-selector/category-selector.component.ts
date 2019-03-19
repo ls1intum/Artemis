@@ -43,7 +43,9 @@ export class CategorySelectorComponent implements OnChanges {
     }
 
     onBlur(categoryName: string) {
-        if(!categoryName) return;
+        if (!categoryName) {
+            return;
+        }
         this.onItemAdded({
             category: categoryName
         } as ExerciseCategory);
