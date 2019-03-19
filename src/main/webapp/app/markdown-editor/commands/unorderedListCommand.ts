@@ -6,12 +6,12 @@ export class UnorderedListCommand extends Command {
     buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.unorderedList';
 
     execute(): void {
-        let selectedText = this.editor.getSelectedText();
+        const selectedText = this.editor.getSelectedText();
         this.splitText(selectedText);
     }
 
     splitText(selectedText: string): void {
-        let parseArray = selectedText.split('\n');
+        const parseArray = selectedText.split('\n');
         parseArray.forEach( element => this.replaceText(element));
     }
 
@@ -20,7 +20,7 @@ export class UnorderedListCommand extends Command {
             const textToAdd = element.slice(2);
             const text = `${textToAdd}\n`;
             this.editor.insert(text);
-        }else {
+        } else {
             const range = this.editor.selection.getRange();
             element = `- ${element}\n`;
             this.editor.session.replace(range, element);
