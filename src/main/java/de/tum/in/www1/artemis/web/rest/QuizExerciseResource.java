@@ -381,7 +381,7 @@ public class QuizExerciseResource {
 
         if (updateOfResultsAndStatisticsNecessary) {
             // update Statistics
-            statisticService.recalculateStatistics(result);
+            quizStatisticService.recalculateStatistics(result);
         }
 
         return ResponseEntity.ok()

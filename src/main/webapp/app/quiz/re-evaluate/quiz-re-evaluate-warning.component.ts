@@ -110,7 +110,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
                 this.checkDragAndDropQuestion(question as DragAndDropQuestion, backUpQuestion as DragAndDropQuestion);
             }
             // check ShortAnswerQuestions
-            if (question.type === QuestionType.SHORT_ANSWER) {
+            if (question.type === QuizQuestionType.SHORT_ANSWER) {
                 this.checkShortAnswerQuestion(question as ShortAnswerQuestion, backUpQuestion as ShortAnswerQuestion);
             }
         }

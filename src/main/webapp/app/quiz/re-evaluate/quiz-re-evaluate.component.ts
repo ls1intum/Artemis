@@ -16,9 +16,9 @@ import * as moment from 'moment';
 })
 export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     // Make constants available to html for comparison
-    readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
-    readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
-    readonly SHORT_ANSWER = QuestionType.SHORT_ANSWER;
+    readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
+    readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
+    readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
 
 
     private subscription: Subscription;
