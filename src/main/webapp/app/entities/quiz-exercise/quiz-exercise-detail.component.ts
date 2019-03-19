@@ -600,7 +600,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * @desc Get the reasons, why the quiz is invalid
      * @returns {Array} array of objects with fields 'translateKey' and 'translateValues'
      */
-    private computeInvalidReasons(): Reason[] {
+    computeInvalidReasons(): Reason[] {
         const invalidReasons = new Array<Reason>();
         if (!this.quizExercise) {
             return;
