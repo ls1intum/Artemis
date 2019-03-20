@@ -87,7 +87,8 @@ import {
     faUpload,
     faUser,
     faUserPlus,
-    faWrench
+    faWrench,
+    faGripLinesVertical
 } from '@fortawesome/free-solid-svg-icons';
 
 import {
@@ -188,7 +189,6 @@ library.add(faArrowsAltV);
 library.add(faFile);
 library.add(faCodeBranch);
 library.add(faCircle);
-
 library.add(farQuestionCircle);
 library.add(farCheckCircle);
 library.add(farTimeCircle);
@@ -200,5 +200,6 @@ library.add(farFileAlt);
 library.add(farPlayCircle);
 library.add(farFileCode);
 library.add(farCircle);
+library.add(faGripLinesVertical);
 
 // jhipster-needle-add-element-to-vendor - JHipster will add new menu items here

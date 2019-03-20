@@ -8,25 +8,24 @@ import interact from 'interactjs';
 })
 export class AssessmentInstructionsComponent implements OnInit, AfterViewInit {
     @Input() exercise: Exercise;
+    @Input() collapsed = false;
     constructor() {}
 
     ngOnInit() {}
 
     ngAfterViewInit(): void {
-        interact('.resizable-instructions')
+        interact('.expanded-instructions')
             .resizable({
-                // Enable resize from left edge; triggered by class rg-left
                 edges: { left: '.draggable-left', right: false, bottom: false, top: false },
                 // Set maximum width
                 restrictSize: {
                     min: { width: 215 },
-                    max: { width: 500 }
+                    max: { width: 1000 }
                 },
                 inertia: true
             })
             .on('resizemove', event => {
                 const target = event.target;
-                // Update element width
                 target.style.width = event.rect.width + 'px';
             });
     }
