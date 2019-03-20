@@ -56,11 +56,11 @@
                             <div class="form-check">
                                 <label class="form-check-label" for="acceptTerms">
                                     <input class="form-check-input" type="checkbox" name="acceptTerms" id="acceptTerms" [(ngModel)]="acceptTerms" checked>
-                                    <span jhiTranslate="login.form.acceptTerms">Accept terms</span>
+                                    <a [routerLink]="['datenschutz'] "jhiTranslate="login.form.acceptTerms">Accept terms</a>
                                 </label>
                             </div>
                         </div>
-                        <button type="submit" [disabled]="!acceptTerms || password.length < 4 || username.length < 4"
+                        <button type="submit" [disabled]="!acceptTerms || (password && password.length < 4) || (username && username.length < 4)"
                                 class="btn btn-primary" jhiTranslate="login.form.button">Sign in
                         </button>
                     </form>
