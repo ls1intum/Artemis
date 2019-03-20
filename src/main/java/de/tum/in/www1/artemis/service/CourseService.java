@@ -155,6 +155,7 @@ public class CourseService {
             return new ArrayList<>(userCourses);
         } else {
             // not admin => fetch visible courses first
+            //TODO: I think we can fetch all current courses with eager exercises in one database call and then filter in Java
             List<Course> allCourses = findAll();
             Set<Course> userCourses = new HashSet<>();
             // filter old courses and courses the user should not be able to see
