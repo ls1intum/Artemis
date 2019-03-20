@@ -14,7 +14,8 @@ import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-course-update',
-    templateUrl: './course-update.component.html'
+    templateUrl: './course-update.component.html',
+    styles: ['.color-preview { cursor: pointer; }']
 })
 export class CourseUpdateComponent implements OnInit {
     @ViewChild(ColorSelectorComponent) colorSelector: ColorSelectorComponent;
