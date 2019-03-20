@@ -3,7 +3,7 @@ import { ApollonDiagramDetailComponent } from './apollon-diagram-detail.componen
 import { ApollonDiagramListComponent } from './apollon-diagram-list.component';
 import { UserRouteAccessService } from '../core';
 import { ApollonDiagramStudentComponent } from './apollon-diagram-student.component';
-import { ApollonDiagramAssessmentComponent } from './apollon-diagram-assessment.component';
+import { ModelingAssessmentComponent } from './modeling-assessment/modeling-assessment.component';
 
 export const apollonDiagramsRoutes: Routes = [
     {
@@ -35,7 +35,7 @@ export const apollonDiagramsRoutes: Routes = [
     },
     {
         path: 'apollon-diagrams/exercise/:exerciseId/:submissionId/tutor',
-        component: ApollonDiagramAssessmentComponent,
+        component: ModelingAssessmentComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
             pageTitle: 'arTeMiSApp.apollonDiagram.detail.title'
@@ -45,7 +45,7 @@ export const apollonDiagramsRoutes: Routes = [
     // We have to fake path change to make angular reload the component
     {
         path: 'apollon-diagrams2/exercise/:exerciseId/:submissionId/tutor',
-        component: ApollonDiagramAssessmentComponent,
+        component: ModelingAssessmentComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
             pageTitle: 'arTeMiSApp.apollonDiagram.detail.title'

@@ -1,32 +1,52 @@
-import { Component, ElementRef, OnInit, ViewChild, Input, OnDestroy } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, Input, OnDestroy, AfterViewInit } from '@angular/core';
 import ApollonEditor, { ApollonOptions, Point, State } from '@ls1intum/apollon';
 import * as $ from 'jquery';
 import { DiagramType } from 'app/entities/modeling-exercise';
 import { JhiAlertService } from 'ng-jhipster';
+import * as interact from 'interactjs';
 
 @Component({
     selector: 'jhi-apollon-diagram-tutor',
     templateUrl: './apollon-diagram-tutor.component.html',
-    styles: []
+    styleUrls: ['./apollon-diagram-tutor.component.scss']
 })
-export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
+export class ApollonDiagramTutorComponent implements OnInit, OnDestroy, AfterViewInit {
     @ViewChild('editorContainer') editorContainer: ElementRef;
     @Input() diagramType: DiagramType;
     @Input() model: string;
+    @Input() resizable = false;
     apollonEditor: ApollonEditor;
 
     constructor(private jhiAlertService: JhiAlertService) {}
 
     ngOnInit() {
+
+    }
+    ngOnDestroy(): void {
+        if (this.apollonEditor) {
+            this.apollonEditor.destroy();
+        }
+    }
+    ngAfterViewInit(): void {
         if (this.model) {
             this.initializeApollonEditor(JSON.parse(this.model));
         } else {
             this.jhiAlertService.error('arTeMiSApp.apollonDiagram.submission.noModel');
         }
-    }
-    ngOnDestroy(): void {
-        if (this.apollonEditor) {
-            this.apollonEditor.destroy();
+        if (this.resizable) {
+            interact('.resizable')
+                .resizable({
+                    edges: { left: false, right: '.draggable-right', bottom: false, top: false },
+                    restrictSize: {
+                        min: { width: 15 },
+                        max: { width: 600 }
+                    },
+                    inertia: true
+                })
+                .on('resizemove', event => {
+                    const target = event.target;
+                    target.style.width = event.rect.width + 'px';
+                });
         }
     }
 

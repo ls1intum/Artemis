@@ -1,0 +1,22 @@
+$titlebar-height: 65px;
+
+.assessment-container {
+    display: flex;
+    height: calc(100vh - 174px);
+    flex-flow: column nowrap;
+}
+
+.editor-container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    overflow: hidden;
+    jhi-apollon-diagram-tutor {
+        max-width: 100%;
+        min-width: 0%;
+    }
+}
+
+.conflict {
+    background-color: rgb(248, 214, 217);
+}

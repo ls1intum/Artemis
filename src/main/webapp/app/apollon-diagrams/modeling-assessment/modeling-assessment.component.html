@@ -1,4 +1,4 @@
-<div>
+<div class="assessment-container">
     <jhi-alert></jhi-alert>
 
     <div class="row">
@@ -47,11 +47,11 @@
         </div>
     </div>
 
-    <h2>
-        <span *ngIf="busy" style="color:grey"
-            ><fa-icon icon="spinner" [spin]="true"></fa-icon>&nbsp;<span>Please wait while finding the next submission!</span></span
-        >
-    </h2>
+    <!--<h2>-->
+    <!--<span *ngIf="busy" style="color:grey"-->
+    <!--&gt;<fa-icon icon="spinner" [spin]="true"></fa-icon>&nbsp;<span>Please wait while finding the next submission!</span></span-->
+    <!--&gt;-->
+    <!--</h2>-->
 
     <!--<div class="row" *ngIf="modelingExercise">-->
     <!--<div class="col">-->
@@ -70,30 +70,23 @@
     <!--</div>-->
     <!--</div>-->
 
-    <div>
-        <button type="submit" (click)="previousState()" class="btn btn-info">
-            <fa-icon icon="arrow-left"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back">Back</span>
-        </button>
-        <button
-            *ngIf="(result?.rated && !done) || (result?.assessor && result.assessor.id !== userId && !result?.rated)"
-            [disabled]="busy"
-            class="btn btn-success"
-            (click)="assessNextOptimal(0)"
-        >
-            <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;Assess next submission
-        </button>
-    </div>
-    <br />
+    <!--<div>-->
+    <!--<button type="submit" (click)="previousState()" class="btn btn-info">-->
+    <!--<fa-icon icon="arrow-left"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back">Back</span>-->
+    <!--</button>-->
+    <!--<button-->
+    <!--*ngIf="(result?.rated && !done) || (result?.assessor && result.assessor.id !== userId && !result?.rated)"-->
+    <!--[disabled]="busy"-->
+    <!--class="btn btn-success"-->
+    <!--(click)="assessNextOptimal(0)"-->
+    <!--&gt;-->
+    <!--<fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;Assess next submission-->
+    <!--</button>-->
+    <!--</div>-->
+    <!--<br />-->
 
     <div class="editor-container">
-        <!--<div class="col-8 col-xl-9">-->
-        <jhi-apollon-diagram-tutor
-            *ngIf="submission"
-            class=""
-            [diagramType]="diagramType"
-            [model]="submission.model"
-        ></jhi-apollon-diagram-tutor>
-        <jhi-assessment-instructions *ngIf="modelingExercise" class="" [exercise]="modelingExercise"></jhi-assessment-instructions>
-        <!--</div>-->
+        <jhi-apollon-diagram-tutor *ngIf="submission" [diagramType]="diagramType" [model]="submission.model"></jhi-apollon-diagram-tutor>
+        <jhi-assessment-instructions *ngIf="modelingExercise" [exercise]="modelingExercise"></jhi-assessment-instructions>
     </div>
 </div>

@@ -3,23 +3,23 @@ import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ApollonOptions, Point, State } from '@ls1intum/apollon';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
-import { DiagramType, ModelingExercise, ModelingExerciseService } from '../entities/modeling-exercise';
-import { Result, ResultService } from '../entities/result';
-import { ModelingAssessmentService } from '../entities/modeling-assessment';
-import { AccountService } from '../core';
-import { Submission } from '../entities/submission';
+import { ModelingSubmission, ModelingSubmissionService } from '../../entities/modeling-submission';
+import { DiagramType, ModelingExercise, ModelingExerciseService } from '../../entities/modeling-exercise';
+import { Result, ResultService } from '../../entities/result';
+import { ModelingAssessmentService } from '../../entities/modeling-assessment';
+import { AccountService } from '../../core';
+import { Submission } from '../../entities/submission';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Conflict } from 'app/entities/modeling-assessment/conflict.model';
 import { isNullOrUndefined } from 'util';
 
 @Component({
-    selector: 'jhi-apollon-diagram-assessment',
-    templateUrl: './apollon-diagram-assessment.component.html',
-    styleUrls: ['./apollon-diagram-assessment.component.scss'],
+    selector: 'jhi-modeling-assessment',
+    templateUrl: './modeling-assessment.component.html',
+    styleUrls: ['./modeling-assessment.component.scss'],
     providers: [ModelingAssessmentService]
 })
-export class ApollonDiagramAssessmentComponent implements OnInit, OnDestroy {
+export class ModelingAssessmentComponent implements OnInit, OnDestroy {
     @ViewChild('editorContainer')
     editorContainer: ElementRef;
     @Output()

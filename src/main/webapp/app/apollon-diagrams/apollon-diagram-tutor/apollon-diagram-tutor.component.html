@@ -1,1 +1,7 @@
-<div #editorContainer ></div>
+<div *ngIf="resizable; else notResizable" class="resizable">
+    <div #editorContainer class="apollon-container"></div>
+    <div class="draggable-right"><fa-icon icon="grip-lines-vertical"></fa-icon></div>
+</div>
+<ng-template #notResizable>
+    <div #editorContainer class="apollon-container"></div>
+</ng-template>

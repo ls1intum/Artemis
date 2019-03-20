@@ -11,10 +11,11 @@ import { ApollonDiagramStudentComponent } from './apollon-diagram-student.compon
 import { ArTEMiSResultModule, ResultComponent } from '../entities/result';
 import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
-import { ApollonDiagramAssessmentComponent } from 'app/apollon-diagrams/apollon-diagram-assessment.component';
 import { ApollonDiagramTutorComponent } from './apollon-diagram-tutor/apollon-diagram-tutor.component';
 import { AssessmentInstructionsComponent } from './assessment-instructions/assessment-instructions.component';
 import { DragDropModule } from '@angular/cdk/drag-drop';
+import { ExpandableParagraphComponent } from 'app/apollon-diagrams/assessment-instructions/expandable-paragraph/expandable-paragraph.component';
+import { ModelingAssessmentComponent } from 'app/apollon-diagrams/modeling-assessment/modeling-assessment.component';
 
 const ENTITY_STATES = [...apollonDiagramsRoutes];
 
@@ -26,8 +27,9 @@ const ENTITY_STATES = [...apollonDiagramsRoutes];
         ApollonDiagramListComponent,
         ApollonQuizExerciseGenerationComponent,
         ApollonDiagramStudentComponent,
-        ApollonDiagramAssessmentComponent,
+        ModelingAssessmentComponent,
         ApollonDiagramTutorComponent,
+        ExpandableParagraphComponent,
         AssessmentInstructionsComponent
     ],
     entryComponents: [
