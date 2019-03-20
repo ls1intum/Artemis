@@ -5,20 +5,19 @@
         <ng-container *ngFor="let command of defaultCommands">
             <button class="btn btn-outline-secondary mr-1"
                     (click)="command.execute()"
-                    [ngbTooltip]="buttontitle">
+                    [ngbTooltip]= "(command.buttonTranslationString | translate)">
                 <fa-icon [icon]="command.buttonIcon" ></fa-icon>
             </button>
-            <ng-template #buttontitle>{{command.buttonTranslationString | translate}}</ng-template>
         </ng-container>
     </div>
-        <div class="btn-group col-xs-6" ngbDropdown role="group" aria-label="Button group with nested dropdown">
+        <div class="btn-group col-xs-6" ngbDropdown role="group" aria-label="Button group with nested dropdown" style="margin-left: 5px">
             <button class="btn btn-outline-secondary mr-1" id="dropdownBasic1" ngbDropdownToggle>Style</button>
             <div class="dropdown-menu" ngbDropdownMenu>
                 <ng-container *ngFor="let command of headerCommands" ><button class="dropdown-item" (click)="command.execute()">{{command.buttonTranslationString | translate}}</button></ng-container>
             </div>
         </div>
     </div>
-    <div class="tool-bar" *ngIf="specialCommands && specialCommands.length != 0" style="margin-top: 3px" >
+    <div class="tool-bar" *ngIf="specialCommands && specialCommands.length != 0" style="margin-top: 5px" >
         <ng-container *ngFor="let command of specialCommands">
             <div class="btn btn-group-sm btn-outline-secondary mr-1" (click)="command.execute()">
                 {{command.buttonTranslationString | translate}}
@@ -30,7 +29,7 @@
     <ace-editor #aceEditor [mode]="aseEditorOptions.mode"
                 [autoUpdateContent]="aseEditorOptions.autoUpdateContent" [(text)]="markdown"
                 (textChange)="markdownChange.emit($event)"
-                style="min-height: 200px; width:100%; overflow: auto;" class="form-control"></ace-editor>
+                style="min-height: 200px; width:100%; overflow: auto; margin-top: 5px" class="form-control"></ace-editor>
 </div>
 <!--End Editor-->
 
