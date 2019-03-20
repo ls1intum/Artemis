@@ -79,6 +79,8 @@ public class Result implements Serializable {
     // This explicit flag exists intentionally, as sometimes a Result is loaded from the database without
     // loading it's Feedback list. In this case you still want to know, if Feedback for this Result exists
     // without querying the server/database again.
+    // IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the moment
+    // all other exercise types should set this flag to false
     @Column(name = "hasFeedback")
     private Boolean hasFeedback;
 
@@ -217,14 +219,42 @@ public class Result implements Serializable {
         return this;
     }
 
+    /**
+     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without
+     * loading it's Feedback list. In this case you still want to know, if Feedback for this Result exists
+     * without querying the server/database again.
+     * IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the moment
+     * all other exercise types should set this flag to false
+     *
+     * @param hasFeedback
+     */
     public void setHasFeedback(Boolean hasFeedback) {
         this.hasFeedback = hasFeedback;
     }
 
+    /**
+     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without
+     * loading it's Feedback list. In this case you still want to know, if Feedback for this Result exists
+     * without querying the server/database again.
+     * IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the moment
+     * all other exercise types should set this flag to false
+     *
+     * @return
+     */
     public Boolean getHasFeedback() {
         return hasFeedback;
     }
 
+    /**
+     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without
+     * loading it's Feedback list. In this case you still want to know, if Feedback for this Result exists
+     * without querying the server/database again.
+     * IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the moment
+     * all other exercise types should set this flag to false
+     *
+     * @param hasFeedback
+     * @return
+     */
     public Result hasFeedback(Boolean hasFeedback) {
         this.hasFeedback = hasFeedback;
         return this;

@@ -113,9 +113,9 @@ public class ResultService {
      *
      * @param result
      */
-    public void createNewResult(Result result) {
+    public void createNewResult(Result result, boolean isProgrammingExerciseWithFeedback) {
         if (!result.getFeedbacks().isEmpty()) {
-            result.setHasFeedback(true);
+            result.setHasFeedback(isProgrammingExerciseWithFeedback);
         }
 
         //TODO: in this case we do not have a submission. However, it would be good to create one, even if it might be "empty"

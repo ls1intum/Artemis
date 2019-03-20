@@ -117,7 +117,7 @@ public class TextAssessmentResource extends AssessmentResource {
             Result result = new Result();
             result.setParticipation(participation);
             result.setSubmission(textSubmission.get());
-            resultService.createNewResult(result);
+            resultService.createNewResult(result, false);
             participation.addResult(result);
         }
 
@@ -159,7 +159,7 @@ public class TextAssessmentResource extends AssessmentResource {
             Result newResult = new Result();
             newResult.setSubmission(textSubmission.get());
             newResult.setExampleResult(true);
-            resultService.createNewResult(newResult);
+            resultService.createNewResult(newResult, false);
             return newResult;
         });
 
