@@ -641,64 +641,24 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * @function resetDropLocation
-     * @desc Resets the dropLocation
-     * @param dropLocation {dropLocation} the dropLocation, which will be reset
+     * @function resetSpot
+     * @desc Resets the spot
+     * @param spot {spot} the spot, which will be reset
      */
     resetSpot(spot: ShortAnswerSpot): void {
-        // Find matching DropLocation in backupQuestion
+        // Find matching spot in backupQuestion
         const backupSpot = this.backupQuestion.spots.find(currentSpot => currentSpot.id === spot.id);
-        // Find current index of our DropLocation
+        // Find current index of our spot
         const spotIndex = this.question.spots.indexOf(spot);
-        // Remove current DropLocation at given index and insert the backup at the same position
+        // Remove current spot at given index and insert the backup at the same position
         this.question.spots.splice(spotIndex, 1);
         this.question.spots.splice(spotIndex, 0, backupSpot);
     }
 
     /**
-     * @function resetSolution
-     * @desc Resets the whole solution
-     * @param solution {ShortAnswerSolution} the solution, which will be reset
-     */
-    resetSolution(solution: ShortAnswerSolution) {
-        // Find matching solution in backupQuestion
-        const backupSolution = this.backupQuestion.solutions.find(solutionBackup => solution.id === solutionBackup.id);
-        // Find current index of our solution
-        const solutionIndex = this.question.solutions.indexOf(solution);
-        // Remove current solution at given index and insert the backup at the same position
-        this.question.solutions.splice(solutionIndex, 1);
-        this.question.solutions.splice(solutionIndex, 0, backupSolution);
-    }
-
-    /**
-     * @function setSolutionInvalid
-     * @desc Set the solution invalid
-     * @param  solution {ShortAnswerSolution} the solution which should be deleted
-     */
-    setSolutionInvalid(solution: ShortAnswerSolution) {
-        this.question.solutions[this.question.solutions.indexOf(solution)].invalid = true;
-        // solution needs to be updated in correctMappings as well
-        this.question.correctMappings.find(
-            mapping =>
-                mapping.solution.id === this.question.solutions[this.question.solutions.indexOf(solution)].id)
-            .solution = this.question.solutions[this.question.solutions.indexOf(solution)];
-        this.questionUpdated.emit();
-    }
-
-    /**
-     * @function isSolutionInvalid
-     * @desc Checks if the given solution is invalid
-     * @param  solution {ShortAnswerSolution} the solution which should be checked
-     * @return {boolean} true if the answer is invalid
-     */
-    isSolutionInvalid(solution: ShortAnswerSolution) {
-        return solution.invalid;
-    }
-
-    /**
-     * @function deleteDropLocation
-     * @desc Delete the given drop location
-     * @param dropLocationToDelete {object} the drop location to delete
+     * @function deleteSpot
+     * @desc Delete the given spot
+     * @param spotToDelete {object} the spot to delete
      */
     deleteSpot(spotToDelete: ShortAnswerSpot): void {
         this.question.spots = this.question.spots.filter(spot => spot !== spotToDelete);
@@ -711,9 +671,9 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     }
 
     /**
-     * @function deleteMappingsForDropLocation
-     * @desc Delete all mappings for the given drop location
-     * @param dropLocation {object} the drop location for which we want to delete all mappings
+     * @function deleteMappingsForSpot
+     * @desc Delete all mappings for the given spot
+     * @param spot {object} the spot for which we want to delete all mappings
      */
     deleteMappingsForSpot(spot: ShortAnswerSpot): void {
         if (!this.question.correctMappings) {
@@ -724,6 +684,11 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         );
     }
 
+    /**
+     * @function setQuestionText
+     * @desc sets the new text as question.text and updates the UI (through textParts)
+     * @param id
+     */
     setQuestionText(id: string): void {
         const rowColumn: string [] = id.split('-').slice(1);
         this.textParts[rowColumn[0]][rowColumn[1]] = (<HTMLInputElement>document.getElementById(id)).value;

@@ -100,7 +100,7 @@
         </div>
         <div class="edit-sa-question" style="padding:20px" *ngIf="showPreview || reEvaluationInProgress">
             <h4 jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.visualModeHeadline"></h4>
-            <span jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.visualModeExplanation"></span>
+            <span *ngIf="!reEvaluationInProgress"  jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.visualModeExplanation"></span>
             <hr/>
             <div *ngIf="!reEvaluationInProgress" class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.addSpot" (click)="addSpotAtCursorVisualMode()"></div>
             <hr *ngIf="!reEvaluationInProgress" />
@@ -154,28 +154,11 @@
                     <div>
                         <textarea [(ngModel)]="solution.text" (ngModelChange)="questionUpdated.emit()"></textarea>
                     </div>
-
-                    <div class="delete-button" *ngIf="reEvaluationInProgress">
-                        <div class="re-evaluate-button" title="Set invalid" *ngIf="!solution.invalid"
-                             (click)="setSolutionInvalid(solution)">
-                            <fa-icon icon="ban" size="lg"></fa-icon>
-                        </div>
-                        <div class="re-evaluate-button" title="Reset" (click)="resetSolution(solution)">
-                            <fa-icon icon="undo" size="lg"></fa-icon>
-                        </div>
-                        <div class="re-evaluate-button" title="Delete" (click)="deleteSolution(solution)">
-                            <fa-icon icon="trash" size="lg"></fa-icon>
-                        </div>
-                    </div>
-
-                    <div class="delete-button" title="Delete" (click)="deleteSolution(solution)" *ngIf="!reEvaluationInProgress">
+                    <div class="delete-button" title="Delete" (click)="deleteSolution(solution)">
                         <fa-icon icon="trash" size="lg"></fa-icon>
                     </div>
                     <div class="drag-handle drag-handle-wrapper" title="Move">
                         <fa-icon icon="bars" class="drag-handle" size="lg"></fa-icon>
-                    </div>
-                    <div class="dimensions" *ngIf="reEvaluationInProgress">
-                        <span style="color:red" *ngIf="solution.invalid">{{'arTeMiSApp.quizQuestion.invalid' | translate}}</span>
                     </div>
                     <div class="mapping-numbers-wrapper">
                         <div *ngFor="let mapping of getMappingsForSolution(solution)">
