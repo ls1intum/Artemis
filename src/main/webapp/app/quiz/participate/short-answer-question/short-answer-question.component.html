@@ -21,7 +21,7 @@
             <input class="short-answer-question-input" *ngIf="!question.spots[i].invalid && submittedTexts[i] !== undefined && submittedTexts[i].isCorrect" style="background: lightgreen" disabled value="{{submittedTexts[i].text}}" size="{{submittedTexts[i].text.length + 2}}">
             <input class="short-answer-question-input" *ngIf="!question.spots[i].invalid && submittedTexts[i] !== undefined && !submittedTexts[i].isCorrect" style="background: red" disabled value="{{submittedTexts[i].text}}" size="{{submittedTexts[i].text.length + 2}}">
             <input class="short-answer-question-input" *ngIf="!question.spots[i].invalid && submittedTexts[i] === undefined" style="background: red" disabled >
-            <div *ngIf="question.spots[i].invalid" class="short-answer-question-display" [ngbTooltip]="('arTeMiSApp.quizQuestion.invalidText' | translate)">
+            <div *ngIf="question.spots[i].invalid" class="short-answer-question-display" [ngbTooltip]="('arTeMiSApp.shortAnswerSpot.invalidSpot' | translate)">
                 <input class="short-answer-question-input" style="background: grey" disabled value="{{submittedTexts[i].text}}" size="{{submittedTexts[i].text.length + 2}}">
             </div>
         </div>

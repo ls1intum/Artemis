@@ -17,7 +17,8 @@
             },
             "width": "Width",
             "invalid": "Invalid",
-            "question": "Question"
+            "question": "Question",
+            "invalidSpot": "Dieses Inputfeld wurde als ungültig markiert. Die eingesetzte Lösung wird als korrekt gewertet."
         }
     }
 }
