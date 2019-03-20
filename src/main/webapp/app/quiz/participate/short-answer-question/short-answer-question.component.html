@@ -18,9 +18,12 @@
     <div *ngIf="showResult && !showingSampleSolution">
         <div class="short-answer-question-display" *ngFor="let textPart of textBeforeSpots; let i = index">
             {{textPart}}
-            <input class="short-answer-question-input" *ngIf="submittedTexts[i] !== undefined && submittedTexts[i].isCorrect" style="background: lightgreen" disabled value="{{submittedTexts[i].text}}" size="{{submittedTexts[i].text.length + 2}}">
-            <input class="short-answer-question-input" *ngIf="submittedTexts[i] !== undefined && !submittedTexts[i].isCorrect" style="background: red" disabled value="{{submittedTexts[i].text}}" size="{{submittedTexts[i].text.length + 2}}">
-            <input class="short-answer-question-input" *ngIf="submittedTexts[i] === undefined" style="background: red" disabled >
+            <input class="short-answer-question-input" *ngIf="!question.spots[i].invalid && submittedTexts[i] !== undefined && submittedTexts[i].isCorrect" style="background: lightgreen" disabled value="{{submittedTexts[i].text}}" size="{{submittedTexts[i].text.length + 2}}">
+            <input class="short-answer-question-input" *ngIf="!question.spots[i].invalid && submittedTexts[i] !== undefined && !submittedTexts[i].isCorrect" style="background: red" disabled value="{{submittedTexts[i].text}}" size="{{submittedTexts[i].text.length + 2}}">
+            <input class="short-answer-question-input" *ngIf="!question.spots[i].invalid && submittedTexts[i] === undefined" style="background: red" disabled >
+            <div *ngIf="question.spots[i].invalid" class="short-answer-question-display" [ngbTooltip]="('arTeMiSApp.quizQuestion.invalidText' | translate)">
+                <input class="short-answer-question-input" style="background: grey" disabled value="{{submittedTexts[i].text}}" size="{{submittedTexts[i].text.length + 2}}">
+            </div>
         </div>
         <span>{{textAfterSpots}}</span>
     </div>

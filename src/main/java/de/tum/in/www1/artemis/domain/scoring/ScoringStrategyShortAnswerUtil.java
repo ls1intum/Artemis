@@ -33,6 +33,7 @@ public class ScoringStrategyShortAnswerUtil {
             foundCorrectSolution = false;
 
             if(submittedTextForSpot != null) {
+                submittedTextForSpot.setIsCorrect(false);
                 for (ShortAnswerSolution solution : solutionsForSpot) {
                     if (submittedTextForSpot.isSubmittedTextCorrect(submittedTextForSpot.getText(), solution.getText())
                         && notUsedSolutions.contains(solution)
