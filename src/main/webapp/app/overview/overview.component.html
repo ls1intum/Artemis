@@ -9,6 +9,7 @@
 <div class="row mb-3" *ngIf="nextRelevantExercise">
     <div class="col-12 pl-4 pr-4">
         <jhi-course-exercise-row class="pb-1" [exercise]="nextRelevantExercise" [course]="nextRelevantCourse"
+                                 [smallColumns]="true" [equalColumns]="false"
             [extendedLink]="true"></jhi-course-exercise-row>
     </div>
 </div>

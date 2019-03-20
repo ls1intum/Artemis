@@ -6,6 +6,7 @@ export * from './course-exercises/course-exercise-row.component';
 export * from './course-exercises/course-exercises.component';
 export * from './exercise-details/course-exercise-details.component';
 export * from './exercise-details/exercise-details-student-actions.component';
+export * from './exercise-details/difficulty-badge.component';
 export * from './exercise-details/exercise-action-button.component';
 export * from './overview-course-card.component';
 export * from './overview.route';
