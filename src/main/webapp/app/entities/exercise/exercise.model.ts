@@ -36,6 +36,12 @@ export const enum ParticipationStatus {
     INACTIVE = 'inactive'
 }
 
+export interface ExerciseCategory {
+    exerciseId: number;
+    category: string;
+    color: string;
+}
+
 export abstract class Exercise implements BaseEntity {
     public id: number;
     public problemStatement: string;

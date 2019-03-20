@@ -36,7 +36,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     readonly INITIALIZED = ParticipationStatus.INITIALIZED;
     readonly INACTIVE = ParticipationStatus.INACTIVE;
 
-    @HostBinding('class') classes = 'col';
+    @Input() @HostBinding('class.col') equalColumns = true;
+    @Input() @HostBinding('class.col-auto') smallColumns = false;
 
     @Input() exercise: Exercise;
     @Input() courseId: number;
