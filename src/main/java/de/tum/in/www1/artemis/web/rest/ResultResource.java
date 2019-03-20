@@ -75,7 +75,7 @@ public class ResultResource {
     }
 
     /**
-     * POST  /results : Create a new manual result.
+     * POST  /results : Create a new manual result for a programming exercise (Do NOT use it for other exercise types)
      * NOTE: we deviate from the standard URL scheme to avoid conflicts with a different POST request on results
      *
      * @param result the result to create
@@ -104,7 +104,7 @@ public class ResultResource {
             throw new BadRequestAlertException("In case feedback is present, feedback text and detail text are mandatory.", ENTITY_NAME, "feedbackTextOrDetailTextNull");
         }
 
-        resultService.createNewResult(result);
+        resultService.createNewResult(result, true);
 
         return ResponseEntity.created(new URI("/api/results/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))

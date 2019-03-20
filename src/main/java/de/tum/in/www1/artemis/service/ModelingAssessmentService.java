@@ -82,7 +82,7 @@ public class ModelingAssessmentService extends AssessmentService {
             feedback.setType(FeedbackType.MANUAL);
             result.addFeedback(feedback);
         }
-        result.setHasFeedback(true);
+        result.setHasFeedback(false);
 
         if (result.getSubmission() == null) {
             result.setSubmission(modelingSubmission);

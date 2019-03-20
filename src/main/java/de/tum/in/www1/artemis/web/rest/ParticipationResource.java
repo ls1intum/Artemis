@@ -258,7 +258,7 @@ public class ParticipationResource {
         Result result = new Result();
         result.setParticipation(participation);
         result.setSubmission(textSubmission.get());
-        resultService.createNewResult(result);
+        resultService.createNewResult(result, false);
         participation.setResults(new HashSet<>());
         participation.addResult(result);
 
