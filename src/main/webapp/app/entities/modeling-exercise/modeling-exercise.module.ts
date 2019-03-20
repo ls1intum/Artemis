@@ -19,11 +19,13 @@ import {
 import { SortByModule } from 'app/components/pipes';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor';
+import { ArTEMiSCategorySelectorModule } from 'app/components/category-selector/category-selector.module';
+import { ArTEMiSDifficultyPickerModule } from 'app/components/exercise/difficulty-picker/difficulty-picker.module';
 
 const ENTITY_STATES = [...modelingExerciseRoute, ...modelingExercisePopupRoute];
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, FormDateTimePickerModule, ArTEMiSMarkdownEditorModule],
+    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, FormDateTimePickerModule, ArTEMiSMarkdownEditorModule, ArTEMiSCategorySelectorModule, ArTEMiSDifficultyPickerModule],
     declarations: [
         ModelingExerciseComponent,
         ModelingExerciseDetailComponent,

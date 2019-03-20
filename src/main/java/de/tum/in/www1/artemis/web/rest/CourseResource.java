@@ -526,4 +526,32 @@ public class CourseResource {
 
         return ResponseEntity.ok().body(course);
     }
+
+    /**
+     * GET  /courses/:courseId/categories : Returns all categories used in a course
+     *
+     * @param courseId the id of the course to get the categories from
+     * @return the ResponseEntity with status 200 (OK) and the list of categories or with status 404 (Not Found)
+     */
+    @GetMapping(value = "/courses/{courseId}/categories")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<String>> getCategoriesInCourse(@PathVariable Long courseId) {
+        long start = System.currentTimeMillis();
+        log.debug("REST request to get categories of Course : {}", courseId);
+
+        User user = userService.getUser();
+        Course course = courseService.findOne(courseId);
+
+        List<Exercise> exercises = exerciseService.findAllExercisesByCourseId(course, user);
+        List<String> categories = new ArrayList<>();
+        for (Exercise exercise : exercises) {
+            categories.addAll(exercise.getCategories());
+        }
+
+
+        log.debug("getCategoriesInCourse took " + (System.currentTimeMillis() - start) + "ms");
+
+        return ResponseEntity.ok().body(categories);
+    }
 }

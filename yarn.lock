@@ -7072,6 +7072,14 @@ ngx-cacheable@1.1.3:
   resolved "https://registry.yarnpkg.com/ngx-cacheable/-/ngx-cacheable-1.1.3.tgz#f4f9572c440ad4e587e40f7d1ad376b4573e8dbd"
   integrity sha512-Pc0Fp8lSlw3Ut2QQh1AhsMPKO1WMtt9V5plrMJcq/nx1EJe3kpUz0+MK+w3wqUMT5ZTE7B9/e4WkJsRXtpBa3w==
 
+ngx-chips@^2.0.0-beta.0:
+  version "2.0.0-beta.0"
+  resolved "https://registry.yarnpkg.com/ngx-chips/-/ngx-chips-2.0.0-beta.0.tgz#34ee6552ff2f3fc23d54ecba572a70022ac2e34a"
+  integrity sha512-TND8OAaD1FBt5RG0TS8vhDOpVIXakQSTucQKD8GDhaNSz+92ba2WAZA5snzI5exVs52hjfCdUTAjam6d/OO9Ug==
+  dependencies:
+    ng2-material-dropdown "0.10.1"
+    tslib "^1.9.0"
+
 ngx-clipboard@12.0.0:
   version "12.0.0"
   resolved "https://registry.yarnpkg.com/ngx-clipboard/-/ngx-clipboard-12.0.0.tgz#5ad5e10545fc4c8e8ca99f4197c3305f6bfbde53"

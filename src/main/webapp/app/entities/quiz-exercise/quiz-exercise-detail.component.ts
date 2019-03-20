@@ -23,6 +23,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { Observable } from 'rxjs/Observable';
 import { EditDragAndDropQuestionComponent, EditMultipleChoiceQuestionComponent, EditShortAnswerQuestionComponent } from 'app/quiz/edit';
 import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
+import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 
 interface Reason {
     translateKey: string;
@@ -96,6 +97,9 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     statusOptionsPractice: Option[] = [new Option(false, 'Closed'), new Option(true, 'Open for Practice')];
     statusOptionsActive: Option[] = [new Option(true, 'Active')];
 
+    exerciseCategories: ExerciseCategory[];
+    existingCategories: ExerciseCategory[];
+
     constructor(
         private route: ActivatedRoute,
         private courseService: CourseService,
@@ -105,6 +109,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         private router: Router,
         private translateService: TranslateService,
         private fileUploaderService: FileUploaderService,
+        private exerciseService: ExerciseService,
         private jhiAlertService: JhiAlertService,
         private location: Location,
         private changeDetector: ChangeDetectorRef,
@@ -175,6 +180,13 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         if (!this.quizExercise.course) {
             this.quizExercise.course = this.course;
         }
+        this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.quizExercise);
+        this.courseService.findAllCategoriesOfCourse(this.quizExercise.course.id).subscribe(
+            (res: HttpResponse<string[]>) => {
+                this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body);
+            },
+            (res: HttpErrorResponse) => this.onError(res)
+        );
         this.updateDuration();
         this.cacheValidation();
     }
@@ -183,6 +195,11 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         if (changes.course || changes.quizExercise) {
             this.init();
         }
+    }
+
+    updateCategories(categories: ExerciseCategory[]) {
+        this.quizExercise.categories = categories.map(el => JSON.stringify(el));
+        this.cacheValidation();
     }
 
     /**
@@ -478,14 +495,25 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         if (!this.quizExercise || !this.savedEntity) {
             return false;
         }
-        const keysToCompare = ['title', 'duration', 'isPlannedToStart', 'isVisibleBeforeStart', 'isOpenForPractice'];
+        const keysToCompare = ['title', 'difficulty', 'duration', 'isPlannedToStart', 'isVisibleBeforeStart', 'isOpenForPractice'];
 
         // Unsaved changes if any of the stated object key values are not equal or the questions/release dates differ
         return (
             keysToCompare.some(key => this.quizExercise[key] !== this.savedEntity[key]) ||
             !this.areDatesIdentical(this.quizExercise.releaseDate, this.savedEntity.releaseDate) ||
+            !this.areCategoriesIdentical(this.quizExercise.categories, this.savedEntity.categories) ||
             !this.areQuizExerciseEntityQuestionsIdentical(this.quizExercise.quizQuestions, this.savedEntity.quizQuestions)
         );
+    }
+
+    areCategoriesIdentical(categoriesUsed: string[], categoriesSaved: string[]): boolean {
+        if (!categoriesUsed) {
+            categoriesUsed = [];
+        }
+        if (!categoriesSaved) {
+            categoriesSaved = [];
+        }
+        return JSON.stringify(categoriesUsed).toLowerCase() === JSON.stringify(categoriesSaved).toLowerCase();
     }
 
     /**
@@ -677,7 +705,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
             if (question.title.length >= 250) {
                 invalidReasons.push({
                     translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionTitleLength',
-                    translateValues: {index: index + 1}
+                    translateValues: { index: index + 1 }
                 });
             }
 
