@@ -252,6 +252,7 @@ public class CourseResource {
     @GetMapping("/courses/for-dashboard")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public List<Course> getAllCoursesForDashboard(Principal principal) {
+        long start = System.currentTimeMillis();
         log.debug("REST request to get all Courses the user has access to with exercises, participations and results");
         User user = userService.getUserWithGroupsAndAuthorities();
 
@@ -261,13 +262,16 @@ public class CourseResource {
         // get all participations of this user
         List<Participation> participations = participationService.findWithResultsByStudentUsername(principal.getName());
 
+        long exerciseCount = 0;
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
                 // add participation with result to each exercise
                 exercise.filterForCourseDashboard(participations, principal.getName());
+                exerciseCount++;
             }
         }
-
+        long end = System.currentTimeMillis();
+        log.info("/courses/for-dashboard in " + (end-start) + "ms for " + courses.size() + " courses with " + exerciseCount + " exercises for user " + principal.getName());
         return courses;
     }
 
