@@ -16,6 +16,6 @@ export class ExplanationCommand extends SpecialCommand {
     }
 
     getIdentifier(): string {
-        return '[-e]';
+        return '-e]';
     }
 }
