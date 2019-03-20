@@ -20,7 +20,6 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
 
-
     private subscription: Subscription;
 
     quizExercise: QuizExercise;

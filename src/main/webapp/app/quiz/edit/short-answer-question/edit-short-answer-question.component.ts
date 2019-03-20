@@ -677,7 +677,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      */
     setSolutionInvalid(solution: ShortAnswerSolution) {
         this.question.solutions[this.question.solutions.indexOf(solution)].invalid = true;
-        //solution needs to be updated in correctMappings aswell
+        // solution needs to be updated in correctMappings as well
         this.question.correctMappings.find(
             mapping =>
                 mapping.solution.id === this.question.solutions[this.question.solutions.indexOf(solution)].id)
@@ -701,11 +701,6 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @param dropLocationToDelete {object} the drop location to delete
      */
     deleteSpot(spotToDelete: ShortAnswerSpot): void {
-        console.log("spots before:" );
-        console.log(this.question.spots);
-        console.log("mappings before:");
-        console.log(this.question.correctMappings);
-
         this.question.spots = this.question.spots.filter(spot => spot !== spotToDelete);
         this.deleteMappingsForSpot(spotToDelete);
 
@@ -713,11 +708,6 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         this.textParts = this.textParts.map(part => part.filter(text => text !== '[-spot ' + spotToDelete.spotNr + ']'));
 
         this.question.text = this.textParts.map(textPart => textPart.join(' ')).join('\n');
-
-        console.log("spots after:" );
-        console.log(this.question.spots);
-        console.log("mappings after:");
-        console.log(this.question.correctMappings);
     }
 
     /**
@@ -734,7 +724,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         );
     }
 
-    setQuestionText(id: string):void {
+    setQuestionText(id: string): void {
         const rowColumn: string [] = id.split('-').slice(1);
         this.textParts[rowColumn[0]][rowColumn[1]] = (<HTMLInputElement>document.getElementById(id)).value;
         this.question.text = this.textParts.map(textPart => textPart.join(' ')).join('\n');
