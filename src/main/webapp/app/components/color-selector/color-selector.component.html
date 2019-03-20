@@ -1,0 +1,6 @@
+<div class="color-selector" [style.top.px]="colorSelectorPosition.top"
+    [style.left.px]="colorSelectorPosition.left" *ngIf="showColorSelector">
+    <div class="tag-color-selector" *ngFor="let tagColor of tagColors" (click)="selectColorForTag(tagColor)">
+        <div class="color-element" [ngStyle]="{backgroundColor: tagColor}"></div>
+    </div>
+</div>

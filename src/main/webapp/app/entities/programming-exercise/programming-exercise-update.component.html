@@ -23,7 +23,16 @@
                     <input required type="text" class="form-control" name="shortName" id="field_shortName" minlength="3" [pattern]="shortNamePattern"
                            [(ngModel)]="programmingExercise.shortName" [readonly]="programmingExercise.id"/>
                 </div>
-
+                <div class="form-group-narrow position-relative">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.categories">Categories</label>
+                    <jhi-category-selector [exerciseCategories]="exerciseCategories" [existingCategories]="existingCategories" (selectedCategories)="updateCategories($event)"></jhi-category-selector>
+                </div>
+                <div class="form-group-narrow">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.difficulty">Difficulty</label>
+                    <div>
+                        <jhi-difficulty-picker [exercise]="programmingExercise"></jhi-difficulty-picker>
+                    </div>
+                </div>
                 <div class="form-group-narrow">
                     <label class="label-narrow" jhiTranslate="arTeMiSApp.programmingExercise.programmingLanguage" for="field_programmingLanguage">Programming Language</label>
                     <select required class="form-control" [(ngModel)]="programmingExercise.programmingLanguage" name="programmingLanguage" id="field_programmingLanguage" [disabled]="programmingExercise.id">

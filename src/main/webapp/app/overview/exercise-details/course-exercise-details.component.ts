@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
-import { Exercise, ExerciseService, ExerciseType, getIcon } from 'app/entities/exercise';
+import { Exercise, ExerciseCategory, ExerciseService, ExerciseType, getIcon } from 'app/entities/exercise';
 import { CourseScoreCalculationService, CourseService } from 'app/entities/course';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
@@ -29,6 +29,7 @@ export class CourseExerciseDetailsComponent implements OnInit {
     public exerciseStatusBadge = 'badge-success';
     public sortedResults: Result[];
     public sortedHistoryResult: Result[];
+    public exerciseCategories: ExerciseCategory[];
 
     getIcon = getIcon;
 
@@ -61,6 +62,7 @@ export class CourseExerciseDetailsComponent implements OnInit {
                     const startingElement = sortedResultLength - MAX_RESULT_HISTORY_LENGTH;
                     this.sortedHistoryResult = this.sortedResults.slice(startingElement, sortedResultLength);
                 }
+                this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
             });
         }
     }

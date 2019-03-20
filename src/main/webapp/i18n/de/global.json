@@ -217,7 +217,8 @@
         "invalid.solution.repository.url": "Die Lösung Repository URL scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für ArTEMiS zugänglich ist.",
         "idnull": "Ungültige ID"
     },
-    "footer": "Du hast einen Fehler gefunden oder Feedback zu ArTEMiS? <a href=\"mailto:artemis.ase@in.tum.de\">Lass es uns bitte wissen!</a>",
+    "footer": "Du hast einen Fehler gefunden oder Feedback zu ArTEMiS? <a href=\"mailto:{{email}}\">Lass es uns bitte wissen!</a>",
+    "releaseNotes": "Versionshinweise",
     "justNow": "gerade eben",
     "pendingChanges": "WARNUNG: Du hast nicht gespeicherte Änderungen. Klicke Abbrechen, um zurück zu gehen und deine Änderungen zu speichern oder klicke OK, um die Änderungen zu verwerfen.",
     "overview": {
