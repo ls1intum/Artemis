@@ -146,7 +146,7 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
             return;
         } else {
             const parseArray = this.markdown
-            .split('\[')
+            .split('\[-')
             .map(this.parseLineForSpecialCommand);
             this.textWithSpecialCommandFound.emit(parseArray);
         }

@@ -1,5 +1,4 @@
 import {
-    AfterViewInit,
     Component,
     ElementRef,
     EventEmitter,
@@ -28,14 +27,13 @@ import { ExplanationCommand } from 'app/markdown-editor/specialCommands/explanat
 import { SpecialCommand } from 'app/markdown-editor/specialCommands/specialCommand';
 import { MarkdownEditorComponent } from 'app/markdown-editor';
 import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
-import {CodeCommand, LinkCommand, PictureuploadCommand} from 'app/markdown-editor/commands';
 
 @Component({
     selector: 'jhi-edit-drag-and-drop-question',
     templateUrl: './edit-drag-and-drop-question.component.html',
     providers: [ArtemisMarkdown, DragAndDropQuestionUtil]
 })
-export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, EditQuizQuestion, AfterViewInit {
+export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, EditQuizQuestion {
     @ViewChild('clickLayer')
     private clickLayer: ElementRef;
     @ViewChild('markdownEditor')
@@ -142,11 +140,6 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
         if (changes.question && changes.question.currentValue != null) {
             this.backupQuestion = JSON.parse(JSON.stringify(this.question));
         }
-    }
-
-    ngAfterViewInit(): void {
-        this.markdownEditor.removeCommand(LinkCommand);
-        this.markdownEditor.removeCommand(PictureuploadCommand)
     }
 
     /**

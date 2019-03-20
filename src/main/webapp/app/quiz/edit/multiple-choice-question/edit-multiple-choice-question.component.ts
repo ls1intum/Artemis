@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewChild, ChangeDetectorRef, AfterViewInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { MultipleChoiceQuestion } from 'app/entities/multiple-choice-question';
 import { AnswerOption } from 'app/entities/answer-option';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
@@ -12,14 +12,13 @@ import {
     HintCommand,
 } from 'app/markdown-editor/specialCommands';
 import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
-import {LinkCommand, PictureuploadCommand} from 'app/markdown-editor/commands';
 
 @Component({
     selector: 'jhi-edit-multiple-choice-question',
     templateUrl: './edit-multiple-choice-question.component.html',
     providers: [ArtemisMarkdown]
 })
-export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQuestion, AfterViewInit {
+export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQuestion {
 
     @ViewChild('markdownEditor')
     private markdownEditor: MarkdownEditorComponent;
@@ -58,11 +57,6 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
         this.questionEditorText = this.generateMarkdown();
     }
 
-    ngAfterViewInit(): void {
-        this.markdownEditor.removeCommand(LinkCommand);
-        this.markdownEditor.removeCommand(PictureuploadCommand)
-    }
-
     /**
      * @function generateMarkdown
      * @desc Generate the markdown text for this question
@@ -77,7 +71,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
             this.question.answerOptions
                 .map(
                     answerOption =>
-                        (answerOption.isCorrect ? '[x]' : '[ ]') + ' ' + this.artemisMarkdown.generateTextHintExplanation(answerOption)
+                        (answerOption.isCorrect ? '[-x]' : '[- ]') + ' ' + this.artemisMarkdown.generateTextHintExplanation(answerOption)
                 )
                 .join('\n');
         return markdownText;
