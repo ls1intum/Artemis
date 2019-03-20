@@ -251,7 +251,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         incorrectSampleAnswerOption.text = 'Enter an incorrect answer option here';
 
         mcQuestion.answerOptions = [correctSampleAnswerOption, incorrectSampleAnswerOption];
-
         this.quizExercise.quizQuestions.push(mcQuestion);
         this.cacheValidation();
     }
@@ -274,7 +273,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         dndQuestion.dropLocations = [];
         dndQuestion.dragItems = [];
         dndQuestion.correctMappings = [];
-
         this.quizExercise.quizQuestions.push(dndQuestion);
         this.cacheValidation();
     }
@@ -297,7 +295,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         shortAnswerQuestion.spots = [];
         shortAnswerQuestion.solutions = [];
         shortAnswerQuestion.correctMappings = [];
-
         this.quizExercise.quizQuestions.push(shortAnswerQuestion);
         this.cacheValidation();
     }
@@ -655,7 +652,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
                 }
             }
         }
-
         this.quizExercise.quizQuestions.forEach(function(question: QuizQuestion, index: number) {
             if (!question.title || question.title === '') {
                 invalidReasons.push({
@@ -904,14 +900,11 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      */
     save(): void {
         this.onDateTimeChange();
-
         if (this.hasSavedQuizStarted || !this.pendingChangesCache || !this.quizIsValid) {
             return;
         }
-
         this.isSaving = true;
         this.parseAllQuestions();
-
         if ( this.quizExercise.id !== undefined) {
             this.quizExerciseService.update(this.quizExercise).subscribe(
                 (quizExerciseResponse: HttpResponse<QuizExercise>) => {

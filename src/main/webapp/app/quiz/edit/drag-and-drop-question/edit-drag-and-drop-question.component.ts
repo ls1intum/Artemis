@@ -124,7 +124,6 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
         /** Initialize DropLocation and MouseEvent objects **/
         this.currentDropLocation = new DropLocation();
         this.mouse = new DragAndDropMouseEvent();
-
         this.questionEditorText = this.artemisMarkdown.generateTextHintExplanation(this.question);
     }
 
@@ -815,20 +814,33 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
         this.prepareForSave();
     }
 
-    changesInMarkdown() {
+    /**
+     * @function changesInMarkdown
+     * @desc detection of  changes in the markdown editor
+     */
+    changesInMarkdown(): void {
         console.log('markdown');
         this.questionUpdated.emit();
         this.changeDetector.detectChanges();
         this.prepareForSave();
     }
 
+    /**
+     * @function specialCommandsFound
+     * @desc call the specialCommandFoundSave for each element of the array
+     * @param specialCommands {array} text with the corresponding special command
+     */
     specialCommandsFound(specialCommands: [string, SpecialCommand][]): void {
         this.cleanupQuestion();
-        specialCommands.forEach(command => this.specialCommandFound(command[0], command[1]));
+        specialCommands.forEach(command => this.specialCommandFoundSave(command[0], command[1]));
     }
 
-    specialCommandFound(textLine: string, specialCommand: SpecialCommand) {
-
+    /**
+     * @function  specialCommandFoundSave
+     * @desc detection of  changes in the markdown editor
+     * @param textLine {string} and specialCommand {object} text with the corresponding special command
+     */
+    specialCommandFoundSave(textLine: string, specialCommand: SpecialCommand) {
         if (specialCommand === null && textLine.length > 0) {
             this.question.text = textLine;
         }
@@ -840,12 +852,20 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
             }
     }
 
+    /**
+     * @function cleanupQuestion
+     * @desc Reset of the question
+     */
     private cleanupQuestion() {
         this.question.text = null;
         this.question.explanation = null;
         this.question.hint = null;
     }
 
+    /**
+     * @function prepareForSave
+     * @desc triggers the saving process for the question
+     */
     prepareForSave(): void {
         this.cleanupQuestion();
         this.markdownEditor.parse();

@@ -123,7 +123,6 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
             },
             this
         );
-
         this.changeDetector.detectChanges();
     }
 
@@ -573,6 +572,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
        this.questionEditor.getEditor().clearSelection();
     }
 
+    // TODO: Method to use when Markdown Editor is integrated
     prepareForSave(): void {
         console.log('Did call EditShortAnswerQuestionComponent.prepareForSave');
     }
