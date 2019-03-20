@@ -1,11 +1,12 @@
 import { Component, Output, EventEmitter, Input, OnInit } from '@angular/core';
+import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 
 export interface Coordinates {
     left: number;
     top: number;
 }
 
-const DEFAULT_COLORS = ['#6ae8ac', '#9dca53', '#94a11c', '#691b0b', '#ad5658', '#1b97ca', '#0d3cc2', '#0ab84f'];
+const DEFAULT_COLORS = [ARTEMIS_DEFAULT_COLOR, '#9dca53', '#94a11c', '#691b0b', '#ad5658', '#1b97ca', '#0d3cc2', '#0ab84f'];
 
 @Component({
     selector: 'jhi-color-selector',

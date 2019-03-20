@@ -1,5 +1,5 @@
 <div class="card">
-    <div class="card-header bg-{{randomColor}} text-white" routerLink="/overview/{{course.id}}">
+    <div class="card-header text-white" routerLink="/overview/{{course.id}}" [ngStyle]="{backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR}">
         <h5 class="card-title text-center">
             {{course.title}}
         </h5>
