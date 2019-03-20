@@ -10,7 +10,6 @@ import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { Course } from './course.model';
 import { CourseService } from './course.service';
 import { ColorSelectorComponent } from 'app/components/color-selector/color-selector.component';
-import { ExerciseCategory } from 'app/entities/exercise';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 
 @Component({
@@ -65,7 +64,7 @@ export class CourseUpdateComponent implements OnInit {
         }
     }
 
-    openColorSelector(event: MouseEvent, tagItem: ExerciseCategory) {
+    openColorSelector(event: MouseEvent) {
         this.colorSelector.openColorSelector(event);
     }
 
