@@ -24,13 +24,6 @@ export class OverviewCourseCardComponent implements OnInit {
     ngOnInit() {
     }
 
-    // TODO: remove again!
-    get randomColor(): string {
-        const colors = ['danger', 'info', 'success', 'warning'];
-        const randomIndex = (this.course.id % colors.length) - 1;
-        return colors[randomIndex];
-    }
-
     displayTotalRelativeScore(): number {
         if (this.course.exercises.length > 0) {
             return this.courseScoreCalculationService.calculateTotalScores(this.course.exercises).get('relativeScore');
