@@ -21,6 +21,7 @@ import {
     OverviewCourseCardComponent,
     ExerciseActionButtonComponent,
     CourseExerciseDetailsComponent,
+    DifficultyBadgeComponent,
     ExerciseDetailsStudentActionsComponent
 } from './';
 import { ArTEMiSResultModule } from 'app/entities/result';
@@ -49,6 +50,7 @@ const ENTITY_STATES = [
         ExerciseActionButtonComponent,
         CourseGradeBookComponent,
         ExerciseDetailsStudentActionsComponent,
+        DifficultyBadgeComponent,
         ExerciseTypePipe,
         SidePanelComponent
     ],
