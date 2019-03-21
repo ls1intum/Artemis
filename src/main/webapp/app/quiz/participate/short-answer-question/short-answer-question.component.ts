@@ -4,6 +4,7 @@ import { ShortAnswerQuestion } from '../../../entities/short-answer-question';
 import { ShortAnswerSolution } from '../../../entities/short-answer-solution';
 import { ShortAnswerSubmittedText } from 'app/entities/short-answer-submitted-text';
 import { ShortAnswerQuestionUtil } from '../../../components/util/short-answer-question-util.service';
+import {ShortAnswerSpot} from "app/entities/short-answer-spot";
 
 @Component({
     selector: 'jhi-short-answer-question',
@@ -58,6 +59,7 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
     textBeforeSpots: string[];
     textAfterSpots: string[];
     sampleSolutions: ShortAnswerSolution[] =  [];
+    textParts: String [][];
 
     constructor(
         private artemisMarkdown: ArtemisMarkdown,
@@ -83,6 +85,12 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
         // the last part that comes after the last spot tag
         this.textAfterSpots = this.textWithoutSpots.slice(this.textWithoutSpots.length - 1);
 
+
+
+
+        this.textParts = this.question.text.split(/\n/g).map(t => t.split(/\s+(?![^[]]*])/g));
+
+
         this.rendered.text = artemisMarkdown.htmlForMarkdown(this.question.text);
         this.rendered.hint = artemisMarkdown.htmlForMarkdown(this.question.hint);
         this.rendered.explanation = artemisMarkdown.htmlForMarkdown(this.question.explanation);
@@ -100,6 +108,25 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
             submittedText.spot = this.question.spots[id];
             this.submittedTexts.push(submittedText);
         }
+
+        let i = 0;
+        let j = 0;
+        for (const textpart of this.textParts) {
+            for (const element of textpart) {
+                console.log(element.toString());
+                if (this.isInputField(element.toString())) {
+                    const submittedText = new ShortAnswerSubmittedText();
+                    submittedText.text = (<HTMLInputElement>document.getElementById('solution-' + i + '-' + j + '-' + this._question.id)).value;
+                    submittedText.spot = this.getSpot(this.getSpotNr(element.toString()));
+                    console.log(submittedText);
+                    this.submittedTexts.push(submittedText);
+                }
+                j++;
+            }
+            i++;
+        }
+
+
         this.submittedTextsChange.emit(this.submittedTexts);
         /** Only execute the onMappingUpdate function if we received such input **/
         if (this.fnOnSubmittedTextUpdate) {
@@ -121,5 +148,31 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
      */
     hideSampleSolution() {
         this.showingSampleSolution = false;
+    }
+
+
+    // add functions below to util class
+    /**
+     * checks if text is an input field (check for spot tag)
+     * @param text
+     */
+    isInputField(text: string): boolean {
+        return !(text.search(/\[-spot/g) === -1);
+    }
+
+    /**
+     * gets just the spot number
+     * @param text
+     */
+    getSpotNr(text: string): number {
+        return +text.split(/\[-spot/g).join('').split(']').join('').trim();
+    }
+
+    /**
+     * gets the spot for a specific spotNr
+     * @param spotNr
+     */
+    getSpot(spotNr: number): ShortAnswerSpot  {
+        return this.question.spots.filter(spot => spot.spotNr === spotNr)[0];
     }
 }

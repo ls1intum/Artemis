@@ -367,7 +367,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         // split text before first option tag
         const questionText = editor.getValue().split(/\[-option /g)[0].trim();
         // split on every whitespace. !!!only exception: [-spot 1] is not split!!!
-        this.textParts = questionText.split(/\n+/g).map((t: String) => t.split(/\s+(?![^[]]*])/g));
+        this.textParts = questionText.split(/\n/g).map((t: String) => t.split(/\s+(?![^[]]*])/g));
         this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]] = '[-spot ' + this.numberOfSpot + ']';
         // recreation of text from array
         this.question.text = this.textParts.map(textPart => textPart.join(' ')).join('\n');
@@ -564,7 +564,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      */
     togglePreview(): void {
        this.showPreview = !this.showPreview;
-       this.textParts = this.question.text.split(/\n+/g).map(t => t.split(/\s+(?![^[]]*])/g));
+       this.textParts = this.question.text.split(/\n/g).map(t => t.split(/\s+(?![^[]]*])/g));
        this.questionEditor.getEditor().setValue(this.generateMarkdown());
        this.questionEditor.getEditor().clearSelection();
     }
