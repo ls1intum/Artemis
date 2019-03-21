@@ -39,12 +39,12 @@ public class ProgrammingExercise extends Exercise implements Serializable {
     @Column(name = "package_name")
     private String packageName;
 
-    @OneToOne(orphanRemoval=true)
+    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval=true, fetch = FetchType.LAZY)
     @JoinColumn(unique = true)
     @JsonIgnoreProperties("exercise")
     private Participation templateParticipation;
 
-    @OneToOne
+    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval=true, fetch = FetchType.LAZY)
     @JoinColumn(unique = true)
     @JsonIgnoreProperties("exercise")
     private Participation solutionParticipation;
