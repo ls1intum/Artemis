@@ -8,6 +8,7 @@ import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -40,6 +41,7 @@ public class LectureResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/lectures")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Lecture> createLecture(@RequestBody Lecture lecture) throws URISyntaxException {
         log.debug("REST request to save Lecture : {}", lecture);
         if (lecture.getId() != null) {
@@ -61,6 +63,7 @@ public class LectureResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/lectures")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Lecture> updateLecture(@RequestBody Lecture lecture) throws URISyntaxException {
         log.debug("REST request to update Lecture : {}", lecture);
         if (lecture.getId() == null) {
@@ -73,23 +76,13 @@ public class LectureResource {
     }
 
     /**
-     * GET  /lectures : get all the lectures.
-     *
-     * @return the ResponseEntity with status 200 (OK) and the list of lectures in body
-     */
-    @GetMapping("/lectures")
-    public List<Lecture> getAllLectures() {
-        log.debug("REST request to get all Lectures");
-        return lectureRepository.findAll();
-    }
-
-    /**
      * GET  /lectures/:id : get the "id" lecture.
      *
      * @param id the id of the lecture to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the lecture, or with status 404 (Not Found)
      */
     @GetMapping("/lectures/{id}")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Lecture> getLecture(@PathVariable Long id) {
         log.debug("REST request to get Lecture : {}", id);
         Optional<Lecture> lecture = lectureRepository.findById(id);
@@ -103,6 +96,7 @@ public class LectureResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/lectures/{id}")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteLecture(@PathVariable Long id) {
         log.debug("REST request to delete Lecture : {}", id);
         lectureRepository.deleteById(id);
