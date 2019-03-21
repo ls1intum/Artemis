@@ -8,6 +8,7 @@ import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -40,6 +41,7 @@ public class AttachmentResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/attachments")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Attachment> createAttachment(@RequestBody Attachment attachment) throws URISyntaxException {
         log.debug("REST request to save Attachment : {}", attachment);
         if (attachment.getId() != null) {
@@ -61,6 +63,7 @@ public class AttachmentResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/attachments")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Attachment> updateAttachment(@RequestBody Attachment attachment) throws URISyntaxException {
         log.debug("REST request to update Attachment : {}", attachment);
         if (attachment.getId() == null) {
@@ -73,23 +76,13 @@ public class AttachmentResource {
     }
 
     /**
-     * GET  /attachments : get all the attachments.
-     *
-     * @return the ResponseEntity with status 200 (OK) and the list of attachments in body
-     */
-    @GetMapping("/attachments")
-    public List<Attachment> getAllAttachments() {
-        log.debug("REST request to get all Attachments");
-        return attachmentRepository.findAll();
-    }
-
-    /**
      * GET  /attachments/:id : get the "id" attachment.
      *
      * @param id the id of the attachment to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the attachment, or with status 404 (Not Found)
      */
     @GetMapping("/attachments/{id}")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Attachment> getAttachment(@PathVariable Long id) {
         log.debug("REST request to get Attachment : {}", id);
         Optional<Attachment> attachment = attachmentRepository.findById(id);
@@ -103,6 +96,7 @@ public class AttachmentResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/attachments/{id}")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteAttachment(@PathVariable Long id) {
         log.debug("REST request to delete Attachment : {}", id);
         attachmentRepository.deleteById(id);

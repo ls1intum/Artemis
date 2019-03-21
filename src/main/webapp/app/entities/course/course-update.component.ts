@@ -1,5 +1,5 @@
 import { ActivatedRoute } from '@angular/router';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
@@ -9,12 +9,17 @@ import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 
 import { Course } from './course.model';
 import { CourseService } from './course.service';
+import { ColorSelectorComponent } from 'app/components/color-selector/color-selector.component';
+import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-course-update',
-    templateUrl: './course-update.component.html'
+    templateUrl: './course-update.component.html',
+    styles: ['.color-preview { cursor: pointer; }']
 })
 export class CourseUpdateComponent implements OnInit {
+    @ViewChild(ColorSelectorComponent) colorSelector: ColorSelectorComponent;
+    readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     courseForm: FormGroup;
     course: Course;
     isSaving: boolean;
@@ -42,7 +47,8 @@ export class CourseUpdateComponent implements OnInit {
             startDate: new FormControl(this.course.startDate),
             endDate: new FormControl(this.course.endDate),
             onlineCourse: new FormControl(this.course.onlineCourse),
-            registrationEnabled: new FormControl(this.course.registrationEnabled)
+            registrationEnabled: new FormControl(this.course.registrationEnabled),
+            color: new FormControl(this.course.color)
         });
     }
 
@@ -57,6 +63,14 @@ export class CourseUpdateComponent implements OnInit {
         } else {
             this.subscribeToSaveResponse(this.courseService.create(this.courseForm.value));
         }
+    }
+
+    openColorSelector(event: MouseEvent) {
+        this.colorSelector.openColorSelector(event);
+    }
+
+    onSelectedColor(selectedColor: string) {
+        this.courseForm.patchValue({'color': selectedColor});
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<Course>>) {

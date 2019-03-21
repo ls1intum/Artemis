@@ -49,7 +49,7 @@ public class ProgrammingSubmissionService {
         }
         if (participation.getInitializationState() == InitializationState.INACTIVE) {
             //the build plan was deleted before, e.g. due to cleanup, therefore we need to reactivate the build plan by resuming the participation
-            participationService.resume(participation.getExercise(), participation);
+            participationService.resumeExercise(participation.getExercise(), participation);
             //in addition we need to trigger a build so that we receive a result in a few seconds
             continuousIntegrationService.get().triggerBuild(participation);
         }

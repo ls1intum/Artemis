@@ -258,11 +258,14 @@ public class CourseResource {
         User user = userService.getUserWithGroupsAndAuthorities();
 
         // get all courses with exercises for this user
-        List<Course> courses = courseService.findAllWithExercisesForUser(principal, user);
+        List<Course> courses = courseService.findAllActiveWithExercisesForUser(principal, user);
 
-        log.info("          /courses/for-dashboard.findAllWithExercisesForUser in " + (System.currentTimeMillis()-start) + "ms");
+        log.info("          /courses/for-dashboard.findAllActiveWithExercisesForUser in " + (System.currentTimeMillis()-start) + "ms");
         // get all participations of this user
-        //TODO: can we limit this to active courses?
+        //TODO: can we limit the following call to only retrieve participations and results for active courses?
+        //TODO: can we only load the relevant result (the latest rated one which is displayed in the user interface)
+            // Idea: we should save the current rated result in Participation and make sure that this is being set correctly when new results are added
+            // this would also improve the performance for other REST calls
         List<Participation> participations = participationService.findWithResultsByStudentUsername(principal.getName());
         log.info("          /courses/for-dashboard.findWithResultsByStudentUsername in " + (System.currentTimeMillis()-start) + "ms");
 

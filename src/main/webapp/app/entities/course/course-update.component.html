@@ -10,9 +10,22 @@
                     <label for="id" jhiTranslate="global.field.id">ID</label>
                     <input type="text" class="form-control" id="id" name="id" formControlName="id" readonly />
                 </div>
-                <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="arTeMiSApp.course.title" for="field_title">Title</label>
-                    <input type="text" class="form-control" name="title" id="field_title" formControlName="title" required/>
+                <div class="row">
+                    <div class="col">
+                        <div class="form-group">
+                            <label class="form-control-label" jhiTranslate="arTeMiSApp.course.title" for="field_title">Title</label>
+                            <input type="text" class="form-control" name="title" id="field_title" formControlName="title" required/>
+                        </div>
+                    </div>
+                    <div class="col-2">
+                        <div class="form-group">
+                            <label class="form-control-label" jhiTranslate="arTeMiSApp.course.color" for="field_title">Color</label>
+                            <div class="color-preview form-control" [ngStyle]="{backgroundColor: courseForm.get('color').value || ARTEMIS_DEFAULT_COLOR}" (click)="openColorSelector($event)">
+
+                            </div>
+                            <jhi-color-selector (selectedColor)="onSelectedColor($event)"></jhi-color-selector>
+                        </div>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="arTeMiSApp.course.shortName" for="field_shortName">Short Name</label>

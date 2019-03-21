@@ -2,6 +2,7 @@ import { Component, OnInit, Input } from '@angular/core';
 import { Course, CourseScoreCalculationService } from 'app/entities/course';
 import { Exercise, ExerciseService } from 'app/entities/exercise';
 import { ActivatedRoute, Router } from '@angular/router';
+import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-overview-course-card',
@@ -9,6 +10,7 @@ import { ActivatedRoute, Router } from '@angular/router';
     styleUrls: ['overview-course-card.scss']
 })
 export class OverviewCourseCardComponent implements OnInit {
+    readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     @Input() course: Course;
 
     constructor(
@@ -20,13 +22,6 @@ export class OverviewCourseCardComponent implements OnInit {
     }
 
     ngOnInit() {
-    }
-
-    // TODO: remove again!
-    get randomColor(): string {
-        const colors = ['danger', 'info', 'success', 'warning'];
-        const randomIndex = (this.course.id % colors.length) - 1;
-        return colors[randomIndex];
     }
 
     displayTotalRelativeScore(): number {

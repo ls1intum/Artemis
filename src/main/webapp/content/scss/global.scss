@@ -81,9 +81,9 @@ Generic styles
 /* other generic styles */
 
 .jh-card {
-    //padding: 1.5%;
-    margin-top: 20px;
-    //border: border-primary;
+    @media (min-width: 577px) {
+        margin-top: 20px;
+    }
 }
 
 .error {
@@ -115,6 +115,12 @@ Generic styles
 
 .footer {
     border-top: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+@media (max-width: 576px) {
+    .main-container {
+        padding: 0;
+    }
 }
 
 /* ==========================================================================
