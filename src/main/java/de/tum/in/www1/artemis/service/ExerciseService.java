@@ -8,6 +8,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -159,6 +160,12 @@ public class ExerciseService {
             //eagerly load questions and statistic
             quizExercise.getQuizQuestions().size();
             quizExercise.getQuizPointStatistic().getId();
+        }
+        else if (exercise.get() instanceof ProgrammingExercise) {
+            ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise.get();
+            //eagerly load templateParticipation and solutionParticipation
+            programmingExercise.setTemplateParticipation((Participation)Hibernate.unproxy(programmingExercise.getTemplateParticipation()));
+            programmingExercise.setSolutionParticipation((Participation)Hibernate.unproxy(programmingExercise.getSolutionParticipation()));
         }
         return exercise.get();
     }
