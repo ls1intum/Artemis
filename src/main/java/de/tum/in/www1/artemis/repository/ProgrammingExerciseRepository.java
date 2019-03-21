@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 
 /**
@@ -16,10 +17,14 @@ import java.util.List;
 @Repository
 public interface ProgrammingExerciseRepository extends JpaRepository<ProgrammingExercise, Long> {
 
-    @Query("select e from ProgrammingExercise e where e.course.id = :#{#courseId}")
+    @Query("select pe from ProgrammingExercise pe left join fetch pe.templateParticipation left join fetch pe.solutionParticipation where pe.course.id = :#{#courseId}")
     List<ProgrammingExercise> findByCourseId(@Param("courseId") Long courseId);
 
-    @Query("select distinct p from ProgrammingExercise as p left join fetch p.participations")
+    //Override to automatically fetch the templateParticipation and solutionParticipation
+    @Query("select distinct pe from ProgrammingExercise pe left join fetch pe.templateParticipation left join fetch pe.solutionParticipation where pe.id = :#{#exerciseId}")
+    Optional<ProgrammingExercise> findById(@Param("exerciseId") Long exerciseId);
+
+    @Query("select distinct pe from ProgrammingExercise as pe left join fetch pe.participations")
     List<ProgrammingExercise> findAllWithEagerParticipations();
 
     ProgrammingExercise findOneByTemplateParticipationId(Long templateParticipationId);
