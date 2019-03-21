@@ -3,6 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 
 import { ProgrammingExercise, ProgrammingLanguage } from './programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/entities/programming-exercise/programming-exercise.service';
+import { ResultService } from 'app/entities/result';
 import { JhiAlertService } from 'ng-jhipster';
 
 @Component({
@@ -14,11 +15,23 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
 
     programmingExercise: ProgrammingExercise;
 
-    constructor(private activatedRoute: ActivatedRoute, private programmingExerciseService: ProgrammingExerciseService, private jhiAlertService: JhiAlertService) {}
+    constructor(private activatedRoute: ActivatedRoute, private programmingExerciseService: ProgrammingExerciseService, private resultService: ResultService, private jhiAlertService: JhiAlertService) {}
 
     ngOnInit() {
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
+
+            this.resultService
+                .findResultsForParticipation(this.programmingExercise.course.id, this.programmingExercise.id, this.programmingExercise.solutionParticipation.id)
+                .subscribe(results => {
+                    this.programmingExercise.solutionParticipation.results = results.body;
+                });
+
+            this.resultService
+                .findResultsForParticipation(this.programmingExercise.course.id, this.programmingExercise.id, this.programmingExercise.templateParticipation.id)
+                .subscribe(results => {
+                    this.programmingExercise.templateParticipation.results = results.body;
+                });
         });
     }
 

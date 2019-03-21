@@ -28,7 +28,9 @@
             "publishBuildPlanUrl": "Publish Build Plan",
             "allowOnlineEditor": "Allow Online Editor",
             "programmingLanguage": "Programming Language",
-            "packageName": "Package Name"
+            "packageName": "Package Name",
+            "templateResult": "Template Result",
+            "solutionResult": "Solution Result"
         },
         "editor": {
             "title": "Code Editor"

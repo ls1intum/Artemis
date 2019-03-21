@@ -55,7 +55,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             const exercise = this.participation.exercise;
 
             if (this.participation.results && this.participation.results.length > 0) {
-                if (exercise.type === ExerciseType.MODELING) {
+                if (exercise && exercise.type === ExerciseType.MODELING) {
                     // sort results by completionDate descending to ensure the newest result is shown
                     // this is important for modeling exercises since students can have multiple tries
                     // think about if this should be used for all types of exercises
