@@ -60,10 +60,20 @@ public class CourseService {
      */
     @Transactional(readOnly = true)
     public List<Course> findAll() {
-        log.debug("Request to get all Courses");
+        log.debug("Request to get all courses");
         return courseRepository.findAll();
     }
 
+    /**
+     * Get all the courses.
+     *
+     * @return the list of entities
+     */
+    @Transactional(readOnly = true)
+    public List<Course> findAllActive() {
+        log.debug("Request to get all active courses");
+        return courseRepository.findAllActive();
+    }
 
     /**
      * Get all the courses.
@@ -72,7 +82,7 @@ public class CourseService {
      */
     @Transactional(readOnly = true)
     public List<Course> findAllCurrentlyActiveAndNotOnlineAndEnabled() {
-        log.debug("Request to get all Courses which are active");
+        log.debug("Request to get all active courses which are not online and enabled");
         return courseRepository.findAllCurrentlyActiveAndNotOnlineAndEnabled();
     }
 
@@ -125,9 +135,9 @@ public class CourseService {
      * @return the list of entities
      */
     @Transactional(readOnly = true)
-    public List<Course> findAllWithExercises() {
+    public List<Course> findAllActiveWithExercises() {
         log.debug("Request to get all Courses with Exercises");
-        return courseRepository.findAllWithEagerExercises();
+        return courseRepository.findAllActiveWithEagerExercises();
     }
 
 
@@ -139,10 +149,10 @@ public class CourseService {
      * @return the list of all courses including exercises for the user
      */
     @Transactional(readOnly = true)
-    public List<Course> findAllWithExercisesForUser(Principal principal, User user) {
+    public List<Course> findAllActiveWithExercisesForUser(Principal principal, User user) {
         if (authCheckService.isAdmin()) {
             // admin => fetch all courses with all exercises immediately
-            List<Course> allCourses = findAllWithExercises();
+            List<Course> allCourses = findAllActiveWithExercises();
             Set<Course> userCourses = new HashSet<>();
             // filter old courses and unnecessary information anyway
             for (Course course : allCourses) {
@@ -155,8 +165,7 @@ public class CourseService {
             return new ArrayList<>(userCourses);
         } else {
             // not admin => fetch visible courses first
-            //TODO: I think we can fetch all current courses with eager exercises in one database call and then filter in Java
-            List<Course> allCourses = findAll();
+            List<Course> allCourses = findAllActive();
             Set<Course> userCourses = new HashSet<>();
             // filter old courses and courses the user should not be able to see
             for (Course course : allCourses) {
