@@ -123,7 +123,7 @@
                     "question_invalid": "Question set invalid:",
                     "scoring_change": "Scoring changed:",
                     "no_changes": "No changes, which affect the existing results",
-                    "statistic": "The existing statistics must be recalculated!",
+                    "quizStatistic": "The existing statistics must be recalculated!",
                     "results": "The existing results must be recalculated!",
                     "resulttext": {
                         "element_deleted": "The question-element will be removed from all results",

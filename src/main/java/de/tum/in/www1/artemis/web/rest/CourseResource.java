@@ -252,22 +252,29 @@ public class CourseResource {
     @GetMapping("/courses/for-dashboard")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public List<Course> getAllCoursesForDashboard(Principal principal) {
+        long start = System.currentTimeMillis();
         log.debug("REST request to get all Courses the user has access to with exercises, participations and results");
+        log.info("/courses/for-dashboard.start");
         User user = userService.getUserWithGroupsAndAuthorities();
 
         // get all courses with exercises for this user
         List<Course> courses = courseService.findAllWithExercisesForUser(principal, user);
 
+        log.info("          /courses/for-dashboard.findAllWithExercisesForUser in " + (System.currentTimeMillis()-start) + "ms");
         // get all participations of this user
+        //TODO: can we limit this to active courses?
         List<Participation> participations = participationService.findWithResultsByStudentUsername(principal.getName());
+        log.info("          /courses/for-dashboard.findWithResultsByStudentUsername in " + (System.currentTimeMillis()-start) + "ms");
 
+        long exerciseCount = 0;
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
                 // add participation with result to each exercise
                 exercise.filterForCourseDashboard(participations, principal.getName());
+                exerciseCount++;
             }
         }
-
+        log.info("/courses/for-dashboard.done in " + (System.currentTimeMillis()-start) + "ms for " + courses.size() + " courses with " + exerciseCount + " exercises for user " + principal.getName());
         return courses;
     }
 

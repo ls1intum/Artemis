@@ -62,7 +62,7 @@ public class Participation implements Serializable {
      * submissions and results as follows: each participation has multiple submissions. For each submission there can be
      * a result. Therefore, the result is persisted with the submission. Refer to Submission.result for cascading settings.
      */
-    @OneToMany(mappedBy = "participation")
+    @OneToMany(mappedBy = "participation", cascade = CascadeType.REMOVE)
     @JsonIgnoreProperties("participation")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonView(QuizView.Before.class)
@@ -85,7 +85,7 @@ public class Participation implements Serializable {
      * We can think about adding orphanRemoval=true here, after adding the participationId to all submissions.
      *
      */
-    @OneToMany(mappedBy = "participation", cascade = {CascadeType.REMOVE})
+    @OneToMany(mappedBy = "participation", cascade = CascadeType.REMOVE)
     @JsonIgnoreProperties({"participation", "result"})
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Submission> submissions = new HashSet<>();
