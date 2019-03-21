@@ -18,6 +18,7 @@
             },
             "totalScore": "Total Score:",
             "title": "Title",
+            "color": "Color",
             "shortName": "Short Name",
             "studentGroupName": "Student Group",
             "teachingAssistantGroupName": "Tutor Group",
