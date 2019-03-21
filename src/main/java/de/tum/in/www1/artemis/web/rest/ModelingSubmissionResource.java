@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.web.rest;
 import java.net.URISyntaxException;
 import java.security.Principal;
 import java.util.List;
+import java.util.Optional;
+
 import org.slf4j.*;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -13,6 +15,8 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.web.rest.errors.*;
 import io.swagger.annotations.*;
+import org.springframework.web.server.ResponseStatusException;
+
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 /**
@@ -70,9 +74,12 @@ public class ModelingSubmissionResource {
             throw new BadRequestAlertException("A new modelingSubmission cannot already have an ID", ENTITY_NAME, "idexists");
         }
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        Participation participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
+        Optional<Participation> participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
+        if (!participation.isPresent()) {
+            throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + exerciseId);
+        }
         checkAuthorization(modelingExercise);
-        modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, participation);
+        modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, participation.get());
         hideDetails(modelingSubmission);
         return ResponseEntity.ok(modelingSubmission);
     }
@@ -102,8 +109,11 @@ public class ModelingSubmissionResource {
             return createModelingSubmission(exerciseId, principal, modelingSubmission);
         }
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        Participation participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
-        modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, participation);
+        Optional<Participation> participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
+        if (!participation.isPresent()) {
+            throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + exerciseId);
+        }
+        modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, participation.get());
         hideDetails(modelingSubmission);
         return ResponseEntity.ok(modelingSubmission);
     }
