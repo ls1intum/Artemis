@@ -83,6 +83,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
     open(content: any) {
         this.modalService.open(content, {size: 'lg'});
     }
+
     /**
      * @function prepareForSave
      * @desc triggers the saving process for the question
@@ -95,7 +96,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
 
     /**
      * @function cleanupQuestion
-     * @desc Reset of the question
+     * @desc Reset of the question by setting all question attributes to null
      */
     private cleanupQuestion() {
         // Reset Question Object
@@ -112,7 +113,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
 
     /**
      * @function specialCommandsFound
-     * @desc call the specialCommandFoundSave for each element of the array
+     * @desc clean up the question and call the specialCommandFoundSave for each element of the array
      * @param specialCommands {array} text with the corresponding special command
      */
     specialCommandsFound(specialCommands: [string, SpecialCommand][]): void {
@@ -123,7 +124,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
 
     /**
      * @function resetMultipleChoicePreview
-     * @desc resets the preview function of the question
+     * @desc reset the preview function of the question and check for changes
      */
     private resetMultipleChoicePreview() {
         this.showMultipleChoiceQuestionPreview = false;
@@ -134,8 +135,8 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
 
     /**
      * @function  specialCommandFoundSave
-     * @desc detection of  changes in the markdown editor
-     * @param textLine {string} and specialCommand {object} text with the corresponding special command
+     * @desc assign the text according to the specialCommand to the corresponding attribute of the question object
+     * @param textLine {string} with the corresponding specialCommand {SpecialCommand}
      */
     private specialCommandFoundSave(textLine: string, specialCommand: SpecialCommand) {
         if (specialCommand === null && textLine.length > 0) {

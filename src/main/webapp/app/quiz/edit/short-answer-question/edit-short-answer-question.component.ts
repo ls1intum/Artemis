@@ -572,8 +572,10 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
        this.questionEditor.getEditor().clearSelection();
     }
 
-    // TODO: Method to use when Markdown Editor is integrated
+    /**
+     * @function prepareForSave
+     * @desc reset the question and calls the parsing method of the markdown editor
+     */
     prepareForSave(): void {
-        console.log('Did call EditShortAnswerQuestionComponent.prepareForSave');
     }
 }

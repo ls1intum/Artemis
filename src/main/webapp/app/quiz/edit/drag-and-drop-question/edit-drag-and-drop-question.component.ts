@@ -22,9 +22,7 @@ import { DragState } from 'app/entities/drag-item/drag-state.enum';
 import * as $ from 'jquery';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import * as TempID from 'app/quiz/edit/temp-id';
-import { HintCommand } from 'app/markdown-editor/specialCommands/hint.command';
-import { ExplanationCommand } from 'app/markdown-editor/specialCommands/explanation.command';
-import { SpecialCommand } from 'app/markdown-editor/specialCommands/specialCommand';
+import { HintCommand, SpecialCommand, ExplanationCommand } from 'app/markdown-editor/specialCommands';
 import { MarkdownEditorComponent } from 'app/markdown-editor';
 import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
 
@@ -831,7 +829,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
 
     /**
      * @function  specialCommandFoundSave
-     * @desc detection of  changes in the markdown editor
+     * @desc assigns the text according to the specialCommand to the corresponding attribute of the question object
      * @param textLine {string} and specialCommand {object} text with the corresponding special command
      */
     specialCommandFoundSave(textLine: string, specialCommand: SpecialCommand) {

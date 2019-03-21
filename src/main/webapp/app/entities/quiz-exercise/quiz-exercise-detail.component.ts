@@ -456,7 +456,8 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
 
     /**
      * @function cacheValidation
-     * @desc Check the validity of the quiz on change
+     * @desc check whether the quiz is valid, whether warnings are needed and if changes occured
+     *       triggers the changes in the html file
      */
     cacheValidation(): void {
         this.warningQuizCache = this.computeInvalidWarnings().length > 0;

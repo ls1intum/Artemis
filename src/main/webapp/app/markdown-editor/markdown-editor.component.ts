@@ -118,8 +118,6 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
      * @function setupQuestionEditor
      * @desc Initializes the ace editor for the mc question
      */
-
-    /** Currently responsible for making the editor appear nicely**/
     setupMarkdownEditor(): void {
         this.aceEditorContainer.setTheme('chrome');
         this.aceEditorContainer.getEditor().renderer.setShowGutter(false);
@@ -131,13 +129,14 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
     }
 
     /**
-     * If Special Commands are defined, this emits line by line with the corresponding command.
-     * Otherwise, markdown is parsed to HTML and emitted. Result is displayed using default preview.
+     * @function parse
+     * @desc check if special commands are contained
+     *       if no special commands are contained parse markdown parse to HTML and emit to parent
+     *       otherwise divide it by [, call the method parseLineForSpecialCommand for each textLine and emit the result to parent
+     *       result is displayed using default preview
      */
     parse(): void {
-        // const defaultHtmlPreviewRequired = this.html.observers.length > 0;
-        // Only generate HTML if no Special Commands are defined.
-        // Special Commands require special parsing by the client.
+        // check if specialCommands are contained
         if (this.specialCommands == null || this.specialCommands.length === 0) {
                 this.previewTextAsHtml = this.artemisMarkdown.htmlForMarkdown(this.markdown);
 
@@ -145,6 +144,7 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
                 this.html.emit(this.previewTextAsHtml);
             return;
         } else {
+            // seperate the text by [
             const parseArray = this.markdown
             .split('\[-')
             .map(this.parseLineForSpecialCommand);
@@ -152,6 +152,12 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
         }
     }
 
+    /**
+     * @function parseLineForSpecialCommand
+     * @desc check which specialCommand is contained within the textLine and remove the specialCommand from the textLine
+     * @param textLine {string} from the parse function
+     * @return array of the textLine with the corresponding specialCommand
+     */
     private parseLineForSpecialCommand = (textLine: string): [string, SpecialCommand] => {
         for (const specialCommand of this.specialCommands) {
             const possibleCommandIdentifier = [specialCommand.getIdentifier(), specialCommand.getIdentifier().toLowerCase(), specialCommand.getIdentifier().toUpperCase()];
@@ -167,7 +173,7 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
 
     /**
      * @function togglePreview
-     * @desc Toggles the preview in the template
+     * @desc Toggle the preview in the template
      */
     togglePreview(): void {
         this.previewMode = !this.previewMode;
