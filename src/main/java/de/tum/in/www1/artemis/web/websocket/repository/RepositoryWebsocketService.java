@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.websocket;
+package de.tum.in.www1.artemis.web.websocket.repository;
 
 import afu.org.checkerframework.checker.nullness.qual.Nullable;
 import de.tum.in.www1.artemis.domain.*;
@@ -15,74 +15,15 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Controller;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.security.Principal;
 import java.util.Optional;
 
-@Entity
-class FileSubmission implements Serializable {
-    @Id
-    private String fileName;
-    private String fileContent;
-
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
-    }
-    public void setFileContent(String fileContent) {
-        this.fileContent = fileContent;
-    }
-    public String getFileName() {
-        return fileName;
-    }
-    public String getFileContent() {
-        return fileContent;
-    }
-}
-
-@Entity
-class FileSubmissionError extends WebsocketError implements Serializable {
-    @Id
-    private Long participationId;
-    private String fileName;
-
-    FileSubmissionError(Long participationId, String fileName, String error) {
-        super(error);
-        this.participationId = participationId;
-        this.fileName = fileName;
-    }
-
-    public Long getParticipationId() {
-        return participationId;
-    }
-
-    public void setParticipationId(Long participationId) {
-        this.participationId = participationId;
-    }
-
-    public String getFileName() {
-        return fileName;
-    }
-
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
-    }
-
-    public String getError() {
-        return error;
-    }
-
-    public void setError(String errorMessage) {
-        this.error = errorMessage;
-    }
-}
 
 @Controller
 @SuppressWarnings("unused")
@@ -166,7 +107,8 @@ public class RepositoryWebsocketService {
                 return;
             }
 
-            messagingTemplate.convertAndSendToUser(principal.getName(), "/topic/repository/" + participationId + "/file", submission);
+            FileSubmissionSuccess successMessage = new FileSubmissionSuccess(submission.getFileName());
+            messagingTemplate.convertAndSendToUser(principal.getName(), "/topic/repository/" + participationId + "/file", successMessage);
 
         } else {
             FileSubmissionError error = new FileSubmissionError(participationId, submission.getFileName(), "User does not have the necessary permissions.");

@@ -9,7 +9,7 @@ import java.io.Serializable;
 public class WebsocketError implements Serializable {
     protected String error;
 
-    WebsocketError(String error) {
+    public WebsocketError(String error) {
         this.error = error;
     }
 
