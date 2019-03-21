@@ -36,8 +36,7 @@ public class ScoringStrategyShortAnswerUtil {
                 submittedTextForSpot.setIsCorrect(false);
                 for (ShortAnswerSolution solution : solutionsForSpot) {
                     if (submittedTextForSpot.isSubmittedTextCorrect(submittedTextForSpot.getText(), solution.getText())
-                        && notUsedSolutions.contains(solution)
-                        && !solution.isInvalid()) {
+                        && notUsedSolutions.contains(solution)) {
                         notUsedSolutions.remove(solution);
                         submittedTextForSpot.setIsCorrect(true);
                         correctSolutionsCount++;
