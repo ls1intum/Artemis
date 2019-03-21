@@ -16,6 +16,6 @@ export class HintCommand extends SpecialCommand {
     }
 
     getIdentifier(): string {
-        return '-h]';
+        return 'h]';
     }
 }
