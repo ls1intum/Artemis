@@ -417,6 +417,15 @@ entity Attachment {
     attachmentType AttachmentType
 }
 
+entity Conflict {
+    elementInConflict String,
+    escalationState: EscalationState,
+}
+
+entity ConflictElement {
+    jsonElementId: String,
+}
+
 enum AttachmentType {
     FILE,
     URL
@@ -453,6 +462,7 @@ relationship OneToMany {
     Exercise{attachments} to Attachment{exercise},
     Exercise{studentQuestions} to StudentQuestion{exercise},
     Lecture{studentQuestions} to StudentQuestion{lecture},
+    ConflictElement{result} to ExerciseResult,
 }
 
 relationship OneToOne {
