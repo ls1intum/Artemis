@@ -22,7 +22,7 @@ import { DragState } from 'app/entities/drag-item/drag-state.enum';
 import * as $ from 'jquery';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import * as TempID from 'app/quiz/edit/temp-id';
-import { HintCommand, SpecialCommand, ExplanationCommand } from 'app/markdown-editor/specialCommands';
+import { HintCommand, DomainCommand, ExplanationCommand } from 'app/markdown-editor/domainCommands';
 import { MarkdownEditorComponent } from 'app/markdown-editor';
 import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
 
@@ -95,7 +95,8 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
     hintCommand = new HintCommand();
     explanationCommand = new ExplanationCommand();
 
-    commandDragAndDropQuestions: SpecialCommand[] = [this.explanationCommand, this.hintCommand];
+    /** {array} with domainCommands that are needed for a drag and drop question **/
+    commandDragAndDropQuestions: DomainCommand[] = [this.explanationCommand, this.hintCommand];
 
     constructor(
         private artemisMarkdown: ArtemisMarkdown,
@@ -808,45 +809,50 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
 
     /**
      * @function changesInMarkdown
-     * @desc detection of  changes in the markdown editor
+     * @desc Detect of text changes in the markdown editor
+     *      1. Notify the parent component to check the validity of the text
+     *      2. Parse the text in the editor
      */
     changesInMarkdown(): void {
-        console.log('markdown');
         this.questionUpdated.emit();
         this.changeDetector.detectChanges();
         this.prepareForSave();
     }
 
     /**
-     * @function specialCommandsFound
-     * @desc call the specialCommandFoundSave for each element of the array
-     * @param {array} contains markdownTextLine with the corresponding specialCommand {SpecialCommand} identifier
+     * @function domainCommandsFound
+     * @desc Get the {array} from the editor and assign its values based on the domainCommands
+     *       to the corresponding question attributes one by one
+     * @param {array} contains markdownTextLine with the corresponding domainCommand {DomainCommand} identifier
      */
-    specialCommandsFound(specialCommands: [string, SpecialCommand][]): void {
+    domainCommandsFound(domainCommands: [string, DomainCommand][]): void {
         this.cleanupQuestion();
-        specialCommands.forEach(command => this.specialCommandFoundSave(command[0], command[1]));
+        domainCommands.forEach(command => this.domainCommandFoundSave(command[0], command[1]));
     }
 
     /**
-     * @function specialCommandFoundSave
-     * @desc assign the textLine based on the specialCommand to the corresponding attribute of the drag and drop question
-     * @param textLine {string} and specialCommand {object} text with the corresponding special command
+     * @function domainCommandFoundSave
+     * @desc Parse the markdown text one by one  into the corresponding question attributes
+     *       1. Check which command is passed on based on the identifier
+     *          1a. If no command has been passed on assign the text to the question text
+     *       2. Assign the textLine based on the domainCommand to the corresponding attribute of the drag and drop question
+     * @param textLine {string} and domainCommand {object} text with the corresponding domain command
      */
-    specialCommandFoundSave(textLine: string, specialCommand: SpecialCommand) {
-        if (specialCommand === null && textLine.length > 0) {
+    domainCommandFoundSave(textLine: string, domainCommand: DomainCommand) {
+        if (domainCommand === null && textLine.length > 0) {
             this.question.text = textLine;
         }
 
-        if (specialCommand instanceof ExplanationCommand) {
+        if (domainCommand instanceof ExplanationCommand) {
                 this.question.explanation = textLine;
-        } else if (specialCommand instanceof HintCommand) {
+        } else if (domainCommand instanceof HintCommand) {
                 this.question.hint = textLine;
             }
     }
 
     /**
      * @function cleanupQuestion
-     * @desc Reset of the drag and drop question by setting the attributes to null
+     * @desc Clear the question to avoid double assignments of one attribute
      */
     private cleanupQuestion() {
         this.question.text = null;
@@ -857,6 +863,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
     /**
      * @function prepareForSave
      * @desc triggers the saving process by cleaning up the question and calling the markdown parse function
+     *       to get the newest values in the editor to update the question attributes
      */
     prepareForSave(): void {
         this.cleanupQuestion();

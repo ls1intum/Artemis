@@ -5,6 +5,14 @@ export class HeadingTwoCommand extends Command {
     buttonIcon = 'heading2';
     buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.headingTwo';
 
+    /**
+     * @function execute
+     * @desc Create/Remove heading two language
+     *       1. Check if the selected text includes (##) and/or ('Heading 2')
+     *       2. If included  reduce the selected text by this elements and add replace the selected text by textToAdd
+     *       3. If not included add (##) before the selected text and insert them into the editor
+     *       4. Heading two in markdown language appears
+     */
     execute(): void {
         let selectedText = this.editor.getSelectedText();
         let textToAdd = '';

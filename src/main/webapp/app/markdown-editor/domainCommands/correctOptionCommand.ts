@@ -1,11 +1,12 @@
-import { SpecialCommand } from 'app/markdown-editor/specialCommands/specialCommand';
+import { DomainCommand } from 'app/markdown-editor/domainCommands/domainCommand';
 
-export class CorrectOptionCommand extends SpecialCommand {
+export class CorrectOptionCommand extends DomainCommand {
 
     buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.addCorrectAnswerOption';
 
     /**
-     * @function add a new correct answer option to the text editor
+     * @function execute
+     * @desc Add a new correct answer option to the text editor at the location of the cursor
      */
     execute(): void {
         const addedText = '\n[-x] Enter a correct answer option here';
@@ -18,6 +19,10 @@ export class CorrectOptionCommand extends SpecialCommand {
         this.editor.selection.setRange(range);
     }
 
+    /**
+     * @function getIdentifier
+     * @desc identify the correctOption by the identifier
+     */
     getIdentifier(): string {
         return 'X]';
     }

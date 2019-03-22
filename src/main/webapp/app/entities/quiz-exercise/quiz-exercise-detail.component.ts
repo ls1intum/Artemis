@@ -456,8 +456,9 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
 
     /**
      * @function cacheValidation
-     * @desc check whether the quiz is valid, whether warnings are needed and if changes occured
-     *       triggers the changes in the html file
+     * @desc 1. Check whether the inputs in the quiz are valid
+     *       2. Check if warning are needed for the inputs
+     *       3. Display the warnings/invalid reasons in the html file if needed
      */
     cacheValidation(): void {
         this.warningQuizCache = this.computeInvalidWarnings().length > 0;
@@ -916,7 +917,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
     }
 
     /**
-     * @function triggers the parsing in the designated edit component
+     * @function triggers the parsing of the editor content in the designated edit component
      */
     parseAllQuestions(): void {
         const editQuestionComponents: EditQuizQuestion[] = [...this.editMultipleChoiceQuestionComponents.toArray(), ...this.editDragAndDropQuestionComponents.toArray(), ...this.editShortAnswerQuestionComponents.toArray()];

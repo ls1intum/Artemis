@@ -52,9 +52,9 @@
                 <jhi-markdown-editor #markdownEditor
                                      [markdown]="questionEditorText"
                                      [showPreviewButton]="true"
-                                     [specialCommands]="commandMultipleChoiceQuestions"
+                                     [domainCommands]="commandMultipleChoiceQuestions"
                                      (markdownChange)="prepareForSave()"
-                                     (textWithSpecialCommandFound)="specialCommandsFound($event)">
+                                     (textWithDomainCommandFound)="domainCommandsFound($event)">
                     <!-- Preview -->
                     <ng-container #preview>
                         <jhi-multiple-choice-question *ngIf="showMultipleChoiceQuestionPreview"

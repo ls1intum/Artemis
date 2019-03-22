@@ -8,9 +8,9 @@ import {
     CorrectOptionCommand,
     ExplanationCommand,
     IncorrectOptionCommand,
-    SpecialCommand,
+    DomainCommand,
     HintCommand,
-} from 'app/markdown-editor/specialCommands';
+} from 'app/markdown-editor/domainCommands';
 import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
 
 @Component({
@@ -41,6 +41,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
 
     currentAnswerOption: AnswerOption;
 
+    /** Set default preview of the markdown editor as preview for the multiple choice question **/
     get showPreview(): boolean { return this.markdownEditor.previewMode; }
     showMultipleChoiceQuestionPreview = true;
 
@@ -49,7 +50,8 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
     incorrectCommand = new IncorrectOptionCommand();
     explanationCommand = new ExplanationCommand();
 
-    commandMultipleChoiceQuestions: SpecialCommand[] = [this.correctCommand, this.incorrectCommand, this.explanationCommand, this.hintCommand];
+    /** DomainCommands for the multiple choice question **/
+    commandMultipleChoiceQuestions: DomainCommand[] = [this.correctCommand, this.incorrectCommand, this.explanationCommand, this.hintCommand];
 
     constructor(private artemisMarkdown: ArtemisMarkdown, private modalService: NgbModal, private changeDetector: ChangeDetectorRef) {}
 
@@ -88,7 +90,9 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
 
     /**
      * @function prepareForSave
-     * @desc reset the question, call the parse method of the markdown editor and notify parent component about changes
+     * @desc 1. Triggers the saving process by cleaning up the question and calling the markdown parse function
+     *       to get the newest values in the editor to update the question attributes
+     *       2. Notify parent component about changes to check the validity of new values of the question attributes
      */
     prepareForSave(): void {
         this.cleanupQuestion();
@@ -98,7 +102,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
 
     /**
      * @function cleanupQuestion
-     * @desc Reset of the question by setting all question attributes to null or empty
+     * @desc Clear the question to avoid double assignments of one attribute
      */
     private cleanupQuestion() {
         // Reset Question Object
@@ -114,19 +118,21 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
     }
 
     /**
-     * @function specialCommandsFound
-     * @desc clean up the question and call the specialCommandFoundSave for each element of the array
-     * @param {array} contains markdownTextLine with the corresponding specialCommand {SpecialCommand} identifier
+     * @function domainCommandsFound
+     * @desc Get the {array} from the editor and assign its values based on the domainCommands
+     *       to the corresponding question attributes one by one
+     * @param {array} contains markdownTextLine with the corresponding domainCommand {DomainCommand} identifier
      */
-    specialCommandsFound(specialCommands: [string, SpecialCommand][]): void {
+    domainCommandsFound(domainCommands: [string, DomainCommand][]): void {
         this.cleanupQuestion();
-        specialCommands.forEach(command => this.specialCommandFoundSave(command[0], command[1]));
+        domainCommands.forEach(command => this.domainCommandFoundSave(command[0], command[1]));
         this.resetMultipleChoicePreview();
     }
 
     /**
      * @function resetMultipleChoicePreview
-     * @desc reset the preview function of the multiple choice question and check for changes
+     * @desc 1. Reset the preview function of the multiple choice question
+     *       2. Check for changes and notify the parent component to check for the question validity
      */
     private resetMultipleChoicePreview() {
         this.showMultipleChoiceQuestionPreview = false;
@@ -136,31 +142,34 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
     }
 
     /**
-     * @function  specialCommandFoundSave
-     * @desc assign the textLine based on the specialCommand to the corresponding attribute of the multiple choice question
-     * @param textLine {string} with the corresponding specialCommand {SpecialCommand}
+     * @function  domainCommandFoundSave
+     * @desc Assign the text one by one into the corresponding question attributes
+     *       1. Determine the domainCommand based on the command identifier
+     *          1a. If no command identifier found assign the text to the question text
+     *       2. Assign the textLine based on the domainCommand to the corresponding attribute of the multiple choice question
+     * @param textLine {string} with the corresponding domainCommand {DomainCommand}
      */
-    private specialCommandFoundSave(textLine: string, specialCommand: SpecialCommand) {
-        if (specialCommand === null && textLine.length > 0) {
+    private domainCommandFoundSave(textLine: string, domainCommand: DomainCommand) {
+        if (domainCommand === null && textLine.length > 0) {
             this.question.text = textLine;
         }
 
-        if (specialCommand instanceof CorrectOptionCommand || specialCommand instanceof IncorrectOptionCommand) {
+        if (domainCommand instanceof CorrectOptionCommand || domainCommand instanceof IncorrectOptionCommand) {
             this.currentAnswerOption = new AnswerOption();
-            if (specialCommand instanceof CorrectOptionCommand) {
+            if (domainCommand instanceof CorrectOptionCommand) {
                 this.currentAnswerOption.isCorrect = true;
             } else {
                 this.currentAnswerOption.isCorrect = false;
             }
             this.currentAnswerOption.text = textLine;
             this.question.answerOptions.push(this.currentAnswerOption);
-        } else if (specialCommand instanceof ExplanationCommand) {
+        } else if (domainCommand instanceof ExplanationCommand) {
             if (this.currentAnswerOption != null) {
                 this.currentAnswerOption.explanation = textLine;
             } else {
                 this.question.explanation = textLine;
             }
-        } else if (specialCommand instanceof HintCommand) {
+        } else if (domainCommand instanceof HintCommand) {
             if (this.currentAnswerOption != null) {
                 this.currentAnswerOption.hint = textLine;
             } else {

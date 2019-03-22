@@ -1,9 +1,13 @@
-import { SpecialCommand } from 'app/markdown-editor/specialCommands/specialCommand';
+import { DomainCommand } from 'app/markdown-editor/domainCommands/domainCommand';
 
-export class HintCommand extends SpecialCommand {
+export class HintCommand extends DomainCommand {
 
     buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.addHint';
 
+    /**
+     * @function execute
+     * @desc Add a new hint to the answer option or question title in the editor at the location of the cursor
+     */
     execute(): void {
         const addedText = "\n\t[-h] Add a hint here (visible during the quiz via '?'-Button)";
         this.editor.focus();
@@ -15,6 +19,10 @@ export class HintCommand extends SpecialCommand {
         this.editor.selection.setRange(range);
     }
 
+    /**
+     * @function getIdentifier
+     * @desc Identify the hint by the identifier
+     */
     getIdentifier(): string {
         return 'h]';
     }

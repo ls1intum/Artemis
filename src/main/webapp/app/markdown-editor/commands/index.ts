@@ -10,4 +10,4 @@ export { LinkCommand } from './link.command';
 export { CodeCommand } from './code.command';
 export { OrderedListCommand } from './orderedListCommand';
 export { UnorderedListCommand } from './unorderedListCommand';
-export { PictureuploadCommand } from './pictureupload.command';
+export { AttachmentCommand } from './attachmentCommand';

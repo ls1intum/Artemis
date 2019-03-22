@@ -1,10 +1,18 @@
 import { Command } from './command';
 
-export class PictureuploadCommand extends Command {
+export class AttachmentCommand extends Command {
 
     buttonIcon = 'image';
     buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.imageUpload';
 
+    /**
+     * @function execute
+     * @desc insert/remove the markdown command for uploading an attachment
+     *       1. Check if the selected text includes ('![](http://)')
+     *       2. If included reduce the selected text by this elements and replace the selected text by textToAdd
+     *       3. If not included add ('![](http://)') at the cursor position in the editor
+     *       4. Attachment in markdown language appears
+     */
     execute(): void {
         let selectedText = this.editor.getSelectedText();
         let textToAdd = '';

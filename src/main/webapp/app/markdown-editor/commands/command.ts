@@ -1,3 +1,6 @@
+/** abstract class for all commands - default and domain commands of ArTEMiS
+ *  default commands: markdown commands e.g. bold, italic
+ *  domain commands: ArTEMiS customized commands **/
 export abstract class Command {
 
     buttonIcon: string;

@@ -1,9 +1,13 @@
-import { SpecialCommand } from 'app/markdown-editor/specialCommands/specialCommand';
+import { DomainCommand } from 'app/markdown-editor/domainCommands/domainCommand';
 
-export class ExplanationCommand extends SpecialCommand {
+export class ExplanationCommand extends DomainCommand {
 
     buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.addExplanation';
 
+    /**
+     * @function execute
+     * @desc Add a new explanation to answer option or question title in the text editor at the location of the cursor
+     */
     execute(): void {
         const addedText = '\n\t[-e] Add an explanation here (only visible in feedback after quiz has ended)';
         this.editor.focus();
@@ -15,6 +19,10 @@ export class ExplanationCommand extends SpecialCommand {
         this.editor.selection.setRange(range);
     }
 
+    /**
+     * @function getIdentifier
+     * @desc Identify the explanation by the identifier
+     */
     getIdentifier(): string {
         return 'e]';
     }
