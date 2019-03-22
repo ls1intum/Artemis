@@ -102,8 +102,8 @@
                             <div *ngFor="let feedback of assessmentResult.feedbacks"
                                  [style.top.px]="positions[feedback.referenceId].y"
                                  [style.left.px]="positions[feedback.referenceId].x">
-                                <fa-icon [icon]="{'check': feedback.credits > 0, 'times': feedback.credits < 0}" *ngFor="let i of numberToArray(feedback.credits, 0)"></fa-icon>
-                                <fa-icon class="half" [icon]="{'check': feedback.credits > 0, 'times': feedback.credits < 0}" *ngIf="feedback.credits % 1 !== 0"></fa-icon>
+                                <fa-icon [icon]="feedback.credits > 0 ? 'check' : feedback.credits < 0 ? 'times': ''" *ngFor="let i of numberToArray(feedback.credits, 0)"></fa-icon>
+                                <fa-icon class="half" [icon]="feedback.credits > 0 ? 'check' : feedback.credits < 0 ? 'times': ''" *ngIf="feedback.credits % 1 !== 0"></fa-icon>
                             </div>
                         </ng-container>
                     </div>
