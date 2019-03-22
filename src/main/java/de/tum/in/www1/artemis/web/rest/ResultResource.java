@@ -232,16 +232,6 @@ public class ResultResource {
         List<Result> results = new ArrayList<>();
         Participation participation = participationService.findOne(participationId);
 
-        // Manually link the programming Exercise
-        ProgrammingExercise programmingExercise = programmingExerciseService.getExerciseForTemplateParticipation(participation);
-        if (programmingExercise == null) {
-            programmingExercise = programmingExerciseService.getExerciseForSolutionParticipation(participation);
-            if (programmingExercise == null) {
-                return notFound();
-            }
-        }
-
-        participation.setExercise(programmingExercise);
 
         if (!authCheckService.isOwnerOfParticipation(participation)) {
             Course course = participation.getExercise().getCourse();
