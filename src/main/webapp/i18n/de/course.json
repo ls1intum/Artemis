@@ -18,6 +18,7 @@
             },
             "totalScore": "Gesamtergebnis:",
             "title": "Titel",
+            "color": "Farbe",
             "shortName": "Kurzname",
             "studentGroupName": "Studenten Gruppe",
             "teachingAssistantGroupName": "Tutor Gruppe",

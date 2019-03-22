@@ -8,6 +8,7 @@ import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -40,6 +41,7 @@ public class StudentQuestionAnswerResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/student-question-answers")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentQuestionAnswer> createStudentQuestionAnswer(@RequestBody StudentQuestionAnswer studentQuestionAnswer) throws URISyntaxException {
         log.debug("REST request to save StudentQuestionAnswer : {}", studentQuestionAnswer);
         if (studentQuestionAnswer.getId() != null) {
@@ -61,6 +63,7 @@ public class StudentQuestionAnswerResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/student-question-answers")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentQuestionAnswer> updateStudentQuestionAnswer(@RequestBody StudentQuestionAnswer studentQuestionAnswer) throws URISyntaxException {
         log.debug("REST request to update StudentQuestionAnswer : {}", studentQuestionAnswer);
         if (studentQuestionAnswer.getId() == null) {
@@ -73,23 +76,13 @@ public class StudentQuestionAnswerResource {
     }
 
     /**
-     * GET  /question-answers : get all the questionAnswers.
-     *
-     * @return the ResponseEntity with status 200 (OK) and the list of questionAnswers in body
-     */
-    @GetMapping("/student-question-answers")
-    public List<StudentQuestionAnswer> getAllStudentQuestionAnswers() {
-        log.debug("REST request to get all QuestionAnswers");
-        return studentQuestionAnswerRepository.findAll();
-    }
-
-    /**
      * GET  /question-answers/:id : get the "id" questionAnswer.
      *
      * @param id the id of the questionAnswer to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the questionAnswer, or with status 404 (Not Found)
      */
     @GetMapping("/student-question-answers/{id}")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<StudentQuestionAnswer> getStudentQuestionAnswer(@PathVariable Long id) {
         log.debug("REST request to get StudentQuestionAnswer : {}", id);
         Optional<StudentQuestionAnswer> questionAnswer = studentQuestionAnswerRepository.findById(id);
@@ -103,6 +96,7 @@ public class StudentQuestionAnswerResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/student-question-answers/{id}")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteStudentQuestionAnswer(@PathVariable Long id) {
         log.debug("REST request to delete StudentQuestionAnswer : {}", id);
         studentQuestionAnswerRepository.deleteById(id);
