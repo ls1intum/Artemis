@@ -14,6 +14,7 @@ export class Course implements BaseEntity {
     public instructorGroupName: string;
     public startDate: Moment;
     public endDate: Moment;
+    public color: string;
     public onlineCourse = false; // default value
     public registrationEnabled = false; // default value
     public maxComplaints: number;

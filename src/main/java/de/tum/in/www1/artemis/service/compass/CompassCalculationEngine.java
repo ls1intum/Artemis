@@ -65,9 +65,11 @@ public class CompassCalculationEngine implements CalculationEngine {
 
         for (ModelingSubmission submission : submissions) {
             String model = submission.getModel();
-            buildModel(submission.getId(), new JsonParser().parse(model).getAsJsonObject());
-            buildAssessment(submission);
-            modelSelector.addAlreadyAssessedModel(submission.getId());
+            if (model != null) {
+                buildModel(submission.getId(), new JsonParser().parse(model).getAsJsonObject());
+                buildAssessment(submission);
+                modelSelector.addAlreadyAssessedModel(submission.getId());
+            }
         }
 
         assessModelsAutomatically();

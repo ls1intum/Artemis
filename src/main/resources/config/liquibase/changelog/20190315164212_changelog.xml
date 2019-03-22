@@ -16,7 +16,7 @@
         <dropForeignKeyConstraint baseTableName="answer_option" constraintName="FKfqeqisl0e28xp3yn9bmlgkhej"/>
         <addForeignKeyConstraint baseColumnNames="question_id" baseTableName="answer_option" constraintName="FKfqeqisl0e28xp3yn9bmlgkhej" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="quiz_question"/>
         <dropForeignKeyConstraint baseTableName="short_answer_mapping" constraintName="FK4ehrp6xueea0pyiiidtuouc0s"/>
-        <addForeignKeyConstraint baseColumnNames="question_id" baseTableName="short_answer_mapping" constraintName="FK4ehrp6xueea0pyiiidtuouc0s" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="quiz_quetion"/>
+        <addForeignKeyConstraint baseColumnNames="question_id" baseTableName="short_answer_mapping" constraintName="FK4ehrp6xueea0pyiiidtuouc0s" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="quiz_question"/>
         <dropForeignKeyConstraint baseTableName="short_answer_solution" constraintName="FKejag8le5jrd03enkmhxircugx"/>
         <addForeignKeyConstraint baseColumnNames="question_id" baseTableName="short_answer_solution" constraintName="FKejag8le5jrd03enkmhxircugx" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="quiz_question"/>
         <dropForeignKeyConstraint baseTableName="short_answer_spot" constraintName="FK2kwul05ckvpi145gc0bmf7obh"/>

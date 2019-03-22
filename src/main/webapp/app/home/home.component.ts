@@ -18,6 +18,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
     modalRef: NgbModalRef;
     password: string;
     rememberMe = true;
+    acceptTerms = true;
     username: string;
     captchaRequired = false;
     credentials: Credentials;
