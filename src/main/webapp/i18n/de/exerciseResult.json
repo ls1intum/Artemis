@@ -2,20 +2,20 @@
     "arTeMiSApp": {
         "exerciseResult": {
             "home": {
-                "title": "Exercise Results",
-                "createLabel": "Exercise Result erstellen",
-                "createOrEditLabel": "Exercise Result erstellen oder bearbeiten"
+                "title": "Exercise Ergebnisse",
+                "createLabel": "Exercise Ergebnis erstellen",
+                "createOrEditLabel": "Exercise Ergebnis erstellen oder bearbeiten"
             },
-            "created": "Exercise Result erstellt mit ID {{ param }}",
-            "updated": "Exercise Result aktualisiert mit ID {{ param }}",
-            "deleted": "Exercise Result gelöscht mit ID {{ param }}",
+            "created": "Exercise Ergebnis erstellt mit ID {{ param }}",
+            "updated": "Exercise Ergebnis aktualisiert mit ID {{ param }}",
+            "deleted": "Exercise Ergebnis gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Exercise Result {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Exercise Ergebnis {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Exercise Result"
+                "title": "Exercise Ergebnis"
             },
-            "resultString": "Result String",
+            "resultString": "Ergebnis String",
             "completionDate": "Completion Date",
             "successful": "Successful",
             "buildArtifact": "Build Artifact",
