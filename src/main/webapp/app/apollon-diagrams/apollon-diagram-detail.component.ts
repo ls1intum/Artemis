@@ -1,7 +1,7 @@
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import ApollonEditor, { State } from '@ls1intum/apollon';
+import { ApollonEditor, ApollonMode, UMLModel, DiagramType } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
 import { ApollonQuizExerciseGenerationComponent } from './exercise-generation/apollon-quiz-exercise-generation.component';
 import { ApollonDiagram, ApollonDiagramService } from '../entities/apollon-diagram';
@@ -34,8 +34,8 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
 
                     this.diagram = diagram;
 
-                    const state = JSON.parse(diagram.jsonRepresentation);
-                    this.initializeApollonEditor(state);
+                    const model = JSON.parse(diagram.jsonRepresentation);
+                    this.initializeApollonEditor(model);
                 },
                 response => {
                     this.jhiAlertService.error('Error while loading Apollon diagram');
@@ -50,15 +50,16 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         }
     }
 
-    initializeApollonEditor(initialState: State) {
+    initializeApollonEditor(initialModel: UMLModel) {
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();
         }
 
+        // TODO in the future the user should choose which diagram type is used
         this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
-            mode: 'FULL',
-            initialState,
-            diagramType: 'CLASS'
+            mode: ApollonMode.Exporting,
+            model: initialModel,
+            type: DiagramType.ClassDiagram
         });
     }
 
@@ -68,10 +69,10 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const diagramState = this.apollonEditor.getState();
+        const umlModel = this.apollonEditor.model;
         const updatedDiagram: ApollonDiagram = {
             ...this.diagram,
-            jsonRepresentation: JSON.stringify(diagramState)
+            jsonRepresentation: JSON.stringify(umlModel)
         };
 
         this.apollonDiagramService.update(updatedDiagram).subscribe(

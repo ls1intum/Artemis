@@ -1,12 +1,6 @@
 import { Exercise, ExerciseType } from '../exercise';
 import { Course } from '../course';
-
-export const enum DiagramType {
-    CLASS = 'CLASS',
-    ACTIVITY = 'ACTIVITY',
-    USE_CASE = 'USE_CASE',
-    COMMUNICATION = 'COMMUNICATION'
-}
+import { DiagramType } from '@ls1intum/apollon';
 
 export class ModelingExercise extends Exercise {
 

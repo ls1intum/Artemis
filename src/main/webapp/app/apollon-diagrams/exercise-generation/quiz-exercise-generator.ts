@@ -1,17 +1,3 @@
-import {
-    computeBoundingBox,
-    EntityMember,
-    LayoutedDiagram,
-    LayoutedEntity,
-    LayoutedEntityMember,
-    LayoutedRelationship,
-    Rect,
-    renderDiagramToSVG,
-    renderEntityToSVG,
-    renderRelationshipToSVG,
-    Size,
-    State
-} from '@ls1intum/apollon';
 import { convertRenderedSVGToPNG } from './svg-renderer';
 import * as TempID from '../../quiz/edit/temp-id';
 import { Course } from '../../entities/course';
@@ -31,7 +17,8 @@ const MAX_SIZE_UNIT = 200;
 export async function generateDragAndDropQuizExercise(
     diagramTitle: string,
     layoutedDiagram: LayoutedDiagram,
-    interactiveElementIds: Set<string>,
+    interactiveElements: Set<string>,
+    interactiveRelationships: Set<string>,
     fontFamily: string,
     course: Course,
     fileUploaderService: FileUploaderService,
@@ -39,7 +26,7 @@ export async function generateDragAndDropQuizExercise(
 ) {
     // Render the layouted diagram as SVG
     const renderedDiagram = renderDiagramToSVG(layoutedDiagram, {
-        shouldRenderElement: id => !interactiveElementIds.has(id),
+        shouldRenderElement: id => !interactiveElements.has(id),
         fontFamily
     });
 
@@ -53,7 +40,8 @@ export async function generateDragAndDropQuizExercise(
     const dragAndDropQuestion = await generateDragAndDropQuestion(
         diagramTitle,
         layoutedDiagram,
-        interactiveElementIds,
+        interactiveElements,
+        interactiveRelationships,
         backgroundImageUploadResponse.path,
         fontFamily,
         fileUploaderService

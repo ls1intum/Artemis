@@ -1,11 +1,11 @@
 import { Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import ApollonEditor, { ApollonOptions, Point, State } from '@ls1intum/apollon';
+import { DiagramType, ApollonEditor, ApollonOptions, UMLModel, ApollonMode } from '@ls1intum/apollon';
 import { ActivatedRoute, Router } from '@angular/router';
 import * as $ from 'jquery';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
-import { DiagramType, ModelingExercise, ModelingExerciseService } from '../entities/modeling-exercise';
+import { ModelingExercise, ModelingExerciseService } from '../entities/modeling-exercise';
 import { Result, ResultService } from '../entities/result';
 import { ModelingAssessmentService } from '../entities/modeling-assessment';
 import { AccountService } from '../core';
@@ -91,10 +91,10 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
                  */
                 if (
                     this.modelingExercise.diagramType === null ||
-                    this.modelingExercise.diagramType === DiagramType.USE_CASE ||
-                    this.modelingExercise.diagramType === DiagramType.COMMUNICATION
+                    this.modelingExercise.diagramType === DiagramType.UseCaseDiagram ||
+                    this.modelingExercise.diagramType === DiagramType.ObjectDiagram
                 ) {
-                    this.modelingExercise.diagramType = DiagramType.CLASS;
+                    this.modelingExercise.diagramType = DiagramType.ClassDiagram;
                 }
                 if (this.submission.model) {
                     this.initializeApollonEditor(JSON.parse(this.submission.model));
@@ -130,25 +130,25 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
     /**
      * Initializes the Apollon editor in read only mode.
      */
-    initializeApollonEditor(initialState: State) {
+    initializeApollonEditor(initialModel: UMLModel) {
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();
         }
 
         this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
-            initialState,
-            mode: 'READ_ONLY',
-            diagramType: <ApollonOptions['diagramType']>this.modelingExercise.diagramType
+            mode: ApollonMode.ReadOnly,
+            model: initialModel,
+            type: this.modelingExercise.diagramType
         });
 
         this.apollonEditor.subscribeToSelectionChange(selection => {
             const selectedEntities: string[] = [];
-            for (const entity of selection.entityIds) {
+            for (const entity of selection.elements) {
                 selectedEntities.push(entity);
             }
             this.selectedEntities = selectedEntities;
             const selectedRelationships: string[] = [];
-            for (const rel of selection.relationshipIds) {
+            for (const rel of selection.relationships) {
                 selectedRelationships.push(rel);
             }
             this.selectedRelationships = selectedRelationships;
@@ -175,29 +175,29 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         if (!this.apollonEditor || !this.result || !this.result.feedbacks) {
             return;
         }
-        const editorState = this.apollonEditor.getState();
-        let cardinalityAllEntities = editorState.entities.allIds.length + editorState.relationships.allIds.length;
-        for (const elem of editorState.entities.allIds) {
-            cardinalityAllEntities += editorState.entities.byId[elem].attributes.length + editorState.entities.byId[elem].methods.length;
+        const model = this.apollonEditor.model;
+        let cardinalityAllEntities = model.elements.length + model.relationships.length;
+        for (const elem of model.elements) {
+            cardinalityAllEntities += model.elements.byId[elem].attributes.length + model.elements.byId[elem].methods.length;
         }
 
         if (this.result.feedbacks.length < cardinalityAllEntities) {
             const isPartialAssessment = this.result.feedbacks.length !== 0;
-            for (const elem of editorState.entities.allIds) {
+            for (const elem of model.elements) {
                 const assessment = new Feedback(elem, ModelElementType.CLASS, 0, '');
                 this.pushAssessmentIfNotExists(elem, assessment, isPartialAssessment);
-                for (const attribute of editorState.entities.byId[elem].attributes) {
+                for (const attribute of model.elements.byId[elem].attributes) {
                     const attributeAssessment = new Feedback(attribute.id, ModelElementType.ATTRIBUTE, 0, '');
                     this.pushAssessmentIfNotExists(attribute.id, attributeAssessment, isPartialAssessment);
                 }
-                for (const method of editorState.entities.byId[elem].methods) {
+                for (const method of model.elements.byId[elem].methods) {
                     const methodAssessment = new Feedback(method.id, ModelElementType.METHOD, 0, '');
                     this.pushAssessmentIfNotExists(method.id, methodAssessment, isPartialAssessment);
                 }
             }
-            for (const elem of editorState.relationships.allIds) {
-                const assessment = new Feedback(elem, ModelElementType.RELATIONSHIP, 0, '');
-                this.pushAssessmentIfNotExists(elem, assessment, isPartialAssessment);
+            for (const relationship of model.relationships) {
+                const assessment = new Feedback(relationship, ModelElementType.RELATIONSHIP, 0, '');
+                this.pushAssessmentIfNotExists(relationship, assessment, isPartialAssessment);
             }
         }
 
@@ -291,7 +291,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
     }
 
     setAssessmentsNames() {
-        this.assessmentsNames = this.modelingAssessmentService.getNamesForAssessments(this.result, this.apollonEditor.getState());
+        this.assessmentsNames = this.modelingAssessmentService.getNamesForAssessments(this.result, this.apollonEditor.model);
     }
 
     /**
@@ -313,17 +313,17 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
             }
         } else {
             if (this.apollonEditor) {
-                const editorState = this.apollonEditor.getState();
+                const model = this.apollonEditor.model;
                 if (this.selectedEntities) {
-                    for (const entity of editorState.entities.allIds) {
+                    for (const entity of model.elements) {
                         if (type === ModelElementType.ATTRIBUTE) {
-                            for (const attribute of editorState.entities.byId[entity].attributes) {
+                            for (const attribute of model.elements.byId[entity].attributes) {
                                 if (attribute.id === id && this.selectedEntities.indexOf(entity) > -1) {
                                     return true;
                                 }
                             }
                         } else if (type === ModelElementType.METHOD) {
-                            for (const method of editorState.entities.byId[entity].methods) {
+                            for (const method of model.elements.byId[entity].methods) {
                                 if (method.id === id && this.selectedEntities.indexOf(entity) > -1) {
                                     return true;
                                 }
@@ -379,20 +379,20 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
     }
 
     private highlightElementsWithConflict() {
-        const state: State = this.apollonEditor.getState();
-        const entitiesToHighlight: string[] = state.entities.allIds.filter((id: string) => {
+        const model = this.apollonEditor.model;
+        const entitiesToHighlight: string[] = model.elements.allIds.filter((id: string) => {
             if (this.conflicts.has(id)) {
                 return true;
             }
-            if (state.entities.byId[id].attributes.find(attribute => this.conflicts.has(attribute.id))) {
+            if (model.elements.byId[id].attributes.find(attribute => this.conflicts.has(attribute.id))) {
                 return true;
             }
-            if (state.entities.byId[id].methods.find(method => this.conflicts.has(method.id))) {
+            if (model.elements.byId[id].methods.find(method => this.conflicts.has(method.id))) {
                 return true;
             }
             return false;
         });
-        const relationshipsToHighlight: string [] = state.relationships.allIds.filter(id => this.conflicts.has(id));
+        const relationshipsToHighlight: string [] = model.relationships.allIds.filter(id => this.conflicts.has(id));
 
         entitiesToHighlight.forEach(id => {
             document.getElementById(id).style.fill = 'rgb(248, 214, 217)';

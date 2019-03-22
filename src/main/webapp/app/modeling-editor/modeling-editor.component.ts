@@ -1,10 +1,10 @@
 import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
-import { DiagramType, ModelingExercise } from '../entities/modeling-exercise';
+import { ModelingExercise } from '../entities/modeling-exercise';
 import { Participation } from '../entities/participation';
 import { ApollonDiagramService } from '../entities/apollon-diagram/apollon-diagram.service';
-import ApollonEditor, { ApollonOptions, Point, State } from '@ls1intum/apollon';
+import { ApollonEditor, ApollonMode, ApollonOptions, DiagramType, UMLModel } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
 import { Result } from '../entities/result';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
@@ -56,7 +56,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
      */
     positions: Map<string, Point>;
 
-    diagramState: State = null;
+    umlModel: UMLModel = null;
     isActive: boolean;
     isSaving: boolean;
     retryStarted = false;
@@ -98,10 +98,10 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                          */
                         if (
                             this.modelingExercise.diagramType === null ||
-                            this.modelingExercise.diagramType === DiagramType.USE_CASE ||
-                            this.modelingExercise.diagramType === DiagramType.COMMUNICATION
+                            this.modelingExercise.diagramType === DiagramType.UseCaseDiagram ||
+                            this.modelingExercise.diagramType === DiagramType.ObjectDiagram
                         ) {
-                            this.modelingExercise.diagramType = DiagramType.CLASS;
+                            this.modelingExercise.diagramType = DiagramType.ClassDiagram;
                         }
                         this.isActive =
                             this.modelingExercise.dueDate == null || new Date() <= moment(this.modelingExercise.dueDate).toDate();
@@ -171,7 +171,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
      * If it was already submitted, the Apollon editor is loaded in read-only mode.
      * Otherwise, it is loaded in the modeling mode and an auto save timer is started.
      */
-    initializeApollonEditor(initialState: State) {
+    initializeApollonEditor(initialModel: UMLModel) {
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();
         }
@@ -179,26 +179,26 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         if (this.submission && this.submission.submitted) {
             clearInterval(this.autoSaveInterval);
             this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
-                initialState,
-                mode: 'READ_ONLY',
-                diagramType: <ApollonOptions['diagramType']>this.modelingExercise.diagramType
+                model: initialModel,
+                mode: ApollonMode.ReadOnly,
+                type: this.modelingExercise.diagramType
             });
 
-            const state = this.apollonEditor.getState();
+            const model = this.apollonEditor.model;
             this.apollonEditor.subscribeToSelectionChange(selection => {
                 const selectedEntities = [];
-                for (const entity of selection.entityIds) {
+                for (const entity of selection.elements) {
                     selectedEntities.push(entity);
-                    for (const attribute of state.entities.byId[entity].attributes) {
+                    for (const attribute of model.elements.byId[entity].attributes) {
                         selectedEntities.push(attribute.id);
                     }
-                    for (const method of state.entities.byId[entity].methods) {
+                    for (const method of model.elements.byId[entity].methods) {
                         selectedEntities.push(method.id);
                     }
                 }
                 this.selectedEntities = selectedEntities;
                 const selectedRelationships = [];
-                for (const rel of selection.relationshipIds) {
+                for (const rel of selection.relationships) {
                     selectedRelationships.push(rel);
                 }
                 this.selectedRelationships = selectedRelationships;
@@ -215,9 +215,9 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
             });
         } else {
             this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
-                initialState,
-                mode: 'MODELING_ONLY',
-                diagramType: <ApollonOptions['diagramType']>this.modelingExercise.diagramType
+                model: initialModel,
+                mode: ApollonMode.Modelling,
+                type: this.modelingExercise.diagramType
             });
             this.updateSubmissionModel();
             // auto save of submission if there are changes
@@ -287,7 +287,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
             return;
         }
         this.updateSubmissionModel();
-        if (!this.diagramState || this.diagramState.entities.allIds.length === 0) {
+        if (!this.umlModel || this.umlModel.elements.length === 0) {
             this.jhiAlertService.warning('arTeMiSApp.modelingEditor.empty');
             return;
         }
@@ -353,8 +353,8 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
      * Saves the current model state in the attribute diagramState
      */
     updateSubmissionModel() {
-        this.diagramState = this.apollonEditor.getState();
-        const diagramJson = JSON.stringify(this.diagramState);
+        this.umlModel = this.apollonEditor.model;
+        const diagramJson = JSON.stringify(this.umlModel);
         if (this.submission && diagramJson != null) {
             this.submission.model = diagramJson;
         }
@@ -379,7 +379,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
 
     getElementPositions() {
         // TODO: use Result instead of ModelingAssessment
-        this.positions = this.modelingAssessmentService.getElementPositions(this.assessmentResult, this.apollonEditor.getState());
+        this.positions = this.modelingAssessmentService.getElementPositions(this.assessmentResult, this.apollonEditor.model);
     }
 
     /**
@@ -421,12 +421,12 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         if (
             (!this.submission &&
                 this.apollonEditor &&
-                this.apollonEditor.getState().entities.allIds.length > 0 &&
-                JSON.stringify(this.apollonEditor.getState()) !== '') ||
+                this.apollonEditor.model.elements.length > 0 &&
+                JSON.stringify(this.apollonEditor.model) !== '') ||
             (this.submission &&
                 this.submission.model &&
-                JSON.parse(this.submission.model).version === this.apollonEditor.getState().version &&
-                this.submission.model !== JSON.stringify(this.apollonEditor.getState()))
+                JSON.parse(this.submission.model).version === this.apollonEditor.model.version &&
+                this.submission.model !== JSON.stringify(this.apollonEditor.model))
         ) {
             return false;
         }
@@ -466,11 +466,11 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
      * is used in the submit() function
      */
     calculateNumberOfModelElements(): number {
-        if (this.diagramState) {
-            let total = this.diagramState.entities.allIds.length + this.diagramState.relationships.allIds.length;
-            for (const elem of this.diagramState.entities.allIds) {
-                total += this.diagramState.entities.byId[elem].attributes.length;
-                total += this.diagramState.entities.byId[elem].methods.length;
+        if (this.umlModel) {
+            let total = this.umlModel.elements.length + this.umlModel.relationships.length;
+            for (const elem of this.umlModel.elements) {
+                total += this.umlModel.elements.byId[elem].attributes.length;
+                total += this.umlModel.elements.byId[elem].methods.length;
             }
             return total;
         }

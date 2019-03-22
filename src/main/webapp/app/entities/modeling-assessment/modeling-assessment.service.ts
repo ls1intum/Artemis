@@ -4,17 +4,7 @@ import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from '../../app.constants';
 
 import { Result } from '../result';
-import {
-    ENTITY_KIND_HEIGHT,
-    ENTITY_MEMBER_HEIGHT,
-    ENTITY_MEMBER_LIST_VERTICAL_PADDING,
-    ENTITY_NAME_HEIGHT,
-    EntityKind,
-    Point,
-    RectEdge,
-    RelationshipKind,
-    State
-} from '@ls1intum/apollon';
+import { RelationshipKind, UMLModel, ElementKind } from '@ls1intum/apollon';
 import { ModelElementType } from 'app/entities/modeling-assessment/uml-element.model';
 import { Feedback } from 'app/entities/feedback';
 
@@ -77,33 +67,32 @@ export class ModelingAssessmentService {
     /**
      * Creates the labels for the assessment elements for displaying them in the modeling and assessment editor.
      */
-    getNamesForAssessments(result: Result, model: State): Map<string, Map<string, string>> {
+    getNamesForAssessments(result: Result, model: UMLModel): Map<string, Map<string, string>> {
         const assessmentsNames = new Map<string, Map<string, string>>();
         for (const feedback of result.feedbacks) {
             const referencedModelType = feedback.referenceType;
             const referencedModelId = feedback.referenceId;
             if (referencedModelType === ModelElementType.CLASS) {
-                const classElement = model.entities.byId[referencedModelId];
+                const classElement = model.elements.byId[referencedModelId];
                 const className = classElement.name;
                 let type: string;
                 switch (classElement.kind) {
-                    case EntityKind.ActivityControlInitialNode:
+                    case ElementKind.ActivityInitialNode:
                         type = 'initial node';
                         break;
-                    case EntityKind.ActivityControlFinalNode:
+                    case ElementKind.ActivityFinalNode:
                         type = 'final node';
                         break;
-                    case EntityKind.ActivityObject:
+                    case ElementKind.ActivityObjectNode:
                         type = 'object';
                         break;
-                    case EntityKind.ActivityActionNode:
+                    case ElementKind.ActivityActionNode:
                         type = 'action';
                         break;
-                    case EntityKind.ActivityForkNode:
-                    case EntityKind.ActivityForkNodeHorizontal:
+                    case ElementKind.ActivityForkNode:
                         type = 'fork node';
                         break;
-                    case EntityKind.ActivityMergeNode:
+                    case ElementKind.ActivityMergeNode:
                         type = 'merge node';
                         break;
                     default:
@@ -112,16 +101,16 @@ export class ModelingAssessmentService {
                 }
                 assessmentsNames[referencedModelId] = {type, name: className};
             } else if (referencedModelType === ModelElementType.ATTRIBUTE) {
-                for (const entityId of model.entities.allIds) {
-                    for (const att of model.entities.byId[entityId].attributes) {
+                for (const entityId of model.elements) {
+                    for (const att of model.elements.byId[entityId].attributes) {
                         if (att.id === referencedModelId) {
                             assessmentsNames[referencedModelId] = {type: referencedModelType, name: att.name};
                         }
                     }
                 }
             } else if (referencedModelType === ModelElementType.METHOD) {
-                for (const entityId of model.entities.allIds) {
-                    for (const method of model.entities.byId[entityId].methods) {
+                for (const entityId of model.elements) {
+                    for (const method of model.elements.byId[entityId].methods) {
                         if (method.id === referencedModelId) {
                             assessmentsNames[referencedModelId] = {type: referencedModelType, name: method.name};
                         }
@@ -129,28 +118,28 @@ export class ModelingAssessmentService {
                 }
             } else if (referencedModelType === ModelElementType.RELATIONSHIP) {
                 const relationship = model.relationships.byId[referencedModelId];
-                const source = model.entities.byId[relationship.source.entityId].name;
-                const target = model.entities.byId[relationship.target.entityId].name;
+                const source = model.elements.byId[relationship.source.entityId].name;
+                const target = model.elements.byId[relationship.target.entityId].name;
                 const kind: RelationshipKind = model.relationships.byId[referencedModelId].kind;
                 let type = 'association';
                 let relation: string;
                 switch (kind) {
-                    case RelationshipKind.AssociationBidirectional:
+                    case RelationshipKind.ClassBidirectional:
                         relation = ' <-> ';
                         break;
-                    case RelationshipKind.AssociationUnidirectional:
+                    case RelationshipKind.ClassUnidirectional:
                         relation = ' --> ';
                         break;
-                    case RelationshipKind.Aggregation:
+                    case RelationshipKind.ClassAggregation:
                         relation = ' --◇ ';
                         break;
-                    case RelationshipKind.Inheritance:
+                    case RelationshipKind.ClassInheritance:
                         relation = ' --▷ ';
                         break;
-                    case RelationshipKind.Dependency:
+                    case RelationshipKind.ClassDependency:
                         relation = ' ╌╌> ';
                         break;
-                    case RelationshipKind.Composition:
+                    case RelationshipKind.ClassComposition:
                         relation = ' --◆ ';
                         break;
                     case RelationshipKind.ActivityControlFlow:
@@ -168,11 +157,12 @@ export class ModelingAssessmentService {
         return assessmentsNames;
     }
 
+    // TODO: this should be part of Apollon in the future
     /**
      * Calculates the positions for the symbols used for visualizing the scores of the assessment.
      * For associations the symbol is positioned at the source entity of the association.
      */
-    getElementPositions(result: Result, model: State): Map<string, Point> {
+    getElementPositions(result: Result, model: UMLModel): Map<string, Point> {
         const SYMBOL_HEIGHT = 31;
         const SYMBOL_WIDTH = 65;
         const positions = new Map<string, Point>();
@@ -181,44 +171,42 @@ export class ModelingAssessmentService {
             const referencedModelId = feedback.referenceId;
             const elemPosition: Point = {x: 0, y: 0};
             if (referencedModelType === ModelElementType.CLASS) {
-                if (model.entities.byId[referencedModelId]) {
-                    const entity = model.entities.byId[referencedModelId];
+                if (model.elements.byId[referencedModelId]) {
+                    const entity = model.elements.byId[referencedModelId];
                     elemPosition.x = entity.position.x + entity.size.width;
-                    if (entity.kind === EntityKind.ActivityControlInitialNode || entity.kind === EntityKind.ActivityControlFinalNode) {
+                    if (entity.kind === ElementKind.ActivityInitialNode || entity.kind === ElementKind.ActivityFinalNode) {
                         elemPosition.x = entity.position.x;
                     }
                     elemPosition.y = entity.position.y;
                 }
             } else if (referencedModelType === ModelElementType.ATTRIBUTE) {
-                for (const entityId of model.entities.allIds) {
-                    const entity = model.entities.byId[entityId];
-                    entity.attributes.forEach((attribute, index) => {
+                for (const element of model.elements) {
+                    element.attributes.forEach((attribute, index) => {
                         if (attribute.id === referencedModelId) {
-                            elemPosition.x = entity.position.x + entity.size.width;
-                            elemPosition.y = entity.position.y + ENTITY_NAME_HEIGHT + ENTITY_MEMBER_LIST_VERTICAL_PADDING;
-                            if (entity.kind === EntityKind.Interface || entity.kind === EntityKind.Enumeration) {
+                            elemPosition.x = element.position.x + element.size.width;
+                            elemPosition.y = element.position.y + ENTITY_NAME_HEIGHT + ENTITY_MEMBER_LIST_VERTICAL_PADDING;
+                            if (element.kind === ElementKind.Interface || element.kind === EntityKind.Enumeration) {
                                 elemPosition.y += ENTITY_KIND_HEIGHT;
                             }
-                            if (entity.attributes.length > 1 && index > 0) {
+                            if (element.attributes.length > 1 && index > 0) {
                                 elemPosition.y += index * ENTITY_MEMBER_HEIGHT;
                             }
                         }
                     });
                 }
             } else if (referencedModelType === ModelElementType.METHOD) {
-                for (const entityId of model.entities.allIds) {
-                    const entity = model.entities.byId[entityId];
-                    entity.methods.forEach((method, index) => {
+                for (const element of model.elements) {
+                    element.methods.forEach((method, index) => {
                         if (method.id === referencedModelId) {
-                            elemPosition.x = entity.position.x + entity.size.width;
-                            elemPosition.y = entity.position.y + ENTITY_NAME_HEIGHT + ENTITY_MEMBER_LIST_VERTICAL_PADDING;
-                            if (entity.kind === EntityKind.Interface || entity.kind === EntityKind.Enumeration) {
+                            elemPosition.x = element.position.x + element.size.width;
+                            elemPosition.y = element.position.y + ENTITY_NAME_HEIGHT + ENTITY_MEMBER_LIST_VERTICAL_PADDING;
+                            if (element.kind === ElementKind.Interface || entity.kind === ElementKind.Enumeration) {
                                 elemPosition.y += ENTITY_KIND_HEIGHT;
                             }
-                            if (entity.attributes.length > 0) {
+                            if (element.attributes.length > 0) {
                                 elemPosition.y += 2 * ENTITY_MEMBER_LIST_VERTICAL_PADDING + entity.attributes.length * ENTITY_MEMBER_HEIGHT;
                             }
-                            if (entity.methods.length > 1 && index > 0) {
+                            if (element.methods.length > 1 && index > 0) {
                                 elemPosition.y += index * ENTITY_MEMBER_HEIGHT;
                             }
                         }
@@ -228,9 +216,9 @@ export class ModelingAssessmentService {
                 if (model.relationships.byId[referencedModelId]) {
                     const relationship = model.relationships.byId[referencedModelId];
                     const kind: RelationshipKind = relationship.kind;
-                    const sourceEntity = model.entities.byId[relationship.source.entityId];
-                    const destEntity = model.entities.byId[relationship.target.entityId];
-                    if (kind === RelationshipKind.AssociationBidirectional) {
+                    const sourceEntity = model.elements.byId[relationship.source.entityId];
+                    const destEntity = model.elements.byId[relationship.target.entityId];
+                    if (kind === RelationshipKind.ClassBidirectional) {
                         const rightElem = sourceEntity.position.x > destEntity.position.x ? sourceEntity : destEntity;
                         const rightEdge: RectEdge = rightElem === sourceEntity ? relationship.source.edge : relationship.target.edge;
                         elemPosition.x = rightElem.position.x;

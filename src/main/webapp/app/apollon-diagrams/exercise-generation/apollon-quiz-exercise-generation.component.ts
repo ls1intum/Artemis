@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import ApollonEditor, { layoutDiagram } from '@ls1intum/apollon';
 import { generateDragAndDropQuizExercise } from './quiz-exercise-generator';
 import { Course, CourseService } from '../../entities/course';
 import { QuizExerciseService } from '../../entities/quiz-exercise';
 import { FileUploaderService } from '../../shared/http/file-uploader.service';
+import { ApollonEditor } from '@ls1intum/apollon';
 
 @Component({
     selector: 'jhi-apollon-quiz-exercise-generation',
@@ -38,16 +38,18 @@ export class ApollonQuizExerciseGenerationComponent implements OnInit {
             return;
         }
 
-        const diagramState = this.apollonEditor.getState();
-        const layoutedDiagram = layoutDiagram(diagramState, { outerPadding: 20 });
-        const interactiveElementIds = new Set(diagramState.interactiveElements.allIds);
+        const model = this.apollonEditor.model;
+        const layoutedDiagram = layoutDiagram(model, { outerPadding: 20 });
+        const interactiveElements = new Set(model.interactive.elements);
+        const interactiveRelationships = new Set(model.interactive.relationships);
 
         const fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif';
 
         await generateDragAndDropQuizExercise(
             this.diagramTitle,
             layoutedDiagram,
-            interactiveElementIds,
+            interactiveElements,
+            interactiveRelationships,
             fontFamily,
             this.selectedCourse,
             this.fileUploaderService,
