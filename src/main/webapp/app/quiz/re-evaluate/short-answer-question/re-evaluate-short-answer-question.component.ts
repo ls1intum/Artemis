@@ -14,15 +14,6 @@ import { ShortAnswerQuestion } from '../../../entities/short-answer-question';
     providers: []
 })
 export class ReEvaluateShortAnswerQuestionComponent {
-    /**
-     question: '=',
-     onDelete: '&',
-     onUpdated: '&',
-     questionIndex: '<',
-     onMoveUp: '&',
-     onMoveDown: '&'
-     */
-
     @Input()
     question: ShortAnswerQuestion;
     @Input()

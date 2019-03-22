@@ -200,8 +200,8 @@ export class QuizReEvaluateWarningComponent implements OnInit {
     /**
      * @function checkShortAnswerQuestion
      * @desc
-     * 1. check ShortAnswer-Question-Elements
-     * 2. set flags based on detected changes
+     * 1. We check all ShortAnswer-Question-Elements in case a spot, solution or mapping has changed/was deleted
+     * 2. Set flags based on detected changes to inform the instructor in the UI what his changes have for consequences.
      *
      * @param question
      * @param backUpQuestion
@@ -212,7 +212,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
             || question.spots.length < backUpQuestion.spots.length) {
             this.questionElementDeleted = true;
         }
-
+        // check if a spot or solution was added
         if (question.solutions.length > backUpQuestion.solutions.length
             || question.spots.length > backUpQuestion.spots.length) {
             this.solutionAdded = true;
