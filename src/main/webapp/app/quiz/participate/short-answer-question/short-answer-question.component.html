@@ -3,21 +3,33 @@
     <p *ngIf="questionText !== '' ">{{questionText}}</p>
 
 
-
-    <div *ngFor="let textPart of textParts; let i = index">
-        <div class="short-answer-question-display"  *ngFor="let element of textPart; let j = index">
-            <span *ngIf="!isInputField(element)">{{element}}</span>
-            <div *ngIf="isInputField(element)" style="position: relative; display: inline-block">
-                <input class="short-answer-question-input" type="text" [disabled]="clickDisabled"
-                       value="{{submittedTexts[(getSpotNr(element) - 1)] !== undefined ? submittedTexts[(getSpotNr(element) - 1)].text : ''}}"
-                       id="solution-{{i}}-{{j}}-{{question.id}}" (change)="setSubmittedText()">
+    <div *ngIf="!showResult">
+        <div *ngFor="let textPart of textParts; let i = index">
+            <div class="short-answer-question-display"  *ngFor="let element of textPart; let j = index">
+                <span *ngIf="!isInputField(element)">{{element}}</span>
+                <div *ngIf="isInputField(element)" style="position: relative; display: inline-block">
+                    <input class="short-answer-question-input" type="text" [disabled]="clickDisabled"
+                           value="{{getSubmittedTextForSpot(element) !== undefined ? getSubmittedTextForSpot(element).text : ''}}"
+                           id="solution-{{i}}-{{j}}-{{question.id}}" (change)="setSubmittedText()">
+                </div>
             </div>
-            <!-- <span>&nbsp;</span>  -->
+        </div>
+    </div>
+    <div *ngIf="showResult">
+        <div *ngFor="let textPart of textParts; let i = index">
+            <div class="short-answer-question-display"  *ngFor="let element of textPart; let j = index">
+                <span *ngIf="!isInputField(element)">{{element}}</span>
+                <div *ngIf="isInputField(element)" style="position: relative; display: inline-block">
+                    <input class="short-answer-question-input" disabled
+                           style="background: lightgreen" value="{{getSubmittedTextForSpot(element).text}}">
+                </div>
+            </div>
         </div>
     </div>
 
 
 
+    <!--
     <div *ngIf="!showResult && !clickDisabled">
         <div class="short-answer-question-display" *ngFor="let textPart of textBeforeSpots; let i = index">
         {{textPart}} <input class="short-answer-question-input" type="text" id="solution-{{i}}-{{_question.id}}" value="{{submittedTexts[i] !== undefined ? submittedTexts[i].text : ''}}" (change)="setSubmittedText()"  >
@@ -32,6 +44,9 @@
         </div>
         <span>{{textAfterSpots}}</span>
     </div>
+
+    -->
+
     <div *ngIf="showResult && !showingSampleSolution">
         <div class="short-answer-question-display" *ngFor="let textPart of textBeforeSpots; let i = index">
             {{textPart}}

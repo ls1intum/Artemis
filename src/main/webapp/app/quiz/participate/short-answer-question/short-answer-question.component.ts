@@ -102,12 +102,16 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
      */
     setSubmittedText() {
         this.submittedTexts = [];
+        /*
         for (const id of Object.keys(this.textBeforeSpots)) {
             const submittedText = new ShortAnswerSubmittedText();
             submittedText.text = (<HTMLInputElement>document.getElementById('solution-' + id + '-' + this._question.id)).value;
             submittedText.spot = this.question.spots[id];
             this.submittedTexts.push(submittedText);
-        }
+        } */
+
+        console.log('länge von submittedTexts' + this.submittedTexts.length);
+        console.log(this.submittedTexts);
 
         let i = 0;
         let j = 0;
@@ -148,6 +152,10 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
      */
     hideSampleSolution() {
         this.showingSampleSolution = false;
+    }
+
+    getSubmittedTextForSpot(spotTag: string): ShortAnswerSubmittedText {
+        return this.submittedTexts.filter(submittedText => submittedText.spot.spotNr === this.getSpotNr(spotTag))[0];
     }
 
 
