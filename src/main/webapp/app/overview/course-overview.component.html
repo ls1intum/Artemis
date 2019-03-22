@@ -1,7 +1,19 @@
 <div *ngIf="course">
     <div class="course-info-bar">
-        <h3>{{course.title}}</h3>
-        <h4>{{course.description || ("arTeMiSApp.courseOverview.noDescription"| translate)}}</h4>
+        <div class="row">
+            <div class="col general-info">
+                <h3>{{course.title}}</h3>
+                <h4>{{course.description || ("arTeMiSApp.courseOverview.noDescription"| translate)}}</h4>
+            </div>
+            <div class="col-4 d-none d-md-flex justify-content-end course-icon">
+                <jhi-secured-image
+
+                    *ngIf="course.courseIcon"
+                    [src]="course.courseIcon"
+                    [alt]="'arTeMiSApp.dragAndDropQuestion.noBackgroundPicture' | translate">
+                </jhi-secured-image>
+            </div>
+        </div>
     </div>
     <div class="tab-bar">
         <div class="tab-item" routerLink="exercises" routerLinkActive="active">
