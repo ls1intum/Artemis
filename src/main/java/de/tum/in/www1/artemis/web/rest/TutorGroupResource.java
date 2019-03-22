@@ -8,6 +8,7 @@ import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -40,6 +41,7 @@ public class TutorGroupResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/tutor-groups")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<TutorGroup> createTutorGroup(@RequestBody TutorGroup tutorGroup) throws URISyntaxException {
         log.debug("REST request to save TutorGroup : {}", tutorGroup);
         if (tutorGroup.getId() != null) {
@@ -61,6 +63,7 @@ public class TutorGroupResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/tutor-groups")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<TutorGroup> updateTutorGroup(@RequestBody TutorGroup tutorGroup) throws URISyntaxException {
         log.debug("REST request to update TutorGroup : {}", tutorGroup);
         if (tutorGroup.getId() == null) {
@@ -73,24 +76,13 @@ public class TutorGroupResource {
     }
 
     /**
-     * GET  /tutor-groups : get all the tutorGroups.
-     *
-     * @param eagerload flag to eager load entities from relationships (This is applicable for many-to-many)
-     * @return the ResponseEntity with status 200 (OK) and the list of tutorGroups in body
-     */
-    @GetMapping("/tutor-groups")
-    public List<TutorGroup> getAllTutorGroups(@RequestParam(required = false, defaultValue = "false") boolean eagerload) {
-        log.debug("REST request to get all TutorGroups");
-        return tutorGroupRepository.findAllWithEagerRelationships();
-    }
-
-    /**
      * GET  /tutor-groups/:id : get the "id" tutorGroup.
      *
      * @param id the id of the tutorGroup to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the tutorGroup, or with status 404 (Not Found)
      */
     @GetMapping("/tutor-groups/{id}")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<TutorGroup> getTutorGroup(@PathVariable Long id) {
         log.debug("REST request to get TutorGroup : {}", id);
         Optional<TutorGroup> tutorGroup = tutorGroupRepository.findOneWithEagerRelationships(id);
@@ -104,6 +96,7 @@ public class TutorGroupResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/tutor-groups/{id}")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteTutorGroup(@PathVariable Long id) {
         log.debug("REST request to delete TutorGroup : {}", id);
         tutorGroupRepository.deleteById(id);

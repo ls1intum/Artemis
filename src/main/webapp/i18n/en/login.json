@@ -5,6 +5,7 @@
             "password": "Password",
             "password.placeholder": "Your password",
             "rememberme": "Remember me",
+            "acceptTerms": "Accept terms",
             "button": "Sign in"
         },
         "messages": {
