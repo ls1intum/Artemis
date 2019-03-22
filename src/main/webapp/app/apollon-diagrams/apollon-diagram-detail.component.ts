@@ -34,7 +34,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
 
                     this.diagram = diagram;
 
-                    const model = JSON.parse(diagram.jsonRepresentation);
+                    const model = JSON.parse(diagram.jsonRepresentation || '{}');
                     this.initializeApollonEditor(model);
                 },
                 response => {
