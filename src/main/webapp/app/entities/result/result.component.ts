@@ -80,8 +80,9 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
 
             if (exercise && exercise.type === ExerciseType.PROGRAMMING) {
                 this.accountService.identity().then(user => {
-                    // only subscribe for the currently logged in user
-                    if (user.id === this.participation.student.id && (exercise.dueDate == null || exercise.dueDate.isAfter(moment()))) {
+                    // only subscribe for the currently logged in user or if the participation is a template/solution participation and the student is at least instructor
+                    if ((this.participation.student && user.id === this.participation.student.id && (exercise.dueDate == null || exercise.dueDate.isAfter(moment())))
+                        || (this.participation.student == null && this.accountService.isAtLeastInstructorInCourse(exercise.course))) {
                         // subscribe for new results (e.g. when a programming exercise was automatically tested)
                         this.websocketChannelResults = `/topic/participation/${this.participation.id}/newResults`;
                         this.jhiWebsocketService.subscribe(this.websocketChannelResults);

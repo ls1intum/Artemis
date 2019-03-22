@@ -24,12 +24,14 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
             this.resultService
                 .findResultsForParticipation(this.programmingExercise.course.id, this.programmingExercise.id, this.programmingExercise.solutionParticipation.id)
                 .subscribe(results => {
+                    this.programmingExercise.solutionParticipation.exercise = this.programmingExercise;
                     this.programmingExercise.solutionParticipation.results = results.body;
                 });
 
             this.resultService
                 .findResultsForParticipation(this.programmingExercise.course.id, this.programmingExercise.id, this.programmingExercise.templateParticipation.id)
                 .subscribe(results => {
+                    this.programmingExercise.templateParticipation.exercise = this.programmingExercise;
                     this.programmingExercise.templateParticipation.results = results.body;
                 });
         });
