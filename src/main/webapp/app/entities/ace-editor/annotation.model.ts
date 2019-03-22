@@ -2,6 +2,9 @@ import { TextChange } from './text-change.model';
 
 type Annotation = { row: number; column: number; text: string; type: string; ts: number };
 
+/**
+ * Wrapper class for ace editor annotations.
+ */
 export class AnnotationArray extends Array<Annotation> {
     /**
      * Recalculates the position of annotations according to changes in the editor.

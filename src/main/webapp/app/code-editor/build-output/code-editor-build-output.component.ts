@@ -9,7 +9,7 @@ import { Result, ResultService } from '../../entities/result';
 import * as $ from 'jquery';
 import * as interact from 'interactjs';
 import { Interactable } from 'interactjs';
-import { BuildLogEntry } from '../../entities/build-log';
+import { BuildLogEntryArray } from '../../entities/build-log';
 
 @Component({
     selector: 'jhi-code-editor-build-output',
@@ -17,7 +17,7 @@ import { BuildLogEntry } from '../../entities/build-log';
     providers: [JhiAlertService, WindowRef, RepositoryService, ResultService]
 })
 export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges {
-    buildLogs: BuildLogEntry[] = [];
+    buildLogs = new BuildLogEntryArray();
 
     /** Resizable constants **/
     resizableMinHeight = 100;
@@ -29,7 +29,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges 
     @Input()
     isBuilding: boolean;
     @Output()
-    buildLogChange = new EventEmitter<BuildLogEntry[]>();
+    buildLogChange = new EventEmitter<BuildLogEntryArray>();
 
     constructor(
         private parent: CodeEditorComponent,
@@ -105,9 +105,9 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges 
      */
     getBuildLogs() {
         this.repositoryService.buildlogs(this.participation.id).subscribe(buildLogs => {
-            this.buildLogs = buildLogs;
+            this.buildLogs = new BuildLogEntryArray(...buildLogs);
             $('.buildoutput').scrollTop($('.buildoutput')[0].scrollHeight);
-            this.buildLogChange.emit(buildLogs);
+            this.buildLogChange.emit(this.buildLogs);
         });
     }
 
@@ -118,9 +118,9 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnChanges 
                 if (details.body.length === 0) {
                     this.getBuildLogs();
                 } else {
-                    this.buildLogs = [];
+                    this.buildLogs = new BuildLogEntryArray();
                     // If there are no compile errors, send recent timestamp
-                    this.buildLogChange.emit([{time: new Date(Date.now()), log: ''}]);
+                    this.buildLogChange.emit(new BuildLogEntryArray({time: new Date(Date.now()), log: ''}));
                 }
             });
         }

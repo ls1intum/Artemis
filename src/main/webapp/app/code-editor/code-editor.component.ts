@@ -1,26 +1,27 @@
-import { CourseService } from '../entities/course';
-import { JhiAlertService } from 'ng-jhipster';
-import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
-import { Subscription } from 'rxjs/Subscription';
-import { ActivatedRoute } from '@angular/router';
-import { WindowRef } from '../core/websocket/window.service';
-import { Participation, ParticipationService } from '../entities/participation';
-import { ParticipationDataProvider } from '../course-list/exercise-list/participation-data-provider';
-import { RepositoryFileService, RepositoryService } from '../entities/repository/repository.service';
-import { Result } from '../entities/result';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import * as $ from 'jquery';
+import { ActivatedRoute } from '@angular/router';
+import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Interactable } from 'interactjs';
+import { JhiAlertService } from 'ng-jhipster';
+import { LocalStorageService } from 'ngx-webstorage';
+import { Subscription } from 'rxjs/Subscription';
 import {
     compose,
     fromPairs,
     map,
     toPairs,
 } from 'lodash/fp';
-import { Interactable } from 'interactjs';
+
+import { BuildLogEntryArray } from 'app/entities/build-log';
+
+import { CourseService } from '../entities/course';
+import { Participation, ParticipationService } from '../entities/participation';
+import { ParticipationDataProvider } from '../course-list/exercise-list/participation-data-provider';
+import { RepositoryFileService, RepositoryService } from '../entities/repository/repository.service';
+import { Result } from '../entities/result';
 import { SaveStatusChange, Session, AnnotationArray } from '../entities/ace-editor';
-import { BuildLogEntry } from 'app/entities/build-log';
-import { safeUnescape } from 'app/shared';
-import { LocalStorageService } from 'ngx-webstorage';
+import { WindowRef } from '../core/websocket/window.service';
 
 @Component({
     selector: 'jhi-editor',
@@ -29,8 +30,6 @@ import { LocalStorageService } from 'ngx-webstorage';
 })
 export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
     /** Dependencies as defined by the Editor component */
-    errorLogRegex = /\[(ERROR)\].*\/(src\/.+):\[(\d+),(\d+)\]\s(.*$)/;
-
     participation: Participation;
     repository: RepositoryService;
     selectedFile: string;
@@ -165,27 +164,10 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
      * Check if the received build logs are recent and format them for use in the ace-editor
      * @param buildLogs
      */
-    updateLatestBuildLogs(buildLogs: BuildLogEntry[]) {
+    updateLatestBuildLogs(buildLogs: BuildLogEntryArray) {
         const timestamp = buildLogs.length ? Date.parse(buildLogs[0].time) : 0;
         if (!this.buildLogErrors || timestamp > this.buildLogErrors.timestamp) {
-            const errors = buildLogs
-                // Parse build logs
-                .map(({ log, time }) => log && { log: log.match(this.errorLogRegex), time })
-                // Remove entries that could not be parsed, are too short or not errors
-                .filter(({ log }) => !!log && log.length === 6 && log[1] === 'ERROR')
-                // Map buildLogEntries into annotation format
-                .map(({ log: [, , fileName, row, column, text], time }) => ({
-                    type: 'error',
-                    fileName,
-                    row: Math.max(parseInt(row, 10) - 1, 0),
-                    column: Math.max(parseInt(column, 10) - 1, 0),
-                    text: safeUnescape(text),
-                    ts: Date.parse(time)
-                }))
-                // Group annotations by filename
-                .reduce((buildLogErrors, { fileName, ...rest }) =>
-                        ({...buildLogErrors, [fileName]: new AnnotationArray( ...(buildLogErrors[fileName] || []), rest ) }), {});
-            this.buildLogErrors = { errors, timestamp };
+            this.buildLogErrors = { errors: buildLogs.extractErrors(), timestamp };
         }
     }
 

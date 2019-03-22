@@ -127,7 +127,7 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
                 if (this.annotationChange) {
                     this.annotationChange.unsubscribe();
                 }
-                this.editor.getEditor().getSession().off('change', this.recalculateAnnotationPositions);
+                this.editor.getEditor().getSession().off('change', this.updateAnnotationPositions);
                 this.editor.getEditor().getSession().clearAnnotations();
             }
             this.loadFile(this.selectedFile);
@@ -147,7 +147,7 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
                 removedFiles,
                 (a, b) => a === b[0]
             );
-            const newEntries = newFiles.map(fileName => [fileName, {errors: [], code: '', unsavedChanges: false}]);
+            const newEntries = newFiles.map(fileName => [fileName, {errors: new AnnotationArray(), code: '', unsavedChanges: false}]);
             this.editorFileSessions = compose(
                 fromPairs,
                 unionBy('[0]', newEntries)
@@ -205,10 +205,10 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
     }
 
     /**
-     * Recalculate the position of the editor annotations based on the file changes
+     * Update the position of the editor annotations based on the file changes
      * @param change
      */
-    recalculateAnnotationPositions = (change: TextChange) => {
+    updateAnnotationPositions = (change: TextChange) => {
         this.editorFileSessions[this.selectedFile].errors = this.editorFileSessions[this.selectedFile].errors.update(change);
     }
 
@@ -328,7 +328,7 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
             this.editor.getEditor().getSession()
                 .setAnnotations(this.editorFileSessions[this.selectedFile].errors);
             this.annotationChange = fromEvent(this.editor.getEditor().getSession(), 'change')
-                .subscribe(([change]) => this.recalculateAnnotationPositions(change));
+                .subscribe(([change]) => this.updateAnnotationPositions(change));
         }
     }
 
