@@ -43,11 +43,12 @@
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.modelingExercise.diagramType" for="field_diagramType">Diagram Type</label>
             <select class="form-control" name="diagramType" [(ngModel)]="modelingExercise.diagramType" id="field_diagramType" >
-                <option value="CLASS">{{'arTeMiSApp.DiagramType.CLASS' | translate}}</option>
-                <option value="ACTIVITY">{{'arTeMiSApp.DiagramType.ACTIVITY' | translate}}</option>
+                <option value="ClassDiagram">{{'arTeMiSApp.DiagramType.ClassDiagram' | translate}}</option>
+                <option value="ActivityDiagram">{{'arTeMiSApp.DiagramType.ActivityDiagram' | translate}}</option>
                 <!-- currently we do not support use case and communication diagrams
-                <option value="USE_CASE">{{'arTeMiSApp.DiagramType.USE_CASE' | translate}}</option>
-                <option value="COMMUNICATION">{{'arTeMiSApp.DiagramType.COMMUNICATION' | translate}}</option>-->
+                <option value="ObjectDiagram">{{'arTeMiSApp.DiagramType.ObjectDiagram' | translate}}</option>
+                <option value="UseCaseDiagram">{{'arTeMiSApp.DiagramType.UseCaseDiagram' | translate}}</option>
+                <option value="CommunicationDiagram">{{'arTeMiSApp.DiagramType.CommunicationDiagram' | translate}}</option>-->
             </select>
         </div>
         <div class="form-group">

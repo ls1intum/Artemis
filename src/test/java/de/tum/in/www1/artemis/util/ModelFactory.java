@@ -19,7 +19,7 @@ public class ModelFactory {
         exercise.setReleaseDate(releaseDate);
         exercise.setDueDate(dueDate);
         exercise.assessmentDueDate(assessmentDueDate);
-        exercise.setDiagramType(DiagramType.CLASS);
+        exercise.setDiagramType(DiagramType.ClassDiagram);
         exercise.setCourse(course);
         exercise.setParticipations(new HashSet<>());
         exercise.setExampleSubmissions(new HashSet<>());

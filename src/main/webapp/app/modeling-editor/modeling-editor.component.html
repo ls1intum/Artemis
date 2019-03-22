@@ -20,10 +20,10 @@
                 </ng-container>
             </button>
             <button class="btn btn-success" (click)="submit()"
-                    [disabled]="!submission || !umlModel || umlModel.entities.allIds.length === 0"
+                    [disabled]="!submission || !umlModel || umlModel.elements.length === 0"
                     [hidden]="submission?.submitted || !isActive">Submit</button>
             <button class="btn btn-warning" (click)="submit()"
-                    [disabled]="!submission || !umlModel || umlModel.entities.allIds.length === 0"
+                    [disabled]="!submission || !umlModel || umlModel.elements.length === 0"
                     [hidden]="submission?.submitted || isActive">Submit (deadline missed)</button>
             <button class="btn btn-info" (click)="retry()"
                     *ngIf="isActive && submission?.submitted && result?.rated && !retryStarted"><fa-icon icon="sync"></fa-icon> Retry</button>
