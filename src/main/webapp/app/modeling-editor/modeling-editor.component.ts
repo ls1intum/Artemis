@@ -4,7 +4,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { ModelingExercise } from '../entities/modeling-exercise';
 import { Participation } from '../entities/participation';
 import { ApollonDiagramService } from '../entities/apollon-diagram/apollon-diagram.service';
-import { ApollonEditor, ApollonMode, ApollonOptions, DiagramType, UMLModel } from '@ls1intum/apollon';
+import { ApollonEditor, ApollonMode, DiagramType, UMLModel, UMLClassifier, ElementType } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
 import { Result } from '../entities/result';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
@@ -43,7 +43,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
      * JSON with the following keys: editor, entities, interactiveElements, relationships
      * format is given by Apollon
      */
-    submissionState: State;
+    submissionState: UMLModel;
 
     // TODO: rename
     assessmentResult: Result;
@@ -54,7 +54,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
      * an Array of model element IDs as keys with {x: <xOffset>, y: <yOffset>} as values
      * is used for positioning the assessment symbols
      */
-    positions: Map<string, Point>;
+    positions: Map<string, { x: number; y: number }>;
 
     umlModel: UMLModel = null;
     isActive: boolean;
@@ -122,12 +122,10 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                                 this.assessmentResult = JSON.parse(this.result.assessments);
                                 this.initializeAssessmentInfo();
                             } else {
-                                this.modelingAssessmentService
-                                    .getAssessment(this.submission.id)
-                                    .subscribe(assessments => {
-                                        this.assessmentResult = assessments;
-                                        this.initializeAssessmentInfo();
-                                    });
+                                this.modelingAssessmentService.getAssessment(this.submission.id).subscribe(assessments => {
+                                    this.assessmentResult = assessments;
+                                    this.initializeAssessmentInfo();
+                                });
                             }
                         }
                     },
@@ -180,7 +178,8 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
             clearInterval(this.autoSaveInterval);
             this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
                 model: initialModel,
-                mode: ApollonMode.ReadOnly,
+                mode: ApollonMode.Modelling,
+                readonly: true,
                 type: this.modelingExercise.diagramType
             });
 
@@ -270,8 +269,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                     this.result = this.submission.result;
                     this.isSaving = false;
                     this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
-                    this.isActive =
-                        this.modelingExercise.dueDate == null || new Date() <= moment(this.modelingExercise.dueDate).toDate();
+                    this.isActive = this.modelingExercise.dueDate == null || new Date() <= moment(this.modelingExercise.dueDate).toDate();
                     this.subscribeToWebsocket();
                 },
                 error => {
@@ -287,7 +285,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
             return;
         }
         this.updateSubmissionModel();
-        if (!this.umlModel || this.umlModel.elements.length === 0) {
+        if (!this.umlModel || Object.keys(this.umlModel.elements).length === 0) {
             this.jhiAlertService.warning('arTeMiSApp.modelingEditor.empty');
             return;
         }
@@ -413,7 +411,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
      * This function opens the modal for the help dialog.
      */
     open(content: any) {
-        this.modalService.open(content, {size: 'lg'});
+        this.modalService.open(content, { size: 'lg' });
     }
 
     // function to check whether there are pending changes
@@ -421,7 +419,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         if (
             (!this.submission &&
                 this.apollonEditor &&
-                this.apollonEditor.model.elements.length > 0 &&
+                Object.keys(this.apollonEditor.model.elements).length > 0 &&
                 JSON.stringify(this.apollonEditor.model) !== '') ||
             (this.submission &&
                 this.submission.model &&
@@ -467,10 +465,17 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
      */
     calculateNumberOfModelElements(): number {
         if (this.umlModel) {
-            let total = this.umlModel.elements.length + this.umlModel.relationships.length;
-            for (const elem of this.umlModel.elements) {
-                total += this.umlModel.elements.byId[elem].attributes.length;
-                total += this.umlModel.elements.byId[elem].methods.length;
+            let total = Object.keys(this.umlModel.elements).length + Object.keys(this.umlModel.relationships).length;
+            for (const id in this.umlModel.elements) {
+                const elem = this.umlModel.elements[id];
+                switch (elem.type) {
+                    case ElementType.Class:
+                    case ElementType.AbstractClass:
+                    case ElementType.Interface:
+                    case ElementType.Enumeration:
+                        total += (elem as UMLClassifier).attributes.length + (elem as UMLClassifier).methods.length;
+                        break;
+                }
             }
             return total;
         }

@@ -2,7 +2,7 @@ import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/co
 import { JhiAlertService } from 'ng-jhipster';
 import { ApollonDiagram, ApollonDiagramService } from '../entities/apollon-diagram';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import ApollonEditor, { State } from '@ls1intum/apollon';
+import { ApollonEditor, UMLModel, ApollonMode, DiagramType } from '@ls1intum/apollon';
 import { ActivatedRoute } from '@angular/router';
 import * as ApollonDiagramTitleFormatter from './apollon-diagram-title-formatter';
 
@@ -55,15 +55,15 @@ export class ApollonDiagramStudentComponent implements OnInit, OnDestroy {
         }
     }
 
-    initializeApollonEditor(initialState: State) {
+    initializeApollonEditor(model: UMLModel) {
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();
         }
 
         this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
-            initialState,
-            mode: 'MODELING_ONLY',
-            diagramType: 'CLASS'
+            model,
+            mode: ApollonMode.Modelling,
+            type: DiagramType.ClassDiagram
         });
     }
 
@@ -73,7 +73,7 @@ export class ApollonDiagramStudentComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const diagramState = this.apollonEditor.getState();
+        const diagramState = this.apollonEditor.model;
         const updatedDiagram: ApollonDiagram = {
             ...this.diagram,
             jsonRepresentation: JSON.stringify(diagramState)

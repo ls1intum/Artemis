@@ -9,6 +9,7 @@ import { DragAndDropMapping } from '../../entities/drag-and-drop-mapping';
 import { DragItem } from '../../entities/drag-item';
 import { ScoringType } from '../../entities/quiz-question';
 import * as moment from 'moment';
+import { ApollonEditor, UMLModel, UMLElement, UMLClassifier } from '@ls1intum/apollon';
 
 // Drop locations in quiz exercises are relatively positioned and sized
 // using integers in the interval [0,200]
@@ -16,7 +17,7 @@ const MAX_SIZE_UNIT = 200;
 
 export async function generateDragAndDropQuizExercise(
     diagramTitle: string,
-    layoutedDiagram: LayoutedDiagram,
+    model: UMLModel,
     interactiveElements: Set<string>,
     interactiveRelationships: Set<string>,
     fontFamily: string,
@@ -24,11 +25,20 @@ export async function generateDragAndDropQuizExercise(
     fileUploaderService: FileUploaderService,
     quizExerciseService: QuizExerciseService
 ) {
+    const div = document.createElement('div');
+    const exporter = new ApollonEditor(div, { model });
     // Render the layouted diagram as SVG
-    const renderedDiagram = renderDiagramToSVG(layoutedDiagram, {
-        shouldRenderElement: id => !interactiveElements.has(id),
-        fontFamily
+    const renderedDiagram = exporter.exportAsSVG({
+        filter: [
+            ...Object.values(model.elements)
+                .filter(element => interactiveElements.has(element.id))
+                .map(element => element.id),
+            ...Object.values(model.relationships)
+                .filter(relationship => interactiveRelationships.has(relationship.id))
+                .map(relationship => relationship.id)
+        ]
     });
+    exporter.destroy();
 
     // Create a PNG diagram background image from the given diagram SVG
     const diagramBackground = await convertRenderedSVGToPNG(renderedDiagram);
@@ -39,7 +49,7 @@ export async function generateDragAndDropQuizExercise(
     // Generate a drag-and-drop question object
     const dragAndDropQuestion = await generateDragAndDropQuestion(
         diagramTitle,
-        layoutedDiagram,
+        model,
         interactiveElements,
         interactiveRelationships,
         backgroundImageUploadResponse.path,
@@ -65,22 +75,25 @@ export async function generateDragAndDropQuizExercise(
 
 async function generateDragAndDropQuestion(
     diagramTitle: string,
-    layoutedDiagram: LayoutedDiagram,
+    model: UMLModel,
     interactiveElementIds: Set<string>,
+    interactiveRelationshipIds: Set<string>,
     backgroundFilePath: string,
     fontFamily: string,
     fileUploaderService: FileUploaderService
 ): Promise<DragAndDropQuestion> {
     const { dragItems, dropLocations, correctMappings } = await generateDragAndDropMappings(
-        layoutedDiagram,
+        model,
         interactiveElementIds,
+        interactiveRelationshipIds,
         fontFamily,
         fileUploaderService
     );
 
     const dragAndDropQuestion = new DragAndDropQuestion();
     dragAndDropQuestion.title = diagramTitle;
-    dragAndDropQuestion.text = 'Fill the empty spaces in the UML diagram by dragging and dropping the elements below the diagram into the correct places.';
+    dragAndDropQuestion.text =
+        'Fill the empty spaces in the UML diagram by dragging and dropping the elements below the diagram into the correct places.';
     dragAndDropQuestion.scoringType = ScoringType.PROPORTIONAL_WITH_PENALTY; // default value
     dragAndDropQuestion.randomizeOrder = true;
     dragAndDropQuestion.score = 1;
@@ -92,23 +105,24 @@ async function generateDragAndDropQuestion(
 }
 
 async function generateDragAndDropMappings(
-    layoutedDiagram: LayoutedDiagram,
+    model: UMLModel,
     interactiveElementIds: Set<string>,
+    interactiveRelationshipIds: Set<string>,
     fontFamily: string,
     fileUploaderService: FileUploaderService
 ) {
     const entityMappings = await generateMappingsForInteractiveEntitiesImages(
-        layoutedDiagram,
+        model,
         interactiveElementIds,
         fontFamily,
         fileUploaderService
     );
 
-    const entityMemberMappings = generateMappingsForInteractiveEntitiesTexts(layoutedDiagram, interactiveElementIds, fontFamily);
+    const entityMemberMappings = generateMappingsForInteractiveEntitiesTexts(model, interactiveElementIds, fontFamily);
 
     const relationshipMappings = await generateMappingsForInteractiveRelationships(
-        layoutedDiagram,
-        interactiveElementIds,
+        model,
+        interactiveRelationshipIds,
         fontFamily,
         fileUploaderService
     );
@@ -125,7 +139,7 @@ async function generateDragAndDropMappings(
 }
 
 async function generateMappingsForInteractiveEntitiesImages(
-    layoutedDiagram: LayoutedDiagram,
+    model: UMLModel,
     interactiveElementIds: Set<string>,
     fontFamily: string,
     fileUploaderService: FileUploaderService
@@ -134,10 +148,13 @@ async function generateMappingsForInteractiveEntitiesImages(
     const dropLocations: DropLocation[] = [];
     const correctMappings: DragAndDropMapping[] = [];
 
-    const interactiveEntities = layoutedDiagram.entities.filter(entity => interactiveElementIds.has(entity.id));
+    const interactiveEntities = [...interactiveElementIds].map(id => model.elements[id]);
+
+    const div = document.createElement('div');
+    const exporter = new ApollonEditor(div, { model });
 
     for (const entity of interactiveEntities) {
-        const renderedEntity = renderEntityToSVG(entity, { fontFamily, shouldRenderElement: () => true });
+        const renderedEntity = exporter.exportAsSVG({ filter: [entity.id] })
         const image = await convertRenderedSVGToPNG(renderedEntity);
 
         const imageUploadResponse = await fileUploaderService.uploadFile(image, `entity-${entity.id}.png`);
@@ -146,11 +163,11 @@ async function generateMappingsForInteractiveEntitiesImages(
         dragItem.pictureFilePath = imageUploadResponse.path;
 
         const dropLocation = createDropLocation(
-            entity.position.x,
-            entity.position.y,
-            entity.size.width,
-            entity.size.height,
-            layoutedDiagram.size
+            entity.bounds.x,
+            entity.bounds.y,
+            entity.bounds.width,
+            entity.bounds.height,
+            model.size
         );
 
         imageDragItems.push(dragItem);
@@ -161,12 +178,13 @@ async function generateMappingsForInteractiveEntitiesImages(
         correctMapping.dropLocation = dropLocation;
         correctMappings.push(correctMapping);
     }
+    exporter.destroy()
 
     return { dragItems: imageDragItems, dropLocations, correctMappings };
 }
 
 function generateMappingsForInteractiveEntitiesTexts(
-    layoutedDiagram: LayoutedDiagram,
+    model: UMLModel,
     interactiveElementIds: Set<string>,
     fontFamily: string
 ) {
@@ -177,10 +195,11 @@ function generateMappingsForInteractiveEntitiesTexts(
     // we collect all correct drop locations for each entity member name
     const correctDropLocationIDsByEntityMemberName = new Map<string, Set<number>>();
 
-    for (const entity of layoutedDiagram.entities) {
+    for (const id in model.elements) {
+        const entity = model.elements[id] as UMLClassifier;
         for (const entityMembers of [entity.attributes, entity.methods]) {
             const [entityKindDragItems, entityKindDropLocations] = getEntityMemberDragItemsAndDropLocations(
-                layoutedDiagram,
+                model,
                 entity,
                 entityMembers,
                 interactiveElementIds
@@ -208,18 +227,20 @@ function generateMappingsForInteractiveEntitiesTexts(
 }
 
 function getEntityMemberDragItemsAndDropLocations(
-    layoutedDiagram: LayoutedDiagram,
-    entity: LayoutedEntity,
-    entityMembers: LayoutedEntityMember[],
+    model: UMLModel,
+    entity: UMLElement,
+    entityMembers: { id: string, name: string, bounds: { x: number; y: number; width: number; height: number} }[],
     interactiveElementIds: Set<string>
 ): [DragItem[], DropLocation[]] {
-    const interactiveMembers = entityMembers.filter(member => interactiveElementIds.has(member.id)).map(member => ({
-        ...member,
-        position: {
-            x: entity.position.x + member.position.x,
-            y: entity.position.y + member.position.y
-        }
-    }));
+    const interactiveMembers = entityMembers
+        .filter(member => interactiveElementIds.has(member.id))
+        .map(member => ({
+            ...member,
+            position: {
+                x: entity.bounds.x + member.bounds.x,
+                y: entity.bounds.y + member.bounds.y
+            }
+        }));
 
     const textDragItems: DragItem[] = interactiveMembers.map(member => {
         const dragItem = new DragItem();
@@ -229,7 +250,7 @@ function getEntityMemberDragItemsAndDropLocations(
     });
 
     const dropLocations: DropLocation[] = interactiveMembers.map(member => {
-        return createDropLocation(member.position.x, member.position.y, member.size.width, member.size.height, layoutedDiagram.size);
+        return createDropLocation(member.position.x, member.position.y, member.bounds.width, member.bounds.height, model.size);
     });
 
     return [textDragItems, dropLocations];
@@ -260,8 +281,8 @@ function getCorrectMappings(
 }
 
 async function generateMappingsForInteractiveRelationships(
-    layoutedDiagram: LayoutedDiagram,
-    interactiveElementIds: Set<string>,
+    model: UMLModel,
+    interactiveRelationshipIds: Set<string>,
     fontFamily: string,
     fileUploaderService: FileUploaderService
 ) {
@@ -269,24 +290,26 @@ async function generateMappingsForInteractiveRelationships(
     const dropLocations: DropLocation[] = [];
     const correctMappings: DragAndDropMapping[] = [];
 
-    for (const interactiveRelationship of getInteractiveRelationships(layoutedDiagram, interactiveElementIds)) {
-        const renderedRelationship = renderRelationshipToSVG(interactiveRelationship, {
-            fontFamily,
-            shouldRenderElement: () => true
-        });
+    const interactiveRelationships = [...interactiveRelationshipIds].map(id => model.relationships[id]);
+
+    const div = document.createElement('div');
+    const exporter = new ApollonEditor(div, { model });
+
+    for (const relationship of interactiveRelationships) {
+        const renderedRelationship = exporter.exportAsSVG({ filter: [relationship.id] })
 
         const image = await convertRenderedSVGToPNG(renderedRelationship);
 
         const imageUploadResponse = await fileUploaderService.uploadFile(
             image,
-            `relationship-${interactiveRelationship.relationship.id}.png`
+            `relationship-${relationship.id}.png`
         );
 
         const imageDragItem = new DragItem();
         imageDragItem.tempID = TempID.generate();
         imageDragItem.pictureFilePath = imageUploadResponse.path;
 
-        const boundingBox = computeBoundingBox(interactiveRelationship.path);
+        const boundingBox = relationship.bounds;
         const MIN_SIDE_LENGTH = 30;
 
         if (boundingBox.width < MIN_SIDE_LENGTH) {
@@ -301,7 +324,7 @@ async function generateMappingsForInteractiveRelationships(
             boundingBox.y -= delta / 2;
         }
 
-        const dropLocation = createDropLocation(boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height, layoutedDiagram.size);
+        const dropLocation = createDropLocation(boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height, model.size);
 
         dragItems.push(imageDragItem);
         dropLocations.push(dropLocation);
@@ -316,11 +339,7 @@ async function generateMappingsForInteractiveRelationships(
     return { dragItems, dropLocations, correctMappings };
 }
 
-function getInteractiveRelationships(layoutedDiagram: LayoutedDiagram, interactiveElementIds: Set<string>) {
-    return layoutedDiagram.relationships.filter(relationship => interactiveElementIds.has(relationship.relationship.id));
-}
-
-function createDropLocation(x: number, y: number, width: number, height: number, totalSize: Size): DropLocation {
+function createDropLocation(x: number, y: number, width: number, height: number, totalSize: { width: number, height: number }): DropLocation {
     const dropLocation = new DropLocation();
     dropLocation.tempID = TempID.generate();
     dropLocation.posX = Math.round((MAX_SIZE_UNIT * x) / totalSize.width);

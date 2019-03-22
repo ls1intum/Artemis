@@ -40,7 +40,7 @@ export class ModelingExercisePopupService {
                     if (courseId) {
                         this.courseService.find(courseId).subscribe(res => {
                             const course = res.body;
-                            this.ngbModalRef = this.modelingExerciseModalRef(component, new ModelingExercise(course, DiagramType.CLASS));
+                            this.ngbModalRef = this.modelingExerciseModalRef(component, new ModelingExercise(course, DiagramType.ClassDiagram));
                             resolve(this.ngbModalRef);
                         });
                     } else {

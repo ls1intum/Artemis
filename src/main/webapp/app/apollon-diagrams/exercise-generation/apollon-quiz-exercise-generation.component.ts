@@ -39,7 +39,6 @@ export class ApollonQuizExerciseGenerationComponent implements OnInit {
         }
 
         const model = this.apollonEditor.model;
-        const layoutedDiagram = layoutDiagram(model, { outerPadding: 20 });
         const interactiveElements = new Set(model.interactive.elements);
         const interactiveRelationships = new Set(model.interactive.relationships);
 
@@ -47,7 +46,7 @@ export class ApollonQuizExerciseGenerationComponent implements OnInit {
 
         await generateDragAndDropQuizExercise(
             this.diagramTitle,
-            layoutedDiagram,
+            model,
             interactiveElements,
             interactiveRelationships,
             fontFamily,

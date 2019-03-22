@@ -1,7 +1,7 @@
 import { Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { DiagramType, ApollonEditor, ApollonOptions, UMLModel, ApollonMode } from '@ls1intum/apollon';
+import { DiagramType, ApollonEditor, UMLModel, UMLClassifier, ApollonMode, ElementType } from '@ls1intum/apollon';
 import { ActivatedRoute, Router } from '@angular/router';
 import * as $ from 'jquery';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
@@ -40,7 +40,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
     assessmentsAreValid = false;
     invalidError = '';
     totalScore = 0;
-    positions: Map<string, Point>;
+    positions: Map<string, { x: number; y: number }>;
     busy: boolean;
     done = true;
     timeout: any;
@@ -58,8 +58,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         private resultService: ResultService,
         private modelingAssessmentService: ModelingAssessmentService,
         private accountService: AccountService
-    ) {
-    }
+    ) {}
 
     ngOnInit() {
         // Used to check if the assessor is the current user
@@ -136,7 +135,8 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         }
 
         this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
-            mode: ApollonMode.ReadOnly,
+            mode: ApollonMode.Modelling,
+            readonly: true,
             model: initialModel,
             type: this.modelingExercise.diagramType
         });
@@ -176,26 +176,35 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
             return;
         }
         const model = this.apollonEditor.model;
-        let cardinalityAllEntities = model.elements.length + model.relationships.length;
-        for (const elem of model.elements) {
-            cardinalityAllEntities += model.elements.byId[elem].attributes.length + model.elements.byId[elem].methods.length;
+        let cardinalityAllEntities = Object.values(model.elements).length + Object.values(model.relationships).length;
+        for (const id in model.elements) {
+            const elem = model.elements[id];
+            switch (elem.type) {
+                case ElementType.Class:
+                case ElementType.AbstractClass:
+                case ElementType.Interface:
+                case ElementType.Enumeration:
+                    cardinalityAllEntities += (elem as UMLClassifier).attributes.length + (elem as UMLClassifier).methods.length;
+                    break;
+            }
         }
 
         if (this.result.feedbacks.length < cardinalityAllEntities) {
             const isPartialAssessment = this.result.feedbacks.length !== 0;
-            for (const elem of model.elements) {
-                const assessment = new Feedback(elem, ModelElementType.CLASS, 0, '');
-                this.pushAssessmentIfNotExists(elem, assessment, isPartialAssessment);
-                for (const attribute of model.elements.byId[elem].attributes) {
+            for (const id in model.elements) {
+                const elem = model.elements[id];
+                const assessment = new Feedback(id, ModelElementType.CLASS, 0, '');
+                this.pushAssessmentIfNotExists(id, assessment, isPartialAssessment);
+                for (const attribute of (elem as UMLClassifier).attributes) {
                     const attributeAssessment = new Feedback(attribute.id, ModelElementType.ATTRIBUTE, 0, '');
                     this.pushAssessmentIfNotExists(attribute.id, attributeAssessment, isPartialAssessment);
                 }
-                for (const method of model.elements.byId[elem].methods) {
+                for (const method of (elem as UMLClassifier).methods) {
                     const methodAssessment = new Feedback(method.id, ModelElementType.METHOD, 0, '');
                     this.pushAssessmentIfNotExists(method.id, methodAssessment, isPartialAssessment);
                 }
             }
-            for (const relationship of model.relationships) {
+            for (const relationship in model.relationships) {
                 const assessment = new Feedback(relationship, ModelElementType.RELATIONSHIP, 0, '');
                 this.pushAssessmentIfNotExists(relationship, assessment, isPartialAssessment);
             }
@@ -224,34 +233,40 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
     saveAssessment() {
         this.checkScoreBoundaries();
         this.removeCircularDependencies();
-        this.modelingAssessmentService.save(this.result.feedbacks, this.submission.id).subscribe((result: Result) => {
-            this.result = result;
-            this.onNewResult.emit(this.result);
-            this.jhiAlertService.success('arTeMiSApp.apollonDiagram.assessment.saveSuccessful');
-        }, () => {
-            this.jhiAlertService.error('arTeMiSApp.apollonDiagram.assessment.saveFailed');
-        });
+        this.modelingAssessmentService.save(this.result.feedbacks, this.submission.id).subscribe(
+            (result: Result) => {
+                this.result = result;
+                this.onNewResult.emit(this.result);
+                this.jhiAlertService.success('arTeMiSApp.apollonDiagram.assessment.saveSuccessful');
+            },
+            () => {
+                this.jhiAlertService.error('arTeMiSApp.apollonDiagram.assessment.saveFailed');
+            }
+        );
     }
 
     submit() {
         this.checkScoreBoundaries();
         this.removeCircularDependencies();
-        this.modelingAssessmentService.save(this.result.feedbacks, this.submission.id, true, this.ignoreConflicts).subscribe((result: Result) => {
-            result.participation.results = [result];
-            this.result = result;
-            this.jhiAlertService.success('arTeMiSApp.apollonDiagram.assessment.submitSuccessful');
-            this.conflicts = undefined;
-            this.done = false;
-        }, (error: HttpErrorResponse) => {
-            if (error.status === 409) {
-                this.conflicts = new Map();
-                (error.error as Conflict[]).forEach(conflict => this.conflicts.set(conflict.elementInConflict.id, conflict));
-                this.highlightElementsWithConflict();
-                this.jhiAlertService.error('arTeMiSApp.apollonDiagram.assessment.submitFailedWithConflict');
-            } else {
-                this.jhiAlertService.error('arTeMiSApp.apollonDiagram.assessment.submitFailed');
+        this.modelingAssessmentService.save(this.result.feedbacks, this.submission.id, true, this.ignoreConflicts).subscribe(
+            (result: Result) => {
+                result.participation.results = [result];
+                this.result = result;
+                this.jhiAlertService.success('arTeMiSApp.apollonDiagram.assessment.submitSuccessful');
+                this.conflicts = undefined;
+                this.done = false;
+            },
+            (error: HttpErrorResponse) => {
+                if (error.status === 409) {
+                    this.conflicts = new Map();
+                    (error.error as Conflict[]).forEach(conflict => this.conflicts.set(conflict.elementInConflict.id, conflict));
+                    this.highlightElementsWithConflict();
+                    this.jhiAlertService.error('arTeMiSApp.apollonDiagram.assessment.submitFailedWithConflict');
+                } else {
+                    this.jhiAlertService.error('arTeMiSApp.apollonDiagram.assessment.submitFailed');
+                }
             }
-        });
+        );
     }
 
     /**
@@ -315,15 +330,15 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
             if (this.apollonEditor) {
                 const model = this.apollonEditor.model;
                 if (this.selectedEntities) {
-                    for (const entity of model.elements) {
+                    for (const entity in model.elements) {
                         if (type === ModelElementType.ATTRIBUTE) {
-                            for (const attribute of model.elements.byId[entity].attributes) {
+                            for (const attribute of (model.elements[entity] as UMLClassifier).attributes) {
                                 if (attribute.id === id && this.selectedEntities.indexOf(entity) > -1) {
                                     return true;
                                 }
                             }
                         } else if (type === ModelElementType.METHOD) {
-                            for (const method of model.elements.byId[entity].methods) {
+                            for (const method of (model.elements[entity] as UMLClassifier).methods) {
                                 if (method.id === id && this.selectedEntities.indexOf(entity) > -1) {
                                     return true;
                                 }
@@ -338,7 +353,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
     }
 
     getElementPositions() {
-        this.positions = this.modelingAssessmentService.getElementPositions(this.result, this.apollonEditor.getState());
+        this.positions = this.modelingAssessmentService.getElementPositions(this.result, this.apollonEditor.model);
     }
 
     assessNextOptimal(attempts: number) {
@@ -380,19 +395,19 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
 
     private highlightElementsWithConflict() {
         const model = this.apollonEditor.model;
-        const entitiesToHighlight: string[] = model.elements.allIds.filter((id: string) => {
+        const entitiesToHighlight: string[] = Object.keys(model.elements).filter((id: string) => {
             if (this.conflicts.has(id)) {
                 return true;
             }
-            if (model.elements.byId[id].attributes.find(attribute => this.conflicts.has(attribute.id))) {
+            if ((model.elements[id] as UMLClassifier).attributes.find(attribute => this.conflicts.has(attribute.id))) {
                 return true;
             }
-            if (model.elements.byId[id].methods.find(method => this.conflicts.has(method.id))) {
+            if ((model.elements[id] as UMLClassifier).methods.find(method => this.conflicts.has(method.id))) {
                 return true;
             }
             return false;
         });
-        const relationshipsToHighlight: string [] = model.relationships.allIds.filter(id => this.conflicts.has(id));
+        const relationshipsToHighlight: string[] = Object.keys(model.relationships).filter(id => this.conflicts.has(id));
 
         entitiesToHighlight.forEach(id => {
             document.getElementById(id).style.fill = 'rgb(248, 214, 217)';
