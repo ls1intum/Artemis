@@ -74,25 +74,16 @@ public class TextAssessmentService extends AssessmentService {
             textSubmissionRepository.save(textSubmission);
         }
 
-        /*
-         * write assessment to file system
-         */
-
-        // delete removed feedback
-        List<Feedback> deprecatedFeedback = feedbackRepository.findByResult(result).stream()
-            .filter(f -> textAssessment.stream().noneMatch(a -> a.referenceEquals(f)))
-            .collect(Collectors.toList());
-        feedbackRepository.deleteAll(deprecatedFeedback);
-
-        // update existing and save new
+        // Note: If there is old feedback that gets removed here and not added again in the for-loop, it will also be
+        //       deleted in the database because of the 'orphanRemoval = true' flag.
+        result.getFeedbacks().clear();
         for (Feedback feedback : textAssessment) {
-            feedback.setResult(result);
-            result.addFeedback(feedback);
+            feedback.setPositive(feedback.getCredits() >= 0);
             feedback.setType(FeedbackType.MANUAL);
+            result.addFeedback(feedback);
         }
-        this.feedbackRepository.saveAll(textAssessment);
-
         result.setHasFeedback(false);
+
         resultRepository.save(result);
         return result;
     }
