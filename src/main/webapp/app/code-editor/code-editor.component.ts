@@ -32,7 +32,7 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
     repositoryFiles: string[];
     session: Session;
     latestResult: Result;
-    buildLogErrors: { errors: { [fileName: string]: AceAnnotation[] }; ts: number };
+    buildLogErrors: { errors: { [fileName: string]: AceAnnotation[] }; timestamp: number };
     saveStatusLabel: string;
     saveStatusIcon: { spin: boolean; icon: string; class: string };
 
@@ -160,8 +160,8 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
      * @param buildLogs
      */
     updateLatestBuildLogs(buildLogs: BuildLogEntry[]) {
-        const ts = buildLogs.length ? Date.parse(buildLogs[0].time) : 0;
-        if (!this.buildLogErrors || ts > this.buildLogErrors.ts) {
+        const timestamp = buildLogs.length ? Date.parse(buildLogs[0].time) : 0;
+        if (!this.buildLogErrors || timestamp > this.buildLogErrors.timestamp) {
             const errors = buildLogs
                 .map(({ log, time }) => log && { log: log.match(this.errorLogRegex), time })
                 .filter(({ log }) => !!log && log.length === 6 && log[1] === 'ERROR')
@@ -174,7 +174,7 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
                     ts: Date.parse(time)
                 }))
                 .reduce((acc, { fileName, ...rest }) => ({ ...acc, [fileName]: [...(acc[fileName] || []), rest] }), {});
-            this.buildLogErrors = { errors, ts };
+            this.buildLogErrors = { errors, timestamp };
         }
     }
 
@@ -219,8 +219,8 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
         if (this.participation) {
             const sessions = JSON.parse(this.localStorageService.retrieve('sessions') || '{}');
             this.session = sessions[this.participation.id];
-            if (this.session && (!this.buildLogErrors || this.session.ts > this.buildLogErrors.ts)) {
-                this.buildLogErrors = { errors: this.session.errors, ts: this.session.ts };
+            if (this.session && (!this.buildLogErrors || this.session.timestamp > this.buildLogErrors.timestamp)) {
+                this.buildLogErrors = { errors: this.session.errors, timestamp: this.session.timestamp };
             }
         }
     }

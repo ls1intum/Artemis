@@ -183,7 +183,7 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
                             ...acc,
                             [file]: errors
                         }), {});
-                    this.localStorageService.store('sessions', JSON.stringify({[this.participation.id]: {errors: sessionAnnotations, ts: Date.now()}}));
+                    this.localStorageService.store('sessions', JSON.stringify({[this.participation.id]: {errors: sessionAnnotations, timestamp: Date.now()}}));
                     this.editorFileSessions[res.fileName].unsavedChanges = false;
                     this.updateSaveStatusLabel();
                 },
