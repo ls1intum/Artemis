@@ -40,10 +40,10 @@
                     <label class="form-control-label" jhiTranslate="arTeMiSApp.course.courseIcon" for="field_shortName">Course Icon</label>
                     <div class="input-group background-file">
                         <div class="custom-file">
-                            <input id="courseImageInput{{courseForm.id}}" type="file" accept="image/*"
+                            <input id="courseImageInput{{course.id}}" type="file" accept="image/*"
                                    class="custom-file-input" (change)="setCourseImage($event)"/>
                             <label class="custom-file-label ellipsis"
-                                   for="courseImageInput{{courseForm.id}}">{{courseImageFileName}}</label>
+                                   for="courseImageInput{{course.id}}">{{courseImageFileName}}</label>
                         </div>
                         <div class="input-group-prepend">
                             <button
