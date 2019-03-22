@@ -204,7 +204,6 @@ public class ResultResource {
         if (result.getId() == null) {
             return createResult(result);
         }
-        // TODO: test if this works by using CASCASE = ALL and orphanRemove= true, because we would need to save all child objects 'Feedback' and make sure old child objects 'Feedback' for the old result (which will be replaced) are deleted as well
         // have a look how quiz-exercise handles this case with the contained questions
         resultRepository.save(result);
         return ResponseEntity.ok()

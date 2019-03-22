@@ -54,6 +54,7 @@ public class TextAssessmentResource extends AssessmentResource {
 
     @PutMapping("/exercise/{exerciseId}/result/{resultId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    //TODO: we should send a result object here that includes the feedback
     public ResponseEntity<Result> saveTextAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody List<Feedback> textAssessments) {
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
         ResponseEntity<Result> responseFailure = checkTextExerciseForRequest(textExercise);
@@ -65,6 +66,7 @@ public class TextAssessmentResource extends AssessmentResource {
 
     @PutMapping("/exercise/{exerciseId}/result/{resultId}/submit")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    //TODO: we should send a result object here that includes the feedback
     public ResponseEntity<Result> submitTextAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody List<Feedback> textAssessments) {
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
         ResponseEntity<Result> responseFailure = checkTextExerciseForRequest(textExercise);
