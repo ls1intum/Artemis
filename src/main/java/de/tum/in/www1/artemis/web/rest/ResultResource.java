@@ -233,6 +233,7 @@ public class ResultResource {
         Participation participation = participationService.findOne(participationId);
 
         if (participation.getStudent() == null) {
+            // If the student is null, then we participation is a template/solution participation -> check for instructor role
             if (!authCheckService.isAtLeastInstructorForCourse(participation.getExercise().getCourse(), null)) {
                 return forbidden();
             }
@@ -394,9 +395,18 @@ public class ResultResource {
         }
         Participation participation = result.get().getParticipation();
         Course course = participation.getExercise().getCourse();
-        if (!authCheckService.isOwnerOfParticipation(participation)) {
-            if (!userHasPermissions(course)) return forbidden();
+
+        if (participation.getStudent() == null) {
+            // If the student is null, then we participation is a template/solution participation -> check for instructor role
+            if (!authCheckService.isAtLeastInstructorForCourse(participation.getExercise().getCourse(), null)) {
+                return forbidden();
+            }
+        } else {
+            if (!authCheckService.isOwnerOfParticipation(participation)) {
+                if (!userHasPermissions(course)) return forbidden();
+            }
         }
+
         try {
             List<Feedback> feedbackItems = feedbackService.getFeedbackForBuildResult(result.get());
             return Optional.ofNullable(feedbackItems)
