@@ -39,7 +39,7 @@ import { DomainCommand } from 'app/markdown-editor/domainCommands';
 export class MarkdownEditorComponent implements AfterViewInit, OnInit {
     @ViewChild('aceEditor')
     aceEditorContainer: AceEditorComponent;
-    aseEditorOptions = {
+    aceEditorOptions = {
         autoUpdateContent: true,
         mode: 'markdown',
     };

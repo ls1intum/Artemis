@@ -26,8 +26,8 @@
     </div>
 
 
-    <ace-editor #aceEditor [mode]="aseEditorOptions.mode"
-                [autoUpdateContent]="aseEditorOptions.autoUpdateContent" [(text)]="markdown"
+    <ace-editor #aceEditor [mode]="aceEditorOptions.mode"
+                [autoUpdateContent]="aceEditorOptions.autoUpdateContent" [(text)]="markdown"
                 (textChange)="markdownChange.emit($event)"
                 style="min-height: 200px; width:100%; overflow: auto; margin-top: 5px" class="form-control"></ace-editor>
 </div>
