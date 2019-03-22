@@ -4,6 +4,9 @@ import de.tum.in.www1.artemis.web.websocket.WebsocketError;
 
 import java.io.Serializable;
 
+/**
+ * Class for marshalling and sending errors encountered when trying to persist file updates received by websocket.
+ */
 public class FileSubmissionError extends WebsocketError implements Serializable {
     private Long participationId;
     private String fileName;

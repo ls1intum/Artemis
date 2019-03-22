@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.websocket.repository;
 
-import afu.org.checkerframework.checker.nullness.qual.Nullable;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationService;
@@ -15,6 +14,7 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Controller;
 
+import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,7 +50,6 @@ public class RepositoryWebsocketService {
         this.messagingTemplate = messagingTemplate;
     }
 
-
     @Nullable
     private boolean checkParticipation(Participation participation, Principal principal) {
         if (!userHasPermissions(participation, principal)) return false;
@@ -71,7 +70,10 @@ public class RepositoryWebsocketService {
     }
 
     /**
-     * PUT /repository/{participationId}/file: Update the file content
+     * Path used for processing and persisting file updates.
+     * Sends a success message if the file changes could be saved, error messages if the process fails
+     * when the git repository can't be reached or the file can't be found.
+     * To store the update it is necessary that the user has the necessary permissions to make changes in the repository.
      *
      * @param participationId Participation ID
      * @param submission
