@@ -18,7 +18,7 @@
             "width": "Width",
             "invalid": "Invalid",
             "question": "Question",
-            "invalidSpot": "Dieses Inputfeld wurde als ungültig markiert. Die eingesetzte Lösung wird als korrekt gewertet."
+            "invalidSpot": "Dieses Eingabefeld wurde als ungültig markiert. Die eingesetzte Lösung wird als korrekt gewertet."
         }
     }
 }
