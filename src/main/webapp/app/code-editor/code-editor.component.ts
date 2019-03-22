@@ -10,8 +10,14 @@ import { RepositoryFileService, RepositoryService } from '../entities/repository
 import { Result } from '../entities/result';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import * as $ from 'jquery';
+import {
+    compose,
+    fromPairs,
+    map,
+    toPairs,
+} from 'lodash/fp';
 import { Interactable } from 'interactjs';
-import { AceAnnotation, SaveStatusChange, Session } from '../entities/ace-editor';
+import { SaveStatusChange, Session, AnnotationArray } from '../entities/ace-editor';
 import { BuildLogEntry } from 'app/entities/build-log';
 import { safeUnescape } from 'app/shared';
 import { LocalStorageService } from 'ngx-webstorage';
@@ -32,7 +38,7 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
     repositoryFiles: string[];
     session: Session;
     latestResult: Result;
-    buildLogErrors: { errors: { [fileName: string]: AceAnnotation[] }; timestamp: number };
+    buildLogErrors: { errors: { [fileName: string]: AnnotationArray }; timestamp: number };
     saveStatusLabel: string;
     saveStatusIcon: { spin: boolean; icon: string; class: string };
 
@@ -163,8 +169,11 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
         const timestamp = buildLogs.length ? Date.parse(buildLogs[0].time) : 0;
         if (!this.buildLogErrors || timestamp > this.buildLogErrors.timestamp) {
             const errors = buildLogs
+                // Parse build logs
                 .map(({ log, time }) => log && { log: log.match(this.errorLogRegex), time })
+                // Remove entries that could not be parsed, are too short or not errors
                 .filter(({ log }) => !!log && log.length === 6 && log[1] === 'ERROR')
+                // Map buildLogEntries into annotation format
                 .map(({ log: [, , fileName, row, column, text], time }) => ({
                     type: 'error',
                     fileName,
@@ -173,7 +182,9 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
                     text: safeUnescape(text),
                     ts: Date.parse(time)
                 }))
-                .reduce((acc, { fileName, ...rest }) => ({ ...acc, [fileName]: [...(acc[fileName] || []), rest] }), {});
+                // Group annotations by filename
+                .reduce((buildLogErrors, { fileName, ...rest }) =>
+                        ({...buildLogErrors, [fileName]: new AnnotationArray( ...(buildLogErrors[fileName] || []), rest ) }), {});
             this.buildLogErrors = { errors, timestamp };
         }
     }
@@ -220,7 +231,14 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
             const sessions = JSON.parse(this.localStorageService.retrieve('sessions') || '{}');
             this.session = sessions[this.participation.id];
             if (this.session && (!this.buildLogErrors || this.session.timestamp > this.buildLogErrors.timestamp)) {
-                this.buildLogErrors = { errors: this.session.errors, timestamp: this.session.timestamp };
+                this.buildLogErrors = {
+                    errors: compose(
+                        fromPairs,
+                        map(([fileName, errors]) => [fileName, new AnnotationArray(...errors)]),
+                        toPairs
+                    )(this.session.errors),
+                    timestamp: this.session.timestamp
+                };
             }
         }
     }

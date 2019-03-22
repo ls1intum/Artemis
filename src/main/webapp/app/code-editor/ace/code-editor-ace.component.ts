@@ -37,7 +37,7 @@ import { RepositoryFileService } from 'app/entities/repository';
 import { WindowRef } from 'app/core';
 import * as ace from 'brace';
 
-import { AceAnnotation, TextChange, SaveStatusChange } from '../../entities/ace-editor';
+import { AnnotationArray, TextChange, SaveStatusChange } from '../../entities/ace-editor';
 import { JhiWebsocketService } from '../../core';
 
 @Component({
@@ -53,7 +53,7 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
     readonly aceModeList = ace.acequire('ace/ext/modelist');
 
     /** Ace Editor Options **/
-    editorFileSessions: {[fileName: string]: {code: string, errors: AceAnnotation[], unsavedChanges: boolean}} = {};
+    editorFileSessions: {[fileName: string]: {code: string, errors: AnnotationArray, unsavedChanges: boolean}} = {};
     editorMode = this.aceModeList.getModeForPath('Test.java').name; // String or mode object
 
     annotationChange: Subscription;
@@ -69,7 +69,7 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
     @Input()
     repositoryFiles: string[];
     @Input()
-    buildLogErrors: {[fileName: string]: AceAnnotation[]};
+    buildLogErrors: {[fileName: string]: AnnotationArray[]};
     @Output()
     saveStatusChange = new EventEmitter<SaveStatusChange>();
 
@@ -153,13 +153,13 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
                 unionBy('[0]', newEntries)
             )(filteredEntries);
         }
-        // If there are new errors, update the existing file sessions accordingly
+        // If there are new errors (through buildLog or a loaded session), overwrite existing errors in the editorFileSessions as they are outdated
         if (changes.buildLogErrors) {
             this.editorFileSessions = compose(
                 fromPairs,
                 map(([fileName, {errors, ...session}]) => [fileName, {
                     ...session,
-                    errors: changes.buildLogErrors.currentValue[fileName] || []
+                    errors: changes.buildLogErrors.currentValue[fileName] || new AnnotationArray()
                 }]),
                 toPairs
             )(this.editorFileSessions);
@@ -209,21 +209,7 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
      * @param change
      */
     recalculateAnnotationPositions = (change: TextChange) => {
-        const {start: {row: rowStart, column: columnStart}, end: {row: rowEnd, column: columnEnd}, action} = change;
-        if (action === 'remove' || action === 'insert') {
-            const sign = action === 'remove' ? -1 : 1;
-            const updateRowDiff = sign * (rowEnd - rowStart);
-            const updateColDiff = sign * (columnEnd - columnStart);
-            const updatedAnnotations = this.editorFileSessions[this.selectedFile].errors
-                .map(({row, column, ...rest}) => {
-                    return {
-                        ...rest,
-                        row: row > rowStart ? row + updateRowDiff : row,
-                        column: column > columnStart ? column + updateColDiff : column
-                    };
-                });
-            this.editorFileSessions[this.selectedFile].errors = updatedAnnotations;
-        }
+        this.editorFileSessions[this.selectedFile].errors = this.editorFileSessions[this.selectedFile].errors.update(change);
     }
 
     onSaveStatusChange(statusChange: SaveStatusChange) {
@@ -272,7 +258,7 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
                 if (!this.editorFileSessions[fileName]) {
                     this.editorFileSessions[fileName] = {
                         code: fileObj.fileContent,
-                        errors: [],
+                        errors: new AnnotationArray(),
                         unsavedChanges: false
                     };
                 } else {
