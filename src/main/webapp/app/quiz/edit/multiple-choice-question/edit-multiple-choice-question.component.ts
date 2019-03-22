@@ -78,7 +78,9 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
     }
 
     /**
-     * This function opens the modal for the help dialog.
+     * @function open
+     * @desc open the modal for the help dialog
+     * @param content
      */
     open(content: any) {
         this.modalService.open(content, {size: 'lg'});
@@ -86,7 +88,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
 
     /**
      * @function prepareForSave
-     * @desc triggers the saving process for the question
+     * @desc reset the question, call the parse method of the markdown editor and notify parent component about changes
      */
     prepareForSave(): void {
         this.cleanupQuestion();
@@ -96,7 +98,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
 
     /**
      * @function cleanupQuestion
-     * @desc Reset of the question by setting all question attributes to null
+     * @desc Reset of the question by setting all question attributes to null or empty
      */
     private cleanupQuestion() {
         // Reset Question Object
@@ -114,7 +116,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
     /**
      * @function specialCommandsFound
      * @desc clean up the question and call the specialCommandFoundSave for each element of the array
-     * @param specialCommands {array} text with the corresponding special command
+     * @param {array} contains markdownTextLine with the corresponding specialCommand {SpecialCommand} identifier
      */
     specialCommandsFound(specialCommands: [string, SpecialCommand][]): void {
         this.cleanupQuestion();
@@ -124,7 +126,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
 
     /**
      * @function resetMultipleChoicePreview
-     * @desc reset the preview function of the question and check for changes
+     * @desc reset the preview function of the multiple choice question and check for changes
      */
     private resetMultipleChoicePreview() {
         this.showMultipleChoiceQuestionPreview = false;
@@ -135,7 +137,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
 
     /**
      * @function  specialCommandFoundSave
-     * @desc assign the text according to the specialCommand to the corresponding attribute of the question object
+     * @desc assign the textLine based on the specialCommand to the corresponding attribute of the multiple choice question
      * @param textLine {string} with the corresponding specialCommand {SpecialCommand}
      */
     private specialCommandFoundSave(textLine: string, specialCommand: SpecialCommand) {

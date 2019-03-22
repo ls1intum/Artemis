@@ -88,10 +88,20 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
         return this.previewChild == null;
     }
 
+    /**
+     * @function addCommand
+     * @param command
+     * @desc add a defaultCommand to the view
+     */
     addCommand(command: Command) {
         this.defaultCommands.push(command);
     }
 
+    /**
+     * @function removeCommand
+     * @param command
+     * @desc remove command from the view
+     */
     removeCommand(classRef: typeof Command) {
         setTimeout(() =>
             this.defaultCommands = this.defaultCommands.filter(element => !(element instanceof classRef))
@@ -130,21 +140,21 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
 
     /**
      * @function parse
-     * @desc check if special commands are contained
-     *       if no special commands are contained parse markdown parse to HTML and emit to parent
-     *       otherwise divide it by [, call the method parseLineForSpecialCommand for each textLine and emit the result to parent
-     *       result is displayed using default preview
+     * @desc check if specialCommands are contained
+     *       if no specialCommands are contained parse markdown to HTML and emit to parent component
+     *       otherwise divide it by [, call the method parseLineForSpecialCommand for each textLine and emit the result to parent component
+     *       parsed result is displayed using default preview
      */
     parse(): void {
         // check if specialCommands are contained
         if (this.specialCommands == null || this.specialCommands.length === 0) {
                 this.previewTextAsHtml = this.artemisMarkdown.htmlForMarkdown(this.markdown);
 
-                // Emit to Clients
+                // emit to parent component
                 this.html.emit(this.previewTextAsHtml);
             return;
         } else {
-            // seperate the text by [
+            // seperate the markdown text by [
             const parseArray = this.markdown
             .split('\[-')
             .map(this.parseLineForSpecialCommand);
@@ -156,14 +166,12 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
      * @function parseLineForSpecialCommand
      * @desc check which specialCommand is contained within the textLine and remove the specialCommand from the textLine
      * @param textLine {string} from the parse function
-     * @return array of the textLine with the corresponding specialCommand
+     * @return array of the textLine with the previously contained specialCommand
      */
     private parseLineForSpecialCommand = (textLine: string): [string, SpecialCommand] => {
         for (const specialCommand of this.specialCommands) {
             const possibleCommandIdentifier = [specialCommand.getIdentifier(), specialCommand.getIdentifier().toLowerCase(), specialCommand.getIdentifier().toUpperCase()];
             if (possibleCommandIdentifier.some(identifier => textLine.indexOf(identifier) !== -1)) {
-
-                // TODO one possible extension would be to search for opening and closing tags and send all text in-between (potentially multiple lines) into the emitter
                 const trimmedLineWithoutIdentifier = possibleCommandIdentifier.reduce((line, identifier) => line.replace(identifier, ''), textLine).trim();
                 return [trimmedLineWithoutIdentifier, specialCommand];
             }

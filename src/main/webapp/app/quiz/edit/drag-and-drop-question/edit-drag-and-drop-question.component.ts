@@ -820,7 +820,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
     /**
      * @function specialCommandsFound
      * @desc call the specialCommandFoundSave for each element of the array
-     * @param specialCommands {array} text with the corresponding special command
+     * @param {array} contains markdownTextLine with the corresponding specialCommand {SpecialCommand} identifier
      */
     specialCommandsFound(specialCommands: [string, SpecialCommand][]): void {
         this.cleanupQuestion();
@@ -828,8 +828,8 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
     }
 
     /**
-     * @function  specialCommandFoundSave
-     * @desc assigns the text according to the specialCommand to the corresponding attribute of the question object
+     * @function specialCommandFoundSave
+     * @desc assign the textLine based on the specialCommand to the corresponding attribute of the drag and drop question
      * @param textLine {string} and specialCommand {object} text with the corresponding special command
      */
     specialCommandFoundSave(textLine: string, specialCommand: SpecialCommand) {
@@ -846,7 +846,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
 
     /**
      * @function cleanupQuestion
-     * @desc Reset of the question
+     * @desc Reset of the drag and drop question by setting the attributes to null
      */
     private cleanupQuestion() {
         this.question.text = null;
@@ -856,7 +856,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
 
     /**
      * @function prepareForSave
-     * @desc triggers the saving process for the question
+     * @desc triggers the saving process by cleaning up the question and calling the markdown parse function
      */
     prepareForSave(): void {
         this.cleanupQuestion();
