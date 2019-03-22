@@ -232,11 +232,17 @@ public class ResultResource {
         List<Result> results = new ArrayList<>();
         Participation participation = participationService.findOne(participationId);
 
-
-        if (!authCheckService.isOwnerOfParticipation(participation)) {
-            Course course = participation.getExercise().getCourse();
-            if (!userHasPermissions(course)) return forbidden();
+        if (participation.getStudent() == null) {
+            if (!authCheckService.isAtLeastInstructorForCourse(participation.getExercise().getCourse(), null)) {
+                return forbidden();
+            }
+        } else {
+            if (!authCheckService.isOwnerOfParticipation(participation)) {
+                Course course = participation.getExercise().getCourse();
+                if (!userHasPermissions(course)) return forbidden();
+            }
         }
+
         if (participation != null) {
             // if exercise is quiz => only give out results if quiz is over
             if (participation.getExercise() instanceof QuizExercise) {

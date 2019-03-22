@@ -126,11 +126,6 @@ public class AuthorizationCheckService {
      * @return true, if user is student is owner of this participation, otherwise false
      */
     public boolean isOwnerOfParticipation(Participation participation) {
-        // The student is null if we have a template or solution participation -> check for instructor
-        if (participation.getStudent() == null) {
-            return isAtLeastInstructorForExercise(participation.getExercise());
-        }
-
         return participation.getStudent().getLogin().equals(SecurityUtils.getCurrentUserLogin().get());
     }
 
