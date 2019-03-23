@@ -138,6 +138,12 @@ public class ProgrammingExerciseService {
         solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneURL(projectKey, solutionRepoName).toString());
         programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneURL(projectKey, testRepoName).toString());
 
+        // Save participations to get the ids required for the webhooks
+        templateParticipation.setExercise(programmingExercise);
+        solutionParticipation.setExercise(programmingExercise);
+        templateParticipation = participationRepository.save(templateParticipation);
+        solutionParticipation = participationRepository.save(solutionParticipation);
+
         // The creation of the webhooks must occur before the initial push to ensure that the initial commit creates a result
         versionControlService.get().addWebHook(templateParticipation.getRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + templateParticipation.getId(), "ArTEMiS WebHook");
         versionControlService.get().addWebHook(solutionParticipation.getRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + solutionParticipation.getId(), "ArTEMiS WebHook");
@@ -181,8 +187,6 @@ public class ProgrammingExerciseService {
         continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, "SOLUTION", solutionRepoName, testRepoName); // plan for the solution (instructors) with solution repository
 
         // save to get the id required for the webhook
-        participationRepository.save(templateParticipation);
-        participationRepository.save(solutionParticipation);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
         versionControlService.get().addWebHook(testsRepoUrl, ARTEMIS_BASE_URL + TEST_CASE_CHANGED_API_PATH + programmingExercise.getId(), "ArTEMiS Tests WebHook");
