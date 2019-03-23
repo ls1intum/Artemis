@@ -3,19 +3,19 @@
         "exerciseResult": {
             "home": {
                 "title": "Exercise Ergebnisse",
-                "createLabel": "Exercise Ergebnis erstellen",
-                "createOrEditLabel": "Exercise Ergebnis erstellen oder bearbeiten"
+                "createLabel": "Ergebnis erstellen",
+                "createOrEditLabel": "Ergebnis erstellen oder bearbeiten"
             },
-            "created": "Exercise Ergebnis erstellt mit ID {{ param }}",
-            "updated": "Exercise Ergebnis aktualisiert mit ID {{ param }}",
-            "deleted": "Exercise Ergebnis gelöscht mit ID {{ param }}",
+            "created": "Ergebnis erstellt mit ID {{ param }}",
+            "updated": "Ergebnis aktualisiert mit ID {{ param }}",
+            "deleted": "Ergebnis gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Exercise Ergebnis {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll das Ergebnis {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Exercise Ergebnis"
+                "title": "Ergebnis"
             },
-            "resultString": "Ergebnis String",
+            "resultString": "Ergebnis",
             "completionDate": "Completion Date",
             "successful": "Successful",
             "buildArtifact": "Build Artifact",
