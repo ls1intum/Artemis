@@ -19,9 +19,17 @@
         <div *ngFor="let textPart of textParts; let i = index">
             <div class="short-answer-question-display"  *ngFor="let element of textPart; let j = index">
                 <span *ngIf="!isInputField(element)">{{element}}</span>
-                <div *ngIf="isInputField(element)" style="position: relative; display: inline-block">
+                <div *ngIf="isInputField(element) && !showingSampleSolution" style="position: relative; display: inline-block">
                     <input class="short-answer-question-input" disabled
-                           style="background: lightgreen" value="{{getSubmittedTextForSpot(element).text}}">
+                           [style.background]="getSubmittedTextForSpot(element).isCorrect ? 'lightgreen' : 'red'"
+                           value="{{getSubmittedTextForSpot(element) !== undefined ? getSubmittedTextForSpot(element).text : ''}}"
+                           size="{{getSubmittedTextForSpot(element).text.length + 2}}">
+                </div>
+                <div *ngIf="isInputField(element) && showingSampleSolution" style="position: relative; display: inline-block">
+                    <input class="short-answer-question-input" disabled
+                           [style.background]="'lightgreen'"
+                           value="{{getSampleSolutionForSpot(element).text}}"
+                           size="{{getSampleSolutionForSpot(element).text.length + 2}}">
                 </div>
             </div>
         </div>
@@ -46,7 +54,7 @@
     </div>
 
     -->
-
+<!--
     <div *ngIf="showResult && !showingSampleSolution">
         <div class="short-answer-question-display" *ngFor="let textPart of textBeforeSpots; let i = index">
             {{textPart}}
@@ -64,7 +72,7 @@
         </div>
         <span>{{textAfterSpots}}</span>
     </div>
-
+-->
     <span style="color:red;" *ngIf="question.invalid" jhiTranslate="arTeMiSApp.quizQuestion.invalidText"></span>
     <div class="hint" *ngIf="question.hint || (question.explanation && showResult)">
         <ng-template #renderedHint>

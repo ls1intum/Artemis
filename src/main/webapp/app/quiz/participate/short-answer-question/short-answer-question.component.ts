@@ -158,6 +158,12 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
         return this.submittedTexts.filter(submittedText => submittedText.spot.spotNr === this.getSpotNr(spotTag))[0];
     }
 
+    getSampleSolutionForSpot(spotTag: string): ShortAnswerSolution {
+        return this.sampleSolutions.filter(
+            solution => solution.id === this.question.correctMappings.filter(
+                mapping => mapping.spot.spotNr === this.getSpotNr(spotTag))[0].id)[0];
+    }
+
 
     // add functions below to util class
     /**
