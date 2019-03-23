@@ -110,6 +110,9 @@ public class FileService {
         if (publicPath.contains("files/drag-and-drop/drag-items")) {
             return Constants.DRAG_ITEM_FILEPATH + filename;
         }
+        if (publicPath.contains("files/course/icons")) {
+            return Constants.COURSE_ICON_FILEPATH + filename;
+        }
 
         // path is unknown => cannot convert
         throw new RuntimeException("Unknown Filepath: " + publicPath);
@@ -138,6 +141,9 @@ public class FileService {
         }
         if (actualPath.contains(Constants.DRAG_ITEM_FILEPATH)) {
             return "/api/files/drag-and-drop/drag-items/" + id + "/" + filename;
+        }
+        if (actualPath.contains(Constants.COURSE_ICON_FILEPATH)) {
+            return "/api/files/course/icons/" + id + "/" + filename;
         }
 
         // path is unknown => cannot convert
