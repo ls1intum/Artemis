@@ -113,4 +113,19 @@ export class ArtemisMarkdown {
         const html = converter.makeHtml(markdownText);
         return this.sanitizer.sanitize(SecurityContext.HTML, html);
     }
+
+    markdownForHtml(htmlText: string) {
+        const converter = new showdown.Converter({
+            parseImgDimensions: true,
+            headerLevelStart: 3,
+            simplifiedAutoLink: true,
+            excludeTrailingPunctuationFromURLs: true,
+            strikethrough: true,
+            tables: true,
+            openLinksInNewWindow: true,
+            backslashEscapesHTMLTags: true
+        });
+        const markdown = converter.makeMarkdown(htmlText);
+        return markdown;
+    }
 }

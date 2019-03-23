@@ -90,6 +90,9 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
 
         this.textParts = this.question.text.split(/\n/g).map(t => t.split(/\s+(?![^[]]*])/g));
 
+        this.textParts = this.textParts.map(textPart =>
+            textPart.map(element =>
+                 element = artemisMarkdown.htmlForMarkdown(element.toString())));
 
         this.rendered.text = artemisMarkdown.htmlForMarkdown(this.question.text);
         this.rendered.hint = artemisMarkdown.htmlForMarkdown(this.question.hint);
@@ -114,12 +117,15 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
         console.log(this.submittedTexts);
 
         let i = 0;
-        let j = 0;
         for (const textpart of this.textParts) {
+            let j = 0;
             for (const element of textpart) {
                 console.log(element.toString());
+                console.log(this.isInputField(element.toString()));
                 if (this.isInputField(element.toString())) {
                     const submittedText = new ShortAnswerSubmittedText();
+                    console.log('solution-' + i + '-' + j + '-' + this._question.id);
+                    console.log(this.getSpot(this.getSpotNr(element.toString())));
                     submittedText.text = (<HTMLInputElement>document.getElementById('solution-' + i + '-' + j + '-' + this._question.id)).value;
                     submittedText.spot = this.getSpot(this.getSpotNr(element.toString()));
                     console.log(submittedText);
@@ -159,9 +165,25 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
     }
 
     getSampleSolutionForSpot(spotTag: string): ShortAnswerSolution {
+        console.log(this.sampleSolutions);
+        console.log(this.question.correctMappings.filter(mapping => mapping.spot.spotNr === this.getSpotNr(spotTag)));
+        console.log(this.sampleSolutions.filter(
+            solution => solution.id === this.question.correctMappings.filter(
+                mapping => mapping.spot.spotNr === this.getSpotNr(spotTag.toString()))[0].solution.id));
+
         return this.sampleSolutions.filter(
             solution => solution.id === this.question.correctMappings.filter(
-                mapping => mapping.spot.spotNr === this.getSpotNr(spotTag))[0].id)[0];
+                mapping => mapping.spot.spotNr === this.getSpotNr(spotTag.toString()))[0].solution.id)[0];
+    }
+
+    isSubmittedTextCompletelyCorrect(spotTag: string): boolean {
+        let isTextCorrect = false;
+        const solutionsForSpot = this.shortAnswerQuestionUtil.getAllSolutionsForSpot(this.question.correctMappings, this.getSpot(this.getSpotNr(spotTag)));
+
+        if (solutionsForSpot.filter(solution => solution.text === this.getSubmittedTextForSpot(spotTag).text).length > 0) {
+            isTextCorrect = true;
+        }
+        return isTextCorrect;
     }
 
 
@@ -179,7 +201,7 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
      * @param text
      */
     getSpotNr(text: string): number {
-        return +text.split(/\[-spot/g).join('').split(']').join('').trim();
+        return +text.split(/\s+/g).slice(1).join().split(/\]/g)[0].trim();
     }
 
     /**

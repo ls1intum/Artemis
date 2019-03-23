@@ -64,7 +64,8 @@
             <div id="test" class="sa-question" >
                 <div *ngFor="let textPart of textParts; let i = index">
                     <div class="short-answer-question-display" *ngFor="let element of textPart; let j = index">
-                        <span *ngIf="!isInputField(element)" id="element-{{i}}-{{j}}">{{element}}</span>
+                        <div *ngIf="!isInputField(element)" id="element-{{i}}-{{j}}"
+                             style="display: inline-flex" [innerHTML]="element"></div>
                         <div *ngIf="isInputField(element)" style="position: relative; display: inline-block">
                             <input dnd-droppable (onDropSuccess)="onDragDrop(getSpot(getSpotNr(element)), $event)" class="short-answer-question-input" disabled type="text">
                             <div [ngClass]="'mapping-number mapping-color-' + getSpot(getSpotNr(element)).spotNr % 8">

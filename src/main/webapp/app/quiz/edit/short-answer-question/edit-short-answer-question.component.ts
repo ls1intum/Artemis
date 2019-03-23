@@ -361,17 +361,27 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
 
         const editor = this.questionEditor.getEditor();
         // ID 'element-row-column' is divided into array of [row, column]
-        const selectedTextRowColumn = window.getSelection().focusNode.parentElement.id.split('-').slice(1);
-        const markedText = this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]];
+        const selectedTextRowColumn = window.getSelection().focusNode.parentNode.parentElement.id.split('-').slice(1);
+        const markedText = this.artemisMarkdown.markdownForHtml(this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]]);
 
         // split text before first option tag
         const questionText = editor.getValue().split(/\[-option /g)[0].trim();
         // split on every whitespace. !!!only exception: [-spot 1] is not split!!!
         this.textParts = questionText.split(/\n/g).map((t: String) => t.split(/\s+(?![^[]]*])/g));
         this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]] = '[-spot ' + this.numberOfSpot + ']';
+        this.textParts = this.textParts.map(textPart =>
+            textPart.map(element =>
+                element = this.artemisMarkdown.htmlForMarkdown(element.toString())));
         // recreation of text from array
-        this.question.text = this.textParts.map(textPart => textPart.join(' ')).join('\n');
+        const htmlForMarkdown = this.textParts.map(textPart =>
+            textPart.map(element =>
+                element = this.artemisMarkdown.markdownForHtml(element.toString()).trim()));
+        console.log(htmlForMarkdown);
+        this.question.text = htmlForMarkdown.map(textPart => textPart.join(' ')).join('\n');
+        console.log("test");
+        console.log(this.question.text);
         editor.setValue(this.generateMarkdown());
+
 
         editor.moveCursorTo(editor.getLastVisibleRow() + this.numberOfSpot, Number.POSITIVE_INFINITY);
         this.addOptionToSpot(editor, this.numberOfSpot, markedText, this.firstPressed);
@@ -396,7 +406,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @param text
      */
     getSpotNr(text: string): number {
-        return +text.split(/\[-spot/g).join('').split(']').join('').trim();
+        return +text.split(/\s+/g).slice(1).join().split(/\]/g)[0].trim();
     }
 
     /**
@@ -565,6 +575,9 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     togglePreview(): void {
        this.showPreview = !this.showPreview;
        this.textParts = this.question.text.split(/\n/g).map(t => t.split(/\s+(?![^[]]*])/g));
+       this.textParts = this.textParts.map(textPart =>
+            textPart.map(element =>
+                element = this.artemisMarkdown.htmlForMarkdown(element.toString())));
        this.questionEditor.getEditor().setValue(this.generateMarkdown());
        this.questionEditor.getEditor().clearSelection();
     }
