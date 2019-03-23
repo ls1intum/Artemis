@@ -18,17 +18,19 @@
             "detail": {
                 "title": "Programming Exercise"
             },
-            "templateRepositoryUrl": "Template Repository Url",
+            "templateRepositoryUrl": "Vorlage Repository Url",
             "testRepositoryUrl": "Test Repository Url (optional)",
-            "solutionRepositoryUrl": "Solution Repository Url (optional)",
-            "templateBuildPlanId": "Template Build Plan Id",
-            "solutionBuildPlanId": "Solution Build Plan Id (optional)",
+            "solutionRepositoryUrl": "Lösung Repository Url (optional)",
+            "templateBuildPlanId": "Vorlage Build Plan Id",
+            "solutionBuildPlanId": "Lösung Build Plan Id (optional)",
             "repositories": "Repositories",
             "buildplans": "Build Plans",
             "publishBuildPlanUrl": "Publish Build Plan",
             "allowOnlineEditor": "Allow Online Editor",
             "programmingLanguage": "Programming Language",
-            "packageName": "Package Name"
+            "packageName": "Package Name",
+            "templateResult": "Ergebnis Vorlage",
+            "solutionResult": "Ergebnis Lösung"
         },
         "editor": {
             "title": "Code Editor"
