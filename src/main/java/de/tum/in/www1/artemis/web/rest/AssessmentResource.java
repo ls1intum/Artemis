@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import org.springframework.http.ResponseEntity;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.service.*;
