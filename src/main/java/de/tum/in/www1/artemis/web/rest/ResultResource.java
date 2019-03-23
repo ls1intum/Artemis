@@ -232,7 +232,7 @@ public class ResultResource {
         Participation participation = participationService.findOne(participationId);
 
         if (participation.getStudent() == null) {
-            // If the student is null, then we participation is a template/solution participation -> check for instructor role
+            // If the student is null, then participation is a template/solution participation -> check for instructor role
             if (!authCheckService.isAtLeastInstructorForCourse(participation.getExercise().getCourse(), null)) {
                 return forbidden();
             }
