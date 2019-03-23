@@ -191,10 +191,10 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
 
         if (this.result.feedbacks.length < cardinalityAllEntities) {
             const isPartialAssessment = this.result.feedbacks.length !== 0;
-            for (const id in model.elements) {
-                const elem = model.elements[id];
-                const assessment = new Feedback(id, ModelElementType.CLASS, 0, '');
-                this.pushAssessmentIfNotExists(id, assessment, isPartialAssessment);
+            for (const elementId in model.elements) {
+                const elem = model.elements[elementId];
+                const assessment = new Feedback(elementId, ModelElementType.CLASS, 0, '');
+                this.pushAssessmentIfNotExists(elementId, assessment, isPartialAssessment);
                 for (const attribute of (elem as UMLClassifier).attributes) {
                     const attributeAssessment = new Feedback(attribute.id, ModelElementType.ATTRIBUTE, 0, '');
                     this.pushAssessmentIfNotExists(attribute.id, attributeAssessment, isPartialAssessment);
@@ -204,9 +204,9 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
                     this.pushAssessmentIfNotExists(method.id, methodAssessment, isPartialAssessment);
                 }
             }
-            for (const relationship in model.relationships) {
-                const assessment = new Feedback(relationship, ModelElementType.RELATIONSHIP, 0, '');
-                this.pushAssessmentIfNotExists(relationship, assessment, isPartialAssessment);
+            for (const relationshipId in model.relationships) {
+                const assessment = new Feedback(relationshipId, ModelElementType.RELATIONSHIP, 0, '');
+                this.pushAssessmentIfNotExists(relationshipId, assessment, isPartialAssessment);
             }
         }
 
@@ -330,16 +330,16 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
             if (this.apollonEditor) {
                 const model = this.apollonEditor.model;
                 if (this.selectedEntities) {
-                    for (const entity in model.elements) {
+                    for (const elementId in model.elements) {
                         if (type === ModelElementType.ATTRIBUTE) {
-                            for (const attribute of (model.elements[entity] as UMLClassifier).attributes) {
-                                if (attribute.id === id && this.selectedEntities.indexOf(entity) > -1) {
+                            for (const attribute of (model.elements[elementId] as UMLClassifier).attributes) {
+                                if (attribute.id === id && this.selectedEntities.indexOf(elementId) > -1) {
                                     return true;
                                 }
                             }
                         } else if (type === ModelElementType.METHOD) {
-                            for (const method of (model.elements[entity] as UMLClassifier).methods) {
-                                if (method.id === id && this.selectedEntities.indexOf(entity) > -1) {
+                            for (const method of (model.elements[elementId] as UMLClassifier).methods) {
+                                if (method.id === id && this.selectedEntities.indexOf(elementId) > -1) {
                                     return true;
                                 }
                             }

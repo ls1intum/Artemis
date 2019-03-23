@@ -154,7 +154,7 @@ async function generateMappingsForInteractiveEntitiesImages(
     const exporter = new ApollonEditor(div, { model });
 
     for (const entity of interactiveEntities) {
-        const renderedEntity = exporter.exportAsSVG({ filter: [entity.id] })
+        const renderedEntity = exporter.exportAsSVG({ filter: [entity.id] });
         const image = await convertRenderedSVGToPNG(renderedEntity);
 
         const imageUploadResponse = await fileUploaderService.uploadFile(image, `entity-${entity.id}.png`);
@@ -178,7 +178,7 @@ async function generateMappingsForInteractiveEntitiesImages(
         correctMapping.dropLocation = dropLocation;
         correctMappings.push(correctMapping);
     }
-    exporter.destroy()
+    exporter.destroy();
 
     return { dragItems: imageDragItems, dropLocations, correctMappings };
 }
@@ -296,7 +296,7 @@ async function generateMappingsForInteractiveRelationships(
     const exporter = new ApollonEditor(div, { model });
 
     for (const relationship of interactiveRelationships) {
-        const renderedRelationship = exporter.exportAsSVG({ filter: [relationship.id] })
+        const renderedRelationship = exporter.exportAsSVG({ filter: [relationship.id] });
 
         const image = await convertRenderedSVGToPNG(renderedRelationship);
 

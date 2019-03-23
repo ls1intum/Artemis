@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.compass.controller;
 
-import com.google.gson.JsonArray;
+import com.google.common.base.CaseFormat;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class JSONParser {
 
@@ -34,20 +35,18 @@ public class JSONParser {
      * @throws IOException on unexpected json formats
      */
     public static UMLModel buildModelFromJSON(JsonObject root, long modelId) throws IOException {
-        JsonObject entities = root.getAsJsonObject(JSONMapping.elements);
-        JsonArray allElementIds = entities.getAsJsonArray(JSONMapping.idArray);
-        JsonObject entitiesById = entities.getAsJsonObject(JSONMapping.byId);
+        JsonObject elementsById = root.getAsJsonObject(JSONMapping.elements);
+        Set<String> allElementIds = elementsById.keySet();
 
-        JsonObject relationships = root.getAsJsonObject(JSONMapping.relationships);
-        JsonArray allRelationshipIds = relationships.getAsJsonArray(JSONMapping.idArray);
-        JsonObject relationshipsById = relationships.getAsJsonObject(JSONMapping.byId);
+        JsonObject relationshipsById = root.getAsJsonObject(JSONMapping.relationships);
+        Set<String> allRelationshipIds = relationshipsById.keySet();
 
         Map<String, UMLClass> umlClassMap = new HashMap<>();
         List<UMLAssociation> umlAssociationList = new ArrayList<>();
 
         // <editor-fold desc="iterate over every class">
-        for (JsonElement elementId : allElementIds) {
-            JsonObject connectable = entitiesById.getAsJsonObject(elementId.getAsString());
+        for (String elementId : allElementIds) {
+            JsonObject connectable = elementsById.getAsJsonObject(elementId);
 
             String className = connectable.get(JSONMapping.elementName).getAsString();
 
@@ -96,8 +95,10 @@ public class JSONParser {
                 umlMethodList.add(newMethod);
             }
 
-            UMLClass newClass = new UMLClass(className, umlAttributesList, umlMethodList, connectable.get(JSONMapping.elementID).getAsString(),
-                connectable.get(JSONMapping.relationshipType).getAsString());
+            String elementType = connectable.get(JSONMapping.elementType).getAsString();
+            elementType = CaseFormat.UPPER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, elementType);
+
+            UMLClass newClass = new UMLClass(className, umlAttributesList, umlMethodList, elementId, elementType);
 
             //set parent class in attributes and methods
             for (UMLAttribute attribute : umlAttributesList) {
@@ -114,8 +115,8 @@ public class JSONParser {
         // </editor-fold>
 
         // <editor-fold desc="iterate over every relationship">
-        for (JsonElement relationshipElement : allRelationshipIds) {
-            JsonObject relationship = relationshipsById.getAsJsonObject(relationshipElement.getAsString());
+        for (String relationshipId : allRelationshipIds) {
+            JsonObject relationship = relationshipsById.getAsJsonObject(relationshipId);
 
             JsonObject relationshipSource = relationship.getAsJsonObject(JSONMapping.relationshipSource);
             JsonObject relationshipTarget = relationship.getAsJsonObject(JSONMapping.relationshipTarget);
@@ -135,10 +136,11 @@ public class JSONParser {
             JsonElement relationshipTargetMultiplicity = relationshipTarget.has(JSONMapping.relationshipMultiplicity) ?
                 relationshipTarget.get(JSONMapping.relationshipMultiplicity) : JsonNull.INSTANCE;
 
+            String relationshipType = relationship.get(JSONMapping.relationshipType).getAsString();
+            relationshipType = CaseFormat.UPPER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, relationshipType);
+
             if (source != null && target != null) {
-                UMLAssociation newRelation = new UMLAssociation(source, target,
-                    relationship.get(JSONMapping.relationshipType).getAsString(),
-                    relationship.get(JSONMapping.elementID).getAsString(),
+                UMLAssociation newRelation = new UMLAssociation(source, target, relationshipType, relationshipId,
                     relationshipSourceRole.isJsonNull() ? "" : relationshipSourceRole.getAsString(),
                     relationshipTargetRole.isJsonNull() ? "" : relationshipTargetRole.getAsString(),
                     relationshipSourceMultiplicity.isJsonNull() ? "" : relationshipSourceMultiplicity.getAsString(),

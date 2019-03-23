@@ -8,7 +8,7 @@ public class JSONMapping {
     public static final String elementID = "id";
 
     // model base structure
-    public static final String elements = "entities";
+    public static final String elements = "elements";
     public static final String idArray = "allIds";
     public static final String relationships = "relationships";
     public static final String byId = "byId";
@@ -17,12 +17,13 @@ public class JSONMapping {
     public static final String elementName = "name";
     public static final String elementAttributes = "attributes";
     public static final String elementMethods = "methods";
+    public static final String elementType = "type";
 
     // relationships
     public static final String relationshipSource = "source";
     public static final String relationshipTarget = "target";
-    public static final String relationshipEndpointID = "entityId";
-    public static final String relationshipType = "kind";
+    public static final String relationshipEndpointID = "element";
+    public static final String relationshipType = "type";
     public static final String relationshipMultiplicity = "multiplicity";
     public static final String relationshipRole= "role";
 
