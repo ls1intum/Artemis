@@ -19,6 +19,7 @@
             "totalScore": "Total Score:",
             "title": "Title",
             "color": "Color",
+            "courseIcon": "Course Icon",
             "shortName": "Short Name",
             "studentGroupName": "Student Group",
             "teachingAssistantGroupName": "Tutor Group",
@@ -33,6 +34,8 @@
             "quizExercises": "Quiz Exercises",
             "modelingExercises": "Modeling Exercises",
             "textExercises": "Text Exercises (Beta)",
+            "upload": "Upload",
+            "uploading": "Uploading...",
             "fileUploadExercises": "File Upload Exercises (Beta)",
             "form": {
                 "shortname": {
