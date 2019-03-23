@@ -260,7 +260,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
      * because a score is not a number/empty.
      * This function originally checked whether the total score is negative
      * or greater than the max. score, but we decided to remove the restriction
-     * and instead set the score the boundaries on the server.
+     * and instead set the score boundaries on the server.
      */
     checkScoreBoundaries() {
         if (!this.result.feedbacks || this.result.feedbacks.length === 0) {
