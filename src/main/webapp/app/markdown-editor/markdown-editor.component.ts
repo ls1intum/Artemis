@@ -186,23 +186,24 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
         } else {
             /** create array with domain command identifiern*/
             const possibleCommandIdentifier = new Array<string>();
-            for (let domainCommand of this.domainCommands) {
+            for (const domainCommand of this.domainCommands) {
                  possibleCommandIdentifier.push(domainCommand.getOpeningIdentifier());
             }
 
-
             /** create empty array that will be emited to the parent component*/
             const parseArray = [];
+            /** create a copy of the markdown text*/
             let copy = this.markdown.slice(0);
 
-            /** create array with the identifiers to use for RegEx*/
+            /** create array with the identifiers to use for RegEx by deleting the []*/
             const tagNames = possibleCommandIdentifier.map(tag => tag.replace('[', '').replace(']', '')).join('|');
 
+            /** iterate trough the whole text to find the domainCommand*/
             while (true) {
                 const regex = new RegExp(`(?=\\[(${tagNames})\\])`, 'gm');
+                /** minimize the copy until no elements are contained*/
                 const results = copy.split(regex, 1);
-                console.log(results);
-                if (!results || !results.length || !results[0].length) break;
+                if (!results || !results.length || !results[0].length){ break;}
                 copy = copy.replace(results[0], '');
                 const content = this.parseLineForDomainCommand(results[0].trim());
                 parseArray.push(content);
@@ -223,14 +224,13 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
     private parseLineForDomainCommand = (textLine: string): [string, DomainCommand] => {
         for (const domainCommand of this.domainCommands) {
             const possibleOpeningCommandIdentifier = [domainCommand.getOpeningIdentifier(), domainCommand.getOpeningIdentifier().toLowerCase(), domainCommand.getOpeningIdentifier().toUpperCase()];
-            //const possibleClosingIdentifier = [domainCommand.getClosingIdentifier(), domainCommand.getClosingIdentifier().toLowerCase(), domainCommand.getClosingIdentifier().toUpperCase()];
+            // const possibleClosingIdentifier = [domainCommand.getClosingIdentifier(), domainCommand.getClosingIdentifier().toLowerCase(), domainCommand.getClosingIdentifier().toUpperCase()];
 
             if (possibleOpeningCommandIdentifier.some(identifier => textLine.indexOf(identifier) !== -1)) {
-               let trimmedLineWithoutIdentifier = possibleOpeningCommandIdentifier.reduce((line, identifier) => line.replace(identifier, ''), textLine).trim();
-                    console.log(trimmedLineWithoutIdentifier);
-               //if (possibleClosingIdentifier.some(identifier => trimmedLineWithoutIdentifier.indexOf(identifier) !== -1)) {
+               const trimmedLineWithoutIdentifier = possibleOpeningCommandIdentifier.reduce((line, identifier) => line.replace(identifier, ''), textLine).trim();
+               // if (possibleClosingIdentifier.some(identifier => trimmedLineWithoutIdentifier.indexOf(identifier) !== -1)) {
                        // let trimmedLineWithoutIdentifierinTotal = possibleClosingIdentifier.reduce((line, identifier) => line.replace(identifier, ''), trimmedLineWithoutIdentifier).trim();
-                       //console.log(trimmedLineWithoutIdentifierinTotal);
+                       // console.log(trimmedLineWithoutIdentifierinTotal);
                         return [trimmedLineWithoutIdentifier, domainCommand];
                 }
            // }
