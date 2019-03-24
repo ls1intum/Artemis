@@ -60,6 +60,8 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     /** For visual mode **/
     textParts: String [][];
 
+    backupQuestion: ShortAnswerQuestion;
+
     constructor(
         private artemisMarkdown: ArtemisMarkdown,
         private shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
@@ -68,6 +70,18 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     ) {}
 
     ngOnInit(): void {
+        /** Create question backup for resets. We convert it first to JSON and then back to make sure we get a real copy of the object **/
+        this.backupQuestion = JSON.parse(JSON.stringify(this.question));
+
+        /** We create now the structure on how to display the text of the question
+         * 1. The question text is split at every new line. The first element of the array would be then the first line of the question text.
+         * 2. Now each line of the question text will be divided into each word (we used whitespace as separator).
+         * Note: As the spot tag ( e.g. [-spot 1] ) has in between a whitespace we use regex to not take whitespaces as a separator in between
+         * these [ ] brackets.
+         * **/
+        const textForEachLine = this.question.text.split(/\n+/g);
+        this.textParts = textForEachLine.map(t => t.split(/\s+(?![^[]]*])/g));
+
         /** Assign status booleans and strings **/
         this.showPreview = false;
         this.isQuestionCollapsed = false;
@@ -90,7 +104,9 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @desc Setup the question editor
      */
     ngAfterViewInit(): void {
-        requestAnimationFrame(this.setupQuestionEditor.bind(this));
+        if (!this.reEvaluationInProgress) {
+            requestAnimationFrame(this.setupQuestionEditor.bind(this));
+        }
     }
 
     /**
@@ -350,6 +366,10 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     }
 
     /**
+     * For Visual Mode
+     */
+
+    /**
      * @function addSpotAtCursorVisualMode
      * @desc Add a input field on the current selected location and add the solution option accordingly
      */
@@ -369,8 +389,9 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
 
         // split text before first option tag
         const questionText = editor.getValue().split(/\[-option /g)[0].trim();
-        // split on every whitespace. !!!only exception: [-spot 1] is not split!!!
-        this.textParts = questionText.split(/\n+/g).map((t: String) => t.split(/\s+(?![^[]]*])/g));
+        // split on every whitespace. !!!only exception: [-spot 1] is not split!!! for more details see description in ngOnInit.
+        const textForEachLine = questionText.split(/\n+/g);
+        this.textParts = textForEachLine.map((t: String) => t.split(/\s+(?![^[]]*])/g));
         this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]] = '[-spot ' + this.numberOfSpot + ']';
         // recreation of text from array
         this.question.text = this.textParts.map(textPart => textPart.join(' ')).join('\n');
@@ -567,9 +588,129 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      */
     togglePreview(): void {
        this.showPreview = !this.showPreview;
-       this.textParts = this.question.text.split(/\n+/g).map(t => t.split(/\s+(?![^[]]*])/g));
+       // split on every whitespace. !!!only exception: [-spot 1] is not split!!! for more details see description in ngOnInit.
+       const textForEachLine = this.question.text.split(/\n+/g);
+       this.textParts = textForEachLine.map(t => t.split(/\s+(?![^[]]*])/g));
        this.questionEditor.getEditor().setValue(this.generateMarkdown());
        this.questionEditor.getEditor().clearSelection();
+    }
+
+    /**
+     * For Re-evaluate
+     */
+
+    /**
+     * @function moveUp
+     * @desc Move this question one position up so that it is visible further up in the UI
+     */
+    moveUp() {
+        this.questionMoveUp.emit();
+    }
+
+    /**
+     * @function moveDown
+     * @desc Move this question one position down so that it is visible further down in the UI
+     */
+    moveDown() {
+        this.questionMoveDown.emit();
+    }
+
+    /**
+     * @function
+     * @desc Resets the question title by using the title of the backupQuestion (which has the original title of the question)
+     */
+    resetQuestionTitle() {
+        this.question.title = this.backupQuestion.title;
+    }
+
+    /**
+     * @function resetQuestionText
+     * @desc Resets the question text by using the text of the backupQuestion (which has the original text of the question)
+     */
+    resetQuestionText() {
+        this.question.text = this.backupQuestion.text;
+        this.question.spots = JSON.parse(JSON.stringify(this.backupQuestion.spots));
+        // split on every whitespace. !!!only exception: [-spot 1] is not split!!! for more details see description in ngOnInit.
+        const textForEachLine = this.question.text.split(/\n+/g);
+        this.textParts = textForEachLine.map(t => t.split(/\s+(?![^[]]*])/g));
+        this.question.explanation = this.backupQuestion.explanation;
+        this.question.hint = this.backupQuestion.hint;
+    }
+
+    /**
+     * @function resetQuestion
+     * @desc Resets the whole question by using the backupQuestion (which is the original question)
+     */
+    resetQuestion() {
+        this.resetQuestionTitle();
+        this.question.invalid = this.backupQuestion.invalid;
+        this.question.randomizeOrder = this.backupQuestion.randomizeOrder;
+        this.question.scoringType = this.backupQuestion.scoringType;
+        this.question.solutions = JSON.parse(JSON.stringify(this.backupQuestion.solutions));
+        this.question.correctMappings = JSON.parse(JSON.stringify(this.backupQuestion.correctMappings));
+        this.question.spots = JSON.parse(JSON.stringify(this.backupQuestion.spots));
+        this.resetQuestionText();
+    }
+
+    /**
+     * @function resetSpot
+     * @desc Resets the spot by using the spot of the backupQuestion (which has the original spot of the question)
+     * @param spot {spot} the spot, which will be reset
+     */
+    resetSpot(spot: ShortAnswerSpot): void {
+        // Find matching spot in backupQuestion
+        const backupSpot = this.backupQuestion.spots.find(currentSpot => currentSpot.id === spot.id);
+        // Find current index of our spot
+        const spotIndex = this.question.spots.indexOf(spot);
+        // Remove current spot at given index and insert the backup at the same position
+        this.question.spots.splice(spotIndex, 1);
+        this.question.spots.splice(spotIndex, 0, backupSpot);
+    }
+
+    /**
+     * @function deleteSpot
+     * @desc Delete the given spot by filtering every spot except the spot to be delete
+     * @param spotToDelete {object} the spot to delete
+     */
+    deleteSpot(spotToDelete: ShortAnswerSpot): void {
+        this.question.spots = this.question.spots.filter(spot => spot !== spotToDelete);
+        this.deleteMappingsForSpot(spotToDelete);
+
+        // split on every whitespace. !!!only exception: [-spot 1] is not split!!! for more details see description in ngOnInit.
+        const textForEachLine = this.question.text.split(/\n+/g);
+        this.textParts = textForEachLine.map(t => t.split(/\s+(?![^[]]*])/g));
+
+        this.textParts = this.textParts.map(part => part.filter(text => text !== '[-spot ' + spotToDelete.spotNr + ']'));
+
+        this.question.text = this.textParts.map(textPart => textPart.join(' ')).join('\n');
+    }
+
+    /**
+     * @function deleteMappingsForSpot
+     * @desc Delete all mappings for the given spot by filtering all mappings which do not include the spot
+     * @param spot {object} the spot for which we want to delete all mappings
+     */
+    deleteMappingsForSpot(spot: ShortAnswerSpot): void {
+        if (!this.question.correctMappings) {
+            this.question.correctMappings = [];
+        }
+        this.question.correctMappings = this.question.correctMappings.filter(
+            mapping => !this.shortAnswerQuestionUtil.isSameSpot(mapping.spot, spot)
+        );
+    }
+
+    /**
+     * @function setQuestionText
+     * @desc sets the new text as question.text and updates the UI (through textParts)
+     * @param id
+     */
+    setQuestionText(id: string): void {
+        const rowColumn: string [] = id.split('-').slice(1);
+        this.textParts[rowColumn[0]][rowColumn[1]] = (<HTMLInputElement>document.getElementById(id)).value;
+        this.question.text = this.textParts.map(textPart => textPart.join(' ')).join('\n');
+        // split on every whitespace. !!!only exception: [-spot 1] is not split!!! for more details see description in ngOnInit.
+        const textForEachLine = this.question.text.split(/\n+/g);
+        this.textParts = textForEachLine.map(t => t.split(/\s+(?![^[]]*])/g));
     }
 
     /**
