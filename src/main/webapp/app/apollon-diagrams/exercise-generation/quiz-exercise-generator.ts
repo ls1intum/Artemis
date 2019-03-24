@@ -15,9 +15,6 @@ import { ApollonEditor, Element, UMLModel, UMLClassifier, ElementType, SVG } fro
 // using integers in the interval [0,200]
 const MAX_SIZE_UNIT = 200;
 
-// Add a margin to the exported images
-const MARGIN = 20;
-
 export async function generateDragAndDropQuizExercise(
     diagramTitle: string,
     model: UMLModel,
@@ -27,7 +24,7 @@ export async function generateDragAndDropQuizExercise(
 ) {
     // Render the layouted diagram as SVG
     const renderedDiagram = ApollonEditor.exportModelAsSvg(model, {
-        margin: MARGIN,
+        margin: 20,
         keepOriginalSize: true,
         exclude: [...model.interactive.elements, ...model.interactive.relationships]
     });
@@ -115,7 +112,7 @@ async function generateDragAndDropItem(
 ): Promise<{ dragItem: DragItem; dropLocation: DropLocation; correctMapping: DragAndDropMapping }> {
     const isRelationship = Object.keys(model.relationships).includes(element.id);
 
-    const margin = isRelationship ? MARGIN : 0;
+    const margin = isRelationship ? 30 : 0;
 
     const renderedEntity: SVG = ApollonEditor.exportModelAsSvg(model, {
         margin,
