@@ -100,20 +100,24 @@ export class ModelingAssessmentService {
                 }
                 assessmentsNames[referencedModelId] = {type, name: className};
             } else if (referencedModelType === ModelElementType.ATTRIBUTE) {
-                for (const id in model.elements) {
-                    const elem = model.elements[id] as UMLClassifier;
-                    for (const att of elem.attributes) {
-                        if (att.id === referencedModelId) {
-                            assessmentsNames[referencedModelId] = {type: referencedModelType, name: att.name};
+                for (const elem of Object.values(model.elements)) {
+                    const classifier = elem as UMLClassifier;
+                    if (classifier) {
+                        for (const att of classifier.attributes) {
+                            if (att.id === referencedModelId) {
+                                assessmentsNames[referencedModelId] = { type: referencedModelType, name: att.name };
+                            }
                         }
                     }
                 }
             } else if (referencedModelType === ModelElementType.METHOD) {
-                for (const id in model.elements) {
-                    const elem = model.elements[id] as UMLClassifier;
-                    for (const method of elem.methods) {
-                        if (method.id === referencedModelId) {
-                            assessmentsNames[referencedModelId] = {type: referencedModelType, name: method.name};
+                for (const elem of Object.values(model.elements)) {
+                    const classifier = elem as UMLClassifier;
+                    if (classifier) {
+                        for (const method of classifier.methods) {
+                            if (method.id === referencedModelId) {
+                                assessmentsNames[referencedModelId] = { type: referencedModelType, name: method.name };
+                            }
                         }
                     }
                 }

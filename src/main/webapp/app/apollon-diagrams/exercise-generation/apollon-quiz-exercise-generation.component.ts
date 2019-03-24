@@ -29,7 +29,8 @@ export class ApollonQuizExerciseGenerationComponent implements OnInit {
             response => {
                 this.courses = response.body;
                 this.selectedCourse = this.courses[0];
-            }, () => { }
+            },
+            () => {}
         );
     }
 
@@ -39,17 +40,10 @@ export class ApollonQuizExerciseGenerationComponent implements OnInit {
         }
 
         const model = this.apollonEditor.model;
-        const interactiveElements = new Set(model.interactive.elements);
-        const interactiveRelationships = new Set(model.interactive.relationships);
-
-        const fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif';
 
         await generateDragAndDropQuizExercise(
             this.diagramTitle,
             model,
-            interactiveElements,
-            interactiveRelationships,
-            fontFamily,
             this.selectedCourse,
             this.fileUploaderService,
             this.quizExerciseService

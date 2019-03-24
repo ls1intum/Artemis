@@ -17,7 +17,7 @@ import { JhiWebsocketService } from '../core';
 import { Observable } from 'rxjs/Observable';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
-import { ModelElementType } from 'app/entities/modeling-assessment/uml-element.model';
+import { ModelElementType, UMLClass } from 'app/entities/modeling-assessment/uml-element.model';
 
 @Component({
     selector: 'jhi-modeling-editor',
@@ -469,10 +469,10 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
     calculateNumberOfModelElements(): number {
         if (this.umlModel) {
             let total = Object.keys(this.umlModel.elements).length + Object.keys(this.umlModel.relationships).length;
-            for (const id in this.umlModel.elements) {
-                const elem = this.umlModel.elements[id] as UMLClassifier;
-                if (elem) {
-                    total += elem.attributes.length + elem.methods.length;
+            for (const elem of Object.values(this.umlModel.elements)) {
+                const classifier = elem as UMLClassifier;
+                if (classifier) {
+                    total += classifier.attributes.length + classifier.methods.length;
                 }
             }
             return total;
