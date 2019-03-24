@@ -9,6 +9,7 @@ import { CourseExerciseService } from '../course/course.service';
 import { ActivatedRoute } from '@angular/router';
 import { CourseService } from '../course';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-modeling-exercise',
@@ -21,12 +22,13 @@ export class ModelingExerciseComponent extends ExerciseComponent {
         private modelingExerciseService: ModelingExerciseService,
         private courseExerciseService: CourseExerciseService,
         courseService: CourseService,
+        translateService: TranslateService,
         private jhiAlertService: JhiAlertService,
         eventManager: JhiEventManager,
         private accountService: AccountService,
         route: ActivatedRoute
     ) {
-        super(courseService, route, eventManager);
+        super(courseService, translateService, route, eventManager);
         this.modelingExercises = [];
     }
 

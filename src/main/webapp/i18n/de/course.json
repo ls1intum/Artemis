@@ -19,6 +19,7 @@
             "totalScore": "Gesamtergebnis:",
             "title": "Titel",
             "color": "Farbe",
+            "courseIcon": "Kursicon",
             "shortName": "Kurzname",
             "studentGroupName": "Studenten Gruppe",
             "teachingAssistantGroupName": "Tutor Gruppe",
@@ -33,6 +34,8 @@
             "quizExercises": "Quizaufgaben",
             "modelingExercises": "Modellierungsaufgaben",
             "textExercises": "Textaufgabe (Beta)",
+            "upload": "Hochladen",
+            "uploading": "Lade hoch...",
             "fileUploadExercises": "Datei Upload Aufgabe (Beta)"
         }
     }
