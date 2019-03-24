@@ -219,7 +219,7 @@
 
 "@ls1intum/apollon@https://github.com/ls1intum/Apollon#feature/interface":
   version "2.0.0-beta.8"
-  resolved "https://github.com/ls1intum/Apollon#1902cdfecb85abe6fd894e593a925ec5f4e5391d"
+  resolved "https://github.com/ls1intum/Apollon#036471374bd96247adeef467a4402c93fcc312a2"
   dependencies:
     react "16.8.4"
     react-dom "16.8.4"
