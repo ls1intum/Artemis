@@ -117,6 +117,23 @@ async function generateDragAndDropItem(
     dragItem.tempID = TempID.generate();
     dragItem.pictureFilePath = imageUploadResponse.path;
 
+    const isRelationship = Object.keys(model.relationships).includes(element.id);
+    if (isRelationship) {
+        const MIN_SIDE_LENGTH = 30;
+
+        if (renderedEntity.clip.width < MIN_SIDE_LENGTH) {
+            const delta = MIN_SIDE_LENGTH - renderedEntity.clip.width;
+            renderedEntity.clip.width = MIN_SIDE_LENGTH;
+            renderedEntity.clip.x -= delta / 2;
+        }
+
+        if (renderedEntity.clip.height < MIN_SIDE_LENGTH) {
+            const delta = MIN_SIDE_LENGTH - renderedEntity.clip.height;
+            renderedEntity.clip.height = MIN_SIDE_LENGTH;
+            renderedEntity.clip.y -= delta / 2;
+        }
+    }
+
     const dropLocation = new DropLocation();
     dropLocation.tempID = TempID.generate();
     dropLocation.posX = Math.round((MAX_SIZE_UNIT * (renderedEntity.clip.x - clip.x)) / clip.width);
