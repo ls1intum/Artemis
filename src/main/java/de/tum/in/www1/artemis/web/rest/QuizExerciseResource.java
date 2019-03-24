@@ -372,20 +372,19 @@ public class QuizExerciseResource {
         //update QuizExercise
         quizExercise.reconnectJSONIgnoreAttributes();
 
-        //adjust existing results if an answer or and question was deleted and recalculate them
-        quizExerciseService.adjustResultsOnQuizChanges(quizExercise);
+        // needed in case the instructor adds a new solution to the question, the quizExercise has to be saved again so that no PersistencyExceptions can appear
+        QuizExercise updatedQuizExercise = quizExerciseService.save(quizExercise);
 
-        QuizExercise result = quizExerciseService.saveWithNoNewEntities(quizExercise);
+        //adjust existing results if an answer or and question was deleted and recalculate them
+        quizExerciseService.adjustResultsOnQuizChanges(updatedQuizExercise);
 
         if (updateOfResultsAndStatisticsNecessary) {
             // update Statistics
-            quizStatisticService.recalculateStatistics(quizExercise);
+            quizStatisticService.recalculateStatistics(updatedQuizExercise);
         }
-
 
         return ResponseEntity.ok()
             .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, quizExercise.getId().toString()))
-            .body(result);
+            .body(updatedQuizExercise);
     }
-
 }
