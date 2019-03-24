@@ -17,17 +17,17 @@
         <jhi-alert></jhi-alert>
         <div class="row col-12">
             <div class="col-12 col-md-6">
-                <div class="form-group">
+                <div class="form-group-narrow">
                     <label for="quiz-title" jhiTranslate="arTeMiSApp.exercise.title">Title</label>
                     <input id="quiz-title" name="quiz-title" class="form-control" [(ngModel)]="quizExercise.title" (ngModelChange)="cacheValidation()"
                         placeholder="Short Quiz Title" />
                 </div>
-                <div class="form-group position-relative">
+                <div class="form-group-narrow position-relative">
                     <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.categories">Categories</label>
                     <jhi-category-selector [exerciseCategories]="exerciseCategories" [existingCategories]="existingCategories"
                         (selectedCategories)="updateCategories($event)" (ngModelChange)="cacheValidation()"></jhi-category-selector>
                 </div>
-                <div class="form-group">
+                <div class="form-group-narrow">
                     <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.difficulty">Difficulty</label>
                     <div>
                         <jhi-difficulty-picker (ngModelChange)="cacheValidation()" [exercise]="quizExercise"></jhi-difficulty-picker>
@@ -35,19 +35,19 @@
                 </div>
             </div>
             <div class="col-12 col-md-6">
-                <div class="form-group">
+                <div class="form-group-narrow">
                     <label jhiTranslate="arTeMiSApp.quizExercise.duration">Duration</label>
                     <div class="d-flex align-items-center">
-                        <input id="quiz-duration-minutes" style="width: 56px;" class="form-control mb-2 mr-2" title="Duration"
-                            type="number" min="0" max="999" (ngModelChange)="onDurationChange()" [(ngModel)]="duration.minutes"
+                        <input id="quiz-duration-minutes" style="width: 70px;" class="form-control mb-2 mr-2" title="Duration"
+                            type="number" min="0" max="600" (ngModelChange)="onDurationChange()" [(ngModel)]="duration.minutes"
                             (blur)="onDurationChange()" />
                         <span jhiTranslate="arTeMiSApp.quizExercise.minutes"></span>
-                        <input id="quiz-duration-seconds" style="width: 56px;" class="form-control mb-2 mr-2 ml-2"
+                        <input id="quiz-duration-seconds" style="width: 70px;" class="form-control mb-2 mr-2 ml-2"
                             title="Duration" type="number" max="999" min="-99" (ngModelChange)="onDurationChange()"
                             [(ngModel)]="duration.seconds" (blur)="onDurationChange()" />
                         <span jhiTranslate="arTeMiSApp.quizExercise.seconds"></span>
                 </div>
-                <div class="form-group">
+                <div class="form-group-narrow">
                     <label jhiTranslate="arTeMiSApp.quizExercise.options">Options</label>
                     <div class="form-check custom-control custom-checkbox">
                         <input type="checkbox" id="cbRandomizeOrder" class="form-check-input custom-control-input"
@@ -70,7 +70,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-12 text-left mt-2 mb-2">
+        <div class="col-12 text-left mt-1 mb-1">
             <h4>
                 <span jhiTranslate="arTeMiSApp.quizExercise.questions">
                 </span>
@@ -103,25 +103,25 @@
             </div>
         </div>
         <div class="row w-100">
-            <div class="col-12 col-sm-6 col-xl-3 mb-2">
+            <div class="col-12 col-sm-6 col-xl-3 mb-1">
                 <button id="quiz-add-mc-question" class="btn btn-block btn-success" (click)="addMultipleChoiceQuestion()">
                     <fa-icon icon="plus"></fa-icon>
                     <span jhiTranslate="arTeMiSApp.quizExercise.addMultipleChoiceQuestion">Add Multiplce-Choice Question</span>
                 </button>
             </div>
-            <div class="col-12 col-sm-6 col-xl-3 mb-2">
+            <div class="col-12 col-sm-6 col-xl-3 mb-1">
                 <button id="quiz-add-dnd-question" class="btn btn-block btn-success" (click)="addDragAndDropQuestion()">
                     <fa-icon icon="plus"></fa-icon>
                     <span jhiTranslate="arTeMiSApp.quizExercise.addDragAndDropQuestion"></span>
                 </button>
             </div>
-            <div class="col-12 col-sm-6 col-xl-3 mb-2">
+            <div class="col-12 col-sm-6 col-xl-3 mb-1">
                 <button id="quiz-add-short-answer-question" class="btn btn-block btn-success" (click)="addShortAnswerQuestion()">
                     <fa-icon icon="plus"></fa-icon>
                     <span jhiTranslate="arTeMiSApp.quizExercise.addShortAnswerQuestion"></span>
                 </button>
             </div>
-            <div class="col-12 col-sm-6 col-xl-3 mb-2">
+            <div class="col-12 col-sm-6 col-xl-3 mb-1">
                 <button class="btn btn-block" (click)="showHideExistingQuestions()" [ngClass]="{'btn-primary': showExistingQuestions, 'btn-success': !showExistingQuestions}">
                     <fa-icon icon="plus"></fa-icon>
                     <span jhiTranslate="arTeMiSApp.quizExercise.addExistingQuestions"></span>
