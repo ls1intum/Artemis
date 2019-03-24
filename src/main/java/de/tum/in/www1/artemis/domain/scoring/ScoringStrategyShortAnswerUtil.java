@@ -23,11 +23,17 @@ public class ScoringStrategyShortAnswerUtil {
 
         // iterate through each spot and compare its correct solutions with the submitted texts
         for (ShortAnswerSpot spot : shortAnswerQuestion.getSpots()) {
+            if(spot.isInvalid()) {
+                correctSolutionsCount++;
+                continue;
+            }
+
             Set<ShortAnswerSolution> solutionsForSpot = shortAnswerQuestion.getCorrectSolutionForSpot(spot);
             ShortAnswerSubmittedText submittedTextForSpot = shortAnswerAnswer.getSubmittedTextForSpot(spot);
             foundCorrectSolution = false;
 
-            if (submittedTextForSpot != null) {
+            if(submittedTextForSpot != null) {
+                submittedTextForSpot.setIsCorrect(false);
                 for (ShortAnswerSolution solution : solutionsForSpot) {
                     if (submittedTextForSpot.isSubmittedTextCorrect(submittedTextForSpot.getText(), solution.getText())
                         && notUsedSolutions.contains(solution)) {

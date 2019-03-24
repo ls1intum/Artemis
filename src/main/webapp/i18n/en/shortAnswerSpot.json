@@ -17,7 +17,8 @@
             },
             "width": "Width",
             "invalid": "Invalid",
-            "question": "Question"
+            "question": "Question",
+            "invalidSpot": "This spot was marked as invalid. Your answer here will count as correct"
         }
     }
 }

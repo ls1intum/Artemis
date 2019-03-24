@@ -58,6 +58,16 @@
                     (questionMoveDown)="moveDown(question)">
                 </jhi-re-evaluate-drag-and-drop-question>
             </div>
+            <div *ngIf="question.type === SHORT_ANSWER">
+                <jhi-re-evaluate-short-answer-question
+                    [question]="question"
+                    [questionIndex]="i + 1"
+                    (questionUpdated)="onQuestionUpdated()"
+                    (questionDeleted)="deleteQuestion(question)"
+                    (questionMoveUp)="moveUp(question)"
+                    (questionMoveDown)="moveDown(question)">
+                </jhi-re-evaluate-short-answer-question>
+            </div>
             &nbsp;
         </div>
     </div>
