@@ -72,10 +72,10 @@ export class ModelingAssessmentService {
             const referencedModelType = feedback.referenceType;
             const referencedModelId = feedback.referenceId;
             if (referencedModelType === ModelElementType.CLASS) {
-                const classElement = model.elements.byId[referencedModelId];
+                const classElement = model.elements[referencedModelId];
                 const className = classElement.name;
                 let type: string;
-                switch (classElement.kind) {
+                switch (classElement.type) {
                     case ElementType.ActivityInitialNode:
                         type = 'initial node';
                         break;
@@ -101,27 +101,45 @@ export class ModelingAssessmentService {
                 assessmentsNames[referencedModelId] = {type, name: className};
             } else if (referencedModelType === ModelElementType.ATTRIBUTE) {
                 for (const id in model.elements) {
-                    const elem = model.elements[id] as UMLClassifier;
-                    for (const att of elem.attributes) {
-                        if (att.id === referencedModelId) {
-                            assessmentsNames[referencedModelId] = {type: referencedModelType, name: att.name};
+                    const elem = model.elements[id];
+                    if (
+                        ([
+                            ElementType.Class,
+                            ElementType.AbstractClass,
+                            ElementType.Interface,
+                            ElementType.Enumeration
+                        ] as ElementType[]).includes(elem.type)
+                    ) {
+                        for (const att of (elem as UMLClassifier).attributes) {
+                            if (att.id === referencedModelId) {
+                                assessmentsNames[referencedModelId] = { type: referencedModelType, name: att.name };
+                            }
                         }
                     }
                 }
             } else if (referencedModelType === ModelElementType.METHOD) {
                 for (const id in model.elements) {
-                    const elem = model.elements[id] as UMLClassifier;
-                    for (const method of elem.methods) {
-                        if (method.id === referencedModelId) {
-                            assessmentsNames[referencedModelId] = {type: referencedModelType, name: method.name};
+                    const elem = model.elements[id];
+                    if (
+                        ([
+                            ElementType.Class,
+                            ElementType.AbstractClass,
+                            ElementType.Interface,
+                            ElementType.Enumeration
+                        ] as ElementType[]).includes(elem.type)
+                    ) {
+                        for (const method of (elem as UMLClassifier).methods) {
+                            if (method.id === referencedModelId) {
+                                assessmentsNames[referencedModelId] = { type: referencedModelType, name: method.name };
+                            }
                         }
                     }
                 }
             } else if (referencedModelType === ModelElementType.RELATIONSHIP) {
-                const relationship = model.relationships.byId[referencedModelId];
-                const source = model.elements.byId[relationship.source.entityId].name;
-                const target = model.elements.byId[relationship.target.entityId].name;
-                const kind: RelationshipType = model.relationships.byId[referencedModelId].kind;
+                const relationship = model.relationships[referencedModelId];
+                const source = model.elements[relationship.source.element].name;
+                const target = model.elements[relationship.target.element].name;
+                const kind: RelationshipType = model.relationships[referencedModelId].type;
                 let type = 'association';
                 let relation: string;
                 switch (kind) {
