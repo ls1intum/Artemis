@@ -338,10 +338,9 @@ public class Participation implements Serializable {
         }
 
         Submission submission = optionalSubmission.get();
-        if (!Hibernate.isInitialized(optionalSubmission.get())) {
-            //TODO Why do we need to unproxy here?
-            submission = (Submission) Hibernate.unproxy(submission);
-        }
+        // This unproxy is necessary to retrieve the right type of submission (e.g. TextSubmission) to be able to
+        // compare it with the `submissionType` argument
+        submission = (Submission) Hibernate.unproxy(submission);
 
         if (submissionType.isInstance(submission)) {
             return Optional.of(submissionType.cast(submission));

@@ -204,7 +204,6 @@ public class ResultResource {
         if (result.getId() == null) {
             return createResult(result);
         }
-        // TODO: test if this works by using CASCASE = ALL and orphanRemove= true, because we would need to save all child objects 'Feedback' and make sure old child objects 'Feedback' for the old result (which will be replaced) are deleted as well
         // have a look how quiz-exercise handles this case with the contained questions
         resultRepository.save(result);
         return ResponseEntity.ok()
@@ -232,10 +231,18 @@ public class ResultResource {
         List<Result> results = new ArrayList<>();
         Participation participation = participationService.findOne(participationId);
 
-        if (!authCheckService.isOwnerOfParticipation(participation)) {
-            Course course = participation.getExercise().getCourse();
-            if (!userHasPermissions(course)) return forbidden();
+        if (participation.getStudent() == null) {
+            // If the student is null, then participation is a template/solution participation -> check for instructor role
+            if (!authCheckService.isAtLeastInstructorForCourse(participation.getExercise().getCourse(), null)) {
+                return forbidden();
+            }
+        } else {
+            if (!authCheckService.isOwnerOfParticipation(participation)) {
+                Course course = participation.getExercise().getCourse();
+                if (!userHasPermissions(course)) return forbidden();
+            }
         }
+
         if (participation != null) {
             // if exercise is quiz => only give out results if quiz is over
             if (participation.getExercise() instanceof QuizExercise) {
@@ -387,9 +394,18 @@ public class ResultResource {
         }
         Participation participation = result.get().getParticipation();
         Course course = participation.getExercise().getCourse();
-        if (!authCheckService.isOwnerOfParticipation(participation)) {
-            if (!userHasPermissions(course)) return forbidden();
+
+        if (participation.getStudent() == null) {
+            // If the student is null, then we participation is a template/solution participation -> check for instructor role
+            if (!authCheckService.isAtLeastInstructorForCourse(participation.getExercise().getCourse(), null)) {
+                return forbidden();
+            }
+        } else {
+            if (!authCheckService.isOwnerOfParticipation(participation)) {
+                if (!userHasPermissions(course)) return forbidden();
+            }
         }
+
         try {
             List<Feedback> feedbackItems = feedbackService.getFeedbackForBuildResult(result.get());
             return Optional.ofNullable(feedbackItems)
