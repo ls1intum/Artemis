@@ -100,8 +100,7 @@ export class ModelingAssessmentService {
                 }
                 assessmentsNames[referencedModelId] = {type, name: className};
             } else if (referencedModelType === ModelElementType.ATTRIBUTE) {
-                for (const id in model.elements) {
-                    const elem = model.elements[id];
+                for (const elem of Object.values(model.elements)) {
                     if (
                         ([
                             ElementType.Class,
@@ -118,8 +117,7 @@ export class ModelingAssessmentService {
                     }
                 }
             } else if (referencedModelType === ModelElementType.METHOD) {
-                for (const id in model.elements) {
-                    const elem = model.elements[id];
+                for (const elem of Object.values(model.elements)) {
                     if (
                         ([
                             ElementType.Class,
@@ -190,7 +188,7 @@ export class ModelingAssessmentService {
             const referencedModelId = feedback.referenceId;
 
             const element = [...Object.values(model.elements), ...Object.values(model.relationships)]
-                .find(element => element.id === referencedModelId);
+                .find(elem => elem.id === referencedModelId);
 
             const elemPosition: { x: number; y: number } = { x: 0, y: 0 };
             if (element) {

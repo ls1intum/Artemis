@@ -466,8 +466,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
     calculateNumberOfModelElements(): number {
         if (this.umlModel) {
             let total = Object.keys(this.umlModel.elements).length + Object.keys(this.umlModel.relationships).length;
-            for (const id in this.umlModel.elements) {
-                const elem = this.umlModel.elements[id];
+            for (const elem of Object.values(this.umlModel.elements)) {
                 switch (elem.type) {
                     case ElementType.Class:
                     case ElementType.AbstractClass:

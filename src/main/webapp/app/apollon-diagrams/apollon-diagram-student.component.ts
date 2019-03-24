@@ -55,13 +55,13 @@ export class ApollonDiagramStudentComponent implements OnInit, OnDestroy {
         }
     }
 
-    initializeApollonEditor(model: UMLModel) {
+    initializeApollonEditor(initialModel: UMLModel) {
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();
         }
 
         this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
-            model,
+            model: initialModel,
             mode: ApollonMode.Modelling,
             type: DiagramType.ClassDiagram
         });

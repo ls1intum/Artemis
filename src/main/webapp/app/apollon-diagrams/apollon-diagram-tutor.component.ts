@@ -177,8 +177,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         }
         const model = this.apollonEditor.model;
         let cardinalityAllEntities = Object.values(model.elements).length + Object.values(model.relationships).length;
-        for (const id in model.elements) {
-            const elem = model.elements[id];
+        for (const elem of Object.values(model.elements)) {
             switch (elem.type) {
                 case ElementType.Class:
                 case ElementType.AbstractClass:
@@ -191,10 +190,9 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
 
         if (this.result.feedbacks.length < cardinalityAllEntities) {
             const isPartialAssessment = this.result.feedbacks.length !== 0;
-            for (const elementId in model.elements) {
-                const elem = model.elements[elementId];
-                const assessment = new Feedback(elementId, ModelElementType.CLASS, 0, '');
-                this.pushAssessmentIfNotExists(elementId, assessment, isPartialAssessment);
+            for (const elem of Object.values(model.elements)) {
+                const assessment = new Feedback(elem.id, ModelElementType.CLASS, 0, '');
+                this.pushAssessmentIfNotExists(elem.id, assessment, isPartialAssessment);
                 for (const attribute of (elem as UMLClassifier).attributes) {
                     const attributeAssessment = new Feedback(attribute.id, ModelElementType.ATTRIBUTE, 0, '');
                     this.pushAssessmentIfNotExists(attribute.id, attributeAssessment, isPartialAssessment);
@@ -204,7 +202,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
                     this.pushAssessmentIfNotExists(method.id, methodAssessment, isPartialAssessment);
                 }
             }
-            for (const relationshipId in model.relationships) {
+            for (const relationshipId of Object.keys(model.relationships)) {
                 const assessment = new Feedback(relationshipId, ModelElementType.RELATIONSHIP, 0, '');
                 this.pushAssessmentIfNotExists(relationshipId, assessment, isPartialAssessment);
             }
@@ -330,16 +328,16 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
             if (this.apollonEditor) {
                 const model = this.apollonEditor.model;
                 if (this.selectedEntities) {
-                    for (const elementId in model.elements) {
+                    for (const element of Object.values(model.elements)) {
                         if (type === ModelElementType.ATTRIBUTE) {
-                            for (const attribute of (model.elements[elementId] as UMLClassifier).attributes) {
-                                if (attribute.id === id && this.selectedEntities.indexOf(elementId) > -1) {
+                            for (const attribute of (element as UMLClassifier).attributes) {
+                                if (attribute.id === id && this.selectedEntities.indexOf(element.id) > -1) {
                                     return true;
                                 }
                             }
                         } else if (type === ModelElementType.METHOD) {
-                            for (const method of (model.elements[elementId] as UMLClassifier).methods) {
-                                if (method.id === id && this.selectedEntities.indexOf(elementId) > -1) {
+                            for (const method of (element as UMLClassifier).methods) {
+                                if (method.id === id && this.selectedEntities.indexOf(element.id) > -1) {
                                     return true;
                                 }
                             }
