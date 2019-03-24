@@ -40,7 +40,7 @@ export class UnorderedListCommand extends Command {
             this.editor.insert(text);
         } else {
             const range = this.editor.selection.getRange();
-            element = `- ${element}\n`;
+            element = `- ${element}`;
             this.editor.session.replace(range, element);
             this.editor.focus();
         }
