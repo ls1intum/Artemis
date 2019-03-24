@@ -4,7 +4,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { ModelingExercise } from '../entities/modeling-exercise';
 import { Participation } from '../entities/participation';
 import { ApollonDiagramService } from '../entities/apollon-diagram/apollon-diagram.service';
-import { ApollonEditor, ApollonMode, DiagramType, UMLModel, UMLClassifier, ElementType } from '@ls1intum/apollon';
+import { ApollonEditor, ApollonMode, DiagramType, UMLModel } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
 import { Result } from '../entities/result';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
@@ -17,7 +17,7 @@ import { JhiWebsocketService } from '../core';
 import { Observable } from 'rxjs/Observable';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
-import { ModelElementType, UMLClass } from 'app/entities/modeling-assessment/uml-element.model';
+import { ModelElementType } from 'app/entities/modeling-assessment/uml-element.model';
 
 @Component({
     selector: 'jhi-modeling-editor',
@@ -451,14 +451,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
      */
     calculateNumberOfModelElements(): number {
         if (this.umlModel) {
-            let total = Object.keys(this.umlModel.elements).length + Object.keys(this.umlModel.relationships).length;
-            for (const elem of Object.values(this.umlModel.elements)) {
-                const classifier = elem as UMLClassifier;
-                if (classifier) {
-                    total += classifier.attributes.length + classifier.methods.length;
-                }
-            }
-            return total;
+            return Object.keys(this.umlModel.elements).length + Object.keys(this.umlModel.relationships).length;
         }
         return 0;
     }

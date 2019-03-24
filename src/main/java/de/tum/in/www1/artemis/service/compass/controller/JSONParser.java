@@ -7,6 +7,7 @@ import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLAssociation;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLAttribute;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLClass;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLClass.UMLClassType;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLMethod;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLModel;
 import de.tum.in.www1.artemis.service.compass.utils.JSONMapping;
@@ -24,6 +25,10 @@ import java.util.Set;
 public class JSONParser {
 
     private final static Logger log = LoggerFactory.getLogger(JSONParser.class);
+    // TODO CZ: find a better solution
+    private final static List<String> ClassTypes = Arrays.asList(UMLClassType.CLASS.toString(),
+        UMLClassType.ABSTRACT_CLASS.toString(), UMLClassType.INTERFACE.toString(), UMLClassType.ENUMERATION.toString());
+
 
     /**
      * Process a json object retrieved from a json formatted file to retrieve an UML model
@@ -34,6 +39,7 @@ public class JSONParser {
      * @return the model as java object
      * @throws IOException on unexpected json formats
      */
+    // TODO CZ: refactor this (extract buildModelFromJSON to specific UML classes, e.g. UMLClass.buildModelFromJSON() to get the parsed class)
     public static UMLModel buildModelFromJSON(JsonObject root, long modelId) throws IOException {
         JsonObject elementsById = root.getAsJsonObject(JSONMapping.elements);
         Set<String> allElementIds = elementsById.keySet();
@@ -48,70 +54,65 @@ public class JSONParser {
         for (String elementId : allElementIds) {
             JsonObject connectable = elementsById.getAsJsonObject(elementId);
 
-            String className = connectable.get(JSONMapping.elementName).getAsString();
-
-            List<UMLAttribute> umlAttributesList = new ArrayList<>();
-            List<UMLMethod> umlMethodList = new ArrayList<>();
-
-            for (JsonElement attributeElement : connectable.getAsJsonArray(JSONMapping.elementAttributes)) {
-                JsonObject attribute = attributeElement.getAsJsonObject();
-
-                String[] attributeNameArray = attribute.get(JSONMapping.elementName).getAsString().replaceAll(" ", "").split(":");
-                String attributeName = attributeNameArray[0];
-                String attributeType = "";
-                if (attributeNameArray.length == 2) {
-                    attributeType = attributeNameArray[1];
-                }
-                UMLAttribute newAttr = new UMLAttribute(attributeName, attributeType, attribute.get(JSONMapping.elementID).getAsString());
-                umlAttributesList.add(newAttr);
-            }
-
-            for (JsonElement methodElement : connectable.getAsJsonArray(JSONMapping.elementMethods)) {
-                JsonObject method = methodElement.getAsJsonObject();
-
-                String completeMethodName = method.get(JSONMapping.elementName).getAsString();
-
-                String[] methodEntryArray = completeMethodName.replaceAll(" ", "").split(":");
-                String[] methodParts = methodEntryArray[0].split("[()]");
-
-                if (methodParts.length < 1) {
-                    break;
-                }
-
-                String methodName = methodParts[0];
-
-                String[] methodParams = {};
-
-                if (methodParts.length == 2) {
-                    methodParams = methodParts[1].split(",");
-                }
-
-                String methodReturnType = "";
-                if (methodEntryArray.length == 2) {
-                    methodReturnType = methodEntryArray[1];
-                }
-
-                UMLMethod newMethod = new UMLMethod(completeMethodName, methodName, methodReturnType, Arrays.asList(methodParams), method.get(JSONMapping.elementID).getAsString());
-                umlMethodList.add(newMethod);
-            }
-
             String elementType = connectable.get(JSONMapping.elementType).getAsString();
             elementType = CaseFormat.UPPER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, elementType);
+            if (ClassTypes.contains(elementType))
+            {
+                String className = connectable.get(JSONMapping.elementName).getAsString();
 
-            UMLClass newClass = new UMLClass(className, umlAttributesList, umlMethodList, elementId, elementType);
+                List<UMLAttribute> umlAttributesList = new ArrayList<>();
+                for (JsonElement attributeId : connectable.getAsJsonArray(JSONMapping.elementAttributes)) {
+                    JsonObject attribute = elementsById.get(attributeId.getAsString()).getAsJsonObject();
 
-            //set parent class in attributes and methods
-            for (UMLAttribute attribute : umlAttributesList) {
-                attribute.setParentClass(newClass);
+                    String[] attributeNameArray = attribute.get(JSONMapping.elementName).getAsString()
+                        .replaceAll(" ", "").split(":");
+                    String attributeName = attributeNameArray[0];
+                    String attributeType = "";
+                    if (attributeNameArray.length == 2) {
+                        attributeType = attributeNameArray[1];
+                    }
+                    UMLAttribute newAttr = new UMLAttribute(attributeName, attributeType,
+                        attribute.get(JSONMapping.elementID).getAsString());
+                    umlAttributesList.add(newAttr);
+                }
+
+                List<UMLMethod> umlMethodList = new ArrayList<>();
+                for (JsonElement methodId : connectable.getAsJsonArray(JSONMapping.elementMethods)) {
+                    JsonObject method = elementsById.get(methodId.getAsString()).getAsJsonObject();
+
+                    String completeMethodName = method.get(JSONMapping.elementName).getAsString();
+                    String[] methodEntryArray = completeMethodName.replaceAll(" ", "").split(":");
+                    String[] methodParts = methodEntryArray[0].split("[()]");
+                    if (methodParts.length < 1) {
+                        break;
+                    }
+                    String methodName = methodParts[0];
+                    String[] methodParams = {};
+                    if (methodParts.length == 2) {
+                        methodParams = methodParts[1].split(",");
+                    }
+                    String methodReturnType = "";
+                    if (methodEntryArray.length == 2) {
+                        methodReturnType = methodEntryArray[1];
+                    }
+                    UMLMethod newMethod = new UMLMethod(completeMethodName, methodName, methodReturnType, Arrays.asList(methodParams), method.get(JSONMapping.elementID).getAsString());
+                    umlMethodList.add(newMethod);
+                }
+
+                UMLClass newClass = new UMLClass(className, umlAttributesList, umlMethodList, elementId, elementType);
+
+                //set parent class in attributes and methods
+                for (UMLAttribute attribute : umlAttributesList) {
+                    attribute.setParentClass(newClass);
+                }
+
+                for (UMLMethod method: umlMethodList) {
+                    method.setParentClass(newClass);
+                }
+
+                umlClassMap.put(newClass.getJSONElementID(), newClass);
             }
-
-            for (UMLMethod method: umlMethodList) {
-                method.setParentClass(newClass);
-            }
-
-            umlClassMap.put(newClass.getJSONElementID(), newClass);
         }
-
         // </editor-fold>
 
         // <editor-fold desc="iterate over every relationship">
@@ -150,7 +151,6 @@ public class JSONParser {
                 throw new IOException("Relationship source or target not part of model!");
             }
         }
-
         // </editor-fold>
 
         return new UMLModel(new ArrayList<>(umlClassMap.values()), umlAssociationList, modelId);
