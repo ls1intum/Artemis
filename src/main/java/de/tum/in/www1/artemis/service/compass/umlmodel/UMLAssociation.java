@@ -5,34 +5,38 @@ import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 public class UMLAssociation extends UMLElement {
 
-    // PLAIN is legacy
     // TODO move activity diagram types into its own class
+    // TODO CZ: add relations for other diagram types
     public enum UMLRelationType {
-        PLAIN,
-        DEPENDENCY,
-        AGGREGATION,
-        INHERITANCE,
-        REALIZATION,
-        COMPOSITION,
-        ASSOCIATION_UNIDIRECTIONAL,
-        ASSOCIATION_BIDIRECTIONAL,
+        // class diagram relations
+        CLASS_BIDIRECTIONAL,
+        CLASS_UNIDIRECTIONAL,
+        CLASS_INHERITANCE,
+        CLASS_REALIZATION,
+        CLASS_DEPENDENCY,
+        CLASS_AGGREGATION,
+        CLASS_COMPOSITION,
+
+        // activity diagram relations
         ACTIVITY_CONTROL_FLOW;
 
         public String toReadableString() {
+
+            // TODO CZ: find better solution
             switch (this) {
-                case DEPENDENCY:
+                case CLASS_DEPENDENCY:
                     return "Dependency";
-                case AGGREGATION:
+                case CLASS_AGGREGATION:
                     return "Aggregation";
-                case INHERITANCE:
+                case CLASS_INHERITANCE:
                     return "Inheritance";
-                case REALIZATION:
+                case CLASS_REALIZATION:
                     return "Realization";
-                case COMPOSITION:
+                case CLASS_COMPOSITION:
                     return "Composition";
-                case ASSOCIATION_UNIDIRECTIONAL:
+                case CLASS_UNIDIRECTIONAL:
                     return "Unidirectional";
-                case ASSOCIATION_BIDIRECTIONAL:
+                case CLASS_BIDIRECTIONAL:
                     return "Bidirectional";
                 case ACTIVITY_CONTROL_FLOW:
                     return "Control Flow";
@@ -43,19 +47,19 @@ public class UMLAssociation extends UMLElement {
 
         public String toSymbol() {
             switch (this) {
-                case DEPENDENCY:
+                case CLASS_DEPENDENCY:
                     return " ╌╌> ";
-                case AGGREGATION:
+                case CLASS_AGGREGATION:
                     return " --◇ ";
-                case INHERITANCE:
+                case CLASS_INHERITANCE:
                     return " --▷ ";
-                case REALIZATION:
+                case CLASS_REALIZATION:
                     return " ╌╌▷ ";
-                case COMPOSITION:
+                case CLASS_COMPOSITION:
                     return " --◆ ";
-                case ASSOCIATION_UNIDIRECTIONAL:
+                case CLASS_UNIDIRECTIONAL:
                     return " --> ";
-                case ASSOCIATION_BIDIRECTIONAL:
+                case CLASS_BIDIRECTIONAL:
                     return " <-> ";
                 case ACTIVITY_CONTROL_FLOW:
                     return " --> ";
@@ -141,7 +145,7 @@ public class UMLAssociation extends UMLElement {
         }
 
         // bidirectional associations can be swapped
-        if (type == UMLRelationType.ASSOCIATION_BIDIRECTIONAL) {
+        if (type == UMLRelationType.CLASS_BIDIRECTIONAL) {
             double similarityReverse = 0;
 
             if (reference.targetRole.equals(this.sourceRole)) {
