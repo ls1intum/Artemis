@@ -81,7 +81,6 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
                 } else {
                     this.result.feedbacks = [];
                 }
-                console.log(this.result)
                 this.submission.participation.results = [this.result];
                 this.result.participation = this.submission.participation;
                 /**
