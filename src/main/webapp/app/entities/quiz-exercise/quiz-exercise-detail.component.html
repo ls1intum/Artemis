@@ -18,9 +18,9 @@
         <div class="row col-12">
             <div class="col-12 col-md-6">
                 <div class="form-group">
-                    <label for="quiz-title" jhiTranslate="arTeMiSApp.exercise.title">Title</label>{{pendingChangesCache}}
+                    <label for="quiz-title" jhiTranslate="arTeMiSApp.exercise.title">Title</label>
                     <input id="quiz-title" name="quiz-title" class="form-control" [(ngModel)]="quizExercise.title" (ngModelChange)="cacheValidation()"
-                        placeholder="Quiz Title" />
+                        placeholder="Short Quiz Title" />
                 </div>
                 <div class="form-group position-relative">
                     <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.categories">Categories</label>

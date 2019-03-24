@@ -69,24 +69,36 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
         new HeadingThreeCommand(),
     ];
 
-    /** {array} containing all domain commands which need to be set by the parent component which contains the markdown editor */
+    /**
+     * {domainCommands} containing all domain commands which need to be set by the parent component which contains the markdown editor
+     */
     @Input() domainCommands: DomainCommand[];
 
-    /** {EventEmitter} emits an {array} of the textLine with the corresponding domain command to the parent component which contains the markdown editoR */
+    /**
+     * {textWithDomainCommandFound} emits an {array} of text lines with the corresponding domain command to the parent component which contains the markdown editor
+     */
     @Output() textWithDomainCommandFound = new EventEmitter<[string, DomainCommand][]>();
 
-    /**{boolean} 1. true -> the preview of the editor is used
-     *           2. false -> the preview of the parent component is used, parent has to set this value to false with an input*/
+    /**
+     * {showPreviewButton} 1. true -> the preview of the editor is used
+     *           2. false -> the preview of the parent component is used, parent has to set this value to false with an input
+     */
     @Input() showPreviewButton = true;
 
-    /** {string} text that is emitted to the parent component if the parent does not use any domain commands */
+    /**
+     * {previewTextAsHtml} text that is emitted to the parent component if the parent does not use any domain commands
+     */
     previewTextAsHtml: string;
 
-    /** {boolean} when editor is created the preview is set to false, since the edit mode is set active */
+    /**
+     * {previewMode} when editor is created the preview is set to false, since the edit mode is set active
+     */
     previewMode = false;
 
-    /** Is not null when the parent component is responsible for the preview content
-     * -> parent component has to implement ng-content and set the showPreviewButton on true through an input */
+    /**
+     * {previewChild} Is not null when the parent component is responsible for the preview content
+     * -> parent component has to implement ng-content and set the showPreviewButton on true through an input
+     */
     @ContentChild('preview') previewChild: ElementRef;
 
     constructor(private artemisMarkdown: ArtemisMarkdown) {
@@ -174,6 +186,7 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
         } else {
             /** separate the markdown text by [- */
             const parseArray = this.markdown
+            // TODO: do not split with '\[-', instead search for opening identifiers of all domain commands. In case the commands run over multiple lines, take this into account.
             .split('\[-')
             .map(this.parseLineForDomainCommand);
             this.textWithDomainCommandFound.emit(parseArray);
@@ -190,11 +203,12 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
      * @return array of the textLine with the domainCommand identifier
      */
     private parseLineForDomainCommand = (textLine: string): [string, DomainCommand] => {
-        for (const specialCommand of this.domainCommands) {
-            const possibleCommandIdentifier = [specialCommand.getIdentifier(), specialCommand.getIdentifier().toLowerCase(), specialCommand.getIdentifier().toUpperCase()];
+        for (const domainCommand of this.domainCommands) {
+            const possibleCommandIdentifier = [domainCommand.getOpeningIdentifier(), domainCommand.getOpeningIdentifier().toLowerCase(), domainCommand.getOpeningIdentifier().toUpperCase()];
+            // TODO: also search for the closing identifier
             if (possibleCommandIdentifier.some(identifier => textLine.indexOf(identifier) !== -1)) {
                 const trimmedLineWithoutIdentifier = possibleCommandIdentifier.reduce((line, identifier) => line.replace(identifier, ''), textLine).trim();
-                return [trimmedLineWithoutIdentifier, specialCommand];
+                return [trimmedLineWithoutIdentifier, domainCommand];
             }
         }
         return [textLine.trim(), null];

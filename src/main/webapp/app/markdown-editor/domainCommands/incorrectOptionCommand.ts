@@ -9,7 +9,7 @@ export class IncorrectOptionCommand extends DomainCommand {
      * @desc Add a new incorrect answer option to the text editor at the location of the cursor
      */
     execute(): void {
-        const addedText = '\n[- ] Enter an incorrect answer option here';
+        const addedText = '\n' + this.getOpeningIdentifier() + 'Enter a wrong answer option here' + this.getClosingIdentifier();
         this.editor.focus();
         this.editor.clearSelection();
         this.editor.moveCursorTo(this.editor.getCursorPosition().row, Number.POSITIVE_INFINITY);
@@ -20,10 +20,18 @@ export class IncorrectOptionCommand extends DomainCommand {
     }
 
     /**
-     * @function getIdentifier
-     * @desc Identify the inCorrectOption by the identifier
+     * @function getOpeningIdentifier
+     * @desc identify the start of the correct option
      */
-    getIdentifier(): string {
-        return ' ]';
+    getOpeningIdentifier(): string {
+        return '[wrong]';
+    }
+
+    /**
+     * @function getClosingIdentifier
+     * @desc identify the end of the correct option
+     */
+    getClosingIdentifier(): string {
+        return '[wrong]';
     }
 }

@@ -5,5 +5,6 @@ import { Command } from 'app/markdown-editor/commands/command';
  * Each domain command has its own logic and an unique identifier**/
 export abstract class DomainCommand extends Command {
 
-    abstract getIdentifier(): string; // e.g. [-e]
+    abstract getOpeningIdentifier(): string; // e.g. [exp]
+    abstract getClosingIdentifier(): string; // e.g. [/exp]
 }
