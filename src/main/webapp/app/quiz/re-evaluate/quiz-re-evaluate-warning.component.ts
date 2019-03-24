@@ -6,6 +6,7 @@ import { QuizReEvaluateService } from './quiz-re-evaluate.service';
 import { QuizQuestion, QuizQuestionType } from '../../entities/quiz-question';
 import { MultipleChoiceQuestion } from '../../entities/multiple-choice-question';
 import { DragAndDropQuestion } from '../../entities/drag-and-drop-question';
+import { ShortAnswerQuestion } from '../../entities/short-answer-question';
 
 @Component({
     selector: 'jhi-quiz-re-evaluate-warning',
@@ -24,6 +25,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
     questionDeleted = false;
     questionInvalid = false;
     scoringChanged = false;
+    solutionAdded = false;
 
     quizExercise: QuizExercise;
     backUpQuiz: QuizExercise;
@@ -107,6 +109,10 @@ export class QuizReEvaluateWarningComponent implements OnInit {
             if (question.type === QuizQuestionType.DRAG_AND_DROP) {
                 this.checkDragAndDropQuestion(question as DragAndDropQuestion, backUpQuestion as DragAndDropQuestion);
             }
+            // check ShortAnswerQuestions
+            if (question.type === QuizQuestionType.SHORT_ANSWER) {
+                this.checkShortAnswerQuestion(question as ShortAnswerQuestion, backUpQuestion as ShortAnswerQuestion);
+            }
         }
     }
 
@@ -185,6 +191,60 @@ export class QuizReEvaluateWarningComponent implements OnInit {
                 });
                 // dropLocation set invalid?
                 if (backUpDropLocation !== null && dropLocation.invalid !== backUpDropLocation.invalid) {
+                    this.questionElementInvalid = true;
+                }
+            });
+        }
+    }
+
+    /**
+     * @function checkShortAnswerQuestion
+     * @desc
+     * 1. We check all ShortAnswer-Question-Elements in case a spot, solution or mapping has changed/was deleted
+     * 2. Set flags based on detected changes to inform the instructor in the UI what his changes have for consequences.
+     *
+     * @param question
+     * @param backUpQuestion
+     */
+    checkShortAnswerQuestion(question: ShortAnswerQuestion, backUpQuestion: ShortAnswerQuestion): void {
+        // check if a spot or solution was deleted
+        if (question.solutions.length < backUpQuestion.solutions.length
+            || question.spots.length < backUpQuestion.spots.length) {
+            this.questionElementDeleted = true;
+        }
+        // check if a spot or solution was added
+        if (question.solutions.length > backUpQuestion.solutions.length
+            || question.spots.length > backUpQuestion.spots.length) {
+            this.solutionAdded = true;
+        }
+
+        // check if the correct Mappings has changed
+        if (JSON.stringify(question.correctMappings).toLowerCase() !== JSON.stringify(backUpQuestion.correctMappings).toLowerCase()) {
+            this.questionCorrectness = true;
+        }
+        // only check if there are no changes on the question-elements yet
+        if (!this.questionElementInvalid) {
+            // check each solution
+            question.solutions.forEach(solution => {
+                const backUpSolution = backUpQuestion.solutions.find(solutionBackUp => {
+                    return solutionBackUp.id === solution.id;
+                });
+                // check if a solution was added
+                if (this.solutionAdded && backUpSolution === undefined) {
+                    return;
+                }
+                // solution set invalid?
+                if (backUpSolution !== null && solution.invalid !== backUpSolution.invalid) {
+                    this.questionElementInvalid = true;
+                }
+            });
+            // check each spot
+            question.spots.forEach(spot => {
+                const backUpSpot = backUpQuestion.spots.find(spotBackUp => {
+                    return spotBackUp.id === spot.id;
+                });
+                // spot set invalid?
+                if (backUpSpot !== null && spot.invalid !== backUpSpot.invalid) {
                     this.questionElementInvalid = true;
                 }
             });
