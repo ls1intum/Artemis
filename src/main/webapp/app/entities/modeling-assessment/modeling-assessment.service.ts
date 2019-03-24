@@ -100,27 +100,7 @@ export class ModelingAssessmentService {
                 }
                 assessmentsNames[referencedModelId] = {type, name: className};
             } else if (referencedModelType === ModelElementType.ATTRIBUTE) {
-                for (const elem of Object.values(model.elements)) {
-                    const classifier = elem as UMLClassifier;
-                    if (classifier) {
-                        for (const att of classifier.attributes) {
-                            if (att.id === referencedModelId) {
-                                assessmentsNames[referencedModelId] = { type: referencedModelType, name: att.name };
-                            }
-                        }
-                    }
-                }
             } else if (referencedModelType === ModelElementType.METHOD) {
-                for (const elem of Object.values(model.elements)) {
-                    const classifier = elem as UMLClassifier;
-                    if (classifier) {
-                        for (const method of classifier.methods) {
-                            if (method.id === referencedModelId) {
-                                assessmentsNames[referencedModelId] = { type: referencedModelType, name: method.name };
-                            }
-                        }
-                    }
-                }
             } else if (referencedModelType === ModelElementType.RELATIONSHIP) {
                 const relationship = model.relationships[referencedModelId];
                 const source = model.elements[relationship.source.element].name;

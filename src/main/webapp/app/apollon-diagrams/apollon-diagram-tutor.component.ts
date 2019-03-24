@@ -1,7 +1,7 @@
 import { Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { DiagramType, ApollonEditor, UMLModel, UMLClassifier, ApollonMode, ElementType } from '@ls1intum/apollon';
+import { DiagramType, ApollonEditor, UMLModel, UMLClassifier, ApollonMode } from '@ls1intum/apollon';
 import { ActivatedRoute, Router } from '@angular/router';
 import * as $ from 'jquery';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
@@ -12,7 +12,6 @@ import { AccountService } from '../core';
 import { Submission } from '../entities/submission';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Conflict } from 'app/entities/modeling-assessment/conflict.model';
-import { isNullOrUndefined } from 'util';
 import { Feedback } from 'app/entities/feedback';
 import { ModelElementType } from 'app/entities/modeling-assessment/uml-element.model';
 
@@ -82,6 +81,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
                 } else {
                     this.result.feedbacks = [];
                 }
+                console.log(this.result)
                 this.submission.participation.results = [this.result];
                 this.result.participation = this.submission.participation;
                 /**
@@ -141,27 +141,9 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
             type: this.modelingExercise.diagramType
         });
 
-        const model = this.apollonEditor.model;
         this.apollonEditor.subscribeToSelectionChange(selection => {
-            const selectedEntities: string[] = [];
-            for (const elementId of selection.elements) {
-                selectedEntities.push(elementId);
-                const classifier: UMLClassifier = model.elements[elementId] as UMLClassifier;
-                if (classifier) {
-                    for (const attribute of classifier.attributes) {
-                        selectedEntities.push(attribute.id);
-                    }
-                    for (const method of classifier.methods) {
-                        selectedEntities.push(method.id);
-                    }
-                }
-            }
-            this.selectedEntities = selectedEntities;
-            const selectedRelationships: string[] = [];
-            for (const rel of selection.relationships) {
-                selectedRelationships.push(rel);
-            }
-            this.selectedRelationships = selectedRelationships;
+            this.selectedEntities = selection.elements;
+            this.selectedRelationships = selection.relationships;
         });
 
         this.initializeAssessments();
@@ -199,14 +181,6 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
             for (const elem of Object.values(model.elements)) {
                 const assessment = new Feedback(elem.id, ModelElementType.CLASS, 0, '');
                 this.pushAssessmentIfNotExists(elem.id, assessment, isPartialAssessment);
-                for (const attribute of (elem as UMLClassifier).attributes) {
-                    const attributeAssessment = new Feedback(attribute.id, ModelElementType.ATTRIBUTE, 0, '');
-                    this.pushAssessmentIfNotExists(attribute.id, attributeAssessment, isPartialAssessment);
-                }
-                for (const method of (elem as UMLClassifier).methods) {
-                    const methodAssessment = new Feedback(method.id, ModelElementType.METHOD, 0, '');
-                    this.pushAssessmentIfNotExists(method.id, methodAssessment, isPartialAssessment);
-                }
             }
             for (const relationshipId of Object.keys(model.relationships)) {
                 const assessment = new Feedback(relationshipId, ModelElementType.RELATIONSHIP, 0, '');
@@ -401,12 +375,6 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         const model = this.apollonEditor.model;
         const entitiesToHighlight: string[] = Object.keys(model.elements).filter((id: string) => {
             if (this.conflicts.has(id)) {
-                return true;
-            }
-            if ((model.elements[id] as UMLClassifier).attributes.find(attribute => this.conflicts.has(attribute.id))) {
-                return true;
-            }
-            if ((model.elements[id] as UMLClassifier).methods.find(method => this.conflicts.has(method.id))) {
                 return true;
             }
             return false;

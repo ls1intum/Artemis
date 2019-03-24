@@ -185,25 +185,8 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
 
             const model = this.apollonEditor.model;
             this.apollonEditor.subscribeToSelectionChange(selection => {
-                const selectedEntities = [];
-                for (const elementId of selection.elements) {
-                    selectedEntities.push(elementId);
-                    const classifier: UMLClassifier = model.elements[elementId] as UMLClassifier;
-                    if (classifier) {
-                        for (const attribute of classifier.attributes) {
-                            selectedEntities.push(attribute.id);
-                        }
-                        for (const method of classifier.methods) {
-                            selectedEntities.push(method.id);
-                        }
-                    }
-                }
-                this.selectedEntities = selectedEntities;
-                const selectedRelationships = [];
-                for (const rel of selection.relationships) {
-                    selectedRelationships.push(rel);
-                }
-                this.selectedRelationships = selectedRelationships;
+                this.selectedEntities = selection.elements;
+                this.selectedRelationships = selection.relationships;
             });
 
             const apollonDiv = $('.apollon-editor > div');
