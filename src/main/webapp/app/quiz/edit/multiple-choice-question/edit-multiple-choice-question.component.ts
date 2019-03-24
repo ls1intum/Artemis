@@ -175,7 +175,6 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
                 this.question.hint = textLine;
             }
         }
-        this.changeDetector.detectChanges();
     }
 
     /**

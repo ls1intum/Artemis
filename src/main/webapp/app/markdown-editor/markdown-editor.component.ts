@@ -195,6 +195,7 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
             const parseArray = [];
             let copy = this.markdown.slice(0);
 
+            /** create array with the identifiers to use for RegEx*/
             const tagNames = possibleCommandIdentifier.map(tag => tag.replace('[', '').replace(']', '')).join('|');
 
             while (true) {
