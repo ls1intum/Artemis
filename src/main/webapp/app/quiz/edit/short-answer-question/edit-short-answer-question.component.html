@@ -36,7 +36,7 @@
                 </div>
             </div>
         </div>
-        <div class="markupEditorArea" [hidden]="showPreview">
+        <div class="markupEditorArea" [hidden]="showVisualMode">
             <div class="toolbar">
                 <div class="btn-group">
                    <!-- <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.addHint" (click)="addHintAtCursor()"></div>
@@ -55,7 +55,7 @@
                 </ace-editor>
             </div>
         </div>
-        <div class="edit-sa-question" style="padding:20px" *ngIf="!reEvaluationInProgress && showPreview">
+        <div class="edit-sa-question" style="padding:20px" *ngIf="!reEvaluationInProgress && showVisualMode">
             <h4 jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.visualModeHeadline"></h4>
             <span jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.visualModeExplanation"></span>
             <hr/>
@@ -120,13 +120,13 @@
             </div>
         </div>
         <hr/>
-        <div *ngIf="!showPreview" class="toolbar">
+        <div *ngIf="!showVisualMode" class="toolbar">
             <div class="btn-group">
                 <div class="btn btn-outline-secondary active" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.text"></div>
                 <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.visual" (click)="togglePreview()"></div>
             </div>
         </div>
-        <div *ngIf="showPreview" class="toolbar">
+        <div *ngIf="showVisualMode" class="toolbar">
             <div class="btn-group">
                 <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.text" (click)="togglePreview()"></div>
                 <div class="btn btn-outline-secondary active" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.visual"></div>

@@ -3,7 +3,7 @@ import { ShortAnswerSolution } from '../../entities/short-answer-solution';
 import { ShortAnswerSpot } from '../../entities/short-answer-spot';
 import { ShortAnswerMapping } from '../../entities/short-answer-mapping';
 import { ShortAnswerQuestion } from '../../entities/short-answer-question';
-
+import { ArtemisMarkdown } from '../../components/util/markdown.service';
 @Injectable({ providedIn: 'root' })
 export class ShortAnswerQuestionUtil {
     constructor() {}
@@ -417,4 +417,40 @@ export class ShortAnswerQuestionUtil {
     atLeastAsManySolutionsAsSpots(question: ShortAnswerQuestion): boolean {
         return question.spots.length <= question.solutions.length;
     }
+
+    /**
+     * We create now the structure on how to display the text of the question
+     * 1. The question text is split at every new line. The first element of the array would be then the first line of the question text.
+     * 2. Now each line of the question text will be divided into each word (we used whitespace as separator).
+     * Note: As the spot tag ( e.g. [-spot 1] ) has in between a whitespace we use regex to not take whitespaces as a separator in between
+     * these [ ] brackets.
+     *
+     * @param questionText
+     * @returns {string[][]}
+     */
+    divideQuestionTextIntoTextParts(questionText: string): string[][] {
+        const textForEachLine = questionText.split(/\n+/g);
+        const textParts = textForEachLine.map(text => text.split(/\s+(?![^[]]*])/g));
+
+        return textParts;
+    }
+
+    /**
+     * We transform now the different text parts of the question text to HTML.
+     * 1. We iterate through every line of the question text.
+     * 2. We iterate through every element of each line of the question text and set each element with the new HTML.
+     * @param textParts
+     * @param artemisMarkdown
+     * @returns {string[][]}
+     */
+    transformTextPartsIntoHTML(textParts: string[][], artemisMarkdown: ArtemisMarkdown): string [][] {
+        const textPartsInHTML = textParts.map(textPart =>
+            textPart.map(element =>
+                element = artemisMarkdown.htmlForMarkdown(element.toString())));
+
+        return textPartsInHTML;
+    }
+
+
+
 }

@@ -43,7 +43,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     questionEditorText = '';
     questionEditorMode = 'markdown';
     questionEditorAutoUpdate = true;
-    showPreview: boolean;
+    showVisualMode: boolean;
 
     /** Status boolean for collapse status **/
     isQuestionCollapsed: boolean;
@@ -57,7 +57,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     optionsWithID: string [] = [];
 
     /** For visual mode **/
-    textParts: String [][];
+    textParts: string [][];
 
     constructor(
         private artemisMarkdown: ArtemisMarkdown,
@@ -67,7 +67,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
 
     ngOnInit(): void {
         /** Assign status booleans and strings **/
-        this.showPreview = false;
+        this.showVisualMode = false;
         this.isQuestionCollapsed = false;
     }
 
@@ -362,26 +362,45 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         const editor = this.questionEditor.getEditor();
         // ID 'element-row-column' is divided into array of [row, column]
         const selectedTextRowColumn = window.getSelection().focusNode.parentNode.parentElement.id.split('-').slice(1);
-        const markedText = this.artemisMarkdown.markdownForHtml(this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]]);
+        console.log("ranges");
+        console.log(window.getSelection());
+        console.log(window.getSelection().focusNode.parentNode.parentElement);
+        console.log(window.getSelection().getRangeAt(0));
+        console.log(window.getSelection().getRangeAt(0).startOffset);
+        console.log(window.getSelection().getRangeAt(0).endOffset);
+        const startOfRange = window.getSelection().getRangeAt(0).startOffset;
+        const endOfRange = window.getSelection().getRangeAt(0).endOffset;
+
+        const markedTextHTML = this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]];
+        const markedText = this.artemisMarkdown.markdownForHtml(markedTextHTML).substring(startOfRange, endOfRange);
 
         // split text before first option tag
         const questionText = editor.getValue().split(/\[-option /g)[0].trim();
+
         // split on every whitespace. !!!only exception: [-spot 1] is not split!!!
-        this.textParts = questionText.split(/\n/g).map((t: String) => t.split(/\s+(?![^[]]*])/g));
-        this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]] = '[-spot ' + this.numberOfSpot + ']';
-        this.textParts = this.textParts.map(textPart =>
-            textPart.map(element =>
-                element = this.artemisMarkdown.htmlForMarkdown(element.toString())));
+        console.log("questionTExt");
+        console.log(questionText);
+        this.textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(questionText);
+        const textOfSelectedRow = this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]];
+        console.log("textParts");
+        console.log(this.textParts);
+
+        console.log("neuer text zum einfügen in element-"+selectedTextRowColumn[0] +'-' +selectedTextRowColumn[1]);
+        console.log(textOfSelectedRow.substring(0,startOfRange-1) + '[-spot ' + this.numberOfSpot + ']' + textOfSelectedRow.substring(endOfRange+1));
+
+        this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]] =
+            textOfSelectedRow.substring(0,startOfRange) + ' [-spot ' + this.numberOfSpot + '] ' + textOfSelectedRow.substring(endOfRange);
+
+        console.log(this.textParts);
         // recreation of text from array
-        const htmlForMarkdown = this.textParts.map(textPart =>
-            textPart.map(element =>
-                element = this.artemisMarkdown.markdownForHtml(element.toString()).trim()));
-        console.log(htmlForMarkdown);
-        this.question.text = htmlForMarkdown.map(textPart => textPart.join(' ')).join('\n');
+        this.question.text = this.textParts.map(textPart => textPart.join(' ')).join('\n');
+
+        this.textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.question.text);
+        this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(this.textParts, this.artemisMarkdown);
+
         console.log("test");
         console.log(this.question.text);
         editor.setValue(this.generateMarkdown());
-
 
         editor.moveCursorTo(editor.getLastVisibleRow() + this.numberOfSpot, Number.POSITIVE_INFINITY);
         this.addOptionToSpot(editor, this.numberOfSpot, markedText, this.firstPressed);
@@ -398,7 +417,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @param text
      */
     isInputField(text: string): boolean {
-        return !(text.search(/\[-spot/g) === -1);
+        return !(text.search(/\-spot/g) === -1);
     }
 
     /**
@@ -406,7 +425,10 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @param text
      */
     getSpotNr(text: string): number {
-        return +text.split(/\s+/g).slice(1).join().split(/\]/g)[0].trim();
+        console.log("getSpotNr");
+        console.log(text);
+        console.log(+text.split(/\-spot/g).slice(1).join().trim()[0]);
+        return +text.split(/\-spot/g).slice(1).join().trim()[0];
     }
 
     /**
@@ -573,11 +595,9 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @desc Toggles the preview in the template
      */
     togglePreview(): void {
-       this.showPreview = !this.showPreview;
-       this.textParts = this.question.text.split(/\n/g).map(t => t.split(/\s+(?![^[]]*])/g));
-       this.textParts = this.textParts.map(textPart =>
-            textPart.map(element =>
-                element = this.artemisMarkdown.htmlForMarkdown(element.toString())));
+       this.showVisualMode = !this.showVisualMode;
+       this.textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.question.text);
+       this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(this.textParts, this.artemisMarkdown);
        this.questionEditor.getEditor().setValue(this.generateMarkdown());
        this.questionEditor.getEditor().clearSelection();
     }
