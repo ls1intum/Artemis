@@ -141,10 +141,20 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
             type: this.modelingExercise.diagramType
         });
 
+        const model = this.apollonEditor.model;
         this.apollonEditor.subscribeToSelectionChange(selection => {
             const selectedEntities: string[] = [];
-            for (const entity of selection.elements) {
-                selectedEntities.push(entity);
+            for (const elementId of selection.elements) {
+                selectedEntities.push(elementId);
+                const classifier: UMLClassifier = model.elements[elementId] as UMLClassifier;
+                if (classifier) {
+                    for (const attribute of classifier.attributes) {
+                        selectedEntities.push(attribute.id);
+                    }
+                    for (const method of classifier.methods) {
+                        selectedEntities.push(method.id);
+                    }
+                }
             }
             this.selectedEntities = selectedEntities;
             const selectedRelationships: string[] = [];
@@ -178,13 +188,9 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         const model = this.apollonEditor.model;
         let cardinalityAllEntities = Object.values(model.elements).length + Object.values(model.relationships).length;
         for (const elem of Object.values(model.elements)) {
-            switch (elem.type) {
-                case ElementType.Class:
-                case ElementType.AbstractClass:
-                case ElementType.Interface:
-                case ElementType.Enumeration:
-                    cardinalityAllEntities += (elem as UMLClassifier).attributes.length + (elem as UMLClassifier).methods.length;
-                    break;
+            const classifier = elem as UMLClassifier;
+            if (classifier) {
+                cardinalityAllEntities += classifier.attributes.length + classifier.methods.length;
             }
         }
 
@@ -273,7 +279,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
      * because a score is not a number/empty.
      * This function originally checked whether the total score is negative
      * or greater than the max. score, but we decided to remove the restriction
-     * and instead set the score the boundaries on the server.
+     * and instead set the score boundaries on the server.
      */
     checkScoreBoundaries() {
         if (!this.result.feedbacks || this.result.feedbacks.length === 0) {
@@ -318,35 +324,35 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
             } else if (this.selectedRelationships && this.selectedRelationships.indexOf(id) > -1) {
                 return true;
             }
-        } else if (type === ModelElementType.CLASS) {
+        } else {
             if (!this.selectedEntities) {
                 return false;
             } else if (this.selectedEntities && this.selectedEntities.indexOf(id) > -1) {
                 return true;
             }
-        } else {
-            if (this.apollonEditor) {
-                const model = this.apollonEditor.model;
-                if (this.selectedEntities) {
-                    for (const element of Object.values(model.elements)) {
-                        if (type === ModelElementType.ATTRIBUTE) {
-                            for (const attribute of (element as UMLClassifier).attributes) {
-                                if (attribute.id === id && this.selectedEntities.indexOf(element.id) > -1) {
-                                    return true;
-                                }
-                            }
-                        } else if (type === ModelElementType.METHOD) {
-                            for (const method of (element as UMLClassifier).methods) {
-                                if (method.id === id && this.selectedEntities.indexOf(element.id) > -1) {
-                                    return true;
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    return false;
-                }
-            }
+        // } else {
+        //     if (this.apollonEditor) {
+        //         const model = this.apollonEditor.model;
+        //         if (this.selectedEntities) {
+        //             for (const element of Object.values(model.elements)) {
+        //                 if (type === ModelElementType.ATTRIBUTE) {
+        //                     for (const attribute of (element as UMLClassifier).attributes) {
+        //                         if (attribute.id === id && this.selectedEntities.indexOf(element.id) > -1) {
+        //                             return true;
+        //                         }
+        //                     }
+        //                 } else if (type === ModelElementType.METHOD) {
+        //                     for (const method of (element as UMLClassifier).methods) {
+        //                         if (method.id === id && this.selectedEntities.indexOf(element.id) > -1) {
+        //                             return true;
+        //                         }
+        //                     }
+        //                 }
+        //             }
+        //         } else {
+        //             return false;
+        //         }
+        //     }
         }
     }
 

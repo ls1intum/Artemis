@@ -101,15 +101,9 @@ export class ModelingAssessmentService {
                 assessmentsNames[referencedModelId] = {type, name: className};
             } else if (referencedModelType === ModelElementType.ATTRIBUTE) {
                 for (const elem of Object.values(model.elements)) {
-                    if (
-                        ([
-                            ElementType.Class,
-                            ElementType.AbstractClass,
-                            ElementType.Interface,
-                            ElementType.Enumeration
-                        ] as ElementType[]).includes(elem.type)
-                    ) {
-                        for (const att of (elem as UMLClassifier).attributes) {
+                    const classifier = elem as UMLClassifier;
+                    if (classifier) {
+                        for (const att of classifier.attributes) {
                             if (att.id === referencedModelId) {
                                 assessmentsNames[referencedModelId] = { type: referencedModelType, name: att.name };
                             }
@@ -118,15 +112,9 @@ export class ModelingAssessmentService {
                 }
             } else if (referencedModelType === ModelElementType.METHOD) {
                 for (const elem of Object.values(model.elements)) {
-                    if (
-                        ([
-                            ElementType.Class,
-                            ElementType.AbstractClass,
-                            ElementType.Interface,
-                            ElementType.Enumeration
-                        ] as ElementType[]).includes(elem.type)
-                    ) {
-                        for (const method of (elem as UMLClassifier).methods) {
+                    const classifier = elem as UMLClassifier;
+                    if (classifier) {
+                        for (const method of classifier.methods) {
                             if (method.id === referencedModelId) {
                                 assessmentsNames[referencedModelId] = { type: referencedModelType, name: method.name };
                             }
@@ -137,10 +125,10 @@ export class ModelingAssessmentService {
                 const relationship = model.relationships[referencedModelId];
                 const source = model.elements[relationship.source.element].name;
                 const target = model.elements[relationship.target.element].name;
-                const kind: RelationshipType = model.relationships[referencedModelId].type;
+                const relationshipType: RelationshipType = relationship.type;
                 let type = 'association';
                 let relation: string;
-                switch (kind) {
+                switch (relationshipType) {
                     case RelationshipType.ClassBidirectional:
                         relation = ' <-> ';
                         break;

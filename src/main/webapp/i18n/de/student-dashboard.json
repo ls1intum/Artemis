@@ -17,6 +17,7 @@
         },
         "courseOverview": {
             "noDescription": "Keine Beschreibung verfügbar",
+            "noCourseIcon": "Kein Kurs Icon verfügbar",
             "menu": {
                 "exercises": "Aufgaben",
                 "statistics": "Statistiken"
