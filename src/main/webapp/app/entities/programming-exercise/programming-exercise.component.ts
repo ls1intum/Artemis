@@ -7,6 +7,8 @@ import { ProgrammingExerciseService } from './programming-exercise.service';
 import { CourseExerciseService, CourseService } from '../course';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
+import { TranslateService } from '@ngx-translate/core';
+
 @Component({
     selector: 'jhi-programming-exercise',
     templateUrl: './programming-exercise.component.html'
@@ -18,11 +20,12 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         private programmingExerciseService: ProgrammingExerciseService,
         private courseExerciseService: CourseExerciseService,
         courseService: CourseService,
+        translateService: TranslateService,
         private jhiAlertService: JhiAlertService,
         eventManager: JhiEventManager,
         route: ActivatedRoute
     ) {
-        super(courseService, route, eventManager);
+        super(courseService, translateService, route, eventManager);
         this.programmingExercises = [];
     }
 

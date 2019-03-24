@@ -17,7 +17,7 @@
         "referenceId": "858f8bcc-876e-4e64-ac6f-f8894f54a5ee",
         "referenceType": "relationship",
         "reference": "relationship:858f8bcc-876e-4e64-ac6f-f8894f54a5ee",
-        "credits": 0,
+        "credits": -0.5,
         "text": "Context is missing\n\nThis association is incorrect, you are missing the Context class."
     },
     {
@@ -66,7 +66,7 @@
         "referenceId": "ec697b17-d33d-4c85-b181-7c3f0901e9a7",
         "referenceType": "method",
         "reference": "method:ec697b17-d33d-4c85-b181-7c3f0901e9a7",
-        "credits": 0,
-        "text": "Correct"
+        "credits": -1.5,
+        "text": "Not Correct"
     }
 ]

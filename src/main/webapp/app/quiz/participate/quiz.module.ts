@@ -1,11 +1,10 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { JhiLanguageService } from 'ng-jhipster';
+import { JhiAlertService, JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
 
 import { ArTEMiSSharedModule } from '../../shared';
 import { JhiWebsocketService } from '../../core';
-import { JhiAlertService } from 'ng-jhipster';
 import { quizRoute } from './quiz.route';
 import { RepositoryService } from '../../entities/repository/repository.service';
 import { HomeComponent } from '../../home';
@@ -16,7 +15,6 @@ import { DragAndDropQuestionComponent } from './drag-and-drop-question/drag-and-
 import { ShortAnswerQuestionComponent } from './short-answer-question/short-answer-question.component';
 import { DragItemComponent } from './drag-and-drop-question/drag-item.component';
 import { AngularFittextModule } from 'angular-fittext';
-import { SecuredImageComponent } from '../../components/util/secured-image.component';
 import { DndModule } from 'ng2-dnd';
 import { QuizScoringInfoStudentModalComponent } from './quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
 
@@ -30,8 +28,7 @@ const ENTITY_STATES = [...quizRoute];
         DragAndDropQuestionComponent,
         QuizScoringInfoStudentModalComponent,
         ShortAnswerQuestionComponent,
-        DragItemComponent,
-        SecuredImageComponent
+        DragItemComponent
     ],
     entryComponents: [HomeComponent, QuizComponent, JhiMainComponent],
     providers: [RepositoryService, JhiWebsocketService, JhiAlertService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
@@ -40,7 +37,6 @@ const ENTITY_STATES = [...quizRoute];
         DragAndDropQuestionComponent,
         ShortAnswerQuestionComponent,
         DragItemComponent,
-        SecuredImageComponent
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
