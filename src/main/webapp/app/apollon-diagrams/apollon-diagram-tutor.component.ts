@@ -1,7 +1,7 @@
 import { Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { DiagramType, ApollonEditor, UMLModel, UMLClassifier, ApollonMode } from '@ls1intum/apollon';
+import { DiagramType, ApollonEditor, UMLModel, UMLClassifier, ApollonMode, Assessment } from '@ls1intum/apollon';
 import { ActivatedRoute, Router } from '@angular/router';
 import * as $ from 'jquery';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
@@ -81,7 +81,6 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
                 } else {
                     this.result.feedbacks = [];
                 }
-                console.log(this.result)
                 this.submission.participation.results = [this.result];
                 this.result.participation = this.submission.participation;
                 /**
@@ -106,13 +105,13 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
                 if (nextOptimal) {
                     this.modelingAssessmentService.getPartialAssessment(submissionId).subscribe((result: Result) => {
                         this.result = result;
-                        this.initializeAssessments();
-                        this.checkScoreBoundaries();
+                        // this.initializeAssessments();
+                        // this.checkScoreBoundaries();
                     });
                 } else {
                     if (this.result && this.result.feedbacks) {
-                        this.initializeAssessments();
-                        this.checkScoreBoundaries();
+                        // this.initializeAssessments();
+                        // this.checkScoreBoundaries();
                     }
                 }
             });
@@ -134,9 +133,19 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
             this.apollonEditor.destroy();
         }
 
+        const feedbacks: Feedback[] = this.result.feedbacks;
+        const assessments: { [id: string]: Assessment } = feedbacks.reduce((acc, feedback) => ({
+            ...acc,
+            [feedback.referenceId]: {
+                score: feedback.credits,
+                feedback: feedback.text,
+            }
+        }), {});
+        initialModel.assessments = assessments;
+
         this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
-            mode: ApollonMode.Modelling,
-            readonly: true,
+            mode: ApollonMode.Assessment,
+            readonly: false,
             model: initialModel,
             type: this.modelingExercise.diagramType
         });
@@ -148,15 +157,15 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
 
         this.initializeAssessments();
 
-        const apollonDiv = $('.apollon-editor > div');
-        const assessmentsDiv = $('.assessments__container');
-        assessmentsDiv.scrollTop(apollonDiv.scrollTop());
-        assessmentsDiv.scrollLeft(apollonDiv.scrollLeft());
+        // const apollonDiv = $('.apollon-editor > div');
+        // const assessmentsDiv = $('.assessments__container');
+        // assessmentsDiv.scrollTop(apollonDiv.scrollTop());
+        // assessmentsDiv.scrollLeft(apollonDiv.scrollLeft());
 
-        apollonDiv.on('scroll', function() {
-            assessmentsDiv.scrollTop(apollonDiv.scrollTop());
-            assessmentsDiv.scrollLeft(apollonDiv.scrollLeft());
-        });
+        // apollonDiv.on('scroll', function() {
+        //     assessmentsDiv.scrollTop(apollonDiv.scrollTop());
+        //     assessmentsDiv.scrollLeft(apollonDiv.scrollLeft());
+        // });
     }
 
     /**

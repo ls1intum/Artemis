@@ -60,62 +60,8 @@
     <br>
 
     <div class="row">
-        <div class="col-8 col-xl-9">
+        <div class="col-12">
             <div #editorContainer style="width: 100%; height: 100vh;"></div>
-            <div class="assessments">
-                <div class="assessments__container">
-                    <div class="assessments__canvas">
-                        <ng-container *ngIf="result?.feedbacks && positions">
-                            <div *ngFor="let feedback of result.feedbacks"
-                                 [style.top.px]="positions[feedback.referenceId].y"
-                                 [style.left.px]="positions[feedback.referenceId].x">
-                                <fa-icon [icon]="feedback.credits > 0 ? 'check' : feedback.credits < 0 ? 'times': ''" *ngFor="let i of numberToArray(feedback.credits, 0)"></fa-icon>
-                                <fa-icon class="half" [icon]="feedback.credits > 0 ? 'check' : feedback.credits < 0 ? 'times': ''" *ngIf="feedback.credits % 1 !== 0"></fa-icon>
-                            </div>
-                        </ng-container>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-4 col-xl-3">
-            <div *ngIf="invalidError !== ''" class="alert alert-danger" role="alert">{{invalidError}}</div>
-            <div
-                *ngIf="(!selectedEntities && !selectedRelationships) || (selectedEntities?.length === 0 && selectedRelationships?.length === 0)">
-                Select an element to grade the element.
-            </div>
-            <ng-container>
-                <!--TODO CZ: replace isSelected function call in html-->
-                <div *ngFor="let feedback of result?.feedbacks" [hidden]="!isSelected(feedback.referenceId, feedback.referenceType)">
-                    <div class="card">
-                        <div class="card-header" [class.conflict]="conflicts && conflicts.get(feedback.referenceId)">
-                            <h4 class="card-title"
-                                *ngIf="assessmentsNames">Score for
-                                <span>{{assessmentsNames[feedback.referenceId]['type']}} </span> <code
-                                    class="text-primary">{{assessmentsNames[feedback.referenceId]['name']}}</code></h4>
-                        </div>
-                        <div class="card-body">
-                            <div class="form-group">
-                                <label>Score </label>
-                                <input type="number" step="0.5" [(ngModel)]="feedback.credits" (ngModelChange)="checkScoreBoundaries()">
-                                <div class="form-text text-muted" *ngIf="conflicts && conflicts.get(feedback.referenceId)">
-                                    <small class="header-text row-container conflicting-scores-label">
-                                        Others assessed similar elements with:
-                                        <div class="row-container">
-                                            <small
-                                                *ngFor="let score of conflicts.get(feedback.referenceId).scoresInConflict; let isLast=last">{{score.points}}{{isLast ? '' : ', '}}</small>
-                                        </div>
-                                    </small>
-                                </div>
-                            </div>
-                            <div class="form-group row">
-                                <label class="col-auto">Feedback</label>
-                                <textarea class="col form-control" rows="2" [(ngModel)]="feedback.text"></textarea>
-                            </div>
-                        </div>
-                    </div>
-                    <br>
-                </div>
-            </ng-container>
         </div>
     </div>
 </div>
