@@ -59,8 +59,7 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
     annotationChange: Subscription;
 
     /** Callback timing variables **/
-    updateFilesDebounceTime = 3000;
-    saveFileDelayTime = 2500;
+    updateFilesDebounceTime = 500;
 
     @Input()
     participation: Participation;
@@ -289,20 +288,17 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
      * @param fileName: name of currently selected file
      */
     saveFile(fileName: string) {
-        // Delay file save
-        setTimeout(() => {
-            this.onSaveStatusChange({
-                isSaved: false,
-                saveStatusIcon: {
-                    spin: true,
-                    icon: 'circle-notch',
-                    class: 'text-info'
-                },
-                saveStatusLabel: '<span class="text-info">Saving file.</span>'
-            });
+        this.onSaveStatusChange({
+            isSaved: false,
+            saveStatusIcon: {
+                spin: true,
+                icon: 'circle-notch',
+                class: 'text-info'
+            },
+            saveStatusLabel: '<span class="text-info">Saving file.</span>'
+        });
 
-            this.jhiWebsocketService.send(this.updateFileChannel, {fileName, fileContent: this.editorFileSessions[fileName].code});
-        }, this.saveFileDelayTime);
+        this.jhiWebsocketService.send(this.updateFileChannel, {fileName, fileContent: this.editorFileSessions[fileName].code});
     }
 
     /**
