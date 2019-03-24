@@ -115,10 +115,10 @@ async function generateDragAndDropItem(
 ): Promise<{ dragItem: DragItem; dropLocation: DropLocation; correctMapping: DragAndDropMapping }> {
     const isRelationship = Object.keys(model.relationships).includes(element.id);
 
-    const margin = isRelationship ? MARGIN : 0
+    const margin = isRelationship ? MARGIN : 0;
 
     const renderedEntity: SVG = ApollonEditor.exportModelAsSvg(model, {
-        margin: margin,
+        margin,
         include: [element.id]
     });
     const image = await convertRenderedSVGToPNG(renderedEntity);
