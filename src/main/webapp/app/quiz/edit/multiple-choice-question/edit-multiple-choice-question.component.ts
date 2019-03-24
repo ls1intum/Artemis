@@ -73,8 +73,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
             this.question.answerOptions
                 .map(
                     answerOption =>
-                        (answerOption.isCorrect ? '[correct]' : '[wrong]') + ' ' + this.artemisMarkdown.generateTextHintExplanation(answerOption)
-                        + ' ' + (answerOption.isCorrect ? '[/correct]' : '[/wrong]'))
+                        (answerOption.isCorrect ? '[correct]' : '[wrong]') + ' ' + this.artemisMarkdown.generateTextHintExplanation(answerOption))
                 .join('\n');
         return markdownText;
     }

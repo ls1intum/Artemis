@@ -9,7 +9,7 @@ export class CorrectOptionCommand extends DomainCommand {
      * @desc Add a new correct answer option to the text editor at the location of the cursor
      */
     execute(): void {
-        const addedText = '\n' + this.getOpeningIdentifier() + 'Enter a correct answer option here' + this.getClosingIdentifier();
+        const addedText = '\n' + this.getOpeningIdentifier() + ' Enter a correct answer option here';
         this.editor.focus();
         this.editor.clearSelection();
         this.editor.moveCursorTo(this.editor.getCursorPosition().row, Number.POSITIVE_INFINITY);

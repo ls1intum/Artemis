@@ -9,7 +9,7 @@ export class HintCommand extends DomainCommand {
      * @desc Add a new hint to the answer option or question title in the editor at the location of the cursor
      */
     execute(): void {
-        const addedText = '\n\t' + this.getOpeningIdentifier() + 'Add a hint here (visible during the quiz via ?-Button)' + this.getClosingIdentifier();
+        const addedText = '\n\t' + this.getOpeningIdentifier() + ' Add a hint here (visible during the quiz via ?-Button)';
         this.editor.focus();
         this.editor.clearSelection();
         this.editor.moveCursorTo(this.editor.getCursorPosition().row, Number.POSITIVE_INFINITY);
