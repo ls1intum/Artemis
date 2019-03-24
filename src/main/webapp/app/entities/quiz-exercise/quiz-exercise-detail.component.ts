@@ -461,6 +461,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      *       3. Display the warnings/invalid reasons in the html file if needed
      */
     cacheValidation(): void {
+        console.log('change');
         this.warningQuizCache = this.computeInvalidWarnings().length > 0;
         this.quizIsValid = this.validQuiz();
         this.pendingChangesCache = this.pendingChanges();

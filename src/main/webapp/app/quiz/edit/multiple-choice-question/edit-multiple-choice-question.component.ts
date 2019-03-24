@@ -73,8 +73,8 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
             this.question.answerOptions
                 .map(
                     answerOption =>
-                        (answerOption.isCorrect ? '[-x]' : '[- ]') + ' ' + this.artemisMarkdown.generateTextHintExplanation(answerOption)
-                )
+                        (answerOption.isCorrect ? '[correct]' : '[wrong]') + ' ' + this.artemisMarkdown.generateTextHintExplanation(answerOption)
+                        + ' ' + (answerOption.isCorrect ? '[/correct]' : '[/wrong]'))
                 .join('\n');
         return markdownText;
     }
@@ -176,7 +176,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
                 this.question.hint = textLine;
             }
         }
-
+        this.changeDetector.detectChanges();
     }
 
     /**

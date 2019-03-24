@@ -32,6 +32,6 @@ export class CorrectOptionCommand extends DomainCommand {
      * @desc identify the end of the correct option
      */
     getClosingIdentifier(): string {
-        return '[correct]';
+        return '[/correct]';
     }
 }

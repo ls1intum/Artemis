@@ -18,20 +18,20 @@ export class ArtemisMarkdown {
      */
     parseTextHintExplanation(markdownText: string, targetObject: MarkDownElement) {
         // split markdownText into main text, hint and explanation
-        const markdownTextParts = markdownText.split(/\[-e]|\[-h]/g);
+        const markdownTextParts = markdownText.split(/\[exp]|\[hint]/g);
         targetObject.text = markdownTextParts[0].trim();
-        if (markdownText.indexOf('[-h]') !== -1 && markdownText.indexOf('[-e]') !== -1) {
-            if (markdownText.indexOf('[-h]') < markdownText.indexOf('[-e]')) {
+        if (markdownText.indexOf('[hint]') !== -1 && markdownText.indexOf('[exp]') !== -1) {
+            if (markdownText.indexOf('[hint]') < markdownText.indexOf('[exp]')) {
                 targetObject.hint = markdownTextParts[1].trim();
                 targetObject.explanation = markdownTextParts[2].trim();
             } else {
                 targetObject.hint = markdownTextParts[2].trim();
                 targetObject.explanation = markdownTextParts[1].trim();
             }
-        } else if (markdownText.indexOf('[-h]') !== -1) {
+        } else if (markdownText.indexOf('[hint]') !== -1) {
             targetObject.hint = markdownTextParts[1].trim();
             targetObject.explanation = null;
-        } else if (markdownText.indexOf('[-e]') !== -1) {
+        } else if (markdownText.indexOf('[exp]') !== -1) {
             targetObject.hint = null;
             targetObject.explanation = markdownTextParts[1].trim();
         } else {
@@ -55,8 +55,8 @@ export class ArtemisMarkdown {
     generateTextHintExplanation(sourceObject: MarkDownElement) {
         return (
             sourceObject.text +
-            (sourceObject.hint ? '\n\t[-h] ' + sourceObject.hint : '') +
-            (sourceObject.explanation ? '\n\t[-e] ' + sourceObject.explanation : '')
+            (sourceObject.hint ? '\n\t[hint] ' + sourceObject.hint : '') +
+            (sourceObject.explanation ? '\n\t[exp] ' + sourceObject.explanation : '')
         );
     }
 
@@ -67,7 +67,7 @@ export class ArtemisMarkdown {
      */
     addHintAtCursor(editor: any) {
         // TODO: what is the proper type?
-        const addedText = "\n\t[-h] Add a hint here (visible during the quiz via '?'-Button)";
+        const addedText = "\n\t[hint] Add a hint here (visible during the quiz via '?'-Button)";
         editor.focus();
         editor.clearSelection();
         editor.moveCursorTo(editor.getCursorPosition().row, Number.POSITIVE_INFINITY);
@@ -84,7 +84,7 @@ export class ArtemisMarkdown {
      */
     addExplanationAtCursor(editor: any) {
         // TODO: what is the proper type?
-        const addedText = '\n\t[-e] Add an explanation here (only visible in feedback after quiz has ended)';
+        const addedText = '\n\t[exp] Add an explanation here (only visible in feedback after quiz has ended)';
         editor.focus();
         editor.clearSelection();
         editor.moveCursorTo(editor.getCursorPosition().row, Number.POSITIVE_INFINITY);

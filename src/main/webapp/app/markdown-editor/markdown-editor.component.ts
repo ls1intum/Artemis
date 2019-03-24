@@ -184,13 +184,33 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
                 this.html.emit(this.previewTextAsHtml);
             return;
         } else {
-            /** separate the markdown text by [- */
-            const parseArray = this.markdown
-            // TODO: do not split with '\[-', instead search for opening identifiers of all domain commands. In case the commands run over multiple lines, take this into account.
-            .split('\[-')
-            .map(this.parseLineForDomainCommand);
+            /** create array with domain command identifiern*/
+            const possibleCommandIdentifier = new Array<string>();
+            for (let domainCommand of this.domainCommands) {
+                 possibleCommandIdentifier.push(domainCommand.getOpeningIdentifier());
+            }
+
+
+            /** create empty array that will be emited to the parent component*/
+            const parseArray = [];
+            let copy = this.markdown.slice(0);
+
+            for (const tag of possibleCommandIdentifier) {
+                const tagName = tag.replace('[', '').replace(']', '');
+                const regex = new RegExp(`\\[${tagName}[^\0]*?\\[\\/${tagName}]`, 'gm');
+                copy = copy.replace(regex, '');
+                const results = this.markdown.match(regex);
+                if(!results)continue;
+                for (const result of results) {
+                    const content = this.parseLineForDomainCommand(result);
+                    parseArray.push(content);
+                }
+            }
+            const valueToAdd = this.parseLineForDomainCommand(copy);
+            parseArray.push(valueToAdd);
             this.textWithDomainCommandFound.emit(parseArray);
         }
+
     }
 
     /**
@@ -204,11 +224,17 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
      */
     private parseLineForDomainCommand = (textLine: string): [string, DomainCommand] => {
         for (const domainCommand of this.domainCommands) {
-            const possibleCommandIdentifier = [domainCommand.getOpeningIdentifier(), domainCommand.getOpeningIdentifier().toLowerCase(), domainCommand.getOpeningIdentifier().toUpperCase()];
-            // TODO: also search for the closing identifier
-            if (possibleCommandIdentifier.some(identifier => textLine.indexOf(identifier) !== -1)) {
-                const trimmedLineWithoutIdentifier = possibleCommandIdentifier.reduce((line, identifier) => line.replace(identifier, ''), textLine).trim();
-                return [trimmedLineWithoutIdentifier, domainCommand];
+            const possibleOpeningCommandIdentifier = [domainCommand.getOpeningIdentifier(), domainCommand.getOpeningIdentifier().toLowerCase(), domainCommand.getOpeningIdentifier().toUpperCase()];
+            const possibleClosingIdentifier = [domainCommand.getClosingIdentifier(), domainCommand.getClosingIdentifier().toLowerCase(), domainCommand.getClosingIdentifier().toUpperCase()];
+
+            if (possibleOpeningCommandIdentifier.some(identifier => textLine.indexOf(identifier) !== -1)) {
+               let trimmedLineWithoutIdentifier = possibleOpeningCommandIdentifier.reduce((line, identifier) => line.replace(identifier, ''), textLine).trim();
+                    console.log(trimmedLineWithoutIdentifier);
+               if (possibleClosingIdentifier.some(identifier => trimmedLineWithoutIdentifier.indexOf(identifier) !== -1)) {
+                        let trimmedLineWithoutIdentifierinTotal = possibleClosingIdentifier.reduce((line, identifier) => line.replace(identifier, ''), trimmedLineWithoutIdentifier).trim();
+                       console.log(trimmedLineWithoutIdentifierinTotal);
+                        return [trimmedLineWithoutIdentifierinTotal, domainCommand];
+                }
             }
         }
         return [textLine.trim(), null];
