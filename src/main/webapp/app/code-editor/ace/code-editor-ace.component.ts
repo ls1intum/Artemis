@@ -129,7 +129,10 @@ export class CodeEditorAceComponent implements OnInit, AfterViewInit, OnChanges,
                 this.editor.getEditor().getSession().off('change', this.updateAnnotationPositions);
                 this.editor.getEditor().getSession().clearAnnotations();
             }
-            this.loadFile(this.selectedFile);
+            // Only load the file from server if there is nothing stored in the editorFileSessions
+            if (!this.editorFileSessions[this.selectedFile].code) {
+                this.loadFile(this.selectedFile);
+            }
         }
         // Update editor file session object to include new files and remove old files
         if (changes.repositoryFiles) {
