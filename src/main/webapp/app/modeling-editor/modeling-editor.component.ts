@@ -17,7 +17,7 @@ import { JhiWebsocketService } from '../core';
 import { Observable } from 'rxjs/Observable';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
-import { ModelElementType } from 'app/entities/modeling-assessment/uml-element.model';
+import { ModelElementType, UMLClass } from 'app/entities/modeling-assessment/uml-element.model';
 
 @Component({
     selector: 'jhi-modeling-editor',
@@ -188,12 +188,12 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                 const selectedEntities = [];
                 for (const entity of selection.elements) {
                     selectedEntities.push(entity);
-                    for (const attribute of model.elements.byId[entity].attributes) {
-                        selectedEntities.push(attribute.id);
-                    }
-                    for (const method of model.elements.byId[entity].methods) {
-                        selectedEntities.push(method.id);
-                    }
+                    // for (const attribute of (model.elements[entity] as UMLClassifier).attributes) {
+                    //     selectedEntities.push(attribute.id);
+                    // }
+                    // for (const method of (model.elements[entity] as UMLClassifier).methods) {
+                    //     selectedEntities.push(method.id);
+                    // }
                 }
                 this.selectedEntities = selectedEntities;
                 const selectedRelationships = [];
