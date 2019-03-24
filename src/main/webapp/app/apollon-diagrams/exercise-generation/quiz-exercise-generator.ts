@@ -9,7 +9,7 @@ import { DragAndDropMapping } from '../../entities/drag-and-drop-mapping';
 import { DragItem } from '../../entities/drag-item';
 import { ScoringType } from '../../entities/quiz-question';
 import * as moment from 'moment';
-import { ApollonEditor, Element, UMLModel, UMLClassifier, ElementType, SVG } from '@ls1intum/apollon';
+import { ApollonEditor, Element, UMLModel, SVG } from '@ls1intum/apollon';
 
 // Drop locations in quiz exercises are relatively positioned and sized
 // using integers in the interval [0,200]
@@ -40,9 +40,10 @@ export async function generateDragAndDropQuizExercise(
     const dropLocations: DropLocation[] = [];
     const correctMappings: DragAndDropMapping[] = [];
 
+    const elements = { ...model.elements, ...model.relationships };
     // Create Drag Items, Drop Locations and their mappings for each interactive element
     for (const id of [...model.interactive.elements, ...model.interactive.relationships]) {
-        const element: Element = findElementInModel(model, id);
+        const element: Element = elements[id];
         const { dragItem, dropLocation, correctMapping } = await generateDragAndDropItem(
             element,
             model,
@@ -157,21 +158,4 @@ async function generateDragAndDropItem(
     correctMapping.dragItem = dragItem;
     correctMapping.dropLocation = dropLocation;
     return { dragItem, dropLocation, correctMapping };
-}
-
-function findElementInModel(model: UMLModel, id: string): Element {
-    const memberElements = Object.values(model.elements)
-        .filter(element =>
-            ([ElementType.Class, ElementType.AbstractClass, ElementType.Interface, ElementType.Enumeration] as ElementType[]).includes(
-                element.type
-            )
-        )
-        .map(element => element as UMLClassifier)
-        .reduce<Element[]>((member, element) => [...member, ...element.attributes, ...element.methods], []);
-    const elements: { [id: string]: Element } = {
-        ...model.elements,
-        ...memberElements.reduce((object, member) => ({ ...object, [member.id]: member }), {}),
-        ...model.relationships
-    };
-    return elements[id];
 }
