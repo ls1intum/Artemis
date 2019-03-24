@@ -84,6 +84,7 @@
                 Select an element to grade the element.
             </div>
             <ng-container>
+                <!--TODO CZ: replace isSelected function call in html-->
                 <div *ngFor="let feedback of result?.feedbacks" [hidden]="!isSelected(feedback.referenceId, feedback.referenceType)">
                     <div class="card">
                         <div class="card-header" [class.conflict]="conflicts && conflicts.get(feedback.referenceId)">

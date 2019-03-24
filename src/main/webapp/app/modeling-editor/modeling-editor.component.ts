@@ -186,13 +186,16 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
             const model = this.apollonEditor.model;
             this.apollonEditor.subscribeToSelectionChange(selection => {
                 const selectedEntities = [];
-                for (const entity of selection.elements) {
-                    selectedEntities.push(entity);
-                    for (const attribute of model.elements.byId[entity].attributes) {
-                        selectedEntities.push(attribute.id);
-                    }
-                    for (const method of model.elements.byId[entity].methods) {
-                        selectedEntities.push(method.id);
+                for (const elementId of selection.elements) {
+                    selectedEntities.push(elementId);
+                    const classifier: UMLClassifier = model.elements[elementId] as UMLClassifier;
+                    if (classifier) {
+                        for (const attribute of classifier.attributes) {
+                            selectedEntities.push(attribute.id);
+                        }
+                        for (const method of classifier.methods) {
+                            selectedEntities.push(method.id);
+                        }
                     }
                 }
                 this.selectedEntities = selectedEntities;
@@ -467,14 +470,9 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         if (this.umlModel) {
             let total = Object.keys(this.umlModel.elements).length + Object.keys(this.umlModel.relationships).length;
             for (const id in this.umlModel.elements) {
-                const elem = this.umlModel.elements[id];
-                switch (elem.type) {
-                    case ElementType.Class:
-                    case ElementType.AbstractClass:
-                    case ElementType.Interface:
-                    case ElementType.Enumeration:
-                        total += (elem as UMLClassifier).attributes.length + (elem as UMLClassifier).methods.length;
-                        break;
+                const elem = this.umlModel.elements[id] as UMLClassifier;
+                if (elem) {
+                    total += elem.attributes.length + elem.methods.length;
                 }
             }
             return total;

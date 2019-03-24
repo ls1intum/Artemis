@@ -72,10 +72,10 @@ export class ModelingAssessmentService {
             const referencedModelType = feedback.referenceType;
             const referencedModelId = feedback.referenceId;
             if (referencedModelType === ModelElementType.CLASS) {
-                const classElement = model.elements.byId[referencedModelId];
+                const classElement = model.elements[referencedModelId];
                 const className = classElement.name;
                 let type: string;
-                switch (classElement.kind) {
+                switch (classElement.type) {
                     case ElementType.ActivityInitialNode:
                         type = 'initial node';
                         break;
@@ -118,13 +118,13 @@ export class ModelingAssessmentService {
                     }
                 }
             } else if (referencedModelType === ModelElementType.RELATIONSHIP) {
-                const relationship = model.relationships.byId[referencedModelId];
-                const source = model.elements.byId[relationship.source.entityId].name;
-                const target = model.elements.byId[relationship.target.entityId].name;
-                const kind: RelationshipType = model.relationships.byId[referencedModelId].kind;
+                const relationship = model.relationships[referencedModelId];
+                const source = model.elements[relationship.source.element].name;
+                const target = model.elements[relationship.target.element].name;
+                const relationshipType: RelationshipType = relationship.type;
                 let type = 'association';
                 let relation: string;
-                switch (kind) {
+                switch (relationshipType) {
                     case RelationshipType.ClassBidirectional:
                         relation = ' <-> ';
                         break;
@@ -172,7 +172,7 @@ export class ModelingAssessmentService {
             const referencedModelId = feedback.referenceId;
 
             const element = [...Object.values(model.elements), ...Object.values(model.relationships)]
-                .find(element => element.id === referencedModelId);
+                .find(elem => elem.id === referencedModelId);
 
             const elemPosition: { x: number; y: number } = { x: 0, y: 0 };
             if (element) {
