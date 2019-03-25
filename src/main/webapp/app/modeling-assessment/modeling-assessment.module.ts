@@ -4,8 +4,9 @@ import { JhiLanguageHelper } from 'app/core';
 
 import { ArTEMiSSharedModule } from 'app/shared';
 import { ModelingAssessmentService } from './modeling-assessment.service';
-import { ModelingAssessmentComponent, modelingAssessmentRoutes } from 'app/entities/modeling-assessment';
 import { RouterModule } from '@angular/router';
+import { modelingAssessmentRoutes } from 'app/modeling-assessment/modeling-assessment.route';
+import { ModelingAssessmentComponent } from 'app/modeling-assessment/modeling-assessment.component';
 
 const ENTITY_STATES = [...modelingAssessmentRoutes];
 

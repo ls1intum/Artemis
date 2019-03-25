@@ -24,7 +24,7 @@ import { ArTEMiSAccountModule } from './account/account.module';
 import { ArTEMiSCourseListModule } from './course-list';
 import { ArTEMiSEntityModule } from './entities/entity.module';
 import { ArTEMiSInstructorCourseDashboardModule, ArTEMiSInstructorDashboardModule } from './dashboard';
-import { ArTEMiSAssessmentDashboardModule } from './assessment-dashboard';
+import { ArTEMiSAssessmentDashboardModule } from './modeling-assessment';
 import { PaginationConfig } from './blocks/config/uib-pagination.config';
 import { DifferencePipe, MomentModule } from 'angular2-moment';
 import { ArTEMiSCodeEditorModule } from './code-editor';

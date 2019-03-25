@@ -10,19 +10,19 @@ import { DifferencePipe } from 'angular2-moment';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Result } from '../entities/result';
 import { ResultDetailComponent } from 'app/entities/result';
-import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 import { HttpResponse } from '@angular/common/http';
 import { AccountService } from '../core';
 import { Submission } from '../entities/submission';
 import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/modeling-submission';
 import { DiagramType, ModelingExercise } from 'app/entities/modeling-exercise';
+import { ModelingAssessmentService } from 'app/modeling-assessment/modeling-assessment.service';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
-    templateUrl: './assessment-dashboard.component.html',
+    templateUrl: './modeling-assessment-dashboard.component.html',
     providers: [JhiAlertService, ModelingAssessmentService]
 })
-export class AssessmentDashboardComponent implements OnInit, OnDestroy {
+export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     // make constants available to html for comparison
     readonly MODELING = ExerciseType.MODELING;
     readonly CLASS_DIAGRAM = DiagramType.ClassDiagram;

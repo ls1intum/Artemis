@@ -8,7 +8,6 @@ import { ApollonEditor, ApollonMode, DiagramType, UMLModel, ElementType, UMLRela
 import { JhiAlertService } from 'ng-jhipster';
 import { Result } from '../entities/result';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
-import { ModelingAssessmentService } from '../entities/modeling-assessment';
 import * as $ from 'jquery';
 import { ModelingEditorService } from './modeling-editor.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -17,6 +16,7 @@ import { JhiWebsocketService } from '../core';
 import { Observable } from 'rxjs/Observable';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
+import { ModelingAssessmentService } from 'app/modeling-assessment/modeling-assessment.service';
 
 @Component({
     selector: 'jhi-modeling-editor',
@@ -115,8 +115,8 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                                 this.assessmentResult = JSON.parse(this.result.assessments);
                                 this.initializeAssessmentInfo();
                             } else {
-                                this.modelingAssessmentService.getAssessment(this.submission.id).subscribe(assessments => {
-                                    this.assessmentResult = assessments;
+                                this.modelingAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
+                                    this.assessmentResult = assessmentResult;
                                     this.initializeAssessmentInfo();
                                 });
                             }
@@ -143,8 +143,8 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
             if (submission.submitted) {
                 this.submission = submission;
                 if (this.submission.result && this.submission.result.rated) {
-                    this.modelingAssessmentService.getAssessment(this.submission.id).subscribe(assessments => {
-                        this.assessmentResult = assessments;
+                    this.modelingAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
+                        this.assessmentResult = assessmentResult;
                         this.initializeAssessmentInfo();
                     });
                 }
@@ -287,8 +287,8 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                         const participation = this.participation;
                         participation.results = [this.result];
                         this.participation = Object.assign({}, participation);
-                        this.modelingAssessmentService.getAssessment(this.submission.id).subscribe(assessments => {
-                            this.assessmentResult = assessments;
+                        this.modelingAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
+                            this.assessmentResult = assessmentResult;
                             this.initializeAssessmentInfo();
                         });
                         this.jhiAlertService.success('arTeMiSApp.modelingEditor.submitSuccessfulWithAssessment');

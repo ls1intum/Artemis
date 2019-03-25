@@ -3,15 +3,15 @@ import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ApollonEditor, ApollonMode, DiagramType, UMLModel } from '@ls1intum/apollon';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ModelingSubmission, ModelingSubmissionService } from '../modeling-submission';
-import { ModelingExercise, ModelingExerciseService } from '../modeling-exercise';
-import { Result, ResultService } from '../result';
+import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
+import { ModelingExercise, ModelingExerciseService } from '../entities/modeling-exercise';
+import { Result, ResultService } from '../entities/result';
 import { AccountService } from 'app/core';
-import { Submission } from '../submission';
+import { Submission } from '../entities/submission';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Conflict } from 'app/entities/modeling-assessment/conflict.model';
+import { Conflict } from 'app/modeling-assessment/conflict.model';
 import { Feedback } from 'app/entities/feedback';
-import { ModelingAssessmentService } from 'app/entities/modeling-assessment/modeling-assessment.service';
+import { ModelingAssessmentService } from 'app/modeling-assessment/modeling-assessment.service';
 
 @Component({
     selector: 'jhi-apollon-diagram-tutor',

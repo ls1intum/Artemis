@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
-import { ModelingAssessmentComponent } from 'app/entities/modeling-assessment';
 import { UserRouteAccessService } from 'app/core';
+import { ModelingAssessmentComponent } from 'app/modeling-assessment/modeling-assessment.component';
 
 export const modelingAssessmentRoutes: Routes = [
     {
