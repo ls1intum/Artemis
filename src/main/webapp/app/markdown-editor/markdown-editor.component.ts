@@ -171,9 +171,13 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
      * @function parse
      * @desc Check if domainCommands are contained within the text to decide how to parse the text
      *       1. If no domainCommands are contained parse markdown to HTML and emit the result to the parent component
-     *       2. Otherwise divide the text by "[-", a common identifier for all domainCommands,
-     *       2a. Call the method parseLineForDomainCommand for each textLine
-     *       2b. Emit the result to parent component to assign the value of the array to the right attributes
+     *       2. Otherwise create an array containing all domainCommands identifier passed on from the client,
+     *       2a. Create a copy of the markdown text
+     *       2b. Create the regEx Expression which searches for the domainCommand identifier
+     *       2b. Go through the copy of the markdown text until it is empty and split it as soon as a domainCommand identifier is found into [command]
+     *       2c. Reduce the copy by the length of the command
+     *       2d. Call the parseLineForDomainCommand for command and save it into content
+     *       3. Emit the content to parent component to assign the values of the array to the right attributes
      */
     parse(): void {
         /** check if domainCommands are contained */
@@ -198,16 +202,22 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
             /** create array with the identifiers to use for RegEx by deleting the []*/
             const tagNames = possibleCommandIdentifier.map(tag => tag.replace('[', '').replace(']', '')).join('|');
 
-            /** iterate trough the whole text to find the domainCommand*/
-            while (true) {
-                const regex = new RegExp(`(?=\\[(${tagNames})\\])`, 'gm');
-                /** minimize the copy until no elements are contained*/
-                const results = copy.split(regex, 1);
-                if (!results || !results.length || !results[0].length){ break;}
-                copy = copy.replace(results[0], '');
-                const content = this.parseLineForDomainCommand(results[0].trim());
+            /** create a new regex expression which searches for the domainCommands identifiers */
+            const regex = new RegExp(`(?=\\[(${tagNames})\\])`, 'gm');
+
+            /** iterating loop until the copy exists through the whole markdown text and split it as soon as a domainCommand identifier is found*/
+            while (copy.length) {
+                /** as soon as an identifier is found within the regEx the copy of the markdown text is split and saved into results*/
+                let [command] = copy.split(regex, 1);
+                /** reduce the copy of the markdown text by the length of the command*/
+                copy = copy.substring(command.length);
+                /** 1.call the parseLineForDomainCommand for each splited element
+                *   2.trim reduced the whitespacing linebreaks */
+                const content = this.parseLineForDomainCommand(command.trim());
+                /** push the content into the parseArray*/
                 parseArray.push(content);
             }
+            /**emit the parsed array to the client*/
             this.textWithDomainCommandFound.emit(parseArray);
         }
     }
