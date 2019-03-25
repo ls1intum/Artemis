@@ -197,13 +197,13 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
             }
 
             /** create empty array which
-             * will containing the splitted textline with the corresponding domainCommandIdentifier which
+             * will contain the splitted textline with the corresponding domainCommandIdentifier which
              * will be emitted to the parent component */
             const commandTextsMappedToCommandIdentifiers = [];
             /** create a copy of the markdown text */
             let copy = this.markdown.slice(0);
 
-            /** create array with the identifiers to use for RegEx by deleting the [] */
+            /** create array with the identifiers to use for RegEx by deleting the [] of the domainCommandIdentifiers */
             const tagNames = possibleCommandIdentifier.map(tag => tag.replace('[', '').replace(']', '')).join('|');
 
             /** create a new regex expression which searches for the domainCommands identifiers
@@ -218,21 +218,22 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
 
             /** iterating loop as long as the copy of the markdown text exists and split the copy as soon as a domainCommand identifier is found */
             while (copy.length) {
-                /** 1. as soon as an identifier is found within the regEx the copy of the markdown text is split and saved into {array} command
-                 *  split method saves its values into an array
+                /** As soon as an identifier is with regEx the copy of the markdown text is split and saved into {array} command
+                 *  split: saves its values into an {array}
                  *  limit 1: indicated that as soon as an identifier is found copy is split */
                 const [command] = copy.split(regex, 1);
-                /** substring reduces the {string} copy by the length of the command
-                 *  and saves it into copy to start the loop again and search for further domainCommandIdentifiers
+                /** substring: reduces the {string} by the length in the brackets
+                 *  Split the copy by the length of {array} command to get the remaining array
+                 *  and save it into copy to start the loop again and search for further domainCommandIdentifiers
                  *  when copy is empty the while loop will terminate*/
                 copy = copy.substring(command.length);
-                /** 1.call the parseLineForDomainCommand for each splited element
-                *   2.trim reduced the whitespacing linebreaks */
+                /** call the parseLineForDomainCommand for each extracted command
+                *   trim: reduced the whitespacing linebreaks */
                 const commandTextWithCommandIdentifier = this.parseLineForDomainCommand(command.trim());
                 /** push the commandTextWithCommandIdentifier into the commandTextsMappedToCommandIdentifiers*/
                 commandTextsMappedToCommandIdentifiers.push(commandTextWithCommandIdentifier);
             }
-            /** emit the parsed array to the client*/
+            /** emit the {array} commandTextsMappedToCommandIdentifiers to the client*/
             this.textWithDomainCommandsFound.emit(commandTextsMappedToCommandIdentifiers);
         }
     }
