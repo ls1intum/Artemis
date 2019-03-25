@@ -2,7 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { Result, ResultService } from '../../entities/result';
 import { Feedback } from '../../entities/feedback';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { BuildLogEntry } from 'app/entities/build-log';
+import { BuildLogEntryArray } from 'app/entities/build-log';
 
 // Modal -> Result details view
 @Component({
@@ -18,7 +18,7 @@ export class EditorInstructionsResultDetailComponent implements OnInit {
     isLoading: boolean;
     filterTests: string[];
     feedbackList: Feedback[];
-    buildLogs: BuildLogEntry[];
+    buildLogs: BuildLogEntryArray;
 
     constructor(public activeModal: NgbActiveModal, private resultService: ResultService) {}
 

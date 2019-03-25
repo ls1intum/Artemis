@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.security.Principal;
 import java.util.Optional;
 
 /**
@@ -127,6 +128,17 @@ public class AuthorizationCheckService {
      */
     public boolean isOwnerOfParticipation(Participation participation) {
         return participation.getStudent().getLogin().equals(SecurityUtils.getCurrentUserLogin().get());
+    }
+
+    /**
+     * Method used to check whether the user of the websocket message is owner of this participation
+     *
+     * @param participation participation to check the rights for
+     * @param principal websocket user
+     * @return true, if user is student is owner of this participation, otherwise false
+     */
+    public boolean isOwnerOfParticipation(Participation participation, Principal principal) {
+        return participation.getStudent().getLogin().equals(principal.getName());
     }
 
     /**

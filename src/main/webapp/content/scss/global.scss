@@ -30,6 +30,22 @@ a {
     white-space: nowrap
 }
 
+.footer {
+    .footer-text {
+        font-weight: normal;
+        font-size: small;
+
+        &:hover {
+            font-weight: normal
+        }
+    }
+    // make sure to align with the bootstrap rule here
+    @media (max-width: 576px) {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+}
+
 a:not(.btn):hover {
     color: $primary;
     font-weight: bold;
@@ -111,10 +127,6 @@ Generic styles
 .readonly {
     background-color: #eee;
     opacity: 1;
-}
-
-.footer {
-    border-top: 1px solid rgba(0, 0, 0, 0.125);
 }
 
 @media (max-width: 576px) {

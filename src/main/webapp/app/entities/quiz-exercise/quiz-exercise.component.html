@@ -8,7 +8,7 @@
                 Create new Quiz
             </span>
         </button>
-        <button class="btn mr-2 btn-primary float-right jh-create-entity create-quiz-exercise" [routerLink]="['/course', courseId, 'quiz-exercise', 'export']">
+        <button *ngIf="quizExercises && quizExercises.length > 0" class="btn mr-2 btn-primary float-right jh-create-entity create-quiz-exercise" [routerLink]="['/course', courseId, 'quiz-exercise', 'export']">
             <fa-icon icon="plus"></fa-icon>
             <span jhiTranslate="arTeMiSApp.quizExercise.home.exportLabel">
                 Export Quiz Exercises
