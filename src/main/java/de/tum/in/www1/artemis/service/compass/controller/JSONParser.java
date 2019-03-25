@@ -5,12 +5,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLAssociation;
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLAttribute;
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLClass;
+import de.tum.in.www1.artemis.service.compass.umlmodel.*;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLClass.UMLClassType;
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLMethod;
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLModel;
 import de.tum.in.www1.artemis.service.compass.utils.JSONMapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,6 +44,23 @@ public class JSONParser {
 
         Map<String, UMLClass> umlClassMap = new HashMap<>();
         List<UMLAssociation> umlAssociationList = new ArrayList<>();
+        Map<String, UMLPackage> umlPackageMap = new HashMap<>();
+
+        // <editor-fold desc="iterate over every package">
+        for (JsonElement elem : elements) {
+            JsonObject element = elem.getAsJsonObject();
+
+            String elementType = element.get(JSONMapping.elementType).getAsString();
+            elementType = CaseFormat.UPPER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, elementType);
+            if (elementType.toUpperCase().equals("PACKAGE")) {
+                String packageName = element.get(JSONMapping.elementName).getAsString();
+
+                List<UMLClass> umlClassList = new ArrayList<>();
+                String jsonElementId = element.get(JSONMapping.elementID).getAsString();
+                UMLPackage umlPackage = new UMLPackage(packageName, umlClassList, jsonElementId);
+                umlPackageMap.put(jsonElementId, umlPackage);
+            }
+        }
 
         // <editor-fold desc="iterate over every class">
         for (JsonElement elem : elements) {
@@ -101,6 +114,15 @@ public class JSONParser {
                 UMLClass newClass = new UMLClass(className, umlAttributesList, umlMethodList,
                     element.get(JSONMapping.elementID).getAsString(), elementType);
 
+                if (element.has(JSONMapping.owner)) {
+                    String packageId = element.get(JSONMapping.owner).getAsString();
+                    UMLPackage umlPackage = umlPackageMap.get(packageId);
+                    if (umlPackage != null) {
+                        umlPackage.addClass(newClass);
+                        newClass.setUmlPackage(umlPackage);
+                    }
+                }
+
                 //set parent class in attributes and methods
                 for (UMLAttribute attribute : umlAttributesList) {
                     attribute.setParentClass(newClass);
@@ -113,6 +135,7 @@ public class JSONParser {
                 umlClassMap.put(newClass.getJSONElementID(), newClass);
             }
         }
+
         // </editor-fold>
 
         // <editor-fold desc="iterate over every relationship">
@@ -154,7 +177,7 @@ public class JSONParser {
         }
         // </editor-fold>
 
-        return new UMLModel(new ArrayList<>(umlClassMap.values()), umlAssociationList, modelId);
+        return new UMLModel(new ArrayList<>(umlPackageMap.values()), new ArrayList<>(umlClassMap.values()), umlAssociationList, modelId);
     }
 
     private static Map<String, JsonObject> generateJsonElementMap(JsonArray elements) {

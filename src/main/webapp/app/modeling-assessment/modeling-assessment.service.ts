@@ -79,6 +79,9 @@ export class ModelingAssessmentService {
                     case UMLElementType.Class:
                         type = 'class';
                         break;
+                    case UMLElementType.Package:
+                        type = 'package';
+                        break;
                     case UMLElementType.Interface:
                         type = 'interface';
                         break;

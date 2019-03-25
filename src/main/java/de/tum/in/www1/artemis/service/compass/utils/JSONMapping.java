@@ -14,10 +14,12 @@ public class JSONMapping {
     public static final String byId = "byId";
 
     // elements
+    public static final String owner = "owner";
     public static final String elementName = "name";
     public static final String elementAttributes = "attributes";
     public static final String elementMethods = "methods";
     public static final String elementType = "type";
+    public static final String elementClasses = "classes";
 
     // relationships
     public static final String relationshipSource = "source";

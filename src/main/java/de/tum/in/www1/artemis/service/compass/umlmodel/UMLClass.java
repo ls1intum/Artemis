@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.compass.umlmodel;
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
+import javax.annotation.Nullable;
 import java.util.List;
 
 public class UMLClass extends UMLElement {
@@ -16,11 +17,11 @@ public class UMLClass extends UMLElement {
 
     private String name;
     private UMLClassType type;
+
+    @Nullable
+    private UMLPackage umlPackage;
     private List<UMLAttribute> attributes;
     private List<UMLMethod> methods;
-
-    public UMLClass() {
-    }
 
     public UMLClass(String name, List<UMLAttribute> attributes, List<UMLMethod> methodList, String jsonElementID, String type) {
         this.name = name;
@@ -183,6 +184,15 @@ public class UMLClass extends UMLElement {
 
     public List<UMLMethod> getMethods() {
         return methods;
+    }
+
+    @Nullable
+    public UMLPackage getUmlPackage() {
+        return umlPackage;
+    }
+
+    public void setUmlPackage(@Nullable UMLPackage umlPackage) {
+        this.umlPackage = umlPackage;
     }
 
     public int getElementCount() {

@@ -85,6 +85,9 @@ public class CompassCalculationEngine implements CalculationEngine {
         UMLModel model = modelIndex.getModel(submissionId);
         modelingAssessment.forEach(currentFeedback -> {
             UMLElement currentElement = model.getElementByJSONID(currentFeedback.getReferenceElementId()); //TODO MJ return Optional ad throw Exception if no UMLElement found?
+            if (currentElement == null) {
+                return;
+            }
             assessmentIndex.getAssessment(currentElement.getElementID()).ifPresent(assessment -> {
                 List<Score> scores = assessment.getScores(currentElement.getContext());
                 List<Score> scoresInConflict = scores.stream()

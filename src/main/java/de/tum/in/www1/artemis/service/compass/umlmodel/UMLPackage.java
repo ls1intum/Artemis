@@ -4,21 +4,14 @@ import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
 
 import java.util.List;
 
-public class UMLActivity extends UMLElement {
+public class UMLPackage extends UMLElement {
 
     private String name;
 
-    public enum UMLActivityType {
-        ACTIVITY_CONTROL_INITIAL_NODE,
-        ACTIVITY_CONTROL_FINAL_NODE,
-        ACTIVITY_ACTION_NODE,
-        ACTIVITY_OBJECT,
-        ACTIVITY_MERGE_NODE,
-        ACTIVITY_FORK_NODE,
-        ACTIVITY_FORK_NODE_HORIZONTAL
-    }
+    private List<UMLClass> classes;
 
-    public UMLActivity(String name, String jsonElementID) {
+    public UMLPackage(String name, List<UMLClass> classes, String jsonElementID) {
+        this.classes = classes;
         this.name = name;
         this.setJsonElementID(jsonElementID);
     }
@@ -26,7 +19,7 @@ public class UMLActivity extends UMLElement {
     @Override
     public double similarity(UMLElement element) {
         double similarity = 0;
-        if (element.getClass() == UMLActivity.class) {
+        if (element.getClass() == UMLPackage.class) {
             similarity += NameSimilarity.nameContainsSimilarity(name, element.getName());
         }
         return similarity;
@@ -40,5 +33,13 @@ public class UMLActivity extends UMLElement {
     @Override
     public String getValue() {
         return name;
+    }
+
+    public void addClass(UMLClass umlClass) {
+        this.classes.add(umlClass);
+    }
+
+    public void removeClass(UMLClass umlClass) {
+        this.classes.remove(umlClass);
     }
 }

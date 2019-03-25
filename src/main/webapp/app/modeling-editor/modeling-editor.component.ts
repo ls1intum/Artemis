@@ -4,7 +4,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { ModelingExercise } from '../entities/modeling-exercise';
 import { Participation } from '../entities/participation';
 import { ApollonDiagramService } from '../entities/apollon-diagram';
-import { ApollonEditor, ApollonMode, DiagramType, UMLModel, ElementType, UMLRelationshipType } from '@ls1intum/apollon';
+import { ApollonEditor, ApollonMode, DiagramType, ElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
 import { Result } from '../entities/result';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
@@ -105,22 +105,18 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                         if (this.submission && this.submission.result) {
                             this.result = this.submission.result;
                         }
-                        if (this.submission && this.submission.model) {
+                        if (this.submission && this.submission.submitted && this.result && this.result.completionDate) {
+                            this.modelingAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
+                                this.assessmentResult = assessmentResult;
+                                this.initializeAssessmentInfo();
+                                this.initializeApollonEditor(JSON.parse(this.submission.model));
+                            });
+                        } else if (this.submission && this.submission.model) {
                             this.initializeApollonEditor(JSON.parse(this.submission.model));
                         } else {
                             this.initializeApollonEditor(null);
                         }
-                        if (this.submission && this.submission.submitted && this.result && this.result.completionDate) {
-                            if (this.result.assessments) {
-                                this.assessmentResult = JSON.parse(this.result.assessments);
-                                this.initializeAssessmentInfo();
-                            } else {
-                                this.modelingAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
-                                    this.assessmentResult = assessmentResult;
-                                    this.initializeAssessmentInfo();
-                                });
-                            }
-                        }
+
                     },
                     error => {
                         if (error.status === 403) {
@@ -169,9 +165,19 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
 
         if (this.submission && this.submission.submitted) {
             clearInterval(this.autoSaveInterval);
+            if (this.assessmentResult && this.assessmentResult.feedbacks && this.assessmentResult.feedbacks.length > 0) {
+                initialModel.assessments = this.assessmentResult.feedbacks.map(feedback => {
+                    return {
+                        modelElementId: feedback.referenceId,
+                        elementType: feedback.referenceType,
+                        score: feedback.credits,
+                        feedback: feedback.text,
+                    };
+                });
+            }
             this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
                 model: initialModel,
-                mode: ApollonMode.Modelling,
+                mode: ApollonMode.Assessment,
                 readonly: true,
                 type: this.modelingExercise.diagramType
             });
@@ -195,8 +201,10 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
             this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
                 model: initialModel,
                 mode: ApollonMode.Modelling,
+                readonly: false,
                 type: this.modelingExercise.diagramType
             });
+
             this.updateSubmissionModel();
             // auto save of submission if there are changes
             this.autoSaveInterval = window.setInterval(() => {
@@ -396,6 +404,9 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
 
     // function to check whether there are pending changes
     canDeactivate(): Observable<boolean> | boolean {
+        if (this.submission && this.submission.submitted) {
+            return true;
+        }
         const jsonModel = JSON.stringify(this.apollonEditor.model);
         if ((!this.submission && this.apollonEditor && this.apollonEditor.model.elements.length > 0 && jsonModel !== '') ||
             (this.submission && this.submission.model && JSON.parse(this.submission.model).version === this.apollonEditor.model.version && this.submission.model !== jsonModel)) {

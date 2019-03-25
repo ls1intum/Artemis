@@ -8,6 +8,7 @@ import java.util.List;
 
 public class UMLModel {
 
+    private List<UMLPackage> packageList;
     private List<UMLClass> classList;
     private List<UMLAssociation> associationList;
 
@@ -20,7 +21,8 @@ public class UMLModel {
     }
 
 
-    public UMLModel(List<UMLClass> classList, List<UMLAssociation> associationList, long modelID) {
+    public UMLModel(List<UMLPackage> packageList, List<UMLClass> classList, List<UMLAssociation> associationList, long modelID) {
+        this.packageList = packageList;
         this.classList = classList;
         this.associationList = associationList;
         this.modelID = modelID;
@@ -183,6 +185,12 @@ public class UMLModel {
      */
     public UMLElement getElementByJSONID (String jsonElementId) {
         UMLElement element;
+
+        for (UMLPackage umlPackage : packageList) {
+            if (umlPackage.getJSONElementID().equals(jsonElementId)) {
+                return umlPackage;
+            }
+        }
 
         for (UMLClass umlClass : classList) {
             element = umlClass.getElementByJSONID(jsonElementId);

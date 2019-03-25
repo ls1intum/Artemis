@@ -137,7 +137,7 @@ export class ModelingAssessmentComponent implements OnInit, OnDestroy {
             this.apollonEditor.destroy();
         }
 
-        const assessments = this.result.feedbacks.map(feedback => {
+        initialModel.assessments = this.result.feedbacks.map(feedback => {
             return {
                 modelElementId: feedback.referenceId,
                 elementType: feedback.referenceType,
@@ -145,7 +145,6 @@ export class ModelingAssessmentComponent implements OnInit, OnDestroy {
                 feedback: feedback.text,
             };
         });
-        initialModel.assessments = assessments;
 
         this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
             mode: ApollonMode.Assessment,
