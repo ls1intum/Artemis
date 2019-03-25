@@ -13,6 +13,7 @@ import { Subscription } from 'rxjs';
 import { QuizExercise } from '../../entities/quiz-exercise';
 import * as moment from 'moment';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
+import { DiagramType, ModelingExercise } from 'app/entities/modeling-exercise';
 
 @Pipe({ name: 'showExercise' })
 export class ShowExercisePipe implements PipeTransform {
@@ -35,6 +36,7 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
     readonly TEXT = ExerciseType.TEXT;
+    readonly CLASS_DIAGRAM = DiagramType.ClassDiagram;
 
     _course: Course;
     routerSubscription: Subscription;
@@ -79,6 +81,10 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
     ) {
         // Initialize array to avoid undefined errors
         this.exercises = [];
+    }
+
+    asModelingExercise(exercise: Exercise): ModelingExercise {
+        return exercise as ModelingExercise;
     }
 
     ngOnInit(): void {

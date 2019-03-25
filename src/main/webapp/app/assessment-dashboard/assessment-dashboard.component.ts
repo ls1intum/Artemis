@@ -127,7 +127,7 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
      * @param {boolean} forceReload force REST call to update nextOptimalSubmissionIds
      */
     filterSubmissions(forceReload: boolean) {
-        if (this.nextOptimalSubmissionIds.length < 3 || forceReload) {
+        if (this.modelingExercise.diagramType === this.CLASS_DIAGRAM && (this.nextOptimalSubmissionIds.length < 3 || forceReload)) {
             this.modelingAssessmentService.getOptimalSubmissions(this.modelingExercise.id).subscribe(optimal => {
                 this.nextOptimalSubmissionIds = optimal.body.map((submission: Submission) => submission.id);
                 this.applyFilter();
@@ -143,8 +143,7 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
     applyFilter() {
         // A submission is optimal if it is part of nextOptimalSubmissionIds and (nobody is currently assessing it or you are currently assessing it)
         this.submissions.forEach(submission => {
-            submission.optimal =
-                this.nextOptimalSubmissionIds.includes(submission.id) &&
+            submission.optimal = this.nextOptimalSubmissionIds.includes(submission.id) &&
                 (!(submission.result && submission.result.assessor) ||
                     (submission.result && submission.result.assessor && submission.result.assessor.id === this.userId));
         });
@@ -173,9 +172,11 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
      * Reset optimality attribute of models
      */
     resetOptimality() {
-        this.modelingAssessmentService.resetOptimality(this.modelingExercise.id).subscribe(() => {
-            this.filterSubmissions(true);
-        });
+        if (this.modelingExercise.diagramType === this.CLASS_DIAGRAM) {
+            this.modelingAssessmentService.resetOptimality(this.modelingExercise.id).subscribe(() => {
+                this.filterSubmissions(true);
+            });
+        }
     }
 
     makeAllSubmissionsVisible() {
