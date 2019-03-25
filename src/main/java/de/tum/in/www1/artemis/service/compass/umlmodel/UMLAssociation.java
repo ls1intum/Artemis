@@ -94,7 +94,7 @@ public class UMLAssociation extends UMLElement {
         this.sourceRole = sourceRole;
         this.targetRole = targetRole;
 
-        this.jsonElementID = jsonElementID;
+        this.setJsonElementID(jsonElementID);
 
         this.type = UMLRelationType.valueOf(type.toUpperCase());
     }

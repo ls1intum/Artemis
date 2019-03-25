@@ -194,7 +194,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
             (error: HttpErrorResponse) => {
                 if (error.status === 409) {
                     this.conflicts = new Map();
-                    (error.error as Conflict[]).forEach(conflict => this.conflicts.set(conflict.elementInConflict.id, conflict));
+                    (error.error as Conflict[]).forEach(conflict => this.conflicts.set(conflict.conflictedElementId, conflict));
                     this.highlightElementsWithConflict();
                     this.jhiAlertService.error('arTeMiSApp.apollonDiagram.assessment.submitFailedWithConflict');
                 } else {

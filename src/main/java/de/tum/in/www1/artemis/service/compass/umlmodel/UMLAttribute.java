@@ -9,15 +9,10 @@ public class UMLAttribute extends UMLElement {
     private String name;
     private String type;
 
-
-    public UMLAttribute() {
-    }
-
-
     public UMLAttribute(String name, String type, String jsonElementID) {
         this.name = name;
         this.type = type;
-        this.jsonElementID = jsonElementID;
+        this.setJsonElementID(jsonElementID);
     }
 
     public void setParentClass(UMLClass parentClass) {

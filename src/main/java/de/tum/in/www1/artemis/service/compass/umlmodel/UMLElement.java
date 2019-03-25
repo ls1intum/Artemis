@@ -1,24 +1,13 @@
 package de.tum.in.www1.artemis.service.compass.umlmodel;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import de.tum.in.www1.artemis.service.compass.assessment.Context;
 
 import java.util.Objects;
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "kind")//Mapping to ModelElementTypes in Client
-@JsonSubTypes({
-    @JsonSubTypes.Type(value = UMLClass.class, name = "class"),
-    @JsonSubTypes.Type(value = UMLAttribute.class, name = "attribute"),
-    @JsonSubTypes.Type(value = UMLMethod.class, name = "method"),
-    @JsonSubTypes.Type(value = UMLAssociation.class, name = "relationship")
-})
 public abstract class UMLElement {
 
-    int elementID; //id of similarity set the element belongs to
-    @JsonProperty("id")
-    String jsonElementID; // unique element id //TODO rename into uniqueId?
+    private int similarityID; //id of similarity set the element belongs to
+    private String jsonElementID; // unique element id //TODO rename into uniqueId?
     private Context context;
 
     /**
@@ -34,15 +23,19 @@ public abstract class UMLElement {
     public abstract String getValue();
 
     public int getElementID() {
-        return elementID;
+        return similarityID;
     }
 
     public void setElementID (int elementID) {
-        this.elementID = elementID;
+        this.similarityID = elementID;
     }
 
     public String getJSONElementID() {
         return jsonElementID;
+    }
+
+    public void setJsonElementID(String jsonElementID) {
+        this.jsonElementID = jsonElementID;
     }
 
     public Context getContext() {
@@ -64,16 +57,16 @@ public abstract class UMLElement {
         UMLElement otherElement = (UMLElement) obj;
 
         if (otherElement.context == null || this.context == null) {
-            return otherElement.elementID == this.elementID && otherElement.jsonElementID.equals(this.jsonElementID)
+            return otherElement.similarityID == this.similarityID && otherElement.jsonElementID.equals(this.jsonElementID)
                 && otherElement.context == this.context;
         }
 
-        return otherElement.elementID == this.elementID && otherElement.jsonElementID.equals(this.jsonElementID)
+        return otherElement.similarityID == this.similarityID && otherElement.jsonElementID.equals(this.jsonElementID)
             && otherElement.context.equals(this.context);
     }
 
     @Override
     public int hashCode () {
-        return Objects.hash(elementID, jsonElementID, context);
+        return Objects.hash(similarityID, jsonElementID, context);
     }
 }

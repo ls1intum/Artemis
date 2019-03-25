@@ -72,7 +72,7 @@ export class ModelingAssessmentService {
             const referencedModelType = feedback.referenceType;
             const referencedModelId = feedback.referenceId;
             if (referencedModelType in UMLElementType) {
-                const element = model.elements.find(element => element.id === referencedModelId);
+                const element = model.elements.find(elem => elem.id === referencedModelId);
                 const name = element.name;
                 let type: string;
                 switch (element.type) {
@@ -116,7 +116,7 @@ export class ModelingAssessmentService {
                         type = '';
                         break;
                 }
-                assessmentsNames[referencedModelId] = {type, name: name};
+                assessmentsNames[referencedModelId] = {type, name};
             } else if (referencedModelType in UMLRelationshipType) {
                 const relationship = model.relationships.find(rel => rel.id === referencedModelId);
                 const source = model.elements.find(element => element.id === relationship.source.element).name;

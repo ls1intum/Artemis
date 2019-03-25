@@ -26,7 +26,7 @@ public class UMLClass extends UMLElement {
         this.name = name;
         this.attributes = attributes;
         this.methods = methodList;
-        this.jsonElementID = jsonElementID;
+        this.setJsonElementID(jsonElementID);
         this.type = UMLClassType.valueOf(type);
     }
 
@@ -157,18 +157,18 @@ public class UMLClass extends UMLElement {
     }
 
     UMLElement getElementByJSONID(String jsonID) {
-        if (this.jsonElementID.equals(jsonID)) {
+        if (this.getJSONElementID().equals(jsonID)) {
             return this;
         }
 
         for (UMLAttribute umlAttribute : attributes) {
-            if (umlAttribute.jsonElementID.equals(jsonID)) {
+            if (umlAttribute.getJSONElementID().equals(jsonID)) {
                 return umlAttribute;
             }
         }
 
         for (UMLMethod umlMethod : methods) {
-            if (umlMethod.jsonElementID.equals(jsonID)) {
+            if (umlMethod.getJSONElementID().equals(jsonID)) {
                 return umlMethod;
             }
         }

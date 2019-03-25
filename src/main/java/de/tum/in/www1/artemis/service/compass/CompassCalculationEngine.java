@@ -91,7 +91,7 @@ public class CompassCalculationEngine implements CalculationEngine {
                     .filter(score -> !scoresAreConsideredEqual(score.getPoints(), currentFeedback.getCredits()))
                     .collect(Collectors.toList());
                 if (!scoresInConflict.isEmpty()) {
-                    conflicts.add(new Conflict(currentElement, currentFeedback, scoresInConflict));
+                    conflicts.add(new Conflict(currentElement.getJSONElementID(), currentFeedback, scoresInConflict));
                 }
             });
         });

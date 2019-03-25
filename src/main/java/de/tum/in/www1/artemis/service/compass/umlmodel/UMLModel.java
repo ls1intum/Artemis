@@ -127,25 +127,25 @@ public class UMLModel {
         }
 
         for (UMLClass umlClass : classList) {
-            if (!lastAssessmentCompassResult.getJsonIdPointsMapping().containsKey(umlClass.jsonElementID)) {
+            if (!lastAssessmentCompassResult.getJsonIdPointsMapping().containsKey(umlClass.getJSONElementID())) {
                 return false;
             }
 
             for (UMLAttribute attribute : umlClass.getAttributes()) {
-                if (!lastAssessmentCompassResult.getJsonIdPointsMapping().containsKey(attribute.jsonElementID)) {
+                if (!lastAssessmentCompassResult.getJsonIdPointsMapping().containsKey(attribute.getJSONElementID())) {
                     return false;
                 }
             }
 
             for (UMLMethod method : umlClass.getMethods()) {
-                if (!lastAssessmentCompassResult.getJsonIdPointsMapping().containsKey(method.jsonElementID)) {
+                if (!lastAssessmentCompassResult.getJsonIdPointsMapping().containsKey(method.getJSONElementID())) {
                     return false;
                 }
             }
         }
 
         for (UMLAssociation relation : associationList) {
-            if (!lastAssessmentCompassResult.getJsonIdPointsMapping().containsKey(relation.jsonElementID)) {
+            if (!lastAssessmentCompassResult.getJsonIdPointsMapping().containsKey(relation.getJSONElementID())) {
                 return false;
             }
         }
