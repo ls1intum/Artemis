@@ -1,7 +1,13 @@
 <div class="row justify-content-center">
     <div class="col-8">
         <div *ngIf="course">
-            <h2><span jhiTranslate="arTeMiSApp.course.detail.title">Course</span> {{course.id}}</h2>
+            <div>
+                <jhi-secured-image
+                    *ngIf="course.courseIcon"
+                    [src]="course.courseIcon">
+                </jhi-secured-image>
+                <h2><span jhiTranslate="arTeMiSApp.course.detail.title">Course</span> {{course.id}}</h2>
+            </div>
             <hr>
             <jhi-alert></jhi-alert>
             <jhi-alert-error></jhi-alert-error>
