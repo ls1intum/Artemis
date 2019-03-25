@@ -105,7 +105,7 @@ public class CompassCalculationEngine implements CalculationEngine {
             SimilarityDetector.analyzeSimilarity(model, modelIndex);
             modelIndex.addModel(model);
         } catch (IOException e) {
-            log.error("Could not load file !", e);
+            log.error("Error while building and adding model!", e);
         }
     }
 

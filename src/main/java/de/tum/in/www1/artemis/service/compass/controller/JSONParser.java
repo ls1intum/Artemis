@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.compass.controller;
 
 import com.google.common.base.CaseFormat;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
@@ -20,7 +21,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class JSONParser {
 
@@ -41,28 +41,27 @@ public class JSONParser {
      */
     // TODO CZ: refactor this (extract buildModelFromJSON to specific UML classes, e.g. UMLClass.buildModelFromJSON() to get the parsed class)
     public static UMLModel buildModelFromJSON(JsonObject root, long modelId) throws IOException {
-        JsonObject elementsById = root.getAsJsonObject(JSONMapping.elements);
-        Set<String> allElementIds = elementsById.keySet();
+        JsonArray elements = root.getAsJsonArray(JSONMapping.elements);
+        Map<String, JsonObject> jsonElementMap = generateJsonElementMap(elements);
 
-        JsonObject relationshipsById = root.getAsJsonObject(JSONMapping.relationships);
-        Set<String> allRelationshipIds = relationshipsById.keySet();
+        JsonArray relationships = root.getAsJsonArray(JSONMapping.relationships);
 
         Map<String, UMLClass> umlClassMap = new HashMap<>();
         List<UMLAssociation> umlAssociationList = new ArrayList<>();
 
         // <editor-fold desc="iterate over every class">
-        for (String elementId : allElementIds) {
-            JsonObject connectable = elementsById.getAsJsonObject(elementId);
+        for (JsonElement elem : elements) {
+            JsonObject element = elem.getAsJsonObject();
 
-            String elementType = connectable.get(JSONMapping.elementType).getAsString();
+            String elementType = element.get(JSONMapping.elementType).getAsString();
             elementType = CaseFormat.UPPER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, elementType);
             if (ClassTypes.contains(elementType))
             {
-                String className = connectable.get(JSONMapping.elementName).getAsString();
+                String className = element.get(JSONMapping.elementName).getAsString();
 
                 List<UMLAttribute> umlAttributesList = new ArrayList<>();
-                for (JsonElement attributeId : connectable.getAsJsonArray(JSONMapping.elementAttributes)) {
-                    JsonObject attribute = elementsById.get(attributeId.getAsString()).getAsJsonObject();
+                for (JsonElement attributeId : element.getAsJsonArray(JSONMapping.elementAttributes)) {
+                    JsonObject attribute = jsonElementMap.get(attributeId.getAsString());
 
                     String[] attributeNameArray = attribute.get(JSONMapping.elementName).getAsString()
                         .replaceAll(" ", "").split(":");
@@ -77,8 +76,8 @@ public class JSONParser {
                 }
 
                 List<UMLMethod> umlMethodList = new ArrayList<>();
-                for (JsonElement methodId : connectable.getAsJsonArray(JSONMapping.elementMethods)) {
-                    JsonObject method = elementsById.get(methodId.getAsString()).getAsJsonObject();
+                for (JsonElement methodId : element.getAsJsonArray(JSONMapping.elementMethods)) {
+                    JsonObject method = jsonElementMap.get(methodId.getAsString());
 
                     String completeMethodName = method.get(JSONMapping.elementName).getAsString();
                     String[] methodEntryArray = completeMethodName.replaceAll(" ", "").split(":");
@@ -99,7 +98,8 @@ public class JSONParser {
                     umlMethodList.add(newMethod);
                 }
 
-                UMLClass newClass = new UMLClass(className, umlAttributesList, umlMethodList, elementId, elementType);
+                UMLClass newClass = new UMLClass(className, umlAttributesList, umlMethodList,
+                    element.get(JSONMapping.elementID).getAsString(), elementType);
 
                 //set parent class in attributes and methods
                 for (UMLAttribute attribute : umlAttributesList) {
@@ -116,8 +116,8 @@ public class JSONParser {
         // </editor-fold>
 
         // <editor-fold desc="iterate over every relationship">
-        for (String relationshipId : allRelationshipIds) {
-            JsonObject relationship = relationshipsById.getAsJsonObject(relationshipId);
+        for (JsonElement rel : relationships) {
+            JsonObject relationship = rel.getAsJsonObject();
 
             JsonObject relationshipSource = relationship.getAsJsonObject(JSONMapping.relationshipSource);
             JsonObject relationshipTarget = relationship.getAsJsonObject(JSONMapping.relationshipTarget);
@@ -141,7 +141,8 @@ public class JSONParser {
             relationshipType = CaseFormat.UPPER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, relationshipType);
 
             if (source != null && target != null) {
-                UMLAssociation newRelation = new UMLAssociation(source, target, relationshipType, relationshipId,
+                UMLAssociation newRelation = new UMLAssociation(source, target, relationshipType,
+                    relationship.get(JSONMapping.elementID).getAsString(),
                     relationshipSourceRole.isJsonNull() ? "" : relationshipSourceRole.getAsString(),
                     relationshipTargetRole.isJsonNull() ? "" : relationshipTargetRole.getAsString(),
                     relationshipSourceMultiplicity.isJsonNull() ? "" : relationshipSourceMultiplicity.getAsString(),
@@ -154,6 +155,14 @@ public class JSONParser {
         // </editor-fold>
 
         return new UMLModel(new ArrayList<>(umlClassMap.values()), umlAssociationList, modelId);
+    }
+
+    private static Map<String, JsonObject> generateJsonElementMap(JsonArray elements) {
+        Map<String, JsonObject> jsonElementMap = new HashMap<>();
+        elements.forEach(
+            element -> jsonElementMap.put(element.getAsJsonObject().get("id").getAsString(), element.getAsJsonObject())
+        );
+        return jsonElementMap;
     }
 }
 
