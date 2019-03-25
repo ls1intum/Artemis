@@ -1,0 +1,15 @@
+jhi-secured-image {
+    padding-right: 20px;
+
+    ::ng-deep img {
+        border-radius: 50%;
+        height: 100px;
+        width: 100px;
+        object-fit: cover;
+        margin-bottom: 10px;
+    }
+
+    +h2 {
+        display: inline;
+    }
+}

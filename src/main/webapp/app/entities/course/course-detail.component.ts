@@ -9,7 +9,8 @@ import { CourseService } from './course.service';
 
 @Component({
     selector: 'jhi-course-detail',
-    templateUrl: './course-detail.component.html'
+    templateUrl: './course-detail.component.html',
+    styleUrls: ['course-detail.component.scss']
 })
 export class CourseDetailComponent implements OnInit, OnDestroy {
 
