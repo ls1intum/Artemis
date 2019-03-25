@@ -1,11 +1,13 @@
-<div class="footer row">
-    <div class="col-md-6">
-        <p jhiTranslate="footer" [translateValues]="{email: email}"></p>
+<div class="row footer">
+    <div class="col-sm-6">
+        <a [href]="bugReportUrl" jhiTranslate="bug" class="footer-text" target="_blank"></a>
+        <a [href]="featureRequestUrl" jhiTranslate="feature" class="footer-text ml-3" target="_blank"></a>
+        <a [href]="email" jhiTranslate="contact" class="footer-text ml-3"></a>
     </div>
 
-    <div class="col-md-6 text-md-right">
-        <a [href]="releaseNotesUrl" jhiTranslate="releaseNotes" target="_blank"></a>
-        <a [routerLink]="['/datenschutz']" jhiTranslate="legal.privacy.title" class="ml-3"></a>
-        <a [href]="imprintUrl"  target="_blank" jhiTranslate="legal.imprint.title" class="ml-3"></a>
+    <div class="col-sm-6 text-md-right">
+        <a [href]="releaseNotesUrl" jhiTranslate="releaseNotes" class="footer-text" target="_blank"></a>
+        <a [routerLink]="['/datenschutz']" jhiTranslate="legal.privacy.title" class="footer-text ml-3"></a>
+        <a [href]="imprintUrl"  target="_blank" jhiTranslate="legal.imprint.title" class="footer-text ml-3" target="_blank"></a>
     </div>
 </div>
