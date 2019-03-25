@@ -3,7 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from 'app/app.constants';
 import { Result } from '../result';
-import { UMLModel, ElementType, UMLElementType, UMLRelationshipType } from '@ls1intum/apollon';
+import { UMLModel, ElementType, UMLElementType, UMLRelationshipType, UMLClassifier } from '@ls1intum/apollon';
 import { Feedback } from 'app/entities/feedback';
 
 export type EntityResponseType = HttpResponse<Result>;
@@ -71,11 +71,29 @@ export class ModelingAssessmentService {
         for (const feedback of result.feedbacks) {
             const referencedModelType = feedback.referenceType;
             const referencedModelId = feedback.referenceId;
-            if (referencedModelType === UMLElementType.Class) {
-                const classElement = model.elements.find(element => element.id === referencedModelId);
-                const className = classElement.name;
+            if (referencedModelType in UMLElementType) {
+                const element = model.elements.find(element => element.id === referencedModelId);
+                const name = element.name;
                 let type: string;
-                switch (classElement.type) {
+                switch (element.type) {
+                    case UMLElementType.Class:
+                        type = 'class';
+                        break;
+                    case UMLElementType.Interface:
+                        type = 'interface';
+                        break;
+                    case UMLElementType.AbstractClass:
+                        type = 'abstract class';
+                        break;
+                    case UMLElementType.Enumeration:
+                        type = 'enum';
+                        break;
+                    case UMLElementType.ClassAttribute:
+                        type = 'attribute';
+                        break;
+                    case UMLElementType.ClassMethod:
+                        type = 'method';
+                        break;
                     case UMLElementType.ActivityInitialNode:
                         type = 'initial node';
                         break;
@@ -95,12 +113,10 @@ export class ModelingAssessmentService {
                         type = 'merge node';
                         break;
                     default:
-                        type = referencedModelType;
+                        type = '';
                         break;
                 }
-                assessmentsNames[referencedModelId] = {type, name: className};
-            } else if (referencedModelType === UMLElementType.ClassAttribute) {
-            } else if (referencedModelType === UMLElementType.ClassMethod) {
+                assessmentsNames[referencedModelId] = {type, name: name};
             } else if (referencedModelType in UMLRelationshipType) {
                 const relationship = model.relationships.find(rel => rel.id === referencedModelId);
                 const source = model.elements.find(element => element.id === relationship.source.element).name;

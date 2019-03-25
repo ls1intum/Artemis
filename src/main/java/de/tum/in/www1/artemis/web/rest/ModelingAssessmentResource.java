@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.service.compass.conflict.Conflict;
@@ -161,7 +162,10 @@ public class ModelingAssessmentResource extends AssessmentResource {
                 return ResponseEntity.status(HttpStatus.CONFLICT).body(conflicts);
             } else {
                 modelingAssessmentService.submitManualAssessment(result, modelingExercise);
-                compassService.addAssessment(exerciseId, submissionId, feedbacks);
+                // NOTE: for now (until Compass learns to assess other diagrams) ignore all diagram types except class diagrams
+                if (modelingExercise.getDiagramType() == DiagramType.ClassDiagram) {
+                    compassService.addAssessment(exerciseId, submissionId, feedbacks);
+                }
             }
         }
         return ResponseEntity.ok(result);

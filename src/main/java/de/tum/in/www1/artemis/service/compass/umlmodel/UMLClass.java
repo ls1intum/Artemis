@@ -7,22 +7,11 @@ import java.util.List;
 
 public class UMLClass extends UMLElement {
 
-    // TODO move activity diagram types into its own class
     public enum UMLClassType {
-        //Class Diagram
         CLASS,
         ABSTRACT_CLASS,
         ENUMERATION,
         INTERFACE,
-
-        //Activity Diagram
-        ACTIVITY_CONTROL_INITIAL_NODE,
-        ACTIVITY_CONTROL_FINAL_NODE,
-        ACTIVITY_ACTION_NODE,
-        ACTIVITY_OBJECT,
-        ACTIVITY_MERGE_NODE,
-        ACTIVITY_FORK_NODE,
-        ACTIVITY_FORK_NODE_HORIZONTAL
     }
 
     private String name;
@@ -30,10 +19,8 @@ public class UMLClass extends UMLElement {
     private List<UMLAttribute> attributes;
     private List<UMLMethod> methods;
 
-
     public UMLClass() {
     }
-
 
     public UMLClass(String name, List<UMLAttribute> attributes, List<UMLMethod> methodList, String jsonElementID, String type) {
         this.name = name;
@@ -57,6 +44,7 @@ public class UMLClass extends UMLElement {
 
             similarity += NameSimilarity.nameContainsSimilarity(name, element.getName()) * CompassConfiguration.CLASS_NAME_WEIGHT;
 
+            //TODO: we could distinguish that abstract class and interface is more similar than e.g. class and enumeration
             if (this.type == ((UMLClass) element).type) {
                 similarity += CompassConfiguration.CLASS_TYPE_WEIGHT;
             }

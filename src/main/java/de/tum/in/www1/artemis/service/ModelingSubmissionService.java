@@ -127,7 +127,10 @@ public class ModelingSubmissionService {
      * @param modelingExercise   the exercise the submission belongs to
      */
     public void notifyCompass(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {
-        this.compassService.addModel(modelingExercise.getId(), modelingSubmission.getId(), modelingSubmission.getModel());
+        // NOTE: for now (until Compass learns to assess other diagrams) ignore all diagram types except class diagrams
+        if (modelingExercise.getDiagramType() == DiagramType.ClassDiagram) {
+            this.compassService.addModel(modelingExercise.getId(), modelingSubmission.getId(), modelingSubmission.getModel());
+        }
     }
 
 
