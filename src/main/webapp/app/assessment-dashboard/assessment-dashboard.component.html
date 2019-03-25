@@ -58,7 +58,7 @@
                 </td>
                 <td>
                     <button *ngIf="(submission.optimal && !(submission.result && submission.result.assessor)) || (submission.result && submission.result.assessor && submission.result.assessor.id === userId) || canOverrideAssessments"
-                            routerLink="/apollon-diagrams/exercise/{{modelingExercise.id}}/{{submission.id}}/tutor"
+                            routerLink="/modeling-exercise/{{modelingExercise.id}}/submissions/{{submission.id}}/assessment"
                             [queryParams]="{optimal: false}"
                             class="btn btn-outline-success btn-sm">
                         <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;Assess model
@@ -139,7 +139,7 @@
                 <td>
                     <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                     <button *ngIf="modelingExercise.type === MODELING && submission && !submission.result"
-                            routerLink="/apollon-diagrams/exercise/{{modelingExercise.id}}/{{submission.id}}/tutor"
+                            routerLink="/modeling-exercise/{{modelingExercise.id}}/submissions/{{submission.id}}/assessment"
                             [disabled]="busy"
                             [queryParams]="{optimal: false}"
                             class="btn btn-outline-secondary btn-sm">
@@ -147,7 +147,7 @@
                     </button>
                     </span>
                     <button *ngIf="modelingExercise.type === MODELING && submission && submission.result"
-                            routerLink="/apollon-diagrams/exercise/{{modelingExercise.id}}/{{submission.id}}/tutor"
+                            routerLink="/modeling-exercise/{{modelingExercise.id}}/submissions/{{submission.id}}/assessment"
                             [disabled]="busy"
                             [queryParams]="{optimal: false}"
                             class="btn btn-outline-secondary btn-sm">

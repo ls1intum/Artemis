@@ -55,7 +55,6 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
             this.apollonEditor.destroy();
         }
 
-        // TODO in the future the user should choose which diagram type is used
         this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
             mode: ApollonMode.Exporting,
             model: initialModel,

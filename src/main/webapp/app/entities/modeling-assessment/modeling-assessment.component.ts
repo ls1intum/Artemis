@@ -1,25 +1,24 @@
 import { Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ApollonEditor, ApollonMode, Assessment, DiagramType, UMLModel } from '@ls1intum/apollon';
+import { ApollonEditor, ApollonMode, DiagramType, UMLModel } from '@ls1intum/apollon';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
-import { ModelingExercise, ModelingExerciseService } from '../entities/modeling-exercise';
-import { Result, ResultService } from '../entities/result';
-import { ModelingAssessmentService } from '../entities/modeling-assessment';
-import { AccountService } from '../core';
-import { Submission } from '../entities/submission';
+import { ModelingSubmission, ModelingSubmissionService } from '../modeling-submission';
+import { ModelingExercise, ModelingExerciseService } from '../modeling-exercise';
+import { Result, ResultService } from '../result';
+import { AccountService } from 'app/core';
+import { Submission } from '../submission';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Conflict } from 'app/entities/modeling-assessment/conflict.model';
 import { Feedback } from 'app/entities/feedback';
+import { ModelingAssessmentService } from 'app/entities/modeling-assessment/modeling-assessment.service';
 
 @Component({
     selector: 'jhi-apollon-diagram-tutor',
-    templateUrl: './apollon-diagram-tutor.component.html',
-    styleUrls: ['./apollon-diagram-tutor.component.scss'],
-    providers: [ModelingAssessmentService]
+    templateUrl: './modeling-assessment.component.html',
+    styleUrls: ['./modeling-assessment.component.scss'],
 })
-export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
+export class ModelingAssessmentComponent implements OnInit, OnDestroy {
     @ViewChild('editorContainer')
     editorContainer: ElementRef;
     @Output()
@@ -83,7 +82,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
                 /**
                  * set diagramType to class diagram if it is null
                  */
-                if (this.modelingExercise.diagramType === null) {
+                if (this.modelingExercise.diagramType == null) {
                     this.modelingExercise.diagramType = DiagramType.ClassDiagram;
                 }
                 if (this.submission.model) {
