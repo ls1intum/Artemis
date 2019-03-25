@@ -7,6 +7,12 @@ import { ModelingAssessmentService } from './modeling-assessment.service';
 import { RouterModule } from '@angular/router';
 import { modelingAssessmentRoutes } from 'app/modeling-assessment/modeling-assessment.route';
 import { ModelingAssessmentComponent } from 'app/modeling-assessment/modeling-assessment.component';
+import { HomeComponent } from 'app/home';
+import { ArTEMiSResultModule, ResultComponent, ResultDetailComponent } from 'app/entities/result';
+import { ModelingAssessmentDashboardComponent } from 'app/modeling-assessment/modeling-assessment-dashboard.component';
+import { JhiMainComponent } from 'app/layouts';
+import { SortByModule } from 'app/components/pipes';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
 const ENTITY_STATES = [...modelingAssessmentRoutes];
 
@@ -14,17 +20,15 @@ const ENTITY_STATES = [...modelingAssessmentRoutes];
     imports: [
         ArTEMiSSharedModule,
         RouterModule.forChild(ENTITY_STATES),
+        NgbModule, SortByModule, ArTEMiSResultModule,
     ],
     declarations: [
-        ModelingAssessmentComponent
+        ModelingAssessmentDashboardComponent, ModelingAssessmentComponent
     ],
     entryComponents: [
-        ModelingAssessmentComponent
+        HomeComponent, ResultComponent, ResultDetailComponent, ModelingAssessmentDashboardComponent, JhiMainComponent, ModelingAssessmentComponent
     ],
-    providers: [
-        ModelingAssessmentService,
-        { provide: JhiLanguageService, useClass: JhiLanguageService }
-    ],
+    providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArTEMiSModelingAssessmentModule {
