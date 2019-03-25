@@ -217,9 +217,10 @@
   dependencies:
     "@fortawesome/fontawesome-common-types" "^0.2.16"
 
-"@ls1intum/apollon@https://github.com/ls1intum/Apollon#feature/interface":
-  version "2.0.0-beta.8"
-  resolved "https://github.com/ls1intum/Apollon#59aaa62b7173f64636298a42452d38c3de7c8dbf"
+"@ls1intum/apollon@2.0.0-beta.11":
+  version "2.0.0-beta.11"
+  resolved "https://registry.yarnpkg.com/@ls1intum/apollon/-/apollon-2.0.0-beta.11.tgz#453d0dcf95a39c0a539b903e461bf3b4bc568dc2"
+  integrity sha512-8CM3qtZzCnbhmZdauIl6Tikl32qLofGlvD2GQzdP6WJVcNWxtNlWIOjANYuTuk+saiyVWaxsdMEIx0LDB23uUg==
   dependencies:
     react "16.8.4"
     react-dom "16.8.4"
