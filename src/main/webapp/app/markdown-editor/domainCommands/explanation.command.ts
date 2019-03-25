@@ -1,4 +1,5 @@
 import { DomainCommand } from 'app/markdown-editor/domainCommands/domainCommand';
+import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 
 export class ExplanationCommand extends DomainCommand {
 
@@ -9,22 +10,19 @@ export class ExplanationCommand extends DomainCommand {
      * @desc Add a new explanation to answer option or question title in the text editor at the location of the cursor
      */
     execute(): void {
-        const addedText = '\n\t' + this.getOpeningIdentifier() + ' Add an explanation here (only visible in feedback after quiz has ended)';
-        this.editor.focus();
-        this.editor.clearSelection();
-        this.editor.moveCursorTo(this.editor.getCursorPosition().row, Number.POSITIVE_INFINITY);
-        this.editor.insert(addedText);
-        const range = this.editor.selection.getRange();
-        range.setStart(range.start.row, 6);
-        this.editor.selection.setRange(range);
+        const text = '\n\t' + this.getOpeningIdentifier() + ExplanationCommand.text;
+        ArtemisMarkdown.addTextAtCursor(text, this.aceEditorContainer);
     }
+
+    public static readonly identifier = '[exp]';
+    public static readonly text = ' Add an explanation here (only visible in feedback after quiz has ended)';
 
     /**
      * @function getOpeningIdentifier
      * @desc identify the start of the explanation
      */
     getOpeningIdentifier(): string {
-        return '[exp]';
+        return ExplanationCommand.identifier;
     }
 
     /**

@@ -13,21 +13,21 @@ export class CodeCommand extends Command {
      *       4. code markdown appears
      */
     execute(): void {
-        let selectedText = this.editor.getSelectedText();
+        let selectedText = this.getSelectedText();
         let textToAdd = '';
 
         if (selectedText.includes('```language ') && !selectedText.includes('Source Code')) {
             textToAdd = selectedText.slice(12, -3);
-            this.editor.insert(textToAdd);
+            this.insertText(textToAdd);
         } else if (selectedText.includes('```language ') && selectedText.includes('Source Code') ) {
             textToAdd = selectedText.slice(23, -3);
-            this.editor.insert(textToAdd);
+            this.insertText(textToAdd);
         } else {
-            const range = this.editor.selection.getRange();
+            const range = this.getRange();
             const initText = 'Source Code';
             selectedText = '```language ' + (selectedText || initText) + '```';
-            this.editor.session.replace(range, selectedText);
-            this.editor.focus();
+            this.replace(range, selectedText);
+            this.focus();
         }
     }
 }

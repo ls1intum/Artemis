@@ -14,21 +14,21 @@ export class HeadingTwoCommand extends Command {
      *       4. Heading two in markdown language appears
      */
     execute(): void {
-        let selectedText = this.editor.getSelectedText();
+        let selectedText = this.getSelectedText();
         let textToAdd = '';
 
         if (selectedText.includes('##') && !selectedText.includes('Heading 2')) {
             textToAdd = selectedText.slice(3);
-            this.editor.insert(textToAdd);
+            this.insertText(textToAdd);
         } else if (selectedText.includes('##') && selectedText.includes('Heading 2')) {
             textToAdd = selectedText.slice(3, -9);
-            this.editor.insert(textToAdd);
+            this.insertText(textToAdd);
         } else {
             const initText = 'Heading 2';
-            const range = this.editor.selection.getRange();
+            const range = this.getRange();
             selectedText = `## ${selectedText || initText}`;
-            this.editor.session.replace(range, selectedText);
-            this.editor.focus();
+            this.replace(range, selectedText);
+            this.focus();
         }
     }
 }

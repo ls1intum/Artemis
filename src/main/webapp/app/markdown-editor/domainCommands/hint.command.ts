@@ -1,4 +1,5 @@
 import { DomainCommand } from 'app/markdown-editor/domainCommands/domainCommand';
+import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 
 export class HintCommand extends DomainCommand {
 
@@ -9,22 +10,19 @@ export class HintCommand extends DomainCommand {
      * @desc Add a new hint to the answer option or question title in the editor at the location of the cursor
      */
     execute(): void {
-        const addedText = '\n\t' + this.getOpeningIdentifier() + ' Add a hint here (visible during the quiz via ?-Button)';
-        this.editor.focus();
-        this.editor.clearSelection();
-        this.editor.moveCursorTo(this.editor.getCursorPosition().row, Number.POSITIVE_INFINITY);
-        this.editor.insert(addedText);
-        const range = this.editor.selection.getRange();
-        range.setStart(range.start.row, 6);
-        this.editor.selection.setRange(range);
+        const text = '\n\t' + this.getOpeningIdentifier() + HintCommand.text;
+        ArtemisMarkdown.addTextAtCursor(text, this.aceEditorContainer);
     }
+
+    public static readonly identifier = '[hint]';
+    public static readonly text = ' Add a hint here (visible during the quiz via ?-Button)';
 
     /**
      * @function getOpeningIdentifier
      * @desc identify the start of the hint
      */
     getOpeningIdentifier(): string {
-        return '[hint]';
+        return HintCommand.identifier;
     }
 
     /**

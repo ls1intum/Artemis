@@ -10,7 +10,7 @@ export class OrderedListCommand extends Command {
      * @desc Use the markdown language for creating/removing an ordered list
      */
     execute(): void {
-        const selectedText = this.editor.getSelectedText();
+        const selectedText = this.getSelectedText();
         this.splitText(selectedText);
     }
 
@@ -42,15 +42,15 @@ export class OrderedListCommand extends Command {
         if (element.includes('.')) {
             const textToAdd = element.slice(3);
             const text = `${textToAdd}\n`;
-            this.editor.insert(text);
+            this.insertText(text);
         } else if (element === '') {
-            const range = this.editor.selection.getRange();
+            const range = this.getRange();
             element = `1. ${element}`;
-            this.editor.session.replace(range, element);
-            this.editor.focus();
+            this.replace(range, element);
+            this.focus();
         } else {
             element = `${position}. ${element}\n`;
-            this.editor.insert(element);
+            this.insertText(element);
         }
     }
 }
