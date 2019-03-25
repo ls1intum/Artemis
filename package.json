@@ -20,7 +20,7 @@
         "@fortawesome/fontawesome-svg-core": "1.2.16",
         "@fortawesome/free-regular-svg-icons": "5.8.0",
         "@fortawesome/free-solid-svg-icons": "5.8.0",
-        "@ls1intum/apollon": "2.0.0-beta.11",
+        "@ls1intum/apollon": "2.0.0-beta.13",
         "@ng-bootstrap/ng-bootstrap": "4.1.0",
         "@nguniversal/express-engine": "7.1.1",
         "@ngx-translate/core": "11.0.1",

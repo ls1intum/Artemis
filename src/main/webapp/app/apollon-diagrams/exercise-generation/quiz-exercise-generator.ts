@@ -42,8 +42,8 @@ export async function generateDragAndDropQuizExercise(
 
     const elements = { ...model.elements, ...model.relationships };
     // Create Drag Items, Drop Locations and their mappings for each interactive element
-    for (const id of [...model.interactive.elements, ...model.interactive.relationships]) {
-        const element: Element = elements[id];
+    for (const elementId of [...model.interactive.elements, ...model.interactive.relationships]) {
+        const element = elements.find(element => element.id === elementId)
         const { dragItem, dropLocation, correctMapping } = await generateDragAndDropItem(
             element,
             model,
@@ -111,7 +111,7 @@ async function generateDragAndDropItem(
     clip: { x: number; y: number; width: number; height: number },
     fileUploaderService: FileUploaderService
 ): Promise<{ dragItem: DragItem; dropLocation: DropLocation; correctMapping: DragAndDropMapping }> {
-    const isRelationship = Object.keys(model.relationships).includes(element.id);
+    const isRelationship = model.relationships.map(r => r.id).reduce((a,b) => a.concat(b)).includes(element.id);
 
     const margin = isRelationship ? 30 : 0;
 

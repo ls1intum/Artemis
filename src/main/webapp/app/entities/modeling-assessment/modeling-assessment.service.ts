@@ -1,10 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
-import { SERVER_API_URL } from '../../app.constants';
+import { SERVER_API_URL } from 'app/app.constants';
 import { Result } from '../result';
-import { UMLModel, ElementType, RelationshipType, UMLClassifier } from '@ls1intum/apollon';
-import { ModelElementType } from 'app/entities/modeling-assessment/uml-element.model';
+import { UMLModel, ElementType, UMLElementType, UMLRelationshipType } from '@ls1intum/apollon';
 import { Feedback } from 'app/entities/feedback';
 
 export type EntityResponseType = HttpResponse<Result>;
@@ -57,7 +56,7 @@ export class ModelingAssessmentService {
      */
     convertResult(result: Result): Result {
         for (const feedback of result.feedbacks) {
-            feedback.referenceType = feedback.reference.split(':')[0] as ModelElementType;
+            feedback.referenceType = feedback.reference.split(':')[0] as ElementType;
             feedback.referenceId = feedback.reference.split(':')[1];
         }
         return result;
@@ -66,32 +65,33 @@ export class ModelingAssessmentService {
     /**
      * Creates the labels for the assessment elements for displaying them in the modeling and assessment editor.
      */
+    // TODO: define a mapping or simplify this complex monster in a another way so that we can support other diagram types as well
     getNamesForAssessments(result: Result, model: UMLModel): Map<string, Map<string, string>> {
         const assessmentsNames = new Map<string, Map<string, string>>();
         for (const feedback of result.feedbacks) {
             const referencedModelType = feedback.referenceType;
             const referencedModelId = feedback.referenceId;
-            if (referencedModelType === ModelElementType.CLASS) {
-                const classElement = model.elements[referencedModelId];
+            if (referencedModelType === UMLElementType.Class) {
+                const classElement = model.elements.find(element => element.id === referencedModelId);
                 const className = classElement.name;
                 let type: string;
                 switch (classElement.type) {
-                    case ElementType.ActivityInitialNode:
+                    case UMLElementType.ActivityInitialNode:
                         type = 'initial node';
                         break;
-                    case ElementType.ActivityFinalNode:
+                    case UMLElementType.ActivityFinalNode:
                         type = 'final node';
                         break;
-                    case ElementType.ActivityObjectNode:
+                    case UMLElementType.ActivityObjectNode:
                         type = 'object';
                         break;
-                    case ElementType.ActivityActionNode:
+                    case UMLElementType.ActivityActionNode:
                         type = 'action';
                         break;
-                    case ElementType.ActivityForkNode:
+                    case UMLElementType.ActivityForkNode:
                         type = 'fork node';
                         break;
-                    case ElementType.ActivityMergeNode:
+                    case UMLElementType.ActivityMergeNode:
                         type = 'merge node';
                         break;
                     default:
@@ -99,35 +99,35 @@ export class ModelingAssessmentService {
                         break;
                 }
                 assessmentsNames[referencedModelId] = {type, name: className};
-            } else if (referencedModelType === ModelElementType.ATTRIBUTE) {
-            } else if (referencedModelType === ModelElementType.METHOD) {
-            } else if (referencedModelType === ModelElementType.RELATIONSHIP) {
-                const relationship = model.relationships[referencedModelId];
-                const source = model.elements[relationship.source.element].name;
-                const target = model.elements[relationship.target.element].name;
-                const relationshipType: RelationshipType = relationship.type;
+            } else if (referencedModelType === UMLElementType.ClassAttribute) {
+            } else if (referencedModelType === UMLElementType.ClassMethod) {
+            } else if (referencedModelType in UMLRelationshipType) {
+                const relationship = model.relationships.find(rel => rel.id === referencedModelId);
+                const source = model.elements.find(element => element.id === relationship.source.element).name;
+                const target = model.elements.find(element => element.id === relationship.target.element).name;
+                const relationshipType = relationship.type;
                 let type = 'association';
                 let relation: string;
                 switch (relationshipType) {
-                    case RelationshipType.ClassBidirectional:
+                    case UMLRelationshipType.ClassBidirectional:
                         relation = ' <-> ';
                         break;
-                    case RelationshipType.ClassUnidirectional:
+                    case UMLRelationshipType.ClassUnidirectional:
                         relation = ' --> ';
                         break;
-                    case RelationshipType.ClassAggregation:
+                    case UMLRelationshipType.ClassAggregation:
                         relation = ' --◇ ';
                         break;
-                    case RelationshipType.ClassInheritance:
+                    case UMLRelationshipType.ClassInheritance:
                         relation = ' --▷ ';
                         break;
-                    case RelationshipType.ClassDependency:
+                    case UMLRelationshipType.ClassDependency:
                         relation = ' ╌╌> ';
                         break;
-                    case RelationshipType.ClassComposition:
+                    case UMLRelationshipType.ClassComposition:
                         relation = ' --◆ ';
                         break;
-                    case RelationshipType.ActivityControlFlow:
+                    case UMLRelationshipType.ActivityControlFlow:
                         relation = ' --> ';
                         type = 'control flow';
                         break;
@@ -163,105 +163,7 @@ export class ModelingAssessmentService {
                 elemPosition.x = element.bounds.x;
                 elemPosition.y = element.bounds.y;
             }
-            //
-            // if (referencedModelType === ModelElementType.CLASS) {
-            //     if (model.elements.byId[referencedModelId]) {
-            //         const entity = model.elements.byId[referencedModelId];
-            //         elemPosition.x = entity.position.x + entity.size.width;
-            //         if (entity.kind === ElementType.ActivityInitialNode || entity.kind === ElementType.ActivityFinalNode) {
-            //             elemPosition.x = entity.position.x;
-            //         }
-            //         elemPosition.y = entity.position.y;
-            //     }
-            // } else if (referencedModelType === ModelElementType.ATTRIBUTE) {
-            //     for (const element of model.elements) {
-            //         element.attributes.forEach((attribute, index) => {
-            //             if (attribute.id === referencedModelId) {
-            //                 elemPosition.x = element.position.x + element.size.width;
-            //                 elemPosition.y = element.position.y + ENTITY_NAME_HEIGHT + ENTITY_MEMBER_LIST_VERTICAL_PADDING;
-            //                 if (element.kind === ElementType.Interface || element.kind === EntityKind.Enumeration) {
-            //                     elemPosition.y += ENTITY_KIND_HEIGHT;
-            //                 }
-            //                 if (element.attributes.length > 1 && index > 0) {
-            //                     elemPosition.y += index * ENTITY_MEMBER_HEIGHT;
-            //                 }
-            //             }
-            //         });
-            //     }
-            // } else if (referencedModelType === ModelElementType.METHOD) {
-            //     for (const element of model.elements) {
-            //         element.methods.forEach((method, index) => {
-            //             if (method.id === referencedModelId) {
-            //                 elemPosition.x = element.position.x + element.size.width;
-            //                 elemPosition.y = element.position.y + ENTITY_NAME_HEIGHT + ENTITY_MEMBER_LIST_VERTICAL_PADDING;
-            //                 if (element.kind === ElementType.Interface || entity.kind === ElementType.Enumeration) {
-            //                     elemPosition.y += ENTITY_KIND_HEIGHT;
-            //                 }
-            //                 if (element.attributes.length > 0) {
-            //                     elemPosition.y += 2 * ENTITY_MEMBER_LIST_VERTICAL_PADDING + entity.attributes.length * ENTITY_MEMBER_HEIGHT;
-            //                 }
-            //                 if (element.methods.length > 1 && index > 0) {
-            //                     elemPosition.y += index * ENTITY_MEMBER_HEIGHT;
-            //                 }
-            //             }
-            //         });
-            //     }
-            // } else if (referencedModelType === ModelElementType.RELATIONSHIP) {
-            //     if (model.relationships.byId[referencedModelId]) {
-            //         const relationship = model.relationships.byId[referencedModelId];
-            //         const kind: RelationshipType = relationship.kind;
-            //         const sourceEntity = model.elements.byId[relationship.source.entityId];
-            //         const destEntity = model.elements.byId[relationship.target.entityId];
-            //         if (kind === RelationshipType.ClassBidirectional) {
-            //             const rightElem = sourceEntity.position.x > destEntity.position.x ? sourceEntity : destEntity;
-            //             const rightEdge: RectEdge = rightElem === sourceEntity ? relationship.source.edge : relationship.target.edge;
-            //             elemPosition.x = rightElem.position.x;
-            //             elemPosition.y = rightElem.position.y;
-            //             switch (rightEdge) {
-            //                 case 'TOP':
-            //                     elemPosition.x += rightElem.size.width / 2;
-            //                     elemPosition.y -= SYMBOL_HEIGHT;
-            //                     break;
-            //                 case 'BOTTOM':
-            //                     elemPosition.x += rightElem.size.width / 2;
-            //                     elemPosition.y += rightElem.size.height;
-            //                     break;
-            //                 case 'LEFT':
-            //                     elemPosition.y += rightElem.size.height / 2;
-            //                     break;
-            //                 case 'RIGHT':
-            //                     elemPosition.x += rightElem.size.width + SYMBOL_WIDTH;
-            //                     elemPosition.y += rightElem.size.height / 2;
-            //                     break;
-            //                 default:
-            //                     break;
-            //             }
-            //         } else {
-            //             elemPosition.x = sourceEntity.position.x;
-            //             elemPosition.y = sourceEntity.position.y;
-            //             const sourceEdge: RectEdge = relationship.source.edge;
-            //             switch (sourceEdge) {
-            //                 case 'TOP':
-            //                     elemPosition.x += sourceEntity.size.width / 2;
-            //                     elemPosition.y -= SYMBOL_HEIGHT;
-            //                     break;
-            //                 case 'BOTTOM':
-            //                     elemPosition.x += sourceEntity.size.width / 2;
-            //                     elemPosition.y += sourceEntity.size.height;
-            //                     break;
-            //                 case 'LEFT':
-            //                     elemPosition.y += sourceEntity.size.height / 2;
-            //                     break;
-            //                 case 'RIGHT':
-            //                     elemPosition.x += sourceEntity.size.width + SYMBOL_WIDTH;
-            //                     elemPosition.y += sourceEntity.size.height / 2;
-            //                     break;
-            //                 default:
-            //                     break;
-            //             }
-            //         }
-            //     }
-            // }
+
             positions[referencedModelId] = elemPosition;
         }
 

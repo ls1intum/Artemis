@@ -12,7 +12,6 @@ import { Submission } from '../entities/submission';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Conflict } from 'app/entities/modeling-assessment/conflict.model';
 import { Feedback } from 'app/entities/feedback';
-import { ModelElementType } from 'app/entities/modeling-assessment/uml-element.model';
 
 @Component({
     selector: 'jhi-apollon-diagram-tutor',
@@ -32,7 +31,8 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
     modelingExercise: ModelingExercise;
     result: Result;
     conflicts: Map<string, Conflict>;
-    elementFeedback: Map<string, Feedback> = new Map();
+
+    elementFeedback: Map<string, Feedback> = new Map(); // map element.id --> Feedback
     assessmentsAreValid = false;
     invalidError = '';
     totalScore = 0;
@@ -143,14 +143,14 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
             this.apollonEditor.destroy();
         }
 
-        const feedbacks: Feedback[] = this.result.feedbacks;
-        const assessments: { [id: string]: Assessment } = feedbacks.reduce((acc, feedback) => ({
-            ...acc,
-            [feedback.referenceId]: {
+        const assessments = this.result.feedbacks.map(feedback => {
+            return {
+                modelElementId: feedback.referenceId,
+                elementType: feedback.referenceType,
                 score: feedback.credits,
                 feedback: feedback.text,
-            }
-        }), {});
+            };
+        });
         initialModel.assessments = assessments;
 
         this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
@@ -245,16 +245,14 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
      * Returns an array containing all feedback entries from the mapping.
      */
     private generateFeedbackFromAssessment(): Feedback[] {
-        for (const elementId in this.apollonEditor.model.assessments) {
-            const assessment: Assessment = this.apollonEditor.model.assessments[elementId];
-            const existingFeedback: Feedback = this.elementFeedback.get(elementId);
+        for (const assessment of this.apollonEditor.model.assessments) {
+            const existingFeedback = this.elementFeedback.get(assessment.modelElementId);
             if (existingFeedback) {
                 existingFeedback.credits = assessment.score;
                 existingFeedback.text = assessment.feedback;
             } else {
-                // TODO CZ: replace UNKNOWN element type
-                this.elementFeedback.set(elementId,
-                    new Feedback(elementId, ModelElementType.UNKNOWN, assessment.score, assessment.feedback));
+                this.elementFeedback.set(assessment.modelElementId,
+                    new Feedback(assessment.modelElementId, assessment.elementType, assessment.score, assessment.feedback));
             }
         }
         return [...this.elementFeedback.values()];
@@ -293,16 +291,14 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
 
     private highlightElementsWithConflict() {
         const model = this.apollonEditor.model;
-        const entitiesToHighlight: string[] = Object.keys(model.elements).filter((id: string) => {
-            if (this.conflicts.has(id)) {
-                return true;
-            }
-            return false;
-        });
-        const relationshipsToHighlight: string[] = Object.keys(model.relationships).filter(id => this.conflicts.has(id));
+        const entitiesToHighlight = model.elements.filter(element => {
+            return this.conflicts.has(element.id);
 
-        entitiesToHighlight.forEach(id => {
-            document.getElementById(id).style.fill = 'rgb(248, 214, 217)';
+        });
+        const relationshipsToHighlight = model.relationships.filter(relationship => this.conflicts.has(relationship.id));
+
+        entitiesToHighlight.forEach(element => {
+            document.getElementById(element.id).style.fill = 'rgb(248, 214, 217)';
         });
 
         // TODO MJ highlight relation entities. currently do not have unique id

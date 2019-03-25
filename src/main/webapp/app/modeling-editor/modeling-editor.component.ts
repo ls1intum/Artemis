@@ -3,8 +3,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { ModelingExercise } from '../entities/modeling-exercise';
 import { Participation } from '../entities/participation';
-import { ApollonDiagramService } from '../entities/apollon-diagram/apollon-diagram.service';
-import { ApollonEditor, ApollonMode, DiagramType, UMLModel } from '@ls1intum/apollon';
+import { ApollonDiagramService } from '../entities/apollon-diagram';
+import { ApollonEditor, ApollonMode, DiagramType, UMLModel, ElementType, UMLRelationshipType } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
 import { Result } from '../entities/result';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
@@ -17,7 +17,6 @@ import { JhiWebsocketService } from '../core';
 import { Observable } from 'rxjs/Observable';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
-import { ModelElementType } from 'app/entities/modeling-assessment/uml-element.model';
 
 @Component({
     selector: 'jhi-modeling-editor',
@@ -271,7 +270,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
             return;
         }
         this.updateSubmissionModel();
-        if (!this.umlModel || Object.keys(this.umlModel.elements).length === 0) {
+        if (!this.umlModel || this.umlModel.elements.length === 0) {
             this.jhiAlertService.warning('arTeMiSApp.modelingEditor.empty');
             return;
         }
@@ -379,17 +378,18 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
     /**
      * Checks whether a model element in the modeling editor is selected.
      */
-    isSelected(id: string, type: ModelElementType) {
+    isSelected(modelElementId: string, type: ElementType) {
         if (
             (!this.selectedEntities || this.selectedEntities.length === 0) &&
             (!this.selectedRelationships || this.selectedRelationships.length === 0)
         ) {
             return true;
         }
-        if (type !== ModelElementType.RELATIONSHIP) {
-            return this.selectedEntities.indexOf(id) > -1;
+        // TODO does this work?
+        if (type in UMLRelationshipType) {
+            return this.selectedEntities.indexOf(modelElementId) > -1;
         } else {
-            return this.selectedRelationships.indexOf(id) > -1;
+            return this.selectedRelationships.indexOf(modelElementId) > -1;
         }
     }
 
@@ -402,16 +402,9 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
 
     // function to check whether there are pending changes
     canDeactivate(): Observable<boolean> | boolean {
-        if (
-            (!this.submission &&
-                this.apollonEditor &&
-                Object.keys(this.apollonEditor.model.elements).length > 0 &&
-                JSON.stringify(this.apollonEditor.model) !== '') ||
-            (this.submission &&
-                this.submission.model &&
-                JSON.parse(this.submission.model).version === this.apollonEditor.model.version &&
-                this.submission.model !== JSON.stringify(this.apollonEditor.model))
-        ) {
+        const jsonModel = JSON.stringify(this.apollonEditor.model);
+        if ((!this.submission && this.apollonEditor && this.apollonEditor.model.elements.length > 0 && jsonModel !== '') ||
+            (this.submission && this.submission.model && JSON.parse(this.submission.model).version === this.apollonEditor.model.version && this.submission.model !== jsonModel)) {
             return false;
         }
         return true;
@@ -451,7 +444,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
      */
     calculateNumberOfModelElements(): number {
         if (this.umlModel) {
-            return Object.keys(this.umlModel.elements).length + Object.keys(this.umlModel.relationships).length;
+            return this.umlModel.elements.length + this.umlModel.relationships.length;
         }
         return 0;
     }

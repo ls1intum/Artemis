@@ -1,14 +1,10 @@
-export const enum ModelElementType {
-    CLASS = 'class',
-    ATTRIBUTE = 'attribute',
-    METHOD = 'method',
-    RELATIONSHIP = 'relationship',
-    UNKNOWN = 'unknown'
-}
+import { ElementType } from '@ls1intum/apollon';
+
+// TODO we should get rid of this and rather use Apollon types
 
 export interface UMLElement {
     id: string;
-    kind: ModelElementType;
+    kind: ElementType;
 }
 
 export interface UMLClass extends UMLElement {
