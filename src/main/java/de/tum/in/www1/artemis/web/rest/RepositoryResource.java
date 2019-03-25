@@ -160,33 +160,6 @@ public class RepositoryResource {
         return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert("file", filename)).build();
     }
 
-
-    /**
-     * PUT /repository/{participationId}/file: Update the file content
-     *
-     * @param participationId Participation ID
-     * @param filename
-     * @param request
-     * @return
-     * @throws IOException
-     */
-    @PutMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> updateFile(@PathVariable Long participationId, @RequestParam("file")  String filename, HttpServletRequest request) throws IOException, InterruptedException {
-        log.debug("REST request to update file {} for Participation : {}", filename, participationId);
-
-        Participation participation = participationService.findOne(participationId);
-        ResponseEntity<Void> failureResponse = checkParticipation(participation);
-        if (failureResponse != null) return failureResponse;
-
-        Repository repository = gitService.get().getOrCheckoutRepository(participation);
-        Optional<File> file = gitService.get().getFileByName(repository, filename);
-        if(!file.isPresent()) { return notFound(); }
-
-        InputStream inputStream = request.getInputStream();
-        Files.copy(inputStream, file.get().toPath(), StandardCopyOption.REPLACE_EXISTING);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert("file", filename)).build();
-    }
-
     /**
      * DELETE /repository/{participationId}/file: Delete the file
      *

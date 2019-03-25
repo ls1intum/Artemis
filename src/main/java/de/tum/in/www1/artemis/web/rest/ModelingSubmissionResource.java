@@ -41,7 +41,9 @@ public class ModelingSubmissionResource {
     private final CompassService compassService;
 
 
-    public ModelingSubmissionResource(ModelingSubmissionService modelingSubmissionService, ModelingExerciseService modelingExerciseService, ParticipationService participationService, CourseService courseService, ResultService resultService, AuthorizationCheckService authCheckService, CompassService compassService) {
+    public ModelingSubmissionResource(ModelingSubmissionService modelingSubmissionService, ModelingExerciseService modelingExerciseService,
+                                      ParticipationService participationService, CourseService courseService, ResultService resultService,
+                                      AuthorizationCheckService authCheckService, CompassService compassService) {
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseService = modelingExerciseService;
         this.participationService = participationService;
@@ -153,24 +155,25 @@ public class ModelingSubmissionResource {
     public ResponseEntity<ModelingSubmission> getModelingSubmission(@PathVariable Long submissionId) {
         log.debug("REST request to get ModelingSubmission with id: {}", submissionId);
         ModelingSubmission modelingSubmission = modelingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
-        Exercise exercise = modelingSubmission.getParticipation().getExercise();
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+        ModelingExercise modelingExercise = (ModelingExercise) modelingSubmission.getParticipation().getExercise();
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
             return forbidden();
         }
         if (modelingSubmission.getResult() == null) {
             modelingSubmissionService.setNewResult(modelingSubmission);
         }
         if (modelingSubmission.getResult().getAssessor() == null) {
-            compassService.removeModelWaitingForAssessment(exercise.getId(), submissionId);
+            if (compassService.isSupported(modelingExercise.getDiagramType())) {
+                compassService.removeModelWaitingForAssessment(modelingExercise.getId(), submissionId);
+            }
             //we set the assessor and save the result to soft lock the assessment (so that it cannot be edited by another tutor)
             resultService.setAssessor(modelingSubmission.getResult());
         }
         //Make sure the exercise is connected to the participation in the json response
-        modelingSubmission.getParticipation().setExercise(exercise);
+        modelingSubmission.getParticipation().setExercise(modelingExercise);
         hideDetails(modelingSubmission);
         return ResponseEntity.ok(modelingSubmission);
     }
-
 
     private void hideDetails(ModelingSubmission modelingSubmission) {
         //do not send old submissions or old results to the client
@@ -186,7 +189,6 @@ public class ModelingSubmissionResource {
             }
         }
     }
-
 
     private void checkAuthorization(ModelingExercise exercise) throws AccessForbiddenException {
         Course course = courseService.findOne(exercise.getCourse().getId());
