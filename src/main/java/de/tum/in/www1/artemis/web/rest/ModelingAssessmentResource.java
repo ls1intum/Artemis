@@ -18,6 +18,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -67,7 +68,9 @@ public class ModelingAssessmentResource extends AssessmentResource {
     public ResponseEntity<String> resetOptimalModels(@PathVariable Long exerciseId) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         checkAuthorization(modelingExercise);
-        compassService.resetModelsWaitingForAssessment(exerciseId);
+        if (compassService.isSupported(modelingExercise.getDiagramType())) {
+            compassService.resetModelsWaitingForAssessment(exerciseId);
+        }
         return ResponseEntity.noContent().build();
     }
 
@@ -79,14 +82,20 @@ public class ModelingAssessmentResource extends AssessmentResource {
         checkAuthorization(modelingExercise);
 
         // TODO: we need to make sure that per participation there is only one optimalModel
-        Set<Long> optimalModelSubmissions = compassService.getModelsWaitingForAssessment(exerciseId);
-        JsonArray response = new JsonArray();
-        for (Long optimalModelSubmissionId : optimalModelSubmissions) {
-            JsonObject entry = new JsonObject();
-            response.add(entry);
-            entry.addProperty("id", optimalModelSubmissionId);
+        if (compassService.isSupported(modelingExercise.getDiagramType())) {
+            Set<Long> optimalModelSubmissions = compassService.getModelsWaitingForAssessment(exerciseId);
+            JsonArray response = new JsonArray();
+            for (Long optimalModelSubmissionId : optimalModelSubmissions) {
+                JsonObject entry = new JsonObject();
+                response.add(entry);
+                entry.addProperty("id", optimalModelSubmissionId);
+            }
+            return ResponseEntity.ok(response.toString());
         }
-        return ResponseEntity.ok(response.toString());
+        else {
+            //TODO: proper error message Not supported
+            return ResponseEntity.ok("");
+        }
     }
 
     @GetMapping("/modeling-submissions/{submissionId}/partial-assessment")
@@ -97,17 +106,20 @@ public class ModelingAssessmentResource extends AssessmentResource {
     public ResponseEntity<Result> getPartialAssessment(@PathVariable Long submissionId) {
         ModelingSubmission submission = modelingSubmissionService.findOneWithEagerResult(submissionId);
         Participation participation = submission.getParticipation();
-        ModelingExercise modelingExercise =
-            modelingExerciseService.findOne(participation.getExercise().getId());
+        ModelingExercise modelingExercise = modelingExerciseService.findOne(participation.getExercise().getId());
         checkAuthorization(modelingExercise);
-        List<Feedback> partialFeedbackAssessment =
-            compassService.getPartialAssessment(participation.getExercise().getId(), submission);
-        Result result = submission.getResult();
-        if (result != null) {
-            result.getFeedbacks().clear();
-            result.getFeedbacks().addAll(partialFeedbackAssessment);
-            return ResponseEntity.ok(result);
-        } else {
+        if (compassService.isSupported(modelingExercise.getDiagramType())) {
+            List<Feedback> partialFeedbackAssessment = compassService.getPartialAssessment(participation.getExercise().getId(), submission);
+            Result result = submission.getResult();
+            if (result != null) {
+                result.getFeedbacks().clear();
+                result.getFeedbacks().addAll(partialFeedbackAssessment);
+                return ResponseEntity.ok(result);
+            } else {
+                return notFound();
+            }
+        }
+        else {
             return notFound();
         }
     }
@@ -156,14 +168,15 @@ public class ModelingAssessmentResource extends AssessmentResource {
         Result result = modelingAssessmentService.saveManualAssessment(modelingSubmission, feedbacks);
         // TODO CZ: move submit logic to modeling assessment service
         if (submit) {
-            List<Conflict> conflicts =
-                compassService.getConflicts(exerciseId, submissionId, result.getFeedbacks());
+            List<Conflict> conflicts = new ArrayList<>();
+            if (compassService.isSupported(modelingExercise.getDiagramType())) {
+                conflicts = compassService.getConflicts(exerciseId, submissionId, result.getFeedbacks());
+            }
             if (!conflicts.isEmpty() && !ignoreConflict) {
                 return ResponseEntity.status(HttpStatus.CONFLICT).body(conflicts);
             } else {
                 modelingAssessmentService.submitManualAssessment(result, modelingExercise);
-                // NOTE: for now (until Compass learns to assess other diagrams) ignore all diagram types except class diagrams
-                if (modelingExercise.getDiagramType() == DiagramType.ClassDiagram) {
+                if (compassService.isSupported(modelingExercise.getDiagramType())) {
                     compassService.addAssessment(exerciseId, submissionId, feedbacks);
                 }
             }

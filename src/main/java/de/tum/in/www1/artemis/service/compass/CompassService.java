@@ -74,6 +74,11 @@ public class CompassService {
         this.participationRepository = participationRepository;
     }
 
+    public boolean isSupported(DiagramType diagramType) {
+        // at the moment, we only support class diagrams
+        return diagramType == DiagramType.ClassDiagram;
+    }
+
     /**
      * This method will return a new Entry with a new Id for every call
      *
