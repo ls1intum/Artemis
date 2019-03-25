@@ -92,18 +92,12 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                         this.participation = modelingSubmission.participation;
                         this.modelingExercise = this.participation.exercise as ModelingExercise;
                         /**
-                         * set diagramType to class diagram if exercise is null, use case or communication
-                         * apollon does not support use case and communication yet
+                         * set diagramType to class diagram if exercise is null
                          */
-                        if (
-                            this.modelingExercise.diagramType === null ||
-                            this.modelingExercise.diagramType === DiagramType.UseCaseDiagram ||
-                            this.modelingExercise.diagramType === DiagramType.ObjectDiagram
-                        ) {
+                        if (this.modelingExercise.diagramType == null) {
                             this.modelingExercise.diagramType = DiagramType.ClassDiagram;
                         }
-                        this.isActive =
-                            this.modelingExercise.dueDate == null || new Date() <= moment(this.modelingExercise.dueDate).toDate();
+                        this.isActive = this.modelingExercise.dueDate == null || new Date() <= moment(this.modelingExercise.dueDate).toDate();
                         this.submission = modelingSubmission;
                         if (this.submission && this.submission.id && !this.submission.submitted) {
                             this.subscribeToWebsocket();
