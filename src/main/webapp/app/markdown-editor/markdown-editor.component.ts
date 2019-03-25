@@ -209,7 +209,7 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
             /** create a new regex expression which searches for the domainCommands identifiers
              * (?=   If a command is found, add the command identifier to the result of the split
              * \\[  look for the character '[' to determine the beginning of the command identifier
-             * (${tagNames}) look it after the '[' one of the element of tagNames is contained
+             * (${tagNames}) look if after the '[' one of the element of tagNames is contained
              * \\] look for the character ']' to determine the end of the command identifier
              * )  close the bracket
              *  g: search in the whole string
