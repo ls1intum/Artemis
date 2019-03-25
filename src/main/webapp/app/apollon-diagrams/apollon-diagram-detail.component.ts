@@ -14,7 +14,7 @@ import { ApollonDiagram, ApollonDiagramService } from '../entities/apollon-diagr
 export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     @ViewChild('editorContainer') editorContainer: ElementRef;
 
-    diagram: ApollonDiagram | null = null;
+    apollonDiagram: ApollonDiagram | null = null;
     apollonEditor: ApollonEditor | null = null;
 
     constructor(
@@ -32,7 +32,7 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
                 response => {
                     const diagram = response.body;
 
-                    this.diagram = diagram;
+                    this.apollonDiagram = diagram;
 
                     const model = JSON.parse(diagram.jsonRepresentation || '{}');
                     this.initializeApollonEditor(model);
@@ -59,19 +59,19 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
             mode: ApollonMode.Exporting,
             model: initialModel,
-            type: DiagramType.ClassDiagram
+            type: this.apollonDiagram.diagramType
         });
     }
 
     saveDiagram() {
-        if (this.diagram === null) {
+        if (this.apollonDiagram === null) {
             // Should never happen, but let's be defensive anyway
             return;
         }
 
         const umlModel = this.apollonEditor.model;
         const updatedDiagram: ApollonDiagram = {
-            ...this.diagram,
+            ...this.apollonDiagram,
             jsonRepresentation: JSON.stringify(umlModel)
         };
 
@@ -87,6 +87,6 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         const modalRef = this.modalService.open(ApollonQuizExerciseGenerationComponent, { backdrop: 'static' });
         const modalComponentInstance = modalRef.componentInstance as ApollonQuizExerciseGenerationComponent;
         modalComponentInstance.apollonEditor = this.apollonEditor;
-        modalComponentInstance.diagramTitle = this.diagram.title;
+        modalComponentInstance.diagramTitle = this.apollonDiagram.title;
     }
 }
