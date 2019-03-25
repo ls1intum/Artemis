@@ -2,6 +2,8 @@ import { DomainCommand } from 'app/markdown-editor/domainCommands/domainCommand'
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 
 export class ExplanationCommand extends DomainCommand {
+    public static readonly identifier = '[exp]';
+    public static readonly text = ' Add an explanation here (only visible in feedback after quiz has ended)';
 
     buttonTranslationString = 'arTeMiSApp.multipleChoiceQuestion.editor.addExplanation';
 
@@ -13,9 +15,6 @@ export class ExplanationCommand extends DomainCommand {
         const text = '\n\t' + this.getOpeningIdentifier() + ExplanationCommand.text;
         ArtemisMarkdown.addTextAtCursor(text, this.aceEditorContainer);
     }
-
-    public static readonly identifier = '[exp]';
-    public static readonly text = ' Add an explanation here (only visible in feedback after quiz has ended)';
 
     /**
      * @function getOpeningIdentifier

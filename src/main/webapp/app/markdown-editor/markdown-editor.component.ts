@@ -210,7 +210,7 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
             /** iterating loop as long as the copy of the markdown text exists and split the copy as soon as a domainCommand identifier is found */
             while (copy.length) {
                 /** as soon as an identifier is found within the regEx the copy of the markdown text is split and saved into [command] */
-                let [command] = copy.split(regex, 1);
+                const [command] = copy.split(regex, 1);
                 /** reduce the copy of the markdown text by the length of the command - when copy is empty the while loop will terminate*/
                 copy = copy.substring(command.length);
                 /** 1.call the parseLineForDomainCommand for each splited element

@@ -7,13 +7,32 @@ import { AceEditorComponent } from 'ng2-ace-editor';
 
 @Injectable({ providedIn: 'root' })
 export class ArtemisMarkdown {
+
+    /**
+     * adds the passed text into the editor of the passed ace editor component at the current curser by focusing, clearing a selection,
+     * moving the cursor to the end of the line, and finally inserting the given text.
+     * After that the new test will be selected
+     *
+     * @param text the text that will be added into the editor of the passed ace editor component
+     * @param aceEditorContainer holds the editor in which the text will be added at the current curser position
+     */
+    static addTextAtCursor(text: String, aceEditorContainer: AceEditorComponent) {
+        aceEditorContainer.getEditor().focus();
+        aceEditorContainer.getEditor().clearSelection();
+        aceEditorContainer.getEditor().moveCursorTo(aceEditorContainer.getEditor().getCursorPosition().row, Number.POSITIVE_INFINITY);
+        aceEditorContainer.getEditor().insert(text);
+        const range = aceEditorContainer.getEditor().selection.getRange();
+        range.setStart(range.start.row, 6);
+        aceEditorContainer.getEditor().selection.setRange(range);
+    }
+
     constructor(private sanitizer: DomSanitizer) {}
 
     /**
      * Parse the markdown text and apply the result to the target object's data
      *
-     * The markdown text is split at [-h] and [-e] tags.
-     *  => First part is text. Everything after [-h] is Hint, anything after [-e] is explanation
+     * The markdown text is split at HintCommand.identifier and ExplanationCommand.identifier tags.
+     *  => First part is text. Everything after HintCommand.identifier is Hint, anything after ExplanationCommand.identifier is explanation
      *
      * @param markdownText {string} the markdown text to parse
      * @param targetObject {object} the object that the result will be saved in. Fields modified are 'text', 'hint' and 'explanation'.
@@ -81,24 +100,6 @@ export class ArtemisMarkdown {
     addExplanationAtCursor(aceEditorContainer: AceEditorComponent) {
         const text = '\n\t' + ExplanationCommand.identifier + ExplanationCommand.text;
         ArtemisMarkdown.addTextAtCursor(text, aceEditorContainer);
-    }
-
-    /**
-     * adds the passed text into the editor of the passed ace editor component at the current curser by focusing, clearing a selection,
-     * moving the cursor to the end of the line, and finally inserting the given text.
-     * After that the new test will be selected
-     *
-     * @param text the text that will be added into the editor of the passed ace editor component
-     * @param aceEditorContainer holds the editor in which the text will be added at the current curser position
-     */
-    static addTextAtCursor(text: String, aceEditorContainer: AceEditorComponent) {
-        aceEditorContainer.getEditor().focus();
-        aceEditorContainer.getEditor().clearSelection();
-        aceEditorContainer.getEditor().moveCursorTo(aceEditorContainer.getEditor().getCursorPosition().row, Number.POSITIVE_INFINITY);
-        aceEditorContainer.getEditor().insert(text);
-        const range = aceEditorContainer.getEditor().selection.getRange();
-        range.setStart(range.start.row, 6);
-        aceEditorContainer.getEditor().selection.setRange(range);
     }
 
     /**
