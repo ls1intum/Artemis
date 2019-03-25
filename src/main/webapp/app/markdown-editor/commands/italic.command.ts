@@ -14,15 +14,15 @@ export class ItalicCommand extends Command {
      *       4. Italic in markdown language appears
      */
     execute(): void {
-        const chosenText = this.editor.getSelectedText();
+        const chosenText = this.getSelectedText();
         let textToAdd = '';
 
         if (chosenText.includes('*')) {
             textToAdd = chosenText.slice(1, -1);
-            this.editor.insert(textToAdd);
+            this.insertText(textToAdd);
         } else {
             textToAdd = `*${chosenText}*`;
-            this.editor.insert(textToAdd);
+            this.insertText(textToAdd);
         }
     }
 }

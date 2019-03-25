@@ -14,17 +14,17 @@ export class AttachmentCommand extends Command {
      *       4. Attachment in markdown language appears
      */
     execute(): void {
-        let selectedText = this.editor.getSelectedText();
+        let selectedText = this.getSelectedText();
         let textToAdd = '';
 
         if (selectedText.includes('![](http://)')) {
             textToAdd = selectedText.slice(10);
-            this.editor.insert(textToAdd);
+            this.insertText(textToAdd);
         } else {
-            const range = this.editor.selection.getRange();
+            const range = this.getRange();
             selectedText = `![](http://)`;
-            this.editor.session.replace(range, selectedText);
-            this.editor.focus();
+            this.replace(range, selectedText);
+            this.focus();
         }
     }
 }

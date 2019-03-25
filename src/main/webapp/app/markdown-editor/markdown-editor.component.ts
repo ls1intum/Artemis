@@ -144,11 +144,11 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
     ngOnInit(): void {
         if (this.domainCommands == null || this.domainCommands.length === 0) {
         [...this.defaultCommands, ...this.headerCommands || []].forEach(command => {
-            command.setEditor(this.aceEditorContainer.getEditor());
+            command.setEditor(this.aceEditorContainer);
         });
         } else {
             [...this.defaultCommands, ...this.domainCommands, ...this.headerCommands || []].forEach(command => {
-                command.setEditor(this.aceEditorContainer.getEditor());
+                command.setEditor(this.aceEditorContainer);
             });
         }
     }

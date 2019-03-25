@@ -14,15 +14,15 @@ export class UnderlineCommand extends Command {
      *       4. Undeline in markdown language appears
      */
     execute(): void {
-        const chosenText = this.editor.getSelectedText();
+        const chosenText = this.getSelectedText();
         let textToAdd = '';
 
         if (chosenText.includes('<ins>')) {
             textToAdd = chosenText.slice(5, -6);
-            this.editor.insert(textToAdd);
+            this.insertText(textToAdd);
         } else {
             textToAdd = `<ins>${chosenText}</ins>`;
-            this.editor.insert(textToAdd);
+            this.insertText(textToAdd);
         }
     }
 }

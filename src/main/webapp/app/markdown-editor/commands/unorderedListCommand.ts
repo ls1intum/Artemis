@@ -10,7 +10,7 @@ export class UnorderedListCommand extends Command {
      * @desc Use the markdown language for creating an unordered list
      */
     execute(): void {
-        const selectedText = this.editor.getSelectedText();
+        const selectedText = this.getSelectedText();
         this.splitText(selectedText);
     }
 
@@ -37,12 +37,12 @@ export class UnorderedListCommand extends Command {
         if (element.includes('-')) {
             const textToAdd = element.slice(2);
             const text = `${textToAdd}\n`;
-            this.editor.insert(text);
+            this.insertText(text);
         } else {
-            const range = this.editor.selection.getRange();
+            const range = this.getRange();
             element = `- ${element}`;
-            this.editor.session.replace(range, element);
-            this.editor.focus();
+            this.replace(range, element);
+            this.focus();
         }
     }
 }

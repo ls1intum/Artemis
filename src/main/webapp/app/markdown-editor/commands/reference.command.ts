@@ -14,21 +14,21 @@ export class ReferenceCommand extends Command {
      *       4. Reference in markdown appears
      */
     execute(): void {
-        let selectedText = this.editor.getSelectedText();
+        let selectedText = this.getSelectedText();
         let textToAdd = '';
 
         if (selectedText.includes('>') && !selectedText.includes('Reference')) {
             textToAdd = selectedText.slice(2);
-            this.editor.insert(textToAdd);
+            this.insertText(textToAdd);
         } else if (selectedText.includes('>') && selectedText.includes('Reference')) {
             textToAdd = selectedText.slice(2, -9);
-            this.editor.insert(textToAdd);
+            this.insertText(textToAdd);
         } else {
-            const range = this.editor.selection.getRange();
+            const range = this.getRange();
             const initText = 'Reference';
             selectedText = `> ${selectedText || initText}`;
-            this.editor.session.replace(range, selectedText);
-            this.editor.focus();
+            this.replace(range, selectedText);
+            this.focus();
         }
     }
 }

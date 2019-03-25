@@ -1,4 +1,5 @@
 import { DomainCommand } from 'app/markdown-editor/domainCommands/domainCommand';
+import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 
 export class CorrectOptionCommand extends DomainCommand {
 
@@ -9,14 +10,8 @@ export class CorrectOptionCommand extends DomainCommand {
      * @desc Add a new correct answer option to the text editor at the location of the cursor
      */
     execute(): void {
-        const addedText = '\n' + this.getOpeningIdentifier() + ' Enter a correct answer option here';
-        this.editor.focus();
-        this.editor.clearSelection();
-        this.editor.moveCursorTo(this.editor.getCursorPosition().row, Number.POSITIVE_INFINITY);
-        this.editor.insert(addedText);
-        const range = this.editor.selection.getRange();
-        range.setStart(range.start.row, 6);
-        this.editor.selection.setRange(range);
+        const text = '\n' + this.getOpeningIdentifier() + ' Enter a correct answer option here';
+        ArtemisMarkdown.addTextAtCursor(text, this.aceEditorContainer);
     }
 
     /**
