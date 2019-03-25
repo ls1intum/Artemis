@@ -172,12 +172,14 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
      * @desc Check if domainCommands are contained within the text to decide how to parse the text
      *       1. If no domainCommands are contained parse markdown to HTML and emit the result to the parent component
      *       2. Otherwise create an array containing all domainCommands identifier passed on from the client,
-     *       2a. Create a copy of the markdown text
-     *       2b. Create the regEx Expression which searches for the domainCommand identifier
-     *       2b. Go through the copy of the markdown text until it is empty and split it as soon as a domainCommand identifier is found into [command]
-     *       2c. Reduce the copy by the length of the command
-     *       2d. Call the parseLineForDomainCommand for command and save it into content
-     *       3. Emit the content to parent component to assign the values of the array to the right attributes
+     *       3. Create a copy of the markdown text
+     *       4. Create the regEx Expression which searches for the domainCommand identifier
+     *       5. Go through the copy of the markdown text until it is empty and split it as soon as a domainCommand identifier is found into [command]
+     *           5a. One command can contain text over several lines
+     *           5b. All the text between two identifiers is mapped to the first identifier
+     *       6. Reduce the copy by the length of the command
+     *       7. Call the parseLineForDomainCommand for command and save it into content
+     *       8. Emit the content to parent component to assign the values of the array to the right attributes
      */
     parse(): void {
         /** check if domainCommands are contained */
@@ -188,28 +190,28 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
                 this.html.emit(this.previewTextAsHtml);
             return;
         } else {
-            /** create array with domain command identifiern*/
+            /** create array with domain command identifier */
             const possibleCommandIdentifier = new Array<string>();
             for (const domainCommand of this.domainCommands) {
                  possibleCommandIdentifier.push(domainCommand.getOpeningIdentifier());
             }
 
-            /** create empty array that will be emited to the parent component*/
+            /** create empty array that will be emited to the parent component */
             const parseArray = [];
-            /** create a copy of the markdown text*/
+            /** create a copy of the markdown text */
             let copy = this.markdown.slice(0);
 
-            /** create array with the identifiers to use for RegEx by deleting the []*/
+            /** create array with the identifiers to use for RegEx by deleting the [] */
             const tagNames = possibleCommandIdentifier.map(tag => tag.replace('[', '').replace(']', '')).join('|');
 
             /** create a new regex expression which searches for the domainCommands identifiers */
             const regex = new RegExp(`(?=\\[(${tagNames})\\])`, 'gm');
 
-            /** iterating loop until the copy exists through the whole markdown text and split it as soon as a domainCommand identifier is found*/
+            /** iterating loop as long as the copy of the markdown text exists and split the copy as soon as a domainCommand identifier is found */
             while (copy.length) {
-                /** as soon as an identifier is found within the regEx the copy of the markdown text is split and saved into results*/
+                /** as soon as an identifier is found within the regEx the copy of the markdown text is split and saved into [command] */
                 let [command] = copy.split(regex, 1);
-                /** reduce the copy of the markdown text by the length of the command*/
+                /** reduce the copy of the markdown text by the length of the command - when copy is empty the while loop will terminate*/
                 copy = copy.substring(command.length);
                 /** 1.call the parseLineForDomainCommand for each splited element
                 *   2.trim reduced the whitespacing linebreaks */

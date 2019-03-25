@@ -38,9 +38,14 @@ export class UnorderedListCommand extends Command {
             const textToAdd = element.slice(2);
             const text = `${textToAdd}\n`;
             this.insertText(text);
-        } else {
+        } else if (element === '') {
             const range = this.getRange();
             element = `- ${element}`;
+            this.replace(range, element);
+            this.focus();
+        } else {
+            const range = this.getRange();
+            element = `- ${element}\n`;
             this.replace(range, element);
             this.focus();
         }
