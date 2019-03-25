@@ -2,7 +2,8 @@ export const enum ModelElementType {
     CLASS = 'class',
     ATTRIBUTE = 'attribute',
     METHOD = 'method',
-    RELATIONSHIP = 'relationship'
+    RELATIONSHIP = 'relationship',
+    UNKNOWN = 'unknown'
 }
 
 export interface UMLElement {

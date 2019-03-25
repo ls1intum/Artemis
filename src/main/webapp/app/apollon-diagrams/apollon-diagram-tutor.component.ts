@@ -1,9 +1,8 @@
 import { Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { DiagramType, ApollonEditor, UMLModel, UMLClassifier, ApollonMode, Assessment } from '@ls1intum/apollon';
+import { ApollonEditor, ApollonMode, Assessment, DiagramType, UMLModel } from '@ls1intum/apollon';
 import { ActivatedRoute, Router } from '@angular/router';
-import * as $ from 'jquery';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
 import { ModelingExercise, ModelingExerciseService } from '../entities/modeling-exercise';
 import { Result, ResultService } from '../entities/result';
@@ -28,18 +27,15 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
     onNewResult = new EventEmitter<Result>();
 
     apollonEditor: ApollonEditor | null = null;
-    selectedEntities: string[];
-    selectedRelationships: string[];
 
     submission: ModelingSubmission;
     modelingExercise: ModelingExercise;
     result: Result;
     conflicts: Map<string, Conflict>;
-    assessmentsNames: Map<string, Map<string, string>>;
+    elementFeedback: Map<string, Feedback> = new Map();
     assessmentsAreValid = false;
     invalidError = '';
     totalScore = 0;
-    positions: Map<string, { x: number; y: number }>;
     busy: boolean;
     done = true;
     timeout: any;
@@ -69,7 +65,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
             const submissionId = Number(params['submissionId']);
             let nextOptimal: boolean;
             this.route.queryParams.subscribe(query => {
-                nextOptimal = query['optimal'] === 'true';
+                nextOptimal = query['optimal'] === 'true'; // TODO CZ: do we need this flag?
             });
 
             this.modelingSubmissionService.getSubmission(submissionId).subscribe(res => {
@@ -81,6 +77,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
                 } else {
                     this.result.feedbacks = [];
                 }
+                this.updateElementFeedbackMapping(this.result.feedbacks);
                 this.submission.participation.results = [this.result];
                 this.result.participation = this.submission.participation;
                 /**
@@ -105,14 +102,10 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
                 if (nextOptimal) {
                     this.modelingAssessmentService.getPartialAssessment(submissionId).subscribe((result: Result) => {
                         this.result = result;
-                        // this.initializeAssessments();
-                        // this.checkScoreBoundaries();
                     });
-                } else {
-                    if (this.result && this.result.feedbacks) {
-                        // this.initializeAssessments();
-                        // this.checkScoreBoundaries();
-                    }
+                }
+                if (this.result) {
+                    this.calculateTotalScore();
                 }
             });
         });
@@ -126,9 +119,26 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Initializes the Apollon editor in read only mode.
+     * Updates the mapping of elementIds to Feedback elements. This should be called after getting the
+     * (updated) Feedback list from the server.
+     *
+     * @param feedbacks new Feedback elements to insert
      */
-    initializeApollonEditor(initialModel: UMLModel) {
+    private updateElementFeedbackMapping(feedbacks: Feedback[]) {
+        if (!feedbacks) {
+            return;
+        }
+        for (const feedback of feedbacks) {
+            this.elementFeedback.set(feedback.referenceId, feedback);
+        }
+    }
+
+    /**
+     * Initializes the Apollon editor with the Feedback List in Assessment mode.
+     * The Feedback elements are converted to Assessment objects needed by Apollon before they are added to
+     * the initial model which is then passed to Apollon.
+     */
+    private initializeApollonEditor(initialModel: UMLModel) {
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();
         }
@@ -149,80 +159,16 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
             model: initialModel,
             type: this.modelingExercise.diagramType
         });
-
-        this.apollonEditor.subscribeToSelectionChange(selection => {
-            this.selectedEntities = selection.elements;
-            this.selectedRelationships = selection.relationships;
-        });
-
-        this.initializeAssessments();
-
-        // const apollonDiv = $('.apollon-editor > div');
-        // const assessmentsDiv = $('.assessments__container');
-        // assessmentsDiv.scrollTop(apollonDiv.scrollTop());
-        // assessmentsDiv.scrollLeft(apollonDiv.scrollLeft());
-
-        // apollonDiv.on('scroll', function() {
-        //     assessmentsDiv.scrollTop(apollonDiv.scrollTop());
-        //     assessmentsDiv.scrollLeft(apollonDiv.scrollLeft());
-        // });
-    }
-
-    /**
-     * Creates the assessment elements for each model element.
-     * The default score is 0.
-     */
-    initializeAssessments() {
-        if (!this.apollonEditor || !this.result || !this.result.feedbacks) {
-            return;
-        }
-        const model = this.apollonEditor.model;
-        let cardinalityAllEntities = Object.values(model.elements).length + Object.values(model.relationships).length;
-        for (const elem of Object.values(model.elements)) {
-            const classifier = elem as UMLClassifier;
-            if (classifier) {
-                cardinalityAllEntities += classifier.attributes.length + classifier.methods.length;
-            }
-        }
-
-        if (this.result.feedbacks.length < cardinalityAllEntities) {
-            const isPartialAssessment = this.result.feedbacks.length !== 0;
-            for (const elem of Object.values(model.elements)) {
-                const assessment = new Feedback(elem.id, ModelElementType.CLASS, 0, '');
-                this.pushAssessmentIfNotExists(elem.id, assessment, isPartialAssessment);
-            }
-            for (const relationshipId of Object.keys(model.relationships)) {
-                const assessment = new Feedback(relationshipId, ModelElementType.RELATIONSHIP, 0, '');
-                this.pushAssessmentIfNotExists(relationshipId, assessment, isPartialAssessment);
-            }
-        }
-
-        if (this.result.feedbacks) {
-            this.setAssessmentsNames();
-            this.getElementPositions();
-        }
-    }
-
-    /**
-     * Adds the partial assessment to the assessment array if it does not exist in the assessment array.
-     */
-    pushAssessmentIfNotExists(id: string, newAssessment: Feedback, partialAssessment: boolean) {
-        if (partialAssessment) {
-            for (const feedback of this.result.feedbacks) {
-                if (feedback.referenceId === id) {
-                    return;
-                }
-            }
-        }
-        this.result.feedbacks.push(newAssessment);
     }
 
     saveAssessment() {
-        this.checkScoreBoundaries();
+        this.calculateTotalScore();
         this.removeCircularDependencies();
+        this.result.feedbacks = this.generateFeedbackFromAssessment();
         this.modelingAssessmentService.save(this.result.feedbacks, this.submission.id).subscribe(
             (result: Result) => {
                 this.result = result;
+                this.updateElementFeedbackMapping(result.feedbacks);
                 this.onNewResult.emit(this.result);
                 this.jhiAlertService.success('arTeMiSApp.apollonDiagram.assessment.saveSuccessful');
             },
@@ -233,12 +179,14 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
     }
 
     submit() {
-        this.checkScoreBoundaries();
+        this.calculateTotalScore();
         this.removeCircularDependencies();
+        this.result.feedbacks = this.generateFeedbackFromAssessment();
         this.modelingAssessmentService.save(this.result.feedbacks, this.submission.id, true, this.ignoreConflicts).subscribe(
             (result: Result) => {
                 result.participation.results = [result];
                 this.result = result;
+                this.updateElementFeedbackMapping(result.feedbacks);
                 this.jhiAlertService.success('arTeMiSApp.apollonDiagram.assessment.submitSuccessful');
                 this.conflicts = undefined;
                 this.done = false;
@@ -264,11 +212,10 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
      * or greater than the max. score, but we decided to remove the restriction
      * and instead set the score boundaries on the server.
      */
-    checkScoreBoundaries() {
+    private calculateTotalScore() {
         if (!this.result.feedbacks || this.result.feedbacks.length === 0) {
             this.totalScore = 0;
         }
-        const maxScore = this.modelingExercise.maxScore;
         let totalScore = 0;
         for (const feedback of this.result.feedbacks) {
             totalScore += feedback.credits;
@@ -287,60 +234,30 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
      * Removes the circular dependencies in the nested objects.
      * Otherwise, we would get a JSON error when trying to send the submission to the server.
      */
-    removeCircularDependencies() {
+    private removeCircularDependencies() {
         this.submission.result.participation = null;
         this.submission.result.submission = null;
     }
 
-    setAssessmentsNames() {
-        this.assessmentsNames = this.modelingAssessmentService.getNamesForAssessments(this.result, this.apollonEditor.model);
-    }
-
     /**
-     * Checks whether a model element is selected or not.
-     * Is used for displaying the corresponding assessment element.
+     * Gets the assessments from Apollon and creates/updates the corresponding Feedback entries in the
+     * element feedback mapping.
+     * Returns an array containing all feedback entries from the mapping.
      */
-    isSelected(id: string, type: ModelElementType) {
-        if (type === ModelElementType.RELATIONSHIP) {
-            if (!this.selectedRelationships) {
-                return false;
-            } else if (this.selectedRelationships && this.selectedRelationships.indexOf(id) > -1) {
-                return true;
+    private generateFeedbackFromAssessment(): Feedback[] {
+        for (const elementId in this.apollonEditor.model.assessments) {
+            const assessment: Assessment = this.apollonEditor.model.assessments[elementId];
+            const existingFeedback: Feedback = this.elementFeedback.get(elementId);
+            if (existingFeedback) {
+                existingFeedback.credits = assessment.score;
+                existingFeedback.text = assessment.feedback;
+            } else {
+                // TODO CZ: replace UNKNOWN element type
+                this.elementFeedback.set(elementId,
+                    new Feedback(elementId, ModelElementType.UNKNOWN, assessment.score, assessment.feedback));
             }
-        } else {
-            if (!this.selectedEntities) {
-                return false;
-            } else if (this.selectedEntities && this.selectedEntities.indexOf(id) > -1) {
-                return true;
-            }
-        // } else {
-        //     if (this.apollonEditor) {
-        //         const model = this.apollonEditor.model;
-        //         if (this.selectedEntities) {
-        //             for (const element of Object.values(model.elements)) {
-        //                 if (type === ModelElementType.ATTRIBUTE) {
-        //                     for (const attribute of (element as UMLClassifier).attributes) {
-        //                         if (attribute.id === id && this.selectedEntities.indexOf(element.id) > -1) {
-        //                             return true;
-        //                         }
-        //                     }
-        //                 } else if (type === ModelElementType.METHOD) {
-        //                     for (const method of (element as UMLClassifier).methods) {
-        //                         if (method.id === id && this.selectedEntities.indexOf(element.id) > -1) {
-        //                             return true;
-        //                         }
-        //                     }
-        //                 }
-        //             }
-        //         } else {
-        //             return false;
-        //         }
-        //     }
         }
-    }
-
-    getElementPositions() {
-        this.positions = this.modelingAssessmentService.getElementPositions(this.result, this.apollonEditor.model);
+        return [...this.elementFeedback.values()];
     }
 
     assessNextOptimal(attempts: number) {
@@ -368,12 +285,6 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
             },
             attempts === 0 ? 0 : 500 + (attempts - 1) * 1000
         );
-    }
-
-    numberToArray(n: number, startFrom: number): number[] {
-        n = n > 5 ? 5 : n;
-        n = n < -5 ? -5 : n;
-        return this.modelingAssessmentService.numberToArray(n, startFrom);
     }
 
     previousState() {
