@@ -153,12 +153,17 @@ export class ModelingAssessmentComponent implements OnInit, OnDestroy {
             model: initialModel,
             type: this.modelingExercise.diagramType
         });
+
+        this.apollonEditor.subscribeToSelectionChange(selection => {
+            this.result.feedbacks = this.generateFeedbackFromAssessment();
+            this.calculateTotalScore();
+        });
     }
 
     saveAssessment() {
-        this.calculateTotalScore();
         this.removeCircularDependencies();
         this.result.feedbacks = this.generateFeedbackFromAssessment();
+        this.calculateTotalScore();
         this.modelingAssessmentService.save(this.result.feedbacks, this.submission.id).subscribe(
             (result: Result) => {
                 this.result = result;
@@ -173,9 +178,9 @@ export class ModelingAssessmentComponent implements OnInit, OnDestroy {
     }
 
     submit() {
-        this.calculateTotalScore();
         this.removeCircularDependencies();
         this.result.feedbacks = this.generateFeedbackFromAssessment();
+        this.calculateTotalScore();
         this.modelingAssessmentService.save(this.result.feedbacks, this.submission.id, true, this.ignoreConflicts).subscribe(
             (result: Result) => {
                 result.participation.results = [result];
