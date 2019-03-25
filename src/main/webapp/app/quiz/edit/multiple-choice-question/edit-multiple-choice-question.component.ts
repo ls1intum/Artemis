@@ -39,8 +39,6 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
     /** Status boolean for collapse status **/
     isQuestionCollapsed: boolean;
 
-    currentAnswerOption: AnswerOption;
-
     /** Set default preview of the markdown editor as preview for the multiple choice question **/
     get showPreview(): boolean { return this.markdownEditor.previewMode; }
     showMultipleChoiceQuestionPreview = true;
@@ -110,21 +108,48 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
         this.question.explanation = null;
         this.question.hint = null;
         this.question.hasCorrectOption = null;
-
-        // Remove Current Answer Option
-        this.currentAnswerOption = null;
-
     }
 
     /**
      * @function domainCommandsFound
-     * @desc Get the {array} from the editor and assign its values based on the domainCommands
-     *       to the corresponding question attributes one by one
-     * @param {array} contains markdownTextLine with the corresponding domainCommand {DomainCommand} identifier
+     * @desc Get the {array} from the editor and assign its values based on the domainCommands to the corresponding question attributes one by one
+     *       1. Go trough each element of the {array} domain command
+     *       2. If the first element {string} has not second element {domainCommandIdentifier} in the array assign the string to the question text
+     *       3. else assign the first element {string} according to the second element {domainCommandIdentifier} to the corresponding attributes of the question
+     * @param {array} of markdownTextLine {string} with the corresponding domainCommand {DomainCommand} identifier
      */
     domainCommandsFound(domainCommands: [string, DomainCommand][]): void {
         this.cleanupQuestion();
-        domainCommands.forEach(command => this.domainCommandFoundSave(command[0], command[1]));
+        let currentAnswerOption = new AnswerOption();
+
+        for (const command of domainCommands)  {
+
+            if (command[1] === null && command[0].length > 0) {
+                this.question.text = command[0];
+            }
+            if (command[1] instanceof CorrectOptionCommand || command[1] instanceof IncorrectOptionCommand) {
+                currentAnswerOption = new AnswerOption();
+                if (command[1] instanceof CorrectOptionCommand) {
+                    currentAnswerOption.isCorrect = true;
+                } else {
+                    currentAnswerOption.isCorrect = false;
+                }
+                currentAnswerOption.text = command[0];
+                this.question.answerOptions.push(currentAnswerOption);
+            } else if (command[1] instanceof ExplanationCommand) {
+                if (currentAnswerOption != null) {
+                    currentAnswerOption.explanation = command[0];
+                } else {
+                    this.question.explanation = command[0];
+                }
+            } else if (command[1] instanceof HintCommand) {
+                if (currentAnswerOption != null) {
+                    currentAnswerOption.hint = command[0];
+                } else {
+                    this.question.hint = command[0];
+                }
+            }
+        }
         this.resetMultipleChoicePreview();
     }
 
@@ -138,43 +163,6 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
         this.changeDetector.detectChanges();
         this.showMultipleChoiceQuestionPreview = true;
         this.changeDetector.detectChanges();
-    }
-
-    /**
-     * @function  domainCommandFoundSave
-     * @desc Assign the text one by one into the corresponding question attributes
-     *       1. Determine the domainCommand based on the command identifier
-     *          1a. If no command identifier found assign the text to the question text
-     *       2. Assign the textLine based on the domainCommand to the corresponding attribute of the multiple choice question
-     * @param textLine {string} with the corresponding domainCommand {DomainCommand}
-     */
-    private domainCommandFoundSave(textLine: string, domainCommand: DomainCommand) {
-        if (domainCommand === null && textLine.length > 0) {
-            this.question.text = textLine;
-        }
-
-        if (domainCommand instanceof CorrectOptionCommand || domainCommand instanceof IncorrectOptionCommand) {
-            this.currentAnswerOption = new AnswerOption();
-            if (domainCommand instanceof CorrectOptionCommand) {
-                this.currentAnswerOption.isCorrect = true;
-            } else {
-                this.currentAnswerOption.isCorrect = false;
-            }
-            this.currentAnswerOption.text = textLine;
-            this.question.answerOptions.push(this.currentAnswerOption);
-        } else if (domainCommand instanceof ExplanationCommand) {
-            if (this.currentAnswerOption != null) {
-                this.currentAnswerOption.explanation = textLine;
-            } else {
-                this.question.explanation = textLine;
-            }
-        } else if (domainCommand instanceof HintCommand) {
-            if (this.currentAnswerOption != null) {
-                this.currentAnswerOption.hint = textLine;
-            } else {
-                this.question.hint = textLine;
-            }
-        }
     }
 
     /**

@@ -54,7 +54,7 @@
                                      [showPreviewButton]="true"
                                      [domainCommands]="commandMultipleChoiceQuestions"
                                      (markdownChange)="prepareForSave()"
-                                     (textWithDomainCommandFound)="domainCommandsFound($event)">
+                                     (textWithDomainCommandsFound)="domainCommandsFound($event)">
                     <!-- Preview -->
                     <ng-container #preview>
                         <jhi-multiple-choice-question *ngIf="showMultipleChoiceQuestionPreview"

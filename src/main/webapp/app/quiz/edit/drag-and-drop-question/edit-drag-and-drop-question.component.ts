@@ -823,31 +823,27 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
      * @function domainCommandsFound
      * @desc Get the {array} from the editor and assign its values based on the domainCommands
      *       to the corresponding question attributes one by one
+     *       1. Go trough each element of the {array} domain command
+     *       2. If the first element {string} has not second element {domainCommandIdentifier} in the array assign the string to the question text
+     *       3. else assign the first element {string} according to the second element {domainCommandIdentifier} to the corresponding attributes of the question
      * @param {array} contains markdownTextLine with the corresponding domainCommand {DomainCommand} identifier
      */
     domainCommandsFound(domainCommands: [string, DomainCommand][]): void {
         this.cleanupQuestion();
-        domainCommands.forEach(command => this.domainCommandFoundSave(command[0], command[1]));
-    }
 
-    /**
-     * @function domainCommandFoundSave
-     * @desc Parse the markdown text one by one  into the corresponding question attributes
-     *       1. Check which command is passed on based on the identifier
-     *          1a. If no command has been passed on assign the text to the question text
-     *       2. Assign the textLine based on the domainCommand to the corresponding attribute of the drag and drop question
-     * @param textLine {string} and domainCommand {object} text with the corresponding domain command
-     */
-    domainCommandFoundSave(textLine: string, domainCommand: DomainCommand) {
-        if (domainCommand === null && textLine.length > 0) {
-            this.question.text = textLine;
-        }
+        for (const command of domainCommands)  {
 
-        if (domainCommand instanceof ExplanationCommand) {
-                this.question.explanation = textLine;
-        } else if (domainCommand instanceof HintCommand) {
-                this.question.hint = textLine;
+            if (command[1] === null && command[0].length > 0) {
+                this.question.text = command[0];
             }
+
+            if (command[1] instanceof ExplanationCommand) {
+                this.question.explanation = command[0];
+            } else if (command[1] instanceof HintCommand) {
+                this.question.hint = command[0];
+            }
+
+        }
     }
 
     /**

@@ -75,9 +75,9 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
     @Input() domainCommands: DomainCommand[];
 
     /**
-     * {textWithDomainCommandFound} emits an {array} of text lines with the corresponding domain command to the parent component which contains the markdown editor
+     * {textWithDomainCommandsFound} emits an {array} of text lines with the corresponding domain command to the parent component which contains the markdown editor
      */
-    @Output() textWithDomainCommandFound = new EventEmitter<[string, DomainCommand][]>();
+    @Output() textWithDomainCommandsFound = new EventEmitter<[string, DomainCommand][]>();
 
     /**
      * {showPreviewButton} 1. true -> the preview of the editor is used
@@ -196,31 +196,44 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
                  possibleCommandIdentifier.push(domainCommand.getOpeningIdentifier());
             }
 
-            /** create empty array that will be emited to the parent component */
-            const parseArray = [];
+            /** create empty array which
+             * will containing the splitted textline with the corresponding domainCommandIdentifier which
+             * will be emitted to the parent component */
+            const commandTextsMappedToCommandIdentifiers = [];
             /** create a copy of the markdown text */
             let copy = this.markdown.slice(0);
 
             /** create array with the identifiers to use for RegEx by deleting the [] */
             const tagNames = possibleCommandIdentifier.map(tag => tag.replace('[', '').replace(']', '')).join('|');
 
-            /** create a new regex expression which searches for the domainCommands identifiers */
+            /** create a new regex expression which searches for the domainCommands identifiers
+             * (?=   If a command is found, add the command identifier to the result of the split
+             * \\[  look for the character '[' to determine the beginning of the command identifier
+             * (${tagNames}) look it after the '[' one of the element of tagNames is contained
+             * \\] look for the character ']' to determine the end of the command identifier
+             * )  close the bracket
+             *  g: search in the whole string
+             *  m: match the regex over multiple lines*/
             const regex = new RegExp(`(?=\\[(${tagNames})\\])`, 'gm');
 
             /** iterating loop as long as the copy of the markdown text exists and split the copy as soon as a domainCommand identifier is found */
             while (copy.length) {
-                /** as soon as an identifier is found within the regEx the copy of the markdown text is split and saved into [command] */
+                /** 1. as soon as an identifier is found within the regEx the copy of the markdown text is split and saved into {array} command
+                 *  split method saves its values into an array
+                 *  limit 1: indicated that as soon as an identifier is found copy is split */
                 const [command] = copy.split(regex, 1);
-                /** reduce the copy of the markdown text by the length of the command - when copy is empty the while loop will terminate*/
+                /** substring reduces the {string} copy by the length of the command
+                 *  and saves it into copy to start the loop again and search for further domainCommandIdentifiers
+                 *  when copy is empty the while loop will terminate*/
                 copy = copy.substring(command.length);
                 /** 1.call the parseLineForDomainCommand for each splited element
                 *   2.trim reduced the whitespacing linebreaks */
-                const content = this.parseLineForDomainCommand(command.trim());
-                /** push the content into the parseArray*/
-                parseArray.push(content);
+                const commandTextWithCommandIdentifier = this.parseLineForDomainCommand(command.trim());
+                /** push the commandTextWithCommandIdentifier into the commandTextsMappedToCommandIdentifiers*/
+                commandTextsMappedToCommandIdentifiers.push(commandTextWithCommandIdentifier);
             }
-            /**emit the parsed array to the client*/
-            this.textWithDomainCommandFound.emit(parseArray);
+            /** emit the parsed array to the client*/
+            this.textWithDomainCommandsFound.emit(commandTextsMappedToCommandIdentifiers);
         }
     }
 
