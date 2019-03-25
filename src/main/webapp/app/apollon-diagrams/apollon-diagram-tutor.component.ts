@@ -81,14 +81,9 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
                 this.submission.participation.results = [this.result];
                 this.result.participation = this.submission.participation;
                 /**
-                 * set diagramType to class diagram if exercise is null, use case or communication
-                 * apollon does not support use case and communication yet
+                 * set diagramType to class diagram if it is null
                  */
-                if (
-                    this.modelingExercise.diagramType === null ||
-                    this.modelingExercise.diagramType === DiagramType.UseCaseDiagram ||
-                    this.modelingExercise.diagramType === DiagramType.ObjectDiagram
-                ) {
+                if (this.modelingExercise.diagramType === null) {
                     this.modelingExercise.diagramType = DiagramType.ClassDiagram;
                 }
                 if (this.submission.model) {
