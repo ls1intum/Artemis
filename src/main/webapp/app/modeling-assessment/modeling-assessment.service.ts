@@ -161,34 +161,6 @@ export class ModelingAssessmentService {
         return assessmentsNames;
     }
 
-    // TODO: this should be part of Apollon in the future
-    /**
-     * Calculates the positions for the symbols used for visualizing the scores of the assessment.
-     * For associations the symbol is positioned at the source entity of the association.
-     */
-    getElementPositions(result: Result, model: UMLModel): Map<string, { x: number; y: number }> {
-        const SYMBOL_HEIGHT = 31;
-        const SYMBOL_WIDTH = 65;
-        const positions = new Map<string, { x: number; y: number }>();
-        for (const feedback of result.feedbacks) {
-            const referencedModelType = feedback.referenceType;
-            const referencedModelId = feedback.referenceId;
-
-            const element = [...Object.values(model.elements), ...Object.values(model.relationships)]
-                .find(elem => elem.id === referencedModelId);
-
-            const elemPosition: { x: number; y: number } = { x: 0, y: 0 };
-            if (element) {
-                elemPosition.x = element.bounds.x;
-                elemPosition.y = element.bounds.y;
-            }
-
-            positions[referencedModelId] = elemPosition;
-        }
-
-        return positions;
-    }
-
     /**
      * Creates an array filled with n integers starting from the number provided by startFrom.
      * Example: numberToArray(5, 0) returns the array

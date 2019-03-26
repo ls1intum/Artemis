@@ -52,7 +52,7 @@ public class JSONParser {
 
             String elementType = element.get(JSONMapping.elementType).getAsString();
             elementType = CaseFormat.UPPER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, elementType);
-            if (elementType.toUpperCase().equals("PACKAGE")) {
+            if (elementType.equals("PACKAGE")) {
                 String packageName = element.get(JSONMapping.elementName).getAsString();
 
                 List<UMLClass> umlClassList = new ArrayList<>();
@@ -61,8 +61,9 @@ public class JSONParser {
                 umlPackageMap.put(jsonElementId, umlPackage);
             }
         }
+        // </editor-fold>
 
-        // <editor-fold desc="iterate over every class">
+        // <editor-fold desc="iterate over every element (classes, attributes, methods)">
         for (JsonElement elem : elements) {
             JsonObject element = elem.getAsJsonObject();
 
@@ -114,8 +115,8 @@ public class JSONParser {
                 UMLClass newClass = new UMLClass(className, umlAttributesList, umlMethodList,
                     element.get(JSONMapping.elementID).getAsString(), elementType);
 
-                if (element.has(JSONMapping.owner)) {
-                    String packageId = element.get(JSONMapping.owner).getAsString();
+                if (element.has(JSONMapping.elementOwner)) {
+                    String packageId = element.get(JSONMapping.elementOwner).getAsString();
                     UMLPackage umlPackage = umlPackageMap.get(packageId);
                     if (umlPackage != null) {
                         umlPackage.addClass(newClass);

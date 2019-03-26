@@ -155,7 +155,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
 
     /**
      * This function initialized the Apollon editor depending on the submission status.
-     * If it was already submitted, the Apollon editor is loaded in read-only mode.
+     * If it was already submitted, the Apollon editor is loaded in Assessment read-only mode.
      * Otherwise, it is loaded in the modeling mode and an auto save timer is started.
      */
     initializeApollonEditor(initialModel: UMLModel) {
@@ -182,7 +182,6 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                 type: this.modelingExercise.diagramType
             });
 
-            const model = this.apollonEditor.model;
             this.apollonEditor.subscribeToSelectionChange(selection => {
                 this.selectedEntities = selection.elements;
                 this.selectedRelationships = selection.relationships;
@@ -335,7 +334,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
     }
 
     /**
-     * Saves the current model state in the attribute diagramState
+     * Updates the model of the submission with the current Apollon model state
      */
     updateSubmissionModel() {
         this.umlModel = this.apollonEditor.model;
@@ -346,35 +345,18 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
     }
 
     /**
-     * Retrieves names and positions for displaying the assessment and calculates the total score
+     * Retrieves names for displaying the assessment and calculates the total score
      */
     initializeAssessmentInfo() {
         if (this.assessmentResult && this.submission && this.submission.model) {
             this.submissionState = JSON.parse(this.submission.model);
-            // TODO: use Result instead of ModelingAssessment
             this.assessmentsNames = this.modelingAssessmentService.getNamesForAssessments(this.assessmentResult, this.submissionState);
-            this.positions = this.modelingAssessmentService.getElementPositions(this.assessmentResult, this.submissionState);
             let totalScore = 0;
             for (const feedback of this.assessmentResult.feedbacks) {
                 totalScore += feedback.credits;
             }
             this.totalScore = totalScore;
         }
-    }
-
-    getElementPositions() {
-        // TODO: use Result instead of ModelingAssessment
-        this.positions = this.modelingAssessmentService.getElementPositions(this.assessmentResult, this.apollonEditor.model);
-    }
-
-    /**
-     * This function is used for limiting the number of symbols for the assessment to 5.
-     * For each point an <i> element is created
-     */
-    numberToArray(n: number, startFrom: number): number[] {
-        n = n > 5 ? 5 : n;
-        n = n < -5 ? -5 : n;
-        return this.modelingAssessmentService.numberToArray(n, startFrom);
     }
 
     /**

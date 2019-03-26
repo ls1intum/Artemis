@@ -80,8 +80,6 @@ public class ModelingSubmissionIntegrationTest {
 
     @Test
     @WithMockUser(value = "student2", roles = "USER")
-    // TODO: enable again when updating after submit is not possible anymore
-    @Ignore
     public void updateModelSubmissionAfterSubmit() throws Exception {
         database.addParticipationForExercise(exercise, "student2");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyModel, false);

@@ -9,17 +9,15 @@ public class JSONMapping {
 
     // model base structure
     public static final String elements = "elements";
-    public static final String idArray = "allIds";
     public static final String relationships = "relationships";
     public static final String byId = "byId";
 
     // elements
-    public static final String owner = "owner";
+    public static final String elementOwner = "owner";
     public static final String elementName = "name";
     public static final String elementAttributes = "attributes";
     public static final String elementMethods = "methods";
     public static final String elementType = "type";
-    public static final String elementClasses = "classes";
 
     // relationships
     public static final String relationshipSource = "source";
