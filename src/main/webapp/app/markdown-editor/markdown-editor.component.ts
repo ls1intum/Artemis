@@ -28,6 +28,7 @@ import { Command,
 } from 'app/markdown-editor/commands';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { DomainCommand } from 'app/markdown-editor/domainCommands';
+import {AnswerOption} from 'app/entities/answer-option';
 
 @Component({
     selector: 'jhi-markdown-editor',
@@ -183,7 +184,7 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
             /** create empty array which
              * will contain the splitted text with the corresponding domainCommandIdentifier which
              * will be emitted to the parent component */
-            const commandTextsMappedToCommandIdentifiers = [];
+            const commandTextsMappedToCommandIdentifiers = new Array<[string, DomainCommand]>();
             /** create a remainingMarkdownText of the markdown text to loop trough it and find the domainCommandIdentifier */
             let remainingMarkdownText = this.markdown.slice(0);
 
