@@ -18,7 +18,7 @@ export class OrderedListCommand extends Command {
      * @function splitText
      * @desc 1. Split the text at the line break into an array
      *       2. Assign each line the position it has in the array
-     *       3. Call for each textline the replaceText method
+     *       3. Call for each textLine the replaceText method
      * @param {string} the selected text by the cursor
      */
     splitText(selectedText: string): void {
@@ -43,14 +43,14 @@ export class OrderedListCommand extends Command {
             const textToAdd = element.slice(3);
             const text = `${textToAdd}\n`;
             this.insertText(text);
-            /** check if it is an empty string an start the basic command of an ordering list with number one*/
+            /** if the selectedText is an empty string start the basic command of an ordering list with number one */
         } else if (element === '') {
             const range = this.getRange();
             element = `1. ${element}`;
             this.replace(range, element);
             this.focus();
         } else {
-            /** if there is a selected text, add the position of the array + (.) before the text element */
+            /** if there is a selected text, add the texts' position of the array + (.) before the text element itself */
             element = `${position}. ${element}\n`;
             this.insertText(element);
         }

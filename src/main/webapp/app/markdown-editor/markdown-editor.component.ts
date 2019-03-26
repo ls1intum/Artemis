@@ -182,11 +182,10 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
      *       8. Emit the content to parent component to assign the values of the array to the right attributes
      */
     parse(): void {
-        /** check if domainCommands are contained */
+        /** check if domainCommands are passed on from the parent component */
         if (this.domainCommands == null || this.domainCommands.length === 0) {
+            /** if no domainCommands contained emit the markdown text converted to html to parent component to display */
                 this.previewTextAsHtml = this.artemisMarkdown.htmlForMarkdown(this.markdown);
-
-                /** emit to parent component*/
                 this.html.emit(this.previewTextAsHtml);
             return;
         } else {
@@ -196,7 +195,7 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
              * will contain the splitted textline with the corresponding domainCommandIdentifier which
              * will be emitted to the parent component */
             const commandTextsMappedToCommandIdentifiers = [];
-            /** create a copy of the markdown text */
+            /** create a copy of the markdown text to loop trough it and find the domainCommandIdentifier */
             let copy = this.markdown.slice(0);
 
             /** create array with the identifiers to use for RegEx by deleting the [] of the domainCommandIdentifiers */
@@ -236,7 +235,7 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
 
     /**
      * @function parseLineForDomainCommand
-     * @desc Couple each textLine with the domainCommand identifier to emit that to the parent component for assignment
+     * @desc Couple each textLine with the domainCommandIdentifier to emit that to the parent component for the value assignment
      *       1. Check which domainCommand identifier is contained within the textLine
      *       2. Remove the domainCommand identifier from the textLine
      *       3. Create an array with first element textLine and second element the domainCommand identifier
@@ -246,16 +245,11 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
     private parseLineForDomainCommand = (textLine: string): [string, DomainCommand] => {
         for (const domainCommand of this.domainCommands) {
             const possibleOpeningCommandIdentifier = [domainCommand.getOpeningIdentifier(), domainCommand.getOpeningIdentifier().toLowerCase(), domainCommand.getOpeningIdentifier().toUpperCase()];
-            // const possibleClosingIdentifier = [domainCommand.getClosingIdentifier(), domainCommand.getClosingIdentifier().toLowerCase(), domainCommand.getClosingIdentifier().toUpperCase()];
-
             if (possibleOpeningCommandIdentifier.some(identifier => textLine.indexOf(identifier) !== -1)) {
-               const trimmedLineWithoutIdentifier = possibleOpeningCommandIdentifier.reduce((line, identifier) => line.replace(identifier, ''), textLine).trim();
-               // if (possibleClosingIdentifier.some(identifier => trimmedLineWithoutIdentifier.indexOf(identifier) !== -1)) {
-                       // let trimmedLineWithoutIdentifierinTotal = possibleClosingIdentifier.reduce((line, identifier) => line.replace(identifier, ''), trimmedLineWithoutIdentifier).trim();
-                       // console.log(trimmedLineWithoutIdentifierinTotal);
+                //TODO when closingIdentifiers are used write a method to extract them from the textLine
+                const trimmedLineWithoutIdentifier = possibleOpeningCommandIdentifier.reduce((line, identifier) => line.replace(identifier, ''), textLine).trim();
                         return [trimmedLineWithoutIdentifier, domainCommand];
                 }
-           // }
         }
         return [textLine.trim(), null];
     };

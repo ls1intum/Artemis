@@ -116,6 +116,8 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
      *       1. Go trough each element of the {array} domain command
      *       2. If the first element {string} has not second element {domainCommandIdentifier} in the array assign the string to the question text
      *       3. else assign the first element {string} according to the second element {domainCommandIdentifier} to the corresponding attributes of the question
+     * Important is that the resetMultipleChoicePreview() is triggered to notify the parent component
+     * about the changes within the question and to trigger the checking method for correct values
      * @param {array} of markdownTextLine {string} with the corresponding domainCommand {DomainCommand} identifier
      */
     domainCommandsFound(domainCommands: [string, DomainCommand][]): void {
@@ -123,7 +125,6 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
         let currentAnswerOption = new AnswerOption();
 
         for (const [name, command] of domainCommands)  {
-
             if (command === null && name.length > 0) {
                 this.question.text = name;
             }
@@ -155,8 +156,9 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
 
     /**
      * @function resetMultipleChoicePreview
-     * @desc 1. Reset the preview function of the multiple choice question
-     *       2. Check for changes and notify the parent component to check for the question validity
+     * @desc  Reset the preview function of the multiple choice question in order to
+     *          cause a change so the parent component is notified
+     *          and the check for the question validity is triggered
      */
     private resetMultipleChoicePreview() {
         this.showMultipleChoiceQuestionPreview = false;
