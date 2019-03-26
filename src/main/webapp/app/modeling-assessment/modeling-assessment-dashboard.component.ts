@@ -5,11 +5,10 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Exercise, ExerciseType } from '../entities/exercise';
 import { ExerciseService } from 'app/entities/exercise';
 import { Course, CourseService } from '../entities/course';
-import { ResultService } from 'app/entities/result';
+import { ResultDetailComponent, ResultService } from 'app/entities/result';
 import { DifferencePipe } from 'angular2-moment';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Result } from '../entities/result';
-import { ResultDetailComponent } from 'app/entities/result';
 import { HttpResponse } from '@angular/common/http';
 import { AccountService } from '../core';
 import { Submission } from '../entities/submission';
@@ -206,7 +205,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
             }, 500 + 1000 * attempts);
         } else {
             const randomInt = Math.floor(Math.random() * this.nextOptimalSubmissionIds.length);
-            this.router.navigate(['apollon-diagrams', 'exercise', this.modelingExercise.id, this.nextOptimalSubmissionIds[randomInt], 'tutor']);
+            this.router.navigate(['modeling-exercise', this.modelingExercise.id, 'submissions', this.nextOptimalSubmissionIds[randomInt], 'assessment']);
         }
     }
 

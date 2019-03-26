@@ -31,7 +31,7 @@ export class ModelingAssessmentComponent implements OnInit, OnDestroy {
     result: Result;
     conflicts: Map<string, Conflict>;
 
-    elementFeedback: Map<string, Feedback> = new Map(); // map element.id --> Feedback
+    elementFeedback: Map<string, Feedback>; // map element.id --> Feedback
     assessmentsAreValid = false;
     invalidError = '';
     totalScore = 0;
@@ -76,7 +76,7 @@ export class ModelingAssessmentComponent implements OnInit, OnDestroy {
                 } else {
                     this.result.feedbacks = [];
                 }
-                this.updateElementFeedbackMapping(this.result.feedbacks);
+                this.updateElementFeedbackMapping(this.result.feedbacks, true);
                 this.submission.participation.results = [this.result];
                 this.result.participation = this.submission.participation;
                 /**
@@ -117,8 +117,12 @@ export class ModelingAssessmentComponent implements OnInit, OnDestroy {
      * (updated) Feedback list from the server.
      *
      * @param feedbacks new Feedback elements to insert
+     * @param initialize initialize a new map, if this flag is true
      */
-    private updateElementFeedbackMapping(feedbacks: Feedback[]) {
+    private updateElementFeedbackMapping(feedbacks: Feedback[], initialize?: boolean) {
+        if (initialize) {
+            this.elementFeedback = new Map();
+        }
         if (!feedbacks) {
             return;
         }
@@ -271,11 +275,8 @@ export class ModelingAssessmentComponent implements OnInit, OnDestroy {
                     if (nextOptimalSubmissionIds.length === 0) {
                         this.assessNextOptimal(attempts + 1);
                     } else {
-                        // TODO: Workaround We have to fake path change to make angular reload the component
-                        const addition = this.router.url.includes('apollon-diagrams2') ? '' : '2';
-                        this.router.navigateByUrl(
-                            `/apollon-diagrams${addition}/exercise/${this.modelingExercise.id}/${nextOptimalSubmissionIds.pop()}/tutor`
-                        );
+                        this.busy = false;
+                        this.router.navigate(['modeling-exercise', this.modelingExercise.id, 'submissions', nextOptimalSubmissionIds.pop(), 'assessment'], );
                     }
                 });
             },

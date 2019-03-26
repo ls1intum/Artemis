@@ -5,8 +5,13 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
-import de.tum.in.www1.artemis.service.compass.umlmodel.*;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLAssociation;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLAttribute;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLClass;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLClass.UMLClassType;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLMethod;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLModel;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLPackage;
 import de.tum.in.www1.artemis.service.compass.utils.JSONMapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -115,7 +120,7 @@ public class JSONParser {
                 UMLClass newClass = new UMLClass(className, umlAttributesList, umlMethodList,
                     element.get(JSONMapping.elementID).getAsString(), elementType);
 
-                if (element.has(JSONMapping.elementOwner)) {
+                if (element.has(JSONMapping.elementOwner) && !element.get(JSONMapping.elementOwner).isJsonNull()) {
                     String packageId = element.get(JSONMapping.elementOwner).getAsString();
                     UMLPackage umlPackage = umlPackageMap.get(packageId);
                     if (umlPackage != null) {

@@ -371,9 +371,9 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         }
         // TODO does this work?
         if (type in UMLRelationshipType) {
-            return this.selectedEntities.indexOf(modelElementId) > -1;
-        } else {
             return this.selectedRelationships.indexOf(modelElementId) > -1;
+        } else {
+            return this.selectedEntities.indexOf(modelElementId) > -1;
         }
     }
 
