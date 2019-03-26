@@ -96,7 +96,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
     explanationCommand = new ExplanationCommand();
 
     /** {array} with domainCommands that are needed for a drag and drop question **/
-    commandDragAndDropQuestions: DomainCommand[] = [this.explanationCommand, this.hintCommand];
+    dragAndDropQuestionDomainCommands: DomainCommand[] = [this.explanationCommand, this.hintCommand];
 
     constructor(
         private artemisMarkdown: ArtemisMarkdown,
@@ -821,21 +821,21 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
 
     /**
      * @function domainCommandsFound
-     * @desc 1. Gets the {array} containing the textLine with the domainCommandIdentifier and creates a new drag and drop problem statement
-     *       by assigning the textLines according to the domainCommandIdentifiers to the drag and drop attributes.
+     * @desc 1. Gets the {array} containing the text with the domainCommandIdentifier and creates a new drag and drop problem statement
+     *       by assigning the text according to the domainCommandIdentifiers to the drag and drop attributes.
      *       (question text, explanation, hint)
-     * @param {array} containing markdownTextLine with the corresponding domainCommand {DomainCommand} identifier
+     * @param {array} containing markdownText with the corresponding domainCommand {DomainCommand} identifier
      */
     domainCommandsFound(domainCommands: [string, DomainCommand][]): void {
         this.cleanupQuestion();
-        for (const  [textLine, command]  of domainCommands)  {
-            if (command === null && textLine.length > 0) {
-                this.question.text = textLine;
+        for (const  [text, command]  of domainCommands)  {
+            if (command === null && text.length > 0) {
+                this.question.text = text;
             }
             if (command instanceof ExplanationCommand) {
-                this.question.explanation = textLine;
+                this.question.explanation = text;
             } else if (command instanceof HintCommand) {
-                this.question.hint = textLine;
+                this.question.hint = text;
             }
         }
     }

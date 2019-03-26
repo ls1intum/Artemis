@@ -179,41 +179,41 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
             return;
         } else {
             /** create array with domain command identifier */
-            const possibleCommandIdentifier = this.domainCommands.map(command => command.getOpeningIdentifier());
+            const domainCommandIdentifiersToParse = this.domainCommands.map(command => command.getOpeningIdentifier());
             /** create empty array which
-             * will contain the splitted textline with the corresponding domainCommandIdentifier which
+             * will contain the splitted text with the corresponding domainCommandIdentifier which
              * will be emitted to the parent component */
             const commandTextsMappedToCommandIdentifiers = [];
-            /** create a copy of the markdown text to loop trough it and find the domainCommandIdentifier */
-            let copy = this.markdown.slice(0);
+            /** create a remainingMarkdownText of the markdown text to loop trough it and find the domainCommandIdentifier */
+            let remainingMarkdownText = this.markdown.slice(0);
 
-            /** create array with the identifiers to use for RegEx by deleting the [] of the domainCommandIdentifiers */
-            const tagNames = possibleCommandIdentifier.map(tag => tag.replace('[', '').replace(']', '')).join('|');
+            /** create string with the identifiers to use for RegEx by deleting the [] of the domainCommandIdentifiers */
+            const commandIdentifiersString = domainCommandIdentifiersToParse.map(tag => tag.replace('[', '').replace(']', '')).join('|');
 
             /** create a new regex expression which searches for the domainCommands identifiers
              * (?=   If a command is found, add the command identifier to the result of the split
              * \\[  look for the character '[' to determine the beginning of the command identifier
-             * (${tagNames}) look if after the '[' one of the element of tagNames is contained
+             * (${commandIdentifiersString}) look if after the '[' one of the element of commandIdentifiersString is contained
              * \\] look for the character ']' to determine the end of the command identifier
              * )  close the bracket
              *  g: search in the whole string
              *  m: match the regex over multiple lines*/
-            const regex = new RegExp(`(?=\\[(${tagNames})\\])`, 'gm');
+            const regex = new RegExp(`(?=\\[(${commandIdentifiersString})\\])`, 'gm');
 
-            /** iterating loop as long as the copy of the markdown text exists and split the copy as soon as a domainCommand identifier is found */
-            while (copy.length) {
-                /** As soon as an identifier is with regEx the copy of the markdown text is split and saved into {array} command
+            /** iterating loop as long as the remainingMarkdownText of the markdown text exists and split the remainingMarkdownText as soon as a domainCommand identifier is found */
+            while (remainingMarkdownText.length) {
+                /** As soon as an identifier is with regEx the remainingMarkdownText of the markdown text is split and saved into {array} textWithCommandIdentifier
                  *  split: saves its values into an {array}
-                 *  limit 1: indicated that as soon as an identifier is found copy is split */
-                const [command] = copy.split(regex, 1);
+                 *  limit 1: indicated that as soon as an identifier is found remainingMarkdownText is split */
+                const [textWithCommandIdentifier] = remainingMarkdownText.split(regex, 1);
                 /** substring: reduces the {string} by the length in the brackets
-                 *  Split the copy by the length of {array} command to get the remaining array
-                 *  and save it into copy to start the loop again and search for further domainCommandIdentifiers
-                 *  when copy is empty the while loop will terminate*/
-                copy = copy.substring(command.length);
-                /** call the parseLineForDomainCommand for each extracted command
+                 *  Split the remainingMarkdownText by the length of {array} textWithCommandIdentifier to get the remaining array
+                 *  and save it into remainingMarkdownText to start the loop again and search for further domainCommandIdentifiers
+                 *  when remainingMarkdownText is empty the while loop will terminate*/
+                remainingMarkdownText = remainingMarkdownText.substring(textWithCommandIdentifier.length);
+                /** call the parseLineForDomainCommand for each extracted textWithCommandIdentifier
                 *   trim: reduced the whitespacing linebreaks */
-                const commandTextWithCommandIdentifier = this.parseLineForDomainCommand(command.trim());
+                const commandTextWithCommandIdentifier = this.parseLineForDomainCommand(textWithCommandIdentifier.trim());
                 /** push the commandTextWithCommandIdentifier into the commandTextsMappedToCommandIdentifiers*/
                 commandTextsMappedToCommandIdentifiers.push(commandTextWithCommandIdentifier);
             }
