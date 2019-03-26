@@ -1,36 +1,28 @@
 <div class="assessment-container">
     <jhi-alert></jhi-alert>
 
-    <div class="row">
-        <div class="col">
-            <h2>
-                Assessment
-                <span *ngIf="result && result.participation"
-                    >for Submission: {{ result.participation.student.firstName }} {{ result.participation.student.lastName }}</span
-                >
-            </h2>
+    <h2 class="top-container">
+        <div class="assessment-title row-container">
+            Assessment
+            <jhi-result *ngIf="result?.rated && result.participation"
+                [participation]="result.participation"></jhi-result>
         </div>
-        <div class="col text-right">
-            <span *ngIf="result && result.participation"><jhi-result [participation]="result.participation"></jhi-result></span>
+        <div class="control-container row-container">
             <button
                 class="btn btn-primary"
                 (click)="saveAssessment()"
-                [disabled]="
-                    !result?.feedbacks || !assessmentsAreValid || (result?.assessor && result.assessor.id !== userId && !isAuthorized)
-                "
+                [disabled]="!assessmentsAreValid || (result?.assessor && result.assessor.id !== userId && !isAuthorized)"
                 [hidden]="result && result.rated"
             >
-                Save Assessment
+                Save
             </button>
             <button
                 class="btn btn-success"
                 (click)="submit()"
-                [disabled]="
-                    !result?.feedbacks || !assessmentsAreValid || (result?.assessor && result.assessor.id !== userId && !isAuthorized)
-                "
+                [disabled]="!assessmentsAreValid || (result?.assessor && result.assessor.id !== userId && !isAuthorized)"
                 [hidden]="result && result.rated"
             >
-                Submit Assessment
+                Submit
             </button>
             <button
                 class="btn btn-danger"
@@ -40,53 +32,22 @@
             >
                 Override Assessment
             </button>
-            <div *ngIf="conflicts && conflicts.size > 0" class="custom-control custom-switch">
-                <input type="checkbox" class="custom-control-input" id="customSwitches" [(ngModel)]="ignoreConflicts" />
-                <label class="custom-control-label" for="customSwitches">Ignore Conflict</label>
-            </div>
+            <button
+                class="btn btn-success"
+                [disabled]="busy"
+                [hidden]="!result || !result.rated"
+                (click)="assessNextOptimal()"
+            >
+                <fa-icon *ngIf="busy" icon="spinner" [spin]="true">&nbsp;</fa-icon>
+                Next Submission
+            </button>
         </div>
-    </div>
-
-    <!--<h2>-->
-    <!--<span *ngIf="busy" style="color:grey"-->
-    <!--&gt;<fa-icon icon="spinner" [spin]="true"></fa-icon>&nbsp;<span>Please wait while finding the next submission!</span></span-->
-    <!--&gt;-->
-    <!--</h2>-->
-
-    <!--<div class="row" *ngIf="modelingExercise">-->
-    <!--<div class="col">-->
-    <!--<p class="mb-3">-->
-    <!--<strong>Exercise:</strong> {{ modelingExercise.title }}<br />-->
-    <!--<strong>Problem Statement:</strong> {{ modelingExercise.problemStatement }}-->
-    <!--</p>-->
-    <!--</div>-->
-    <!--<div class="col text-right">-->
-    <!--<span-->
-    <!--&gt;<h5><strong>Score:</strong> {{ totalScore | number: '1.0-2' }} / {{ modelingExercise.maxScore }}</h5></span-->
-    <!--&gt;-->
-    <!--<span *ngIf="result && result.assessor && result.assessor.id !== userId" style="color:red"-->
-    <!--&gt;<h6>Reviewer: {{ result.assessor.firstName + (isAuthorized ? '' : ' - submission locked') }}</h6></span-->
-    <!--&gt;-->
-    <!--</div>-->
-    <!--</div>-->
-
-    <!--<div>-->
-    <!--<button type="submit" (click)="previousState()" class="btn btn-info">-->
-    <!--<fa-icon icon="arrow-left"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back">Back</span>-->
-    <!--</button>-->
-    <!--<button-->
-    <!--*ngIf="(result?.rated && !done) || (result?.assessor && result.assessor.id !== userId && !result?.rated)"-->
-    <!--[disabled]="busy"-->
-    <!--class="btn btn-success"-->
-    <!--(click)="assessNextOptimal(0)"-->
-    <!--&gt;-->
-    <!--<fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;Assess next submission-->
-    <!--</button>-->
-    <!--</div>-->
-    <!--<br />-->
+    </h2>
 
     <div class="editor-container">
-        <jhi-apollon-diagram-tutor *ngIf="submission" [diagramType]="diagramType" [model]="submission.model"></jhi-apollon-diagram-tutor>
-        <jhi-assessment-instructions *ngIf="modelingExercise" [exercise]="modelingExercise"></jhi-assessment-instructions>
+        <jhi-apollon-diagram-tutor *ngIf="submission" [diagramType]="diagramType"
+            [model]="submission.model"></jhi-apollon-diagram-tutor>
+        <jhi-assessment-instructions *ngIf="modelingExercise"
+            [exercise]="modelingExercise"></jhi-assessment-instructions>
     </div>
 </div>

@@ -1,5 +1,29 @@
 $titlebar-height: 65px;
 
+.top-container{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.row-container{
+    display: flex;
+    align-items: center;
+}
+
+.assessment-title{
+    jhi-result{
+        padding-left: 25px;
+        font-size: 1rem;
+    }
+}
+
+.control-container{
+ button{
+     margin-left: 15px;
+ }
+}
+
 .assessment-container {
     display: flex;
     height: calc(100vh - 174px);
