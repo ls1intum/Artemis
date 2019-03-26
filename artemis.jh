@@ -417,8 +417,8 @@ entity Attachment {
     attachmentType AttachmentType
 }
 
-entity Conflict {
-    jsonElementId: String,
+entity ModelAssessmentConflict {
+    modelElementId: String,
     state: EscalationState,
 }
 
@@ -495,7 +495,7 @@ relationship ManyToOne {
     Notification{author} to User,
     SingleUserNotification{recipient} to User,
     GroupNotification{course} to Course,
-    Conflict{result} to ExerciseResult,
+    ModelAssessmentConflict{result} to ExerciseResult,
 }
 
 relationship ManyToMany {

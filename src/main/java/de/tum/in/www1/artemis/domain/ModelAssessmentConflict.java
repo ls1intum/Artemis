@@ -6,8 +6,8 @@ import javax.validation.constraints.Size;
 import de.tum.in.www1.artemis.domain.enumeration.EscalationState;
 
 @Entity
-@Table(name = "conflict")
-public class Conflict {
+@Table(name = "model_assessment_conflict")
+public class ModelAssessmentConflict {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -17,12 +17,12 @@ public class Conflict {
     private Result result;
 
     @Size(max = 50)
-    @Column(name = "jsonElementId")
-    private String jsonElementId;
+    @Column(name = "modelElementId")
+    private String modelElementId;
 
     @ElementCollection
     @CollectionTable(name="conflictingElementsResult")
-    @MapKeyColumn(name="jsonElementId")
+    @MapKeyColumn(name="modelElementId")
     private Map<String, Result> conflictingElementsResultMap;
 
     @Column(name = "state")
@@ -49,13 +49,13 @@ public class Conflict {
     }
 
 
-    public String getJsonElementId() {
-        return jsonElementId;
+    public String getModelElementId() {
+        return modelElementId;
     }
 
 
-    public void setJsonElementId(String jsonElementId) {
-        this.jsonElementId = jsonElementId;
+    public void setModelElementId(String modelElementId) {
+        this.modelElementId = modelElementId;
     }
 
 
