@@ -17,6 +17,16 @@
             <input required type="text" class="form-control" name="title" id="field_title"
                    [(ngModel)]="modelingExercise.title" />
         </div>
+        <div class="form-group position-relative">
+            <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.categories">Categories</label>
+            <jhi-category-selector [exerciseCategories]="exerciseCategories" [existingCategories]="existingCategories"(selectedCategories)="updateCategories($event)"></jhi-category-selector>
+        </div>
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.difficulty">Difficulty</label>
+            <div>
+                <jhi-difficulty-picker [exercise]="modelingExercise"></jhi-difficulty-picker>
+            </div>
+        </div>
         <div class="d-flex">
             <div class="form-group flex-grow-1">
                 <jhi-date-time-picker labelName="Release Date" [(ngModel)]="modelingExercise.releaseDate" name="releaseDate"></jhi-date-time-picker>
@@ -54,10 +64,10 @@
         </div>
     </div>
     <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">
+        <button id="modeling-back-cancel-button" type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">
             <fa-icon icon="ban"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
-        <button type="submit" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
+        <button id="modeling-save-button" type="submit" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
             <fa-icon icon="save"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
         </button>
     </div>

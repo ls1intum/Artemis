@@ -1,0 +1,28 @@
+<div class="card">
+
+    <div class="card-header bg-primary text-white">
+        <h3 class="card-title">
+            <fa-icon [icon]="['far', 'file-alt']"></fa-icon>
+            <span> &nbsp;{{selectedFile}}</span>
+        </h3>
+    </div>
+
+    <div class="card-body">
+        <ace-editor #editor
+                    [text]="editorFileSessions[selectedFile] ? editorFileSessions[selectedFile].code : ''"
+                    [mode]="editorMode"
+                    [readOnly]=false
+                    [autoUpdateContent]="true"
+                    [durationBeforeCallback]="800"
+                    (textChanged)="onFileTextChanged($event)"
+                    class="panel panel-default"
+                    style="display: block; width:100%; min-height: 500px; overflow: auto; line-height: 14px;"
+                    [hidden]="!selectedFile">
+        </ace-editor>
+
+        <p class="text-center lead text-muted" [hidden]="selectedFile" style="padding-top: 50px">
+            Select a file to get started!
+        </p>
+    </div>
+
+</div>

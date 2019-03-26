@@ -16,7 +16,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
@@ -31,7 +35,11 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -258,9 +266,10 @@ public class BambooService implements ContinuousIntegrationService {
             String message = getBambooClient().getPlanHelper().clonePlan(templateProject + "-" + templatePlan, toPlan, toPlan, "", "", true);
             log.info("Clone build plan " + toPlan + " was successful." + message);
         } catch (CliClient.ClientException clientException) {
-            log.error(clientException.getMessage(), clientException);
             if (clientException.getMessage().contains("already exists")) {
                 throw new BambooException(clientException.getMessage());
+            } else {
+                log.error(clientException.getMessage(), clientException);
             }
         } catch (CliClient.RemoteRestException e) {
             log.error(e.getMessage(), e);
@@ -353,7 +362,7 @@ public class BambooService implements ContinuousIntegrationService {
         //TODO: only save this result if it is newer (e.g. + 5s) than the last saved result for this participation --> this avoids saving exact same results multiple times
 
         Result result = new Result();
-        result.setRated(participation.getExercise().getDueDate() == null || ZonedDateTime.now().isBefore(participation.getExercise().getDueDate()));
+        result.setRatedIfNotExceeded(participation.getExercise().getDueDate(), ZonedDateTime.now());
         result.setAssessmentType(AssessmentType.AUTOMATIC);
         result.setSuccessful((boolean) buildResults.get("successful"));
         result.setResultString((String) buildResults.get("buildTestSummary"));
@@ -434,7 +443,7 @@ public class BambooService implements ContinuousIntegrationService {
             }
 
             Result result = new Result();
-            result.setRated(participation.getExercise().getDueDate() == null || ZonedDateTime.now().isBefore(participation.getExercise().getDueDate()));
+            result.setRatedIfNotExceeded(participation.getExercise().getDueDate(), ZonedDateTime.now());
             result.setAssessmentType(AssessmentType.AUTOMATIC);
             result.setSuccessful((Boolean) buildMap.get("successful"));
 

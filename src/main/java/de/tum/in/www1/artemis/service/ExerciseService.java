@@ -8,6 +8,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -47,7 +48,7 @@ public class ExerciseService {
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final Optional<VersionControlService> versionControlService;
     private final Optional<GitService> gitService;
-    private final StatisticService statisticService;
+    private final QuizStatisticService quizStatisticService;
     private final QuizScheduleService quizScheduleService;
 
     public ExerciseService(ExerciseRepository exerciseRepository,
@@ -57,7 +58,7 @@ public class ExerciseService {
                            Optional<ContinuousIntegrationService> continuousIntegrationService,
                            Optional<VersionControlService> versionControlService,
                            Optional<GitService> gitService,
-                           StatisticService statisticService,
+                           QuizStatisticService quizStatisticService,
                            QuizScheduleService quizScheduleService) {
         this.exerciseRepository = exerciseRepository;
         this.userService = userService;
@@ -66,7 +67,7 @@ public class ExerciseService {
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.gitService = gitService;
-        this.statisticService = statisticService;
+        this.quizStatisticService = quizStatisticService;
         this.quizScheduleService = quizScheduleService;
     }
 
@@ -157,8 +158,14 @@ public class ExerciseService {
         if (exercise.get() instanceof QuizExercise) {
             QuizExercise quizExercise = (QuizExercise) exercise.get();
             //eagerly load questions and statistic
-            quizExercise.getQuestions().size();
+            quizExercise.getQuizQuestions().size();
             quizExercise.getQuizPointStatistic().getId();
+        }
+        else if (exercise.get() instanceof ProgrammingExercise) {
+            ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise.get();
+            //eagerly load templateParticipation and solutionParticipation
+            programmingExercise.setTemplateParticipation((Participation)Hibernate.unproxy(programmingExercise.getTemplateParticipation()));
+            programmingExercise.setSolutionParticipation((Participation)Hibernate.unproxy(programmingExercise.getSolutionParticipation()));
         }
         return exercise.get();
     }
@@ -214,7 +221,7 @@ public class ExerciseService {
             quizScheduleService.clearQuizData(quizExercise.getId());
 
             // clean up the statistics
-            statisticService.recalculateStatistics(quizExercise);
+            quizStatisticService.recalculateStatistics(quizExercise);
         }
     }
 

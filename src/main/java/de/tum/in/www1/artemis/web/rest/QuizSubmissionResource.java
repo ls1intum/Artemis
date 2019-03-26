@@ -82,8 +82,15 @@ public class QuizSubmissionResource {
         // update and save submission
         Result result = quizSubmissionService.submitForPractice(quizSubmission, quizExercise, participation);
 
-        // return quizSubmission
-        quizSubmission.setSubmissionDate(result.getCompletionDate());
+        // remove some redundant or unnecessary data that is not needed on client side
+        for (SubmittedAnswer answer: quizSubmission.getSubmittedAnswers()) {
+            answer.getQuizQuestion().setQuizQuestionStatistic(null);
+        }
+
+        quizExercise.setQuizPointStatistic(null);
+        quizExercise.setCourse(null);
+
+        // return result with quizSubmission, participation and quiz exercise (including the solution)
         return ResponseEntity.ok(result);
     }
 

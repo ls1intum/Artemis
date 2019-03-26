@@ -55,7 +55,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             const exercise = this.participation.exercise;
 
             if (this.participation.results && this.participation.results.length > 0) {
-                if (exercise.type === ExerciseType.MODELING) {
+                if (exercise && exercise.type === ExerciseType.MODELING) {
                     // sort results by completionDate descending to ensure the newest result is shown
                     // this is important for modeling exercises since students can have multiple tries
                     // think about if this should be used for all types of exercises
@@ -80,8 +80,9 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
 
             if (exercise && exercise.type === ExerciseType.PROGRAMMING) {
                 this.accountService.identity().then(user => {
-                    // only subscribe for the currently logged in user
-                    if (user.id === this.participation.student.id && (exercise.dueDate == null || exercise.dueDate.isAfter(moment()))) {
+                    // only subscribe for the currently logged in user or if the participation is a template/solution participation and the student is at least instructor
+                    if ((this.participation.student && user.id === this.participation.student.id && (exercise.dueDate == null || exercise.dueDate.isAfter(moment())))
+                        || (this.participation.student == null && this.accountService.isAtLeastInstructorInCourse(exercise.course))) {
                         // subscribe for new results (e.g. when a programming exercise was automatically tested)
                         this.websocketChannelResults = `/topic/participation/${this.participation.id}/newResults`;
                         this.jhiWebsocketService.subscribe(this.websocketChannelResults);

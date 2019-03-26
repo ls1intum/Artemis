@@ -1,0 +1,22 @@
+<tag-input #categoryInput [ngModel]="exerciseCategories" theme='bootstrap' class="form-control tag-input"
+           name="categories" identifyBy="category" displayBy="category" [maxItems]='2' id="field_categories"
+           [clearOnBlur]="true"
+           (onAdd)="onItemAdded($event)"
+           (onBlur)="onBlur($event)"
+           (onRemove)="onItemRemove($event)">
+    <tag-input-dropdown [focusFirstElement]="true"
+                        identifyBy="category"
+                        displayBy="category"
+                        [zIndex]="10000"
+                        [autocompleteItems]="uniqueCategories"></tag-input-dropdown>
+    <ng-template let-item="item" let-index="index">
+        <div class="custom-tag" [ngStyle]="{backgroundColor: item.color}">
+                        <span (click)="openColorSelector($event, item)">
+                            {{ item.category }}
+                        </span>
+            <delete-icon (click)="categoryInput.onRemoveRequested(item, index)"></delete-icon>
+        </div>
+    </ng-template>
+</tag-input>
+<jhi-color-selector [tagColors]="categoryColors"
+                    (selectedColor)="onSelectedColor($event)"></jhi-color-selector>

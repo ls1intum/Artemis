@@ -1,0 +1,17 @@
+{
+    "arTeMiSApp": {
+        "instructorExerciseDashboard": {
+            "title": "Instructor Übungs-Dashboard",
+            "pageHeader": "Instructor Übungs-Dashboard für",
+            "back": "Zurück",
+            "noProblemStatement": "No problem statement available",
+            "informationAboutExercise": "Keine Problembeschreibung verfügbar",
+            "exerciseDueDate": "Übung zwei Termine",
+            "submissions": "Einreichungen",
+            "assessmentDueDate": "Assessment zwei Termine",
+            "assessments": "Assessments",
+            "open": "offen",
+            "leaderboardTitle": "Tutor Bestenliste für diese Übung"
+        }
+    }
+}

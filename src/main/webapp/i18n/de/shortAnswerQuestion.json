@@ -16,7 +16,7 @@
                 "title": "Short Answer Question"
             },
             "spots": "Spots",
-            "solutions": "Solutions",
+            "solutions": "Lösungen",
             "correctMappings": "Correct Mappings",
 
             "editor": {
@@ -25,7 +25,9 @@
                 "addSpot": "[-spot #] Add Spot",
                 "addOption": "[-option #] Add Answer Option",
                 "text": "Text",
-                "visual": "Visual"
+                "visual": "Visual",
+                "visualModeHeadline": "Visueller Modus",
+                "visualModeExplanation": "Bitte markieren Sie ein Wort und drücken Sie anschließend auf Add Spot um ein neuen Spot mit der zugehörigen Lösung zu generieren"
             }
         }
     }

@@ -4,24 +4,24 @@
     "relationships": [
         {
             "relationshipType": "one-to-many",
-            "relationshipName": "spots",
             "otherEntityName": "shortAnswerSpot",
-            "otherEntityRelationshipName": "question"
+            "otherEntityRelationshipName": "quizQuestion",
+            "relationshipName": "spots"
         },
         {
             "relationshipType": "one-to-many",
-            "relationshipName": "solutions",
             "otherEntityName": "shortAnswerSolution",
-            "otherEntityRelationshipName": "question"
+            "otherEntityRelationshipName": "quizQuestion",
+            "relationshipName": "solutions"
         },
         {
             "relationshipType": "one-to-many",
-            "relationshipName": "correctMappings",
             "otherEntityName": "shortAnswerMapping",
-            "otherEntityRelationshipName": "question"
+            "otherEntityRelationshipName": "quizQuestion",
+            "relationshipName": "correctMappings"
         }
     ],
-    "changelogDate": "20181107093810",
+    "changelogDate": "20190315161926",
     "entityTableName": "short_answer_question",
     "dto": "no",
     "pagination": "no",

@@ -13,7 +13,13 @@
                     <span *ngIf="exercise.dueDate" [ngClass]="exerciseStatusBadge" class="badge"
                           exercise.dueDate>{{exercise.dueDate | amTimeAgo}}</span>
                 </h4>
-                <!--<h4>Categories: Homework, Group exercise</h4>-->
+                <div class="d-md-flex" *ngIf="exercise.categories">
+                    <h4 class="mr-1">{{"arTeMiSApp.courseOverview.exerciseDetails.categories" | translate}}</h4>
+                    <h4 *ngFor="let category of exerciseCategories">
+                        <span class="badge text-white mr-1"
+                              [ngStyle]="{backgroundColor: category.color}">{{category.category}}</span>
+                    </h4>
+                </div>
             </div>
             <div class="col-4 d-none d-md-inline">
                 <div class="row">
@@ -22,13 +28,13 @@
                     <div class="col-6">
                         <h5>
                             {{exercise.type | exerciseTypeLabel}}
-                            <fa-icon [icon]="exerciseIcon.faIcon" placement="right"></fa-icon>
+                            <fa-icon [icon]="getIcon(exercise.type)" placement="right"></fa-icon>
                         </h5>
                     </div>
                 </div>
                 <div class="row">
                     <div class="col-6"><h5>{{"arTeMiSApp.courseOverview.exerciseDetails.level" | translate}}</h5></div>
-                    <div class="col-6"><h5>{{"N/A"}}</h5></div>
+                    <div class="col-6"><h5><jhi-difficulty-badge [exercise]="exercise"></jhi-difficulty-badge></h5></div>
                 </div>
                 <div class="row">
                     <div class="col-6">

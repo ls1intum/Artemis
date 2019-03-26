@@ -8,6 +8,7 @@ import { ClipboardModule } from 'ngx-clipboard';
 import { MomentModule } from 'angular2-moment';
 import { ArTEMiSSharedModule } from 'app/shared';
 import { ExerciseTypePipe } from 'app/entities/exercise/';
+import { SidePanelComponent } from 'app/components/side-panel/side-panel.component';
 
 import {
     CourseExerciseRowComponent,
@@ -20,9 +21,12 @@ import {
     OverviewCourseCardComponent,
     ExerciseActionButtonComponent,
     CourseExerciseDetailsComponent,
+    DifficultyBadgeComponent,
     ExerciseDetailsStudentActionsComponent
 } from './';
 import { ArTEMiSResultModule } from 'app/entities/result';
+import { SecuredImageComponent } from 'app/components/util/secured-image.component';
+import { ArTEMiSQuizModule } from 'app/quiz/participate';
 
 const ENTITY_STATES = [
     ...OVERVIEW_ROUTES
@@ -48,7 +52,9 @@ const ENTITY_STATES = [
         ExerciseActionButtonComponent,
         CourseGradeBookComponent,
         ExerciseDetailsStudentActionsComponent,
-        ExerciseTypePipe
+        DifficultyBadgeComponent,
+        ExerciseTypePipe,
+        SidePanelComponent
     ],
     entryComponents: [],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],

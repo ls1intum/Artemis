@@ -8,7 +8,7 @@ public class Policy {
 		this.context = context;
 	}
 
-	public void configure (){
+	public void configure() {
 		if(this.context.getDates().size() > 10) {
 			System.out.println("More than 10 dates, choosing merge sort!");
 			this.context.setSortAlgorithm(new MergeSort());

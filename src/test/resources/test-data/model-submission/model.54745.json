@@ -1,0 +1,315 @@
+{
+  "version": "1.0",
+  "entities": {
+    "allIds": [
+      "d83a8d0c-52b5-4ac4-b7c0-2051c3bd57c0",
+      "1d842153-ee27-434e-b8b1-1a5996db2cbd",
+      "f49e6a7e-59c1-44aa-994e-03f70198909d",
+      "8f79b134-aa9c-4a5a-b9d6-00517a8eaf5b",
+      "41c3d6da-2c68-431a-8c42-73fef2f5b148",
+      "f0008e87-165a-4992-94e0-889d5e2a3b0e"
+    ],
+    "byId": {
+      "d83a8d0c-52b5-4ac4-b7c0-2051c3bd57c0": {
+        "id": "d83a8d0c-52b5-4ac4-b7c0-2051c3bd57c0",
+        "kind": "CLASS",
+        "name": "Smartphone",
+        "position": {
+          "x": 70,
+          "y": 320
+        },
+        "size": {
+          "width": 200,
+          "height": 40
+        },
+        "attributes": [],
+        "methods": [],
+        "renderMode": {
+          "showAttributes": true,
+          "showMethods": true
+        }
+      },
+      "1d842153-ee27-434e-b8b1-1a5996db2cbd": {
+        "id": "1d842153-ee27-434e-b8b1-1a5996db2cbd",
+        "kind": "CLASS",
+        "name": "Internet",
+        "position": {
+          "x": 220,
+          "y": 430
+        },
+        "size": {
+          "width": 200,
+          "height": 70
+        },
+        "attributes": [],
+        "methods": [
+          {
+            "id": "22d11657-04dc-4385-983e-0c0f2de7bb0d",
+            "name": "+ selectStrategy()"
+          }
+        ],
+        "renderMode": {
+          "showAttributes": true,
+          "showMethods": true
+        }
+      },
+      "f49e6a7e-59c1-44aa-994e-03f70198909d": {
+        "id": "f49e6a7e-59c1-44aa-994e-03f70198909d",
+        "kind": "INTERFACE",
+        "name": "Internetstategy",
+        "position": {
+          "x": 510,
+          "y": 430
+        },
+        "size": {
+          "width": 200,
+          "height": 80
+        },
+        "attributes": [],
+        "methods": [
+          {
+            "id": "89f760ff-5676-43df-a61b-38db88469d0c",
+            "name": "+performAlogrithm()"
+          }
+        ],
+        "renderMode": {
+          "showAttributes": true,
+          "showMethods": true
+        }
+      },
+      "8f79b134-aa9c-4a5a-b9d6-00517a8eaf5b": {
+        "id": "8f79b134-aa9c-4a5a-b9d6-00517a8eaf5b",
+        "kind": "CLASS",
+        "name": "WiFi",
+        "position": {
+          "x": 450,
+          "y": 580
+        },
+        "size": {
+          "width": 200,
+          "height": 70
+        },
+        "attributes": [],
+        "methods": [
+          {
+            "id": "7e18d46f-2d9f-4b30-8df5-1e7418984d9f",
+            "name": "+performAlgorith()"
+          }
+        ],
+        "renderMode": {
+          "showAttributes": true,
+          "showMethods": true
+        }
+      },
+      "41c3d6da-2c68-431a-8c42-73fef2f5b148": {
+        "id": "41c3d6da-2c68-431a-8c42-73fef2f5b148",
+        "kind": "CLASS",
+        "name": "Mobile Data",
+        "position": {
+          "x": 710,
+          "y": 590
+        },
+        "size": {
+          "width": 200,
+          "height": 70
+        },
+        "attributes": [],
+        "methods": [
+          {
+            "id": "40ecb386-b902-456b-95ea-d4826c0aae50",
+            "name": "+ method()"
+          }
+        ],
+        "renderMode": {
+          "showAttributes": true,
+          "showMethods": true
+        }
+      },
+      "f0008e87-165a-4992-94e0-889d5e2a3b0e": {
+        "id": "f0008e87-165a-4992-94e0-889d5e2a3b0e",
+        "kind": "CLASS",
+        "name": "Internetpolicy",
+        "position": {
+          "x": 380,
+          "y": 290
+        },
+        "size": {
+          "width": 200,
+          "height": 40
+        },
+        "attributes": [],
+        "methods": [],
+        "renderMode": {
+          "showAttributes": true,
+          "showMethods": true
+        }
+      }
+    }
+  },
+  "relationships": {
+    "allIds": [
+      "87fd4ab0-842c-4cf5-8fb2-2cc3b5709f71",
+      "8c90fa0b-d64a-4820-b5cd-c2aaaa8ddc1d",
+      "79a7d53b-b48d-436d-8d8e-48726e4ed504",
+      "8fc8880c-1f95-46e0-9e20-088296f0e275",
+      "3eb12740-566f-425b-9427-d6d98b9eb5d8"
+    ],
+    "byId": {
+      "87fd4ab0-842c-4cf5-8fb2-2cc3b5709f71": {
+        "id": "87fd4ab0-842c-4cf5-8fb2-2cc3b5709f71",
+        "name": "Relationship",
+        "selected": false,
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "kind": "INHERITANCE",
+        "source": {
+          "entityId": "41c3d6da-2c68-431a-8c42-73fef2f5b148",
+          "multiplicity": null,
+          "role": null,
+          "edge": "TOP",
+          "edgeOffset": 0.5
+        },
+        "target": {
+          "entityId": "f49e6a7e-59c1-44aa-994e-03f70198909d",
+          "multiplicity": null,
+          "role": null,
+          "edge": "BOTTOM",
+          "edgeOffset": 0.5
+        },
+        "straightLine": false,
+        "owner": null,
+        "interactive": false
+      },
+      "8c90fa0b-d64a-4820-b5cd-c2aaaa8ddc1d": {
+        "id": "8c90fa0b-d64a-4820-b5cd-c2aaaa8ddc1d",
+        "name": "Relationship",
+        "selected": false,
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "kind": "INHERITANCE",
+        "source": {
+          "entityId": "8f79b134-aa9c-4a5a-b9d6-00517a8eaf5b",
+          "multiplicity": null,
+          "role": null,
+          "edge": "TOP",
+          "edgeOffset": 0.5
+        },
+        "target": {
+          "entityId": "f49e6a7e-59c1-44aa-994e-03f70198909d",
+          "multiplicity": null,
+          "role": null,
+          "edge": "BOTTOM",
+          "edgeOffset": 0.5
+        },
+        "straightLine": false,
+        "owner": null,
+        "interactive": false
+      },
+      "79a7d53b-b48d-436d-8d8e-48726e4ed504": {
+        "id": "79a7d53b-b48d-436d-8d8e-48726e4ed504",
+        "name": "Relationship",
+        "selected": false,
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "kind": "ASSOCIATION_UNIDIRECTIONAL",
+        "source": {
+          "entityId": "1d842153-ee27-434e-b8b1-1a5996db2cbd",
+          "multiplicity": null,
+          "role": null,
+          "edge": "RIGHT",
+          "edgeOffset": 0.5
+        },
+        "target": {
+          "entityId": "f49e6a7e-59c1-44aa-994e-03f70198909d",
+          "multiplicity": null,
+          "role": null,
+          "edge": "LEFT",
+          "edgeOffset": 0.5
+        },
+        "straightLine": false,
+        "owner": null,
+        "interactive": false
+      },
+      "8fc8880c-1f95-46e0-9e20-088296f0e275": {
+        "id": "8fc8880c-1f95-46e0-9e20-088296f0e275",
+        "name": "Relationship",
+        "selected": false,
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "kind": "DEPENDENCY",
+        "source": {
+          "entityId": "d83a8d0c-52b5-4ac4-b7c0-2051c3bd57c0",
+          "multiplicity": null,
+          "role": null,
+          "edge": "BOTTOM",
+          "edgeOffset": 0.5
+        },
+        "target": {
+          "entityId": "1d842153-ee27-434e-b8b1-1a5996db2cbd",
+          "multiplicity": null,
+          "role": null,
+          "edge": "TOP",
+          "edgeOffset": 0.5
+        },
+        "straightLine": false,
+        "owner": null,
+        "interactive": false
+      },
+      "3eb12740-566f-425b-9427-d6d98b9eb5d8": {
+        "id": "3eb12740-566f-425b-9427-d6d98b9eb5d8",
+        "name": "Relationship",
+        "selected": false,
+        "bounds": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "kind": "DEPENDENCY",
+        "source": {
+          "entityId": "f0008e87-165a-4992-94e0-889d5e2a3b0e",
+          "multiplicity": null,
+          "role": null,
+          "edge": "BOTTOM",
+          "edgeOffset": 0.5
+        },
+        "target": {
+          "entityId": "1d842153-ee27-434e-b8b1-1a5996db2cbd",
+          "multiplicity": null,
+          "role": null,
+          "edge": "TOP",
+          "edgeOffset": 0.5
+        },
+        "straightLine": false,
+        "owner": null,
+        "interactive": false
+      }
+    }
+  },
+  "interactiveElements": {
+    "allIds": []
+  },
+  "editor": {
+    "canvasSize": {
+      "width": 1600,
+      "height": 1600
+    },
+    "gridSize": 10
+  }
+}

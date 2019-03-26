@@ -2,12 +2,22 @@
     "arTeMiSApp": {
         "studentDashboard": {
             "title": "Deine aktuellen Kurse",
+            "exerciseTitle": "Aktuelle Übung von \"{{ course }}\" aktiv bis {{ date }}:",
             "cardTitle": "Deine aktuelle Punktzahl:",
             "cardNoExerciseLabel": "Keine Übung geplant",
-            "cardExerciseLabel": "Nächste Übung:"
+            "cardExerciseLabel": "Nächste Übung:",
+            "register": {
+                "signUp": "Für einen Kurs anmelden",
+                "registerSuccessful": "Anmeldung erfolgreich",
+                "signUpForCourse": "Für den ausgewählten Kurs anmelden",
+                "cancel": "Abbrechen",
+                "noCourse": "Keine Kurse für eine Registrierung verfügbar",
+                "pleaseSelectCourse": "# Wähle einen Kurs aus"
+            }
         },
         "courseOverview": {
             "noDescription": "Keine Beschreibung verfügbar",
+            "noCourseIcon": "Kein Kurs Icon verfügbar",
             "menu": {
                 "exercises": "Aufgaben",
                 "statistics": "Statistiken"
@@ -15,18 +25,32 @@
             "exerciseList": {
                 "noExerciseDate": "Kein Datum zugeordnet",
                 "exerciseGroupHeader": "Aufgaben: {{ total }}",
+                "currentExerciseGroupHeader": "Aktuelle Übung aktiv bis {{ date }}:",
                 "sortExercises": "Aufgaben sortieren",
                 "newFirst": "Neueste zuerst",
                 "oldFirst": "Älteste zuerst",
                 "noExercises": "Es gibt keine Aufgaben für diesen Kurs.",
                 "notReleased": "Nicht freigegeben",
                 "live": "Live",
-                "userNotStartedExercise":"Du hast mit der Aufgabe noch nicht angefangen.",
-                "quizNotStarted":"Das Quiz hat noch nicht begonnen.",
-                "userNotStartedQuiz":"Du hast mit dem Quiz noch nicht begonnen.",
-                "userNotParticipated":"Du hast bei diesem Live-Quiz nicht teilgenommen.",
-                "userParticipating":"Du nimmst gerade an diesem Quiz teil.",
-                "userSubmitted":"Du hast bereits abgegeben. Warte, bis das Quiz beendet ist, um die Ergebnisse zu sehen."
+                "userNotStartedExercise": "Du hast mit der Aufgabe noch nicht angefangen.",
+                "quizNotStarted": "Das Quiz hat noch nicht begonnen.",
+                "userNotStartedQuiz": "Du hast mit dem Quiz noch nicht begonnen.",
+                "userNotParticipated": "Du hast bei diesem Live-Quiz nicht teilgenommen.",
+                "userParticipating": "Du nimmst gerade an diesem Quiz teil.",
+                "userSubmitted": "Du hast bereits abgegeben. Warte, bis das Quiz beendet ist, um die Ergebnisse zu sehen.",
+                "details": {
+                    "courseInformation": "Kurs Informationen:",
+                    "totalExercises": "Aufgaben insgesamt:",
+                    "quizTotal": "Quiz Aufgaben insgesamt:",
+                    "modelingTotal": "Modelierungs Aufgaben insgesamt:",
+                    "programmingTotal": "Programmier Aufgaben insgesamt:",
+                    "textTotal": "Text Aufgaben insgesamt:",
+                    "file-uploadTotal": "Aufgaben mit Datei-Upload insgesamt:",
+                    "startDate": "Start:",
+                    "endDate": "Ende:",
+                    "upcomingDeadlines": "Bevorstehende Termine:",
+                    "noUpcomingExercises": "Aktuell gibt es keine anstehenden Übungen."
+                }
             },
             "statistics": {
                 "totalScore": "Gesamtpunktzahl",
@@ -38,6 +62,7 @@
             },
             "exerciseDetails": {
                 "dueDate": "Abgabedatum:",
+                "categories": "Kategorien:",
                 "exerciseType": "Aufgaben-Typ:",
                 "level": "Schwierigkeit:",
                 "exerciseStatus": "Aufgaben Status:",

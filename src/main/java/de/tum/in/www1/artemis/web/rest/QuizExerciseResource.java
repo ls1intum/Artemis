@@ -5,7 +5,7 @@ import de.tum.in.www1.artemis.domain.QuizExercise;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
-import de.tum.in.www1.artemis.service.StatisticService;
+import de.tum.in.www1.artemis.service.QuizStatisticService;
 import de.tum.in.www1.artemis.service.scheduled.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -39,18 +39,18 @@ public class QuizExerciseResource {
 
     private final QuizExerciseService quizExerciseService;
     private final CourseService courseService;
-    private final StatisticService statisticService;
+    private final QuizStatisticService quizStatisticService;
     private final AuthorizationCheckService authCheckService;
     private final QuizScheduleService quizScheduleService;
 
     public QuizExerciseResource(QuizExerciseService quizExerciseService,
                                 CourseService courseService,
-                                StatisticService statisticService,
+                                QuizStatisticService quizStatisticService,
                                 AuthorizationCheckService authCheckService,
                                 QuizScheduleService quizScheduleService) {
         this.quizExerciseService = quizExerciseService;
         this.courseService = courseService;
-        this.statisticService = statisticService;
+        this.quizStatisticService = quizStatisticService;
         this.authCheckService = authCheckService;
         this.quizScheduleService = quizScheduleService;
     }
@@ -161,7 +161,7 @@ public class QuizExerciseResource {
         List<QuizExercise> result = quizExerciseService.findByCourseId(courseId);
 
         for (QuizExercise quizExercise : result) {
-            quizExercise.setQuestions(null);
+            quizExercise.setQuizQuestions(null);
             //not required in the returned json body
             quizExercise.setParticipations(null);
             quizExercise.setCourse(null);
@@ -200,7 +200,7 @@ public class QuizExerciseResource {
         if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
             return forbidden();
         }
-        statisticService.recalculateStatistics(quizExercise);
+        quizStatisticService.recalculateStatistics(quizExercise);
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(quizExercise));
     }
 
@@ -223,13 +223,10 @@ public class QuizExerciseResource {
         if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
             return forbidden();
         }
-
-        // filter out information depending on quiz state
         quizExercise.applyAppropriateFilterForStudents();
 
-        // filter out the statistic information
-        quizExercise.setQuizPointStatistic(null);
-
+        // filter out information depending on quiz state
+        quizExercise.filterForStudentsDuringQuiz();
         return ResponseEntity.ok(quizExercise);
     }
 
@@ -375,20 +372,19 @@ public class QuizExerciseResource {
         //update QuizExercise
         quizExercise.reconnectJSONIgnoreAttributes();
 
-        //adjust existing results if an answer or and question was deleted and recalculate them
-        quizExerciseService.adjustResultsOnQuizChanges(quizExercise);
+        // needed in case the instructor adds a new solution to the question, the quizExercise has to be saved again so that no PersistencyExceptions can appear
+        QuizExercise updatedQuizExercise = quizExerciseService.save(quizExercise);
 
-        QuizExercise result = quizExerciseService.saveWithNoNewEntities(quizExercise);
+        //adjust existing results if an answer or and question was deleted and recalculate them
+        quizExerciseService.adjustResultsOnQuizChanges(updatedQuizExercise);
 
         if (updateOfResultsAndStatisticsNecessary) {
             // update Statistics
-            statisticService.recalculateStatistics(quizExercise);
+            quizStatisticService.recalculateStatistics(updatedQuizExercise);
         }
-
 
         return ResponseEntity.ok()
             .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, quizExercise.getId().toString()))
-            .body(result);
+            .body(updatedQuizExercise);
     }
-
 }

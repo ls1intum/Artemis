@@ -1,6 +1,10 @@
 package de.tum.in.www1.artemis.service;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
@@ -17,18 +21,15 @@ import java.util.stream.Collectors;
 public class TextAssessmentService extends AssessmentService {
 
     private final FeedbackRepository feedbackRepository;
-    private final TextExerciseService textExerciseService;
     private final TextSubmissionRepository textSubmissionRepository;
     private final UserService userService;
 
     public TextAssessmentService(FeedbackRepository feedbackRepository,
                                  ResultRepository resultRepository,
-                                 TextExerciseService textExerciseService,
                                  TextSubmissionRepository textSubmissionRepository,
                                  UserService userService) {
         super(resultRepository);
         this.feedbackRepository = feedbackRepository;
-        this.textExerciseService = textExerciseService;
         this.textSubmissionRepository = textSubmissionRepository;
         this.userService = userService;
     }
@@ -47,7 +48,7 @@ public class TextAssessmentService extends AssessmentService {
         Result result = saveAssessment(resultId, textAssessment);
         Double calculatedScore = calculateTotalScore(textAssessment);
 
-        return prepareSubmission(result, textExercise, calculatedScore);
+        return submitResult(result, textExercise, calculatedScore);
     }
 
     /**
@@ -73,25 +74,16 @@ public class TextAssessmentService extends AssessmentService {
             textSubmissionRepository.save(textSubmission);
         }
 
-        /*
-         * write assessment to file system
-         */
-
-        // delete removed feedback
-        List<Feedback> deprecatedFeedback = feedbackRepository.findByResult(result).stream()
-            .filter(f -> textAssessment.stream().noneMatch(a -> a.referenceEquals(f)))
-            .collect(Collectors.toList());
-        feedbackRepository.deleteAll(deprecatedFeedback);
-
-        // update existing and save new
+        // Note: If there is old feedback that gets removed here and not added again in the for-loop, it will also be
+        //       deleted in the database because of the 'orphanRemoval = true' flag.
+        result.getFeedbacks().clear();
         for (Feedback feedback : textAssessment) {
-            feedback.setResult(result);
-            result.addFeedback(feedback);
+            feedback.setPositive(feedback.getCredits() >= 0);
             feedback.setType(FeedbackType.MANUAL);
+            result.addFeedback(feedback);
         }
-        this.feedbackRepository.saveAll(textAssessment);
-
         result.setHasFeedback(false);
+
         resultRepository.save(result);
         return result;
     }
@@ -107,6 +99,7 @@ public class TextAssessmentService extends AssessmentService {
      * @param assessments    the List of Feedback
      * @return the total score
      */
+    // TODO CZ: move to AssessmentService class, as it's the same for modeling and text exercises (i.e. total score is sum of feedback credits) apart from rounding, but maybe also good for text exercises?
     private Double calculateTotalScore(List<Feedback> assessments) {
         return assessments.stream().mapToDouble(Feedback::getCredits).sum();
     }

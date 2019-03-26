@@ -26,6 +26,10 @@
             "fieldType": "ZonedDateTime"
         },
         {
+            "fieldName": "assessmentDueDate",
+            "fieldType": "ZonedDateTime"
+        },
+        {
             "fieldName": "maxScore",
             "fieldType": "Double"
         },
@@ -42,18 +46,43 @@
     "relationships": [
         {
             "relationshipType": "one-to-many",
-            "relationshipName": "participations",
             "otherEntityName": "participation",
-            "otherEntityRelationshipName": "exercise"
+            "otherEntityRelationshipName": "exercise",
+            "relationshipName": "participations"
+        },
+        {
+            "relationshipType": "one-to-many",
+            "otherEntityName": "tutorParticipation",
+            "otherEntityRelationshipName": "assessedExercise",
+            "relationshipName": "tutorParticipations"
+        },
+        {
+            "relationshipType": "one-to-many",
+            "otherEntityName": "exampleSubmission",
+            "otherEntityRelationshipName": "exercise",
+            "relationshipName": "exampleSubmissions"
+        },
+        {
+            "relationshipType": "one-to-many",
+            "otherEntityName": "attachment",
+            "otherEntityRelationshipName": "exercise",
+            "relationshipName": "attachments"
+        },
+        {
+            "relationshipType": "one-to-many",
+            "otherEntityName": "studentQuestion",
+            "otherEntityRelationshipName": "exercise",
+            "relationshipName": "studentQuestions"
         },
         {
             "relationshipType": "many-to-one",
-            "relationshipName": "course",
             "otherEntityName": "course",
-            "otherEntityField": "title"
+            "otherEntityRelationshipName": "exercises",
+            "relationshipName": "course",
+            "otherEntityField": "id"
         }
     ],
-    "changelogDate": "20180927081352",
+    "changelogDate": "20190315161911",
     "entityTableName": "exercise",
     "dto": "no",
     "pagination": "infinite-scroll",

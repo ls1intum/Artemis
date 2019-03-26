@@ -5,7 +5,7 @@ import { SERVER_API_URL } from '../../app.constants';
 
 import * as moment from 'moment';
 
-import { Exercise } from './exercise.model';
+import { Exercise, ExerciseCategory } from './exercise.model';
 import { LtiConfiguration } from '../lti-configuration';
 import { ParticipationService } from '../participation/participation.service';
 import { map } from 'rxjs/operators';
@@ -68,9 +68,15 @@ export class ExerciseService {
         return this.http.get<Exercise>(`${this.resourceUrl}/${id}/results`);
     }
 
-    getNextExerciseForDays(exercises: Exercise[], delay = 7): Exercise {
+    getNextExerciseForDays(exercises: Exercise[], delayInDays = 7): Exercise {
         return exercises.find(exercise => {
-            return moment().isBefore(exercise.dueDate) && moment().add(delay, 'day').isSameOrAfter(exercise.dueDate);
+            return moment().isBefore(exercise.dueDate) && moment().add(delayInDays, 'day').isSameOrAfter(exercise.dueDate);
+        });
+    }
+
+    getNextExerciseForHours(exercises: Exercise[], delayInHours = 12): Exercise {
+        return exercises.find(exercise => {
+            return moment().isBefore(exercise.dueDate) && moment().add(delayInHours, 'hours').isSameOrAfter(exercise.dueDate);
         });
     }
 
@@ -117,6 +123,17 @@ export class ExerciseService {
             });
         }
         return res;
+    }
+
+    convertExerciseCategoriesFromServer(exercise: Exercise): ExerciseCategory[] {
+        if (!exercise.categories) {
+            return [];
+        }
+        return exercise.categories.map(el => JSON.parse(el));
+    }
+
+    convertExerciseCategoriesAsStringFromServer(categories: string[]): ExerciseCategory[] {
+        return categories.map(el => JSON.parse(el));
     }
 
     getForTutors(exerciseId: number): Observable<HttpResponse<Exercise>> {

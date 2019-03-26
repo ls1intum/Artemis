@@ -6,13 +6,13 @@ import { Observable } from 'rxjs/Observable';
 import { JhiEventManager } from 'ng-jhipster';
 
 import { ArTEMiSTestModule } from '../../../test.module';
-import { StatisticCounterDialogComponent } from '../../../../../../main/webapp/app/entities/statistic-counter/statistic-counter-dialog.component';
-import { StatisticCounterService } from '../../../../../../main/webapp/app/entities/statistic-counter/statistic-counter.service';
-import { StatisticCounter } from '../../../../../../main/webapp/app/entities/statistic-counter/statistic-counter.model';
+import { StatisticCounterDialogComponent } from '../../../../../../main/webapp/app/entities/quiz-statistic-counter/statistic-counter-dialog.component';
+import { StatisticCounterService } from '../../../../../../main/webapp/app/entities/quiz-statistic-counter/statistic-counter.service';
+import { QuizStatisticCounter } from '../../../../../../main/webapp/app/entities/quiz-statistic-counter/quiz-statistic-counter.model';
 
 describe('Component Tests', () => {
 
-    describe('StatisticCounter Management Dialog Component', () => {
+    describe('QuizStatisticCounter Management Dialog Component', () => {
         let comp: StatisticCounterDialogComponent;
         let fixture: ComponentFixture<StatisticCounterDialogComponent>;
         let service: StatisticCounterService;
@@ -44,7 +44,7 @@ describe('Component Tests', () => {
                 inject([],
                     fakeAsync(() => {
                         // GIVEN
-                        const entity = new StatisticCounter(123);
+                        const entity = new QuizStatisticCounter(123);
                         spyOn(service, 'update').and.returnValue(Observable.of(new HttpResponse({body: entity})));
                         comp.statisticCounter = entity;
                         // WHEN
@@ -64,7 +64,7 @@ describe('Component Tests', () => {
                 inject([],
                     fakeAsync(() => {
                         // GIVEN
-                        const entity = new StatisticCounter();
+                        const entity = new QuizStatisticCounter();
                         spyOn(service, 'create').and.returnValue(Observable.of(new HttpResponse({body: entity})));
                         comp.statisticCounter = entity;
                         // WHEN

@@ -9,6 +9,7 @@ import { ActivatedRoute } from '@angular/router';
 import * as moment from 'moment';
 import { CourseService } from '../course';
 import { ExerciseComponent } from 'app/entities/exercise/exercise.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-quiz-exercise',
@@ -28,13 +29,14 @@ export class QuizExerciseComponent extends ExerciseComponent {
 
     constructor(
         courseService: CourseService,
+        translateService: TranslateService,
         private quizExerciseService: QuizExerciseService,
         private jhiAlertService: JhiAlertService,
         eventManager: JhiEventManager,
         private accountService: AccountService,
         route: ActivatedRoute
     ) {
-        super(courseService, route, eventManager);
+        super(courseService, translateService, route, eventManager);
 
     }
 
@@ -161,7 +163,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
     exportQuizById(quizExerciseId: number, exportAll: boolean) {
         this.quizExerciseService.find(quizExerciseId).subscribe((res: HttpResponse<QuizExercise>) => {
             const exercise = res.body;
-            this.quizExerciseService.exportQuiz(exercise.questions, exportAll);
+            this.quizExerciseService.exportQuiz(exercise.quizQuestions, exportAll);
         });
     }
 

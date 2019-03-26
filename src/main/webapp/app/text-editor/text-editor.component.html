@@ -52,4 +52,12 @@
             </div>
         </ng-template>
     </div>
+
+    <div class="row" *ngIf="result">
+            <button class="btn btn-primary" (click)="showComplaintForm = !showComplaintForm">{{'arTeMiSApp.complaint.moreInfo' | translate}}</button>
+    </div>
+
+    <div class="row" *ngIf="showComplaintForm">
+        <jhi-complaint-form [resultId]="result.id" class="col-12"></jhi-complaint-form>
+    </div>
 </div>

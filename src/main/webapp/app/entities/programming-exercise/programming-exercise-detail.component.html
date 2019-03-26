@@ -3,6 +3,7 @@
         <div *ngIf="programmingExercise">
             <h2><span jhiTranslate="arTeMiSApp.programmingExercise.detail.title">Programming Exercise</span> {{programmingExercise.id}}</h2>
             <hr>
+            <jhi-alert></jhi-alert>
             <jhi-alert-error></jhi-alert-error>
             <dl class="row-md jh-entity-details">
                 <dt><span jhiTranslate="arTeMiSApp.exercise.title">Title</span></dt>
@@ -65,6 +66,14 @@
                 <dd>
                     <a [routerLink]="['/', { outlets: { popup: 'exercise/'+ programmingExercise.id + '/lti-configuration'} }]">LTI Configuration</a>
                 </dd>
+                <dt><span jhiTranslate="arTeMiSApp.programmingExercise.templateResult">Template Result</span></dt>
+                <dd>
+                    <div *ngIf="programmingExercise.templateParticipation.results"><jhi-result [participation]="programmingExercise.templateParticipation"></jhi-result></div>
+                </dd>
+                <dt><span jhiTranslate="arTeMiSApp.programmingExercise.solutionResult">Solution Result</span></dt>
+                <dd>
+                    <div *ngIf="programmingExercise.solutionParticipation.results"><jhi-result [participation]="programmingExercise.solutionParticipation"></jhi-result></div>
+                </dd>
             </dl>
 
             <button type="submit"
@@ -75,9 +84,16 @@
 
             <button type="button"
                     [routerLink]="['/course', programmingExercise.course.id,'programming-exercise', programmingExercise.id, 'edit']"
-                    class="btn btn-primary">
+                    class="btn btn-primary mr-1">
                 <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
             </button>
+
+            <button type="button" *ngIf="programmingExercise.programmingLanguage == JAVA"
+                    (click)="generateStructureOracle()"
+                    class="btn btn-secondary mr-1">
+                <span>Update Structure Test Oracle</span>
+            </button>
+
         </div>
     </div>
 </div>

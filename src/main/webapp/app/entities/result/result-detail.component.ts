@@ -3,7 +3,7 @@ import { Result, ResultService } from './';
 import { RepositoryService } from '../repository/repository.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Feedback } from '../feedback/index';
-import { BuildLogEntry } from '../../entities/build-log';
+import { BuildLogEntryArray } from '../../entities/build-log';
 
 // Modal -> Result details view
 @Component({
@@ -14,7 +14,7 @@ export class ResultDetailComponent implements OnInit {
     @Input() result: Result;
     isLoading: boolean;
     feedbackList: Feedback[];
-    buildLogs: BuildLogEntry[];
+    buildLogs: BuildLogEntryArray;
 
     constructor(public activeModal: NgbActiveModal,
                 private resultService: ResultService,
@@ -27,7 +27,7 @@ export class ResultDetailComponent implements OnInit {
             if (!this.feedbackList || this.feedbackList.length === 0) {
                 // If we don't have received any feedback, we fetch the buid log outputs
                 this.repositoryService.buildlogs(this.result.participation.id).subscribe(repoResult => {
-                    this.buildLogs = repoResult;
+                    this.buildLogs = new BuildLogEntryArray(...repoResult);
                     this.isLoading = false;
                 });
             } else {

@@ -5,11 +5,11 @@ import { Observable, of } from 'rxjs';
 import { JhiEventManager } from 'ng-jhipster';
 
 import { ArTeMiSTestModule } from '../../../test.module';
-import { StatisticDeleteDialogComponent } from 'app/entities/statistic/statistic-delete-dialog.component';
-import { StatisticService } from 'app/entities/statistic/statistic.service';
+import { StatisticDeleteDialogComponent } from 'app/entities/quiz-statistic/statistic-delete-dialog.component';
+import { StatisticService } from 'app/entities/quiz-statistic/statistic.service';
 
 describe('Component Tests', () => {
-    describe('Statistic Management Delete Component', () => {
+    describe('QuizStatistic Management Delete Component', () => {
         let comp: StatisticDeleteDialogComponent;
         let fixture: ComponentFixture<StatisticDeleteDialogComponent>;
         let service: StatisticService;

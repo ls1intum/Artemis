@@ -62,7 +62,7 @@ dependencyManagement {
 defaultTasks 'bootRun'
 
 group = 'de.tum.in.www1.artemis'
-version = '2.5.0'
+version = '2.6.0'
 description = 'Automated Assessment Management System for Interactive Learning'
 
 bootWar {
@@ -153,13 +153,13 @@ dependencies {
 
     compile fileTree(dir: 'libs', include: '*.jar')
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
-    compile group: 'org.eclipse.jgit', name: 'org.eclipse.jgit', version: '5.2.1.201812262042-r'
+    compile group: 'org.eclipse.jgit', name: 'org.eclipse.jgit', version: '5.3.0.201903130848-r'
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
     compile group: 'net.sourceforge.plantuml', name: 'plantuml', version: '8059'
     compile "org.imsglobal:basiclti-util:1.2.0"
     compile "org.jasypt:jasypt:1.9.2"
 
-    compile group: 'com.atlassian.bamboo', name: 'bamboo-specs', version: '6.7.2'
+    compile group: 'com.atlassian.bamboo', name: 'bamboo-specs', version: '6.8.1'
 
     // Use ", version: jhipster_dependencies_version, changing: true" if you want
     // to use a SNAPSHOT release instead of a stable release
@@ -218,29 +218,32 @@ dependencies {
     compile "mysql:mysql-connector-java"
 //    liquibaseRuntime "mysql:mysql-connector-java"
     compile "org.mapstruct:mapstruct-jdk8:${mapstruct_version}"
+    //TODO: instead of com.google.code.gson, we might want to use Jackson to reduce the number of json parsing frameworks
     compile group: 'com.google.code.gson', name: 'gson', version: '2.8.5'
+    compile group: 'com.thoughtworks.qdox', name: 'qdox', version: '2.0-M10'
+
     annotationProcessor "org.mapstruct:mapstruct-processor:${mapstruct_version}"
     annotationProcessor "org.hibernate:hibernate-jpamodelgen"
     annotationProcessor ("org.springframework.boot:spring-boot-configuration-processor") {
         exclude group: 'com.vaadin.external.google', module: 'android-json'
     }
-    testCompile "com.jayway.jsonpath:json-path"
     testCompile ("org.springframework.boot:spring-boot-starter-test") {
         exclude group: 'com.vaadin.external.google', module: 'android-json'
     }
     testCompile "org.springframework.security:spring-security-test"
-    testCompile "org.springframework.boot:spring-boot-test"
-    testCompile "org.assertj:assertj-core:3.12.1"
-    testCompile "junit:junit"
     testCompile "org.mockito:mockito-core:2.24.5"
     testCompile "com.mattbertolini:liquibase-slf4j"
-    testCompile "org.hamcrest:hamcrest-library"
     testCompile "com.h2database:h2"
+    testCompile 'org.awaitility:awaitility:3.1.6'
     //jhipster-needle-gradle-dependency - JHipster will add additional dependencies here
 }
 
 task cleanResources(type: Delete) {
     delete 'build/resources'
+}
+
+task executeTests (type: Exec) {
+ commandLine './gradlew', 'test', '-x', 'webpackBuildDev', '-x', 'webpack'
 }
 
 wrapper {

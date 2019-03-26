@@ -13,12 +13,13 @@
     "relationships": [
         {
             "relationshipType": "many-to-one",
-            "relationshipName": "question",
             "otherEntityName": "shortAnswerQuestion",
+            "otherEntityRelationshipName": "solutions",
+            "relationshipName": "quizQuestion",
             "otherEntityField": "id"
         }
     ],
-    "changelogDate": "20181107093812",
+    "changelogDate": "20190315161928",
     "entityTableName": "short_answer_solution",
     "dto": "no",
     "pagination": "no",

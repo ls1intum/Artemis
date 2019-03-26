@@ -1,6 +1,8 @@
 import { BaseEntity } from 'app/shared';
 import { Exercise } from '../exercise';
 import { Moment } from 'moment';
+import { Lecture } from 'app/entities/lecture';
+import { TutorGroup } from 'app/entities/tutor-group';
 
 export class Course implements BaseEntity {
     public id: number;
@@ -12,10 +14,15 @@ export class Course implements BaseEntity {
     public instructorGroupName: string;
     public startDate: Moment;
     public endDate: Moment;
+    public color: string;
+    public courseIcon: string;
     public onlineCourse = false; // default value
+    public registrationEnabled = false; // default value
     public maxComplaints: number;
 
     public exercises: Exercise[];
+    public lectures: Lecture[];
+    public tutorGroups: TutorGroup[];
 
     // helper attributes
     public isAtLeastTutor: boolean;
@@ -25,3 +32,19 @@ export class Course implements BaseEntity {
 
     constructor() {}
 }
+
+export type StatsForInstructorDashboard = {
+    numberOfStudents: number;
+    numberOfSubmissions: number;
+    numberOfTutors: number;
+    numberOfAssessments: number;
+    numberOfComplaints: number;
+    numberOfOpenComplaints: number;
+};
+
+export type StatsForTutorDashboard = {
+    numberOfAssessments: number;
+    numberOfTutorAssessments: number;
+    numberOfComplaints: number;
+    numberOfSubmissions: number;
+};

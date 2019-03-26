@@ -56,6 +56,7 @@ public class QuizSubmissionService {
         // update submission properties
         quizSubmission.setSubmitted(true);
         quizSubmission.setType(SubmissionType.MANUAL);
+        quizSubmission.setSubmissionDate(ZonedDateTime.now());
 
         // calculate scores
         quizSubmission.calculateAndUpdateScores(quizExercise);

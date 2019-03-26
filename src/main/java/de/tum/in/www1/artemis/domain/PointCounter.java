@@ -15,7 +15,7 @@ import java.util.Objects;
 @Entity
 @DiscriminatorValue(value="PC")
 //@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-public class PointCounter extends StatisticCounter implements Serializable {
+public class PointCounter extends QuizStatisticCounter implements Serializable {
 
     private static final long serialVersionUID = 1L;
 

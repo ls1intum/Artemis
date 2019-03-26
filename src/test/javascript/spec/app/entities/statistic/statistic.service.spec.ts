@@ -4,11 +4,11 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { take, map } from 'rxjs/operators';
-import { StatisticService } from 'app/entities/statistic/statistic.service';
+import { StatisticService } from 'app/entities/quiz-statistic/statistic.service';
 import { IStatistic, Statistic } from 'app/shared/model/statistic.model';
 
 describe('Service Tests', () => {
-    describe('Statistic Service', () => {
+    describe('QuizStatistic Service', () => {
         let injector: TestBed;
         let service: StatisticService;
         let httpMock: HttpTestingController;
@@ -36,7 +36,7 @@ describe('Service Tests', () => {
                 req.flush(JSON.stringify(returnedFromService));
             });
 
-            it('should create a Statistic', async () => {
+            it('should create a QuizStatistic', async () => {
                 const returnedFromService = Object.assign(
                     {
                         id: 0
@@ -52,7 +52,7 @@ describe('Service Tests', () => {
                 req.flush(JSON.stringify(returnedFromService));
             });
 
-            it('should update a Statistic', async () => {
+            it('should update a QuizStatistic', async () => {
                 const returnedFromService = Object.assign(
                     {
                         released: true,
@@ -71,7 +71,7 @@ describe('Service Tests', () => {
                 req.flush(JSON.stringify(returnedFromService));
             });
 
-            it('should return a list of Statistic', async () => {
+            it('should return a list of QuizStatistic', async () => {
                 const returnedFromService = Object.assign(
                     {
                         released: true,
@@ -93,7 +93,7 @@ describe('Service Tests', () => {
                 httpMock.verify();
             });
 
-            it('should delete a Statistic', async () => {
+            it('should delete a QuizStatistic', async () => {
                 const rxPromise = service.delete(123).subscribe(resp => expect(resp.ok));
 
                 const req = httpMock.expectOne({ method: 'DELETE' });
