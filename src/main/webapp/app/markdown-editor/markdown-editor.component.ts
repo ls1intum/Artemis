@@ -224,23 +224,23 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
 
     /**
      * @function parseLineForDomainCommand
-     * @desc Couple each textLine with the domainCommandIdentifier to emit that to the parent component for the value assignment
-     *       1. Check which domainCommand identifier is contained within the textLine
-     *       2. Remove the domainCommand identifier from the textLine
-     *       3. Create an array with first element textLine and second element the domainCommand identifier
-     * @param textLine {string} from the parse function
-     * @return array of the textLine with the domainCommand identifier
+     * @desc Couple each text with the domainCommandIdentifier to emit that to the parent component for the value assignment
+     *       1. Check which domainCommand identifier is contained within the text
+     *       2. Remove the domainCommand identifier from the text
+     *       3. Create an array with first element text and second element the domainCommand identifier
+     * @param text {string} from the parse function
+     * @return array of the text with the domainCommand identifier
      */
-    private parseLineForDomainCommand = (textLine: string): [string, DomainCommand] => {
+    private parseLineForDomainCommand = (text: string): [string, DomainCommand] => {
         for (const domainCommand of this.domainCommands) {
             const possibleOpeningCommandIdentifier = [domainCommand.getOpeningIdentifier(), domainCommand.getOpeningIdentifier().toLowerCase(), domainCommand.getOpeningIdentifier().toUpperCase()];
-            if (possibleOpeningCommandIdentifier.some(identifier => textLine.indexOf(identifier) !== -1)) {
-                // TODO when closingIdentifiers are used write a method to extract them from the textLine
-                const trimmedLineWithoutIdentifier = possibleOpeningCommandIdentifier.reduce((line, identifier) => line.replace(identifier, ''), textLine).trim();
+            if (possibleOpeningCommandIdentifier.some(identifier => text.indexOf(identifier) !== -1)) {
+                // TODO when closingIdentifiers are used write a method to extract them from the text
+                const trimmedLineWithoutIdentifier = possibleOpeningCommandIdentifier.reduce((line, identifier) => line.replace(identifier, ''), text).trim();
                         return [trimmedLineWithoutIdentifier, domainCommand];
                 }
         }
-        return [textLine.trim(), null];
+        return [text.trim(), null];
     };
 
     /**
