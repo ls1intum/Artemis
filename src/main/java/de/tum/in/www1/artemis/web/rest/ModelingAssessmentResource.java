@@ -1,25 +1,17 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
+import java.util.*;
+import org.slf4j.*;
+import org.springframework.http.*;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.service.compass.conflict.Conflict;
 import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.Set;
-
+import io.swagger.annotations.*;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.notFound;
 
@@ -43,6 +35,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
     private final ModelingAssessmentService modelingAssessmentService;
     private final ModelingSubmissionService modelingSubmissionService;
 
+
     public ModelingAssessmentResource(
         AuthorizationCheckService authCheckService,
         UserService userService,
@@ -61,6 +54,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
         this.modelingSubmissionService = modelingSubmissionService;
     }
 
+
     @DeleteMapping("/exercises/{exerciseId}/optimal-model-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<String> resetOptimalModels(@PathVariable Long exerciseId) {
@@ -70,26 +64,26 @@ public class ModelingAssessmentResource extends AssessmentResource {
         return ResponseEntity.noContent().build();
     }
 
+
+    //TODO MJ add api documentation (returns list of submission ids as array)
     @GetMapping("/exercises/{exerciseId}/optimal-model-submissions")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional
-    public ResponseEntity<String> getNextOptimalModelSubmissions(@PathVariable Long exerciseId) {
+    public ResponseEntity<Long[]> getNextOptimalModelSubmissions(@PathVariable Long exerciseId) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         checkAuthorization(modelingExercise);
-
         // TODO: we need to make sure that per participation there is only one optimalModel
         Set<Long> optimalModelSubmissions = compassService.getModelsWaitingForAssessment(exerciseId);
-        JsonArray response = new JsonArray();
-        for (Long optimalModelSubmissionId : optimalModelSubmissions) {
-            JsonObject entry = new JsonObject();
-            response.add(entry);
-            entry.addProperty("id", optimalModelSubmissionId);
+        if (optimalModelSubmissions.isEmpty()) {
+            return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(response.toString());
+        return ResponseEntity.ok(optimalModelSubmissions.toArray(new Long[]{}));
     }
 
+
     @GetMapping("/modeling-submissions/{submissionId}/partial-assessment")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")//TODO MJ better path "/modeling-submissions/{submissionId}/result"?
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+//TODO MJ better path "/modeling-submissions/{submissionId}/result"?
     // TODO MJ merge with getAssessmentBySubmissionId() ?
     // Note: This endpoint is currently not used and not fully tested after migrating UML models and modeling
     //       submissions from file system to database.
@@ -111,6 +105,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
         }
     }
 
+
     @GetMapping("/modeling-submissions/{submissionId}/result")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Result> getAssessmentBySubmissionId(@PathVariable Long submissionId) {
@@ -127,6 +122,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
             return notFound();
         }
     }
+
 
     @ResponseStatus(HttpStatus.OK)
     @ApiResponses({
@@ -166,6 +162,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
         }
         return ResponseEntity.ok(result);
     }
+
 
     @Override
     String getEntityName() {
