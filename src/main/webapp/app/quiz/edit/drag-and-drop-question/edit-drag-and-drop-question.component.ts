@@ -828,7 +828,6 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
      */
     domainCommandsFound(domainCommands: [string, DomainCommand][]): void {
         this.cleanupQuestion();
-
         for (const  [textLine, command]  of domainCommands)  {
             if (command === null && textLine.length > 0) {
                 this.question.text = textLine;

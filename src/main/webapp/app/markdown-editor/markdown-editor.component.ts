@@ -235,7 +235,7 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
         for (const domainCommand of this.domainCommands) {
             const possibleOpeningCommandIdentifier = [domainCommand.getOpeningIdentifier(), domainCommand.getOpeningIdentifier().toLowerCase(), domainCommand.getOpeningIdentifier().toUpperCase()];
             if (possibleOpeningCommandIdentifier.some(identifier => textLine.indexOf(identifier) !== -1)) {
-                //TODO when closingIdentifiers are used write a method to extract them from the textLine
+                // TODO when closingIdentifiers are used write a method to extract them from the textLine
                 const trimmedLineWithoutIdentifier = possibleOpeningCommandIdentifier.reduce((line, identifier) => line.replace(identifier, ''), textLine).trim();
                         return [trimmedLineWithoutIdentifier, domainCommand];
                 }
