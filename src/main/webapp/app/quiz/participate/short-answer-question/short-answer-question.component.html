@@ -4,8 +4,8 @@
 
 
     <div *ngIf="!showResult">
-        <div *ngFor="let textPart of textParts; let i = index">
-            <div class="short-answer-question-display"  *ngFor="let element of textPart; let j = index">
+        <div *ngFor="let textPart of textParts; let i = index" style="display: flex;max-width: 100%;flex-wrap: wrap;">
+            <div class="short-answer-question-display"   *ngFor="let element of textPart; let j = index">
                 <div *ngIf="!isInputField(element)" style="display: inline-flex" [innerHTML]="element"></div>
                 <div *ngIf="isInputField(element)" style="position: relative; display: inline-block">
                     <input class="short-answer-question-input" type="text" [disabled]="clickDisabled"
@@ -16,7 +16,7 @@
         </div>
     </div>
     <div *ngIf="showResult">
-        <div *ngFor="let textPart of textParts; let i = index">
+        <div *ngFor="let textPart of textParts; let i = index" style="display: flex; max-width: 100%;flex-wrap: wrap;">
             <div class="short-answer-question-display"  *ngFor="let element of textPart; let j = index">
                 <div *ngIf="!isInputField(element)" style="display: inline-flex" [innerHTML]="element"></div>
                 <div *ngIf="isInputField(element) && !showingSampleSolution" style="position: relative; display: inline-block">

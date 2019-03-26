@@ -62,7 +62,7 @@
             <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.addSpot" (click)="addSpotAtCursorVisualMode()"></div>
             <hr/>
             <div id="test" class="sa-question" >
-                <div *ngFor="let textPart of textParts; let i = index">
+                <div style="display: flex;max-width: 100%;flex-wrap: wrap;" *ngFor="let textPart of textParts; let i = index">
                     <div class="short-answer-question-display" *ngFor="let element of textPart; let j = index">
                         <div *ngIf="!isInputField(element)" id="element-{{i}}-{{j}}"
                              style="display: inline-flex" [innerHTML]="element"></div>
