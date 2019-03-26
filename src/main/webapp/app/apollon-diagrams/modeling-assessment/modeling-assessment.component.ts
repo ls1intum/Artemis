@@ -1,17 +1,17 @@
-import { Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
-import { JhiAlertService } from 'ng-jhipster';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ApollonOptions, Point, State } from '@ls1intum/apollon';
-import { ActivatedRoute, Router } from '@angular/router';
-import { ModelingSubmission, ModelingSubmissionService } from '../../entities/modeling-submission';
-import { DiagramType, ModelingExercise, ModelingExerciseService } from '../../entities/modeling-exercise';
-import { Result, ResultService } from '../../entities/result';
-import { ModelingAssessmentService } from '../../entities/modeling-assessment';
-import { AccountService } from '../../core';
-import { Submission } from '../../entities/submission';
-import { HttpErrorResponse } from '@angular/common/http';
-import { Conflict } from 'app/entities/modeling-assessment/conflict.model';
-import { isNullOrUndefined } from 'util';
+import {Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, ViewChild} from '@angular/core';
+import {JhiAlertService} from 'ng-jhipster';
+import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
+import {ApollonOptions, Point, State} from '@ls1intum/apollon';
+import {ActivatedRoute, Router} from '@angular/router';
+import {ModelingSubmission, ModelingSubmissionService} from '../../entities/modeling-submission';
+import {DiagramType, ModelingExercise, ModelingExerciseService} from '../../entities/modeling-exercise';
+import {Result, ResultService} from '../../entities/result';
+import {genericRetryStrategy, ModelingAssessmentService} from '../../entities/modeling-assessment';
+import {AccountService} from '../../core';
+import {HttpErrorResponse} from '@angular/common/http';
+import {Conflict} from 'app/entities/modeling-assessment/conflict.model';
+import {isNullOrUndefined} from 'util';
+import {retryWhen} from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-modeling-assessment',
@@ -52,7 +52,8 @@ export class ModelingAssessmentComponent implements OnInit, OnDestroy {
         private resultService: ResultService,
         private modelingAssessmentService: ModelingAssessmentService,
         private accountService: AccountService
-    ) {}
+    ) {
+    }
 
     ngOnInit() {
         // Used to check if the assessor is the current user
@@ -84,8 +85,8 @@ export class ModelingAssessmentComponent implements OnInit, OnDestroy {
                  */
                 this.diagramType = isNullOrUndefined(
                     this.modelingExercise.diagramType ||
-                        this.modelingExercise.diagramType === DiagramType.USE_CASE ||
-                        this.modelingExercise.diagramType === DiagramType.COMMUNICATION
+                    this.modelingExercise.diagramType === DiagramType.USE_CASE ||
+                    this.modelingExercise.diagramType === DiagramType.COMMUNICATION
                 )
                     ? DiagramType.CLASS
                     : this.modelingExercise.diagramType;
@@ -191,31 +192,23 @@ export class ModelingAssessmentComponent implements OnInit, OnDestroy {
         this.submission.result.submission = null;
     }
 
-    assessNextOptimal(attempts: number) {
-        if (attempts > 4) {
-            this.busy = false;
-            this.done = true;
-            this.jhiAlertService.info('assessmentDashboard.noSubmissionFound');
-            return;
-        }
+    assessNextOptimal() {
         this.busy = true;
-        this.timeout = setTimeout(
-            () => {
-                this.modelingAssessmentService.getOptimalSubmissions(this.modelingExercise.id).subscribe(optimal => {
-                    const nextOptimalSubmissionIds = optimal.body.map((submission: Submission) => submission.id);
-                    if (nextOptimalSubmissionIds.length === 0) {
-                        this.assessNextOptimal(attempts + 1);
-                    } else {
-                        // TODO: Workaround We have to fake path change to make angular reload the component
-                        const addition = this.router.url.includes('apollon-diagrams2') ? '' : '2';
-                        this.router.navigateByUrl(
-                            `/apollon-diagrams${addition}/exercise/${this.modelingExercise.id}/${nextOptimalSubmissionIds.pop()}/tutor`
-                        );
-                    }
-                });
-            },
-            attempts === 0 ? 0 : 500 + (attempts - 1) * 1000
-        );
+        this.modelingAssessmentService
+            .getOptimalSubmissions(this.modelingExercise.id)
+            .pipe(
+                retryWhen(genericRetryStrategy({maxRetryAttempts: 5, scalingDuration: 1000}))
+            )
+            .subscribe(
+                (optimal: number[]) => {
+                    this.busy = false;
+                    this.router.navigateByUrl(`/apollon-diagrams/exercise/${this.modelingExercise.id}/${optimal.pop()}/tutor`);
+                },
+                () => {
+                    this.busy = false;
+                    this.jhiAlertService.info('assessmentDashboard.noSubmissionFound');
+                }
+            );
     }
 
     previousState() {

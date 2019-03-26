@@ -1,20 +1,23 @@
-import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Subscription } from 'rxjs/Subscription';
-import { ActivatedRoute, Router } from '@angular/router';
-import { Exercise, ExerciseType } from '../entities/exercise';
-import { ExerciseService } from '../entities/exercise/exercise.service';
-import { Course, CourseService } from '../entities/course';
-import { ResultService } from '../entities/result/result.service';
-import { DifferencePipe } from 'angular2-moment';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Result } from '../entities/result';
-import { ResultDetailComponent } from '../entities/result/result-detail.component';
-import { ModelingAssessmentService } from '../entities/modeling-assessment/modeling-assessment.service';
-import { HttpResponse } from '@angular/common/http';
-import { AccountService } from '../core';
-import { Submission } from '../entities/submission';
-import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/modeling-submission';
+import {JhiAlertService, JhiEventManager} from 'ng-jhipster';
+import {Component, OnDestroy, OnInit} from '@angular/core';
+import {Subscription} from 'rxjs/Subscription';
+import {ActivatedRoute, Router} from '@angular/router';
+import {Exercise, ExerciseType} from '../entities/exercise';
+import {ExerciseService} from '../entities/exercise/exercise.service';
+import {Course, CourseService} from '../entities/course';
+import {ResultService} from '../entities/result/result.service';
+import {DifferencePipe} from 'angular2-moment';
+import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
+import {Result} from '../entities/result';
+import {ResultDetailComponent} from '../entities/result/result-detail.component';
+import {
+    genericRetryStrategy,
+    ModelingAssessmentService
+} from '../entities/modeling-assessment/modeling-assessment.service';
+import {HttpResponse} from '@angular/common/http';
+import {AccountService} from '../core';
+import {ModelingSubmission, ModelingSubmissionService} from 'app/entities/modeling-submission';
+import {retryWhen} from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
@@ -96,7 +99,7 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
      */
     getSubmissions(forceReload: boolean) {
         this.modelingSubmissionService
-            .getModelingSubmissionsForExercise(this.exercise.id, { submittedOnly: true })
+            .getModelingSubmissionsForExercise(this.exercise.id, {submittedOnly: true})
             .subscribe((res: HttpResponse<ModelingSubmission[]>) => {
                 // only use submissions that have already been submitted (this makes sure that unsubmitted submissions are not shown
                 // the server should have filtered these submissions alreadyart
@@ -124,7 +127,7 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
     filterSubmissions(forceReload: boolean) {
         if (this.nextOptimalSubmissionIds.length < 3 || forceReload) {
             this.modelingAssessmentService.getOptimalSubmissions(this.exercise.id).subscribe(optimal => {
-                this.nextOptimalSubmissionIds = optimal.body.map((submission: Submission) => submission.id);
+                this.nextOptimalSubmissionIds = optimal;
                 this.applyFilter();
             });
         } else {
@@ -156,7 +159,7 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
     }
 
     showDetails(result: Result) {
-        const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'lg' });
+        const modalRef = this.modalService.open(ResultDetailComponent, {keyboard: true, size: 'lg'});
         modalRef.componentInstance.result = result;
     }
 
@@ -185,23 +188,24 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
      * @param {number} attempts Count the attempts to reduce frequency on repeated failure (network errors)
      */
     assessNextOptimal(attempts: number) {
-        if (attempts > 3) {
-            this.busy = false;
-            this.jhiAlertService.info('assessmentDashboard.noSubmissionFound');
-            return;
-        }
         this.busy = true;
-        if (this.nextOptimalSubmissionIds.length === 0) {
-            setTimeout(() => {
-                this.modelingAssessmentService.getOptimalSubmissions(this.exercise.id).subscribe(optimal => {
-                    this.nextOptimalSubmissionIds = optimal.body.map((submission: Submission) => submission.id);
-                    this.assessNextOptimal(attempts + 1);
-                });
-            }, 500 + 1000 * attempts);
-        } else {
-            const randomInt = Math.floor(Math.random() * this.nextOptimalSubmissionIds.length);
-            this.router.navigate(['apollon-diagrams', 'exercise', this.exercise.id, this.nextOptimalSubmissionIds[randomInt], 'tutor']);
-        }
+        this.modelingAssessmentService
+            .getOptimalSubmissions(this.exercise.id)
+            .pipe(
+                retryWhen(genericRetryStrategy({maxRetryAttempts: 4, scalingDuration: 1000}))
+            )
+            .subscribe(
+                (optimal: number[]) => {
+                    this.busy = false;
+                    this.nextOptimalSubmissionIds = optimal;
+                    const randomInt = Math.floor(Math.random() * this.nextOptimalSubmissionIds.length);
+                    this.router.navigate(['apollon-diagrams', 'exercise', this.exercise.id, this.nextOptimalSubmissionIds[randomInt], 'tutor']);
+                },
+                () => {
+                    this.busy = false;
+                    this.jhiAlertService.info('assessmentDashboard.noSubmissionFound');
+                }
+            );
     }
 
     ngOnDestroy() {
@@ -209,5 +213,6 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
         this.eventManager.destroy(this.eventSubscriber);
     }
 
-    callback() {}
+    callback() {
+    }
 }

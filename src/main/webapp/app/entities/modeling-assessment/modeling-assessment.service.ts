@@ -17,15 +17,16 @@ import {
 } from '@ls1intum/apollon';
 import { ModelElementType } from 'app/entities/modeling-assessment/uml-element.model';
 import { Feedback } from 'app/entities/feedback';
+import { mergeMap, _throw } from 'rxjs/operators';
+import { timer } from 'rxjs';
 
 export type EntityResponseType = HttpResponse<Result>;
 
-@Injectable({providedIn: 'root'})
+@Injectable({ providedIn: 'root' })
 export class ModelingAssessmentService {
     private resourceUrl = SERVER_API_URL + 'api';
 
-    constructor(private http: HttpClient) {
-    }
+    constructor(private http: HttpClient) {}
 
     save(feedbacks: Feedback[], submissionId: number, submit = false, ignoreConflicts = false): Observable<Result> {
         let url = `${this.resourceUrl}/modeling-submissions/${submissionId}/feedback`;
@@ -35,31 +36,25 @@ export class ModelingAssessmentService {
                 url += '&ignoreConflicts=true';
             }
         }
-        return this.http
-            .put<Result>(url, feedbacks)
-            .map( res => this.convertResult(res));
+        return this.http.put<Result>(url, feedbacks).map(res => this.convertResult(res));
     }
 
     getAssessment(submissionId: number): Observable<Result> {
-        return this.http
-            .get<Result>(`${this.resourceUrl}/modeling-submissions/${submissionId}/result`)
-            .map( res => this.convertResult(res));
+        return this.http.get<Result>(`${this.resourceUrl}/modeling-submissions/${submissionId}/result`).map(res => this.convertResult(res));
     }
 
-    getOptimalSubmissions(exerciseId: number): Observable<HttpResponse<any>> {
-        return this.http
-            .get(`${this.resourceUrl}/exercises/${exerciseId}/optimal-model-submissions`, {observe: 'response'});
+    getOptimalSubmissions(exerciseId: number): Observable<number[]> {
+        return this.http.get<number[]>(`${this.resourceUrl}/exercises/${exerciseId}/optimal-model-submissions`);
     }
 
     getPartialAssessment(submissionId: number): Observable<Result> {
         return this.http
             .get<Result>(`${this.resourceUrl}/modeling-submissions/${submissionId}/partial-assessment`)
-            .map( res => this.convertResult(res));
+            .map(res => this.convertResult(res));
     }
 
     resetOptimality(exerciseId: number): Observable<HttpResponse<void>> {
-        return this.http
-            .delete<void>(`${this.resourceUrl}/exercises/${exerciseId}/optimal-model-submissions`, {observe: 'response'});
+        return this.http.delete<void>(`${this.resourceUrl}/exercises/${exerciseId}/optimal-model-submissions`, { observe: 'response' });
     }
 
     /**
@@ -110,12 +105,12 @@ export class ModelingAssessmentService {
                         type = referencedModelType;
                         break;
                 }
-                assessmentsNames[referencedModelId] = {type, name: className};
+                assessmentsNames[referencedModelId] = { type, name: className };
             } else if (referencedModelType === ModelElementType.ATTRIBUTE) {
                 for (const entityId of model.entities.allIds) {
                     for (const att of model.entities.byId[entityId].attributes) {
                         if (att.id === referencedModelId) {
-                            assessmentsNames[referencedModelId] = {type: referencedModelType, name: att.name};
+                            assessmentsNames[referencedModelId] = { type: referencedModelType, name: att.name };
                         }
                     }
                 }
@@ -123,7 +118,7 @@ export class ModelingAssessmentService {
                 for (const entityId of model.entities.allIds) {
                     for (const method of model.entities.byId[entityId].methods) {
                         if (method.id === referencedModelId) {
-                            assessmentsNames[referencedModelId] = {type: referencedModelType, name: method.name};
+                            assessmentsNames[referencedModelId] = { type: referencedModelType, name: method.name };
                         }
                     }
                 }
@@ -160,9 +155,9 @@ export class ModelingAssessmentService {
                     default:
                         relation = ' --- ';
                 }
-                assessmentsNames[referencedModelId] = {type, name: source + relation + target};
+                assessmentsNames[referencedModelId] = { type, name: source + relation + target };
             } else {
-                assessmentsNames[referencedModelId] = {type: referencedModelType, name: ''};
+                assessmentsNames[referencedModelId] = { type: referencedModelType, name: '' };
             }
         }
         return assessmentsNames;
@@ -179,7 +174,7 @@ export class ModelingAssessmentService {
         for (const feedback of result.feedbacks) {
             const referencedModelType = feedback.referenceType;
             const referencedModelId = feedback.referenceId;
-            const elemPosition: Point = {x: 0, y: 0};
+            const elemPosition: Point = { x: 0, y: 0 };
             if (referencedModelType === ModelElementType.CLASS) {
                 if (model.entities.byId[referencedModelId]) {
                     const entity = model.entities.byId[referencedModelId];
@@ -296,3 +291,26 @@ export class ModelingAssessmentService {
         return [...Array(n).keys()].map(i => i + startFrom);
     }
 }
+
+export const genericRetryStrategy = ({
+    maxRetryAttempts = 3,
+    scalingDuration = 1000,
+    excludedStatusCodes = []
+}: {
+    maxRetryAttempts?: number;
+    scalingDuration?: number;
+    excludedStatusCodes?: number[];
+} = {}) => (attempts: Observable<any>) => {
+    return attempts.pipe(
+        mergeMap((error, i) => {
+            const retryAttempt = i + 1;
+            // if maximum number of retries have been met
+            // or response is a status code we don't wish to retry, throw error
+            if (retryAttempt > maxRetryAttempts || excludedStatusCodes.find(e => e === error.status)) {
+                return _throw(error);
+            }
+            // retry after 1s, 2s, etc...
+            return timer(retryAttempt * scalingDuration);
+        })
+    );
+};
