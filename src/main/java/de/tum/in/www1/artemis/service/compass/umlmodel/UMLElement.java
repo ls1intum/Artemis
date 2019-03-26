@@ -22,6 +22,8 @@ public abstract class UMLElement {
 
     public abstract String getValue();
 
+    public abstract String getType();
+
     public int getElementID() {
         return similarityID;
     }

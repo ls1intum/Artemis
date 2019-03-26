@@ -19,13 +19,13 @@ import de.tum.in.www1.artemis.service.compass.controller.ModelSelector;
 import de.tum.in.www1.artemis.service.compass.controller.SimilarityDetector;
 import de.tum.in.www1.artemis.service.compass.grade.CompassGrade;
 import de.tum.in.www1.artemis.service.compass.grade.Grade;
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLAssociation;
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLAttribute;
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLClass;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLMethod;
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLModel;
-import de.tum.in.www1.artemis.service.compass.utils.JSONMapping;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLAttribute;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassModel;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassRelationship;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLMethod;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLPackage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,7 +82,11 @@ public class CompassCalculationEngine implements CalculationEngine {
      */
     public List<Conflict> getConflicts(long submissionId, List<Feedback> modelingAssessment) {
         List<Conflict> conflicts = new ArrayList<>();
-        UMLModel model = modelIndex.getModel(submissionId);
+        UMLClassModel model = modelIndex.getModel(submissionId);
+        if (model == null) {
+            // TODO CZ: throw an Exception here?
+            return conflicts;
+        }
         modelingAssessment.forEach(currentFeedback -> {
             UMLElement currentElement = model.getElementByJSONID(currentFeedback.getReferenceElementId()); //TODO MJ return Optional ad throw Exception if no UMLElement found?
             if (currentElement == null) {
@@ -104,7 +108,7 @@ public class CompassCalculationEngine implements CalculationEngine {
 
     private void buildModel(long id, JsonObject jsonModel) {
         try {
-            UMLModel model = JSONParser.buildModelFromJSON(jsonModel, id);
+            UMLClassModel model = JSONParser.buildModelFromJSON(jsonModel, id);
             SimilarityDetector.analyzeSimilarity(model, modelIndex);
             modelIndex.addModel(model);
         } catch (IOException e) {
@@ -114,7 +118,7 @@ public class CompassCalculationEngine implements CalculationEngine {
 
 
     private void buildAssessment(ModelingSubmission submission) {
-        UMLModel model = modelIndex.getModelMap().get(submission.getId());
+        UMLClassModel model = modelIndex.getModelMap().get(submission.getId());
         if (model == null || submission.getResult() == null || !submission.getResult().getHasFeedback()) {
             log.error("Could not build assessment for submission {}", submission.getId());
             return;
@@ -132,7 +136,7 @@ public class CompassCalculationEngine implements CalculationEngine {
      * @param model the UML model
      * @return a map of elementIds to scores
      */
-    private Map<String, Score> getScoresFromFeedbackList(List<Feedback> feedbackList, UMLModel model) {
+    private Map<String, Score> getScoresFromFeedbackList(List<Feedback> feedbackList, UMLClassModel model) {
         Map<String, Score> scoreHashMap = new HashMap<>();
 
         for (Feedback feedback : feedbackList) {
@@ -156,12 +160,12 @@ public class CompassCalculationEngine implements CalculationEngine {
     }
 
 
-    protected Collection<UMLModel> getUmlModelCollection() {
+    protected Collection<UMLClassModel> getUmlModelCollection() {
         return modelIndex.getModelCollection();
     }
 
 
-    protected Map<Long, UMLModel> getModelMap() {
+    protected Map<Long, UMLClassModel> getModelMap() {
         return modelIndex.getModelMap();
     }
 
@@ -183,7 +187,7 @@ public class CompassCalculationEngine implements CalculationEngine {
     }
 
 
-    private void addNewManualAssessment(Map<String, Score> scoreHashMap, UMLModel model) {
+    private void addNewManualAssessment(Map<String, Score> scoreHashMap, UMLClassModel model) {
         try {
             automaticAssessmentController.addScoresToAssessment(assessmentIndex, scoreHashMap, model);
         } catch (IOException e) {
@@ -218,7 +222,7 @@ public class CompassCalculationEngine implements CalculationEngine {
             return null;
         }
 
-        UMLModel model = modelIndex.getModelMap().get(modelId);
+        UMLClassModel model = modelIndex.getModelMap().get(modelId);
         CompassResult compassResult = model.getLastAssessmentCompassResult();
 
         if (compassResult == null) {
@@ -238,7 +242,7 @@ public class CompassCalculationEngine implements CalculationEngine {
     public void notifyNewAssessment(List<Feedback> modelingAssessment, long submissionId) {
         lastUsed = LocalDateTime.now();
         modelSelector.addAlreadyAssessedModel(submissionId);
-        UMLModel model = modelIndex.getModel(submissionId);
+        UMLClassModel model = modelIndex.getModel(submissionId);
         addNewManualAssessment(modelingAssessment, model);
         modelSelector.removeModelWaitingForAssessment(model.getModelID());
         assessModelsAutomatically();
@@ -287,7 +291,7 @@ public class CompassCalculationEngine implements CalculationEngine {
     // TODO adapt the parser to support different UML diagrams
     @Override
     public List<Feedback> convertToFeedback(Grade grade, long modelId, Result result) {
-        UMLModel model = this.modelIndex.getModelMap().get(modelId);
+        UMLClassModel model = this.modelIndex.getModelMap().get(modelId);
         if (model == null) {
             return null;
         }
@@ -325,32 +329,14 @@ public class CompassCalculationEngine implements CalculationEngine {
     /**
      * Creates the reference string to be stored in an Feedback element for modeling submissions. The reference of a
      * modeling Feedback stores the type of the corresponding UML element and its jsonElementId and is of the form
-     * "<UmlElementType>:<jsonElementIds>".
+     * "<umlElementType>:<jsonElementIds>".
      *
      * @param umlElement    the UML model element the Feedback belongs to
      * @param jsonElementId the jsonElementId of the UML model element
      * @return the formatted reference string containing the element type and its jsonElementId
      */
     private String buildReferenceString(UMLElement umlElement, String jsonElementId) {
-        // TODO find cleaner solution
-        String type = umlElement.getClass().getSimpleName();
-        switch (type) {
-            case "UMLClass":
-                type = JSONMapping.assessmentElementTypeClass;
-                break;
-            case "UMLAttribute":
-                type = JSONMapping.assessmentElementTypeAttribute;
-                break;
-            case "UMLAssociation":
-                type = JSONMapping.assessmentElementTypeRelationship;
-                break;
-            case "UMLMethod":
-                type = JSONMapping.assessmentElementTypeMethod;
-                break;
-            default:
-                type = "";
-        }
-        return type + ":" + jsonElementId;
+        return umlElement.getType() + ":" + jsonElementId;
     }
 
 
@@ -399,7 +385,7 @@ public class CompassCalculationEngine implements CalculationEngine {
         jsonObject.addProperty("totalCoverage", this.getTotalCoverage());
 
         JsonObject models = new JsonObject();
-        for (Map.Entry<Long, UMLModel> modelEntry : this.getModelMap().entrySet()) {
+        for (Map.Entry<Long, UMLClassModel> modelEntry : this.getModelMap().entrySet()) {
             JsonObject model = new JsonObject();
             model.addProperty("coverage", modelEntry.getValue().getLastAssessmentCoverage());
             model.addProperty("confidence", modelEntry.getValue().getLastAssessmentConfidence());
@@ -422,7 +408,7 @@ public class CompassCalculationEngine implements CalculationEngine {
             model.addProperty("classes", elements.stream().filter(umlElement -> umlElement instanceof UMLClass).count());
             model.addProperty("attributes", elements.stream().filter(umlElement -> umlElement instanceof UMLAttribute).count());
             model.addProperty("methods", elements.stream().filter(umlElement -> umlElement instanceof UMLMethod).count());
-            model.addProperty("associations", elements.stream().filter(umlElement -> umlElement instanceof UMLAssociation).count());
+            model.addProperty("associations", elements.stream().filter(umlElement -> umlElement instanceof UMLClassRelationship).count());
             models.add(modelEntry.getKey().toString(), model);
         }
         jsonObject.add("models", models);
@@ -430,7 +416,7 @@ public class CompassCalculationEngine implements CalculationEngine {
         return jsonObject;
     }
 
-    private void addNewManualAssessment(List<Feedback> modelingAssessment, UMLModel model) {
+    private void addNewManualAssessment(List<Feedback> modelingAssessment, UMLClassModel model) {
         Map<String, Score> scoreList = createScoreList(modelingAssessment, model);
         try {
             automaticAssessmentController.addScoresToAssessment(assessmentIndex, scoreList, model);
@@ -447,7 +433,7 @@ public class CompassCalculationEngine implements CalculationEngine {
      * @param model              the UmlModel the modelingAssessment belongs to
      * @return mapping of the jsonElementID of each ModelElement contained in the modelingAssessment to its corresponding score
      */
-    private Map<String, Score> createScoreList(List<Feedback> modelingAssessment, UMLModel model) {
+    private Map<String, Score> createScoreList(List<Feedback> modelingAssessment, UMLClassModel model) {
         Map<String, Score> scoreHashMap = new HashMap<>();
 
         for (Feedback feedback : modelingAssessment) {
@@ -486,48 +472,44 @@ public class CompassCalculationEngine implements CalculationEngine {
      * @param model          the model to check
      * @return if the element could be found in the given model
      */
-    private boolean elementExistsInModel(String jsonElementID, String umlElementType, UMLModel model) {
-        boolean elementExists = false;
-
-        switch (umlElementType) {
-            case JSONMapping.assessmentElementTypeClass:
-                for (UMLClass umlClass : model.getClassList()) {
-                    if (umlClass.getJSONElementID().equals(jsonElementID)) {
-                        elementExists = true;
-                        break;
+    // TODO CZ: move to specific UMLModel class
+    private boolean elementExistsInModel(String jsonElementID, String umlElementType, UMLClassModel model) {
+        if (UMLClass.UMLClassType.getTypesAsList().contains(umlElementType)) {
+            for (UMLClass umlClass : model.getClassList()) {
+                if (umlClass.getJSONElementID().equals(jsonElementID)) {
+                    return true;
+                }
+            }
+        } else if (umlElementType.equals(UMLAttribute.UML_ATTRIBUTE_TYPE)) {
+            for (UMLClass umlClass : model.getClassList()) {
+                for (UMLAttribute umlAttribute : umlClass.getAttributes()) {
+                    if (umlAttribute.getJSONElementID().equals(jsonElementID)) {
+                        return true;
                     }
                 }
-                break;
-            case JSONMapping.assessmentElementTypeAttribute:
-                for (UMLClass umlClass : model.getClassList()) {
-                    for (UMLAttribute umlAttribute : umlClass.getAttributes()) {
-                        if (umlAttribute.getJSONElementID().equals(jsonElementID)) {
-                            elementExists = true;
-                            break;
-                        }
+            }
+        } else if (umlElementType.equals(UMLMethod.UML_METHOD_TYPE)) {
+            for (UMLClass umlClass : model.getClassList()) {
+                for (UMLMethod umlMethod : umlClass.getMethods()) {
+                    if (umlMethod.getJSONElementID().equals(jsonElementID)) {
+                        return true;
                     }
                 }
-                break;
-            case JSONMapping.assessmentElementTypeMethod:
-                for (UMLClass umlClass : model.getClassList()) {
-                    for (UMLMethod umlMethod : umlClass.getMethods()) {
-                        if (umlMethod.getJSONElementID().equals(jsonElementID)) {
-                            elementExists = true;
-                            break;
-                        }
-                    }
+            }
+        } else if (UMLClassRelationship.UMLRelationType.getTypesAsList().contains(umlElementType)) {
+            for (UMLClassRelationship umlClassRelationship : model.getAssociationList()) {
+                if (umlClassRelationship.getJSONElementID().equals(jsonElementID)) {
+                    return true;
                 }
-                break;
-            case JSONMapping.assessmentElementTypeRelationship:
-                for (UMLAssociation umlAssociation : model.getAssociationList()) {
-                    if (umlAssociation.getJSONElementID().equals(jsonElementID)) {
-                        elementExists = true;
-                        break;
-                    }
+            }
+        } else if (umlElementType.equals(UMLPackage.UML_PACKAGE_TYPE)) {
+            for (UMLPackage umlPackage : model.getPackageList()) {
+                if (umlPackage.getJSONElementID().equals(jsonElementID)) {
+                    return true;
                 }
-                break;
+            }
         }
-        return elementExists;
+        return false;
     }
 
 
@@ -560,7 +542,7 @@ public class CompassCalculationEngine implements CalculationEngine {
             this.modelIndex.getNumberOfUniqueElements() + "\n");
 
         int totalModelElements = 0;
-        for (UMLModel umlModel : this.getUmlModelCollection()) {
+        for (UMLClassModel umlModel : this.getUmlModelCollection()) {
             totalModelElements += umlModel.getClassList().size() + umlModel.getAssociationList().size();
             for (UMLClass umlClass : umlModel.getClassList()) {
                 totalModelElements += umlClass.getMethods().size() + umlClass.getAttributes().size();

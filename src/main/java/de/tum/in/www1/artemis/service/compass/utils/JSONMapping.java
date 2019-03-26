@@ -10,7 +10,6 @@ public class JSONMapping {
     // model base structure
     public static final String elements = "elements";
     public static final String relationships = "relationships";
-    public static final String byId = "byId";
 
     // elements
     public static final String elementOwner = "owner";
@@ -33,11 +32,6 @@ public class JSONMapping {
     public static final String assessmentComment = "comment";
 
     public static final String assessmentElementID = elementID;
-    public static final String assessmentElementType = "type";
-    public static final String assessmentElementTypeClass = "class";
-    public static final String assessmentElementTypeAttribute = "attribute";
-    public static final String assessmentElementTypeMethod = "method";
-    public static final String assessmentElementTypeRelationship = "relationship";
 
     public static final String assessmentElementCoverage = "coverage";
     public static final String assessmentElementConfidence = "confidence";

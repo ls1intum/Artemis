@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service.compass.controller;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLModel;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassModel;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 import java.util.Collection;
@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class ModelIndex {
 
     private Queue<UMLElement> uniqueModelElementList;
-    private Map<Long, UMLModel> modelMap;
+    private Map<Long, UMLClassModel> modelMap;
 
     private HashMap<UMLElement, Integer> modelElementMapping;
 
@@ -48,19 +48,19 @@ public class ModelIndex {
         return uniqueModelElementList.size() - 1;
     }
 
-    public void addModel(UMLModel model) {
+    public void addModel(UMLClassModel model) {
         modelMap.put(model.getModelID(), model);
     }
 
-    public UMLModel getModel(long modelId) {
+    public UMLClassModel getModel(long modelId) {
         return modelMap.get(modelId); //TODO MJ check if there? return Optional?
     }
 
-    public Map<Long, UMLModel> getModelMap() {
+    public Map<Long, UMLClassModel> getModelMap() {
         return modelMap;
     }
 
-    public Collection<UMLModel> getModelCollection() {
+    public Collection<UMLClassModel> getModelCollection() {
         return modelMap.values();
     }
 

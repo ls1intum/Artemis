@@ -1,12 +1,10 @@
-package de.tum.in.www1.artemis.service.compass.umlmodel;
+package de.tum.in.www1.artemis.service.compass.umlmodel.activitydiagram;
 
+import com.google.common.base.CaseFormat;
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
-
-import java.util.List;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 public class UMLActivity extends UMLElement {
-
-    private String name;
 
     public enum UMLActivityType {
         ACTIVITY_CONTROL_INITIAL_NODE,
@@ -18,9 +16,13 @@ public class UMLActivity extends UMLElement {
         ACTIVITY_FORK_NODE_HORIZONTAL
     }
 
-    public UMLActivity(String name, String jsonElementID) {
+    private String name;
+    private UMLActivityType type;
+
+    public UMLActivity(String name, String jsonElementID, String type) {
         this.name = name;
         this.setJsonElementID(jsonElementID);
+        this.type = UMLActivityType.valueOf(type);
     }
 
     @Override
@@ -40,5 +42,10 @@ public class UMLActivity extends UMLElement {
     @Override
     public String getValue() {
         return name;
+    }
+
+    @Override
+    public String getType() {
+        return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, type.name());
     }
 }

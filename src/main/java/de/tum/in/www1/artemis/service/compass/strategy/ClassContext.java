@@ -1,10 +1,10 @@
 package de.tum.in.www1.artemis.service.compass.strategy;
 
 import de.tum.in.www1.artemis.service.compass.assessment.Context;
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLAssociation;
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLClass;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLModel;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassModel;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassRelationship;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -12,7 +12,7 @@ import java.util.Set;
 @SuppressWarnings("unused")
 public class ClassContext {
 
-    public static Context getNoContext(UMLClass umlClass, UMLModel model) {
+    public static Context getNoContext(UMLClass umlClass, UMLClassModel model) {
         return Context.NO_CONTEXT;
     }
 
@@ -20,7 +20,7 @@ public class ClassContext {
      *
      * @return Context including the relations connected to the UML class and all children of the class (attributes + methods)
      */
-    public static Context getStrictContext(UMLClass umlClass, UMLModel model) {
+    public static Context getStrictContext(UMLClass umlClass, UMLClassModel model) {
         Set<Integer> associations = findAssociationsForClassInModel(umlClass, model);
         for (UMLElement element: umlClass.getAttributes()) {
             associations.add(element.getElementID());
@@ -34,11 +34,11 @@ public class ClassContext {
         return new Context(associations);
     }
 
-    private static Set<Integer> findAssociationsForClassInModel(UMLClass umlClass, UMLModel model) {
+    private static Set<Integer> findAssociationsForClassInModel(UMLClass umlClass, UMLClassModel model) {
         Set<Integer> relations = new HashSet<>();
-        for (UMLAssociation umlAssociation : model.getAssociationList()) {
-            if (umlAssociation.getSource().equals(umlClass) || umlAssociation.getTarget().equals(umlClass)) {
-                relations.add(umlAssociation.getElementID());
+        for (UMLClassRelationship relationship : model.getAssociationList()) {
+            if (relationship.getSource().equals(umlClass) || relationship.getTarget().equals(umlClass)) {
+                relations.add(relationship.getElementID());
             }
         }
         return relations;
@@ -48,7 +48,7 @@ public class ClassContext {
      *
      * @return Context including the relations connected to the UML class
      */
-    public static Context getWeakContext(UMLClass umlClass, UMLModel model) {
+    public static Context getWeakContext(UMLClass umlClass, UMLClassModel model) {
         Set<Integer> associations = findAssociationsForClassInModel(umlClass, model);
         if (associations.isEmpty()) {
             return Context.NO_CONTEXT;

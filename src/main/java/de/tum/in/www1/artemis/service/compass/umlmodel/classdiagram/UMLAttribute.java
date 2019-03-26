@@ -1,9 +1,12 @@
-package de.tum.in.www1.artemis.service.compass.umlmodel;
+package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 public class UMLAttribute extends UMLElement {
+
+    public final static String UML_ATTRIBUTE_TYPE = "ClassAttribute";
 
     private UMLClass parentClass;
     private String name;
@@ -51,4 +54,7 @@ public class UMLAttribute extends UMLElement {
     public String getValue() {
         return name;
     }
+
+    @Override
+    public String getType() { return UML_ATTRIBUTE_TYPE; }
 }

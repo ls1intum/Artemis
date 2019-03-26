@@ -1,10 +1,13 @@
-package de.tum.in.www1.artemis.service.compass.umlmodel;
+package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 import java.util.List;
 
 public class UMLPackage extends UMLElement {
+
+    public final static String UML_PACKAGE_TYPE = "Package";
 
     private String name;
 
@@ -34,6 +37,9 @@ public class UMLPackage extends UMLElement {
     public String getValue() {
         return name;
     }
+
+    @Override
+    public String getType() { return UML_PACKAGE_TYPE; }
 
     public void addClass(UMLClass umlClass) {
         this.classes.add(umlClass);

@@ -1,12 +1,16 @@
-package de.tum.in.www1.artemis.service.compass.umlmodel;
+package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
+import com.google.common.base.CaseFormat;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
-public class UMLAssociation extends UMLElement {
 
-    // TODO move activity diagram types into its own class
-    // TODO CZ: add relations for other diagram types
+public class UMLClassRelationship extends UMLElement {
+
     public enum UMLRelationType {
         // class diagram relations
         CLASS_BIDIRECTIONAL,
@@ -15,34 +19,12 @@ public class UMLAssociation extends UMLElement {
         CLASS_REALIZATION,
         CLASS_DEPENDENCY,
         CLASS_AGGREGATION,
-        CLASS_COMPOSITION,
+        CLASS_COMPOSITION;
 
-        // activity diagram relations
-        ACTIVITY_CONTROL_FLOW;
-
-        public String toReadableString() {
-
-            // TODO CZ: find better solution
-            switch (this) {
-                case CLASS_DEPENDENCY:
-                    return "Dependency";
-                case CLASS_AGGREGATION:
-                    return "Aggregation";
-                case CLASS_INHERITANCE:
-                    return "Inheritance";
-                case CLASS_REALIZATION:
-                    return "Realization";
-                case CLASS_COMPOSITION:
-                    return "Composition";
-                case CLASS_UNIDIRECTIONAL:
-                    return "Unidirectional";
-                case CLASS_BIDIRECTIONAL:
-                    return "Bidirectional";
-                case ACTIVITY_CONTROL_FLOW:
-                    return "Control Flow";
-                default:
-                    return "Other";
-            }
+        public static List<String> getTypesAsList() {
+            return Arrays.stream(UMLRelationType.values())
+                .map(umlRelationType -> CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, umlRelationType.name()))
+                .collect(Collectors.toList());
         }
 
         public String toSymbol() {
@@ -61,8 +43,6 @@ public class UMLAssociation extends UMLElement {
                     return " --> ";
                 case CLASS_BIDIRECTIONAL:
                     return " <-> ";
-                case ACTIVITY_CONTROL_FLOW:
-                    return " --> ";
                 default:
                     return " --- ";
             }
@@ -80,8 +60,8 @@ public class UMLAssociation extends UMLElement {
 
     private UMLRelationType type;
 
-    public UMLAssociation(UMLClass source, UMLClass target, String type, String jsonElementID, String sourceRole, String targetRole,
-                          String sourceMultiplicity, String targetMultiplicity) {
+    public UMLClassRelationship(UMLClass source, UMLClass target, String type, String jsonElementID, String sourceRole, String targetRole,
+                                String sourceMultiplicity, String targetMultiplicity) {
         this.source = source;
         this.target = target;
         this.sourceMultiplicity = sourceMultiplicity;
@@ -102,11 +82,11 @@ public class UMLAssociation extends UMLElement {
      */
     @Override
     public double similarity(UMLElement element) {
-        if (element.getClass() != UMLAssociation.class) {
+        if (element.getClass() != UMLClassRelationship.class) {
             return 0;
         }
 
-        UMLAssociation reference = (UMLAssociation) element;
+        UMLClassRelationship reference = (UMLClassRelationship) element;
 
         double similarity = 0;
         double weight = 1;
@@ -171,12 +151,17 @@ public class UMLAssociation extends UMLElement {
 
     @Override
     public String getName() {
-        return "Association " + getSource().getValue() + type.toSymbol() + getTarget().getValue() + " (" + type.toReadableString() + ")";
+        return "Association " + getSource().getValue() + type.toSymbol() + getTarget().getValue() + " (" + getType() + ")";
     }
 
     @Override
     public String getValue() {
-        return type.toReadableString();
+        return getType();
+    }
+
+    @Override
+    public String getType() {
+        return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, type.name());
     }
 
     public UMLClass getSource() {
