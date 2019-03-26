@@ -39,18 +39,19 @@ export class OrderedListCommand extends Command {
      * @param extracted textLine {string} with the position {number} it has in the overall selectedText{array}
      */
     replaceText(element: string, position: number): void {
+        /** case 1: text is formed in as an ordered list and the list should be unformed by deleting number + (.) + whitespace */
         if (element.includes('.')) {
             const textToAdd = element.slice(3);
             const text = `${textToAdd}\n`;
             this.insertText(text);
-            /** if the selectedText is an empty string start the basic command of an ordering list with number one */
+            /** case 2: start a new ordered list from scratch  */
         } else if (element === '') {
             const range = this.getRange();
             element = `1. ${element}`;
             this.replace(range, element);
             this.focus();
         } else {
-            /** if there is a selected text, add the texts' position of the array + (.) before the text element itself */
+            /** case 3: formate existing text into an ordered list by inserting the position of the array before the text*/
             element = `${position}. ${element}\n`;
             this.insertText(element);
         }

@@ -112,21 +112,22 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
 
     /**
      * @function domainCommandsFound
-     * @desc Get the {array} from the editor and assign its values based on the domainCommands to the corresponding question attributes one by one
-     *       1. Go trough each element of the {array} domain command
-     *       2. If the first element textLine {string} has no second element {domainCommandIdentifier} in the array assign the textLine to the question text
-     *       3. else assign the first element textLine {string} according to the second element {domainCommandIdentifier} to the corresponding attributes of the question
-     * Important is that the resetMultipleChoicePreview() is triggered to notify the parent component
-     * about the changes within the question and to trigger the checking method for correct values
+     * @desc 1. Gets the {array} containing the textLine with the domainCommandIdentifier and creates a new multiple choice question
+     *       by assigning the textLines according to the domainCommandIdentifiers to the multiple choice question attributes.
+     *       (question text, explanation, hint, answeroption(correct/wrong)
+     *       2. For each answer option a new AnswerOption entity is created by assiging the answeroption text and setting
+     *       the answeroption correct/wrong
+     *       3.Important is that the resetMultipleChoicePreview() is triggered to notify the parent component
+     *       about the changes within the question and to trigger the checking method for correct values
      * @param {array} of markdownTextLine {string} with the corresponding domainCommand {DomainCommand} identifier
      */
     domainCommandsFound(domainCommands: [string, DomainCommand][]): void {
         this.cleanupQuestion();
         let currentAnswerOption = new AnswerOption();
 
-        for (const [name, command] of domainCommands)  {
-            if (command === null && name.length > 0) {
-                this.question.text = name;
+        for (const [textLine, command] of domainCommands)  {
+            if (command === null && textLine.length > 0) {
+                this.question.text = textLine;
             }
             if (command instanceof CorrectOptionCommand || command instanceof IncorrectOptionCommand) {
                 currentAnswerOption = new AnswerOption();
@@ -135,19 +136,19 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
                 } else {
                     currentAnswerOption.isCorrect = false;
                 }
-                currentAnswerOption.text = name;
+                currentAnswerOption.text = textLine;
                 this.question.answerOptions.push(currentAnswerOption);
             } else if (command instanceof ExplanationCommand) {
                 if (currentAnswerOption != null) {
-                    currentAnswerOption.explanation = name;
+                    currentAnswerOption.explanation = textLine;
                 } else {
-                    this.question.explanation = name;
+                    this.question.explanation = textLine;
                 }
             } else if (command instanceof HintCommand) {
                 if (currentAnswerOption != null) {
-                    currentAnswerOption.hint = name;
+                    currentAnswerOption.hint = textLine;
                 } else {
-                    this.question.hint = name;
+                    this.question.hint = textLine;
                 }
             }
         }

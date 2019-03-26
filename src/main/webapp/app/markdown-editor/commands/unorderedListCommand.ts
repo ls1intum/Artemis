@@ -34,19 +34,19 @@ export class UnorderedListCommand extends Command {
      * @param element {string} extracted textLine from the {array} selectedText
      */
     replaceText(element: string): void {
+        /** case 1: text is formed in as an unordered list and the list should be unformed by deleting (-) + whitespace */
         if (element.includes('-')) {
             const textToAdd = element.slice(2);
             const text = `${textToAdd}\n`;
             this.insertText(text);
-            /** if the selectedText is an empty string start the basic command of an unordering list with - */
+            /** case 2: start a new unordered list from scratch  */
         } else if (element === '') {
             const range = this.getRange();
             element = `- ${element}`;
             this.replace(range, element);
             this.focus();
         } else {
-            /** if the selectedText is not an empty string start insert
-             * before the textLine a (-) and make line break before the next insert */
+            /** case 3: formate existing text into an unformed list */
             const range = this.getRange();
             element = `- ${element}\n`;
             this.replace(range, element);
