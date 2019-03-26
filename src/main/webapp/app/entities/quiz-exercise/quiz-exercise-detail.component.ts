@@ -136,7 +136,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         const courseId = +this.route.snapshot.paramMap.get('courseId');
         const quizId = +this.route.snapshot.paramMap.get('id');
         /** Query the courseService for the participationId given by the params */
-        if (courseId && !quizId) {
+        if (courseId) {
             this.courseService.find(courseId).subscribe((response: HttpResponse<Course>) => {
                 this.course = response.body;
                 // Make sure to call init if we didn't receive an id => new quiz-exercise
