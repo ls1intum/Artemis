@@ -28,7 +28,6 @@ import { Command,
 } from 'app/markdown-editor/commands';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { DomainCommand } from 'app/markdown-editor/domainCommands';
-import {AnswerOption} from 'app/entities/answer-option';
 
 @Component({
     selector: 'jhi-markdown-editor',
