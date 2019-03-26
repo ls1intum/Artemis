@@ -265,7 +265,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
 
         const incorrectSampleAnswerOption = new AnswerOption();
         incorrectSampleAnswerOption.isCorrect = false;
-        incorrectSampleAnswerOption.text = 'Enter an incorrect answer option here';
+        incorrectSampleAnswerOption.text = 'Enter an wrong answer option here';
 
         mcQuestion.answerOptions = [correctSampleAnswerOption, incorrectSampleAnswerOption];
         this.quizExercise.quizQuestions.push(mcQuestion);
