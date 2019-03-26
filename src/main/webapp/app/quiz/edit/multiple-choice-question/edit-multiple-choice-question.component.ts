@@ -112,14 +112,13 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
 
     /**
      * @function domainCommandsFound
-     * @desc 1. Gets the {array} containing the text with the domainCommandIdentifier and creates a new multiple choice question
-     *       by assigning the text according to the domainCommandIdentifiers to the multiple choice question attributes.
-     *       (question text, explanation, hint, answeroption(correct/wrong)
-     *       2. For each answer option a new AnswerOption entity is created by assiging the answeroption text and setting
-     *       the answeroption correct/wrong
-     *       3.Important is that the resetMultipleChoicePreview() is triggered to notify the parent component
-     *       about the changes within the question and to trigger the checking method for correct values
-     * @param {array} of markdownText {string} with the corresponding domainCommand {DomainCommand} identifier
+     * @desc 1. Gets a tuple of text and domainCommandIdentifiers and assigns text values according to the domainCommandIdentifiers a
+     *          multiple choice question the to the multiple choice question attributes.
+     *          (question text, explanation, hint, answerOption (correct/wrong)
+     *       2. The tupple order is the same as the order of the commands in the markdown text inserted by the user
+     *       3. resetMultipleChoicePreview() is triggered to notify the parent component
+     *       about the changes within the question and to cacheValidation() since the assigned values have changed
+     * @param {domainCommands} containing tuples of [text, domainCommandIdentifiers]
      */
     domainCommandsFound(domainCommands: [string, DomainCommand][]): void {
         this.cleanupQuestion();
