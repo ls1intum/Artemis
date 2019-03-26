@@ -69,36 +69,25 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
         new HeadingThreeCommand(),
     ];
 
-    /**
-     * {domainCommands} containing all domain commands which need to be set by the parent component which contains the markdown editor
-     */
+    /** {domainCommands} containing all domain commands which need to be set by the parent component which contains the markdown editor */
     @Input() domainCommands: DomainCommand[];
 
-    /**
-     * {textWithDomainCommandsFound} emits an {array} of text lines with the corresponding domain command to the parent component which contains the markdown editor
-     */
+    /** {textWithDomainCommandsFound} emits an {array} of text lines with the corresponding domain command to the parent component which contains the markdown editor */
     @Output() textWithDomainCommandsFound = new EventEmitter<[string, DomainCommand][]>();
 
-    /**
-     * {showPreviewButton} 1. true -> the preview of the editor is used
-     *           2. false -> the preview of the parent component is used, parent has to set this value to false with an input
-     */
+    /** {showPreviewButton}
+     * 1. true -> the preview of the editor is used
+     * 2. false -> the preview of the parent component is used, parent has to set this value to false with an input */
     @Input() showPreviewButton = true;
 
-    /**
-     * {previewTextAsHtml} text that is emitted to the parent component if the parent does not use any domain commands
-     */
+    /** {previewTextAsHtml} text that is emitted to the parent component if the parent does not use any domain commands */
     previewTextAsHtml: string;
 
-    /**
-     * {previewMode} when editor is created the preview is set to false, since the edit mode is set active
-     */
+    /** {previewMode} when editor is created the preview is set to false, since the edit mode is set active */
     previewMode = false;
 
-    /**
-     * {previewChild} Is not null when the parent component is responsible for the preview content
-     * -> parent component has to implement ng-content and set the showPreviewButton on true through an input
-     */
+    /** {previewChild} Is not null when the parent component is responsible for the preview content
+     * -> parent component has to implement ng-content and set the showPreviewButton on true through an input */
     @ContentChild('preview') previewChild: ElementRef;
 
     constructor(private artemisMarkdown: ArtemisMarkdown) {

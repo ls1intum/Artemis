@@ -811,7 +811,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
      * @function changesInMarkdown
      * @desc Detect of text changes in the markdown editor
      *      1. Notify the parent component to check the validity of the text
-     *      2. Parse the text in the editor
+     *      2. Parse the text in the editor to get the newest values
      */
     changesInMarkdown(): void {
         this.questionUpdated.emit();
@@ -824,9 +824,9 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
      * @desc Get the {array} from the editor and assign its values based on the domainCommands
      *       to the corresponding question attributes one by one
      *       1. Go trough each element of the {array} domain command
-     *       2. If the first textLine {string} of the {array} has not second element {domainCommandIdentifier} in the array assign the string to the question text
-     *       3. else assign the first element {string} according to the second element {domainCommandIdentifier} to the corresponding attributes of the question
-     * @param {array} contains markdownTextLine with the corresponding domainCommand {DomainCommand} identifier
+     *       2. If the first textLine {string} of the {array} has no second element {domainCommandIdentifier} in the array assign the string to the question text
+     *       3. else assign the first element textLine {string} according to the second element {domainCommandIdentifier} to the corresponding attributes of the question
+     * @param {array} containing markdownTextLine with the corresponding domainCommand {DomainCommand} identifier
      */
     domainCommandsFound(domainCommands: [string, DomainCommand][]): void {
         this.cleanupQuestion();
