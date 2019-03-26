@@ -61,56 +61,62 @@ export class ModelingAssessmentComponent implements OnInit, OnDestroy {
             this.userId = user.id;
         });
         this.isAuthorized = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
-        this.route.params.subscribe(params => {
-            const submissionId = Number(params['submissionId']);
-            let nextOptimal: boolean;
-            this.route.queryParams.subscribe(query => {
-                nextOptimal = query['optimal'] === 'true';
-            });
-
-            this.modelingSubmissionService.getSubmission(submissionId).subscribe((submission: ModelingSubmission) => {
-                this.submission = submission;
-                this.modelingExercise = this.submission.participation.exercise as ModelingExercise;
-                this.result = this.submission.result;
-                if (this.result.feedbacks) {
-                    this.result = this.modelingAssessmentService.convertResult(this.result);
-                } else {
-                    this.result.feedbacks = [];
-                }
-                this.submission.participation.results = [this.result]; // TODO why is this necessary
-                this.result.participation = this.submission.participation;
-                /**
-                 * set diagramType to class diagram if exercise is null, use case or communication
-                 * apollon does not support use case and communication yet
-                 */
-                this.diagramType = isNullOrUndefined(
-                    this.modelingExercise.diagramType ||
-                    this.modelingExercise.diagramType === DiagramType.USE_CASE ||
-                    this.modelingExercise.diagramType === DiagramType.COMMUNICATION
-                )
-                    ? DiagramType.CLASS
-                    : this.modelingExercise.diagramType;
-                if ((this.result.assessor == null || this.result.assessor.id === this.userId) && !this.result.rated) {
-                    this.jhiAlertService.info('arTeMiSApp.apollonDiagram.lock');
-                }
-                if (nextOptimal) {
-                    this.modelingAssessmentService.getPartialAssessment(submissionId).subscribe((result: Result) => {
-                        this.result = result;
-                        // this.initializeAssessments();
-                        this.checkScoreBoundaries();
-                    });
-                } else {
-                    if (this.result && this.result.feedbacks) {
-                        // this.initializeAssessments();
-                        this.checkScoreBoundaries();
-                    }
-                }
-            });
-        });
+       this.initComponent();
     }
 
     ngOnDestroy() {
         clearTimeout(this.timeout);
+    }
+
+    initComponent() {
+        this.route.params.subscribe(params => {
+            const submissionId = Number(params['submissionId']);
+            // let nextOptimal: boolean;
+            // this.route.queryParams.subscribe(query => {
+            //     nextOptimal = query['optimal'] === 'true';
+            // });
+            this.loadSubmission(submissionId);
+        });
+    }
+
+    loadSubmission(submissionId: number) {
+        this.modelingSubmissionService.getSubmission(submissionId).subscribe((submission: ModelingSubmission) => {
+            this.submission = submission;
+            this.modelingExercise = this.submission.participation.exercise as ModelingExercise;
+            this.result = this.submission.result;
+            if (this.result.feedbacks) {
+                this.result = this.modelingAssessmentService.convertResult(this.result);
+            } else {
+                this.result.feedbacks = [];
+            }
+            // this.submission.participation.results = [this.result]; // TODO why is this necessary
+            // this.result.participation = this.submission.participation;
+            /**
+             * set diagramType to class diagram if exercise is null, use case or communication
+             * apollon does not support use case and communication yet
+             */
+            // this.diagramType = isNullOrUndefined(
+            //     this.modelingExercise.diagramType ||
+            //     this.modelingExercise.diagramType === DiagramType.USE_CASE ||
+            //     this.modelingExercise.diagramType === DiagramType.COMMUNICATION
+            // )
+            //     ? DiagramType.CLASS
+            //     : this.modelingExercise.diagramType;
+            if ((this.result.assessor == null || this.result.assessor.id === this.userId) && !this.result.rated) {
+                this.jhiAlertService.info('arTeMiSApp.apollonDiagram.lock');
+            }
+            // if (nextOptimal) {
+            //     this.modelingAssessmentService.getPartialAssessment(submissionId).subscribe((result: Result) => {
+            //         this.result = result;
+            //         // this.initializeAssessments();
+            //         this.checkScoreBoundaries();
+            //     });
+            // } else if (this.result && this.result.feedbacks) {
+            //     // this.initializeAssessments();
+            //     this.checkScoreBoundaries();
+            // }
+
+        });
     }
 
     saveAssessment() {
@@ -203,6 +209,7 @@ export class ModelingAssessmentComponent implements OnInit, OnDestroy {
                 (optimal: number[]) => {
                     this.busy = false;
                     this.router.navigateByUrl(`/apollon-diagrams/exercise/${this.modelingExercise.id}/${optimal.pop()}/tutor`);
+                    this.initComponent();
                 },
                 () => {
                     this.busy = false;
