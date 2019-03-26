@@ -307,7 +307,7 @@ export const genericRetryStrategy = ({
             // if maximum number of retries have been met
             // or response is a status code we don't wish to retry, throw error
             if (retryAttempt > maxRetryAttempts || excludedStatusCodes.find(e => e === error.status)) {
-                return _throw(error);
+                 throw(error);
             }
             // retry after 1s, 2s, etc...
             return timer(retryAttempt * scalingDuration);

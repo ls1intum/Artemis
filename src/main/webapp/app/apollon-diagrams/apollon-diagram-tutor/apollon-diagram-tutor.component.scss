@@ -2,9 +2,6 @@
     display: flex;
     height: 100%;
     .draggable-right{
-        //position: absolute;
-        //top: 0;
-        //right: 0;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -13,7 +10,5 @@
 }
 
 .apollon-container{
-    //width: calc(100% - 15px);
     height: 100%;
-    overflow: scroll;
 }

@@ -16,6 +16,7 @@ import { AssessmentInstructionsComponent } from './assessment-instructions/asses
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { ExpandableParagraphComponent } from 'app/apollon-diagrams/assessment-instructions/expandable-paragraph/expandable-paragraph.component';
 import { ModelingAssessmentComponent } from 'app/apollon-diagrams/modeling-assessment/modeling-assessment.component';
+import { ModelingAssessmentConflictComponent } from './modeling-assessment/modeling-assessment-conflict/modeling-assessment-conflict.component';
 
 const ENTITY_STATES = [...apollonDiagramsRoutes];
 
@@ -30,7 +31,8 @@ const ENTITY_STATES = [...apollonDiagramsRoutes];
         ModelingAssessmentComponent,
         ApollonDiagramTutorComponent,
         ExpandableParagraphComponent,
-        AssessmentInstructionsComponent
+        AssessmentInstructionsComponent,
+        ModelingAssessmentConflictComponent
     ],
     entryComponents: [
         ApollonDiagramCreateFormComponent,

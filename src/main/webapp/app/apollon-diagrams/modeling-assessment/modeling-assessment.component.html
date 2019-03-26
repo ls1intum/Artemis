@@ -45,7 +45,7 @@
     </h2>
 
     <div class="editor-container">
-        <jhi-apollon-diagram-tutor *ngIf="submission" [diagramType]="diagramType"
+        <jhi-apollon-diagram-tutor *ngIf="submission" [diagramType]="this.modelingExercise.diagramType"
             [model]="submission.model"></jhi-apollon-diagram-tutor>
         <jhi-assessment-instructions *ngIf="modelingExercise"
             [exercise]="modelingExercise"></jhi-assessment-instructions>

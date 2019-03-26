@@ -129,6 +129,9 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
             this.modelingAssessmentService.getOptimalSubmissions(this.exercise.id).subscribe(optimal => {
                 this.nextOptimalSubmissionIds = optimal;
                 this.applyFilter();
+            }, () => {
+                this.nextOptimalSubmissionIds = [];
+                this.applyFilter();
             });
         } else {
             this.applyFilter();

@@ -1,0 +1,16 @@
+.navigation-container{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.row-container{
+    display: flex;
+    align-items: center;
+}
+
+.control-container{
+    button{
+        margin-left: 15px;
+    }
+}

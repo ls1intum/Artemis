@@ -4,7 +4,7 @@ import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
 import {ApollonOptions, Point, State} from '@ls1intum/apollon';
 import {ActivatedRoute, Router} from '@angular/router';
 import {ModelingSubmission, ModelingSubmissionService} from '../../entities/modeling-submission';
-import {DiagramType, ModelingExercise, ModelingExerciseService} from '../../entities/modeling-exercise';
+import {ModelingExercise, ModelingExerciseService} from '../../entities/modeling-exercise';
 import {Result, ResultService} from '../../entities/result';
 import {genericRetryStrategy, ModelingAssessmentService} from '../../entities/modeling-assessment';
 import {AccountService} from '../../core';
@@ -27,18 +27,15 @@ export class ModelingAssessmentComponent implements OnInit, OnDestroy {
 
     submission: ModelingSubmission;
     modelingExercise: ModelingExercise;
-    diagramType: DiagramType;
     result: Result;
     conflicts: Map<string, Conflict>;
     assessmentsAreValid = false;
-    invalidError = '';
     totalScore = 0;
     busy: boolean;
     done = true;
-    timeout: any;
     userId: number;
     isAuthorized: boolean;
-    ignoreConflicts: false;
+    // ignoreConflicts: false;
     // assessmentsNames: Map<string, Map<string, string>>;
     // positions: Map<string, Point>;
 
@@ -61,11 +58,10 @@ export class ModelingAssessmentComponent implements OnInit, OnDestroy {
             this.userId = user.id;
         });
         this.isAuthorized = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
-       this.initComponent();
+        this.initComponent();
     }
 
     ngOnDestroy() {
-        clearTimeout(this.timeout);
     }
 
     initComponent() {
@@ -137,7 +133,7 @@ export class ModelingAssessmentComponent implements OnInit, OnDestroy {
     submit() {
         this.checkScoreBoundaries();
         this.removeCircularDependencies();
-        this.modelingAssessmentService.save(this.result.feedbacks, this.submission.id, true, this.ignoreConflicts).subscribe(
+        this.modelingAssessmentService.save(this.result.feedbacks, this.submission.id, true, false).subscribe(
             (result: Result) => {
                 result.participation.results = [result];
                 this.result = result;
@@ -181,12 +177,10 @@ export class ModelingAssessmentComponent implements OnInit, OnDestroy {
             // TODO: due to the JS rounding problems, it might be the case that we get something like 16.999999999999993 here, so we better round this number
             if (feedback.credits == null) {
                 this.assessmentsAreValid = false;
-                return (this.invalidError = 'The score field must be a number and can not be empty!');
             }
         }
         this.totalScore = totalScore;
         this.assessmentsAreValid = true;
-        this.invalidError = '';
     }
 
     /**

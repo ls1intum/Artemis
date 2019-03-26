@@ -4,6 +4,7 @@ import { ApollonDiagramListComponent } from './apollon-diagram-list.component';
 import { UserRouteAccessService } from '../core';
 import { ApollonDiagramStudentComponent } from './apollon-diagram-student.component';
 import { ModelingAssessmentComponent } from './modeling-assessment/modeling-assessment.component';
+import {ModelingAssessmentConflictComponent} from "app/apollon-diagrams/modeling-assessment/modeling-assessment-conflict/modeling-assessment-conflict.component";
 
 export const apollonDiagramsRoutes: Routes = [
     {
@@ -36,6 +37,15 @@ export const apollonDiagramsRoutes: Routes = [
     {
         path: 'apollon-diagrams/exercise/:exerciseId/:submissionId/tutor',
         component: ModelingAssessmentComponent,
+        data: {
+            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
+            pageTitle: 'arTeMiSApp.apollonDiagram.detail.title'
+        },
+        canActivate: [UserRouteAccessService]
+    },
+    {
+        path: 'apollon-diagrams/exercise/:exerciseId/:submissionId/conflict',
+        component: ModelingAssessmentConflictComponent,
         data: {
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
             pageTitle: 'arTeMiSApp.apollonDiagram.detail.title'

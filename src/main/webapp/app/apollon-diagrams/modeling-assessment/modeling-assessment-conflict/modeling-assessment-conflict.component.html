@@ -1,0 +1,21 @@
+<div class="conflict-container">
+    <jhi-alert></jhi-alert>
+    <h2 class="navigation-container">
+        <div class="row-container">
+            Conflict &nbsp; {{conflictIndex + 1}}/{{conflicts.length}}
+        </div>
+        <div class="control-container row-container">
+            <button class="btn btn-primary">previous</button>
+            <button class="btn btn-primary">next</button>
+        </div>
+    </h2>
+
+    <div class="editor-container">
+        <jhi-apollon-diagram-tutor *ngIf="submission" [diagramType]="this.modelingExercise.diagramType"
+                                   [model]="submission.model"></jhi-apollon-diagram-tutor>
+        <jhi-apollon-diagram-tutor *ngIf="submission" [diagramType]="this.modelingExercise.diagramType"
+                                   [model]="submission.model"></jhi-apollon-diagram-tutor>
+        <jhi-assessment-instructions *ngIf="modelingExercise"
+                                     [exercise]="modelingExercise"></jhi-assessment-instructions>
+    </div>
+</div>
