@@ -49,7 +49,7 @@ public class QuizSubmissionWebsocketService {
         }
 
         // check if user already submitted for this quiz
-        Participation participation = participationService.getParticipationForQuiz(quizExercise, username);
+        Participation participation = participationService.participationForQuizWithResult(quizExercise, username);
         if (!participation.getResults().isEmpty()) {
             // NOTE: At this point, there can only be one Result because we already checked
             // if the quiz is active, so there is no way the student could have already practiced

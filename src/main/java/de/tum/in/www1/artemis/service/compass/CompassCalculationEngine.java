@@ -63,11 +63,13 @@ public class CompassCalculationEngine implements CalculationEngine {
         automaticAssessmentController = new AutomaticAssessmentController();
         modelSelector = new ModelSelector(); //TODO MJ fix Bug where on load of exercise no modelsWaitingForAssessment are added ? No differentiation between submitted and saved assessments!
 
-        for ( ModelingSubmission submission : submissions) {
+        for (ModelingSubmission submission : submissions) {
             String model = submission.getModel();
-            buildModel(submission.getId(), new JsonParser().parse(model).getAsJsonObject());
-            buildAssessment(submission);
-            modelSelector.addAlreadyAssessedModel(submission.getId());
+            if (model != null) {
+                buildModel(submission.getId(), new JsonParser().parse(model).getAsJsonObject());
+                buildAssessment(submission);
+                modelSelector.addAlreadyAssessedModel(submission.getId());
+            }
         }
 
         assessModelsAutomatically();

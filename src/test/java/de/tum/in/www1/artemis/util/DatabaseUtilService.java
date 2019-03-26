@@ -47,12 +47,12 @@ public class DatabaseUtilService {
 
 
     public void resetDatabase() {
-        participationRepo.deleteAll();
-        exerciseRepo.deleteAll();
-        courseRepo.deleteAll();
         feedbackRepo.deleteAll();
         resultRepo.deleteAll();
         modelingSubmissionRepo.deleteAll();
+        participationRepo.deleteAll();
+        exerciseRepo.deleteAll();
+        courseRepo.deleteAll();
         userRepo.deleteAll();
         assertThat(courseRepo.findAll()).as("course data has been cleared").isEmpty();
         assertThat(exerciseRepo.findAll()).as("exercise data has been cleared").isEmpty();
@@ -138,7 +138,7 @@ public class DatabaseUtilService {
         course.addExercises(exercise);
         courseRepo.save(course);
         exerciseRepo.save(exercise);
-        List<Course> courseRepoContent = courseRepo.findAllWithEagerExercises();
+        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercises();
         List<Exercise> exerciseRepoContent = exerciseRepo.findAll();
         assertThat(exerciseRepoContent.size()).as("a exercise got stored").isEqualTo(1);
         assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);

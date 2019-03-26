@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import static java.math.BigDecimal.ROUND_HALF_EVEN;
+import static java.math.BigDecimal.ROUND_HALF_UP;
 
 /**
  * A Result.
@@ -79,6 +79,8 @@ public class Result implements Serializable {
     // This explicit flag exists intentionally, as sometimes a Result is loaded from the database without
     // loading it's Feedback list. In this case you still want to know, if Feedback for this Result exists
     // without querying the server/database again.
+    // IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the moment
+    // all other exercise types should set this flag to false
     @Column(name = "hasFeedback")
     private Boolean hasFeedback;
 
@@ -217,14 +219,42 @@ public class Result implements Serializable {
         return this;
     }
 
+    /**
+     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without
+     * loading it's Feedback list. In this case you still want to know, if Feedback for this Result exists
+     * without querying the server/database again.
+     * IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the moment
+     * all other exercise types should set this flag to false
+     *
+     * @param hasFeedback
+     */
     public void setHasFeedback(Boolean hasFeedback) {
         this.hasFeedback = hasFeedback;
     }
 
+    /**
+     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without
+     * loading it's Feedback list. In this case you still want to know, if Feedback for this Result exists
+     * without querying the server/database again.
+     * IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the moment
+     * all other exercise types should set this flag to false
+     *
+     * @return
+     */
     public Boolean getHasFeedback() {
         return hasFeedback;
     }
 
+    /**
+     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without
+     * loading it's Feedback list. In this case you still want to know, if Feedback for this Result exists
+     * without querying the server/database again.
+     * IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the moment
+     * all other exercise types should set this flag to false
+     *
+     * @param hasFeedback
+     * @return
+     */
     public Result hasFeedback(Boolean hasFeedback) {
         this.hasFeedback = hasFeedback;
         return this;
@@ -391,7 +421,7 @@ public class Result implements Serializable {
 
     // TODO CZ: not necessary - AssessmentService#submitResult could be used for calculating the score and setting the result string for modeling exercises instead/as well
     public void evaluateFeedback(double maxScore) {
-        double totalScore = calculateTotalScore();
+        double totalScore = calculateTotalScore(maxScore);
         setScore(totalScore, maxScore);
         setResultString(totalScore, maxScore);
     }
@@ -434,11 +464,13 @@ public class Result implements Serializable {
      * @return sum of every feedback credit rounded to max two numbers after the comma
      */
     // TODO CZ: not necessary - AssessmentService#submitResult could be used for calculating the score and setting the result string for modeling exercises instead/as well
-    private double calculateTotalScore() {
+    private double calculateTotalScore(double maxScore) {
         double totalScore = 0.0;
         for (Feedback feedback : this.feedbacks) {
             totalScore += feedback.getCredits();
         }
-        return new BigDecimal(totalScore).setScale(2, ROUND_HALF_EVEN).doubleValue(); // TODO CZ: does ROUND_HALF_EVEN make sense here? why not use ROUND_HALF_UP?
+        // limit total score to be between 0 and maxScore
+        totalScore = Math.max(Math.min(totalScore, maxScore), 0);
+        return new BigDecimal(totalScore).setScale(2, ROUND_HALF_UP).doubleValue();
     }
 }

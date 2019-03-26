@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -134,15 +135,13 @@ public class ParticipationResource {
         if (!courseService.userHasAtLeastStudentPermissions(course)) {
             throw new AccessForbiddenException("You are not allowed to access this resource");
         }
-        try {
-            participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
-            return ResponseEntity.badRequest()
-                .headers(HeaderUtil.createFailureAlert("participation", "participationAlreadyExists", "There is already a participation for the given exercise and user."))
-                .body(null);
-        } catch (ResponseStatusException e) {
-            Participation participation = participationService.startExercise(exercise, principal.getName());
-            return ResponseEntity.created(new URI("/api/participations/" + participation.getId())).body(participation);
+        if (participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName()).isPresent()) {
+            // participation already exists
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("participation", "participationAlreadyExists", "There is already a participation for the given exercise and user.")).body(null);
         }
+        Participation participation = participationService.startExercise(exercise, principal.getName());
+        return ResponseEntity.created(new URI("/api/participations/" + participation.getId()))
+            .body(participation);
     }
 
 
@@ -156,21 +155,33 @@ public class ParticipationResource {
      */
     @PutMapping(value = "/courses/{courseId}/exercises/{exerciseId}/resume-participation")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @Transactional
     public ResponseEntity<Participation> resumeParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to resume Exercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
         Participation participation = participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName());
-        //TODO: are results initialized here?
-        Result result = participation.findLatestResult();
-        participation.setResults(Sets.newHashSet(result));
         checkAccessPermissionOwner(participation);
         if (exercise instanceof ProgrammingExercise) {
-            participation = participationService.resume(exercise, participation);
+            participation = participationService.resumeExercise(exercise, participation);
+            addLatestResultToParticipation(participation);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, participation.getStudent().getFirstName()))
                 .body(participation);
         }
         log.debug("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to resume participation", exerciseId);
         return ResponseEntity.ok().body(participation);
+    }
+
+    /**
+     * This makes sure the client can display the latest result immediately after loading this participation
+     * @param participation
+     */
+    private void addLatestResultToParticipation(Participation participation) {
+        //unproxy results if necessary
+        if (!Hibernate.isInitialized(participation.getResults())) {
+            participation.setResults((Set<Result>)Hibernate.unproxy(participation.getResults()));
+        }
+        Result result = participation.findLatestResult();
+        participation.setResults(Sets.newHashSet(result));
     }
 
 
@@ -258,7 +269,7 @@ public class ParticipationResource {
         Result result = new Result();
         result.setParticipation(participation);
         result.setSubmission(textSubmission.get());
-        resultService.createNewResult(result);
+        resultService.createNewResult(result, false);
         participation.setResults(new HashSet<>());
         participation.addResult(result);
 
@@ -402,7 +413,11 @@ public class ParticipationResource {
         if (exercise instanceof QuizExercise) {
             response = participationForQuizExercise((QuizExercise) exercise, principal.getName());
         } else if (exercise instanceof ModelingExercise) {
-            Participation participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
+            Optional<Participation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
+            if (!optionalParticipation.isPresent()) {
+                throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + exerciseId);
+            }
+            Participation participation = optionalParticipation.get();
             participation.getResults().size(); // eagerly load the association
             response = new MappingJacksonValue(participation);
         } else {
@@ -428,7 +443,7 @@ public class ParticipationResource {
             // filtered quizExercise and submission from HashMap
             quizExercise = quizExerciseService.findOneWithQuestions(quizExercise.getId());
             quizExercise.filterForStudentsDuringQuiz();
-            Participation participation = participationService.getParticipationForQuiz(quizExercise, username);
+            Participation participation = participationService.participationForQuizWithResult(quizExercise, username);
             // set view
             Class view = quizExerciseService.viewForStudentsInQuizExercise(quizExercise);
             MappingJacksonValue value = new MappingJacksonValue(participation);
@@ -437,7 +452,7 @@ public class ParticipationResource {
         } else {
             // quiz has ended => get participation from database and add full quizExercise
             quizExercise = quizExerciseService.findOneWithQuestions(quizExercise.getId());
-            Participation participation = participationService.getParticipationForQuiz(quizExercise, username);
+            Participation participation = participationService.participationForQuizWithResult(quizExercise, username);
             //avoid problems due to bidirectional associations between submission and result during serialization
             for (Result result : participation.getResults()) {
                 if (result.getSubmission() != null) {

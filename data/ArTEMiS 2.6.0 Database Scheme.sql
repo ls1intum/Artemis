@@ -23,7 +23,7 @@ CREATE TABLE `answer_option` (
   `invalid` bit(1) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `FKfqeqisl0e28xp3yn9bmlgkhej` (`question_id`),
-  CONSTRAINT `FKfqeqisl0e28xp3yn9bmlgkhej` FOREIGN KEY (`question_id`) REFERENCES `quiz_question` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+  CONSTRAINT `FKfqeqisl0e28xp3yn9bmlgkhej` FOREIGN KEY (`question_id`) REFERENCES `quiz_question` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
@@ -219,10 +219,10 @@ CREATE TABLE `drag_and_drop_mapping` (
   KEY `FK7p8h4scvkiilws9d5dxsdxkwy` (`question_id`),
   KEY `FKa9cfgroc0t8ujct9ux7ub1nyo` (`submitted_answer_id`),
   KEY `FKawq05c6hvxl400ouw5sg89xp9` (`drop_location_id`),
-  CONSTRAINT `FK5qmi3mh5y1mt9ysht4nx34nvf` FOREIGN KEY (`drag_item_id`) REFERENCES `drag_item` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  CONSTRAINT `FK7p8h4scvkiilws9d5dxsdxkwy` FOREIGN KEY (`question_id`) REFERENCES `quiz_question` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  CONSTRAINT `FKa9cfgroc0t8ujct9ux7ub1nyo` FOREIGN KEY (`submitted_answer_id`) REFERENCES `submitted_answer` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  CONSTRAINT `FKawq05c6hvxl400ouw5sg89xp9` FOREIGN KEY (`drop_location_id`) REFERENCES `drop_location` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+  CONSTRAINT `FK5qmi3mh5y1mt9ysht4nx34nvf` FOREIGN KEY (`drag_item_id`) REFERENCES `drag_item` (`id`),
+  CONSTRAINT `FK7p8h4scvkiilws9d5dxsdxkwy` FOREIGN KEY (`question_id`) REFERENCES `quiz_question` (`id`),
+  CONSTRAINT `FKa9cfgroc0t8ujct9ux7ub1nyo` FOREIGN KEY (`submitted_answer_id`) REFERENCES `submitted_answer` (`id`),
+  CONSTRAINT `FKawq05c6hvxl400ouw5sg89xp9` FOREIGN KEY (`drop_location_id`) REFERENCES `drop_location` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
@@ -241,7 +241,7 @@ CREATE TABLE `drag_item` (
   `invalid` bit(1) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `FK6qk07o5uhre61g1egc064wmmc` (`question_id`),
-  CONSTRAINT `FK6qk07o5uhre61g1egc064wmmc` FOREIGN KEY (`question_id`) REFERENCES `quiz_question` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+  CONSTRAINT `FK6qk07o5uhre61g1egc064wmmc` FOREIGN KEY (`question_id`) REFERENCES `quiz_question` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
@@ -262,7 +262,7 @@ CREATE TABLE `drop_location` (
   `invalid` bit(1) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `FKlbu6qm8ykqhtb5xm911bg5ct7` (`question_id`),
-  CONSTRAINT `FKlbu6qm8ykqhtb5xm911bg5ct7` FOREIGN KEY (`question_id`) REFERENCES `quiz_question` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+  CONSTRAINT `FKlbu6qm8ykqhtb5xm911bg5ct7` FOREIGN KEY (`question_id`) REFERENCES `quiz_question` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
@@ -331,10 +331,10 @@ CREATE TABLE `exercise` (
   UNIQUE KEY `UC_EXERCISESOLUTION_PARTICIPATION_ID_COL` (`solution_participation_id`),
   UNIQUE KEY `UC_EXERCISETEMPLATE_PARTICIPATION_ID_COL` (`template_participation_id`),
   KEY `fk_exercise_course_id` (`course_id`),
-  CONSTRAINT `FK1kyxexi1uqeu8pw3vcbulfi42` FOREIGN KEY (`quiz_point_statistic_id`) REFERENCES `quiz_statistic` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `FK1kyxexi1uqeu8pw3vcbulfi42` FOREIGN KEY (`quiz_point_statistic_id`) REFERENCES `quiz_statistic` (`id`),
   CONSTRAINT `FK4ldf9949g6c5n7a79sr6rkt5n` FOREIGN KEY (`solution_participation_id`) REFERENCES `participation` (`id`),
   CONSTRAINT `FK91br4p8i0d3owf75pqxpnc3o0` FOREIGN KEY (`template_participation_id`) REFERENCES `participation` (`id`),
-  CONSTRAINT `fk_exercise_course_id` FOREIGN KEY (`course_id`) REFERENCES `course` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+  CONSTRAINT `fk_exercise_course_id` FOREIGN KEY (`course_id`) REFERENCES `course` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
@@ -348,7 +348,7 @@ CREATE TABLE `exercise_categories` (
   `exercise_id` bigint(20) NOT NULL,
   `categories` varchar(255) DEFAULT NULL,
   KEY `FKqdemq87pe28lexkg6kh73vueg` (`exercise_id`),
-  CONSTRAINT `FKqdemq87pe28lexkg6kh73vueg` FOREIGN KEY (`exercise_id`) REFERENCES `exercise` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+  CONSTRAINT `FKqdemq87pe28lexkg6kh73vueg` FOREIGN KEY (`exercise_id`) REFERENCES `exercise` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
@@ -370,7 +370,7 @@ CREATE TABLE `feedback` (
   `reference` varchar(2000) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `FKmaiyumo49qyke2ijh8h575yy2` (`result_id`),
-  CONSTRAINT `feedback_ibfk_1` FOREIGN KEY (`result_id`) REFERENCES `result` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+  CONSTRAINT `feedback_ibfk_1` FOREIGN KEY (`result_id`) REFERENCES `result` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
@@ -445,7 +445,7 @@ CREATE TABLE `jhi_persistent_audit_evt_data` (
   `value` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`event_id`,`name`),
   KEY `idx_persistent_audit_evt_data` (`event_id`),
-  CONSTRAINT `fk_evt_pers_audit_evt_data` FOREIGN KEY (`event_id`) REFERENCES `jhi_persistent_audit_event` (`event_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+  CONSTRAINT `fk_evt_pers_audit_evt_data` FOREIGN KEY (`event_id`) REFERENCES `jhi_persistent_audit_event` (`event_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
@@ -464,7 +464,7 @@ CREATE TABLE `jhi_persistent_token` (
   `user_agent` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`series`),
   KEY `fk_user_persistent_token` (`user_id`),
-  CONSTRAINT `fk_user_persistent_token` FOREIGN KEY (`user_id`) REFERENCES `jhi_user` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+  CONSTRAINT `fk_user_persistent_token` FOREIGN KEY (`user_id`) REFERENCES `jhi_user` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
@@ -509,8 +509,8 @@ CREATE TABLE `jhi_user_authority` (
   `authority_name` varchar(50) NOT NULL,
   PRIMARY KEY (`user_id`,`authority_name`),
   KEY `fk_authority_name` (`authority_name`),
-  CONSTRAINT `fk_authority_name` FOREIGN KEY (`authority_name`) REFERENCES `jhi_authority` (`name`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  CONSTRAINT `fk_user_id` FOREIGN KEY (`user_id`) REFERENCES `jhi_user` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+  CONSTRAINT `fk_authority_name` FOREIGN KEY (`authority_name`) REFERENCES `jhi_authority` (`name`),
+  CONSTRAINT `fk_user_id` FOREIGN KEY (`user_id`) REFERENCES `jhi_user` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
@@ -580,8 +580,8 @@ CREATE TABLE `multiple_choice_submitted_answer_selected_options` (
   `selected_options_id` bigint(20) NOT NULL,
   PRIMARY KEY (`multiple_choice_submitted_answers_id`,`selected_options_id`),
   KEY `FK87gmes7g3ad3qf3wmx3lu0iq0` (`selected_options_id`),
-  CONSTRAINT `FK87gmes7g3ad3qf3wmx3lu0iq0` FOREIGN KEY (`selected_options_id`) REFERENCES `answer_option` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  CONSTRAINT `FKd6kco24shh09opxvn2kmi0dw5` FOREIGN KEY (`multiple_choice_submitted_answers_id`) REFERENCES `submitted_answer` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+  CONSTRAINT `FK87gmes7g3ad3qf3wmx3lu0iq0` FOREIGN KEY (`selected_options_id`) REFERENCES `answer_option` (`id`),
+  CONSTRAINT `FKd6kco24shh09opxvn2kmi0dw5` FOREIGN KEY (`multiple_choice_submitted_answers_id`) REFERENCES `submitted_answer` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
@@ -632,8 +632,8 @@ CREATE TABLE `participation` (
   UNIQUE KEY `UK6skuc03gvp2gw5lyji5lu0v0v` (`student_id`,`exercise_id`,`initialization_state`),
   KEY `fk_participation_exercise_id` (`exercise_id`),
   KEY `fk_participation_student_id` (`student_id`),
-  CONSTRAINT `fk_participation_exercise_id` FOREIGN KEY (`exercise_id`) REFERENCES `exercise` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  CONSTRAINT `fk_participation_student_id` FOREIGN KEY (`student_id`) REFERENCES `jhi_user` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+  CONSTRAINT `fk_participation_exercise_id` FOREIGN KEY (`exercise_id`) REFERENCES `exercise` (`id`),
+  CONSTRAINT `fk_participation_student_id` FOREIGN KEY (`student_id`) REFERENCES `jhi_user` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
@@ -661,8 +661,8 @@ CREATE TABLE `quiz_question` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `UC_QUESTIONQUESTION_STATISTIC_ID_COL` (`quiz_question_statistic_id`),
   KEY `FKcw89k10abejup8p3hif0kjpw` (`exercise_id`),
-  CONSTRAINT `FKcw89k10abejup8p3hif0kjpw` FOREIGN KEY (`exercise_id`) REFERENCES `exercise` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  CONSTRAINT `FKoi0sqphft8m7f92qa7ui8i3ac` FOREIGN KEY (`quiz_question_statistic_id`) REFERENCES `statistic` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+  CONSTRAINT `FKcw89k10abejup8p3hif0kjpw` FOREIGN KEY (`exercise_id`) REFERENCES `exercise` (`id`),
+  CONSTRAINT `FKoi0sqphft8m7f92qa7ui8i3ac` FOREIGN KEY (`quiz_question_statistic_id`) REFERENCES `quiz_statistic` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
@@ -710,12 +710,12 @@ CREATE TABLE `quiz_statistic_counter` (
   KEY `FK3bqk45run356e20sqmf3sak1o` (`quiz_point_statistic_id`),
   KEY `FKoh69hhnfcimvw7i1cwhepvt5g` (`multiple_choice_question_statistic_id`),
   KEY `FKhascwjyvee25c0k3tay04ghog` (`short_answer_question_statistic_id`),
-  CONSTRAINT `FK11jgyics37wyibhhpp866exa8` FOREIGN KEY (`drag_and_drop_question_statistic_id`) REFERENCES `quiz_statistic` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  CONSTRAINT `FK2bses6ev8komaj0jw4gcyl8te` FOREIGN KEY (`drop_location_id`) REFERENCES `drop_location` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  CONSTRAINT `FK3bqk45run356e20sqmf3sak1o` FOREIGN KEY (`quiz_point_statistic_id`) REFERENCES `quiz_statistic` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  CONSTRAINT `FKg7hjug3wu6icklf6gbiqs4n18` FOREIGN KEY (`answer_id`) REFERENCES `answer_option` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `FK11jgyics37wyibhhpp866exa8` FOREIGN KEY (`drag_and_drop_question_statistic_id`) REFERENCES `quiz_statistic` (`id`),
+  CONSTRAINT `FK2bses6ev8komaj0jw4gcyl8te` FOREIGN KEY (`drop_location_id`) REFERENCES `drop_location` (`id`),
+  CONSTRAINT `FK3bqk45run356e20sqmf3sak1o` FOREIGN KEY (`quiz_point_statistic_id`) REFERENCES `quiz_statistic` (`id`),
+  CONSTRAINT `FKg7hjug3wu6icklf6gbiqs4n18` FOREIGN KEY (`answer_id`) REFERENCES `answer_option` (`id`),
   CONSTRAINT `FKhascwjyvee25c0k3tay04ghog` FOREIGN KEY (`short_answer_question_statistic_id`) REFERENCES `quiz_statistic` (`id`),
-  CONSTRAINT `FKoh69hhnfcimvw7i1cwhepvt5g` FOREIGN KEY (`multiple_choice_question_statistic_id`) REFERENCES `quiz_statistic` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `FKoh69hhnfcimvw7i1cwhepvt5g` FOREIGN KEY (`multiple_choice_question_statistic_id`) REFERENCES `quiz_statistic` (`id`),
   CONSTRAINT `FKoqgu1clyd02qbo86silw1uhmk` FOREIGN KEY (`spot_id`) REFERENCES `short_answer_spot` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
@@ -745,9 +745,9 @@ CREATE TABLE `result` (
   UNIQUE KEY `UC_RESULTSUBMISSION_ID_COL` (`submission_id`),
   KEY `FKkkdvousfa95ueh46xg741fadg` (`assessor_id`),
   KEY `fk_result_participation_id` (`participation_id`),
-  CONSTRAINT `FK3vct9sad5oubthdmq63n58mnp` FOREIGN KEY (`submission_id`) REFERENCES `submission` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  CONSTRAINT `FKkkdvousfa95ueh46xg741fadg` FOREIGN KEY (`assessor_id`) REFERENCES `jhi_user` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  CONSTRAINT `fk_result_participation_id` FOREIGN KEY (`participation_id`) REFERENCES `participation` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+  CONSTRAINT `FK3vct9sad5oubthdmq63n58mnp` FOREIGN KEY (`submission_id`) REFERENCES `submission` (`id`),
+  CONSTRAINT `FKkkdvousfa95ueh46xg741fadg` FOREIGN KEY (`assessor_id`) REFERENCES `jhi_user` (`id`),
+  CONSTRAINT `fk_result_participation_id` FOREIGN KEY (`participation_id`) REFERENCES `participation` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
@@ -900,7 +900,7 @@ CREATE TABLE `submission` (
   `model` longtext,
   PRIMARY KEY (`id`),
   KEY `FKeap67y7pxd6ffvwbs6d6sfhmq` (`participation_id`),
-  CONSTRAINT `FKeap67y7pxd6ffvwbs6d6sfhmq` FOREIGN KEY (`participation_id`) REFERENCES `participation` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+  CONSTRAINT `FKeap67y7pxd6ffvwbs6d6sfhmq` FOREIGN KEY (`participation_id`) REFERENCES `participation` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
@@ -919,8 +919,8 @@ CREATE TABLE `submitted_answer` (
   PRIMARY KEY (`id`),
   KEY `FK6drbcvqf26cahd0j1u9ff0rtr` (`quiz_question_id`),
   KEY `FKfwgc3a5vd0cxt5jsvvxm2tstf` (`submission_id`),
-  CONSTRAINT `FK6drbcvqf26cahd0j1u9ff0rtr` FOREIGN KEY (`quiz_question_id`) REFERENCES `quiz_question` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  CONSTRAINT `FKfwgc3a5vd0cxt5jsvvxm2tstf` FOREIGN KEY (`submission_id`) REFERENCES `submission` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+  CONSTRAINT `FK6drbcvqf26cahd0j1u9ff0rtr` FOREIGN KEY (`quiz_question_id`) REFERENCES `quiz_question` (`id`),
+  CONSTRAINT `FKfwgc3a5vd0cxt5jsvvxm2tstf` FOREIGN KEY (`submission_id`) REFERENCES `submission` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
@@ -994,7 +994,7 @@ CREATE TABLE `user_groups` (
   `user_id` bigint(20) NOT NULL,
   `groups` varchar(255) DEFAULT NULL,
   KEY `FK_qhsd8ovn89o4usyr3fgaqkdjt` (`user_id`),
-  CONSTRAINT `FK_qhsd8ovn89o4usyr3fgaqkdjt` FOREIGN KEY (`user_id`) REFERENCES `jhi_user` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+  CONSTRAINT `FK_qhsd8ovn89o4usyr3fgaqkdjt` FOREIGN KEY (`user_id`) REFERENCES `jhi_user` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 

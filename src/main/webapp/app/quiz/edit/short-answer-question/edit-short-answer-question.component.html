@@ -1,5 +1,5 @@
 <div class="edit-sa-question">
-    <div class="question-options card-header question-card-header">
+    <div class="question-options card-header question-card-header" *ngIf="!reEvaluationInProgress">
         <button
             class="btn btn-light question-collapse"
             (click)= "isQuestionCollapsed = !isQuestionCollapsed"
@@ -8,7 +8,7 @@
             <fa-icon size="3x" [icon]="isQuestionCollapsed ? 'angle-right' : 'angle-down'"></fa-icon>
         </button>
         <div class="form-group question-title col-lg-9 col-md-7 col-sm-12 col-xs-12">
-            <input class="form-control" [(ngModel)]="question.title" placeholder="Question Title"/>
+            <input id="short-answer-question-title" class="form-control" [(ngModel)]="question.title" placeholder="Question Title"/>
         </div>
         <div class="form-group col-lg-2 col-md-3 col-sm-7 col-xs-8">
             <span jhiTranslate="arTeMiSApp.quizQuestion.score" class="colon-suffix"></span>
@@ -18,6 +18,35 @@
     </div>
 
     <div class="card-body question-card-body" [ngbCollapse]="isQuestionCollapsed" id="collapseQuestion{{questionIndex}}">
+        <div class="row" *ngIf="reEvaluationInProgress">
+            <div class="col-md-10 text-left">
+                <div class="input-group">
+                    <input class="form-control" [(ngModel)]="question.title" placeholder="Question Title"
+                           style="height: 33px"/>
+                    <span class="input-group-btn">
+                        <button class="btn btn-outline-secondary" type="button" (click)="resetQuestionTitle()">
+                            <fa-icon icon="undo"></fa-icon>
+                        </button>
+                    </span>
+                </div>
+            </div>
+            <div class="col-md-2 text-right">
+                <div class="form-group">
+                    <div class="re-evaluate-button" (click)="moveUp()">
+                        <fa-icon icon="chevron-up" size="2x"></fa-icon>
+                    </div>
+                    <div class="re-evaluate-button" (click)="moveDown()">
+                        <fa-icon icon="chevron-down" size="2x"></fa-icon>
+                    </div>
+                    <div class="re-evaluate-button"(click)="resetQuestion()">
+                        <fa-icon icon="undo" size="2x"></fa-icon>
+                    </div>
+                    <div class="re-evaluate-button" (click)="deleteQuestion()">
+                        <fa-icon icon="trash" size="2x"></fa-icon>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="question-options">
             <div class="form-group">
                 <span jhiTranslate="arTeMiSApp.quizQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
@@ -30,14 +59,28 @@
             <div class="form-group">
                 <div class="form-check custom-control custom-checkbox"></div>
             </div>
-            <div class="form-group">
+            <div class="form-group" *ngIf="!reEvaluationInProgress">
                 <div class="delete-button" (click)="deleteQuestion()">
                     <fa-icon icon="trash" size="2x"></fa-icon>
                 </div>
             </div>
+            <ng-container *ngIf="reEvaluationInProgress">
+                <button
+                    class="btn btn-outline-secondary"
+                    [hidden]="question.invalid"
+                    (click)="question.invalid = true"
+                    jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.setQuestionInvalid">
+                </button>
+                <button
+                    class="btn btn-outline-secondary"
+                    [hidden]="!question.invalid"
+                    [disabled]="question.invalid"
+                    jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.questionIsInvalid">
+                </button>
+            </ng-container>
         </div>
         <div class="markupEditorArea" [hidden]="showPreview">
-            <div class="toolbar">
+            <div class="toolbar" *ngIf="!reEvaluationInProgress">
                 <div class="btn-group">
                    <!-- <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.addHint" (click)="addHintAtCursor()"></div>
                     <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.addExplanation" (click)="addExplanationAtCursor()"></div>-->
@@ -45,7 +88,7 @@
                     <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.addOption" (click)="addOption()"></div>
                 </div>
             </div>
-            <div class="question-content">
+            <div class="question-content" *ngIf="!reEvaluationInProgress">
                 <ace-editor #questionEditor
                             [(text)]="questionEditorText"
                             [mode]="questionEditorMode"
@@ -55,26 +98,50 @@
                 </ace-editor>
             </div>
         </div>
-        <div class="edit-sa-question" style="padding:20px" *ngIf="!reEvaluationInProgress && showPreview">
+        <div class="edit-sa-question" style="padding:20px" *ngIf="showPreview || reEvaluationInProgress">
             <h4 jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.visualModeHeadline"></h4>
-            <span jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.visualModeExplanation"></span>
+            <span *ngIf="!reEvaluationInProgress"  jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.visualModeExplanation"></span>
             <hr/>
-            <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.addSpot" (click)="addSpotAtCursorVisualMode()"></div>
-            <hr/>
-            <div id="test" class="sa-question" >
-                <div *ngFor="let textPart of textParts; let i = index">
-                    <div class="short-answer-question-display" style="white-space: normal;" *ngFor="let element of textPart; let j = index">
-                        <span *ngIf="!isInputField(element)" id="element-{{i}}-{{j}}">{{element}}</span>
-                        <div *ngIf="isInputField(element)" style="position: relative; display: inline-block">
-                            <input dnd-droppable (onDropSuccess)="onDragDrop(getSpot(getSpotNr(element)), $event)" class="short-answer-question-input" disabled type="text">
-                            <div [ngClass]="'mapping-number mapping-color-' + getSpot(getSpotNr(element)).spotNr % 8">
-                                {{getSpotNr(element)}}
+            <div *ngIf="!reEvaluationInProgress" class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.addSpot" (click)="addSpotAtCursorVisualMode()"></div>
+            <hr *ngIf="!reEvaluationInProgress" />
+            <div style="display: flex">
+                <div id="test" class="sa-question" >
+                    <div *ngFor="let textPart of textParts; let i = index">
+                        <div class="short-answer-question-display" style="white-space: normal;" *ngFor="let element of textPart; let j = index">
+                            <span *ngIf="!isInputField(element) && !reEvaluationInProgress" id="element-{{i}}-{{j}}">{{element}}</span>
+                            <input *ngIf="!isInputField(element) && reEvaluationInProgress" id="element-{{i}}-{{j}}-textInput" class="short-answer-question-input" value="{{element}}" size="{{element.length +1}}" type="text" (change)="setQuestionText('element-' + i + '-' + j + '-textInput')">
+                            <div *ngIf="isInputField(element)" style="position: relative; display: inline-block">
+                                <input dnd-droppable (onDropSuccess)="onDragDrop(getSpot(getSpotNr(element)), $event)" class="short-answer-question-input" disabled type="text">
+
+
+                                <div style="position: absolute;top: -8px;right: -4px;display: inline-flex;" *ngIf="reEvaluationInProgress">
+                                    <div class="re-evaluate-button" title="Set invalid"
+                                         *ngIf="!getSpot(getSpotNr(element)).invalid" (click)="getSpot(getSpotNr(element)).invalid = true">
+                                        <fa-icon icon="ban" size="lg"></fa-icon>
+                                    </div>
+                                    <div class="re-evaluate-button" title="Reset" (click)="resetSpot(getSpot(getSpotNr(element)))">
+                                        <fa-icon icon="undo" size="lg"></fa-icon>
+                                    </div>
+                                    <div [ngClass]="reEvaluationInProgress ? 're-evaluate-button' : 'delete-button'"
+                                         title="Delete" (click)="deleteSpot(getSpot(getSpotNr(element)))">
+                                        <fa-icon icon="trash" size="lg"></fa-icon>
+                                    </div>
+                                </div>
+                                <div [ngClass]="'mapping-number mapping-color-' + getSpot(getSpotNr(element)).spotNr % 8">
+                                    {{getSpotNr(element)}}
+                                </div>
                             </div>
+                           <!-- <span>&nbsp;</span>  -->
                         </div>
-                       <!-- <span>&nbsp;</span>  -->
                     </div>
                 </div>
+                <span *ngIf="reEvaluationInProgress" class="input-group-btn" style="vertical-align: top">
+                    <button class="btn btn-outline-secondary btn-lg" type="button" (click)="resetQuestionText()">
+                        <fa-icon icon="undo"></fa-icon>
+                    </button>
+                </span>
             </div>
+
             <hr/>
             <div *ngIf="!question.solutions || !question.solutions.length" class="instructions">
                 <span jhiTranslate="arTeMiSApp.dragAndDropQuestion.addDragItemsInstructions"></span>
@@ -87,7 +154,7 @@
                     <div>
                         <textarea [(ngModel)]="solution.text" (ngModelChange)="questionUpdated.emit()"></textarea>
                     </div>
-                    <div class="delete-button" title="Delete" (click)="deleteSolution(solution)" *ngIf="!reEvaluationInProgress">
+                    <div class="delete-button" title="Delete" (click)="deleteSolution(solution)">
                         <fa-icon icon="trash" size="lg"></fa-icon>
                     </div>
                     <div class="drag-handle drag-handle-wrapper" title="Move">
@@ -106,7 +173,7 @@
                 </div>
             </div>
             <div class="question-options row d-flex justify-content-start">
-                <ng-container *ngIf="!reEvaluationInProgress">
+                <ng-container>
                     <div class="question-options">
                         <div class="col">
                             <button class="btn btn-outline-secondary" (click)="addTextSolution()">
@@ -119,13 +186,13 @@
             </div>
         </div>
         <hr/>
-        <div *ngIf="!showPreview" class="toolbar">
+        <div *ngIf="!showPreview && !reEvaluationInProgress" class="toolbar">
             <div class="btn-group">
                 <div class="btn btn-outline-secondary active" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.text"></div>
                 <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.visual" (click)="togglePreview()"></div>
             </div>
         </div>
-        <div *ngIf="showPreview" class="toolbar">
+        <div *ngIf="showPreview && !reEvaluationInProgress" class="toolbar">
             <div class="btn-group">
                 <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.text" (click)="togglePreview()"></div>
                 <div class="btn btn-outline-secondary active" jhiTranslate="arTeMiSApp.shortAnswerQuestion.editor.visual"></div>
@@ -133,3 +200,4 @@
         </div>
     </div>
  </div>
+

@@ -231,7 +231,7 @@ public class CourseResource {
 
     /**
      * GET  /courses : get all courses that the current user can register to.
-     * Decided by the start and end date
+     * Decided by the start and end date and if the registrationEnabled flag is set correctly
      *
      * @return the list of courses which are active)
      */
@@ -239,7 +239,7 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public List<Course> getAllCoursesToRegister() {
         log.debug("REST request to get all currently active Courses that are not online courses");
-        return courseService.findAllCurrentlyActiveAndNotOnline();
+        return courseService.findAllCurrentlyActiveAndNotOnlineAndEnabled();
     }
 
     /**
@@ -252,22 +252,32 @@ public class CourseResource {
     @GetMapping("/courses/for-dashboard")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public List<Course> getAllCoursesForDashboard(Principal principal) {
+        long start = System.currentTimeMillis();
         log.debug("REST request to get all Courses the user has access to with exercises, participations and results");
+        log.info("/courses/for-dashboard.start");
         User user = userService.getUserWithGroupsAndAuthorities();
 
         // get all courses with exercises for this user
-        List<Course> courses = courseService.findAllWithExercisesForUser(principal, user);
+        List<Course> courses = courseService.findAllActiveWithExercisesForUser(principal, user);
 
+        log.info("          /courses/for-dashboard.findAllActiveWithExercisesForUser in " + (System.currentTimeMillis()-start) + "ms");
         // get all participations of this user
+        //TODO: can we limit the following call to only retrieve participations and results for active courses?
+        //TODO: can we only load the relevant result (the latest rated one which is displayed in the user interface)
+            // Idea: we should save the current rated result in Participation and make sure that this is being set correctly when new results are added
+            // this would also improve the performance for other REST calls
         List<Participation> participations = participationService.findWithResultsByStudentUsername(principal.getName());
+        log.info("          /courses/for-dashboard.findWithResultsByStudentUsername in " + (System.currentTimeMillis()-start) + "ms");
 
+        long exerciseCount = 0;
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
                 // add participation with result to each exercise
                 exercise.filterForCourseDashboard(participations, principal.getName());
+                exerciseCount++;
             }
         }
-
+        log.info("/courses/for-dashboard.done in " + (System.currentTimeMillis()-start) + "ms for " + courses.size() + " courses with " + exerciseCount + " exercises for user " + principal.getName());
         return courses;
     }
 
@@ -525,5 +535,33 @@ public class CourseResource {
         log.debug("getResultsForCurrentStudent took " + (System.currentTimeMillis() - start) + "ms");
 
         return ResponseEntity.ok().body(course);
+    }
+
+    /**
+     * GET  /courses/:courseId/categories : Returns all categories used in a course
+     *
+     * @param courseId the id of the course to get the categories from
+     * @return the ResponseEntity with status 200 (OK) and the list of categories or with status 404 (Not Found)
+     */
+    @GetMapping(value = "/courses/{courseId}/categories")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<String>> getCategoriesInCourse(@PathVariable Long courseId) {
+        long start = System.currentTimeMillis();
+        log.debug("REST request to get categories of Course : {}", courseId);
+
+        User user = userService.getUser();
+        Course course = courseService.findOne(courseId);
+
+        List<Exercise> exercises = exerciseService.findAllExercisesByCourseId(course, user);
+        List<String> categories = new ArrayList<>();
+        for (Exercise exercise : exercises) {
+            categories.addAll(exercise.getCategories());
+        }
+
+
+        log.debug("getCategoriesInCourse took " + (System.currentTimeMillis() - start) + "ms");
+
+        return ResponseEntity.ok().body(categories);
     }
 }

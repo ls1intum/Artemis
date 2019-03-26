@@ -1,5 +1,5 @@
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
-import { Exercise, ExerciseType, ParticipationStatus, getIcon, getIconTooltip } from 'app/entities/exercise';
+import { Exercise, ExerciseCategory, ExerciseService, ExerciseType, ParticipationStatus, getIcon, getIconTooltip } from 'app/entities/exercise';
 import { JhiAlertService } from 'ng-jhipster';
 import { QuizExercise } from 'app/entities/quiz-exercise';
 import { InitializationState, Participation, ParticipationService } from 'app/entities/participation';
@@ -29,14 +29,16 @@ export class CourseExerciseRowComponent implements OnInit {
 
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
+    public exerciseCategories: ExerciseCategory[];
 
     constructor(private accountService: AccountService,
-                private jhiAlertService: JhiAlertService,
-                private $window: WindowRef,
-                private participationService: ParticipationService,
-                private httpClient: HttpClient,
-                private router: Router,
-                private route: ActivatedRoute) {
+        private jhiAlertService: JhiAlertService,
+        private $window: WindowRef,
+        private participationService: ParticipationService,
+        private exerciseService: ExerciseService,
+        private httpClient: HttpClient,
+        private router: Router,
+        private route: ActivatedRoute) {
     }
 
     ngOnInit() {
@@ -53,6 +55,7 @@ export class CourseExerciseRowComponent implements OnInit {
                 quizExercise.isPlannedToStart && quizExercise.isOpenForPractice && moment(this.exercise.dueDate).isBefore(moment());
             this.exercise = quizExercise;
         }
+        this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
     }
 
     getUrgentClass(date: Moment): string {
@@ -143,7 +146,7 @@ export class CourseExerciseRowComponent implements OnInit {
             if (this.extendedLink) {
                 this.router.navigate(['overview', this.course.id, 'exercises', this.exercise.id]);
             } else {
-                this.router.navigate([this.exercise.id], {relativeTo: this.route});
+                this.router.navigate([this.exercise.id], { relativeTo: this.route });
             }
         }
     }

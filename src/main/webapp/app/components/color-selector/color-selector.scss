@@ -1,0 +1,35 @@
+.color-selector {
+    position: absolute;
+    width: 210px;
+    height: 110px;
+    background-color: #FFFFFF;
+    z-index: 1000;
+    display: flex;
+    flex-wrap: wrap;
+    padding: 4px;
+    border-radius: 3px;
+    border: 1px solid #ced4da;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, .175);
+
+    .tag-color-selector {
+        height: 50px;
+        width: 50px;
+        display: flex;
+        flex-wrap: wrap;
+        padding: 4px;
+        flex: 1 0 25%;
+        border-radius: 3px;
+
+        &:hover {
+            border: 1px solid #ced4da;
+            padding: 3px;
+        }
+
+        .color-element {
+            width: 42px;
+            height: 42px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+    }
+}

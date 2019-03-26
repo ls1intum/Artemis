@@ -24,6 +24,7 @@ import {
 } from './';
 import { CourseExerciseCardComponent } from 'app/entities/course/course-exercise-card.component';
 import { FormDateTimePickerModule } from '../../shared/date-time-picker/date-time-picker.module';
+import { ArTEMiSColorSelectorModule } from 'app/components/color-selector/color-selector.module';
 
 const ENTITY_STATES = [...courseRoute, ...coursePopupRoute];
 
@@ -37,7 +38,8 @@ const ENTITY_STATES = [...courseRoute, ...coursePopupRoute];
         ArTEMiSModelingExerciseModule,
         RouterModule.forChild(ENTITY_STATES),
         FormDateTimePickerModule,
-        ReactiveFormsModule
+        ReactiveFormsModule,
+        ArTEMiSColorSelectorModule
     ],
     declarations: [
         CourseComponent,

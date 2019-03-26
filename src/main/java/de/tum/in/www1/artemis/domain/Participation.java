@@ -85,7 +85,7 @@ public class Participation implements Serializable {
      * We can think about adding orphanRemoval=true here, after adding the participationId to all submissions.
      *
      */
-    @OneToMany(mappedBy = "participation", cascade = {CascadeType.REMOVE})
+    @OneToMany(mappedBy = "participation")
     @JsonIgnoreProperties({"participation", "result"})
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Submission> submissions = new HashSet<>();
@@ -338,10 +338,9 @@ public class Participation implements Serializable {
         }
 
         Submission submission = optionalSubmission.get();
-        if (!Hibernate.isInitialized(optionalSubmission.get())) {
-            //TODO Why do we need to unproxy here?
-            submission = (Submission) Hibernate.unproxy(submission);
-        }
+        // This unproxy is necessary to retrieve the right type of submission (e.g. TextSubmission) to be able to
+        // compare it with the `submissionType` argument
+        submission = (Submission) Hibernate.unproxy(submission);
 
         if (submissionType.isInstance(submission)) {
             return Optional.of(submissionType.cast(submission));

@@ -1,12 +1,39 @@
 <?xml version="1.1" encoding="UTF-8" standalone="no"?>
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
     <changeSet author="krusche" id="1552664538429">
+
+        <!-- refactoring changes -->
         <renameTable oldTableName="question" newTableName="quiz_question"/>
         <renameTable oldTableName="statistic" newTableName="quiz_statistic"/>
         <renameTable oldTableName="statistic_counter" newTableName="quiz_statistic_counter"/>
         <renameColumn tableName="quiz_question" oldColumnName="questions_order" newColumnName="quiz_questions_order" columnDataType="BIGINT"/>
         <renameColumn tableName="quiz_question" oldColumnName="question_statistic_id" newColumnName="quiz_question_statistic_id" columnDataType="BIGINT"/>
         <renameColumn tableName="submitted_answer" oldColumnName="question_id" newColumnName="quiz_question_id" columnDataType="BIGINT"/>
+
+        <!-- normally these constraints are updated automatically, however on some computers this does not work properly and leads to problems, so we do it explicitly -->
+        <dropForeignKeyConstraint baseTableName="quiz_question" constraintName="FKoi0sqphft8m7f92qa7ui8i3ac"/>
+        <addForeignKeyConstraint baseColumnNames="quiz_question_statistic_id" baseTableName="quiz_question" constraintName="FKoi0sqphft8m7f92qa7ui8i3ac" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="quiz_statistic"/>
+        <dropForeignKeyConstraint baseTableName="answer_option" constraintName="FKfqeqisl0e28xp3yn9bmlgkhej"/>
+        <addForeignKeyConstraint baseColumnNames="question_id" baseTableName="answer_option" constraintName="FKfqeqisl0e28xp3yn9bmlgkhej" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="quiz_question"/>
+        <dropForeignKeyConstraint baseTableName="short_answer_mapping" constraintName="FK4ehrp6xueea0pyiiidtuouc0s"/>
+        <addForeignKeyConstraint baseColumnNames="question_id" baseTableName="short_answer_mapping" constraintName="FK4ehrp6xueea0pyiiidtuouc0s" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="quiz_question"/>
+        <dropForeignKeyConstraint baseTableName="short_answer_solution" constraintName="FKejag8le5jrd03enkmhxircugx"/>
+        <addForeignKeyConstraint baseColumnNames="question_id" baseTableName="short_answer_solution" constraintName="FKejag8le5jrd03enkmhxircugx" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="quiz_question"/>
+        <dropForeignKeyConstraint baseTableName="short_answer_spot" constraintName="FK2kwul05ckvpi145gc0bmf7obh"/>
+        <addForeignKeyConstraint baseColumnNames="question_id" baseTableName="short_answer_spot" constraintName="FK2kwul05ckvpi145gc0bmf7obh" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="quiz_question"/>
+        <dropForeignKeyConstraint baseTableName="drag_and_drop_mapping" constraintName="FK7p8h4scvkiilws9d5dxsdxkwy"/>
+        <addForeignKeyConstraint baseColumnNames="question_id" baseTableName="drag_and_drop_mapping" constraintName="FK7p8h4scvkiilws9d5dxsdxkwy" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="quiz_question"/>
+        <dropForeignKeyConstraint baseTableName="drag_and_drop_mapping" constraintName="FK7p8h4scvkiilws9d5dxsdxkwy"/>
+        <addForeignKeyConstraint baseColumnNames="question_id" baseTableName="drag_and_drop_mapping" constraintName="FK7p8h4scvkiilws9d5dxsdxkwy" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="quiz_question"/>
+        <dropForeignKeyConstraint baseTableName="drag_item" constraintName="FK6qk07o5uhre61g1egc064wmmc"/>
+        <addForeignKeyConstraint baseColumnNames="question_id" baseTableName="drag_item" constraintName="FK6qk07o5uhre61g1egc064wmmc" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="quiz_question"/>
+        <dropForeignKeyConstraint baseTableName="drop_location" constraintName="FKlbu6qm8ykqhtb5xm911bg5ct7"/>
+        <addForeignKeyConstraint baseColumnNames="question_id" baseTableName="drop_location" constraintName="FKlbu6qm8ykqhtb5xm911bg5ct7" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="quiz_question"/>
+        <dropForeignKeyConstraint baseTableName="drag_item" constraintName="FK6qk07o5uhre61g1egc064wmmc"/>
+        <addForeignKeyConstraint baseColumnNames="question_id" baseTableName="drag_item" constraintName="FK6qk07o5uhre61g1egc064wmmc" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="quiz_question"/>
+        <dropForeignKeyConstraint baseTableName="drag_item" constraintName="FK6qk07o5uhre61g1egc064wmmc"/>
+        <addForeignKeyConstraint baseColumnNames="question_id" baseTableName="drag_item" constraintName="FK6qk07o5uhre61g1egc064wmmc" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="quiz_question"/>
+
         <createTable tableName="attachment">
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints primaryKey="true" primaryKeyName="attachmentPK"/>

@@ -17,6 +17,7 @@
         },
         "courseOverview": {
             "noDescription": "Keine Beschreibung verfügbar",
+            "noCourseIcon": "Kein Kurs Icon verfügbar",
             "menu": {
                 "exercises": "Aufgaben",
                 "statistics": "Statistiken"
@@ -61,6 +62,7 @@
             },
             "exerciseDetails": {
                 "dueDate": "Abgabedatum:",
+                "categories": "Kategorien:",
                 "exerciseType": "Aufgaben-Typ:",
                 "level": "Schwierigkeit:",
                 "exerciseStatus": "Aufgaben Status:",

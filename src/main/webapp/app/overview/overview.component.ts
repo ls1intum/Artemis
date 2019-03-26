@@ -1,25 +1,41 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Course, CourseScoreCalculationService, CourseService } from 'app/entities/course';
 import { HttpResponse } from '@angular/common/http';
 import { JhiAlertService } from 'ng-jhipster';
 import { Exercise, ExerciseService } from 'app/entities/exercise';
+import { AccountService } from 'app/core';
+import { TUM_REGEX } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-overview',
     templateUrl: './overview.component.html',
     styles: []
 })
-export class OverviewComponent {
+export class OverviewComponent implements OnInit {
     public courses: Course[];
     public nextRelevantCourse: Course;
     public coursesToSelect: Course[];
     public courseToRegister: Course;
+    public isTumStudent = false;
     showCourseSelection = false;
     addedSuccessful = false;
     loading = false;
 
-    constructor(private courseService: CourseService, private exerciseService: ExerciseService, private jhiAlertService: JhiAlertService, private courseScoreCalculationService: CourseScoreCalculationService) {
+    constructor(
+        private courseService: CourseService,
+        private exerciseService: ExerciseService,
+        private jhiAlertService: JhiAlertService,
+        private accountService: AccountService,
+        private courseScoreCalculationService: CourseScoreCalculationService
+    ) {
         this.loadAndFilterCourses();
+
+    }
+
+    ngOnInit(): void {
+        this.accountService.identity().then(user => {
+            this.isTumStudent = !!user.login.match(TUM_REGEX);
+        });
 
     }
 
