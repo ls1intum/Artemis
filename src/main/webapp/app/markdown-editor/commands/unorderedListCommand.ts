@@ -26,12 +26,12 @@ export class UnorderedListCommand extends Command {
     }
 
     /**
-     * @function execute
-     * @desc 1. Check if the selected text includes (.)
-     *       2. If included reduce the selected text by this elements and replace the selected text by textToAdd
+     * @function replaceText
+     * @desc 1. Check if the selected text includes (-)
+     *       2. If included reduce the selected text by 2 (-, whitespace) and replace the selected text by textToAdd
      *       3. If not included combine (-) with the selected text and insert into the editor
      *       4. An unordered list in markdown appears
-     * @param {string}
+     * @param element {string} extracted textLine from the {array} selectedText
      */
     replaceText(element: string): void {
         if (element.includes('-')) {

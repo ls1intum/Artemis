@@ -15,13 +15,12 @@ export class ReferenceCommand extends Command {
      */
     execute(): void {
         let selectedText = this.getSelectedText();
-        let textToAdd = '';
 
         if (selectedText.includes('>') && !selectedText.includes('Reference')) {
-            textToAdd = selectedText.slice(2);
+            const textToAdd = selectedText.slice(2);
             this.insertText(textToAdd);
         } else if (selectedText.includes('>') && selectedText.includes('Reference')) {
-            textToAdd = selectedText.slice(2, -9);
+            const textToAdd = selectedText.slice(2, -9);
             this.insertText(textToAdd);
         } else {
             const range = this.getRange();

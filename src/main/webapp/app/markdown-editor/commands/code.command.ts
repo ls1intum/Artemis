@@ -14,13 +14,12 @@ export class CodeCommand extends Command {
      */
     execute(): void {
         let selectedText = this.getSelectedText();
-        let textToAdd = '';
 
         if (selectedText.includes('```language ') && !selectedText.includes('Source Code')) {
-            textToAdd = selectedText.slice(12, -3);
+            const textToAdd = selectedText.slice(12, -3);
             this.insertText(textToAdd);
         } else if (selectedText.includes('```language ') && selectedText.includes('Source Code') ) {
-            textToAdd = selectedText.slice(23, -3);
+            const textToAdd = selectedText.slice(23, -3);
             this.insertText(textToAdd);
         } else {
             const range = this.getRange();

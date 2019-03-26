@@ -824,23 +824,23 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Edit
      * @desc Get the {array} from the editor and assign its values based on the domainCommands
      *       to the corresponding question attributes one by one
      *       1. Go trough each element of the {array} domain command
-     *       2. If the first element {string} has not second element {domainCommandIdentifier} in the array assign the string to the question text
+     *       2. If the first textLine {string} of the {array} has not second element {domainCommandIdentifier} in the array assign the string to the question text
      *       3. else assign the first element {string} according to the second element {domainCommandIdentifier} to the corresponding attributes of the question
      * @param {array} contains markdownTextLine with the corresponding domainCommand {DomainCommand} identifier
      */
     domainCommandsFound(domainCommands: [string, DomainCommand][]): void {
         this.cleanupQuestion();
 
-        for (const command of domainCommands)  {
+        for (const  [name, command]  of domainCommands)  {
 
-            if (command[1] === null && command[0].length > 0) {
-                this.question.text = command[0];
+            if (command === null && name.length > 0) {
+                this.question.text = name;
             }
 
-            if (command[1] instanceof ExplanationCommand) {
-                this.question.explanation = command[0];
-            } else if (command[1] instanceof HintCommand) {
-                this.question.hint = command[0];
+            if (command instanceof ExplanationCommand) {
+                this.question.explanation = name;
+            } else if (command instanceof HintCommand) {
+                this.question.hint = name;
             }
 
         }

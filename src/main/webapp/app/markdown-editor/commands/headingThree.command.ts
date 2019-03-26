@@ -15,13 +15,12 @@ export class HeadingThreeCommand extends Command {
      */
     execute(): void {
         let selectedText = this.getSelectedText();
-        let textToAdd = '';
 
         if (selectedText.includes('###') && !selectedText.includes('Heading 3')) {
-            textToAdd = selectedText.slice(4);
+            const textToAdd = selectedText.slice(4);
             this.insertText(textToAdd);
         } else if (selectedText.includes('###') && selectedText.includes('Heading 3')) {
-            textToAdd = selectedText.slice(4, -9);
+            const textToAdd = selectedText.slice(4, -9);
             this.insertText(textToAdd);
         } else {
             const initText = 'Heading 3';

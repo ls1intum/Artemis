@@ -191,11 +191,7 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
             return;
         } else {
             /** create array with domain command identifier */
-            const possibleCommandIdentifier = new Array<string>();
-            for (const domainCommand of this.domainCommands) {
-                 possibleCommandIdentifier.push(domainCommand.getOpeningIdentifier());
-            }
-
+            const possibleCommandIdentifier = this.domainCommands.map(command => command.getOpeningIdentifier());
             /** create empty array which
              * will contain the splitted textline with the corresponding domainCommandIdentifier which
              * will be emitted to the parent component */

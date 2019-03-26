@@ -122,31 +122,31 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQues
         this.cleanupQuestion();
         let currentAnswerOption = new AnswerOption();
 
-        for (const command of domainCommands)  {
+        for (const [name, command] of domainCommands)  {
 
-            if (command[1] === null && command[0].length > 0) {
-                this.question.text = command[0];
+            if (command === null && name.length > 0) {
+                this.question.text = name;
             }
-            if (command[1] instanceof CorrectOptionCommand || command[1] instanceof IncorrectOptionCommand) {
+            if (command instanceof CorrectOptionCommand || command instanceof IncorrectOptionCommand) {
                 currentAnswerOption = new AnswerOption();
-                if (command[1] instanceof CorrectOptionCommand) {
+                if (command instanceof CorrectOptionCommand) {
                     currentAnswerOption.isCorrect = true;
                 } else {
                     currentAnswerOption.isCorrect = false;
                 }
-                currentAnswerOption.text = command[0];
+                currentAnswerOption.text = name;
                 this.question.answerOptions.push(currentAnswerOption);
-            } else if (command[1] instanceof ExplanationCommand) {
+            } else if (command instanceof ExplanationCommand) {
                 if (currentAnswerOption != null) {
-                    currentAnswerOption.explanation = command[0];
+                    currentAnswerOption.explanation = name;
                 } else {
-                    this.question.explanation = command[0];
+                    this.question.explanation = name;
                 }
-            } else if (command[1] instanceof HintCommand) {
+            } else if (command instanceof HintCommand) {
                 if (currentAnswerOption != null) {
-                    currentAnswerOption.hint = command[0];
+                    currentAnswerOption.hint = name;
                 } else {
-                    this.question.hint = command[0];
+                    this.question.hint = name;
                 }
             }
         }

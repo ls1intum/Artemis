@@ -30,7 +30,7 @@ interface Reason {
     translateValues: {};
 }
 
-interface Warnings {
+interface Warning {
     translateKey: string;
     translateValues: {};
 }
@@ -136,7 +136,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         const courseId = +this.route.snapshot.paramMap.get('courseId');
         const quizId = +this.route.snapshot.paramMap.get('id');
         /** Query the courseService for the participationId given by the params */
-        if (courseId) {
+        if (courseId && !quizId) {
             this.courseService.find(courseId).subscribe((response: HttpResponse<Course>) => {
                 this.course = response.body;
                 // Make sure to call init if we didn't receive an id => new quiz-exercise
@@ -610,23 +610,17 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
      * @desc Get the reasons, why the quiz needs warnings
      * @returns {Array} array of objects with fields 'translateKey' and 'translateValues'
      */
-    computeInvalidWarnings(): Warnings[] {
-        let invalidWarnings = new Array<Warnings>();
-        if (!this.quizExercise) {
-            invalidWarnings = [];
-            return;
-        }
-
-        this.quizExercise.quizQuestions.forEach(function(question: QuizQuestion, index: number) {
-            if (question.type === QuizQuestionType.MULTIPLE_CHOICE
-                && (<MultipleChoiceQuestion>question).answerOptions.some(option => !option.explanation)) {
-                invalidWarnings.push({
-                    translateKey: 'arTeMiSApp.quizExercise.invalidReasons.explanationIsMissing',
-                    translateValues: {index: index + 1}
-                });
-            }
-        });
-            return invalidWarnings;
+    computeInvalidWarnings(): Warning[] {
+        const invalidWarnings = !this.quizExercise ? [] : this.quizExercise.quizQuestions.map((question, index) => {
+                if (question.type === QuizQuestionType.MULTIPLE_CHOICE
+                    && (<MultipleChoiceQuestion>question).answerOptions.some(option => !option.explanation)) {
+                    return {
+                        translateKey: 'arTeMiSApp.quizExercise.invalidReasons.explanationIsMissing',
+                        translateValues: {index: index + 1}
+                    };
+                }
+            }).filter(Boolean);
+        return invalidWarnings;
     }
 
     /**

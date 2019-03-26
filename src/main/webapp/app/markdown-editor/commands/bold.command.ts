@@ -14,14 +14,14 @@ export class BoldCommand extends Command {
          *       4. Bold markdown appears
          */
     execute(): void {
-        const chosenText = this.getSelectedText();
+        const selectedText = this.getSelectedText();
         let textToAdd = '';
 
-        if (chosenText.includes('**')) {
-            textToAdd = chosenText.slice(2, -2);
+        if (selectedText.includes('**')) {
+            textToAdd = selectedText.slice(2, -2);
             this.insertText(textToAdd);
         } else {
-            textToAdd = `**${chosenText}**`;
+            textToAdd = `**${selectedText}**`;
             this.insertText(textToAdd);
         }
     }
