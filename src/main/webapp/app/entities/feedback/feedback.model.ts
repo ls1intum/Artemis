@@ -1,6 +1,6 @@
 import { BaseEntity } from 'app/shared';
 import { Result } from '../result';
-import { ModelElementType } from 'app/entities/modeling-assessment/uml-element.model';
+import { ElementType } from '@ls1intum/apollon';
 
 export const enum FeedbackType {
     AUTOMATIC = 'AUTOMATIC',
@@ -18,10 +18,10 @@ export class Feedback implements BaseEntity {
     public positive: boolean;
 
     // helper attributes for modeling exercise assessments stored in Feedback
-    public referenceType: ModelElementType;
+    public referenceType: ElementType;
     public referenceId: string;
 
-    constructor(referenceId?: string, referenceType?: ModelElementType, credits?: number, text?: string) {
+    constructor(referenceId?: string, referenceType?: ElementType, credits?: number, text?: string) {
         this.referenceId = referenceId;
         this.referenceType = referenceType;
         this.reference = referenceType + ':' + referenceId;

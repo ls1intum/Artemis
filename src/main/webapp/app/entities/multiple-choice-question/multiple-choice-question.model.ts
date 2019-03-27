@@ -5,6 +5,8 @@ export class MultipleChoiceQuestion extends QuizQuestion {
 
     public answerOptions?: AnswerOption[];
 
+    public hasCorrectOption: boolean;
+
     constructor() {
         super(QuizQuestionType.MULTIPLE_CHOICE);
     }

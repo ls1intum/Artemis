@@ -24,6 +24,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.Principal;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
@@ -366,6 +367,14 @@ public class UserService {
     @Transactional(readOnly = true)
     public User getUserWithGroupsAndAuthorities() {
         User user = userRepository.findOneByLogin(SecurityUtils.getCurrentUserLogin().get()).get();
+        user.getGroups().size(); // eagerly load the association
+        user.getAuthorities().size(); // eagerly load the association
+        return user;
+    }
+
+    @Transactional(readOnly = true)
+    public User getUserWithGroupsAndAuthorities(Principal principal) {
+        User user = userRepository.findOneByLogin(principal.getName()).get();
         user.getGroups().size(); // eagerly load the association
         user.getAuthorities().size(); // eagerly load the association
         return user;

@@ -44,7 +44,7 @@ public class ParticipationIntegrationTest {
     public void initTestCase() {
         database.resetDatabase();
         database.addUsers(2, 0);
-        database.addCourseWithModelingExercise();
+        database.addCourseWithDifferentModelingExercises();
     }
 
 

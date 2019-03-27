@@ -1,9 +1,10 @@
-import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs/Observable';
 import { HttpClient, HttpEvent, HttpHandler, HttpInterceptor, HttpParams, HttpRequest } from '@angular/common/http';
-import { SERVER_API_URL } from '../../app.constants';
+import { Injectable } from '@angular/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { BuildLogEntry } from '../../entities/build-log';
+import { Observable } from 'rxjs/Observable';
+
+import { BuildLogEntryArray } from '../../entities/build-log';
+import { SERVER_API_URL } from '../../app.constants';
 
 @Injectable({ providedIn: 'root' })
 export class RepositoryService {
@@ -23,8 +24,8 @@ export class RepositoryService {
         return this.http.get<void>(`${this.resourceUrl}/${participationId}/pull`, {});
     }
 
-    buildlogs(participationId: number): Observable<Array<BuildLogEntry>> {
-        return this.http.get<BuildLogEntry[]>(`${this.resourceUrl}/${participationId}/buildlogs`);
+    buildlogs(participationId: number): Observable<BuildLogEntryArray> {
+        return this.http.get<BuildLogEntryArray>(`${this.resourceUrl}/${participationId}/buildlogs`);
     }
 }
 

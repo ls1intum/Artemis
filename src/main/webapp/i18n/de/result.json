@@ -17,7 +17,7 @@
                 "title": "Result"
             },
             "noResult": "Kein Ergebnis",
-            "resultString": "Result String",
+            "resultString": "Ergebnis",
             "completionDate": "Completion Date",
             "successful": "Successful",
             "buildArtifact": "Build Artifact",

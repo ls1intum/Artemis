@@ -1,6 +1,6 @@
 <div>
     <h4>
-        <span *ngIf="course && !showHeading">{{course.title}} - </span><span *ngIf="programmingExercises && showHeading">{{programmingExercises.length}} </span>
+        <span *ngIf="course && !showHeading">{{course.title}} - </span><span *ngIf="programmingExercises && showHeading">{{getAmountOfExercisesString(programmingExercises)}} </span>
         <span jhiTranslate="arTeMiSApp.programmingExercise.home.title">Programming Exercises</span>
         <button *ngIf="course" id="jh-link-entity" class="btn btn-primary float-right jh-link-entity link-programming-exercise mr-1" [routerLink]="['/', { outlets: { popup: ['course', course.id, 'programming-exercise-new'] } }]">
             <fa-icon [icon]="'plus'"></fa-icon>
@@ -19,13 +19,13 @@
     <div class="row">
     </div>
     <br>
-    <div class="table-responsive" *ngIf="programmingExercises">
+    <div class="table-responsive" *ngIf="programmingExercises && programmingExercises.length > 0">
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
                     <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
                     <th jhiSortBy="title"><span jhiTranslate="arTeMiSApp.exercise.title">Title</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
-                    <th jhiSortBy="title"><span jhiTranslate="arTeMiSApp.exercise.shortName">Short Name</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
+                    <th jhiSortBy="shortName"><span jhiTranslate="arTeMiSApp.exercise.shortName">Short Name</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
                     <th jhiSortBy="releaseDate"><span jhiTranslate="arTeMiSApp.exercise.releaseDate">Release Date</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
                     <th jhiSortBy="dueDate"><span jhiTranslate="arTeMiSApp.exercise.dueDate">Due Date</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
                     <th jhiSortBy="maxScore"><span jhiTranslate="arTeMiSApp.exercise.maxScore">Max Score</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>

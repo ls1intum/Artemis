@@ -16,12 +16,18 @@
         <div *ngFor="let textPart of textParts; let i = index" style="display: flex; max-width: 100%;flex-wrap: wrap;">
             <div class="short-answer-question-display"  *ngFor="let element of textPart; let j = index">
                 <div *ngIf="!shortAnswerQuestionUtil.isInputField(element)" style="display: inline-flex" [innerHTML]="element"></div>
-                <div *ngIf="shortAnswerQuestionUtil.isInputField(element) && !showingSampleSolution" style="position: relative; display: inline-block">
+                <div *ngIf="shortAnswerQuestionUtil.isInputField(element) && !showingSampleSolution && !shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element), question).invalid" 
+                    style="position: relative; display: inline-block">
                     <input class="short-answer-question-input" disabled
                            [style.background]="getBackgroundColourForInputField(element)"
                            value="{{getSubmittedTextForSpot(element) !== undefined ? getSubmittedTextForSpot(element).text : ''}}"
                            size="{{getSubmittedTextForSpot(element) !== undefined ? getSubmittedTextForSpot(element).text.length + 2 : 5}}">
                 </div>
+                <div *ngIf="shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element), question).invalid" class="short-answer-question-display" [ngbTooltip]="('arTeMiSApp.shortAnswerSpot.invalidSpot' | translate)">
+                        <input class="short-answer-question-input" style="background: grey" disabled 
+                           value="{{getSubmittedTextForSpot(element) !== undefined ? getSubmittedTextForSpot(element).text : ''}}"
+                           size="{{getSubmittedTextForSpot(element) !== undefined ? getSubmittedTextForSpot(element).text.length + 2 : 5}}">
+                    </div>
                 <div *ngIf="shortAnswerQuestionUtil.isInputField(element) && showingSampleSolution" style="position: relative; display: inline-block">
                     <input class="short-answer-question-input" disabled
                            [style.background]="'lightgreen'"

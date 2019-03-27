@@ -5,7 +5,7 @@
                 "title": "Editor"
             },
             "testStatusLabels": {
-                "testStatusNoResult": "Keine Results",
+                "testStatusNoResult": "Keine Ergebnisse",
                 "testStatusTestPassing": "Test bestanden",
                 "testStatusTestFailing": "Test fehlgeschlagen",
                 "totalTestsPassing": "{{totalTests}} Tests bestanden",

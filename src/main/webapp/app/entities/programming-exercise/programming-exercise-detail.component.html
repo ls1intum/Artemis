@@ -66,6 +66,14 @@
                 <dd>
                     <a [routerLink]="['/', { outlets: { popup: 'exercise/'+ programmingExercise.id + '/lti-configuration'} }]">LTI Configuration</a>
                 </dd>
+                <dt><span jhiTranslate="arTeMiSApp.programmingExercise.templateResult">Template Result</span></dt>
+                <dd>
+                    <div *ngIf="programmingExercise.templateParticipation.results"><jhi-result [participation]="programmingExercise.templateParticipation"></jhi-result></div>
+                </dd>
+                <dt><span jhiTranslate="arTeMiSApp.programmingExercise.solutionResult">Solution Result</span></dt>
+                <dd>
+                    <div *ngIf="programmingExercise.solutionParticipation.results"><jhi-result [participation]="programmingExercise.solutionParticipation"></jhi-result></div>
+                </dd>
             </dl>
 
             <button type="submit"
