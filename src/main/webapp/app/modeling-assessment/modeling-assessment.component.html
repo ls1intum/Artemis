@@ -1,0 +1,67 @@
+<div class="p-4">
+    <jhi-alert></jhi-alert>
+
+    <div class="row">
+        <div>
+            <button type="submit" (click)="previousState()" class="btn btn-info">
+                <fa-icon icon="arrow-left"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back">Back</span>
+            </button>
+            <button *ngIf="(result?.rated && !done) || (result?.assessor && result.assessor.id !== userId && !result?.rated)" [disabled]="busy" class="btn btn-success" (click)="assessNextOptimal(0)">
+                <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;Assess next submission
+            </button>
+        </div>
+        <div class="col">
+            <h4>
+                Assessment <span
+                *ngIf="result && result.participation">for Submission of {{result.participation.student.firstName}} {{result.participation.student.lastName}}</span>
+            </h4>
+        </div>
+        <div class="col text-right">
+            <span *ngIf="result && result.participation"><jhi-result
+                [participation]="result.participation"></jhi-result></span>
+            <button class="btn btn-primary" (click)="saveAssessment()"
+                    [disabled]="!result?.feedbacks || !assessmentsAreValid || (result?.assessor && result.assessor.id !== userId && !isAuthorized)"
+                    [hidden]="result && result.rated">Save Assessment
+            </button>
+            <button class="btn btn-success" (click)="submit()"
+                    [disabled]="!result?.feedbacks || !assessmentsAreValid || (result?.assessor && result.assessor.id !== userId && !isAuthorized)"
+                    [hidden]="result && result.rated">Submit Assessment
+            </button>
+            <button class="btn btn-danger" (click)="submit()"
+                    [disabled]="!result?.feedbacks || !assessmentsAreValid"
+                    [hidden]="!result || !result.rated">Override Assessment
+            </button>
+            <div *ngIf="conflicts && conflicts.size > 0" class="custom-control custom-switch">
+                <input type="checkbox" class="custom-control-input" id="customSwitches" [(ngModel)]="ignoreConflicts">
+                <label class="custom-control-label" for="customSwitches">Ignore Conflict</label>
+            </div>
+
+        </div>
+    </div>
+
+    <h2>
+        <span *ngIf="busy" style="color:grey"><fa-icon icon="spinner" [spin]="true"></fa-icon>&nbsp;<span>Please wait while finding the next submission!</span></span>
+    </h2>
+
+    <div class="row" *ngIf="modelingExercise">
+        <div class="col-10">
+            <p>
+                <strong>Exercise:</strong> {{ modelingExercise.title }}<br>
+                <strong>Problem Statement:</strong> {{ modelingExercise.problemStatement }}<br>
+                <strong>Assessment instruction:</strong> Double click the diagram elements and give all of them a score and a feedback comment based on the grading criteria.
+            </p>
+        </div>
+        <div class="col-2 text-right">
+            <span><h5><strong>Score:</strong> {{ totalScore | number : '1.0-2' }} / {{ modelingExercise.maxScore }}</h5></span>
+            <span *ngIf="result && result.assessor && result.assessor.id !== userId"
+                  style="color:red"><h6>Reviewer: {{result.assessor.firstName + (isAuthorized ? '' : ' - submission locked')}}</h6></span>
+        </div>
+    </div>
+    <br>
+
+    <div class="row">
+        <div class="col-12">
+            <div #editorContainer style="width: 100%; height: 100vh;"></div>
+        </div>
+    </div>
+</div>

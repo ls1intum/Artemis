@@ -7,11 +7,10 @@ import { ApollonDiagramListComponent } from './apollon-diagram-list.component';
 import { apollonDiagramsRoutes } from './apollon-diagrams.route';
 import { ApollonQuizExerciseGenerationComponent } from './exercise-generation/apollon-quiz-exercise-generation.component';
 import { ArTEMiSSharedModule } from '../shared';
-import { ApollonDiagramStudentComponent } from './apollon-diagram-student.component';
-import { ApollonDiagramTutorComponent } from './apollon-diagram-tutor.component';
 import { ArTEMiSResultModule, ResultComponent } from '../entities/result';
 import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
+import { SortByModule } from 'app/components/pipes';
 
 const ENTITY_STATES = [...apollonDiagramsRoutes];
 
@@ -19,6 +18,7 @@ const ENTITY_STATES = [...apollonDiagramsRoutes];
     imports: [
         ArTEMiSSharedModule,
         RouterModule.forChild(ENTITY_STATES),
+        SortByModule,
         ArTEMiSResultModule
     ],
     declarations: [
@@ -26,8 +26,6 @@ const ENTITY_STATES = [...apollonDiagramsRoutes];
         ApollonDiagramDetailComponent,
         ApollonDiagramListComponent,
         ApollonQuizExerciseGenerationComponent,
-        ApollonDiagramStudentComponent,
-        ApollonDiagramTutorComponent
     ],
     entryComponents: [
         ApollonDiagramCreateFormComponent,

@@ -10,7 +10,7 @@ import { ParticipationService } from '../entities/participation/participation.se
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Result } from '../entities/result';
 import { ResultDetailComponent } from '../entities/result/result-detail.component';
-import { ModelingAssessmentService } from '../entities/modeling-assessment/modeling-assessment.service';
+import { ModelingAssessmentService } from '../modeling-assessment/modeling-assessment.service';
 import { HttpResponse } from '@angular/common/http';
 import { Moment } from 'moment';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';

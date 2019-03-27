@@ -1,26 +1,24 @@
-package de.tum.in.www1.artemis.service.compass.umlmodel;
+package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
 import de.tum.in.www1.artemis.service.compass.assessment.CompassResult;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 import java.util.List;
 
 
-public class UMLModel {
+public class UMLClassModel {
 
+    private List<UMLPackage> packageList;
     private List<UMLClass> classList;
-    private List<UMLAssociation> associationList;
+    private List<UMLClassRelationship> associationList;
 
     private long modelID;
 
     private CompassResult lastAssessmentCompassResult = null;
 
-
-    public UMLModel() {
-    }
-
-
-    public UMLModel(List<UMLClass> classList, List<UMLAssociation> associationList, long modelID) {
+    public UMLClassModel(List<UMLPackage> packageList, List<UMLClass> classList, List<UMLClassRelationship> associationList, long modelID) {
+        this.packageList = packageList;
         this.classList = classList;
         this.associationList = associationList;
         this.modelID = modelID;
@@ -32,14 +30,14 @@ public class UMLModel {
      * @param reference the uml model to compare with
      * @return the similarity as number [0-1]
      */
-    public double similarity(UMLModel reference) {
+    public double similarity(UMLClassModel reference) {
         double sim1 = reference.similarityScore(this);
         double sim2 = this.similarityScore(reference);
 
         return sim1 * sim2;
     }
 
-    private double similarityScore(UMLModel reference) {
+    private double similarityScore(UMLClassModel reference) {
         double similarity = 0;
 
         int elementCount = classList.size() + associationList.size();
@@ -62,8 +60,8 @@ public class UMLModel {
             }
         }
 
-        for (UMLAssociation umlAssociation : associationList) {
-            double similarityValue = reference.similarUMLRelationScore(umlAssociation);
+        for (UMLClassRelationship relationship : associationList) {
+            double similarityValue = reference.similarUMLRelationScore(relationship);
             similarity += weight * similarityValue;
 
             // = no match found
@@ -98,7 +96,7 @@ public class UMLModel {
             connectableElement.overallSimilarity(referenceConnectable)).max().orElse(0);
     }
 
-    private double similarUMLRelationScore(UMLAssociation referenceRelation) {
+    private double similarUMLRelationScore(UMLClassRelationship referenceRelation) {
         return associationList.stream().mapToDouble(umlRelation ->
             umlRelation.similarity(referenceRelation)).max().orElse(0);
     }
@@ -127,25 +125,25 @@ public class UMLModel {
         }
 
         for (UMLClass umlClass : classList) {
-            if (!lastAssessmentCompassResult.getJsonIdPointsMapping().containsKey(umlClass.jsonElementID)) {
+            if (!lastAssessmentCompassResult.getJsonIdPointsMapping().containsKey(umlClass.getJSONElementID())) {
                 return false;
             }
 
             for (UMLAttribute attribute : umlClass.getAttributes()) {
-                if (!lastAssessmentCompassResult.getJsonIdPointsMapping().containsKey(attribute.jsonElementID)) {
+                if (!lastAssessmentCompassResult.getJsonIdPointsMapping().containsKey(attribute.getJSONElementID())) {
                     return false;
                 }
             }
 
             for (UMLMethod method : umlClass.getMethods()) {
-                if (!lastAssessmentCompassResult.getJsonIdPointsMapping().containsKey(method.jsonElementID)) {
+                if (!lastAssessmentCompassResult.getJsonIdPointsMapping().containsKey(method.getJSONElementID())) {
                     return false;
                 }
             }
         }
 
-        for (UMLAssociation relation : associationList) {
-            if (!lastAssessmentCompassResult.getJsonIdPointsMapping().containsKey(relation.jsonElementID)) {
+        for (UMLClassRelationship relation : associationList) {
+            if (!lastAssessmentCompassResult.getJsonIdPointsMapping().containsKey(relation.getJSONElementID())) {
                 return false;
             }
         }
@@ -184,6 +182,12 @@ public class UMLModel {
     public UMLElement getElementByJSONID (String jsonElementId) {
         UMLElement element;
 
+        for (UMLPackage umlPackage : packageList) {
+            if (umlPackage.getJSONElementID().equals(jsonElementId)) {
+                return umlPackage;
+            }
+        }
+
         for (UMLClass umlClass : classList) {
             element = umlClass.getElementByJSONID(jsonElementId);
             if (element != null) {
@@ -191,9 +195,9 @@ public class UMLModel {
             }
         }
 
-        for (UMLAssociation umlAssociation : associationList) {
-            if (umlAssociation.getJSONElementID().equals(jsonElementId)) {
-                return umlAssociation;
+        for (UMLClassRelationship relationship : associationList) {
+            if (relationship.getJSONElementID().equals(jsonElementId)) {
+                return relationship;
             }
         }
 
@@ -214,9 +218,11 @@ public class UMLModel {
         return classList;
     }
 
-    public List<UMLAssociation> getAssociationList() {
+    public List<UMLClassRelationship> getAssociationList() {
         return associationList;
     }
+
+    public List<UMLPackage> getPackageList() { return packageList; }
 
     /**
      * Checks if the model contains an element with the given elementId.

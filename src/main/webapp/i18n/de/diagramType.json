@@ -3,10 +3,11 @@
         "DiagramType" : {
             "null": "",
             "undefined": "",
-            "CLASS": "Klassendiagramm",
-            "ACTIVITY": "Aktivitätsdiagramm",
-            "USE_CASE": "Anwendungsfalldiagramm",
-            "COMMUNICATION": "Kommunikationsdiagramm"
+            "ClassDiagram": "Klassendiagramm",
+            "ObjectDiagram": "Objektdiagramm",
+            "ActivityDiagram": "Aktivitätsdiagramm",
+            "UseCaseDiagram": "Anwendungsfalldiagramm",
+            "CommunicationDiagram": "Kommunikationsdiagramm"
         }
     }
 }

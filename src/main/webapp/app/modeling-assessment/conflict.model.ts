@@ -1,10 +1,9 @@
-import { Score } from 'app/entities/modeling-assessment/score.model';
-import { UMLElement } from 'app/entities/modeling-assessment/uml-element.model';
+import { Score } from 'app/modeling-assessment/score.model';
 import { User } from 'app/core';
 import { Feedback } from 'app/entities/feedback';
 
 export class Conflict {
-    elementInConflict: UMLElement;
+    conflictedElementId: string;
     conflictingFeedback: Feedback;
     scoresInConflict: Score[];
     initiator: User;

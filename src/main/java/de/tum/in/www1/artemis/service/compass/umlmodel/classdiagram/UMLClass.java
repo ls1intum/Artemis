@@ -1,67 +1,66 @@
-package de.tum.in.www1.artemis.service.compass.umlmodel;
+package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
+import com.google.common.base.CaseFormat;
 import de.tum.in.www1.artemis.service.compass.strategy.NameSimilarity;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
+import javax.annotation.Nullable;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class UMLClass extends UMLElement {
 
-    // TODO move activity diagram types into its own class
     public enum UMLClassType {
-        //Class Diagram
         CLASS,
         ABSTRACT_CLASS,
         ENUMERATION,
-        INTERFACE,
+        INTERFACE;
 
-        //Activity Diagram
-        ACTIVITY_CONTROL_INITIAL_NODE,
-        ACTIVITY_CONTROL_FINAL_NODE,
-        ACTIVITY_ACTION_NODE,
-        ACTIVITY_OBJECT,
-        ACTIVITY_MERGE_NODE,
-        ACTIVITY_FORK_NODE,
-        ACTIVITY_FORK_NODE_HORIZONTAL
+        public static List<String> getTypesAsList() {
+            return Arrays.stream(UMLClassType.values())
+                .map(umlClassType -> CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, umlClassType.name()))
+                .collect(Collectors.toList());
+        }
     }
 
     private String name;
     private UMLClassType type;
+
+    @Nullable
+    private UMLPackage umlPackage;
     private List<UMLAttribute> attributes;
     private List<UMLMethod> methods;
-
-
-    public UMLClass() {
-    }
-
 
     public UMLClass(String name, List<UMLAttribute> attributes, List<UMLMethod> methodList, String jsonElementID, String type) {
         this.name = name;
         this.attributes = attributes;
         this.methods = methodList;
-        this.jsonElementID = jsonElementID;
+        this.setJsonElementID(jsonElementID);
         this.type = UMLClassType.valueOf(type);
     }
 
     /**
      * checks for name similarity
      *
-     * @param element the element to compare with
+     * @param other the element to compare with
      * @return the similarity as number [0-1]
      */
     @Override
-    public double similarity(UMLElement element) {
+    public double similarity(UMLElement other) {
         double similarity = 0;
 
-        if (element.getClass() == UMLClass.class) {
-
-            similarity += NameSimilarity.nameContainsSimilarity(name, element.getName()) * CompassConfiguration.CLASS_NAME_WEIGHT;
-
-            if (this.type == ((UMLClass) element).type) {
-                similarity += CompassConfiguration.CLASS_TYPE_WEIGHT;
-            }
+        if (other.getClass() != UMLClass.class) {
+            return similarity;
         }
+        UMLClass otherClass = (UMLClass) other;
 
+        similarity += NameSimilarity.nameContainsSimilarity(name, otherClass.name) * CompassConfiguration.CLASS_NAME_WEIGHT;
+        //TODO: we could distinguish that abstract class and interface is more similar than e.g. class and enumeration
+        if (this.type == otherClass.type) {
+            similarity += CompassConfiguration.CLASS_TYPE_WEIGHT;
+        }
         return similarity;
     }
 
@@ -168,19 +167,24 @@ public class UMLClass extends UMLElement {
         return name;
     }
 
+    @Override
+    public String getType() {
+        return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, type.name());
+    }
+
     UMLElement getElementByJSONID(String jsonID) {
-        if (this.jsonElementID.equals(jsonID)) {
+        if (this.getJSONElementID().equals(jsonID)) {
             return this;
         }
 
         for (UMLAttribute umlAttribute : attributes) {
-            if (umlAttribute.jsonElementID.equals(jsonID)) {
+            if (umlAttribute.getJSONElementID().equals(jsonID)) {
                 return umlAttribute;
             }
         }
 
         for (UMLMethod umlMethod : methods) {
-            if (umlMethod.jsonElementID.equals(jsonID)) {
+            if (umlMethod.getJSONElementID().equals(jsonID)) {
                 return umlMethod;
             }
         }
@@ -195,6 +199,15 @@ public class UMLClass extends UMLElement {
 
     public List<UMLMethod> getMethods() {
         return methods;
+    }
+
+    @Nullable
+    public UMLPackage getUmlPackage() {
+        return umlPackage;
+    }
+
+    public void setUmlPackage(@Nullable UMLPackage umlPackage) {
+        this.umlPackage = umlPackage;
     }
 
     public int getElementCount() {
