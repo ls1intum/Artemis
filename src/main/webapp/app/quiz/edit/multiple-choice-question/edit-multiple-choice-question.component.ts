@@ -1,20 +1,27 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
-import { MultipleChoiceQuestion } from '../../../entities/multiple-choice-question';
-import { AnswerOption } from '../../../entities/answer-option';
-import { ArtemisMarkdown } from '../../../components/util/markdown.service';
-import { AceEditorComponent } from 'ng2-ace-editor';
-import 'brace/theme/chrome';
-import 'brace/mode/markdown';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild, ChangeDetectorRef } from '@angular/core';
+import { MultipleChoiceQuestion } from 'app/entities/multiple-choice-question';
+import { AnswerOption } from 'app/entities/answer-option';
+import { ArtemisMarkdown } from 'app/components/util/markdown.service';
+import { MarkdownEditorComponent } from 'app/markdown-editor';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import {
+    CorrectOptionCommand,
+    ExplanationCommand,
+    IncorrectOptionCommand,
+    DomainCommand,
+    HintCommand,
+} from 'app/markdown-editor/domainCommands';
+import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
 
 @Component({
     selector: 'jhi-edit-multiple-choice-question',
     templateUrl: './edit-multiple-choice-question.component.html',
     providers: [ArtemisMarkdown]
 })
-export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, AfterViewInit {
-    @ViewChild('questionEditor')
-    private questionEditor: AceEditorComponent;
+export class EditMultipleChoiceQuestionComponent implements OnInit, EditQuizQuestion {
+
+    @ViewChild('markdownEditor')
+    private markdownEditor: MarkdownEditorComponent;
 
     @Input()
     question: MultipleChoiceQuestion;
@@ -28,59 +35,26 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, A
 
     /** Ace Editor configuration constants **/
     questionEditorText = '';
-    questionEditorMode = 'markdown';
-    questionEditorAutoUpdate = true;
 
     /** Status boolean for collapse status **/
     isQuestionCollapsed: boolean;
 
-    showPreview: boolean;
+    /** Set default preview of the markdown editor as preview for the multiple choice question **/
+    get showPreview(): boolean { return this.markdownEditor.previewMode; }
+    showMultipleChoiceQuestionPreview = true;
 
-    constructor(private artemisMarkdown: ArtemisMarkdown, private modalService: NgbModal) {}
+    hintCommand = new HintCommand();
+    correctCommand = new CorrectOptionCommand();
+    incorrectCommand = new IncorrectOptionCommand();
+    explanationCommand = new ExplanationCommand();
+
+    /** DomainCommands for the multiple choice question **/
+    commandMultipleChoiceQuestions: DomainCommand[] = [this.correctCommand, this.incorrectCommand, this.explanationCommand, this.hintCommand];
+
+    constructor(private artemisMarkdown: ArtemisMarkdown, private modalService: NgbModal, private changeDetector: ChangeDetectorRef) {}
 
     ngOnInit(): void {
-        this.showPreview = false;
-    }
-
-    /**
-     * @function ngOnChanges
-     * @desc Watch for any changes to the question model and notify listener
-     * @param changes {SimpleChanges}
-     */
-    ngOnChanges(changes: SimpleChanges): void {
-        /** Check if previousValue wasn't null to avoid firing at component initialization **/
-        if (changes.question && changes.question.previousValue != null) {
-            this.questionUpdated.emit();
-        }
-    }
-
-    ngAfterViewInit(): void {
-        /** Setup editor **/
-        requestAnimationFrame(this.setupQuestionEditor.bind(this));
-    }
-
-    /**
-     * @function setupQuestionEditor
-     * @desc Initializes the ace editor for the mc question
-     */
-    setupQuestionEditor(): void {
-        this.questionEditor.setTheme('chrome');
-        this.questionEditor.getEditor().renderer.setShowGutter(false);
-        this.questionEditor.getEditor().renderer.setPadding(10);
-        this.questionEditor.getEditor().renderer.setScrollMargin(8, 8);
-        this.questionEditor.getEditor().setHighlightActiveLine(false);
-        this.questionEditor.getEditor().setShowPrintMargin(false);
         this.questionEditorText = this.generateMarkdown();
-        this.questionEditor.getEditor().clearSelection();
-
-        this.questionEditor.getEditor().on(
-            'blur',
-            () => {
-                this.parseMarkdown(this.questionEditorText);
-                this.questionUpdated.emit();
-            },
-            this
-        );
     }
 
     /**
@@ -97,114 +71,100 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, A
             this.question.answerOptions
                 .map(
                     answerOption =>
-                        (answerOption.isCorrect ? '[x]' : '[ ]') + ' ' + this.artemisMarkdown.generateTextHintExplanation(answerOption)
-                )
+                        (answerOption.isCorrect ? '[correct]' : '[wrong]') + ' ' + this.artemisMarkdown.generateTextHintExplanation(answerOption))
                 .join('\n');
         return markdownText;
     }
 
     /**
-     * @function parseMarkdown
-     * @param text {string} the markdown text to parse
-     * @desc Parse the markdown and apply the result to the question's data
-     * The markdown rules are as follows:
-     *
-     * 1. Text is split at [x] and [ ] (also accepts [X] and [])
-     *    => The first part (any text before the first [x] or [ ]) is the question text
-     * 2. The question text is split into text, hint, and explanation using ArtemisMarkdown
-     * 3. For every answer option (Parts after each [x] or [ ]):
-     *    3.a) Same treatment as the question text for text, hint, and explanation
-     *    3.b) Answer options are marked as isCorrect depending on [ ] or [x]
-     *
-     * Note: Existing IDs for answer options are reused in the original order.
-     */
-    parseMarkdown(text: string): void {
-        // First split by [], [ ], [x] and [X]
-        const questionParts = text.split(/\[\]|\[ \]|\[x\]|\[X\]/g);
-        const questionText = questionParts[0];
-
-        // Split question into main text, hint and explanation
-        this.artemisMarkdown.parseTextHintExplanation(questionText, this.question);
-
-        // Extract existing answer option IDs
-        const existingAnswerOptionIDs = this.question.answerOptions
-            .filter(questionAnswerOption => questionAnswerOption.id != null)
-            .map(questionAnswerOption => questionAnswerOption.id);
-        this.question.answerOptions = [];
-
-        let endOfPreviousPart = text.indexOf(questionText) + questionText.length;
-        /**
-         * Work on answer options
-         * We slice the first questionPart since that's our question text and no real answer option
-         */
-        for (const answerOptionText of questionParts.slice(1)) {
-            // Find the box (text in-between the parts)
-            const answerOption = new AnswerOption();
-            const startOfThisPart = text.indexOf(answerOptionText, endOfPreviousPart);
-            const box = text.substring(endOfPreviousPart, startOfThisPart);
-            // Check if box says this answer option is correct or not
-            answerOption.isCorrect = box === '[x]' || box === '[X]';
-            // Update endOfPreviousPart for next loop
-            endOfPreviousPart = startOfThisPart + answerOptionText.length;
-
-            // Parse this answerOption
-            this.artemisMarkdown.parseTextHintExplanation(answerOptionText, answerOption);
-
-            // Assign existing ID if available
-            if (this.question.answerOptions.length < existingAnswerOptionIDs.length) {
-                answerOption.id = existingAnswerOptionIDs[this.question.answerOptions.length];
-            }
-            this.question.answerOptions.push(answerOption);
-        }
-    }
-
-    /**
-     * @function addAnswerOptionTextToEditor
-     * @desc Adds the markdown for a correct or incorrect answerOption at the end of the current markdown text
-     * @param mode {boolean} mode true sets the text for an correct answerOption, false for an incorrect one
-     */
-    addAnswerOptionTextToEditor(mode: boolean): void {
-        const textToAdd = mode ? '\n[x] Enter a correct answer option here' : '\n[ ] Enter an incorrect answer option here';
-        this.questionEditor.getEditor().focus();
-        this.questionEditor.getEditor().clearSelection();
-        const lines = this.questionEditorText.split('\n').length;
-        const range = this.questionEditor.getEditor().selection.getRange();
-        this.questionEditor.getEditor().moveCursorTo(this.questionEditor.getEditor().getCursorPosition().row, Number.POSITIVE_INFINITY);
-        this.questionEditor.getEditor().insert(textToAdd);
-        range.setStart(lines, 4);
-        range.setEnd(lines, textToAdd.length - 1);
-        this.questionEditor.getEditor().selection.setRange(range, false);
-    }
-
-    /**
-     * @function addHintAtCursor
-     * @desc Adds the markdown for a hint at the current cursor location
-     */
-    addHintAtCursor(): void {
-        this.artemisMarkdown.addHintAtCursor(this.questionEditor.getEditor());
-    }
-
-    /**
-     * This function opens the modal for the help dialog.
+     * @function open
+     * @desc open the modal for the help dialog
+     * @param content
      */
     open(content: any) {
-        this.modalService.open(content, { size: 'lg' });
+        this.modalService.open(content, {size: 'lg'});
     }
 
     /**
-     * @function addExplanationAtCursor
-     * @desc Adds the markdown for an explanation at the current cursor location
+     * @function prepareForSave
+     * @desc 1. Triggers the saving process by cleaning up the question and calling the markdown parse function
+     *       to get the newest values in the editor to update the question attributes
+     *       2. Notify parent component about changes to check the validity of new values of the question attributes
      */
-    addExplanationAtCursor(): void {
-        this.artemisMarkdown.addExplanationAtCursor(this.questionEditor.getEditor());
+    prepareForSave(): void {
+        this.cleanupQuestion();
+        this.markdownEditor.parse();
+        this.questionUpdated.emit();
     }
 
     /**
-     * @function togglePreview
-     * @desc Toggles the preview in the template
+     * @function cleanupQuestion
+     * @desc Clear the question to avoid double assignments of one attribute
      */
-    togglePreview(): void {
-        this.showPreview = !this.showPreview;
+    private cleanupQuestion() {
+        // Reset Question Object
+        this.question.answerOptions = [];
+        this.question.text = null;
+        this.question.explanation = null;
+        this.question.hint = null;
+        this.question.hasCorrectOption = null;
+    }
+
+    /**
+     * @function domainCommandsFound
+     * @desc 1. Gets a tuple of text and domainCommandIdentifiers and assigns text values according to the domainCommandIdentifiers a
+     *          multiple choice question the to the multiple choice question attributes.
+     *          (question text, explanation, hint, answerOption (correct/wrong)
+     *       2. The tupple order is the same as the order of the commands in the markdown text inserted by the user
+     *       3. resetMultipleChoicePreview() is triggered to notify the parent component
+     *       about the changes within the question and to cacheValidation() since the assigned values have changed
+     * @param {domainCommands} containing tuples of [text, domainCommandIdentifiers]
+     */
+    domainCommandsFound(domainCommands: [string, DomainCommand][]): void {
+        this.cleanupQuestion();
+        let currentAnswerOption = new AnswerOption();
+
+        for (const [text, command] of domainCommands)  {
+            if (command === null && text.length > 0) {
+                this.question.text = text;
+            }
+            if (command instanceof CorrectOptionCommand || command instanceof IncorrectOptionCommand) {
+                currentAnswerOption = new AnswerOption();
+                if (command instanceof CorrectOptionCommand) {
+                    currentAnswerOption.isCorrect = true;
+                } else {
+                    currentAnswerOption.isCorrect = false;
+                }
+                currentAnswerOption.text = text;
+                this.question.answerOptions.push(currentAnswerOption);
+            } else if (command instanceof ExplanationCommand) {
+                if (currentAnswerOption != null) {
+                    currentAnswerOption.explanation = text;
+                } else {
+                    this.question.explanation = text;
+                }
+            } else if (command instanceof HintCommand) {
+                if (currentAnswerOption != null) {
+                    currentAnswerOption.hint = text;
+                } else {
+                    this.question.hint = text;
+                }
+            }
+        }
+        this.resetMultipleChoicePreview();
+    }
+
+    /**
+     * @function resetMultipleChoicePreview
+     * @desc  Reset the preview function of the multiple choice question in order to cause a change
+     *        so the parent component is notified
+     *        and the check for the question validity is triggered
+     */
+    private resetMultipleChoicePreview() {
+        this.showMultipleChoiceQuestionPreview = false;
+        this.changeDetector.detectChanges();
+        this.showMultipleChoiceQuestionPreview = true;
+        this.changeDetector.detectChanges();
     }
 
     /**

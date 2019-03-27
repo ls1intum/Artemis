@@ -1,5 +1,5 @@
-<div class="edit-mc-question" [hidden]="showPreview">
-    <div class="question-options card-header question-card-header">
+<div class="edit-mc-question">
+    <div class="question-options card-header question-card-header" [hidden]="showPreview">
         <button
             class="btn btn-light question-collapse"
             (click)="isQuestionCollapsed = !isQuestionCollapsed"
@@ -8,27 +8,34 @@
             <fa-icon size="3x" [icon]="isQuestionCollapsed ? 'angle-right' : 'angle-down'"></fa-icon>
         </button>
         <div class="form-group question-title col-lg-9 col-md-7 col-sm-12 col-xs-12">
-            <input id="mc-question-title" class="form-control" [(ngModel)]="question.title" placeholder="Short Question Title"/>
+            <input id="mc-question-title" class="form-control" [(ngModel)]="question.title" (ngModelChange)="questionUpdated.emit()" placeholder="Short Question Title"/>
         </div>
         <div class="form-group col-lg-2 col-md-3 col-sm-7 col-xs-8">
             <span jhiTranslate="arTeMiSApp.quizQuestion.score" class="colon-suffix"></span>
-            <input class="form-control" title="score" type="number" min="0" max="9999" [(ngModel)]="question.score"/>
+            <input class="form-control" title="score" type="number" min="0" max="9999" [(ngModel)]="question.score"  (ngModelChange)="questionUpdated.emit()"/>
         </div>
-        <div class="col-lg-1 col-md-2 col-sm-4 col-xs-4"><h3><span class="badge badge-info align-text-top">MC</span></h3></div>
+        <div class="col-lg-1 col-md-2 col-sm-4 col-xs-4"><h3><span class="badge badge-info align-text-top">MC</span>
+        </h3></div>
     </div>
-    <div class="card-body question-card-body" [ngbCollapse]="isQuestionCollapsed" id="collapseQuestion{{questionIndex}}">
-        <div class="question-options">
+    <div class="card-body question-card-body" [ngbCollapse]="isQuestionCollapsed"
+         id="collapseQuestion{{questionIndex}}">
+        <div class="question-options" [hidden]="showPreview">
             <div class="form-group">
                 <span jhiTranslate="arTeMiSApp.quizQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
-                <select class="form-control" [(ngModel)]="question.scoringType" title="scoring type">
-                    <option value="ALL_OR_NOTHING">{{'arTeMiSApp.quizExercise.scoringType.all_or_nothing' | translate}}</option>
-                    <option value="PROPORTIONAL_WITH_PENALTY">{{'arTeMiSApp.quizExercise.scoringType.proportional_with_penalty' | translate}}</option>
+                <select class="form-control" [(ngModel)]="question.scoringType"  (ngModelChange)="questionUpdated.emit()" title="scoring type">
+                    <option value="ALL_OR_NOTHING">{{'arTeMiSApp.quizExercise.scoringType.all_or_nothing' |
+                        translate}}
+                    </option>
+                    <option value="PROPORTIONAL_WITH_PENALTY">
+                        {{'arTeMiSApp.quizExercise.scoringType.proportional_with_penalty' | translate}}
+                    </option>
                 </select>
                 <jhi-quiz-scoring-info-modal></jhi-quiz-scoring-info-modal>
             </div>
             <div class="form-group">
                 <div class="form-check custom-control custom-checkbox">
-                    <input type="checkbox" id="{{'cbRandomizeOrderMC' + questionIndex}}" [(ngModel)]="question.randomizeOrder" class="form-check-input custom-control-input"/>
+                    <input type="checkbox" id="{{'cbRandomizeOrderMC' + questionIndex}}"
+                           [(ngModel)]="question.randomizeOrder"  (ngModelChange)="questionUpdated.emit()" class="form-check-input custom-control-input"/>
                     <label class="form-check-label custom-control-label" for="{{'cbRandomizeOrderMC' + questionIndex}}"
                            jhiTranslate="arTeMiSApp.multipleChoiceQuestion.randomizeOrder">
                     </label>
@@ -41,43 +48,25 @@
             </div>
         </div>
         <div class="markupEditorArea">
-            <div class="toolbar">
-                <div class="btn-group">
-                    <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addCorrectAnswerOption" (click)="addAnswerOptionTextToEditor(true)"></div>
-                    <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addIncorrectAnswerOption" (click)="addAnswerOptionTextToEditor(false)"></div>
-                </div> &nbsp;
-                <div class="btn-group">
-                    <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addHint" (click)="addHintAtCursor()"></div>
-                    <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addExplanation" (click)="addExplanationAtCursor()"></div>
-                </div>
-            </div>
             <div class="question-content">
-                <ace-editor #questionEditor
-                            [(text)]="questionEditorText"
-                            [mode]="questionEditorMode"
-                            [autoUpdateContent]="questionEditorAutoUpdate"
-                            style="min-height: 200px; width:100%; overflow: auto;"
-                            class="form-control">
-                </ace-editor>
-            </div>
-            <hr/>
-            <div class="toolbar">
-                <div class="btn btn-outline-secondary" (click)="togglePreview()">
-                    <fa-icon icon="eye"></fa-icon>
-                    <span jhiTranslate="entity.action.preview"></span>
-                </div>
+                <jhi-markdown-editor #markdownEditor
+                                     [markdown]="questionEditorText"
+                                     [showPreviewButton]="true"
+                                     [domainCommands]="commandMultipleChoiceQuestions"
+                                     (markdownChange)="prepareForSave()"
+                                     (textWithDomainCommandsFound)="domainCommandsFound($event)">
+                    <!-- Preview -->
+                    <ng-container #preview>
+                        <jhi-multiple-choice-question *ngIf="showMultipleChoiceQuestionPreview"
+                                                      [question]="question"
+                                                      [selectedAnswerOptions]="[]"
+                                                      [questionIndex]="questionIndex">
+                        </jhi-multiple-choice-question>
+                        <hr/>
+                    </ng-container>
+                    <!-- End of Preview-->
+                </jhi-markdown-editor>
             </div>
         </div>
-    </div>
-</div>
-<div class="preview-mc-question" *ngIf="showPreview">
-    <jhi-multiple-choice-question [question]="question"
-                                  [selectedAnswerOptions]="[]"
-                                  [questionIndex]="questionIndex">
-    </jhi-multiple-choice-question>
-    <hr/>
-    <div class="btn btn-outline-secondary" (click)="togglePreview()">
-        <fa-icon icon="pencil-alt"></fa-icon>
-        <span jhiTranslate="entity.action.edit"></span>
     </div>
 </div>
