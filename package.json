@@ -152,13 +152,19 @@
         "yarn": ">=1.3.2"
     },
     "lint-staged": {
-        "src/**/*.{json,ts,css,scss}": [
-            "prettier --write",
-            "git add"
-        ]
+        "linters": {
+            "src/**/*.{json,ts,css,scss}": [
+                "prettier --write",
+                "git add"
+            ],
+            "*.java": [
+                "./linting.sh",
+                "git add"
+            ]
+        }
     },
     "scripts": {
-        "prettier:format": "prettier --write \"src/**/*.{json,ts,css,scss}\"",
+        "prettier:format": "prettier --write \"src/**/*.{json,ts,css,scss,html}\"",
         "lint": "tslint --project tsconfig.json -e 'node_modules/**'",
         "lint:fix": "yarn run lint --fix",
         "ngc": "ngc -p tsconfig-aot.json",

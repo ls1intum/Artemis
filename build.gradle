@@ -29,6 +29,7 @@ plugins {
 //    id 'org.liquibase.gradle' version "2.0.1"
     id "com.github.ben-manes.versions" version "0.21.0"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
+    id "com.diffplug.gradle.spotless" version "3.18.0"
 }
 
 apply plugin: 'java'
@@ -49,6 +50,15 @@ apply plugin: "com.github.ben-manes.versions"
 idea {
     module {
         excludeDirs += files('node_modules')
+    }
+}
+
+spotless {
+    java {
+        googleJavaFormat()
+        indentWithTabs(2)
+        indentWithSpaces(4)
+        paddedCell()
     }
 }
 
