@@ -25,11 +25,11 @@ plugins {
     id "net.ltgt.apt-idea" version "0.21"
     id "net.ltgt.apt" version "0.21"
     id "io.spring.dependency-management" version "1.0.7.RELEASE"
-    id "com.moowork.node" version "1.2.0"
+    id "com.moowork.node" version "1.3.1"
 //    id 'org.liquibase.gradle' version "2.0.1"
     id "com.github.ben-manes.versions" version "0.21.0"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
-    id "com.diffplug.gradle.spotless" version "3.18.0"
+    id "com.diffplug.gradle.spotless" version "3.20.0"
 }
 
 apply plugin: 'java'
@@ -176,7 +176,7 @@ dependencies {
     // to use a SNAPSHOT release instead of a stable release
     compile group: "io.github.jhipster", name: "jhipster-framework"
     compile "org.springframework.boot:spring-boot-starter-cache"
-    compile "io.micrometer:micrometer-registry-prometheus:1.1.2"
+    compile "io.micrometer:micrometer-registry-prometheus:1.1.3"
     compile "net.logstash.logback:logstash-logback-encoder:5.3"
     compile "com.fasterxml.jackson.datatype:jackson-datatype-hppc"
     compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
