@@ -8,9 +8,10 @@ import {Component, Input, OnInit} from '@angular/core';
 export class ModelingAssessmentConflictComponent implements OnInit {
     @Input() conflicts;
 
-    conflictIndex = 0;
+    conflictIndex =0;
 
     constructor() {
+
     }
 
     ngOnInit() {

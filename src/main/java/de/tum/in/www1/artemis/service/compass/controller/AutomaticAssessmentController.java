@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.compass.controller;
 
+import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.service.compass.assessment.Assessment;
 import de.tum.in.www1.artemis.service.compass.assessment.CompassResult;
 import de.tum.in.www1.artemis.service.compass.assessment.Context;
@@ -22,14 +23,14 @@ public class AutomaticAssessmentController {
     /**
      * Add a score to an assessment, creates a new assessment if it does not exists
      *
-     * @param index        manages all assessments
-     * @param scoreHashMap maps elementIds to scores
-     * @param model        the UML model - contains all elements with its corresponding jsonIds
+     * @param index                manages all assessments
+     * @param elementIdFeedbackMap maps elementIds to feedbacks
+     * @param model                the UML model - contains all elements with its corresponding jsonIds
      * @throws IOException if the score for the element is null
      */
-    public void addScoresToAssessment(AssessmentIndex index, Map<String, Score> scoreHashMap, UMLModel model) throws IOException {
+    public void addFeedbacksToAssessment(AssessmentIndex index, Map<String, Feedback> elementIdFeedbackMap, UMLModel model) throws IOException {
 
-        for (String jsonElementID : scoreHashMap.keySet()) {
+        for (String jsonElementID : elementIdFeedbackMap.keySet()) {
             UMLElement element = model.getElementByJSONID(jsonElementID);
 
             if (element == null) {
@@ -40,9 +41,9 @@ public class AutomaticAssessmentController {
             Optional<Assessment> assessmentOptional = index.getAssessment(element.getElementID());
 
             if (assessmentOptional.isPresent()) {
-                assessmentOptional.get().addScore(scoreHashMap.get(jsonElementID), context);
+                assessmentOptional.get().addFeedback(elementIdFeedbackMap.get(jsonElementID), context);
             } else {
-                Assessment newAssessment = new Assessment(context, scoreHashMap.get(jsonElementID));
+                Assessment newAssessment = new Assessment(context, elementIdFeedbackMap.get(jsonElementID));
                 index.addAssessment(element.getElementID(), newAssessment);
             }
         }

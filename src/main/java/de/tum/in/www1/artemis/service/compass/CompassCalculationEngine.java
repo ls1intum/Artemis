@@ -4,42 +4,23 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.ModelAssessmentConflict;
 import de.tum.in.www1.artemis.domain.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.service.compass.assessment.Assessment;
 import de.tum.in.www1.artemis.service.compass.assessment.CompassResult;
-import de.tum.in.www1.artemis.service.compass.assessment.Score;
-import de.tum.in.www1.artemis.service.compass.conflict.Conflict;
-import de.tum.in.www1.artemis.service.compass.controller.AssessmentIndex;
-import de.tum.in.www1.artemis.service.compass.controller.AutomaticAssessmentController;
-import de.tum.in.www1.artemis.service.compass.controller.JSONParser;
-import de.tum.in.www1.artemis.service.compass.controller.ModelIndex;
-import de.tum.in.www1.artemis.service.compass.controller.ModelSelector;
-import de.tum.in.www1.artemis.service.compass.controller.SimilarityDetector;
+import de.tum.in.www1.artemis.service.compass.controller.*;
 import de.tum.in.www1.artemis.service.compass.grade.CompassGrade;
 import de.tum.in.www1.artemis.service.compass.grade.Grade;
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLAssociation;
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLAttribute;
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLClass;
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLMethod;
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLModel;
+import de.tum.in.www1.artemis.service.compass.umlmodel.*;
 import de.tum.in.www1.artemis.service.compass.utils.JSONMapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -80,22 +61,22 @@ public class CompassCalculationEngine implements CalculationEngine {
      * @param modelingAssessment assessment to check for conflicts
      * @return a list of conflicts modelingAssessment causes with the current manual assessment data
      */
-    public List<Conflict> getConflicts(long submissionId, List<Feedback> modelingAssessment) {
-        List<Conflict> conflicts = new ArrayList<>();
+    public Map<String, List<Feedback>> getConflictingFeedbacks(long submissionId, List<Feedback> modelingAssessment) {
+        HashMap<String, List<Feedback>> elementConflictingFeedbackMapping = new HashMap<>();
         UMLModel model = modelIndex.getModel(submissionId);
         modelingAssessment.forEach(currentFeedback -> {
             UMLElement currentElement = model.getElementByJSONID(currentFeedback.getReferenceElementId()); //TODO MJ return Optional ad throw Exception if no UMLElement found?
             assessmentIndex.getAssessment(currentElement.getElementID()).ifPresent(assessment -> {
-                List<Score> scores = assessment.getScores(currentElement.getContext());
-                List<Score> scoresInConflict = scores.stream()
-                    .filter(score -> !scoresAreConsideredEqual(score.getPoints(), currentFeedback.getCredits()))
+                List<Feedback> feedbacks = assessment.getFeedbacks(currentElement.getContext());
+                List<Feedback> feedbacksInConflict = feedbacks.stream()
+                    .filter(feedback -> !scoresAreConsideredEqual(feedback.getCredits(), currentFeedback.getCredits()))
                     .collect(Collectors.toList());
-                if (!scoresInConflict.isEmpty()) {
-                    conflicts.add(new Conflict(currentElement, currentFeedback, scoresInConflict));
+                if (!feedbacksInConflict.isEmpty()) {
+                    elementConflictingFeedbackMapping.put(currentElement.getJSONElementID(),feedbacksInConflict);
                 }
             });
         });
-        return conflicts;
+        return elementConflictingFeedbackMapping;
     }
 
 
@@ -116,40 +97,9 @@ public class CompassCalculationEngine implements CalculationEngine {
             log.error("Could not build assessment for submission {}", submission.getId());
             return;
         }
-        Map<String, Score> scoreList = getScoresFromFeedbackList(submission.getResult().getFeedbacks(), model);
-        addNewManualAssessment(scoreList, model);
+        Map<String, Feedback> feedbackMapping = createElementIdFeedbackMapping(submission.getResult().getFeedbacks());
+        addNewManualAssessment(feedbackMapping, model);
         modelSelector.removeModelWaitingForAssessment(model.getModelID());
-    }
-
-
-    /**
-     * Create a jsonModelId to Score mapping generated from the feedback list of a submission.
-     *
-     * @param feedbackList the feedbackList
-     * @param model the UML model
-     * @return a map of elementIds to scores
-     */
-    private Map<String, Score> getScoresFromFeedbackList(List<Feedback> feedbackList, UMLModel model) {
-        Map<String, Score> scoreHashMap = new HashMap<>();
-
-        for (Feedback feedback : feedbackList) {
-            String jsonElementId = feedback.getReferenceElementId();
-            if (!model.containsElement(jsonElementId)) {
-                // This might happen if e.g. the user input was malformed and the compass model parser had to ignore the element
-                log.warn("Element " + jsonElementId + " not found in model");
-                continue;
-            }
-
-            // Ignore misformatted score
-            try {
-                Score score = new Score(feedback.getCredits(), Collections.singletonList(feedback.getText()), 1.0);
-                scoreHashMap.put(jsonElementId, score);
-            } catch (Exception e) {
-                log.error(e.getMessage(), e);
-            }
-        }
-
-        return scoreHashMap;
     }
 
 
@@ -177,15 +127,6 @@ public class CompassCalculationEngine implements CalculationEngine {
 
     private void assessModelsAutomatically() {
         automaticAssessmentController.assessModelsAutomatically(modelIndex, assessmentIndex);
-    }
-
-
-    private void addNewManualAssessment(Map<String, Score> scoreHashMap, UMLModel model) {
-        try {
-            automaticAssessmentController.addScoresToAssessment(assessmentIndex, scoreHashMap, model);
-        } catch (IOException e) {
-            log.error("manual assessment for " + model.getName() + " could not be added: " + e.getMessage());
-        }
     }
 
 
@@ -282,6 +223,7 @@ public class CompassCalculationEngine implements CalculationEngine {
 
 
     // TODO adapt the parser to support different UML diagrams
+
     @Override
     public List<Feedback> convertToFeedback(Grade grade, long modelId, Result result) {
         UMLModel model = this.modelIndex.getModelMap().get(modelId);
@@ -428,52 +370,37 @@ public class CompassCalculationEngine implements CalculationEngine {
     }
 
     private void addNewManualAssessment(List<Feedback> modelingAssessment, UMLModel model) {
-        Map<String, Score> scoreList = createScoreList(modelingAssessment, model);
+        Map<String, Feedback> feedbackMapping = createElementIdFeedbackMapping(modelingAssessment);
         try {
-            automaticAssessmentController.addScoresToAssessment(assessmentIndex, scoreList, model);
+            automaticAssessmentController.addFeedbacksToAssessment(assessmentIndex, feedbackMapping, model);
+        } catch (IOException e) {
+            log.error("manual assessment for " + model.getName() + " could not be added: " + e.getMessage());
+        }
+    }
+
+    private void addNewManualAssessment(Map<String, Feedback> elementIdFeedbackMap, UMLModel model) {
+        try {
+            automaticAssessmentController.addFeedbacksToAssessment(assessmentIndex, elementIdFeedbackMap, model);
         } catch (IOException e) {
             log.error("manual assessment for " + model.getName() + " could not be added: " + e.getMessage());
         }
     }
 
     /**
-     * Checks if each Feedback corresponds to an element in the UMLModel and returns a mapping from each
-     * jsonElementID in the Assessment to its Score.
+     * Create a jsonModelId to Feedback mapping generated from the feedback list of a submission.
      *
-     * @param modelingAssessment the modeling assessment to create the score list of
-     * @param model              the UmlModel the modelingAssessment belongs to
-     * @return mapping of the jsonElementID of each ModelElement contained in the modelingAssessment to its corresponding score
+     * @param feedbackList the feedbackList
+     * @return a map of elementIds to scores
      */
-    private Map<String, Score> createScoreList(List<Feedback> modelingAssessment, UMLModel model) {
-        Map<String, Score> scoreHashMap = new HashMap<>();
-
-        for (Feedback feedback : modelingAssessment) {
-            String jsonElementID = feedback.getReferenceElementId();
-            String umlElementType = feedback.getReferenceElementType();
-            if (!elementExistsInModel(jsonElementID, umlElementType, model)) {
-                /*
-                 * This might happen if e.g. the user input was malformed and the compass model parser had to ignore the element
-                 */
-                log.warn("Element " + jsonElementID + " of type " + umlElementType + " not in model");
-                continue;
-            }
-
-            List<String> comment = new ArrayList<>();
-            String feedbackText = feedback.getText();
-            if (feedbackText != null && !feedbackText.trim().isEmpty()) {
-                comment.add(feedbackText);
-            }
-
-            // Ignore malformed score
-            try {
-                Score score = new Score(feedback.getCredits(), comment, 1.0);
-                scoreHashMap.put(jsonElementID, score);
-            } catch (Exception e) {
-                log.error(e.getMessage(), e);
-            }
-        }
-        return scoreHashMap;
+    private Map<String, Feedback> createElementIdFeedbackMapping(List<Feedback> feedbackList) {
+        Map<String, Feedback> elementIdFeedbackMap = new HashMap<>();
+        feedbackList.forEach(feedback -> {
+            String jsonElementId = feedback.getReferenceElementId();
+            elementIdFeedbackMap.put(jsonElementId, feedback);
+        });
+        return elementIdFeedbackMap;
     }
+
 
     /**
      * Checks if an element with the given id and of the given type exists in the given UML model.
@@ -531,13 +458,13 @@ public class CompassCalculationEngine implements CalculationEngine {
     private boolean hasConflict(int elementId) {
         Optional<Assessment> assessment = this.assessmentIndex.getAssessment(elementId);
         if (assessment.isPresent()) {
-            for (List<Score> scores : assessment.get().getContextScoreList().values()) {
+            for (List<Feedback> feedbacks : assessment.get().getContextFeedbackList().values()) {
                 double uniqueScore = -1;
-                for (Score score : scores) {
-                    if (uniqueScore != -1 && uniqueScore != score.getPoints()) {
+                for (Feedback feedback : feedbacks) {
+                    if (uniqueScore != -1 && uniqueScore != feedback.getCredits()) {
                         return true;
                     }
-                    uniqueScore = score.getPoints();
+                    uniqueScore = feedback.getCredits();
                 }
             }
         }
@@ -547,51 +474,5 @@ public class CompassCalculationEngine implements CalculationEngine {
 
     private boolean scoresAreConsideredEqual(double score1, double score2) {
         return Math.abs(score1 - score2) < Constants.COMPASS_SCORE_EQUALITY_THRESHOLD;
-    }
-
-
-    // Used for internal analysis of metrics
-    void printStatistic() {
-        // Variability of solutions
-        log.debug("Number of unique elements (without context) == similarity sets: " +
-            this.modelIndex.getNumberOfUniqueElements() + "\n");
-
-        int totalModelElements = 0;
-        for (UMLModel umlModel : this.getUmlModelCollection()) {
-            totalModelElements += umlModel.getClassList().size() + umlModel.getAssociationList().size();
-            for (UMLClass umlClass : umlModel.getClassList()) {
-                totalModelElements += umlClass.getMethods().size() + umlClass.getAttributes().size();
-            }
-        }
-
-        log.debug("Number of total model elements: " + totalModelElements + "\n");
-        double optimalEqu = (totalModelElements * 1.0) / this.getModelMap().size();
-        log.debug("Number of optimal similarity sets: " + optimalEqu + "\n");
-        log.debug("Variance: " +
-            (this.modelIndex.getNumberOfUniqueElements() - optimalEqu) / (totalModelElements - optimalEqu) + "\n");
-
-        // Total coverage and confidence
-        this.automaticAssessmentController.assessModelsAutomatically(modelIndex, assessmentIndex);
-        log.debug("Total confidence: " + this.automaticAssessmentController.getTotalConfidence() + "\n");
-        log.debug("Total coverage: " + this.automaticAssessmentController.getTotalCoverage() + "\n");
-
-        // Conflicts
-        int conflicts = 0;
-        double uniqueElementsContext = 0;
-        for (Assessment assessment : this.assessmentIndex.getAssessmentsMap().values()) {
-            for (List<Score> scores : assessment.getContextScoreList().values()) {
-                uniqueElementsContext++;
-                double uniqueScore = -1;
-                for (Score score : scores) {
-                    if (uniqueScore != -1 && uniqueScore != score.getPoints()) {
-                        conflicts++;
-                        break;
-                    }
-                    uniqueScore = score.getPoints();
-                }
-            }
-        }
-        log.debug("Total conflicts (with context): " + conflicts + "\n");
-        log.debug("Relative conflicts (with context): " + (conflicts / uniqueElementsContext) + "\n");
     }
 }

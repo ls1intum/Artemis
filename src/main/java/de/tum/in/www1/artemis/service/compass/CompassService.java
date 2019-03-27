@@ -1,18 +1,13 @@
 package de.tum.in.www1.artemis.service.compass;
 
 import com.google.gson.JsonObject;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.ModelingExercise;
-import de.tum.in.www1.artemis.domain.ModelingSubmission;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.service.compass.conflict.Conflict;
 import de.tum.in.www1.artemis.service.compass.grade.CompassGrade;
 import de.tum.in.www1.artemis.service.compass.grade.Grade;
 import org.slf4j.Logger;
@@ -25,11 +20,7 @@ import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -172,9 +163,21 @@ public class CompassService {
         }
     }
 
-    public List<Conflict> getConflicts(long exerciseId, long submissionId, List<Feedback> modelingAssessment) {
+    public List<ModelAssessmentConflict> getConflicts(long exerciseId, Result result, List<Feedback> modelingAssessment) {
         CompassCalculationEngine engine = getCalculationEngine(exerciseId);
-        return engine.getConflicts(submissionId, modelingAssessment);
+        Map<String, List<Feedback>> elementConflictingFeedbackMapping = engine.getConflictingFeedbacks(result.getSubmission().getId(), modelingAssessment);
+        List<ModelAssessmentConflict> conflicts = new LinkedList<>();
+        elementConflictingFeedbackMapping.forEach((elementID, feedbacks) -> {
+            HashMap<String, Result> elementResultMap = new HashMap<>();
+            feedbacks.forEach(feedback -> elementResultMap.put(feedback.getReferenceElementId(), feedback.getResult()));
+
+            ModelAssessmentConflict conflict = new ModelAssessmentConflict();
+            conflict.setModelElementId(elementID);
+//            conflict.setResult(result);
+//            conflict.setConflictingElementsResultMap(elementResultMap);
+            conflicts.add(conflict);
+        });
+        return conflicts;
     }
 
     /**
@@ -182,7 +185,7 @@ public class CompassService {
      * the assessment is added it to the corresponding result and the result is saved in the database.
      * This is done only if the submission is not assessed already (check for result.getAssessmentType() == null).
      *
-     * @param modelId the id of the model/submission that should be updated with an automatic assessment
+     * @param modelId    the id of the model/submission that should be updated with an automatic assessment
      * @param exerciseId the id of the corresponding exercise
      */
     private void assessAutomatically(long modelId, long exerciseId) {
@@ -226,7 +229,7 @@ public class CompassService {
                 double points = Math.max(Math.min(grade.getPoints(), maxPoints), 0);
                 result.setScore((long) (points * 100 / maxPoints));
                 result.setCompletionDate(ZonedDateTime.now());
-                result.setResultString(points,modelingExercise.getMaxScore());
+                result.setResultString(points, modelingExercise.getMaxScore());
 
                 resultRepository.save(result);
                 engine.removeModelWaitingForAssessment(modelId, true);
@@ -243,16 +246,16 @@ public class CompassService {
      * Round compass grades to avoid machine precision errors, make the grades more readable and give a slight
      * advantage which makes 100% scores easier reachable.
      * Also see https://confluencebruegge.in.tum.de/display/ArTEMiS/Feature+suggestions for more information.
-     *
+     * <p>
      * Positive values
-     *   > [x.0, x.15[ gets rounded to x.0
-     *   > [x.15, x.65[ gets rounded to x.5
-     *   > [x.65, x + 1[ gets rounded to x + 1
-     *
+     * > [x.0, x.15[ gets rounded to x.0
+     * > [x.15, x.65[ gets rounded to x.5
+     * > [x.65, x + 1[ gets rounded to x + 1
+     * <p>
      * Negative values
-     *   > [-x - 1, -x.85[ gets rounded to -x - 1
-     *   > [-x.85, -x.35[ gets rounded to -x.5
-     *   > [-x.35, -x.0[ gets rounded to -x.0
+     * > [-x - 1, -x.85[ gets rounded to -x - 1
+     * > [-x.85, -x.35[ gets rounded to -x.5
+     * > [-x.35, -x.0[ gets rounded to -x.0
      *
      * @param grade the grade for which the points should be rounded
      * @return the rounded compass grade

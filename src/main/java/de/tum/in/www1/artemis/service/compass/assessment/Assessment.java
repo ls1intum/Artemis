@@ -1,20 +1,22 @@
 package de.tum.in.www1.artemis.service.compass.assessment;
 
+import de.tum.in.www1.artemis.domain.Feedback;
+
 import java.util.*;
 
 public class Assessment {
 
-    private Map<Context, List<Score>> contextScoreList; //TODO MJ replace Score with Feedback
+    private Map<Context, List<Feedback>> contextFeedbackList; //TODO MJ replace Score with Feedback
     private Map<Context, Score> contextScoreMapping;
 
-    public Assessment(Context context, Score score) {
-        contextScoreList = new HashMap<>();
+    public Assessment(Context context, Feedback feedback) {
+        contextFeedbackList = new HashMap<>();
         contextScoreMapping = new HashMap<>();
-
-        List<Score> contextAssessments = new ArrayList<>();
-        contextAssessments.add(score);
-
-        contextScoreList.put(context, contextAssessments);
+        List<Feedback> contextAssessments = new ArrayList<>();
+        contextAssessments.add(feedback);
+        List<String> comments = Collections.singletonList(feedback.getText());
+        Score score = new Score(feedback.getCredits(),comments,1.0);
+        contextFeedbackList.put(context, contextAssessments);
         contextScoreMapping.put(context, score);
     }
 
@@ -30,46 +32,46 @@ public class Assessment {
      * @param context The context whose associated scores are to be returned
      * @return List of Scores added for the given context. Returns empty List when no scores are available for context
      */
-    public List<Score> getScores(Context context) {
-        return contextScoreList.getOrDefault(context, new ArrayList<>());
+    public List<Feedback> getFeedbacks(Context context) {
+        return contextFeedbackList.getOrDefault(context, new ArrayList<>());
     }
 
     /**
-     * Add score for a specific context to the contextScoreList, recalculate metrics for the contextScoreMapping
+     * Add feedback for a specific context to the contextFeedbackList, recalculate metrics for the contextScoreMapping
      *
-     * @param score   The score to add
+     * @param feedback   The feedback to add
      * @param context The context connected to the score
      */
-    public void addScore(Score score, Context context) {
-        List<Score> scores = getScores(context);
-        scores.add(score);
-        contextScoreMapping.put(context, calculateTotalScore(scores));
+    public void addFeedback(Feedback feedback, Context context) {
+        List<Feedback> feedbacks = getFeedbacks(context);
+        feedbacks.add(feedback);
+        contextScoreMapping.put(context, calculateTotalScore(feedbacks));
     }
 
     /**
      * Used for statistic
      */
-    public Map<Context, List<Score>> getContextScoreList() {
-        return this.contextScoreList;
+    public Map<Context, List<Feedback>> getContextFeedbackList() {
+        return this.contextFeedbackList;
     }
 
-    private Score calculateTotalScore(List<Score> scores) {
+    private Score calculateTotalScore(List<Feedback> feedbacks) {
         Set<String> comments = new HashSet<>();
         // sum points and save number of assessments for each unique credit number
         double credits = 0;
         Map<Double, Integer> counting = new HashMap<>();
 
-        for (Score existingScores : scores) {
-            double points = existingScores.getPoints();
+        for (Feedback existingFeedback : feedbacks) {
+            double points = existingFeedback.getCredits();
 
             credits += points;
             counting.put(points, counting.getOrDefault(points, 0) + 1);
-            comments.addAll(existingScores.getComments());
+            comments.add(existingFeedback.getText());
         }
 
         double maxCount = counting.entrySet().stream().mapToInt(Map.Entry::getValue).max().orElse(0);
-        double mean = credits / scores.size();
-        double confidence = maxCount / scores.size();
+        double mean = credits / feedbacks.size();
+        double confidence = maxCount / feedbacks.size();
         return new Score(mean, new ArrayList<>(comments), confidence);
     }
 }
