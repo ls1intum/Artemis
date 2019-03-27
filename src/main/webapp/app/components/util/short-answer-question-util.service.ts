@@ -432,7 +432,39 @@ export class ShortAnswerQuestionUtil {
         const textForEachLine = questionText.split(/\n+/g);
         const textParts = textForEachLine.map(text => text.split(/\s+(?![^[]]*])/g));
 
-        return textParts;
+        const map0 = questionText.split(/\n/g);
+        //const map1 = map0.map(x => x.split(/(?=\[)/g));
+        const map1 = map0.map(x => x.split(/\s+(?=\[)/g));
+        let map2 = map1.map(y => y.reduce((a, e) => [...a, ...e.split(/(?<=\])/g)], []));
+        console.log("divideQuestionTextIntoTextParts:");
+        map2 = map2.map(x => x.map(y => y.trim()));
+        console.log(map2);
+
+        return map2; //map2;
+    }
+
+    /**
+     * checks if text is an input field (check for spot tag)
+     * @param text
+     */
+    isInputField(text: string): boolean {
+        return !(text.search(/\[-spot/g) === -1);
+    }
+
+    /**
+     * gets just the spot number
+     * @param text
+     */
+    getSpotNr(text: string): number {
+        return +text.split(/\[-spot/g).slice(1).join().trim()[0];
+    }
+
+    /**
+     * gets the spot for a specific spotNr
+     * @param spotNr, question
+     */
+    getSpot(spotNr: number, question: ShortAnswerQuestion): ShortAnswerSpot  {
+        return question.spots.filter(spot => spot.spotNr === spotNr)[0];
     }
 
     /**
@@ -450,7 +482,4 @@ export class ShortAnswerQuestionUtil {
 
         return textPartsInHTML;
     }
-
-
-
 }
