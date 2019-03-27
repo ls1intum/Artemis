@@ -48,7 +48,6 @@ public class ModelingSubmissionIntegrationTest {
 
     @Before
     public void initTestCase() throws Exception {
-        database.resetFileStorage();
         database.resetDatabase();
         database.addUsers(2, 1);
         database.addCourseWithModelingExercise();

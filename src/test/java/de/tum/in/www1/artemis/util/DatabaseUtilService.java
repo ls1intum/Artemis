@@ -60,12 +60,6 @@ public class DatabaseUtilService {
     }
 
 
-    public void resetFileStorage() throws IOException {
-        Path path = Paths.get(Constants.FILEPATH_COMPASS + File.separator);
-        FileUtils.cleanDirectory(new File(path.toUri()));
-    }
-
-
     /**
      * Adds the provided number of students and tutors into the user repository. Students login is a
      * concatenation of the prefix "student" and a number counting from 1 to numberOfStudents Tutors

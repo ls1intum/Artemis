@@ -49,7 +49,6 @@ public class ModelingAssessmentIntegrationTest {
 
     @Before
     public void initTestCase() throws Exception {
-        database.resetFileStorage();
         database.resetDatabase();
         database.addUsers(2, 1);
         database.addCourseWithModelingExercise();
@@ -175,11 +174,11 @@ public class ModelingAssessmentIntegrationTest {
                 + submission1.getId() + "/feedback?submit=true",
             feedbacks1,
             HttpStatus.OK);
-        List<Conflict> conflicts = request.putWithResponseBodyList(
+        List<ModelAssessmentConflict> conflicts = request.putWithResponseBodyList(
             "/api/modeling-submissions/"
                 + submission2.getId() + "/feedback?submit=true",
             feedbacks2,
-            Conflict.class,
+            ModelAssessmentConflict.class,
             HttpStatus.CONFLICT);
         ModelingSubmission storedSubmission = modelingSubmissionRepo.findById(submission2.getId()).get();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacks(storedSubmission.getResult().getId()).get();
