@@ -362,17 +362,38 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         const editor = this.questionEditor.getEditor();
         // ID 'element-row-column' is divided into array of [row, column]
         const selectedTextRowColumn = window.getSelection().focusNode.parentNode.parentElement.id.split('-').slice(1);
+        console.log("row + column");
+        console.log(selectedTextRowColumn);
+
         console.log("ranges");
         console.log(window.getSelection());
         console.log(window.getSelection().focusNode.parentNode.parentElement);
         console.log(window.getSelection().getRangeAt(0));
-        console.log(window.getSelection().getRangeAt(0).startOffset);
-        console.log(window.getSelection().getRangeAt(0).endOffset);
+        console.log('start: '+ window.getSelection().getRangeAt(0).startOffset);
+        console.log('end: '+window.getSelection().getRangeAt(0).endOffset);
         const startOfRange = window.getSelection().getRangeAt(0).startOffset;
         const endOfRange = window.getSelection().getRangeAt(0).endOffset;
 
+        var caretOffset = 0;
+        var range = window.getSelection().getRangeAt(0);
+        var preCaretRange = range.cloneRange();
+        var element = window.getSelection().focusNode.parentNode.parentElement.firstElementChild;
+        preCaretRange.selectNodeContents(element);
+
+        console.log("test mit julian:");
+        console.log(preCaretRange.startOffset, preCaretRange.endOffset);
+
+        preCaretRange.setEnd(range.endContainer, range.endOffset);
+        caretOffset = preCaretRange.toString().length;
+
+        console.log(caretOffset);
+
+        console.log(preCaretRange.startOffset, preCaretRange.endOffset);
+
+
         const markedTextHTML = this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]];
         const markedText = this.artemisMarkdown.markdownForHtml(markedTextHTML).substring(startOfRange, endOfRange);
+        //const markedText = this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]].substring(startOfRange, endOfRange);;
 
         // split text before first option tag
         const questionText = editor.getValue().split(/\[-option /g)[0].trim();
@@ -382,15 +403,17 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         console.log(questionText);
         this.textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(questionText);
         const textOfSelectedRow = this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]];
-        console.log("textParts");
-        console.log(this.textParts);
 
         console.log("neuer text zum einfügen in element-"+selectedTextRowColumn[0] +'-' +selectedTextRowColumn[1]);
-        console.log(textOfSelectedRow.substring(0,startOfRange-1) + '[-spot ' + this.numberOfSpot + ']' + textOfSelectedRow.substring(endOfRange+1));
+        console.log(textOfSelectedRow.substring(0,startOfRange) + ' [-spot ' + this.numberOfSpot + ']' + textOfSelectedRow.substring(endOfRange));
 
         this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]] =
-            textOfSelectedRow.substring(0,startOfRange) + ' [-spot ' + this.numberOfSpot + '] ' + textOfSelectedRow.substring(endOfRange);
-
+            textOfSelectedRow.substring(0,startOfRange) + ' [-spot ' + this.numberOfSpot + ']' + textOfSelectedRow.substring(endOfRange);
+        console.log("erster teil bevor spot eingesetzt;");
+        console.log(textOfSelectedRow.substring(0,startOfRange));
+        console.log("letzter teil bevor spot eingesetzt;");
+        console.log(textOfSelectedRow.substring(endOfRange));
+        console.log("neue textParts mit einsatz neuem spot");
         console.log(this.textParts);
         // recreation of text from array
         this.question.text = this.textParts.map(textPart => textPart.join(' ')).join('\n');
@@ -398,7 +421,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         this.textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.question.text);
         this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(this.textParts, this.artemisMarkdown);
 
-        console.log("test");
+        console.log("finaler question.text: ");
         console.log(this.question.text);
         editor.setValue(this.generateMarkdown());
 
@@ -410,33 +433,6 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         this.firstPressed++;
 
         this.questionUpdated.emit();
-    }
-
-    /**
-     * checks if text is an input field (check for spot tag)
-     * @param text
-     */
-    isInputField(text: string): boolean {
-        return !(text.search(/\-spot/g) === -1);
-    }
-
-    /**
-     * gets just the spot number
-     * @param text
-     */
-    getSpotNr(text: string): number {
-        console.log("getSpotNr");
-        console.log(text);
-        console.log(+text.split(/\-spot/g).slice(1).join().trim()[0]);
-        return +text.split(/\-spot/g).slice(1).join().trim()[0];
-    }
-
-    /**
-     * gets the spot for a specific spotNr
-     * @param spotNr
-     */
-    getSpot(spotNr: number): ShortAnswerSpot  {
-        return this.question.spots.filter(spot => spot.spotNr === spotNr)[0];
     }
 
     /**
