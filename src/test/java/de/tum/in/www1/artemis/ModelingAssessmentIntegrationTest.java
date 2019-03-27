@@ -44,7 +44,10 @@ public class ModelingAssessmentIntegrationTest {
     @Autowired
     ParticipationService participationService;
 
-    private ModelingExercise exercise;
+    private ModelingExercise classExercise;
+    private ModelingExercise activityExercise;
+    private ModelingExercise objectExercise;
+    private ModelingExercise useCaseExercise;
 
 
     @Before
@@ -53,14 +56,17 @@ public class ModelingAssessmentIntegrationTest {
         database.resetDatabase();
         database.addUsers(2, 1);
         database.addCourseWithDifferentModelingExercises();
-        exercise = (ModelingExercise) exerciseRepo.findAll().get(0);
+        classExercise = (ModelingExercise) exerciseRepo.findAll().get(0);
+        activityExercise = (ModelingExercise) exerciseRepo.findAll().get(1);
+        objectExercise = (ModelingExercise) exerciseRepo.findAll().get(2);
+        useCaseExercise = (ModelingExercise) exerciseRepo.findAll().get(3);
     }
 
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void manualAssessmentSubmitAsStudent() throws Exception {
-        ModelingSubmission submission = database.addModelingSubmissionFromResources(exercise, "test-data/model-submission/model.54727.json", "student1");
+        ModelingSubmission submission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
         request.put(
             "/api/modeling-submissions/"
@@ -81,7 +87,7 @@ public class ModelingAssessmentIntegrationTest {
     @WithMockUser(username = "tutor1", roles = "TA")
     public void manualAssessmentSave() throws Exception {
         User assessor = userRepo.findOneByLogin("tutor1").get();
-        ModelingSubmission submission = database.addModelingSubmissionFromResources(exercise, "test-data/model-submission/model.54727.json", "student1");
+        ModelingSubmission submission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
         request.put(
             "/api/modeling-submissions/"
@@ -97,10 +103,64 @@ public class ModelingAssessmentIntegrationTest {
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void manualAssessmentSubmit() throws Exception {
+    public void manualAssessmentSubmit_classDiagram() throws Exception {
         User assessor = userRepo.findOneByLogin("tutor1").get();
-        ModelingSubmission submission = database.addModelingSubmissionFromResources(exercise, "test-data/model-submission/model.54727.json", "student1");
+        ModelingSubmission submission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
+        request.put(
+            "/api/modeling-submissions/"
+                + submission.getId() + "/feedback?submit=true",
+            feedbacks,
+            HttpStatus.OK);
+        ModelingSubmission storedSubmission = modelingSubmissionRepo.findById(submission.getId()).get();
+        Result storedResult = resultRepo.findByIdWithEagerFeedbacks(storedSubmission.getResult().getId()).get();
+        checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks());
+        checkResultAfterSubmit(storedResult, assessor);
+    }
+
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void manualAssessmentSubmit_activityDiagram() throws Exception {
+        User assessor = userRepo.findOneByLogin("tutor1").get();
+        ModelingSubmission submission = database.addModelingSubmissionFromResources(activityExercise, "test-data/model-submission/activity-model.json", "student1");
+        List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/activity-assessment.json");
+        request.put(
+            "/api/modeling-submissions/"
+                + submission.getId() + "/feedback?submit=true",
+            feedbacks,
+            HttpStatus.OK);
+        ModelingSubmission storedSubmission = modelingSubmissionRepo.findById(submission.getId()).get();
+        Result storedResult = resultRepo.findByIdWithEagerFeedbacks(storedSubmission.getResult().getId()).get();
+        checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks());
+        checkResultAfterSubmit(storedResult, assessor);
+    }
+
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void manualAssessmentSubmit_objectDiagram() throws Exception {
+        User assessor = userRepo.findOneByLogin("tutor1").get();
+        ModelingSubmission submission = database.addModelingSubmissionFromResources(objectExercise, "test-data/model-submission/object-model.json", "student1");
+        List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/object-assessment.json");
+        request.put(
+            "/api/modeling-submissions/"
+                + submission.getId() + "/feedback?submit=true",
+            feedbacks,
+            HttpStatus.OK);
+        ModelingSubmission storedSubmission = modelingSubmissionRepo.findById(submission.getId()).get();
+        Result storedResult = resultRepo.findByIdWithEagerFeedbacks(storedSubmission.getResult().getId()).get();
+        checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks());
+        checkResultAfterSubmit(storedResult, assessor);
+    }
+
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void manualAssessmentSubmit_useCaseDiagram() throws Exception {
+        User assessor = userRepo.findOneByLogin("tutor1").get();
+        ModelingSubmission submission = database.addModelingSubmissionFromResources(useCaseExercise, "test-data/model-submission/use-case-model.json", "student1");
+        List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/use-case-assessment.json");
         request.put(
             "/api/modeling-submissions/"
                 + submission.getId() + "/feedback?submit=true",
@@ -117,7 +177,7 @@ public class ModelingAssessmentIntegrationTest {
     @WithMockUser(username = "tutor1", roles = "TA")
     public void manualAssessmentSaveAndSubmit() throws Exception {
         User assessor = userRepo.findOneByLogin("tutor1").get();
-        ModelingSubmission submission = database.addModelingSubmissionFromResources(exercise, "test-data/model-submission/model.54727.json", "student1");
+        ModelingSubmission submission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
         request.put(
             "/api/modeling-submissions/"
@@ -146,11 +206,11 @@ public class ModelingAssessmentIntegrationTest {
     @Ignore
     // TODO CZ: fix this test
     public void automaticAssessmentUponModelSubmission() throws Exception {
-        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(exercise, "test-data/model-submission/model.54727.json", "student1");
-        Result result = database.addModelingAssessmentForSubmission(exercise, submission1, "test-data/model-assessment/assessment.54727.json", "tutor1");
+        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
+        Result result = database.addModelingAssessmentForSubmission(classExercise, submission1, "test-data/model-assessment/assessment.54727.json", "tutor1");
         ModelingSubmission submission2 = ModelFactory.generateModelingSubmission(database.loadFileFromResources("test-data/model-submission/model.54727.cpy.json"), true);
         request.postWithResponseBody(
-            "/api/exercises/" + exercise.getId() + "/modeling-submissions",
+            "/api/exercises/" + classExercise.getId() + "/modeling-submissions",
             submission2,
             ModelingSubmission.class,
             HttpStatus.OK);
@@ -164,8 +224,8 @@ public class ModelingAssessmentIntegrationTest {
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     public void automaticAssessmentUponAssessmentSubmission() throws Exception {
-        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(exercise, "test-data/model-submission/model.54727.json", "student1");
-        ModelingSubmission submission2 = database.addModelingSubmissionFromResources(exercise, "test-data/model-submission/model.54727.cpy.json", "student2");
+        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
+        ModelingSubmission submission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.cpy.json", "student2");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
         request.put(
             "/api/modeling-submissions/"
@@ -186,8 +246,8 @@ public class ModelingAssessmentIntegrationTest {
     @WithMockUser(username = "tutor1", roles = "TA")
     public void testConflictDetection() throws Exception {
         User assessor = userRepo.findOneByLogin("tutor1").get();
-        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(exercise, "test-data/model-submission/model.conflict.1.json", "student1");
-        ModelingSubmission submission2 = database.addModelingSubmissionFromResources(exercise, "test-data/model-submission/model.conflict.2.json", "student2");
+        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.conflict.1.json", "student1");
+        ModelingSubmission submission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.conflict.2.json", "student2");
         List<Feedback> feedbacks1 = database.loadAssessmentFomResources("test-data/model-assessment/assessment.conflict.1.json");
         List<Feedback> feedbacks2 = database.loadAssessmentFomResources("test-data/model-assessment/assessment.conflict.2.json");
         request.put(
