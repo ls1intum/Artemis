@@ -12,7 +12,7 @@
   "elements": [
     {
       "id": "6aba5764-d102-4740-9675-b2bd0a4f2680",
-      "name": "Strategy1",
+      "name": "FirstStrategy",
       "owner": null,
       "type": "Class",
       "bounds": {
@@ -28,7 +28,7 @@
     },
     {
       "id": "f96984a2-2ce0-46f6-9211-ec389b19512a",
-      "name": "Strategy2",
+      "name": "SecondStrategy",
       "owner": null,
       "type": "Class",
       "bounds": {

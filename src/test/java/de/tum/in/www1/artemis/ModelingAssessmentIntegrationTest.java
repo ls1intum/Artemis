@@ -142,8 +142,28 @@ public class ModelingAssessmentIntegrationTest {
 
 
     @Test
+    @WithMockUser(value = "student1", roles = "USER")
+    @Ignore
+    // TODO CZ: fix this test
+    public void automaticAssessmentUponModelSubmission() throws Exception {
+        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(exercise, "test-data/model-submission/model.54727.json", "student1");
+        Result result = database.addModelingAssessmentForSubmission(exercise, submission1, "test-data/model-assessment/assessment.54727.json", "tutor1");
+        ModelingSubmission submission2 = ModelFactory.generateModelingSubmission(database.loadFileFromResources("test-data/model-submission/model.54727.cpy.json"), true);
+        request.postWithResponseBody(
+            "/api/exercises/" + exercise.getId() + "/modeling-submissions",
+            submission2,
+            ModelingSubmission.class,
+            HttpStatus.OK);
+        await().atMost(10, TimeUnit.SECONDS).alias("2nd submission has been automatically assessed").until(submissionHasBeenAssessed(submission2.getId()));
+        ModelingSubmission storedSubmission2 = modelingSubmissionRepo.findById(submission2.getId()).get();
+        Result storedResult2 = storedSubmission2.getResult();
+        assertThat(result.getScore()).as("identical model got assessed equally").isEqualTo(storedResult2.getScore());
+        assertThat(storedResult2.getAssessmentType()).as("got assessed automatically").isEqualTo(AssessmentType.AUTOMATIC);
+    }
+
+    @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void automaticAssessment() throws Exception {
+    public void automaticAssessmentUponAssessmentSubmission() throws Exception {
         ModelingSubmission submission1 = database.addModelingSubmissionFromResources(exercise, "test-data/model-submission/model.54727.json", "student1");
         ModelingSubmission submission2 = database.addModelingSubmissionFromResources(exercise, "test-data/model-submission/model.54727.cpy.json", "student2");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
@@ -185,7 +205,7 @@ public class ModelingAssessmentIntegrationTest {
         Result storedResult = resultRepo.findByIdWithEagerFeedbacks(storedSubmission.getResult().getId()).get();
         checkFeedbackCorrectlyStored(feedbacks2, storedResult.getFeedbacks());
         checkResultAfterSave(storedResult, assessor);
-        assertThat(conflicts.size()).as("both conflicts got detected").isEqualTo(2);
+        assertThat(conflicts.size()).as("all three conflicts got detected").isEqualTo(3);
     }
 
 

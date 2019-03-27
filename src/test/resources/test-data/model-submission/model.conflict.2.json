@@ -53,7 +53,7 @@
         "594ab1eb-2f79-4573-a9a7-4806f631c5fe"
       ],
       "methods": [
-        "8cbbfa78-ace3-4e86-bcb5-485355bfcdc1"
+        "62db30c6-520e-4346-b841-4cf98857d784"
       ]
     },
     {
@@ -69,7 +69,7 @@
       }
     },
     {
-      "id": "8cbbfa78-ace3-4e86-bcb5-485355bfcdc1",
+      "id": "62db30c6-520e-4346-b841-4cf98857d784",
       "name": "boil()",
       "owner": "77f659ca-670f-4942-beb1-5b257971fc27",
       "type": "ClassMethod",

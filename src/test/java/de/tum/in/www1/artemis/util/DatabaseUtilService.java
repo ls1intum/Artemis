@@ -5,6 +5,7 @@ import java.io.*;
 import java.nio.file.*;
 import java.time.ZonedDateTime;
 import java.util.*;
+import de.tum.in.www1.artemis.service.ModelingAssessmentService;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -42,6 +43,8 @@ public class DatabaseUtilService {
     FeedbackRepository feedbackRepo;
     @Autowired
     ModelingSubmissionService modelSubmissionService;
+    @Autowired
+    ModelingAssessmentService modelingAssessmentService;
     @Autowired
     ObjectMapper mapper;
 
@@ -205,6 +208,15 @@ public class DatabaseUtilService {
         JsonObject sentModelObject = parser.parse(sentModel).getAsJsonObject();
         JsonObject storedModelObject = parser.parse(storedModel).getAsJsonObject();
         assertThat(storedModelObject).as("model correctly stored").isEqualTo(sentModelObject);
+    }
+
+
+    public Result addModelingAssessmentForSubmission(ModelingExercise exercise, ModelingSubmission submission,
+                                                    String path, String login) throws Exception {
+        List<Feedback> assessment = loadAssessmentFomResources(path);
+        Result result = modelingAssessmentService.saveManualAssessment(submission, assessment);
+        result = modelingAssessmentService.submitManualAssessment(result, exercise);
+        return result;
     }
 
 
