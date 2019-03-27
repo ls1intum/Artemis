@@ -52,7 +52,7 @@ public class ModelingAssessmentIntegrationTest {
         database.resetFileStorage();
         database.resetDatabase();
         database.addUsers(2, 1);
-        database.addCourseWithModelingExercise();
+        database.addCourseWithDifferentModelingExercises();
         exercise = (ModelingExercise) exerciseRepo.findAll().get(0);
     }
 

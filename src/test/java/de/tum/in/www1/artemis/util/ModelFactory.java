@@ -11,6 +11,7 @@ public class ModelFactory {
         ZonedDateTime releaseDate,
         ZonedDateTime dueDate,
         ZonedDateTime assessmentDueDate,
+        DiagramType diagramType,
         Course course) {
         ModelingExercise exercise = new ModelingExercise();
         exercise.setTitle(UUID.randomUUID().toString());
@@ -19,7 +20,7 @@ public class ModelFactory {
         exercise.setReleaseDate(releaseDate);
         exercise.setDueDate(dueDate);
         exercise.assessmentDueDate(assessmentDueDate);
-        exercise.setDiagramType(DiagramType.ClassDiagram);
+        exercise.setDiagramType(diagramType);
         exercise.setCourse(course);
         exercise.setParticipations(new HashSet<>());
         exercise.setExampleSubmissions(new HashSet<>());
