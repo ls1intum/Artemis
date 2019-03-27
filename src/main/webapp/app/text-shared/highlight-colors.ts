@@ -1,4 +1,4 @@
-export module HighlightColors {
+export namespace HighlightColors {
     export enum Color {
         yellow = 'yellow',
         lime = 'lime',

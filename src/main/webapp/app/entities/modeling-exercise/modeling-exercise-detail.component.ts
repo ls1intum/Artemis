@@ -6,6 +6,7 @@ import { JhiEventManager } from 'ng-jhipster';
 
 import { ModelingExercise } from './modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
+import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 
 @Component({
     selector: 'jhi-modeling-exercise-detail',
@@ -16,11 +17,13 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     modelingExercise: ModelingExercise;
     private subscription: Subscription;
     private eventSubscriber: Subscription;
+    problemStatement: string;
 
     constructor(
         private eventManager: JhiEventManager,
         private modelingExerciseService: ModelingExerciseService,
-        private route: ActivatedRoute
+        private route: ActivatedRoute,
+        private artemisMarkdown: ArtemisMarkdown
     ) {
     }
 
@@ -35,8 +38,10 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
         this.modelingExerciseService.find(id)
             .subscribe((modelingExerciseResponse: HttpResponse<ModelingExercise>) => {
                 this.modelingExercise = modelingExerciseResponse.body;
+                this.problemStatement = this.artemisMarkdown.htmlForMarkdown(this.modelingExercise.problemStatement);
             });
     }
+
     previousState() {
         window.history.back();
     }
