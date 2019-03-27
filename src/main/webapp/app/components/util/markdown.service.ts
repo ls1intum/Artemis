@@ -22,7 +22,9 @@ export class ArtemisMarkdown {
         aceEditorContainer.getEditor().moveCursorTo(aceEditorContainer.getEditor().getCursorPosition().row, Number.POSITIVE_INFINITY);
         aceEditorContainer.getEditor().insert(text);
         const range = aceEditorContainer.getEditor().selection.getRange();
-        range.setStart(range.start.row, 6);
+        const identifier = text.split(']');
+        const offset = identifier[0].length + 1;
+        range.setStart(range.start.row, offset);
         aceEditorContainer.getEditor().selection.setRange(range);
     }
 
