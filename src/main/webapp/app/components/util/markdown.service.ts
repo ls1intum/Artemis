@@ -22,11 +22,12 @@ export class ArtemisMarkdown {
         aceEditorContainer.getEditor().moveCursorTo(aceEditorContainer.getEditor().getCursorPosition().row, Number.POSITIVE_INFINITY);
         aceEditorContainer.getEditor().insert(text);
         const range = aceEditorContainer.getEditor().selection.getRange();
-        const identifier = text.split(']');
-        const offset = identifier[0].length + 1;
-        range.setStart(range.start.row, offset);
+        const commandIdentifier = text.split(']');
+        const offsetRange = commandIdentifier[0].length + 1;
+        range.setStart(range.start.row, offsetRange);
         aceEditorContainer.getEditor().selection.setRange(range);
     }
+
 
     constructor(private sanitizer: DomSanitizer) {}
 
