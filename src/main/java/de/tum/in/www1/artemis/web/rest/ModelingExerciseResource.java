@@ -186,7 +186,12 @@ public class ModelingExerciseResource {
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
             return forbidden();
         }
-        return ResponseEntity.ok(compassService.getStatistics(exerciseId).toString());
+        if (compassService.isSupported(modelingExercise.get().getDiagramType())) {
+            return ResponseEntity.ok(compassService.getStatistics(exerciseId).toString());
+        }
+        else {
+            return notFound();
+        }
     }
 
 

@@ -1,21 +1,15 @@
 {
-  "version": "1.0",
-  "entities": {
-    "allIds": [],
-    "byId": {}
+  "version": "2.0",
+  "size": {
+    "width": 0,
+    "height": 0
   },
-  "relationships": {
-    "allIds": [],
-    "byId": {}
+  "type": "ClassDiagram",
+  "interactive": {
+    "elements": [],
+    "relationships": []
   },
-  "interactiveElements": {
-    "allIds": []
-  },
-  "editor": {
-    "canvasSize": {
-      "width": 1600,
-      "height": 1600
-    },
-    "gridSize": 10
-  }
+  "elements": [],
+  "relationships": [],
+  "assessments": []
 }

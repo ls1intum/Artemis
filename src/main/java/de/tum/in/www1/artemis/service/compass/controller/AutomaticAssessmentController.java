@@ -4,7 +4,12 @@ import de.tum.in.www1.artemis.service.compass.assessment.Assessment;
 import de.tum.in.www1.artemis.service.compass.assessment.CompassResult;
 import de.tum.in.www1.artemis.service.compass.assessment.Context;
 import de.tum.in.www1.artemis.service.compass.assessment.Score;
-import de.tum.in.www1.artemis.service.compass.umlmodel.*;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLAttribute;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassModel;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassRelationship;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLMethod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +32,7 @@ public class AutomaticAssessmentController {
      * @param model        the UML model - contains all elements with its corresponding jsonIds
      * @throws IOException if the score for the element is null
      */
-    public void addScoresToAssessment(AssessmentIndex index, Map<String, Score> scoreHashMap, UMLModel model) throws IOException {
+    public void addScoresToAssessment(AssessmentIndex index, Map<String, Score> scoreHashMap, UMLClassModel model) throws IOException {
 
         for (String jsonElementID : scoreHashMap.keySet()) {
             UMLElement element = model.getElementByJSONID(jsonElementID);
@@ -60,7 +65,7 @@ public class AutomaticAssessmentController {
         totalCoverage = 0;
         totalConfidence = 0;
 
-        for (UMLModel model : modelIndex.getModelCollection()) {
+        for (UMLClassModel model : modelIndex.getModelCollection()) {
 
             CompassResult compassResult = assessModelAutomatically(model, assessmentIndex);
 
@@ -81,7 +86,7 @@ public class AutomaticAssessmentController {
      * @param assessmentIndex manages all assessments
      * @return a result
      */
-    public CompassResult assessModelAutomatically(UMLModel model, AssessmentIndex assessmentIndex) {
+    public CompassResult assessModelAutomatically(UMLClassModel model, AssessmentIndex assessmentIndex) {
         List<CompassResult> compassResultList = new ArrayList<>();
 
         double totalCount = 0;
@@ -98,7 +103,7 @@ public class AutomaticAssessmentController {
 
         Map<UMLElement, Score> scoreHashMap = new HashMap<>();
 
-        for (UMLAssociation relation : model.getAssociationList()) {
+        for (UMLClassRelationship relation : model.getAssociationList()) {
             Optional<Assessment> assessmentOptional = assessmentIndex.getAssessment(relation.getElementID());
             totalCount++;
 

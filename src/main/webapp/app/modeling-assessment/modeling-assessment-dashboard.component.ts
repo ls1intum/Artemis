@@ -3,32 +3,31 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Exercise, ExerciseType } from '../entities/exercise';
-import { ExerciseService } from '../entities/exercise/exercise.service';
+import { ExerciseService } from 'app/entities/exercise';
 import { Course, CourseService } from '../entities/course';
-import { ResultService } from '../entities/result/result.service';
+import { ResultDetailComponent, ResultService } from 'app/entities/result';
 import { DifferencePipe } from 'angular2-moment';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Result } from '../entities/result';
-import { ResultDetailComponent } from '../entities/result/result-detail.component';
-import { ModelingAssessmentService } from '../entities/modeling-assessment/modeling-assessment.service';
 import { HttpResponse } from '@angular/common/http';
 import { AccountService } from '../core';
 import { Submission } from '../entities/submission';
 import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/modeling-submission';
+import { DiagramType, ModelingExercise } from 'app/entities/modeling-exercise';
+import { ModelingAssessmentService } from 'app/modeling-assessment/modeling-assessment.service';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
-    templateUrl: './assessment-dashboard.component.html',
+    templateUrl: './modeling-assessment-dashboard.component.html',
     providers: [JhiAlertService, ModelingAssessmentService]
 })
-export class AssessmentDashboardComponent implements OnInit, OnDestroy {
+export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     // make constants available to html for comparison
-    readonly QUIZ = ExerciseType.QUIZ;
-    readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
+    readonly CLASS_DIAGRAM = DiagramType.ClassDiagram;
 
     course: Course;
-    exercise: Exercise;
+    modelingExercise: ModelingExercise;
     paramSub: Subscription;
     predicate: string;
     reverse: boolean;
@@ -78,8 +77,13 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
                 this.course = res.body;
             });
             this.exerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<Exercise>) => {
-                this.exercise = res.body;
-                this.getSubmissions(true);
+
+                if (res.body.type === this.MODELING) {
+                    this.modelingExercise = res.body as ModelingExercise;
+                    this.getSubmissions(true);
+                } else {
+                    // TODO: error message if this is not a modeling exercise
+                }
             });
         });
         this.registerChangeInResults();
@@ -90,16 +94,16 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Get all results for the current exercise, this includes information about all submitted models ( = submissions)
+     * Get all results for the current modeling exercise, this includes information about all submitted models ( = submissions)
      *
      * @param {boolean} forceReload force REST call to update nextOptimalSubmissionIds
      */
     getSubmissions(forceReload: boolean) {
         this.modelingSubmissionService
-            .getModelingSubmissionsForExercise(this.exercise.id, { submittedOnly: true })
+            .getModelingSubmissionsForExercise(this.modelingExercise.id, { submittedOnly: true })
             .subscribe((res: HttpResponse<ModelingSubmission[]>) => {
                 // only use submissions that have already been submitted (this makes sure that unsubmitted submissions are not shown
-                // the server should have filtered these submissions alreadyart
+                // the server should have filtered these submissions already
                 this.submissions = res.body.filter(submission => submission.submitted);
                 this.submissions.forEach(submission => {
                     if (submission.result) {
@@ -122,8 +126,8 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
      * @param {boolean} forceReload force REST call to update nextOptimalSubmissionIds
      */
     filterSubmissions(forceReload: boolean) {
-        if (this.nextOptimalSubmissionIds.length < 3 || forceReload) {
-            this.modelingAssessmentService.getOptimalSubmissions(this.exercise.id).subscribe(optimal => {
+        if (this.modelingExercise.diagramType === this.CLASS_DIAGRAM && (this.nextOptimalSubmissionIds.length < 3 || forceReload)) {
+            this.modelingAssessmentService.getOptimalSubmissions(this.modelingExercise.id).subscribe(optimal => {
                 this.nextOptimalSubmissionIds = optimal.body.map((submission: Submission) => submission.id);
                 this.applyFilter();
             });
@@ -138,8 +142,7 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
     applyFilter() {
         // A submission is optimal if it is part of nextOptimalSubmissionIds and (nobody is currently assessing it or you are currently assessing it)
         this.submissions.forEach(submission => {
-            submission.optimal =
-                this.nextOptimalSubmissionIds.includes(submission.id) &&
+            submission.optimal = this.nextOptimalSubmissionIds.includes(submission.id) &&
                 (!(submission.result && submission.result.assessor) ||
                     (submission.result && submission.result.assessor && submission.result.assessor.id === this.userId));
         });
@@ -168,9 +171,11 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
      * Reset optimality attribute of models
      */
     resetOptimality() {
-        this.modelingAssessmentService.resetOptimality(this.exercise.id).subscribe(() => {
-            this.filterSubmissions(true);
-        });
+        if (this.modelingExercise.diagramType === this.CLASS_DIAGRAM) {
+            this.modelingAssessmentService.resetOptimality(this.modelingExercise.id).subscribe(() => {
+                this.filterSubmissions(true);
+            });
+        }
     }
 
     makeAllSubmissionsVisible() {
@@ -193,14 +198,14 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
         this.busy = true;
         if (this.nextOptimalSubmissionIds.length === 0) {
             setTimeout(() => {
-                this.modelingAssessmentService.getOptimalSubmissions(this.exercise.id).subscribe(optimal => {
+                this.modelingAssessmentService.getOptimalSubmissions(this.modelingExercise.id).subscribe(optimal => {
                     this.nextOptimalSubmissionIds = optimal.body.map((submission: Submission) => submission.id);
                     this.assessNextOptimal(attempts + 1);
                 });
             }, 500 + 1000 * attempts);
         } else {
             const randomInt = Math.floor(Math.random() * this.nextOptimalSubmissionIds.length);
-            this.router.navigate(['apollon-diagrams', 'exercise', this.exercise.id, this.nextOptimalSubmissionIds[randomInt], 'tutor']);
+            this.router.navigate(['modeling-exercise', this.modelingExercise.id, 'submissions', this.nextOptimalSubmissionIds[randomInt], 'assessment']);
         }
     }
 

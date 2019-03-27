@@ -1,7 +1,8 @@
-<div *ngIf="exercise">
-    <h4>Assessment dashboard for exercise "{{exercise.title}}"</h4>
+<div *ngIf="modelingExercise">
+    <h4>Assessment dashboard for modeling exercise <strong>{{modelingExercise.title}}</strong></h4>
     <div>
-        <div class="button-toolbar float-right">
+        <!-- These buttons only make sense when Compass is activated so for now we only use it for ClassDiagrams -->
+        <div class="button-toolbar float-right" *ngIf="modelingExercise.diagramType === CLASS_DIAGRAM">
             <button [disabled]="busy || (optimalSubmissions && optimalSubmissions.length === 0 && assessedSubmissions === submissions.length)" class="btn btn-success btn-sm mr-1" (click)="assessNextOptimal(0)">
                 <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;Assess next submission
             </button>
@@ -15,16 +16,19 @@
             </button>
         </div>
     </div>
-     <h4>
+    <h4>
         <small [ngStyle]="assessedSubmissions === submissions.length && submissions.length > 0 && {'color': '#5cb85c'}">
-            <strong>Progress ({{assessedSubmissions / submissions.length * 100 | number: '0.0-0'}}%) </strong>{{assessedSubmissions}} out of {{submissions.length}} submitted models assessed
+            <strong>Progress: {{assessedSubmissions / submissions.length * 100 | number: '0.0-0'}}% </strong>({{assessedSubmissions}} out of {{submissions.length}} submitted models assessed)
         </small>
     </h4>
     <jhi-alert></jhi-alert>
-    <h4>
-        <span *ngIf="busy" style="color:grey"><fa-icon icon="spinner" [spin]="true"></fa-icon>&nbsp;<span>Please wait while finding the next submission!</span></span>
-    </h4>
-    <p>ArTEMiS optimized the assessment order to minimize your correction effort. Please assess the following submissions first:</p>
+    <!-- These statements only make sense when Compass is activated so for now we only use it for ClassDiagrams -->
+    <div *ngIf="modelingExercise.diagramType === CLASS_DIAGRAM">
+        <h4>
+            <span *ngIf="busy" style="color:grey"><fa-icon icon="spinner" [spin]="true"></fa-icon>&nbsp;<span>Please wait while finding the next submission!</span></span>
+        </h4>
+        <p>ArTEMiS optimized the assessment order to minimize your correction effort. Please assess the following submissions first:</p>
+    </div>
     <div class="table-responsive" *ngIf="optimalSubmissions && optimalSubmissions.length > 0">
         <table class="table table-striped exercise-table">
             <thead>
@@ -54,7 +58,7 @@
                 </td>
                 <td>
                     <button *ngIf="(submission.optimal && !(submission.result && submission.result.assessor)) || (submission.result && submission.result.assessor && submission.result.assessor.id === userId) || canOverrideAssessments"
-                            routerLink="/apollon-diagrams/exercise/{{exercise.id}}/{{submission.id}}/tutor"
+                            routerLink="/modeling-exercise/{{modelingExercise.id}}/submissions/{{submission.id}}/assessment"
                             [queryParams]="{optimal: false}"
                             class="btn btn-outline-success btn-sm">
                         <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;Assess model
@@ -68,13 +72,14 @@
         <div *ngIf="assessedSubmissions === submissions.length">
             <p style="color: #5cb85c"><strong>Congratulation all models have been assessed</strong></p>
         </div>
-        <div *ngIf="assessedSubmissions !== submissions.length">
+        <!-- This statement only makes sense when Compass is activated so for now we only use it for ClassDiagrams -->
+        <div *ngIf="modelingExercise.diagramType === CLASS_DIAGRAM && assessedSubmissions !== submissions.length">
             <p><strong>Currently there are no models to assess. Try pushing the refresh button</strong></p>
         </div>
     </div>
-    <h5 *ngIf="otherSubmissions.length > 0" style="padding-top: 5px">Other submissions:</h5>
-    <p *ngIf="!allSubmissionsVisible && otherSubmissions.length > 0"><strong><a (click)="makeAllSubmissionsVisible()">Show {{otherSubmissions.length}} other submissions</a></strong></p>
-    <div class="table-responsive" *ngIf="otherSubmissions.length > 0 && allSubmissionsVisible">
+    <h5 *ngIf="modelingExercise.diagramType === CLASS_DIAGRAM && otherSubmissions.length > 0" style="padding-top: 5px">Other submissions:</h5>
+    <p *ngIf="modelingExercise.diagramType === CLASS_DIAGRAM && !allSubmissionsVisible && otherSubmissions.length > 0"><strong><a (click)="makeAllSubmissionsVisible()">Show {{otherSubmissions.length}} other submissions</a></strong></p>
+    <div class="table-responsive" *ngIf="otherSubmissions.length > 0 && (modelingExercise.diagramType !== CLASS_DIAGRAM || allSubmissionsVisible)">
         <table class="table table-striped exercise-table">
             <thead>
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
@@ -125,7 +130,7 @@
                     <span *ngIf="submission.result && submission.result.score != null">{{submission.result.score}}%</span>
                 </td>
                 <td>{{durationString(submission.submissionDate, (submission.participation.initializationDate ?
-                    submission.participation.initializationDate : exercise.releaseDate))}} minutes
+                    submission.participation.initializationDate : modelingExercise.releaseDate))}} minutes
                 </td>
                 <td>{{ submission.result && submission.result.assessmentType }}</td>
                 <td>
@@ -133,16 +138,16 @@
                 </td>
                 <td>
                     <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                    <button *ngIf="exercise.type === MODELING && submission && !submission.result"
-                            routerLink="/apollon-diagrams/exercise/{{exercise.id}}/{{submission.id}}/tutor"
+                    <button *ngIf="modelingExercise.type === MODELING && submission && !submission.result"
+                            routerLink="/modeling-exercise/{{modelingExercise.id}}/submissions/{{submission.id}}/assessment"
                             [disabled]="busy"
                             [queryParams]="{optimal: false}"
                             class="btn btn-outline-secondary btn-sm">
                         <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;Assess model
                     </button>
                     </span>
-                    <button *ngIf="exercise.type === MODELING && submission && submission.result"
-                            routerLink="/apollon-diagrams/exercise/{{exercise.id}}/{{submission.id}}/tutor"
+                    <button *ngIf="modelingExercise.type === MODELING && submission && submission.result"
+                            routerLink="/modeling-exercise/{{modelingExercise.id}}/submissions/{{submission.id}}/assessment"
                             [disabled]="busy"
                             [queryParams]="{optimal: false}"
                             class="btn btn-outline-secondary btn-sm">

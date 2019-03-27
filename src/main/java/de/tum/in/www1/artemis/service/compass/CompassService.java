@@ -74,6 +74,11 @@ public class CompassService {
         this.participationRepository = participationRepository;
     }
 
+    public boolean isSupported(DiagramType diagramType) {
+        // at the moment, we only support class diagrams
+        return diagramType == DiagramType.ClassDiagram;
+    }
+
     /**
      * This method will return a new Entry with a new Id for every call
      *
@@ -206,7 +211,7 @@ public class CompassService {
                  * Workaround for ignoring automatic assessments of unsupported modeling exercise types
                  * TODO remove this after adapting compass
                  */
-                if (!modelingExercise.getDiagramType().equals(DiagramType.CLASS)) {
+                if (!modelingExercise.getDiagramType().equals(DiagramType.ClassDiagram)) {
                     return;
                 }
                 // Round compass grades to avoid machine precision errors, make the grades more readable

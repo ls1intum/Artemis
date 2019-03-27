@@ -158,6 +158,7 @@ dependencies {
     compile group: 'net.sourceforge.plantuml', name: 'plantuml', version: '8059'
     compile "org.imsglobal:basiclti-util:1.2.0"
     compile "org.jasypt:jasypt:1.9.2"
+    compile "me.xdrop:fuzzywuzzy:1.2.0"
 
     compile group: 'com.atlassian.bamboo', name: 'bamboo-specs', version: '6.8.1'
 

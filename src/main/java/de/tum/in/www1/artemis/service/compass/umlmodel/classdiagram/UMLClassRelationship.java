@@ -1,64 +1,48 @@
-package de.tum.in.www1.artemis.service.compass.umlmodel;
+package de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram;
 
+import com.google.common.base.CaseFormat;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
-public class UMLAssociation extends UMLElement {
 
-    // PLAIN is legacy
-    // TODO move activity diagram types into its own class
+public class UMLClassRelationship extends UMLElement {
+
     public enum UMLRelationType {
-        PLAIN,
-        DEPENDENCY,
-        AGGREGATION,
-        INHERITANCE,
-        REALIZATION,
-        COMPOSITION,
-        ASSOCIATION_UNIDIRECTIONAL,
-        ASSOCIATION_BIDIRECTIONAL,
-        ACTIVITY_CONTROL_FLOW;
+        // class diagram relations
+        CLASS_BIDIRECTIONAL,
+        CLASS_UNIDIRECTIONAL,
+        CLASS_INHERITANCE,
+        CLASS_REALIZATION,
+        CLASS_DEPENDENCY,
+        CLASS_AGGREGATION,
+        CLASS_COMPOSITION;
 
-        public String toReadableString() {
-            switch (this) {
-                case DEPENDENCY:
-                    return "Dependency";
-                case AGGREGATION:
-                    return "Aggregation";
-                case INHERITANCE:
-                    return "Inheritance";
-                case REALIZATION:
-                    return "Realization";
-                case COMPOSITION:
-                    return "Composition";
-                case ASSOCIATION_UNIDIRECTIONAL:
-                    return "Unidirectional";
-                case ASSOCIATION_BIDIRECTIONAL:
-                    return "Bidirectional";
-                case ACTIVITY_CONTROL_FLOW:
-                    return "Control Flow";
-                default:
-                    return "Other";
-            }
+        public static List<String> getTypesAsList() {
+            return Arrays.stream(UMLRelationType.values())
+                .map(umlRelationType -> CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, umlRelationType.name()))
+                .collect(Collectors.toList());
         }
 
         public String toSymbol() {
             switch (this) {
-                case DEPENDENCY:
+                case CLASS_DEPENDENCY:
                     return " ╌╌> ";
-                case AGGREGATION:
+                case CLASS_AGGREGATION:
                     return " --◇ ";
-                case INHERITANCE:
+                case CLASS_INHERITANCE:
                     return " --▷ ";
-                case REALIZATION:
+                case CLASS_REALIZATION:
                     return " ╌╌▷ ";
-                case COMPOSITION:
+                case CLASS_COMPOSITION:
                     return " --◆ ";
-                case ASSOCIATION_UNIDIRECTIONAL:
+                case CLASS_UNIDIRECTIONAL:
                     return " --> ";
-                case ASSOCIATION_BIDIRECTIONAL:
+                case CLASS_BIDIRECTIONAL:
                     return " <-> ";
-                case ACTIVITY_CONTROL_FLOW:
-                    return " --> ";
                 default:
                     return " --- ";
             }
@@ -76,13 +60,8 @@ public class UMLAssociation extends UMLElement {
 
     private UMLRelationType type;
 
-
-    public UMLAssociation() {
-    }
-
-
-    public UMLAssociation(UMLClass source, UMLClass target, String type, String jsonElementID, String sourceRole, String targetRole,
-                          String sourceMultiplicity, String targetMultiplicity) {
+    public UMLClassRelationship(UMLClass source, UMLClass target, String type, String jsonElementID, String sourceRole, String targetRole,
+                                String sourceMultiplicity, String targetMultiplicity) {
         this.source = source;
         this.target = target;
         this.sourceMultiplicity = sourceMultiplicity;
@@ -90,7 +69,7 @@ public class UMLAssociation extends UMLElement {
         this.sourceRole = sourceRole;
         this.targetRole = targetRole;
 
-        this.jsonElementID = jsonElementID;
+        this.setJsonElementID(jsonElementID);
 
         this.type = UMLRelationType.valueOf(type.toUpperCase());
     }
@@ -103,11 +82,11 @@ public class UMLAssociation extends UMLElement {
      */
     @Override
     public double similarity(UMLElement element) {
-        if (element.getClass() != UMLAssociation.class) {
+        if (element.getClass() != UMLClassRelationship.class) {
             return 0;
         }
 
-        UMLAssociation reference = (UMLAssociation) element;
+        UMLClassRelationship reference = (UMLClassRelationship) element;
 
         double similarity = 0;
         double weight = 1;
@@ -141,7 +120,7 @@ public class UMLAssociation extends UMLElement {
         }
 
         // bidirectional associations can be swapped
-        if (type == UMLRelationType.ASSOCIATION_BIDIRECTIONAL) {
+        if (type == UMLRelationType.CLASS_BIDIRECTIONAL) {
             double similarityReverse = 0;
 
             if (reference.targetRole.equals(this.sourceRole)) {
@@ -172,12 +151,17 @@ public class UMLAssociation extends UMLElement {
 
     @Override
     public String getName() {
-        return "Association " + getSource().getValue() + type.toSymbol() + getTarget().getValue() + " (" + type.toReadableString() + ")";
+        return "Association " + getSource().getValue() + type.toSymbol() + getTarget().getValue() + " (" + getType() + ")";
     }
 
     @Override
     public String getValue() {
-        return type.toReadableString();
+        return getType();
+    }
+
+    @Override
+    public String getType() {
+        return CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, type.name());
     }
 
     public UMLClass getSource() {

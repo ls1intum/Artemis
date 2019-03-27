@@ -1,0 +1,60 @@
+[
+  {
+    "id": 594,
+    "text": "correct",
+    "reference": "ActivityActionNode:864c2d7f-c11e-417b-850f-f371f44024e8",
+    "credits": 0.5,
+    "positive": true,
+    "type": "MANUAL",
+    "referenceType": "ActivityActionNode",
+    "referenceId": "864c2d7f-c11e-417b-850f-f371f44024e8"
+  },
+  {
+    "id": 595,
+    "text": "good",
+    "reference": "ActivityMergeNode:9997d464-c620-43e9-b02c-7eee2b3b346a",
+    "credits": 2,
+    "positive": true,
+    "type": "MANUAL",
+    "referenceType": "ActivityMergeNode",
+    "referenceId": "9997d464-c620-43e9-b02c-7eee2b3b346a"
+  },
+  {
+    "id": 596,
+    "text": "what is that for?",
+    "reference": "ActivityForkNode:a63aa3fa-b91e-4b06-91a1-f57959b9e2f8",
+    "credits": -0.5,
+    "positive": false,
+    "type": "MANUAL",
+    "referenceType": "ActivityForkNode",
+    "referenceId": "a63aa3fa-b91e-4b06-91a1-f57959b9e2f8"
+  },
+  {
+    "id": 597,
+    "reference": "ActivityActionNode:d0cb2fc1-0171-4ec2-88e7-80a5a25e059a",
+    "credits": 0.5,
+    "positive": true,
+    "type": "MANUAL",
+    "referenceType": "ActivityActionNode",
+    "referenceId": "d0cb2fc1-0171-4ec2-88e7-80a5a25e059a"
+  },
+  {
+    "id": 598,
+    "text": "correct",
+    "reference": "ActivityActionNode:a41807cb-b39a-4619-9477-6a33ecff1c1f",
+    "credits": 0.5,
+    "positive": true,
+    "type": "MANUAL",
+    "referenceType": "ActivityActionNode",
+    "referenceId": "a41807cb-b39a-4619-9477-6a33ecff1c1f"
+  },
+  {
+    "id": 599,
+    "reference": "ActivityObjectNode:520b207d-e599-45ec-b535-fbe01c29df66",
+    "credits": 0.5,
+    "positive": true,
+    "type": "MANUAL",
+    "referenceType": "ActivityObjectNode",
+    "referenceId": "520b207d-e599-45ec-b535-fbe01c29df66"
+  }
+]

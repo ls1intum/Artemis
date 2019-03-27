@@ -5,6 +5,8 @@ import java.io.*;
 import java.nio.file.*;
 import java.time.ZonedDateTime;
 import java.util.*;
+import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
+import de.tum.in.www1.artemis.service.ModelingAssessmentService;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -42,6 +44,8 @@ public class DatabaseUtilService {
     FeedbackRepository feedbackRepo;
     @Autowired
     ModelingSubmissionService modelSubmissionService;
+    @Autowired
+    ModelingAssessmentService modelingAssessmentService;
     @Autowired
     ObjectMapper mapper;
 
@@ -122,7 +126,7 @@ public class DatabaseUtilService {
     }
 
 
-    public void addCourseWithModelingExercise() {
+    public void addCourseWithDifferentModelingExercises() {
         Course course =
             ModelFactory.generateCourse(
                 null,
@@ -132,21 +136,45 @@ public class DatabaseUtilService {
                 "tumuser",
                 "tutor",
                 "tutor");
-        ModelingExercise exercise =
+        ModelingExercise classExercise =
             ModelFactory.generateModelingExercise(
-                pastTimestamp, futureTimestamp, futureFututreTimestamp, course);
-        course.addExercises(exercise);
+                pastTimestamp, futureTimestamp, futureFututreTimestamp, DiagramType.ClassDiagram, course);
+        course.addExercises(classExercise);
+        ModelingExercise activityExercise =
+            ModelFactory.generateModelingExercise(
+                pastTimestamp, futureTimestamp, futureFututreTimestamp, DiagramType.ActivityDiagram, course);
+        course.addExercises(activityExercise);
+        ModelingExercise objectExercise =
+            ModelFactory.generateModelingExercise(
+                pastTimestamp, futureTimestamp, futureFututreTimestamp, DiagramType.ObjectDiagram, course);
+        course.addExercises(objectExercise);
+        ModelingExercise useCaseExercise =
+            ModelFactory.generateModelingExercise(
+                pastTimestamp, futureTimestamp, futureFututreTimestamp, DiagramType.UseCaseDiagram, course);
+        course.addExercises(useCaseExercise);
         courseRepo.save(course);
-        exerciseRepo.save(exercise);
+        exerciseRepo.save(classExercise);
+        exerciseRepo.save(activityExercise);
+        exerciseRepo.save(objectExercise);
+        exerciseRepo.save(useCaseExercise);
         List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercises();
         List<Exercise> exerciseRepoContent = exerciseRepo.findAll();
-        assertThat(exerciseRepoContent.size()).as("a exercise got stored").isEqualTo(1);
+        assertThat(exerciseRepoContent.size()).as("a exercise got stored").isEqualTo(4);
         assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(1);
         assertThat(courseRepoContent.get(0).getExercises().size())
             .as("Course contains exercise")
-            .isEqualTo(1);
+            .isEqualTo(4);
         assertThat(courseRepoContent.get(0).getExercises().contains(exerciseRepoContent.get(0)))
-            .as("course contains the right exercise")
+            .as("course contains the class exercise")
+            .isTrue();
+        assertThat(courseRepoContent.get(0).getExercises().contains(exerciseRepoContent.get(1)))
+            .as("course contains the activity exercise")
+            .isTrue();
+        assertThat(courseRepoContent.get(0).getExercises().contains(exerciseRepoContent.get(2)))
+            .as("course contains the object exercise")
+            .isTrue();
+        assertThat(courseRepoContent.get(0).getExercises().contains(exerciseRepoContent.get(3)))
+            .as("course contains the use case exercise")
             .isTrue();
     }
 
@@ -205,6 +233,15 @@ public class DatabaseUtilService {
         JsonObject sentModelObject = parser.parse(sentModel).getAsJsonObject();
         JsonObject storedModelObject = parser.parse(storedModel).getAsJsonObject();
         assertThat(storedModelObject).as("model correctly stored").isEqualTo(sentModelObject);
+    }
+
+
+    public Result addModelingAssessmentForSubmission(ModelingExercise exercise, ModelingSubmission submission,
+                                                    String path, String login) throws Exception {
+        List<Feedback> assessment = loadAssessmentFomResources(path);
+        Result result = modelingAssessmentService.saveManualAssessment(submission, assessment);
+        result = modelingAssessmentService.submitManualAssessment(result, exercise);
+        return result;
     }
 
 

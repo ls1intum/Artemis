@@ -1,10 +1,9 @@
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core';
 import { TextAssessmentComponent } from './text-assessment.component';
 import { TextAssessmentDashboardComponent } from './text-assessment-dashboard/text-assessment-dashboard.component';
 
-const routes: Routes = [
+export const textAssessmentRoutes: Routes = [
     {
         path: 'text/:exerciseId/assessment/:submissionId',
         component: TextAssessmentComponent,
@@ -24,9 +23,3 @@ const routes: Routes = [
         canActivate: [UserRouteAccessService]
     }
 ];
-
-@NgModule({
-    imports: [RouterModule.forChild(routes)],
-    exports: [RouterModule]
-})
-export class ArTEMiSTextAssessmentRoutingModule {}

@@ -1,7 +1,12 @@
 package de.tum.in.www1.artemis.service.compass.controller;
 
 import de.tum.in.www1.artemis.service.compass.assessment.Context;
-import de.tum.in.www1.artemis.service.compass.umlmodel.*;
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLAttribute;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassModel;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassRelationship;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLMethod;
 
 import java.util.Collection;
 
@@ -13,7 +18,7 @@ public class SimilarityDetector {
      * @param model the new model which contains the model elements
      * @param index the modelIndex which keeps track of all elementIds
      */
-    public static void analyzeSimilarity(UMLModel model, ModelIndex index) {
+    public static void analyzeSimilarity(UMLClassModel model, ModelIndex index) {
 
         for (UMLClass umlClass : model.getClassList()) {
             umlClass.setElementID(index.getElementID(umlClass));
@@ -27,14 +32,14 @@ public class SimilarityDetector {
             }
         }
 
-        for (UMLAssociation relation : model.getAssociationList()) {
+        for (UMLClassRelationship relation : model.getAssociationList()) {
             relation.setElementID(index.getElementID(relation));
         }
 
         setContext(model);
     }
 
-    private static void setContext(UMLModel model) {
+    private static void setContext(UMLClassModel model) {
         for (UMLClass umlClass : model.getClassList()) {
             umlClass.setContext(generateContextForElement(model, umlClass));
             for (UMLAttribute attribute : umlClass.getAttributes()) {
@@ -44,14 +49,14 @@ public class SimilarityDetector {
                 method.setContext(generateContextForElement(model, method));
             }
         }
-        for (UMLAssociation relation : model.getAssociationList()) {
+        for (UMLClassRelationship relation : model.getAssociationList()) {
             relation.setContext(generateContextForElement(model, relation));
         }
     }
 
 
     //TODO: we need a very good documentation here
-    private static Context generateContextForElement(UMLModel model, UMLElement element) {
+    private static Context generateContextForElement(UMLClassModel model, UMLElement element) {
 
         if (element.getClass() == UMLAttribute.class) {
             for (UMLClass umlClass : model.getClassList()) {
@@ -93,11 +98,11 @@ public class SimilarityDetector {
     }
 
     @SuppressWarnings("unused")
-    static double diversity (Collection<UMLModel> modelList) {
+    static double diversity (Collection<UMLClassModel> modelList) {
         double diversity = 0;
 
-        for (UMLModel model : modelList) {
-            for (UMLModel referenceModel : modelList) {
+        for (UMLClassModel model : modelList) {
+            for (UMLClassModel referenceModel : modelList) {
                 diversity += referenceModel.similarity(model);
             }
         }
