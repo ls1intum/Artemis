@@ -6,7 +6,7 @@ import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -54,6 +54,7 @@ public class TextAssessmentResource extends AssessmentResource {
 
     @PutMapping("/exercise/{exerciseId}/result/{resultId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    //TODO: we should send a result object here that includes the feedback
     public ResponseEntity<Result> saveTextAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody List<Feedback> textAssessments) {
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
         ResponseEntity<Result> responseFailure = checkTextExerciseForRequest(textExercise);
@@ -65,6 +66,7 @@ public class TextAssessmentResource extends AssessmentResource {
 
     @PutMapping("/exercise/{exerciseId}/result/{resultId}/submit")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    //TODO: we should send a result object here that includes the feedback
     public ResponseEntity<Result> submitTextAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody List<Feedback> textAssessments) {
         TextExercise textExercise = textExerciseService.findOne(exerciseId);
         ResponseEntity<Result> responseFailure = checkTextExerciseForRequest(textExercise);
@@ -105,7 +107,8 @@ public class TextAssessmentResource extends AssessmentResource {
 
         if (!participation.getResults().isEmpty()) {
             User user = userService.getUser();
-            User assessor = participation.findLatestSubmission().getResult().getAssessor();
+            //TODO: check that the latest submission is not null
+            User assessor = participation.findLatestSubmission().get().getResult().getAssessor();
             // Another tutor started assessing this submission.
             if (!assessor.getLogin().equals(user.getLogin())) {
                 throw new BadRequestAlertException("This submission is being assessed by another tutor", ENTITY_NAME, "alreadyAssessed");
@@ -116,7 +119,7 @@ public class TextAssessmentResource extends AssessmentResource {
             Result result = new Result();
             result.setParticipation(participation);
             result.setSubmission(textSubmission.get());
-            resultService.createNewResult(result);
+            resultService.createNewResult(result, false);
             participation.addResult(result);
         }
 
@@ -158,7 +161,7 @@ public class TextAssessmentResource extends AssessmentResource {
             Result newResult = new Result();
             newResult.setSubmission(textSubmission.get());
             newResult.setExampleResult(true);
-            resultService.createNewResult(newResult);
+            resultService.createNewResult(newResult, false);
             return newResult;
         });
 

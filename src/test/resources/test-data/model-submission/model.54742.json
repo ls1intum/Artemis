@@ -1,0 +1,351 @@
+{
+  "version": "2.0",
+  "size": {
+    "width": 1550,
+    "height": 1200
+  },
+  "type": "ClassDiagram",
+  "interactive": {
+    "elements": [],
+    "relationships": []
+  },
+  "elements": [
+    {
+      "id": "cc086305-943b-4d80-b60a-1eac3d14de31",
+      "name": "AccessStrategy",
+      "owner": null,
+      "type": "Interface",
+      "bounds": {
+        "x": -20,
+        "y": -380,
+        "width": 200,
+        "height": 80
+      },
+      "attributes": [],
+      "methods": [
+        "437d882e-512a-4d0d-aef8-232d13ea8d88"
+      ]
+    },
+    {
+      "id": "437d882e-512a-4d0d-aef8-232d13ea8d88",
+      "name": "+ connectToInternet()",
+      "owner": "cc086305-943b-4d80-b60a-1eac3d14de31",
+      "type": "ClassMethod",
+      "bounds": {
+        "x": 0,
+        "y": 50,
+        "width": 200,
+        "height": 30
+      }
+    },
+    {
+      "id": "e1f74a16-b8fc-4859-8bed-d3fea4cb82c4",
+      "name": "WiFi",
+      "owner": null,
+      "type": "Class",
+      "bounds": {
+        "x": -160,
+        "y": -190,
+        "width": 200,
+        "height": 70
+      },
+      "attributes": [],
+      "methods": [
+        "b889f2a8-be22-4593-b5af-b409744cae19"
+      ]
+    },
+    {
+      "id": "b889f2a8-be22-4593-b5af-b409744cae19",
+      "name": "+ connectToInternet()",
+      "owner": "e1f74a16-b8fc-4859-8bed-d3fea4cb82c4",
+      "type": "ClassMethod",
+      "bounds": {
+        "x": 0,
+        "y": 40,
+        "width": 200,
+        "height": 30
+      }
+    },
+    {
+      "id": "94907611-24d8-4c91-8793-1fb93b4c7a4a",
+      "name": "MobileData",
+      "owner": null,
+      "type": "Class",
+      "bounds": {
+        "x": 130,
+        "y": -190,
+        "width": 200,
+        "height": 70
+      },
+      "attributes": [],
+      "methods": [
+        "8e0ef698-2ff4-4f51-a037-6756cf5be2c4"
+      ]
+    },
+    {
+      "id": "8e0ef698-2ff4-4f51-a037-6756cf5be2c4",
+      "name": "+ connectToInternet()",
+      "owner": "94907611-24d8-4c91-8793-1fb93b4c7a4a",
+      "type": "ClassMethod",
+      "bounds": {
+        "x": 0,
+        "y": 40,
+        "width": 200,
+        "height": 30
+      }
+    },
+    {
+      "id": "e7f50025-af9a-4859-86ad-7d0cecc07bf1",
+      "name": "Browser",
+      "owner": null,
+      "type": "Class",
+      "bounds": {
+        "x": -610,
+        "y": -550,
+        "width": 200,
+        "height": 40
+      },
+      "attributes": [],
+      "methods": []
+    },
+    {
+      "id": "fdb6f0bb-effd-4cac-b982-611b95ea5d51",
+      "name": "Context",
+      "owner": null,
+      "type": "Class",
+      "bounds": {
+        "x": -430,
+        "y": -390,
+        "width": 200,
+        "height": 100
+      },
+      "attributes": [],
+      "methods": [
+        "397ea379-afed-46aa-a6c7-b7c18ce4d829",
+        "2d1e8217-2187-4ddd-92aa-8a9493303696"
+      ]
+    },
+    {
+      "id": "397ea379-afed-46aa-a6c7-b7c18ce4d829",
+      "name": "+ connect()",
+      "owner": "fdb6f0bb-effd-4cac-b982-611b95ea5d51",
+      "type": "ClassMethod",
+      "bounds": {
+        "x": 0,
+        "y": 40,
+        "width": 200,
+        "height": 30
+      }
+    },
+    {
+      "id": "2d1e8217-2187-4ddd-92aa-8a9493303696",
+      "name": "+ selectConnectionType()",
+      "owner": "fdb6f0bb-effd-4cac-b982-611b95ea5d51",
+      "type": "ClassMethod",
+      "bounds": {
+        "x": 0,
+        "y": 70,
+        "width": 200,
+        "height": 30
+      }
+    },
+    {
+      "id": "bf9851d0-07e0-4fe2-9eae-17589d9d1b21",
+      "name": "Policy",
+      "owner": null,
+      "type": "Class",
+      "bounds": {
+        "x": -260,
+        "y": -550,
+        "width": 200,
+        "height": 40
+      },
+      "attributes": [],
+      "methods": []
+    }
+  ],
+  "relationships": [
+    {
+      "id": "c161ec96-d664-4297-8a8e-b880606988a7",
+      "name": "Association",
+      "type": "ClassBidirectional",
+      "source": {
+        "element": "e1f74a16-b8fc-4859-8bed-d3fea4cb82c4",
+        "direction": "Up",
+        "multiplicity": "",
+        "role": ""
+      },
+      "target": {
+        "element": "cc086305-943b-4d80-b60a-1eac3d14de31",
+        "direction": "Down",
+        "multiplicity": "",
+        "role": ""
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 110
+        },
+        {
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "bounds": {
+        "x": 10,
+        "y": -300,
+        "width": 1,
+        "height": 110
+      }
+    },
+    {
+      "id": "dfd4ffa4-8df8-47e5-a285-043b47123146",
+      "name": "Association",
+      "type": "ClassInheritance",
+      "source": {
+        "element": "94907611-24d8-4c91-8793-1fb93b4c7a4a",
+        "direction": "Up",
+        "multiplicity": "",
+        "role": ""
+      },
+      "target": {
+        "element": "cc086305-943b-4d80-b60a-1eac3d14de31",
+        "direction": "Down",
+        "multiplicity": "",
+        "role": ""
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 110
+        },
+        {
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "bounds": {
+        "x": 155,
+        "y": -300,
+        "width": 1,
+        "height": 110
+      }
+    },
+    {
+      "id": "286cc08d-9ab4-46e1-a98e-4b3ea00515ce",
+      "name": "Association",
+      "type": "ClassDependency",
+      "source": {
+        "element": "e7f50025-af9a-4859-86ad-7d0cecc07bf1",
+        "direction": "Down",
+        "multiplicity": "",
+        "role": ""
+      },
+      "target": {
+        "element": "fdb6f0bb-effd-4cac-b982-611b95ea5d51",
+        "direction": "Up",
+        "multiplicity": "",
+        "role": ""
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 60
+        },
+        {
+          "x": 180,
+          "y": 60
+        },
+        {
+          "x": 180,
+          "y": 120
+        }
+      ],
+      "bounds": {
+        "x": -510,
+        "y": -510,
+        "width": 180,
+        "height": 120
+      }
+    },
+    {
+      "id": "da84e597-61c2-4cc8-89b1-3acbc0815067",
+      "name": "Association",
+      "type": "ClassDependency",
+      "source": {
+        "element": "bf9851d0-07e0-4fe2-9eae-17589d9d1b21",
+        "direction": "Down",
+        "multiplicity": "",
+        "role": ""
+      },
+      "target": {
+        "element": "fdb6f0bb-effd-4cac-b982-611b95ea5d51",
+        "direction": "Up",
+        "multiplicity": "",
+        "role": ""
+      },
+      "path": [
+        {
+          "x": 170,
+          "y": 0
+        },
+        {
+          "x": 170,
+          "y": 60
+        },
+        {
+          "x": 0,
+          "y": 60
+        },
+        {
+          "x": 0,
+          "y": 120
+        }
+      ],
+      "bounds": {
+        "x": -330,
+        "y": -510,
+        "width": 170,
+        "height": 120
+      }
+    },
+    {
+      "id": "446eb5a5-7fe0-4e26-8c2f-c5e1dbbf0dbf",
+      "name": "Association",
+      "type": "ClassUnidirectional",
+      "source": {
+        "element": "fdb6f0bb-effd-4cac-b982-611b95ea5d51",
+        "direction": "Right",
+        "multiplicity": "",
+        "role": ""
+      },
+      "target": {
+        "element": "cc086305-943b-4d80-b60a-1eac3d14de31",
+        "direction": "Left",
+        "multiplicity": "",
+        "role": ""
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 210,
+          "y": 0
+        }
+      ],
+      "bounds": {
+        "x": -230,
+        "y": -340,
+        "width": 210,
+        "height": 1
+      }
+    }
+  ],
+  "assessments": []
+}

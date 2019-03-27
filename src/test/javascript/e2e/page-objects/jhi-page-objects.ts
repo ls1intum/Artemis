@@ -68,8 +68,6 @@ export class NavBarPage {
     }
 
     async getSignInPage() {
-        await this.clickOnAccountMenu();
-        await this.clickOnSignIn();
         return new SignInPage();
     }
     async getPasswordPage() {
@@ -89,11 +87,6 @@ export class NavBarPage {
         await this.clickOnEntity(entityName);
     }
 
-    async goToSignInPage() {
-        await this.clickOnAccountMenu();
-        await this.clickOnSignIn();
-    }
-
     async goToPasswordMenu() {
         await this.clickOnAccountMenu();
         await this.clickOnPasswordMenu();
@@ -108,6 +101,7 @@ export class NavBarPage {
 export class SignInPage {
     username = element(by.id('username'));
     password = element(by.id('password'));
+    acceptTerms = element(by.css('label[for="acceptTerms"]'));
     loginButton = element(by.css('button[type=submit]'));
     closeButton = element(by.className('close'));
 
@@ -127,6 +121,10 @@ export class SignInPage {
         await this.password.sendKeys(password);
     }
 
+    async checkAcceptTerms() {
+        await this.acceptTerms.click();
+    }
+
     async getPassword() {
         return this.password.getAttribute('value');
     }
@@ -138,6 +136,7 @@ export class SignInPage {
     async autoSignInUsing(username: string, password: string) {
         await this.setUserName(username);
         await this.setPassword(password);
+
         await this.login();
     }
 

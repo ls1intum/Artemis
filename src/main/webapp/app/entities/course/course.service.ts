@@ -23,7 +23,7 @@ export type EntityArrayResponseType = HttpResponse<Course[]>;
 export class CourseService {
     private resourceUrl = SERVER_API_URL + 'api/courses';
 
-    constructor(private http: HttpClient, private exerciseService: ExerciseService, private accountService: AccountService) {}
+    constructor(private http: HttpClient, private exerciseService: ExerciseService, private accountService: AccountService) { }
 
     create(course: Course): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(course);
@@ -113,6 +113,11 @@ export class CourseService {
     getStatsForInstructors(id: number): Observable<HttpResponse<StatsForInstructorDashboard>> {
         return this.http
             .get<StatsForInstructorDashboard>(`${this.resourceUrl}/${id}/stats-for-instructor-dashboard`, { observe: 'response' });
+    }
+
+    findAllCategoriesOfCourse(courseId: number): Observable<HttpResponse<string[]>> {
+        return this.http
+            .get<string[]>(`${this.resourceUrl}/${courseId}/categories`, { observe: 'response' });
     }
 
     protected convertDateFromClient(course: Course): Course {

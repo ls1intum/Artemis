@@ -20,10 +20,23 @@
             "randomizeOrder": "Present Answer Options in Random Order",
             "scoringType": "Type / Scoring",
             "editor": {
-                "addCorrectAnswerOption": "[X] Correct Option",
-                "addIncorrectAnswerOption": "[ ] Incorrect Option",
-                "addHint": "[-h] Hint",
-                "addExplanation": "[-e] Explanation"
+                "addCorrectAnswerOption": "[correct] Correct Option",
+                "addInCorrectAnswerOption": "[wrong] Incorrect Option",
+                "addHint": "[hint] Hint",
+                "addExplanation": "[exp] Explanation",
+                "bold": "Bold",
+                "italic": "Italic",
+                "underline": "Underline",
+                "unorderedList": "Unordered List",
+                "heading": "Heading",
+                "headingOne": "Heading One",
+                "headingTwo": "Heading Two",
+                "headingThree": "Heading Three",
+                "quote": "Quote",
+                "link": "Link",
+                "orderedList": "Ordered List",
+                "imageUpload": "Attachment",
+                "code": "Code"
             }
         }
     }

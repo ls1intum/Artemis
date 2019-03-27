@@ -1,8 +1,8 @@
 <div>
     <h4>
-        <span *ngIf="course && !showHeading">{{course.title}} - </span><span *ngIf="modelingExercises && showHeading">{{modelingExercises.length}} </span>
+        <span *ngIf="course && !showHeading">{{course.title}} - </span><span *ngIf="modelingExercises && showHeading">{{getAmountOfExercisesString(modelingExercises)}} </span>
         <span jhiTranslate="arTeMiSApp.modelingExercise.home.title">Modeling Exercises</span>
-        <button *ngIf="course" class="btn btn-primary float-right jh-create-entity create-modeling-exercise" [routerLink]="['/', { outlets: { popup: ['course', course.id, 'modeling-exercise-new'] } }]">
+        <button id="modeling-exercise-create-button" *ngIf="course" class="btn btn-primary float-right jh-create-entity create-modeling-exercise" [routerLink]="['/', { outlets: { popup: ['course', course.id, 'modeling-exercise-new'] } }]">
             <fa-icon icon="plus"></fa-icon>
             <span  jhiTranslate="arTeMiSApp.modelingExercise.home.createLabel">
             Create Modeling Exercise
@@ -13,7 +13,7 @@
     <div class="row">
     </div>
     <br>
-    <div class="table-responsive" *ngIf="modelingExercises">
+    <div class="table-responsive" *ngIf="modelingExercises && modelingExercises.length > 0">
         <table class="table table-striped">
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">

@@ -5,7 +5,7 @@ import { AccountService, JhiWebsocketService } from '../../core';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizPointStatistic } from '../../entities/quiz-point-statistic';
 import { ChartOptions } from 'chart.js';
-import { QuestionType } from '../../entities/question';
+import { QuizQuestionType } from '../../entities/quiz-question';
 import { createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
 import { Subscription } from 'rxjs/Subscription';
 import { PointCounter } from 'app/entities/point-counter';
@@ -17,9 +17,9 @@ import * as moment from 'moment';
 })
 export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
     // make constants available to html for comparison
-    readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
-    readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
-    readonly SHORT_ANSWER = QuestionType.SHORT_ANSWER;
+    readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
+    readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
+    readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
 
     quizExercise: QuizExercise;
     quizPointStatistic: QuizPointStatistic;
@@ -70,10 +70,6 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
             // use different REST-call if the User is a Student
             if (this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
                 this.quizExerciseService.find(params['quizId']).subscribe(res => {
-                    this.loadQuizSuccess(res.body);
-                });
-            } else {
-                this.quizExerciseService.findForStudent(params['quizId']).subscribe(res => {
                     this.loadQuizSuccess(res.body);
                 });
             }
@@ -234,7 +230,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
     calculateMaxScore() {
         let result = 0;
 
-        this.quizExercise.questions.forEach(function(question) {
+        this.quizExercise.quizQuestions.forEach(function(question) {
             result = result + question.score;
         });
         return result;
@@ -323,19 +319,19 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
     }
 
     /**
-     * got to the Template with the previous Statistic -> the last QuestionStatistic
-     * if there is no QuestionStatistic -> go to QuizStatistic
+     * got to the Template with the previous QuizStatistic -> the last QuizQuestionStatistic
+     * if there is no QuizQuestionStatistic -> go to QuizStatistic
      */
     previousStatistic() {
-        if (this.quizExercise.questions === null || this.quizExercise.questions.length === 0) {
+        if (this.quizExercise.quizQuestions === null || this.quizExercise.quizQuestions.length === 0) {
             this.router.navigateByUrl('/quiz/' + this.quizExercise.id + '/quiz-statistic');
         } else {
-            const previousQuestion = this.quizExercise.questions[this.quizExercise.questions.length - 1];
-            if (previousQuestion.type === QuestionType.MULTIPLE_CHOICE) {
+            const previousQuestion = this.quizExercise.quizQuestions[this.quizExercise.quizQuestions.length - 1];
+            if (previousQuestion.type === QuizQuestionType.MULTIPLE_CHOICE) {
                 this.router.navigateByUrl('/quiz/' + this.quizExercise.id + '/multiple-choice-question-statistic/' + previousQuestion.id);
-            } else if (previousQuestion.type === QuestionType.DRAG_AND_DROP) {
+            } else if (previousQuestion.type === QuizQuestionType.DRAG_AND_DROP) {
                 this.router.navigateByUrl('/quiz/' + this.quizExercise.id + '/drag-and-drop-question-statistic/' + previousQuestion.id);
-            } else if (previousQuestion.type === QuestionType.SHORT_ANSWER) {
+            } else if (previousQuestion.type === QuizQuestionType.SHORT_ANSWER) {
                 this.router.navigateByUrl('/quiz/' + this.quizExercise.id + '/short-answer-question-statistic/' + previousQuestion.id);
             }
         }

@@ -87,7 +87,18 @@ import {
     faUpload,
     faUser,
     faUserPlus,
-    faWrench
+    faWrench,
+    faBold,
+    faItalic,
+    faUnderline,
+    faLink,
+    faHeading,
+    faQuoteLeft,
+    faCode,
+    faCopy,
+    faListOl,
+    faListUl,
+    faImage,
 } from '@fortawesome/free-solid-svg-icons';
 
 import {
@@ -188,6 +199,17 @@ library.add(faArrowsAltV);
 library.add(faFile);
 library.add(faCodeBranch);
 library.add(faCircle);
+library.add(faBold);
+library.add(faUnderline);
+library.add(faItalic);
+library.add(faQuoteLeft);
+library.add(faLink);
+library.add(faHeading);
+library.add(faCode);
+library.add(faCopy);
+library.add(faListUl);
+library.add(faListOl);
+library.add(faImage);
 
 library.add(farQuestionCircle);
 library.add(farCheckCircle);

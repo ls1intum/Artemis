@@ -8,11 +8,11 @@
             <fa-icon size="3x" [icon]="isQuestionCollapsed ? 'angle-right' : 'angle-down'"></fa-icon>
         </button>
         <div class="form-group question-title col-lg-9 col-md-7 col-sm-12 col-xs-12">
-            <input class="form-control" [(ngModel)]="question.title" placeholder="Short Question Title"/>
+            <input class="form-control" [(ngModel)]="question.title"  (ngModelChange)="questionUpdated.emit()" placeholder="Short Question Title"/>
         </div>
         <div class="form-group col-lg-2 col-md-3 col-sm-7 col-xs-8">
-            <span jhiTranslate="arTeMiSApp.question.score" class="colon-suffix"></span>
-            <input class="form-control" title="score" type="number" min="0" max="9999" [(ngModel)]="question.score"/>
+            <span jhiTranslate="arTeMiSApp.quizQuestion.score" class="colon-suffix"></span>
+            <input class="form-control" title="score" type="number" min="0" max="9999" [(ngModel)]="question.score" (ngModelChange)="questionUpdated.emit()"/>
         </div>
         <div class="col-lg-1 col-md-2 col-sm-4 col-xs-4"><h3><span class="badge badge-warning align-text-top">DnD</span></h3></div>
     </div>
@@ -20,7 +20,7 @@
         <div class="row" *ngIf="reEvaluationInProgress">
             <div class="col-md-10 text-left">
                 <div class="input-group">
-                    <input class="form-control" [(ngModel)]="question.title" placeholder="Question Title"
+                    <input class="form-control" [(ngModel)]="question.title" (ngModelChange)="questionUpdated.emit()" placeholder="Question Title"
                            style="height: 33px"/>
                     <span class="input-group-btn">
                         <button class="btn btn-outline-secondary" type="button" (click)="resetQuestionTitle()">
@@ -48,8 +48,8 @@
         </div>
         <div class="question-options">
             <div class="form-group">
-                <span jhiTranslate="arTeMiSApp.question.scoringType" class="colon-suffix no-flex-shrink"></span>
-                <select class="form-control" [(ngModel)]="question.scoringType" title="scoring type">
+                <span jhiTranslate="arTeMiSApp.quizQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
+                <select class="form-control" [(ngModel)]="question.scoringType" (ngModelChange)="questionUpdated.emit()" title="scoring type">
                     <option value="ALL_OR_NOTHING">{{'arTeMiSApp.quizExercise.scoringType.all_or_nothing' | translate}}</option>
                     <option value="PROPORTIONAL_WITH_PENALTY">{{'arTeMiSApp.quizExercise.scoringType.proportional_with_penalty' | translate}}</option>
                 </select>
@@ -84,30 +84,24 @@
             </ng-container>
         </div>
         <div class="markupEditorArea">
-            <div class="toolbar" *ngIf="!reEvaluationInProgress">
-                <div class="btn-group">
-                    <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addHint" (click)="addHintAtCursor()"></div>
-                    <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addExplanation" (click)="addExplanationAtCursor()"></div>
-                </div>
-            </div>
             <div class="question-content" *ngIf="!reEvaluationInProgress">
-                <ace-editor #questionEditor
-                            [(text)]="questionEditorText"
-                            [mode]="questionEditorMode"
-                            [autoUpdateContent]="questionEditorAutoUpdate"
-                            style="display:block; min-height: 200px; width:100%; overflow: auto;"
-                            class="form-control">
-                </ace-editor>
+                <jhi-markdown-editor #markdownEditor
+                                     [markdown]="questionEditorText"
+                                     [showPreviewButton]="false"
+                                     [domainCommands]="dragAndDropQuestionDomainCommands"
+                                     (markdownChange)="changesInMarkdown()"
+                                     (textWithDomainCommandsFound)="domainCommandsFound($event)"
+                ></jhi-markdown-editor>
             </div>
-            <div class="question-content" style="padding-bottom: 12px" *ngIf="reEvaluationInProgress">
-                <div class="input-group" style="height: 60px">
-                    <ace-editor #questionEditor
-                                [(text)]="questionEditorText"
-                                [mode]="questionEditorMode"
-                                [autoUpdateContent]="questionEditorAutoUpdate"
-                                style="display:block; min-height: 50px; width:90%; overflow: auto;"
-                                class="form-control">
-                    </ace-editor>
+            <div class="markupEditorArea" *ngIf="reEvaluationInProgress">
+                <div class="question-content">
+                    <jhi-markdown-editor #markdownEditor
+                                         [markdown]="questionEditorText"
+                                         [showPreviewButton]="false"
+                                         [domainCommands]="dragAndDropQuestionDomainCommands"
+                                         (markdownChange)="changesInMarkdown()"
+                                         (textWithDomainCommandsFound)="domainCommandsFound($event)"
+                    ></jhi-markdown-editor>
                     <span class="input-group-btn" style="vertical-align: top">
                         <button class="btn btn-outline-secondary btn-lg" type="button" (click)="resetQuestionText()">
                             <fa-icon icon="undo"></fa-icon>
@@ -243,7 +237,7 @@
                     <fa-icon icon="bars" class="drag-handle" size="lg"></fa-icon>
                 </div>
                 <div class="dimensions" *ngIf="reEvaluationInProgress">
-                    <span style="color:red" *ngIf="dragItem.invalid" jhiTranslate="arTeMiSApp.question.invalid"></span>
+                    <span style="color:red" *ngIf="dragItem.invalid" jhiTranslate="arTeMiSApp.quizQuestion.invalid"></span>
                 </div>
                 <div class="mapping-numbers-wrapper">
                     <div *ngFor="let mapping of getMappingsForDragItem(dragItem)" [ngClass]="'mapping-number mapping-color-' + (getMappingIndex(mapping) % 8)">

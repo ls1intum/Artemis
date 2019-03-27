@@ -3,7 +3,9 @@ package de.tum.in.www1.artemis.domain;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.service.FileService;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -24,6 +26,12 @@ import java.util.Set;
 public class Course implements Serializable {
 
     private static final long serialVersionUID = 1L;
+
+    @Transient
+    private FileService fileService = new FileService();
+
+    @Transient
+    private String prevCourseIcon;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -71,10 +79,29 @@ public class Course implements Serializable {
     @JsonView(QuizView.Before.class)
     private Integer maxComplaints;
 
-    @OneToMany(mappedBy = "course")
+    @Column(name = "color")
+    private String color;
+
+    @Column(name = "course_icon")
+    private String courseIcon;
+
+    @Column(name = "registration_enabled")
+    private Boolean registrationEnabled;
+
+    @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("course")
     private Set<Exercise> exercises = new HashSet<>();
+
+    @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonIgnoreProperties("course")
+    private Set<Lecture> lectures = new HashSet<>();
+
+    @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonIgnoreProperties("course")
+    private Set<TutorGroup> tutorGroups = new HashSet<>();
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -215,6 +242,45 @@ public class Course implements Serializable {
         this.maxComplaints = maxComplaints;
     }
 
+    public String getColor() {
+        return color;
+    }
+
+    public Course color(String color) {
+        this.color = color;
+        return this;
+    }
+
+    public void setColor(String color) {
+        this.color = color;
+    }
+
+    public String getCourseIcon() {
+        return courseIcon;
+    }
+
+    public Course courseIcon(String courseIcon) {
+        this.courseIcon = courseIcon;
+        return this;
+    }
+
+    public void setCourseIcon(String courseIcon) {
+        this.courseIcon = courseIcon;
+    }
+
+    public Boolean isRegistrationEnabled() {
+        return registrationEnabled;
+    }
+
+    public Course registrationEnabled(Boolean registrationEnabled) {
+        this.registrationEnabled = registrationEnabled;
+        return this;
+    }
+
+    public void setRegistrationEnabled(Boolean registrationEnabled) {
+        this.registrationEnabled = registrationEnabled;
+    }
+
     public Set<Exercise> getExercises() {
         return exercises;
     }
@@ -239,8 +305,120 @@ public class Course implements Serializable {
     public void setExercises(Set<Exercise> exercises) {
         this.exercises = exercises;
     }
+
+    public Set<Lecture> getLectures() {
+        return lectures;
+    }
+
+    public Course lectures(Set<Lecture> lectures) {
+        this.lectures = lectures;
+        return this;
+    }
+
+    public Course addLectures(Lecture lecture) {
+        this.lectures.add(lecture);
+        lecture.setCourse(this);
+        return this;
+    }
+
+    public Course removeLectures(Lecture lecture) {
+        this.lectures.remove(lecture);
+        lecture.setCourse(null);
+        return this;
+    }
+
+    public void setLectures(Set<Lecture> lectures) {
+        this.lectures = lectures;
+    }
+
+    public Set<TutorGroup> getTutorGroups() {
+        return tutorGroups;
+    }
+
+    public Course tutorGroups(Set<TutorGroup> tutorGroups) {
+        this.tutorGroups = tutorGroups;
+        return this;
+    }
+
+    public Course addTutorGroups(TutorGroup tutorGroup) {
+        this.tutorGroups.add(tutorGroup);
+        tutorGroup.setCourse(this);
+        return this;
+    }
+
+    public Course removeTutorGroups(TutorGroup tutorGroup) {
+        this.tutorGroups.remove(tutorGroup);
+        tutorGroup.setCourse(null);
+        return this;
+    }
+
+    public void setTutorGroups(Set<TutorGroup> tutorGroups) {
+        this.tutorGroups = tutorGroups;
+    }
+
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
+    /*
+     * NOTE:
+     *
+     * The file management is necessary to differentiate between temporary and used files
+     * and to delete used files when the corresponding course is deleted or it is replaced by
+     * another file.
+     *
+     * The workflow is as follows
+     *
+     * 1. user uploads a file -> this is a temporary file,
+     *           because at this point the corresponding course
+     *           might not exist yet.
+     * 2. user saves the course -> now we move the temporary file
+     *           which is addressed in courseIcon to a permanent
+     *           location and update the value in courseIcon accordingly.
+     *           => This happens in @PrePersist and @PostPersist
+     * 3. user might upload another file to replace the existing file
+     *           -> this new file is a temporary file at first
+     * 4. user saves changes (with the new courseIcon pointing to the new temporary file)
+     *           -> now we delete the old file in the permanent location
+     *              and move the new file to a permanent location and update
+     *              the value in courseIcon accordingly.
+     *           => This happens in @PreUpdate and uses @PostLoad to know the old path
+     * 5. When course is deleted, the file in the permanent location is deleted
+     *           => This happens in @PostRemove
+     */
+    @PostLoad
+    public void onLoad() {
+        // replace placeholder with actual id if necessary (this is needed because changes made in afterCreate() are not persisted)
+        if (courseIcon != null && courseIcon.contains(Constants.FILEPATH_ID_PLACHEOLDER)) {
+            courseIcon = courseIcon.replace(Constants.FILEPATH_ID_PLACHEOLDER, getId().toString());
+        }
+        // save current path as old path (needed to know old path in onUpdate() and onDelete())
+        prevCourseIcon = courseIcon;
+    }
+
+    @PrePersist
+    public void beforeCreate() {
+        // move file if necessary (id at this point will be null, so placeholder will be inserted)
+        courseIcon = fileService.manageFilesForUpdatedFilePath(prevCourseIcon, courseIcon, Constants.COURSE_ICON_FILEPATH, getId());
+    }
+
+    @PostPersist
+    public void afterCreate() {
+        // replace placeholder with actual id if necessary (id is no longer null at this point)
+        if (courseIcon != null && courseIcon.contains(Constants.FILEPATH_ID_PLACHEOLDER)) {
+            courseIcon = courseIcon.replace(Constants.FILEPATH_ID_PLACHEOLDER, getId().toString());
+        }
+    }
+
+    @PreUpdate
+    public void onUpdate() {
+        // move file and delete old file if necessary
+        courseIcon = fileService.manageFilesForUpdatedFilePath(prevCourseIcon, courseIcon, Constants.COURSE_ICON_FILEPATH, getId());
+    }
+
+    @PostRemove
+    public void onDelete() {
+        // delete old file if necessary
+        fileService.manageFilesForUpdatedFilePath(prevCourseIcon, null, Constants.COURSE_ICON_FILEPATH, getId());
+    }
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -274,6 +452,9 @@ public class Course implements Serializable {
             ", startDate='" + getStartDate() + "'" +
             ", endDate='" + getEndDate() + "'" +
             ", onlineCourse='" + isOnlineCourse() + "'" +
+            ", color='" + getColor() + "'" +
+            ", courseIcon='" + getCourseIcon() + "'" +
+            ", registrationEnabled='" + isRegistrationEnabled() + "'" +
             "}";
     }
 }

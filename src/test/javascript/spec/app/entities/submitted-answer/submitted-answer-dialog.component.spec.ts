@@ -9,7 +9,7 @@ import { ArTEMiSTestModule } from '../../../test.module';
 import { SubmittedAnswerDialogComponent } from '../../../../../../main/webapp/app/entities/submitted-answer/submitted-answer-dialog.component';
 import { SubmittedAnswerService } from '../../../../../../main/webapp/app/entities/submitted-answer/submitted-answer.service';
 import { SubmittedAnswer } from '../../../../../../main/webapp/app/entities/submitted-answer/submitted-answer.model';
-import { QuestionService } from '../../../../../../main/webapp/app/entities/question';
+import { QuestionService } from '../../../../../../main/webapp/app/entities/quiz-question';
 import { QuizSubmissionService } from '../../../../../../main/webapp/app/entities/quiz-submission';
 
 describe('Component Tests', () => {

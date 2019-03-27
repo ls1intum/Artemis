@@ -4,12 +4,12 @@
     "relationships": [
         {
             "relationshipType": "one-to-many",
-            "relationshipName": "submittedTexts",
             "otherEntityName": "shortAnswerSubmittedText",
-            "otherEntityRelationshipName": "submittedAnswer"
+            "otherEntityRelationshipName": "submittedAnswer",
+            "relationshipName": "submittedTexts"
         }
     ],
-    "changelogDate": "20181107093825",
+    "changelogDate": "20190315161942",
     "entityTableName": "sa_submitted_answer",
     "dto": "no",
     "pagination": "no",

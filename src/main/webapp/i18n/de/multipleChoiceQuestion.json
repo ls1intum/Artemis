@@ -16,14 +16,24 @@
             "detail": {
                 "title": "Multiple Choice Question"
             },
-            "answerOptions": "Answer Options",
+            "answerOptions": "Antwortmöglichkeiten",
             "randomizeOrder": "Antwortmöglichkeiten in zufälliger Reihenfolge anzeigen",
-            "scoringType": "Type / Scoring",
+            "scoringType": "Art der Bewertung",
             "editor": {
-                "addCorrectAnswerOption": "[X] Correct Option",
-                "addIncorrectAnswerOption": "[ ] Incorrect Option",
-                "addHint": "[-h] Hint",
-                "addExplanation": "[-e] Explanation"
+                "addCorrectAnswerOption": "[correct] Korrekte Antwortmöglichkeit",
+                "addIncorrectAnswerOption": "[wrong] Falsche Antwortmöglichkeit",
+                "addHint": "[hint] Hinweis",
+                "addExplanation": "[exp] Erklärung",
+                "bold": "Bold",
+                "italic": "Italic",
+                "underline": "Underline",
+                "unorderedList": "Ungeordnete List",
+                "heading": "Überschrift",
+                "quote": "Zitat",
+                "link": "Link",
+                "orderedList": "Geordnete List",
+                "imageUpload": "Anhang",
+                "code": "code"
             }
         }
     }

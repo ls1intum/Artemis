@@ -1,0 +1,107 @@
+[
+  {
+    "referenceId": "bf9851d0-07e0-4fe2-9eae-17589d9d1b21",
+    "referenceType": "Class",
+    "reference": "Class:bf9851d0-07e0-4fe2-9eae-17589d9d1b21",
+    "credits": 0.5,
+    "text": "Correct"
+  },
+  {
+    "referenceId": "e7f50025-af9a-4859-86ad-7d0cecc07bf1",
+    "referenceType": "Class",
+    "reference": "Class:e7f50025-af9a-4859-86ad-7d0cecc07bf1",
+    "credits": 0,
+    "text": "Correct, but you are missing the accessInternet() method and a wifiAvailable attribute"
+  },
+  {
+    "referenceId": "5365b93d-5561-4f24-9568-355a680fe543",
+    "referenceType": "ClassMethod",
+    "reference": "ClassMethod:5365b93d-5561-4f24-9568-355a680fe543",
+    "credits": 0.5,
+    "text": "Correct"
+  },
+  {
+    "referenceId": "cc086305-943b-4d80-b60a-1eac3d14de31",
+    "referenceType": "Interface",
+    "reference": "Interface:cc086305-943b-4d80-b60a-1eac3d14de31",
+    "credits": 0.5,
+    "text": "Correct"
+  },
+  {
+    "referenceId": "437d882e-512a-4d0d-aef8-232d13ea8d88",
+    "referenceType": "ClassMethod",
+    "reference": "ClassMethod:437d882e-512a-4d0d-aef8-232d13ea8d88",
+    "credits": 0.5,
+    "text": "Correct"
+  },
+  {
+    "referenceId": "e1f74a16-b8fc-4859-8bed-d3fea4cb82c4",
+    "referenceType": "Class",
+    "reference": "Class:e1f74a16-b8fc-4859-8bed-d3fea4cb82c4",
+    "credits": 0.5,
+    "text": "Correct"
+  },
+  {
+    "referenceId": "b889f2a8-be22-4593-b5af-b409744cae19",
+    "referenceType": "ClassMethod",
+    "reference": "ClassMethod:b889f2a8-be22-4593-b5af-b409744cae19",
+    "credits": -1.5,
+    "text": "The method should have the same name as the interface :)"
+  },
+  {
+    "referenceId": "94907611-24d8-4c91-8793-1fb93b4c7a4a",
+    "referenceType": "Class",
+    "reference": "Class:94907611-24d8-4c91-8793-1fb93b4c7a4a",
+    "credits": 0.5,
+    "text": "Correct"
+  },
+  {
+    "referenceId": "8e0ef698-2ff4-4f51-a037-6756cf5be2c4",
+    "referenceType": "ClassMethod",
+    "reference": "ClassMethod:8e0ef698-2ff4-4f51-a037-6756cf5be2c4",
+    "credits": -0.5,
+    "text": "You forgot to name this method"
+  },
+  {
+    "referenceId": "fdb6f0bb-effd-4cac-b982-611b95ea5d51",
+    "referenceType": "Class",
+    "reference": "Class:fdb6f0bb-effd-4cac-b982-611b95ea5d51",
+    "credits": 0.5,
+    "text": "Correct"
+  },
+  {
+    "referenceId": "6e4fa25d-0b77-41ac-9025-4acebb95e1ff",
+    "referenceType": "ClassInheritance",
+    "reference": "ClassInheritance:6e4fa25d-0b77-41ac-9025-4acebb95e1ff",
+    "credits": 0.5,
+    "text": ""
+  },
+  {
+    "referenceId": "66115728-82d7-4821-890c-dad55205b7c1",
+    "referenceType": "ClassInheritance",
+    "reference": "ClassInheritance:66115728-82d7-4821-890c-dad55205b7c1",
+    "credits": 0.5,
+    "text": ""
+  },
+  {
+    "referenceId": "060d3e57-43b3-491e-acc3-0fb03072f872",
+    "referenceType": "ClassUnidirectional",
+    "reference": "ClassUnidirectional:060d3e57-43b3-491e-acc3-0fb03072f872",
+    "credits": 0.5,
+    "text": ""
+  },
+  {
+    "referenceId": "82838b9b-c9a5-435f-8e2a-8ae2be940eda",
+    "referenceType": "ClassDependency",
+    "reference": "ClassDependency:82838b9b-c9a5-435f-8e2a-8ae2be940eda",
+    "credits": 0.5,
+    "text": ""
+  },
+  {
+    "referenceId": "56008107-3c79-48ea-8a42-ba05f1504b4f",
+    "referenceType": "ClassDependency",
+    "reference": "ClassDependency:56008107-3c79-48ea-8a42-ba05f1504b4f",
+    "credits": 0.5,
+    "text": ""
+  }
+]

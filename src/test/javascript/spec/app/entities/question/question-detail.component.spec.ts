@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 
 import { ArTEMiSTestModule } from '../../../test.module';
-import { QuestionDetailComponent } from 'app/entities/question/question-detail.component';
+import { QuestionDetailComponent } from 'app/entities/quiz-question/question-detail.component';
 import { Question } from 'app/shared/model/question.model';
 
 describe('Component Tests', () => {

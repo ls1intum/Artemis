@@ -37,20 +37,20 @@
     "relationships": [
         {
             "relationshipType": "one-to-one",
-            "relationshipName": "quizPointStatistic",
             "otherEntityName": "quizPointStatistic",
+            "otherEntityRelationshipName": "quiz",
+            "relationshipName": "quizPointStatistic",
             "otherEntityField": "id",
-            "ownerSide": true,
-            "otherEntityRelationshipName": "quiz"
+            "ownerSide": true
         },
         {
             "relationshipType": "one-to-many",
-            "relationshipName": "questions",
-            "otherEntityName": "question",
-            "otherEntityRelationshipName": "exercise"
+            "otherEntityName": "quizQuestion",
+            "otherEntityRelationshipName": "exercise",
+            "relationshipName": "quizQuestions"
         }
     ],
-    "changelogDate": "20180927081357",
+    "changelogDate": "20190315161916",
     "entityTableName": "quiz_exercise",
     "dto": "no",
     "pagination": "no",

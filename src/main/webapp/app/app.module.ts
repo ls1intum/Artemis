@@ -18,34 +18,39 @@ import { ArTEMiSSharedModule } from './shared';
 import { ArTEMiSCoreModule } from 'app/core';
 import { ArTEMiSAppRoutingModule } from './app-routing.module';
 import { ArTEMiSHomeModule } from './home';
+import { ArTEMiSLegalModule } from './legal';
 import { ArTEMiSOverviewModule } from './overview';
 import { ArTEMiSAccountModule } from './account/account.module';
 import { ArTEMiSCourseListModule } from './course-list';
 import { ArTEMiSEntityModule } from './entities/entity.module';
 import { ArTEMiSInstructorCourseDashboardModule, ArTEMiSInstructorDashboardModule } from './dashboard';
-import { ArTEMiSAssessmentDashboardModule } from './assessment-dashboard';
 import { PaginationConfig } from './blocks/config/uib-pagination.config';
 import { DifferencePipe, MomentModule } from 'angular2-moment';
-import { ArTEMiSEditorModule } from './editor';
+import { ArTEMiSCodeEditorModule } from './code-editor';
 import { RepositoryInterceptor, RepositoryService } from './entities/repository';
 import { ArTEMiSQuizModule } from './quiz/participate';
 import { ArTEMiSTextModule } from './text-editor';
 import { ArTEMiSTextAssessmentModule } from './text-assessment';
 import { ArTEMiSModelingStatisticsModule } from './modeling-statistics/';
-import * as moment from 'moment';
-// jhipster-needle-angular-add-module-import JHipster will add new module here
 import { ActiveMenuDirective, ErrorComponent, FooterComponent, JhiMainComponent, NavbarComponent, PageRibbonComponent, ProfileService } from './layouts';
 import { ArTEMiSApollonDiagramsModule } from './apollon-diagrams';
 import { ArTEMiSStatisticModule } from './quiz-statistics/quiz-statistic.module';
 import { ArTEMiSModelingEditorModule } from './modeling-editor/modeling-editor.module';
 import { QuizExerciseExportComponent } from './entities/quiz-exercise/quiz-exercise-export.component';
-import { PendingChangesGuard } from './shared/guard/pending-changes.guard';
+import { PendingChangesGuard } from 'app/shared';
 import { ArTEMiSInstructorCourseStatsDashboardModule } from 'app/instructor-course-dashboard';
 import { ArTEMiSInstructorExerciseStatsDashboardModule } from 'app/instructor-exercise-dashboard';
-import { ParticipationDataProvider } from './course-list/exercise-list/participation-data-provider';
+import { ParticipationDataProvider } from 'app/course-list';
 import { ArTEMiSTutorCourseDashboardModule } from 'app/tutor-course-dashboard';
 import { ArTEMiSTutorExerciseDashboardModule } from 'app/tutor-exercise-dashboard';
 import { ArTEMiSExampleSubmissionModule } from 'app/example-text-submission';
+
+import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor/markdown-editor.module';
+import { ArTEMiSComplaintsModule } from 'app/complaints';
+import { ArTEMiSModelingAssessmentModule } from 'app/modeling-assessment/modeling-assessment.module';
+
+import * as moment from 'moment';
+// jhipster-needle-angular-add-module-import JHipster will add new module here
 
 @NgModule({
     imports: [
@@ -71,18 +76,20 @@ import { ArTEMiSExampleSubmissionModule } from 'app/example-text-submission';
         ArTEMiSSharedModule.forRoot(),
         ArTEMiSCoreModule,
         ArTEMiSHomeModule,
+        ArTEMiSLegalModule,
         ArTEMiSOverviewModule,
         ArTEMiSAccountModule,
         ArTEMiSEntityModule,
         ArTEMiSApollonDiagramsModule,
         ArTEMiSCourseListModule,
-        ArTEMiSEditorModule,
+        ArTEMiSCodeEditorModule,
         ArTEMiSQuizModule,
         ArTEMiSInstructorCourseDashboardModule,
         ArTEMiSInstructorDashboardModule,
-        ArTEMiSAssessmentDashboardModule,
+        ArTEMiSModelingAssessmentModule,
         ArTEMiSStatisticModule,
         ArTEMiSModelingEditorModule,
+        ArTEMiSMarkdownEditorModule,
         ArTEMiSModelingStatisticsModule,
         ArTEMiSTextModule,
         ArTEMiSTextAssessmentModule,
@@ -90,7 +97,8 @@ import { ArTEMiSExampleSubmissionModule } from 'app/example-text-submission';
         ArTEMiSInstructorExerciseStatsDashboardModule,
         ArTEMiSTutorCourseDashboardModule,
         ArTEMiSTutorExerciseDashboardModule,
-        ArTEMiSExampleSubmissionModule
+        ArTEMiSExampleSubmissionModule,
+        ArTEMiSComplaintsModule
         // jhipster-needle-angular-add-module JHipster will add new module here
     ],
     declarations: [

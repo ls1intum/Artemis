@@ -28,7 +28,5 @@ export class Result implements BaseEntity {
     public feedbacks: Feedback[];
     public participation: Participation;
 
-    public assessments: string; // only used for results of modeling exercises so far
-
     constructor() {}
 }

@@ -21,6 +21,7 @@
                 "title": "Quiz für {{ param }} bearbeiten",
                 "addQuestion": "Frage hinzufügen",
                 "invalidInput": "Ungültige Eingabe",
+                "warning": "Warnung",
                 "pendingChanges": "Ungespeicherte Änderungen",
                 "saving": "Speichern...",
                 "saved": "Gespeichert!",
@@ -43,6 +44,7 @@
                 "applyFilter": "Filter anwenden"
             },
             "description": "Beschreibung",
+            "options": "Optionen",
             "explanation": "Erklärung",
             "randomizeQuestionOrder": "Fragen in zufälliger Reihenfolge anzeigen",
             "allowedNumberOfAttempts": "Erlaubte Anzahl an Versuchen",
@@ -121,7 +123,7 @@
                     "question_invalid": "Frage ungültig gesetzt:",
                     "scoring_change": "Bewertungsart verändert:",
                     "no_changes": "Keine Änderungen, welche die bestehenden Ergebnisse beeinflussen",
-                    "statistic": "Die bestehende Statistiken müssen neu berechnet werden!",
+                    "quizStatistic": "Die bestehende Statistiken müssen neu berechnet werden!",
                     "results": "Die bestehenden Ergebnisse müssen neu berechnet werden!",
                     "resulttext": {
                         "element_deleted": "Das Frage-Element wird aus allen Ergebnissen entfernt",
@@ -153,7 +155,8 @@
                 "shortAnswerQuestionSolutionHasNoValue": "Frage {{index}}: Es gibt mindestens eine Lösung die keinen Wert besitzt.",
                 "shortAnswerQuestionDuplicateMapping": "Frage {{index}}: Es gibt mindestens ein Mapping das doppelt ist.",
                 "questionTitleLength": "Frage {{index}}: Die Frage ist länger als 250 Zeichen. Bitte kürzen!",
-                "quizTitleLength": "Quiz: Der Titel ist länger als 250 Zeichen. Bitte kürzen!"
+                "quizTitleLength": "Quiz: Der Titel ist länger als 250 Zeichen. Bitte kürzen!",
+                "explanationIsMissing": "Frage {{index}}: Nicht jede Antwortmöglichkeit enthält eine Erklärung."
             },
             "scoringType": {
                 "all_or_nothing": "Alles-oder-Nichts",

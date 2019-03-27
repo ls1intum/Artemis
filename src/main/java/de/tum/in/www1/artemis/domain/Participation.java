@@ -85,7 +85,7 @@ public class Participation implements Serializable {
      * We can think about adding orphanRemoval=true here, after adding the participationId to all submissions.
      *
      */
-    @OneToMany(mappedBy = "participation", cascade = {CascadeType.REMOVE})
+    @OneToMany(mappedBy = "participation")
     @JsonIgnoreProperties({"participation", "result"})
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Submission> submissions = new HashSet<>();
@@ -315,26 +315,37 @@ public class Participation implements Serializable {
      *
      * @return the latest submission or null
      */
-    public Submission findLatestSubmission() {
+    public Optional<Submission> findLatestSubmission() {
         Set<Submission> submissions = this.submissions;
         if (submissions == null || submissions.size() == 0) {
-            return null;
+            return Optional.empty();
         }
 
-        //TODO: what happens if the submissionDate is null?
-        return submissions.stream()
-            .min((r1, r2) -> r2.getSubmissionDate().compareTo(r1.getSubmissionDate()))
-            .orElse(null);
+        return submissions.stream().max((s1, s2) -> {
+            if (s1.getSubmissionDate() == null || s2.getSubmissionDate() == null) {
+                //this case should not happen, but in the rare case we can compare the ids
+                //newer ids are typically later
+                return s1.getId().compareTo(s2.getId());
+            }
+            return s1.getSubmissionDate().compareTo(s2.getSubmissionDate());
+        });
     }
 
-    private <T extends Submission> T findLatestSubmissionOfType(Class<T> submissionType) {
-        Submission submission = findLatestSubmission();
+    private <T extends Submission> Optional<T> findLatestSubmissionOfType(Class<T> submissionType) {
+        Optional<Submission> optionalSubmission = findLatestSubmission();
+        if (!optionalSubmission.isPresent()) {
+            return Optional.empty();
+        }
+
+        Submission submission = optionalSubmission.get();
+        // This unproxy is necessary to retrieve the right type of submission (e.g. TextSubmission) to be able to
+        // compare it with the `submissionType` argument
         submission = (Submission) Hibernate.unproxy(submission);
 
         if (submissionType.isInstance(submission)) {
-            return submissionType.cast(submission);
+            return Optional.of(submissionType.cast(submission));
         } else {
-            return null;
+            return Optional.empty();
         }
     }
 
@@ -344,7 +355,7 @@ public class Participation implements Serializable {
      *
      * @return the latest modeling submission or null
      */
-    public ModelingSubmission findLatestModelingSubmission() {
+    public Optional<ModelingSubmission> findLatestModelingSubmission() {
         return findLatestSubmissionOfType(ModelingSubmission.class);
     }
 
@@ -354,7 +365,7 @@ public class Participation implements Serializable {
      *
      * @return the latest text submission or null
      */
-    public TextSubmission findLatestTextSubmission() {
+    public Optional<TextSubmission> findLatestTextSubmission() {
         return findLatestSubmissionOfType(TextSubmission.class);
     }
 

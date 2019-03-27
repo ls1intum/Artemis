@@ -11,7 +11,7 @@ import java.util.Objects;
  */
 @Entity
 @DiscriminatorValue(value="SA")
-public class ShortAnswerSpotCounter extends StatisticCounter implements Serializable {
+public class ShortAnswerSpotCounter extends QuizStatisticCounter implements Serializable {
 
     private static final long serialVersionUID = 1L;
 

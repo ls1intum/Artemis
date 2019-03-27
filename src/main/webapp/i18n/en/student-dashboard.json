@@ -17,6 +17,7 @@
         },
         "courseOverview": {
             "noDescription": "No description available",
+            "noCourseIcon": "No course icon available",
             "menu": {
                 "exercises": "Exercises",
                 "statistics": "Statistics"
@@ -61,6 +62,7 @@
             },
             "exerciseDetails": {
                 "dueDate": "Due date:",
+                "categories": "Categories:",
                 "exerciseType": "Exercise Type:",
                 "level": "Level:",
                 "exerciseStatus": "Exercise status:",

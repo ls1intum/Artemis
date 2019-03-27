@@ -1,7 +1,7 @@
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import ApollonEditor, { State } from '@ls1intum/apollon';
+import { ApollonEditor, ApollonMode, UMLModel, DiagramType } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
 import { ApollonQuizExerciseGenerationComponent } from './exercise-generation/apollon-quiz-exercise-generation.component';
 import { ApollonDiagram, ApollonDiagramService } from '../entities/apollon-diagram';
@@ -14,7 +14,7 @@ import { ApollonDiagram, ApollonDiagramService } from '../entities/apollon-diagr
 export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     @ViewChild('editorContainer') editorContainer: ElementRef;
 
-    diagram: ApollonDiagram | null = null;
+    apollonDiagram: ApollonDiagram | null = null;
     apollonEditor: ApollonEditor | null = null;
 
     constructor(
@@ -32,10 +32,10 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
                 response => {
                     const diagram = response.body;
 
-                    this.diagram = diagram;
+                    this.apollonDiagram = diagram;
 
-                    const state = JSON.parse(diagram.jsonRepresentation);
-                    this.initializeApollonEditor(state);
+                    const model = JSON.parse(diagram.jsonRepresentation || '{}');
+                    this.initializeApollonEditor(model);
                 },
                 response => {
                     this.jhiAlertService.error('Error while loading Apollon diagram');
@@ -50,28 +50,28 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         }
     }
 
-    initializeApollonEditor(initialState: State) {
+    initializeApollonEditor(initialModel: UMLModel) {
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();
         }
 
         this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
-            mode: 'FULL',
-            initialState,
-            diagramType: 'CLASS'
+            mode: ApollonMode.Exporting,
+            model: initialModel,
+            type: this.apollonDiagram.diagramType
         });
     }
 
     saveDiagram() {
-        if (this.diagram === null) {
+        if (this.apollonDiagram === null) {
             // Should never happen, but let's be defensive anyway
             return;
         }
 
-        const diagramState = this.apollonEditor.getState();
+        const umlModel = this.apollonEditor.model;
         const updatedDiagram: ApollonDiagram = {
-            ...this.diagram,
-            jsonRepresentation: JSON.stringify(diagramState)
+            ...this.apollonDiagram,
+            jsonRepresentation: JSON.stringify(umlModel)
         };
 
         this.apollonDiagramService.update(updatedDiagram).subscribe(
@@ -86,6 +86,6 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
         const modalRef = this.modalService.open(ApollonQuizExerciseGenerationComponent, { backdrop: 'static' });
         const modalComponentInstance = modalRef.componentInstance as ApollonQuizExerciseGenerationComponent;
         modalComponentInstance.apollonEditor = this.apollonEditor;
-        modalComponentInstance.diagramTitle = this.diagram.title;
+        modalComponentInstance.diagramTitle = this.apollonDiagram.title;
     }
 }

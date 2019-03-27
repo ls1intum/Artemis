@@ -6,13 +6,12 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 
 public class ModelFactory {
-    public static ZonedDateTime currentDate = ZonedDateTime.now();
-
 
     public static ModelingExercise generateModelingExercise(
         ZonedDateTime releaseDate,
         ZonedDateTime dueDate,
         ZonedDateTime assessmentDueDate,
+        DiagramType diagramType,
         Course course) {
         ModelingExercise exercise = new ModelingExercise();
         exercise.setTitle(UUID.randomUUID().toString());
@@ -21,7 +20,7 @@ public class ModelFactory {
         exercise.setReleaseDate(releaseDate);
         exercise.setDueDate(dueDate);
         exercise.assessmentDueDate(assessmentDueDate);
-        exercise.setDiagramType(DiagramType.CLASS);
+        exercise.setDiagramType(diagramType);
         exercise.setCourse(course);
         exercise.setParticipations(new HashSet<>());
         exercise.setExampleSubmissions(new HashSet<>());
@@ -41,17 +40,6 @@ public class ModelFactory {
             generatedUsers.add(student);
         }
         return generatedUsers;
-    }
-
-
-    public static ModelingSubmission generateModelingSubmission(boolean submitted, String model) {
-        ModelingSubmission submission = new ModelingSubmission();
-        submission.setModel(model);
-        submission.setSubmitted(submitted);
-        if (submitted) {
-            submission.setSubmissionDate(currentDate);
-        }
-        return submission;
     }
 
 
@@ -81,6 +69,17 @@ public class ModelFactory {
             UUID.randomUUID().toString(),
             UUID.randomUUID().toString(),
             UUID.randomUUID().toString());
+    }
+
+
+    public static ModelingSubmission generateModelingSubmission(String model, boolean submitted) {
+        ModelingSubmission submission = new ModelingSubmission();
+        submission.setModel(model);
+        submission.setSubmitted(submitted);
+        if (submitted) {
+            submission.setSubmissionDate(ZonedDateTime.now().minusDays(1));
+        }
+        return submission;
     }
 
 
