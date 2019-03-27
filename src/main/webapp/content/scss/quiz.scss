@@ -25,7 +25,7 @@
     border-color: #ced4da;
 }
 
-.saQuestion-statistic-letter {
+.saQuestion-quizStatistic-letter {
     position: absolute;
     right: 0px;
     top: 10px;
@@ -41,7 +41,7 @@
     text-align: center;
 }
 
-.saQuestion-statistic-letter-solution {
+.saQuestion-quizStatistic-letter-solution {
     position: absolute;
     right: 0px;
     top: 10px;
@@ -107,7 +107,7 @@
     }
 }
 
-.statistic-footer {
+.quizStatistic-footer {
     position: fixed;
     height: 60px;
     bottom: 0;
@@ -124,7 +124,7 @@
     }
 }
 
-.statistic-footer-content {
+.quizStatistic-footer-content {
     height: 100%;
     display: flex;
     align-items: center;

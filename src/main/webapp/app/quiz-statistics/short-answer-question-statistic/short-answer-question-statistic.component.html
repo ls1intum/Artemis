@@ -5,37 +5,25 @@
             <div *ngIf="question" class="col">
                 <h3>{{question.title}} <span style="color:red;" *ngIf="question.invalid"
                                              jhiTranslate="showStatistic.invalid"></span></h3>
-
-                <div *ngIf="!showSolution" style="display: inline-flex;">
-                    <div style="text-align: left">
-                        <div class="short-answer-question-display" *ngFor="let textPart of textBeforeSpots;let i = index">
-                            {{textPart}}
-                            <div style="position: relative; display: inline-flex">
-                                <input class="short-answer-question-input"  disabled>
-                                <div class="saQuestion-quizStatistic-letter">
-                                    <span>{{getLetter(i) + "."}}</span>
-                                </div>
+                <div *ngFor="let textPart of textParts; let i = index" style="display: inline-flex; max-width: 100%;flex-wrap: wrap;">
+                    <div class="short-answer-question-display"  *ngFor="let element of textPart; let j = index">
+                        <div *ngIf="!shortAnswerQuestionUtil.isInputField(element)" style="display: inline-flex" [innerHTML]="element"></div>
+                        <div *ngIf="shortAnswerQuestionUtil.isInputField(element) && !showSolution" style="position: relative; display: inline-flex">
+                            <input class="short-answer-question-input" disabled>
+                            <div class="saQuestion-quizStatistic-letter">
+                                <span>{{getLetter(shortAnswerQuestionUtil.getSpotNr(element)) + "."}}</span>
                             </div>
                         </div>
-                        <span>{{textAfterSpots}}</span>
-                    </div>
-                </div>
-
-                <div *ngIf="showSolution" style="display: inline-flex">
-                    <div style="text-align: left">
-                        <div class="short-answer-question-display" *ngFor="let textPart of textBeforeSpots;let i = index">
-                            {{textPart}}
-                            <div style="position: relative; display: inline-flex">
-                                <input style="background: lightgreen" class="short-answer-question-input" disabled value="{{sampleSolutions[i].text}}">
-                                <div class="saQuestion-quizStatistic-letter-solution">
-                                    <span>{{getLetter(i) + "."}}</span>
-                                </div>
+                        <div *ngIf="shortAnswerQuestionUtil.isInputField(element) && showSolution" style="position: relative; display: inline-flex">
+                            <input class="short-answer-question-input" disabled [style.background]="'lightgreen'"
+                                   value="{{getSampleSolutionForSpot(element) !== undefined ? getSampleSolutionForSpot(element).text : ''}}"
+                                   size="{{getSampleSolutionForSpot(element) !== undefined ? getSampleSolutionForSpot(element).text.length + 4 : 5}}">
+                            <div class="saQuestion-quizStatistic-letter-solution">
+                                <span>{{getLetter(shortAnswerQuestionUtil.getSpotNr(element)) + "."}}</span>
                             </div>
                         </div>
-                        <span>{{textAfterSpots}}</span>
                     </div>
                 </div>
-
                 <div>
                     <p>&nbsp;</p>
                     <div class="row">

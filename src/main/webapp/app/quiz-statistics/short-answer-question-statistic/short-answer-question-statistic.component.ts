@@ -64,10 +64,7 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
     // options for chart in chart.js style
     options: ChartOptions;
 
-    questionText: string;
-    textWithoutSpots: string[];
-    textBeforeSpots: string[];
-    textAfterSpots: string[];
+    textParts: string[][];
     lettersForSolutions: number[] = [];
 
     sampleSolutions: ShortAnswerSolution[] =  [];
@@ -154,7 +151,7 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
         // load Layout only at the opening (not if the websocket refreshed the data)
         if (!refresh) {
             this.questionTextRendered = this.artemisMarkdown.htmlForMarkdown(this.question.text);
-            this.generateSaStructure();
+            this.generateShortAnswerStructure();
             this.generateLettersForSolutions();
 
             this.loadLayout();
@@ -164,16 +161,9 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
         this.sampleSolutions = this.shortAnswerQuestionUtil.getSampleSolution(this.question);
     }
 
-    generateSaStructure() {
-        // is either '' or the question in the first line
-        this.questionText = this.shortAnswerQuestionUtil.firstLineOfQuestion(this.question.text);
-        this.textWithoutSpots = this.shortAnswerQuestionUtil.getTextWithoutSpots(this.question.text);
-
-        // separates the text into parts that come before the spot tag
-        this.textBeforeSpots = this.textWithoutSpots.slice(0, this.textWithoutSpots.length - 1);
-
-        // the last part that comes after the last spot tag
-        this.textAfterSpots = this.textWithoutSpots.slice(this.textWithoutSpots.length - 1);
+    generateShortAnswerStructure() {
+        this.textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.question.text);
+        this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(this.textParts, this.artemisMarkdown);
     }
 
     generateLettersForSolutions() {
@@ -185,6 +175,12 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
                 }
             }
         }
+    }
+
+    getSampleSolutionForSpot(spotTag: string): ShortAnswerSolution {
+        return this.sampleSolutions.filter(
+            solution => solution.id === this.question.correctMappings.filter(
+                mapping => mapping.spot.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag.toString()))[0].solution.id)[0];
     }
 
     /**
@@ -368,7 +364,7 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
      * @param index the given number
      */
     getLetter(index: number) {
-        return String.fromCharCode(65 + index);
+        return String.fromCharCode(65 + (index - 1));
     }
 
     /**
