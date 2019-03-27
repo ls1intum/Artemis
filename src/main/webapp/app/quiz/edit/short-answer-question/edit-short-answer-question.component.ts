@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { ShortAnswerQuestion } from '../../../entities/short-answer-question';
 import { ShortAnswerSpot } from '../../../entities/short-answer-spot';
 import { ShortAnswerSolution } from '../../../entities/short-answer-solution';
@@ -10,13 +10,14 @@ import 'brace/mode/markdown';
 import { ShortAnswerQuestionUtil } from 'app/components/util/short-answer-question-util.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import * as TempID from 'app/quiz/edit/temp-id';
+import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
 
 @Component({
     selector: 'jhi-edit-short-answer-question',
     templateUrl: './edit-short-answer-question.component.html',
     providers: [ArtemisMarkdown]
 })
-export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, AfterViewInit {
+export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, AfterViewInit, EditQuizQuestion {
     @ViewChild('questionEditor')
     private questionEditor: AceEditorComponent;
     @ViewChild('clickLayer')
@@ -64,7 +65,8 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     constructor(
         private artemisMarkdown: ArtemisMarkdown,
         private shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
-        private modalService: NgbModal
+        private modalService: NgbModal,
+        private changeDetector: ChangeDetectorRef
     ) {}
 
     ngOnInit(): void {
@@ -137,6 +139,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
             },
             this
         );
+        this.changeDetector.detectChanges();
     }
 
     /**
@@ -294,7 +297,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @desc Add the markdown for a hint at the current cursor location
      */
     addHintAtCursor(): void {
-        this.artemisMarkdown.addHintAtCursor(this.questionEditor.getEditor());
+        this.artemisMarkdown.addHintAtCursor(this.questionEditor);
     }
 
     /**
@@ -302,7 +305,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @desc Add the markdown for an explanation at the current cursor location
      */
     addExplanationAtCursor(): void {
-        this.artemisMarkdown.addExplanationAtCursor(this.questionEditor.getEditor());
+        this.artemisMarkdown.addExplanationAtCursor(this.questionEditor);
     }
 
     /**
@@ -708,5 +711,12 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         // split on every whitespace. !!!only exception: [-spot 1] is not split!!! for more details see description in ngOnInit.
         const textForEachLine = this.question.text.split(/\n+/g);
         this.textParts = textForEachLine.map(t => t.split(/\s+(?![^[]]*])/g));
+    }
+
+    /**
+     * @function prepareForSave
+     * @desc reset the question and calls the parsing method of the markdown editor
+     */
+    prepareForSave(): void {
     }
 }

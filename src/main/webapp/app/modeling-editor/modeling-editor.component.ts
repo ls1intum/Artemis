@@ -16,6 +16,7 @@ import { JhiWebsocketService } from '../core';
 import { Observable } from 'rxjs/Observable';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
+import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { ModelingAssessmentService } from 'app/modeling-assessment/modeling-assessment.service';
 
 @Component({
@@ -64,6 +65,8 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
 
     websocketChannel: string;
 
+    problemStatement: string;
+
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
         private apollonDiagramService: ApollonDiagramService,
@@ -74,7 +77,8 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         private modelingEditorService: ModelingEditorService,
         private modalService: NgbModal,
         private translateService: TranslateService,
-        private router: Router
+        private router: Router,
+        private artemisMarkdown: ArtemisMarkdown
     ) {
         this.isSaving = false;
         this.autoSaveTimer = 0;
@@ -91,6 +95,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                         }
                         this.participation = modelingSubmission.participation;
                         this.modelingExercise = this.participation.exercise as ModelingExercise;
+                        this.problemStatement = this.artemisMarkdown.htmlForMarkdown(this.modelingExercise.problemStatement);
                         /**
                          * set diagramType to class diagram if exercise is null
                          */

@@ -1,30 +1,41 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
-import { DragAndDropQuestion } from '../../../entities/drag-and-drop-question';
-import { ArtemisMarkdown } from '../../../components/util/markdown.service';
-import { DragAndDropQuestionUtil } from '../../../components/util/drag-and-drop-question-util.service';
-import { FileUploaderService } from '../../../shared/http/file-uploader.service';
-import { DropLocation } from '../../../entities/drop-location';
-import { DragItem } from '../../../entities/drag-item';
-import { DragAndDropMapping } from '../../../entities/drag-and-drop-mapping';
-import { DragAndDropMouseEvent } from '../../../entities/drag-item/drag-and-drop-mouse-event.class';
-import { DragState } from '../../../entities/drag-item/drag-state.enum';
-import { AceEditorComponent } from 'ng2-ace-editor';
+import {
+    Component,
+    ElementRef,
+    EventEmitter,
+    Input,
+    OnChanges,
+    OnInit,
+    Output,
+    SimpleChanges,
+    ViewChild,
+    ChangeDetectorRef
+} from '@angular/core';
+import { DragAndDropQuestion } from 'app/entities/drag-and-drop-question';
+import { ArtemisMarkdown } from 'app/components/util/markdown.service';
+import { DragAndDropQuestionUtil } from 'app/components/util/drag-and-drop-question-util.service';
+import { FileUploaderService } from 'app/shared/http/file-uploader.service';
+import { DropLocation } from 'app/entities/drop-location';
+import { DragItem } from 'app/entities/drag-item';
+import { DragAndDropMapping } from 'app/entities/drag-and-drop-mapping';
+import { DragAndDropMouseEvent } from 'app/entities/drag-item/drag-and-drop-mouse-event.class';
+import { DragState } from 'app/entities/drag-item/drag-state.enum';
 import * as $ from 'jquery';
-import 'brace/theme/chrome';
-import 'brace/mode/markdown';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import * as TempID from 'app/quiz/edit/temp-id';
+import { HintCommand, DomainCommand, ExplanationCommand } from 'app/markdown-editor/domainCommands';
+import { MarkdownEditorComponent } from 'app/markdown-editor';
+import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
 
 @Component({
     selector: 'jhi-edit-drag-and-drop-question',
     templateUrl: './edit-drag-and-drop-question.component.html',
     providers: [ArtemisMarkdown, DragAndDropQuestionUtil]
 })
-export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, AfterViewInit {
-    @ViewChild('questionEditor')
-    private questionEditor: AceEditorComponent;
+export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, EditQuizQuestion {
     @ViewChild('clickLayer')
     private clickLayer: ElementRef;
+    @ViewChild('markdownEditor')
+    private markdownEditor: MarkdownEditorComponent;
 
     @Input()
     question: DragAndDropQuestion;
@@ -45,8 +56,6 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
 
     /** Ace Editor configuration constants **/
     questionEditorText = '';
-    questionEditorMode = 'markdown';
-    questionEditorAutoUpdate = true;
 
     backupQuestion: DragAndDropQuestion;
 
@@ -83,11 +92,18 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
      */
     mouse: DragAndDropMouseEvent;
 
+    hintCommand = new HintCommand();
+    explanationCommand = new ExplanationCommand();
+
+    /** {array} with domainCommands that are needed for a drag and drop question **/
+    dragAndDropQuestionDomainCommands: DomainCommand[] = [this.explanationCommand, this.hintCommand];
+
     constructor(
         private artemisMarkdown: ArtemisMarkdown,
         private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
         private modalService: NgbModal,
-        private fileUploaderService: FileUploaderService
+        private fileUploaderService: FileUploaderService,
+        private changeDetector: ChangeDetectorRef
     ) {}
 
     ngOnInit(): void {
@@ -105,6 +121,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
         /** Initialize DropLocation and MouseEvent objects **/
         this.currentDropLocation = new DropLocation();
         this.mouse = new DragAndDropMouseEvent();
+        this.questionEditorText = this.artemisMarkdown.generateTextHintExplanation(this.question);
     }
 
     /**
@@ -116,48 +133,12 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
         /** Check if previousValue wasn't null to avoid firing at component initialization **/
         if (changes.question && changes.question.previousValue != null) {
             this.questionUpdated.emit();
+            // this.changeDetector.detectChanges();
         }
         /** Update backupQuestion if the question changed **/
         if (changes.question && changes.question.currentValue != null) {
             this.backupQuestion = JSON.parse(JSON.stringify(this.question));
         }
-    }
-
-    /**
-     * @function ngAfterViewInit
-     * @desc Setup the question editor
-     */
-    ngAfterViewInit(): void {
-        requestAnimationFrame(this.setupQuestionEditor.bind(this));
-    }
-
-    /**
-     * @function setupQuestionEditor
-     * @desc Set up Question text editor
-     */
-    setupQuestionEditor(): void {
-        // Default editor settings for inline markup editor
-        this.questionEditor.setTheme('chrome');
-        this.questionEditor.getEditor().renderer.setShowGutter(false);
-        this.questionEditor.getEditor().renderer.setPadding(10);
-        this.questionEditor.getEditor().renderer.setScrollMargin(8, 8);
-        this.questionEditor.getEditor().setHighlightActiveLine(false);
-        this.questionEditor.getEditor().setShowPrintMargin(false);
-
-        // Generate markdown from question and show result in editor
-        this.questionEditorText = this.artemisMarkdown.generateTextHintExplanation(this.question);
-        this.questionEditor.getEditor().clearSelection();
-
-        // Register the onBlur listener
-        this.questionEditor.getEditor().on(
-            'blur',
-            () => {
-                // Parse the markdown in the editor and update question accordingly
-                this.artemisMarkdown.parseTextHintExplanation(this.questionEditorText, this.question);
-                this.questionUpdated.emit();
-            },
-            this
-        );
     }
 
     /**
@@ -179,22 +160,6 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
      */
     drop(): void {
         this.dropAllowed = false;
-    }
-
-    /**
-     * @function addHintAtCursor
-     * @desc Add the markdown for a hint at the current cursor location
-     */
-    addHintAtCursor(): void {
-        this.artemisMarkdown.addHintAtCursor(this.questionEditor.getEditor());
-    }
-
-    /**
-     * @function addExplanationAtCursor
-     * @desc Add the markdown for an explanation at the current cursor location
-     */
-    addExplanationAtCursor(): void {
-        this.artemisMarkdown.addExplanationAtCursor(this.questionEditor.getEditor());
     }
 
     /**
@@ -774,7 +739,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
         this.question.text = this.backupQuestion.text;
         this.question.explanation = this.backupQuestion.explanation;
         this.question.hint = this.backupQuestion.hint;
-        this.setupQuestionEditor();
+        this.questionEditorText = this.artemisMarkdown.generateTextHintExplanation(this.question);
     }
 
     /**
@@ -839,5 +804,59 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
      */
     togglePreview(): void {
         this.showPreview = !this.showPreview;
+        this.prepareForSave();
+    }
+
+    /**
+     * @function changesInMarkdown
+     * @desc Detect of text changes in the markdown editor
+     *      1. Notify the parent component to check the validity of the text
+     *      2. Parse the text in the editor to get the newest values
+     */
+    changesInMarkdown(): void {
+        this.questionUpdated.emit();
+        this.changeDetector.detectChanges();
+        this.prepareForSave();
+    }
+
+    /**
+     * @function domainCommandsFound
+     * @desc 1. Gets the {array} containing the text with the domainCommandIdentifier and creates a new drag and drop problem statement
+     *       by assigning the text according to the domainCommandIdentifiers to the drag and drop attributes.
+     *       (question text, explanation, hint)
+     * @param {array} containing markdownText with the corresponding domainCommand {DomainCommand} identifier
+     */
+    domainCommandsFound(domainCommands: [string, DomainCommand][]): void {
+        this.cleanupQuestion();
+        for (const  [text, command]  of domainCommands)  {
+            if (command === null && text.length > 0) {
+                this.question.text = text;
+            }
+            if (command instanceof ExplanationCommand) {
+                this.question.explanation = text;
+            } else if (command instanceof HintCommand) {
+                this.question.hint = text;
+            }
+        }
+    }
+
+    /**
+     * @function cleanupQuestion
+     * @desc Clear the question to avoid double assignments of one attribute
+     */
+    private cleanupQuestion() {
+        this.question.text = null;
+        this.question.explanation = null;
+        this.question.hint = null;
+    }
+
+    /**
+     * @function prepareForSave
+     * @desc triggers the saving process by cleaning up the question and calling the markdown parse function
+     *       to get the newest values in the editor to update the question attributes
+     */
+    prepareForSave(): void {
+        this.cleanupQuestion();
+        this.markdownEditor.parse();
     }
 }

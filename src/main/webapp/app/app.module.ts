@@ -44,6 +44,8 @@ import { ParticipationDataProvider } from 'app/course-list';
 import { ArTEMiSTutorCourseDashboardModule } from 'app/tutor-course-dashboard';
 import { ArTEMiSTutorExerciseDashboardModule } from 'app/tutor-exercise-dashboard';
 import { ArTEMiSExampleSubmissionModule } from 'app/example-text-submission';
+
+import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor/markdown-editor.module';
 import { ArTEMiSComplaintsModule } from 'app/complaints';
 import { ArTEMiSModelingAssessmentModule } from 'app/modeling-assessment/modeling-assessment.module';
 
@@ -87,6 +89,7 @@ import * as moment from 'moment';
         ArTEMiSModelingAssessmentModule,
         ArTEMiSStatisticModule,
         ArTEMiSModelingEditorModule,
+        ArTEMiSMarkdownEditorModule,
         ArTEMiSModelingStatisticsModule,
         ArTEMiSTextModule,
         ArTEMiSTextAssessmentModule,
