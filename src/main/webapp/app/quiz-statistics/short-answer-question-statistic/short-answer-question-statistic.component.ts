@@ -77,7 +77,7 @@ export class ShortAnswerQuestionStatisticComponent implements OnInit, OnDestroy,
         private quizExerciseService: QuizExerciseService,
         private jhiWebsocketService: JhiWebsocketService,
         private quizStatisticUtil: QuizStatisticUtil,
-        private shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
+        public shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
         private artemisMarkdown: ArtemisMarkdown,
     ) {
         this.options = createOptions(this);

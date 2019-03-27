@@ -58,7 +58,7 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
 
     constructor(
         private artemisMarkdown: ArtemisMarkdown,
-        private shortAnswerQuestionUtil: ShortAnswerQuestionUtil
+        public shortAnswerQuestionUtil: ShortAnswerQuestionUtil
     ) {}
 
     ngOnInit() {}

@@ -61,7 +61,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
 
     constructor(
         private artemisMarkdown: ArtemisMarkdown,
-        private shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
+        public shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
         private modalService: NgbModal
     ) {}
 
