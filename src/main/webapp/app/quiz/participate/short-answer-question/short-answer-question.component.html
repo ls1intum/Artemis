@@ -1,13 +1,10 @@
 <div class="sa-question" [ngClass]="{disabled: clickDisabled && !showResult, result: showResult && !forceSampleSolution, incorrect: (score || 0) < question.score && !forceSampleSolution}">
     <h4 class="question-title-display"><span>{{questionIndex}})</span> {{question.title}}</h4>
-    <p *ngIf="questionText !== '' ">{{questionText}}</p>
-
-
     <div *ngIf="!showResult">
         <div *ngFor="let textPart of textParts; let i = index" style="display: flex;max-width: 100%;flex-wrap: wrap;">
             <div class="short-answer-question-display"   *ngFor="let element of textPart; let j = index">
-                <div *ngIf="!isInputField(element)" style="display: inline-flex" [innerHTML]="element"></div>
-                <div *ngIf="isInputField(element)" style="position: relative; display: inline-block">
+                <div *ngIf="!shortAnswerQuestionUtil.isInputField(element)" style="display: inline-flex" [innerHTML]="element"></div>
+                <div *ngIf="shortAnswerQuestionUtil.isInputField(element)" style="position: relative; display: inline-block">
                     <input class="short-answer-question-input" type="text" [disabled]="clickDisabled"
                            value="{{getSubmittedTextForSpot(element) !== undefined ? getSubmittedTextForSpot(element).text : ''}}"
                            id="solution-{{i}}-{{j}}-{{question.id}}" (change)="setSubmittedText()">
@@ -18,62 +15,22 @@
     <div *ngIf="showResult">
         <div *ngFor="let textPart of textParts; let i = index" style="display: flex; max-width: 100%;flex-wrap: wrap;">
             <div class="short-answer-question-display"  *ngFor="let element of textPart; let j = index">
-                <div *ngIf="!isInputField(element)" style="display: inline-flex" [innerHTML]="element"></div>
-                <div *ngIf="isInputField(element) && !showingSampleSolution" style="position: relative; display: inline-block">
+                <div *ngIf="!shortAnswerQuestionUtil.isInputField(element)" style="display: inline-flex" [innerHTML]="element"></div>
+                <div *ngIf="shortAnswerQuestionUtil.isInputField(element) && !showingSampleSolution" style="position: relative; display: inline-block">
                     <input class="short-answer-question-input" disabled
-                           [style.background]="getSubmittedTextForSpot(element).isCorrect ?
-                           (isSubmittedTextCompletelyCorrect(element) ? 'lightgreen' : 'yellow') : 'red'"
+                           [style.background]="getBackgroundColourForInputField(element)"
                            value="{{getSubmittedTextForSpot(element) !== undefined ? getSubmittedTextForSpot(element).text : ''}}"
-                           size="{{getSubmittedTextForSpot(element).text.length + 2}}">
+                           size="{{getSubmittedTextForSpot(element) !== undefined ? getSubmittedTextForSpot(element).text.length + 2 : 5}}">
                 </div>
-                <div *ngIf="isInputField(element) && showingSampleSolution" style="position: relative; display: inline-block">
+                <div *ngIf="shortAnswerQuestionUtil.isInputField(element) && showingSampleSolution" style="position: relative; display: inline-block">
                     <input class="short-answer-question-input" disabled
                            [style.background]="'lightgreen'"
-                           value="{{getSampleSolutionForSpot(element).text}}"
-                           size="{{getSampleSolutionForSpot(element).text.length + 2}}">
+                           value="{{getSampleSolutionForSpot(element) !== undefined ? getSampleSolutionForSpot(element).text : ''}}"
+                           size="{{getSampleSolutionForSpot(element) !== undefined ? getSampleSolutionForSpot(element).text.length + 2 : 5}}">
                 </div>
             </div>
         </div>
     </div>
-
-
-
-    <!--
-    <div *ngIf="!showResult && !clickDisabled">
-        <div class="short-answer-question-display" *ngFor="let textPart of textBeforeSpots; let i = index">
-        {{textPart}} <input class="short-answer-question-input" type="text" id="solution-{{i}}-{{_question.id}}" value="{{submittedTexts[i] !== undefined ? submittedTexts[i].text : ''}}" (change)="setSubmittedText()"  >
-        </div>
-        <span>{{textAfterSpots}}</span>
-    </div>
-
-
-    <div *ngIf="!showResult && clickDisabled">
-        <div class="short-answer-question-display" *ngFor="let textPart of textBeforeSpots; let i = index">
-            {{textPart}} <input class="short-answer-question-input" disabled value="{{submittedTexts[i] !== undefined ? submittedTexts[i].text : ''}}">
-        </div>
-        <span>{{textAfterSpots}}</span>
-    </div>
-
-    -->
-<!--
-    <div *ngIf="showResult && !showingSampleSolution">
-        <div class="short-answer-question-display" *ngFor="let textPart of textBeforeSpots; let i = index">
-            {{textPart}}
-            <input class="short-answer-question-input" *ngIf="submittedTexts[i] !== undefined && submittedTexts[i].isCorrect" style="background: lightgreen" disabled value="{{submittedTexts[i].text}}" size="{{submittedTexts[i].text.length + 2}}">
-            <input class="short-answer-question-input" *ngIf="submittedTexts[i] !== undefined && !submittedTexts[i].isCorrect" style="background: red" disabled value="{{submittedTexts[i].text}}" size="{{submittedTexts[i].text.length + 2}}">
-            <input class="short-answer-question-input" *ngIf="submittedTexts[i] === undefined" style="background: red" disabled >
-        </div>
-        <span>{{textAfterSpots}}</span>
-    </div>
-
-    <div *ngIf="showResult && showingSampleSolution">
-        <div class="short-answer-question-display" *ngFor="let textPart of textBeforeSpots; let i = index">
-            {{textPart}}
-            <input class="short-answer-question-input" style="background: lightgreen" disabled value="{{sampleSolutions[i].text}}" size="{{sampleSolutions[i].text.length + 2}}">
-        </div>
-        <span>{{textAfterSpots}}</span>
-    </div>
--->
     <span style="color:red;" *ngIf="question.invalid" jhiTranslate="arTeMiSApp.quizQuestion.invalidText"></span>
     <div class="hint" *ngIf="question.hint || (question.explanation && showResult)">
         <ng-template #renderedHint>

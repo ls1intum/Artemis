@@ -4,7 +4,6 @@ import { ShortAnswerQuestion } from '../../../entities/short-answer-question';
 import { ShortAnswerSolution } from '../../../entities/short-answer-solution';
 import { ShortAnswerSubmittedText } from 'app/entities/short-answer-submitted-text';
 import { ShortAnswerQuestionUtil } from '../../../components/util/short-answer-question-util.service';
-import {ShortAnswerSpot} from "app/entities/short-answer-spot";
 
 @Component({
     selector: 'jhi-short-answer-question',
@@ -54,12 +53,8 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
     submittedTextsChange = new EventEmitter();
     showingSampleSolution = false;
     rendered: ShortAnswerQuestion;
-    questionText: string;
-    textWithoutSpots: string[];
-    textBeforeSpots: string[];
-    textAfterSpots: string[];
     sampleSolutions: ShortAnswerSolution[] =  [];
-    textParts: String [][];
+    textParts: string[][];
 
     constructor(
         private artemisMarkdown: ArtemisMarkdown,
@@ -75,24 +70,9 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
         const artemisMarkdown = this.artemisMarkdown;
         this.rendered = new ShortAnswerQuestion();
 
-        // is either '' or the question in the first line
-        this.questionText = this.shortAnswerQuestionUtil.firstLineOfQuestion(this.question.text);
-        this.textWithoutSpots = this.shortAnswerQuestionUtil.getTextWithoutSpots(this.question.text);
-
-        // separates the text into parts that come before the spot tag
-        this.textBeforeSpots = this.textWithoutSpots.slice(0, this.textWithoutSpots.length - 1);
-
-        // the last part that comes after the last spot tag
-        this.textAfterSpots = this.textWithoutSpots.slice(this.textWithoutSpots.length - 1);
-
-
-
-
-        this.textParts = this.question.text.split(/\n/g).map(t => t.split(/\s+(?![^[]]*])/g));
-
-        this.textParts = this.textParts.map(textPart =>
-            textPart.map(element =>
-                 element = artemisMarkdown.htmlForMarkdown(element.toString())));
+        // new way
+        this.textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.question.text);
+        this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(this.textParts, this.artemisMarkdown);
 
         this.rendered.text = artemisMarkdown.htmlForMarkdown(this.question.text);
         this.rendered.hint = artemisMarkdown.htmlForMarkdown(this.question.hint);
@@ -105,14 +85,6 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
      */
     setSubmittedText() {
         this.submittedTexts = [];
-        /*
-        for (const id of Object.keys(this.textBeforeSpots)) {
-            const submittedText = new ShortAnswerSubmittedText();
-            submittedText.text = (<HTMLInputElement>document.getElementById('solution-' + id + '-' + this._question.id)).value;
-            submittedText.spot = this.question.spots[id];
-            this.submittedTexts.push(submittedText);
-        } */
-
         console.log('länge von submittedTexts' + this.submittedTexts.length);
         console.log(this.submittedTexts);
 
@@ -120,14 +92,14 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
         for (const textpart of this.textParts) {
             let j = 0;
             for (const element of textpart) {
-                console.log(element.toString());
-                console.log(this.isInputField(element.toString()));
-                if (this.isInputField(element.toString())) {
+                console.log(element);
+                console.log(this.shortAnswerQuestionUtil.isInputField(element));
+                if (this.shortAnswerQuestionUtil.isInputField(element)) {
                     const submittedText = new ShortAnswerSubmittedText();
                     console.log('solution-' + i + '-' + j + '-' + this._question.id);
-                    console.log(this.getSpot(this.getSpotNr(element.toString())));
+                    console.log(this.shortAnswerQuestionUtil.getSpot(this.shortAnswerQuestionUtil.getSpotNr(element), this.question));
                     submittedText.text = (<HTMLInputElement>document.getElementById('solution-' + i + '-' + j + '-' + this._question.id)).value;
-                    submittedText.spot = this.getSpot(this.getSpotNr(element.toString()));
+                    submittedText.spot = this.shortAnswerQuestionUtil.getSpot(this.shortAnswerQuestionUtil.getSpotNr(element), this.question);
                     console.log(submittedText);
                     this.submittedTexts.push(submittedText);
                 }
@@ -135,8 +107,6 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
             }
             i++;
         }
-
-
         this.submittedTextsChange.emit(this.submittedTexts);
         /** Only execute the onMappingUpdate function if we received such input **/
         if (this.fnOnSubmittedTextUpdate) {
@@ -161,54 +131,36 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
     }
 
     getSubmittedTextForSpot(spotTag: string): ShortAnswerSubmittedText {
-        return this.submittedTexts.filter(submittedText => submittedText.spot.spotNr === this.getSpotNr(spotTag))[0];
+        return this.submittedTexts.filter(submittedText => submittedText.spot.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag))[0];
     }
 
     getSampleSolutionForSpot(spotTag: string): ShortAnswerSolution {
         console.log(this.sampleSolutions);
-        console.log(this.question.correctMappings.filter(mapping => mapping.spot.spotNr === this.getSpotNr(spotTag)));
+        console.log(this.question.correctMappings.filter(mapping => mapping.spot.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag)));
         console.log(this.sampleSolutions.filter(
             solution => solution.id === this.question.correctMappings.filter(
-                mapping => mapping.spot.spotNr === this.getSpotNr(spotTag.toString()))[0].solution.id));
+                mapping => mapping.spot.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag.toString()))[0].solution.id));
 
         return this.sampleSolutions.filter(
             solution => solution.id === this.question.correctMappings.filter(
-                mapping => mapping.spot.spotNr === this.getSpotNr(spotTag.toString()))[0].solution.id)[0];
+                mapping => mapping.spot.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag.toString()))[0].solution.id)[0];
+    }
+
+    getBackgroundColourForInputField(spotTag: string): string {
+        if(this.getSubmittedTextForSpot(spotTag) === undefined) {
+            return 'red';
+        }
+       return this.getSubmittedTextForSpot(spotTag).isCorrect ? (this.isSubmittedTextCompletelyCorrect(spotTag) ? 'lightgreen' : 'yellow') : 'red';
     }
 
     isSubmittedTextCompletelyCorrect(spotTag: string): boolean {
         let isTextCorrect = false;
-        const solutionsForSpot = this.shortAnswerQuestionUtil.getAllSolutionsForSpot(this.question.correctMappings, this.getSpot(this.getSpotNr(spotTag)));
+        const solutionsForSpot = this.shortAnswerQuestionUtil.getAllSolutionsForSpot(this.question.correctMappings,
+            this.shortAnswerQuestionUtil.getSpot(this.shortAnswerQuestionUtil.getSpotNr(spotTag), this.question));
 
         if (solutionsForSpot.filter(solution => solution.text === this.getSubmittedTextForSpot(spotTag).text).length > 0) {
             isTextCorrect = true;
         }
         return isTextCorrect;
-    }
-
-
-    // add functions below to util class
-    /**
-     * checks if text is an input field (check for spot tag)
-     * @param text
-     */
-    isInputField(text: string): boolean {
-        return !(text.search(/\[-spot/g) === -1);
-    }
-
-    /**
-     * gets just the spot number
-     * @param text
-     */
-    getSpotNr(text: string): number {
-        return +text.split(/\s+/g).slice(1).join().split(/\]/g)[0].trim();
-    }
-
-    /**
-     * gets the spot for a specific spotNr
-     * @param spotNr
-     */
-    getSpot(spotNr: number): ShortAnswerSpot  {
-        return this.question.spots.filter(spot => spot.spotNr === spotNr)[0];
     }
 }
