@@ -177,7 +177,7 @@
         "test": "yarn run lint && jest --coverage --logHeapUsage -w=2 --config src/test/javascript/jest.conf.js",
         "test:watch": "yarn run test -- --watch",
         "test:e2e": "protractor protractor.conf.js",
-        "postinstall": "webdriver-manager update --gecko false",
+        "postinstall": "webdriver-manager update --versions.chrome=73.0.3683.86 --gecko false",
         "webpack:dev": "yarn run webpack-dev-server --config webpack/webpack.dev.js --inline --hot --port=9060 --watch-content-base --env.stats=minimal",
         "webpack:dev-verbose": "yarn run webpack-dev-server --config webpack/webpack.dev.js --inline --hot --port=9060 --watch-content-base --profile --progress --env.stats=normal",
         "webpack:build:main": "yarn run webpack --config webpack/webpack.dev.js --env.stats=minimal",
