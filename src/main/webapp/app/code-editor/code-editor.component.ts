@@ -1,19 +1,27 @@
-import { CourseService } from '../entities/course';
-import { JhiAlertService } from 'ng-jhipster';
-import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
-import { Subscription } from 'rxjs/Subscription';
+import * as $ from 'jquery';
 import { ActivatedRoute } from '@angular/router';
-import { WindowRef } from '../core/websocket/window.service';
+import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Interactable } from 'interactjs';
+import { JhiAlertService } from 'ng-jhipster';
+import { LocalStorageService } from 'ngx-webstorage';
+import { Subscription } from 'rxjs/Subscription';
+import {
+    compose,
+    fromPairs,
+    map,
+    toPairs,
+} from 'lodash/fp';
+
+import { BuildLogEntryArray } from 'app/entities/build-log';
+
+import { CourseService } from '../entities/course';
 import { Participation, ParticipationService } from '../entities/participation';
 import { ParticipationDataProvider } from '../course-list/exercise-list/participation-data-provider';
 import { RepositoryFileService, RepositoryService } from '../entities/repository/repository.service';
 import { Result } from '../entities/result';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import * as $ from 'jquery';
-import { Interactable } from 'interactjs';
-import { AceAnnotation, SaveStatusChange } from '../entities/ace-editor';
-import { BuildLogEntry } from 'app/entities/build-log';
-import { safeUnescape } from 'app/shared';
+import { SaveStatusChange, Session, AnnotationArray } from '../entities/ace-editor';
+import { WindowRef } from '../core/websocket/window.service';
 
 @Component({
     selector: 'jhi-editor',
@@ -22,15 +30,14 @@ import { safeUnescape } from 'app/shared';
 })
 export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
     /** Dependencies as defined by the Editor component */
-    errorLogRegex = /\[(ERROR)\].*\/(src\/.+):\[(\d+),(\d+)\]\s(.*$)/;
-
     participation: Participation;
     repository: RepositoryService;
     selectedFile: string;
     paramSub: Subscription;
     repositoryFiles: string[];
+    session: Session;
     latestResult: Result;
-    buildLogErrors: { [fileName: string]: AceAnnotation };
+    buildLogErrors: { errors: { [fileName: string]: AnnotationArray }; timestamp: number };
     saveStatusLabel: string;
     saveStatusIcon: { spin: boolean; icon: string; class: string };
 
@@ -54,7 +61,8 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
         private participationService: ParticipationService,
         private participationDataProvider: ParticipationDataProvider,
         private repositoryService: RepositoryService,
-        private repositoryFileService: RepositoryFileService
+        private repositoryFileService: RepositoryFileService,
+        private localStorageService: LocalStorageService
     ) {}
 
     /**
@@ -91,6 +99,7 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
                     // do not display the README.md, because students should not edit it
                     this.repositoryFiles = files.filter(value => value !== 'README.md');
                     this.checkIfRepositoryIsClean();
+                    this.loadSession();
                 },
                 (error: HttpErrorResponse) => {
                     console.log('There was an error while getting files: ' + error.message + ': ' + error.error);
@@ -151,18 +160,15 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
         this.latestResult = $event.newResult;
     }
 
-    updateLatestBuildLogs(buildLogs: BuildLogEntry[]) {
-        this.buildLogErrors = buildLogs
-            .map(({ log }) => log && log.match(this.errorLogRegex))
-            .filter(log => !!log && log.length === 6 && log[1] === 'ERROR')
-            .map(([, , fileName, row, column, text]) => ({
-                type: 'error',
-                fileName,
-                row: Math.max(parseInt(row, 10) - 1, 0),
-                column: Math.max(parseInt(column, 10) - 1, 0),
-                text: safeUnescape(text)
-            }))
-            .reduce((acc, { fileName, ...rest }) => ({ ...acc, [fileName]: [...(acc[fileName] || []), rest] }), {});
+    /**
+     * Check if the received build logs are recent and format them for use in the ace-editor
+     * @param buildLogs
+     */
+    updateLatestBuildLogs(buildLogs: BuildLogEntryArray) {
+        const timestamp = buildLogs.length ? Date.parse(buildLogs[0].time) : 0;
+        if (!this.buildLogErrors || timestamp > this.buildLogErrors.timestamp) {
+            this.buildLogErrors = { errors: buildLogs.extractErrors(), timestamp };
+        }
     }
 
     /**
@@ -195,6 +201,28 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
                 console.log('There was an error while getting files: ' + error.message + ': ' + error.error);
             }
         );
+    }
+
+    /**
+     * @function loadSession
+     * @desc Gets the user's session data from localStorage to load editor settings
+     */
+    loadSession() {
+        // Only do this if we already received a participation object from parent
+        if (this.participation) {
+            const sessions = JSON.parse(this.localStorageService.retrieve('sessions') || '{}');
+            this.session = sessions[this.participation.id];
+            if (this.session && (!this.buildLogErrors || this.session.timestamp > this.buildLogErrors.timestamp)) {
+                this.buildLogErrors = {
+                    errors: compose(
+                        fromPairs,
+                        map(([fileName, errors]) => [fileName, new AnnotationArray(...errors)]),
+                        toPairs
+                    )(this.session.errors),
+                    timestamp: this.session.timestamp
+                };
+            }
+        }
     }
 
     /**
@@ -240,7 +268,7 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
         target.blur();
         this.isBuilding = true;
         this.repository.commit(this.participation.id).subscribe(
-            res => {
+            () => {
                 this.isCommitted = true;
             },
             err => {

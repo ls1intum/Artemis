@@ -5,6 +5,7 @@
             "password": "Passwort",
             "password.placeholder": "Ihr Passwort",
             "rememberme": "Automatische Anmeldung",
+            "acceptTerms": "Bedingungen akzeptieren",
             "button": "Anmelden"
         },
         "messages": {

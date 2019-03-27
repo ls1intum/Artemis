@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 
@@ -12,6 +12,7 @@ import { ModelingExerciseService } from './modeling-exercise.service';
 import { Course, CourseService } from '../course';
 
 import { Subscription } from 'rxjs/Subscription';
+import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 
 @Component({
     selector: 'jhi-modeling-exercise-dialog',
@@ -21,6 +22,8 @@ export class ModelingExerciseDialogComponent implements OnInit {
     modelingExercise: ModelingExercise;
     isSaving: boolean;
     maxScorePattern = '^[1-9]{1}[0-9]{0,4}$'; // make sure max score is a positive natural integer and not too large
+    exerciseCategories: ExerciseCategory[];
+    existingCategories: ExerciseCategory[];
 
     courses: Course[];
 
@@ -29,6 +32,7 @@ export class ModelingExerciseDialogComponent implements OnInit {
         private jhiAlertService: JhiAlertService,
         private modelingExerciseService: ModelingExerciseService,
         private courseService: CourseService,
+        private exerciseService: ExerciseService,
         private eventManager: JhiEventManager
     ) {}
 
@@ -40,10 +44,21 @@ export class ModelingExerciseDialogComponent implements OnInit {
             },
             (res: HttpErrorResponse) => this.onError(res)
         );
+        this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.modelingExercise);
+        this.courseService.findAllCategoriesOfCourse(this.modelingExercise.course.id).subscribe(
+            (res: HttpResponse<string[]>) => {
+                this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body);
+            },
+            (res: HttpErrorResponse) => this.onError(res)
+        );
     }
 
     clear() {
         this.activeModal.dismiss('cancel');
+    }
+
+    updateCategories(categories: ExerciseCategory[]) {
+        this.modelingExercise.categories = categories.map(el => JSON.stringify(el));
     }
 
     save() {

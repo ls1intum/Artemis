@@ -17,6 +17,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.security.Principal;
 import java.util.List;
@@ -114,7 +115,11 @@ public class TextSubmissionResource {
         ResponseEntity<TextSubmission> responseFailure = this.checkExerciseValidity(textExercise);
         if (responseFailure != null) return responseFailure;
 
-        Participation participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
+        Optional<Participation> optionalParticipation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
+        if (!optionalParticipation.isPresent()) {
+            throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + exerciseId);
+        }
+        Participation participation = optionalParticipation.get();
 
         // update and save submission
         textSubmission = textSubmissionService.save(textSubmission, textExercise, participation);

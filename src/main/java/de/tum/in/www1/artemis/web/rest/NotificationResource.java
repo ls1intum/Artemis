@@ -8,6 +8,7 @@ import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -40,6 +41,7 @@ public class NotificationResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/notifications")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Notification> createNotification(@RequestBody Notification notification) throws URISyntaxException {
         log.debug("REST request to save Notification : {}", notification);
         if (notification.getId() != null) {
@@ -61,6 +63,7 @@ public class NotificationResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/notifications")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Notification> updateNotification(@RequestBody Notification notification) throws URISyntaxException {
         log.debug("REST request to update Notification : {}", notification);
         if (notification.getId() == null) {
@@ -73,23 +76,13 @@ public class NotificationResource {
     }
 
     /**
-     * GET  /notifications : get all the notifications.
-     *
-     * @return the ResponseEntity with status 200 (OK) and the list of notifications in body
-     */
-    @GetMapping("/notifications")
-    public List<Notification> getAllNotifications() {
-        log.debug("REST request to get all Notifications");
-        return notificationRepository.findAll();
-    }
-
-    /**
      * GET  /notifications/:id : get the "id" notification.
      *
      * @param id the id of the notification to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the notification, or with status 404 (Not Found)
      */
     @GetMapping("/notifications/{id}")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Notification> getNotification(@PathVariable Long id) {
         log.debug("REST request to get Notification : {}", id);
         Optional<Notification> notification = notificationRepository.findById(id);
@@ -103,6 +96,7 @@ public class NotificationResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/notifications/{id}")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteNotification(@PathVariable Long id) {
         log.debug("REST request to delete Notification : {}", id);
         notificationRepository.deleteById(id);

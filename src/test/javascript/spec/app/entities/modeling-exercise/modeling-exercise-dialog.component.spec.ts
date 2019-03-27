@@ -1,5 +1,5 @@
 /* tslint:disable max-line-length */
-import { ComponentFixture, TestBed, async, inject, fakeAsync, tick } from '@angular/core/testing';
+import { async, ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable } from 'rxjs/Observable';
@@ -9,6 +9,7 @@ import { ArTEMiSTestModule } from '../../../test.module';
 import { ModelingExerciseDialogComponent } from '../../../../../../main/webapp/app/entities/modeling-exercise/modeling-exercise-dialog.component';
 import { ModelingExerciseService } from '../../../../../../main/webapp/app/entities/modeling-exercise/modeling-exercise.service';
 import { ModelingExercise } from '../../../../../../main/webapp/app/entities/modeling-exercise/modeling-exercise.model';
+import { DiagramType } from '@ls1intum/apollon';
 
 describe('Component Tests', () => {
 
@@ -44,7 +45,7 @@ describe('Component Tests', () => {
                 inject([],
                     fakeAsync(() => {
                         // GIVEN
-                        const entity = new ModelingExercise(123);
+                        const entity = new ModelingExercise(DiagramType.ClassDiagram);
                         spyOn(service, 'update').and.returnValue(Observable.of(new HttpResponse({body: entity})));
                         comp.modelingExercise = entity;
                         // WHEN
@@ -64,7 +65,7 @@ describe('Component Tests', () => {
                 inject([],
                     fakeAsync(() => {
                         // GIVEN
-                        const entity = new ModelingExercise();
+                        const entity = new ModelingExercise(DiagramType.ClassDiagram);
                         spyOn(service, 'create').and.returnValue(Observable.of(new HttpResponse({body: entity})));
                         comp.modelingExercise = entity;
                         // WHEN

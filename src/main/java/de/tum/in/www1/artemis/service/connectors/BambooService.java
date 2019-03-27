@@ -266,9 +266,10 @@ public class BambooService implements ContinuousIntegrationService {
             String message = getBambooClient().getPlanHelper().clonePlan(templateProject + "-" + templatePlan, toPlan, toPlan, "", "", true);
             log.info("Clone build plan " + toPlan + " was successful." + message);
         } catch (CliClient.ClientException clientException) {
-            log.error(clientException.getMessage(), clientException);
             if (clientException.getMessage().contains("already exists")) {
                 throw new BambooException(clientException.getMessage());
+            } else {
+                log.error(clientException.getMessage(), clientException);
             }
         } catch (CliClient.RemoteRestException e) {
             log.error(e.getMessage(), e);

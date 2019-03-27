@@ -1309,9 +1309,14 @@ table.answer-options-result {
 
 /* Start Changes Progress Bar */
 
+.stepwizardquiz {
+    ngb-tooltip-window {
+        width: 200px!important;
+    }
+}
+
 ngb-tooltip-window {
     padding: 0;
-    width: 200px!important;
     /*background: #cf0!important;*/
 }
 

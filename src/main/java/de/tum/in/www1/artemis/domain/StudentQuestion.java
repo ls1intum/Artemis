@@ -37,7 +37,7 @@ public class StudentQuestion implements Serializable {
     @Column(name = "visible_for_students")
     private Boolean visibleForStudents;
 
-    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "question", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<StudentQuestionAnswer> answers = new HashSet<>();
 

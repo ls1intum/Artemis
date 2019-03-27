@@ -9,13 +9,13 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/modeling-submission';
 import { ExampleSubmissionService } from 'app/entities/example-submission/example-submission.service';
 import { Feedback } from 'app/entities/feedback';
-import { ModelingAssessmentService } from 'app/entities/modeling-assessment';
 import { Result } from 'app/entities/result';
 // import { HighlightColors } from 'app/text-shared/highlight-colors';
 import { ModelingExercise } from 'app/entities/modeling-exercise';
 import { TutorParticipationService } from 'app/tutor-exercise-dashboard/tutor-participation.service';
 import { TutorParticipation } from 'app/entities/tutor-participation';
 import { ModelingEditorComponent } from 'app/modeling-editor';
+import { ModelingAssessmentService } from 'app/modeling-assessment';
 
 @Component({
     selector: 'jhi-example-modeling-submission',

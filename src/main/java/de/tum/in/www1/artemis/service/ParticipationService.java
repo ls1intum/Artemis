@@ -170,19 +170,25 @@ public class ParticipationService {
      *
      * If the quiz hasn't ended, participation is constructed from cached submission
      *
-     * If the quis has ended, we first look in the database for the participation
+     * If the quiz has ended, we first look in the database for the participation
      * and construct one if none was found
      *
      * @param quizExercise the quiz exercise to attach to the participation
      * @param username     the username of the user that the participation belongs to
-     * @return the found or created participation
+     * @return the found or created participation with a result
      */
 
-    //TODO The method name is misleading. It sounds that data is only read, but it is also changed, see e.g. below setRated(true)
-    public Participation getParticipationForQuiz(QuizExercise quizExercise, String username) {
+    public Participation participationForQuizWithResult(QuizExercise quizExercise, String username) {
         if (quizExercise.isEnded()) {
             // try getting participation from database first
-            Participation participation = findOneByExerciseIdAndStudentLoginAnyState(quizExercise.getId(), username);
+            Optional<Participation> optionalParticipation = findOneByExerciseIdAndStudentLoginAnyState(quizExercise.getId(), username);
+
+            if (!optionalParticipation.isPresent()) {
+                log.error("Participation in quiz " + quizExercise.getTitle() + " not found for user " + username);
+                //TODO properly handle this case
+                return null;
+            }
+            Participation participation = optionalParticipation.get();
             // add exercise
             participation.setExercise(quizExercise);
 
@@ -248,7 +254,7 @@ public class ParticipationService {
      * @param exercise exercise to which the inactive participation belongs
      * @return resumed participation
      */
-    public Participation resume(Exercise exercise, Participation participation) {
+    public Participation resumeExercise(Exercise exercise, Participation participation) {
         ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
         participation = copyBuildPlan(participation, programmingExercise);
         participation = configureBuildPlan(participation);
@@ -412,7 +418,6 @@ public class ParticipationService {
         return participation.get();
     }
 
-
     /**
      * Get one initialized/inactive participation by its student and exercise.
      *
@@ -439,12 +444,10 @@ public class ParticipationService {
      * @param username   the username of the student
      * @return the entity
      */
-    @NotNull
     @Transactional(readOnly = true)
-    public Participation findOneByExerciseIdAndStudentLoginAnyState(Long exerciseId, String username) {
+    public Optional<Participation> findOneByExerciseIdAndStudentLoginAnyState(Long exerciseId, String username) {
         log.debug("Request to get Participation for User {} for Exercise with id: {}", username, exerciseId);
-        return participationRepository.findOneByExerciseIdAndStudentLogin(exerciseId, username)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + username + " in exercise " + exerciseId));
+        return participationRepository.findOneByExerciseIdAndStudentLogin(exerciseId, username);
     }
 
 
@@ -657,4 +660,5 @@ public class ParticipationService {
             delete(participation.getId(), deleteBuildPlan, deleteRepository);
         }
     }
+
 }

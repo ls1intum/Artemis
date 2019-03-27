@@ -4,7 +4,6 @@ import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ModelingExercise;
 import de.tum.in.www1.artemis.domain.ModelingSubmission;
-import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -26,7 +25,6 @@ import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +32,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 public class CompassService {
@@ -75,6 +72,11 @@ public class CompassService {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.participationRepository = participationRepository;
+    }
+
+    public boolean isSupported(DiagramType diagramType) {
+        // at the moment, we only support class diagrams
+        return diagramType == DiagramType.ClassDiagram;
     }
 
     /**
@@ -209,7 +211,7 @@ public class CompassService {
                  * Workaround for ignoring automatic assessments of unsupported modeling exercise types
                  * TODO remove this after adapting compass
                  */
-                if (!modelingExercise.getDiagramType().equals(DiagramType.CLASS)) {
+                if (!modelingExercise.getDiagramType().equals(DiagramType.ClassDiagram)) {
                     return;
                 }
                 // Round compass grades to avoid machine precision errors, make the grades more readable
@@ -220,7 +222,7 @@ public class CompassService {
                 // Save to database
                 List<Feedback> automaticFeedbackAssessments = engine.convertToFeedback(grade, modelId, result);
                 result.getFeedbacks().addAll(automaticFeedbackAssessments);
-                result.setHasFeedback(true);
+                result.setHasFeedback(false);
 
                 result.setRatedIfNotExceeded(modelingExercise.getDueDate(), modelingSubmission.get().getSubmissionDate());
                 result.setAssessmentType(AssessmentType.AUTOMATIC);
@@ -242,18 +244,48 @@ public class CompassService {
         }
     }
 
+    /**
+     * Round compass grades to avoid machine precision errors, make the grades more readable and give a slight
+     * advantage which makes 100% scores easier reachable.
+     * Also see https://confluencebruegge.in.tum.de/display/ArTEMiS/Feature+suggestions for more information.
+     *
+     * Positive values
+     *   > [x.0, x.15[ gets rounded to x.0
+     *   > [x.15, x.65[ gets rounded to x.5
+     *   > [x.65, x + 1[ gets rounded to x + 1
+     *
+     * Negative values
+     *   > [-x - 1, -x.85[ gets rounded to -x - 1
+     *   > [-x.85, -x.35[ gets rounded to -x.5
+     *   > [-x.35, -x.0[ gets rounded to -x.0
+     *
+     * @param grade the grade for which the points should be rounded
+     * @return the rounded compass grade
+     */
     private Grade roundGrades(Grade grade) {
         Map<String, Double> jsonIdPointsMapping = grade.getJsonIdPointsMapping();
         BigDecimal pointsSum = new BigDecimal(0);
         for (Map.Entry<String, Double> entry : jsonIdPointsMapping.entrySet()) {
             BigDecimal point = new BigDecimal(entry.getValue());
+            boolean isNegative = point.doubleValue() < 0;
+            // get the fractional part of the entry score and subtract 0.15 (e.g. 1.5 -> 0.35 or -1.5 -> -0.65)
             double fractionalPart = point.remainder(BigDecimal.ONE).subtract(new BigDecimal(0.15)).doubleValue();
+            // remove the fractional part of the entry score (e.g. 1.5 -> 1 or -1.5 -> -1)
             point = point.setScale(0, RoundingMode.DOWN);
+
+            if (isNegative) {
+                // for negative values subtract 1 to get the lower integer value (e.g. -1.5 -> -1 -> -2)
+                point = point.subtract(BigDecimal.ONE);
+                // and add 1 to the fractional part to get it into the same positive range as we have for positive values (e.g. -1.5 -> -0.5 -> 0.5)
+                fractionalPart += 1;
+            }
+
             if (fractionalPart >= 0.5) {
                 point = point.add(new BigDecimal(1));
             } else if (fractionalPart >= 0) {
                 point = point.add(new BigDecimal(0.5));
             }
+
             jsonIdPointsMapping.put(entry.getKey(), point.doubleValue());
             pointsSum = pointsSum.add(point);
         }

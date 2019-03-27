@@ -21,9 +21,12 @@ import {
     OverviewCourseCardComponent,
     ExerciseActionButtonComponent,
     CourseExerciseDetailsComponent,
+    DifficultyBadgeComponent,
     ExerciseDetailsStudentActionsComponent
 } from './';
 import { ArTEMiSResultModule } from 'app/entities/result';
+import { SecuredImageComponent } from 'app/components/util/secured-image.component';
+import { ArTEMiSQuizModule } from 'app/quiz/participate';
 
 const ENTITY_STATES = [
     ...OVERVIEW_ROUTES
@@ -49,6 +52,7 @@ const ENTITY_STATES = [
         ExerciseActionButtonComponent,
         CourseGradeBookComponent,
         ExerciseDetailsStudentActionsComponent,
+        DifficultyBadgeComponent,
         ExerciseTypePipe,
         SidePanelComponent
     ],

@@ -18,6 +18,8 @@
             },
             "totalScore": "Total Score:",
             "title": "Title",
+            "color": "Color",
+            "courseIcon": "Course Icon",
             "shortName": "Short Name",
             "studentGroupName": "Student Group",
             "teachingAssistantGroupName": "Tutor Group",
@@ -26,11 +28,14 @@
             "startDate": "Start",
             "endDate": "End",
             "onlineCourse": "Online Course",
+            "registrationEnabled": "Registration Enabled",
             "exercises": "Exercises",
             "programmingExercises": "Programming Exercises",
             "quizExercises": "Quiz Exercises",
             "modelingExercises": "Modeling Exercises",
             "textExercises": "Text Exercises (Beta)",
+            "upload": "Upload",
+            "uploading": "Uploading...",
             "fileUploadExercises": "File Upload Exercises (Beta)",
             "form": {
                 "shortname": {

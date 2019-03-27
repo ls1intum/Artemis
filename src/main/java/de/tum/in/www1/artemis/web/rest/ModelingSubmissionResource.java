@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.web.rest;
 import java.net.URISyntaxException;
 import java.security.Principal;
 import java.util.List;
+import java.util.Optional;
+
 import org.slf4j.*;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -13,6 +15,8 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.web.rest.errors.*;
 import io.swagger.annotations.*;
+import org.springframework.web.server.ResponseStatusException;
+
 import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 /**
@@ -37,7 +41,9 @@ public class ModelingSubmissionResource {
     private final CompassService compassService;
 
 
-    public ModelingSubmissionResource(ModelingSubmissionService modelingSubmissionService, ModelingExerciseService modelingExerciseService, ParticipationService participationService, CourseService courseService, ResultService resultService, AuthorizationCheckService authCheckService, CompassService compassService) {
+    public ModelingSubmissionResource(ModelingSubmissionService modelingSubmissionService, ModelingExerciseService modelingExerciseService,
+                                      ParticipationService participationService, CourseService courseService, ResultService resultService,
+                                      AuthorizationCheckService authCheckService, CompassService compassService) {
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingExerciseService = modelingExerciseService;
         this.participationService = participationService;
@@ -70,9 +76,12 @@ public class ModelingSubmissionResource {
             throw new BadRequestAlertException("A new modelingSubmission cannot already have an ID", ENTITY_NAME, "idexists");
         }
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        Participation participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
+        Optional<Participation> participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
+        if (!participation.isPresent()) {
+            throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + exerciseId);
+        }
         checkAuthorization(modelingExercise);
-        modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, participation);
+        modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, participation.get());
         hideDetails(modelingSubmission);
         return ResponseEntity.ok(modelingSubmission);
     }
@@ -102,8 +111,11 @@ public class ModelingSubmissionResource {
             return createModelingSubmission(exerciseId, principal, modelingSubmission);
         }
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
-        Participation participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
-        modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, participation);
+        Optional<Participation> participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
+        if (!participation.isPresent()) {
+            throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + exerciseId);
+        }
+        modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, participation.get());
         hideDetails(modelingSubmission);
         return ResponseEntity.ok(modelingSubmission);
     }
@@ -143,24 +155,25 @@ public class ModelingSubmissionResource {
     public ResponseEntity<ModelingSubmission> getModelingSubmission(@PathVariable Long submissionId) {
         log.debug("REST request to get ModelingSubmission with id: {}", submissionId);
         ModelingSubmission modelingSubmission = modelingSubmissionService.findOneWithEagerResultAndFeedback(submissionId);
-        Exercise exercise = modelingSubmission.getParticipation().getExercise();
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
+        ModelingExercise modelingExercise = (ModelingExercise) modelingSubmission.getParticipation().getExercise();
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
             return forbidden();
         }
         if (modelingSubmission.getResult() == null) {
             modelingSubmissionService.setNewResult(modelingSubmission);
         }
         if (modelingSubmission.getResult().getAssessor() == null) {
-            compassService.removeModelWaitingForAssessment(exercise.getId(), submissionId);
+            if (compassService.isSupported(modelingExercise.getDiagramType())) {
+                compassService.removeModelWaitingForAssessment(modelingExercise.getId(), submissionId);
+            }
             //we set the assessor and save the result to soft lock the assessment (so that it cannot be edited by another tutor)
             resultService.setAssessor(modelingSubmission.getResult());
         }
         //Make sure the exercise is connected to the participation in the json response
-        modelingSubmission.getParticipation().setExercise(exercise);
+        modelingSubmission.getParticipation().setExercise(modelingExercise);
         hideDetails(modelingSubmission);
         return ResponseEntity.ok(modelingSubmission);
     }
-
 
     private void hideDetails(ModelingSubmission modelingSubmission) {
         //do not send old submissions or old results to the client
@@ -176,7 +189,6 @@ public class ModelingSubmissionResource {
             }
         }
     }
-
 
     private void checkAuthorization(ModelingExercise exercise) throws AccessForbiddenException {
         Course course = courseService.findOne(exercise.getCourse().getId());

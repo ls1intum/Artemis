@@ -134,6 +134,20 @@ public class FileUploadResource {
     }
 
     /**
+     * GET /files/course/icons/:courseId/:filename : Get the course image
+     *
+     * @param courseId ID of the course, the image belongs to
+     * @param filename   the filename of the file
+     * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
+     */
+    @GetMapping("/files/course/icons/{courseId}/{filename:.+}")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<byte[]> getCoursIcon(@PathVariable Long courseId, @PathVariable String filename) {
+        log.debug("REST request to get file : {}", filename);
+        return responseEntityForFilePath(Constants.COURSE_ICON_FILEPATH + filename);
+    }
+
+    /**
      * Reads the file and turns it into a ResponseEntity
      *
      * @param path the path for the file to read

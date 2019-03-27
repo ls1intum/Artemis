@@ -1,14 +1,13 @@
 import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, Input } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
-import { DiagramType, ModelingExercise } from '../entities/modeling-exercise';
+import { ModelingExercise } from '../entities/modeling-exercise';
 import { Participation } from '../entities/participation';
-import { ApollonDiagramService } from '../entities/apollon-diagram/apollon-diagram.service';
-import ApollonEditor, { ApollonOptions, Point, State } from '@ls1intum/apollon';
+import { ApollonDiagramService } from '../entities/apollon-diagram';
+import { ApollonEditor, ApollonMode, DiagramType, ElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
 import { Result } from '../entities/result';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
-import { ModelingAssessmentService } from '../entities/modeling-assessment';
 import * as $ from 'jquery';
 import { ModelingEditorService } from './modeling-editor.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -17,7 +16,8 @@ import { JhiWebsocketService } from '../core';
 import { Observable } from 'rxjs/Observable';
 import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
-import { ModelElementType } from 'app/entities/modeling-assessment/uml-element.model';
+import { ArtemisMarkdown } from 'app/components/util/markdown.service';
+import { ModelingAssessmentService } from 'app/modeling-assessment/modeling-assessment.service';
 
 @Component({
     selector: 'jhi-modeling-editor',
@@ -57,7 +57,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
      * JSON with the following keys: editor, entities, interactiveElements, relationships
      * format is given by Apollon
      */
-    submissionState: State;
+    submissionState: UMLModel;
 
     // TODO: rename
     assessmentResult: Result;
@@ -68,9 +68,9 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
      * an Array of model element IDs as keys with {x: <xOffset>, y: <yOffset>} as values
      * is used for positioning the assessment symbols
      */
-    positions: Map<string, Point>;
+    positions: Map<string, { x: number; y: number }>;
 
-    diagramState: State = null;
+    umlModel: UMLModel = null;
     isActive: boolean;
     isSaving: boolean;
     retryStarted = false;
@@ -78,6 +78,8 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
     autoSaveTimer: number;
 
     websocketChannel: string;
+
+    problemStatement: string;
 
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
@@ -89,7 +91,8 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         private modelingEditorService: ModelingEditorService,
         private modalService: NgbModal,
         private translateService: TranslateService,
-        private router: Router
+        private router: Router,
+        private artemisMarkdown: ArtemisMarkdown
     ) {
         this.isSaving = false;
         this.autoSaveTimer = 0;
@@ -110,9 +113,9 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                         }
                         this.participation = modelingSubmission.participation;
                         this._modelingExercise = this.participation.exercise as ModelingExercise;
+                        this.problemStatement = this.artemisMarkdown.htmlForMarkdown(this._modelingExercise.problemStatement);
                         this.checkDiagramType();
-                        this.isActive =
-                            this._modelingExercise.dueDate == null || new Date() <= moment(this._modelingExercise.dueDate).toDate();
+                        this.isActive = this._modelingExercise.dueDate == null || new Date() <= moment(this._modelingExercise.dueDate).toDate();
                         this._submission = modelingSubmission;
                         if (this._submission && this._submission.id && !this._submission.submitted) {
                             this.subscribeToWebsocket();
@@ -120,20 +123,14 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                         if (this._submission && this._submission.result) {
                             this.result = this._submission.result;
                         }
-                        this.initializeEditor();
                         if (this._submission && this._submission.submitted && this.result && this.result.completionDate) {
-                            if (this.result.assessments) {
-                                this.assessmentResult = JSON.parse(this.result.assessments);
+                            this.modelingAssessmentService.getAssessment(this._submission.id).subscribe((assessmentResult: Result) => {
+                                this.assessmentResult = assessmentResult;
                                 this.initializeAssessmentInfo();
-                            } else {
-                                this.modelingAssessmentService
-                                    .getAssessment(this._submission.id)
-                                    .subscribe(assessments => {
-                                        this.assessmentResult = assessments;
-                                        this.initializeAssessmentInfo();
-                                    });
-                            }
+                                this.initializeApollonEditor(JSON.parse(this._submission.model));
+                            });
                         }
+                        this.initializeEditor();
                     },
                     error => {
                         if (error.status === 403) {
@@ -147,17 +144,12 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
     }
 
     /**
-     * Set diagramType to class diagram if exercise is null, use case or communication diagram.
-     * Apollon does not support use case and communication diagram types yet.
+     * Set diagramType to class diagram if it is null
      */
     private checkDiagramType(): void {
         if (this._modelingExercise) {
-            if (
-                this._modelingExercise.diagramType === null ||
-                this._modelingExercise.diagramType === DiagramType.USE_CASE ||
-                this._modelingExercise.diagramType === DiagramType.COMMUNICATION
-            ) {
-                this._modelingExercise.diagramType = DiagramType.CLASS;
+            if (this._modelingExercise.diagramType == null) {
+                this._modelingExercise.diagramType = DiagramType.ClassDiagram;
             }
         }
     }
@@ -170,10 +162,10 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         this.jhiWebsocketService.subscribe(this.websocketChannel);
         this.jhiWebsocketService.receive(this.websocketChannel).subscribe(submission => {
             if (submission.submitted) {
-                this.submission = submission;
-                if (this.submission.result && this.submission.result.rated) {
-                    this.modelingAssessmentService.getAssessment(this._submission.id).subscribe(assessments => {
-                        this.assessmentResult = assessments;
+                this._submission = submission;
+                if (this._submission.result && this._submission.result.rated) {
+                    this.modelingAssessmentService.getAssessment(this._submission.id).subscribe((assessmentResult: Result) => {
+                        this.assessmentResult = assessmentResult;
                         this.initializeAssessmentInfo();
                     });
                 }
@@ -197,40 +189,36 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
 
     /**
      * This function initialized the Apollon editor depending on the submission status.
-     * If it was already submitted, the Apollon editor is loaded in read-only mode.
+     * If it was already submitted, the Apollon editor is loaded in Assessment read-only mode.
      * Otherwise, it is loaded in the modeling mode and an auto save timer is started.
      */
-    initializeApollonEditor(initialState: State) {
+    initializeApollonEditor(initialModel: UMLModel) {
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();
         }
 
         if (this._submission && this._submission.submitted) {
             clearInterval(this.autoSaveInterval);
+            if (this.assessmentResult && this.assessmentResult.feedbacks && this.assessmentResult.feedbacks.length > 0) {
+                initialModel.assessments = this.assessmentResult.feedbacks.map(feedback => {
+                    return {
+                        modelElementId: feedback.referenceId,
+                        elementType: feedback.referenceType,
+                        score: feedback.credits,
+                        feedback: feedback.text,
+                    };
+                });
+            }
             this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
-                initialState,
-                mode: 'READ_ONLY',
-                diagramType: <ApollonOptions['diagramType']>this._modelingExercise.diagramType
+                model: initialModel,
+                mode: ApollonMode.Assessment,
+                readonly: true,
+                type: this._modelingExercise.diagramType
             });
 
-            const state = this.apollonEditor.getState();
             this.apollonEditor.subscribeToSelectionChange(selection => {
-                const selectedEntities = [];
-                for (const entity of selection.entityIds) {
-                    selectedEntities.push(entity);
-                    for (const attribute of state.entities.byId[entity].attributes) {
-                        selectedEntities.push(attribute.id);
-                    }
-                    for (const method of state.entities.byId[entity].methods) {
-                        selectedEntities.push(method.id);
-                    }
-                }
-                this.selectedEntities = selectedEntities;
-                const selectedRelationships = [];
-                for (const rel of selection.relationshipIds) {
-                    selectedRelationships.push(rel);
-                }
-                this.selectedRelationships = selectedRelationships;
+                this.selectedEntities = selection.elements;
+                this.selectedRelationships = selection.relationships;
             });
 
             const apollonDiv = $('.apollon-editor > div');
@@ -244,10 +232,12 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
             });
         } else {
             this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
-                initialState,
-                mode: 'MODELING_ONLY',
-                diagramType: <ApollonOptions['diagramType']>this._modelingExercise.diagramType
+                model: initialModel,
+                mode: ApollonMode.Modelling,
+                readonly: false,
+                type: this._modelingExercise.diagramType
             });
+
             this.updateSubmissionModel();
             if (this.isExampleSubmission) {
                 return; // disable auto save for example submissions
@@ -279,7 +269,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         this.isSaving = true;
         this.autoSaveTimer = 0;
 
-        if (this.submission.id) {
+        if (this._submission.id) {
             this.modelingSubmissionService.update(this._submission, this._modelingExercise.id).subscribe(
                 response => {
                     this._submission = response.body;
@@ -302,8 +292,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                     this.result = this._submission.result;
                     this.isSaving = false;
                     this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
-                    this.isActive = this._modelingExercise.dueDate == null ||
-                        new Date() <= moment(this._modelingExercise.dueDate).toDate();
+                    this.isActive = this._modelingExercise.dueDate == null || new Date() <= moment(this._modelingExercise.dueDate).toDate();
                     this.subscribeToWebsocket();
                 },
                 error => {
@@ -319,7 +308,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
             return;
         }
         this.updateSubmissionModel();
-        if (!this.diagramState || this.diagramState.entities.allIds.length === 0) {
+        if (!this.umlModel || this.umlModel.elements.length === 0) {
             this.jhiAlertService.warning('arTeMiSApp.modelingEditor.empty');
             return;
         }
@@ -332,7 +321,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         }
 
         if (confirmSubmit) {
-            this.submission.submitted = true;
+            this._submission.submitted = true;
             this.modelingSubmissionService.update(this._submission, this._modelingExercise.id).subscribe(
                 response => {
                     this._submission = response.body;
@@ -342,8 +331,8 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                         const participation = this.participation;
                         participation.results = [this.result];
                         this.participation = Object.assign({}, participation);
-                        this.modelingAssessmentService.getAssessment(this._submission.id).subscribe(assessments => {
-                            this.assessmentResult = assessments;
+                        this.modelingAssessmentService.getAssessment(this._submission.id).subscribe((assessmentResult: Result) => {
+                            this.assessmentResult = assessmentResult;
                             this.initializeAssessmentInfo();
                         });
                         this.jhiAlertService.success('arTeMiSApp.modelingEditor.submitSuccessfulWithAssessment');
@@ -384,25 +373,23 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
     }
 
     /**
-     * Saves the current model state in the attribute diagramState and updates the model of the submission object
-     * with the current state of the Apollon editor.
+     * Updates the model of the submission with the current Apollon model state
      */
     updateSubmissionModel() {
-        this.diagramState = this.apollonEditor.getState();
-        const diagramJson = JSON.stringify(this.diagramState);
+        this.umlModel = this.apollonEditor.model;
+        const diagramJson = JSON.stringify(this.umlModel);
         if (this._submission && diagramJson != null) {
             this._submission.model = diagramJson;
         }
     }
 
     /**
-     * Retrieves names and positions for displaying the assessment and calculates the total score
+     * Retrieves names for displaying the assessment and calculates the total score
      */
     initializeAssessmentInfo() {
         if (this.assessmentResult && this._submission && this._submission.model) {
             this.submissionState = JSON.parse(this._submission.model);
             this.assessmentsNames = this.modelingAssessmentService.getNamesForAssessments(this.assessmentResult, this.submissionState);
-            this.positions = this.modelingAssessmentService.getElementPositions(this.assessmentResult, this.submissionState);
             let totalScore = 0;
             for (const feedback of this.assessmentResult.feedbacks) {
                 totalScore += feedback.credits;
@@ -411,35 +398,21 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         }
     }
 
-    getElementPositions() {
-        // TODO: use Result instead of ModelingAssessment
-        this.positions = this.modelingAssessmentService.getElementPositions(this.assessmentResult, this.apollonEditor.getState());
-    }
-
-    /**
-     * This function is used for limiting the number of symbols for the assessment to 5.
-     * For each point an <i> element is created
-     */
-    numberToArray(n: number, startFrom: number): number[] {
-        n = n > 5 ? 5 : n;
-        n = n < -5 ? -5 : n;
-        return this.modelingAssessmentService.numberToArray(n, startFrom);
-    }
-
     /**
      * Checks whether a model element in the modeling editor is selected.
      */
-    isSelected(id: string, type: ModelElementType) {
+    isSelected(modelElementId: string, type: ElementType) {
         if (
             (!this.selectedEntities || this.selectedEntities.length === 0) &&
             (!this.selectedRelationships || this.selectedRelationships.length === 0)
         ) {
             return true;
         }
-        if (type !== ModelElementType.RELATIONSHIP) {
-            return this.selectedEntities.indexOf(id) > -1;
+        // TODO does this work?
+        if (type in UMLRelationshipType) {
+            return this.selectedRelationships.indexOf(modelElementId) > -1;
         } else {
-            return this.selectedRelationships.indexOf(id) > -1;
+            return this.selectedEntities.indexOf(modelElementId) > -1;
         }
     }
 
@@ -447,23 +420,19 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
      * Opens the modal for the help dialog.
      */
     open(content: any) {
-        this.modalService.open(content, {size: 'lg'});
+        this.modalService.open(content, { size: 'lg' });
     }
 
     /**
      * Checks whether there are pending changes of the model.
      */
     canDeactivate(): Observable<boolean> | boolean {
-        if (
-            (!this._submission &&
-                this.apollonEditor &&
-                this.apollonEditor.getState().entities.allIds.length > 0 &&
-                JSON.stringify(this.apollonEditor.getState()) !== '') ||
-            (this._submission &&
-                this._submission.model &&
-                JSON.parse(this._submission.model).version === this.apollonEditor.getState().version &&
-                this._submission.model !== JSON.stringify(this.apollonEditor.getState()))
-        ) {
+        if (this._submission && this._submission.submitted) {
+            return true;
+        }
+        const jsonModel = JSON.stringify(this.apollonEditor.model);
+        if ((!this._submission && this.apollonEditor && this.apollonEditor.model.elements.length > 0 && jsonModel !== '') ||
+            (this._submission && this._submission.model && JSON.parse(this._submission.model).version === this.apollonEditor.model.version && this._submission.model !== jsonModel)) {
             return false;
         }
         return true;
@@ -500,13 +469,8 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
      * is used in the submit() function
      */
     calculateNumberOfModelElements(): number {
-        if (this.diagramState) {
-            let total = this.diagramState.entities.allIds.length + this.diagramState.relationships.allIds.length;
-            for (const elem of this.diagramState.entities.allIds) {
-                total += this.diagramState.entities.byId[elem].attributes.length;
-                total += this.diagramState.entities.byId[elem].methods.length;
-            }
-            return total;
+        if (this.umlModel) {
+            return this.umlModel.elements.length + this.umlModel.relationships.length;
         }
         return 0;
     }

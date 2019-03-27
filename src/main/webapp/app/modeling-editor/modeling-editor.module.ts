@@ -7,6 +7,7 @@ import { ArTEMiSResultModule, ResultComponent } from '../entities/result';
 import { ModelingEditorService } from './modeling-editor.service';
 import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
+import { AceEditorModule } from 'ng2-ace-editor';
 
 const ENTITY_STATES = [
     ...modelingEditorRoute,
@@ -16,7 +17,8 @@ const ENTITY_STATES = [
     imports: [
         ArTEMiSSharedModule,
         RouterModule.forChild(ENTITY_STATES),
-        ArTEMiSResultModule
+        ArTEMiSResultModule,
+        AceEditorModule
     ],
     declarations: [
         ModelingEditorComponent

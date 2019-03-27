@@ -57,7 +57,7 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
            return 'opaque';
        }
 
-       if (step === this.TRAINED && this.tutorParticipation.trainedExampleSubmissions.length > 0) {
+       if (step === this.TRAINED && this.tutorParticipation.trainedExampleSubmissions && this.tutorParticipation.trainedExampleSubmissions.length > 0) {
            return 'orange';
        }
     }

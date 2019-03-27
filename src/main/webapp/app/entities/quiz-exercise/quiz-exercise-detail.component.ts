@@ -1,12 +1,11 @@
-import { Component, HostListener, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, HostListener, OnChanges, OnInit, QueryList, SimpleChanges, ViewChildren, ChangeDetectionStrategy } from '@angular/core';
 import { QuizExerciseService } from './quiz-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Course, CourseService } from 'app/entities/course';
 import { QuizExercise } from './quiz-exercise.model';
-import { DragAndDropQuestionUtil } from '../../components/util/drag-and-drop-question-util.service';
-import { ShortAnswerQuestionUtil } from '../../components/util/short-answer-question-util.service';
+import { DragAndDropQuestionUtil } from 'app/components/util/drag-and-drop-question-util.service';
+import { ShortAnswerQuestionUtil } from 'app/components/util/short-answer-question-util.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { QuizQuestion, QuizQuestionType, ScoringType } from '../quiz-question';
@@ -22,8 +21,16 @@ import { Location } from '@angular/common';
 import { ComponentCanDeactivate } from 'app/shared';
 import { JhiAlertService } from 'ng-jhipster';
 import { Observable } from 'rxjs/Observable';
+import { EditDragAndDropQuestionComponent, EditMultipleChoiceQuestionComponent, EditShortAnswerQuestionComponent } from 'app/quiz/edit';
+import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
+import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 
 interface Reason {
+    translateKey: string;
+    translateValues: {};
+}
+
+interface Warning {
     translateKey: string;
     translateValues: {};
 }
@@ -31,17 +38,26 @@ interface Reason {
 @Component({
     selector: 'jhi-quiz-exercise-detail',
     templateUrl: './quiz-exercise-detail.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
     providers: [DragAndDropQuestionUtil, ShortAnswerQuestionUtil]
 })
-export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy, ComponentCanDeactivate {
+export class QuizExerciseDetailComponent implements OnInit, OnChanges, ComponentCanDeactivate {
     // Make constants available to html for comparison
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
 
+    @ViewChildren('editMultipleChoice')
+    editMultipleChoiceQuestionComponents: QueryList<EditMultipleChoiceQuestionComponent>;
+
+    @ViewChildren('editDragAndDrop')
+    editDragAndDropQuestionComponents: QueryList<EditDragAndDropQuestionComponent>;
+
+    @ViewChildren('editShortAnswer')
+    editShortAnswerQuestionComponents: QueryList<EditShortAnswerQuestionComponent>;
+
     course: Course;
     quizExercise: QuizExercise;
-    paramSub: Subscription;
     courseRepository: CourseService;
 
     entity: QuizExercise;
@@ -72,24 +88,31 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
 
     /** Status constants **/
     isSaving = false;
-    isTrue = true;
+    quizIsValid: boolean;
+    warningQuizCache = false;
+    pendingChangesCache: boolean;
 
     /** Status Options **/
     statusOptionsVisible: Option[] = [new Option(false, 'Hidden'), new Option(true, 'Visible')];
     statusOptionsPractice: Option[] = [new Option(false, 'Closed'), new Option(true, 'Open for Practice')];
     statusOptionsActive: Option[] = [new Option(true, 'Active')];
 
+    exerciseCategories: ExerciseCategory[];
+    existingCategories: ExerciseCategory[];
+
     constructor(
         private route: ActivatedRoute,
         private courseService: CourseService,
         private quizExerciseService: QuizExerciseService,
-        private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
-        private shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
+        public dragAndDropQuestionUtil: DragAndDropQuestionUtil,
+        public shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
         private router: Router,
         private translateService: TranslateService,
         private fileUploaderService: FileUploaderService,
+        private exerciseService: ExerciseService,
         private jhiAlertService: JhiAlertService,
-        private location: Location
+        private location: Location,
+        private changeDetector: ChangeDetectorRef,
     ) {}
 
     ngOnInit(): void {
@@ -110,24 +133,24 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         const today = moment();
         this.minDate = { year: today.year(), month: today.month() + 1, day: today.date() };
 
-        this.paramSub = this.route.params.subscribe(params => {
-            /** Query the courseService for the participationId given by the params */
-            if (params['courseId']) {
-                this.courseService.find(params['courseId']).subscribe((response: HttpResponse<Course>) => {
-                    this.course = response.body;
-                    // Make sure to call init if we didn't receive an id => new quiz-exercise
-                    if (!params['id']) {
-                        this.init();
-                    }
-                });
-            }
-            if (params['id']) {
-                this.quizExerciseService.find(params['id']).subscribe((response: HttpResponse<QuizExercise>) => {
-                    this.quizExercise = response.body;
+        const courseId = +this.route.snapshot.paramMap.get('courseId');
+        const quizId = +this.route.snapshot.paramMap.get('id');
+        /** Query the courseService for the participationId given by the params */
+        if (courseId) {
+            this.courseService.find(courseId).subscribe((response: HttpResponse<Course>) => {
+                this.course = response.body;
+                // Make sure to call init if we didn't receive an id => new quiz-exercise
+                if (!quizId) {
                     this.init();
-                });
-            }
-        });
+                }
+            });
+        }
+        if (quizId) {
+            this.quizExerciseService.find(quizId).subscribe((response: HttpResponse<QuizExercise>) => {
+                this.quizExercise = response.body;
+                this.init();
+            });
+        }
         this.courseRepository = this.courseService;
     }
 
@@ -157,7 +180,15 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         if (!this.quizExercise.course) {
             this.quizExercise.course = this.course;
         }
+        this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.quizExercise);
+        this.courseService.findAllCategoriesOfCourse(this.quizExercise.course.id).subscribe(
+            (res: HttpResponse<string[]>) => {
+                this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body);
+            },
+            (res: HttpErrorResponse) => this.onError(res)
+        );
         this.updateDuration();
+        this.cacheValidation();
     }
 
     ngOnChanges(changes: SimpleChanges): void {
@@ -166,12 +197,17 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         }
     }
 
+    updateCategories(categories: ExerciseCategory[]) {
+        this.quizExercise.categories = categories.map(el => JSON.stringify(el));
+        this.cacheValidation();
+    }
+
     /**
      * @function showDropdown
      * @desc Determine which dropdown to display depending on the relationship between start time, end time, and current time
      * @returns {string} Name of the dropdown to show
      */
-    showDropdown(): string {
+    get showDropdown(): string {
         if (this.quizExercise && this.quizExercise.isPlannedToStart) {
             const plannedEndMoment = moment(this.quizExercise.releaseDate).add(this.quizExercise.duration, 'seconds');
             if (plannedEndMoment.isBefore(moment())) {
@@ -184,7 +220,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     }
 
     canDeactivate(): Observable<boolean> | boolean {
-        return !this.pendingChanges();
+        return !this.pendingChangesCache;
     }
 
     // displays the alert for confirming refreshing or closing the page if there are unsaved changes
@@ -229,10 +265,11 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
 
         const incorrectSampleAnswerOption = new AnswerOption();
         incorrectSampleAnswerOption.isCorrect = false;
-        incorrectSampleAnswerOption.text = 'Enter an incorrect answer option here';
+        incorrectSampleAnswerOption.text = 'Enter an wrong answer option here';
 
         mcQuestion.answerOptions = [correctSampleAnswerOption, incorrectSampleAnswerOption];
         this.quizExercise.quizQuestions.push(mcQuestion);
+        this.cacheValidation();
     }
 
     /**
@@ -254,6 +291,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         dndQuestion.dragItems = [];
         dndQuestion.correctMappings = [];
         this.quizExercise.quizQuestions.push(dndQuestion);
+        this.cacheValidation();
     }
 
     /**
@@ -275,7 +313,9 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         shortAnswerQuestion.solutions = [];
         shortAnswerQuestion.correctMappings = [];
         this.quizExercise.quizQuestions.push(shortAnswerQuestion);
+        this.cacheValidation();
     }
+
     /**
      * @function calculateMaxExerciseScore
      * @desc Iterates over the questions of the quizExercise and calculates the sum of all question scores
@@ -304,6 +344,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         this.showExistingQuestions = !this.showExistingQuestions;
         this.selectedCourseId = null;
         this.allExistingQuestions = this.existingQuestions = [];
+        this.changeDetector.detectChanges();
     }
 
     /**
@@ -346,6 +387,10 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         );
     }
 
+    private onError(error: HttpErrorResponse) {
+        this.jhiAlertService.error(error.message);
+    }
+
     /**
      * @function applyFilter
      * @desc Applies filter on questions shown in add existing questions view.
@@ -374,6 +419,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                 }
             }
         }
+        this.cacheValidation();
     }
 
     /**
@@ -387,6 +433,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
             this.importFile = fileList[0];
             this.importFileName = this.importFile['name'];
         }
+        this.changeDetector.detectChanges();
     }
 
     /**
@@ -404,6 +451,22 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         this.showExistingQuestions = !this.showExistingQuestions;
         this.selectedCourseId = null;
         this.allExistingQuestions = this.existingQuestions = [];
+        this.cacheValidation();
+    }
+
+    /**
+     * @function cacheValidation
+     * @desc 1. Check whether the inputs in the quiz are valid
+     *       2. Check if warning are needed for the inputs
+     *       3. Display the warnings/invalid reasons in the html file if needed
+     */
+    cacheValidation(): void {
+        this.warningQuizCache = this.computeInvalidWarnings().length > 0;
+        this.quizIsValid = this.validQuiz();
+        this.pendingChangesCache = this.pendingChanges();
+        this.computeInvalidReasons();
+        this.computeInvalidWarnings();
+        this.changeDetector.detectChanges();
     }
 
     /**
@@ -413,6 +476,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      */
     deleteQuestion(questionToDelete: QuizQuestion): void {
         this.quizExercise.quizQuestions = this.quizExercise.quizQuestions.filter(question => question !== questionToDelete);
+        this.cacheValidation();
     }
 
     /**
@@ -420,6 +484,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      * @desc Handles the change of a question by replacing the array with a copy (allows for shallow comparison)
      */
     onQuestionUpdated(): void {
+        this.cacheValidation();
         this.quizExercise.quizQuestions = Array.from(this.quizExercise.quizQuestions);
     }
 
@@ -432,14 +497,25 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         if (!this.quizExercise || !this.savedEntity) {
             return false;
         }
-        const keysToCompare = ['title', 'duration', 'isPlannedToStart', 'isVisibleBeforeStart', 'isOpenForPractice'];
+        const keysToCompare = ['title', 'difficulty', 'duration', 'isPlannedToStart', 'isVisibleBeforeStart', 'isOpenForPractice'];
 
         // Unsaved changes if any of the stated object key values are not equal or the questions/release dates differ
         return (
             keysToCompare.some(key => this.quizExercise[key] !== this.savedEntity[key]) ||
             !this.areDatesIdentical(this.quizExercise.releaseDate, this.savedEntity.releaseDate) ||
+            !this.areCategoriesIdentical(this.quizExercise.categories, this.savedEntity.categories) ||
             !this.areQuizExerciseEntityQuestionsIdentical(this.quizExercise.quizQuestions, this.savedEntity.quizQuestions)
         );
+    }
+
+    areCategoriesIdentical(categoriesUsed: string[], categoriesSaved: string[]): boolean {
+        if (!categoriesUsed) {
+            categoriesUsed = [];
+        }
+        if (!categoriesSaved) {
+            categoriesSaved = [];
+        }
+        return JSON.stringify(categoriesUsed).toLowerCase() === JSON.stringify(categoriesSaved).toLowerCase();
     }
 
     /**
@@ -471,7 +547,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      * @desc Check if the current inputs are valid
      * @returns {boolean} true if valid, false otherwise
      */
-    validQuiz(): boolean {
+    private validQuiz(): boolean {
         if (!this.quizExercise) {
             return false;
         }
@@ -494,7 +570,9 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         const areAllQuestionsValid = this.quizExercise.quizQuestions.every(function(question) {
             if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                 const mcQuestion = question as MultipleChoiceQuestion;
-                return question.title && question.title !== '' && question.title.length < 250 && mcQuestion.answerOptions.some(answerOption => answerOption.isCorrect);
+                if (mcQuestion.answerOptions.some(answerOption => answerOption.isCorrect)) {
+                    return question.title && question.title !== '' && question.title.length < 250;
+                }
             } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
                 const dndQuestion = question as DragAndDropQuestion;
                 return (
@@ -528,36 +606,54 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     }
 
     /**
+     * @function computeInvalidWarnings
+     * @desc Get the reasons, why the quiz needs warnings
+     * @returns {Array} array of objects with fields 'translateKey' and 'translateValues'
+     */
+    computeInvalidWarnings(): Warning[] {
+        const invalidWarnings = !this.quizExercise ? [] : this.quizExercise.quizQuestions.map((question, index) => {
+                if (question.type === QuizQuestionType.MULTIPLE_CHOICE
+                    && (<MultipleChoiceQuestion>question).answerOptions.some(option => !option.explanation)) {
+                    return {
+                        translateKey: 'arTeMiSApp.quizExercise.invalidReasons.explanationIsMissing',
+                        translateValues: {index: index + 1}
+                    };
+                }
+            }).filter(Boolean);
+        return invalidWarnings;
+    }
+
+    /**
      * @function invalidReasons
      * @desc Get the reasons, why the quiz is invalid
      * @returns {Array} array of objects with fields 'translateKey' and 'translateValues'
      */
-    invalidReasons(): Reason[] {
-        const reasons = new Array<Reason>();
+    computeInvalidReasons(): Reason[] {
+        const invalidReasons = new Array<Reason>();
         if (!this.quizExercise) {
             return;
         }
 
         if (!this.quizExercise.title || this.quizExercise.title === '') {
-            reasons.push({
+            invalidReasons.push({
                 translateKey: 'arTeMiSApp.quizExercise.invalidReasons.quizTitle',
                 translateValues: {}
             });
         }
         if (this.quizExercise.title.length >= 250) {
-            reasons.push({
+            invalidReasons.push({
                 translateKey: 'arTeMiSApp.quizExercise.invalidReasons.quizTitleLength',
                 translateValues: {}
             });
         }
         if (!this.quizExercise.duration) {
-            reasons.push({
+            invalidReasons.push({
                 translateKey: 'arTeMiSApp.quizExercise.invalidReasons.quizDuration',
                 translateValues: {}
             });
         }
         if (!this.quizExercise.quizQuestions || this.quizExercise.quizQuestions.length === 0) {
-            reasons.push({
+            invalidReasons.push({
                 translateKey: 'arTeMiSApp.quizExercise.invalidReasons.noQuestion',
                 translateValues: {}
             });
@@ -565,7 +661,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         /** We only verify the releaseDate if the checkbox is activated **/
         if (this.quizExercise.isPlannedToStart) {
             if (this.quizExercise.releaseDate == null || !moment(this.quizExercise.releaseDate).isValid()) {
-                reasons.push({
+                invalidReasons.push({
                     translateKey: 'arTeMiSApp.quizExercise.invalidReasons.invalidStartTime',
                     translateValues: {}
                 });
@@ -573,7 +669,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
             // Release Date valid but lies in the past
             if (this.quizExercise.releaseDate && moment(this.quizExercise.releaseDate).isValid()) {
                 if (moment(this.quizExercise.releaseDate).isBefore(moment())) {
-                    reasons.push({
+                    invalidReasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.startTimeInPast',
                         translateValues: {}
                     });
@@ -582,50 +678,57 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         }
         this.quizExercise.quizQuestions.forEach(function(question: QuizQuestion, index: number) {
             if (!question.title || question.title === '') {
-                reasons.push({
+                invalidReasons.push({
                     translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionTitle',
                     translateValues: { index: index + 1 }
                 });
             }
             if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                 const mcQuestion = question as MultipleChoiceQuestion;
-                if (!mcQuestion.answerOptions.some(answerOption => answerOption.isCorrect)) {
-                    reasons.push({
+                if (! (mcQuestion.answerOptions.some(answeroption => answeroption.isCorrect))) {
+                    invalidReasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionCorrectAnswerOption',
+                        translateValues: { index: index + 1 }
+                    });
+                }
+                if (!(mcQuestion.answerOptions.every(answeroption => answeroption.explanation !== ''))) {
+                    invalidReasons.push({
+                        translateKey: 'arTeMiSApp.quizExercise.invalidReasons.explanationIsMissing',
                         translateValues: { index: index + 1 }
                     });
                 }
             }
             if (question.title.length >= 250) {
-                reasons.push({
+                invalidReasons.push({
                     translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionTitleLength',
-                    translateValues: {index: index + 1}
+                    translateValues: { index: index + 1 }
                 });
             }
+
             if (question.type === QuizQuestionType.DRAG_AND_DROP) {
                 const dndQuestion = question as DragAndDropQuestion;
                 if (!dndQuestion.correctMappings || dndQuestion.correctMappings.length === 0) {
-                    reasons.push({
+                    invalidReasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionCorrectMapping',
-                        translateValues: { index: index + 1 }
+                        translateValues: {index: index + 1}
                     });
                 } else if (this.dragAndDropQuestionUtil.solve(dndQuestion, []).length === 0) {
-                    reasons.push({
+                    invalidReasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionUnsolvable',
-                        translateValues: { index: index + 1 }
+                        translateValues: {index: index + 1}
                     });
                 }
                 if (!this.dragAndDropQuestionUtil.validateNoMisleadingCorrectMapping(dndQuestion)) {
-                    reasons.push({
+                    invalidReasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.misleadingCorrectMapping',
-                        translateValues: { index: index + 1 }
+                        translateValues: {index: index + 1}
                     });
                 }
             }
             if (question.type === QuizQuestionType.SHORT_ANSWER) {
                 const shortAnswerQuestion = question as ShortAnswerQuestion;
                 if (!shortAnswerQuestion.correctMappings || shortAnswerQuestion.correctMappings.length === 0) {
-                    reasons.push({
+                    invalidReasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionCorrectMapping',
                         translateValues: { index: index + 1 }
                     });
@@ -636,44 +739,43 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                     });
                 } */
                 if (!this.shortAnswerQuestionUtil.validateNoMisleadingCorrectShortAnswerMapping(shortAnswerQuestion)) {
-                    reasons.push({
+                    invalidReasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.misleadingCorrectMapping',
                         translateValues: { index: index + 1 }
                     });
                 }
                 if (!this.shortAnswerQuestionUtil.everySpotHasASolution(shortAnswerQuestion.correctMappings, shortAnswerQuestion.spots)) {
-                    reasons.push({
+                    invalidReasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.shortAnswerQuestionEverySpotHasASolution',
                         translateValues: { index: index + 1 }
                     });
                 }
                 if (!this.shortAnswerQuestionUtil.everyMappedSolutionHasASpot(shortAnswerQuestion.correctMappings)) {
-                    reasons.push({
+                    invalidReasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.shortAnswerQuestionEveryMappedSolutionHasASpot',
                         translateValues: { index: index + 1 }
                     });
                 }
                 if (!(shortAnswerQuestion.solutions.filter(solution => solution.text.trim() === '').length === 0)) {
-                    reasons.push({
+                    invalidReasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.shortAnswerQuestionSolutionHasNoValue',
                         translateValues: { index: index + 1 }
                     });
                 }
                 if (this.shortAnswerQuestionUtil.hasMappingDuplicateValues(shortAnswerQuestion.correctMappings)) {
-                    reasons.push({
+                    invalidReasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.shortAnswerQuestionDuplicateMapping',
                         translateValues: { index: index + 1 }
                     });
                 }
                 if (!this.shortAnswerQuestionUtil.atLeastAsManySolutionsAsSpots(shortAnswerQuestion)) {
-                    reasons.push({
+                    invalidReasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.shortAnswerQuestionUnsolvable',
                         translateValues: { index: index + 1 }
                     });
                 }
             }
-        }, this);
-        return reasons;
+        }, this); return invalidReasons;
     }
 
     /**
@@ -684,7 +786,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     invalidReasonsHTML(): string {
         const translate = this.translateService;
         let reasonString = '';
-        for (const reason of this.invalidReasons()) {
+        for (const reason of this.computeInvalidReasons()) {
             translate.get(reason['translateKey'], reason['translateValues']).subscribe((res: string) => {
                 reasonString += res + '   -   ';
             });
@@ -716,6 +818,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
             }
         };
         fileReader.readAsText(this.importFile);
+        this.cacheValidation();
     }
 
     /**
@@ -808,16 +911,25 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     }
 
     /**
+     * @function triggers the parsing of the editor content in the designated edit component
+     */
+    parseAllQuestions(): void {
+        const editQuestionComponents: EditQuizQuestion[] = [...this.editMultipleChoiceQuestionComponents.toArray(), ...this.editDragAndDropQuestionComponents.toArray(), ...this.editShortAnswerQuestionComponents.toArray()];
+        editQuestionComponents.forEach(component => component.prepareForSave());
+    }
+
+    /**
      * @function save
      * @desc Save the quiz to the server and invoke callback functions depending of result
      */
     save(): void {
         this.onDateTimeChange();
-        if (this.hasSavedQuizStarted() || !this.pendingChanges() || !this.validQuiz()) {
+        if (this.hasSavedQuizStarted || !this.pendingChangesCache || !this.quizIsValid) {
             return;
         }
         this.isSaving = true;
-        if (this.quizExercise.id !== undefined) {
+        this.parseAllQuestions();
+        if ( this.quizExercise.id !== undefined) {
             this.quizExerciseService.update(this.quizExercise).subscribe(
                 (quizExerciseResponse: HttpResponse<QuizExercise>) => {
                     if (quizExerciseResponse.body) {
@@ -828,6 +940,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                 },
                 (res: HttpErrorResponse) => this.onSaveError(res)
             );
+            this.pendingChangesCache = false;
         } else {
             this.quizExerciseService.create(this.quizExercise).subscribe(
                 (quizExerciseResponse: HttpResponse<QuizExercise>) => {
@@ -839,6 +952,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                 },
                 (res: HttpErrorResponse) => this.onSaveError(res)
             );
+            this.pendingChangesCache = false;
         }
     }
 
@@ -848,26 +962,24 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      * Terminates the saving process and assign the returned quizExercise to the local entities
      * @param {QuizExercise} quizExercise: Saved quizExercise entity
      */
-    onSaveSuccess(quizExercise: QuizExercise): void {
+    private onSaveSuccess(quizExercise: QuizExercise): void {
         this.isSaving = false;
         this.prepareEntity(quizExercise);
         this.savedEntity = JSON.parse(JSON.stringify(quizExercise));
         this.quizExercise = quizExercise;
+        this.changeDetector.detectChanges();
     }
 
     /**
      * @function onSaveError
      * @desc Callback function for when the save fails
      */
-    onSaveError(error?: HttpErrorResponse): void {
+    private onSaveError = (error?: HttpErrorResponse): void => {
         console.error('Saving Quiz Failed! Please try again later.');
         this.jhiAlertService.error('arTeMiSApp.quizExercise.saveError');
         this.isSaving = false;
-    }
-
-    private onError(error: HttpErrorResponse) {
-        this.jhiAlertService.error(error.message);
-    }
+        this.changeDetector.detectChanges();
+    };
 
     /**
      * @function prepareEntity
@@ -914,6 +1026,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         } else {
             this.quizExercise.releaseDate = null;
         }
+        this.cacheValidation();
     }
 
     /**
@@ -924,6 +1037,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         const duration = moment.duration(this.duration);
         this.quizExercise.duration = Math.min(Math.max(duration.asSeconds(), 0), 10 * 60 * 60);
         this.updateDuration();
+        this.cacheValidation();
     }
 
     /**
@@ -949,13 +1063,8 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      * @desc Check if the saved quiz has started
      * @return {boolean} true if the saved quiz has started, otherwise false
      */
-    hasSavedQuizStarted(): boolean {
+    get hasSavedQuizStarted(): boolean {
         return !!(this.savedEntity && this.savedEntity.isPlannedToStart && moment(this.savedEntity.releaseDate).isBefore(moment()));
-    }
-
-    ngOnDestroy(): void {
-        /** Unsubscribe from route params **/
-        this.paramSub.unsubscribe();
     }
 
     back(): void {

@@ -6,13 +6,14 @@ import { Moment, isMoment } from 'moment';
 @Component({
     selector: 'jhi-date-time-picker',
     template: `
-        <label class="form-control-label">
+        <label class="form-control-label" *ngIf="labelName">
             {{ labelName }}
         </label>
         <div class="d-flex">
             <input
                 class="form-control position-relative pl-5"
                 [ngModel]="value"
+                [disabled]="disabled"
                 (ngModelChange)="updateField($event)"
                 [owlDateTime]="dt"
                 name="datePicker"
@@ -36,6 +37,8 @@ export class FormDateTimePickerComponent implements ControlValueAccessor {
     labelName: string;
     @Input()
     value: any;
+    @Input()
+    disabled: boolean;
     _onChange = (val: Moment) => {};
 
     writeValue(value: any) {
