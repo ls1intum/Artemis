@@ -2,11 +2,19 @@
     <jhi-alert></jhi-alert>
 
     <div class="row">
+        <div>
+            <button type="submit" (click)="previousState()" class="btn btn-info">
+                <fa-icon icon="arrow-left"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back">Back</span>
+            </button>
+            <button *ngIf="(result?.rated && !done) || (result?.assessor && result.assessor.id !== userId && !result?.rated)" [disabled]="busy" class="btn btn-success" (click)="assessNextOptimal(0)">
+                <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;Assess next submission
+            </button>
+        </div>
         <div class="col">
-            <h2>
+            <h4>
                 Assessment <span
-                *ngIf="result && result.participation">for Submission: {{result.participation.student.firstName}} {{result.participation.student.lastName}}</span>
-            </h2>
+                *ngIf="result && result.participation">for Submission of {{result.participation.student.firstName}} {{result.participation.student.lastName}}</span>
+            </h4>
         </div>
         <div class="col text-right">
             <span *ngIf="result && result.participation"><jhi-result
@@ -36,27 +44,18 @@
     </h2>
 
     <div class="row" *ngIf="modelingExercise">
-        <div class="col">
-            <p class="mb-3">
+        <div class="col-10">
+            <p>
                 <strong>Exercise:</strong> {{ modelingExercise.title }}<br>
-                <strong>Problem Statement:</strong> {{ modelingExercise.problemStatement }}
+                <strong>Problem Statement:</strong> {{ modelingExercise.problemStatement }}<br>
+                <strong>Assessment instruction:</strong> Double click the diagram elements and give all of them a score and a feedback comment based on the grading criteria.
             </p>
         </div>
-        <div class="col text-right">
-            <!--TODO CZ: score is not updated correctly-->
+        <div class="col-2 text-right">
             <span><h5><strong>Score:</strong> {{ totalScore | number : '1.0-2' }} / {{ modelingExercise.maxScore }}</h5></span>
             <span *ngIf="result && result.assessor && result.assessor.id !== userId"
                   style="color:red"><h6>Reviewer: {{result.assessor.firstName + (isAuthorized ? '' : ' - submission locked')}}</h6></span>
         </div>
-    </div>
-
-    <div>
-        <button type="submit" (click)="previousState()" class="btn btn-info">
-            <fa-icon icon="arrow-left"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back">Back</span>
-        </button>
-        <button *ngIf="(result?.rated && !done) || (result?.assessor && result.assessor.id !== userId && !result?.rated)" [disabled]="busy" class="btn btn-success" (click)="assessNextOptimal(0)">
-            <fa-icon icon="folder-open" [fixedWidth]="true"></fa-icon>&nbsp;Assess next submission
-        </button>
     </div>
     <br>
 
