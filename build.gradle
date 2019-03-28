@@ -55,10 +55,9 @@ idea {
 
 spotless {
     java {
-        googleJavaFormat()
-        indentWithTabs(2)
-        indentWithSpaces(4)
-        paddedCell()
+        importOrderFile 'artemis-spotless.importorder'
+        removeUnusedImports()
+        eclipse().configFile 'artemis-spotless-style.xml'
     }
 }
 
