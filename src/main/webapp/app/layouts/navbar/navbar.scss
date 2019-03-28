@@ -1,22 +1,23 @@
-
 /* ==========================================================================
 Navbar
 ========================================================================== */
 .navbar-version {
     font-size: 10px;
-    color: #ccc
+    color: #ccc;
 }
 
 .jh-navbar {
     background-color: #353d47;
-    padding: .2em 1em;
+    padding: 0.2em 1em;
     .profile-image {
         margin: -10px 0px;
         height: 40px;
         width: 40px;
         border-radius: 50%;
     }
-    .dropdown-item.active, .dropdown-item.active:focus, .dropdown-item.active:hover {
+    .dropdown-item.active,
+    .dropdown-item.active:focus,
+    .dropdown-item.active:hover {
         background-color: #353d47;
     }
     .dropdown-toggle::after {
@@ -65,19 +66,11 @@ Logo styles
     &.logo {
         padding: 5px 15px;
         .logo-img {
-             height: 45px;
-             width: 70px;
-             display: inline-block;
-             vertical-align: middle;
-             background: url("../../../content/images/logo_tum.png") no-repeat center center;
-             background-size: contain;
-         }
-        .logo-ls1 {
-            height: 45px;
-            width: 70px;
+            height: 38px;
+            width: 73px;
             display: inline-block;
             vertical-align: middle;
-            background: url("../../../content/images/logo_l1_weiss.png") no-repeat center center;
+            background: url('../../../content/images/logo_tum.png') no-repeat center center;
             background-size: contain;
         }
     }
