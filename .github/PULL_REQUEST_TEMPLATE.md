@@ -3,8 +3,7 @@
 
 ### Checklist
 - [ ] I run `yarn run webpack:build:main`: the project builds without errors.
-- [ ] I run `yarn lint`: there project builds without code style warnings.
-- [ ] I removed unnecessary whitespace changes in all related files.
+- [ ] I run `yarn lint`: the project builds without code style warnings.
 - [ ] I updated the documentation and models.
 - [ ] I tested the changes and all related features on the test server https://artemistest.ase.in.tum.de.
 - [ ] I added (end-to-end) test cases for the new functionality.
