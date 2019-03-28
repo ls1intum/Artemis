@@ -51,20 +51,20 @@
                     <label jhiTranslate="arTeMiSApp.quizExercise.options">Options</label>
                     <div class="form-check custom-control custom-checkbox">
                         <input type="checkbox" id="cbRandomizeOrder" class="form-check-input custom-control-input"
-                            [(ngModel)]="quizExercise.randomizeQuestionOrder" />
+                            [(ngModel)]="quizExercise.randomizeQuestionOrder" (ngModelChange)="cacheValidation()" />
                         <label class="form-check-label custom-control-label" for="cbRandomizeOrder" jhiTranslate="arTeMiSApp.quizExercise.randomizeQuestionOrder">
                         </label>
                     </div>
                     <div class="form-check custom-control custom-checkbox">
                         <input type="checkbox" id="cbPlannedToStart" class="form-check-input custom-control-input"
-                            [(ngModel)]="quizExercise.isPlannedToStart" />
+                            [(ngModel)]="quizExercise.isPlannedToStart" (ngModelChange)="cacheValidation()" />
                         <label class="form-check-label custom-control-label" for="cbPlannedToStart" jhiTranslate="arTeMiSApp.quizExercise.startTime">
                         </label>
                     </div>
                     <div class="mt-1 d-flex align-items-center" *ngIf="quizExercise.isPlannedToStart">
                         <div class="flex-grow-1">
                             <jhi-date-time-picker [disabled]="!quizExercise.isPlannedToStart" [(ngModel)]="quizExercise.releaseDate"
-                                name="releaseDate"></jhi-date-time-picker>
+                                                  (ngModelChange)="cacheValidation()" name="releaseDate"></jhi-date-time-picker>
                         </div>
                     </div>
                 </div>
