@@ -1,0 +1,29 @@
+.resizing-bar {
+    line-height: 14px;
+    position: absolute;
+    z-index: 1;
+    -moz-user-select: -moz-none;
+    -ms-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+    background: 0 0;
+
+    cursor: col-resize;
+    height: 100%;
+    right: 0;
+    top: 0;
+    margin-right: -14px;
+}
+
+.resizing-bar span {
+    position: absolute;
+    box-sizing: border-box;
+    display: block;
+    border-style: solid;
+    border-color: #ccc;
+    top: 50%;
+    margin: -10px 0 0 3.5px;
+    height: 20px;
+    width: 7px;
+    border-width: 0 1px;
+}

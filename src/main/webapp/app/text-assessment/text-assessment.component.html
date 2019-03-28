@@ -27,17 +27,18 @@
 </h2>
 
 <div class="row mt-5" *ngIf="!busy && exercise">
-    <div class="col-6">
-        <div class="card">
-            <div class="card-header text-white bg-primary">Student submission</div>
-            <div class="card-body">
-                <jhi-text-assessment-editor [submissionText]="submission?.text" [assessments]="assessments"
-                                            (assessedText)="addAssessment($event)"></jhi-text-assessment-editor>
-            </div>
+    <div class="card resizable-submission" [ngStyle]="{'width.px':1000}">
+        <div class="card-header text-white bg-primary">Student submission</div>
+        <div class="card-body">
+            <jhi-text-assessment-editor [submissionText]="submission?.text" [assessments]="assessments"
+                                        (assessedText)="addAssessment($event)"></jhi-text-assessment-editor>
         </div>
+
+        <!-- Required for resizing; don't remove empty span -->
+        <div class="resizing-bar"><span></span></div>
     </div>
 
-    <div class="col-6">
+    <div class="flex-grow-1 ml-5">
         <div class="card" *ngIf="exercise.problemStatement">
             <div class="card-header text-white bg-primary">Problem statement</div>
             <div class="card-body">{{exercise.problemStatement}}</div>

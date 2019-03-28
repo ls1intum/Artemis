@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, AfterViewInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { TextExercise } from 'app/entities/text-exercise';
 import { TextSubmission } from 'app/entities/text-submission';
@@ -10,13 +10,16 @@ import { Result, ResultService } from 'app/entities/result';
 import { TextAssessmentsService } from 'app/entities/text-assessments/text-assessments.service';
 import { Feedback } from 'app/entities/feedback';
 import { Participation } from 'app/entities/participation';
+import * as interact from 'interactjs';
+import { Interactable } from 'interactjs';
+import { WindowRef } from 'app/core';
 
 @Component({
-    providers: [TextAssessmentsService],
+    providers: [TextAssessmentsService, WindowRef],
     templateUrl: './text-assessment.component.html',
-    styles: []
+    styleUrls: ['./text-assessment-component.scss'],
 })
-export class TextAssessmentComponent implements OnInit, OnDestroy {
+export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit {
     text: string;
     participation: Participation;
     submission: TextSubmission;
@@ -31,6 +34,11 @@ export class TextAssessmentComponent implements OnInit, OnDestroy {
     busy = true;
     showResult = true;
 
+    /** Resizable constants **/
+    resizableMinWidth = 100;
+    resizableMaxWidth = 1200;
+    interactResizable: Interactable;
+
     public getColorForIndex = HighlightColors.forIndex;
 
     constructor(
@@ -41,7 +49,8 @@ export class TextAssessmentComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         private resultService: ResultService,
         private assessmentsService: TextAssessmentsService,
-        private location: Location
+        private location: Location,
+        private $window: WindowRef,
     ) {
         this.assessments = [];
         this.assessmentsAreValid = false;
@@ -78,6 +87,32 @@ export class TextAssessmentComponent implements OnInit, OnDestroy {
                 this.checkScoreBoundaries();
             });
         }
+    }
+
+    /**
+     * @function ngAfterViewInit
+     * @desc After the view was initialized, we create an interact.js resizable object,
+     *       designate the edges which can be used to resize the target element and set min and max values.
+     *       The 'resizemove' callback function processes the event values and sets new width and height values for the element.
+     */
+    ngAfterViewInit(): void {
+        this.resizableMinWidth = this.$window.nativeWindow.screen.width / 6;
+        this.interactResizable = interact('.resizable-submission')
+            .resizable({
+                // Enable resize from right edge; triggered by class .resizing-bar
+                edges: { left: false, right: '.resizing-bar', bottom: false, top: false },
+                // Set min and max width
+                restrictSize: {
+                    min: { width: this.resizableMinWidth },
+                    max: { width: this.resizableMaxWidth },
+                },
+                inertia: true,
+            })
+            .on('resizemove', function(event) {
+                const target = event.target;
+                // Update element width
+                target.style.width = event.rect.width + 'px';
+            });
     }
 
     public ngOnDestroy(): void {
