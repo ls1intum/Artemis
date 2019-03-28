@@ -11,6 +11,7 @@ import {
     faAngleRight,
     faArchive,
     faArrowLeft,
+    faArrowRight,
     faArrowsAltV,
     faAsterisk,
     faBan,
@@ -127,6 +128,7 @@ library.add(faEye);
 library.add(faBan);
 library.add(faTimes);
 library.add(faArrowLeft);
+library.add(faArrowRight);
 library.add(faSave);
 library.add(faPlus);
 library.add(faPencilAlt);

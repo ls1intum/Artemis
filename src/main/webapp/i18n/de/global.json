@@ -76,6 +76,7 @@
             "admin": {
                 "main": "Server-Administration",
                 "userManagement": "Benutzerverwaltung",
+                "notificationManagement": "Mitteilungsverwaltung",
                 "tracker": "Benutzer Aktivitäten",
                 "metrics": "Metriken",
                 "health": "Status",
@@ -86,7 +87,8 @@
                 "database": "Datenbank",
                 "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)"
             },
-            "language": "Sprache"
+            "language": "Sprache",
+            "noNotifications": "Keine Mitteilungen verfügbar"
         },
         "form": {
             "username": "Benutzername",

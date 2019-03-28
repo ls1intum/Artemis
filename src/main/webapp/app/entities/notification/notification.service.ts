@@ -8,6 +8,9 @@ import { Notification } from 'app/entities/notification';
 
 import { SERVER_API_URL } from 'app/app.constants';
 import { createRequestOption } from 'app/shared';
+import { AccountService, JhiWebsocketService, User } from 'app/core';
+import { Router } from '@angular/router';
+import { Course } from 'app/entities/course';
 
 type EntityResponseType = HttpResponse<Notification>;
 type EntityArrayResponseType = HttpResponse<Notification[]>;
@@ -16,7 +19,11 @@ type EntityArrayResponseType = HttpResponse<Notification[]>;
 export class NotificationService {
     public resourceUrl = SERVER_API_URL + 'api/notifications';
 
-    constructor(protected http: HttpClient) {}
+    constructor(private jhiWebsocketService: JhiWebsocketService,
+                private router: Router,
+                private http: HttpClient,
+                private accountService: AccountService) {
+    }
 
     create(notification: Notification): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(notification);
@@ -49,6 +56,12 @@ export class NotificationService {
         return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }
 
+    getRecentNotificationsForUser(): Observable<EntityArrayResponseType> {
+        return this.http
+            .get<Notification[]>(`${this.resourceUrl}/for-user`, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
+    }
+
     protected convertDateFromClient(notification: Notification): Notification {
         const copy: Notification = Object.assign({}, notification, {
             notificationDate:
@@ -74,4 +87,46 @@ export class NotificationService {
         }
         return res;
     }
+    private userChannel: string;
+
+    subscribeUserNotifications(): Promise<any> {
+        return new Promise(((resolve, reject) => {
+            this.accountService.identity().then((account: User) => {
+                this.jhiWebsocketService.subscribe(`topic/user/${account.id}/singleUser`);
+                resolve()
+            }).catch(error => reject(error));
+        }));
+    }
+
+    onUserNotification(): Observable<any> {
+        return this.jhiWebsocketService.receive(this.userChannel);
+    }
+
+    subscribeGroupNotification(course: Course) {
+        if (this.accountService.hasAnyAuthorityDirect(['ROLE_USER'])) {
+            this.jhiWebsocketService.subscribe(`topic/course/${course.id}/student`);
+        }
+        if (this.accountService.hasAnyAuthorityDirect(['ROLE_TA'])) {
+            this.jhiWebsocketService.subscribe(`topic/course/${course.id}/tutor`);
+        }
+        if (this.accountService.hasAnyAuthorityDirect(['ROLE_INSTRUCTOR'])) {
+            this.jhiWebsocketService.subscribe(`topic/course/${course.id}/instructor`);
+        }
+
+    }
+
+    interpretNotification(notification: Notification): void {
+        console.log("STARTING NOTIFICATION", notification)
+        console.log("STARTING NOTIFICATION", notification.target)
+        this.formatTarget(notification.target)
+    }
+
+    formatTarget(target: object) {
+        // entityName
+        // entityId
+        // courseId
+        // page
+        this.router.navigate(['overview', target.course, 'exercises', target.id])
+    }
+
 }

@@ -1,0 +1,25 @@
+{
+    "notificationManagement": {
+        "home": {
+            "title": "Mitteilungen",
+            "createLabel": "Neue Mitteilung erstellen",
+            "createOrEditLabel": "Mitteilung erstellen oder bearbeiten"
+        },
+        "created": "Eine neue Mitteilung wurde mit ID {{ param }} erstellt",
+        "updated": "Eine Mitteilung mit ID {{ param }} wurde geändert",
+        "deleted": "Eine Mitteilung mit ID {{ param }} wurde gelöscht",
+        "delete": {
+            "question": "Sind Sie sicher, dass Sie die Mitteilung {{ id }} löschen möchten?"
+        },
+        "detail": {
+            "title": "Mitteilung"
+        },
+        "title": "Titel",
+        "text": "Text",
+        "type": "Typ",
+        "expireDate": "Gültig bis",
+        "notificationDate": "Mitteilungsdatum",
+        "active": "Aktiv",
+        "notActive": "Nicht Aktiv"
+    }
+}

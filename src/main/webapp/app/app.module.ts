@@ -32,7 +32,18 @@ import { ArTEMiSQuizModule } from './quiz/participate';
 import { ArTEMiSTextModule } from './text-editor';
 import { ArTEMiSTextAssessmentModule } from './text-assessment';
 import { ArTEMiSModelingStatisticsModule } from './modeling-statistics/';
-import { ActiveMenuDirective, ErrorComponent, FooterComponent, JhiMainComponent, NavbarComponent, PageRibbonComponent, ProfileService } from './layouts';
+// jhipster-needle-angular-add-module-import JHipster will add new module here
+import {
+    ActiveMenuDirective,
+    ErrorComponent,
+    FooterComponent,
+    SystemNotificationComponent,
+    JhiMainComponent,
+    NavbarComponent,
+    PageRibbonComponent,
+    ProfileService,
+    NotificationContainerComponent
+} from './layouts';
 import { ArTEMiSApollonDiagramsModule } from './apollon-diagrams';
 import { ArTEMiSStatisticModule } from './quiz-statistics/quiz-statistic.module';
 import { ArTEMiSModelingEditorModule } from './modeling-editor/modeling-editor.module';
@@ -48,9 +59,10 @@ import { ArTEMiSExampleSubmissionModule } from 'app/example-text-submission';
 import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor/markdown-editor.module';
 import { ArTEMiSComplaintsModule } from 'app/complaints';
 import { ArTEMiSModelingAssessmentModule } from 'app/modeling-assessment/modeling-assessment.module';
+import { ArTEMiSNotificationModule } from 'app/entities/notification/notification.module';
+import { ArTEMiSSystemNotificationModule } from 'app/entities/system-notification/system-notification.module';
 
 import * as moment from 'moment';
-// jhipster-needle-angular-add-module-import JHipster will add new module here
 
 @NgModule({
     imports: [
@@ -98,7 +110,9 @@ import * as moment from 'moment';
         ArTEMiSTutorCourseDashboardModule,
         ArTEMiSTutorExerciseDashboardModule,
         ArTEMiSExampleSubmissionModule,
-        ArTEMiSComplaintsModule
+        ArTEMiSComplaintsModule,
+        ArTEMiSNotificationModule,
+        ArTEMiSSystemNotificationModule
         // jhipster-needle-angular-add-module JHipster will add new module here
     ],
     declarations: [
@@ -108,6 +122,8 @@ import * as moment from 'moment';
         PageRibbonComponent,
         ActiveMenuDirective,
         FooterComponent,
+        SystemNotificationComponent,
+        NotificationContainerComponent,
         QuizExerciseExportComponent
     ],
     providers: [

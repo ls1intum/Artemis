@@ -1,4 +1,5 @@
 import { Account } from '../../core';
+import { Moment } from 'moment';
 
 export class User extends Account {
     public id: number;
@@ -7,6 +8,7 @@ export class User extends Account {
     public createdDate: Date;
     public lastModifiedBy: string;
     public lastModifiedDate: Date;
+    public lastNotificationRead: Moment;
     public password: string;
 
     constructor(
@@ -23,6 +25,7 @@ export class User extends Account {
         createdDate?: Date,
         lastModifiedBy?: string,
         lastModifiedDate?: Date,
+        lastNotificationRead?: Moment,
         password?: string,
         imageUrl?: string
     ) {
@@ -33,6 +36,7 @@ export class User extends Account {
         this.createdDate = createdDate ? createdDate : null;
         this.lastModifiedBy = lastModifiedBy ? lastModifiedBy : null;
         this.lastModifiedDate = lastModifiedDate ? lastModifiedDate : null;
+        this.lastNotificationRead = lastNotificationRead ? lastNotificationRead : null;
         this.password = password ? password : null;
     }
 }

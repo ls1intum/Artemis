@@ -1,12 +1,22 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import de.tum.in.www1.artemis.domain.Notification;
+import de.tum.in.www1.artemis.domain.SystemNotification;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
+import de.tum.in.www1.artemis.service.NotificationService;
+import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import de.tum.in.www1.artemis.web.rest.util.PaginationUtil;
 import io.github.jhipster.web.util.ResponseUtil;
+import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -28,9 +38,13 @@ public class NotificationResource {
     private static final String ENTITY_NAME = "notification";
 
     private final NotificationRepository notificationRepository;
+    private final NotificationService notificationService;
+    private final UserService userService;
 
-    public NotificationResource(NotificationRepository notificationRepository) {
+    public NotificationResource(NotificationRepository notificationRepository, NotificationService notificationService, UserService userService) {
         this.notificationRepository = notificationRepository;
+        this.notificationService = notificationService;
+        this.userService = userService;
     }
 
     /**
@@ -51,6 +65,21 @@ public class NotificationResource {
         return ResponseEntity.created(new URI("/api/notifications/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
             .body(result);
+    }
+
+    /**
+     * GET  /system-notifications : get all system notifications for administration purposes.
+     *
+     * @return the list of system notifications
+     */
+    @GetMapping("/notifications/for-user")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity<List<Notification>> getAllSystemNotifications(@ApiParam Pageable pageable) {
+        log.debug("REST request to get all Courses the user has access to");
+        User currentUser = userService.getUserWithGroupsAndAuthorities();
+
+        final List<Notification> page = notificationService.findAllExceptSystem(currentUser);
+        return new ResponseEntity<>(page, null, HttpStatus.OK);
     }
 
     /**

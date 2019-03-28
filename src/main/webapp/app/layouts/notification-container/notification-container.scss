@@ -1,0 +1,9 @@
+.notification-container{
+    width: 400px;
+    .notification-item {
+        cursor: pointer;
+        .notification-description {
+            white-space: normal;
+        }
+    }
+}

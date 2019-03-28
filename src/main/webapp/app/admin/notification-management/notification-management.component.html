@@ -1,0 +1,71 @@
+<div>
+    <h2>
+        <span id="user-management-page-heading" jhiTranslate="notificationManagement.home.title">Notifications</span>
+        <button class="btn btn-primary float-right jh-create-entity" [routerLink]="['./new']">
+            <fa-icon [icon]="'plus'"></fa-icon> <span jhiTranslate="notificationManagement.home.createLabel">Create a new notification</span>
+        </button>
+    </h2>
+    <jhi-alert></jhi-alert>
+    <div class="table-responsive" *ngIf="notifications">
+        <table class="table table-striped">
+            <thead>
+            <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="transition.bind(this)">
+                <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <th jhiSortBy="title"><span jhiTranslate="notificationManagement.title">Title</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <th jhiSortBy="text"><span jhiTranslate="notificationManagement.text">Text</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <th jhiSortBy="type"><span jhiTranslate="notificationManagement.type">Type</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <th></th>
+                <th jhiSortBy="expireDate"> <span jhiTranslate="notificationManagement.notificationDate">Notification Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <th jhiSortBy="expireDate"> <span jhiTranslate="notificationManagement.expireDate">Expire Date</span> <fa-icon [icon]="'sort'"></fa-icon></th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody *ngIf ="notifications">
+            <tr *ngFor="let notification of notifications; trackBy: trackIdentity">
+                <td>{{notification.id}}</td>
+                <td>{{notification.title}}</td>
+                <td>{{notification.text}}</td>
+                <td>{{notification.type}}</td>
+                <td>
+                    <span *ngIf="isNotificationActive(notification); else notActive" class="badge badge-success">{{"notificationManagement.active" | translate}}</span>
+                    <ng-template #notActive>
+                    <span class="badge badge-danger">{{"notificationManagement.notActive" | translate}}</span>
+                    </ng-template>
+                </td>
+                <td>{{notification.notificationDate | date:'yyyy-MM-dd HH:mm'}}</td>
+                <td>{{notification.expireDate | date:'yyyy-MM-dd HH:mm'}}</td>
+                <td class="text-right">
+                    <div class="btn-group flex-btn-group-container">
+                        <button type="submit"
+                                [routerLink]="['./', notification.id, 'view']"
+                                class="btn btn-info btn-sm">
+                            <fa-icon [icon]="'eye'"></fa-icon>
+                            <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
+                        </button>
+                        <button type="submit"
+                                [routerLink]="['./', notification.id, 'edit']"
+                                queryParamsHandling="merge"
+                                class="btn btn-primary btn-sm">
+                            <fa-icon [icon]="'pencil-alt'"></fa-icon>
+                            <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                        </button>
+                        <button type="button" (click)="deleteNotification(notification)"
+                                class="btn btn-danger btn-sm">
+                            <fa-icon [icon]="'times'"></fa-icon>
+                            <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div *ngIf="notifications">
+        <div class="row justify-content-center">
+            <jhi-item-count [page]="page" [total]="totalItems" [itemsPerPage]="itemsPerPage"></jhi-item-count>
+        </div>
+        <div class="row justify-content-center">
+            <ngb-pagination [collectionSize]="totalItems" [(page)]="page" [pageSize]="itemsPerPage" [maxSize]="5" [rotate]="true" [boundaryLinks]="true" (pageChange)="loadPage(page)"></ngb-pagination>
+        </div>
+    </div>
+</div>

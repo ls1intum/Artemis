@@ -1,0 +1,27 @@
+<li ngbDropdown [autoClose]="'outside'" [placement]="'bottom-right'" class="nav-item dropdown pointer">
+    <a class="nav-link dropdown-toggle" ngbDropdownToggle href="javascript:void(0);" id="notificationsNavBarDropdown" (click)="updateNotificationDate()">
+                        <span>
+                            <fa-icon [icon]="'bell'"></fa-icon>
+                            <span *ngIf="notificationCount > 0" class="badge badge-danger badge-pill">{{notificationCount}}</span>
+                        </span>
+    </a>
+    <ul class="dropdown-menu notification-container" ngbDropdownMenu>
+        <li class="dropdown-item" *ngFor="let notification of notifications">
+            <div class="row notification-item align-items-center" (click)="startNotification(notification)">
+                <div class="col">
+                    <h5>
+                        {{notification.title}}
+                        <span class="badge ml-1 badge-primary" *ngIf="!currentUser || notification.notificationDate.isAfter(currentUser.lastNotificationRead)">new</span>
+                    </h5>
+                    <p class="notification-description">{{notification.text}}</p>
+                </div>
+                <div class="col-auto">
+                    <fa-icon [icon]="'arrow-right'"></fa-icon>
+                </div>
+            </div>
+        </li>
+        <li class="dropdown-item" *ngIf="notifications && notifications.length === 0">
+            {{"global.menu.noNotifications" | translate}}
+        </li>
+    </ul>
+</li>

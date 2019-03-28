@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -26,6 +27,7 @@ import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import javax.swing.text.html.Option;
 import javax.validation.Valid;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -183,5 +185,12 @@ public class UserResource {
         log.debug("REST request to delete User: {}", login);
         userService.deleteUser(login);
         return ResponseEntity.ok().headers(HeaderUtil.createAlert( "userManagement.deleted", login)).build();
+    }
+
+    @PutMapping("/users/notification-date")
+    public ResponseEntity<UserDTO> updateUserNotificationDate() {
+        log.debug("REST request to update notification date for logged in user");
+        Optional<UserDTO> updatedUser = Optional.of(userService.updateUserNotificationReadDate()).map(UserDTO::new);
+        return ResponseUtil.wrapOrNotFound(updatedUser);
     }
 }

@@ -6,9 +6,12 @@ ProdConfig();
 
 if (module['hot']) {
     module['hot'].accept();
+    if ('production' !== process.env.NODE_ENV) {
+        console.clear();
+    }
 }
 
 platformBrowserDynamic()
     .bootstrapModule(ArTeMiSAppModule, { preserveWhitespaces: true })
-    .then(platformRef => {})
+    .then(platformRef => { })
     .catch(err => console.error(err));

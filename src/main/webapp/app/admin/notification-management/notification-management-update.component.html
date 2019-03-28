@@ -1,0 +1,52 @@
+<div class="row justify-content-center">
+    <div class="col-8">
+        <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
+            <h2 id="myNotificationLabel" jhiTranslate="notificationManagement.home.createOrEditLabel">
+                Create or edit a Notification
+            </h2>
+            <div>
+                <jhi-alert-error></jhi-alert-error>
+                <div class="form-group" [hidden]="!notification.id">
+                    <label jhiTranslate="global.field.id">ID</label>
+                    <input type="text" class="form-control" name="id"
+                           [(ngModel)]="notification.id" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="notificationManagement.title">Title</label>
+                    <input type="text" class="form-control" name="login" #titleInput="ngModel"
+                           [(ngModel)]="notification.title" required minlength="1" maxlength="50">
+
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="notificationManagement.text">Text</label>
+                    <input type="text" class="form-control" name="text" #textInput="ngModel"
+                           [(ngModel)]="notification.text">
+
+                </div>
+                <div class="form-group">
+                    <label jhiTranslate="notificationManagement.type">Type</label>
+                    <select class="form-control" name="type" [(ngModel)]="notification.type">
+                            <option *ngFor="let systemNotificationType of systemNotificationTypes" [value]="systemNotificationType.value">{{systemNotificationType.name}}</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <jhi-date-time-picker [labelName]="('notificationManagement.notificationDate' | translate)" [(ngModel)]="notification.notificationDate" name="notificationDate"></jhi-date-time-picker>
+                </div>
+                <div class="form-group">
+                    <jhi-date-time-picker [labelName]="('notificationManagement.expireDate' | translate)" [(ngModel)]="notification.expireDate" name="expireDate"></jhi-date-time-picker>
+                </div>
+
+            </div>
+            <div>
+                <button type="button" class="btn btn-secondary" (click)="previousState()">
+                    <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span
+                    jhiTranslate="entity.action.cancel">Cancel</span>
+                </button>
+                <button type="submit" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
+                    <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

@@ -191,6 +191,14 @@ public class User extends AbstractAuditingEntity implements Serializable {
         this.resetDate = resetDate;
     }
 
+    public ZonedDateTime getLastNotificationRead() {
+        return lastNotificationRead;
+    }
+
+    public void setLastNotificationRead(ZonedDateTime lastNotificationRead) {
+        this.lastNotificationRead = lastNotificationRead;
+    }
+
     public String getLangKey() {
         return langKey;
     }

@@ -76,6 +76,7 @@
             "admin": {
                 "main": "Server Administration",
                 "userManagement": "User management",
+                "notificationManagement": "Notification management",
                 "tracker": "User tracker",
                 "metrics": "Metrics",
                 "health": "Health",
@@ -86,7 +87,8 @@
                 "database": "Database",
                 "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)"
             },
-            "language": "Language"
+            "language": "Language",
+            "noNotifications": "No notifications available"
         },
         "form": {
             "username": "Username",

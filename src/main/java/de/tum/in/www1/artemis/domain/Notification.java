@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -26,7 +25,7 @@ import java.util.Objects;
 @DiscriminatorValue(value = "N")
 // NOTE: Use strict cache to prevent lost updates
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "notificationType")
 // Annotation necessary to distinguish between concrete implementations of Notification when deserializing from JSON
 @JsonSubTypes({
     @JsonSubTypes.Type(value = GroupNotification.class, name = "group"),

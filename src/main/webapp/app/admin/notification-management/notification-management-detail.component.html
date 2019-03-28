@@ -1,0 +1,24 @@
+<div *ngIf="notification">
+    <h2>
+        <span jhiTranslate="notificationManagement.detail.title">Notification</span> [<b>{{notification.id}}</b>]
+    </h2>
+    <dl class="row-md jh-entity-details">
+        <dt><span jhiTranslate="global.field.id">Id</span></dt>
+        <dd>
+            <span>{{notification.id}}</span>
+        </dd>
+        <dt><span jhiTranslate="notificationManagement.title">Title</span></dt>
+        <dd>{{notification.title}}</dd>
+        <dt><span jhiTranslate="notificationManagement.text">Text</span></dt>
+        <dd>{{notification.text}}</dd>
+        <dt><span jhiTranslate="notificationManagement.type">Type</span></dt>
+        <dd>{{notification.type}}</dd>
+        <dt><span jhiTranslate="notificationManagement.expireDate">Expire Date</span></dt>
+        <dd>{{notification.expireDate}}</dd>
+    </dl>
+    <button type="submit"
+            routerLink="/notification-management"
+            class="btn btn-info">
+        <fa-icon icon="arrow-left"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
+    </button>
+</div>

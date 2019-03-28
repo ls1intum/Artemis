@@ -33,6 +33,10 @@ export class UserService {
         return this.http.delete<void>(`${this.resourceUrl}/${login}`, { observe: 'response' });
     }
 
+    updateUserNotificationDate(): Observable<HttpResponse<User>> {
+        return this.http.put<User>(`${this.resourceUrl}/notification-date`, null, { observe: 'response' });
+    }
+
     authorities(): Observable<string[]> {
         return this.http.get<string[]>(SERVER_API_URL + 'api/users/authorities');
     }

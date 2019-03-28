@@ -406,4 +406,10 @@ public class UserService {
     private void clearUserCaches(User user) {
         cacheManager.getCache(UserRepository.USERS_CACHE).evict(user.getLogin());
     }
+
+    public User updateUserNotificationReadDate() {
+        User loggedInUser = getUserWithGroupsAndAuthorities();
+        userRepository.updateUserNotificationReadDate(loggedInUser.getId());
+        return loggedInUser;
+    }
 }
