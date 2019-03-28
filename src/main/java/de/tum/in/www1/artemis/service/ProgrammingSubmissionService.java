@@ -8,14 +8,13 @@ import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
+import java.time.ZonedDateTime;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.ZonedDateTime;
-import java.util.Optional;
 
 @Service
 @Transactional
@@ -30,9 +29,13 @@ public class ProgrammingSubmissionService {
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final SimpMessageSendingOperations messagingTemplate;
 
-    public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ParticipationRepository participationRepository,
-                                        Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-                                        ParticipationService participationService, SimpMessageSendingOperations messagingTemplate) {
+    public ProgrammingSubmissionService(
+            ProgrammingSubmissionRepository programmingSubmissionRepository,
+            ParticipationRepository participationRepository,
+            Optional<VersionControlService> versionControlService,
+            Optional<ContinuousIntegrationService> continuousIntegrationService,
+            ParticipationService participationService,
+            SimpMessageSendingOperations messagingTemplate) {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.participationRepository = participationRepository;
         this.versionControlService = versionControlService;
@@ -42,15 +45,18 @@ public class ProgrammingSubmissionService {
     }
 
     public void notifyPush(Long participationId, Object requestBody) {
-        Participation participation = participationRepository.getOne(participationId);
-        if (participation == null) {
-            log.error("Invalid participation received while notifying about push: " + participationId);
+        Optional<Participation> optionalParticipation =
+                participationRepository.findById(participationId);
+        if (!optionalParticipation.isPresent()) {
+            log.warn("Invalid participation received while notifying about push: " + participationId);
             return;
         }
+        Participation participation = optionalParticipation.get();
         if (participation.getInitializationState() == InitializationState.INACTIVE) {
-            //the build plan was deleted before, e.g. due to cleanup, therefore we need to reactivate the build plan by resuming the participation
+            // the build plan was deleted before, e.g. due to cleanup, therefore we need to reactivate the
+            // build plan by resuming the participation
             participationService.resumeExercise(participation.getExercise(), participation);
-            //in addition we need to trigger a build so that we receive a result in a few seconds
+            // in addition we need to trigger a build so that we receive a result in a few seconds
             continuousIntegrationService.get().triggerBuild(participation);
         }
 
@@ -61,7 +67,8 @@ public class ProgrammingSubmissionService {
             programmingSubmission.setCommitHash(lastCommitHash);
             log.info("create new programmingSubmission with commitHash: " + lastCommitHash);
         } catch (Exception ex) {
-            log.error("Commit hash could not be parsed for submission from participation " + participation, ex);
+            log.error(
+                    "Commit hash could not be parsed for submission from participation " + participation, ex);
         }
 
         programmingSubmission.setSubmitted(true);
@@ -73,7 +80,7 @@ public class ProgrammingSubmissionService {
         programmingSubmissionRepository.save(programmingSubmission);
 
         // notify user via websocket
-        messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newSubmission", programmingSubmission);
+        messagingTemplate.convertAndSend(
+                "/topic/participation/" + participation.getId() + "/newSubmission", programmingSubmission);
     }
-
 }
