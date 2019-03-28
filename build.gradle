@@ -258,7 +258,7 @@ task executeTests (type: Exec) {
 }
 
 wrapper {
-    gradleVersion = '5.2.1'
+    gradleVersion = '5.3'
 }
 
 task stage(dependsOn: 'bootWar') {
