@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
-        "target": "es2018",
-        "module": "es2015",
+        "target": "es5",
+        "module": "commonjs",
         "moduleResolution": "node",
         "sourceMap": true,
         "emitDecoratorMetadata": true,
@@ -11,7 +11,7 @@
         "skipLibCheck": true,
         "suppressImplicitAnyIndexErrors": true,
         "outDir": "build/www/app",
-        "lib": ["es2018", "dom"],
+        "lib": ["es7", "dom"],
         "typeRoots": [
             "node_modules/@types"
         ],
