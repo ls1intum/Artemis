@@ -14,18 +14,14 @@ import { EditDragAndDropQuestionComponent } from './drag-and-drop-question/edit-
 import { EditShortAnswerQuestionComponent } from './short-answer-question/edit-short-answer-question.component';
 import { AngularFittextModule } from 'angular-fittext';
 import { AceEditorModule } from 'ng2-ace-editor';
+import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor/markdown-editor.module';
 import { DndModule } from 'ng2-dnd';
 import { ArTEMiSQuizModule } from '../participate';
 import { QuizScoringInfoModalComponent } from './quiz-scoring-info-modal/quiz-scoring-info-modal.component';
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, DndModule.forRoot(), AngularFittextModule, AceEditorModule, ArTEMiSQuizModule],
-    declarations: [
-        EditMultipleChoiceQuestionComponent,
-        EditDragAndDropQuestionComponent,
-        QuizScoringInfoModalComponent,
-        EditShortAnswerQuestionComponent
-    ],
+    imports: [ArTEMiSSharedModule, DndModule.forRoot(), AngularFittextModule, AceEditorModule, ArTEMiSQuizModule, ArTEMiSMarkdownEditorModule],
+    declarations: [EditMultipleChoiceQuestionComponent, EditDragAndDropQuestionComponent, QuizScoringInfoModalComponent, EditShortAnswerQuestionComponent],
     entryComponents: [
         HomeComponent,
         QuizComponent,
@@ -33,11 +29,11 @@ import { QuizScoringInfoModalComponent } from './quiz-scoring-info-modal/quiz-sc
         JhiMainComponent,
         EditMultipleChoiceQuestionComponent,
         EditDragAndDropQuestionComponent,
-        EditShortAnswerQuestionComponent
+        EditShortAnswerQuestionComponent,
     ],
     providers: [RepositoryService, JhiAlertService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
     exports: [EditMultipleChoiceQuestionComponent, EditDragAndDropQuestionComponent, EditShortAnswerQuestionComponent],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArTEMiSQuizEditModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

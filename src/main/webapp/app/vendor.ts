@@ -88,7 +88,18 @@ import {
     faUser,
     faUserPlus,
     faWrench,
-    faGripLinesVertical
+    faBold,
+    faItalic,
+    faUnderline,
+    faLink,
+    faHeading,
+    faQuoteLeft,
+    faCode,
+    faCopy,
+    faListOl,
+    faListUl,
+    faImage,
+    faGripLinesVertical,
 } from '@fortawesome/free-solid-svg-icons';
 
 import {
@@ -102,7 +113,7 @@ import {
     faPlayCircle as farPlayCircle,
     faQuestionCircle as farQuestionCircle,
     faSquare as farSquare,
-    faTimesCircle as farTimeCircle
+    faTimesCircle as farTimeCircle,
 } from '@fortawesome/free-regular-svg-icons';
 
 // Imports all fontawesome core and solid icons
@@ -189,6 +200,18 @@ library.add(faArrowsAltV);
 library.add(faFile);
 library.add(faCodeBranch);
 library.add(faCircle);
+library.add(faBold);
+library.add(faUnderline);
+library.add(faItalic);
+library.add(faQuoteLeft);
+library.add(faLink);
+library.add(faHeading);
+library.add(faCode);
+library.add(faCopy);
+library.add(faListUl);
+library.add(faListOl);
+library.add(faImage);
+
 library.add(farQuestionCircle);
 library.add(farCheckCircle);
 library.add(farTimeCircle);

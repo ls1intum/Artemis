@@ -127,7 +127,9 @@ public class ModelingSubmissionService {
      * @param modelingExercise   the exercise the submission belongs to
      */
     public void notifyCompass(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {
-        this.compassService.addModel(modelingExercise.getId(), modelingSubmission.getId(), modelingSubmission.getModel());
+        if (compassService.isSupported(modelingExercise.getDiagramType())) {
+            this.compassService.addModel(modelingExercise.getId(), modelingSubmission.getId(), modelingSubmission.getModel());
+        }
     }
 
 

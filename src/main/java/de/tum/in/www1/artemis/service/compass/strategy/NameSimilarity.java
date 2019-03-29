@@ -1,28 +1,18 @@
 package de.tum.in.www1.artemis.service.compass.strategy;
 
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
+import me.xdrop.fuzzywuzzy.FuzzySearch;
 
 @SuppressWarnings("unused")
 public class NameSimilarity {
 
     /**
-     *
      * @return 1 if both strings have any word in common (splitting on uppercase), 0 otherwise
      */
     public static double nameContainsSimilarity(String string1, String string2) {
-        // Split before any Uppercase without excluding letters
-        String[] names1 = string1.split("(?=\\p{Lu})");
-        String[] names2 = string2.split("(?=\\p{Lu})");
-        // Both arrays should contain less than 5 words - therefore HashSet is slower
-        for (String name1: names1) {
-            for (String name2: names2) {
-                if (name1.equals(name2)) {
-                    return 1;
-                }
-            }
-        }
-        return 0;
-    }
+        //TODO longterm: think about an even more sophisticated approach that takes e.g. thesaurus and specific uml conventions into account
+        return FuzzySearch.ratio(string1, string2) / 100.0;
+     }
 
     public static double nameEqualsSimilarity(String string1, String string2) {
         return string1.equals(string2) ? 1 : 0;

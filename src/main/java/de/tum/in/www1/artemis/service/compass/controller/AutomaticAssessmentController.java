@@ -5,12 +5,16 @@ import de.tum.in.www1.artemis.service.compass.assessment.Assessment;
 import de.tum.in.www1.artemis.service.compass.assessment.CompassResult;
 import de.tum.in.www1.artemis.service.compass.assessment.Context;
 import de.tum.in.www1.artemis.service.compass.assessment.Score;
-import de.tum.in.www1.artemis.service.compass.umlmodel.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLAttribute;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClass;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassModel;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassRelationship;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLMethod;
 import java.io.IOException;
 import java.util.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AutomaticAssessmentController {
 
@@ -19,16 +23,17 @@ public class AutomaticAssessmentController {
     private double totalCoverage;
     private double totalConfidence;
 
-
     /**
-     * Add a score to an assessment, creates a new assessment if it does not exists
-     *
-     * @param index                manages all assessments
-     * @param elementIdFeedbackMap maps elementIds to feedbacks
-     * @param model                the UML model - contains all elements with its corresponding jsonIds
-     * @throws IOException if the score for the element is null
-     */
-    public void addFeedbacksToAssessment(AssessmentIndex index, Map<String, Feedback> elementIdFeedbackMap, UMLModel model) throws IOException {
+    * Add a score to an assessment, creates a new assessment if it does not exists
+    *
+    * @param index manages all assessments
+    * @param elementIdFeedbackMap maps elementIds to feedbacks
+    * @param model the UML model - contains all elements with its corresponding jsonIds
+    * @throws IOException if the score for the element is null
+    */
+    public void addFeedbacksToAssessment(
+            AssessmentIndex index, Map<String, Feedback> elementIdFeedbackMap, UMLClassModel model)
+            throws IOException {
 
         for (String jsonElementID : elementIdFeedbackMap.keySet()) {
             UMLElement element = model.getElementByJSONID(jsonElementID);
@@ -49,40 +54,38 @@ public class AutomaticAssessmentController {
         }
     }
 
-
     /**
-     * Loops over all models and triggers their automatic assessments
-     *
-     * @param modelIndex      manages all models
-     * @param assessmentIndex manages all assessments
-     */
+    * Loops over all models and triggers their automatic assessments
+    *
+    * @param modelIndex manages all models
+    * @param assessmentIndex manages all assessments
+    */
     public void assessModelsAutomatically(ModelIndex modelIndex, AssessmentIndex assessmentIndex) {
 
         totalCoverage = 0;
         totalConfidence = 0;
 
-        for (UMLModel model : modelIndex.getModelCollection()) {
+        for (UMLClassModel model : modelIndex.getModelCollection()) {
 
             CompassResult compassResult = assessModelAutomatically(model, assessmentIndex);
 
             totalCoverage += compassResult.getCoverage();
             totalConfidence += compassResult.getConfidence();
-
         }
 
         totalConfidence /= modelIndex.getModelCollectionSize();
         totalCoverage /= modelIndex.getModelCollectionSize();
     }
 
-
     /**
-     * Loop over all elements of a model, get their assessments and build a result with them
-     *
-     * @param model           the UML model which contains all the model elements
-     * @param assessmentIndex manages all assessments
-     * @return a result
-     */
-    public CompassResult assessModelAutomatically(UMLModel model, AssessmentIndex assessmentIndex) {
+    * Loop over all elements of a model, get their assessments and build a result with them
+    *
+    * @param model the UML model which contains all the model elements
+    * @param assessmentIndex manages all assessments
+    * @return a result
+    */
+    public CompassResult assessModelAutomatically(
+            UMLClassModel model, AssessmentIndex assessmentIndex) {
         List<CompassResult> compassResultList = new ArrayList<>();
 
         double totalCount = 0;
@@ -99,8 +102,9 @@ public class AutomaticAssessmentController {
 
         Map<UMLElement, Score> scoreHashMap = new HashMap<>();
 
-        for (UMLAssociation relation : model.getAssociationList()) {
-            Optional<Assessment> assessmentOptional = assessmentIndex.getAssessment(relation.getElementID());
+        for (UMLClassRelationship relation : model.getAssociationList()) {
+            Optional<Assessment> assessmentOptional =
+                    assessmentIndex.getAssessment(relation.getElementID());
             totalCount++;
 
             if (!assessmentOptional.isPresent()) {
@@ -108,8 +112,12 @@ public class AutomaticAssessmentController {
             } else {
                 Score score = assessmentOptional.get().getScore(relation.getContext());
                 if (score == null) {
-                    log.debug("Unable to find score for relation " + relation.getJSONElementID() + " in model " + model.getModelID()
-                        + " with the specific context");
+                    log.debug(
+                            "Unable to find score for relation "
+                                    + relation.getJSONElementID()
+                                    + " in model "
+                                    + model.getModelID()
+                                    + " with the specific context");
                 } else {
                     scoreHashMap.put(relation, score);
                 }
@@ -125,13 +133,13 @@ public class AutomaticAssessmentController {
 
         compassResultList.add(new CompassResult(scoreHashMap, coverage));
 
-        CompassResult compassResult = CompassResult.buildResultFromResultList(compassResultList, coverage);
+        CompassResult compassResult =
+                CompassResult.buildResultFromResultList(compassResultList, coverage);
 
         model.setLastAssessmentCompassResult(compassResult);
 
         return compassResult;
     }
-
 
     private CompassResult assessConnectable(UMLClass umlClass, AssessmentIndex index) {
         Map<UMLElement, Score> scoreHashMap = new HashMap<>();
@@ -179,7 +187,10 @@ public class AutomaticAssessmentController {
             Score score = assessmentOptional.get().getScore(umlClass.getContext());
 
             if (score == null) {
-                log.debug("Unable to find score for class " + umlClass.getJSONElementID() + " with the specific context");
+                log.debug(
+                        "Unable to find score for class "
+                                + umlClass.getJSONElementID()
+                                + " with the specific context");
             } else {
                 scoreHashMap.put(umlClass, score);
             }
@@ -196,14 +207,11 @@ public class AutomaticAssessmentController {
         return new CompassResult(scoreHashMap, coverage);
     }
 
-
     public double getTotalCoverage() {
         return totalCoverage;
     }
 
-
     public double getTotalConfidence() {
         return totalConfidence;
     }
-
 }

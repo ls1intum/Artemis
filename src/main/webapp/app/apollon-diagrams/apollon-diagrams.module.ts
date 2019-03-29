@@ -7,41 +7,19 @@ import { ApollonDiagramListComponent } from './apollon-diagram-list.component';
 import { apollonDiagramsRoutes } from './apollon-diagrams.route';
 import { ApollonQuizExerciseGenerationComponent } from './exercise-generation/apollon-quiz-exercise-generation.component';
 import { ArTEMiSSharedModule } from '../shared';
-import { ApollonDiagramStudentComponent } from './apollon-diagram-student.component';
 import { ArTEMiSResultModule, ResultComponent } from '../entities/result';
 import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
-import { ApollonDiagramTutorComponent } from './apollon-diagram-tutor/apollon-diagram-tutor.component';
-import { AssessmentInstructionsComponent } from './assessment-instructions/assessment-instructions.component';
-import { DragDropModule } from '@angular/cdk/drag-drop';
-import { ExpandableParagraphComponent } from 'app/apollon-diagrams/assessment-instructions/expandable-paragraph/expandable-paragraph.component';
-import { ModelingAssessmentComponent } from 'app/apollon-diagrams/modeling-assessment/modeling-assessment.component';
-import { ModelingAssessmentConflictComponent } from './modeling-assessment/modeling-assessment-conflict/modeling-assessment-conflict.component';
+import { SortByModule } from 'app/components/pipes';
 
 const ENTITY_STATES = [...apollonDiagramsRoutes];
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), ArTEMiSResultModule, DragDropModule],
-    declarations: [
-        ApollonDiagramCreateFormComponent,
-        ApollonDiagramDetailComponent,
-        ApollonDiagramListComponent,
-        ApollonQuizExerciseGenerationComponent,
-        ApollonDiagramStudentComponent,
-        ModelingAssessmentComponent,
-        ApollonDiagramTutorComponent,
-        ExpandableParagraphComponent,
-        AssessmentInstructionsComponent,
-        ModelingAssessmentConflictComponent
-    ],
-    entryComponents: [
-        ApollonDiagramCreateFormComponent,
-        ApollonDiagramListComponent,
-        ApollonQuizExerciseGenerationComponent,
-        ResultComponent
-    ],
+    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, ArTEMiSResultModule],
+    declarations: [ApollonDiagramCreateFormComponent, ApollonDiagramDetailComponent, ApollonDiagramListComponent, ApollonQuizExerciseGenerationComponent],
+    entryComponents: [ApollonDiagramCreateFormComponent, ApollonDiagramListComponent, ApollonQuizExerciseGenerationComponent, ResultComponent],
     providers: [JhiAlertService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArTEMiSApollonDiagramsModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

@@ -1,4 +1,4 @@
-<form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
+<form name="editForm" role="form" novalidate #editForm="ngForm">
 
     <div class="modal-header">
         <h4 class="modal-title" id="myModelingExerciseLabel" jhiTranslate="arTeMiSApp.modelingExercise.home.createOrEditLabel">Create or edit a Modeling Exercise</h4>
@@ -7,67 +7,69 @@
     </div>
     <div class="modal-body">
         <jhi-alert-error></jhi-alert-error>
-        <div class="form-group" [hidden]="!modelingExercise.id">
+        <div class="form-group-narrow" [hidden]="!modelingExercise.id">
             <label for="id" jhiTranslate="global.field.id">ID</label>
             <input type="text" class="form-control" id="id" name="id"
                    [(ngModel)]="modelingExercise.id" readonly />
         </div>
-        <div class="form-group">
+        <div class="form-group-narrow">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.title" for="field_title">Title</label>
             <input required type="text" class="form-control" name="title" id="field_title"
                    [(ngModel)]="modelingExercise.title" />
         </div>
-        <div class="form-group position-relative">
+        <div class="form-group-narrow position-relative">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.categories">Categories</label>
             <jhi-category-selector [exerciseCategories]="exerciseCategories" [existingCategories]="existingCategories"(selectedCategories)="updateCategories($event)"></jhi-category-selector>
         </div>
-        <div class="form-group">
+        <div class="form-group-narrow">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.difficulty">Difficulty</label>
             <div>
                 <jhi-difficulty-picker [exercise]="modelingExercise"></jhi-difficulty-picker>
             </div>
         </div>
         <div class="d-flex">
-            <div class="form-group flex-grow-1">
+            <div class="form-group-narrow flex-grow-1">
                 <jhi-date-time-picker labelName="Release Date" [(ngModel)]="modelingExercise.releaseDate" name="releaseDate"></jhi-date-time-picker>
             </div>
-            <div class="form-group flex-grow-1 ml-3">
+            <div class="form-group-narrow flex-grow-1 ml-3">
                 <jhi-date-time-picker labelName="Due Date" [(ngModel)]="modelingExercise.dueDate" name="dueDate"></jhi-date-time-picker>
             </div>
         </div>
-        <div class="form-group">
+        <div class="form-group-narrow">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.maxScore" for="field_maxScore">Max Score</label>
             <input type="number" required class="form-control" [pattern]="maxScorePattern" min="0" max="9999" name="maxScore" id="field_maxScore"
                    [(ngModel)]="modelingExercise.maxScore" />
         </div>
-        <div class="form-group">
+        <div class="form-group-narrow">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.modelingExercise.diagramType" for="field_diagramType">Diagram Type</label>
             <select class="form-control" name="diagramType" [(ngModel)]="modelingExercise.diagramType" id="field_diagramType" >
-                <option value="CLASS">{{'arTeMiSApp.DiagramType.CLASS' | translate}}</option>
-                <option value="ACTIVITY">{{'arTeMiSApp.DiagramType.ACTIVITY' | translate}}</option>
-                <!-- currently we do not support use case and communication diagrams
-                <option value="USE_CASE">{{'arTeMiSApp.DiagramType.USE_CASE' | translate}}</option>
-                <option value="COMMUNICATION">{{'arTeMiSApp.DiagramType.COMMUNICATION' | translate}}</option>-->
+                <option value="ClassDiagram">{{'arTeMiSApp.DiagramType.ClassDiagram' | translate}}</option>
+                <option value="ActivityDiagram">{{'arTeMiSApp.DiagramType.ActivityDiagram' | translate}}</option>
+                <option value="ObjectDiagram">{{'arTeMiSApp.DiagramType.ObjectDiagram' | translate}}</option>
+                <option value="UseCaseDiagram">{{'arTeMiSApp.DiagramType.UseCaseDiagram' | translate}}</option>
+                <!-- currently we do not support communication diagrams
+                <option value="CommunicationDiagram">{{'arTeMiSApp.DiagramType.CommunicationDiagram' | translate}}</option>-->
             </select>
         </div>
-        <div class="form-group">
+        <div class="form-group-narrow">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.course" for="field_course">Course</label>
             <select class="form-control" id="field_course" name="course" [(ngModel)]="modelingExercise.course" >
                 <option [ngValue]="null"></option>
                 <option [ngValue]="course.id === modelingExercise.course?.id ? modelingExercise.course : course" *ngFor="let course of courses; trackBy: trackCourseById">{{course.title}}</option>
             </select>
         </div>
-        <div class="form-group">
+        <div class="form-group-narrow" name="problemStatement" id="field_problemStatement">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.problemStatement" for="field_problemStatement">Problem Statement</label>
-            <textarea required class="form-control" name="problemStatement" id="field_problemStatement" maxLength="1000"
-                      [(ngModel)]="modelingExercise.problemStatement"></textarea>
+            <div class="question-content">
+            <jhi-markdown-editor [(markdown)]="modelingExercise.problemStatement"></jhi-markdown-editor>
+            </div>
         </div>
     </div>
     <div class="modal-footer">
         <button id="modeling-back-cancel-button" type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">
             <fa-icon icon="ban"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
-        <button id="modeling-save-button" type="submit" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
+        <button type="button" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary" (click)="save()">
             <fa-icon icon="save"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
         </button>
     </div>

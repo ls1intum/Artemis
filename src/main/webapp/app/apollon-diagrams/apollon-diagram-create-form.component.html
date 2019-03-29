@@ -4,9 +4,20 @@
     </div>
     <div class="modal-body">
         <jhi-alert-error></jhi-alert-error>
-        <div class="form-group">
+        <div class="form-group-narrow">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.apollonDiagram.title" for="field_title">Title</label>
             <input #titleInput type="text" class="form-control" name="title" id="field_title" [(ngModel)]="apollonDiagram.title" />
+        </div>
+        <div class="form-group-narrow">
+            <label class="form-control-label" jhiTranslate="arTeMiSApp.modelingExercise.diagramType" for="field_diagramType">Diagram Type</label>
+            <select class="form-control" name="diagramType" [(ngModel)]="apollonDiagram.diagramType" id="field_diagramType" >
+                <option value="ClassDiagram">{{'arTeMiSApp.DiagramType.ClassDiagram' | translate}}</option>
+                <option value="ActivityDiagram">{{'arTeMiSApp.DiagramType.ActivityDiagram' | translate}}</option>
+                <option value="ObjectDiagram">{{'arTeMiSApp.DiagramType.ObjectDiagram' | translate}}</option>
+                <option value="UseCaseDiagram">{{'arTeMiSApp.DiagramType.UseCaseDiagram' | translate}}</option>
+                <!-- currently we do not support communication diagrams
+                <option value="CommunicationDiagram">{{'arTeMiSApp.DiagramType.CommunicationDiagram' | translate}}</option>-->
+            </select>
         </div>
     </div>
     <div class="modal-footer">

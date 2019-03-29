@@ -15,7 +15,7 @@ export class DragAndDropQuestionUtil {
      * @param [mappings] {Array} (optional) the mappings we try to use in the sample solution (this may contain incorrect mappings - they will be filtered out)
      * @return {Array} array of mappings that would solve this question (may be empty, if question is unsolvable)
      */
-    solve(question: DragAndDropQuestion, mappings: DragAndDropMapping[]) {
+    solve(question: DragAndDropQuestion, mappings?: DragAndDropMapping[]) {
         if (!question.correctMappings) {
             return [];
         }
@@ -65,12 +65,7 @@ export class DragAndDropQuestionUtil {
      * @param sampleMappings {Array} the mappings so far
      * @return {boolean} true, if the question was solved (solution is saved in sampleMappings), otherwise false
      */
-    solveRec(
-        correctMappings: DragAndDropMapping[],
-        remainingDropLocations: DropLocation[],
-        availableDragItems: DragItem[],
-        sampleMappings: DragAndDropMapping[]
-    ) {
+    solveRec(correctMappings: DragAndDropMapping[], remainingDropLocations: DropLocation[], availableDragItems: DragItem[], sampleMappings: DragAndDropMapping[]) {
         if (remainingDropLocations.length === 0) {
             return true;
         }

@@ -10,7 +10,7 @@ import { ParticipationService } from '../entities/participation/participation.se
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Result } from '../entities/result';
 import { ResultDetailComponent } from '../entities/result/result-detail.component';
-import { ModelingAssessmentService } from '../entities/modeling-assessment/modeling-assessment.service';
+import { ModelingAssessmentService } from '../modeling-assessment/modeling-assessment.service';
 import { HttpResponse } from '@angular/common/http';
 import { Moment } from 'moment';
 import { SourceTreeService } from 'app/components/util/sourceTree.service';
@@ -18,7 +18,7 @@ import { SourceTreeService } from 'app/components/util/sourceTree.service';
 @Component({
     selector: 'jhi-instructor-dashboard',
     templateUrl: './exercise-dashboard.component.html',
-    providers: [JhiAlertService, ModelingAssessmentService, SourceTreeService]
+    providers: [JhiAlertService, ModelingAssessmentService, SourceTreeService],
 })
 export class ExerciseDashboardComponent implements OnInit, OnDestroy {
     // make constants available to html for comparison
@@ -46,7 +46,7 @@ export class ExerciseDashboardComponent implements OnInit, OnDestroy {
         private participationService: ParticipationService,
         private sourceTreeService: SourceTreeService,
         private modalService: NgbModal,
-        private eventManager: JhiEventManager
+        private eventManager: JhiEventManager,
     ) {
         this.reverse = false;
         this.predicate = 'id';
@@ -78,7 +78,7 @@ export class ExerciseDashboardComponent implements OnInit, OnDestroy {
                 showAllResults: this.showAllResults,
                 ratedOnly: true,
                 withSubmissions: this.exercise.type === ExerciseType.MODELING,
-                withAssessors: this.exercise.type === ExerciseType.MODELING
+                withAssessors: this.exercise.type === ExerciseType.MODELING,
             })
             .subscribe((res: HttpResponse<Result[]>) => {
                 const tempResults: Result[] = res.body;

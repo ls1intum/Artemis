@@ -16,7 +16,7 @@ export class ModelingExercisePopupService {
         private modalService: NgbModal,
         private router: Router,
         private modelingExerciseService: ModelingExerciseService,
-        private courseService: CourseService
+        private courseService: CourseService,
     ) {
         this.ngbModalRef = null;
     }
@@ -40,11 +40,13 @@ export class ModelingExercisePopupService {
                     if (courseId) {
                         this.courseService.find(courseId).subscribe(res => {
                             const course = res.body;
-                            this.ngbModalRef = this.modelingExerciseModalRef(component, new ModelingExercise(course, DiagramType.CLASS));
+                            // class diagram is the default value and can be changed by the user in the creation dialog
+                            this.ngbModalRef = this.modelingExerciseModalRef(component, new ModelingExercise(DiagramType.ClassDiagram, course));
                             resolve(this.ngbModalRef);
                         });
                     } else {
-                        this.ngbModalRef = this.modelingExerciseModalRef(component, new ModelingExercise());
+                        // class diagram is the default value and can be changed by the user in the creation dialog
+                        this.ngbModalRef = this.modelingExerciseModalRef(component, new ModelingExercise(DiagramType.ClassDiagram));
                         resolve(this.ngbModalRef);
                     }
                 }, 0);
@@ -63,7 +65,7 @@ export class ModelingExercisePopupService {
             reason => {
                 this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
                 this.ngbModalRef = null;
-            }
+            },
         );
         return modalRef;
     }

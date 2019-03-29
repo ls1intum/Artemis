@@ -1,0 +1,389 @@
+{
+  "version": "2.0",
+  "size": {
+    "width": 880,
+    "height": 1295
+  },
+  "type": "ActivityDiagram",
+  "interactive": {
+    "elements": [],
+    "relationships": []
+  },
+  "elements": [
+    {
+      "id": "a41807cb-b39a-4619-9477-6a33ecff1c1f",
+      "name": "ActionNode",
+      "owner": null,
+      "type": "ActivityActionNode",
+      "bounds": {
+        "x": 120,
+        "y": -30,
+        "width": 200,
+        "height": 100
+      }
+    },
+    {
+      "id": "ebcbf763-473d-4a77-8cfa-7f35457381e2",
+      "name": "",
+      "owner": null,
+      "type": "ActivityInitialNode",
+      "bounds": {
+        "x": -20,
+        "y": -430,
+        "width": 40,
+        "height": 40
+      }
+    },
+    {
+      "id": "a63aa3fa-b91e-4b06-91a1-f57959b9e2f8",
+      "name": "",
+      "owner": null,
+      "type": "ActivityForkNode",
+      "bounds": {
+        "x": -190,
+        "y": 130,
+        "width": 20,
+        "height": 60
+      }
+    },
+    {
+      "id": "864c2d7f-c11e-417b-850f-f371f44024e8",
+      "name": "ActionNode",
+      "owner": null,
+      "type": "ActivityActionNode",
+      "bounds": {
+        "x": -100,
+        "y": -320,
+        "width": 200,
+        "height": 100
+      }
+    },
+    {
+      "id": "d0cb2fc1-0171-4ec2-88e7-80a5a25e059a",
+      "name": "ActionNode",
+      "owner": null,
+      "type": "ActivityActionNode",
+      "bounds": {
+        "x": -280,
+        "y": -40,
+        "width": 200,
+        "height": 100
+      }
+    },
+    {
+      "id": "520b207d-e599-45ec-b535-fbe01c29df66",
+      "name": "ObjectNode",
+      "owner": null,
+      "type": "ActivityObjectNode",
+      "bounds": {
+        "x": 120,
+        "y": 200,
+        "width": 200,
+        "height": 100
+      }
+    },
+    {
+      "id": "9997d464-c620-43e9-b02c-7eee2b3b346a",
+      "name": "Condition",
+      "owner": null,
+      "type": "ActivityMergeNode",
+      "bounds": {
+        "x": -100,
+        "y": -150,
+        "width": 200,
+        "height": 60
+      }
+    },
+    {
+      "id": "25c84465-3372-4ccc-b459-e6072749e5d7",
+      "name": "",
+      "owner": null,
+      "type": "ActivityFinalNode",
+      "bounds": {
+        "x": 200,
+        "y": 390,
+        "width": 45,
+        "height": 45
+      }
+    },
+    {
+      "id": "4ef14f4b-cc25-4add-bc85-3764d334c6a0",
+      "name": "",
+      "owner": null,
+      "type": "ActivityFinalNode",
+      "bounds": {
+        "x": -90,
+        "y": 260,
+        "width": 45,
+        "height": 45
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "id": "36cbad9c-5715-4a8c-8639-b2057dac16aa",
+      "name": "Association",
+      "type": "ActivityControlFlow",
+      "source": {
+        "element": "ebcbf763-473d-4a77-8cfa-7f35457381e2",
+        "direction": "Down"
+      },
+      "target": {
+        "element": "864c2d7f-c11e-417b-850f-f371f44024e8",
+        "direction": "Up"
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 70
+        }
+      ],
+      "bounds": {
+        "x": 0,
+        "y": -390,
+        "width": 1,
+        "height": 70
+      }
+    },
+    {
+      "id": "030a9199-4ee2-44ca-9d51-a1321311cbac",
+      "name": "Association",
+      "type": "ActivityControlFlow",
+      "source": {
+        "element": "a41807cb-b39a-4619-9477-6a33ecff1c1f",
+        "direction": "Down"
+      },
+      "target": {
+        "element": "520b207d-e599-45ec-b535-fbe01c29df66",
+        "direction": "Up"
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 130
+        }
+      ],
+      "bounds": {
+        "x": 220,
+        "y": 70,
+        "width": 1,
+        "height": 130
+      }
+    },
+    {
+      "id": "63950f36-5391-40c9-9648-a7b8186f88c5",
+      "name": "Association",
+      "type": "ActivityControlFlow",
+      "source": {
+        "element": "864c2d7f-c11e-417b-850f-f371f44024e8",
+        "direction": "Down"
+      },
+      "target": {
+        "element": "9997d464-c620-43e9-b02c-7eee2b3b346a",
+        "direction": "Up"
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 70
+        }
+      ],
+      "bounds": {
+        "x": 0,
+        "y": -220,
+        "width": 1,
+        "height": 70
+      }
+    },
+    {
+      "id": "df52bc06-587f-4c67-b0b7-c56347558939",
+      "name": "Association",
+      "type": "ActivityControlFlow",
+      "source": {
+        "element": "9997d464-c620-43e9-b02c-7eee2b3b346a",
+        "direction": "Right"
+      },
+      "target": {
+        "element": "a41807cb-b39a-4619-9477-6a33ecff1c1f",
+        "direction": "Up"
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 120,
+          "y": 0
+        },
+        {
+          "x": 120,
+          "y": 90
+        }
+      ],
+      "bounds": {
+        "x": 100,
+        "y": -120,
+        "width": 120,
+        "height": 90
+      }
+    },
+    {
+      "id": "8c4fba78-1fa0-46d1-9629-66deaf5a9efa",
+      "name": "Association",
+      "type": "ActivityControlFlow",
+      "source": {
+        "element": "9997d464-c620-43e9-b02c-7eee2b3b346a",
+        "direction": "Left"
+      },
+      "target": {
+        "element": "d0cb2fc1-0171-4ec2-88e7-80a5a25e059a",
+        "direction": "Up"
+      },
+      "path": [
+        {
+          "x": 80,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 80
+        }
+      ],
+      "bounds": {
+        "x": -180,
+        "y": -120,
+        "width": 80,
+        "height": 80
+      }
+    },
+    {
+      "id": "aa004dae-c620-44bb-a5fc-2fe68446e0c9",
+      "name": "Association",
+      "type": "ActivityControlFlow",
+      "source": {
+        "element": "d0cb2fc1-0171-4ec2-88e7-80a5a25e059a",
+        "direction": "Down"
+      },
+      "target": {
+        "element": "a63aa3fa-b91e-4b06-91a1-f57959b9e2f8",
+        "direction": "Up"
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 40
+        },
+        {
+          "x": 0,
+          "y": 30
+        },
+        {
+          "x": 0,
+          "y": 70
+        }
+      ],
+      "bounds": {
+        "x": -180,
+        "y": 60,
+        "width": 1,
+        "height": 70
+      }
+    },
+    {
+      "id": "bbba8e63-4261-4668-a117-b9a41b910174",
+      "name": "Association",
+      "type": "ActivityControlFlow",
+      "source": {
+        "element": "520b207d-e599-45ec-b535-fbe01c29df66",
+        "direction": "Down"
+      },
+      "target": {
+        "element": "25c84465-3372-4ccc-b459-e6072749e5d7",
+        "direction": "Up"
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 90
+        }
+      ],
+      "bounds": {
+        "x": 222.5,
+        "y": 300,
+        "width": 1,
+        "height": 90
+      }
+    },
+    {
+      "id": "f7a76335-8e6c-46ac-a32b-d36e404d1b0a",
+      "name": "Association",
+      "type": "ActivityControlFlow",
+      "source": {
+        "element": "a63aa3fa-b91e-4b06-91a1-f57959b9e2f8",
+        "direction": "Down"
+      },
+      "target": {
+        "element": "4ef14f4b-cc25-4add-bc85-3764d334c6a0",
+        "direction": "Up"
+      },
+      "path": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 40
+        },
+        {
+          "x": 50,
+          "y": 40
+        },
+        {
+          "x": 50,
+          "y": 30
+        },
+        {
+          "x": 112.5,
+          "y": 30
+        },
+        {
+          "x": 112.5,
+          "y": 70
+        }
+      ],
+      "bounds": {
+        "x": -180,
+        "y": 190,
+        "width": 112.5,
+        "height": 70
+      }
+    }
+  ],
+  "assessments": []
+}

@@ -1,23 +1,23 @@
-import {Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, ViewChild} from '@angular/core';
-import {JhiAlertService} from 'ng-jhipster';
-import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
-import {ApollonOptions, Point, State} from '@ls1intum/apollon';
-import {ActivatedRoute, Router} from '@angular/router';
-import {ModelingSubmission, ModelingSubmissionService} from '../../entities/modeling-submission';
-import {ModelingExercise, ModelingExerciseService} from '../../entities/modeling-exercise';
-import {Result, ResultService} from '../../entities/result';
-import {genericRetryStrategy, ModelingAssessmentService} from '../../entities/modeling-assessment';
-import {AccountService} from '../../core';
-import {HttpErrorResponse} from '@angular/common/http';
-import {Conflict} from 'app/entities/modeling-assessment/conflict.model';
-import {isNullOrUndefined} from 'util';
-import {retryWhen} from 'rxjs/operators';
+import { Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { JhiAlertService } from 'ng-jhipster';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ApollonOptions, Point, State } from '@ls1intum/apollon';
+import { ActivatedRoute, Router } from '@angular/router';
+import { ModelingSubmission, ModelingSubmissionService } from '../../entities/modeling-submission';
+import { ModelingExercise, ModelingExerciseService } from '../../entities/modeling-exercise';
+import { Result, ResultService } from '../../entities/result';
+import { genericRetryStrategy, ModelingAssessmentService } from '../../entities/modeling-assessment';
+import { AccountService } from '../../core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Conflict } from 'app/entities/modeling-assessment/conflict.model';
+import { isNullOrUndefined } from 'util';
+import { retryWhen } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-modeling-assessment',
     templateUrl: './modeling-assessment.component.html',
-    styleUrls: ['./modeling-assessment.component.scss'],
-    providers: [ModelingAssessmentService]
+    styleUrls: ['../../modeling-assessment/modeling-assessment.component.scss'],
+    providers: [ModelingAssessmentService],
 })
 export class ModelingAssessmentComponent implements OnInit, OnDestroy {
     @ViewChild('editorContainer')
@@ -48,9 +48,8 @@ export class ModelingAssessmentComponent implements OnInit, OnDestroy {
         private modelingExerciseService: ModelingExerciseService,
         private resultService: ResultService,
         private modelingAssessmentService: ModelingAssessmentService,
-        private accountService: AccountService
-    ) {
-    }
+        private accountService: AccountService,
+    ) {}
 
     ngOnInit() {
         // Used to check if the assessor is the current user
@@ -61,8 +60,7 @@ export class ModelingAssessmentComponent implements OnInit, OnDestroy {
         this.initComponent();
     }
 
-    ngOnDestroy() {
-    }
+    ngOnDestroy() {}
 
     initComponent() {
         this.route.params.subscribe(params => {
@@ -111,7 +109,6 @@ export class ModelingAssessmentComponent implements OnInit, OnDestroy {
             //     // this.initializeAssessments();
             //     this.checkScoreBoundaries();
             // }
-
         });
     }
 
@@ -126,7 +123,7 @@ export class ModelingAssessmentComponent implements OnInit, OnDestroy {
             },
             () => {
                 this.jhiAlertService.error('arTeMiSApp.apollonDiagram.assessment.saveFailed');
-            }
+            },
         );
     }
 
@@ -150,7 +147,7 @@ export class ModelingAssessmentComponent implements OnInit, OnDestroy {
                 } else {
                     this.jhiAlertService.error('arTeMiSApp.apollonDiagram.assessment.submitFailed');
                 }
-            }
+            },
         );
     }
 
@@ -196,9 +193,7 @@ export class ModelingAssessmentComponent implements OnInit, OnDestroy {
         this.busy = true;
         this.modelingAssessmentService
             .getOptimalSubmissions(this.modelingExercise.id)
-            .pipe(
-                retryWhen(genericRetryStrategy({maxRetryAttempts: 5, scalingDuration: 1000}))
-            )
+            .pipe(retryWhen(genericRetryStrategy({ maxRetryAttempts: 5, scalingDuration: 1000 })))
             .subscribe(
                 (optimal: number[]) => {
                     this.busy = false;
@@ -208,7 +203,7 @@ export class ModelingAssessmentComponent implements OnInit, OnDestroy {
                 () => {
                     this.busy = false;
                     this.jhiAlertService.info('assessmentDashboard.noSubmissionFound');
-                }
+                },
             );
     }
 

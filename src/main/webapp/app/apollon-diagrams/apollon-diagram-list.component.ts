@@ -5,22 +5,28 @@ import { JhiAlertService } from 'ng-jhipster';
 import * as ApollonDiagramTitleFormatter from './apollon-diagram-title-formatter';
 import { ApollonDiagram, ApollonDiagramService } from '../entities/apollon-diagram';
 import { ApollonDiagramCreateFormComponent } from './apollon-diagram-create-form.component';
+import { DiagramType } from '@ls1intum/apollon';
 
 @Component({
     selector: 'jhi-apollon-diagram-list',
     templateUrl: './apollon-diagram-list.component.html',
-    providers: [ApollonDiagramService, JhiAlertService]
+    providers: [ApollonDiagramService, JhiAlertService],
 })
 export class ApollonDiagramListComponent implements OnInit {
     apollonDiagrams: ApollonDiagram[] = [];
+    predicate: string;
+    reverse: boolean;
 
     constructor(
         private apollonDiagramsService: ApollonDiagramService,
         private jhiAlertService: JhiAlertService,
         private modalService: NgbModal,
         private route: ActivatedRoute,
-        private router: Router
-    ) {}
+        private router: Router,
+    ) {
+        this.predicate = 'id';
+        this.reverse = true;
+    }
 
     ngOnInit() {
         this.apollonDiagramsService.query().subscribe(
@@ -29,13 +35,13 @@ export class ApollonDiagramListComponent implements OnInit {
             },
             response => {
                 this.jhiAlertService.error('Error while loading Apollon diagrams');
-            }
+            },
         );
     }
 
     goToDetailsPage(id: number) {
         this.router.navigate([id], {
-            relativeTo: this.route
+            relativeTo: this.route,
         });
     }
 
@@ -54,7 +60,7 @@ export class ApollonDiagramListComponent implements OnInit {
                 // TODO: this is a workaround to avoid translation not found issues. Provide proper translations
                 const jhiAlert = this.jhiAlertService.error(errorMessage);
                 jhiAlert.msg = errorMessage;
-            }
+            },
         );
     }
 
@@ -65,6 +71,13 @@ export class ApollonDiagramListComponent implements OnInit {
     openCreateDiagramDialog() {
         const modalRef = this.modalService.open(ApollonDiagramCreateFormComponent, { size: 'lg', backdrop: 'static' });
         const formComponentInstance = modalRef.componentInstance as ApollonDiagramCreateFormComponent;
-        formComponentInstance.apollonDiagram = new ApollonDiagram();
+        // class diagram is the default value and can be changed by the user in the creation dialog
+        formComponentInstance.apollonDiagram = new ApollonDiagram(DiagramType.ClassDiagram);
     }
+
+    trackId(index: number, item: ApollonDiagram) {
+        return item.id;
+    }
+
+    callback() {}
 }

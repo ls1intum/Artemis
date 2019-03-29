@@ -20,10 +20,10 @@
                 </ng-container>
             </button>
             <button class="btn btn-success" (click)="submit()"
-                    [disabled]="!submission || !diagramState || diagramState.entities.allIds.length === 0"
+                    [disabled]="!submission || !umlModel || this.umlModel.elements.length === 0"
                     [hidden]="submission?.submitted || !isActive">Submit</button>
             <button class="btn btn-warning" (click)="submit()"
-                    [disabled]="!submission || !diagramState || diagramState.entities.allIds.length === 0"
+                    [disabled]="!submission || !umlModel || this.umlModel.elements.length === 0"
                     [hidden]="submission?.submitted || isActive">Submit (deadline missed)</button>
             <button class="btn btn-info" (click)="retry()"
                     *ngIf="isActive && submission?.submitted && result?.rated && !retryStarted"><fa-icon icon="sync"></fa-icon> Retry</button>
@@ -32,7 +32,10 @@
 
     <div class="row" *ngIf="modelingExercise">
         <div class="col">
-            <p class="mb-3"><span><strong>Problem Statement:</strong></span> {{ modelingExercise.problemStatement }}</p>
+            <p class="mb-3">
+                <span><strong>Problem Statement:</strong></span>
+                <span [innerHTML]="problemStatement" ></span>
+            </p>
         </div>
         <div class="col text-right" *ngIf="!submission?.submitted"><p><strong>Max. Score: {{ modelingExercise.maxScore }}</strong></p></div>
     </div>
@@ -95,20 +98,6 @@
     <div class="row">
         <div [ngClass]="{'col-9': submission?.submitted, 'col-12': !submission?.submitted}">
             <div #editorContainer style="width: 100%; height: 100vh;"></div>
-            <div class="assessments">
-                <div class="assessments__container">
-                    <div class="assessments__canvas">
-                        <ng-container *ngIf="result?.rated && assessmentResult && positions">
-                            <div *ngFor="let feedback of assessmentResult.feedbacks"
-                                 [style.top.px]="positions[feedback.referenceId].y"
-                                 [style.left.px]="positions[feedback.referenceId].x">
-                                <fa-icon [icon]="{'check': feedback.credits > 0, 'times': feedback.credits < 0}" *ngFor="let i of numberToArray(feedback.credits, 0)"></fa-icon>
-                                <fa-icon class="half" [icon]="{'check': feedback.credits > 0, 'times': feedback.credits < 0}" *ngIf="feedback.credits % 1 !== 0"></fa-icon>
-                            </div>
-                        </ng-container>
-                    </div>
-                </div>
-            </div>
         </div>
         <div class="col-3" *ngIf="submission?.submitted">
             <h4>Assessment</h4>
@@ -123,6 +112,7 @@
                         </tr>
                     </thead>
                     <tbody *ngIf="assessmentsNames">
+                    <!--TODO CZ: replace function call 'isSelected' in html-->
                         <tr *ngFor="let feedback of assessmentResult.feedbacks" [hidden]="(feedback.credits === 0 && !feedback.text) || !isSelected(feedback.referenceId, feedback.referenceType)">
                             <td>
                                 <span>{{assessmentsNames[feedback.referenceId]['type']}} </span>

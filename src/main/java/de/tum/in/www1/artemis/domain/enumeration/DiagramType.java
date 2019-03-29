@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.domain.enumeration;
 
 /**
- * The DiagramType enumeration.
+ * The DiagramType enumeration. This has to be exactly the same as defined in Apollon on the client side
  */
 public enum DiagramType {
-    CLASS, ACTIVITY, USE_CASE, COMMUNICATION
+    ClassDiagram, ObjectDiagram, ActivityDiagram, UseCaseDiagram, CommunicationDiagram
 }

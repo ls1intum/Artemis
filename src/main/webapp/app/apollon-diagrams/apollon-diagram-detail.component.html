@@ -6,14 +6,14 @@
             <a href="#/apollon-diagrams">&larr; Back</a>
         </div>
         <div class="col text-right">
-            <button class="btn btn-info mr-1" (click)="generateExercise()" [hidden]="!diagram">Generate a Quiz Exercise &hellip;</button>
-            <button class="btn btn-success" (click)="saveDiagram()" [hidden]="!diagram">Save</button>
+            <button class="btn btn-info mr-1" (click)="generateExercise()" [hidden]="!apollonDiagram">Generate a Quiz Exercise &hellip;</button>
+            <button class="btn btn-success" (click)="saveDiagram()" [hidden]="!apollonDiagram">Save</button>
         </div>
     </div>
 
-    <div class="form-group mb-3" *ngIf="diagram">
+    <div class="form-group mb-3" *ngIf="apollonDiagram">
         <label class="form-control-label" jhiTranslate="arTeMiSApp.apollonDiagram.title" for="field_title">Title</label>
-        <input type="text" class="form-control" name="title" id="field_title" [(ngModel)]="diagram.title" />
+        <input type="text" class="form-control" name="title" id="field_title" [(ngModel)]="apollonDiagram.title" />
     </div>
 
     <div #editorContainer style="width: 100%; height: calc(100vh - 300px)"></div>

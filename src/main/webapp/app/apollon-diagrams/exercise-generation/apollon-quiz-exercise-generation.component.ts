@@ -1,15 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import ApollonEditor, { layoutDiagram } from '@ls1intum/apollon';
 import { generateDragAndDropQuizExercise } from './quiz-exercise-generator';
 import { Course, CourseService } from '../../entities/course';
 import { QuizExerciseService } from '../../entities/quiz-exercise';
 import { FileUploaderService } from '../../shared/http/file-uploader.service';
+import { ApollonEditor } from '@ls1intum/apollon';
 
 @Component({
     selector: 'jhi-apollon-quiz-exercise-generation',
     templateUrl: './apollon-quiz-exercise-generation.component.html',
-    providers: []
+    providers: [],
 })
 export class ApollonQuizExerciseGenerationComponent implements OnInit {
     apollonEditor: ApollonEditor;
@@ -21,7 +21,7 @@ export class ApollonQuizExerciseGenerationComponent implements OnInit {
         private activeModal: NgbActiveModal,
         private courseService: CourseService,
         private fileUploaderService: FileUploaderService,
-        private quizExerciseService: QuizExerciseService
+        private quizExerciseService: QuizExerciseService,
     ) {}
 
     ngOnInit() {
@@ -29,7 +29,8 @@ export class ApollonQuizExerciseGenerationComponent implements OnInit {
             response => {
                 this.courses = response.body;
                 this.selectedCourse = this.courses[0];
-            }, () => { }
+            },
+            () => {},
         );
     }
 
@@ -38,21 +39,9 @@ export class ApollonQuizExerciseGenerationComponent implements OnInit {
             return;
         }
 
-        const diagramState = this.apollonEditor.getState();
-        const layoutedDiagram = layoutDiagram(diagramState, { outerPadding: 20 });
-        const interactiveElementIds = new Set(diagramState.interactiveElements.allIds);
+        const model = this.apollonEditor.model;
 
-        const fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif';
-
-        await generateDragAndDropQuizExercise(
-            this.diagramTitle,
-            layoutedDiagram,
-            interactiveElementIds,
-            fontFamily,
-            this.selectedCourse,
-            this.fileUploaderService,
-            this.quizExerciseService
-        );
+        await generateDragAndDropQuizExercise(this.diagramTitle, model, this.selectedCourse, this.fileUploaderService, this.quizExerciseService);
 
         this.activeModal.close();
     }

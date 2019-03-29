@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -29,6 +30,10 @@ public class ApollonDiagram implements Serializable {
     @Column(name = "json_representation")
     @Lob
     private String jsonRepresentation;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "diagram_type")
+    private DiagramType diagramType;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -65,6 +70,19 @@ public class ApollonDiagram implements Serializable {
         this.jsonRepresentation = jsonRepresentation;
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
+
+    public DiagramType getDiagramType() {
+        return diagramType;
+    }
+
+    public ApollonDiagram diagramType(DiagramType diagramType) {
+        this.diagramType = diagramType;
+        return this;
+    }
+
+    public void setDiagramType(DiagramType diagramType) {
+        this.diagramType = diagramType;
+    }
 
     @Override
     public boolean equals(Object o) {

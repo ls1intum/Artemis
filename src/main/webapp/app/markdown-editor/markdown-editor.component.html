@@ -1,0 +1,52 @@
+<!--Begin Editor-->
+<div [hidden]="previewMode">
+    <div class="tool-bar row">
+    <div class="col-xs-6" style="margin-left: 14px">
+        <ng-container *ngFor="let command of defaultCommands">
+            <button class="btn btn-outline-secondary mr-1"
+                    (click)="command.execute()"
+                    [ngbTooltip]= "(command.buttonTranslationString | translate)">
+                <fa-icon [icon]="command.buttonIcon" ></fa-icon>
+            </button>
+        </ng-container>
+    </div>
+        <div class="btn-group col-xs-6" ngbDropdown role="group" aria-label="Button group with nested dropdown" style="margin-left: 5px">
+            <button class="btn btn-outline-secondary mr-1" id="dropdownBasic1" ngbDropdownToggle>Style</button>
+            <div class="dropdown-menu" ngbDropdownMenu>
+                <ng-container *ngFor="let command of headerCommands" ><button class="dropdown-item" (click)="command.execute()">{{command.buttonTranslationString | translate}}</button></ng-container>
+            </div>
+        </div>
+    </div>
+    <div class="tool-bar" *ngIf="domainCommands && domainCommands.length != 0" style="margin-top: 5px" >
+        <ng-container *ngFor="let command of domainCommands">
+            <div class="btn btn-group-sm btn-outline-secondary mr-1" (click)="command.execute()">
+                {{command.buttonTranslationString | translate}}
+            </div>
+        </ng-container>
+    </div>
+
+
+    <ace-editor #aceEditor [mode]="aceEditorOptions.mode"
+                [autoUpdateContent]="aceEditorOptions.autoUpdateContent" [(text)]="markdown"
+                (textChange)="markdownChange.emit($event)"
+                style="min-height: 200px; width:100%; overflow: auto; margin-top: 5px" class="form-control"></ace-editor>
+</div>
+<!--End Editor-->
+
+<!--Begin Preview-->
+<ng-container *ngIf="previewMode">
+    <ng-content></ng-content>
+    <div *ngIf="showDefaultPreview" [innerHTML]="previewTextAsHtml">
+        Preview
+    </div>
+</ng-container>
+<!--End Preview-->
+
+<!--Begin Edit/Preview Button-->
+<div class="toolbar">
+    <div *ngIf="showPreviewButton" class="btn btn-outline-secondary" (click)="togglePreview()">
+        <fa-icon [icon]="previewButtonIcon" class="mr-1"></fa-icon>
+        <span [jhiTranslate]="previewButtonTranslateString"></span>
+    </div>
+</div>
+<!--End Edit/Preview Button-->

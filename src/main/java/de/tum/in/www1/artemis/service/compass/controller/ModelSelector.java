@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.compass.controller;
 
-import de.tum.in.www1.artemis.service.compass.umlmodel.UMLModel;
+import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLClassModel;
 
 import java.util.*;
 
@@ -22,17 +22,17 @@ public class ModelSelector {
         double threshold = 0.15;
         int maxCandidateListSize = 10;
 
-        List<UMLModel> partiallyAssessed = new ArrayList<>();
-        for (UMLModel umlModel: modelIndex.getModelCollection()) {
+        List<UMLClassModel> partiallyAssessed = new ArrayList<>();
+        for (UMLClassModel umlModel: modelIndex.getModelCollection()) {
             if (!alreadyAssessedModels.contains(umlModel.getModelID()) && !umlModel.isEntirelyAssessed()) {
                 partiallyAssessed.add(umlModel);
             }
         }
 
         // Make sure that the candidate list is not too big
-        List<UMLModel> candidates = partiallyAssessed;
+        List<UMLClassModel> candidates = partiallyAssessed;
 
-        candidates.sort(Comparator.comparingDouble(UMLModel::getLastAssessmentCoverage));
+        candidates.sort(Comparator.comparingDouble(UMLClassModel::getLastAssessmentCoverage));
 
         if (!candidates.isEmpty()) {
             double smallestCoverage = candidates.get(0).getLastAssessmentCoverage();
@@ -51,9 +51,9 @@ public class ModelSelector {
         // select a model which covers many other models (= high similarity to others)
         Long selectedCandidateId = null;
         double lastMeanSimilarity = 0;
-        for (UMLModel candidate : candidates) {
+        for (UMLClassModel candidate : candidates) {
             double similarity = 0;
-            for (UMLModel model : partiallyAssessed) {
+            for (UMLClassModel model : partiallyAssessed) {
                 similarity += model.similarity(candidate);
             }
 
@@ -73,7 +73,7 @@ public class ModelSelector {
         }
 
         // if none exists, select any unassessed model
-        for (UMLModel model : modelIndex.getModelCollection()) {
+        for (UMLClassModel model : modelIndex.getModelCollection()) {
             if (model.isUnassessed() && !alreadyAssessedModels.contains(model.getModelID())) {
                 alreadyAssessedModels.add(model.getModelID());
                 modelsWaitingForAssessment.add(model.getModelID());

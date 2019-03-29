@@ -1,4 +1,4 @@
-export module HighlightColors {
+export namespace HighlightColors {
     export enum Color {
         yellow = 'yellow',
         lime = 'lime',
@@ -15,7 +15,7 @@ export module HighlightColors {
         purple = 'purple',
         black = 'black',
         gray = 'gray',
-        silver = 'silver'
+        silver = 'silver',
     }
 
     export function forIndex(index: number): Color {

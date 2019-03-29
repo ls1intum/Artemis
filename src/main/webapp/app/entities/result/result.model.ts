@@ -7,7 +7,7 @@ import { Moment } from 'moment';
 
 export const enum AssessmentType {
     AUTOMATIC = 'AUTOMATIC',
-    MANUAL = 'MANUAL'
+    MANUAL = 'MANUAL',
 }
 
 export class Result implements BaseEntity {
@@ -27,8 +27,6 @@ export class Result implements BaseEntity {
     public assessor: User;
     public feedbacks: Feedback[];
     public participation: Participation;
-
-    public assessments: string; // only used for results of modeling exercises so far
 
     constructor() {}
 }

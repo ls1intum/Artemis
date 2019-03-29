@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { ShortAnswerQuestion } from '../../../entities/short-answer-question';
 import { ShortAnswerSpot } from '../../../entities/short-answer-spot';
 import { ShortAnswerSolution } from '../../../entities/short-answer-solution';
@@ -10,13 +10,14 @@ import 'brace/mode/markdown';
 import { ShortAnswerQuestionUtil } from 'app/components/util/short-answer-question-util.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import * as TempID from 'app/quiz/edit/temp-id';
+import { EditQuizQuestion } from 'app/quiz/edit/edit-quiz-question.interface';
 
 @Component({
     selector: 'jhi-edit-short-answer-question',
     templateUrl: './edit-short-answer-question.component.html',
-    providers: [ArtemisMarkdown]
+    providers: [ArtemisMarkdown],
 })
-export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, AfterViewInit {
+export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, AfterViewInit, EditQuizQuestion {
     @ViewChild('questionEditor')
     private questionEditor: AceEditorComponent;
     @ViewChild('clickLayer')
@@ -54,17 +55,18 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
     // defines the first gap between text and solutions when
     firstPressed = 1;
     // has all solution options with their mapping (each spotNr)
-    optionsWithID: string [] = [];
+    optionsWithID: string[] = [];
 
     /** For visual mode **/
-    textParts: String [][];
+    textParts: String[][];
 
     backupQuestion: ShortAnswerQuestion;
 
     constructor(
         private artemisMarkdown: ArtemisMarkdown,
         private shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
-        private modalService: NgbModal
+        private modalService: NgbModal,
+        private changeDetector: ChangeDetectorRef,
     ) {}
 
     ngOnInit(): void {
@@ -135,8 +137,9 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
                 this.parseMarkdown(this.questionEditorText);
                 this.questionUpdated.emit();
             },
-            this
+            this,
         );
+        this.changeDetector.detectChanges();
     }
 
     /**
@@ -179,9 +182,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         const markdownText =
             this.artemisMarkdown.generateTextHintExplanation(this.question) +
             '\n\n\n' +
-            this.question.solutions
-                .map((solution, index) => this.optionsWithID[index] + ' ' + solution.text.trim())
-                .join('\n');
+            this.question.solutions.map((solution, index) => this.optionsWithID[index] + ' ' + solution.text.trim()).join('\n');
         return markdownText;
     }
 
@@ -294,7 +295,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @desc Add the markdown for a hint at the current cursor location
      */
     addHintAtCursor(): void {
-        this.artemisMarkdown.addHintAtCursor(this.questionEditor.getEditor());
+        this.artemisMarkdown.addHintAtCursor(this.questionEditor);
     }
 
     /**
@@ -302,7 +303,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @desc Add the markdown for an explanation at the current cursor location
      */
     addExplanationAtCursor(): void {
-        this.artemisMarkdown.addExplanationAtCursor(this.questionEditor.getEditor());
+        this.artemisMarkdown.addExplanationAtCursor(this.questionEditor);
     }
 
     /**
@@ -381,11 +382,17 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
 
         const editor = this.questionEditor.getEditor();
         // ID 'element-row-column' is divided into array of [row, column]
-        const selectedTextRowColumn = window.getSelection().focusNode.parentElement.id.split('-').slice(1);
+        const selectedTextRowColumn = window
+            .getSelection()
+            .focusNode.parentElement.id.split('-')
+            .slice(1);
         const markedText = this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]];
 
         // split text before first option tag
-        const questionText = editor.getValue().split(/\[-option /g)[0].trim();
+        const questionText = editor
+            .getValue()
+            .split(/\[-option /g)[0]
+            .trim();
         // split on every whitespace. !!!only exception: [-spot 1] is not split!!! for more details see description in ngOnInit.
         const textForEachLine = questionText.split(/\n+/g);
         this.textParts = textForEachLine.map((t: String) => t.split(/\s+(?![^[]]*])/g));
@@ -417,14 +424,19 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @param text
      */
     getSpotNr(text: string): number {
-        return +text.split(/\[-spot/g).join('').split(']').join('').trim();
+        return +text
+            .split(/\[-spot/g)
+            .join('')
+            .split(']')
+            .join('')
+            .trim();
     }
 
     /**
      * gets the spot for a specific spotNr
      * @param spotNr
      */
-    getSpot(spotNr: number): ShortAnswerSpot  {
+    getSpot(spotNr: number): ShortAnswerSpot {
         return this.question.spots.filter(spot => spot.spotNr === spotNr)[0];
     }
 
@@ -463,12 +475,9 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @param dragEvent {object} the solution involved (may be a copy at this point)
      */
     onDragDrop(spot: ShortAnswerSpot, dragEvent: any): void {
-
         let dragItem = dragEvent.dragData;
         // Replace dragItem with original (because it may be a copy)
-        dragItem = this.question.solutions.find(originalDragItem =>
-            dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.tempID === dragItem.tempID
-        );
+        dragItem = this.question.solutions.find(originalDragItem => (dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.tempID === dragItem.tempID));
 
         if (!dragItem) {
             // Drag item was not found in question => do nothing
@@ -483,8 +492,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         if (
             !this.question.correctMappings.some(
                 existingMapping =>
-                    this.shortAnswerQuestionUtil.isSameSpot(existingMapping.spot, spot) &&
-                    this.shortAnswerQuestionUtil.isSameSolution(existingMapping.solution, dragItem)
+                    this.shortAnswerQuestionUtil.isSameSpot(existingMapping.spot, spot) && this.shortAnswerQuestionUtil.isSameSolution(existingMapping.solution, dragItem),
             )
         ) {
             this.deleteMapping(this.getMappingsForSolution(dragItem).filter(mapping => mapping.spot === undefined)[0]);
@@ -553,9 +561,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
-        this.question.correctMappings = this.question.correctMappings.filter(
-            mapping => !this.shortAnswerQuestionUtil.isSameSolution(mapping.solution, solution)
-        );
+        this.question.correctMappings = this.question.correctMappings.filter(mapping => !this.shortAnswerQuestionUtil.isSameSolution(mapping.solution, solution));
     }
 
     /**
@@ -584,12 +590,12 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @desc Toggles the preview in the template
      */
     togglePreview(): void {
-       this.showPreview = !this.showPreview;
-       // split on every whitespace. !!!only exception: [-spot 1] is not split!!! for more details see description in ngOnInit.
-       const textForEachLine = this.question.text.split(/\n+/g);
-       this.textParts = textForEachLine.map(t => t.split(/\s+(?![^[]]*])/g));
-       this.questionEditor.getEditor().setValue(this.generateMarkdown());
-       this.questionEditor.getEditor().clearSelection();
+        this.showPreview = !this.showPreview;
+        // split on every whitespace. !!!only exception: [-spot 1] is not split!!! for more details see description in ngOnInit.
+        const textForEachLine = this.question.text.split(/\n+/g);
+        this.textParts = textForEachLine.map(t => t.split(/\s+(?![^[]]*])/g));
+        this.questionEditor.getEditor().setValue(this.generateMarkdown());
+        this.questionEditor.getEditor().clearSelection();
     }
 
     /**
@@ -691,9 +697,7 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
-        this.question.correctMappings = this.question.correctMappings.filter(
-            mapping => !this.shortAnswerQuestionUtil.isSameSpot(mapping.spot, spot)
-        );
+        this.question.correctMappings = this.question.correctMappings.filter(mapping => !this.shortAnswerQuestionUtil.isSameSpot(mapping.spot, spot));
     }
 
     /**
@@ -702,11 +706,17 @@ export class EditShortAnswerQuestionComponent implements OnInit, OnChanges, Afte
      * @param id
      */
     setQuestionText(id: string): void {
-        const rowColumn: string [] = id.split('-').slice(1);
+        const rowColumn: string[] = id.split('-').slice(1);
         this.textParts[rowColumn[0]][rowColumn[1]] = (<HTMLInputElement>document.getElementById(id)).value;
         this.question.text = this.textParts.map(textPart => textPart.join(' ')).join('\n');
         // split on every whitespace. !!!only exception: [-spot 1] is not split!!! for more details see description in ngOnInit.
         const textForEachLine = this.question.text.split(/\n+/g);
         this.textParts = textForEachLine.map(t => t.split(/\s+(?![^[]]*])/g));
     }
+
+    /**
+     * @function prepareForSave
+     * @desc reset the question and calls the parsing method of the markdown editor
+     */
+    prepareForSave(): void {}
 }

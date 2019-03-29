@@ -26,7 +26,7 @@
                     <fa-icon *ngIf="exercise.type === MODELING" icon="graduation-cap" [fixedWidth]="true" routerLink="/course/{{exercise.course.id}}/exercise/{{exercise.id}}/assessment" routerLinkActive="active"></fa-icon></a>
                 <a class="text-primary" *ngIf="exercise.isAtLeastTutor">
                     <fa-icon *ngIf="exercise.type === TEXT" icon="graduation-cap" [fixedWidth]="true" routerLink="/text/{{exercise.id}}/assessment" routerLinkActive="active"></fa-icon></a>
-                <a class="text-primary" *ngIf="exercise.isAtLeastTutor"><fa-icon *ngIf="exercise.type === MODELING" [fixedWidth]="true"
+                <a class="text-primary" *ngIf="exercise.isAtLeastTutor"><fa-icon *ngIf="exercise.type === MODELING && asModelingExercise(exercise).diagramType === CLASS_DIAGRAM" [fixedWidth]="true"
                    icon="chart-pie" routerLink="/course/{{exercise.course.id}}/exercise/{{exercise.id}}/statistics" routerLinkActive="active"></fa-icon></a>
 
                 <span class="badge badge-warning" *ngIf="!exercise.visibleToStudents" placement="right"

@@ -9,20 +9,27 @@
     <span jhiTranslate="arTeMiSApp.apollonDiagram.home.createLabel">Create a New Apollon Diagram</span>
 </button>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>Title</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr *ngFor="let diagram of apollonDiagrams">
-            <td>{{ getTitleForApollonDiagram(diagram) }}</td>
-            <td>
-                <button class="btn btn-primary mr-1" (click)="goToDetailsPage(diagram.id)">Open</button>
-                <button *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" class="btn btn-danger mr-1" (click)="delete(diagram)">Delete</button>
-            </td>
-        </tr>
-    </tbody>
-</table>
+<div class="table-responsive" *ngIf="apollonDiagrams && apollonDiagrams.length > 0">
+    <table class="table table-striped">
+        <thead>
+            <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
+                <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
+                <th jhiSortBy="title"><span jhiTranslate="arTeMiSApp.exercise.title">Title</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
+                <th jhiSortBy="diagramType"><span jhiTranslate="arTeMiSApp.modelingExercise.diagramType">Diagram Type</span>&nbsp;<fa-icon icon="sort"></fa-icon></th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let apollonDiagram of apollonDiagrams | sortBy: predicate: reverse ;trackBy: trackId">
+                <td><a [routerLink]="['/apollon-diagrams', apollonDiagram.id]">{{apollonDiagram.id}}</a></td>
+                <td>{{ getTitleForApollonDiagram(apollonDiagram) }}</td>
+                <td jhiTranslate="{{'arTeMiSApp.DiagramType.' + apollonDiagram.diagramType}}">{{apollonDiagram.diagramType}}</td>
+                <td>
+                    <button class="btn btn-primary mr-1" (click)="goToDetailsPage(apollonDiagram.id)">Open</button>
+                    <button *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" class="btn btn-danger mr-1" (click)="delete(apollonDiagram)">Delete</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+

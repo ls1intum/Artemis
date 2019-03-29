@@ -24,7 +24,6 @@ import { ArTEMiSAccountModule } from './account/account.module';
 import { ArTEMiSCourseListModule } from './course-list';
 import { ArTEMiSEntityModule } from './entities/entity.module';
 import { ArTEMiSInstructorCourseDashboardModule, ArTEMiSInstructorDashboardModule } from './dashboard';
-import { ArTEMiSAssessmentDashboardModule } from './assessment-dashboard';
 import { PaginationConfig } from './blocks/config/uib-pagination.config';
 import { DifferencePipe, MomentModule } from 'angular2-moment';
 import { ArTEMiSCodeEditorModule } from './code-editor';
@@ -33,21 +32,25 @@ import { ArTEMiSQuizModule } from './quiz/participate';
 import { ArTEMiSTextModule } from './text-editor';
 import { ArTEMiSTextAssessmentModule } from './text-assessment';
 import { ArTEMiSModelingStatisticsModule } from './modeling-statistics/';
-import * as moment from 'moment';
-// jhipster-needle-angular-add-module-import JHipster will add new module here
 import { ActiveMenuDirective, ErrorComponent, FooterComponent, JhiMainComponent, NavbarComponent, PageRibbonComponent, ProfileService } from './layouts';
 import { ArTEMiSApollonDiagramsModule } from './apollon-diagrams';
 import { ArTEMiSStatisticModule } from './quiz-statistics/quiz-statistic.module';
 import { ArTEMiSModelingEditorModule } from './modeling-editor/modeling-editor.module';
 import { QuizExerciseExportComponent } from './entities/quiz-exercise/quiz-exercise-export.component';
-import { PendingChangesGuard } from './shared/guard/pending-changes.guard';
+import { PendingChangesGuard } from 'app/shared';
 import { ArTEMiSInstructorCourseStatsDashboardModule } from 'app/instructor-course-dashboard';
 import { ArTEMiSInstructorExerciseStatsDashboardModule } from 'app/instructor-exercise-dashboard';
-import { ParticipationDataProvider } from './course-list/exercise-list/participation-data-provider';
+import { ParticipationDataProvider } from 'app/course-list';
 import { ArTEMiSTutorCourseDashboardModule } from 'app/tutor-course-dashboard';
 import { ArTEMiSTutorExerciseDashboardModule } from 'app/tutor-exercise-dashboard';
 import { ArTEMiSExampleSubmissionModule } from 'app/example-text-submission';
+
+import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor/markdown-editor.module';
 import { ArTEMiSComplaintsModule } from 'app/complaints';
+import { ArTEMiSModelingAssessmentModule } from 'app/modeling-assessment/modeling-assessment.module';
+
+import * as moment from 'moment';
+// jhipster-needle-angular-add-module-import JHipster will add new module here
 
 @NgModule({
     imports: [
@@ -64,7 +67,7 @@ import { ArTEMiSComplaintsModule } from 'app/complaints';
             alertAsToast: false,
             alertTimeout: 8000,
             i18nEnabled: true,
-            defaultI18nLang: 'en'
+            defaultI18nLang: 'en',
         }),
         /**
          * @external Angulartics offers Vendor-agnostic analytics and integration with Matomo
@@ -83,9 +86,10 @@ import { ArTEMiSComplaintsModule } from 'app/complaints';
         ArTEMiSQuizModule,
         ArTEMiSInstructorCourseDashboardModule,
         ArTEMiSInstructorDashboardModule,
-        ArTEMiSAssessmentDashboardModule,
+        ArTEMiSModelingAssessmentModule,
         ArTEMiSStatisticModule,
         ArTEMiSModelingEditorModule,
+        ArTEMiSMarkdownEditorModule,
         ArTEMiSModelingStatisticsModule,
         ArTEMiSTextModule,
         ArTEMiSTextAssessmentModule,
@@ -94,18 +98,10 @@ import { ArTEMiSComplaintsModule } from 'app/complaints';
         ArTEMiSTutorCourseDashboardModule,
         ArTEMiSTutorExerciseDashboardModule,
         ArTEMiSExampleSubmissionModule,
-        ArTEMiSComplaintsModule
+        ArTEMiSComplaintsModule,
         // jhipster-needle-angular-add-module JHipster will add new module here
     ],
-    declarations: [
-        JhiMainComponent,
-        NavbarComponent,
-        ErrorComponent,
-        PageRibbonComponent,
-        ActiveMenuDirective,
-        FooterComponent,
-        QuizExerciseExportComponent
-    ],
+    declarations: [JhiMainComponent, NavbarComponent, ErrorComponent, PageRibbonComponent, ActiveMenuDirective, FooterComponent, QuizExerciseExportComponent],
     providers: [
         ProfileService,
         RepositoryService,
@@ -127,30 +123,30 @@ import { ArTEMiSComplaintsModule } from 'app/complaints';
         {
             provide: HTTP_INTERCEPTORS,
             useClass: AuthInterceptor,
-            multi: true
+            multi: true,
         },
         {
             provide: HTTP_INTERCEPTORS,
             useClass: AuthExpiredInterceptor,
-            multi: true
+            multi: true,
         },
         {
             provide: HTTP_INTERCEPTORS,
             useClass: ErrorHandlerInterceptor,
-            multi: true
+            multi: true,
         },
         {
             provide: HTTP_INTERCEPTORS,
             useClass: NotificationInterceptor,
-            multi: true
+            multi: true,
         },
         {
             provide: HTTP_INTERCEPTORS,
             useClass: RepositoryInterceptor,
-            multi: true
-        }
+            multi: true,
+        },
     ],
-    bootstrap: [JhiMainComponent]
+    bootstrap: [JhiMainComponent],
 })
 export class ArTeMiSAppModule {
     constructor(private dpConfig: NgbDatepickerConfig) {

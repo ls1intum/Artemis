@@ -1,106 +1,106 @@
 [
   {
-    "referenceId": "d83a8d0c-52b5-4ac4-b7c0-2051c3bd57c0",
-    "referenceType": "class",
-    "reference": "class:d83a8d0c-52b5-4ac4-b7c0-2051c3bd57c0",
+    "referenceId": "bf9851d0-07e0-4fe2-9eae-17589d9d1b21",
+    "referenceType": "Class",
+    "reference": "Class:bf9851d0-07e0-4fe2-9eae-17589d9d1b21",
     "credits": 0.5,
     "text": "Correct"
   },
   {
-    "referenceId": "1d842153-ee27-434e-b8b1-1a5996db2cbd",
-    "referenceType": "class",
-    "reference": "class:1d842153-ee27-434e-b8b1-1a5996db2cbd",
+    "referenceId": "e7f50025-af9a-4859-86ad-7d0cecc07bf1",
+    "referenceType": "Class",
+    "reference": "Class:e7f50025-af9a-4859-86ad-7d0cecc07bf1",
     "credits": 0,
     "text": "Correct, but you are missing the accessInternet() method and a wifiAvailable attribute"
   },
   {
-    "referenceId": "22d11657-04dc-4385-983e-0c0f2de7bb0d",
-    "referenceType": "method",
-    "reference": "method:22d11657-04dc-4385-983e-0c0f2de7bb0d",
+    "referenceId": "5365b93d-5561-4f24-9568-355a680fe543",
+    "referenceType": "ClassMethod",
+    "reference": "ClassMethod:5365b93d-5561-4f24-9568-355a680fe543",
     "credits": 0.5,
     "text": "Correct"
   },
   {
-    "referenceId": "f49e6a7e-59c1-44aa-994e-03f70198909d",
-    "referenceType": "class",
-    "reference": "class:f49e6a7e-59c1-44aa-994e-03f70198909d",
+    "referenceId": "cc086305-943b-4d80-b60a-1eac3d14de31",
+    "referenceType": "Interface",
+    "reference": "Interface:cc086305-943b-4d80-b60a-1eac3d14de31",
     "credits": 0.5,
     "text": "Correct"
   },
   {
-    "referenceId": "89f760ff-5676-43df-a61b-38db88469d0c",
-    "referenceType": "method",
-    "reference": "method:89f760ff-5676-43df-a61b-38db88469d0c",
+    "referenceId": "437d882e-512a-4d0d-aef8-232d13ea8d88",
+    "referenceType": "ClassMethod",
+    "reference": "ClassMethod:437d882e-512a-4d0d-aef8-232d13ea8d88",
     "credits": 0.5,
     "text": "Correct"
   },
   {
-    "referenceId": "8f79b134-aa9c-4a5a-b9d6-00517a8eaf5b",
-    "referenceType": "class",
-    "reference": "class:8f79b134-aa9c-4a5a-b9d6-00517a8eaf5b",
+    "referenceId": "e1f74a16-b8fc-4859-8bed-d3fea4cb82c4",
+    "referenceType": "Class",
+    "reference": "Class:e1f74a16-b8fc-4859-8bed-d3fea4cb82c4",
     "credits": 0.5,
     "text": "Correct"
   },
   {
-    "referenceId": "7e18d46f-2d9f-4b30-8df5-1e7418984d9f",
-    "referenceType": "method",
-    "reference": "method:7e18d46f-2d9f-4b30-8df5-1e7418984d9f",
+    "referenceId": "b889f2a8-be22-4593-b5af-b409744cae19",
+    "referenceType": "ClassMethod",
+    "reference": "ClassMethod:b889f2a8-be22-4593-b5af-b409744cae19",
     "credits": -1.5,
     "text": "The method should have the same name as the interface :)"
   },
   {
-    "referenceId": "41c3d6da-2c68-431a-8c42-73fef2f5b148",
-    "referenceType": "class",
-    "reference": "class:41c3d6da-2c68-431a-8c42-73fef2f5b148",
+    "referenceId": "94907611-24d8-4c91-8793-1fb93b4c7a4a",
+    "referenceType": "Class",
+    "reference": "Class:94907611-24d8-4c91-8793-1fb93b4c7a4a",
     "credits": 0.5,
     "text": "Correct"
   },
   {
-    "referenceId": "40ecb386-b902-456b-95ea-d4826c0aae50",
-    "referenceType": "method",
-    "reference": "method:40ecb386-b902-456b-95ea-d4826c0aae50",
+    "referenceId": "8e0ef698-2ff4-4f51-a037-6756cf5be2c4",
+    "referenceType": "ClassMethod",
+    "reference": "ClassMethod:8e0ef698-2ff4-4f51-a037-6756cf5be2c4",
     "credits": -0.5,
     "text": "You forgot to name this method"
   },
   {
-    "referenceId": "f0008e87-165a-4992-94e0-889d5e2a3b0e",
-    "referenceType": "class",
-    "reference": "class:f0008e87-165a-4992-94e0-889d5e2a3b0e",
+    "referenceId": "fdb6f0bb-effd-4cac-b982-611b95ea5d51",
+    "referenceType": "Class",
+    "reference": "Class:fdb6f0bb-effd-4cac-b982-611b95ea5d51",
     "credits": 0.5,
     "text": "Correct"
   },
   {
-    "referenceId": "87fd4ab0-842c-4cf5-8fb2-2cc3b5709f71",
-    "referenceType": "relationship",
-    "reference": "relationship:87fd4ab0-842c-4cf5-8fb2-2cc3b5709f71",
+    "referenceId": "6e4fa25d-0b77-41ac-9025-4acebb95e1ff",
+    "referenceType": "ClassInheritance",
+    "reference": "ClassInheritance:6e4fa25d-0b77-41ac-9025-4acebb95e1ff",
     "credits": 0.5,
     "text": ""
   },
   {
-    "referenceId": "8c90fa0b-d64a-4820-b5cd-c2aaaa8ddc1d",
-    "referenceType": "relationship",
-    "reference": "relationship:8c90fa0b-d64a-4820-b5cd-c2aaaa8ddc1d",
+    "referenceId": "66115728-82d7-4821-890c-dad55205b7c1",
+    "referenceType": "ClassInheritance",
+    "reference": "ClassInheritance:66115728-82d7-4821-890c-dad55205b7c1",
     "credits": 0.5,
     "text": ""
   },
   {
-    "referenceId": "79a7d53b-b48d-436d-8d8e-48726e4ed504",
-    "referenceType": "relationship",
-    "reference": "relationship:79a7d53b-b48d-436d-8d8e-48726e4ed504",
+    "referenceId": "060d3e57-43b3-491e-acc3-0fb03072f872",
+    "referenceType": "ClassUnidirectional",
+    "reference": "ClassUnidirectional:060d3e57-43b3-491e-acc3-0fb03072f872",
     "credits": 0.5,
     "text": ""
   },
   {
-    "referenceId": "8fc8880c-1f95-46e0-9e20-088296f0e275",
-    "referenceType": "relationship",
-    "reference": "relationship:8fc8880c-1f95-46e0-9e20-088296f0e275",
+    "referenceId": "82838b9b-c9a5-435f-8e2a-8ae2be940eda",
+    "referenceType": "ClassDependency",
+    "reference": "ClassDependency:82838b9b-c9a5-435f-8e2a-8ae2be940eda",
     "credits": 0.5,
     "text": ""
   },
   {
-    "referenceId": "3eb12740-566f-425b-9427-d6d98b9eb5d8",
-    "referenceType": "relationship",
-    "reference": "relationship:3eb12740-566f-425b-9427-d6d98b9eb5d8",
+    "referenceId": "56008107-3c79-48ea-8a42-ba05f1504b4f",
+    "referenceType": "ClassDependency",
+    "reference": "ClassDependency:56008107-3c79-48ea-8a42-ba05f1504b4f",
     "credits": 0.5,
     "text": ""
   }

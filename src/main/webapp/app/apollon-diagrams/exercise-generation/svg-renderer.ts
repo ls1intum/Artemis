@@ -1,13 +1,8 @@
-import { RenderedSVG } from '@ls1intum/apollon';
+import { SVG } from '@ls1intum/apollon';
 
-interface Size {
-    width: number;
-    height: number;
-}
-
-export function convertRenderedSVGToPNG(renderedSVG: RenderedSVG): Promise<Blob> {
+export function convertRenderedSVGToPNG(renderedSVG: SVG): Promise<Blob> {
     return new Promise((resolve, reject) => {
-        const { width, height } = renderedSVG.size;
+        const { width, height } = renderedSVG.clip;
 
         const blob = new Blob([renderedSVG.svg], { type: 'image/svg+xml' });
         const blobUrl = URL.createObjectURL(blob);
