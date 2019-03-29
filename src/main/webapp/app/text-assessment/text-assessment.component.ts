@@ -1,3 +1,5 @@
+import * as $ from 'jquery';
+
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, AfterViewInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { TextExercise } from 'app/entities/text-exercise';
@@ -99,8 +101,8 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         this.resizableMinWidth = this.$window.nativeWindow.screen.width / 6;
         this.interactResizable = interact('.resizable-submission')
             .resizable({
-                // Enable resize from right edge; triggered by class .resizing-bar
-                edges: { left: false, right: '.resizing-bar', bottom: false, top: false },
+                // Enable resize from left edge; triggered by class .resizing-bar
+                edges: { left: '.resizing-bar', right: false, bottom: false, top: false },
                 // Set min and max width
                 restrictSize: {
                     min: { width: this.resizableMinWidth },
@@ -195,5 +197,21 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
         this.totalScore = credits.reduce((a, b) => a + b, 0);
         this.assessmentsAreValid = true;
         this.invalidError = null;
+    }
+
+    toggleCollapse($event: any) {
+        const target = $event.toElement || $event.relatedTarget || $event.target;
+        target.blur();
+        const $card = $(target).closest('#instructions');
+
+        if ($card.hasClass('collapsed')) {
+            $card.removeClass('collapsed');
+            this.interactResizable.resizable({ enabled: true });
+            $card.width(this.resizableMinWidth + 'px');
+        } else {
+            $card.addClass('collapsed');
+            $card.width('55px');
+            this.interactResizable.resizable({ enabled: false });
+        }
     }
 }
