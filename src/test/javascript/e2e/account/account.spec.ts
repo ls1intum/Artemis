@@ -31,7 +31,7 @@ describe('account', () => {
         signInPage = await navBarPage.getSignInPage();
         await signInPage.autoSignInUsing(process.env.bamboo_admin_user, process.env.bamboo_admin_password);
 
-        browser.wait(ec.urlContains('/courses'), 5000).then((result) => expect(result).to.be.true);
+        browser.wait(ec.urlContains('/courses'), 5000).then((result: any) => expect(result).to.be.true);
     });
 
     it('should login successfully with instructor account', async () => {
@@ -39,7 +39,7 @@ describe('account', () => {
         signInPage = await navBarPage.getSignInPage();
         await signInPage.autoSignInUsing(process.env.bamboo_instructor_user, process.env.bamboo_instructor_password);
 
-        browser.wait(ec.urlContains('/courses'), 5000).then((result) => expect(result).to.be.true);
+        browser.wait(ec.urlContains('/courses'), 5000).then((result: any) => expect(result).to.be.true);
     });
 
     it('should login successfully with tutor account', async () => {
@@ -47,7 +47,7 @@ describe('account', () => {
         signInPage = await navBarPage.getSignInPage();
         await signInPage.autoSignInUsing(process.env.bamboo_tutor_user, process.env.bamboo_tutor_password);
 
-        browser.wait(ec.urlContains('/courses'), 5000).then((result) => expect(result).to.be.true);
+        browser.wait(ec.urlContains('/courses'), 5000).then((result: any) => expect(result).to.be.true);
     });
 
     it('should login successfully with student account', async () => {
@@ -55,7 +55,7 @@ describe('account', () => {
         signInPage = await navBarPage.getSignInPage();
         await signInPage.autoSignInUsing(process.env.bamboo_student_user, process.env.bamboo_student_password);
 
-        browser.wait(ec.urlContains('/courses'), 5000).then((result) => expect(result).to.be.true);
+        browser.wait(ec.urlContains('/courses'), 5000).then((result: any) => expect(result).to.be.true);
     });
 
     afterEach(async () => {
