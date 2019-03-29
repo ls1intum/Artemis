@@ -5,7 +5,7 @@ import { MarkDownElement } from 'app/entities/quiz-question';
 import { ExplanationCommand, HintCommand } from 'app/markdown-editor/domainCommands';
 import { AceEditorComponent } from 'ng2-ace-editor';
 
-@Injectable({ providedIn: 'root' })
+@Injectable({providedIn: 'root'})
 export class ArtemisMarkdown {
 
     /**
@@ -27,8 +27,9 @@ export class ArtemisMarkdown {
         range.setStart(range.start.row, offsetRange);
         aceEditorContainer.getEditor().selection.setRange(range);
     }
-    
-    constructor(private sanitizer: DomSanitizer) {}
+
+    constructor(private sanitizer: DomSanitizer) {
+    }
 
     /**
      * Parse the markdown text and apply the result to the target object's data
@@ -79,7 +80,7 @@ export class ArtemisMarkdown {
         return (
             sourceObject.text +
             (sourceObject.hint ? '\n\t' + HintCommand.identifier + ' ' + sourceObject.hint : '') +
-            (sourceObject.explanation ? '\n\t' + ExplanationCommand.identifier +  ' ' + sourceObject.explanation : '')
+            (sourceObject.explanation ? '\n\t' + ExplanationCommand.identifier + ' ' + sourceObject.explanation : '')
         );
     }
 

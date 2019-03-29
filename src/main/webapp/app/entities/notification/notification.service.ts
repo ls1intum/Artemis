@@ -18,6 +18,7 @@ type EntityArrayResponseType = HttpResponse<Notification[]>;
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
+    private userChannel: string;
     public resourceUrl = SERVER_API_URL + 'api/notifications';
     notificationObserver: BehaviorSubject<Notification>;
     subscribedTopics: string[] = [];
@@ -104,8 +105,6 @@ export class NotificationService {
         });
     }
 
-    private userChannel: string;
-
     subscribeUserNotifications(): Promise<any> {
         return new Promise((resolve, reject) => {
             this.accountService
@@ -144,12 +143,5 @@ export class NotificationService {
     interpretNotification(notification: GroupNotification): void {
         const target = JSON.parse(notification.target);
         this.router.navigate([target.mainPage, notification.course.id, target.entity, target.id]);
-    }
-
-    formatTarget() {
-        // entityName
-        // entityId
-        // courseId
-        // page
     }
 }

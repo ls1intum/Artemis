@@ -14,7 +14,7 @@ export class NotificationMgmtResolve implements Resolve<any> {
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
         const id = route.params['id'] ? route.params['id'] : null;
         if (id) {
-            return this.service.find(parseInt(id));
+            return this.service.find(parseInt(id, 10));
         }
         return new SystemNotification();
     }

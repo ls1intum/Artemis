@@ -20,7 +20,7 @@ export class NotificationMgmtDetailComponent implements OnInit, OnDestroy {
     }
 
     load(id: string) {
-        this.systemNotificationService.find(parseInt(id)).subscribe(response => {
+        this.systemNotificationService.find(parseInt(id, 10)).subscribe(response => {
             this.notification = response.body;
         });
     }

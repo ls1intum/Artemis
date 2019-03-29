@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Notification, NotificationService, NotificationType } from 'app/entities/notification';
 import { HttpResponse } from '@angular/common/http';
 import { AccountService, User, UserService } from 'app/core';
@@ -10,10 +10,10 @@ import { GroupNotification } from 'app/entities/group-notification';
     templateUrl: './notification-container.component.html',
     styleUrls: ['./notification-container.scss'],
 })
-export class NotificationContainerComponent {
+export class NotificationContainerComponent implements OnInit {
     notifications: Notification[] = [];
     currentUser: User;
-    notificationCount: number = 0;
+    notificationCount = 0;
 
     constructor(private notificationService: NotificationService, private userService: UserService, private accountService: AccountService) {}
 
