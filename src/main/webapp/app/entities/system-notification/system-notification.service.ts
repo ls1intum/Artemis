@@ -16,28 +16,20 @@ type EntityArrayResponseType = HttpResponse<SystemNotification[]>;
 export class SystemNotificationService {
     public resourceUrl = SERVER_API_URL + 'api/system-notifications';
 
-    constructor(private router: Router,
-                private http: HttpClient) {
-    }
+    constructor(private router: Router, private http: HttpClient) {}
 
     create(notification: SystemNotification): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(notification);
-        return this.http
-            .post<SystemNotification>(this.resourceUrl, copy, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        return this.http.post<SystemNotification>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     update(notification: SystemNotification): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(notification);
-        return this.http
-            .put<SystemNotification>(this.resourceUrl, copy, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        return this.http.put<SystemNotification>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     find(id: number): Observable<EntityResponseType> {
-        return this.http
-            .get<SystemNotification>(`${this.resourceUrl}/${id}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        return this.http.get<SystemNotification>(`${this.resourceUrl}/${id}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     query(req?: any): Observable<EntityArrayResponseType> {
@@ -58,16 +50,10 @@ export class SystemNotificationService {
     }
 
     protected convertDateFromClient(notification: SystemNotification): SystemNotification {
-        console.log(moment)
         const copy: SystemNotification = Object.assign({}, notification, {
             notificationDate:
-                notification.notificationDate != null && moment(notification.notificationDate).isValid()
-                    ? moment(notification.notificationDate).toISOString(true)
-                    : null,
-            expireDate:
-                notification.expireDate != null && moment(notification.expireDate).isValid()
-                    ? moment(notification.expireDate).toISOString(true)
-                    : null
+                notification.notificationDate != null && moment(notification.notificationDate).isValid() ? moment(notification.notificationDate).toISOString(true) : null,
+            expireDate: notification.expireDate != null && moment(notification.expireDate).isValid() ? moment(notification.expireDate).toISOString(true) : null,
         });
         return copy;
     }

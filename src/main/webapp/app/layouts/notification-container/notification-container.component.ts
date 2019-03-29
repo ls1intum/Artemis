@@ -57,7 +57,7 @@ export class NotificationContainerComponent {
             setTimeout(() => {
                 this.currentUser = res.body;
                 this.updateNotificationCount();
-            }, 500);
+            }, 1500);
         });
     }
 }

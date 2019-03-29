@@ -82,11 +82,11 @@ export class NotificationService {
         if (!this.notificationObserver) {
             this.notificationObserver = new BehaviorSubject<Notification>(null);
         }
-        let courseTopic = `/topic/course/${course.id}/${GroupNotificationType.STUDENT}/exerciseUpdated`;
+        let courseTopic = `/topic/course/${course.id}/${GroupNotificationType.STUDENT}`;
         if (this.accountService.isAtLeastInstructorInCourse(course)) {
-            courseTopic = `/topic/course/${course.id}/${GroupNotificationType.INSTRUCTOR}/exerciseUpdated`;
+            courseTopic = `/topic/course/${course.id}/${GroupNotificationType.INSTRUCTOR}`;
         } else if (this.accountService.isAtLeastTutorInCourse(course)) {
-            courseTopic = `/topic/course/${course.id}/${GroupNotificationType.TA}/exerciseUpdated`;
+            courseTopic = `/topic/course/${course.id}/${GroupNotificationType.TA}`;
         }
         if (!this.subscribedTopics.includes(courseTopic)) {
             console.log('SUBSCRIBING TO!!!', courseTopic);

@@ -104,7 +104,7 @@ public class ModelingExerciseResource {
         if (responseFailure != null) return responseFailure;
 
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
-        groupNotificationService.notifyGroupAboutExerciseChange(modelingExercise);
+        groupNotificationService.notifyGroupAboutExerciseCreated(modelingExercise);
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
                 .body(result);

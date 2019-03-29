@@ -30,14 +30,46 @@ public class GroupNotificationService {
         this.userService = userService;
     }
 
+    public void notifyGroupAboutExerciseStart(Exercise exercise) {
+        String title = "Exercise started";
+        String notificationText = "Exercise \"" + exercise.getTitle() + "\" just started.";
+        notifyGroupAboutExercise(exercise, title, notificationText, "exerciseUpdated");
+    }
+
+    public void notifyGroupAboutExerciseVisibility(Exercise exercise) {
+        String title = "New exercise available";
+        String notificationText = "Exercise \"" + exercise.getTitle() + "\" is now available.";
+        notifyGroupAboutExercise(exercise, title, notificationText, "exerciseUpdated");
+    }
+
+    public void notifyGroupAboutExercisePractice(Exercise exercise) {
+        String title = "Exercise open for practice";
+        String notificationText = "Exercise \"" + exercise.getTitle() + "\" is now open for practice.";
+        notifyGroupAboutExercise(exercise, title, notificationText, "exerciseUpdated");
+    }
+
     public void notifyGroupAboutExerciseChange(Exercise exercise) {
+        String title = "Exercise updated";
+        String notificationText = "Exercise \"" + exercise.getTitle() + "\" got updated.";
+        notifyGroupAboutExercise(exercise, title, notificationText, "exerciseUpdated");
+    }
+
+    public void notifyGroupAboutExerciseCreated(Exercise exercise) {
+        String title = "Exercise created";
+        String notificationText = "A new exercise \"" + exercise.getTitle() + "\" got created.";
+        notifyGroupAboutExercise(exercise, title, notificationText, "exerciseCreated");
+    }
+
+    private void notifyGroupAboutExercise(
+            Exercise exercise, String title, String notificationText, String message) {
         GroupNotification groupNotification = new GroupNotification();
         groupNotification.setCourse(exercise.getCourse());
-        groupNotification.setType(GroupNotificationType.INSTRUCTOR);
+        groupNotification.setType(GroupNotificationType.STUDENT);
         groupNotification.setNotificationDate(ZonedDateTime.now());
-        groupNotification.setTitle("Exercise updated");
-        groupNotification.setText("Exercise " + exercise.getTitle() + " got updated.");
+        groupNotification.setTitle(title);
+        groupNotification.setText(notificationText);
         JsonObject target = new JsonObject();
+        target.addProperty("message", message);
         target.addProperty("id", exercise.getId());
         target.addProperty("entity", "exercises");
         target.addProperty("mainPage", "overview");
@@ -47,8 +79,7 @@ public class GroupNotificationService {
                 "/topic/course/"
                         + groupNotification.getCourse().getId()
                         + "/"
-                        + groupNotification.getType()
-                        + "/exerciseUpdated";
+                        + groupNotification.getType();
         saveAndSendGroupNotification(topic, groupNotification);
     }
 

@@ -88,7 +88,7 @@ public class FileUploadExerciseResource {
             return forbidden();
         }
         FileUploadExercise result = fileUploadExerciseRepository.save(fileUploadExercise);
-        groupNotificationService.notifyGroupAboutExerciseChange(fileUploadExercise);
+        groupNotificationService.notifyGroupAboutExerciseCreated(fileUploadExercise);
         return ResponseEntity.created(new URI("/api/file-upload-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
                 .body(result);

@@ -7,13 +7,14 @@
     </a>
     <ul class="dropdown-menu notification-container" ngbDropdownMenu>
         <li class="dropdown-item" *ngFor="let notification of notifications">
-            <div class="row notification-item align-items-center" (click)="startNotification(notification)">
+            <div class="row notification-item mb-2 align-items-center" (click)="startNotification(notification)">
                 <div class="col">
                     <h5>
                         {{notification.title}}
                         <span class="badge ml-1 badge-primary" *ngIf="!currentUser || notification.notificationDate.isAfter(currentUser.lastNotificationRead)">new</span>
                     </h5>
-                    <p class="notification-description">{{notification.text}}</p>
+                    <div class="notification-description mb-1">{{notification.text}}</div>
+                    <div class="notification-info">{{notification.notificationDate | date:'dd/MM/yy HH:MM'}} by {{notification.author.firstName}}</div>
                 </div>
                 <div class="col-auto">
                     <fa-icon [icon]="'arrow-right'"></fa-icon>
