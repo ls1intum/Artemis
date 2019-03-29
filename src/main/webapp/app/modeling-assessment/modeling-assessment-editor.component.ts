@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DiagramType, UMLModel } from '@ls1intum/apollon';
@@ -13,7 +13,7 @@ import { genericRetryStrategy, ModelingAssessmentService } from 'app/modeling-as
 import { retryWhen } from 'rxjs/operators';
 
 @Component({
-    selector: 'jhi-apollon-diagram-tutor',
+    selector: 'jhi-modeling-assessment-editor',
     templateUrl: './modeling-assessment-editor.component.html',
     styleUrls: ['./modeling-assessment-editor.component.scss'],
 })
@@ -55,8 +55,8 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
             let nextOptimal: boolean;
             this.route.queryParams.subscribe(query => {
                 nextOptimal = query['optimal'] === 'true'; // TODO CZ: do we need this flag?
+                this.loadSubmission(submissionId, nextOptimal);
             });
-            this.loadSubmission(submissionId, nextOptimal);
         });
     }
 
@@ -65,8 +65,8 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     initComponent() {}
 
     loadSubmission(submissionId: number, nextOptimal: boolean) {
-        this.modelingSubmissionService.getSubmission(submissionId).subscribe(res => {
-            this.submission = res;
+        this.modelingSubmissionService.getSubmission(submissionId).subscribe((submission: ModelingSubmission) => {
+            this.submission = submission;
             this.modelingExercise = this.submission.participation.exercise as ModelingExercise;
             this.result = this.submission.result;
             if (this.result.feedbacks) {
@@ -91,11 +91,11 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
             if ((this.result.assessor == null || this.result.assessor.id === this.userId) && !this.result.rated) {
                 this.jhiAlertService.info('arTeMiSApp.apollonDiagram.lock');
             }
-            if (nextOptimal) {
-                this.modelingAssessmentService.getPartialAssessment(submissionId).subscribe((result: Result) => {
-                    this.result = result;
-                });
-            }
+            // if (nextOptimal) {
+            //     this.modelingAssessmentService.getPartialAssessment(submissionId).subscribe((result: Result) => {
+            //         this.result = result;
+            //     });
+            // }
             if (this.result) {
                 this.calculateTotalScore();
             }

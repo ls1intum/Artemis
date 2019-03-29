@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, Input, OnInit } from '@angular/core';
-import { Exercise } from 'src/main/webapp/app/entities/exercise';
 import * as interact from 'interactjs';
+import { Exercise } from 'app/entities/exercise';
 
 @Component({
     selector: 'jhi-assessment-instructions',

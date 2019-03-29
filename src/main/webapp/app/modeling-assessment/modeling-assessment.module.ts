@@ -3,7 +3,6 @@ import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
 
 import { ArTEMiSSharedModule } from 'app/shared';
-import { ModelingAssessmentService } from './modeling-assessment.service';
 import { RouterModule } from '@angular/router';
 import { modelingAssessmentRoutes } from 'app/modeling-assessment/modeling-assessment.route';
 import { ModelingAssessmentEditorComponent } from 'app/modeling-assessment/modeling-assessment-editor.component';
@@ -14,11 +13,12 @@ import { JhiMainComponent } from 'app/layouts';
 import { SortByModule } from 'app/components/pipes';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ModelingAssessmentComponent } from './modeling-assessment/modeling-assessment.component';
+import { AssessmentInstructionsModule } from 'app/assessment-instructions/assessment-instructions.module';
 
 const ENTITY_STATES = [...modelingAssessmentRoutes];
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), NgbModule, SortByModule, ArTEMiSResultModule],
+    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), NgbModule, SortByModule, ArTEMiSResultModule, AssessmentInstructionsModule],
     declarations: [ModelingAssessmentDashboardComponent, ModelingAssessmentEditorComponent, ModelingAssessmentComponent],
     entryComponents: [HomeComponent, ResultComponent, ResultDetailComponent, ModelingAssessmentDashboardComponent, JhiMainComponent, ModelingAssessmentEditorComponent],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],

@@ -32,7 +32,7 @@
         </div>
     </h2>
     <div class="editor-container">
-        <jhi-apollon-diagram-tutor *ngIf="submission" [diagramType]="this.modelingExercise.diagramType" [model]="model" ></jhi-apollon-diagram-tutor>
-        <jhi-assessment-instructions *ngIf="modelingExercise" [exercise]="modelingExercise"></jhi-assessment-instructions>
+        <jhi-modeling-assessment *ngIf="submission" [diagramType]="this.modelingExercise.diagramType" [model]="model"></jhi-modeling-assessment>
+        <jhi-assessment-instructions *ngIf="modelingExercise" [exercise]="modelingExercise" [collapsed]="true"></jhi-assessment-instructions>
     </div>
 </div>

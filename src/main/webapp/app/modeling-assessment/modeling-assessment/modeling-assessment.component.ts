@@ -12,10 +12,11 @@ import { Feedback } from 'app/entities/feedback';
 export class ModelingAssessmentComponent implements OnInit, AfterViewInit, OnDestroy {
     apollonEditor: ApollonEditor | null = null;
     elementFeedback: Map<string, Feedback>; // map element.id --> Feedback
-    feedbacks: Feedback[];
+    feedbacks: Feedback[] = [];
 
     @ViewChild('editorContainer') editorContainer: ElementRef;
-    @Input() model: string;
+    @Input() model: UMLModel;
+    @Input() initialFeedback: Feedback[];
     @Input() diagramType: DiagramType;
     @Input() resizable = false;
     @Output() feedbackChanged = new EventEmitter<Feedback[]>();
@@ -26,7 +27,8 @@ export class ModelingAssessmentComponent implements OnInit, AfterViewInit, OnDes
 
     ngAfterViewInit(): void {
         if (this.model) {
-            this.initializeApollonEditor(JSON.parse(this.model));
+            this.updateElementFeedbackMapping(this.feedbacks, true);
+            this.initializeApollonEditor();
         } else {
             this.jhiAlertService.error('arTeMiSApp.apollonDiagram.submission.noModel');
         }
@@ -58,12 +60,12 @@ export class ModelingAssessmentComponent implements OnInit, AfterViewInit, OnDes
      * The Feedback elements are converted to Assessment objects needed by Apollon before they are added to
      * the initial model which is then passed to Apollon.
      */
-    private initializeApollonEditor(initialModel: UMLModel) {
+    private initializeApollonEditor() {
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();
         }
 
-        initialModel.assessments = this.feedbacks.map(feedback => {
+        this.model.assessments = this.feedbacks.map(feedback => {
             return {
                 modelElementId: feedback.referenceId,
                 elementType: feedback.referenceType,
@@ -75,7 +77,7 @@ export class ModelingAssessmentComponent implements OnInit, AfterViewInit, OnDes
         this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
             mode: ApollonMode.Assessment,
             readonly: false,
-            model: initialModel,
+            model: this.model,
             type: this.diagramType,
         });
 
