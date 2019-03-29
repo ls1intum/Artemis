@@ -1,5 +1,6 @@
 .resizable {
     display: flex;
+    //width: 40vw;
     height: 100%;
     .draggable-right {
         display: flex;
@@ -11,4 +12,5 @@
 
 .apollon-container {
     height: 100%;
+    overflow: scroll;
 }

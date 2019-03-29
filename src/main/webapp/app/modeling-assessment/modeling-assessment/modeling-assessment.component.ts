@@ -1,8 +1,9 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, Renderer2 } from '@angular/core';
 import { ApollonEditor, ApollonMode, DiagramType, UMLModel } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
 import * as interact from 'interactjs';
 import { Feedback } from 'app/entities/feedback';
+import { ModelingSubmissionService } from 'app/entities/modeling-submission';
 
 @Component({
     selector: 'jhi-modeling-assessment',
@@ -15,13 +16,15 @@ export class ModelingAssessmentComponent implements OnInit, AfterViewInit, OnDes
     feedbacks: Feedback[] = [];
 
     @ViewChild('editorContainer') editorContainer: ElementRef;
+    @ViewChild('resizeContainer') resizeContainer: ElementRef;
     @Input() model: UMLModel;
     @Input() initialFeedback: Feedback[];
     @Input() diagramType: DiagramType;
-    @Input() resizable = false;
+    @Input() resizeOptions: { initialWidth: string; maxWidth?: number };
+    @Input() readOnly = false;
     @Output() feedbackChanged = new EventEmitter<Feedback[]>();
 
-    constructor(private jhiAlertService: JhiAlertService) {}
+    constructor(private jhiAlertService: JhiAlertService, private renderer: Renderer2) {}
 
     ngOnInit() {}
 
@@ -32,13 +35,16 @@ export class ModelingAssessmentComponent implements OnInit, AfterViewInit, OnDes
         } else {
             this.jhiAlertService.error('arTeMiSApp.apollonDiagram.submission.noModel');
         }
-        if (this.resizable) {
+        if (this.resizeOptions) {
+            if (this.resizeOptions.initialWidth) {
+                this.renderer.setStyle(this.resizeContainer.nativeElement, 'width', this.resizeOptions.initialWidth);
+            }
             interact('.resizable')
                 .resizable({
                     edges: { left: false, right: '.draggable-right', bottom: false, top: false },
                     restrictSize: {
                         min: { width: 15 },
-                        max: { width: 600 },
+                        max: { width: this.resizeOptions.maxWidth | 2500 },
                     },
                     inertia: true,
                 })
@@ -76,7 +82,7 @@ export class ModelingAssessmentComponent implements OnInit, AfterViewInit, OnDes
 
         this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
             mode: ApollonMode.Assessment,
-            readonly: false,
+            readonly: this.readOnly,
             model: this.model,
             type: this.diagramType,
         });

@@ -30,6 +30,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     busy: boolean;
     userId: number;
     isAuthorized: boolean;
+    isAtLeastInstructor: boolean;
     ignoreConflicts: false;
 
     constructor(
@@ -49,7 +50,8 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         this.accountService.identity().then(user => {
             this.userId = user.id;
         });
-        this.isAuthorized = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
+        this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
+        this.checkAuthorization();
         this.route.params.subscribe(params => {
             const submissionId = Number(params['submissionId']);
             let nextOptimal: boolean;
@@ -58,6 +60,10 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                 this.loadSubmission(submissionId, nextOptimal);
             });
         });
+    }
+
+    checkAuthorization() {
+        this.isAuthorized = this.result && this.result.assessor && this.result.assessor.id === this.userId;
     }
 
     ngOnDestroy() {}

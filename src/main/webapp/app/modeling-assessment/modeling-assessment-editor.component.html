@@ -6,23 +6,18 @@
             <jhi-result *ngIf="result?.rated && result.participation" [participation]="result.participation"></jhi-result>
         </div>
         <div class="control-container row-container">
-            <button
-                class="btn btn-primary"
-                (click)="saveAssessment()"
-                [disabled]="!assessmentsAreValid || (result?.assessor && result.assessor.id !== userId && !isAuthorized)"
-                [hidden]="result && result.rated"
-            >
+            <button class="btn btn-primary" (click)="saveAssessment()" [disabled]="!assessmentsAreValid || !isAuthorized" [hidden]="result && result.rated">
                 Save
             </button>
-            <button
-                class="btn btn-success"
-                (click)="submitAssessment()"
-                [disabled]="!assessmentsAreValid || (result?.assessor && result.assessor.id !== userId && !isAuthorized)"
-                [hidden]="result && result.rated"
-            >
+            <button class="btn btn-success" (click)="submitAssessment()" [disabled]="!assessmentsAreValid || !isAuthorized" [hidden]="result && result.rated">
                 Submit
             </button>
-            <button class="btn btn-danger" (click)="submitAssessment()" [disabled]="!result?.feedbacks || !assessmentsAreValid" [hidden]="!result || !result.rated">
+            <button
+                class="btn btn-danger"
+                (click)="submitAssessment()"
+                [disabled]="!result?.feedbacks || !assessmentsAreValid || !isAtLeastInstructor"
+                [hidden]="!result || !result.rated"
+            >
                 Override Assessment
             </button>
             <button class="btn btn-success" [disabled]="busy" [hidden]="!result || !result.rated" (click)="assessNextOptimal()">
@@ -33,6 +28,6 @@
     </h2>
     <div class="editor-container">
         <jhi-modeling-assessment *ngIf="submission" [diagramType]="this.modelingExercise.diagramType" [model]="model"></jhi-modeling-assessment>
-        <jhi-assessment-instructions *ngIf="modelingExercise" [exercise]="modelingExercise" [collapsed]="true"></jhi-assessment-instructions>
+        <jhi-assessment-instructions *ngIf="modelingExercise" [exercise]="modelingExercise" [collapsed]="false"></jhi-assessment-instructions>
     </div>
 </div>

@@ -14,13 +14,22 @@ import { SortByModule } from 'app/components/pipes';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ModelingAssessmentComponent } from './modeling-assessment/modeling-assessment.component';
 import { AssessmentInstructionsModule } from 'app/assessment-instructions/assessment-instructions.module';
+import { ModelingAssessmentConflictComponent } from './modeling-assessment-conflict/modeling-assessment-conflict.component';
 
 const ENTITY_STATES = [...modelingAssessmentRoutes];
 
 @NgModule({
     imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), NgbModule, SortByModule, ArTEMiSResultModule, AssessmentInstructionsModule],
-    declarations: [ModelingAssessmentDashboardComponent, ModelingAssessmentEditorComponent, ModelingAssessmentComponent],
-    entryComponents: [HomeComponent, ResultComponent, ResultDetailComponent, ModelingAssessmentDashboardComponent, JhiMainComponent, ModelingAssessmentEditorComponent],
+    declarations: [ModelingAssessmentDashboardComponent, ModelingAssessmentEditorComponent, ModelingAssessmentComponent, ModelingAssessmentConflictComponent],
+    entryComponents: [
+        HomeComponent,
+        ResultComponent,
+        ResultDetailComponent,
+        ModelingAssessmentDashboardComponent,
+        JhiMainComponent,
+        ModelingAssessmentEditorComponent,
+        ModelingAssessmentConflictComponent,
+    ],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
