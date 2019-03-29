@@ -16,6 +16,11 @@
                 <ng-container *ngFor="let command of headerCommands" ><button class="dropdown-item" (click)="command.execute()">{{command.buttonTranslationString | translate}}</button></ng-container>
             </div>
         </div>
+        <div class="btn-group col-xs-6">
+            <div class="color-preview form-control btn btn-outline-secondary mr-1" [ngStyle]="{backgroundColor: selectedColor}" (click)="openColorSelector($event)">
+            </div>
+            <jhi-color-selector [tagColors]="markdownColors" (selectedColor)="onSelectedColor($event)"></jhi-color-selector>
+        </div>
     </div>
     <div class="tool-bar" *ngIf="domainCommands && domainCommands.length != 0" style="margin-top: 5px" >
         <ng-container *ngFor="let command of domainCommands">
@@ -36,14 +41,14 @@
 <!--Begin Preview-->
 <ng-container *ngIf="previewMode">
     <ng-content></ng-content>
-    <div *ngIf="showDefaultPreview" [innerHTML]="previewTextAsHtml">
+    <div *ngIf="showDefaultPreview" style="min-height: 100px" [innerHTML]="previewTextAsHtml">
         Preview
     </div>
 </ng-container>
 <!--End Preview-->
 
 <!--Begin Edit/Preview Button-->
-<div class="toolbar">
+<div class="toolbar" style="margin-top: 5px">
     <div *ngIf="showPreviewButton" class="btn btn-outline-secondary" (click)="togglePreview()">
         <fa-icon [icon]="previewButtonIcon" class="mr-1"></fa-icon>
         <span [jhiTranslate]="previewButtonTranslateString"></span>

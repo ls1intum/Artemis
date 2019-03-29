@@ -1,41 +1,33 @@
-import {
-    AfterViewInit,
-    Component,
-    ContentChild,
-    ElementRef,
-    EventEmitter,
-    Input,
-    OnInit,
-    Output,
-    ViewChild
-} from '@angular/core';
+import { AfterViewInit, Component, ContentChild, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
-import { Command,
-        BoldCommand,
-        ItalicCommand,
-        UnderlineCommand,
-        HeadingOneCommand,
-        HeadingTwoCommand,
-        HeadingThreeCommand,
-        CodeCommand,
-        LinkCommand,
-        AttachmentCommand,
-        OrderedListCommand,
-        UnorderedListCommand,
-        ReferenceCommand,
+import {
+    Command,
+    BoldCommand,
+    ItalicCommand,
+    UnderlineCommand,
+    HeadingOneCommand,
+    HeadingTwoCommand,
+    HeadingThreeCommand,
+    CodeCommand,
+    LinkCommand,
+    AttachmentCommand,
+    OrderedListCommand,
+    UnorderedListCommand,
+    ReferenceCommand,
 } from 'app/markdown-editor/commands';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { DomainCommand } from 'app/markdown-editor/domainCommands';
+import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
+import { ColorSelectorComponent } from 'app/components/color-selector/color-selector.component';
 
 @Component({
     selector: 'jhi-markdown-editor',
     styleUrls: ['./markdown-editor.scss'],
     providers: [ArtemisMarkdown],
-    templateUrl: './markdown-editor.component.html'
+    templateUrl: './markdown-editor.component.html',
 })
-
 export class MarkdownEditorComponent implements AfterViewInit, OnInit {
     @ViewChild('aceEditor')
     aceEditorContainer: AceEditorComponent;
@@ -43,11 +35,16 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
         autoUpdateContent: true,
         mode: 'markdown',
     };
+    @ViewChild(ColorSelectorComponent) colorSelector: ColorSelectorComponent;
 
     /** {string} which is initially displayed in the editor generated and passed on from the parent component*/
     @Input() markdown: string;
     @Output() markdownChange = new EventEmitter<string>();
     @Output() html = new EventEmitter<string>();
+
+    /** colors for the markdown editor*/
+    markdownColors = ['#ca2024', '#3ea119', '#ffffff', '#000000', '#fffa5c', '#0d3cc2', '#b05db8', '#d89770'];
+    selectedColor = '#000000';
 
     /** {array} containing all default commands accessible for the editor per default */
     defaultCommands: Command[] = [
@@ -63,11 +60,7 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
     ];
 
     /** {array} containing all header commands accessible for the markdown editor per defaulT*/
-    headerCommands: Command[] = [
-        new HeadingOneCommand(),
-        new HeadingTwoCommand(),
-        new HeadingThreeCommand(),
-    ];
+    headerCommands: Command[] = [new HeadingOneCommand(), new HeadingTwoCommand(), new HeadingThreeCommand()];
 
     /** {domainCommands} containing all domain commands which need to be set by the parent component which contains the markdown editor */
     @Input() domainCommands: DomainCommand[];
@@ -90,8 +83,7 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
      * -> parent component has to implement ng-content and set the showPreviewButton on true through an input */
     @ContentChild('preview') previewChild: ElementRef;
 
-    constructor(private artemisMarkdown: ArtemisMarkdown) {
-    }
+    constructor(private artemisMarkdown: ArtemisMarkdown) {}
 
     get previewButtonTranslateString(): string {
         return this.previewMode ? 'entity.action.edit' : 'entity.action.preview';
@@ -104,6 +96,16 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
     /** {boolean} true when the plane html view is needed, false when the preview content is needed from the parent */
     get showDefaultPreview(): boolean {
         return this.previewChild == null;
+    }
+
+    /** opens the button for selecting the color */
+    openColorSelector(event: MouseEvent) {
+        this.colorSelector.openColorSelector(event);
+    }
+
+    /** selected text is changed into the chosen color */
+    onSelectedColor(selectedColor: string) {
+        this.selectedColor = selectedColor;
     }
 
     /**
@@ -121,9 +123,7 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
      * @desc customize the user interface of the markdown editor by removing a command
      */
     removeCommand(classRef: typeof Command) {
-        setTimeout(() =>
-            this.defaultCommands = this.defaultCommands.filter(element => !(element instanceof classRef))
-        );
+        setTimeout(() => (this.defaultCommands = this.defaultCommands.filter(element => !(element instanceof classRef))));
     }
 
     ngAfterViewInit(): void {
@@ -132,11 +132,11 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
 
     ngOnInit(): void {
         if (this.domainCommands == null || this.domainCommands.length === 0) {
-        [...this.defaultCommands, ...this.headerCommands || []].forEach(command => {
-            command.setEditor(this.aceEditorContainer);
-        });
+            [...this.defaultCommands, ...(this.headerCommands || [])].forEach(command => {
+                command.setEditor(this.aceEditorContainer);
+            });
         } else {
-            [...this.defaultCommands, ...this.domainCommands, ...this.headerCommands || []].forEach(command => {
+            [...this.defaultCommands, ...this.domainCommands, ...(this.headerCommands || [])].forEach(command => {
                 command.setEditor(this.aceEditorContainer);
             });
         }
@@ -174,8 +174,8 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
         /** check if domainCommands are passed on from the parent component */
         if (this.domainCommands == null || this.domainCommands.length === 0) {
             /** if no domainCommands contained emit the markdown text converted to html to parent component to display */
-                this.previewTextAsHtml = this.artemisMarkdown.htmlForMarkdown(this.markdown);
-                this.html.emit(this.previewTextAsHtml);
+            this.previewTextAsHtml = this.artemisMarkdown.htmlForMarkdown(this.markdown);
+            this.html.emit(this.previewTextAsHtml);
             return;
         } else {
             /** create array with domain command identifier */
@@ -212,7 +212,7 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
                  *  when remainingMarkdownText is empty the while loop will terminate*/
                 remainingMarkdownText = remainingMarkdownText.substring(textWithCommandIdentifier.length);
                 /** call the parseLineForDomainCommand for each extracted textWithCommandIdentifier
-                *   trim: reduced the whitespacing linebreaks */
+                 *   trim: reduced the whitespacing linebreaks */
                 const commandTextWithCommandIdentifier = this.parseLineForDomainCommand(textWithCommandIdentifier.trim());
                 /** push the commandTextWithCommandIdentifier into the commandTextsMappedToCommandIdentifiers*/
                 commandTextsMappedToCommandIdentifiers.push(commandTextWithCommandIdentifier);
@@ -233,12 +233,16 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
      */
     private parseLineForDomainCommand = (text: string): [string, DomainCommand] => {
         for (const domainCommand of this.domainCommands) {
-            const possibleOpeningCommandIdentifier = [domainCommand.getOpeningIdentifier(), domainCommand.getOpeningIdentifier().toLowerCase(), domainCommand.getOpeningIdentifier().toUpperCase()];
+            const possibleOpeningCommandIdentifier = [
+                domainCommand.getOpeningIdentifier(),
+                domainCommand.getOpeningIdentifier().toLowerCase(),
+                domainCommand.getOpeningIdentifier().toUpperCase(),
+            ];
             if (possibleOpeningCommandIdentifier.some(identifier => text.indexOf(identifier) !== -1)) {
                 // TODO when closingIdentifiers are used write a method to extract them from the text
                 const trimmedLineWithoutIdentifier = possibleOpeningCommandIdentifier.reduce((line, identifier) => line.replace(identifier, ''), text).trim();
-                        return [trimmedLineWithoutIdentifier, domainCommand];
-                }
+                return [trimmedLineWithoutIdentifier, domainCommand];
+            }
         }
         return [text.trim(), null];
     };
@@ -251,5 +255,4 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
         this.previewMode = !this.previewMode;
         this.parse();
     }
-
 }
