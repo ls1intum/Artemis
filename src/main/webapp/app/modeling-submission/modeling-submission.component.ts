@@ -19,11 +19,11 @@ import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { ModelingAssessmentService } from 'app/modeling-assessment/modeling-assessment.service';
 
 @Component({
-    selector: 'jhi-modeling-editor',
-    templateUrl: './modeling-editor.component.html',
+    selector: 'jhi-modeling-submission',
+    templateUrl: './modeling-submission.component.html',
     providers: [ModelingAssessmentService, ApollonDiagramService],
 })
-export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
+export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     @ViewChild('editorContainer')
     editorContainer: ElementRef;
 
