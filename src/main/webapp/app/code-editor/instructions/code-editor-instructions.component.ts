@@ -42,7 +42,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges
     interactResizable: Interactable;
 
     // Can be used to remove the click listeners for result details
-    listenerRemoveFunctions: Function[];
+    listenerRemoveFunctions: Function[] = [];
 
     @Input()
     participation: Participation;
@@ -98,12 +98,13 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges
      * @param {SimpleChanges} changes
      */
     ngOnChanges(changes: SimpleChanges): void {
-        if (changes.participation && this.participation) {
+        // If there is no problemStatement in the exercise, fall back to loading the Readme (old solution)
+        if (changes.participation && this.participation && !this.participation.exercise.problemStatement) {
             // Initialize array for listener remove functions
             this.loadReadme();
         }
 
-        if (changes.latestResult && changes.latestResult.currentValue && !this.isLoadingResults) {
+        if (changes.latestResult && changes.latestResult.currentValue && !this.isLoadingResults && !this.participation.exercise.problemStatement) {
             // New result available, only render it if the readme was alredy downloaded
             if (this.readMeFileRawContent) {
                 this.loadResultsDetails();
@@ -116,19 +117,16 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges
      * @desc Gets the README.md file from our repository and starts the rendering process
      */
     loadReadme() {
-        // Only do this if we already received a participation object from parent
-        if (this.participation) {
-            this.repositoryFileService.get(this.participation.id, 'README.md').subscribe(
-                fileObj => {
-                    this.readMeFileRawContent = fileObj.fileContent;
-                    this.renderReadme();
-                },
-                err => {
-                    // TODO: handle the case that there is no README.md file
-                    console.log('Error while getting README.md file!', err);
-                },
-            );
-        }
+        this.repositoryFileService.get(this.participation.id, 'README.md').subscribe(
+            fileObj => {
+                this.readMeFileRawContent = fileObj.fileContent;
+                this.renderReadme();
+            },
+            err => {
+                // TODO: handle the case that there is no README.md file
+                console.log('Error while getting README.md file!', err);
+            },
+        );
     }
 
     /**

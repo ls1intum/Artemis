@@ -1,4 +1,4 @@
-<div id="cardInstructions" class="card resizable-instructions" [hidden]="readMeFileRenderedContent == null" [ngStyle]="{'width.vw':40}">
+<div id="cardInstructions" class="card resizable-instructions" [ngStyle]="{'width.vw':40}">
     <div class="card-header text-white bg-primary" (click)="toggleEditorCollapse($event, false)">
         <span class="float-right "><fa-icon icon="chevron-right"></fa-icon></span>
         <h3 class="card-title">
@@ -25,6 +25,7 @@
     <!-- Rendered markdown will be inserted in this div -->
     <div
         class="card-body instructions"
+        [hidden]="!participation.exercise.problemStatement && !readMeFileRawContent"
         [innerHtml]="(participation?.exercise.problemStatement
                ? artemisMarkdown.htmlForMarkdown(participation.exercise.problemStatement)
                : readMeFileRenderedContent) | safeHtml">
