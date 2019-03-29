@@ -1,0 +1,40 @@
+<div class="assessment-container">
+    <jhi-alert></jhi-alert>
+
+    <h2 class="top-container">
+        <div class="assessment-title row-container">
+            Assessment
+            <jhi-result *ngIf="result?.rated && result.participation" [participation]="result.participation"></jhi-result>
+        </div>
+        <div class="control-container row-container">
+            <button
+                class="btn btn-primary"
+                (click)="saveAssessment()"
+                [disabled]="!assessmentsAreValid || (result?.assessor && result.assessor.id !== userId && !isAuthorized)"
+                [hidden]="result && result.rated"
+            >
+                Save
+            </button>
+            <button
+                class="btn btn-success"
+                (click)="submit()"
+                [disabled]="!assessmentsAreValid || (result?.assessor && result.assessor.id !== userId && !isAuthorized)"
+                [hidden]="result && result.rated"
+            >
+                Submit
+            </button>
+            <button class="btn btn-danger" (click)="submit()" [disabled]="!result?.feedbacks || !assessmentsAreValid" [hidden]="!result || !result.rated">
+                Override Assessment
+            </button>
+            <button class="btn btn-success" [disabled]="busy" [hidden]="!result || !result.rated" (click)="assessNextOptimal()">
+                <fa-icon *ngIf="busy" icon="spinner" [spin]="true">&nbsp;</fa-icon>
+                Next Submission
+            </button>
+        </div>
+    </h2>
+
+    <div class="editor-container">
+        <jhi-apollon-diagram-tutor *ngIf="submission" [diagramType]="this.modelingExercise.diagramType" [model]="model"></jhi-apollon-diagram-tutor>
+        <jhi-assessment-instructions *ngIf="modelingExercise" [exercise]="modelingExercise"></jhi-assessment-instructions>
+    </div>
+</div>
