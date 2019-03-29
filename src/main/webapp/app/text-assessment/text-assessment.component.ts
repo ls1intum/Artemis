@@ -19,7 +19,7 @@ import { WindowRef } from 'app/core';
 @Component({
     providers: [TextAssessmentsService, WindowRef],
     templateUrl: './text-assessment.component.html',
-    styleUrls: ['./text-assessment-component.scss'],
+    styleUrls: ['./text-assessment.component.scss'],
 })
 export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit {
     text: string;

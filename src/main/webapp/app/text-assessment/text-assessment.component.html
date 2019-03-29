@@ -1,13 +1,15 @@
 <jhi-alert></jhi-alert>
 
 <div class="course-info-bar">
-    <h2>
-        <fa-icon [icon]="'arrow-left'" (click)="previous()" class="back-button mr-2"></fa-icon>
-        <span *ngIf="submission?.exampleSubmission">Example </span>Assessment Editor for Text Exercise {{exercise?.title}}
-    </h2>
+    <div class="row justify-content-between">
+        <div class="col-8">
+            <h2>
+                <fa-icon [icon]="'arrow-left'" (click)="previous()" class="back-button mr-2"></fa-icon>
+                <span *ngIf="submission?.exampleSubmission">Example </span>Assessment Editor for Text Exercise {{exercise?.title}}
+            </h2>
+        </div>
 
-    <div class="row" *ngIf="exercise">
-        <div class="col text-right">
+        <div class="col-4 text-right">
             <h5 class="text-white"><strong>Score:</strong> {{ totalScore | number : '1.0-2' }} / {{ exercise.maxScore }}</h5>
 
             <button class="btn btn-primary ml-3" (click)="save()"
@@ -49,7 +51,14 @@
         <!-- Required for resizing; don't remove empty span -->
         <div class="resizing-bar"><span></span></div>
 
-        <div class="card-header text-white bg-primary" (click)="toggleCollapse($event)">Instructions</div>
+        <div class="card-header text-white bg-primary" (click)="toggleCollapse($event)">
+            <span class="float-right "><fa-icon icon="chevron-right"></fa-icon></span>
+            <h3 class="card-title">
+                <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
+                <span> &nbsp; Instructions &nbsp; </span>
+            </h3>
+        </div>
+
         <div class="card-body">
             <div *ngIf="exercise.problemStatement">
                 <h4>Problem statement</h4>
