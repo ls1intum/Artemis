@@ -11,8 +11,8 @@ exports.config = {
         browserName: 'chrome',
         chromeOptions: {
             args: process.env.JHI_E2E_HEADLESS
-                ? [ "--headless", "--disable-gpu", "--window-size=800,600", "--disable-extensions", "incognito" ]
-                : [ "--disable-gpu", "--window-size=800,600", "--disable-extensions", "incognito" ]
+                ? [ "--headless", "--disable-gpu", "--window-size=1280,1024", "--disable-extensions", "incognito" ]
+                : [ "--disable-gpu", "--window-size=1280,1024", "--disable-extensions", "incognito" ]
         }
     },
 
@@ -38,7 +38,7 @@ exports.config = {
     },
 
     onPrepare: function() {
-        browser.driver.manage().window().setSize(1280, 1024);
+        browser.driver.manage().window().setRect({x: 100, y: 100, width: 1280, height: 1024});
         // Disable animations
         // @ts-ignore
         browser.executeScript('document.body.className += " notransition";');

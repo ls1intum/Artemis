@@ -9,7 +9,7 @@ import { DragAndDropMapping } from '../../entities/drag-and-drop-mapping';
 import { DragItem } from '../../entities/drag-item';
 import { ScoringType } from '../../entities/quiz-question';
 import * as moment from 'moment';
-import { ApollonEditor, Element, UMLModel, SVG } from '@ls1intum/apollon';
+import { ApollonEditor, Element, UMLModel, SVG, ElementType, UMLRelationshipType, UMLElementType } from '@ls1intum/apollon';
 
 // Drop locations in quiz exercises are relatively positioned and sized
 // using integers in the interval [0,200]
@@ -40,7 +40,7 @@ export async function generateDragAndDropQuizExercise(
     const dropLocations: DropLocation[] = [];
     const correctMappings: DragAndDropMapping[] = [];
 
-    const elements = { ...model.elements, ...model.relationships };
+    const elements = [ ...model.elements, ...model.relationships ];
     // Create Drag Items, Drop Locations and their mappings for each interactive element
     for (const elementId of [...model.interactive.elements, ...model.interactive.relationships]) {
         const element = elements.find(elem => elem.id === elementId);
@@ -111,7 +111,7 @@ async function generateDragAndDropItem(
     clip: { x: number; y: number; width: number; height: number },
     fileUploaderService: FileUploaderService
 ): Promise<{ dragItem: DragItem; dropLocation: DropLocation; correctMapping: DragAndDropMapping }> {
-    const isRelationship = model.relationships.find(relationship => relationship.id === element.id) !== undefined;
+    const isRelationship = element.type in UMLRelationshipType;
 
     const margin = isRelationship ? 30 : 0;
 
