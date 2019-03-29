@@ -29,6 +29,14 @@ public class ModelAssessmentConflict {
     private EscalationState state;
 
 
+    public ModelAssessmentConflict(Result result, @Size(max = 50) String modelElementId, Map<String, Result> conflictingElementsResultMap, EscalationState state) {
+        this.result = result;
+        this.modelElementId = modelElementId;
+        this.conflictingElementsResultMap = conflictingElementsResultMap;
+        this.state = state;
+    }
+
+
     public Long getId() {
         return id;
     }
