@@ -8,10 +8,12 @@ import { ModelingExercise, ModelingExerciseService } from '../entities/modeling-
 import { Result, ResultService } from '../entities/result';
 import { AccountService } from 'app/core';
 import { Submission } from '../entities/submission';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Conflict } from 'app/modeling-assessment/conflict.model';
 import { Feedback } from 'app/entities/feedback';
 import { ModelingAssessmentService } from 'app/modeling-assessment/modeling-assessment.service';
+import { ExampleSubmission } from 'app/entities/example-submission';
+import { ExampleSubmissionService } from 'app/entities/example-submission/example-submission.service';
 
 @Component({
     selector: 'jhi-apollon-diagram-tutor',
@@ -27,10 +29,11 @@ export class ModelingAssessmentComponent implements OnInit, OnDestroy {
     apollonEditor: ApollonEditor | null = null;
 
     submission: ModelingSubmission;
+    exampleSubmission: ExampleSubmission;
+    isExampleSubmission: boolean;
     modelingExercise: ModelingExercise;
     result: Result;
     conflicts: Map<string, Conflict>;
-
     elementFeedback: Map<string, Feedback>; // map element.id --> Feedback
     assessmentsAreValid = false;
     invalidError = '';
@@ -48,6 +51,7 @@ export class ModelingAssessmentComponent implements OnInit, OnDestroy {
         private router: Router,
         private route: ActivatedRoute,
         private modelingSubmissionService: ModelingSubmissionService,
+        private exampleSubmissionService: ExampleSubmissionService,
         private modelingExerciseService: ModelingExerciseService,
         private resultService: ResultService,
         private modelingAssessmentService: ModelingAssessmentService,
@@ -65,43 +69,61 @@ export class ModelingAssessmentComponent implements OnInit, OnDestroy {
             let nextOptimal: boolean;
             this.route.queryParams.subscribe(query => {
                 nextOptimal = query['optimal'] === 'true'; // TODO CZ: do we need this flag?
+                this.isExampleSubmission = query['exampleSubmission'] === 'true';
             });
 
-            this.modelingSubmissionService.getSubmission(submissionId).subscribe(res => {
-                this.submission = res;
-                this.modelingExercise = this.submission.participation.exercise as ModelingExercise;
-                this.result = this.submission.result;
-                if (this.result.feedbacks) {
-                    this.result = this.modelingAssessmentService.convertResult(this.result);
-                } else {
-                    this.result.feedbacks = [];
-                }
-                this.updateElementFeedbackMapping(this.result.feedbacks, true);
-                this.submission.participation.results = [this.result];
-                this.result.participation = this.submission.participation;
-                /**
-                 * set diagramType to class diagram if it is null
-                 */
-                if (this.modelingExercise.diagramType == null) {
-                    this.modelingExercise.diagramType = DiagramType.ClassDiagram;
-                }
-                if (this.submission.model) {
-                    this.initializeApollonEditor(JSON.parse(this.submission.model));
-                } else {
-                    this.jhiAlertService.error(`No model could be found for this submission.`);
-                }
-                if ((this.result.assessor == null || this.result.assessor.id === this.userId) && !this.result.rated) {
-                    this.jhiAlertService.info('arTeMiSApp.apollonDiagram.lock');
-                }
-                if (nextOptimal) {
-                    this.modelingAssessmentService.getPartialAssessment(submissionId).subscribe((result: Result) => {
-                        this.result = result;
-                    });
-                }
-                if (this.result) {
-                    this.calculateTotalScore();
-                }
-            });
+            if (this.isExampleSubmission) {
+                this.exampleSubmissionService.get(submissionId).subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
+                    this.exampleSubmission = exampleSubmissionResponse.body;
+                    this.submission = this.exampleSubmission.submission as ModelingSubmission;
+                    this.modelingExercise = this.exampleSubmission.exercise as ModelingExercise;
+                    this.result = this.submission.result; // TODO: result is null
+                    if (this.result.feedbacks) {
+                        this.result = this.modelingAssessmentService.convertResult(this.result);
+                    } else {
+                        this.result.feedbacks = [];
+                    }
+                    this.updateElementFeedbackMapping(this.result.feedbacks, true);
+                    this.checkDiagramType();
+                    if (this.submission.model) {
+                        this.initializeApollonEditor(JSON.parse(this.submission.model));
+                    } else {
+                        this.jhiAlertService.error(`No model could be found for this submission.`);
+                    }
+                    // TODO: is this enough for example submissions?
+                });
+            } else {
+                this.modelingSubmissionService.getSubmission(submissionId).subscribe(res => {
+                    this.submission = res;
+                    this.modelingExercise = this.submission.participation.exercise as ModelingExercise;
+                    this.result = this.submission.result;
+                    if (this.result.feedbacks) {
+                        this.result = this.modelingAssessmentService.convertResult(this.result);
+                    } else {
+                        this.result.feedbacks = [];
+                    }
+                    this.updateElementFeedbackMapping(this.result.feedbacks, true);
+                    this.submission.participation.results = [this.result];
+                    this.result.participation = this.submission.participation;
+                    this.checkDiagramType();
+                    if (this.submission.model) {
+                        this.initializeApollonEditor(JSON.parse(this.submission.model));
+                    } else {
+                        this.jhiAlertService.error(`No model could be found for this submission.`);
+                    }
+                    if ((this.result.assessor == null || this.result.assessor.id === this.userId) && !this.result.rated) {
+                        this.jhiAlertService.info('arTeMiSApp.apollonDiagram.lock');
+                    }
+                    if (nextOptimal) {
+                        this.modelingAssessmentService.getPartialAssessment(submissionId).subscribe((result: Result) => {
+                            this.result = result;
+                        });
+                    }
+                    if (this.result) {
+                        this.calculateTotalScore();
+                    }
+                });
+            }
         });
     }
 
@@ -286,6 +308,15 @@ export class ModelingAssessmentComponent implements OnInit, OnDestroy {
 
     previousState() {
         this.router.navigate(['course', this.modelingExercise.course.id, 'exercise', this.modelingExercise.id, 'assessment']);
+    }
+
+    /**
+     * Set the diagram type to class diagram, if it is null
+     */
+    private checkDiagramType() {
+        if (this.modelingExercise.diagramType === null) {
+            this.modelingExercise.diagramType = DiagramType.ClassDiagram;
+        }
     }
 
     private highlightElementsWithConflict() {

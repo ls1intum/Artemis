@@ -59,7 +59,6 @@ export class ExampleModelingSubmissionComponent implements OnInit, AfterViewInit
     }
 
     ngOnInit(): void {
-        console.log('from example modeling submission component');
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         const exampleSubmissionId = this.route.snapshot.paramMap.get('exampleSubmissionId');
         this.readOnly = !!this.route.snapshot.paramMap.get('readOnly');
@@ -100,7 +99,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, AfterViewInit
 
             // Do not load the results when we have to assess the submission. The API will not provide it anyway
             // if we are not instructors
-            if (this.toComplete) {
+            if (this.toComplete || !this.isAtLeastInstructor) {
                 return;
             }
 
@@ -119,8 +118,13 @@ export class ExampleModelingSubmissionComponent implements OnInit, AfterViewInit
      */
     ngAfterViewInit(): void {
         this.editorList.changes.subscribe((editors: QueryList<ModelingEditorComponent>) => {
-            this.modelingEditor = editors.first;
-            this.passDataToEditor();
+            // This timeout is necessary to postpone setting data in the modeling editor until the view is built up.
+            // Otherwise, we get the Angular error 'Expression has changed after it was checked' for an ngIf statement
+            // in the modeling editor.
+            setTimeout(() => {
+                this.modelingEditor = editors.first;
+                this.passDataToEditor();
+            });
         });
     }
 
@@ -173,6 +177,10 @@ export class ExampleModelingSubmissionComponent implements OnInit, AfterViewInit
                 this.exampleSubmissionId = this.exampleSubmission.id;
                 this.isNewSubmission = false;
             }, this.onError);
+    }
+
+    public createExampleAssessment(): void {
+        // TODO CZ; implement
     }
 
     public addAssessment(assessmentText: string): void {
@@ -268,13 +276,13 @@ export class ExampleModelingSubmissionComponent implements OnInit, AfterViewInit
         );
     }
 
-    readAndUnderstood() {
-        this.tutorParticipationService.assessExampleSubmission(this.exampleSubmission, this.exerciseId).subscribe(
-            (res: HttpResponse<TutorParticipation>) => {
-                this.jhiAlertService.success('arTeMiSApp.exampleSubmission.readSuccessfully');
-            }
-        );
-    }
+    // readAndUnderstood() {
+    //     this.tutorParticipationService.assessExampleSubmission(this.exampleSubmission, this.exerciseId).subscribe(
+    //         (res: HttpResponse<TutorParticipation>) => {
+    //             this.jhiAlertService.success('arTeMiSApp.exampleSubmission.readSuccessfully');
+    //         }
+    //     );
+    // }
 
     private onError(error: string) {
         console.error(error);

@@ -29,6 +29,7 @@ export class ExampleSubmissionService {
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
+    // TODO CZ: directly return Observable<ExampleSubmission> here without calling convertResponse?
     get(exampleSubmissionId: number): Observable<EntityResponseType> {
         return this.http
             .get<ExampleSubmission>(`api/example-submissions/${exampleSubmissionId}`, {

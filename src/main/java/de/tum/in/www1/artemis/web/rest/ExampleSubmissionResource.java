@@ -40,6 +40,7 @@ public class ExampleSubmissionResource {
     @PostMapping("/exercises/{exerciseId}/example-submissions")
     @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRED)
+    // TODO CZ: merge with updateExampleSubmission
     public ResponseEntity<ExampleSubmission> createExampleSubmission(@PathVariable Long exerciseId, @RequestBody ExampleSubmission exampleSubmission) {
         log.debug("REST request to save ExampleSubmission : {}", exampleSubmission);
         if (exampleSubmission.getId() != null) {
@@ -72,6 +73,8 @@ public class ExampleSubmissionResource {
 
     @NotNull
     private ResponseEntity<ExampleSubmission> handleExampleSubmission(Long exerciseId, ExampleSubmission exampleSubmission) {
+        // TODO CZ: remove this method, as the check if the exerciseIds match is unnecessary when the paths of the endpoints change to /example-submissions/... and the exercise is part of the example submission anyway
+        // TODO CZ: check if user is at least instructor?
         if (!exampleSubmission.getExercise().getId().equals(exerciseId)) {
             throw new BadRequestAlertException(
                 "The exercise id in the path does not match the exercise id of the submission",
