@@ -19,7 +19,7 @@ import { retryWhen } from 'rxjs/operators';
     styleUrls: ['../../modeling-assessment/modeling-assessment.component.scss'],
     providers: [ModelingAssessmentService],
 })
-export class ModelingAssessmentComponent implements OnInit, OnDestroy {
+export class ModelingAssessmentViewComponent implements OnInit, OnDestroy {
     @ViewChild('editorContainer')
     editorContainer: ElementRef;
     @Output()
