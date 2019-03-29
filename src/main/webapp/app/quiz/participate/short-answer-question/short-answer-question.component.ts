@@ -51,6 +51,7 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
 
     @Output()
     submittedTextsChange = new EventEmitter();
+
     showingSampleSolution = false;
     rendered: ShortAnswerQuestion;
     sampleSolutions: ShortAnswerSolution[] =  [];
@@ -135,15 +136,8 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
     }
 
     getSampleSolutionForSpot(spotTag: string): ShortAnswerSolution {
-        console.log(this.sampleSolutions);
-        console.log(this.question.correctMappings.filter(mapping => mapping.spot.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag)));
-        console.log(this.sampleSolutions.filter(
-            solution => solution.id === this.question.correctMappings.filter(
-                mapping => mapping.spot.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag.toString()))[0].solution.id));
-
-        return this.sampleSolutions.filter(
-            solution => solution.id === this.question.correctMappings.filter(
-                mapping => mapping.spot.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag.toString()))[0].solution.id)[0];
+        const index = this.question.spots.findIndex(spot => spot.spotNr === this.shortAnswerQuestionUtil.getSpotNr(spotTag));
+        return this.sampleSolutions[index];
     }
 
     getBackgroundColourForInputField(spotTag: string): string {
