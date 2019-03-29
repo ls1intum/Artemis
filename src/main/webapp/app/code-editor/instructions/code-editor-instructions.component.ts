@@ -4,6 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AfterViewInit, Component, ElementRef, Input, OnChanges, OnDestroy, Renderer2, SimpleChanges } from '@angular/core';
 import { WindowRef } from '../../core/websocket/window.service';
 import { RepositoryFileService, RepositoryService } from '../../entities/repository/repository.service';
+import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { CodeEditorComponent } from '../code-editor.component';
 import { CodeEditorService } from '../code-editor.service';
 import { JhiWebsocketService } from '../../core';
@@ -23,7 +24,7 @@ interface Step {
 @Component({
     selector: 'jhi-code-editor-instructions',
     templateUrl: './code-editor-instructions.component.html',
-    providers: [JhiAlertService, WindowRef, RepositoryService, ResultService, CodeEditorService]
+    providers: [JhiAlertService, WindowRef, RepositoryService, ResultService, CodeEditorService],
 })
 export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges, OnDestroy {
     isLoadingResults = false;
@@ -59,7 +60,8 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges
         private editorService: CodeEditorService,
         private modalService: NgbModal,
         private elementRef: ElementRef,
-        private renderer: Renderer2
+        private renderer: Renderer2,
+        public artemisMarkdown: ArtemisMarkdown,
     ) {}
 
     /**
@@ -78,9 +80,9 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges
                 // Set maximum width
                 restrictSize: {
                     min: { width: this.minInstructionsWidth },
-                    max: { width: this.initialInstructionsWidth }
+                    max: { width: this.initialInstructionsWidth },
                 },
-                inertia: true
+                inertia: true,
             })
             .on('resizemove', function(event) {
                 const target = event.target;
@@ -124,7 +126,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges
                 err => {
                     // TODO: handle the case that there is no README.md file
                     console.log('Error while getting README.md file!', err);
-                }
+                },
             );
         }
     }
@@ -158,7 +160,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges
             err => {
                 console.log('Error while loading result details!', err);
                 this.isLoadingResults = false;
-            }
+            },
         );
     }
 
@@ -228,9 +230,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges
         /** We analyze the tests up until our index to determine the number of green tests **/
         const testStatusCircleElements = this.elementRef.nativeElement.querySelectorAll('.stepwizard-circle');
         const testStatusCircleElementsUntilIndex = Array.from(testStatusCircleElements).slice(0, index + 1);
-        const positiveTestsUntilIndex = testStatusCircleElementsUntilIndex.filter((testCircle: HTMLElement) =>
-            testCircle.children[0].classList.contains('text-success')
-        ).length;
+        const positiveTestsUntilIndex = testStatusCircleElementsUntilIndex.filter((testCircle: HTMLElement) => testCircle.children[0].classList.contains('text-success')).length;
         /** The click should only be executed if the clicked element is not a positive test **/
         if (testStatusDOMElements.length && !testStatusCircleElements[index].children[0].classList.contains('text-success')) {
             /** We subtract the number of positive tests from the index to match the correct test status link **/
@@ -316,7 +316,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges
             type: 'plantUml',
             level: state.level,
             lines: [startLine, state.line],
-            content: state.getLines(startLine, state.line, 0, true)
+            content: state.getLines(startLine, state.line, 0, true),
         });
 
         return true;
@@ -334,7 +334,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges
         // tslint:disable-next-line:max-line-length
         plantUml = plantUml.replace(
             '@startuml',
-            '@startuml\nskinparam shadowing false\nskinparam classBorderColor black\nskinparam classArrowColor black\nskinparam DefaultFontSize 14\nskinparam ClassFontStyle bold\nskinparam classAttributeIconSize 0\nhide empty members\n'
+            '@startuml\nskinparam shadowing false\nskinparam classBorderColor black\nskinparam classArrowColor black\nskinparam DefaultFontSize 14\nskinparam ClassFontStyle bold\nskinparam classAttributeIconSize 0\nhide empty members\n',
         );
 
         plantUml = plantUml.replace(/testsColor\(([^)]+)\)/g, (match: any, capture: string) => {
@@ -350,11 +350,13 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges
         this.editorService.getPlantUmlImage(plantUml).subscribe(
             plantUmlSrcAttribute => {
                 // Assign plantUmlSrcAttribute as src attribute to our img element
-                document.getElementById('plantUml' + id).setAttribute('src', 'data:image/jpeg;base64,' + plantUmlSrcAttribute);
+                if (document.getElementById('plantUml' + id)) {
+                    document.getElementById('plantUml' + id).setAttribute('src', 'data:image/jpeg;base64,' + plantUmlSrcAttribute);
+                }
             },
             err => {
                 console.log('Error getting plantUmlImage', err);
-            }
+            },
         );
 
         return "<img id='plantUml" + id + "' alt='plantUml'" + id + " '/>";
@@ -386,7 +388,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges
                 type: 'testsStatus',
                 title: match[1],
                 tests: match[2].split(','),
-                level: state.level
+                level: state.level,
             });
         }
 
@@ -431,7 +433,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges
 
         this.steps.push({
             title: tokens[0].title,
-            done
+            done,
         });
 
         return text;

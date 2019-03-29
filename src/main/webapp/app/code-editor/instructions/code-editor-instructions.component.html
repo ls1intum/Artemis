@@ -23,8 +23,13 @@
     </div>
 
     <!-- Rendered markdown will be inserted in this div -->
-    <div class="card-body instructions" [innerHtml]="readMeFileRenderedContent | safeHtml"></div>
-
+    <div
+        class="card-body instructions"
+        [innerHtml]="(participation?.exercise.problemStatement
+               ? artemisMarkdown.htmlForMarkdown(participation.exercise.problemStatement)
+               : readMeFileRenderedContent) | safeHtml">
+    </div>
+    
     <!-- Required for resizing; don't remove empty span -->
     <div class="rg-left"><span></span></div>
 </div>
