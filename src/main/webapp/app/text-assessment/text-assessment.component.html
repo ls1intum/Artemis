@@ -27,7 +27,7 @@
     </div>
 </div>
 
-<div class="row justify-content-end">
+<div class="row justify-content-end mt-4">
     <div class="col text-right">
         <span *ngIf="result && participation && showResult"><jhi-result [participation]="participation"></jhi-result></span>
         <span *ngIf="result && result.assessor" style="color:red"><h6>Reviewer: {{result.assessor.firstName + (isAuthorized ? '' : ' - submission locked')}}</h6></span>
