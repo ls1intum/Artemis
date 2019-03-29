@@ -14,12 +14,13 @@ import { AccountService } from '../core';
 import { Submission } from '../entities/submission';
 import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/modeling-submission';
 import { DiagramType, ModelingExercise } from 'app/entities/modeling-exercise';
-import { ModelingAssessmentService } from 'app/modeling-assessment/modeling-assessment.service';
+import { genericRetryStrategy, ModelingAssessmentService } from 'app/modeling-assessment/modeling-assessment.service';
+import { retryWhen } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
     templateUrl: './modeling-assessment-dashboard.component.html',
-    providers: [JhiAlertService, ModelingAssessmentService]
+    providers: [JhiAlertService, ModelingAssessmentService],
 })
 export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     // make constants available to html for comparison
@@ -58,7 +59,7 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
         private modelingAssessmentService: ModelingAssessmentService,
         private modalService: NgbModal,
         private eventManager: JhiEventManager,
-        private accountService: AccountService
+        private accountService: AccountService,
     ) {
         this.reverse = false;
         this.predicate = 'id';
@@ -77,7 +78,6 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
                 this.course = res.body;
             });
             this.exerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<Exercise>) => {
-
                 if (res.body.type === this.MODELING) {
                     this.modelingExercise = res.body as ModelingExercise;
                     this.getSubmissions(true);
@@ -99,25 +99,21 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
      * @param {boolean} forceReload force REST call to update nextOptimalSubmissionIds
      */
     getSubmissions(forceReload: boolean) {
-        this.modelingSubmissionService
-            .getModelingSubmissionsForExercise(this.modelingExercise.id, { submittedOnly: true })
-            .subscribe((res: HttpResponse<ModelingSubmission[]>) => {
-                // only use submissions that have already been submitted (this makes sure that unsubmitted submissions are not shown
-                // the server should have filtered these submissions already
-                this.submissions = res.body.filter(submission => submission.submitted);
-                this.submissions.forEach(submission => {
-                    if (submission.result) {
-                        // reconnect some associations
-                        submission.result.submission = submission;
-                        submission.result.participation = submission.participation;
-                        submission.participation.results = [submission.result];
-                    }
-                });
-                this.filterSubmissions(forceReload);
-                this.assessedSubmissions = this.submissions.filter(
-                    submission => submission.result && submission.result.completionDate && submission.result.score
-                ).length;
+        this.modelingSubmissionService.getModelingSubmissionsForExercise(this.modelingExercise.id, { submittedOnly: true }).subscribe((res: HttpResponse<ModelingSubmission[]>) => {
+            // only use submissions that have already been submitted (this makes sure that unsubmitted submissions are not shown
+            // the server should have filtered these submissions already
+            this.submissions = res.body.filter(submission => submission.submitted);
+            this.submissions.forEach(submission => {
+                if (submission.result) {
+                    // reconnect some associations
+                    submission.result.submission = submission;
+                    submission.result.participation = submission.participation;
+                    submission.participation.results = [submission.result];
+                }
             });
+            this.filterSubmissions(forceReload);
+            this.assessedSubmissions = this.submissions.filter(submission => submission.result && submission.result.completionDate && submission.result.score).length;
+        });
     }
 
     /**
@@ -127,8 +123,8 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
      */
     filterSubmissions(forceReload: boolean) {
         if (this.modelingExercise.diagramType === this.CLASS_DIAGRAM && (this.nextOptimalSubmissionIds.length < 3 || forceReload)) {
-            this.modelingAssessmentService.getOptimalSubmissions(this.modelingExercise.id).subscribe(optimal => {
-                this.nextOptimalSubmissionIds = optimal.body.map((submission: Submission) => submission.id);
+            this.modelingAssessmentService.getOptimalSubmissions(this.modelingExercise.id).subscribe((optimal: number[]) => {
+                this.nextOptimalSubmissionIds = optimal;
                 this.applyFilter();
             });
         } else {
@@ -142,9 +138,9 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
     applyFilter() {
         // A submission is optimal if it is part of nextOptimalSubmissionIds and (nobody is currently assessing it or you are currently assessing it)
         this.submissions.forEach(submission => {
-            submission.optimal = this.nextOptimalSubmissionIds.includes(submission.id) &&
-                (!(submission.result && submission.result.assessor) ||
-                    (submission.result && submission.result.assessor && submission.result.assessor.id === this.userId));
+            submission.optimal =
+                this.nextOptimalSubmissionIds.includes(submission.id) &&
+                (!(submission.result && submission.result.assessor) || (submission.result && submission.result.assessor && submission.result.assessor.id === this.userId));
         });
         this.optimalSubmissions = this.submissions.filter(submission => {
             return submission.optimal;
@@ -186,27 +182,32 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
 
     /**
      * Select the next optimal submission to assess or otherwise trigger the REST call
-     *
-     * @param {number} attempts Count the attempts to reduce frequency on repeated failure (network errors)
      */
-    assessNextOptimal(attempts: number) {
-        if (attempts > 3) {
-            this.busy = false;
-            this.jhiAlertService.info('assessmentDashboard.noSubmissionFound');
-            return;
-        }
+    assessNextOptimal() {
         this.busy = true;
         if (this.nextOptimalSubmissionIds.length === 0) {
-            setTimeout(() => {
-                this.modelingAssessmentService.getOptimalSubmissions(this.modelingExercise.id).subscribe(optimal => {
-                    this.nextOptimalSubmissionIds = optimal.body.map((submission: Submission) => submission.id);
-                    this.assessNextOptimal(attempts + 1);
-                });
-            }, 500 + 1000 * attempts);
+            this.modelingAssessmentService
+                .getOptimalSubmissions(this.modelingExercise.id)
+                .pipe(retryWhen(genericRetryStrategy({ maxRetryAttempts: 4, scalingDuration: 1000 })))
+                .subscribe(
+                    (optimal: number[]) => {
+                        this.busy = false;
+                        this.nextOptimalSubmissionIds = optimal;
+                        this.navigateToNextRandomOptimalSubmission();
+                    },
+                    () => {
+                        this.busy = false;
+                        this.jhiAlertService.info('assessmentDashboard.noSubmissionFound');
+                    },
+                );
         } else {
-            const randomInt = Math.floor(Math.random() * this.nextOptimalSubmissionIds.length);
-            this.router.navigate(['modeling-exercise', this.modelingExercise.id, 'submissions', this.nextOptimalSubmissionIds[randomInt], 'assessment']);
+            this.navigateToNextRandomOptimalSubmission();
         }
+    }
+
+    private navigateToNextRandomOptimalSubmission() {
+        const randomInt = Math.floor(Math.random() * this.nextOptimalSubmissionIds.length);
+        this.router.navigate(['modeling-exercise', this.modelingExercise.id, 'submissions', this.nextOptimalSubmissionIds[randomInt], 'assessment']);
     }
 
     ngOnDestroy() {

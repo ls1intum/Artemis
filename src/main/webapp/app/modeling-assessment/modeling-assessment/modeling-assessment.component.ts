@@ -1,5 +1,5 @@
-import { Component, ElementRef, OnInit, ViewChild, Input, AfterViewInit } from '@angular/core';
-import { UMLModel, ApollonEditor, ApollonMode, DiagramType } from '@ls1intum/apollon';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { ApollonEditor, ApollonMode, DiagramType, UMLModel } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
 import * as interact from 'interactjs';
 import { Feedback } from 'app/entities/feedback';
@@ -9,14 +9,17 @@ import { Feedback } from 'app/entities/feedback';
     templateUrl: './modeling-assessment.component.html',
     styleUrls: ['./modeling-assessment.component.scss'],
 })
-export class ModelingAssessmentComponent implements OnInit, AfterViewInit {
+export class ModelingAssessmentComponent implements OnInit, AfterViewInit, OnDestroy {
     apollonEditor: ApollonEditor | null = null;
     elementFeedback: Map<string, Feedback>; // map element.id --> Feedback
+    feedbacks: Feedback[];
 
     @ViewChild('editorContainer') editorContainer: ElementRef;
-    @Input() diagramType: DiagramType;
     @Input() model: string;
+    @Input() diagramType: DiagramType;
     @Input() resizable = false;
+    @Output() feedbackChanged = new EventEmitter<Feedback[]>();
+
     constructor(private jhiAlertService: JhiAlertService) {}
 
     ngOnInit() {}
@@ -60,7 +63,7 @@ export class ModelingAssessmentComponent implements OnInit, AfterViewInit {
             this.apollonEditor.destroy();
         }
 
-        initialModel.assessments = this.result.feedbacks.map(feedback => {
+        initialModel.assessments = this.feedbacks.map(feedback => {
             return {
                 modelElementId: feedback.referenceId,
                 elementType: feedback.referenceType,
@@ -77,8 +80,8 @@ export class ModelingAssessmentComponent implements OnInit, AfterViewInit {
         });
 
         this.apollonEditor.subscribeToSelectionChange(selection => {
-            this.result.feedbacks = this.generateFeedbackFromAssessment();
-            this.calculateTotalScore();
+            this.feedbacks = this.generateFeedbackFromAssessment();
+            // this.calculateTotalScore();
         });
     }
 
