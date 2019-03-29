@@ -1,5 +1,5 @@
 import { NavBarPage, SignInPage } from '../page-objects/jhi-page-objects';
-import {browser, by, element, ExpectedConditions as ec} from "protractor";
+import { browser, by, element, ExpectedConditions as ec } from 'protractor';
 import { CoursePage, NewCoursePage } from '../page-objects/entities/course-page-object';
 import { QuizExercisePage } from '../page-objects/entities/quiz-exercise-page-object';
 import { errorRoute } from '../../../../main/webapp/app/layouts';
@@ -36,7 +36,7 @@ describe('quiz-exercise', () => {
         await newCoursePage.setInstructorGroupName('ls1instructor');
         await newCoursePage.clickSave();
 
-        browser.wait(ec.urlContains('/course'), 1000).then((result) => expect(result).to.be.true);
+        browser.wait(ec.urlContains('/course'), 1000).then(result => expect(result).to.be.true);
 
         // Sign in with instructor account
         await navBarPage.autoSignOut();
@@ -44,16 +44,14 @@ describe('quiz-exercise', () => {
         await signInPage.autoSignInUsing(process.env.bamboo_instructor_user, process.env.bamboo_instructor_password);
     });
 
-    beforeEach(async () => {
-    });
+    beforeEach(async () => {});
 
     it('navigate into quiz-exercise', async () => {
         await navBarPage.clickOnCourseAdminMenu();
         courseId = await coursePage.navigateIntoLastCourseQuizzes();
 
         //TODO: this does not seem to work properly
-        browser.wait(ec.urlContains(`${courseId}/quiz-exercise`), 5000).then((result) => expect(result).to.be.true);
-
+        browser.wait(ec.urlContains(`${courseId}/quiz-exercise`), 5000).then((result: any) => expect(result).to.be.true);
     });
 
     it('create quiz', async () => {
@@ -63,23 +61,23 @@ describe('quiz-exercise', () => {
 
         //set title of quiz
         const title = element(by.id('quiz-title'));
-        title.sendKeys("test-quiz");
+        title.sendKeys('test-quiz');
 
         //set duration of quiz
         const durationMinutes = await element(by.id('quiz-duration-minutes'));
         durationMinutes.clear();
-        durationMinutes.sendKeys("0");
+        durationMinutes.sendKeys('0');
         const durationSeconds = await element(by.id('quiz-duration-seconds'));
         durationSeconds.clear();
-        durationSeconds.sendKeys("5");
+        durationSeconds.sendKeys('5');
 
         //add MC question
         const addMcButton = await element(by.id('quiz-add-mc-question'));
         await addMcButton.click();
 
         // set title of mc question
-        const mcQuestionTitle = await element(by.id('mc-question-title'));  //TODO: we need to support multiple questions
-        mcQuestionTitle.sendKeys("test-mc");
+        const mcQuestionTitle = await element(by.id('mc-question-title')); //TODO: we need to support multiple questions
+        mcQuestionTitle.sendKeys('test-mc');
 
         //deactivate random order to make the test case deterministic
         const randomOrder = await element(by.css('[for="cbRandomizeOrderMC1"]'));
@@ -89,7 +87,7 @@ describe('quiz-exercise', () => {
         expect(quizSaveButton.isPresent());
         await quizSaveButton.click();
 
-        browser.wait(ec.urlContains(`${courseId}/quiz-exercise/new`), 1000).then((result) => expect(result).to.be.true);
+        browser.wait(ec.urlContains(`${courseId}/quiz-exercise/new`), 1000).then((result: any) => expect(result).to.be.true);
 
         const backButton = await element(by.id('quiz-cancel-back-button'));
         expect(backButton.isPresent());
@@ -101,25 +99,28 @@ describe('quiz-exercise', () => {
 
     it('participate in quiz', async () => {
         const quizRows = element.all(by.tagName('tbody')).all(by.tagName('tr'));
-        quizId = await quizRows.last().element(by.css('td:nth-child(1) > a')).getText();
+        quizId = await quizRows
+            .last()
+            .element(by.css('td:nth-child(1) > a'))
+            .getText();
 
         //set visible
         const setVisibleButton = await element(by.id(`quiz-set-visible-${quizId}`));
         expect(setVisibleButton.isPresent());
         await setVisibleButton.click();
 
-        await browser.sleep(500);  // let's wait shortly so that the server gets everything right with the database
+        await browser.sleep(500); // let's wait shortly so that the server gets everything right with the database
 
         //start quiz
         const startQuizInstructorButton = await element(by.id(`instructor-quiz-start-${quizId}`));
         expect(startQuizInstructorButton.isPresent());
         await startQuizInstructorButton.click();
 
-        await browser.sleep(500);  // let's wait shortly so that the server gets everything right with the database
+        await browser.sleep(500); // let's wait shortly so that the server gets everything right with the database
         //navigate to courses
         await navBarPage.clickOnCoursesMenu();
 
-        browser.wait(ec.urlContains(`courses`), 1000).then((result) => expect(result).to.be.true);
+        browser.wait(ec.urlContains(`courses`), 1000).then((result: any) => expect(result).to.be.true);
 
         //open or start quiz (depends a bit on the timing)
         let startQuizButton = await element(by.id(`student-quiz-start-${quizId}`));
@@ -129,7 +130,7 @@ describe('quiz-exercise', () => {
         expect(startQuizButton.isPresent());
         await startQuizButton.click();
 
-        browser.wait(ec.urlContains(`quiz/${quizId}`), 1000).then((result) => expect(result).to.be.true);
+        browser.wait(ec.urlContains(`quiz/${quizId}`), 1000).then((result: any) => expect(result).to.be.true);
 
         // deactivate because we use timeouts in the quiz participation and otherwise it would not work
         browser.waitForAngularEnabled(false);
@@ -138,45 +139,50 @@ describe('quiz-exercise', () => {
         //TODO the answer options are random, search for the correct and incorrect answer option before clicking in it
         const firstAnswerOption = await element(by.id(`answer-option-0`));
         expect(firstAnswerOption.isPresent());
-        await firstAnswerOption.click();//select
-        await firstAnswerOption.click();//deselect
-        await firstAnswerOption.click();//select
+        await firstAnswerOption.click(); //select
+        await firstAnswerOption.click(); //deselect
+        await firstAnswerOption.click(); //select
 
         const secondAnswerOption = await element(by.id(`answer-option-1`));
         expect(secondAnswerOption.isPresent());
-        await secondAnswerOption.click();//select
-        await secondAnswerOption.click();//deselect
-
+        await secondAnswerOption.click(); //select
+        await secondAnswerOption.click(); //deselect
 
         //submit quiz
         const submitQuizButton = await element(by.id(`submit-quiz`));
         expect(submitQuizButton.isPresent());
         await submitQuizButton.click();
 
-
-
         //wait until the quiz has finished
-        await browser.wait(ec.visibilityOf(element(by.id('quiz-score'))), 10000).then(async (result) => {
+        await browser.wait(ec.visibilityOf(element(by.id('quiz-score'))), 10000).then(async (result: any) => {
             //first possibility to check this
-            element(by.id('quiz-score-result')).getText().then(text => {
-               expect(text).equals('1/1 (100 %)');
-            });
+            element(by.id('quiz-score-result'))
+                .getText()
+                .then(text => {
+                    expect(text).equals('1/1 (100 %)');
+                });
 
             //second possibility to check this
             const text = await element(by.id('quiz-score-result')).getText();
             expect(text).equals('1/1 (100 %)');
 
-            element(by.id('answer-option-0-correct')).getText().then(text => {
-                expect(text).equals('Correct');
-            }).catch(error => {
-                expect.fail('first answer option not found as correct');
-            });
+            element(by.id('answer-option-0-correct'))
+                .getText()
+                .then(text => {
+                    expect(text).equals('Correct');
+                })
+                .catch(error => {
+                    expect.fail('first answer option not found as correct');
+                });
 
-            element(by.id('answer-option-1-correct')).getText().then(text => {
-                expect(text).equals('Correct');
-            }).catch(error => {
-                expect.fail('second answer option not found as correct');
-            });
+            element(by.id('answer-option-1-correct'))
+                .getText()
+                .then(text => {
+                    expect(text).equals('Correct');
+                })
+                .catch(error => {
+                    expect.fail('second answer option not found as correct');
+                });
         });
 
         await browser.sleep(500);
@@ -199,29 +205,29 @@ describe('quiz-exercise', () => {
 
         //set title of SA quiz
         const title = element(by.id('quiz-title'));
-        title.sendKeys("test-SA-quiz");
+        title.sendKeys('test-SA-quiz');
 
         //set duration of quiz
         const durationMinutes = await element(by.id('quiz-duration-minutes'));
         durationMinutes.clear();
-        durationMinutes.sendKeys("0");
+        durationMinutes.sendKeys('0');
         const durationSeconds = await element(by.id('quiz-duration-seconds'));
         durationSeconds.clear();
-        durationSeconds.sendKeys("5");
+        durationSeconds.sendKeys('5');
 
         //add short answer question
         const addShortAnswerButton = await element(by.id('quiz-add-short-answer-question'));
         await addShortAnswerButton.click();
 
         // set title of short answer question
-        const shortAnswerQuestionTitle = await element(by.id('short-answer-question-title'));  //TODO: we need to support multiple questions
-        shortAnswerQuestionTitle.sendKeys("test-short-answer");
+        const shortAnswerQuestionTitle = await element(by.id('short-answer-question-title')); //TODO: we need to support multiple questions
+        shortAnswerQuestionTitle.sendKeys('test-short-answer');
 
         const quizSaveButton = await element(by.id('quiz-save'));
         expect(quizSaveButton.isPresent());
         await quizSaveButton.click();
 
-        browser.wait(ec.urlContains(`${courseId}/quiz-exercise/new`), 1000).then((result) => expect(result).to.be.true);
+        browser.wait(ec.urlContains(`${courseId}/quiz-exercise/new`), 1000).then((result: any) => expect(result).to.be.true);
 
         const backButton = await element(by.id('quiz-cancel-back-button'));
         expect(backButton.isPresent());
@@ -252,5 +258,4 @@ describe('quiz-exercise', () => {
         expect(await rows.count()).to.equal(numberOfCourses - 1);
         await navBarPage.autoSignOut();
     });
-
 });
