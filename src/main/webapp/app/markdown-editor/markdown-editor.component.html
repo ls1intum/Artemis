@@ -5,7 +5,8 @@
             <div class="tool-bar row pt-1">
                 <div class="col-xs-6" style="margin-left: 14px">
                     <ng-container *ngFor="let command of defaultCommands">
-                        <button class="btn btn-outline-secondary mr-1"
+                        <button type="button"
+                                class="btn btn-outline-secondary mr-1"
                                 (click)="command.execute()"
                                 [ngbTooltip]= "(command.buttonTranslationString | translate)">
                             <fa-icon [icon]="command.buttonIcon" ></fa-icon>
