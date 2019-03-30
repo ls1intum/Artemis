@@ -122,10 +122,15 @@ export class ModelingAssessmentDashboardComponent implements OnInit, OnDestroy {
      */
     filterSubmissions(forceReload: boolean) {
         if (this.modelingExercise.diagramType === this.CLASS_DIAGRAM && (this.nextOptimalSubmissionIds.length < 3 || forceReload)) {
-            this.modelingAssessmentService.getOptimalSubmissions(this.modelingExercise.id).subscribe((optimal: number[]) => {
-                this.nextOptimalSubmissionIds = optimal;
-                this.applyFilter();
-            });
+            this.modelingAssessmentService.getOptimalSubmissions(this.modelingExercise.id).subscribe(
+                (optimal: number[]) => {
+                    this.nextOptimalSubmissionIds = optimal;
+                    this.applyFilter();
+                },
+                error => {
+                    this.applyFilter();
+                },
+            );
         } else {
             this.applyFilter();
         }
