@@ -1,5 +1,5 @@
 <!--Begin Editor-->
-<div [hidden]="previewMode" style="padding: 8px">
+<div [hidden]="previewMode">
     <div class="tool-bar row">
     <div class="col-xs-6" style="margin-left: 14px">
         <ng-container *ngFor="let command of defaultCommands">
@@ -40,14 +40,14 @@
 <!--Begin Preview-->
 <ng-container *ngIf="previewMode">
     <ng-content></ng-content>
-    <div *ngIf="showDefaultPreview" style="min-height: 100px" [innerHTML]="previewTextAsHtml">
+    <div *ngIf="showDefaultPreview" [innerHTML]="previewTextAsHtml">
         Preview
     </div>
 </ng-container>
 <!--End Preview-->
 
 <!--Begin Edit/Preview Button-->
-<div class="toolbar" style="margin-top: 5px">
+<div class="toolbar">
     <div *ngIf="showPreviewButton" class="btn btn-outline-secondary" (click)="togglePreview()">
         <fa-icon [icon]="previewButtonIcon" class="mr-1"></fa-icon>
         <span [jhiTranslate]="previewButtonTranslateString"></span>
