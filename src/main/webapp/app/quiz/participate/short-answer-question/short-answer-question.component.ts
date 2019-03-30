@@ -8,7 +8,7 @@ import { ShortAnswerQuestionUtil } from '../../../components/util/short-answer-q
 @Component({
     selector: 'jhi-short-answer-question',
     templateUrl: './short-answer-question.component.html',
-    providers: [ArtemisMarkdown, ShortAnswerQuestionUtil]
+    providers: [ArtemisMarkdown, ShortAnswerQuestionUtil],
 })
 export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
     _question: ShortAnswerQuestion;
@@ -54,13 +54,10 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
 
     showingSampleSolution = false;
     rendered: ShortAnswerQuestion;
-    sampleSolutions: ShortAnswerSolution[] =  [];
+    sampleSolutions: ShortAnswerSolution[] = [];
     textParts: string[][];
 
-    constructor(
-        private artemisMarkdown: ArtemisMarkdown,
-        public shortAnswerQuestionUtil: ShortAnswerQuestionUtil
-    ) {}
+    constructor(private artemisMarkdown: ArtemisMarkdown, public shortAnswerQuestionUtil: ShortAnswerQuestionUtil) {}
 
     ngOnInit() {}
 
@@ -86,22 +83,14 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
      */
     setSubmittedText() {
         this.submittedTexts = [];
-        console.log('länge von submittedTexts' + this.submittedTexts.length);
-        console.log(this.submittedTexts);
-
         let i = 0;
         for (const textpart of this.textParts) {
             let j = 0;
             for (const element of textpart) {
-                console.log(element);
-                console.log(this.shortAnswerQuestionUtil.isInputField(element));
                 if (this.shortAnswerQuestionUtil.isInputField(element)) {
                     const submittedText = new ShortAnswerSubmittedText();
-                    console.log('solution-' + i + '-' + j + '-' + this._question.id);
-                    console.log(this.shortAnswerQuestionUtil.getSpot(this.shortAnswerQuestionUtil.getSpotNr(element), this.question));
                     submittedText.text = (<HTMLInputElement>document.getElementById('solution-' + i + '-' + j + '-' + this._question.id)).value;
                     submittedText.spot = this.shortAnswerQuestionUtil.getSpot(this.shortAnswerQuestionUtil.getSpotNr(element), this.question);
-                    console.log(submittedText);
                     this.submittedTexts.push(submittedText);
                 }
                 j++;
@@ -141,16 +130,18 @@ export class ShortAnswerQuestionComponent implements OnInit, OnDestroy {
     }
 
     getBackgroundColourForInputField(spotTag: string): string {
-        if(this.getSubmittedTextForSpot(spotTag) === undefined) {
+        if (this.getSubmittedTextForSpot(spotTag) === undefined) {
             return 'red';
         }
-       return this.getSubmittedTextForSpot(spotTag).isCorrect ? (this.isSubmittedTextCompletelyCorrect(spotTag) ? 'lightgreen' : 'yellow') : 'red';
+        return this.getSubmittedTextForSpot(spotTag).isCorrect ? (this.isSubmittedTextCompletelyCorrect(spotTag) ? 'lightgreen' : 'yellow') : 'red';
     }
 
     isSubmittedTextCompletelyCorrect(spotTag: string): boolean {
         let isTextCorrect = false;
-        const solutionsForSpot = this.shortAnswerQuestionUtil.getAllSolutionsForSpot(this.question.correctMappings,
-            this.shortAnswerQuestionUtil.getSpot(this.shortAnswerQuestionUtil.getSpotNr(spotTag), this.question));
+        const solutionsForSpot = this.shortAnswerQuestionUtil.getAllSolutionsForSpot(
+            this.question.correctMappings,
+            this.shortAnswerQuestionUtil.getSpot(this.shortAnswerQuestionUtil.getSpotNr(spotTag), this.question),
+        );
 
         if (solutionsForSpot.filter(solution => solution.text === this.getSubmittedTextForSpot(spotTag).text).length > 0) {
             isTextCorrect = true;

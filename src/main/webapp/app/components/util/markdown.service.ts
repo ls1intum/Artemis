@@ -7,7 +7,6 @@ import { AceEditorComponent } from 'ng2-ace-editor';
 
 @Injectable({ providedIn: 'root' })
 export class ArtemisMarkdown {
-
     /**
      * adds the passed text into the editor of the passed ace editor component at the current curser by focusing, clearing a selection,
      * moving the cursor to the end of the line, and finally inserting the given text.
@@ -27,7 +26,7 @@ export class ArtemisMarkdown {
         range.setStart(range.start.row, offsetRange);
         aceEditorContainer.getEditor().selection.setRange(range);
     }
-    
+
     constructor(private sanitizer: DomSanitizer) {}
 
     /**
@@ -79,7 +78,7 @@ export class ArtemisMarkdown {
         return (
             sourceObject.text +
             (sourceObject.hint ? '\n\t' + HintCommand.identifier + ' ' + sourceObject.hint : '') +
-            (sourceObject.explanation ? '\n\t' + ExplanationCommand.identifier +  ' ' + sourceObject.explanation : '')
+            (sourceObject.explanation ? '\n\t' + ExplanationCommand.identifier + ' ' + sourceObject.explanation : '')
         );
     }
 
@@ -118,7 +117,7 @@ export class ArtemisMarkdown {
             strikethrough: true,
             tables: true,
             openLinksInNewWindow: true,
-            backslashEscapesHTMLTags: true
+            backslashEscapesHTMLTags: true,
         });
         const html = converter.makeHtml(markdownText);
         return this.sanitizer.sanitize(SecurityContext.HTML, html);
@@ -133,7 +132,7 @@ export class ArtemisMarkdown {
             strikethrough: true,
             tables: true,
             openLinksInNewWindow: true,
-            backslashEscapesHTMLTags: true
+            backslashEscapesHTMLTags: true,
         });
         const markdown = converter.makeMarkdown(htmlText);
         return markdown;
