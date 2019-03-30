@@ -107,15 +107,15 @@
             <hr *ngIf="!reEvaluationInProgress" />
             <div style="display: flex">
                 <div id="test" class="sa-question" >
-                    <div style="display: flex;max-width: 100%;flex-wrap: wrap;" *ngFor="let textPart of textParts; let i = index">
-                        <div class="short-answer-question-display" *ngFor="let element of textPart; let j = index">
-                            <div *ngIf="!shortAnswerQuestionUtil.isInputField(element) && !reEvaluationInProgress" id="element-{{i}}-{{j}}"
-                                style="display: inline-flex" [innerHTML]="element"></div>
-                            <input *ngIf="!shortAnswerQuestionUtil.isInputField(element) && reEvaluationInProgress" id="element-{{i}}-{{j}}-textInput" class="short-answer-question-input" value="{{element}}" size="{{element.length +1}}" type="text" (change)="setQuestionText('element-' + i + '-' + j + '-textInput')">    
+                    <div class="short-answer-question-display" *ngFor="let textPart of textParts; let i = index">
+                        <div class="short-answer-question-display-element" *ngFor="let element of textPart; let j = index">
+                            <div *ngIf="!shortAnswerQuestionUtil.isInputField(element) && !reEvaluationInProgress" id="element-{{i}}-{{j}}" [innerHTML]="element"></div>
+                            <input class="short-answer-question-input" *ngIf="!shortAnswerQuestionUtil.isInputField(element) && reEvaluationInProgress"
+                                   id="element-{{i}}-{{j}}-textInput" value="{{element}}" size="{{element.length +1}}" type="text"
+                                   (change)="setQuestionText('element-' + i + '-' + j + '-textInput')">
                             <div *ngIf="shortAnswerQuestionUtil.isInputField(element)" style="position: relative; display: inline-block">
-                                <input dnd-droppable
-                                   (onDropSuccess)="onDragDrop(shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element), question), $event)"
-                                   class="short-answer-question-input" disabled type="text">
+                                <input class="short-answer-question-input" disabled type="text" dnd-droppable
+                                   (onDropSuccess)="onDragDrop(shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element), question), $event)">
                                 <div style="position: absolute;top: -8px;right: -4px;display: inline-flex;" *ngIf="reEvaluationInProgress">
                                     <div class="re-evaluate-button" title="Set invalid"
                                          *ngIf="!shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element), question).invalid" (click)="shortAnswerQuestionUtil.getSpot(shortAnswerQuestionUtil.getSpotNr(element), question).invalid = true">
@@ -133,6 +133,7 @@
                                     {{shortAnswerQuestionUtil.getSpotNr(element)}}
                                 </div>
                             </div>
+                            &nbsp;
                         </div>
                     </div>
                 </div>
