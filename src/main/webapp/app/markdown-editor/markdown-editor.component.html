@@ -17,8 +17,7 @@
             </div>
         </div>
         <div class="btn-group col-xs-6">
-            <div class="color-preview form-control btn btn-outline-secondary mr-1" [ngStyle]="{backgroundColor: selectedColor}" (click)="openColorSelector($event)">
-            </div>
+            <div class="color-preview form-control btn btn-outline-secondary mr-1" [ngStyle]="{borderColor: selectedColor}" (click)="openColorSelector($event)">Color</div>
             <jhi-color-selector [tagColors]="markdownColors" (selectedColor)="onSelectedColor($event)"></jhi-color-selector>
         </div>
     </div>
