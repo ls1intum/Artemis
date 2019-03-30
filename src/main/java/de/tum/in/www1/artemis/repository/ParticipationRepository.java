@@ -32,9 +32,6 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
 
     List<Participation> findByBuildPlanIdAndInitializationState(String buildPlanId, InitializationState state);
 
-    @Query("select participation from Participation participation where participation.student.login = ?#{principal.username}")
-    List<Participation> findByStudentIsCurrentUser();
-
     @Query("select distinct participation from Participation participation left join fetch participation.results where participation.student.login = :#{#username}")
     List<Participation> findByStudentUsernameWithEagerResults(@Param("username") String username);
 

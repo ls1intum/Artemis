@@ -18,8 +18,11 @@ public abstract class UMLElement {
      */
     public abstract double similarity(UMLElement element);
 
+    // TODO: this is the printable name for debugging and statistics purposes
     public abstract String getName();
 
+    // TODO: this is the element Name (or if not available something else, that identifies the
+    // concrete object)
     public abstract String getValue();
 
     public abstract String getType();
