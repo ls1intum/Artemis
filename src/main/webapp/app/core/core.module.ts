@@ -5,7 +5,6 @@ import { Title } from '@angular/platform-browser';
 import locale from '@angular/common/locales/en';
 import { ArTEMiSNotificationModule } from 'app/entities/notification/notification.module';
 
-
 @NgModule({
     imports: [HttpClientModule, ArTEMiSNotificationModule],
     exports: [],

@@ -22,7 +22,7 @@ export class NotificationService {
     notificationObserver: BehaviorSubject<Notification>;
     subscribedTopics: string[] = [];
 
-    constructor(private jhiWebsocketService: JhiWebsocketService, private router: Router, private http: HttpClient, private accountService: AccountService) {}
+    constructor(private jhiWebsocketService: JhiWebsocketService, private router: Router, private http: HttpClient, private accountService: AccountService) { }
 
     create(notification: Notification): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(notification);
@@ -82,8 +82,8 @@ export class NotificationService {
         if (!this.notificationObserver) {
             this.notificationObserver = new BehaviorSubject<Notification>(null);
         }
-        let userTopic = `topic/user/${user.id}`;
-        if(!this.subscribedTopics.includes(userTopic)) {
+        const userTopic = `topic/user/${user.id}`;
+        if (!this.subscribedTopics.includes(userTopic)) {
             this.subscribedTopics.push(userTopic);
             this.jhiWebsocketService.receive(userTopic).subscribe((notification: Notification) => {
                 this.notificationObserver.next(notification);
