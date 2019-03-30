@@ -8,9 +8,10 @@ import { ModelingExercise, ModelingExerciseService } from '../entities/modeling-
 import { Result, ResultService } from '../entities/result';
 import { AccountService } from 'app/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Conflict } from 'app/modeling-assessment/conflict.model';
-import { genericRetryStrategy, ModelingAssessmentService } from 'app/modeling-assessment/modeling-assessment.service';
+import { Conflict } from 'app/modeling-assessment-editor/conflict.model';
+import { genericRetryStrategy, ModelingAssessmentService } from 'app/modeling-assessment-editor/modeling-assessment.service';
 import { retryWhen } from 'rxjs/operators';
+import { Feedback } from 'app/entities/feedback';
 
 @Component({
     selector: 'jhi-modeling-assessment-editor',
@@ -25,7 +26,8 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     conflicts: Map<string, Conflict>;
 
     assessmentsAreValid = false;
-    invalidError = '';
+    submissionId: number;
+    // invalidError = '';
     totalScore = 0;
     busy: boolean;
     userId: number;
@@ -53,12 +55,8 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
         this.checkAuthorization();
         this.route.params.subscribe(params => {
-            const submissionId = Number(params['submissionId']);
-            let nextOptimal: boolean;
-            this.route.queryParams.subscribe(query => {
-                nextOptimal = query['optimal'] === 'true'; // TODO CZ: do we need this flag?
-                this.loadSubmission(submissionId, nextOptimal);
-            });
+            this.submissionId = Number(params['submissionId']);
+            this.loadSubmission(this.submissionId);
         });
     }
 
@@ -68,44 +66,39 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {}
 
-    initComponent() {}
-
-    loadSubmission(submissionId: number, nextOptimal: boolean) {
-        this.modelingSubmissionService.getSubmission(submissionId).subscribe((submission: ModelingSubmission) => {
-            this.submission = submission;
-            this.modelingExercise = this.submission.participation.exercise as ModelingExercise;
-            this.result = this.submission.result;
-            if (this.result.feedbacks) {
-                this.result = this.modelingAssessmentService.convertResult(this.result);
-            } else {
-                this.result.feedbacks = [];
-            }
-            // this.updateElementFeedbackMapping(this.result.feedbacks, true);
-            this.submission.participation.results = [this.result];
-            this.result.participation = this.submission.participation;
-            /**
-             * set diagramType to class diagram if it is null
-             */
-            if (this.modelingExercise.diagramType == null) {
-                this.modelingExercise.diagramType = DiagramType.ClassDiagram;
-            }
-            if (this.submission.model) {
-                this.model = JSON.parse(this.submission.model);
-            } else {
-                this.jhiAlertService.error(`No model could be found for this submission.`);
-            }
-            if ((this.result.assessor == null || this.result.assessor.id === this.userId) && !this.result.rated) {
-                this.jhiAlertService.info('arTeMiSApp.apollonDiagram.lock');
-            }
-            // if (nextOptimal) {
-            //     this.modelingAssessmentService.getPartialAssessment(submissionId).subscribe((result: Result) => {
-            //         this.result = result;
-            //     });
-            // }
-            if (this.result) {
-                this.calculateTotalScore();
-            }
-        });
+    loadSubmission(submissionId: number) {
+        this.modelingSubmissionService.getSubmission(submissionId).subscribe(
+            (submission: ModelingSubmission) => {
+                this.submission = submission;
+                this.modelingExercise = this.submission.participation.exercise as ModelingExercise;
+                this.result = this.submission.result;
+                if (this.result.feedbacks) {
+                    this.result = this.modelingAssessmentService.convertResult(this.result);
+                } else {
+                    this.result.feedbacks = [];
+                }
+                this.submission.participation.results = [this.result];
+                this.result.participation = this.submission.participation;
+                if (this.modelingExercise.diagramType == null) {
+                    this.modelingExercise.diagramType = DiagramType.ClassDiagram;
+                }
+                if (this.submission.model) {
+                    this.model = JSON.parse(this.submission.model);
+                } else {
+                    this.jhiAlertService.error(`No model could be found for this submission.`);
+                }
+                if ((this.result.assessor == null || this.result.assessor.id === this.userId) && !this.result.rated) {
+                    this.jhiAlertService.info('arTeMiSApp.apollonDiagram.lock');
+                }
+            },
+            error => {
+                this.submission = undefined;
+                this.modelingExercise = undefined;
+                this.result = undefined;
+                this.model = undefined;
+                this.jhiAlertService.error(`Retrieving requested submission failed.`);
+            },
+        );
     }
 
     saveAssessment() {
@@ -126,7 +119,6 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
 
     submitAssessment() {
         this.removeCircularDependencies();
-        // this.result.feedbacks = this.generateFeedbackFromAssessment();
         this.calculateTotalScore();
         this.modelingAssessmentService.save(this.result.feedbacks, this.submission.id, true, this.ignoreConflicts).subscribe(
             (result: Result) => {
@@ -149,6 +141,11 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         );
     }
 
+    onFeedbackChanged(feedback: Feedback[]) {
+        this.result.feedbacks = feedback;
+        this.calculateTotalScore();
+    }
+
     /**
      * Calculates the total score of the current assessment.
      * Returns an error if the total score cannot be calculated
@@ -167,12 +164,12 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
             // TODO: due to the JS rounding problems, it might be the case that we get something like 16.999999999999993 here, so we better round this number
             if (feedback.credits == null) {
                 this.assessmentsAreValid = false;
-                return (this.invalidError = 'The score field must be a number and can not be empty!');
+                // return (this.invalidError = 'The score field must be a number and can not be empty!');
             }
         }
         this.totalScore = totalScore;
         this.assessmentsAreValid = true;
-        this.invalidError = '';
+        // this.invalidError = '';
     }
 
     /**
@@ -192,8 +189,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
             .subscribe(
                 (optimal: number[]) => {
                     this.busy = false;
-                    this.router.navigateByUrl(`/apollon-diagrams/exercise/${this.modelingExercise.id}/${optimal.pop()}/tutor`);
-                    this.initComponent();
+                    this.router.navigateByUrl(`modeling-exercise/${this.modelingExercise.id}/submissions/${optimal.pop()}/assessment`);
                 },
                 () => {
                     this.busy = false;

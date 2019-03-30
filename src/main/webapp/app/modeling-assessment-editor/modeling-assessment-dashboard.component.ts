@@ -13,7 +13,7 @@ import { HttpResponse } from '@angular/common/http';
 import { AccountService } from '../core';
 import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/modeling-submission';
 import { DiagramType, ModelingExercise } from 'app/entities/modeling-exercise';
-import { genericRetryStrategy, ModelingAssessmentService } from 'app/modeling-assessment/modeling-assessment.service';
+import { genericRetryStrategy, ModelingAssessmentService } from 'app/modeling-assessment-editor/modeling-assessment.service';
 import { retryWhen } from 'rxjs/operators';
 
 @Component({

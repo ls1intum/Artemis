@@ -3,7 +3,6 @@ import { ApollonEditor, ApollonMode, DiagramType, UMLModel } from '@ls1intum/apo
 import { JhiAlertService } from 'ng-jhipster';
 import * as interact from 'interactjs';
 import { Feedback } from 'app/entities/feedback';
-import { ModelingSubmissionService } from 'app/entities/modeling-submission';
 
 @Component({
     selector: 'jhi-modeling-assessment',
@@ -89,7 +88,7 @@ export class ModelingAssessmentComponent implements OnInit, AfterViewInit, OnDes
 
         this.apollonEditor.subscribeToSelectionChange(selection => {
             this.feedbacks = this.generateFeedbackFromAssessment();
-            // this.calculateTotalScore();
+            this.feedbackChanged.emit(this.feedbacks);
         });
     }
 

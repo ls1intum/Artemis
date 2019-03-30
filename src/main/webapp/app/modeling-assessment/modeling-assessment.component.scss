@@ -1,7 +1,18 @@
+jhi-score-display {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 2;
+}
+
+.modeling-assessment {
+    position: relative;
+    height: 100%;
+}
+
 .resizable {
     display: flex;
     //width: 40vw;
-    height: 100%;
     .draggable-right {
         display: flex;
         align-items: center;

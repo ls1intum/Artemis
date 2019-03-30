@@ -1,4 +1,4 @@
-import { Score } from 'app/modeling-assessment/score.model';
+import { Score } from 'app/modeling-assessment-editor/score.model';
 import { User } from 'app/core';
 import { Feedback } from 'app/entities/feedback';
 

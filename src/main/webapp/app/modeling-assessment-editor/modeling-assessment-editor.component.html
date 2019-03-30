@@ -27,7 +27,7 @@
         </div>
     </h2>
     <div class="editor-container">
-        <jhi-modeling-assessment *ngIf="submission" [diagramType]="this.modelingExercise.diagramType" [model]="model"></jhi-modeling-assessment>
+        <jhi-modeling-assessment *ngIf="submission" [diagramType]="this.modelingExercise.diagramType" [model]="model" (feedbackChanged)="onFeedbackChanged()"></jhi-modeling-assessment>
         <jhi-assessment-instructions *ngIf="modelingExercise" [exercise]="modelingExercise" [collapsed]="false"></jhi-assessment-instructions>
     </div>
 </div>

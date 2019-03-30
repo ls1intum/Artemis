@@ -3,7 +3,7 @@ import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/mode
 import { ModelingExercise } from 'app/entities/modeling-exercise';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
 import { UMLModel } from '@ls1intum/apollon';
-import { Conflict } from 'app/modeling-assessment/conflict.model';
+import { Conflict } from 'app/modeling-assessment-editor/conflict.model';
 
 @Component({
     selector: 'jhi-modeling-assessment-conflict',

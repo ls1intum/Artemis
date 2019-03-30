@@ -47,9 +47,9 @@ import { ArTEMiSExampleSubmissionModule } from 'app/example-text-submission';
 
 import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor/markdown-editor.module';
 import { ArTEMiSComplaintsModule } from 'app/complaints';
-import { ArTEMiSModelingAssessmentModule } from 'app/modeling-assessment/modeling-assessment.module';
 
 import * as moment from 'moment';
+import { ArTEMiSModelingAssessmentEditorModule } from 'app/modeling-assessment-editor/modeling-assessment-editor.module';
 // jhipster-needle-angular-add-module-import JHipster will add new module here
 
 @NgModule({
@@ -86,7 +86,6 @@ import * as moment from 'moment';
         ArTEMiSQuizModule,
         ArTEMiSInstructorCourseDashboardModule,
         ArTEMiSInstructorDashboardModule,
-        ArTEMiSModelingAssessmentModule,
         ArTEMiSStatisticModule,
         ArTEMiSModelingSubmissionModule,
         ArTEMiSMarkdownEditorModule,
@@ -99,6 +98,7 @@ import * as moment from 'moment';
         ArTEMiSTutorExerciseDashboardModule,
         ArTEMiSExampleSubmissionModule,
         ArTEMiSComplaintsModule,
+        ArTEMiSModelingAssessmentEditorModule,
         // jhipster-needle-angular-add-module JHipster will add new module here
     ],
     declarations: [JhiMainComponent, NavbarComponent, ErrorComponent, PageRibbonComponent, ActiveMenuDirective, FooterComponent, QuizExerciseExportComponent],
