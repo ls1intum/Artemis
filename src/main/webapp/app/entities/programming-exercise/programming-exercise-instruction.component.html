@@ -1,4 +1,4 @@
-<div>
+<div *ngIf="rawMarkdown; else loadingInstructions">
     <div class="card-second-header" [hidden]="steps.length === 0">
         <div class="stepwizard">
             <div class="stepwizard-row">
@@ -23,3 +23,6 @@
     <!-- Rendered markdown will be inserted in this div -->
     <div class="card-body instructions" [hidden]="!renderedMarkdown" [innerHtml]="renderedMarkdown | safeHtml"></div>
 </div>
+<ng-template #loadingInstructions>
+    <span class="d-flex justify-content-center mt-2"><fa-icon size="lg" icon="spinner" [spin]="true"></fa-icon></span>
+</ng-template>
