@@ -70,9 +70,15 @@
                 <div class="form-group-narrow" id="field_problemStatement" name="problemStatement">
                         <label class="form-control-label" for="field_problemStatement" jhiTranslate="arTeMiSApp.programmingExercise.problemStatement"></label>
                         <jhi-markdown-editor
-                            [customPreview]="ProblemStatementPreview"
                             [(markdown)]="programmingExercise.problemStatement"
-                        ></jhi-markdown-editor>
+                        >
+                            <jhi-programming-exercise-instructions
+                                #preview
+                                [rawMarkdown]="programmingExercise.problemStatement"
+                                [latestResult]="{}"
+                                [resultDetails]="[]"
+                            ></jhi-programming-exercise-instructions>
+                        </jhi-markdown-editor>
                 </div>
 
                 <div class="form-group-narrow">

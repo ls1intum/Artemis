@@ -17,8 +17,6 @@ import { ProgrammingExerciseInstructionComponent } from './programming-exercise-
     templateUrl: './programming-exercise-update.component.html',
 })
 export class ProgrammingExerciseUpdateComponent implements OnInit {
-    ProblemStatementPreview: any = ProgrammingExerciseInstructionComponent;
-
     readonly JAVA = ProgrammingLanguage.JAVA;
     readonly PYTHON = ProgrammingLanguage.PYTHON;
 
