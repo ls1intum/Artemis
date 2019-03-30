@@ -276,6 +276,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         const dndQuestion = new DragAndDropQuestion();
         dndQuestion.title = '';
         dndQuestion.text = 'Enter your long question if needed';
+        dndQuestion.hint = 'Add a hint here (visible during the quiz via ?-Button)';
         dndQuestion.scoringType = ScoringType.PROPORTIONAL_WITH_PENALTY; // explicit default value for drag and drop questions
         dndQuestion.randomizeOrder = true;
         dndQuestion.score = 1;
