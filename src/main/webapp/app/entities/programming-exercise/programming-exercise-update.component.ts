@@ -1,20 +1,22 @@
-import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { JhiAlertService } from 'ng-jhipster';
 import { Observable } from 'rxjs';
 
-import { ProgrammingExercise, ProgrammingLanguage } from './programming-exercise.model';
-import { ProgrammingExerciseService } from './programming-exercise.service';
 import { Course, CourseService } from 'app/entities/course';
-import { JhiAlertService } from 'ng-jhipster';
 import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
+
+import { ProgrammingExercise, ProgrammingLanguage } from './programming-exercise.model';
+import { ProgrammingExerciseMarkdownService } from './programming-exercise-markdown.service';
+import { ProgrammingExerciseService } from './programming-exercise.service';
+import { RepositoryFileService } from '../repository';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
-    templateUrl: './programming-exercise-update.component.html'
+    templateUrl: './programming-exercise-update.component.html',
 })
 export class ProgrammingExerciseUpdateComponent implements OnInit {
-
     readonly JAVA = ProgrammingLanguage.JAVA;
     readonly PYTHON = ProgrammingLanguage.PYTHON;
 
@@ -33,11 +35,12 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private courseService: CourseService,
         private jhiAlertService: JhiAlertService,
         private exerciseService: ExerciseService,
-        private activatedRoute: ActivatedRoute
+        private activatedRoute: ActivatedRoute,
     ) {}
 
     ngOnInit() {
         this.isSaving = false;
+        console.log(this.markDown);
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
         });
@@ -52,7 +55,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                         (categoryRes: HttpResponse<string[]>) => {
                             this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body);
                         },
-                        (categoryRes: HttpErrorResponse) => this.onError(categoryRes)
+                        (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
                     );
                 });
             }
@@ -61,7 +64,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body;
             },
-            (res: HttpErrorResponse) => this.onError(res)
+            (res: HttpErrorResponse) => this.onError(res),
         );
     }
 
@@ -82,11 +85,12 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         }
     }
 
+    private renderInstructions(markdown: string) {
+        return this.markdownService.renderInstructions(markdown, undefined, undefined);
+    }
+
     private subscribeToSaveResponse(result: Observable<HttpResponse<ProgrammingExercise>>) {
-        result.subscribe(
-            (res: HttpResponse<ProgrammingExercise>) => this.onSaveSuccess(),
-            (res: HttpErrorResponse) => this.onSaveError(res)
-        );
+        result.subscribe((res: HttpResponse<ProgrammingExercise>) => this.onSaveSuccess(), (res: HttpErrorResponse) => this.onSaveError(res));
     }
 
     private onSaveSuccess() {

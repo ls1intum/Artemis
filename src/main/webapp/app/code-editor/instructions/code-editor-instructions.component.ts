@@ -11,6 +11,7 @@ import { JhiWebsocketService } from '../../core';
 import { Result, ResultService } from '../../entities/result';
 import { Feedback } from '../../entities/feedback';
 import { EditorInstructionsResultDetailComponent } from './code-editor-instructions-result-detail';
+import { ProgrammingExerciseMarkdownService } from '../../entities/programming-exercise';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import * as interact from 'interactjs';
 import { Interactable } from 'interactjs';
@@ -62,6 +63,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges
         private elementRef: ElementRef,
         private renderer: Renderer2,
         public artemisMarkdown: ArtemisMarkdown,
+        public markdownService: ProgrammingExerciseMarkdownService,
     ) {}
 
     /**
@@ -99,7 +101,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges
      */
     ngOnChanges(changes: SimpleChanges): void {
         // If there is no problemStatement in the exercise, fall back to loading the Readme (old solution)
-        if (changes.participation && this.participation && !this.participation.exercise.problemStatement) {
+        if (changes.participation && this.participation) {
             // Initialize array for listener remove functions
             this.loadReadme();
         }
@@ -117,16 +119,21 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges
      * @desc Gets the README.md file from our repository and starts the rendering process
      */
     loadReadme() {
-        this.repositoryFileService.get(this.participation.id, 'README.md').subscribe(
-            fileObj => {
-                this.readMeFileRawContent = fileObj.fileContent;
-                this.renderReadme();
-            },
-            err => {
-                // TODO: handle the case that there is no README.md file
-                console.log('Error while getting README.md file!', err);
-            },
-        );
+        if (!this.participation.exercise.problemStatement) {
+            this.repositoryFileService.get(this.participation.id, 'README.md').subscribe(
+                fileObj => {
+                    this.readMeFileRawContent = fileObj.fileContent;
+                    this.renderReadme();
+                },
+                err => {
+                    // TODO: handle the case that there is no README.md file
+                    console.log('Error while getting README.md file!', err);
+                },
+            );
+        } else {
+            this.readMeFileRawContent = this.participation.exercise.problemStatement;
+            this.renderReadme();
+        }
     }
 
     /**
@@ -186,32 +193,33 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges
         // Reset steps array
         this.steps = [];
         // Render README.md file via Remarkable
-        this.readMeFileRenderedContent = this.markDown.render(this.readMeFileRawContent);
+        this.readMeFileRenderedContent = this.markdownService.renderInstructions(this.readMeFileRawContent, this.latestResult, this.resultDetails);
 
-        // Detach test status click listeners if already initialized; if not, set it empty
-        if (this.listenerRemoveFunctions && this.listenerRemoveFunctions.length) {
-            this.removeTestStatusClickListeners();
-        } else {
-            // Making sure the array is initialized and empty
-            this.listenerRemoveFunctions = [];
-        }
+        // TODO: Migrate listeners?
+        // // Detach test status click listeners if already initialized; if not, set it empty
+        // if (this.listenerRemoveFunctions && this.listenerRemoveFunctions.length) {
+        //     this.removeTestStatusClickListeners();
+        // } else {
+        //     // Making sure the array is initialized and empty
+        //     this.listenerRemoveFunctions = [];
+        // }
 
-        // Since our rendered markdown file gets inserted into the DOM after compile time, we need to register click events for test cases manually
-        const testStatusDOMElements = this.elementRef.nativeElement.querySelectorAll('.test-status');
+        // // Since our rendered markdown file gets inserted into the DOM after compile time, we need to register click events for test cases manually
+        // const testStatusDOMElements = this.elementRef.nativeElement.querySelectorAll('.test-status');
 
-        testStatusDOMElements.forEach((element: any) => {
-            const listenerRemoveFunction = this.renderer.listen(element, 'click', event => {
-                // Extract the data attribute for tests and open the details popup with it
-                let tests = '';
-                if (event.target.getAttribute('data-tests')) {
-                    tests = event.target.getAttribute('data-tests');
-                } else {
-                    tests = event.target.parentElement.getAttribute('data-tests');
-                }
-                this.showDetailsForTests(this.latestResult, tests);
-            });
-            this.listenerRemoveFunctions.push(listenerRemoveFunction);
-        });
+        // testStatusDOMElements.forEach((element: any) => {
+        //     const listenerRemoveFunction = this.renderer.listen(element, 'click', event => {
+        //         // Extract the data attribute for tests and open the details popup with it
+        //         let tests = '';
+        //         if (event.target.getAttribute('data-tests')) {
+        //             tests = event.target.getAttribute('data-tests');
+        //         } else {
+        //             tests = event.target.parentElement.getAttribute('data-tests');
+        //         }
+        //         this.showDetailsForTests(this.latestResult, tests);
+        //     });
+        //     this.listenerRemoveFunctions.push(listenerRemoveFunction);
+        // });
 
         if (!this.isLoadingResults && !this.haveDetailsBeenLoaded) {
             this.loadResultsDetails();
@@ -347,7 +355,7 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges
          */
         this.editorService.getPlantUmlImage(plantUml).subscribe(
             plantUmlSrcAttribute => {
-                // Assign plantUmlSrcAttribute as src attribute to our img element
+                // Assign plantUmlSrcAttribute as src attribute to our img element if exists.
                 if (document.getElementById('plantUml' + id)) {
                     document.getElementById('plantUml' + id).setAttribute('src', 'data:image/jpeg;base64,' + plantUmlSrcAttribute);
                 }

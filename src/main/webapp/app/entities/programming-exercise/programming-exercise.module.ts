@@ -13,6 +13,7 @@ import {
     ProgrammingExercisePopupComponent,
     programmingExercisePopupRoute,
     ProgrammingExercisePopupService,
+    ProgrammingExerciseMarkdownService,
     programmingExerciseRoute,
     ProgrammingExerciseService,
     ProgrammingExerciseUpdateComponent,
@@ -55,7 +56,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseDeletePopupComponent,
     ],
     exports: [ProgrammingExerciseComponent],
-    providers: [ProgrammingExerciseService, ProgrammingExercisePopupService],
+    providers: [ProgrammingExerciseService, ProgrammingExercisePopupService, ProgrammingExerciseMarkdownService],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArTEMiSProgrammingExerciseModule {
