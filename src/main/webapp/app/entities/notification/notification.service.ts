@@ -18,7 +18,6 @@ type EntityArrayResponseType = HttpResponse<Notification[]>;
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
-    private userChannel: string;
     public resourceUrl = SERVER_API_URL + 'api/notifications';
     notificationObserver: BehaviorSubject<Notification>;
     subscribedTopics: string[] = [];
@@ -79,6 +78,19 @@ export class NotificationService {
         return res;
     }
 
+    public handleUserNotifications(user: User): void {
+        if (!this.notificationObserver) {
+            this.notificationObserver = new BehaviorSubject<Notification>(null);
+        }
+        let userTopic = `topic/user/${user.id}`;
+        if(!this.subscribedTopics.includes(userTopic)) {
+            this.subscribedTopics.push(userTopic);
+            this.jhiWebsocketService.receive(userTopic).subscribe((notification: Notification) => {
+                this.notificationObserver.next(notification);
+            });
+        }
+    }
+
     public handleCourseNotifications(course: Course): void {
         if (!this.notificationObserver) {
             this.notificationObserver = new BehaviorSubject<Notification>(null);
@@ -90,7 +102,6 @@ export class NotificationService {
             courseTopic = `/topic/course/${course.id}/${GroupNotificationType.TA}`;
         }
         if (!this.subscribedTopics.includes(courseTopic)) {
-            console.log('SUBSCRIBING TO!!!', courseTopic);
             this.subscribedTopics.push(courseTopic);
             this.jhiWebsocketService.subscribe(courseTopic);
             this.jhiWebsocketService.receive(courseTopic).subscribe((notification: Notification) => {
@@ -122,22 +133,6 @@ export class NotificationService {
             this.notificationObserver = new BehaviorSubject<Notification>(null);
         }
         return this.notificationObserver;
-    }
-
-    onUserNotification(): Observable<any> {
-        return this.jhiWebsocketService.receive(this.userChannel);
-    }
-
-    subscribeGroupNotification(course: Course) {
-        if (this.accountService.hasAnyAuthorityDirect(['ROLE_USER'])) {
-            this.jhiWebsocketService.subscribe(`topic/course/${course.id}/student`);
-        }
-        if (this.accountService.hasAnyAuthorityDirect(['ROLE_TA'])) {
-            this.jhiWebsocketService.subscribe(`topic/course/${course.id}/tutor`);
-        }
-        if (this.accountService.hasAnyAuthorityDirect(['ROLE_INSTRUCTOR'])) {
-            this.jhiWebsocketService.subscribe(`topic/course/${course.id}/instructor`);
-        }
     }
 
     interpretNotification(notification: GroupNotification): void {

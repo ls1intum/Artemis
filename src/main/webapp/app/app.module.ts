@@ -112,7 +112,7 @@ import * as moment from 'moment';
         ArTEMiSExampleSubmissionModule,
         ArTEMiSComplaintsModule,
         ArTEMiSNotificationModule,
-        ArTEMiSSystemNotificationModule
+        ArTEMiSSystemNotificationModule,
         // jhipster-needle-angular-add-module JHipster will add new module here
     ],
     declarations: [
