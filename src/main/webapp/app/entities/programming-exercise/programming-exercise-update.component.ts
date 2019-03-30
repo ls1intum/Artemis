@@ -36,13 +36,25 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private jhiAlertService: JhiAlertService,
         private exerciseService: ExerciseService,
         private activatedRoute: ActivatedRoute,
+        private markdownService: ProgrammingExerciseMarkdownService,
+        private repositoryFileService: RepositoryFileService,
     ) {}
 
     ngOnInit() {
         this.isSaving = false;
-        console.log(this.markDown);
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
+            if (this.programmingExercise.problemStatement === undefined) {
+                this.repositoryFileService.get(this.programmingExercise.templateParticipation.id, 'README.md').subscribe(
+                    fileObj => {
+                        this.programmingExercise.problemStatement = fileObj.fileContent;
+                    },
+                    err => {
+                        // TODO: handle the case that there is no README.md file
+                        console.log('Error while getting README.md file!', err);
+                    },
+                );
+            }
         });
         this.activatedRoute.params.subscribe(params => {
             if (params['courseId']) {
