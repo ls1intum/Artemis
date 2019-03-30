@@ -1,0 +1,25 @@
+<div>
+    <div class="card-second-header" [hidden]="steps.length === 0">
+        <div class="stepwizard">
+            <div class="stepwizard-row">
+                <div *ngFor="let step of steps; index as i" class="stepwizard-step">
+                    <!--The css class test-passing removes the cursor icon and the hover effects from passing test circles-->
+                    <div
+                        data-toggle="tooltip"
+                        data-placement="bottom"
+                        title="{{ step.title }}"
+                        class="btn btn-light btn-circle stepwizard-circle"
+                        [class.test-passing]="step.done"
+                        (click)="triggerTestStatusClick(i)"
+                    >
+                        <fa-icon icon="check" size="lg" class="text-success" *ngIf="step.done"></fa-icon>
+                        <fa-icon icon="times" size="lg" class="text-danger" *ngIf="!step.done"></fa-icon>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rendered markdown will be inserted in this div -->
+    <div class="card-body instructions" [hidden]="!renderedMarkdown" [innerHtml]="renderedMarkdown | safeHtml"></div>
+</div>

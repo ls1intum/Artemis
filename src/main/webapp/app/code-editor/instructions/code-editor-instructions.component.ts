@@ -11,7 +11,6 @@ import { JhiWebsocketService } from '../../core';
 import { Result, ResultService } from '../../entities/result';
 import { Feedback } from '../../entities/feedback';
 import { EditorInstructionsResultDetailComponent } from './code-editor-instructions-result-detail';
-import { ProgrammingExerciseMarkdownService } from '../../entities/programming-exercise';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import * as interact from 'interactjs';
 import { Interactable } from 'interactjs';
@@ -63,7 +62,6 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges
         private elementRef: ElementRef,
         private renderer: Renderer2,
         public artemisMarkdown: ArtemisMarkdown,
-        public markdownService: ProgrammingExerciseMarkdownService,
     ) {}
 
     /**
@@ -151,16 +149,16 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges
                 this.resultDetails = resultDetails.body;
                 this.haveDetailsBeenLoaded = true;
                 this.isLoadingResults = false;
-                if (this.readMeFileRawContent) {
-                    this.renderReadme();
-                    // TODO this is an ugly workaround, because otherwise the functionality to click on the test case feedback does not work ==> Find a better solution
-                    if (this.doneOnce === false) {
-                        setTimeout(() => {
-                            this.doneOnce = true;
-                            this.renderReadme();
-                        }, 10);
-                    }
-                }
+                // if (this.readMeFileRawContent) {
+                //     this.renderReadme();
+                //     // TODO this is an ugly workaround, because otherwise the functionality to click on the test case feedback does not work ==> Find a better solution
+                //     if (this.doneOnce === false) {
+                //         setTimeout(() => {
+                //             this.doneOnce = true;
+                //             this.renderReadme();
+                //         }, 10);
+                //     }
+                // }
             },
             err => {
                 console.log('Error while loading result details!', err);
@@ -193,7 +191,6 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges
         // Reset steps array
         this.steps = [];
         // Render README.md file via Remarkable
-        this.readMeFileRenderedContent = this.markdownService.renderInstructions(this.readMeFileRawContent, this.latestResult, this.resultDetails);
 
         // TODO: Migrate listeners?
         // // Detach test status click listeners if already initialized; if not, set it empty

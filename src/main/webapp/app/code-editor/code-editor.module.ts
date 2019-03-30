@@ -24,11 +24,21 @@ import { CodeEditorFileBrowserDeleteComponent } from './file-browser/code-editor
 import { CodeEditorInstructionsComponent } from './instructions/code-editor-instructions.component';
 import { EditorInstructionsResultDetailComponent } from './instructions/code-editor-instructions-result-detail';
 import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor';
+import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
 
 const ENTITY_STATES = [...codeEditorRoute];
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, AceEditorModule, ArTEMiSResultModule, ArTEMiSMarkdownEditorModule, MomentModule, TreeviewModule.forRoot(), RouterModule.forChild(ENTITY_STATES)],
+    imports: [
+        ArTEMiSSharedModule,
+        AceEditorModule,
+        ArTEMiSResultModule,
+        ArTEMiSMarkdownEditorModule,
+        MomentModule,
+        ArTEMiSProgrammingExerciseModule,
+        TreeviewModule.forRoot(),
+        RouterModule.forChild(ENTITY_STATES),
+    ],
     declarations: [
         CodeEditorComponent,
         CodeEditorAceComponent,

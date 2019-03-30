@@ -11,9 +11,9 @@ import {
     ProgrammingExerciseDetailComponent,
     ProgrammingExerciseDialogComponent,
     ProgrammingExercisePopupComponent,
+    ProgrammingExerciseInstructionComponent,
     programmingExercisePopupRoute,
     ProgrammingExercisePopupService,
-    ProgrammingExerciseMarkdownService,
     programmingExerciseRoute,
     ProgrammingExerciseService,
     ProgrammingExerciseUpdateComponent,
@@ -46,6 +46,7 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseDeleteDialogComponent,
         ProgrammingExercisePopupComponent,
         ProgrammingExerciseDeletePopupComponent,
+        ProgrammingExerciseInstructionComponent,
     ],
     entryComponents: [
         ProgrammingExerciseComponent,
@@ -55,8 +56,8 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseDeleteDialogComponent,
         ProgrammingExerciseDeletePopupComponent,
     ],
-    exports: [ProgrammingExerciseComponent],
-    providers: [ProgrammingExerciseService, ProgrammingExercisePopupService, ProgrammingExerciseMarkdownService],
+    exports: [ProgrammingExerciseComponent, ProgrammingExerciseInstructionComponent],
+    providers: [ProgrammingExerciseService, ProgrammingExercisePopupService, ProgrammingExerciseInstructionComponent],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArTEMiSProgrammingExerciseModule {

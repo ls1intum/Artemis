@@ -1,8 +1,10 @@
-import { Injectable } from '@angular/core';
+import { Component, ElementRef, Input, OnChanges, OnDestroy, Renderer2, SimpleChanges } from '@angular/core';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import * as Remarkable from 'remarkable';
 
 import { CodeEditorService } from '../../code-editor/code-editor.service';
+import { EditorInstructionsResultDetailComponent } from '../../code-editor/instructions/code-editor-instructions-result-detail';
 import { Feedback } from '../feedback';
 import { Result } from '../result';
 
@@ -11,14 +13,32 @@ type Step = {
     done: boolean;
 };
 
-@Injectable({ providedIn: 'root' })
-export class ProgrammingExerciseMarkdownService {
+@Component({
+    selector: 'jhi-programming-exercise-instructions',
+    templateUrl: './programming-exercise-instruction.component.html',
+})
+export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDestroy {
     private markdown: Remarkable;
-    private latestResult: Result;
-    private resultDetails: Feedback[];
-    public steps: Array<Step> = [];
 
-    constructor(private editorService: CodeEditorService, private translateService: TranslateService) {
+    @Input()
+    private rawMarkdown: string;
+    @Input()
+    private latestResult: Result;
+    @Input()
+    private resultDetails: Feedback[];
+
+    private steps: Array<Step> = [];
+    private renderedMarkdown: string;
+    // Can be used to remove the click listeners for result details
+    private listenerRemoveFunctions: Function[] = [];
+
+    constructor(
+        private editorService: CodeEditorService,
+        private translateService: TranslateService,
+        private renderer: Renderer2,
+        private elementRef: ElementRef,
+        private modalService: NgbModal,
+    ) {
         this.markdown = new Remarkable();
         this.markdown.inline.ruler.before('text', 'testsStatus', this.remarkableTestsStatusParser.bind(this), {});
         this.markdown.block.ruler.before('paragraph', 'plantUml', this.remarkablePlantUmlParser.bind(this), {});
@@ -26,11 +46,70 @@ export class ProgrammingExerciseMarkdownService {
         this.markdown.renderer.rules['plantUml'] = this.remarkablePlantUmlRenderer.bind(this);
     }
 
-    public renderInstructions(markdown: string, latestResult: Result, resultDetails: Feedback[]) {
-        this.steps = [];
-        this.latestResult = latestResult;
-        this.resultDetails = resultDetails;
-        return this.markdown.render(markdown);
+    public ngOnChanges(changes: SimpleChanges) {
+        if (this.rawMarkdown && (changes.rawMarkdown || changes.latestResult || changes.resultDetails)) {
+            this.steps = [];
+            this.renderedMarkdown = this.markdown.render(this.rawMarkdown);
+            // TODO: Why do we have to wait here? Shouldn't markdown.render by synchronous?
+            setTimeout(() => this.setUpClickListeners(), 500);
+        }
+    }
+
+    private setUpClickListeners() {
+        // // Detach test status click listeners if already initialized; if not, set it empty
+        if (this.listenerRemoveFunctions.length) {
+            this.listenerRemoveFunctions.forEach(f => f());
+            this.listenerRemoveFunctions = [];
+        }
+        // // Since our rendered markdown file gets inserted into the DOM after compile time, we need to register click events for test cases manually
+        const testStatusDOMElements = this.elementRef.nativeElement.querySelectorAll('.test-status');
+
+        testStatusDOMElements.forEach((element: any) => {
+            const listenerRemoveFunction = this.renderer.listen(element, 'click', event => {
+                // Extract the data attribute for tests and open the details popup with it
+                let tests = '';
+                if (event.target.getAttribute('data-tests')) {
+                    tests = event.target.getAttribute('data-tests');
+                } else {
+                    tests = event.target.parentElement.getAttribute('data-tests');
+                }
+                this.showDetailsForTests(this.latestResult, tests);
+            });
+            this.listenerRemoveFunctions.push(listenerRemoveFunction);
+        });
+    }
+
+    /**
+     * @function triggerTestStatusClick
+     * @desc Clicks the corresponding testStatus DOM element to trigger the dialog
+     * @param index {number} The index indicates which test status link should be clicked
+     */
+    private triggerTestStatusClick(index: number): void {
+        const testStatusDOMElements = this.elementRef.nativeElement.querySelectorAll('.test-status');
+        /** We analyze the tests up until our index to determine the number of green tests **/
+        const testStatusCircleElements = this.elementRef.nativeElement.querySelectorAll('.stepwizard-circle');
+        const testStatusCircleElementsUntilIndex = Array.from(testStatusCircleElements).slice(0, index + 1);
+        const positiveTestsUntilIndex = testStatusCircleElementsUntilIndex.filter((testCircle: HTMLElement) => testCircle.children[0].classList.contains('text-success')).length;
+        /** The click should only be executed if the clicked element is not a positive test **/
+        if (testStatusDOMElements.length && !testStatusCircleElements[index].children[0].classList.contains('text-success')) {
+            /** We subtract the number of positive tests from the index to match the correct test status link **/
+            testStatusDOMElements[index - positiveTestsUntilIndex].click();
+        }
+    }
+
+    /**
+     * @function showDetailsForTests
+     * @desc Opens the ResultDetailComponent as popup; displays test results
+     * @param result {Result} Result object, mostly latestResult
+     * @param tests {string} Identifies the testcase
+     */
+    showDetailsForTests(result: Result, tests: string) {
+        if (!result) {
+            return;
+        }
+        const modalRef = this.modalService.open(EditorInstructionsResultDetailComponent, { keyboard: true, size: 'lg' });
+        modalRef.componentInstance.result = result;
+        modalRef.componentInstance.tests = tests;
     }
 
     /**
@@ -263,5 +342,10 @@ export class ProgrammingExerciseMarkdownService {
         }
 
         return [done, label];
+    }
+
+    ngOnDestroy() {
+        this.listenerRemoveFunctions.forEach(f => f());
+        this.listenerRemoveFunctions = [];
     }
 }
