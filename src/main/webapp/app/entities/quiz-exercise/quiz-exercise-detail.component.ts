@@ -244,6 +244,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         const mcQuestion = new MultipleChoiceQuestion();
         mcQuestion.title = '';
         mcQuestion.text = 'Enter your long question if needed';
+        mcQuestion.hint = 'Add a hint here (visible during the quiz via ?-Button)';
         mcQuestion.scoringType = ScoringType.ALL_OR_NOTHING; // explicit default value for multiple questions
         mcQuestion.randomizeOrder = true;
         mcQuestion.score = 1;
@@ -251,6 +252,8 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, Component
         const correctSampleAnswerOption = new AnswerOption();
         correctSampleAnswerOption.isCorrect = true;
         correctSampleAnswerOption.text = 'Enter a correct answer option here';
+        correctSampleAnswerOption.hint = 'Add a hint here (visible during the quiz via ?-Button)';
+        correctSampleAnswerOption.explanation = 'Add an explanation here (only visible in feedback after quiz has ended)';
 
         const incorrectSampleAnswerOption = new AnswerOption();
         incorrectSampleAnswerOption.isCorrect = false;
