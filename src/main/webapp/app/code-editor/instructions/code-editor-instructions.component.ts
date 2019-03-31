@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
-import interact, { Interactable } from 'interactjs';
+import * as interact from 'interactjs';
 
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 
@@ -20,13 +20,12 @@ import { WindowRef } from '../../core/websocket/window.service';
 export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges {
     isLoadingResults = false;
     haveDetailsBeenLoaded = false;
-    readMeFileRawContent: string;
     resultDetails: Feedback[];
 
     /** Resizable constants **/
     initialInstructionsWidth: number;
     minInstructionsWidth: number;
-    interactResizable: Interactable;
+    interactResizable: interact.Interactable;
 
     @Input()
     participation: Participation;
@@ -93,12 +92,10 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges
      * This is why we now prefer the problemStatement and if it doesn't exist try to load the readme.
      */
     loadInstructions() {
-        if (this.participation.exercise.problemStatement) {
-            this.readMeFileRawContent = this.participation.exercise.problemStatement;
-        } else {
+        if (!this.participation.exercise.problemStatement) {
             this.repositoryFileService.get(this.participation.id, 'README.md').subscribe(
                 fileObj => {
-                    this.readMeFileRawContent = fileObj.fileContent;
+                    this.participation.exercise.problemStatement = fileObj.fileContent;
                 },
                 err => {
                     // TODO: handle the case that there is no README.md file

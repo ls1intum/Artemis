@@ -21,14 +21,14 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     private markdown: Remarkable;
 
     @Input()
-    private rawMarkdown: string;
+    public rawMarkdown: string;
     @Input()
     private latestResult: Result;
     @Input()
     private resultDetails: Feedback[];
 
-    private steps: Array<Step> = [];
-    private renderedMarkdown: string;
+    public steps: Array<Step> = [];
+    public renderedMarkdown: string;
     // Can be used to remove the click listeners for result details
     private listenerRemoveFunctions: Function[] = [];
 
@@ -84,7 +84,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * @desc Clicks the corresponding testStatus DOM element to trigger the dialog
      * @param index {number} The index indicates which test status link should be clicked
      */
-    private triggerTestStatusClick(index: number): void {
+    public triggerTestStatusClick(index: number): void {
         const testStatusDOMElements = this.elementRef.nativeElement.querySelectorAll('.test-status');
         /** We analyze the tests up until our index to determine the number of green tests **/
         const testStatusCircleElements = this.elementRef.nativeElement.querySelectorAll('.stepwizard-circle');

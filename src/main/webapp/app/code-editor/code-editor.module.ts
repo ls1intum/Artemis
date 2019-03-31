@@ -23,7 +23,6 @@ import { CodeEditorFileBrowserCreateComponent } from './file-browser/code-editor
 import { CodeEditorFileBrowserDeleteComponent } from './file-browser/code-editor-file-browser-delete';
 import { CodeEditorInstructionsComponent } from './instructions/code-editor-instructions.component';
 import { EditorInstructionsResultDetailComponent } from './instructions/code-editor-instructions-result-detail';
-import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor';
 import { ArTEMiSProgrammingExerciseModule } from 'app/entities/programming-exercise/programming-exercise.module';
 
 const ENTITY_STATES = [...codeEditorRoute];
@@ -33,7 +32,6 @@ const ENTITY_STATES = [...codeEditorRoute];
         ArTEMiSSharedModule,
         AceEditorModule,
         ArTEMiSResultModule,
-        ArTEMiSMarkdownEditorModule,
         MomentModule,
         ArTEMiSProgrammingExerciseModule,
         TreeviewModule.forRoot(),

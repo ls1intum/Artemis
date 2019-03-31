@@ -72,21 +72,17 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
 
         this.paramSub = this.route.params.subscribe(params => {
             // Cast params id to Number or strict comparison will lead to result false (due to differing types)
-            // TODO: Fix issue with char set
-            // if (
-            //     this.participationDataProvider.participationStorage &&
-            //     this.participationDataProvider.participationStorage.id === Number(params['participationId'])
-            // ) {
-            //     // We found a matching participation in the data provider, so we can avoid doing a REST call
-            //     this.participation = this.participationDataProvider.participationStorage;
-            //     this.obtainLatestResult();
-            // } else {
-            /** Query the participationService for the participationId given by the params */
-            this.participationService.findWithLatestResult(params['participationId']).subscribe((response: HttpResponse<Participation>) => {
-                this.participation = response.body;
+            if (this.participationDataProvider.participationStorage && this.participationDataProvider.participationStorage.id === Number(params['participationId'])) {
+                // We found a matching participation in the data provider, so we can avoid doing a REST call
+                this.participation = this.participationDataProvider.participationStorage;
                 this.obtainLatestResult();
-            });
-            // }
+            } else {
+                /** Query the participationService for the participationId given by the params */
+                this.participationService.findWithLatestResult(params['participationId']).subscribe((response: HttpResponse<Participation>) => {
+                    this.participation = response.body;
+                    this.obtainLatestResult();
+                });
+            }
             /** Query the repositoryFileService for files in the repository */
             this.repositoryFileService.query(params['participationId']).subscribe(
                 files => {
