@@ -30,7 +30,8 @@
             "programmingLanguage": "Programming Language",
             "packageName": "Package Name",
             "templateResult": "Template Result",
-            "solutionResult": "Solution Result"
+            "solutionResult": "Solution Result",
+            "structureTestOracle": "Update Structure Test Oracle"
         },
         "editor": {
             "title": "Code Editor"

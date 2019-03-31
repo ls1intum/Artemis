@@ -30,7 +30,8 @@
             "programmingLanguage": "Programmiersprache",
             "packageName": "Package Name",
             "templateResult": "Ergebnis Vorlage",
-            "solutionResult": "Ergebnis Lösung"
+            "solutionResult": "Ergebnis Lösung",
+            "structureTestOracle": "Oracle Strukturtest aktualisieren"
         },
         "editor": {
             "title": "Code Editor"
