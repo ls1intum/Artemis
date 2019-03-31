@@ -115,37 +115,41 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     /**
      * @function remarkableTestsStatusParser
      * @desc Parser rule for Remarkable custom token TestStatus
+     * For historical reasons, two patterns have to be parsed:
+     * 1) Old pattern, used for storing the checkmark character in the readme file in the assignment git repo
+     * 2) New pattern, used for storing the unicode representation in the database
      * @param state
      * @param silent
      */
     private remarkableTestsStatusParser(state: any, silent: boolean) {
-        const regex = /^✅\[([^\]]*)\]\s*\(([^)]+)\)/;
+        const regexOld = /^✅\[([^\]]*)\]\s*\(([^)]+)\)/;
+        const regexNew = /^&#x2705;\[([^\]]*)\]\s*\(([^)]+)\)/;
 
         // It is surely not our rule, so we can stop early
-        if (state.src[state.pos] !== '✅') {
+        if (state.src[state.pos] !== '✅' && state.src[state.pos] !== '&') {
             return false;
         }
 
-        const match = regex.exec(state.src.slice(state.pos));
-        if (!match) {
+        const match = regexNew.exec(state.src.slice(state.pos)) || regexOld.exec(state.src.slice(state.pos));
+        if (match) {
+            // In silent mode it shouldn't output any tokens or modify pending
+            if (!silent) {
+                // Insert the testsStatus token to our rendered tokens
+                state.push({
+                    type: 'testsStatus',
+                    title: match[1],
+                    tests: match[2].split(','),
+                    level: state.level,
+                });
+            }
+
+            // Every rule should set state.pos to a position after token's contents
+            state.pos += match[0].length;
+
+            return true;
+        } else {
             return false;
         }
-
-        // In silent mode it shouldn't output any tokens or modify pending
-        if (!silent) {
-            // Insert the testsStatus token to our rendered tokens
-            state.push({
-                type: 'testsStatus',
-                title: match[1],
-                tests: match[2].split(','),
-                level: state.level,
-            });
-        }
-
-        // Every rule should set state.pos to a position after token's contents
-        state.pos += match[0].length;
-
-        return true;
     }
 
     /**
