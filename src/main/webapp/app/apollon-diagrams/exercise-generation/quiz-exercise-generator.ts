@@ -1,4 +1,4 @@
-import { ApollonEditor, Element, SVG, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
+import { ApollonEditor, Element, SVG, UMLElementType, UMLModel, UMLRelationshipType, ElementType } from '@ls1intum/apollon';
 import * as moment from 'moment';
 import { Course } from '../../entities/course';
 import { DragAndDropMapping } from '../../entities/drag-and-drop-mapping';
@@ -25,10 +25,13 @@ export async function generateDragAndDropQuizExercise(
     fileUploaderService: FileUploaderService,
     quizExerciseService: QuizExerciseService,
 ) {
+    const interactiveElements = [...model.interactive.elements, ...model.interactive.relationships];
+    const elements = [...model.elements, ...model.relationships];
+
     // Render the layouted diagram as SVG
     const renderedDiagram = ApollonEditor.exportModelAsSvg(model, {
         keepOriginalSize: true,
-        exclude: [...model.interactive.elements, ...model.interactive.relationships],
+        exclude: interactiveElements,
     });
 
     // Create a PNG diagram background image from the given diagram SVG
@@ -42,9 +45,8 @@ export async function generateDragAndDropQuizExercise(
     const dropLocations: DropLocation[] = [];
     const correctMappings: DragAndDropMapping[] = [];
 
-    const elements = [...model.elements, ...model.relationships];
     // Create Drag Items, Drop Locations and their mappings for each interactive element
-    for (const elementId of [...model.interactive.elements, ...model.interactive.relationships]) {
+    for (const elementId of interactiveElements) {
         const element = elements.find(elem => elem.id === elementId);
         const { dragItem, dropLocation } = await generateDragAndDropItem(element, model, fileUploaderService);
         const correctMapping = new DragAndDropMapping(dragItem, dropLocation);
@@ -97,9 +99,10 @@ function generateDragAndDropQuestion(
 }
 
 async function generateDragAndDropItem(element: Element, model: UMLModel, fileUploaderService: FileUploaderService): Promise<{ dragItem: DragItem; dropLocation: DropLocation }> {
+    const textualElementTypes: ElementType[] = [UMLElementType.ClassAttribute, UMLElementType.ClassMethod, UMLElementType.ObjectAttribute];
     if (element.type in UMLRelationshipType) {
         return generateDragAndDropItemForRelationship(element, model, fileUploaderService);
-    } else if (element.type === UMLElementType.ClassAttribute || element.type === UMLElementType.ClassMethod || element.type === UMLElementType.ObjectAttribute) {
+    } else if (textualElementTypes.includes(element.type)) {
         return generateDragAndDropItemForText(element, model);
     } else {
         return generateDragAndDropItemForElement(element, model, fileUploaderService);
