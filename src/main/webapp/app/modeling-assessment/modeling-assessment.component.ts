@@ -13,12 +13,14 @@ export class ModelingAssessmentComponent implements OnInit, AfterViewInit, OnDes
     apollonEditor: ApollonEditor | null = null;
     elementFeedback: Map<string, Feedback>; // map element.id --> Feedback
     feedbacks: Feedback[] = [];
+    totalScore = 0;
 
     @ViewChild('editorContainer') editorContainer: ElementRef;
     @ViewChild('resizeContainer') resizeContainer: ElementRef;
     @Input() model: UMLModel;
     @Input() initialFeedback: Feedback[];
     @Input() diagramType: DiagramType;
+    @Input() maxScore: number;
     @Input() resizeOptions: { initialWidth: string; maxWidth?: number };
     @Input() readOnly = false;
     @Output() feedbackChanged = new EventEmitter<Feedback[]>();
@@ -86,10 +88,13 @@ export class ModelingAssessmentComponent implements OnInit, AfterViewInit, OnDes
             type: this.diagramType,
         });
 
-        this.apollonEditor.subscribeToSelectionChange(selection => {
-            this.feedbacks = this.generateFeedbackFromAssessment();
-            this.feedbackChanged.emit(this.feedbacks);
-        });
+        if (!this.readOnly) {
+            this.apollonEditor.subscribeToSelectionChange(selection => {
+                this.feedbacks = this.generateFeedbackFromAssessment();
+                this.calculateTotalScore();
+                this.feedbackChanged.emit(this.feedbacks);
+            });
+        }
     }
 
     /**
@@ -127,5 +132,29 @@ export class ModelingAssessmentComponent implements OnInit, AfterViewInit, OnDes
         for (const feedback of feedbacks) {
             this.elementFeedback.set(feedback.referenceId, feedback);
         }
+    }
+
+    /**
+     * Calculates the total score of the current assessment.
+     * Returns an error if the total score cannot be calculated
+     * because a score is not a number/empty.
+     * This function originally checked whether the total score is negative
+     * or greater than the max. score, but we decided to remove the restriction
+     * and instead set the score boundaries on the server.
+     */
+    private calculateTotalScore() {
+        if (!this.feedbacks || this.feedbacks.length === 0) {
+            this.totalScore = 0;
+        }
+        let totalScore = 0;
+        for (const feedback of this.feedbacks) {
+            totalScore += feedback.credits;
+            // TODO: move check into modeling-assessment-editor
+            // if (feedback.credits == null) {
+            //     this.assessmentsAreValid = false;
+            //     // return (this.invalidError = 'The score field must be a number and can not be empty!');
+            // }
+        }
+        this.totalScore = totalScore;
     }
 }

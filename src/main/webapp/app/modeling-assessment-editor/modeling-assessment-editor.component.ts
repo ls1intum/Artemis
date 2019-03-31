@@ -147,32 +147,6 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Calculates the total score of the current assessment.
-     * Returns an error if the total score cannot be calculated
-     * because a score is not a number/empty.
-     * This function originally checked whether the total score is negative
-     * or greater than the max. score, but we decided to remove the restriction
-     * and instead set the score boundaries on the server.
-     */
-    calculateTotalScore() {
-        if (!this.result.feedbacks || this.result.feedbacks.length === 0) {
-            this.totalScore = 0;
-        }
-        let totalScore = 0;
-        for (const feedback of this.result.feedbacks) {
-            totalScore += feedback.credits;
-            // TODO: due to the JS rounding problems, it might be the case that we get something like 16.999999999999993 here, so we better round this number
-            if (feedback.credits == null) {
-                this.assessmentsAreValid = false;
-                // return (this.invalidError = 'The score field must be a number and can not be empty!');
-            }
-        }
-        this.totalScore = totalScore;
-        this.assessmentsAreValid = true;
-        // this.invalidError = '';
-    }
-
-    /**
      * Removes the circular dependencies in the nested objects.
      * Otherwise, we would get a JSON error when trying to send the submission to the server.
      */
