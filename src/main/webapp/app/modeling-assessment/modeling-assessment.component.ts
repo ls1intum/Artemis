@@ -3,6 +3,7 @@ import { ApollonEditor, ApollonMode, DiagramType, UMLModel } from '@ls1intum/apo
 import { JhiAlertService } from 'ng-jhipster';
 import * as interact from 'interactjs';
 import { Feedback } from 'app/entities/feedback';
+import { User } from 'app/core';
 
 @Component({
     selector: 'jhi-modeling-assessment',
@@ -21,6 +22,7 @@ export class ModelingAssessmentComponent implements OnInit, AfterViewInit, OnDes
     @Input() initialFeedback: Feedback[];
     @Input() diagramType: DiagramType;
     @Input() maxScore: number;
+    @Input() assessor: User;
     @Input() resizeOptions: { initialWidth: string; maxWidth?: number };
     @Input() readOnly = false;
     @Output() feedbackChanged = new EventEmitter<Feedback[]>();

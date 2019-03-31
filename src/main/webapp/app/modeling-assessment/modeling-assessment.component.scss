@@ -1,3 +1,5 @@
+$draggable-width: 15px;
+
 jhi-score-display {
     position: absolute;
     top: 0;
@@ -12,12 +14,14 @@ jhi-score-display {
 
 .resizable {
     display: flex;
-    //width: 40vw;
     .draggable-right {
         display: flex;
         align-items: center;
         justify-content: center;
-        min-width: 15px;
+        min-width: $draggable-width;
+    }
+    jhi-score-display {
+        right: $draggable-width;
     }
 }
 

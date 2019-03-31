@@ -1,5 +1,6 @@
-<div class="modeling-assessment" [class.resizable]="resizeOptions">
+<div #resizeContainer class="modeling-assessment" [class.resizable]="resizeOptions">
     <jhi-score-display [score]="totalScore" [maxScore]="maxScore"></jhi-score-display>
+    <span *ngIf="assessor">Assessor: {{ assessor.firstName }} {{ assessor.lastName }}</span>
     <div #editorContainer class="apollon-container"></div>
     <div *ngIf="resizeOptions" class="draggable-right">
         <fa-icon icon="grip-lines-vertical"></fa-icon>
