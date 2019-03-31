@@ -10,7 +10,7 @@ import { scrollBehaviourDragImageTranslateOverride } from 'mobile-drag-drop/scro
 // options are optional ;)
 polyfill({
     // use this to make use of the scroll behaviour
-    dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride
+    dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride,
 });
 
 // Drag-enter listener for mobile devices
@@ -24,7 +24,7 @@ window.addEventListener('touchmove', function() {});
 @Component({
     selector: 'jhi-drag-and-drop-question',
     templateUrl: './drag-and-drop-question.component.html',
-    providers: [ArtemisMarkdown, DragAndDropQuestionUtil]
+    providers: [ArtemisMarkdown, DragAndDropQuestionUtil],
 })
 export class DragAndDropQuestionComponent implements OnChanges {
     _question: DragAndDropQuestion;
@@ -70,6 +70,8 @@ export class DragAndDropQuestionComponent implements OnChanges {
     dropAllowed = false;
     correctAnswer: number;
 
+    loading = true;
+
     constructor(private artemisMarkdown: ArtemisMarkdown, private dragAndDropQuestionUtil: DragAndDropQuestionUtil) {}
 
     ngOnChanges(changes: SimpleChanges): void {
@@ -98,6 +100,11 @@ export class DragAndDropQuestionComponent implements OnChanges {
         this.dropAllowed = false;
     }
 
+    changeLoading(value: boolean) {
+        console.log(value);
+        this.loading = value;
+        console.log(value);
+    }
     /**
      * react to the drop event of a drag item
      *
@@ -166,9 +173,7 @@ export class DragAndDropQuestionComponent implements OnChanges {
     dragItemForDropLocation(dropLocation: DropLocation) {
         const that = this;
         if (this.mappings) {
-            const mapping = this.mappings.find(localMapping =>
-                that.dragAndDropQuestionUtil.isSameDropLocation(localMapping.dropLocation, dropLocation)
-            );
+            const mapping = this.mappings.find(localMapping => that.dragAndDropQuestionUtil.isSameDropLocation(localMapping.dropLocation, dropLocation));
             if (mapping) {
                 return mapping.dragItem;
             } else {

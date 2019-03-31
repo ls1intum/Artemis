@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, Input, OnChanges, EventEmitter, Output } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -13,7 +13,9 @@ import { DomSanitizer } from '@angular/platform-browser';
  */
 @Component({
     selector: 'jhi-secured-image',
-    template: `<img [attr.src]="dataUrl$ | async"/>`
+    template: `
+        <img [attr.src]="dataUrl$ | async" />
+    `,
 })
 export class SecuredImageComponent implements OnChanges {
     // This part just creates an rxjs stream from the src
@@ -22,6 +24,10 @@ export class SecuredImageComponent implements OnChanges {
     @Input()
     private src: string;
     private src$ = new BehaviorSubject(this.src);
+    private value = 0;
+
+    @Output()
+    endLoadingProcess = new EventEmitter();
 
     // this stream will contain the actual url that our img tag will load
     // everytime the src changes, the previous call would be canceled and the
@@ -36,8 +42,20 @@ export class SecuredImageComponent implements OnChanges {
     constructor(private httpClient: HttpClient, private domSanitizer: DomSanitizer) {}
 
     private loadImage(url: string): Observable<any> {
-        return this.httpClient
+        const element = this.httpClient
             .get(url, { responseType: 'blob' })
-            .map(e => this.domSanitizer.bypassSecurityTrustUrl(URL.createObjectURL(e)));
+            .map(e => this.domSanitizer.bypassSecurityTrustUrl(URL.createObjectURL(e)))
+            .catch(error => {
+                this.endLoadingProcess.emit(false);
+                if (this.value < 2) {
+                    this.value++;
+                    this.loadImage(url);
+                    console.log(error);
+                } else {
+                    return error;
+                }
+            });
+        this.endLoadingProcess.emit(true);
+        return element;
     }
 }

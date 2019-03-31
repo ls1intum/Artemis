@@ -1,4 +1,5 @@
-<div class="dnd-question" [ngClass]="{disabled: clickDisabled && !showResult, result: showResult && !forceSampleSolution, incorrect: (score || 0) < question.score && !forceSampleSolution}">
+<div class="dnd-question"  [ngClass]="{disabled: clickDisabled && !showResult, result: showResult && !forceSampleSolution, incorrect: (score || 0) < question.score && !forceSampleSolution}">
+    <div *ngIf="loading; else loadingDiagram">
     <h4 class="question-title-display"><span>{{questionIndex}})</span> {{question.title}}</h4>
     <p [innerHTML]="rendered.text"></p><span style="color:red;" *ngIf="question.invalid" jhiTranslate="arTeMiSApp.quizQuestion.invalidText"></span>
     <div class="hint" *ngIf="question.hint || (question.explanation && showResult)">
@@ -36,7 +37,7 @@
             <span jhiTranslate="arTeMiSApp.dragAndDropQuestion.showingYourAnswer" *ngIf="!showingSampleSolution"></span>
         </div>
         <div class="background-area">
-            <jhi-secured-image *ngIf="question.backgroundFilePath" [src]="question.backgroundFilePath"></jhi-secured-image>
+            <jhi-secured-image *ngIf="question.backgroundFilePath" [src]="question.backgroundFilePath" (endLoadingProcess)="changeLoading($event)"></jhi-secured-image>
             <div class="click-layer">
                 <div *ngIf="!showResult">
                     <div class="drop-location" *ngFor="let dropLocation of question.dropLocations" [ngClass]="dropAllowed ? 'drop-allowed' : ''"
@@ -125,4 +126,13 @@
             </div>
         </div>
     </div>
+    </div>
 </div>
+
+<!-- loading banner -->
+<ng-template #loadingDiagram>
+    <h2>
+        <span style="color:grey"><fa-icon icon="spinner"></fa-icon>&nbsp;<span>Please wait until the picture is loaded.</span></span>
+    </h2>
+</ng-template>
+<!-- loading banner end -->
