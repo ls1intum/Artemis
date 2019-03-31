@@ -1,7 +1,6 @@
-
 {
     "arTeMiSApp": {
-        "multipleChoiceQuestion" : {
+        "multipleChoiceQuestion": {
             "home": {
                 "title": "Multiple Choice Questions",
                 "createLabel": "Multiple Choice Question erstellen",
@@ -21,19 +20,22 @@
             "scoringType": "Art der Bewertung",
             "editor": {
                 "addCorrectAnswerOption": "[correct] Korrekte Antwortmöglichkeit",
-                "addIncorrectAnswerOption": "[wrong] Falsche Antwortmöglichkeit",
+                "addInCorrectAnswerOption": "[wrong] Falsche Antwortmöglichkeit",
                 "addHint": "[hint] Hinweis",
                 "addExplanation": "[exp] Erklärung",
-                "bold": "Bold",
-                "italic": "Italic",
-                "underline": "Underline",
+                "bold": "Fett",
+                "italic": "Kursiv",
+                "underline": "Unterstrichen",
                 "unorderedList": "Ungeordnete List",
+                "headingOne": "Überschrift Eins",
+                "headingTwo": "Überschrift Zwei",
+                "headingThree": "Überschrift Drei",
                 "heading": "Überschrift",
                 "quote": "Zitat",
                 "link": "Link",
                 "orderedList": "Geordnete List",
                 "imageUpload": "Anhang",
-                "code": "code"
+                "code": "Code"
             }
         }
     }

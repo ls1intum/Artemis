@@ -1,7 +1,6 @@
-
 {
     "arTeMiSApp": {
-        "multipleChoiceQuestion" : {
+        "multipleChoiceQuestion": {
             "home": {
                 "title": "Multiple Choice Questions",
                 "createLabel": "Create a new Multiple Choice Question",
@@ -28,7 +27,6 @@
                 "italic": "Italic",
                 "underline": "Underline",
                 "unorderedList": "Unordered List",
-                "heading": "Heading",
                 "headingOne": "Heading One",
                 "headingTwo": "Heading Two",
                 "headingThree": "Heading Three",
