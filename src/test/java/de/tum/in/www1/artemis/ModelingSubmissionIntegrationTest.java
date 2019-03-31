@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.util.List;
+
 import org.assertj.core.api.Fail;
 import org.junit.*;
 import org.junit.runner.RunWith;
@@ -11,47 +14,60 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.junit4.SpringRunner;
+
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.util.*;
-import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @AutoConfigureMockMvc
 @AutoConfigureTestDatabase
 public class ModelingSubmissionIntegrationTest {
+
     @Autowired
     CourseRepository courseRepo;
+
     @Autowired
     ExerciseRepository exerciseRepo;
+
     @Autowired
     UserRepository userRepo;
+
     @Autowired
     RequestUtilService request;
+
     @Autowired
     DatabaseUtilService database;
+
     @Autowired
     ParticipationService participationService;
+
     @Autowired
     ResultRepository resultRepo;
+
     @Autowired
     ModelingSubmissionRepository modelingSubmissionRepo;
 
     private ModelingExercise classExercise;
-    private ModelingExercise activityExercise;
-    private ModelingExercise objectExercise;
-    private ModelingExercise useCaseExercise;
-    ModelingSubmission submittedSubmission;
-    ModelingSubmission unsubmittedSubmission;
-    String emptyModel;
-    String validModel;
 
+    private ModelingExercise activityExercise;
+
+    private ModelingExercise objectExercise;
+
+    private ModelingExercise useCaseExercise;
+
+    ModelingSubmission submittedSubmission;
+
+    ModelingSubmission unsubmittedSubmission;
+
+    String emptyModel;
+
+    String validModel;
 
     @Before
     public void initTestCase() throws Exception {
-        database.resetFileStorage();
         database.resetDatabase();
         database.addUsers(2, 1);
         database.addCourseWithDifferentModelingExercises();
@@ -65,95 +81,75 @@ public class ModelingSubmissionIntegrationTest {
         unsubmittedSubmission = generateUnsubmittedSubmission();
     }
 
-
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void modelingSubmissionOfStudent_classDiagram() throws Exception {
         database.addParticipationForExercise(classExercise, "student1");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyModel, false);
-        ModelingSubmission returnedSubmission =
-            performInitialModelSubmission(classExercise.getId(), submission);
+        ModelingSubmission returnedSubmission = performInitialModelSubmission(classExercise.getId(), submission);
         database.checkSubmissionCorrectlyStored(returnedSubmission.getId(), emptyModel);
         checkDetailsHidden(returnedSubmission);
 
         submission = ModelFactory.generateModelingSubmission(validModel, true);
-        returnedSubmission =
-            performUpdateOnModelSubmission(classExercise.getId(), submission);
+        returnedSubmission = performUpdateOnModelSubmission(classExercise.getId(), submission);
         database.checkSubmissionCorrectlyStored(returnedSubmission.getId(), validModel);
         checkDetailsHidden(returnedSubmission);
     }
-
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void modelingSubmissionOfStudent_activityDiagram() throws Exception {
         database.addParticipationForExercise(activityExercise, "student1");
-        String emptyActivityModel =
-            database.loadFileFromResources("test-data/model-submission/empty-activity-model.json");
+        String emptyActivityModel = database.loadFileFromResources("test-data/model-submission/empty-activity-model.json");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyActivityModel, false);
-        ModelingSubmission returnedSubmission =
-            performInitialModelSubmission(activityExercise.getId(), submission);
+        ModelingSubmission returnedSubmission = performInitialModelSubmission(activityExercise.getId(), submission);
         database.checkSubmissionCorrectlyStored(returnedSubmission.getId(), emptyActivityModel);
         checkDetailsHidden(returnedSubmission);
-        String validActivityModel =
-            database.loadFileFromResources("test-data/model-submission/activity-model.json");
+        String validActivityModel = database.loadFileFromResources("test-data/model-submission/activity-model.json");
         submission = ModelFactory.generateModelingSubmission(validActivityModel, true);
-        returnedSubmission =
-            performUpdateOnModelSubmission(activityExercise.getId(), submission);
+        returnedSubmission = performUpdateOnModelSubmission(activityExercise.getId(), submission);
         database.checkSubmissionCorrectlyStored(returnedSubmission.getId(), validActivityModel);
         checkDetailsHidden(returnedSubmission);
     }
-
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void modelingSubmissionOfStudent_objectDiagram() throws Exception {
         database.addParticipationForExercise(objectExercise, "student1");
-        String emptyObjectModel =
-            database.loadFileFromResources("test-data/model-submission/empty-object-model.json");
+        String emptyObjectModel = database.loadFileFromResources("test-data/model-submission/empty-object-model.json");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyObjectModel, false);
-        ModelingSubmission returnedSubmission =
-            performInitialModelSubmission(objectExercise.getId(), submission);
+        ModelingSubmission returnedSubmission = performInitialModelSubmission(objectExercise.getId(), submission);
         database.checkSubmissionCorrectlyStored(returnedSubmission.getId(), emptyObjectModel);
         checkDetailsHidden(returnedSubmission);
-        String validObjectModel =
-            database.loadFileFromResources("test-data/model-submission/object-model.json");
+        String validObjectModel = database.loadFileFromResources("test-data/model-submission/object-model.json");
         submission = ModelFactory.generateModelingSubmission(validObjectModel, true);
-        returnedSubmission =
-            performUpdateOnModelSubmission(objectExercise.getId(), submission);
+        returnedSubmission = performUpdateOnModelSubmission(objectExercise.getId(), submission);
         database.checkSubmissionCorrectlyStored(returnedSubmission.getId(), validObjectModel);
         checkDetailsHidden(returnedSubmission);
     }
-
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
     public void modelingSubmissionOfStudent_useCaseDiagram() throws Exception {
         database.addParticipationForExercise(useCaseExercise, "student1");
-        String emptyUseCaseModel =
-            database.loadFileFromResources("test-data/model-submission/empty-use-case-model.json");
+        String emptyUseCaseModel = database.loadFileFromResources("test-data/model-submission/empty-use-case-model.json");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyUseCaseModel, false);
-        ModelingSubmission returnedSubmission =
-            performInitialModelSubmission(useCaseExercise.getId(), submission);
+        ModelingSubmission returnedSubmission = performInitialModelSubmission(useCaseExercise.getId(), submission);
         database.checkSubmissionCorrectlyStored(returnedSubmission.getId(), emptyUseCaseModel);
         checkDetailsHidden(returnedSubmission);
-        String validUseCaseModel =
-            database.loadFileFromResources("test-data/model-submission/use-case-model.json");
+        String validUseCaseModel = database.loadFileFromResources("test-data/model-submission/use-case-model.json");
         submission = ModelFactory.generateModelingSubmission(validUseCaseModel, true);
-        returnedSubmission =
-            performUpdateOnModelSubmission(useCaseExercise.getId(), submission);
+        returnedSubmission = performUpdateOnModelSubmission(useCaseExercise.getId(), submission);
         database.checkSubmissionCorrectlyStored(returnedSubmission.getId(), validUseCaseModel);
         checkDetailsHidden(returnedSubmission);
     }
-
 
     @Test
     @WithMockUser(value = "student2", roles = "USER")
     public void updateModelSubmissionAfterSubmit() throws Exception {
         database.addParticipationForExercise(classExercise, "student2");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyModel, false);
-        ModelingSubmission returnedSubmission =
-            performInitialModelSubmission(classExercise.getId(), submission);
+        ModelingSubmission returnedSubmission = performInitialModelSubmission(classExercise.getId(), submission);
         database.checkSubmissionCorrectlyStored(returnedSubmission.getId(), emptyModel);
         submission = ModelFactory.generateModelingSubmission(validModel, false);
         try {
@@ -161,10 +157,10 @@ public class ModelingSubmissionIntegrationTest {
             database.checkSubmissionCorrectlyStored(returnedSubmission.getId(), validModel);
             checkDetailsHidden(returnedSubmission);
             Fail.fail("update on submitted ModelingSubmission worked");
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
         }
     }
-
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
@@ -177,14 +173,11 @@ public class ModelingSubmissionIntegrationTest {
         result.setRated(true);
         result.setAssessor(user);
         submission.setResult(result);
-        ModelingSubmission storedSubmission = request.postWithResponseBody(
-            "/api/exercises/" + classExercise.getId() + "/modeling-submissions",
-            submission,
-            ModelingSubmission.class);
+        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
+                ModelingSubmission.class);
         storedSubmission = modelingSubmissionRepo.findById(storedSubmission.getId()).get();
         assertThat(storedSubmission.getResult()).as("submission still unrated").isNull();
     }
-
 
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
@@ -192,9 +185,8 @@ public class ModelingSubmissionIntegrationTest {
         ModelingSubmission submission1 = database.addModelingSubmission(classExercise, submittedSubmission, "student1");
         ModelingSubmission submission2 = database.addModelingSubmission(classExercise, unsubmittedSubmission, "student2");
         List<ModelingSubmission> submissions = request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class);
-        assertThat(submissions).as("contains both submissions").containsExactlyInAnyOrder(new ModelingSubmission[]{submission1, submission2});
+        assertThat(submissions).as("contains both submissions").containsExactlyInAnyOrder(new ModelingSubmission[] { submission1, submission2 });
     }
-
 
     @Test
     @WithMockUser(value = "student1", roles = "USER")
@@ -205,17 +197,16 @@ public class ModelingSubmissionIntegrationTest {
         request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions?submittedOnly=true", HttpStatus.FORBIDDEN, ModelingSubmission.class);
     }
 
-
     @Test
     @WithMockUser(value = "tutor1", roles = "TA")
     public void getAllSubmittedSubmissionsOfExercise() throws Exception {
         ModelingSubmission submission1 = database.addModelingSubmission(classExercise, unsubmittedSubmission, "student1");
         ModelingSubmission submission2 = database.addModelingSubmission(classExercise, submittedSubmission, "student1");
         ModelingSubmission submission3 = database.addModelingSubmission(classExercise, generateSubmittedSubmission(), "student2");
-        List<ModelingSubmission> submissions = request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions?submittedOnly=true", HttpStatus.OK, ModelingSubmission.class);
-        assertThat(submissions).as("contains only submitted submission").containsExactlyInAnyOrder(new ModelingSubmission[]{submission1, submission3});
+        List<ModelingSubmission> submissions = request.getList("/api/exercises/" + classExercise.getId() + "/modeling-submissions?submittedOnly=true", HttpStatus.OK,
+                ModelingSubmission.class);
+        assertThat(submissions).as("contains only submitted submission").containsExactlyInAnyOrder(new ModelingSubmission[] { submission1, submission3 });
     }
-
 
     @Test
     @WithMockUser(value = "tutor1")
@@ -237,7 +228,6 @@ public class ModelingSubmissionIntegrationTest {
         request.get("/api/modeling-submissions/" + submission.getId(), HttpStatus.FORBIDDEN, ModelingSubmission.class);
     }
 
-
     private void checkDetailsHidden(ModelingSubmission submission) {
         assertThat(submission.getParticipation().getSubmissions()).isNullOrEmpty();
         assertThat(submission.getParticipation().getResults()).isNullOrEmpty();
@@ -245,31 +235,17 @@ public class ModelingSubmissionIntegrationTest {
         assertThat(((ModelingExercise) submission.getParticipation().getExercise()).getSampleSolutionExplanation()).isNullOrEmpty();
     }
 
-
-    private ModelingSubmission performInitialModelSubmission(
-        Long exerciseId, ModelingSubmission submission) throws Exception {
-        return request.postWithResponseBody(
-            "/api/exercises/" + exerciseId + "/modeling-submissions",
-            submission,
-            ModelingSubmission.class,
-            HttpStatus.OK);
+    private ModelingSubmission performInitialModelSubmission(Long exerciseId, ModelingSubmission submission) throws Exception {
+        return request.postWithResponseBody("/api/exercises/" + exerciseId + "/modeling-submissions", submission, ModelingSubmission.class, HttpStatus.OK);
     }
 
-
-    private ModelingSubmission performUpdateOnModelSubmission(
-        Long exerciseId, ModelingSubmission submission) throws Exception {
-        return request.putWithResponseBody(
-            "/api/exercises/" + exerciseId + "/modeling-submissions",
-            submission,
-            ModelingSubmission.class,
-            HttpStatus.OK);
+    private ModelingSubmission performUpdateOnModelSubmission(Long exerciseId, ModelingSubmission submission) throws Exception {
+        return request.putWithResponseBody("/api/exercises/" + exerciseId + "/modeling-submissions", submission, ModelingSubmission.class, HttpStatus.OK);
     }
-
 
     private ModelingSubmission generateSubmittedSubmission() {
         return ModelFactory.generateModelingSubmission(emptyModel, true);
     }
-
 
     private ModelingSubmission generateUnsubmittedSubmission() {
         return ModelFactory.generateModelingSubmission(emptyModel, true);
