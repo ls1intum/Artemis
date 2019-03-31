@@ -151,11 +151,6 @@ export class ModelingAssessmentComponent implements OnInit, AfterViewInit, OnDes
         let totalScore = 0;
         for (const feedback of this.feedbacks) {
             totalScore += feedback.credits;
-            // TODO: move check into modeling-assessment-editor
-            // if (feedback.credits == null) {
-            //     this.assessmentsAreValid = false;
-            //     // return (this.invalidError = 'The score field must be a number and can not be empty!');
-            // }
         }
         this.totalScore = totalScore;
     }

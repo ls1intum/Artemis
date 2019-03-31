@@ -27,7 +27,6 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
 
     assessmentsAreValid = false;
     submissionId: number;
-    // invalidError = '';
     totalScore = 0;
     busy: boolean;
     userId: number;
@@ -89,6 +88,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                 if ((this.result.assessor == null || this.result.assessor.id === this.userId) && !this.result.rated) {
                     this.jhiAlertService.info('arTeMiSApp.apollonDiagram.lock');
                 }
+                this.validateFeedback();
             },
             error => {
                 this.submission = undefined;
@@ -138,15 +138,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
 
     onFeedbackChanged(feedback: Feedback[]) {
         this.result.feedbacks = feedback;
-    }
-
-    /**
-     * Removes the circular dependencies in the nested objects.
-     * Otherwise, we would get a JSON error when trying to send the submission to the server.
-     */
-    private removeCircularDependencies() {
-        this.submission.result.participation = null;
-        this.submission.result.submission = null;
+        this.validateFeedback();
     }
 
     assessNextOptimal() {
@@ -164,5 +156,28 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                     this.jhiAlertService.info('assessmentDashboard.noSubmissionFound');
                 },
             );
+    }
+
+    /**
+     * Removes the circular dependencies in the nested objects.
+     * Otherwise, we would get a JSON error when trying to send the submission to the server.
+     */
+    private removeCircularDependencies() {
+        this.submission.result.participation = null;
+        this.submission.result.submission = null;
+    }
+
+    private validateFeedback() {
+        if (!this.result.feedbacks) {
+            this.assessmentsAreValid = false;
+            return;
+        }
+        for (const feedback of this.result.feedbacks) {
+            if (feedback.credits == null) {
+                this.assessmentsAreValid = false;
+                return;
+            }
+        }
+        this.assessmentsAreValid = true;
     }
 }
