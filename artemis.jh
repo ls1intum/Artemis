@@ -519,6 +519,5 @@ relationship ManyToMany {
 }
 
 paginate Exercise with infinite-scroll
-
 service Course with serviceClass
 service Participation with serviceClass
