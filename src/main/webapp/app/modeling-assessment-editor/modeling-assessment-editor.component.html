@@ -7,6 +7,7 @@
         </div>
         <div class="control-container row-container">
             <button class="btn btn-primary" (click)="onSaveAssessment()" [disabled]="!assessmentsAreValid || !isAuthorized" [hidden]="result && result.rated">
+                <fa-icon icon="save"></fa-icon>
                 Save
             </button>
             <button class="btn btn-success" (click)="onSubmitAssessment()" [disabled]="!assessmentsAreValid || !isAuthorized" [hidden]="result && result.rated">
@@ -27,7 +28,7 @@
             [diagramType]="this.modelingExercise.diagramType"
             [maxScore]="modelingExercise.maxScore"
             [model]="model"
-            (feedbackChanged)="onFeedbackChanged()"
+            (feedbackChanged)="onFeedbackChanged($event)"
         ></jhi-modeling-assessment>
         <jhi-assessment-instructions *ngIf="modelingExercise" [exercise]="modelingExercise" [collapsed]="false"></jhi-assessment-instructions>
     </div>

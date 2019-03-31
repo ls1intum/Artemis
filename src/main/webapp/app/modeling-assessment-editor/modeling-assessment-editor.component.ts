@@ -30,8 +30,8 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     totalScore = 0;
     busy: boolean;
     userId: number;
-    isAuthorized: boolean;
-    isAtLeastInstructor: boolean;
+    isAuthorized = false;
+    isAtLeastInstructor = false;
 
     constructor(
         private jhiAlertService: JhiAlertService,
@@ -51,7 +51,6 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
             this.userId = user.id;
         });
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
-        this.checkAuthorization();
         this.route.params.subscribe(params => {
             this.submissionId = Number(params['submissionId']);
             this.loadSubmission(this.submissionId);
@@ -88,6 +87,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                 if ((this.result.assessor == null || this.result.assessor.id === this.userId) && !this.result.rated) {
                     this.jhiAlertService.info('arTeMiSApp.apollonDiagram.lock');
                 }
+                this.checkAuthorization();
                 this.validateFeedback();
             },
             error => {

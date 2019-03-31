@@ -9,15 +9,15 @@
         align-items: center;
     }
     .control-container {
-        button {
-            margin-left: 15px;
+        span {
+            margin: 0 15px;
         }
     }
     .editor-container {
         display: flex;
         justify-content: center;
         width: 100%;
-        overflow: scroll;
+        overflow: auto;
         .conflicting-assessment {
         }
         .assessment {

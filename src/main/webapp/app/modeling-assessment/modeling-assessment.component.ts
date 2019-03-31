@@ -1,5 +1,5 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, Renderer2 } from '@angular/core';
-import { ApollonEditor, ApollonMode, DiagramType, UMLModel } from '@ls1intum/apollon';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, Renderer2, ViewChild } from '@angular/core';
+import { ApollonEditor, ApollonMode, DiagramType, UMLElement, UMLModel, UMLRelationship } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
 import * as interact from 'interactjs';
 import { Feedback } from 'app/entities/feedback';
@@ -73,7 +73,9 @@ export class ModelingAssessmentComponent implements OnInit, AfterViewInit, OnDes
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();
         }
-
+        if (!this.feedbacks || this.feedbacks.length === 0) {
+            this.generateInitialFeedback();
+        }
         this.model.assessments = this.feedbacks.map(feedback => {
             return {
                 modelElementId: feedback.referenceId,
@@ -134,6 +136,15 @@ export class ModelingAssessmentComponent implements OnInit, AfterViewInit, OnDes
         for (const feedback of feedbacks) {
             this.elementFeedback.set(feedback.referenceId, feedback);
         }
+    }
+
+    private generateInitialFeedback() {
+        this.model.elements.forEach((element: UMLElement) => {
+            this.feedbacks.push(new Feedback(element.id, element.type, 0, undefined));
+        });
+        this.model.relationships.forEach((relationship: UMLRelationship) => {
+            this.feedbacks.push(new Feedback(relationship.id, relationship.type, 0, undefined));
+        });
     }
 
     /**
