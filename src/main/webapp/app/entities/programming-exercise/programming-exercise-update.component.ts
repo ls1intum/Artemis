@@ -8,9 +8,11 @@ import { Course, CourseService } from 'app/entities/course';
 import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 import { FileService } from 'app/shared/http/file.service';
 
+import { Feedback } from '../feedback';
 import { ProgrammingExercise, ProgrammingLanguage } from './programming-exercise.model';
 import { ProgrammingExerciseService } from './programming-exercise.service';
 import { RepositoryFileService } from '../repository';
+import { ResultService } from '../result';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -29,6 +31,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
     courses: Course[];
+    latestResult: Array<any>;
+    resultDetails: Feedback[];
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
@@ -38,6 +42,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private activatedRoute: ActivatedRoute,
         private repositoryFileService: RepositoryFileService,
         private fileService: FileService,
+        private resultService: ResultService,
     ) {}
 
     ngOnInit() {
@@ -48,16 +53,18 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             if (this.programmingExercise.id === undefined) {
                 this.fileService.getTemplateFile('programming-exercise-instructions').subscribe(file => (this.programmingExercise.problemStatement = file));
                 // Historical fallback: Older exercises have an instruction file in the git repo
-            } else if (this.programmingExercise.problemStatement === undefined) {
-                this.repositoryFileService.get(this.programmingExercise.templateParticipation.id, 'README.md').subscribe(
-                    fileObj => {
-                        this.programmingExercise.problemStatement = fileObj.fileContent;
-                    },
-                    err => {
-                        // TODO: handle the case that there is no README.md file
-                        console.log('Error while getting README.md file!', err);
-                    },
-                );
+            } else {
+                if (this.programmingExercise.problemStatement === undefined) {
+                    this.repositoryFileService.get(this.programmingExercise.templateParticipation.id, 'README.md').subscribe(
+                        fileObj => {
+                            this.programmingExercise.problemStatement = fileObj.fileContent;
+                        },
+                        err => {
+                            // TODO: handle the case that there is no README.md file
+                            console.log('Error while getting README.md file!', err);
+                        },
+                    );
+                }
             }
         });
         this.activatedRoute.params.subscribe(params => {
@@ -73,6 +80,18 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                         },
                         (categoryRes: HttpErrorResponse) => this.onError(categoryRes),
                     );
+                    this.resultService
+                        .findResultsForParticipation(this.programmingExercise.course.id, this.programmingExercise.id, this.programmingExercise.templateParticipation.id, {
+                            showAllResults: true,
+                        })
+                        .subscribe((latestResult: any) => {
+                            this.latestResult = latestResult.body;
+                            if (this.latestResult.length) {
+                                this.resultService.getFeedbackDetailsForResult(this.latestResult[0].id).subscribe(resultDetails => {
+                                    this.resultDetails = resultDetails.body;
+                                });
+                            }
+                        });
                 });
             }
         });
