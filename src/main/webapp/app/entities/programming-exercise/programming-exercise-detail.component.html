@@ -74,6 +74,13 @@
                 <dd>
                     <div *ngIf="programmingExercise.solutionParticipation.results"><jhi-result [participation]="programmingExercise.solutionParticipation"></jhi-result></div>
                 </dd>
+                <dt><span jhiTranslate="arTeMiSApp.programmingExercise.problemStatement">Problem Statement</span></dt>
+                <dd>
+                    <jhi-programming-exercise-instructions
+                        [rawMarkdown]="programmingExercise.problemStatement"
+                        [latestResult]="programmingExercise.templateParticipation.results"
+                    ></jhi-programming-exercise-instructions>
+                </dd>
             </dl>
 
             <button type="submit"
