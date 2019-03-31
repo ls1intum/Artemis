@@ -2,7 +2,9 @@
 
     <nav class="navbar navbar-light navbar-expand-sm jh-navbar">
         <div class="jh-logo-container float-left editor-top-left">
-            <span class="navbar-title">Online Code Editor for Exercise:</span> <span>{{participation?.exercise.title}}</span>
+            <span class="navbar-title" jhiTranslate="arTeMiSApp.editor.title">
+            </span>
+            <span>{{participation?.exercise.title}}</span>
         </div>
         <div class="navbar-collapse editor-top-right">
             <ul class="navbar-nav ml-auto">
@@ -16,8 +18,8 @@
             </ul>
         </div>
         <button type="button" class="btn btn-primary navbar-btn" [disabled]="!isSaved || isBuilding" (click)="commit($event)" data-toggle="tooltip" data-placement="left" title="Stage, commit, push, build and test your changes.">
-            <span *ngIf="isBuilding"><fa-icon icon="circle-notch" [spin]="true"></fa-icon> Building</span>
-            <span *ngIf="!isBuilding"><fa-icon [icon]="['far', 'play-circle']"></fa-icon> Commit & Run Tests</span>
+            <span *ngIf="isBuilding"><fa-icon icon="circle-notch" [spin]="true"></fa-icon> <span jhiTranslate="arTeMiSApp.editor.building">Building</span></span>
+            <span *ngIf="!isBuilding"><fa-icon [icon]="['far', 'play-circle']"></fa-icon> <span jhiTranslate="arTeMiSApp.editor.commitAndRun">Commit & Run Tests</span></span>
         </button>
     </nav>
 

@@ -34,7 +34,21 @@
             "structureTestOracle": "Oracle Strukturtest aktualisieren"
         },
         "editor": {
-            "title": "Code Editor"
+            "title": "Code Editor für Übung:",
+            "instructions": "&nbsp; Aufgabenstellung &nbsp;",
+            "unsavedChanges": "&nbsp; Nicht gespeicherte Änderungen in {{ unsavedFiles }} Datei(en).",
+            "savingFile": "&nbsp; Datei wird gespeichert.",
+            "changesSaved": "&nbsp; Alle Änderungen gespeichert.",
+            "failedToSave": "&nbsp; Änderungen konnten nicht gespeichert werden.",
+            "changesCommited": "&nbsp; Alle Änderungen commited.",
+            "uncommittedChanges": "&nbsp; Es gibt Änderungen, die nicht committed wurden",
+            "commitAndRun": "Commit & Tests starten",
+            "buildOutput": "&nbsp; Build Ergebnisse",
+            "building": "Building...",
+            "buildFailed": "Build gescheitert",
+            "noBuildOutput": "Keine Build Ergebnisse verfügbar.",
+            "selectFile": "Wähle eine Datei aus, um zu beginnen!",
+            "downloadBuildResult": "Build Ergebnis herunterladen"
         }
     }
 }
