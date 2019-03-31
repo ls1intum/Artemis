@@ -6,11 +6,11 @@ import { Observable } from 'rxjs';
 
 import { Course, CourseService } from 'app/entities/course';
 import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
+import { FileService } from 'app/shared/http/file.service';
 
 import { ProgrammingExercise, ProgrammingLanguage } from './programming-exercise.model';
 import { ProgrammingExerciseService } from './programming-exercise.service';
 import { RepositoryFileService } from '../repository';
-import { ProgrammingExerciseInstructionComponent } from './programming-exercise-instruction.component';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -37,13 +37,18 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private exerciseService: ExerciseService,
         private activatedRoute: ActivatedRoute,
         private repositoryFileService: RepositoryFileService,
+        private fileService: FileService,
     ) {}
 
     ngOnInit() {
         this.isSaving = false;
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
-            if (this.programmingExercise.problemStatement === undefined) {
+            // If the exercise is being created, insert the instruction template into the problem statement.
+            if (this.programmingExercise.id === undefined) {
+                this.fileService.getTemplateFile('programming-exercise-instructions').subscribe(file => (this.programmingExercise.problemStatement = file));
+                // Historical fallback: Older exercises have an instruction file in the git repo
+            } else if (this.programmingExercise.problemStatement === undefined) {
                 this.repositoryFileService.get(this.programmingExercise.templateParticipation.id, 'README.md').subscribe(
                     fileObj => {
                         this.programmingExercise.problemStatement = fileObj.fileContent;

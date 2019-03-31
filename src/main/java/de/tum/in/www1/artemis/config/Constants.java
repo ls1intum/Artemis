@@ -17,6 +17,7 @@ public final class Constants {
 
     public static final int QUIZ_GRACE_PERIOD_IN_SECONDS = 2;
 
+    public static final String TEMPLATE_FILEPATH = "src/main/resources/templates" + File.separator;
     public static final String TEMP_FILEPATH = "uploads" + File.separator + "images" + File.separator + "temp" + File.separator;
     public static final String DRAG_AND_DROP_BACKGROUND_FILEPATH = "uploads" + File.separator + "images" + File.separator + "drag-and-drop" + File.separator + "backgrounds" + File.separator;
     public static final String DRAG_ITEM_FILEPATH = "uploads" + File.separator + "images" + File.separator + "drag-and-drop" + File.separator + "drag-items" + File.separator;

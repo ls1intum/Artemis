@@ -24,13 +24,13 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping("/api")
-public class FileUploadResource {
+public class FileResource {
 
-    private final Logger log = LoggerFactory.getLogger(FileUploadResource.class);
+    private final Logger log = LoggerFactory.getLogger(FileResource.class);
 
     private final FileService fileService;
 
-    public FileUploadResource(FileService fileService) {
+    public FileResource(FileService fileService) {
         this.fileService = fileService;
     }
 
@@ -106,8 +106,19 @@ public class FileUploadResource {
     }
 
     /**
+     * GET /files/templates/:filename : Get the template file with the given filename
+     * @param filename The filename of the file to get
+     * @return The requested file, or 404 if the file doesn't exist
+     */
+    @GetMapping("/files/templates/{filename:.+}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR', 'TA')")
+    public ResponseEntity<byte[]> getTemplateFile(@PathVariable String filename) {
+        log.debug("REST request to get file : {}", filename);
+        return responseEntityForFilePath(Constants.TEMPLATE_FILEPATH + filename);
+    }
+
+    /**
      * GET /files/drag-and-drop/backgrounds/:questionId/:filename : Get the background file with the given name for the given drag and drop question
-     *
      * @param questionId ID of the drag and drop question, the file belongs to
      * @param filename   the filename of the file
      * @return The requested file, 403 if the logged in user is not allowed to access it, or 404 if the file doesn't exist
