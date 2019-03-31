@@ -7,7 +7,6 @@ import { AceEditorComponent } from 'ng2-ace-editor';
 
 @Injectable({providedIn: 'root'})
 export class ArtemisMarkdown {
-
     /**
      * adds the passed text into the editor of the passed ace editor component at the current curser by focusing, clearing a selection,
      * moving the cursor to the end of the line, and finally inserting the given text.
@@ -119,7 +118,7 @@ export class ArtemisMarkdown {
             strikethrough: true,
             tables: true,
             openLinksInNewWindow: true,
-            backslashEscapesHTMLTags: true
+            backslashEscapesHTMLTags: true,
         });
         const html = converter.makeHtml(markdownText);
         return this.sanitizer.sanitize(SecurityContext.HTML, html);

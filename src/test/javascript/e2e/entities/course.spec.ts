@@ -1,6 +1,6 @@
 import { NavBarPage, SignInPage } from '../page-objects/jhi-page-objects';
-import {browser, by, element, ExpectedConditions as ec} from "protractor";
-import {CoursePage, NewCoursePage} from "../page-objects/entities/course-page-object";
+import { browser, by, element, ExpectedConditions as ec } from 'protractor';
+import { CoursePage, NewCoursePage } from '../page-objects/entities/course-page-object';
 
 const expect = chai.expect;
 
@@ -73,12 +73,15 @@ describe('course', () => {
         expect(await newCoursePage.save.getAttribute('disabled')).to.equal(null);
         await newCoursePage.clickSave();
 
-        browser.wait(ec.urlContains('/course'), 5000).then((result) => expect(result).to.be.true);
+        browser.wait(ec.urlContains('/course'), 5000).then((result: any) => expect(result).to.be.true);
     });
 
     it('should show the created course in the list', async () => {
         const rows = element.all(by.tagName('tbody')).all(by.tagName('tr'));
-        const lastTitle = await rows.last().element(by.css('td:nth-child(2) > span.bold')).getText();
+        const lastTitle = await rows
+            .last()
+            .element(by.css('td:nth-child(2) > span.bold'))
+            .getText();
 
         expect(lastTitle).contains(courseName);
     });
@@ -89,9 +92,8 @@ describe('course', () => {
         const deleteButton = rows.last().element(by.className('btn-danger'));
         await deleteButton.click();
 
-        const confirmDeleteButton = element(by.tagName('jhi-course-delete-dialog')).element(by.className('btn-danger'))
+        const confirmDeleteButton = element(by.tagName('jhi-course-delete-dialog')).element(by.className('btn-danger'));
         await confirmDeleteButton.click();
-
 
         rows = element.all(by.tagName('tbody')).all(by.tagName('tr'));
         expect(await rows.count()).to.equal(numberOfCourses - 1);
