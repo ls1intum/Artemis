@@ -1,16 +1,34 @@
 <div class="conflict-container">
     <jhi-alert></jhi-alert>
     <h2 class="navigation-container">
-        <div class="row-container">Conflict &nbsp; {{ conflictIndex + 1 }}/{{ conflicts.length }}</div>
+        Conflict
         <div class="control-container row-container">
-            <button class="btn btn-primary">previous</button>
-            <button class="btn btn-primary">next</button>
+            <button class="btn btn-primary">
+                <fa-icon icon="arrow-left"></fa-icon>
+            </button>
+            {{ conflictIndex + 1 }}/{{ conflicts.length }}
+            <button class="btn btn-primary">
+                <fa-icon icon="arrow-right"></fa-icon>
+            </button>
         </div>
     </h2>
 
     <div class="editor-container">
-            <jhi-modeling-assessment *ngIf="submission" class="conflicting-assessment" [diagramType]="this.modelingExercise.diagramType" [model]="model" [resizeOptions]="{initialWidth:'40vw'}"></jhi-modeling-assessment>
-            <jhi-modeling-assessment *ngIf="submission" class="assessment" [diagramType]="this.modelingExercise.diagramType" [model]="model"></jhi-modeling-assessment>
+        <jhi-modeling-assessment
+            *ngIf="submission"
+            class="conflicting-assessment"
+            [diagramType]="this.modelingExercise.diagramType"
+            [model]="model"
+            [readOnly]="true"
+            [resizeOptions]="{ initialWidth: '40vw' }"
+        ></jhi-modeling-assessment>
+        <jhi-modeling-assessment
+            *ngIf="submission"
+            class="assessment"
+            [diagramType]="this.modelingExercise.diagramType"
+            [model]="model"
+            [readOnly]="true"
+        ></jhi-modeling-assessment>
         <jhi-assessment-instructions *ngIf="modelingExercise" [exercise]="modelingExercise" [collapsed]="true"></jhi-assessment-instructions>
     </div>
 </div>

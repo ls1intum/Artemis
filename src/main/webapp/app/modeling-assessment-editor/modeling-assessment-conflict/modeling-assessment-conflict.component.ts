@@ -12,6 +12,7 @@ import { Conflict } from 'app/modeling-assessment-editor/conflict.model';
 })
 export class ModelingAssessmentConflictComponent implements OnInit {
     model: UMLModel;
+    conflictIndex: number = 0;
 
     @Input() submission: ModelingSubmission;
     @Input() modelingExercise: ModelingExercise;

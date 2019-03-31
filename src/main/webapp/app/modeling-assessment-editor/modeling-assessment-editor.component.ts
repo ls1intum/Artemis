@@ -33,7 +33,6 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     userId: number;
     isAuthorized: boolean;
     isAtLeastInstructor: boolean;
-    ignoreConflicts: false;
 
     constructor(
         private jhiAlertService: JhiAlertService,
@@ -101,10 +100,8 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         );
     }
 
-    saveAssessment() {
+    onSaveAssessment() {
         this.removeCircularDependencies();
-        //TODO get actual feedbacks from modeling-assessments.component
-        this.calculateTotalScore();
         this.modelingAssessmentService.save(this.result.feedbacks, this.submission.id).subscribe(
             (result: Result) => {
                 this.result = result;
@@ -117,10 +114,9 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         );
     }
 
-    submitAssessment() {
+    onSubmitAssessment() {
         this.removeCircularDependencies();
-        this.calculateTotalScore();
-        this.modelingAssessmentService.save(this.result.feedbacks, this.submission.id, true, this.ignoreConflicts).subscribe(
+        this.modelingAssessmentService.save(this.result.feedbacks, this.submission.id, true).subscribe(
             (result: Result) => {
                 result.participation.results = [result];
                 this.result = result;
@@ -132,7 +128,6 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                 if (error.status === 409) {
                     this.conflicts = new Map();
                     (error.error as Conflict[]).forEach(conflict => this.conflicts.set(conflict.conflictedElementId, conflict));
-                    // this.highlightElementsWithConflict();
                     this.jhiAlertService.error('arTeMiSApp.apollonDiagram.assessment.submitFailedWithConflict');
                 } else {
                     this.jhiAlertService.error('arTeMiSApp.apollonDiagram.assessment.submitFailed');

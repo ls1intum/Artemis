@@ -14,11 +14,20 @@ import { AssessmentInstructionsModule } from 'app/assessment-instructions/assess
 import { ModelingAssessmentConflictComponent } from './modeling-assessment-conflict/modeling-assessment-conflict.component';
 import { modelingAssessmentRoutes } from 'app/modeling-assessment-editor/modeling-assessment-editor.route';
 import { ModelingAssessmentModule } from 'app/modeling-assessment/modeling-assessment.module';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 const ENTITY_STATES = [...modelingAssessmentRoutes];
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, ArTEMiSResultModule, AssessmentInstructionsModule, ModelingAssessmentModule],
+    imports: [
+        ArTEMiSSharedModule,
+        RouterModule.forChild(ENTITY_STATES),
+        SortByModule,
+        ArTEMiSResultModule,
+        AssessmentInstructionsModule,
+        ModelingAssessmentModule,
+        FontAwesomeModule,
+    ],
     declarations: [ModelingAssessmentDashboardComponent, ModelingAssessmentEditorComponent, ModelingAssessmentConflictComponent],
     entryComponents: [
         HomeComponent,
