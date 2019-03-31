@@ -422,6 +422,24 @@ enum AttachmentType {
     URL
 }
 
+entity ModelAssessmentConflict {
+    modelElementId String,
+    state EscalationState,
+    creationDate ZonedDateTime,
+    resolutionDate ZonedDateTime
+}
+
+entity ConflictingResult {
+    modelElementId String
+}
+
+enum EscalationState {
+    ON_REVIEW_BY_CAUSER,
+    ON_REVIEW_BY_AFFECTED_TUTOR,
+    ON_REVIEW_BY_INSTRUCTOR,
+    RESOLVED
+}
+
 relationship OneToMany {
     QuizPointStatistic{PointCounters} to PointCounter{quizPointStatistic},
     MultipleChoiceQuestionStatistic{AnswerCounters} to AnswerCounter{MultipleChoiceQuestionStatistic},
@@ -453,6 +471,7 @@ relationship OneToMany {
     Exercise{attachments} to Attachment{exercise},
     Exercise{studentQuestions} to StudentQuestion{exercise},
     Lecture{studentQuestions} to StudentQuestion{lecture},
+    ModelAssessmentConflict{conflictingResults} to ConflictingResult,
 }
 
 relationship OneToOne {
@@ -490,6 +509,8 @@ relationship ManyToOne {
     Notification{author} to User,
     SingleUserNotification{recipient} to User,
     GroupNotification{course} to Course,
+    ModelAssessmentConflict{result} to ExerciseResult,
+    ConflictingResult{result} to ExerciseResult,
 }
 
 relationship ManyToMany {
