@@ -99,6 +99,8 @@ function generateDragAndDropQuestion(
 async function generateDragAndDropItem(element: Element, model: UMLModel, fileUploaderService: FileUploaderService): Promise<{ dragItem: DragItem; dropLocation: DropLocation }> {
     if (element.type in UMLRelationshipType) {
         return generateDragAndDropItemForRelationship(element, model, fileUploaderService);
+    } else if (element.type === UMLElementType.ClassAttribute || element.type === UMLElementType.ClassMethod || element.type === UMLElementType.ObjectAttribute) {
+        return generateDragAndDropItemForText(element, model);
     } else {
         return generateDragAndDropItemForElement(element, model, fileUploaderService);
     }
@@ -115,6 +117,14 @@ async function generateDragAndDropItemForElement(
 
     const dragItem = new DragItem();
     dragItem.pictureFilePath = imageUploadResponse.path;
+    const dropLocation = computeDropLocation(element.bounds, model.size);
+
+    return { dragItem, dropLocation };
+}
+
+async function generateDragAndDropItemForText(element: Element, model: UMLModel): Promise<{ dragItem: DragItem; dropLocation: DropLocation }> {
+    const dragItem = new DragItem();
+    dragItem.text = element.name;
     const dropLocation = computeDropLocation(element.bounds, model.size);
 
     return { dragItem, dropLocation };
