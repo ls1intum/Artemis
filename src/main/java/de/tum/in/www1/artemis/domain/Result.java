@@ -1,16 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonView;
-import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.view.QuizView;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
+import static java.math.BigDecimal.ROUND_HALF_UP;
 
-import javax.annotation.Nullable;
-import javax.persistence.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
@@ -19,7 +10,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import static java.math.BigDecimal.ROUND_HALF_UP;
+import javax.annotation.Nullable;
+import javax.persistence.*;
+
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonView;
+
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
  * A Result.
@@ -61,16 +64,12 @@ public class Result implements Serializable {
     private Long score;
 
     /**
-     * Describes whether a result counts against the total score of a student.
-     * It determines whether the result is shown in the course dashboard or not.
-     * For quiz exercises:
-     * - results are rated=true when students participate in the live quiz mode (there can only be one such result)
-     * - results are rated=false when students participate in the practice mode
+     * Describes whether a result counts against the total score of a student. It determines whether the result is shown in the course dashboard or not. For quiz exercises: -
+     * results are rated=true when students participate in the live quiz mode (there can only be one such result) - results are rated=false when students participate in the
+     * practice mode
      * <p>
-     * For all other exercises (modeling, programming, etc.)
-     * - results are rated=true when students submit before the due date (or when the due date is null),
-     * multiple results can be rated=true, then the result with the last completionDate counts towards the total score of a student
-     * - results are rated=false when students submit after the due date
+     * For all other exercises (modeling, programming, etc.) - results are rated=true when students submit before the due date (or when the due date is null), multiple results can
+     * be rated=true, then the result with the last completionDate counts towards the total score of a student - results are rated=false when students submit after the due date
      */
     @Column(name = "rated")
     @JsonView(QuizView.Before.class)
@@ -87,12 +86,12 @@ public class Result implements Serializable {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(unique = true)
     @JsonView(QuizView.Before.class)
-    @JsonIgnoreProperties({"result", "participation"})
+    @JsonIgnoreProperties({ "result", "participation" })
     private Submission submission;
 
     @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderColumn
-    @JsonIgnoreProperties("result")
+    @JsonIgnoreProperties(value = "result", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonView(QuizView.Before.class)
     private List<Feedback> feedbacks = new ArrayList<>();
@@ -117,9 +116,8 @@ public class Result implements Serializable {
     private Boolean exampleResult;
 
     /**
-     * This property stores the total number of results in the participation this result belongs to.
-     * Not stored in the database, computed dynamically and used in showing statistics to the user
-     * in the exercise view.
+     * This property stores the total number of results in the participation this result belongs to. Not stored in the database, computed dynamically and used in showing statistics
+     * to the user in the exercise view.
      */
     @Transient
     @JsonProperty
@@ -132,7 +130,6 @@ public class Result implements Serializable {
     public void setSubmissionCount(Long submissionCount) {
         this.submissionCount = submissionCount;
     }
-
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -166,7 +163,8 @@ public class Result implements Serializable {
         DecimalFormat formatter = new DecimalFormat("#.##");
         if (maxScore == null) {
             resultString = (formatter.format(totalScore) + " points");
-        } else {
+        }
+        else {
             resultString = (formatter.format(totalScore) + " of " + formatter.format(maxScore) + " points");
         }
     }
@@ -220,11 +218,9 @@ public class Result implements Serializable {
     }
 
     /**
-     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without
-     * loading it's Feedback list. In this case you still want to know, if Feedback for this Result exists
-     * without querying the server/database again.
-     * IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the moment
-     * all other exercise types should set this flag to false
+     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without loading it's Feedback list. In this case you still want to know, if
+     * Feedback for this Result exists without querying the server/database again. IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the
+     * moment all other exercise types should set this flag to false
      *
      * @param hasFeedback
      */
@@ -233,11 +229,9 @@ public class Result implements Serializable {
     }
 
     /**
-     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without
-     * loading it's Feedback list. In this case you still want to know, if Feedback for this Result exists
-     * without querying the server/database again.
-     * IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the moment
-     * all other exercise types should set this flag to false
+     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without loading it's Feedback list. In this case you still want to know, if
+     * Feedback for this Result exists without querying the server/database again. IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the
+     * moment all other exercise types should set this flag to false
      *
      * @return
      */
@@ -246,11 +240,9 @@ public class Result implements Serializable {
     }
 
     /**
-     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without
-     * loading it's Feedback list. In this case you still want to know, if Feedback for this Result exists
-     * without querying the server/database again.
-     * IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the moment
-     * all other exercise types should set this flag to false
+     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without loading it's Feedback list. In this case you still want to know, if
+     * Feedback for this Result exists without querying the server/database again. IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the
+     * moment all other exercise types should set this flag to false
      *
      * @param hasFeedback
      * @return
@@ -261,8 +253,7 @@ public class Result implements Serializable {
     }
 
     /**
-     * 1. set score
-     * 2. set successful = true, if score is 100 or false if not
+     * 1. set score 2. set successful = true, if score is 100 or false if not
      *
      * @param score new score
      */
@@ -448,16 +439,8 @@ public class Result implements Serializable {
 
     @Override
     public String toString() {
-        return "Result{" +
-            "id=" + getId() +
-            ", resultString='" + getResultString() + "'" +
-            ", completionDate='" + getCompletionDate() + "'" +
-            ", successful='" + isSuccessful() + "'" +
-            ", buildArtifact='" + isBuildArtifact() + "'" +
-            ", score=" + getScore() +
-            ", rated='" + isRated() + "'" +
-            ", hasFeedback='" + getHasFeedback() + "'" +
-            "}";
+        return "Result{" + "id=" + getId() + ", resultString='" + getResultString() + "'" + ", completionDate='" + getCompletionDate() + "'" + ", successful='" + isSuccessful()
+                + "'" + ", buildArtifact='" + isBuildArtifact() + "'" + ", score=" + getScore() + ", rated='" + isRated() + "'" + ", hasFeedback='" + getHasFeedback() + "'" + "}";
     }
 
     /**
