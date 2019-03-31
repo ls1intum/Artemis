@@ -24,7 +24,7 @@
             "templateBuildPlanId": "Vorlage Build Plan Id",
             "solutionBuildPlanId": "Lösung Build Plan Id (optional)",
             "repositories": "Repositories",
-            "buildplans": "Build Plans",
+            "buildplans": "Build Pläne",
             "publishBuildPlanUrl": "Build Plan veröffentlichen",
             "allowOnlineEditor": "Online Editor erlauben",
             "programmingLanguage": "Programmiersprache",
