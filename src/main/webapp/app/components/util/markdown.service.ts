@@ -26,6 +26,7 @@ export class ArtemisMarkdown {
         range.setStart(range.start.row, offsetRange);
         aceEditorContainer.getEditor().selection.setRange(range);
     }
+
     constructor(private sanitizer: DomSanitizer) {}
 
     /**

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ContentChild, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ContentChild, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
@@ -22,11 +22,10 @@ import { DomainCommand } from 'app/markdown-editor/domainCommands';
 
 @Component({
     selector: 'jhi-markdown-editor',
-    styleUrls: ['./markdown-editor.scss'],
     providers: [ArtemisMarkdown],
     templateUrl: './markdown-editor.component.html',
 })
-export class MarkdownEditorComponent implements AfterViewInit, OnInit {
+export class MarkdownEditorComponent implements AfterViewInit {
     @ViewChild('aceEditor')
     aceEditorContainer: AceEditorComponent;
     aceEditorOptions = {
@@ -110,10 +109,6 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
     }
 
     ngAfterViewInit(): void {
-        this.setupMarkdownEditor();
-    }
-
-    ngOnInit(): void {
         if (this.domainCommands == null || this.domainCommands.length === 0) {
             [...this.defaultCommands, ...(this.headerCommands || [])].forEach(command => {
                 command.setEditor(this.aceEditorContainer);
@@ -123,6 +118,7 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
                 command.setEditor(this.aceEditorContainer);
             });
         }
+        this.setupMarkdownEditor();
     }
 
     /**
@@ -217,15 +213,12 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
      */
     private parseLineForDomainCommand = (text: string): [string, DomainCommand] => {
         for (const domainCommand of this.domainCommands) {
-            const identifierUpperCapitalLetter = domainCommand.getOpeningIdentifier().replace(
-                domainCommand.getOpeningIdentifier().charAt(1),
-                domainCommand
-                    .getOpeningIdentifier()
-                    .charAt(1)
-                    .toLocaleUpperCase(),
-            );
-            const possibleOpeningCommandIdentifier = [domainCommand.getOpeningIdentifier(), identifierUpperCapitalLetter, domainCommand.getOpeningIdentifier().toUpperCase()];
-            if (possibleOpeningCommandIdentifier.some(identifier => text.toLocaleLowerCase().indexOf(identifier) !== -1)) {
+            const possibleOpeningCommandIdentifier = [
+                domainCommand.getOpeningIdentifier(),
+                domainCommand.getOpeningIdentifier().toLowerCase(),
+                domainCommand.getOpeningIdentifier().toUpperCase(),
+            ];
+            if (possibleOpeningCommandIdentifier.some(identifier => text.indexOf(identifier) !== -1)) {
                 // TODO when closingIdentifiers are used write a method to extract them from the text
                 const trimmedLineWithoutIdentifier = possibleOpeningCommandIdentifier.reduce((line, identifier) => line.replace(identifier, ''), text).trim();
                 return [trimmedLineWithoutIdentifier, domainCommand];
@@ -238,8 +231,11 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
      * @function togglePreview
      * @desc Toggle the preview in the template and parse the text
      */
-    togglePreview(): void {
+    togglePreview(event: any): void {
         this.previewMode = !this.previewMode;
-        this.parse();
+        // The text must only be parsed when the active tab before event was edit, otherwise the text can't have changed.
+        if (event.activeId === 'editor_edit') {
+            this.parse();
+        }
     }
 }

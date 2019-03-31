@@ -1,14 +1,15 @@
 package de.tum.in.www1.artemis.repository;
 
-import de.tum.in.www1.artemis.domain.Participation;
-import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-import java.util.Optional;
+import de.tum.in.www1.artemis.domain.Participation;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 
 /**
  * Spring Data JPA repository for the Participation entity.
@@ -26,14 +27,11 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
     @Query("select distinct participation from Participation participation left join fetch participation.results where participation.exercise.course.id = :courseId")
     List<Participation> findByCourseIdWithEagerResults(@Param("courseId") Long courseId);
 
-    Optional<Participation> findOneByExerciseIdAndStudentLogin(Long exerciseId, String username);
+    Optional<Participation> findByExerciseIdAndStudentLogin(Long exerciseId, String username);
 
     Participation findOneByExerciseIdAndStudentLoginAndInitializationState(Long exerciseId, String username, InitializationState state);
 
     List<Participation> findByBuildPlanIdAndInitializationState(String buildPlanId, InitializationState state);
-
-    @Query("select participation from Participation participation where participation.student.login = ?#{principal.username}")
-    List<Participation> findByStudentIsCurrentUser();
 
     @Query("select distinct participation from Participation participation left join fetch participation.results where participation.student.login = :#{#username}")
     List<Participation> findByStudentUsernameWithEagerResults(@Param("username") String username);
@@ -56,7 +54,8 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
     @Query("select distinct participation from Participation participation left join fetch participation.submissions left join fetch participation.results r left join fetch r.assessor where participation.id = :#{#participationId}")
     Optional<Participation> findByIdWithEagerSubmissionsAndEagerResultsAndEagerAssessors(@Param("participationId") Long participationId);
 
-    //TODO: at the moment we don't want to consider online courses due to some legacy programming exercises where the VCS repo does not notify Artemis that there is a new submission). In the future we can deactivate the last part.
+    // TODO: at the moment we don't want to consider online courses due to some legacy programming exercises where the VCS repo does not notify Artemis that there is a new
+    // submission). In the future we can deactivate the last part.
     @Query("select distinct participation from Participation participation left join fetch participation.results where participation.buildPlanId is not null and participation.student is not null and participation.exercise.course.onlineCourse = false")
     List<Participation> findAllWithBuildPlanId();
 
