@@ -2,21 +2,21 @@
     "arTeMiSApp": {
         "programmingExercise": {
             "home": {
-                "title": "Programming Exercises",
-                "createLabel": "neue Programmieraufgabe erstellen",
+                "title": "Programmieraufgaben",
+                "createLabel": "Neue Programmieraufgabe erstellen",
                 "editLabel": "Programmieraufgabe bearbeiten",
-                "linkLabel": "neue Programmieraufgabe verlinken",
-                "editLinkLabel": "verlinkte Programmieraufgabe bearbeiten",
-                "createOrEditLabel": "Programming Exercise erstellen oder bearbeiten"
+                "linkLabel": "Neue Programmieraufgabe verlinken",
+                "editLinkLabel": "Verlinkte Programmieraufgabe bearbeiten",
+                "createOrEditLabel": "Programmieraufgabe erstellen oder bearbeiten"
             },
-            "created": "Programming Exercise erstellt mit Title {{ param }}",
-            "updated": "Programming Exercise aktualisiert mit Title {{ param }}",
-            "deleted": "Programming Exercise gelöscht mit Title {{ param }}",
+            "created": "Programmieraufgabe erstellt mit Title {{ param }}",
+            "updated": "Programmieraufgabe aktualisiert mit Title {{ param }}",
+            "deleted": "Programmieraufgabe gelöscht mit Title {{ param }}",
             "delete": {
-                "question": "Soll Programming Exercise {{ title }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Programmieraufgabe {{ title }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Programming Exercise"
+                "title": "Programmieraufgabe"
             },
             "templateRepositoryUrl": "Vorlage Repository Url",
             "testRepositoryUrl": "Test Repository Url (optional)",
@@ -25,9 +25,9 @@
             "solutionBuildPlanId": "Lösung Build Plan Id (optional)",
             "repositories": "Repositories",
             "buildplans": "Build Plans",
-            "publishBuildPlanUrl": "Publish Build Plan",
-            "allowOnlineEditor": "Allow Online Editor",
-            "programmingLanguage": "Programming Language",
+            "publishBuildPlanUrl": "Build Plan veröffentlichen",
+            "allowOnlineEditor": "Online Editor erlauben",
+            "programmingLanguage": "Programmiersprache",
             "packageName": "Package Name",
             "templateResult": "Ergebnis Vorlage",
             "solutionResult": "Ergebnis Lösung"
