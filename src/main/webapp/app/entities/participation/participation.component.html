@@ -1,7 +1,6 @@
 <div *ngIf="participations">
     <h2>
-        <span>{{exercise?.title}} - </span>
-        {{participations.length}} <span jhiTranslate="arTeMiSApp.participation.home.title">Participations</span>
+        <span>{{exercise?.title}} - </span>{{participations.length}} <span jhiTranslate="arTeMiSApp.participation.home.title">Participations</span>
     </h2>
     <jhi-alert></jhi-alert>
     <div class="row">
@@ -26,19 +25,13 @@
                 <!-- TODO get the correct URL from the server instead of hardcoding Bamboo here -->
                 <td *ngIf="exercise?.type == PROGRAMMING"><span *ngIf="participation.repositoryUrl != null"><a href="{{participation.repositoryUrl}}" target="_blank">Repository Link</a></span></td>
                 <td *ngIf="exercise?.type == PROGRAMMING"><span *ngIf="participation.buildPlanId != null"><a href="https://bamboobruegge.in.tum.de/browse/{{participation.buildPlanId}}" target="_blank">{{participation.buildPlanId}}</a></span></td>
-                <td>{{participation.initializationState}}</td>
+                <td>{{'arTeMiSApp.InitializationState.' + participation.initializationState | translate}}</td>
                 <td>{{participation.initializationDate | date:'medium'}}</td>
                 <td>
                     <a routerLink="/user-management/{{participation.student?.login}}/view">{{participation.student?.firstName}} {{participation.student?.lastName}}</a>
                 </td>
                 <td class="text-right">
                     <div class="btn-group flex-btn-group-container">
-                        <button type="submit"
-                                routerLink="/participation/{{participation.id}}"
-                                class="btn btn-info btn-sm mr-1">
-                            <fa-icon icon="eye"></fa-icon>
-                            <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
-                        </button>
                         <button type="submit"
                                 [routerLink]="['/', { outlets: { popup: 'participation/'+ participation.id + '/delete'} }]"
                                 replaceUrl="true"

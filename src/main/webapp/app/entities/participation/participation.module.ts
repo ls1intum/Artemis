@@ -11,48 +11,33 @@ import {
     ParticipationComponent,
     ParticipationDeleteDialogComponent,
     ParticipationDeletePopupComponent,
-    ParticipationDetailComponent,
     participationPopupRoute,
     ParticipationPopupService,
     participationRoute,
-    ParticipationService
+    ParticipationService,
 } from './';
 import { SortByModule } from 'app/components/pipes';
 
-const ENTITY_STATES = [
-    ...participationRoute,
-    ...participationPopupRoute,
-];
+const ENTITY_STATES = [...participationRoute, ...participationPopupRoute];
 
 @NgModule({
-    imports: [
-        ArTEMiSSharedModule,
-        ArTEMiSAdminModule,
-        RouterModule.forChild(ENTITY_STATES),
-        SortByModule
-    ],
+    imports: [ArTEMiSSharedModule, ArTEMiSAdminModule, RouterModule.forChild(ENTITY_STATES), SortByModule],
     declarations: [
         ParticipationComponent,
-        ParticipationDetailComponent,
         ParticipationDeleteDialogComponent,
         ParticipationDeletePopupComponent,
         ParticipationCleanupBuildPlanDialogComponent,
-        ParticipationCleanupBuildPlanPopupComponent
+        ParticipationCleanupBuildPlanPopupComponent,
     ],
     entryComponents: [
         ParticipationComponent,
         ParticipationDeleteDialogComponent,
         ParticipationDeletePopupComponent,
         ParticipationCleanupBuildPlanDialogComponent,
-        ParticipationCleanupBuildPlanPopupComponent
-
+        ParticipationCleanupBuildPlanPopupComponent,
     ],
-    providers: [
-        ParticipationService,
-        ParticipationPopupService,
-        { provide: JhiLanguageService, useClass: JhiLanguageService }
-    ],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+    providers: [ParticipationService, ParticipationPopupService, { provide: JhiLanguageService, useClass: JhiLanguageService }],
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArTEMiSParticipationModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
