@@ -3,14 +3,22 @@ package de.tum.in.www1.artemis.web.rest;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.service.FileService;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.core.io.support.ResourcePatternUtils;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -29,9 +37,11 @@ public class FileResource {
     private final Logger log = LoggerFactory.getLogger(FileResource.class);
 
     private final FileService fileService;
+    private final ResourceLoader resourceLoader;
 
-    public FileResource(FileService fileService) {
+    public FileResource(FileService fileService, ResourceLoader resourceLoader) {
         this.fileService = fileService;
+        this.resourceLoader = resourceLoader;
     }
 
     /**
@@ -114,7 +124,17 @@ public class FileResource {
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR', 'TA')")
     public ResponseEntity<byte[]> getTemplateFile(@PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
-        return responseEntityForFilePath(Constants.TEMPLATE_FILEPATH + filename);
+        Resource resource = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResource("classpath:templates/"  + filename);
+        try {
+            File file = resource.getFile();
+            byte[] fileContent = IOUtils.toByteArray(new FileInputStream(file));
+            HttpHeaders responseHeaders = new HttpHeaders();
+            responseHeaders.setContentType(MediaType.TEXT_PLAIN);
+            return new ResponseEntity(fileContent, responseHeaders, HttpStatus.OK);
+        } catch(IOException ex) {
+            HttpHeaders responseHeaders = new HttpHeaders();
+            return new ResponseEntity(null, responseHeaders, HttpStatus.NOT_FOUND);
+        }
     }
 
     /**
