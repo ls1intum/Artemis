@@ -40,4 +40,12 @@ export class ModelingAssessmentConflictComponent implements OnInit {
             });
         });
     }
+
+    onNextConflict() {
+        this.conflictIndex = this.conflictIndex < this.conflicts.length - 1 ? ++this.conflictIndex : this.conflictIndex;
+    }
+
+    onPrevConflict() {
+        this.conflictIndex = this.conflictIndex > 0 ? --this.conflictIndex : this.conflictIndex;
+    }
 }
