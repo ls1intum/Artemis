@@ -153,7 +153,7 @@ async function generateDragAndDropItemForElement(element: Element, model: UMLMod
     const dragItem = new DragItem();
     dragItem.tempID = generate();
     dragItem.pictureFilePath = imageUploadResponse.path;
-    const dropLocation = computeDropLocation(element.bounds, model.size);
+    const dropLocation = computeDropLocation(renderedElement.clip, model.size);
 
     return new DragAndDropMapping(dragItem, dropLocation);
 }
@@ -188,18 +188,13 @@ async function generateDragAndDropItemForRelationship(element: Element, model: U
     const MIN_SIZE = 30;
 
     let margin = {};
-    const bounds = { ...element.bounds };
-    if (bounds.width < MIN_SIZE) {
+    if (element.bounds.width < MIN_SIZE) {
         const delta = MIN_SIZE - element.bounds.width;
         margin = { ...margin, right: delta / 2, left: delta / 2 };
-        bounds.x -= delta / 2;
-        bounds.width = MIN_SIZE;
     }
-    if (bounds.height < MIN_SIZE) {
+    if (element.bounds.height < MIN_SIZE) {
         const delta = MIN_SIZE - element.bounds.height;
         margin = { ...margin, top: delta / 2, bottom: delta / 2 };
-        bounds.y -= delta / 2;
-        bounds.height = MIN_SIZE;
     }
 
     const renderedElement: SVG = ApollonEditor.exportModelAsSvg(model, { margin, include: [element.id] });
@@ -209,7 +204,7 @@ async function generateDragAndDropItemForRelationship(element: Element, model: U
     const dragItem = new DragItem();
     dragItem.tempID = generate();
     dragItem.pictureFilePath = imageUploadResponse.path;
-    const dropLocation = computeDropLocation(bounds, model.size);
+    const dropLocation = computeDropLocation(renderedElement.clip, model.size);
 
     return new DragAndDropMapping(dragItem, dropLocation);
 }
