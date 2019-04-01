@@ -148,6 +148,7 @@ export class CodeEditorComponent implements OnInit, OnChanges, OnDestroy {
     updateLatestResult($event: any) {
         this.isBuilding = false;
         this.latestResult = $event.newResult;
+        this.participation.results = [this.latestResult, ...this.participation.results];
     }
 
     /**
