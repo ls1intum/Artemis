@@ -65,6 +65,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             this.feedbacks = changes.feedbacks.currentValue;
             this.updateElementFeedbackMapping(this.feedbacks, true);
             this.updateApollonAssessments(this.feedbacks);
+            this.calculateTotalScore();
         }
     }
 
