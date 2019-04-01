@@ -64,15 +64,12 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         if (changes.feedbacks && changes.feedbacks.currentValue && this.model) {
             this.feedbacks = changes.feedbacks.currentValue;
             this.updateElementFeedbackMapping(this.feedbacks, true);
-            this.updateApollonAssessments(this.feedbacks);
+            this.setApollonAssessments(this.feedbacks);
             this.calculateTotalScore();
         }
     }
 
     /**
-     * Initializes the Apollon editor with the Feedback List in Assessment mode.
-     * The Feedback elements are converted to Assessment objects needed by Apollon before they are added to
-     * the initial model which is then passed to Apollon.
      */
     private initializeApollonEditor() {
         if (this.apollonEditor !== null) {
@@ -130,7 +127,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         }
     }
 
-    private updateApollonAssessments(feedbacks: Feedback[]) {
+    private setApollonAssessments(feedbacks: Feedback[]) {
         this.model.assessments = feedbacks.map(feedback => {
             return {
                 modelElementId: feedback.referenceId,
@@ -143,8 +140,6 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
 
     /**
      * Calculates the total score of the current assessment.
-     * Returns an error if the total score cannot be calculated
-     * because a score is not a number/empty.
      * This function originally checked whether the total score is negative
      * or greater than the max. score, but we decided to remove the restriction
      * and instead set the score boundaries on the server.
