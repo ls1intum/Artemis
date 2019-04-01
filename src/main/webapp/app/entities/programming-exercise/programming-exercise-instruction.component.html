@@ -1,4 +1,4 @@
-<div class="border" *ngIf="rawMarkdown; else loadingInstructions">
+<div class="border" *ngIf="!isLoading; else loadingInstructions">
     <div class="card-second-header" [hidden]="steps.length === 0">
         <div class="stepwizard">
             <div class="stepwizard-row">

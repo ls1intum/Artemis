@@ -115,10 +115,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         }
     }
 
-    private renderInstructions(markdown: string) {
-        // return this.markdownService.renderInstructions(markdown, undefined, undefined);
-    }
-
     private subscribeToSaveResponse(result: Observable<HttpResponse<ProgrammingExercise>>) {
         result.subscribe((res: HttpResponse<ProgrammingExercise>) => this.onSaveSuccess(), (res: HttpErrorResponse) => this.onSaveError(res));
     }

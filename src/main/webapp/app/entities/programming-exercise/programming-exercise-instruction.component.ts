@@ -7,6 +7,10 @@ import { CodeEditorService } from '../../code-editor/code-editor.service';
 import { EditorInstructionsResultDetailComponent } from '../../code-editor/instructions/code-editor-instructions-result-detail';
 import { Feedback } from '../feedback';
 import { Result, ResultService } from '../result';
+import { ProgrammingExercise } from './programming-exercise.model';
+import { FileService } from 'app/shared/http/file.service';
+import { RepositoryFileService } from '../repository';
+import { Participation } from '../participation';
 
 type Step = {
     title: string;
@@ -21,10 +25,10 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     private markdown: Remarkable;
 
     @Input()
-    public rawMarkdown: string;
-    @Input()
-    private latestResult: Result;
+    public participation: Participation;
 
+    public isLoading = true;
+    private latestResult: Result;
     private resultDetails: Feedback[];
     public steps: Array<Step> = [];
     public renderedMarkdown: string;
@@ -35,6 +39,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         private editorService: CodeEditorService,
         private translateService: TranslateService,
         private resultService: ResultService,
+        private fileService: FileService,
+        private repositoryFileService: RepositoryFileService,
         private renderer: Renderer2,
         private elementRef: ElementRef,
         private modalService: NgbModal,
@@ -47,18 +53,53 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     }
 
     public ngOnChanges(changes: SimpleChanges) {
-        if (this.rawMarkdown && (changes.rawMarkdown || changes.latestResult || changes.resultDetails)) {
+        if (changes.participation.currentValue) {
             this.steps = [];
-            this.loadResultsDetails()
-                .then((resultDetails: Feedback[]) => {
-                    this.resultDetails = resultDetails;
+            this.loadInstructions()
+                .then(() => {
+                    if (this.participation.results) {
+                        this.latestResult = this.participation.results[0];
+                        Promise.resolve();
+                    } else {
+                        return this.loadLatestResult();
+                    }
+                })
+                .then(() => {
+                    if (this.latestResult) {
+                        return this.loadResultsDetails();
+                    } else {
+                        Promise.resolve();
+                    }
+                })
+                .then(() => {
+                    this.renderedMarkdown = this.markdown.render(this.participation.exercise.problemStatement);
+                    // For whatever reason, we have to wait a tick here. The markdown parser should be synchronous...
+                    setTimeout(() => this.setUpClickListeners(), 100);
                 })
                 .finally(() => {
-                    this.renderedMarkdown = this.markdown.render(this.rawMarkdown);
-                    // For whatever reason, we have to wait a tick here. The markdown parser should be synchronous...
-                    setTimeout(() => this.setUpClickListeners(), 0);
+                    this.isLoading = false;
                 });
         }
+    }
+
+    loadLatestResult() {
+        return new Promise((resolve, reject) => {
+            const { exercise } = this.participation;
+            this.resultService
+                .findResultsForParticipation(exercise.course.id, exercise.id, this.participation.id, {
+                    showAllResults: true,
+                })
+                .subscribe(
+                    (latestResult: any) => {
+                        this.latestResult = latestResult.body.length && latestResult.body[0];
+                        resolve();
+                    },
+                    err => {
+                        console.log('Error while loading latest results!', err);
+                        reject();
+                    },
+                );
+        });
     }
 
     /**
@@ -69,7 +110,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         return new Promise((resolve, reject) =>
             this.resultService.getFeedbackDetailsForResult(this.latestResult.id).subscribe(
                 resultDetails => {
-                    resolve(resultDetails.body);
+                    this.resultDetails = resultDetails.body;
+                    resolve();
                 },
                 err => {
                     console.log('Error while loading result details!', err);
@@ -77,6 +119,38 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 },
             ),
         );
+    }
+
+    /**
+     * @function loadInstructions
+     * @desc Loads the instructions for the programming exercise.
+     * We added the problemStatement later, historically the instructions where a file in the student's repository
+     * This is why we now prefer the problemStatement and if it doesn't exist try to load the readme.
+     */
+    loadInstructions() {
+        return new Promise((resolve, reject) => {
+            if (this.participation.exercise.id === undefined) {
+                this.fileService.getTemplateFile('programming-exercise-instructions').subscribe(file => {
+                    this.participation.exercise.problemStatement = file;
+                    resolve();
+                });
+                // Historical fallback: Older exercises have an instruction file in the git repo
+            } else if (this.participation.exercise.problemStatement === undefined) {
+                this.repositoryFileService.get((this.participation.exercise as ProgrammingExercise).templateParticipation.id, 'README.md').subscribe(
+                    fileObj => {
+                        this.participation.exercise.problemStatement = fileObj.fileContent;
+                        resolve();
+                    },
+                    err => {
+                        // TODO: handle the case that there is no README.md file
+                        console.log('Error while getting README.md file!', err);
+                        reject();
+                    },
+                );
+            } else {
+                resolve();
+            }
+        });
     }
 
     private setUpClickListeners() {
@@ -90,6 +164,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
 
         testStatusDOMElements.forEach((element: any) => {
             const listenerRemoveFunction = this.renderer.listen(element, 'click', event => {
+                event.stopPropagation();
                 // Extract the data attribute for tests and open the details popup with it
                 let tests = '';
                 if (event.target.getAttribute('data-tests')) {

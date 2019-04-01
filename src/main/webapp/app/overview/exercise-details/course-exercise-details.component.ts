@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common';
-import { Exercise, ExerciseCategory, ExerciseService, ExerciseType, getIcon } from 'app/entities/exercise';
+import { Exercise, ExerciseCategory, ExerciseService, ExerciseType, getIcon, isProgrammingExercise } from 'app/entities/exercise';
 import { CourseScoreCalculationService, CourseService } from 'app/entities/course';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
@@ -13,7 +13,7 @@ const MAX_RESULT_HISTORY_LENGTH = 5;
 @Component({
     selector: 'jhi-course-exercise-details',
     templateUrl: './course-exercise-details.component.html',
-    styleUrls: ['../course-overview.scss']
+    styleUrls: ['../course-overview.scss'],
 })
 export class CourseExerciseDetailsComponent implements OnInit {
     readonly QUIZ = ExerciseType.QUIZ;
@@ -32,14 +32,17 @@ export class CourseExerciseDetailsComponent implements OnInit {
     public exerciseCategories: ExerciseCategory[];
 
     getIcon = getIcon;
+    isProgrammingExercise = isProgrammingExercise;
 
-    constructor(private $location: Location, private exerciseService: ExerciseService,
-                private courseService: CourseService,
-                private accountService: AccountService,
-                private courseCalculationService: CourseScoreCalculationService,
-                private courseServer: CourseService,
-                private route: ActivatedRoute) {
-    }
+    constructor(
+        private $location: Location,
+        private exerciseService: ExerciseService,
+        private courseService: CourseService,
+        private accountService: AccountService,
+        private courseCalculationService: CourseScoreCalculationService,
+        private courseServer: CourseService,
+        private route: ActivatedRoute,
+    ) {}
 
     ngOnInit() {
         this.subscription = this.route.params.subscribe(params => {
@@ -63,6 +66,7 @@ export class CourseExerciseDetailsComponent implements OnInit {
                     this.sortedHistoryResult = this.sortedResults.slice(startingElement, sortedResultLength);
                 }
                 this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
+                this.exercise.participations = this.exercise.participations && this.exercise.participations.map(p => ({ ...p, exercise }));
             });
         }
     }
@@ -92,7 +96,6 @@ export class CourseExerciseDetailsComponent implements OnInit {
             return `/course/${this.courseId}/exercise/${this.exercise.id}/assessment`;
         } else if (this.exercise.type === ExerciseType.TEXT) {
             return `/text/${this.exercise.id}/assessment`;
-
         } else {
             return;
         }
