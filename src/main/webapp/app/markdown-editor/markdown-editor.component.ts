@@ -42,7 +42,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     @Output() html = new EventEmitter<string>();
 
     /** colors for the markdown editor*/
-    markdownColors = ['#ca2024', '#3ea119', '#ffffff', '#000000', '#fffa5c', '#0d3cc2', '#b05db8', '#d89770'];
+    markdownColors = ['#ca2024', '#3ea119', '#ffffff', '#000000', '#fffa5c', '#0d3cc2', '#b05db8', '#d86b1f'];
     selectedColor = '#000000';
     /** {array} containing all colorPickerCommands */
     colorCommands: Command[] = [new ColorPickerCommand()];

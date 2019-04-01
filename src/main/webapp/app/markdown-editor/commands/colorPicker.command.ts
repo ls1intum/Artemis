@@ -24,35 +24,35 @@ export class ColorPickerCommand extends Command {
             let textToAdd = '';
             switch (color) {
                 case '#ca2024':
-                    textToAdd = `<span style="color:#ca2024">` + `${selectedText}` + `</span>`;
+                    textToAdd = `<span class="red">` + `${selectedText}` + `</span>`;
                     this.insertText(textToAdd);
                     break;
                 case '#3ea119':
-                    textToAdd = `<span style="color:#3ea119">` + `${selectedText}` + `</span>`;
+                    textToAdd = `<span class="green">` + `${selectedText}` + `</span>`;
                     this.insertText(textToAdd);
                     break;
                 case '#ffffff':
-                    textToAdd = `<span style="color:#ffffff">` + `${selectedText}` + `</span>`;
+                    textToAdd = `<span class="white">` + `${selectedText}` + `</span>`;
                     this.insertText(textToAdd);
                     break;
                 case '#000000':
-                    textToAdd = `<span style="color:#000000">` + `${selectedText}` + `</span>`;
+                    textToAdd = `<span class="black">` + `${selectedText}` + `</span>`;
                     this.insertText(textToAdd);
                     break;
                 case '#fffa5c':
-                    textToAdd = `<span style="color:#fffa5c">` + `${selectedText}` + `</span>`;
+                    textToAdd = `<span class="yellow">` + `${selectedText}` + `</span>`;
                     this.insertText(textToAdd);
                     break;
                 case '#0d3cc2':
-                    textToAdd = `<span style="color:#0d3cc2">` + `${selectedText}` + `</span>`;
+                    textToAdd = `<span class="blue">` + `${selectedText}` + `</span>`;
                     this.insertText(textToAdd);
                     break;
                 case '#b05db8':
-                    textToAdd = `<span style="color:#b05db8">` + `${selectedText}` + `</span>`;
+                    textToAdd = `<span class="lila">` + `${selectedText}` + `</span>`;
                     this.insertText(textToAdd);
                     break;
-                case '#d89770':
-                    textToAdd = `<span style="color:#d89770">` + `${selectedText}` + `</span>`;
+                case '#d86b1f':
+                    textToAdd = `<span class="orange">` + `${selectedText}` + `</span>`;
                     this.insertText(textToAdd);
                     break;
             }

@@ -121,7 +121,6 @@ export class ArtemisMarkdown {
             backslashEscapesHTMLTags: true,
         });
         const html = converter.makeHtml(markdownText);
-        return html;
-        // return this.sanitizer.sanitize(SecurityContext.HTML, html);
+        return this.sanitizer.sanitize(SecurityContext.HTML, html);
     }
 }

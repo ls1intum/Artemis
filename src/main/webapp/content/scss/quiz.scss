@@ -1,4 +1,4 @@
-@import "~bootstrap/scss/bootstrap-grid.scss";
+@import '~bootstrap/scss/bootstrap-grid.scss';
 .edit-quiz {
     display: flex;
     flex-direction: column;
@@ -56,9 +56,6 @@
     border-radius: 50%;
     text-align: center;
 }
-
-
-
 
 .edit-quiz .quiz-options,
 .question-options {
@@ -396,8 +393,10 @@
     }
 }
 
-.edit-dnd-question,.edit-sa-question,
-.dnd-question, .sa-question {
+.edit-dnd-question,
+.edit-sa-question,
+.dnd-question,
+.sa-question {
     .background-area {
         position: relative;
 
@@ -455,7 +454,8 @@
     }
 }
 
-.edit-dnd-question, .edit-sa-question {
+.edit-dnd-question,
+.edit-sa-question {
     .markupEditorArea {
         margin-bottom: 14px;
 
@@ -689,7 +689,8 @@
     }
 }
 
-.dnd-question, .sa-question {
+.dnd-question,
+.sa-question {
     .background-area {
         .click-layer {
             .drop-location {
@@ -1004,7 +1005,7 @@ table.answer-options-result {
 }
 
 .questionright {
-    color: green
+    color: green;
 }
 
 .questionwrong {
@@ -1266,7 +1267,6 @@ table.answer-options-result {
 
 /* StepwizardQuiz for the progress bar*/
 
-
 .stepwizardquiz-step .fa {
     vertical-align: initial;
 }
@@ -1304,14 +1304,13 @@ table.answer-options-result {
             }
         }
     }
-
 }
 
 /* Start Changes Progress Bar */
 
 .stepwizardquiz {
     ngb-tooltip-window {
-        width: 200px!important;
+        width: 200px !important;
     }
 }
 
@@ -1320,9 +1319,9 @@ ngb-tooltip-window {
     /*background: #cf0!important;*/
 }
 
-    ngb-tooltip-window > div {
-        margin: auto!important;
-    }
+ngb-tooltip-window > div {
+    margin: auto !important;
+}
 
 /* End Changes Progress Bar */
 
@@ -1336,14 +1335,13 @@ ngb-tooltip-window {
     opacity: 1 !important;
 }
 
-
 .stepwizardquiz-step {
     display: table-cell;
     text-align: center;
     position: relative;
 }
 
-.btn-circle.btn-circle{
+.btn-circle.btn-circle {
     width: 30px;
     height: 30px;
     text-align: center;
@@ -1367,4 +1365,31 @@ ngb-tooltip-window {
 }
 .changed-question {
     background-color: #527cd7 !important;
+}
+
+.markdown-preview {
+    .red {
+        color: #ca2024;
+    }
+    .green {
+        color: #3ea119;
+    }
+    .white {
+        color: #ffffff;
+    }
+    .black {
+        color: #000000;
+    }
+    .yellow {
+        color: #fffa5c;
+    }
+    .blue {
+        color: #0d3cc2;
+    }
+    .lila {
+        color: #b05db8;
+    }
+    .orange {
+        color: #d86b1f;
+    }
 }
