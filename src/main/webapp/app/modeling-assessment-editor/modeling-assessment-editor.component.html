@@ -1,4 +1,4 @@
-<div class="assessment-container">
+<div *ngIf="!conflicts; else conflictResolution" class="assessment-container">
     <jhi-alert></jhi-alert>
     <h2 class="top-container">
         <div class="assessment-title row-container">
@@ -34,3 +34,6 @@
         <jhi-assessment-instructions *ngIf="modelingExercise" [exercise]="modelingExercise" [collapsed]="false"></jhi-assessment-instructions>
     </div>
 </div>
+<ng-template #conflictResolution>
+    <jhi-modeling-assessment-conflict [conflicts]="conflicts" [submission]="submission" [modelingExercise]="modelingExercise"></jhi-modeling-assessment-conflict>
+</ng-template>

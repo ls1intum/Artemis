@@ -26,13 +26,13 @@ $titlebar-height: 65px;
 
 .assessment-container {
     display: flex;
-    height: calc(100vh - 174px);
+    height: calc(100vh - 140px);
     flex-flow: column nowrap;
 }
 
 .editor-container {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     width: 100%;
     overflow: auto;
     jhi-modeling-assessment {

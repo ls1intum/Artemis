@@ -1,13 +1,13 @@
 <div class="conflict-container">
     <jhi-alert></jhi-alert>
     <h2 class="navigation-container">
-        Conflict
+        Conflicts
         <div class="control-container row-container">
-            <button class="btn btn-primary">
+            <button class="btn btn-primary" (click)="onPrevConflict()">
                 <fa-icon icon="arrow-left"></fa-icon>
             </button>
             <span>{{ conflictIndex + 1 }}/{{ conflicts.length }}</span>
-            <button class="btn btn-primary">
+            <button class="btn btn-primary" (click)="onNextConflict()">
                 <fa-icon icon="arrow-right"></fa-icon>
             </button>
         </div>
@@ -27,6 +27,7 @@
             class="assessment"
             [diagramType]="this.modelingExercise.diagramType"
             [model]="model"
+            [assessor]="user"
             [readOnly]="true"
         ></jhi-modeling-assessment>
         <jhi-assessment-instructions *ngIf="modelingExercise" [exercise]="modelingExercise" [collapsed]="true"></jhi-assessment-instructions>
