@@ -1,0 +1,16 @@
+.submission-container {
+    display: flex;
+    //height: calc(100vh - 174px);
+    flex-flow: column nowrap;
+}
+
+.editor-container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    overflow: auto;
+    jhi-modeling-editor {
+        max-width: 100%;
+        min-width: 0;
+    }
+}

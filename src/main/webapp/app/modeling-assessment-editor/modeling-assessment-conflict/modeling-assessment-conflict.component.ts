@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, Renderer2 } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/modeling-submission';
 import { ModelingExercise } from 'app/entities/modeling-exercise';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
@@ -12,7 +12,7 @@ import { Conflict } from 'app/modeling-assessment-editor/conflict.model';
 })
 export class ModelingAssessmentConflictComponent implements OnInit {
     model: UMLModel;
-    conflictIndex: number = 0;
+    conflictIndex = 0;
 
     @Input() submission: ModelingSubmission;
     @Input() modelingExercise: ModelingExercise;

@@ -99,6 +99,7 @@ import { ArTEMiSModelingAssessmentEditorModule } from 'app/modeling-assessment-e
         ArTEMiSExampleSubmissionModule,
         ArTEMiSComplaintsModule,
         ArTEMiSModelingAssessmentEditorModule,
+        ArTEMiSModelingSubmissionModule,
         // jhipster-needle-angular-add-module JHipster will add new module here
     ],
     declarations: [JhiMainComponent, NavbarComponent, ErrorComponent, PageRibbonComponent, ActiveMenuDirective, FooterComponent, QuizExerciseExportComponent],
