@@ -47,13 +47,11 @@ export class SecuredImageComponent implements OnChanges {
             .map(e => this.domSanitizer.bypassSecurityTrustUrl(URL.createObjectURL(e)))
             .catch(error => {
                 this.endLoadingProcess.emit(false);
-                if (this.value < 2) {
-                    this.value++;
+                const numbers = [1, 2];
+                for (let i = 0; i < numbers.length; i++) {
                     this.loadImage(url);
-                    console.log(error);
-                } else {
-                    return error;
                 }
+                return error;
             });
         this.endLoadingProcess.emit(true);
         return element;

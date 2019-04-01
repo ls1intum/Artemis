@@ -70,7 +70,7 @@ export class DragAndDropQuestionComponent implements OnChanges {
     dropAllowed = false;
     correctAnswer: number;
 
-    loading = true;
+    loading = false;
 
     constructor(private artemisMarkdown: ArtemisMarkdown, private dragAndDropQuestionUtil: DragAndDropQuestionUtil) {}
 
@@ -100,11 +100,13 @@ export class DragAndDropQuestionComponent implements OnChanges {
         this.dropAllowed = false;
     }
 
+    /** Sets the view displayed to the user
+     * @param {Output} value -> true: background picture for drag and drop question is loaded
+     *                          false: background picture for drag and drop question is not loaded*/
     changeLoading(value: boolean) {
-        console.log(value);
         this.loading = value;
-        console.log(value);
     }
+
     /**
      * react to the drop event of a drag item
      *
