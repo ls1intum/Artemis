@@ -27,6 +27,11 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     public exercise: ProgrammingExercise;
     @Input()
     public participation: Participation;
+    // If true, shows the participation of the exercise's template, instead of the assignment participation
+    @Input()
+    private showTemplatePartipation = false;
+    // Emits an event, if this component loads a readme file from a student's git repository.
+    // This is a workaround, see the comments on loadInstructions for more info.
     @Output()
     public onInstructionLoad = new EventEmitter();
 
@@ -55,15 +60,18 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     }
 
     public ngOnChanges(changes: SimpleChanges) {
-        if (this.participation && this.exercise && (changes.participation || (changes.exercise && changes.exercise.firstChange))) {
+        // To avoid unnecessary api calls, wait until both the participation and exercise are available.
+        // Only reload api data on the first change of the exercise, as it doesn't have an influence on test results.
+        if (this.participation && this.exercise && (changes.participation || (changes.exercise && changes.exercise.currentValue && changes.exercise.firstChange))) {
             this.loadInstructions()
                 .catch(() => {
                     this.exercise.problemStatement = '';
+                    return Promise.resolve();
                 })
                 .then(() => {
                     if (this.participation.results) {
                         this.latestResult = this.participation.results[0];
-                        Promise.resolve();
+                        return Promise.resolve();
                     } else if (this.exercise.id) {
                         return this.loadLatestResult();
                     }
@@ -72,26 +80,32 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                     if (this.latestResult) {
                         return this.loadResultsDetails();
                     } else {
-                        Promise.resolve();
+                        return Promise.resolve();
                     }
                 })
                 .finally(() => {
-                    this.steps = [];
-                    this.renderedMarkdown = this.markdown.render(this.exercise.problemStatement);
-                    // For whatever reason, we have to wait a tick here. The markdown parser should be synchronous...
-                    setTimeout(() => this.setUpClickListeners(), 100);
-                    this.isLoading = false;
+                    this.updateMarkdown();
                 });
-        } else if (changes.exercise) {
-            this.steps = [];
-            this.renderedMarkdown = this.markdown.render(this.exercise.problemStatement);
-            // For whatever reason, we have to wait a tick here. The markdown parser should be synchronous...
-            setTimeout(() => this.setUpClickListeners(), 100);
-            this.isLoading = false;
+        } else if (changes.exercise && changes.exercise.currentValue) {
+            this.updateMarkdown();
         }
     }
 
-    loadLatestResult() {
+    /**
+     * Reset and then render the markdown of the instruction file.
+     */
+    updateMarkdown() {
+        this.steps = [];
+        this.renderedMarkdown = this.markdown.render(this.exercise.problemStatement);
+        // For whatever reason, we have to wait a tick here. The markdown parser should be synchronous...
+        setTimeout(() => this.setUpClickListeners(), 100);
+        this.isLoading = false;
+    }
+
+    /**
+     * Retrieve latest result for the participation/exercise/course combination.
+     */
+    loadLatestResult(): Promise<void> {
         return new Promise((resolve, reject) => {
             this.resultService.findResultsForParticipation(this.exercise.course.id, this.exercise.id, this.participation.id).subscribe(
                 (latestResult: any) => {
@@ -110,7 +124,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * @function loadResultDetails
      * @desc Fetches details for the result (if we received one) => Input latestResult
      */
-    loadResultsDetails() {
+    loadResultsDetails(): Promise<void> {
         return new Promise((resolve, reject) =>
             this.resultService.getFeedbackDetailsForResult(this.latestResult.id).subscribe(
                 resultDetails => {
@@ -131,11 +145,12 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * We added the problemStatement later, historically the instructions where a file in the student's repository
      * This is why we now prefer the problemStatement and if it doesn't exist try to load the readme.
      */
-    loadInstructions() {
+    loadInstructions(): Promise<void> {
         return new Promise((resolve, reject) => {
             // Historical fallback: Older exercises have an instruction file in the git repo
             if (this.exercise.problemStatement === undefined) {
-                this.repositoryFileService.get((this.exercise as ProgrammingExercise).templateParticipation.id, 'README.md').subscribe(
+                const participationId = this.showTemplatePartipation ? (this.exercise as ProgrammingExercise).templateParticipation.id : this.participation.id;
+                this.repositoryFileService.get(participationId, 'README.md').subscribe(
                     fileObj => {
                         this.exercise.problemStatement = fileObj.fileContent;
                         resolve();
@@ -151,6 +166,9 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         });
     }
 
+    /**
+     * Remove existing listeners and then setup new listeners.
+     */
     private setUpClickListeners() {
         // // Detach test status click listeners if already initialized; if not, set it empty
         if (this.listenerRemoveFunctions.length) {

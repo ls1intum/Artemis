@@ -77,6 +77,7 @@
                 <dt><span jhiTranslate="arTeMiSApp.programmingExercise.problemStatement">Problem Statement</span></dt>
                 <dd>
                     <jhi-programming-exercise-instructions
+                        [showTemplateParticipation]="true"
                         [exercise]="programmingExercise"
                         [participation]="programmingExercise.templateParticipation"
                     ></jhi-programming-exercise-instructions>

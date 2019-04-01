@@ -13,7 +13,6 @@ import { Course, CourseService } from '../course';
 
 import { Subscription } from 'rxjs/Subscription';
 import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
-import { RepositoryFileService } from '../repository';
 import { FileService } from 'app/shared/http/file.service';
 
 @Component({
@@ -55,6 +54,7 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
             },
             (res: HttpErrorResponse) => this.onError(res),
         );
+        // If an exercise is created, load our readme template so the problemStatement is not empty
         if (this.programmingExercise.id === undefined) {
             this.fileService.getTemplateFile('readme').subscribe(
                 file => {
@@ -79,6 +79,10 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
         this.programmingExercise.categories = categories.map(el => JSON.stringify(el));
     }
 
+    /**
+     * Update the problemStatement of the exercise with the data emitted by the markdown editor.
+     * @param problemStatement
+     */
     updateProblemStatement(problemStatement: string) {
         this.programmingExercise = { ...this.programmingExercise, problemStatement };
     }

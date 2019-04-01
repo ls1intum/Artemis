@@ -76,6 +76,7 @@
                             <jhi-programming-exercise-instructions
                                 *ngIf="problemStatementLoaded"
                                 #preview
+                                [showTemplateParticipation]="true"
                                 [participation]="programmingExercise.templateParticipation"
                                 [(exercise)]="programmingExercise"
                             ></jhi-programming-exercise-instructions>

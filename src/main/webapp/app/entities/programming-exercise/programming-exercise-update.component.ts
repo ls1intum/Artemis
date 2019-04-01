@@ -66,6 +66,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             },
             (res: HttpErrorResponse) => this.onError(res),
         );
+        // If an exercise is created, load our readme template so the problemStatement is not empty
         if (this.programmingExercise.id === undefined) {
             this.fileService.getTemplateFile('readme').subscribe(
                 file => {
@@ -82,6 +83,10 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         }
     }
 
+    /**
+     * Update the problemStatement of the exercise with the data emitted by the markdown editor.
+     * @param problemStatement
+     */
     updateProblemStatement(problemStatement: string) {
         this.programmingExercise = { ...this.programmingExercise, problemStatement };
     }

@@ -5,7 +5,6 @@ import { ProgrammingExercise, ProgrammingLanguage } from './programming-exercise
 import { ProgrammingExerciseService } from 'app/entities/programming-exercise/programming-exercise.service';
 import { ResultService } from 'app/entities/result';
 import { JhiAlertService } from 'ng-jhipster';
-import { RepositoryFileService } from '../repository';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -20,7 +19,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
         private activatedRoute: ActivatedRoute,
         private programmingExerciseService: ProgrammingExerciseService,
         private resultService: ResultService,
-        private repositoryFileService: RepositoryFileService,
         private jhiAlertService: JhiAlertService,
     ) {}
 
