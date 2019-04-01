@@ -14,8 +14,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.xnio.IoUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -121,17 +123,16 @@ public class FileResource {
      * @return The requested file, or 404 if the file doesn't exist
      */
     @GetMapping("/files/templates/{filename:.+}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR', 'TA')")
     public ResponseEntity<byte[]> getTemplateFile(@PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
-        Resource resource = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResource("classpath:templates/"  + filename);
         try {
-            File file = resource.getFile();
-            byte[] fileContent = IOUtils.toByteArray(new FileInputStream(file));
+            Resource fileResource = ResourcePatternUtils.getResourcePatternResolver(resourceLoader).getResource("classpath:templates" + File.separator + filename);
+            byte[] fileContent = IOUtils.toByteArray(fileResource.getInputStream());
             HttpHeaders responseHeaders = new HttpHeaders();
             responseHeaders.setContentType(MediaType.TEXT_PLAIN);
             return new ResponseEntity(fileContent, responseHeaders, HttpStatus.OK);
         } catch(IOException ex) {
+            log.debug("Error when retrieving template file : {}", ex.getMessage());
             HttpHeaders responseHeaders = new HttpHeaders();
             return new ResponseEntity(null, responseHeaders, HttpStatus.NOT_FOUND);
         }

@@ -74,6 +74,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                     this.problemStatementLoaded = true;
                 },
                 err => {
+                    this.programmingExercise.problemStatement = '';
                     this.problemStatementLoaded = true;
                     console.log('Error while getting template instruction file!', err);
                 },
