@@ -66,12 +66,11 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             this.loadInstructions()
                 .catch(() => {
                     this.exercise.problemStatement = '';
-                    return Promise.resolve();
                 })
                 .then(() => {
                     if (this.participation.results) {
                         this.latestResult = this.participation.results[0];
-                        return Promise.resolve();
+                        // Only load results if the exercise already is in our database, otherwise their can be no build result anyway
                     } else if (this.exercise.id) {
                         return this.loadLatestResult();
                     }
@@ -79,8 +78,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 .then(() => {
                     if (this.latestResult) {
                         return this.loadResultsDetails();
-                    } else {
-                        return Promise.resolve();
                     }
                 })
                 .finally(() => {
@@ -129,6 +126,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             this.resultService.getFeedbackDetailsForResult(this.latestResult.id).subscribe(
                 resultDetails => {
                     this.resultDetails = resultDetails.body;
+                    this.latestResult.feedbacks = this.resultDetails;
                     resolve();
                 },
                 err => {
