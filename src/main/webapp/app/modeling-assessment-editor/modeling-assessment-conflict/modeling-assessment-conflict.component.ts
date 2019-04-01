@@ -4,6 +4,7 @@ import { ModelingExercise } from 'app/entities/modeling-exercise';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
 import { UMLModel } from '@ls1intum/apollon';
 import { Conflict } from 'app/modeling-assessment-editor/conflict.model';
+import { AccountService, User } from 'app/core';
 
 @Component({
     selector: 'jhi-modeling-assessment-conflict',
@@ -13,12 +14,12 @@ import { Conflict } from 'app/modeling-assessment-editor/conflict.model';
 export class ModelingAssessmentConflictComponent implements OnInit {
     model: UMLModel;
     conflictIndex: number = 0;
+    user: User;
 
     @Input() submission: ModelingSubmission;
     @Input() modelingExercise: ModelingExercise;
     @Input() conflicts: Conflict[] = [];
-
-    constructor(private route: ActivatedRoute, private modelingSubmisionService: ModelingSubmissionService) {}
+    constructor(private route: ActivatedRoute, private modelingSubmisionService: ModelingSubmissionService, private accountService: AccountService) {}
 
     ngOnInit() {
         this.route.url.subscribe((urlSegments: UrlSegment[]) => {
@@ -26,6 +27,7 @@ export class ModelingAssessmentConflictComponent implements OnInit {
                 this.loadSubmision();
             }
         });
+        this.accountService.identity().then(value => (this.user = value));
     }
 
     loadSubmision() {

@@ -27,6 +27,7 @@
             class="assessment"
             [diagramType]="this.modelingExercise.diagramType"
             [model]="model"
+            [assessor]="user"
             [readOnly]="true"
         ></jhi-modeling-assessment>
         <jhi-assessment-instructions *ngIf="modelingExercise" [exercise]="modelingExercise" [collapsed]="true"></jhi-assessment-instructions>

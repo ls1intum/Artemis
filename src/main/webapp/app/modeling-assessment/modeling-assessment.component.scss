@@ -1,15 +1,21 @@
 $draggable-width: 15px;
 
-jhi-score-display {
-    position: absolute;
-    top: 0;
-    right: 0;
-    z-index: 2;
-}
-
 .modeling-assessment {
     position: relative;
     height: 100%;
+
+    .card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: absolute;
+        width: 100%;
+        top: 0;
+        left: 0;
+        z-index: 2;
+        font-size: 1rem;
+        font-weight: 500;
+    }
 }
 
 .resizable {
@@ -20,8 +26,8 @@ jhi-score-display {
         justify-content: center;
         min-width: $draggable-width;
     }
-    jhi-score-display {
-        right: $draggable-width;
+    .card-header {
+        width: calc(100% - 15px);
     }
 }
 
