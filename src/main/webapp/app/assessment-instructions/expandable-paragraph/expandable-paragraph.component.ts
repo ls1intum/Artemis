@@ -3,7 +3,7 @@ import { Component, OnInit, Input } from '@angular/core';
 @Component({
     selector: 'jhi-expandable-paragraph',
     templateUrl: './expandable-paragraph.component.html',
-    styleUrls: ['./expandable-paragraph.component.scss'],
+    styleUrls: ['../assessment-instructions.scss'],
 })
 export class ExpandableParagraphComponent implements OnInit {
     @Input() header = 'Toggle paragraph';

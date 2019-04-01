@@ -9,7 +9,7 @@ import { AceEditorModule } from 'ng2-ace-editor';
 @NgModule({
     imports: [ArTEMiSSharedModule, ArTEMiSResultModule, AceEditorModule],
     declarations: [ModelingEditorComponent],
-    entryComponents: [ModelingEditorComponent, ResultComponent],
+    exports: [ModelingEditorComponent],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
 })
 export class ArTEMiSModelingEditorModule {

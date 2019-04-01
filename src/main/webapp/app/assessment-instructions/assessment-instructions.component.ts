@@ -5,7 +5,7 @@ import { Exercise } from 'app/entities/exercise';
 @Component({
     selector: 'jhi-assessment-instructions',
     templateUrl: './assessment-instructions.component.html',
-    styleUrls: ['./assessment-instructions.component.scss'],
+    styleUrls: ['./assessment-instructions.scss'],
 })
 export class AssessmentInstructionsComponent implements OnInit, AfterViewInit {
     @Input() exercise: Exercise;
