@@ -174,7 +174,8 @@
             "exerciseDashboard": "Exercise Dashboard",
             "newResult": "New Result",
             "cleanupBuildPlan": "Cleanup Build Plan",
-            "registerForCourse": "Register For Course"
+            "registerForCourse": "Register For Course",
+            "exercise": "Exercise"
         },
         "detail": {
             "field": "Field",

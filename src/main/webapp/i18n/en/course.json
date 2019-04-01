@@ -27,6 +27,7 @@
             "description": "Course Description",
             "startDate": "Start",
             "endDate": "End",
+            "accessGroups": "Access Groups",
             "onlineCourse": "Online Course",
             "registrationEnabled": "Registration Enabled",
             "exercises": "Exercises",
@@ -37,6 +38,10 @@
             "upload": "Upload",
             "uploading": "Uploading...",
             "fileUploadExercises": "File Upload Exercises (Beta)",
+            "shortName": "Short Name",
+            "students": "Students",
+            "tutors": "Tutors",
+            "instructors": "Instructors",
             "form": {
                 "shortname": {
                     "minlength": "Short Name must have a length of 3 or more characters.",

@@ -16,22 +16,22 @@
         <table class="table table-striped">
             <thead>
             <tr>
-            <th><span jhiTranslate="global.field.id">ID</span></th>
-            <th><span jhiTranslate="arTeMiSApp.course.title">Title</span></th>
-            <th><span>Access Groups</span></th>
-            <th><span jhiTranslate="arTeMiSApp.course.startDate">Start</span></th>
-            <th><span jhiTranslate="arTeMiSApp.course.endDate">End</span></th>
-            <th><span jhiTranslate="arTeMiSApp.course.onlineCourse">Online Course</span></th>
+            <th><span>{{'global.field.id' | translate}}</span></th>
+            <th><span>{{'arTeMiSApp.course.title' | translate}}</span></th>
+            <th><span>{{'arTeMiSApp.course.accessGroups' | translate}}</span></th>
+            <th><span>{{'arTeMiSApp.course.startDate' | translate}}</span></th>
+            <th><span>{{'arTeMiSApp.course.endDate' | translate}}</span></th>
+            <th><span>{{'arTeMiSApp.course.onlineCourse' | translate}}</span></th>
             <th></th>
             </tr>
             </thead>
             <tbody>
             <tr *ngFor="let course of courses ;trackBy: trackId">
                 <td><a [routerLink]="['/course', course.id, 'view' ]">{{course.id}}</a></td>
-                <td><span class="bold">{{course.title}}</span><br><span *ngIf="course.shortName"><span class="bold">Short Name:</span> {{course.shortName}}</span></td>
-                <td><span class="bold">Students:</span> {{course.studentGroupName}}<br>
-                    <span class="bold">Tutors:</span> {{course.teachingAssistantGroupName}}<br>
-                    <span class="bold">Instructors:</span> {{course.instructorGroupName}}</td>
+                <td><span class="bold">{{course.title}}</span><br><span *ngIf="course.shortName"><span class="bold">{{'arTeMiSApp.course.shortName' | translate}}:</span> {{course.shortName}}</span></td>
+                <td><span class="bold">{{'arTeMiSApp.course.students' | translate}}:</span> {{course.studentGroupName}}<br>
+                    <span class="bold">{{'arTeMiSApp.course.tutors' | translate}}:</span> {{course.teachingAssistantGroupName}}<br>
+                    <span class="bold">{{'arTeMiSApp.course.instructors' | translate}}:</span> {{course.instructorGroupName}}</td>
                 <td>{{course.startDate | date:'medium'}}</td>
                 <td>{{course.endDate | date:'medium'}}</td>
                 <td>{{course.onlineCourse}}</td>
@@ -39,30 +39,30 @@
                     <div class="btn-group flex-btn-group-container">
                         <button type="submit" [routerLink]="['/course', course.id ]" class="btn btn-primary btn-sm mr-1">
                             <fa-icon [icon]="'list-alt'"></fa-icon>
-                            <span class="d-none d-md-inline">Exercises</span>
+                            <span class="d-none d-md-inline">{{'entity.action.exercise' | translate}}</span>
                         </button>
                         <button type="submit" [routerLink]="['/course', course.id, 'dashboard' ]" class="btn btn-info btn-sm mr-1">
                             <fa-icon [icon]="'eye'"></fa-icon>
-                            <span class="d-none d-md-inline" jhiTranslate="entity.action.dashboard">Student Dashboard</span>
+                            <span class="d-none d-md-inline">{{'entity.action.dashboard' | translate}}</span>
                         </button>
                         <button type="submit" [routerLink]="['/course', course.id, 'tutor-dashboard']" class="btn btn-info btn-sm mr-1">
                             <fa-icon [icon]="'th-list'"></fa-icon>
-                            <span jhiTranslate="entity.action.tutorCourseDashboard">Tutor Dashboard</span>
+                            <span>{{'entity.action.tutorCourseDashboard' | translate}}</span>
                         </button>
                         <button type="submit" [routerLink]="['/course', course.id, 'view' ]" class="btn btn-info btn-sm mr-1">
                             <fa-icon [icon]="'eye'"></fa-icon>
-                            <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
+                            <span class="d-none d-md-inline">{{'entity.action.view' | translate}}</span>
                         </button>
                         <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [routerLink]="['/course', course.id, 'instructor-dashboard']" class="btn btn-primary btn-sm mr-1">
-                            <span class="d-none d-md-inline" jhiTranslate="arTeMiSApp.course.instructorDashboard">Instructor dashboard</span>
+                            <span class="d-none d-md-inline">{{'arTeMiSApp.course.instructorDashboard' | translate}}</span>
                         </button>
                         <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" [routerLink]="['/course', course.id, 'edit']" class="btn btn-primary btn-sm mr-1">
                             <fa-icon [icon]="'pencil-alt'"></fa-icon>
-                            <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                            <span class="d-none d-md-inline">{{'entity.action.edit'| translate}}</span>
                         </button>
                         <button type="submit" *jhiHasAnyAuthority="['ROLE_ADMIN']" [routerLink]="['/', { outlets: { popup: 'course/'+ course.id + '/delete'} }]" replaceUrl="true" queryParamsHandling="merge" class="btn btn-danger btn-sm mr-1">
                             <fa-icon [icon]="'times'"></fa-icon>
-                            <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
+                            <span class="d-none d-md-inline">{{'entity.action.delete'| translate}}</span>
                         </button>
                     </div>
                 </td>

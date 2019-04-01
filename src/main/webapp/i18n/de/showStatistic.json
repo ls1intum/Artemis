@@ -12,6 +12,7 @@
         "hideSolution": "Verberge Lösung",
         "quizPointStatisticTitle": "Punkteverteilung",
         "quizStatisticTitle": "Quiz-Statistik",
+        "recalculateStatistics": "Statistiken neu berechnen",
         "quizPointStatistic": {
             "maxScore": "Maximalpunkte: ",
             "titleRated": "Punkteverteilung (bewertet)",
