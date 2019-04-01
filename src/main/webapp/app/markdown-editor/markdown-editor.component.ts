@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ContentChild, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ContentChild, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
@@ -19,16 +19,14 @@ import {
 } from 'app/markdown-editor/commands';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { DomainCommand } from 'app/markdown-editor/domainCommands';
-import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { ColorSelectorComponent } from 'app/components/color-selector/color-selector.component';
 
 @Component({
     selector: 'jhi-markdown-editor',
-    styleUrls: ['./markdown-editor.scss'],
     providers: [ArtemisMarkdown],
     templateUrl: './markdown-editor.component.html',
 })
-export class MarkdownEditorComponent implements AfterViewInit, OnInit {
+export class MarkdownEditorComponent implements AfterViewInit {
     @ViewChild('aceEditor')
     aceEditorContainer: AceEditorComponent;
     aceEditorOptions = {
@@ -85,14 +83,6 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
 
     constructor(private artemisMarkdown: ArtemisMarkdown) {}
 
-    get previewButtonTranslateString(): string {
-        return this.previewMode ? 'entity.action.edit' : 'entity.action.preview';
-    }
-
-    get previewButtonIcon(): string {
-        return this.previewMode ? 'pencil-alt' : 'eye';
-    }
-
     /** {boolean} true when the plane html view is needed, false when the preview content is needed from the parent */
     get showDefaultPreview(): boolean {
         return this.previewChild == null;
@@ -127,10 +117,6 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
     }
 
     ngAfterViewInit(): void {
-        this.setupMarkdownEditor();
-    }
-
-    ngOnInit(): void {
         if (this.domainCommands == null || this.domainCommands.length === 0) {
             [...this.defaultCommands, ...(this.headerCommands || [])].forEach(command => {
                 command.setEditor(this.aceEditorContainer);
@@ -140,6 +126,7 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
                 command.setEditor(this.aceEditorContainer);
             });
         }
+        this.setupMarkdownEditor();
     }
 
     /**
@@ -251,8 +238,11 @@ export class MarkdownEditorComponent implements AfterViewInit, OnInit {
      * @function togglePreview
      * @desc Toggle the preview in the template and parse the text
      */
-    togglePreview(): void {
+    togglePreview(event: any): void {
         this.previewMode = !this.previewMode;
-        this.parse();
+        // The text must only be parsed when the active tab before event was edit, otherwise the text can't have changed.
+        if (event.activeId === 'editor_edit') {
+            this.parse();
+        }
     }
 }
