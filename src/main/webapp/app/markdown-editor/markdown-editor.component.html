@@ -30,8 +30,6 @@
                     </div>
                 </ng-container>
             </div>
-
-
             <ace-editor #aceEditor [mode]="aceEditorOptions.mode"
                         [autoUpdateContent]="aceEditorOptions.autoUpdateContent" [(text)]="markdown"
                         (textChange)="markdownChange.emit($event)"

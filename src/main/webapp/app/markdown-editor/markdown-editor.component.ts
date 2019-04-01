@@ -16,6 +16,7 @@ import {
     OrderedListCommand,
     UnorderedListCommand,
     ReferenceCommand,
+    ColorPickerCommand,
 } from 'app/markdown-editor/commands';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { DomainCommand } from 'app/markdown-editor/domainCommands';
@@ -43,6 +44,8 @@ export class MarkdownEditorComponent implements AfterViewInit {
     /** colors for the markdown editor*/
     markdownColors = ['#ca2024', '#3ea119', '#ffffff', '#000000', '#fffa5c', '#0d3cc2', '#b05db8', '#d89770'];
     selectedColor = '#000000';
+    /** {array} containing all colorPickerCommands */
+    colorCommands: Command[] = [new ColorPickerCommand()];
 
     /** {array} containing all default commands accessible for the editor per default */
     defaultCommands: Command[] = [
@@ -96,6 +99,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     /** selected text is changed into the chosen color */
     onSelectedColor(selectedColor: string) {
         this.selectedColor = selectedColor;
+        this.colorCommands[0].execute(selectedColor);
     }
 
     /**
@@ -118,11 +122,11 @@ export class MarkdownEditorComponent implements AfterViewInit {
 
     ngAfterViewInit(): void {
         if (this.domainCommands == null || this.domainCommands.length === 0) {
-            [...this.defaultCommands, ...(this.headerCommands || [])].forEach(command => {
+            [...this.defaultCommands, ...this.colorCommands, ...(this.headerCommands || [])].forEach(command => {
                 command.setEditor(this.aceEditorContainer);
             });
         } else {
-            [...this.defaultCommands, ...this.domainCommands, ...(this.headerCommands || [])].forEach(command => {
+            [...this.defaultCommands, ...this.domainCommands, ...this.colorCommands, ...(this.headerCommands || [])].forEach(command => {
                 command.setEditor(this.aceEditorContainer);
             });
         }

@@ -11,3 +11,4 @@ export { CodeCommand } from './code.command';
 export { OrderedListCommand } from './orderedListCommand';
 export { UnorderedListCommand } from './unorderedListCommand';
 export { AttachmentCommand } from './attachmentCommand';
+export { ColorPickerCommand } from './colorPicker.command';
