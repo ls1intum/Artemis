@@ -10,8 +10,9 @@ export class ColorPickerCommand extends Command {
      * @desc Set/ Remove color
      *       1. Check if the selected text includes (<span)
      *       2. If included reduce the selected text by the html elements for setting the color and replace the selected text by textToAdd
-     *       3. If not included insert the html element that change the style of the selectedText
+     *       3. If not included insert the html element that change the style of the selectedText by setting the chosen color
      *       4. Color changes occure
+     * Note: Markdown does not support color changes - this is why html injection is used
      */
     execute(color: string): void {
         const selectedText = this.getSelectedText();
