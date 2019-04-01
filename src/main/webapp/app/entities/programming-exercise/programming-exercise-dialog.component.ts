@@ -13,10 +13,12 @@ import { Course, CourseService } from '../course';
 
 import { Subscription } from 'rxjs/Subscription';
 import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
+import { RepositoryFileService } from '../repository';
+import { FileService } from 'app/shared/http/file.service';
 
 @Component({
     selector: 'jhi-programming-exercise-dialog',
-    templateUrl: './programming-exercise-dialog.component.html'
+    templateUrl: './programming-exercise-dialog.component.html',
 })
 export class ProgrammingExerciseDialogComponent implements OnInit {
     programmingExercise: ProgrammingExercise;
@@ -31,9 +33,11 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
         public activeModal: NgbActiveModal,
         private jhiAlertService: JhiAlertService,
         private programmingExerciseService: ProgrammingExerciseService,
+        private repositoryFileService: RepositoryFileService,
+        private fileService: FileService,
         private courseService: CourseService,
         private exerciseService: ExerciseService,
-        private eventManager: JhiEventManager
+        private eventManager: JhiEventManager,
     ) {}
 
     ngOnInit() {
@@ -42,15 +46,32 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body;
             },
-            (res: HttpErrorResponse) => this.onError(res)
+            (res: HttpErrorResponse) => this.onError(res),
         );
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.programmingExercise);
         this.courseService.findAllCategoriesOfCourse(this.programmingExercise.course.id).subscribe(
             (res: HttpResponse<string[]>) => {
                 this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(res.body);
             },
-            (res: HttpErrorResponse) => this.onError(res)
+            (res: HttpErrorResponse) => this.onError(res),
         );
+        // If the exercise is being created, insert the instruction template into the problem statement.
+        if (this.programmingExercise.id === undefined) {
+            this.fileService.getTemplateFile('programming-exercise-instructions').subscribe(file => (this.programmingExercise.problemStatement = file));
+            // Historical fallback: Older exercises have an instruction file in the git repo
+        } else {
+            if (this.programmingExercise.problemStatement === undefined) {
+                this.repositoryFileService.get(this.programmingExercise.templateParticipation.id, 'README.md').subscribe(
+                    fileObj => {
+                        this.programmingExercise.problemStatement = fileObj.fileContent;
+                    },
+                    err => {
+                        // TODO: handle the case that there is no README.md file
+                        console.log('Error while getting README.md file!', err);
+                    },
+                );
+            }
+        }
     }
 
     clear() {
@@ -71,10 +92,7 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ProgrammingExercise>>) {
-        result.subscribe(
-            (res: HttpResponse<ProgrammingExercise>) => this.onSaveSuccess(res.body),
-            (res: HttpErrorResponse) => this.onSaveError(res)
-        );
+        result.subscribe((res: HttpResponse<ProgrammingExercise>) => this.onSaveSuccess(res.body), (res: HttpErrorResponse) => this.onSaveError(res));
     }
 
     private onSaveSuccess(result: ProgrammingExercise) {
@@ -99,7 +117,7 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
 
 @Component({
     selector: 'jhi-programming-exercise-popup',
-    template: ''
+    template: '',
 })
 export class ProgrammingExercisePopupComponent implements OnInit, OnDestroy {
     routeSub: Subscription;
@@ -112,11 +130,7 @@ export class ProgrammingExercisePopupComponent implements OnInit, OnDestroy {
                 this.programmingExercisePopupService.open(ProgrammingExerciseDialogComponent as Component, params['id']);
             } else {
                 if (params['courseId']) {
-                    this.programmingExercisePopupService.open(
-                        ProgrammingExerciseDialogComponent as Component,
-                        undefined,
-                        params['courseId']
-                    );
+                    this.programmingExercisePopupService.open(ProgrammingExerciseDialogComponent as Component, undefined, params['courseId']);
                 } else {
                     this.programmingExercisePopupService.open(ProgrammingExerciseDialogComponent as Component);
                 }

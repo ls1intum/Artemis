@@ -18,27 +18,20 @@ import { WindowRef } from '../../core/websocket/window.service';
     providers: [JhiAlertService, WindowRef, RepositoryService, ResultService, CodeEditorService],
 })
 export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges {
-    isLoadingResults = false;
     haveDetailsBeenLoaded = false;
-    resultDetails: Feedback[];
 
     /** Resizable constants **/
     initialInstructionsWidth: number;
     minInstructionsWidth: number;
     interactResizable: interact.Interactable;
+    noInstructionsAvailable = false;
 
     @Input()
     participation: Participation;
     @Input()
     latestResult: Result;
 
-    constructor(
-        private parent: CodeEditorComponent,
-        private $window: WindowRef,
-        private repositoryFileService: RepositoryFileService,
-        private resultService: ResultService,
-        public artemisMarkdown: ArtemisMarkdown,
-    ) {}
+    constructor(private parent: CodeEditorComponent, private $window: WindowRef, private repositoryFileService: RepositoryFileService, public artemisMarkdown: ArtemisMarkdown) {}
 
     /**
      * @function ngAfterViewInit
@@ -79,10 +72,6 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges
             // Initialize array for listener remove functions
             this.loadInstructions();
         }
-
-        if (changes.latestResult && changes.latestResult.currentValue && !this.isLoadingResults) {
-            this.loadResultsDetails();
-        }
     }
 
     /**
@@ -99,32 +88,11 @@ export class CodeEditorInstructionsComponent implements AfterViewInit, OnChanges
                 },
                 err => {
                     // TODO: handle the case that there is no README.md file
+                    this.noInstructionsAvailable = true;
                     console.log('Error while getting README.md file!', err);
                 },
             );
         }
-    }
-
-    /**
-     * @function loadResultDetails
-     * @desc Fetches details for the result (if we received one) => Input latestResult
-     */
-    loadResultsDetails() {
-        if (!this.latestResult || this.isLoadingResults) {
-            return;
-        }
-        this.isLoadingResults = true;
-
-        this.resultService.getFeedbackDetailsForResult(this.latestResult.id).subscribe(
-            resultDetails => {
-                this.resultDetails = resultDetails.body;
-                this.isLoadingResults = false;
-            },
-            err => {
-                console.log('Error while loading result details!', err);
-                this.isLoadingResults = false;
-            },
-        );
     }
 
     /**

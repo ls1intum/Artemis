@@ -6,7 +6,7 @@ import * as Remarkable from 'remarkable';
 import { CodeEditorService } from '../../code-editor/code-editor.service';
 import { EditorInstructionsResultDetailComponent } from '../../code-editor/instructions/code-editor-instructions-result-detail';
 import { Feedback } from '../feedback';
-import { Result } from '../result';
+import { Result, ResultService } from '../result';
 
 type Step = {
     title: string;
@@ -24,9 +24,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     public rawMarkdown: string;
     @Input()
     private latestResult: Result;
-    @Input()
-    private resultDetails: Feedback[];
 
+    private resultDetails: Feedback[];
     public steps: Array<Step> = [];
     public renderedMarkdown: string;
     // Can be used to remove the click listeners for result details
@@ -35,6 +34,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     constructor(
         private editorService: CodeEditorService,
         private translateService: TranslateService,
+        private resultService: ResultService,
         private renderer: Renderer2,
         private elementRef: ElementRef,
         private modalService: NgbModal,
@@ -49,10 +49,34 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     public ngOnChanges(changes: SimpleChanges) {
         if (this.rawMarkdown && (changes.rawMarkdown || changes.latestResult || changes.resultDetails)) {
             this.steps = [];
-            this.renderedMarkdown = this.markdown.render(this.rawMarkdown);
-            // TODO: Why do we have to wait here? Shouldn't markdown.render by synchronous?
-            setTimeout(() => this.setUpClickListeners(), 500);
+            this.loadResultsDetails()
+                .then((resultDetails: Feedback[]) => {
+                    this.resultDetails = resultDetails;
+                })
+                .finally(() => {
+                    this.renderedMarkdown = this.markdown.render(this.rawMarkdown);
+                    // For whatever reason, we have to wait a tick here. The markdown parser should be synchronous...
+                    setTimeout(() => this.setUpClickListeners(), 0);
+                });
         }
+    }
+
+    /**
+     * @function loadResultDetails
+     * @desc Fetches details for the result (if we received one) => Input latestResult
+     */
+    loadResultsDetails() {
+        return new Promise((resolve, reject) =>
+            this.resultService.getFeedbackDetailsForResult(this.latestResult.id).subscribe(
+                resultDetails => {
+                    resolve(resultDetails.body);
+                },
+                err => {
+                    console.log('Error while loading result details!', err);
+                    reject();
+                },
+            ),
+        );
     }
 
     private setUpClickListeners() {

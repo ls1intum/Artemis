@@ -85,12 +85,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                             showAllResults: true,
                         })
                         .subscribe((latestResult: any) => {
-                            this.latestResult = latestResult.body;
-                            if (this.latestResult.length) {
-                                this.resultService.getFeedbackDetailsForResult(this.latestResult[0].id).subscribe(resultDetails => {
-                                    this.resultDetails = resultDetails.body;
-                                });
-                            }
+                            this.latestResult = latestResult.body.length || latestResult.body[0];
                         });
                 });
             }
