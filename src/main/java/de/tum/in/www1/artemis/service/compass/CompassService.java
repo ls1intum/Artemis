@@ -5,11 +5,7 @@ import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -20,11 +16,7 @@ import org.springframework.stereotype.Service;
 
 import com.google.gson.JsonObject;
 
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.ModelingExercise;
-import de.tum.in.www1.artemis.domain.ModelingSubmission;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
@@ -32,6 +24,7 @@ import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.compass.conflict.Conflict;
+import de.tum.in.www1.artemis.service.compass.conflict.ConflictingResult;
 import de.tum.in.www1.artemis.service.compass.grade.CompassGrade;
 import de.tum.in.www1.artemis.service.compass.grade.Grade;
 
@@ -39,26 +32,40 @@ import de.tum.in.www1.artemis.service.compass.grade.Grade;
 public class CompassService {
 
     private final Logger log = LoggerFactory.getLogger(CompassService.class);
+
     private final ResultRepository resultRepository;
+
     private final ModelingExerciseRepository modelingExerciseRepository;
+
     private final ModelingSubmissionRepository modelingSubmissionRepository;
+
     private final ParticipationRepository participationRepository;
-    /** Map exerciseId to compass CalculationEngines */
+
+    /**
+     * Map exerciseId to compass CalculationEngines
+     */
     private static Map<Long, CalculationEngine> compassCalculationEngines = new ConcurrentHashMap<>();
 
     /**
      * Remove an engine from memory after it has been unused for this number of days
      */
     private static final int DAYS_TO_KEEP_UNUSED_ENGINE = 1;
-    /** Time to check for unused engines */
+
+    /**
+     * Time to check for unused engines
+     */
     private static final int TIME_TO_CHECK_FOR_UNUSED_ENGINES = 3600000;
 
-    /** Confidence and coverage parameters to accept an automatic assessment */
+    /**
+     * Confidence and coverage parameters to accept an automatic assessment
+     */
     private static final double CONFIDENCE_THRESHOLD = 0.75;
 
     private static final double COVERAGE_THRESHOLD = 0.8;
 
-    /** Number of optimal models to keep in cache */
+    /**
+     * Number of optimal models to keep in cache
+     */
     private static final int NUMBER_OF_OPTIMAL_MODELS = 10;
 
     private static Map<Long, Thread> optimalModelThreads = new ConcurrentHashMap<>();
@@ -79,8 +86,7 @@ public class CompassService {
     /**
      * This method will return a new Entry with a new Id for every call
      *
-     * @return new Id and partial grade of the optimalModel for next manual
-     *         assessment, null if all models have been assessed
+     * @return new Id and partial grade of the optimalModel for next manual assessment, null if all models have been assessed
      */
     private Map.Entry<Long, Grade> getNextOptimalModel(long exerciseId) {
         if (!loadExerciseIfSuspended(exerciseId)) { // TODO MJ why null?
@@ -142,9 +148,8 @@ public class CompassService {
      *
      * @param exerciseId the exerciseId
      * @param submission the submission
-     * @return an partial assessment for model elements of the given submission
-     *         where an automatic assessment is already possible, other model
-     *         elements have to be assessed by the assessor
+     * @return an partial assessment for model elements of the given submission where an automatic assessment is already possible, other model elements have to be assessed by the
+     *         assessor
      */
     public List<Feedback> getPartialAssessment(long exerciseId, Submission submission) {
         if (!loadExerciseIfSuspended(exerciseId)) {
@@ -156,14 +161,10 @@ public class CompassService {
     }
 
     /**
-     * Update the engine for the given exercise with a new manual assessment. Check
-     * for every model if new automatic assessments could be created with the new
-     * information.
+     * Update the engine for the given exercise with a new manual assessment. Check for every model if new automatic assessments could be created with the new information.
      *
-     * @param exerciseId         the id of the exercise to which the assessed
-     *                           submission belongs
-     * @param submissionId       the id of the submission for which a new assessment
-     *                           is added
+     * @param exerciseId         the id of the exercise to which the assessed submission belongs
+     * @param submissionId       the id of the submission for which a new assessment is added
      * @param modelingAssessment the new assessment as a list of Feedback
      */
     public void addAssessment(long exerciseId, long submissionId, List<Feedback> modelingAssessment) {
@@ -179,20 +180,27 @@ public class CompassService {
         }
     }
 
-    public List<Conflict> getConflicts(long exerciseId, long submissionId, List<Feedback> modelingAssessment) {
+    public List<Conflict> getConflicts(long exerciseId, Result result, List<Feedback> modelingAssessment) {
         CompassCalculationEngine engine = getCalculationEngine(exerciseId);
-        return engine.getConflicts(submissionId, modelingAssessment);
+        Map<String, List<Feedback>> elementConflictingFeedbackMapping = engine.getConflictingFeedbacks(result.getSubmission().getId(), modelingAssessment);
+        List<Conflict> conflicts = new LinkedList<>();
+        elementConflictingFeedbackMapping.forEach((elementID, feedbacks) -> {
+            Set<ConflictingResult> elementResultMap = new HashSet<>();
+            feedbacks.forEach(feedback -> elementResultMap.add(new ConflictingResult(feedback.getReferenceElementId(), feedback.getResult())));
+            Conflict conflict = new Conflict();
+            conflict.setModelElementId(elementID);
+            conflict.setResult(result);
+            conflict.setConflictingResults(elementResultMap);
+            conflicts.add(conflict);
+        });
+        return conflicts;
     }
 
     /**
-     * Get the assessment for a given model from the calculation engine. If the
-     * confidence and coverage is high enough the assessment is added it to the
-     * corresponding result and the result is saved in the database. This is done
-     * only if the submission is not assessed already (check for
-     * result.getAssessmentType() == null).
+     * Get the assessment for a given model from the calculation engine. If the confidence and coverage is high enough the assessment is added it to the corresponding result and
+     * the result is saved in the database. This is done only if the submission is not assessed already (check for result.getAssessmentType() == null).
      *
-     * @param modelId    the id of the model/submission that should be updated with
-     *                   an automatic assessment
+     * @param modelId    the id of the model/submission that should be updated with an automatic assessment
      * @param exerciseId the id of the corresponding exercise
      */
     private void assessAutomatically(long modelId, long exerciseId) {
@@ -211,8 +219,7 @@ public class CompassService {
             if (grade.getConfidence() >= CONFIDENCE_THRESHOLD && grade.getCoverage() >= COVERAGE_THRESHOLD) {
                 ModelingExercise modelingExercise = modelingExerciseRepository.findById(result.getParticipation().getExercise().getId()).get();
                 /*
-                 * Workaround for ignoring automatic assessments of unsupported modeling
-                 * exercise types TODO remove this after adapting compass
+                 * Workaround for ignoring automatic assessments of unsupported modeling exercise types TODO remove this after adapting compass
                  */
                 if (!modelingExercise.getDiagramType().equals(DiagramType.ClassDiagram)) {
                     return;
@@ -241,29 +248,24 @@ public class CompassService {
 
                 resultRepository.save(result);
                 engine.removeModelWaitingForAssessment(modelId, true);
-            } else {
+            }
+            else {
                 log.info("Model " + modelId + " got a confidence of " + grade.getConfidence() + " and a coverage of " + grade.getCoverage());
             }
-        } else {
+        }
+        else {
             // Make sure next optimal model is in a valid state
             engine.removeModelWaitingForAssessment(modelId, true);
         }
     }
 
     /**
-     * Round compass grades to avoid machine precision errors, make the grades more
-     * readable and give a slight advantage which makes 100% scores easier
-     * reachable. Also see
-     * https://confluencebruegge.in.tum.de/display/ArTEMiS/Feature+suggestions for
-     * more information.
-     *
+     * Round compass grades to avoid machine precision errors, make the grades more readable and give a slight advantage which makes 100% scores easier reachable. Also see
+     * https://confluencebruegge.in.tum.de/display/ArTEMiS/Feature+suggestions for more information.
      * <p>
-     * Positive values > [x.0, x.15[ gets rounded to x.0 > [x.15, x.65[ gets rounded
-     * to x.5 > [x.65, x + 1[ gets rounded to x + 1
-     *
+     * Positive values > [x.0, x.15[ gets rounded to x.0 > [x.15, x.65[ gets rounded to x.5 > [x.65, x + 1[ gets rounded to x + 1
      * <p>
-     * Negative values > [-x - 1, -x.85[ gets rounded to -x - 1 > [-x.85, -x.35[
-     * gets rounded to -x.5 > [-x.35, -x.0[ gets rounded to -x.0
+     * Negative values > [-x - 1, -x.85[ gets rounded to -x - 1 > [-x.85, -x.35[ gets rounded to -x.5 > [-x.35, -x.0[ gets rounded to -x.0
      *
      * @param grade the grade for which the points should be rounded
      * @return the rounded compass grade
@@ -293,7 +295,8 @@ public class CompassService {
 
             if (fractionalPart >= 0.5) {
                 point = point.add(new BigDecimal(1));
-            } else if (fractionalPart >= 0) {
+            }
+            else if (fractionalPart >= 0) {
                 point = point.add(new BigDecimal(0.5));
             }
 
@@ -324,13 +327,10 @@ public class CompassService {
     }
 
     /**
-     * Checks if a calculation engine for the given exerciseId already exists. If
-     * not, it tries to load a new engine.
+     * Checks if a calculation engine for the given exerciseId already exists. If not, it tries to load a new engine.
      *
-     * @param exerciseId the id of the exercise for which the calculation engine is
-     *                   checked/loaded
-     * @return true if a calculation engine for the exercise exists or could be
-     *         loaded successfully, false otherwise
+     * @param exerciseId the id of the exercise for which the calculation engine is checked/loaded
+     * @return true if a calculation engine for the exercise exists or could be loaded successfully, false otherwise
      */
     private boolean loadExerciseIfSuspended(long exerciseId) {
         if (compassCalculationEngines.containsKey(exerciseId)) {
@@ -344,12 +344,9 @@ public class CompassService {
     }
 
     /**
-     * Loads all the submissions of the given exercise from the database, creates a
-     * new calculation engine from the submissions and adds it to the list of
-     * calculation engines.
+     * Loads all the submissions of the given exercise from the database, creates a new calculation engine from the submissions and adds it to the list of calculation engines.
      *
-     * @param exerciseId the exerciseId of the exercise for which the calculation
-     *                   engine should be loaded
+     * @param exerciseId the exerciseId of the exercise for which the calculation engine should be loaded
      */
     private void loadCalculationEngineForExercise(long exerciseId) {
         if (compassCalculationEngines.containsKey(exerciseId)) {
@@ -368,8 +365,7 @@ public class CompassService {
     }
 
     /**
-     * Get all the modeling submissions of the given exercise that have a manual
-     * assessment
+     * Get all the modeling submissions of the given exercise that have a manual assessment
      *
      * @param exerciseId the id of the exercise for
      * @return the list of modeling submissions with manual assessment
@@ -380,9 +376,7 @@ public class CompassService {
     }
 
     /**
-     * format: uniqueElements [{id} name apollonId conflicts] numberModels
-     * numberConflicts totalConfidence totalCoverage models [{id} confidence
-     * coverage conflicts]
+     * format: uniqueElements [{id} name apollonId conflicts] numberModels numberConflicts totalConfidence totalCoverage models [{id} confidence coverage conflicts]
      *
      * @return statistics about the UML model
      */
