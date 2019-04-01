@@ -8,7 +8,6 @@ import { EditorInstructionsResultDetailComponent } from '../../code-editor/instr
 import { Feedback } from '../feedback';
 import { Result, ResultService } from '../result';
 import { ProgrammingExercise } from './programming-exercise.model';
-import { FileService } from 'app/shared/http/file.service';
 import { RepositoryFileService } from '../repository';
 import { Participation } from '../participation';
 
@@ -43,7 +42,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         private editorService: CodeEditorService,
         private translateService: TranslateService,
         private resultService: ResultService,
-        private fileService: FileService,
         private repositoryFileService: RepositoryFileService,
         private renderer: Renderer2,
         private elementRef: ElementRef,
@@ -58,7 +56,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
 
     public ngOnChanges(changes: SimpleChanges) {
         if (this.participation && this.exercise && (changes.participation || (changes.exercise && changes.exercise.firstChange))) {
-            this.steps = [];
             this.loadInstructions()
                 .catch(() => {
                     this.exercise.problemStatement = '';
@@ -79,6 +76,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                     }
                 })
                 .finally(() => {
+                    this.steps = [];
                     this.renderedMarkdown = this.markdown.render(this.exercise.problemStatement);
                     // For whatever reason, we have to wait a tick here. The markdown parser should be synchronous...
                     setTimeout(() => this.setUpClickListeners(), 100);
@@ -89,25 +87,22 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
             this.renderedMarkdown = this.markdown.render(this.exercise.problemStatement);
             // For whatever reason, we have to wait a tick here. The markdown parser should be synchronous...
             setTimeout(() => this.setUpClickListeners(), 100);
+            this.isLoading = false;
         }
     }
 
     loadLatestResult() {
         return new Promise((resolve, reject) => {
-            this.resultService
-                .findResultsForParticipation(this.exercise.course.id, this.exercise.id, this.participation.id, {
-                    showAllResults: true,
-                })
-                .subscribe(
-                    (latestResult: any) => {
-                        this.latestResult = latestResult.body.length && latestResult.body[0];
-                        resolve();
-                    },
-                    err => {
-                        console.log('Error while loading latest results!', err);
-                        reject();
-                    },
-                );
+            this.resultService.findResultsForParticipation(this.exercise.course.id, this.exercise.id, this.participation.id).subscribe(
+                (latestResult: any) => {
+                    this.latestResult = latestResult.body.length && latestResult.body[0];
+                    resolve();
+                },
+                err => {
+                    console.log('Error while loading latest results!', err);
+                    reject();
+                },
+            );
         });
     }
 
@@ -138,19 +133,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      */
     loadInstructions() {
         return new Promise((resolve, reject) => {
-            if (this.exercise.id === undefined) {
-                this.fileService.getTemplateFile('readme').subscribe(
-                    file => {
-                        this.exercise.problemStatement = file;
-                        resolve();
-                    },
-                    err => {
-                        console.log('Error while getting template instruction file!', err);
-                        reject();
-                    },
-                );
-                // Historical fallback: Older exercises have an instruction file in the git repo
-            } else if (this.exercise.problemStatement === undefined) {
+            // Historical fallback: Older exercises have an instruction file in the git repo
+            if (this.exercise.problemStatement === undefined) {
                 this.repositoryFileService.get((this.exercise as ProgrammingExercise).templateParticipation.id, 'README.md').subscribe(
                     fileObj => {
                         this.exercise.problemStatement = fileObj.fileContent;
@@ -464,5 +448,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     ngOnDestroy() {
         this.listenerRemoveFunctions.forEach(f => f());
         this.listenerRemoveFunctions = [];
+        this.steps = [];
     }
 }

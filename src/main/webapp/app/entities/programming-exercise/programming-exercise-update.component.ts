@@ -9,6 +9,7 @@ import { ExerciseCategory, ExerciseService } from 'app/entities/exercise';
 
 import { ProgrammingExercise, ProgrammingLanguage } from './programming-exercise.model';
 import { ProgrammingExerciseService } from './programming-exercise.service';
+import { FileService } from 'app/shared/http/file.service';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -20,6 +21,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     programmingExercise: ProgrammingExercise;
     isSaving: boolean;
+    problemStatementLoaded = false;
 
     maxScorePattern = '^[1-9]{1}[0-9]{0,4}$'; // make sure max score is a positive natural integer and not too large
     packageNamePattern = '^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)+[0-9a-z_]$'; // package name must have at least 1 dot and must not start with a number
@@ -33,6 +35,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private courseService: CourseService,
         private jhiAlertService: JhiAlertService,
         private exerciseService: ExerciseService,
+        private fileService: FileService,
         private activatedRoute: ActivatedRoute,
     ) {}
 
@@ -63,6 +66,20 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             },
             (res: HttpErrorResponse) => this.onError(res),
         );
+        if (this.programmingExercise.id === undefined) {
+            this.fileService.getTemplateFile('readme').subscribe(
+                file => {
+                    this.programmingExercise.problemStatement = file;
+                    this.problemStatementLoaded = true;
+                },
+                err => {
+                    this.problemStatementLoaded = true;
+                    console.log('Error while getting template instruction file!', err);
+                },
+            );
+        } else {
+            this.problemStatementLoaded = true;
+        }
     }
 
     updateProblemStatement(problemStatement: string) {

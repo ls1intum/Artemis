@@ -74,6 +74,7 @@
                             (markdownChange)="updateProblemStatement($event)"
                         >
                             <jhi-programming-exercise-instructions
+                                *ngIf="problemStatementLoaded"
                                 #preview
                                 [participation]="programmingExercise.templateParticipation"
                                 [(exercise)]="programmingExercise"

@@ -28,12 +28,14 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
     courses: Course[];
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
+    problemStatementLoaded = false;
 
     constructor(
         public activeModal: NgbActiveModal,
         private jhiAlertService: JhiAlertService,
         private programmingExerciseService: ProgrammingExerciseService,
         private courseService: CourseService,
+        private fileService: FileService,
         private exerciseService: ExerciseService,
         private eventManager: JhiEventManager,
     ) {}
@@ -53,6 +55,20 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
             },
             (res: HttpErrorResponse) => this.onError(res),
         );
+        if (this.programmingExercise.id === undefined) {
+            this.fileService.getTemplateFile('readme').subscribe(
+                file => {
+                    this.programmingExercise.problemStatement = file;
+                    this.problemStatementLoaded = true;
+                },
+                err => {
+                    this.problemStatementLoaded = true;
+                    console.log('Error while getting template instruction file!', err);
+                },
+            );
+        } else {
+            this.problemStatementLoaded = true;
+        }
     }
 
     clear() {
