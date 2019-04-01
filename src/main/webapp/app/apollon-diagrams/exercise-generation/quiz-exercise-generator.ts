@@ -7,45 +7,45 @@ import { DragItem } from '../../entities/drag-item';
 import { DropLocation } from '../../entities/drop-location';
 import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
 import { ScoringType } from '../../entities/quiz-question';
-import * as TempID from '../../quiz/edit/temp-id';
+import { generate } from '../../quiz/edit/temp-id';
 import { FileUploaderService } from '../../shared/http/file-uploader.service';
 import { convertRenderedSVGToPNG } from './svg-renderer';
 
-type Position = { x: number; y: number };
-type Size = { width: number; height: number };
-type Boundary = Position & Size;
-
-// Drop locations in quiz exercises are relatively positioned and sized
-// using integers in the interval [0,200]
+// Drop locations in quiz exercises are relatively positioned and sized using integers in the interval [0, 200]
 const MAX_SIZE_UNIT = 200;
 
+/**
+ * Generates a new Drag and Drop Quiz Exercise based on a UML model.
+ *
+ * @param {Course} course The selected `Course` in which the new `QuizExercise` should be created.
+ * @param {string} title The title of the new `QuizExercise`.
+ * @param {UMLModel} model The complete UML model the quiz exercise is based on.
+ * @param {FileUploaderService} fileUploaderService To upload images like the background.
+ * @param {QuizExerciseService} quizExerciseService To submit the new `QuizExercise`.
+ */
 export async function generateDragAndDropQuizExercise(
-    diagramTitle: string,
-    model: UMLModel,
     course: Course,
+    title: string,
+    model: UMLModel,
     fileUploaderService: FileUploaderService,
     quizExerciseService: QuizExerciseService,
 ) {
     const interactiveElements = [...model.interactive.elements, ...model.interactive.relationships];
     const elements = [...model.elements, ...model.relationships];
 
-    // Render the layouted diagram as SVG
+    // Render the diagram's background image and store it
     const renderedDiagram = ApollonEditor.exportModelAsSvg(model, {
         keepOriginalSize: true,
         exclude: interactiveElements,
     });
-
-    // Create a PNG diagram background image from the given diagram SVG
     const diagramBackground = await convertRenderedSVGToPNG(renderedDiagram);
-
-    // Upload the diagram background image
     const backgroundImageUploadResponse = await fileUploaderService.uploadFile(diagramBackground, 'diagram-background.png');
 
     const backgroundFilePath: string = backgroundImageUploadResponse.path;
     const dragItems = new Map<string, DragItem>();
     const dropLocations = new Map<string, DropLocation>();
 
-    // Create Drag Items, Drop Locations and their mappings for each interactive element
+    // Create Drag Items and Drop Locations
     for (const elementId of interactiveElements) {
         const element = elements.find(elem => elem.id === elementId);
         const { dragItem, dropLocation } = await generateDragAndDropItem(element, model, fileUploaderService);
@@ -53,58 +53,79 @@ export async function generateDragAndDropQuizExercise(
         dropLocations.set(element.id, dropLocation);
     }
 
-    const correctMappings: DragAndDropMapping[] = createMappingPermutation(dragItems, dropLocations, model);
+    // Create all possible correct mappings between drag items and drop locations
+    const correctMappings = createCorrectMappings(dragItems, dropLocations, model);
 
     // Generate a drag-and-drop question object
-    const dragAndDropQuestion: DragAndDropQuestion = generateDragAndDropQuestion(
-        diagramTitle,
-        [...dragItems.values()],
-        [...dropLocations.values()],
-        correctMappings,
-        backgroundFilePath,
-    );
+    const dragAndDropQuestion = createDragAndDropQuestion(title, backgroundFilePath, [...dragItems.values()], [...dropLocations.values()], correctMappings);
 
     // Generate a quiz exercise object
-    const quizExercise: QuizExercise = generateQuizExercise(course, diagramTitle, dragAndDropQuestion);
+    const quizExercise = createDragAndDropQuizExercise(course, title, dragAndDropQuestion);
 
-    // Create the quiz exercise
+    // Save the quiz exercise
     await quizExerciseService.create(quizExercise).toPromise();
 }
 
-function generateQuizExercise(course: Course, diagramTitle: string, dragAndDropQuestion: DragAndDropQuestion): QuizExercise {
+/**
+ * Create a new Drag and Drop `QuizExercise`.
+ *
+ * @param {Course} course The selected `Course` in which the new `QuizExercise` should be created.
+ * @param {string} title The title of the new `QuizExercise`.
+ * @param {DragAndDropQuestion} question The `DragAndDropQuestion` of the new `QuizExercise`.
+ *
+ * @return {QuizExercise} A new Drag and Drop `QuizExercise`.
+ */
+function createDragAndDropQuizExercise(course: Course, title: string, question: DragAndDropQuestion): QuizExercise {
     const quizExercise = new QuizExercise(course);
-    quizExercise.title = diagramTitle;
+    quizExercise.title = title;
     quizExercise.duration = 600;
-    quizExercise.isVisibleBeforeStart = false;
-    quizExercise.isOpenForPractice = false;
-    quizExercise.isPlannedToStart = false;
     quizExercise.releaseDate = moment();
-    quizExercise.randomizeQuestionOrder = true;
-    quizExercise.quizQuestions = [dragAndDropQuestion];
+    quizExercise.quizQuestions = [question];
     return quizExercise;
 }
 
-function generateDragAndDropQuestion(
-    diagramTitle: string,
+/**
+ * Create a new Drag and Drop Quiz Exercise `DragAndDropQuestion`.
+ *
+ * @param {string} title The title of the new `DragAndDropQuestion`.
+ * @param {string} backgroundFilePath The path to the `DragAndDropQuestion`'s background image.
+ * @param {DragItem[]} dragItems A list of all available `DragItem`s.
+ * @param {DropLocation[]} dropLocations A list of all available `DropLocation`s.
+ * @param {DragAndDropMapping[]} correctMappings A list of mappings between `DragItem`s and `DropLocation`s.
+ *
+ * @return {QuizExercise} A new Drag and Drop `QuizExercise`.
+ */
+function createDragAndDropQuestion(
+    title: string,
+    backgroundFilePath: string,
     dragItems: DragItem[],
     dropLocations: DropLocation[],
     correctMappings: DragAndDropMapping[],
-    backgroundFilePath: string,
 ): DragAndDropQuestion {
     const dragAndDropQuestion = new DragAndDropQuestion();
-    dragAndDropQuestion.title = diagramTitle;
+    dragAndDropQuestion.title = title;
     dragAndDropQuestion.text = 'Fill the empty spaces in the UML diagram by dragging and dropping the elements below the diagram into the correct places.';
     dragAndDropQuestion.scoringType = ScoringType.PROPORTIONAL_WITH_PENALTY;
-    dragAndDropQuestion.randomizeOrder = true;
     dragAndDropQuestion.score = 1;
+    dragAndDropQuestion.backgroundFilePath = backgroundFilePath;
     dragAndDropQuestion.dropLocations = dropLocations;
     dragAndDropQuestion.dragItems = dragItems;
     dragAndDropQuestion.correctMappings = correctMappings;
-    dragAndDropQuestion.backgroundFilePath = backgroundFilePath;
     return dragAndDropQuestion;
 }
 
-async function generateDragAndDropItem(element: Element, model: UMLModel, fileUploaderService: FileUploaderService): Promise<{ dragItem: DragItem; dropLocation: DropLocation }> {
+/**
+ * Convenience function to create a mapping of a `DragItem` and a `DropLocation` for any particular element.
+ *
+ * For each image based drag item the image needs to be uploaded first, therefore the result is returned asynchronously.
+ *
+ * @param {Element} element A particular element of the UML model.
+ * @param {UMLModel} model The complete UML model.
+ * @param {FileUploaderService} fileUploaderService To upload image base drag items.
+ *
+ * @return {Promise<DragAndDropMapping>} A Promise resolving to a Drag and Drop mapping
+ */
+async function generateDragAndDropItem(element: Element, model: UMLModel, fileUploaderService: FileUploaderService): Promise<DragAndDropMapping> {
     const textualElementTypes: ElementType[] = [UMLElementType.ClassAttribute, UMLElementType.ClassMethod, UMLElementType.ObjectAttribute];
     if (element.type in UMLRelationshipType) {
         return generateDragAndDropItemForRelationship(element, model, fileUploaderService);
@@ -115,37 +136,55 @@ async function generateDragAndDropItem(element: Element, model: UMLModel, fileUp
     }
 }
 
-async function generateDragAndDropItemForElement(
-    element: Element,
-    model: UMLModel,
-    fileUploaderService: FileUploaderService,
-): Promise<{ dragItem: DragItem; dropLocation: DropLocation }> {
-    const renderedEntity: SVG = ApollonEditor.exportModelAsSvg(model, { include: [element.id] });
-    const image = await convertRenderedSVGToPNG(renderedEntity);
+/**
+ * Create a mapping of a `DragItem` and a `DropLocation` for a `UMLElement`.
+ *
+ * @param {Element} element An element of the UML model.
+ * @param {UMLModel} model The complete UML model.
+ * @param {FileUploaderService} fileUploaderService To upload image base drag items.
+ *
+ * @return {Promise<DragAndDropMapping>} A Promise resolving to a Drag and Drop mapping
+ */
+async function generateDragAndDropItemForElement(element: Element, model: UMLModel, fileUploaderService: FileUploaderService): Promise<DragAndDropMapping> {
+    const renderedElement: SVG = ApollonEditor.exportModelAsSvg(model, { include: [element.id] });
+    const image = await convertRenderedSVGToPNG(renderedElement);
     const imageUploadResponse = await fileUploaderService.uploadFile(image, `element-${element.id}.png`);
 
     const dragItem = new DragItem();
-    dragItem.tempID = TempID.generate();
+    dragItem.tempID = generate();
     dragItem.pictureFilePath = imageUploadResponse.path;
     const dropLocation = computeDropLocation(element.bounds, model.size);
 
-    return { dragItem, dropLocation };
+    return new DragAndDropMapping(dragItem, dropLocation);
 }
 
-async function generateDragAndDropItemForText(element: Element, model: UMLModel): Promise<{ dragItem: DragItem; dropLocation: DropLocation }> {
+/**
+ * Create a mapping of a `DragItem` and a `DropLocation` for a textual based `UMLElement`.
+ *
+ * @param {Element} element A textual based element of the UML model.
+ * @param {UMLModel} model The complete UML model.
+ *
+ * @return {Promise<DragAndDropMapping>} A Promise resolving to a Drag and Drop mapping
+ */
+async function generateDragAndDropItemForText(element: Element, model: UMLModel): Promise<DragAndDropMapping> {
     const dragItem = new DragItem();
-    dragItem.tempID = TempID.generate();
+    dragItem.tempID = generate();
     dragItem.text = element.name;
     const dropLocation = computeDropLocation(element.bounds, model.size);
 
-    return { dragItem, dropLocation };
+    return new DragAndDropMapping(dragItem, dropLocation);
 }
 
-async function generateDragAndDropItemForRelationship(
-    element: Element,
-    model: UMLModel,
-    fileUploaderService: FileUploaderService,
-): Promise<{ dragItem: DragItem; dropLocation: DropLocation }> {
+/**
+ * Create a mapping of a `DragItem` and a `DropLocation` for a `UMLRelationship`.
+ *
+ * @param {Element} element A relationship of the UML model.
+ * @param {UMLModel} model The complete UML model.
+ * @param {FileUploaderService} fileUploaderService To upload image base drag items.
+ *
+ * @return {Promise<DragAndDropMapping>} A Promise resolving to a Drag and Drop mapping
+ */
+async function generateDragAndDropItemForRelationship(element: Element, model: UMLModel, fileUploaderService: FileUploaderService): Promise<DragAndDropMapping> {
     const MIN_SIZE = 30;
 
     let margin = {};
@@ -163,32 +202,54 @@ async function generateDragAndDropItemForRelationship(
         bounds.height = MIN_SIZE;
     }
 
-    const renderedEntity: SVG = ApollonEditor.exportModelAsSvg(model, { margin, include: [element.id] });
-    const image = await convertRenderedSVGToPNG(renderedEntity);
+    const renderedElement: SVG = ApollonEditor.exportModelAsSvg(model, { margin, include: [element.id] });
+    const image = await convertRenderedSVGToPNG(renderedElement);
     const imageUploadResponse = await fileUploaderService.uploadFile(image, `relationship-${element.id}.png`);
 
     const dragItem = new DragItem();
-    dragItem.tempID = TempID.generate();
+    dragItem.tempID = generate();
     dragItem.pictureFilePath = imageUploadResponse.path;
     const dropLocation = computeDropLocation(bounds, model.size);
 
-    return { dragItem, dropLocation };
+    return new DragAndDropMapping(dragItem, dropLocation);
 }
 
-function computeDropLocation(elementLocation: Boundary, totalSize: Size): DropLocation {
+/**
+ * Create a Drag and Drop Quiz Exercise `DropLocation` for an `Element`.
+ *
+ * Based on the total size of the complete UML model and the boundaries of an element a drop location is computed. Instead of abolute values
+ * for position and size, `DropLocation`s use precentage values to the base of `MAX_SIZE_UNIT`.
+ *
+ * @param {Boundary} elementLocation The position and size of an element.
+ * @param {Size} totalSize The total size of the UML model.
+ *
+ * @return {DropLocation} A Drag and Drop Quiz Exercise `DropLocation`.
+ */
+function computeDropLocation(elementLocation: { x: number; y: number; width: number; height: number }, totalSize: { width: number; height: number }): DropLocation {
     const dropLocation = new DropLocation();
-    dropLocation.tempID = TempID.generate();
-    dropLocation.posX = Math.round((MAX_SIZE_UNIT * elementLocation.x) / totalSize.width);
-    dropLocation.posY = Math.round((MAX_SIZE_UNIT * elementLocation.y) / totalSize.height);
-    dropLocation.width = Math.round((MAX_SIZE_UNIT * elementLocation.width) / totalSize.width);
-    dropLocation.height = Math.round((MAX_SIZE_UNIT * elementLocation.height) / totalSize.height);
+    dropLocation.tempID = generate();
+    dropLocation.posX = Math.ceil((elementLocation.x / totalSize.width) * MAX_SIZE_UNIT);
+    dropLocation.posY = Math.ceil((elementLocation.y / totalSize.height) * MAX_SIZE_UNIT);
+    dropLocation.width = Math.floor((elementLocation.width / totalSize.width) * MAX_SIZE_UNIT);
+    dropLocation.height = Math.floor((elementLocation.height / totalSize.height) * MAX_SIZE_UNIT);
     return dropLocation;
 }
 
-function createMappingPermutation(dragItems: Map<string, DragItem>, dropLocations: Map<string, DropLocation>, model: UMLModel): DragAndDropMapping[] {
+/**
+ * Creates all permutations for correct `DragAndDropMapping` between `DragItem`s and `DropLocation`s.
+ *
+ * @param {Map<string, DragItem>} dragItems A mapping of element ids to drag items.
+ * @param {Map<string, DropLocation>} dropLocations A mapping of element ids to drop locations.
+ * @param {UMLModel} model The complete UML model.
+ *
+ * @return {DragAndDropMapping} A list of all possible `DragAndDropMapping`s.
+ */
+function createCorrectMappings(dragItems: Map<string, DragItem>, dropLocations: Map<string, DropLocation>, model: UMLModel): DragAndDropMapping[] {
     const textualElementTypes: ElementType[] = [UMLElementType.ClassAttribute, UMLElementType.ClassMethod, UMLElementType.ObjectAttribute];
-
     const mappings = new Map<string, DragAndDropMapping[]>();
+    const textualElements = model.elements.filter(element => textualElementTypes.includes(element.type));
+
+    // Create all one-on-one mappings
     for (const [dragItemElementId, dragItem] of dragItems.entries()) {
         for (const [dropLocationElementId, dropLocation] of dropLocations.entries()) {
             if (dragItemElementId === dropLocationElementId) {
@@ -198,12 +259,13 @@ function createMappingPermutation(dragItems: Map<string, DragItem>, dropLocation
         }
     }
 
+    // Create all mapping permutations for textual based elements within the same parent
     for (const [dragItemElementId, dragItem] of dragItems.entries()) {
-        const dragElement = model.elements.find(element => element.id === dragItemElementId);
-        if (!dragElement || !dragElement.owner || !textualElementTypes.includes(dragElement.type)) {
+        const dragElement = textualElements.find(element => element.id === dragItemElementId);
+        if (!dragElement || !dragElement.owner) {
             continue;
         }
-        const dragElementSiblings = model.elements.filter(element => element.owner === dragElement.owner);
+        const dragElementSiblings = textualElements.filter(element => element.owner === dragElement.owner);
         for (const dragElementSibling of dragElementSiblings) {
             if (dragElementSibling.id === dragItemElementId) {
                 continue;
@@ -217,14 +279,15 @@ function createMappingPermutation(dragItems: Map<string, DragItem>, dropLocation
 
     const intermediateMappings = new Map(mappings);
 
+    // Create all mapping permutations for textual based elements with the same name and different parents
     for (const [dragItemElementId, dragItem] of dragItems.entries()) {
-        const dragElement = model.elements.find(element => element.id === dragItemElementId);
-        if (!dragElement || !dragElement.name || !textualElementTypes.includes(dragElement.type)) {
+        const dragElement = textualElements.find(element => element.id === dragItemElementId);
+        if (!dragElement || !dragElement.name) {
             continue;
         }
         for (const [dropLocationElementId, _] of dropLocations.entries()) {
-            const dropElement = model.elements.find(element => element.id === dropLocationElementId);
-            if (dropElement.id === dragElement.id || dropElement.owner === dragElement.owner || dropElement.name !== dragElement.name) {
+            const dropElement = textualElements.find(element => element.id === dropLocationElementId);
+            if (!dropElement || dropElement.id === dragElement.id || dropElement.owner === dragElement.owner || dropElement.name !== dragElement.name) {
                 continue;
             }
             if (intermediateMappings.has(dropLocationElementId)) {
