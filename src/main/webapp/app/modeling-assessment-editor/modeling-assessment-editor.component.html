@@ -28,7 +28,8 @@
             [diagramType]="this.modelingExercise.diagramType"
             [maxScore]="modelingExercise.maxScore"
             [model]="model"
-            (feedbackChanged)="onFeedbackChanged($event)"
+            [feedbacks]="result.feedbacks"
+            (feedbackChanged)="onFeedbackChanged()"
         ></jhi-modeling-assessment>
         <jhi-assessment-instructions *ngIf="modelingExercise" [exercise]="modelingExercise" [collapsed]="false"></jhi-assessment-instructions>
     </div>

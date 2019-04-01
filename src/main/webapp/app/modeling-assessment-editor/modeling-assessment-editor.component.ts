@@ -136,8 +136,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         );
     }
 
-    onFeedbackChanged(feedback: Feedback[]) {
-        this.result.feedbacks = feedback;
+    onFeedbackChanged() {
         this.validateFeedback();
     }
 

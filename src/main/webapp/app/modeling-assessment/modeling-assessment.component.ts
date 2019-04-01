@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, Renderer2, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, Renderer2, ViewChild, OnChanges, SimpleChanges } from '@angular/core';
 import { ApollonEditor, ApollonMode, DiagramType, UMLElement, UMLModel, UMLRelationship } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
 import * as interact from 'interactjs';
@@ -10,16 +10,15 @@ import { User } from 'app/core';
     templateUrl: './modeling-assessment.component.html',
     styleUrls: ['./modeling-assessment.component.scss'],
 })
-export class ModelingAssessmentComponent implements OnInit, AfterViewInit, OnDestroy {
+export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, OnChanges {
     apollonEditor: ApollonEditor | null = null;
     elementFeedback: Map<string, Feedback>; // map element.id --> Feedback
-    feedbacks: Feedback[] = [];
     totalScore = 0;
 
     @ViewChild('editorContainer') editorContainer: ElementRef;
     @ViewChild('resizeContainer') resizeContainer: ElementRef;
     @Input() model: UMLModel;
-    @Input() initialFeedback: Feedback[];
+    @Input() feedbacks: Feedback[] = [];
     @Input() diagramType: DiagramType;
     @Input() maxScore: number;
     @Input() assessor: User;
@@ -29,11 +28,8 @@ export class ModelingAssessmentComponent implements OnInit, AfterViewInit, OnDes
 
     constructor(private jhiAlertService: JhiAlertService, private renderer: Renderer2) {}
 
-    ngOnInit() {}
-
     ngAfterViewInit(): void {
         if (this.model) {
-            this.updateElementFeedbackMapping(this.feedbacks, true);
             this.initializeApollonEditor();
         } else {
             this.jhiAlertService.error('arTeMiSApp.apollonDiagram.submission.noModel');
@@ -64,6 +60,14 @@ export class ModelingAssessmentComponent implements OnInit, AfterViewInit, OnDes
         }
     }
 
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes.feedbacks && changes.feedbacks.currentValue && this.model) {
+            this.feedbacks = changes.feedbacks.currentValue;
+            this.updateElementFeedbackMapping(this.feedbacks, true);
+            this.updateApollonAssessments(this.feedbacks);
+        }
+    }
+
     /**
      * Initializes the Apollon editor with the Feedback List in Assessment mode.
      * The Feedback elements are converted to Assessment objects needed by Apollon before they are added to
@@ -73,25 +77,12 @@ export class ModelingAssessmentComponent implements OnInit, AfterViewInit, OnDes
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();
         }
-        if (!this.feedbacks || this.feedbacks.length === 0) {
-            this.generateInitialFeedback();
-        }
-        this.model.assessments = this.feedbacks.map(feedback => {
-            return {
-                modelElementId: feedback.referenceId,
-                elementType: feedback.referenceType,
-                score: feedback.credits,
-                feedback: feedback.text,
-            };
-        });
-
         this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
             mode: ApollonMode.Assessment,
             readonly: this.readOnly,
             model: this.model,
             type: this.diagramType,
         });
-
         if (!this.readOnly) {
             this.apollonEditor.subscribeToSelectionChange(selection => {
                 this.feedbacks = this.generateFeedbackFromAssessment();
@@ -138,12 +129,14 @@ export class ModelingAssessmentComponent implements OnInit, AfterViewInit, OnDes
         }
     }
 
-    private generateInitialFeedback() {
-        this.model.elements.forEach((element: UMLElement) => {
-            this.feedbacks.push(new Feedback(element.id, element.type, 0, undefined));
-        });
-        this.model.relationships.forEach((relationship: UMLRelationship) => {
-            this.feedbacks.push(new Feedback(relationship.id, relationship.type, 0, undefined));
+    private updateApollonAssessments(feedbacks: Feedback[]) {
+        this.model.assessments = feedbacks.map(feedback => {
+            return {
+                modelElementId: feedback.referenceId,
+                elementType: feedback.referenceType,
+                score: feedback.credits,
+                feedback: feedback.text,
+            };
         });
     }
 
