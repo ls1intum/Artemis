@@ -152,7 +152,8 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 const participationId = this.showTemplatePartipation ? (this.exercise as ProgrammingExercise).templateParticipation.id : this.participation.id;
                 this.repositoryFileService.get(participationId, 'README.md').subscribe(
                     fileObj => {
-                        this.exercise.problemStatement = fileObj.fileContent;
+                        // Old readme files contain unescaped unicode, convert it to make it persistable by the database
+                        this.exercise.problemStatement = fileObj.fileContent.replace(new RegExp(/✅/, 'g'), '&#x2705;');
                         resolve();
                     },
                     err => {
@@ -230,22 +231,18 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     /**
      * @function remarkableTestsStatusParser
      * @desc Parser rule for Remarkable custom token TestStatus
-     * For historical reasons, two patterns have to be parsed:
-     * 1) Old pattern, used for storing the checkmark character in the readme file in the assignment git repo
-     * 2) New pattern, used for storing the unicode representation in the database
      * @param state
      * @param silent
      */
     private remarkableTestsStatusParser(state: any, silent: boolean) {
-        const regexOld = /^✅\[([^\]]*)\]\s*\(([^)]+)\)/;
-        const regexNew = /^&#x2705;\[([^\]]*)\]\s*\(([^)]+)\)/;
+        const regex = /^&#x2705;\[([^\]]*)\]\s*\(([^)]+)\)/;
 
         // It is surely not our rule, so we can stop early
-        if (state.src[state.pos] !== '✅' && state.src[state.pos] !== '&') {
+        if (state.src[state.pos] !== '&') {
             return false;
         }
 
-        const match = regexNew.exec(state.src.slice(state.pos)) || regexOld.exec(state.src.slice(state.pos));
+        const match = regex.exec(state.src.slice(state.pos));
         if (match) {
             // In silent mode it shouldn't output any tokens or modify pending
             if (!silent) {
