@@ -42,7 +42,7 @@
     <ngb-tab title="{{ 'entity.action.preview' | translate }}" id="editor_preview" *ngIf="showPreviewButton">
         <ng-template ngbTabContent>
             <ng-content></ng-content>
-            <div class="pt-1" *ngIf="showDefaultPreview" [innerHTML]="previewTextAsHtml">
+            <div class="pt-1 markdown-preview" *ngIf="showDefaultPreview" [innerHTML]="previewTextAsHtml">
                 Preview
             </div>
         </ng-template>

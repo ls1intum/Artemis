@@ -17,8 +17,17 @@ export class ColorPickerCommand extends Command {
     execute(color: string): void {
         const selectedText = this.getSelectedText();
 
-        if (selectedText.includes('<span')) {
-            const textToAdd = selectedText.slice(28, -7);
+        if (selectedText.includes('class="green"' || 'class="white"' || 'class="black"')) {
+            const textToAdd = selectedText.slice(20, -7);
+            this.insertText(textToAdd);
+        } else if (selectedText.includes('class="yellow"' || 'class="orange"')) {
+            const textToAdd = selectedText.slice(21, -7);
+            this.insertText(textToAdd);
+        } else if (selectedText.includes('class="red"')) {
+            const textToAdd = selectedText.slice(18, -7);
+            this.insertText(textToAdd);
+        } else if (selectedText.includes('class="blue"' || 'class="lila"')) {
+            const textToAdd = selectedText.slice(19, -7);
             this.insertText(textToAdd);
         } else {
             let textToAdd = '';
