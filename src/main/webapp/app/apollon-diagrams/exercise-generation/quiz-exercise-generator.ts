@@ -1,4 +1,4 @@
-import { ApollonEditor, Element, SVG, UMLElementType, UMLModel, UMLRelationshipType, ElementType } from '@ls1intum/apollon';
+import { ApollonEditor, Element, ElementType, SVG, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import * as moment from 'moment';
 import { Course } from '../../entities/course';
 import { DragAndDropMapping } from '../../entities/drag-and-drop-mapping';
@@ -7,6 +7,7 @@ import { DragItem } from '../../entities/drag-item';
 import { DropLocation } from '../../entities/drop-location';
 import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
 import { ScoringType } from '../../entities/quiz-question';
+import * as TempID from '../../quiz/edit/temp-id';
 import { FileUploaderService } from '../../shared/http/file-uploader.service';
 import { convertRenderedSVGToPNG } from './svg-renderer';
 
@@ -41,22 +42,27 @@ export async function generateDragAndDropQuizExercise(
     const backgroundImageUploadResponse = await fileUploaderService.uploadFile(diagramBackground, 'diagram-background.png');
 
     const backgroundFilePath: string = backgroundImageUploadResponse.path;
-    const dragItems: DragItem[] = [];
-    const dropLocations: DropLocation[] = [];
-    const correctMappings: DragAndDropMapping[] = [];
+    const dragItems = new Map<string, DragItem>();
+    const dropLocations = new Map<string, DropLocation>();
 
     // Create Drag Items, Drop Locations and their mappings for each interactive element
     for (const elementId of interactiveElements) {
         const element = elements.find(elem => elem.id === elementId);
         const { dragItem, dropLocation } = await generateDragAndDropItem(element, model, fileUploaderService);
-        const correctMapping = new DragAndDropMapping(dragItem, dropLocation);
-        dragItems.push(dragItem);
-        dropLocations.push(dropLocation);
-        correctMappings.push(correctMapping);
+        dragItems.set(element.id, dragItem);
+        dropLocations.set(element.id, dropLocation);
     }
 
+    const correctMappings: DragAndDropMapping[] = createMappingPermutation(dragItems, dropLocations, model);
+
     // Generate a drag-and-drop question object
-    const dragAndDropQuestion: DragAndDropQuestion = generateDragAndDropQuestion(diagramTitle, dragItems, dropLocations, correctMappings, backgroundFilePath);
+    const dragAndDropQuestion: DragAndDropQuestion = generateDragAndDropQuestion(
+        diagramTitle,
+        [...dragItems.values()],
+        [...dropLocations.values()],
+        correctMappings,
+        backgroundFilePath,
+    );
 
     // Generate a quiz exercise object
     const quizExercise: QuizExercise = generateQuizExercise(course, diagramTitle, dragAndDropQuestion);
@@ -119,6 +125,7 @@ async function generateDragAndDropItemForElement(
     const imageUploadResponse = await fileUploaderService.uploadFile(image, `element-${element.id}.png`);
 
     const dragItem = new DragItem();
+    dragItem.tempID = TempID.generate();
     dragItem.pictureFilePath = imageUploadResponse.path;
     const dropLocation = computeDropLocation(element.bounds, model.size);
 
@@ -127,6 +134,7 @@ async function generateDragAndDropItemForElement(
 
 async function generateDragAndDropItemForText(element: Element, model: UMLModel): Promise<{ dragItem: DragItem; dropLocation: DropLocation }> {
     const dragItem = new DragItem();
+    dragItem.tempID = TempID.generate();
     dragItem.text = element.name;
     const dropLocation = computeDropLocation(element.bounds, model.size);
 
@@ -160,6 +168,7 @@ async function generateDragAndDropItemForRelationship(
     const imageUploadResponse = await fileUploaderService.uploadFile(image, `relationship-${element.id}.png`);
 
     const dragItem = new DragItem();
+    dragItem.tempID = TempID.generate();
     dragItem.pictureFilePath = imageUploadResponse.path;
     const dropLocation = computeDropLocation(bounds, model.size);
 
@@ -168,9 +177,65 @@ async function generateDragAndDropItemForRelationship(
 
 function computeDropLocation(elementLocation: Boundary, totalSize: Size): DropLocation {
     const dropLocation = new DropLocation();
+    dropLocation.tempID = TempID.generate();
     dropLocation.posX = Math.round((MAX_SIZE_UNIT * elementLocation.x) / totalSize.width);
     dropLocation.posY = Math.round((MAX_SIZE_UNIT * elementLocation.y) / totalSize.height);
-    dropLocation.width = Math.round((MAX_SIZE_UNIT * elementLocation.width) / totalSize.width) - 1;
-    dropLocation.height = Math.round((MAX_SIZE_UNIT * elementLocation.height) / totalSize.height) - 1;
+    dropLocation.width = Math.round((MAX_SIZE_UNIT * elementLocation.width) / totalSize.width);
+    dropLocation.height = Math.round((MAX_SIZE_UNIT * elementLocation.height) / totalSize.height);
     return dropLocation;
+}
+
+function createMappingPermutation(dragItems: Map<string, DragItem>, dropLocations: Map<string, DropLocation>, model: UMLModel): DragAndDropMapping[] {
+    const textualElementTypes: ElementType[] = [UMLElementType.ClassAttribute, UMLElementType.ClassMethod, UMLElementType.ObjectAttribute];
+
+    const mappings = new Map<string, DragAndDropMapping[]>();
+    for (const [dragItemElementId, dragItem] of dragItems.entries()) {
+        for (const [dropLocationElementId, dropLocation] of dropLocations.entries()) {
+            if (dragItemElementId === dropLocationElementId) {
+                const mapping = new DragAndDropMapping(dragItem, dropLocation);
+                mappings.set(dragItemElementId, [mapping]);
+            }
+        }
+    }
+
+    for (const [dragItemElementId, dragItem] of dragItems.entries()) {
+        const dragElement = model.elements.find(element => element.id === dragItemElementId);
+        if (!dragElement || !dragElement.owner || !textualElementTypes.includes(dragElement.type)) {
+            continue;
+        }
+        const dragElementSiblings = model.elements.filter(element => element.owner === dragElement.owner);
+        for (const dragElementSibling of dragElementSiblings) {
+            if (dragElementSibling.id === dragItemElementId) {
+                continue;
+            }
+            if (mappings.has(dragElementSibling.id)) {
+                const mapping = new DragAndDropMapping(dragItem, dropLocations.get(dragElementSibling.id));
+                mappings.set(dragItemElementId, [...mappings.get(dragItemElementId), mapping]);
+            }
+        }
+    }
+
+    const intermediateMappings = new Map(mappings);
+
+    for (const [dragItemElementId, dragItem] of dragItems.entries()) {
+        const dragElement = model.elements.find(element => element.id === dragItemElementId);
+        if (!dragElement || !dragElement.name || !textualElementTypes.includes(dragElement.type)) {
+            continue;
+        }
+        for (const [dropLocationElementId, _] of dropLocations.entries()) {
+            const dropElement = model.elements.find(element => element.id === dropLocationElementId);
+            if (dropElement.id === dragElement.id || dropElement.owner === dragElement.owner || dropElement.name !== dragElement.name) {
+                continue;
+            }
+            if (intermediateMappings.has(dropLocationElementId)) {
+                const currentMappings = [...intermediateMappings.get(dropLocationElementId)];
+                for (const currentMapping of currentMappings) {
+                    const mapping = new DragAndDropMapping(dragItem, currentMapping.dropLocation);
+                    mappings.set(dragItemElementId, [...mappings.get(dragItemElementId), mapping]);
+                }
+            }
+        }
+    }
+
+    return [].concat(...mappings.values());
 }
