@@ -33,8 +33,6 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
         public activeModal: NgbActiveModal,
         private jhiAlertService: JhiAlertService,
         private programmingExerciseService: ProgrammingExerciseService,
-        private repositoryFileService: RepositoryFileService,
-        private fileService: FileService,
         private courseService: CourseService,
         private exerciseService: ExerciseService,
         private eventManager: JhiEventManager,
@@ -55,23 +53,6 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
             },
             (res: HttpErrorResponse) => this.onError(res),
         );
-        // If the exercise is being created, insert the instruction template into the problem statement.
-        if (this.programmingExercise.id === undefined) {
-            this.fileService.getTemplateFile('programming-exercise-instructions').subscribe(file => (this.programmingExercise.problemStatement = file));
-            // Historical fallback: Older exercises have an instruction file in the git repo
-        } else {
-            if (this.programmingExercise.problemStatement === undefined) {
-                this.repositoryFileService.get(this.programmingExercise.templateParticipation.id, 'README.md').subscribe(
-                    fileObj => {
-                        this.programmingExercise.problemStatement = fileObj.fileContent;
-                    },
-                    err => {
-                        // TODO: handle the case that there is no README.md file
-                        console.log('Error while getting README.md file!', err);
-                    },
-                );
-            }
-        }
     }
 
     clear() {
@@ -80,6 +61,10 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
 
     updateCategories(categories: ExerciseCategory[]) {
         this.programmingExercise.categories = categories.map(el => JSON.stringify(el));
+    }
+
+    updateProblemStatement(problemStatement: string) {
+        this.programmingExercise = { ...this.programmingExercise, problemStatement };
     }
 
     save() {

@@ -66,7 +66,6 @@ export class CourseExerciseDetailsComponent implements OnInit {
                     this.sortedHistoryResult = this.sortedResults.slice(startingElement, sortedResultLength);
                 }
                 this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
-                this.exercise.participations = this.exercise.participations && this.exercise.participations.map(p => ({ ...p, exercise }));
             });
         }
     }

@@ -28,19 +28,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit {
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
 
-            // Historical fallback: Older exercises have an instruction file in the git repo
-            if (this.programmingExercise.problemStatement === undefined) {
-                this.repositoryFileService.get(this.programmingExercise.templateParticipation.id, 'README.md').subscribe(
-                    fileObj => {
-                        this.programmingExercise.problemStatement = fileObj.fileContent;
-                    },
-                    err => {
-                        // TODO: handle the case that there is no README.md file
-                        console.log('Error while getting README.md file!', err);
-                    },
-                );
-            }
-
             this.programmingExercise.solutionParticipation.exercise = this.programmingExercise;
             this.programmingExercise.templateParticipation.exercise = this.programmingExercise;
 

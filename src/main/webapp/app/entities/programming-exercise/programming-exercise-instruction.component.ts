@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, OnChanges, OnDestroy, Renderer2, SimpleChanges } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnChanges, Output, OnDestroy, Renderer2, SimpleChanges } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import * as Remarkable from 'remarkable';
@@ -25,7 +25,11 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     private markdown: Remarkable;
 
     @Input()
+    public exercise: ProgrammingExercise;
+    @Input()
     public participation: Participation;
+    @Output()
+    public onInstructionLoad = new EventEmitter();
 
     public isLoading = true;
     private latestResult: Result;
@@ -53,14 +57,17 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     }
 
     public ngOnChanges(changes: SimpleChanges) {
-        if (changes.participation.currentValue) {
+        if (this.participation && this.exercise && (changes.participation || (changes.exercise && changes.exercise.firstChange))) {
             this.steps = [];
             this.loadInstructions()
+                .catch(() => {
+                    this.exercise.problemStatement = '';
+                })
                 .then(() => {
                     if (this.participation.results) {
                         this.latestResult = this.participation.results[0];
                         Promise.resolve();
-                    } else {
+                    } else if (this.exercise.id) {
                         return this.loadLatestResult();
                     }
                 })
@@ -71,22 +78,24 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                         Promise.resolve();
                     }
                 })
-                .then(() => {
-                    this.renderedMarkdown = this.markdown.render(this.participation.exercise.problemStatement);
+                .finally(() => {
+                    this.renderedMarkdown = this.markdown.render(this.exercise.problemStatement);
                     // For whatever reason, we have to wait a tick here. The markdown parser should be synchronous...
                     setTimeout(() => this.setUpClickListeners(), 100);
-                })
-                .finally(() => {
                     this.isLoading = false;
                 });
+        } else if (changes.exercise) {
+            this.steps = [];
+            this.renderedMarkdown = this.markdown.render(this.exercise.problemStatement);
+            // For whatever reason, we have to wait a tick here. The markdown parser should be synchronous...
+            setTimeout(() => this.setUpClickListeners(), 100);
         }
     }
 
     loadLatestResult() {
         return new Promise((resolve, reject) => {
-            const { exercise } = this.participation;
             this.resultService
-                .findResultsForParticipation(exercise.course.id, exercise.id, this.participation.id, {
+                .findResultsForParticipation(this.exercise.course.id, this.exercise.id, this.participation.id, {
                     showAllResults: true,
                 })
                 .subscribe(
@@ -129,20 +138,25 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      */
     loadInstructions() {
         return new Promise((resolve, reject) => {
-            if (this.participation.exercise.id === undefined) {
-                this.fileService.getTemplateFile('programming-exercise-instructions').subscribe(file => {
-                    this.participation.exercise.problemStatement = file;
-                    resolve();
-                });
-                // Historical fallback: Older exercises have an instruction file in the git repo
-            } else if (this.participation.exercise.problemStatement === undefined) {
-                this.repositoryFileService.get((this.participation.exercise as ProgrammingExercise).templateParticipation.id, 'README.md').subscribe(
-                    fileObj => {
-                        this.participation.exercise.problemStatement = fileObj.fileContent;
+            if (this.exercise.id === undefined) {
+                this.fileService.getTemplateFile('programming-exercise-instructions').subscribe(
+                    file => {
+                        this.exercise.problemStatement = file;
                         resolve();
                     },
                     err => {
-                        // TODO: handle the case that there is no README.md file
+                        console.log('Error while getting template instruction file!', err);
+                        reject();
+                    },
+                );
+                // Historical fallback: Older exercises have an instruction file in the git repo
+            } else if (this.exercise.problemStatement === undefined) {
+                this.repositoryFileService.get((this.exercise as ProgrammingExercise).templateParticipation.id, 'README.md').subscribe(
+                    fileObj => {
+                        this.exercise.problemStatement = fileObj.fileContent;
+                        resolve();
+                    },
+                    err => {
                         console.log('Error while getting README.md file!', err);
                         reject();
                     },
