@@ -139,7 +139,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     loadInstructions() {
         return new Promise((resolve, reject) => {
             if (this.exercise.id === undefined) {
-                this.fileService.getTemplateFile('programming-exercise-instructions').subscribe(
+                this.fileService.getTemplateFile('readme').subscribe(
                     file => {
                         this.exercise.problemStatement = file;
                         resolve();
