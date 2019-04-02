@@ -15,18 +15,23 @@
 
     <div class="editor-container">
         <jhi-modeling-assessment
-            *ngIf="submission"
+            *ngIf="currentConflict"
             class="conflicting-assessment"
             [diagramType]="this.modelingExercise.diagramType"
-            [model]="model"
+            [model]="conflictingModel"
+            [feedbacks]="conflictingResult.result.feedbacks"
+            [assessor]="conflictingResult.result.assessor"
+            [highlightedElementId]="conflictingResult.modelElementId"
             [readOnly]="true"
             [resizeOptions]="{ initialWidth: '40vw' }"
         ></jhi-modeling-assessment>
         <jhi-modeling-assessment
-            *ngIf="submission"
+            *ngIf="currentConflict"
             class="assessment"
             [diagramType]="this.modelingExercise.diagramType"
             [model]="model"
+            [feedbacks]="currentConflict.result.feedbacks"
+            [highlightedElementId]="currentConflict.modelElementId"
             [assessor]="user"
             [readOnly]="true"
         ></jhi-modeling-assessment>

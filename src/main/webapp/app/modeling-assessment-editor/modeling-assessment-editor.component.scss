@@ -4,6 +4,11 @@ $titlebar-height: 65px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    jhi-alert {
+        font-size: 0.9rem;
+        line-height: 1.5;
+        margin: 0;
+    }
 }
 
 .row-container {

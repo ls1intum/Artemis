@@ -23,7 +23,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     model: UMLModel;
     modelingExercise: ModelingExercise;
     result: Result;
-    conflicts: Map<string, Conflict>;
+    conflicts: Conflict[];
 
     assessmentsAreValid = false;
     submissionId: number;
@@ -126,8 +126,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
             },
             (error: HttpErrorResponse) => {
                 if (error.status === 409) {
-                    this.conflicts = new Map();
-                    (error.error as Conflict[]).forEach(conflict => this.conflicts.set(conflict.conflictedElementId, conflict));
+                    this.conflicts = error.error as Conflict[];
                     this.jhiAlertService.error('arTeMiSApp.apollonDiagram.assessment.submitFailedWithConflict');
                 } else {
                     this.jhiAlertService.error('arTeMiSApp.apollonDiagram.assessment.submitFailed');
@@ -136,7 +135,8 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         );
     }
 
-    onFeedbackChanged() {
+    onFeedbackChanged(feedbacks: Feedback[]) {
+        this.result.feedbacks = feedbacks;
         this.validateFeedback();
     }
 

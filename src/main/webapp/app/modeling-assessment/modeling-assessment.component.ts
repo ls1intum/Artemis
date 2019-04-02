@@ -1,9 +1,10 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, Renderer2, ViewChild, OnChanges, SimpleChanges } from '@angular/core';
-import { ApollonEditor, ApollonMode, DiagramType, UMLElement, UMLModel, UMLRelationship } from '@ls1intum/apollon';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, Renderer2, SimpleChanges, ViewChild } from '@angular/core';
+import { ApollonEditor, ApollonMode, DiagramType, Selection, UMLModel } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
 import * as interact from 'interactjs';
 import { Feedback } from 'app/entities/feedback';
 import { User } from 'app/core';
+import * as $ from 'jquery';
 
 @Component({
     selector: 'jhi-modeling-assessment',
@@ -18,6 +19,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     @ViewChild('editorContainer') editorContainer: ElementRef;
     @ViewChild('resizeContainer') resizeContainer: ElementRef;
     @Input() model: UMLModel;
+    @Input() highlightedElementId: string;
     @Input() feedbacks: Feedback[] = [];
     @Input() diagramType: DiagramType;
     @Input() maxScore: number;
@@ -34,6 +36,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         } else {
             this.jhiAlertService.error('arTeMiSApp.apollonDiagram.submission.noModel');
         }
+        this.updateHighlightedElement(undefined, this.highlightedElementId);
         if (this.resizeOptions) {
             if (this.resizeOptions.initialWidth) {
                 this.renderer.setStyle(this.resizeContainer.nativeElement, 'width', this.resizeOptions.initialWidth);
@@ -64,8 +67,11 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         if (changes.feedbacks && changes.feedbacks.currentValue && this.model) {
             this.feedbacks = changes.feedbacks.currentValue;
             this.updateElementFeedbackMapping(this.feedbacks, true);
-            this.setApollonAssessments(this.feedbacks);
+            this.updateApollonAssessments(this.feedbacks);
             this.calculateTotalScore();
+        }
+        if (changes.highlightedElementId) {
+            this.updateHighlightedElement(changes.highlightedElementId.previousValue, changes.highlightedElementId.currentValue);
         }
     }
 
@@ -82,7 +88,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             type: this.diagramType,
         });
         if (!this.readOnly) {
-            this.apollonEditor.subscribeToSelectionChange(selection => {
+            this.apollonEditor.subscribeToSelectionChange((selection: Selection) => {
                 this.feedbacks = this.generateFeedbackFromAssessment();
                 this.calculateTotalScore();
                 this.feedbackChanged.emit(this.feedbacks);
@@ -127,7 +133,21 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         }
     }
 
-    private setApollonAssessments(feedbacks: Feedback[]) {
+    private updateHighlightedElement(previousElementID: string, newElementID: string) {
+        let element = this.editorContainer.nativeElement as HTMLDivElement;
+        if (previousElementID) {
+            $(element)
+                .find(`#${previousElementID}`)
+                .css('fill', 'white');
+        }
+        if (newElementID) {
+            $(element)
+                .find(`#${newElementID}`)
+                .css('fill', 'rgba(220,53,69,0.7)');
+        }
+    }
+
+    private updateApollonAssessments(feedbacks: Feedback[]) {
         this.model.assessments = feedbacks.map(feedback => {
             return {
                 modelElementId: feedback.referenceId,
