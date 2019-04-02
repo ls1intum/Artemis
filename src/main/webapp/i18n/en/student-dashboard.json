@@ -64,7 +64,7 @@
                 "dueDate": "Due date:",
                 "categories": "Categories:",
                 "exerciseType": "Exercise Type:",
-                "level": "Level:",
+                "difficulty": "Difficulty:",
                 "exerciseStatus": "Exercise status:",
                 "maxPoints": "Max. points:",
                 "problemStatement": "Problem statement:",
@@ -82,8 +82,8 @@
                 "otherResults": "Other results:",
                 "hideResults": "Hide results",
                 "showResults": "Show all results",
-                "rated": "Rated",
-                "practice": "Practice"
+                "graded": "Graded",
+                "notGraded": "Not graded"
             }
         }
     }

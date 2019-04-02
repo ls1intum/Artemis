@@ -22,7 +22,7 @@
                 </div>
             </div>
             <div class="col-4 d-none d-md-inline">
-                <div class="row">
+                <div class="row" *ngIf="exercise.type">
                     <div class="col-6"><h5>{{"arTeMiSApp.courseOverview.exerciseDetails.exerciseType" | translate}}</h5>
                     </div>
                     <div class="col-6">
@@ -32,8 +32,8 @@
                         </h5>
                     </div>
                 </div>
-                <div class="row">
-                    <div class="col-6"><h5>{{"arTeMiSApp.courseOverview.exerciseDetails.level" | translate}}</h5></div>
+                <div class="row" *ngIf="exercise.difficulty">
+                    <div class="col-6"><h5>{{"arTeMiSApp.courseOverview.exerciseDetails.difficulty" | translate}}</h5></div>
                     <div class="col-6"><h5><jhi-difficulty-badge [exercise]="exercise"></jhi-difficulty-badge></h5></div>
                 </div>
                 <div class="row">
@@ -47,7 +47,7 @@
                             <h5>{{"arTeMiSApp.courseOverview.exerciseDetails.notParticipated" | translate}}</h5></div>
                     </ng-template>
                 </div>
-                <div class="row">
+                <div class="row" *ngIf="exercise.maxScore">
                     <div class="col-6"><h5>{{"arTeMiSApp.courseOverview.exerciseDetails.maxPoints" | translate}}</h5>
                     </div>
                     <div class="col-6"><h5>{{exercise.maxScore}} pts.</h5></div>
@@ -99,7 +99,7 @@
                 <div class="col">
                     <h4><span class="badge w-100 badge-success"
                               [ngClass]="exerciseRatedBadge(currentResult)">
-                        {{(currentResult.rated ? 'arTeMiSApp.courseOverview.exerciseDetails.rated' : 'arTeMiSApp.courseOverview.exerciseDetails.practice') | translate | uppercase}}
+                        {{(currentResult.rated ? 'arTeMiSApp.courseOverview.exerciseDetails.graded' : 'arTeMiSApp.courseOverview.exerciseDetails.notGraded') | translate | uppercase}}
                     </span>
                     </h4>
                 </div>
@@ -154,7 +154,7 @@
                     <div class="col">
                         <h4><span class="badge w-100 badge-success"
                                   [ngClass]="exerciseRatedBadge(result)">
-                            {{(result.rated ? 'arTeMiSApp.courseOverview.exerciseDetails.rated' : 'arTeMiSApp.courseOverview.exerciseDetails.practice') | translate | uppercase}}
+                            {{(result.rated ? 'arTeMiSApp.courseOverview.exerciseDetails.graded' : 'arTeMiSApp.courseOverview.exerciseDetails.notGraded') | translate | uppercase}}
                         </span>
                         </h4>
                     </div>

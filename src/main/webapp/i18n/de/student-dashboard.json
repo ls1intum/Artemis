@@ -64,7 +64,7 @@
                 "dueDate": "Abgabedatum:",
                 "categories": "Kategorien:",
                 "exerciseType": "Aufgaben-Typ:",
-                "level": "Schwierigkeit:",
+                "difficulty": "Schwierigkeit:",
                 "exerciseStatus": "Aufgaben Status:",
                 "maxPoints": "Max. Punkte:",
                 "problemStatement": "Problemstellung:",
@@ -82,8 +82,8 @@
                 "otherResults": "Andere Ergebnisse:",
                 "hideResults": "Ergebnisse verbergen",
                 "showResults": "Alle Ergebnisse anzeigen",
-                "rated": "Bewertet",
-                "practice": "Übung"
+                "graded": "Bewertet",
+                "notGraded": "Nicht bewertet"
             }
         }
     }
