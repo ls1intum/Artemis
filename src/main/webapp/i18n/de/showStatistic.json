@@ -41,6 +41,8 @@
             "showSampleSolution": "Zeige Beispiellösung",
             "hideSampleSolution": "Verberge Beispiellösung"
         },
-        "invalid": "(ungültig)"
+        "invalid": "(ungültig)",
+        "quizhasEnded": "Quiz ist zu Ende!",
+        "now": "Läuft"
     }
 }

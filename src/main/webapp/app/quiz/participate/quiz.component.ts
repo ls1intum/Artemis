@@ -342,6 +342,7 @@ export class QuizComponent implements OnInit, OnDestroy {
      * updates all displayed (relative) times in the UI
      */
     updateDisplayedTimes() {
+        const translationBasePath = 'showStatistic.';
         // update remaining time
         if (this.quizExercise && this.quizExercise.adjustedDueDate) {
             const endDate = this.quizExercise.adjustedDueDate;
@@ -352,7 +353,7 @@ export class QuizComponent implements OnInit, OnDestroy {
             } else {
                 // quiz is over => set remaining seconds to negative, to deactivate 'Submit' button
                 this.remainingTimeSeconds = -1;
-                this.remainingTimeText = 'Quiz has ended!';
+                this.remainingTimeText = this.translateService.instant(translationBasePath + 'quizhasEnded');
             }
         } else {
             // remaining time is unknown => Set remaining seconds to 0, to keep 'Submit' button enabled
@@ -371,7 +372,7 @@ export class QuizComponent implements OnInit, OnDestroy {
             if (this.quizExercise.adjustedReleaseDate.isAfter(moment())) {
                 this.timeUntilStart = this.relativeTimeText(this.quizExercise.adjustedReleaseDate.diff(moment(), 'seconds'));
             } else {
-                this.timeUntilStart = 'Now';
+                this.timeUntilStart = this.translateService.instant(translationBasePath + 'now');
             }
         } else {
             this.timeUntilStart = '';
