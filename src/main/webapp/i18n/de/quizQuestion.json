@@ -1,7 +1,6 @@
-
 {
     "arTeMiSApp": {
-        "quizQuestion" : {
+        "quizQuestion": {
             "home": {
                 "title": "Questions",
                 "createLabel": "Question erstellen",
@@ -27,7 +26,10 @@
             "exercise": "Exercise",
             "yourScore": "Erreichte Punktzahl",
             "invalid": "Ungültig",
-            "invalidText": "Diese Frage ist ungültig und wird daher als komplett richtig gelöst bewertet"
+            "invalidText": "Diese Frage ist ungültig und wird daher als komplett richtig gelöst bewertet",
+            "retry": " Wiederholen",
+            "loading": "Warten bis das Bild geladen wurde.",
+            "failed": "Es tut uns leid, dass das Bild nicht geladen werden konnte. Bitte versuchen es erneut indem du auch den Button klickst."
         }
     }
 }

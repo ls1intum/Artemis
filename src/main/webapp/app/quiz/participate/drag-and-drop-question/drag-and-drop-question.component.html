@@ -2,15 +2,15 @@
      [ngClass]="{disabled: clickDisabled && !showResult, result: showResult && !forceSampleSolution, incorrect: (score || 0) < question.score && !forceSampleSolution}">
     <div [hidden]="loadingState === 'success'">
         <h2 *ngIf="loadingState !== 'error'">
-            <span style="color:grey"><fa-icon icon="spinner" spin="true"></fa-icon>&nbsp;<span>Please wait until the picture is loaded.</span></span>
+            <span style="color:grey"><fa-icon icon="spinner" spin="true"></fa-icon>&nbsp;<span>{{'arTeMiSApp.quizQuestion.loading' | translate }}</span></span>
         </h2>
         <div *ngIf="loadingState === 'error'">
             <h2>
-                <span style="color:grey"><fa-icon icon="exclamation-circle"></fa-icon>&nbsp;<span>Sorry the image could not be loaded. Please try again.</span></span>
+                <span style="color:grey"><fa-icon icon="exclamation-circle"></fa-icon>&nbsp;<span>{{'arTeMiSApp.quizQuestion.failed' | translate }}</span></span>
             </h2>
             <p>
                 <button class="btn btn-default" (click)="secureImageComponent.retryLoadImage()">
-                    Retry
+                   {{ 'arTeMiSApp.quizQuestion.retry' | translate }}
                 </button>
             </p>
         </div>
