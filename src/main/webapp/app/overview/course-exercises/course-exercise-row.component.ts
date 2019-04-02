@@ -130,8 +130,8 @@ export class CourseExerciseRowComponent implements OnInit {
 
     showDetails(event: any) {
         const isClickOnAction = event.target.closest('jhi-exercise-details-student-actions') && event.target.closest('.btn');
-        const isClickResult = event.target.closest('jhi-result');
-        if (!isClickOnAction || isClickResult) {
+        const isClickResult = event.target.closest('jhi-result') && event.target.closest('.result');
+        if (!isClickOnAction && !isClickResult) {
             if (this.extendedLink) {
                 this.router.navigate(['overview', this.course.id, 'exercises', this.exercise.id]);
             } else {
