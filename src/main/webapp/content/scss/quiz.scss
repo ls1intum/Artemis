@@ -18,6 +18,11 @@
     .short-answer-question-display-element {
         display: inline-flex;
     }
+
+    .short-answer-question-display-statistic-element {
+        display: inline-flex;
+        line-height: 35px;
+    }
 }
 
 .short-answer-question-display-statistic {
@@ -31,7 +36,7 @@
 
 .short-answer-question-input {
     margin-bottom: 10px;
-    line-height: 30px;
+    line-height: 35px;
     border-width: 1px;
     border-style: solid;
     border-color: #ced4da;
