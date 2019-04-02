@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { AfterViewInit, Component, Input, OnInit } from '@angular/core';
 import { ModelingSubmission, ModelingSubmissionService } from 'app/entities/modeling-submission';
 import { ModelingExercise } from 'app/entities/modeling-exercise';
 import { ActivatedRoute } from '@angular/router';
@@ -12,7 +12,7 @@ import * as $ from 'jquery';
     templateUrl: './modeling-assessment-conflict.component.html',
     styleUrls: ['./modeling-assessment-conflict.component.scss'],
 })
-export class ModelingAssessmentConflictComponent implements OnInit {
+export class ModelingAssessmentConflictComponent implements OnInit, AfterViewInit {
     model: UMLModel;
     conflictIndex = 0;
     user: User;
@@ -34,6 +34,10 @@ export class ModelingAssessmentConflictComponent implements OnInit {
         this.accountService.identity().then(value => (this.user = value));
     }
 
+    ngAfterViewInit() {
+        this.setSameWidthOnModelingAssessments();
+    }
+
     onNextConflict() {
         this.conflictIndex = this.conflictIndex < this.conflicts.length - 1 ? ++this.conflictIndex : this.conflictIndex;
         this.updateSelectedConflict();
@@ -44,23 +48,11 @@ export class ModelingAssessmentConflictComponent implements OnInit {
         this.updateSelectedConflict();
     }
 
-    // private loadSubmission() {
-    //     this.route.params.subscribe(params => {
-    //         const submissionId = Number(params['submissionId']);
-    //         this.modelingSubmisionService.getSubmission(submissionId).subscribe((submission: ModelingSubmission) => {
-    //             this.processNewSubmission(submission);
-    //         });
-    //     }); //TODO MJ error handling
-    // }
-
-    // private processNewSubmission(submission: ModelingSubmission) {
-    //     this.submission = submission;
-    //     this.modelingExercise = submission.participation.exercise as ModelingExercise;
-    //     this.model = JSON.parse(submission.model);
-    //     if (!this.model) {
-    //         //TODO error message
-    //     }
-    // }
+    setSameWidthOnModelingAssessments() {
+        const conflictEditorWidth = $('#conflictEditor').width();
+        const instructionsWidth = $('#assessmentInstructions').width();
+        $('.resizable').css('width', (conflictEditorWidth - instructionsWidth) / 2 + 15);
+    }
 
     private updateSelectedConflict() {
         this.currentConflict = this.conflicts[this.conflictIndex];

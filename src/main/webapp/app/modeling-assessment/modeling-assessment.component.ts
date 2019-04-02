@@ -36,7 +36,10 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         } else {
             this.jhiAlertService.error('arTeMiSApp.apollonDiagram.submission.noModel');
         }
-        this.updateHighlightedElement(undefined, this.highlightedElementId);
+        if (this.highlightedElementId) {
+            this.updateHighlightedElement(undefined, this.highlightedElementId);
+            this.scrollIntoView(this.highlightedElementId);
+        }
         if (this.resizeOptions) {
             if (this.resizeOptions.initialWidth) {
                 this.renderer.setStyle(this.resizeContainer.nativeElement, 'width', this.resizeOptions.initialWidth);
@@ -72,11 +75,10 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         }
         if (changes.highlightedElementId) {
             this.updateHighlightedElement(changes.highlightedElementId.previousValue, changes.highlightedElementId.currentValue);
+            this.scrollIntoView(changes.highlightedElementId.currentValue);
         }
     }
 
-    /**
-     */
     private initializeApollonEditor() {
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();
@@ -134,7 +136,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     }
 
     private updateHighlightedElement(previousElementID: string, newElementID: string) {
-        let element = this.editorContainer.nativeElement as HTMLDivElement;
+        const element = this.editorContainer.nativeElement as HTMLDivElement;
         if (previousElementID) {
             $(element)
                 .find(`#${previousElementID}`)
@@ -144,6 +146,16 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             $(element)
                 .find(`#${newElementID}`)
                 .css('fill', 'rgba(220,53,69,0.7)');
+        }
+    }
+
+    private scrollIntoView(elementId: string) {
+        const element = this.editorContainer.nativeElement as HTMLDivElement;
+        const matchingElement = $(element)
+            .find(`#${elementId}`)
+            .get(0);
+        if (matchingElement) {
+            matchingElement.scrollIntoView({ block: 'center', inline: 'center' });
         }
     }
 
