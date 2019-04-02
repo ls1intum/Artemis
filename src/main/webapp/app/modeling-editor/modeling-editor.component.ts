@@ -1,437 +1,92 @@
-import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs/Subscription';
-import { ModelingExercise } from '../entities/modeling-exercise';
-import { Participation } from '../entities/participation';
-import { ApollonDiagramService } from '../entities/apollon-diagram';
-import { ApollonEditor, ApollonMode, DiagramType, ElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
+import { AfterViewInit, Component, ElementRef, Input, OnDestroy, OnInit, Renderer2, ViewChild } from '@angular/core';
+import { ApollonEditor, ApollonMode, DiagramType, UMLModel } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
-import { Result } from '../entities/result';
-import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
-import * as $ from 'jquery';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ComponentCanDeactivate } from '../shared';
-import { JhiWebsocketService } from '../core';
-import { Observable } from 'rxjs/Observable';
-import { TranslateService } from '@ngx-translate/core';
-import * as moment from 'moment';
-import { ArtemisMarkdown } from 'app/components/util/markdown.service';
-import { ModelingAssessmentService } from 'app/modeling-assessment-editor/modeling-assessment.service';
+import * as interact from 'interactjs';
 
 @Component({
     selector: 'jhi-modeling-editor',
     templateUrl: './modeling-editor.component.html',
-    providers: [ModelingAssessmentService, ApollonDiagramService],
+    styleUrls: ['./modeling-editor.component.scss'],
 })
-export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
+export class ModelingEditorComponent implements OnInit, AfterViewInit, OnDestroy {
     @ViewChild('editorContainer')
     editorContainer: ElementRef;
+    @ViewChild('resizeContainer')
+    resizeContainer: ElementRef;
+    @Input()
+    umlModel: UMLModel;
+    @Input()
+    diagramType: DiagramType;
+    @Input()
+    readOnly = false;
+    @Input()
+    resizeOptions: { initialWidth: string; maxWidth?: number };
 
-    private subscription: Subscription;
-    participation: Participation;
-    modelingExercise: ModelingExercise;
-    result: Result;
+    private apollonEditor: ApollonEditor | null = null;
 
-    apollonEditor: ApollonEditor | null = null;
-    selectedEntities: string[];
-    selectedRelationships: string[];
+    constructor(private jhiAlertService: JhiAlertService, private renderer: Renderer2, private modalService: NgbModal) {}
 
-    submission: ModelingSubmission;
+    ngOnInit() {}
 
-    /**
-     * JSON with the following keys: editor, entities, interactiveElements, relationships
-     * format is given by Apollon
-     */
-    submissionState: UMLModel;
-
-    // TODO: rename
-    assessmentResult: Result;
-    assessmentsNames: Map<string, Map<string, string>>;
-    totalScore: number;
-
-    /**
-     * an Array of model element IDs as keys with {x: <xOffset>, y: <yOffset>} as values
-     * is used for positioning the assessment symbols
-     */
-    positions: Map<string, { x: number; y: number }>;
-
-    umlModel: UMLModel = null;
-    isActive: boolean;
-    isSaving: boolean;
-    retryStarted = false;
-    autoSaveInterval: number;
-    autoSaveTimer: number;
-
-    websocketChannel: string;
-
-    problemStatement: string;
-
-    constructor(
-        private jhiWebsocketService: JhiWebsocketService,
-        private apollonDiagramService: ApollonDiagramService,
-        private modelingSubmissionService: ModelingSubmissionService,
-        private modelingAssessmentService: ModelingAssessmentService,
-        private jhiAlertService: JhiAlertService,
-        private route: ActivatedRoute,
-        private modalService: NgbModal,
-        private translateService: TranslateService,
-        private router: Router,
-        private artemisMarkdown: ArtemisMarkdown,
-    ) {
-        this.isSaving = false;
-        this.autoSaveTimer = 0;
-    }
-
-    ngOnInit() {
-        this.subscription = this.route.params.subscribe(params => {
-            if (params['participationId']) {
-                this.modelingSubmissionService.getDataForModelingEditor(params['participationId']).subscribe(
-                    modelingSubmission => {
-                        // reconnect participation <--> result
-                        if (modelingSubmission.result) {
-                            modelingSubmission.participation.results = [modelingSubmission.result];
-                        }
-                        this.participation = modelingSubmission.participation;
-                        this.modelingExercise = this.participation.exercise as ModelingExercise;
-                        this.problemStatement = this.artemisMarkdown.htmlForMarkdown(this.modelingExercise.problemStatement);
-                        /**
-                         * set diagramType to class diagram if exercise is null
-                         */
-                        if (this.modelingExercise.diagramType == null) {
-                            this.modelingExercise.diagramType = DiagramType.ClassDiagram;
-                        }
-                        this.isActive = this.modelingExercise.dueDate == null || new Date() <= moment(this.modelingExercise.dueDate).toDate();
-                        this.submission = modelingSubmission;
-                        if (this.submission && this.submission.id && !this.submission.submitted) {
-                            this.subscribeToWebsocket();
-                        }
-                        if (this.submission && this.submission.result) {
-                            this.result = this.submission.result;
-                        }
-                        if (this.submission && this.submission.submitted && this.result && this.result.completionDate) {
-                            this.modelingAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
-                                this.assessmentResult = assessmentResult;
-                                this.initializeAssessmentInfo();
-                                this.initializeApollonEditor(JSON.parse(this.submission.model));
-                            });
-                        } else if (this.submission && this.submission.model) {
-                            this.initializeApollonEditor(JSON.parse(this.submission.model));
-                        } else {
-                            this.initializeApollonEditor(null);
-                        }
-                    },
-                    error => {
-                        if (error.status === 403) {
-                            this.router.navigate(['accessdenied']);
-                        }
-                    },
-                );
-            }
-        });
-        window.scroll(0, 0);
-    }
-
-    subscribeToWebsocket() {
-        if (!this.submission && !this.submission.id) {
-            return;
+    ngAfterViewInit(): void {
+        if (this.umlModel) {
+            this.initializeApollonEditor();
+        } else {
+            this.jhiAlertService.error('arTeMiSApp.apollonDiagram.submission.noModel');
         }
-        this.websocketChannel = '/user/topic/modelingSubmission/' + this.submission.id;
-        this.jhiWebsocketService.subscribe(this.websocketChannel);
-        this.jhiWebsocketService.receive(this.websocketChannel).subscribe(submission => {
-            if (submission.submitted) {
-                this.submission = submission;
-                if (this.submission.result && this.submission.result.rated) {
-                    this.modelingAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
-                        this.assessmentResult = assessmentResult;
-                        this.initializeAssessmentInfo();
-                    });
-                }
-                this.jhiAlertService.info('arTeMiSApp.modelingEditor.autoSubmit');
-                if (this.submission.model) {
-                    this.initializeApollonEditor(JSON.parse(this.submission.model));
-                }
-                this.isActive = false;
+        if (this.resizeOptions) {
+            if (this.resizeOptions.initialWidth) {
+                this.renderer.setStyle(this.resizeContainer.nativeElement, 'width', this.resizeOptions.initialWidth);
             }
-        });
-    }
-
-    /**
-     * This function initialized the Apollon editor depending on the submission status.
-     * If it was already submitted, the Apollon editor is loaded in Assessment read-only mode.
-     * Otherwise, it is loaded in the modeling mode and an auto save timer is started.
-     */
-    initializeApollonEditor(initialModel: UMLModel) {
-        if (this.apollonEditor !== null) {
-            this.apollonEditor.destroy();
-        }
-
-        if (this.submission && this.submission.submitted) {
-            clearInterval(this.autoSaveInterval);
-            if (this.assessmentResult && this.assessmentResult.feedbacks && this.assessmentResult.feedbacks.length > 0) {
-                initialModel.assessments = this.assessmentResult.feedbacks.map(feedback => {
-                    return {
-                        modelElementId: feedback.referenceId,
-                        elementType: feedback.referenceType,
-                        score: feedback.credits,
-                        feedback: feedback.text,
-                    };
+            interact('.resizable')
+                .resizable({
+                    edges: { left: false, right: '.draggable-right', bottom: false, top: false },
+                    restrictSize: {
+                        min: { width: 15 },
+                        max: { width: this.resizeOptions.maxWidth | 2500 },
+                    },
+                    inertia: true,
+                })
+                .on('resizemove', event => {
+                    const target = event.target;
+                    target.style.width = event.rect.width + 'px';
                 });
-            }
-            this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
-                model: initialModel,
-                mode: ApollonMode.Assessment,
-                readonly: true,
-                type: this.modelingExercise.diagramType,
-            });
-
-            this.apollonEditor.subscribeToSelectionChange(selection => {
-                this.selectedEntities = selection.elements;
-                this.selectedRelationships = selection.relationships;
-            });
-
-            const apollonDiv = $('.apollon-editor > div');
-            const assessmentsDiv = $('.assessments__container');
-            assessmentsDiv.scrollTop(apollonDiv.scrollTop());
-            assessmentsDiv.scrollLeft(apollonDiv.scrollLeft());
-
-            apollonDiv.on('scroll', function() {
-                assessmentsDiv.scrollTop(apollonDiv.scrollTop());
-                assessmentsDiv.scrollLeft(apollonDiv.scrollLeft());
-            });
-        } else {
-            this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
-                model: initialModel,
-                mode: ApollonMode.Modelling,
-                readonly: false,
-                type: this.modelingExercise.diagramType,
-            });
-
-            this.updateSubmissionModel();
-            // auto save of submission if there are changes
-            this.autoSaveInterval = window.setInterval(() => {
-                this.autoSaveTimer++;
-                if (this.submission && this.submission.submitted) {
-                    clearInterval(this.autoSaveInterval);
-                    this.autoSaveTimer = 0;
-                }
-                if (this.autoSaveTimer >= 60 && !this.canDeactivate()) {
-                    this.saveDiagram();
-                }
-            }, 1000);
         }
     }
 
-    saveDiagram() {
-        if (this.isSaving) {
-            // don't execute the function if it is already currently executing
-            return;
-        }
-        if (!this.submission) {
-            this.submission = new ModelingSubmission();
-        }
-        this.submission.submitted = false;
-        this.updateSubmissionModel();
-        this.isSaving = true;
-        this.autoSaveTimer = 0;
-
-        if (this.submission.id) {
-            this.modelingSubmissionService.update(this.submission, this.modelingExercise.id).subscribe(
-                response => {
-                    this.submission = response.body;
-                    this.result = this.submission.result;
-                    if (!this.submission.model) {
-                        this.updateSubmissionModel();
-                    }
-                    this.isSaving = false;
-                    this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
-                },
-                error => {
-                    this.isSaving = false;
-                    this.jhiAlertService.error('arTeMiSApp.modelingEditor.error');
-                },
-            );
-        } else {
-            this.modelingSubmissionService.create(this.submission, this.modelingExercise.id).subscribe(
-                submission => {
-                    this.submission = submission.body;
-                    this.result = this.submission.result;
-                    this.isSaving = false;
-                    this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
-                    this.isActive = this.modelingExercise.dueDate == null || new Date() <= moment(this.modelingExercise.dueDate).toDate();
-                    this.subscribeToWebsocket();
-                },
-                error => {
-                    this.jhiAlertService.error('arTeMiSApp.modelingEditor.error');
-                    this.isSaving = false;
-                },
-            );
-        }
-    }
-
-    submit() {
-        if (!this.submission) {
-            return;
-        }
-        this.updateSubmissionModel();
-        if (!this.umlModel || this.umlModel.elements.length === 0) {
-            this.jhiAlertService.warning('arTeMiSApp.modelingEditor.empty');
-            return;
-        }
-
-        let confirmSubmit = true;
-        if (this.calculateNumberOfModelElements() < 10) {
-            confirmSubmit = window.confirm('Are you sure you want to submit? You cannot edit your model anymore until you get an assessment!');
-        }
-
-        if (confirmSubmit) {
-            this.submission.submitted = true;
-            this.modelingSubmissionService.update(this.submission, this.modelingExercise.id).subscribe(
-                response => {
-                    this.submission = response.body;
-                    this.result = this.submission.result;
-                    // Compass has already calculated a result
-                    if (this.result && this.result.assessmentType) {
-                        const participation = this.participation;
-                        participation.results = [this.result];
-                        this.participation = Object.assign({}, participation);
-                        this.modelingAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
-                            this.assessmentResult = assessmentResult;
-                            this.initializeAssessmentInfo();
-                        });
-                        this.jhiAlertService.success('arTeMiSApp.modelingEditor.submitSuccessfulWithAssessment');
-                    } else {
-                        if (this.isActive) {
-                            this.jhiAlertService.success('arTeMiSApp.modelingEditor.submitSuccessful');
-                        } else {
-                            this.jhiAlertService.warning('arTeMiSApp.modelingEditor.submitDeadlineMissed');
-                        }
-                    }
-                    this.retryStarted = false;
-                    clearInterval(this.autoSaveInterval);
-                    this.initializeApollonEditor(JSON.parse(this.submission.model));
-                    if (this.websocketChannel) {
-                        this.jhiWebsocketService.unsubscribe(this.websocketChannel);
-                    }
-                },
-                err => {
-                    this.jhiAlertService.error('arTeMiSApp.modelingEditor.error');
-                    this.submission.submitted = false;
-                },
-            );
-        }
-    }
-
-    ngOnDestroy() {
-        this.subscription.unsubscribe();
+    /**
+     * This function initializes the Apollon editor in Modeling mode.
+     */
+    private initializeApollonEditor() {
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();
         }
-        clearInterval(this.autoSaveInterval);
-
-        if (this.websocketChannel) {
-            this.jhiWebsocketService.unsubscribe(this.websocketChannel);
-        }
+        this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
+            model: this.umlModel,
+            mode: ApollonMode.Modelling,
+            readonly: this.readOnly,
+            type: this.diagramType,
+        });
     }
 
     /**
-     * Updates the model of the submission with the current Apollon model state
+     * Returns the current model of the Apollon editor.
      */
-    updateSubmissionModel() {
-        this.umlModel = this.apollonEditor.model;
-        const diagramJson = JSON.stringify(this.umlModel);
-        if (this.submission && diagramJson != null) {
-            this.submission.model = diagramJson;
-        }
-    }
-
-    /**
-     * Retrieves names for displaying the assessment and calculates the total score
-     */
-    initializeAssessmentInfo() {
-        if (this.assessmentResult && this.submission && this.submission.model) {
-            this.submissionState = JSON.parse(this.submission.model);
-            this.assessmentsNames = this.modelingAssessmentService.getNamesForAssessments(this.assessmentResult, this.submissionState);
-            let totalScore = 0;
-            for (const feedback of this.assessmentResult.feedbacks) {
-                totalScore += feedback.credits;
-            }
-            this.totalScore = totalScore;
-        }
-    }
-
-    /**
-     * Checks whether a model element in the modeling editor is selected.
-     */
-    isSelected(modelElementId: string, type: ElementType) {
-        if ((!this.selectedEntities || this.selectedEntities.length === 0) && (!this.selectedRelationships || this.selectedRelationships.length === 0)) {
-            return true;
-        }
-        // TODO does this work?
-        if (type in UMLRelationshipType) {
-            return this.selectedRelationships.indexOf(modelElementId) > -1;
-        } else {
-            return this.selectedEntities.indexOf(modelElementId) > -1;
-        }
+    getCurrentModel(): UMLModel {
+        return this.apollonEditor.model;
     }
 
     /**
      * This function opens the modal for the help dialog.
      */
-    open(content: any) {
+    private open(content: any) {
         this.modalService.open(content, { size: 'lg' });
     }
 
-    // function to check whether there are pending changes
-    canDeactivate(): Observable<boolean> | boolean {
-        if (this.submission && this.submission.submitted) {
-            return true;
+    ngOnDestroy(): void {
+        if (this.apollonEditor !== null) {
+            this.apollonEditor.destroy();
         }
-        const jsonModel = JSON.stringify(this.apollonEditor.model);
-        if (
-            (!this.submission && this.apollonEditor && this.apollonEditor.model.elements.length > 0 && jsonModel !== '') ||
-            (this.submission && this.submission.model && JSON.parse(this.submission.model).version === this.apollonEditor.model.version && this.submission.model !== jsonModel)
-        ) {
-            return false;
-        }
-        return true;
-    }
-
-    // displays the alert for confirming leaving the page if there are unsaved changes
-    @HostListener('window:beforeunload', ['$event'])
-    unloadNotification($event: any) {
-        if (!this.canDeactivate()) {
-            $event.returnValue = this.translateService.instant('pendingChanges');
-        }
-    }
-
-    /**
-     * starts a retry and resets necessary attributes
-     * the retry is only persisted after saving or submitting the model
-     */
-    retry() {
-        this.retryStarted = true;
-        const currentModel = this.submission.model;
-        this.submission = new ModelingSubmission();
-        this.submission.model = currentModel;
-        this.assessmentResult = null;
-        this.result = null; // TODO: think about how we could visualize old results and assessments after retry
-
-        clearInterval(this.autoSaveInterval);
-        if (this.submission.model) {
-            this.initializeApollonEditor(JSON.parse(this.submission.model));
-        } else {
-            this.initializeApollonEditor(null);
-        }
-    }
-
-    /**
-     * counts the number of model elements
-     * is used in the submit() function
-     */
-    calculateNumberOfModelElements(): number {
-        if (this.umlModel) {
-            return this.umlModel.elements.length + this.umlModel.relationships.length;
-        }
-        return 0;
     }
 }

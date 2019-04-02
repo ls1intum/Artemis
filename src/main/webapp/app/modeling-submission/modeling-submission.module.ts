@@ -3,17 +3,18 @@ import { RouterModule } from '@angular/router';
 import { NgModule } from '@angular/core';
 import { ArTEMiSSharedModule } from '../shared';
 import { modelingSubmissionRoute } from './modeling-submission.route';
-import { ArTEMiSResultModule, ResultComponent } from '../entities/result';
+import { ArTEMiSResultModule } from '../entities/result';
 import { JhiLanguageService } from 'ng-jhipster';
 import { JhiLanguageHelper } from 'app/core';
 import { AceEditorModule } from 'ng2-ace-editor';
+import { ArTEMiSModelingEditorModule } from 'app/modeling-editor';
 
 const ENTITY_STATES = [...modelingSubmissionRoute];
 
+// TODO CZ: do we need all these imports?
 @NgModule({
-    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), ArTEMiSResultModule, AceEditorModule],
+    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), ArTEMiSResultModule, AceEditorModule, ArTEMiSModelingEditorModule],
     declarations: [ModelingSubmissionComponent],
-    entryComponents: [ModelingSubmissionComponent, ResultComponent],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
 })
 export class ArTEMiSModelingSubmissionModule {

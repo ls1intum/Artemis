@@ -1,14 +1,13 @@
-import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { ModelingExercise } from '../entities/modeling-exercise';
 import { Participation } from '../entities/participation';
 import { ApollonDiagramService } from '../entities/apollon-diagram';
-import { ApollonEditor, ApollonMode, DiagramType, ElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
+import { DiagramType, ElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
 import { Result } from '../entities/result';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
-import * as $ from 'jquery';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ComponentCanDeactivate } from '../shared';
 import { JhiWebsocketService } from '../core';
@@ -17,43 +16,31 @@ import { TranslateService } from '@ngx-translate/core';
 import * as moment from 'moment';
 import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 import { ModelingAssessmentService } from 'app/modeling-assessment-editor/modeling-assessment.service';
+import { ModelingEditorComponent } from 'app/modeling-editor';
 
 @Component({
     selector: 'jhi-modeling-submission',
     templateUrl: './modeling-submission.component.html',
-    providers: [ModelingAssessmentService, ApollonDiagramService],
+    styleUrls: ['./modeling-submission.component.scss'],
 })
 export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
-    @ViewChild('editorContainer')
-    editorContainer: ElementRef;
+    @ViewChild(ModelingEditorComponent)
+    modelingEditor: ModelingEditorComponent;
 
     private subscription: Subscription;
     participation: Participation;
     modelingExercise: ModelingExercise;
     result: Result;
 
-    apollonEditor: ApollonEditor | null = null;
     selectedEntities: string[];
     selectedRelationships: string[];
 
     submission: ModelingSubmission;
 
-    /**
-     * JSON with the following keys: editor, entities, interactiveElements, relationships
-     * format is given by Apollon
-     */
-    submissionState: UMLModel;
-
     // TODO: rename
     assessmentResult: Result;
     assessmentsNames: Map<string, Map<string, string>>;
     totalScore: number;
-
-    /**
-     * an Array of model element IDs as keys with {x: <xOffset>, y: <yOffset>} as values
-     * is used for positioning the assessment symbols
-     */
-    positions: Map<string, { x: number; y: number }>;
 
     umlModel: UMLModel = null;
     isActive: boolean;
@@ -102,6 +89,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         }
                         this.isActive = this.modelingExercise.dueDate == null || new Date() <= moment(this.modelingExercise.dueDate).toDate();
                         this.submission = modelingSubmission;
+                        if (this.submission && this.submission.model) {
+                            this.umlModel = JSON.parse(this.submission.model);
+                        }
                         if (this.submission && this.submission.id && !this.submission.submitted) {
                             this.subscribeToWebsocket();
                         }
@@ -109,16 +99,13 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                             this.result = this.submission.result;
                         }
                         if (this.submission && this.submission.submitted && this.result && this.result.completionDate) {
+                            // TODO CZ: move to separate assessment result view?
                             this.modelingAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
                                 this.assessmentResult = assessmentResult;
                                 this.initializeAssessmentInfo();
-                                this.initializeApollonEditor(JSON.parse(this.submission.model));
                             });
-                        } else if (this.submission && this.submission.model) {
-                            this.initializeApollonEditor(JSON.parse(this.submission.model));
-                        } else {
-                            this.initializeApollonEditor(null);
                         }
+                        this.setAutoSaveTimer();
                     },
                     error => {
                         if (error.status === 403) {
@@ -141,6 +128,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             if (submission.submitted) {
                 this.submission = submission;
                 if (this.submission.result && this.submission.result.rated) {
+                    // TODO CZ: move to separate assessment result view?
                     this.modelingAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
                         this.assessmentResult = assessmentResult;
                         this.initializeAssessmentInfo();
@@ -148,11 +136,15 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 }
                 this.jhiAlertService.info('arTeMiSApp.modelingEditor.autoSubmit');
                 if (this.submission.model) {
-                    this.initializeApollonEditor(JSON.parse(this.submission.model));
+                    this.updateEditor(JSON.parse(this.submission.model));
                 }
                 this.isActive = false;
             }
         });
+    }
+
+    updateEditor(model: UMLModel) {
+        this.modelingEditor.umlModel = model;
     }
 
     /**
@@ -160,65 +152,21 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * If it was already submitted, the Apollon editor is loaded in Assessment read-only mode.
      * Otherwise, it is loaded in the modeling mode and an auto save timer is started.
      */
-    initializeApollonEditor(initialModel: UMLModel) {
-        if (this.apollonEditor !== null) {
-            this.apollonEditor.destroy();
+    setAutoSaveTimer() {
+        if (this.submission.submitted) {
+            return;
         }
-
-        if (this.submission && this.submission.submitted) {
-            clearInterval(this.autoSaveInterval);
-            if (this.assessmentResult && this.assessmentResult.feedbacks && this.assessmentResult.feedbacks.length > 0) {
-                initialModel.assessments = this.assessmentResult.feedbacks.map(feedback => {
-                    return {
-                        modelElementId: feedback.referenceId,
-                        elementType: feedback.referenceType,
-                        score: feedback.credits,
-                        feedback: feedback.text,
-                    };
-                });
+        // auto save of submission if there are changes
+        this.autoSaveInterval = window.setInterval(() => {
+            this.autoSaveTimer++;
+            if (this.submission && this.submission.submitted) {
+                clearInterval(this.autoSaveInterval);
+                this.autoSaveTimer = 0;
             }
-            this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
-                model: initialModel,
-                mode: ApollonMode.Assessment,
-                readonly: true,
-                type: this.modelingExercise.diagramType,
-            });
-
-            this.apollonEditor.subscribeToSelectionChange(selection => {
-                this.selectedEntities = selection.elements;
-                this.selectedRelationships = selection.relationships;
-            });
-
-            const apollonDiv = $('.apollon-editor > div');
-            const assessmentsDiv = $('.assessments__container');
-            assessmentsDiv.scrollTop(apollonDiv.scrollTop());
-            assessmentsDiv.scrollLeft(apollonDiv.scrollLeft());
-
-            apollonDiv.on('scroll', function() {
-                assessmentsDiv.scrollTop(apollonDiv.scrollTop());
-                assessmentsDiv.scrollLeft(apollonDiv.scrollLeft());
-            });
-        } else {
-            this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
-                model: initialModel,
-                mode: ApollonMode.Modelling,
-                readonly: false,
-                type: this.modelingExercise.diagramType,
-            });
-
-            this.updateSubmissionModel();
-            // auto save of submission if there are changes
-            this.autoSaveInterval = window.setInterval(() => {
-                this.autoSaveTimer++;
-                if (this.submission && this.submission.submitted) {
-                    clearInterval(this.autoSaveInterval);
-                    this.autoSaveTimer = 0;
-                }
-                if (this.autoSaveTimer >= 60 && !this.canDeactivate()) {
-                    this.saveDiagram();
-                }
-            }, 1000);
-        }
+            if (this.autoSaveTimer >= 60 && !this.canDeactivate()) {
+                this.saveDiagram();
+            }
+        }, 1000);
     }
 
     saveDiagram() {
@@ -294,6 +242,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         const participation = this.participation;
                         participation.results = [this.result];
                         this.participation = Object.assign({}, participation);
+                        // TODO CZ: move to separate assessment result view?
                         this.modelingAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
                             this.assessmentResult = assessmentResult;
                             this.initializeAssessmentInfo();
@@ -308,7 +257,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     }
                     this.retryStarted = false;
                     clearInterval(this.autoSaveInterval);
-                    this.initializeApollonEditor(JSON.parse(this.submission.model));
+                    this.updateEditor(JSON.parse(this.submission.model));
                     if (this.websocketChannel) {
                         this.jhiWebsocketService.unsubscribe(this.websocketChannel);
                     }
@@ -323,11 +272,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     ngOnDestroy() {
         this.subscription.unsubscribe();
-        if (this.apollonEditor !== null) {
-            this.apollonEditor.destroy();
-        }
         clearInterval(this.autoSaveInterval);
-
         if (this.websocketChannel) {
             this.jhiWebsocketService.unsubscribe(this.websocketChannel);
         }
@@ -337,20 +282,20 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * Updates the model of the submission with the current Apollon model state
      */
     updateSubmissionModel() {
-        this.umlModel = this.apollonEditor.model;
+        this.umlModel = this.modelingEditor.getCurrentModel();
         const diagramJson = JSON.stringify(this.umlModel);
         if (this.submission && diagramJson != null) {
             this.submission.model = diagramJson;
         }
     }
 
+    // TODO CZ: move to separate assessment result view?
     /**
      * Retrieves names for displaying the assessment and calculates the total score
      */
     initializeAssessmentInfo() {
         if (this.assessmentResult && this.submission && this.submission.model) {
-            this.submissionState = JSON.parse(this.submission.model);
-            this.assessmentsNames = this.modelingAssessmentService.getNamesForAssessments(this.assessmentResult, this.submissionState);
+            this.assessmentsNames = this.modelingAssessmentService.getNamesForAssessments(this.assessmentResult, this.umlModel);
             let totalScore = 0;
             for (const feedback of this.assessmentResult.feedbacks) {
                 totalScore += feedback.credits;
@@ -366,7 +311,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         if ((!this.selectedEntities || this.selectedEntities.length === 0) && (!this.selectedRelationships || this.selectedRelationships.length === 0)) {
             return true;
         }
-        // TODO does this work?
         if (type in UMLRelationshipType) {
             return this.selectedRelationships.indexOf(modelElementId) > -1;
         } else {
@@ -374,22 +318,16 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
     }
 
-    /**
-     * This function opens the modal for the help dialog.
-     */
-    open(content: any) {
-        this.modalService.open(content, { size: 'lg' });
-    }
-
     // function to check whether there are pending changes
     canDeactivate(): Observable<boolean> | boolean {
         if (this.submission && this.submission.submitted) {
             return true;
         }
-        const jsonModel = JSON.stringify(this.apollonEditor.model);
+        const model: UMLModel = this.modelingEditor.getCurrentModel();
+        const jsonModel = JSON.stringify(model);
         if (
-            (!this.submission && this.apollonEditor && this.apollonEditor.model.elements.length > 0 && jsonModel !== '') ||
-            (this.submission && this.submission.model && JSON.parse(this.submission.model).version === this.apollonEditor.model.version && this.submission.model !== jsonModel)
+            (!this.submission && model.elements.length > 0 && jsonModel !== '') ||
+            (this.submission && this.submission.model && JSON.parse(this.submission.model).version === model.version && this.submission.model !== jsonModel)
         ) {
             return false;
         }
@@ -418,10 +356,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
         clearInterval(this.autoSaveInterval);
         if (this.submission.model) {
-            this.initializeApollonEditor(JSON.parse(this.submission.model));
-        } else {
-            this.initializeApollonEditor(null);
+            this.updateEditor(JSON.parse(this.submission.model));
         }
+        this.setAutoSaveTimer();
     }
 
     /**

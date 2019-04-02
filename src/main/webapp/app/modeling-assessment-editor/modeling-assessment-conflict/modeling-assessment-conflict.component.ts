@@ -14,7 +14,7 @@ import * as $ from 'jquery';
 })
 export class ModelingAssessmentConflictComponent implements OnInit {
     model: UMLModel;
-    conflictIndex: number = 0;
+    conflictIndex = 0;
     user: User;
 
     currentConflict: Conflict;

@@ -1,0 +1,21 @@
+$draggable-width: 15px;
+
+.modeling-editor {
+    position: relative;
+    height: 100%;
+}
+
+.resizable {
+    display: flex;
+    .draggable-right {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: $draggable-width;
+    }
+}
+
+.apollon-container {
+    height: 100%;
+    overflow: hidden;
+}
