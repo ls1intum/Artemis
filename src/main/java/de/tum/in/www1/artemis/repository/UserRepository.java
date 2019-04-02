@@ -1,9 +1,9 @@
 package de.tum.in.www1.artemis.repository;
 
-import de.tum.in.www1.artemis.domain.User;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,6 +13,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import de.tum.in.www1.artemis.domain.User;
 
 /** Spring Data JPA repository for the User entity. */
 @Repository
@@ -39,8 +41,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Page<User> findAllByLoginNot(Pageable pageable, String login);
 
-    @Query(
-            "SELECT r.participation.student.id FROM Result r WHERE r.submission.id = :#{#submissionId}")
+    @Query("SELECT r.participation.student.id FROM Result r WHERE r.submission.id = :#{#submissionId}")
     Long findUserIdBySubmissionId(@Param("submissionId") Long submissionId);
 
     @Query("SELECT r.participation.student FROM Result r WHERE r.id = :#{#resultId}")

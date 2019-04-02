@@ -1,30 +1,33 @@
 package de.tum.in.www1.artemis.service;
 
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.google.gson.JsonObject;
+
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.GroupNotification;
 import de.tum.in.www1.artemis.domain.Notification;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.in.www1.artemis.repository.GroupNotificationRepository;
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
 public class GroupNotificationService {
+
     private GroupNotificationRepository groupNotificationRepository;
+
     private final SimpMessageSendingOperations messagingTemplate;
+
     private UserService userService;
 
-    public GroupNotificationService(
-            GroupNotificationRepository groupNotificationRepository,
-            SimpMessageSendingOperations messagingTemplate,
-            UserService userService) {
+    public GroupNotificationService(GroupNotificationRepository groupNotificationRepository, SimpMessageSendingOperations messagingTemplate, UserService userService) {
         this.groupNotificationRepository = groupNotificationRepository;
         this.messagingTemplate = messagingTemplate;
         this.userService = userService;
@@ -60,8 +63,7 @@ public class GroupNotificationService {
         notifyGroupAboutExercise(exercise, title, notificationText, "exerciseCreated");
     }
 
-    private void notifyGroupAboutExercise(
-            Exercise exercise, String title, String notificationText, String message) {
+    private void notifyGroupAboutExercise(Exercise exercise, String title, String notificationText, String message) {
         GroupNotification groupNotification = new GroupNotification();
         groupNotification.setCourse(exercise.getCourse());
         groupNotification.setType(GroupNotificationType.STUDENT);
@@ -75,11 +77,7 @@ public class GroupNotificationService {
         target.addProperty("mainPage", "overview");
         groupNotification.setTarget(target.toString());
         groupNotification.setAuthor(userService.getUser());
-        String topic =
-                "/topic/course/"
-                        + groupNotification.getCourse().getId()
-                        + "/"
-                        + groupNotification.getType();
+        String topic = "/topic/course/" + groupNotification.getCourse().getId() + "/" + groupNotification.getType();
         saveAndSendGroupNotification(topic, groupNotification);
     }
 
@@ -93,7 +91,6 @@ public class GroupNotificationService {
         if (userGroups.size() == 0) {
             return new ArrayList<>();
         }
-        return this.groupNotificationRepository.findAllNewNotificationsForCurrentUser(
-                userGroups, currentUser.getLastNotificationRead());
+        return this.groupNotificationRepository.findAllNewNotificationsForCurrentUser(userGroups, currentUser.getLastNotificationRead());
     }
 }
