@@ -11,36 +11,25 @@ import { ExerciseTypePipe } from 'app/entities/exercise/';
 import { SidePanelComponent } from 'app/components/side-panel/side-panel.component';
 
 import {
+    CourseExerciseDetailsComponent,
     CourseExerciseRowComponent,
     CourseExercisesComponent,
-    CourseOverviewComponent,
     CourseGradeBookComponent,
+    CourseOverviewComponent,
     CourseStatisticsComponent,
+    DifficultyBadgeComponent,
+    ExerciseActionButtonComponent,
+    ExerciseDetailsStudentActionsComponent,
     OVERVIEW_ROUTES,
     OverviewComponent,
     OverviewCourseCardComponent,
-    ExerciseActionButtonComponent,
-    CourseExerciseDetailsComponent,
-    DifficultyBadgeComponent,
-    ExerciseDetailsStudentActionsComponent
 } from './';
 import { ArTEMiSResultModule } from 'app/entities/result';
-import { SecuredImageComponent } from 'app/components/util/secured-image.component';
-import { ArTEMiSQuizModule } from 'app/quiz/participate';
 
-const ENTITY_STATES = [
-    ...OVERVIEW_ROUTES
-];
+const ENTITY_STATES = [...OVERVIEW_ROUTES];
 
 @NgModule({
-    imports: [
-        ArTEMiSSharedModule,
-        ChartsModule,
-        ClipboardModule,
-        MomentModule,
-        ArTEMiSResultModule,
-        RouterModule.forChild(ENTITY_STATES)
-    ],
+    imports: [ArTEMiSSharedModule, ChartsModule, ClipboardModule, MomentModule, ArTEMiSResultModule, RouterModule.forChild(ENTITY_STATES)],
     declarations: [
         OverviewComponent,
         CourseOverviewComponent,
@@ -54,11 +43,11 @@ const ENTITY_STATES = [
         ExerciseDetailsStudentActionsComponent,
         DifficultyBadgeComponent,
         ExerciseTypePipe,
-        SidePanelComponent
+        SidePanelComponent,
     ],
     entryComponents: [],
     providers: [{ provide: JhiLanguageService, useClass: JhiLanguageService }],
-    schemas: [CUSTOM_ELEMENTS_SCHEMA]
+    schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ArTEMiSOverviewModule {
     constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {

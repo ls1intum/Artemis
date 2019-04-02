@@ -10,11 +10,12 @@ import { ExerciseType } from 'app/entities/exercise';
 import { MIN_POINTS_GREEN, MIN_POINTS_ORANGE } from 'app/app.constants';
 
 import * as moment from 'moment';
+import { ProgrammingExercise } from 'app/entities/programming-exercise';
 
 @Component({
     selector: 'jhi-result',
     templateUrl: './result.component.html',
-    providers: [ResultService, RepositoryService]
+    providers: [ResultService, RepositoryService],
 })
 
 /**
@@ -30,9 +31,10 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     @Input() participation: Participation;
     @Input() isBuilding: boolean;
     @Input() short = false;
+    @Input() result: Result;
+    @Input() showUngradedResults: boolean;
     @Output() newResult = new EventEmitter<object>();
 
-    result: Result;
     websocketChannelResults: string;
     websocketChannelSubmissions: string;
     textColorClass: string;
@@ -47,10 +49,17 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
         private repositoryService: RepositoryService,
         private accountService: AccountService,
         private http: HttpClient,
-        private modalService: NgbModal
-    ) { }
+        private modalService: NgbModal,
+    ) {}
 
     ngOnInit(): void {
+        if (this.result) {
+            const exercise = this.participation.exercise;
+            if (exercise && exercise.type === ExerciseType.PROGRAMMING) {
+                this.subscribeForProgramingExercise(exercise as ProgrammingExercise);
+            }
+            return this.init();
+        }
         if (this.participation && this.participation.id) {
             const exercise = this.participation.exercise;
 
@@ -59,17 +68,15 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
                     // sort results by completionDate descending to ensure the newest result is shown
                     // this is important for modeling exercises since students can have multiple tries
                     // think about if this should be used for all types of exercises
-                    this.participation.results.sort(
-                        (r1: Result, r2: Result) => {
-                            if (r1.completionDate > r2.completionDate) {
-                                return -1;
-                            }
-                            if (r1.completionDate < r2.completionDate) {
-                                return 1;
-                            }
-                            return 0;
+                    this.participation.results.sort((r1: Result, r2: Result) => {
+                        if (r1.completionDate > r2.completionDate) {
+                            return -1;
                         }
-                    );
+                        if (r1.completionDate < r2.completionDate) {
+                            return 1;
+                        }
+                        return 0;
+                    });
                 }
                 // Make sure result and participation are connected
                 this.result = this.participation.results[0];
@@ -79,31 +86,37 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             this.init();
 
             if (exercise && exercise.type === ExerciseType.PROGRAMMING) {
-                this.accountService.identity().then(user => {
-                    // only subscribe for the currently logged in user or if the participation is a template/solution participation and the student is at least instructor
-                    if ((this.participation.student && user.id === this.participation.student.id && (exercise.dueDate == null || exercise.dueDate.isAfter(moment())))
-                        || (this.participation.student == null && this.accountService.isAtLeastInstructorInCourse(exercise.course))) {
-                        // subscribe for new results (e.g. when a programming exercise was automatically tested)
-                        this.websocketChannelResults = `/topic/participation/${this.participation.id}/newResults`;
-                        this.jhiWebsocketService.subscribe(this.websocketChannelResults);
-                        this.jhiWebsocketService.receive(this.websocketChannelResults).subscribe((newResult: Result) => {
-                            // convert json string to moment
-                            console.log('Received new result ' + newResult.id + ': ' + newResult.resultString);
-                            newResult.completionDate = newResult.completionDate != null ? moment(newResult.completionDate) : null;
-                            this.handleNewResult(newResult);
-                        });
-
-                        // subscribe for new submissions (e.g. when code was pushed and is currently built)
-                        this.websocketChannelSubmissions = `/topic/participation/${this.participation.id}/newSubmission`;
-                        this.jhiWebsocketService.subscribe(this.websocketChannelSubmissions);
-                        this.jhiWebsocketService.receive(this.websocketChannelSubmissions).subscribe((newProgrammingSubmission: ProgrammingSubmission) => {
-                            // TODO handle this case properly, e.g. by animating a progress bar in the result view
-                            console.log('Received new submission ' + newProgrammingSubmission.id + ': ' + newProgrammingSubmission.commitHash);
-                        });
-                    }
-                });
+                this.subscribeForProgramingExercise(exercise as ProgrammingExercise);
             }
         }
+    }
+
+    subscribeForProgramingExercise(exercise: ProgrammingExercise) {
+        this.accountService.identity().then(user => {
+            // only subscribe for the currently logged in user or if the participation is a template/solution participation and the student is at least instructor
+            if (
+                (this.participation.student && user.id === this.participation.student.id && (exercise.dueDate == null || exercise.dueDate.isAfter(moment()))) ||
+                (this.participation.student == null && this.accountService.isAtLeastInstructorInCourse(exercise.course))
+            ) {
+                // subscribe for new results (e.g. when a programming exercise was automatically tested)
+                this.websocketChannelResults = `/topic/participation/${this.participation.id}/newResults`;
+                this.jhiWebsocketService.subscribe(this.websocketChannelResults);
+                this.jhiWebsocketService.receive(this.websocketChannelResults).subscribe((newResult: Result) => {
+                    // convert json string to moment
+                    console.log('Received new result ' + newResult.id + ': ' + newResult.resultString);
+                    newResult.completionDate = newResult.completionDate != null ? moment(newResult.completionDate) : null;
+                    this.handleNewResult(newResult);
+                });
+
+                // subscribe for new submissions (e.g. when code was pushed and is currently built)
+                this.websocketChannelSubmissions = `/topic/participation/${this.participation.id}/newSubmission`;
+                this.jhiWebsocketService.subscribe(this.websocketChannelSubmissions);
+                this.jhiWebsocketService.receive(this.websocketChannelSubmissions).subscribe((newProgrammingSubmission: ProgrammingSubmission) => {
+                    // TODO handle this case properly, e.g. by animating a progress bar in the result view
+                    console.log('Received new submission ' + newProgrammingSubmission.id + ': ' + newProgrammingSubmission.commitHash);
+                });
+            }
+        });
     }
 
     handleNewResult(newResult: Result) {
@@ -116,13 +129,13 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
         this.result.participation = this.participation;
         this.participation.results = [this.result];
         this.newResult.emit({
-            newResult
+            newResult,
         });
         this.init();
     }
 
     init() {
-        if (this.result && (this.result.score || this.result.score === 0) && (this.result.rated === true || this.result.rated == null)) {
+        if (this.result && (this.result.score || this.result.score === 0) && (this.result.rated === true || this.result.rated == null || this.showUngradedResults)) {
             this.textColorClass = this.getTextColorClass();
             this.hasFeedback = this.getHasFeedback();
             this.resultIconClass = this.getResultIconClass();

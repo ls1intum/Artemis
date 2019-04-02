@@ -21,7 +21,7 @@
                     </h4>
                 </div>
             </div>
-            <div class="col-4 d-none d-md-inline">
+            <div class="col-12 col-md-6 col-lg-4">
                 <div class="row" *ngIf="exercise.type">
                     <div class="col-6"><h5>{{"arTeMiSApp.courseOverview.exerciseDetails.exerciseType" | translate}}</h5>
                     </div>
@@ -99,21 +99,15 @@
                 <div class="col">
                     <h4><span class="badge w-100 badge-success"
                               [ngClass]="exerciseRatedBadge(currentResult)">
-                        {{(currentResult.rated ? 'arTeMiSApp.courseOverview.exerciseDetails.graded' : 'arTeMiSApp.courseOverview.exerciseDetails.notGraded') | translate | uppercase}}
-                    </span>
+                            {{(currentResult.rated ? 'arTeMiSApp.courseOverview.exerciseDetails.graded' : 'arTeMiSApp.courseOverview.exerciseDetails.notGraded') | translate | uppercase}}
+                        </span>
                     </h4>
                 </div>
-                <div class="col text-center">
-                    <h5>{{currentResult.resultString}}</h5>
-                </div>
-                <div class="col text-center d-none d-md-flex">
-                    <h5>{{currentResult.score}}%</h5>
-                </div>
-                <div class="col text-center">
-                    <h5>{{currentResult.completionDate | date: 'dd/MM/yy'}}</h5>
+                <div class="col text-left">
+                    <jhi-result [result]="currentResult" showUngradedResults="true" short="true"></jhi-result>
                 </div>
                 <div class="col text-left d-none d-md-flex">
-                    <h5>({{currentResult.completionDate | amTimeAgo}})</h5>
+                    <h6 [ngbTooltip]="currentResult.completionDate | date: 'dd/MM/yy HH:mm'">({{currentResult.completionDate | amTimeAgo}})</h6>
                 </div>
             </div>
             <div class="row mb-2" *ngIf="!currentResult">
@@ -158,17 +152,11 @@
                         </span>
                         </h4>
                     </div>
-                    <div class="col text-center">
-                        <h5>{{result.resultString}}</h5>
-                    </div>
-                    <div class="col text-center d-none d-md-flex">
-                        <h5>{{result.score}}%</h5>
-                    </div>
-                    <div class="col text-center">
-                        <h5>{{result.completionDate | date: 'dd/MM/yy'}}</h5>
+                    <div class="col text-left">
+                        <jhi-result [result]="result" showUngradedResults="true" short="true"></jhi-result>
                     </div>
                     <div class="col text-left d-none d-md-flex">
-                        <h5>({{result.completionDate | amTimeAgo}})</h5>
+                        <h6 [ngbTooltip]="result.completionDate | date: 'dd/MM/yy HH:mm'">({{result.completionDate | amTimeAgo}})</h6>
                     </div>
                 </div>
             </div>
