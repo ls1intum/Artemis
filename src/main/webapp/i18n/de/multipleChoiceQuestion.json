@@ -41,7 +41,8 @@
                 "link": "Link",
                 "orderedList": "Geordnete List",
                 "imageUpload": "Anhang",
-                "code": "Code"
+                "code": "Code",
+                "style": "Überschriften"
             }
         }
     }

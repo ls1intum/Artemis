@@ -13,7 +13,7 @@
                     </ng-container>
                 </div>
                 <div class="btn-group col-xs-6" ngbDropdown role="group" aria-label="Button group with nested dropdown" style="margin-left: 5px">
-                    <button class="btn btn-outline-secondary mr-1" id="dropdownBasic1" ngbDropdownToggle>Style</button>
+                    <button class="btn btn-outline-secondary mr-1" id="dropdownBasic1" ngbDropdownToggle>{{'arTeMiSApp.multipleChoiceQuestion.editor.style'|  translate}}</button>
                     <div class="dropdown-menu" ngbDropdownMenu>
                         <ng-container *ngFor="let command of headerCommands" ><button class="dropdown-item" (click)="command.execute()">{{command.buttonTranslationString | translate}}</button></ng-container>
                     </div>

@@ -40,7 +40,8 @@
                 "link": "Link",
                 "orderedList": "Ordered List",
                 "imageUpload": "Attachment",
-                "code": "Code"
+                "code": "Code",
+                "style": "Style"
             }
         }
     }
