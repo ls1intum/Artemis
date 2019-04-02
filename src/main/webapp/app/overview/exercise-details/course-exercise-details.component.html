@@ -81,7 +81,7 @@
     <!-- EXERCISE ACTIONS END -->
     <!-- PROBLEM STATEMENT START -->
     <div *ngIf="isProgrammingExercise; else exerciseTemplate" class="mb-4">
-        <jhi-programming-exercise-instructions [exercise]="exercise" [participation]="exercise.participations[0]"></jhi-programming-exercise-instructions>
+        <jhi-programming-exercise-instructions [exercise]="exercise" [participation]="exercise.participations && exercise.participations[0]"></jhi-programming-exercise-instructions>
     </div>
     <ng-template #exerciseTemplate>
         <div class="row mb-2 align-items-baseline" *ngIf="exercise.problemStatement">

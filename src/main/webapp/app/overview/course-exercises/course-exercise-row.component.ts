@@ -1,5 +1,5 @@
 import { Component, HostBinding, Input, OnInit } from '@angular/core';
-import { Exercise, ExerciseCategory, ExerciseService, ExerciseType, ParticipationStatus, getIcon, getIconTooltip, isProgrammingExercise } from 'app/entities/exercise';
+import { Exercise, ExerciseCategory, ExerciseService, ExerciseType, ParticipationStatus, getIcon, getIconTooltip } from 'app/entities/exercise';
 import { JhiAlertService } from 'ng-jhipster';
 import { QuizExercise } from 'app/entities/quiz-exercise';
 import { InitializationState, Participation, ParticipationService } from 'app/entities/participation';
@@ -14,7 +14,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise';
 @Component({
     selector: 'jhi-course-exercise-row',
     templateUrl: './course-exercise-row.component.html',
-    styleUrls: ['./course-exercise-row.scss'],
+    styleUrls: ['./course-exercise-row.scss']
 })
 export class CourseExerciseRowComponent implements OnInit {
     readonly QUIZ = ExerciseType.QUIZ;
@@ -29,19 +29,17 @@ export class CourseExerciseRowComponent implements OnInit {
 
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
-    isProgrammingExercise = isProgrammingExercise;
     public exerciseCategories: ExerciseCategory[];
 
-    constructor(
-        private accountService: AccountService,
+    constructor(private accountService: AccountService,
         private jhiAlertService: JhiAlertService,
         private $window: WindowRef,
         private participationService: ParticipationService,
         private exerciseService: ExerciseService,
         private httpClient: HttpClient,
         private router: Router,
-        private route: ActivatedRoute,
-    ) {}
+        private route: ActivatedRoute) {
+    }
 
     ngOnInit() {
         this.exercise.participationStatus = this.participationStatus(this.exercise);
@@ -53,11 +51,11 @@ export class CourseExerciseRowComponent implements OnInit {
             const quizExercise = this.exercise as QuizExercise;
             quizExercise.isActiveQuiz = this.isActiveQuiz(this.exercise);
 
-            quizExercise.isPracticeModeAvailable = quizExercise.isPlannedToStart && quizExercise.isOpenForPractice && moment(this.exercise.dueDate).isBefore(moment());
+            quizExercise.isPracticeModeAvailable =
+                quizExercise.isPlannedToStart && quizExercise.isOpenForPractice && moment(this.exercise.dueDate).isBefore(moment());
             this.exercise = quizExercise;
         }
         this.exerciseCategories = this.exerciseService.convertExerciseCategoriesFromServer(this.exercise);
-        this.exercise.course = this.course;
     }
 
     getUrgentClass(date: Moment): string {
@@ -93,13 +91,23 @@ export class CourseExerciseRowComponent implements OnInit {
             const quizExercise = exercise as QuizExercise;
             if ((!quizExercise.isPlannedToStart || moment(quizExercise.releaseDate).isAfter(moment())) && quizExercise.visibleToStudents) {
                 return ParticipationStatus.QUIZ_NOT_STARTED;
-            } else if (!this.hasParticipations(exercise) && (!quizExercise.isPlannedToStart || moment(quizExercise.dueDate).isAfter(moment())) && quizExercise.visibleToStudents) {
+            } else if (
+                !this.hasParticipations(exercise) &&
+                (!quizExercise.isPlannedToStart || moment(quizExercise.dueDate).isAfter(moment())) &&
+                quizExercise.visibleToStudents
+            ) {
                 return ParticipationStatus.QUIZ_UNINITIALIZED;
             } else if (!this.hasParticipations(exercise)) {
                 return ParticipationStatus.QUIZ_NOT_PARTICIPATED;
-            } else if (exercise.participations[0].initializationState === InitializationState.INITIALIZED && moment(exercise.dueDate).isAfter(moment())) {
+            } else if (
+                exercise.participations[0].initializationState === InitializationState.INITIALIZED &&
+                moment(exercise.dueDate).isAfter(moment())
+            ) {
                 return ParticipationStatus.QUIZ_ACTIVE;
-            } else if (exercise.participations[0].initializationState === InitializationState.FINISHED && moment(exercise.dueDate).isAfter(moment())) {
+            } else if (
+                exercise.participations[0].initializationState === InitializationState.FINISHED &&
+                moment(exercise.dueDate).isAfter(moment())
+            ) {
                 return ParticipationStatus.QUIZ_SUBMITTED;
             } else {
                 if (!this.hasResults(exercise.participations[0])) {
@@ -109,7 +117,10 @@ export class CourseExerciseRowComponent implements OnInit {
             }
         } else if ((exercise.type === ExerciseType.MODELING || exercise.type === ExerciseType.TEXT) && this.hasParticipations(exercise)) {
             const participation = exercise.participations[0];
-            if (participation.initializationState === InitializationState.INITIALIZED || participation.initializationState === InitializationState.FINISHED) {
+            if (
+                participation.initializationState === InitializationState.INITIALIZED ||
+                participation.initializationState === InitializationState.FINISHED
+            ) {
                 return exercise.type === ExerciseType.MODELING ? ParticipationStatus.MODELING_EXERCISE : ParticipationStatus.TEXT_EXERCISE;
             }
         }

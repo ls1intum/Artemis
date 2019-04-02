@@ -127,6 +127,7 @@ public class AuthorizationCheckService {
      * @return true, if user is student is owner of this participation, otherwise false
      */
     public boolean isOwnerOfParticipation(Participation participation) {
+        // A template/solution participation doesn't have a student, this is done to avoid null pointer exceptions
         if (participation.getStudent() == null) {
             return false;
         } else {
