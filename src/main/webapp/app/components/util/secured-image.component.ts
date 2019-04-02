@@ -25,6 +25,7 @@ export class SecuredImageComponent implements OnChanges {
     private src: string;
     private src$ = new BehaviorSubject(this.src);
     private value = 0;
+    private retryCounter = 0;
 
     @Output()
     endLoadingProcess = new EventEmitter();
@@ -41,19 +42,28 @@ export class SecuredImageComponent implements OnChanges {
     // we need HttpClient to load the image and DomSanitizer to trust the url
     constructor(private httpClient: HttpClient, private domSanitizer: DomSanitizer) {}
 
+    retryLoadImage() {
+        this.retryCounter = 0;
+        this.endLoadingProcess.emit('loading');
+        this.ngOnChanges();
+    }
+
     private loadImage(url: string): Observable<any> {
         const element = this.httpClient
             .get(url, { responseType: 'blob' })
-            .map(e => this.domSanitizer.bypassSecurityTrustUrl(URL.createObjectURL(e)))
+            .map(e => {
+                this.endLoadingProcess.emit('success');
+                return this.domSanitizer.bypassSecurityTrustUrl(URL.createObjectURL(e))
+            })
             .catch(error => {
-                this.endLoadingProcess.emit(false);
-                const numbers = [1, 2];
-                for (let i = 0; i < numbers.length; i++) {
-                    this.loadImage(url);
+                if (this.retryCounter === 0) {
+                    this.retryCounter++;
+                    return this.loadImage(url);
+                } else {
+                    this.endLoadingProcess.emit('error');
                 }
                 return error;
             });
-        this.endLoadingProcess.emit(true);
         return element;
     }
 }

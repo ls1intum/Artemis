@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { DragAndDropQuestionUtil } from '../../../components/util/drag-and-drop-question-util.service';
 import { DragAndDropQuestion } from '../../../entities/drag-and-drop-question';
@@ -6,6 +6,7 @@ import { DragAndDropMapping } from '../../../entities/drag-and-drop-mapping';
 import { DropLocation } from '../../../entities/drop-location';
 import { polyfill } from 'mobile-drag-drop';
 import { scrollBehaviourDragImageTranslateOverride } from 'mobile-drag-drop/scroll-behaviour';
+import { SecuredImageComponent } from 'app/components/util/secured-image.component';
 
 // options are optional ;)
 polyfill({
@@ -27,6 +28,7 @@ window.addEventListener('touchmove', function() {});
     providers: [ArtemisMarkdown, DragAndDropQuestionUtil],
 })
 export class DragAndDropQuestionComponent implements OnChanges {
+    @ViewChild(SecuredImageComponent) secureImageComponent: SecuredImageComponent;
     _question: DragAndDropQuestion;
     _forceSampleSolution: boolean;
 
@@ -70,7 +72,7 @@ export class DragAndDropQuestionComponent implements OnChanges {
     dropAllowed = false;
     correctAnswer: number;
 
-    loading = false;
+    loadingState = 'loading';
 
     constructor(private artemisMarkdown: ArtemisMarkdown, private dragAndDropQuestionUtil: DragAndDropQuestionUtil) {}
 
@@ -101,10 +103,11 @@ export class DragAndDropQuestionComponent implements OnChanges {
     }
 
     /** Sets the view displayed to the user
-     * @param {Output} value -> true: background picture for drag and drop question is loaded
-     *                          false: background picture for drag and drop question is not loaded*/
-    changeLoading(value: boolean) {
-        this.loading = value;
+     * @param {Output} value -> loading: background picture for drag and drop question is currently loading
+     *                          success: background picture for drag and drop question was loaded
+     *                          error: an error occurred during background download */
+    changeLoading(value: string) {
+        this.loadingState = value;
     }
 
     /**
