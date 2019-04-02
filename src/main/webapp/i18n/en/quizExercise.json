@@ -43,6 +43,14 @@
                 "sa": "Short-Answer Question",
                 "applyFilter": "Apply Filter"
             },
+            "quizStatus": {
+                "closed": "Closed",
+                "hidden": "Hidden",
+                "openForPractice": "Open for practice",
+                "active": "Active",
+                "visible": "Visible"
+            },
+            "quizLifecycle": "Quiz Lifecycle",
             "description": "Description",
             "options": "Options",
             "explanation": "Explanation",

@@ -338,7 +338,7 @@
         position: absolute;
         top: 20px;
         right: 20px;
-        max-width: 20%;
+        max-width: 30%;
 
         &.result {
             font-weight: bold;
@@ -1014,7 +1014,7 @@ table.answer-options-result {
 
 .colon-suffix:after {
     content: ':';
-    display: inline-block;
+    display: inline-flex;
 }
 
 .show-explanation {

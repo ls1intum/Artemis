@@ -1,7 +1,6 @@
-
 {
     "arTeMiSApp": {
-        "quizQuestion" : {
+        "quizQuestion": {
             "home": {
                 "title": "Questions",
                 "createLabel": "Create a new Question",
@@ -27,7 +26,9 @@
             "exercise": "Exercise",
             "yourScore": "Your Score",
             "invalid": "Invalid",
-            "invalidText": "This question is invalid and will be assess as complete correct"
+            "invalidText": "This question is invalid and will be assess as complete correct",
+            "showSampleSolution": "Show Sample Solution",
+            "hideSampleSolution": "Hide Sample Solution"
         }
     }
 }

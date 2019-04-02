@@ -34,7 +34,10 @@
                     <span class="bold">{{'arTeMiSApp.course.instructors' | translate}}:</span> {{course.instructorGroupName}}</td>
                 <td>{{course.startDate | date:'medium'}}</td>
                 <td>{{course.endDate | date:'medium'}}</td>
-                <td>{{course.onlineCourse}}</td>
+                <td>
+                    <span *ngIf="course.onlineCourse">{{'arTeMiSApp.course.onlineCourseTrue' | translate}}</span>
+                    <span *ngIf="!course.onlineCourse">{{'arTeMiSApp.course.onlineCourseFalse' | translate}}</span>
+                </td>
                 <td class="text-right">
                     <div class="btn-group flex-btn-group-container">
                         <button type="submit" [routerLink]="['/course', course.id ]" class="btn btn-primary btn-sm mr-1">

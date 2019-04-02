@@ -1,33 +1,34 @@
-
 {
     "arTeMiSApp": {
-        "quizQuestion" : {
+        "quizQuestion": {
             "home": {
-                "title": "Questions",
-                "createLabel": "Question erstellen",
-                "createOrEditLabel": "Question erstellen oder bearbeiten"
+                "title": "Fragen",
+                "createLabel": "Frage erstellen",
+                "createOrEditLabel": "Frage erstellen oder bearbeiten"
             },
-            "created": "Question erstellt mit ID {{ param }}",
-            "updated": "Question aktualisiert mit ID {{ param }}",
-            "deleted": "Question gelöscht mit ID {{ param }}",
+            "created": "Frage erstellt mit ID {{ param }}",
+            "updated": "Frage aktualisiert mit ID {{ param }}",
+            "deleted": "Frage gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Question {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Frage {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Question"
+                "title": "Frage"
             },
-            "title": "Title",
+            "title": "Titel",
             "text": "Text",
-            "hint": "Hint",
-            "explanation": "Explanation",
-            "score": "Score",
-            "scoringType": "Scoring Type",
-            "randomizeOrder": "Randomize Order",
-            "questionStatistic": "Question Statistic",
-            "exercise": "Exercise",
+            "hint": "Hinweis",
+            "explanation": "Erklärung",
+            "score": "Punktzahl",
+            "scoringType": "Bewertungs Typ",
+            "randomizeOrder": "Zufällige Reihenfolge",
+            "questionStatistic": "Frage Statistik",
+            "exercise": "Übung",
             "yourScore": "Erreichte Punktzahl",
             "invalid": "Ungültig",
-            "invalidText": "Diese Frage ist ungültig und wird daher als komplett richtig gelöst bewertet"
+            "invalidText": "Diese Frage ist ungültig und wird daher als komplett richtig gelöst bewertet",
+            "showSampleSolution": "Blende die Musterlösung ein",
+            "hideSampleSolution": "Blende die Musterlösung aus"
         }
     }
 }

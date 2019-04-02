@@ -41,7 +41,9 @@
             "shortName": "Abkürzung",
             "students": "Studenten",
             "tutors": "Tutoren",
-            "instructors": "Instructoren"
+            "instructors": "Instructoren",
+            "onlineCourseFalse": "Nein",
+            "onlineCourseTrue": "Ja"
         }
     }
 }

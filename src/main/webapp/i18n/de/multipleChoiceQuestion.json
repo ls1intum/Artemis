@@ -18,6 +18,12 @@
             "answerOptions": "Antwortmöglichkeiten",
             "randomizeOrder": "Antwortmöglichkeiten in zufälliger Reihenfolge anzeigen",
             "scoringType": "Art der Bewertung",
+            "answer": "Antwort",
+            "solution": "Lösung",
+            "you": "Du",
+            "correct": "Richtig",
+            "wrong": "Falsch",
+            "invalid": "Ungültige Antworten werden als richtig bewertet",
             "editor": {
                 "addCorrectAnswerOption": "[correct] Korrekte Antwortmöglichkeit",
                 "addInCorrectAnswerOption": "[wrong] Falsche Antwortmöglichkeit",

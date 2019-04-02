@@ -42,6 +42,8 @@
             "students": "Students",
             "tutors": "Tutors",
             "instructors": "Instructors",
+            "onlineCourseFalse": "No",
+            "onlineCourseTrue": "Yes",
             "form": {
                 "shortname": {
                     "minlength": "Short Name must have a length of 3 or more characters.",

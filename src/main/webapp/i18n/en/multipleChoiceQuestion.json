@@ -18,6 +18,12 @@
             "answerOptions": "Answer Options",
             "randomizeOrder": "Present Answer Options in Random Order",
             "scoringType": "Type / Scoring",
+            "answer": "Answer",
+            "solution": "Solution",
+            "you": "You",
+            "correct": "Correct",
+            "wrong": "Wrong",
+            "invalid": "Invalid answers will be assessed as correct.",
             "editor": {
                 "addCorrectAnswerOption": "[correct] Correct Option",
                 "addInCorrectAnswerOption": "[wrong] Incorrect Option",
