@@ -112,7 +112,7 @@ public class ProgrammingExerciseResource {
      */
     @PostMapping("/programming-exercises")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ProgrammingExercise> createProgrammingExerciseLink(@RequestBody ProgrammingExercise programmingExercise) throws URISyntaxException {
+    public ResponseEntity<ProgrammingExercise> createProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise) throws URISyntaxException {
         log.debug("REST request to save ProgrammingExercise : {}", programmingExercise);
         if (programmingExercise.getId() != null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new programmingExercise cannot already have an ID")).body(null);
@@ -263,10 +263,10 @@ public class ProgrammingExerciseResource {
      */
     @PutMapping("/programming-exercises")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity<ProgrammingExercise> updateProgrammingExerciseLink(@RequestBody ProgrammingExercise programmingExercise) throws URISyntaxException {
+    public ResponseEntity<ProgrammingExercise> updateProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise) throws URISyntaxException {
         log.debug("REST request to update ProgrammingExercise : {}", programmingExercise);
         if (programmingExercise.getId() == null) {
-            return createProgrammingExerciseLink(programmingExercise);
+            return createProgrammingExercise(programmingExercise);
         }
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(programmingExercise.getCourse().getId());
@@ -282,9 +282,6 @@ public class ProgrammingExerciseResource {
         if (errorResponse != null) {
             return errorResponse;
         }
-
-        // Only save after checking for errors
-        programmingExerciseService.saveParticipations(programmingExercise);
 
         ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
 
