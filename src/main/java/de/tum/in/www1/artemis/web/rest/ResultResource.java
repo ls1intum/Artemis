@@ -221,6 +221,7 @@ public class ResultResource {
      */
     @GetMapping(value = "/courses/{courseId}/exercises/{exerciseId}/participations/{participationId}/results")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @Transactional(readOnly = true)
     public ResponseEntity<List<Result>> getResultsForParticipation(@PathVariable Long courseId,
                                                                    @PathVariable Long exerciseId,
                                                                    @PathVariable Long participationId,
@@ -231,9 +232,15 @@ public class ResultResource {
         List<Result> results = new ArrayList<>();
         Participation participation = participationService.findOne(participationId);
 
+        if (!Hibernate.isInitialized(participation.getExercise())) {
+            participation.setExercise((Exercise)Hibernate.unproxy(participation.getExercise()));
+        }
         if (participation.getStudent() == null) {
+            if (!Hibernate.isInitialized(participation.getExercise().getCourse())) {
+                participation.getExercise().setCourse((Course)Hibernate.unproxy(participation.getExercise().getCourse()));
+            }
             // If the student is null, then participation is a template/solution participation -> check for instructor role
-            if (!authCheckService.isAtLeastInstructorForCourse(participation.getExercise().getCourse(), null)) {
+            if (!authCheckService.isAtLeastInstructorForExercise(participation.getExercise())) {
                 return forbidden();
             }
         } else {
@@ -243,33 +250,31 @@ public class ResultResource {
             }
         }
 
-        if (participation != null) {
-            // if exercise is quiz => only give out results if quiz is over
-            if (participation.getExercise() instanceof QuizExercise) {
-                QuizExercise quizExercise = (QuizExercise) participation.getExercise();
-                if (quizExercise.shouldFilterForStudents()) {
-                    // return empty list
-                    return ResponseEntity.ok().body(results);
-                }
+        // if exercise is quiz => only give out results if quiz is over
+        if (participation.getExercise() instanceof QuizExercise) {
+            QuizExercise quizExercise = (QuizExercise) participation.getExercise();
+            if (quizExercise.shouldFilterForStudents()) {
+                // return empty list
+                return ResponseEntity.ok().body(results);
             }
-            if (showAllResults) {
-                if (ratedOnly) {
-                    results = resultRepository.findByParticipationIdAndRatedOrderByCompletionDateDesc(participationId, true);
-                } else {
-                    results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId);
-                }
+        }
+        if (showAllResults) {
+            if (ratedOnly) {
+                results = resultRepository.findByParticipationIdAndRatedOrderByCompletionDateDesc(participationId, true);
             } else {
-                if (ratedOnly) {
-                    results = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participationId, true)
-                        .map(Arrays::asList)
-                        .orElse(new ArrayList<>());
-                } else {
-                    results = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participationId)
-                        .map(Arrays::asList)
-                        .orElse(new ArrayList<>());
-                }
-
+                results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId);
             }
+        } else {
+            if (ratedOnly) {
+                results = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participationId, true)
+                    .map(Arrays::asList)
+                    .orElse(new ArrayList<>());
+            } else {
+                results = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participationId)
+                    .map(Arrays::asList)
+                    .orElse(new ArrayList<>());
+            }
+
         }
         //remove unnecessary elements in the json response
         results.forEach(result -> {
