@@ -173,7 +173,7 @@
                 "proportional_with_penalty": "Anteilig mit Abzügen"
             },
             "scoringTypeExplanation": {
-                "title": "Bewertungsarten",
+                "title": "Bewertungs Typen",
                 "all_or_nothing": "Alle richtigen Auswahlmöglichkeiten müssen ausgewählt werden und alle falschen Auswahlmöglichkeiten müssen leer bleiben, um die volle Punktzahl zu erreichen. Wird eine falsche Antwortmöglichkeit ausgewählt gibt es 0 Punkte. Es gibt keine Punktzahl dazwischen.",
                 "proportional_with_penalty": "Jede richtige Antwort führt zu einem Bruchteil der Gesamtpunktzahl. Um Rätselraten zu vermeiden, wird für jeden Fehler der gleiche Anteil von den erreichten Punkten abgezogen. Beispiel: Wenn die gesamt Punktzahl der Frage 3 ist und es 5 Optionen gibt, ergibt jede richtige Antwortmöglichkeit 0,6 Punkte. Jede falsche Antwortmöglichkeit zieht 0,6 Punkte ab. Ein Student mit 4 richtigen und 1 falschen Auswahlmöglichkeit erhält dann 1,8 Punkte."
             },
@@ -205,7 +205,8 @@
                 "zeroPointer": "(Natürlich kannst du nicht weniger als 0 Punkte haben.)"
             },
             "explanationAnswered": "Du hast die Frage beantwortet",
-            "explanationNotAnswered": "Du hast die Frage noch nicht beantwortet"
+            "explanationNotAnswered": "Du hast die Frage noch nicht beantwortet",
+            "submissionWarning": "Bist du sicher, dass du dich einreichen willst? Du hast nicht alle Fragen beantwortet und hast noch etwas Zeit übrig!"
         }
     }
 }

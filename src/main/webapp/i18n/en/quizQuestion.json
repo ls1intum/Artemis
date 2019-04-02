@@ -28,7 +28,8 @@
             "invalid": "Invalid",
             "invalidText": "This question is invalid and will be assess as complete correct",
             "showSampleSolution": "Show Sample Solution",
-            "hideSampleSolution": "Hide Sample Solution"
+            "hideSampleSolution": "Hide Sample Solution",
+            "allOptions": "Please choose all correct answer options"
         }
     }
 }

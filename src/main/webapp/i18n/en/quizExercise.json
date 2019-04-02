@@ -205,7 +205,8 @@
                 "zeroPointer": "(Of course you can not have less than 0 points.)"
             },
             "explanationAnswered": "You have answered this question",
-            "explanationNotAnswered": "You have not answered this question"
+            "explanationNotAnswered": "You have not answered this question",
+            "submissionWarning": "Are you sure you want to submit? You have not answered all questions and you still have some time left!"
         }
     }
 }

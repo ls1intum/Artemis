@@ -23,12 +23,13 @@ import { ShortAnswerQuestionComponent } from 'app/quiz/participate/short-answer-
 import { DragAndDropMapping } from 'app/entities/drag-and-drop-mapping';
 import { AnswerOption } from 'app/entities/answer-option';
 import { ShortAnswerSubmittedText } from 'app/entities/short-answer-submitted-text';
+import { TranslateService } from '@ngx-translate/core';
 import * as smoothscroll from 'smoothscroll-polyfill';
 
 @Component({
     selector: 'jhi-quiz',
     templateUrl: './quiz.component.html',
-    providers: [ParticipationService]
+    providers: [ParticipationService],
 })
 export class QuizComponent implements OnInit, OnDestroy {
     // make constants available to html for comparison
@@ -104,7 +105,8 @@ export class QuizComponent implements OnInit, OnDestroy {
         private participationService: ParticipationService,
         private route: ActivatedRoute,
         private jhiAlertService: JhiAlertService,
-        private quizSubmissionService: QuizSubmissionService
+        private quizSubmissionService: QuizSubmissionService,
+        private translateService: TranslateService,
     ) {
         smoothscroll.polyfill();
     }
@@ -202,7 +204,7 @@ export class QuizComponent implements OnInit, OnDestroy {
             (response: HttpResponse<Participation>) => {
                 this.applyParticipationFull(response.body);
             },
-            (res: HttpErrorResponse) => this.onError(res)
+            (res: HttpErrorResponse) => this.onError(res),
         );
     }
 
@@ -222,7 +224,7 @@ export class QuizComponent implements OnInit, OnDestroy {
                     alert('Error: This quiz is not open for practice!');
                 }
             },
-            (res: HttpErrorResponse) => this.onError(res)
+            (res: HttpErrorResponse) => this.onError(res),
         );
     }
 
@@ -234,7 +236,7 @@ export class QuizComponent implements OnInit, OnDestroy {
             (res: HttpResponse<QuizExercise>) => {
                 this.startQuizPreviewOrPractice(res.body);
             },
-            (res: HttpErrorResponse) => this.onError(res)
+            (res: HttpErrorResponse) => this.onError(res),
         );
     }
 
@@ -245,7 +247,7 @@ export class QuizComponent implements OnInit, OnDestroy {
                 this.initQuiz();
                 this.showingResult = true;
             },
-            (res: HttpErrorResponse) => this.onError(res)
+            (res: HttpErrorResponse) => this.onError(res),
         );
     }
 
@@ -272,7 +274,7 @@ export class QuizComponent implements OnInit, OnDestroy {
         this.runningTimeouts.push(
             setTimeout(() => {
                 this.onSubmit();
-            }, quizExercise.duration * 1000)
+            }, quizExercise.duration * 1000),
         );
     }
 
@@ -291,7 +293,7 @@ export class QuizComponent implements OnInit, OnDestroy {
                 },
                 error => {
                     this.onSubmitError(error);
-                }
+                },
             );
 
             // save answers (submissions) through websocket
@@ -316,7 +318,7 @@ export class QuizComponent implements OnInit, OnDestroy {
                         this.applyParticipationAfterStart(payload);
                     }
                 },
-                error => {}
+                error => {},
             );
         }
 
@@ -331,7 +333,7 @@ export class QuizComponent implements OnInit, OnDestroy {
                         this.applyQuizFull(payload);
                     }
                 },
-                error => {}
+                error => {},
             );
         }
     }
@@ -443,9 +445,11 @@ export class QuizComponent implements OnInit, OnDestroy {
             // iterate through all questions of this quiz
             this.quizExercise.quizQuestions.forEach(question => {
                 // find the submitted answer that belongs to this question, only when submitted answers already exist
-                const submittedAnswer = this.submission.submittedAnswers ? this.submission.submittedAnswers.find(answer => {
+                const submittedAnswer = this.submission.submittedAnswers
+                    ? this.submission.submittedAnswers.find(answer => {
                           return answer.quizQuestion.id === question.id;
-                      }) : null;
+                      })
+                    : null;
 
                 if (question.type === QuizQuestionType.MULTIPLE_CHOICE) {
                     // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
@@ -601,7 +605,7 @@ export class QuizComponent implements OnInit, OnDestroy {
                         if (this.disconnected && !this.showingResult) {
                             alert('Loading results failed. Please wait a few seconds and refresh the page manually.');
                         }
-                    }, (this.quizExercise.remainingTime + 5) * 1000)
+                    }, (this.quizExercise.remainingTime + 5) * 1000),
                 );
             }
         } else {
@@ -866,11 +870,13 @@ export class QuizComponent implements OnInit, OnDestroy {
      * This function is called when the user clicks the 'Submit' button
      */
     onSubmit() {
+        const translationBasePath = 'arTeMiSApp.quizExercise.';
         this.applySelection();
         let confirmSubmit = true;
 
-        if (this.remainingTimeSeconds > 15 && (this.areAllQuestionsAnswered() === false)) {
-            confirmSubmit = window.confirm('Are you sure you want to submit? You have not answered all questions and you still have some time left!');
+        if (this.remainingTimeSeconds > 15 && this.areAllQuestionsAnswered() === false) {
+            const warningText = this.translateService.instant(translationBasePath + 'submissionWarning');
+            confirmSubmit = window.confirm(warningText);
         }
         if (confirmSubmit) {
             this.isSubmitting = true;
@@ -881,7 +887,7 @@ export class QuizComponent implements OnInit, OnDestroy {
                             (response: HttpResponse<Result>) => {
                                 this.onSubmitPracticeOrPreviewSuccess(response.body);
                             },
-                            (response: HttpErrorResponse) => this.onSubmitError(response.message)
+                            (response: HttpErrorResponse) => this.onSubmitError(response.message),
                         );
                     }
                     break;
@@ -891,15 +897,15 @@ export class QuizComponent implements OnInit, OnDestroy {
                             (response: HttpResponse<Result>) => {
                                 this.onSubmitPracticeOrPreviewSuccess(response.body);
                             },
-                            (response: HttpErrorResponse) => this.onSubmitError(response.message)
+                            (response: HttpErrorResponse) => this.onSubmitError(response.message),
                         );
                     }
                     break;
                 case 'default':
                     if (this.disconnected || !this.submissionChannel) {
                         alert(
-                            'Cannot Submit while disconnected. Don\'t worry, answers that were saved' +
-                            'while you were still connected will be submitted automatically when the quiz ends.'
+                            "Cannot Submit while disconnected. Don't worry, answers that were saved" +
+                                'while you were still connected will be submitted automatically when the quiz ends.',
                         );
                         this.isSubmitting = false;
                         return;
@@ -934,9 +940,7 @@ export class QuizComponent implements OnInit, OnDestroy {
      */
     onSubmitError(error: string) {
         console.error(error);
-        alert(
-            'Submitting was not possible. Please try again later. If your answers have been saved, you can also wait until the quiz has finished.'
-        );
+        alert('Submitting was not possible. Please try again later. If your answers have been saved, you can also wait until the quiz has finished.');
         this.isSubmitting = false;
     }
 
@@ -946,7 +950,7 @@ export class QuizComponent implements OnInit, OnDestroy {
      */
     navigateToQuestion(questionIndex: number): void {
         document.getElementById('question' + questionIndex).scrollIntoView({
-            behavior: 'smooth'
+            behavior: 'smooth',
         });
     }
 }

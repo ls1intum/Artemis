@@ -28,7 +28,8 @@
             "invalid": "Ungültig",
             "invalidText": "Diese Frage ist ungültig und wird daher als komplett richtig gelöst bewertet",
             "showSampleSolution": "Blende die Musterlösung ein",
-            "hideSampleSolution": "Blende die Musterlösung aus"
+            "hideSampleSolution": "Blende die Musterlösung aus",
+            "allOptions": "Wähle bitte alle richtigen Antwortmöglichkeiten aus."
         }
     }
 }

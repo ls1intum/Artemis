@@ -160,7 +160,9 @@
                         class="form-control"
                         [(ngModel)]="quizExercise.isOpenForPractice"
                         title="status">
-                        <option *ngFor="let option of statusOptionsPractice" [value]="option.key">{{option.label}}
+                        <option *ngFor="let option of statusOptionsPractice" [value]="option.key">
+                            <span *ngIf="option.key === true">{{'arTeMiSApp.quizExercise.quizStatus.openForPractice' | translate}}</span>
+                            <span *ngIf="option.key === false">{{'arTeMiSApp.quizExercise.quizStatus.closed' | translate}}</span>
                         </option>
                     </select>
                     <select
@@ -168,7 +170,9 @@
                         class="form-control"
                         [(ngModel)]="quizExercise.isVisibleBeforeStart"
                         title="status">
-                        <option *ngFor="let option of statusOptionsVisible" [value]="option.key">{{option.label}}
+                        <option *ngFor="let option of statusOptionsVisible" [value]="option.key">
+                            <span *ngIf="option.key === true">{{'arTeMiSApp.quizExercise.quizStatus.visible' | translate}}</span>
+                            <span *ngIf="option.key === false">{{'arTeMiSApp.quizExercise.quizStatus.hidden' | translate}}</span>
                         </option>
                     </select>
                     <select
@@ -176,7 +180,8 @@
                         class="form-control"
                         title="status"
                         disabled>
-                        <option *ngFor="let option of statusOptionsActive" [value]="option.key">{{option.label}}
+                        <option *ngFor="let option of statusOptionsActive" [value]="option.key">
+                            {{'arTeMiSApp.quizExercise.quizStatus.active' | translate}}
                         </option>
                     </select>
                 </div>
