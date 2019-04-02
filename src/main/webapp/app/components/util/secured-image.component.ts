@@ -42,6 +42,7 @@ export class SecuredImageComponent implements OnChanges {
     // we need HttpClient to load the image and DomSanitizer to trust the url
     constructor(private httpClient: HttpClient, private domSanitizer: DomSanitizer) {}
 
+    // triggers the reload of the picture when the user clicks on a button
     retryLoadImage() {
         this.retryCounter = 0;
         this.endLoadingProcess.emit('loading');
@@ -53,7 +54,7 @@ export class SecuredImageComponent implements OnChanges {
             .get(url, { responseType: 'blob' })
             .map(e => {
                 this.endLoadingProcess.emit('success');
-                return this.domSanitizer.bypassSecurityTrustUrl(URL.createObjectURL(e))
+                return this.domSanitizer.bypassSecurityTrustUrl(URL.createObjectURL(e));
             })
             .catch(error => {
                 if (this.retryCounter === 0) {
