@@ -41,10 +41,12 @@ export class MarkdownEditorComponent implements AfterViewInit {
     @Output() markdownChange = new EventEmitter<string>();
     @Output() html = new EventEmitter<string>();
 
-    /** colors for the markdown editor*/
+    /** default colors for the markdown editor*/
     markdownColors = ['#ca2024', '#3ea119', '#ffffff', '#000000', '#fffa5c', '#0d3cc2', '#b05db8', '#d86b1f'];
     selectedColor = '#000000';
-    /** {array} containing all colorPickerCommands */
+    /** {array} containing all colorPickerCommands
+     * IMPORTANT: If you want to use the colorpicker you have to implement <div class="markdown-preview"></div>
+     * because the class definitions are saved within that method*/
     colorCommands: Command[] = [new ColorPickerCommand()];
 
     /** {array} containing all default commands accessible for the editor per default */

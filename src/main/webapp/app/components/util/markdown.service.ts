@@ -105,7 +105,6 @@ export class ArtemisMarkdown {
 
     /**
      * converts markdown into html
-     * sanitizer is disabled because it removes the style attribute of the html element (see https://github.com/angular/angular/pull/24602 )
      * @param {string} markdownText the original markdown text
      * @returns {string} the resulting html as a string
      */
