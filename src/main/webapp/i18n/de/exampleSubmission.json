@@ -2,16 +2,30 @@
     "arTeMiSApp": {
         "exampleSubmission": {
             "home": {
-                "title": "Example Submission Editor"
+                "title": "Beispiel Submission Editor"
             },
             "assessScore": {
-                "success": "Congratulations! This is a good assessment!",
-                "tooLow": "The score of your assessment of this submission is too low. Please carefully review the grading criteria and the submission again, and submit your improved assessment.",
-                "tooHigh": "The score of your assessment of this submission is too high. Please carefully review the grading criteria and the submission again, and submit your improved assessment."
+                "success": "Herzlichen Glückwunsch! Das ist eine gute Beurteilung!",
+                "tooLow": "Die Punktzahl Ihrer Bewertung dieser Einreichung ist zu niedrig. Bitte überprüfen Sie die Bewertungskriterien und die Einreichung noch einmal sorgfältig und reichen Sie Ihre verbesserte Bewertung ein.",
+                "tooHigh": "Die Bewertung dieser Einreichung durch Sie ist zu hoch. Bitte überprüfen Sie die Bewertungskriterien und die Einreichung noch einmal sorgfältig und reichen Sie Ihre verbesserte Bewertung ein."
             },
-            "submitSuccessful": "Your example submission has been properly submitted",
-            "saveSuccessful": "Your example submission has been saved"
+            "submitSuccessful": "Ihre Beispiel-Einreichung wurde ordnungsgemäß eingereicht.",
+            "saveSuccessful": "Deine Beispiel-Einreichung wurde gespeichert.",
+            "readSuccessfully": "Sie haben die Bewertungsanweisungen gelesen, Sie können nun mit der Überprüfung der Beispiel-Einreichung beginnen.",
+            "createNew": "Neu erstellen",
+            "pageHeader": "Beispiel für eine Textvorlage zur Übung",
+            "usedForTutorial": "Wird für Tutorials verwendet",
+            "createNewSubmission": "Neue Einreichung erstellen",
+            "updateTextSubmission": "Aktualisieren der Textvorlage",
+            "problemStatement": "Problemstellung",
+            "sampleSolution": "Musterlösung",
+            "exampleAssessment": "Beispiel Bewertung",
+            "createNewAssessments": "Neue Beurteilungen anlegen",
+            "updateAssessments": "Beurteilungen aktualisieren",
+            "youNeedToCreate": "Sie müssen die Beispieltextvorlage erstellen, bevor Sie die Beispielbewertung erstellen können.",
+            "score": "Punktzahl",
+            "submitAssessment": "Bewertung einreichen",
+            "readAndUnderstood": "Ich habe das Beispiel gelesen und verstanden."
         }
     }
 }
-
