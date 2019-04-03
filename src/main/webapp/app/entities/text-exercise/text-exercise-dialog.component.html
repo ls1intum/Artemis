@@ -60,7 +60,7 @@
             <textarea class="form-control" name="gradingInstructions" id="field_gradingInstructions" maxLength="1000" [(ngModel)]="textExercise.gradingInstructions"></textarea>
         </div>
         <div class="form-group">
-            <span>Example submissions</span>
+            <span jhiTranslate="arTeMiSApp.textExercise.exampleSubmissions">Example submissions</span>
 
             <ul *ngIf="textExercise.id">
                 <li *ngFor="let exampleSubmission of textExercise.exampleSubmissions; let i = index">
@@ -70,9 +70,9 @@
                 </li>
             </ul>
 
-            <button *ngIf="textExercise.id" class="btn btn-primary" routerLink="text-exercise/{{textExercise.id}}/example-submission/new">Create example submission</button>
+            <button *ngIf="textExercise.id" class="btn btn-primary" routerLink="text-exercise/{{textExercise.id}}/example-submission/new" jhiTranslate="arTeMiSApp.textExercise.createExampleSubmissions">Create example submission</button>
 
-            <div class="alert alert-info" *ngIf="!textExercise.id">To create an example submission, you first need to finish creating the text exercise</div>
+            <div class="alert alert-info" *ngIf="!textExercise.id" jhiTranslate="arTeMiSApp.textExercise.exampleSubmissionsRequireExercise">To create an example submission, you first need to finish creating the text exercise.</div>
         </div>
     </div>
     <div class="modal-footer">
