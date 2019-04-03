@@ -26,6 +26,7 @@
             "shortName": "Kurzname",
             "releaseDate": "Veröffentlichungsdatum",
             "dueDate": "Abgabedatum",
+            "assessmentDueDate": "Abgabedatum der Bewertung",
             "maxScore": "Maximale Punktezahl",
             "difficulty": "Schwierigkeit",
             "noLevel": "Keine Angabe",

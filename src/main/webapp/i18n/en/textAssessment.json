@@ -6,13 +6,6 @@
                 "assessment": "Assessment Editor for Text Exercise {{exerciseTitle}}",
                 "exampleAssessment": "Example Assessment Editor for Text Exercise {{exerciseTitle}}"
             },
-            "exercise": {
-                "title": "Exercise",
-                "problemStatement": "Problem Statement",
-                "sampleSolution": "Sample Solution",
-                "score": "Score",
-                "feedback": "Feedback"
-            },
             "assessor": "Reviewer",
             "save": "Save Assessment",
             "saveSuccessful": "Your assessment was saved successfully!",
@@ -27,7 +20,8 @@
             "studentSubmission": "Student submission",
             "instructions": "&nbsp; Instructions &nbsp;",
             "detail": {
-                "scoreFor": "Score for"
+                "scoreFor": "Score for",
+                "feedback": "Feedback"
             },
             "editor": {
                 "assess": "Assess"
