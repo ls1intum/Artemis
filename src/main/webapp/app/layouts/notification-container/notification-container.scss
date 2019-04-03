@@ -1,0 +1,15 @@
+.notification-container {
+    width: 400px;
+    max-height: 500px;
+    overflow: scroll;
+    .notification-item {
+        cursor: pointer;
+        .notification-description {
+            white-space: normal;
+        }
+        .notification-info {
+            opacity: 0.6;
+            font-size: 0.8rem;
+        }
+    }
+}

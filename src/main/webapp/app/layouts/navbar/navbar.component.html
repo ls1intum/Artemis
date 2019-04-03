@@ -56,6 +56,12 @@
                         </a>
                     </li>
                     <li>
+                        <a class="dropdown-item" routerLink="admin/notification-management" routerLinkActive="active" (click)="collapseNavbar()">
+                            <fa-icon [icon]="'bell'" [fixedWidth]="true"></fa-icon>
+                            <span jhiTranslate="global.menu.admin.notificationManagement">Notification management</span>
+                        </a>
+                    </li>
+                    <li>
                         <a class="dropdown-item" routerLink="admin/jhi-tracker" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="'eye'" [fixedWidth]="true"></fa-icon>
                             <span jhiTranslate="global.menu.admin.tracker">User tracker</span>
@@ -108,6 +114,7 @@
                     </li>
                 </ul>
             </li>
+            <jhi-notification-container [ngClass]="'nav-item'" *ngIf="currAccount"></jhi-notification-container>
             <li *ngSwitchCase="true" ngbDropdown class="nav-item dropdown pointer" placement="bottom-right" routerLinkActive="active"
                 [routerLinkActiveOptions]="{exact: true}">
                 <a class="nav-link dropdown-toggle" ngbDropdownToggle href="javascript:void(0);" id="account-menu">

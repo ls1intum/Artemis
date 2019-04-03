@@ -5,7 +5,7 @@ import { MarkDownElement } from 'app/entities/quiz-question';
 import { ExplanationCommand, HintCommand } from 'app/markdown-editor/domainCommands';
 import { AceEditorComponent } from 'ng2-ace-editor';
 
-@Injectable({ providedIn: 'root' })
+@Injectable({providedIn: 'root'})
 export class ArtemisMarkdown {
     /**
      * adds the passed text into the editor of the passed ace editor component at the current curser by focusing, clearing a selection,
@@ -27,7 +27,8 @@ export class ArtemisMarkdown {
         aceEditorContainer.getEditor().selection.setRange(range);
     }
 
-    constructor(private sanitizer: DomSanitizer) {}
+    constructor(private sanitizer: DomSanitizer) {
+    }
 
     /**
      * Parse the markdown text and apply the result to the target object's data
