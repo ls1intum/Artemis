@@ -1,6 +1,6 @@
 <div #resizeContainer class="modeling-assessment" [class.resizable]="resizeOptions">
     <div class="card-header bg-primary text-white">
-        <span class="assessor-label" *ngIf="assessor">Assessor: {{ assessor.firstName }} {{ assessor.lastName }}</span>
+        <span class="assessor-label" *ngIf="assessor" jhiTranslate="modelingAssessment.assessor" [translateValues]="{firstName: assessor.firstName, lastName: assessor.lastName}">Assessor: {{ assessor.firstName }} {{ assessor.lastName }}</span>
         <span class="flex-fill"></span>
         <jhi-score-display [score]="totalScore" [maxScore]="maxScore"></jhi-score-display>
     </div>

@@ -1,0 +1,6 @@
+{
+    "modelingAssessment": {
+        "points": "Punkte",
+        "assessor": "Bewertet von: {{firstName}} {{lastName}}"
+    }
+}

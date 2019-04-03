@@ -1,6 +1,6 @@
-<div *ngIf="!conflicts; else conflictResolution" class="assessment-container">
+<div *ngIf="true; else conflictResolution" class="assessment-container">
     <h2 class="top-container">
-        <div class="assessment-title row-container">
+        <div class="assessment-title row-container" jhiTranslate="modelingAssessmentEditor.assessment">
             Assessment
             <jhi-result *ngIf="result?.rated && result.participation" [participation]="result.participation"></jhi-result>
         </div>
@@ -8,17 +8,17 @@
         <div class="control-container row-container">
             <button class="btn btn-primary" (click)="onSaveAssessment()" [disabled]="!assessmentsAreValid || !isAuthorized" [hidden]="result && result.rated">
                 <fa-icon icon="save"></fa-icon>
-                Save
+                <span jhiTranslate="entity.action.save">Save</span>
             </button>
             <button class="btn btn-success" (click)="onSubmitAssessment()" [disabled]="!assessmentsAreValid || !isAuthorized" [hidden]="result && result.rated">
-                Submit
+                <span jhiTranslate="entity.action.submit">Submit</span>
             </button>
             <button class="btn btn-danger" (click)="onSubmitAssessment()" [disabled]="!assessmentsAreValid || !isAtLeastInstructor" [hidden]="!result || !result.rated">
-                Override Assessment
+                <span jhiTranslate="modelingAssessmentEditor.button.overrideAssessment">Override Assessment</span>
             </button>
             <button class="btn btn-success" [disabled]="busy" [hidden]="!result || !result.rated" (click)="assessNextOptimal()">
                 <fa-icon *ngIf="busy" icon="spinner" [spin]="true">&nbsp;</fa-icon>
-                Next Submission
+                <span jhiTranslate="modelingAssessmentEditor.button.nextSubmission"> Next Submission</span>
             </button>
             <div *ngIf="conflicts && conflicts.length > 0" class="custom-control custom-switch">
                 <input type="checkbox" class="custom-control-input" id="customSwitches" [(ngModel)]="ignoreConflicts">
@@ -39,6 +39,6 @@
         <jhi-assessment-instructions *ngIf="modelingExercise" [exercise]="modelingExercise" [collapsed]="false"></jhi-assessment-instructions>
     </div>
 </div>
-<!--<ng-template #conflictResolution>-->
+<ng-template #conflictResolution>
     <!--<jhi-modeling-assessment-conflict [conflicts]="conflicts" [modelingExercise]="modelingExercise"></jhi-modeling-assessment-conflict>-->
-<!--</ng-template>-->
+</ng-template>
