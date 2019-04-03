@@ -29,11 +29,12 @@
             [maxScore]="modelingExercise.maxScore"
             [model]="model"
             [feedbacks]="result.feedbacks"
+            [highlightedElementIds]="highlightedElementIds"
             (feedbackChanged)="onFeedbackChanged($event)"
         ></jhi-modeling-assessment>
         <jhi-assessment-instructions *ngIf="modelingExercise" [exercise]="modelingExercise" [collapsed]="false"></jhi-assessment-instructions>
     </div>
 </div>
-<ng-template #conflictResolution>
-    <jhi-modeling-assessment-conflict [conflicts]="conflicts" [modelingExercise]="modelingExercise"></jhi-modeling-assessment-conflict>
-</ng-template>
+<!--<ng-template #conflictResolution>-->
+    <!--<jhi-modeling-assessment-conflict [conflicts]="conflicts" [modelingExercise]="modelingExercise"></jhi-modeling-assessment-conflict>-->
+<!--</ng-template>-->

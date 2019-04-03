@@ -24,6 +24,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     modelingExercise: ModelingExercise;
     result: Result;
     conflicts: Conflict[];
+    highlightedElementIds: Set<string>;
 
     assessmentsAreValid = false;
     submissionId: number;
@@ -155,6 +156,12 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
                     this.jhiAlertService.info('assessmentDashboard.noSubmissionFound');
                 },
             );
+    }
+
+    private highlightConflictingElements() {
+        this.conflicts.forEach((conflict: Conflict) => {
+            this.highlightedElementIds.add(conflict.modelElementId);
+        });
     }
 
     /**

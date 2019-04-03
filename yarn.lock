@@ -217,10 +217,10 @@
   dependencies:
     "@fortawesome/fontawesome-common-types" "^0.2.17"
 
-"@ls1intum/apollon@2.0.0-beta.17":
-  version "2.0.0-beta.17"
-  resolved "https://registry.yarnpkg.com/@ls1intum/apollon/-/apollon-2.0.0-beta.17.tgz#b07d56cfd2cd6e1dca770ae4d21d6e85867f39ea"
-  integrity sha512-pjh2pXcauvFsugla3rKWK6O+QtCB+io1gUM5N0KGJb9c4LIRygr532nvHylhKX+df4hjfgymhWpXS8FPrwNYKw==
+"@ls1intum/apollon@2.0.0-beta.19":
+  version "2.0.0-beta.19"
+  resolved "https://registry.yarnpkg.com/@ls1intum/apollon/-/apollon-2.0.0-beta.19.tgz#007698ee1522ba03fcc9a47ebcc61465fe49ead7"
+  integrity sha512-zxBVC4xqd8hgyMYosFzqOcfBcQmUSbQK5uMT7/60iPbxMH7lpla86AN4f+QTHsiDCl7t+zyr82+t+mhdsgy16w==
   dependencies:
     react "16.8.6"
     react-dom "16.8.6"

@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, Renderer2, SimpleChanges, ViewChild } from '@angular/core';
-import { ApollonEditor, ApollonMode, DiagramType, Selection, UMLModel, Assessment } from '@ls1intum/apollon';
+import { ApollonEditor, ApollonMode, DiagramType, Selection, UMLModel, Assessment, UMLElement, UMLRelationship } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
 import * as interact from 'interactjs';
 import { Feedback } from 'app/entities/feedback';
@@ -19,7 +19,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     @ViewChild('editorContainer') editorContainer: ElementRef;
     @ViewChild('resizeContainer') resizeContainer: ElementRef;
     @Input() model: UMLModel;
-    @Input() highlightedElementId: string;
+    @Input() highlightedElementIds: Set<string>;
     @Input() feedbacks: Feedback[] = [];
     @Input() diagramType: DiagramType;
     @Input() maxScore: number;
@@ -37,8 +37,8 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         } else {
             this.jhiAlertService.error('arTeMiSApp.apollonDiagram.submission.noModel');
         }
-        if (this.highlightedElementId) {
-            this.updateHighlightedElement(undefined, this.highlightedElementId);
+        if (this.highlightedElementIds) {
+            this.updateHighlightedElements(undefined, this.highlightedElementIds);
             setTimeout(() => this.scrollIntoView(this.highlightedElementId), 0);
         }
         if (this.resizeOptions) {
@@ -74,9 +74,9 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             this.updateApollonAssessments(this.feedbacks);
             this.calculateTotalScore();
         }
-        if (changes.highlightedElementId) {
-            this.updateHighlightedElement(changes.highlightedElementId.previousValue, changes.highlightedElementId.currentValue);
-            this.scrollIntoView(changes.highlightedElementId.currentValue);
+        if (changes.highlightedElementIds) {
+            this.updateHighlightedElements(changes.highlightedElementIds.currentValue);
+            // this.scrollIntoView(changes.highlightedElementId.currentValue);
         }
     }
 
@@ -141,18 +141,32 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         }
     }
 
-    private updateHighlightedElement(previousElementID: string, newElementID: string) {
-        const element = this.editorContainer.nativeElement as HTMLDivElement;
-        if (previousElementID) {
-            $(element)
-                .find(`#${previousElementID}`)
-                .css('fill', 'white');
-        }
-        if (newElementID) {
-            $(element)
-                .find(`#${newElementID}`)
-                .css('fill', 'rgba(220,53,69,0.7)');
-        }
+    private updateHighlightedElements(newElementIDs: string[]) {
+        this.model.elements.forEach((element: UMLElement) => {
+            if (newElementIDs.find(elementID => elementID === element.id)) {
+                element.highlight = 'rgba(220,53,69,0.7)';
+            } else {
+                element.highlight = 'white';
+            }
+        });
+        this.model.relationships.forEach((relationship: UMLRelationship) => {
+            if (newElementIDs.find(elementID => elementID === relationship.id)) {
+                relationship.highlight = 'rgba(220,53,69,0.7)';
+            } else {
+                relationship.highlight = 'white';
+            }
+        });
+        // const element = this.editorContainer.nativeElement as HTMLDivElement;
+        // if (previousElementID) {
+        //     $(element)
+        //         .find(`#${previousElementID}`)
+        //         .css('fill', 'white');
+        // }
+        // if (newElementID) {
+        //     $(element)
+        //         .find(`#${newElementID}`)
+        //         .css('fill', 'rgba(220,53,69,0.7)');
+        // }
     }
 
     private scrollIntoView(elementId: string) {

@@ -4,8 +4,10 @@
         <span class="flex-fill"></span>
         <jhi-score-display [score]="totalScore" [maxScore]="maxScore"></jhi-score-display>
     </div>
-    <div #editorContainer class="apollon-container"></div>
-    <div *ngIf="resizeOptions" class="draggable-right">
-        <fa-icon icon="grip-lines-vertical"></fa-icon>
+    <div class="apollon-row">
+        <div #editorContainer class="apollon-container"></div>
+        <div *ngIf="resizeOptions" class="draggable-right">
+            <fa-icon icon="grip-lines-vertical"></fa-icon>
+        </div>
     </div>
 </div>

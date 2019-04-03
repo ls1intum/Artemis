@@ -2,16 +2,18 @@ $draggable-width: 15px;
 
 .modeling-assessment {
     position: relative;
+    display: flex;
+    flex-flow: column nowrap;
     height: 100%;
 
     .card-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        position: absolute;
+        //position: absolute;
         width: 100%;
-        top: 0;
-        left: 0;
+        //top: 0;
+        //left: 0;
         z-index: 2;
         font-size: 1rem;
         font-weight: 500;
@@ -34,4 +36,8 @@ $draggable-width: 15px;
 .apollon-container {
     height: 100%;
     overflow: hidden;
+}
+
+.apollon-row {
+    display: flex;
 }
