@@ -38,8 +38,8 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             this.jhiAlertService.error('arTeMiSApp.apollonDiagram.submission.noModel');
         }
         if (this.highlightedElementIds) {
-            this.updateHighlightedElements(undefined, this.highlightedElementIds);
-            setTimeout(() => this.scrollIntoView(this.highlightedElementId), 0);
+            this.updateHighlightedElements(this.highlightedElementIds);
+            // setTimeout(() => this.scrollIntoView(this.highlightedElementId), 0);
         }
         if (this.resizeOptions) {
             if (this.resizeOptions.initialWidth) {
@@ -141,16 +141,16 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         }
     }
 
-    private updateHighlightedElements(newElementIDs: string[]) {
+    private updateHighlightedElements(newElementIDs: Set<string>) {
         this.model.elements.forEach((element: UMLElement) => {
-            if (newElementIDs.find(elementID => elementID === element.id)) {
+            if (newElementIDs.has(element.id)) {
                 element.highlight = 'rgba(220,53,69,0.7)';
             } else {
                 element.highlight = 'white';
             }
         });
         this.model.relationships.forEach((relationship: UMLRelationship) => {
-            if (newElementIDs.find(elementID => elementID === relationship.id)) {
+            if (newElementIDs.has(relationship.id)) {
                 relationship.highlight = 'rgba(220,53,69,0.7)';
             } else {
                 relationship.highlight = 'white';
