@@ -25,6 +25,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     result: Result;
     conflicts: Conflict[];
     highlightedElementIds: Set<string>;
+    ignoreConflicts = false;
 
     assessmentsAreValid = false;
     submissionId: number;
@@ -117,7 +118,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
 
     onSubmitAssessment() {
         this.removeCircularDependencies();
-        this.modelingAssessmentService.save(this.result.feedbacks, this.submission.id, true).subscribe(
+        this.modelingAssessmentService.save(this.result.feedbacks, this.submission.id, true, this.ignoreConflicts).subscribe(
             (result: Result) => {
                 result.participation.results = [result];
                 this.result = result;
