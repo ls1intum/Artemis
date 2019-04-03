@@ -1,10 +1,10 @@
 <div *ngIf="!conflicts; else conflictResolution" class="assessment-container">
-    <jhi-alert></jhi-alert>
     <h2 class="top-container">
         <div class="assessment-title row-container">
             Assessment
             <jhi-result *ngIf="result?.rated && result.participation" [participation]="result.participation"></jhi-result>
         </div>
+        <jhi-alert></jhi-alert>
         <div class="control-container row-container">
             <button class="btn btn-primary" (click)="onSaveAssessment()" [disabled]="!assessmentsAreValid || !isAuthorized" [hidden]="result && result.rated">
                 <fa-icon icon="save"></fa-icon>
@@ -29,11 +29,11 @@
             [maxScore]="modelingExercise.maxScore"
             [model]="model"
             [feedbacks]="result.feedbacks"
-            (feedbackChanged)="onFeedbackChanged()"
+            (feedbackChanged)="onFeedbackChanged($event)"
         ></jhi-modeling-assessment>
         <jhi-assessment-instructions *ngIf="modelingExercise" [exercise]="modelingExercise" [collapsed]="false"></jhi-assessment-instructions>
     </div>
 </div>
 <ng-template #conflictResolution>
-    <jhi-modeling-assessment-conflict [conflicts]="conflicts" [submission]="submission" [modelingExercise]="modelingExercise"></jhi-modeling-assessment-conflict>
+    <jhi-modeling-assessment-conflict [conflicts]="conflicts" [modelingExercise]="modelingExercise"></jhi-modeling-assessment-conflict>
 </ng-template>

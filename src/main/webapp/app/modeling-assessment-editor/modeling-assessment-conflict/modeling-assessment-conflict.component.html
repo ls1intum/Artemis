@@ -13,23 +13,28 @@
         </div>
     </h2>
 
-    <div class="editor-container">
+    <div id="conflictEditor" class="conflict-editor">
         <jhi-modeling-assessment
-            *ngIf="submission"
+            *ngIf="currentConflict"
             class="conflicting-assessment"
             [diagramType]="this.modelingExercise.diagramType"
-            [model]="model"
+            [model]="conflictingModel"
+            [feedbacks]="conflictingResult.result.feedbacks"
+            [assessor]="conflictingResult.result.assessor"
+            [highlightedElementId]="conflictingResult.modelElementId"
             [readOnly]="true"
-            [resizeOptions]="{ initialWidth: '40vw' }"
+            [resizeOptions]="{}"
         ></jhi-modeling-assessment>
         <jhi-modeling-assessment
-            *ngIf="submission"
+            *ngIf="currentConflict"
             class="assessment"
             [diagramType]="this.modelingExercise.diagramType"
             [model]="model"
+            [feedbacks]="currentConflict.result.feedbacks"
+            [highlightedElementId]="currentConflict.modelElementId"
             [assessor]="user"
             [readOnly]="true"
         ></jhi-modeling-assessment>
-        <jhi-assessment-instructions *ngIf="modelingExercise" [exercise]="modelingExercise" [collapsed]="true"></jhi-assessment-instructions>
+        <jhi-assessment-instructions id="assessmentInstructions" *ngIf="modelingExercise" [exercise]="modelingExercise" [collapsed]="true"></jhi-assessment-instructions>
     </div>
 </div>

@@ -4,6 +4,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import * as interact from 'interactjs';
 import { Feedback } from 'app/entities/feedback';
 import { User } from 'app/core';
+import * as $ from 'jquery';
 
 @Component({
     selector: 'jhi-modeling-assessment',
@@ -18,6 +19,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     @ViewChild('editorContainer') editorContainer: ElementRef;
     @ViewChild('resizeContainer') resizeContainer: ElementRef;
     @Input() model: UMLModel;
+    @Input() highlightedElementId: string;
     @Input() feedbacks: Feedback[] = [];
     @Input() diagramType: DiagramType;
     @Input() maxScore: number;
@@ -34,6 +36,10 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             this.initializeApollonEditor();
         } else {
             this.jhiAlertService.error('arTeMiSApp.apollonDiagram.submission.noModel');
+        }
+        if (this.highlightedElementId) {
+            this.updateHighlightedElement(undefined, this.highlightedElementId);
+            this.scrollIntoView(this.highlightedElementId);
         }
         if (this.resizeOptions) {
             if (this.resizeOptions.initialWidth) {
@@ -65,13 +71,15 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         if (changes.feedbacks && changes.feedbacks.currentValue && this.model) {
             this.feedbacks = changes.feedbacks.currentValue;
             this.updateElementFeedbackMapping(this.feedbacks, true);
-            this.setApollonAssessments(this.feedbacks);
+            this.updateApollonAssessments(this.feedbacks);
             this.calculateTotalScore();
+        }
+        if (changes.highlightedElementId) {
+            this.updateHighlightedElement(changes.highlightedElementId.previousValue, changes.highlightedElementId.currentValue);
+            this.scrollIntoView(changes.highlightedElementId.currentValue);
         }
     }
 
-    /**
-     */
     private initializeApollonEditor() {
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();
@@ -130,7 +138,31 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         }
     }
 
-    private setApollonAssessments(feedbacks: Feedback[]) {
+    private updateHighlightedElement(previousElementID: string, newElementID: string) {
+        const element = this.editorContainer.nativeElement as HTMLDivElement;
+        if (previousElementID) {
+            $(element)
+                .find(`#${previousElementID}`)
+                .css('fill', 'white');
+        }
+        if (newElementID) {
+            $(element)
+                .find(`#${newElementID}`)
+                .css('fill', 'rgba(220,53,69,0.7)');
+        }
+    }
+
+    private scrollIntoView(elementId: string) {
+        const element = this.editorContainer.nativeElement as HTMLDivElement;
+        const matchingElement = $(element)
+            .find(`#${elementId}`)
+            .get(0);
+        if (matchingElement) {
+            matchingElement.scrollIntoView({ block: 'center', inline: 'center' });
+        }
+    }
+
+    private updateApollonAssessments(feedbacks: Feedback[]) {
         this.model.assessments = feedbacks.map(feedback => {
             return {
                 modelElementId: feedback.referenceId,
