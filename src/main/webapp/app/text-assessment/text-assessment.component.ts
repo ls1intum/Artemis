@@ -39,7 +39,10 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
     /** Resizable constants **/
     resizableMinWidth = 100;
     resizableMaxWidth = 1200;
+    resizableMinHeight = 200;
+    resizableMaxHeight = 1500;
     interactResizable: Interactable;
+    interactResizableTop: Interactable;
 
     public getColorForIndex = HighlightColors.forIndex;
 
@@ -99,6 +102,8 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
      */
     ngAfterViewInit(): void {
         this.resizableMinWidth = this.$window.nativeWindow.screen.width / 6;
+        this.resizableMinHeight = this.$window.nativeWindow.screen.height / 7;
+
         this.interactResizable = interact('.resizable-submission')
             .resizable({
                 // Enable resize from left edge; triggered by class .resizing-bar
@@ -114,6 +119,24 @@ export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit
                 const target = event.target;
                 // Update element width
                 target.style.width = event.rect.width + 'px';
+            });
+
+        this.interactResizableTop = interact('.resizable-horizontal')
+            .resizable({
+                // Enable resize from bottom edge; triggered by class .resizing-bar-bottom
+                edges: { left: false, right: false, top: false, bottom: '.resizing-bar-bottom' },
+                // Set min and max height
+                restrictSize: {
+                    min: { height: this.resizableMinHeight },
+                    max: { height: this.resizableMaxHeight },
+                },
+                inertia: true,
+            })
+            .on('resizemove', function(event) {
+                const target = event.target;
+                // Update element height
+                target.style.height = event.rect.height + 'px';
+                $('#submission-area').css('min-height', event.rect.height - 100 + 'px');
             });
     }
 
