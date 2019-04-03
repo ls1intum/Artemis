@@ -41,13 +41,13 @@
 
     <div class="row">
         <div *ngIf="submission?.submitted" class="col-9 editor-container">
-            <!--TODO CZ: disable popups in Assessment readonly mode-->
             <jhi-modeling-assessment
                 [model]="umlModel"
                 [feedbacks]="assessmentResult?.feedbacks"
                 [diagramType]="modelingExercise.diagramType"
                 [maxScore]="modelingExercise.maxScore"
                 [readOnly]="true"
+                [enablePopups]="false"
                 (selectionChanged)="onSelectionChanged($event)"
             ></jhi-modeling-assessment>
         </div>

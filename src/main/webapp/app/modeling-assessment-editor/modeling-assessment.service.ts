@@ -48,6 +48,9 @@ export class ModelingAssessmentService {
      * separate referenceType and referenceId fields. The reference field is of the form <referenceType>:<referenceId>.
      */
     convertResult(result: Result): Result {
+        if (!result.feedbacks) {
+            return result;
+        }
         for (const feedback of result.feedbacks) {
             feedback.referenceType = feedback.reference.split(':')[0] as ElementType;
             feedback.referenceId = feedback.reference.split(':')[1];

@@ -26,6 +26,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     @Input() assessor: User;
     @Input() resizeOptions: { initialWidth: string; maxWidth?: number };
     @Input() readOnly = false;
+    @Input() enablePopups = true;
     @Output() feedbackChanged = new EventEmitter<Feedback[]>();
     @Output() selectionChanged = new EventEmitter<Selection>();
 
@@ -89,6 +90,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             readonly: this.readOnly,
             model: this.model,
             type: this.diagramType,
+            enablePopups: this.enablePopups,
         });
         this.apollonEditor.subscribeToSelectionChange((selection: Selection) => {
             if (this.readOnly) {
@@ -188,6 +190,9 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
                 feedback: feedback.text,
             };
         });
+        if (this.apollonEditor) {
+            this.apollonEditor.model = this.model;
+        }
     }
 
     /**
