@@ -31,6 +31,26 @@
             },
             "editor": {
                 "assess": "Assess"
+            },
+            "dashboard": {
+                "heading": "Tutor Assessment dashboard for text exercise \"{{exerciseTitle}}\"",
+                "empty": "No Submissions for this exercise!",
+                "loading": "Loading..",
+                "columns": {
+                    "submissionDate": "Submission date",
+                    "result": "Result",
+                    "submissionCount": "Submission count",
+                    "score": "Score",
+                    "duration": "Duration",
+                    "assessmentType": "Assessment Type",
+                    "assessor": "Reviewer",
+                    "action": "Action"
+                },
+                "minutes": "minutes",
+                "actions": {
+                    "open": "Open assessment",
+                    "assess": "Assess Submission"
+                }
             }
         }
     }

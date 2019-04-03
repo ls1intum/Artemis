@@ -7,7 +7,7 @@
                 "exampleAssessment": "Beispiel Bewertungseditor der Textaufgabe {{exerciseTitle}}"
             },
             "exercise": {
-                "title": "Übung",
+                "title": "Aufgabe",
                 "problemStatement": "Aufgabenstellung",
                 "sampleSolution": "Musterlösung",
                 "score": "Punkte",
@@ -31,6 +31,26 @@
             },
             "editor": {
                 "assess": "Bewerten"
+            },
+            "dashboard": {
+                "heading": "Tutor Dashboard zur Bewertung von Textaufgabe \"{{exerciseTitle}}\"",
+                "empty": "Keine Einreichungen für diese Aufgabe!",
+                "loading": "Laden..",
+                "columns": {
+                    "submissionDate": "Einreichungsdatum",
+                    "result": "Ergebnis",
+                    "submissionCount": "Anzahl der Einreichungen",
+                    "score": "Punkte",
+                    "duration": "Dauer",
+                    "assessmentType": "Bewertungsart",
+                    "assessor": "Prüfer/in",
+                    "action": "Aktion"
+                },
+                "minutes": "Minuten",
+                "actions": {
+                    "open": "Offene Bewertung",
+                    "assess": "Einreichung bewerten"
+                }
             }
         }
     }
