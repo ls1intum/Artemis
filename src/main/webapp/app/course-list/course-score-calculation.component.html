@@ -10,33 +10,33 @@
         <table *ngIf="course.id != 13"class="table table-striped">
             <thead>
             <tr>
-                <th><span>Score Aggregation</span></th>
-                <th><span>My Score</span></th>
-                <th><span>My Relative Score (%)</span></th>
-                <th><span>Max Score</span></th>
+                <th jhiTranslate="arTeMiSApp.courseScoreCalculation.scoreAggregation">Score Aggregation</th>
+                <th jhiTranslate="arTeMiSApp.courseScoreCalculation.myScore">My Score</th>
+                <th jhiTranslate="arTeMiSApp.courseScoreCalculation.myRelativeScore">My Relative Score (%)</th>
+                <th jhiTranslate="arTeMiSApp.courseScoreCalculation.maxScore">Max Score</th>
             </tr>
             </thead>
             <tbody>
             <tr>
-                <td>Score for quizzes</td>
+                <td jhiTranslate="arTeMiSApp.courseScoreCalculation.forQuizzes">Score for quizzes</td>
                 <td>{{quizzesTotalScore}}</td>
                 <td>{{quizzesTotalRelativeScore}}%</td>
                 <td>{{quizzesTotalMaxScore}}</td>
             </tr>
             <tr>
-                <td>Score for programming exercises</td>
+                <td jhiTranslate="arTeMiSApp.courseScoreCalculation.forProgramming">Score for programming exercises</td>
                 <td>{{programmingExerciseTotalScore}}</td>
                 <td>{{programmingExerciseTotalRelativeScore}}%</td>
                 <td>{{programmingExerciseTotalMaxScore}}</td>
             </tr>
             <tr>
-                <td>Score for modeling exercises</td>
+                <td jhiTranslate="arTeMiSApp.courseScoreCalculation.forModeling">Score for modeling exercises</td>
                 <td>{{modelingExerciseTotalScore}}</td>
                 <td>{{modelingExerciseTotalRelativeScore}}%</td>
                 <td>{{modelingExerciseTotalMaxScore}}</td>
             </tr>
             <tr>
-                <td><b>Total score for this course</b></td>
+                <td><b jhiTranslate="arTeMiSApp.courseScoreCalculation.total">Total score for this course</b></td>
                 <td><b>{{totalScore}}</b></td>
                 <td><b>{{totalRelativeScore}}%</b></td>
                 <td><b>{{totalMaxScore}}</b></td>
@@ -47,34 +47,34 @@
         <table *ngIf="course.id == 13" class="table table-striped">
           <thead>
           <tr>
-              <th><span>Score Aggregation</span></th>
-              <th><span>My Score</span></th>
-              <th><span>My Relative Score (%)</span></th>
-              <th><span>Max Score</span></th>
+              <th jhiTranslate="arTeMiSApp.courseScoreCalculation.scoreAggregation">Score Aggregation</th>
+              <th jhiTranslate="arTeMiSApp.courseScoreCalculation.myScore">My Score</th>
+              <th jhiTranslate="arTeMiSApp.courseScoreCalculation.myRelativeScore">My Relative Score (%)</th>
+              <th jhiTranslate="arTeMiSApp.courseScoreCalculation.maxScore">Max Score</th>
               <th></th>
           </tr>
           </thead>
           <tbody>
             <tr>
-                <td>Score for quizzes</td>
+                <td jhiTranslate="arTeMiSApp.courseScoreCalculation.forQuizzes">Score for quizzes</td>
                 <td>{{quizzesTotalScore}}</td>
                 <td>{{quizzesTotalRelativeScore}}%</td>
                 <td>{{quizzesTotalMaxScore}}</td>
             </tr>
             <tr>
-                <td>Score for homework</td>
+                <td jhiTranslate="arTeMiSApp.courseScoreCalculation.eist.forHomework">Score for homework</td>
                 <td>{{eistHomeworkTotalScore}}</td>
                 <td>{{eistHomeworkRelativeScore}}%</td>
                 <td>{{eistHomeworkMaxScore}}</td>
             </tr>
             <tr>
-                <td>Score for in-class exercises</td>
+                <td jhiTranslate="arTeMiSApp.courseScoreCalculation.eist.forInClass">Score for in-class exercises</td>
                 <td>{{eistInClassTotalScore}}</td>
                 <td>{{eistInClassRelativeScore}}%</td>
                 <td>{{eistInClassMaxScore}}</td>
             </tr>
           <tr>
-              <td><b>Total score for this course</b></td>
+              <td><b jhiTranslate="arTeMiSApp.courseScoreCalculation.total">Total score for this course</b></td>
               <td><b>{{totalScore}}</b></td>
               <td><b>{{totalRelativeScore}}%</b></td>
               <td><b>{{totalMaxScore}}</b></td>
