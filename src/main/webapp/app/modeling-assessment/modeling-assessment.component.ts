@@ -1,5 +1,5 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, Renderer2, ViewChild, OnChanges, SimpleChanges } from '@angular/core';
-import { ApollonEditor, ApollonMode, DiagramType, UMLElement, UMLModel, UMLRelationship } from '@ls1intum/apollon';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, Renderer2, SimpleChanges, ViewChild } from '@angular/core';
+import { ApollonEditor, ApollonMode, DiagramType, Selection, UMLModel } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
 import * as interact from 'interactjs';
 import { Feedback } from 'app/entities/feedback';
@@ -25,6 +25,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     @Input() resizeOptions: { initialWidth: string; maxWidth?: number };
     @Input() readOnly = false;
     @Output() feedbackChanged = new EventEmitter<Feedback[]>();
+    @Output() selectionChanged = new EventEmitter<Selection>();
 
     constructor(private jhiAlertService: JhiAlertService, private renderer: Renderer2) {}
 
@@ -81,13 +82,15 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
             model: this.model,
             type: this.diagramType,
         });
-        if (!this.readOnly) {
-            this.apollonEditor.subscribeToSelectionChange(selection => {
+        this.apollonEditor.subscribeToSelectionChange((selection: Selection) => {
+            if (this.readOnly) {
+                this.selectionChanged.emit(selection);
+            } else {
                 this.feedbacks = this.generateFeedbackFromAssessment();
                 this.calculateTotalScore();
                 this.feedbackChanged.emit(this.feedbacks);
-            });
-        }
+            }
+        });
     }
 
     /**

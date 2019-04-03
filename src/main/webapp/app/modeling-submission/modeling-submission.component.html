@@ -19,10 +19,10 @@
                 </ng-container>
             </button>
             <button class="btn btn-success" (click)="submit()"
-                    [disabled]="!submission || !umlModel || this.umlModel.elements.length === 0"
+                    [disabled]="!submission || !umlModel || !umlModel.elements || umlModel.elements.length === 0"
                     [hidden]="submission?.submitted || !isActive">Submit</button>
             <button class="btn btn-warning" (click)="submit()"
-                    [disabled]="!submission || !umlModel || this.umlModel.elements.length === 0"
+                    [disabled]="!submission || !umlModel || !umlModel.elements || umlModel.elements.length === 0"
                     [hidden]="submission?.submitted || isActive">Submit (deadline missed)</button>
             <button class="btn btn-info" (click)="retry()"
                     *ngIf="isActive && submission?.submitted && result?.rated && !retryStarted"><fa-icon icon="sync"></fa-icon> Retry</button>
@@ -30,48 +30,58 @@
     </div><br>
 
     <div class="row" *ngIf="modelingExercise">
-        <div class="col">
+        <div [ngClass]="{'col-12': submission?.submitted, 'col-9': !submission?.submitted}">
             <p class="mb-3">
                 <span><strong>Problem Statement:</strong></span>
                 <span [innerHTML]="problemStatement" ></span>
             </p>
         </div>
-        <div class="col text-right" *ngIf="!submission?.submitted"><p><strong>Max. Score: {{ modelingExercise.maxScore }}</strong></p></div>
+        <div class="col-3 text-right" *ngIf="!submission?.submitted"><p><strong>Max. Score: {{ modelingExercise.maxScore }}</strong></p></div>
     </div>
 
-    <div class="editor-container" *ngIf="submission">
-        <jhi-modeling-editor [diagramType]="modelingExercise.diagramType" [umlModel]="submission.model"></jhi-modeling-editor>
-    </div>
     <div class="row">
-        <!--TODO CZ: cleanup-->
-        <!--<div [ngClass]="{'col-9': submission?.submitted, 'col-12': !submission?.submitted}">-->
-            <!--<jhi-modeling-editor #editorContainer style="width: 100%; height: 100vh;"></jhi-modeling-editor>-->
-        <!--</div>-->
-        <!--<div class="col-3" *ngIf="submission?.submitted">-->
-            <!--<h4>Assessment</h4>-->
-            <!--<p *ngIf="!assessmentResult || assessmentResult?.feedbacks.length === 0">There is no assessment available yet.</p>-->
-            <!--<ng-container *ngIf="assessmentResult?.feedbacks.length > 0">-->
-                <!--<p>Select entities and/or associations in the editor to filter the assessment.</p>-->
-                <!--<table class="table">-->
-                    <!--<thead class="thead-light">-->
-                        <!--<tr>-->
-                            <!--<th>Element</th>-->
-                            <!--<th class="text-center">Score</th>-->
-                        <!--</tr>-->
-                    <!--</thead>-->
-                    <!--<tbody *ngIf="assessmentsNames">-->
-                    <!--&lt;!&ndash;TODO CZ: replace function call 'isSelected' in html&ndash;&gt;-->
-                        <!--<tr *ngFor="let feedback of assessmentResult.feedbacks" [hidden]="(feedback.credits === 0 && !feedback.text) || !isSelected(feedback.referenceId, feedback.referenceType)">-->
-                            <!--<td>-->
-                                <!--<span>{{assessmentsNames[feedback.referenceId]['type']}} </span>-->
-                                <!--<code class="text-primary">{{assessmentsNames[feedback.referenceId]['name']}}</code><br>-->
-                                <!--<span *ngIf="feedback.text" [ngClass]="{'text-success': feedback.credits > 0, 'text-danger': feedback.credits < 0}"><strong>Feedback:</strong> {{feedback.text}}</span>-->
-                            <!--</td>-->
-                            <!--<td class="text-center">{{feedback.credits | number:'1.0-1'}}</td>-->
-                        <!--</tr>-->
-                    <!--</tbody>-->
-                <!--</table>-->
-            <!--</ng-container>-->
-        <!--</div>-->
+        <div *ngIf="submission?.submitted" class="col-9 editor-container">
+            <!--TODO CZ: disable popups in Assessment readonly mode-->
+            <jhi-modeling-assessment
+                [model]="umlModel"
+                [feedbacks]="assessmentResult?.feedbacks"
+                [diagramType]="modelingExercise.diagramType"
+                [maxScore]="modelingExercise.maxScore"
+                [readOnly]="true"
+                (selectionChanged)="onSelectionChanged($event)"
+            ></jhi-modeling-assessment>
+        </div>
+        <div *ngIf="submission && !submission.submitted" class="col-12 editor-container">
+            <jhi-modeling-editor
+                [umlModel]="umlModel"
+                [diagramType]="modelingExercise.diagramType"
+            ></jhi-modeling-editor>
+        </div>
+        <div class="col-3" *ngIf="submission?.submitted">
+            <h4>Assessment</h4>
+            <p *ngIf="!assessmentResult || !assessmentResult.feedbacks || assessmentResult?.feedbacks.length === 0">There is no assessment available yet.</p>
+            <ng-container *ngIf="assessmentResult?.feedbacks.length > 0">
+                <p>Select entities and/or associations in the editor to filter the assessment.</p>
+                <table class="table">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Element</th>
+                            <th class="text-center">Score</th>
+                        </tr>
+                    </thead>
+                    <tbody *ngIf="assessmentsNames">
+                    <!--TODO CZ: replace function call 'isSelected' in html-->
+                        <tr *ngFor="let feedback of assessmentResult.feedbacks" [hidden]="(feedback.credits === 0 && !feedback.text) || !isSelected(feedback.referenceId, feedback.referenceType)">
+                            <td>
+                                <span>{{assessmentsNames[feedback.referenceId]['type']}} </span>
+                                <code class="text-primary">{{assessmentsNames[feedback.referenceId]['name']}}</code><br>
+                                <span *ngIf="feedback.text" [ngClass]="{'text-success': feedback.credits > 0, 'text-danger': feedback.credits < 0}"><strong>Feedback:</strong> {{feedback.text}}</span>
+                            </td>
+                            <td class="text-center">{{feedback.credits | number:'1.0-1'}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </ng-container>
+        </div>
     </div>
 </div>

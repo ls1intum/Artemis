@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, Input, OnDestroy, OnInit, Renderer2, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Input, OnDestroy, Renderer2, ViewChild } from '@angular/core';
 import { ApollonEditor, ApollonMode, DiagramType, UMLModel } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -9,7 +9,7 @@ import * as interact from 'interactjs';
     templateUrl: './modeling-editor.component.html',
     styleUrls: ['./modeling-editor.component.scss'],
 })
-export class ModelingEditorComponent implements OnInit, AfterViewInit, OnDestroy {
+export class ModelingEditorComponent implements AfterViewInit, OnDestroy {
     @ViewChild('editorContainer')
     editorContainer: ElementRef;
     @ViewChild('resizeContainer')
@@ -27,14 +27,8 @@ export class ModelingEditorComponent implements OnInit, AfterViewInit, OnDestroy
 
     constructor(private jhiAlertService: JhiAlertService, private renderer: Renderer2, private modalService: NgbModal) {}
 
-    ngOnInit() {}
-
     ngAfterViewInit(): void {
-        if (this.umlModel) {
-            this.initializeApollonEditor();
-        } else {
-            this.jhiAlertService.error('arTeMiSApp.apollonDiagram.submission.noModel');
-        }
+        this.initializeApollonEditor();
         if (this.resizeOptions) {
             if (this.resizeOptions.initialWidth) {
                 this.renderer.setStyle(this.resizeContainer.nativeElement, 'width', this.resizeOptions.initialWidth);

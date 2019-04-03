@@ -4,7 +4,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { ModelingExercise } from '../entities/modeling-exercise';
 import { Participation } from '../entities/participation';
 import { ApollonDiagramService } from '../entities/apollon-diagram';
-import { DiagramType, ElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
+import { DiagramType, ElementType, Selection, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
 import { Result } from '../entities/result';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
@@ -23,6 +23,7 @@ import { ModelingEditorComponent } from 'app/modeling-editor';
     templateUrl: './modeling-submission.component.html',
     styleUrls: ['./modeling-submission.component.scss'],
 })
+// TODO CZ: move assessment stuff to separate assessment result view?
 export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     @ViewChild(ModelingEditorComponent)
     modelingEditor: ModelingEditorComponent;
@@ -37,12 +38,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     submission: ModelingSubmission;
 
-    // TODO: rename
     assessmentResult: Result;
     assessmentsNames: Map<string, Map<string, string>>;
     totalScore: number;
 
-    umlModel: UMLModel = null;
+    umlModel: UMLModel;
     isActive: boolean;
     isSaving: boolean;
     retryStarted = false;
@@ -69,11 +69,14 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.autoSaveTimer = 0;
     }
 
-    ngOnInit() {
+    ngOnInit(): void {
         this.subscription = this.route.params.subscribe(params => {
             if (params['participationId']) {
                 this.modelingSubmissionService.getDataForModelingEditor(params['participationId']).subscribe(
                     modelingSubmission => {
+                        if (!modelingSubmission) {
+                            this.jhiAlertService.error('arTeMiSApp.apollonDiagram.submission.noSubmission');
+                        }
                         // reconnect participation <--> result
                         if (modelingSubmission.result) {
                             modelingSubmission.participation.results = [modelingSubmission.result];
@@ -89,17 +92,16 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         }
                         this.isActive = this.modelingExercise.dueDate == null || new Date() <= moment(this.modelingExercise.dueDate).toDate();
                         this.submission = modelingSubmission;
-                        if (this.submission && this.submission.model) {
+                        if (this.submission.model) {
                             this.umlModel = JSON.parse(this.submission.model);
                         }
-                        if (this.submission && this.submission.id && !this.submission.submitted) {
+                        if (this.submission.id && !this.submission.submitted) {
                             this.subscribeToWebsocket();
                         }
-                        if (this.submission && this.submission.result) {
+                        if (this.submission.result) {
                             this.result = this.submission.result;
                         }
-                        if (this.submission && this.submission.submitted && this.result && this.result.completionDate) {
-                            // TODO CZ: move to separate assessment result view?
+                        if (this.submission.submitted && this.result && this.result.completionDate) {
                             this.modelingAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
                                 this.assessmentResult = assessmentResult;
                                 this.initializeAssessmentInfo();
@@ -118,7 +120,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         window.scroll(0, 0);
     }
 
-    subscribeToWebsocket() {
+    subscribeToWebsocket(): void {
         if (!this.submission && !this.submission.id) {
             return;
         }
@@ -127,24 +129,19 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.jhiWebsocketService.receive(this.websocketChannel).subscribe(submission => {
             if (submission.submitted) {
                 this.submission = submission;
+                if (this.submission.model) {
+                    this.umlModel = JSON.parse(this.submission.model);
+                }
                 if (this.submission.result && this.submission.result.rated) {
-                    // TODO CZ: move to separate assessment result view?
                     this.modelingAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
                         this.assessmentResult = assessmentResult;
                         this.initializeAssessmentInfo();
                     });
                 }
                 this.jhiAlertService.info('arTeMiSApp.modelingEditor.autoSubmit');
-                if (this.submission.model) {
-                    this.updateEditor(JSON.parse(this.submission.model));
-                }
                 this.isActive = false;
             }
         });
-    }
-
-    updateEditor(model: UMLModel) {
-        this.modelingEditor.umlModel = model;
     }
 
     /**
@@ -152,10 +149,11 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * If it was already submitted, the Apollon editor is loaded in Assessment read-only mode.
      * Otherwise, it is loaded in the modeling mode and an auto save timer is started.
      */
-    setAutoSaveTimer() {
+    setAutoSaveTimer(): void {
         if (this.submission.submitted) {
             return;
         }
+        this.autoSaveTimer = 0;
         // auto save of submission if there are changes
         this.autoSaveInterval = window.setInterval(() => {
             this.autoSaveTimer++;
@@ -169,7 +167,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }, 1000);
     }
 
-    saveDiagram() {
+    saveDiagram(): void {
         if (this.isSaving) {
             // don't execute the function if it is already currently executing
             return;
@@ -187,9 +185,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 response => {
                     this.submission = response.body;
                     this.result = this.submission.result;
-                    if (!this.submission.model) {
-                        this.updateSubmissionModel();
-                    }
                     this.isSaving = false;
                     this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
                 },
@@ -216,7 +211,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
     }
 
-    submit() {
+    submit(): void {
         if (!this.submission) {
             return;
         }
@@ -236,13 +231,13 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             this.modelingSubmissionService.update(this.submission, this.modelingExercise.id).subscribe(
                 response => {
                     this.submission = response.body;
+                    this.umlModel = JSON.parse(this.submission.model);
                     this.result = this.submission.result;
                     // Compass has already calculated a result
                     if (this.result && this.result.assessmentType) {
                         const participation = this.participation;
                         participation.results = [this.result];
                         this.participation = Object.assign({}, participation);
-                        // TODO CZ: move to separate assessment result view?
                         this.modelingAssessmentService.getAssessment(this.submission.id).subscribe((assessmentResult: Result) => {
                             this.assessmentResult = assessmentResult;
                             this.initializeAssessmentInfo();
@@ -256,8 +251,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                         }
                     }
                     this.retryStarted = false;
-                    clearInterval(this.autoSaveInterval);
-                    this.updateEditor(JSON.parse(this.submission.model));
                     if (this.websocketChannel) {
                         this.jhiWebsocketService.unsubscribe(this.websocketChannel);
                     }
@@ -270,7 +263,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
     }
 
-    ngOnDestroy() {
+    ngOnDestroy(): void {
         this.subscription.unsubscribe();
         clearInterval(this.autoSaveInterval);
         if (this.websocketChannel) {
@@ -281,7 +274,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     /**
      * Updates the model of the submission with the current Apollon model state
      */
-    updateSubmissionModel() {
+    updateSubmissionModel(): void {
         this.umlModel = this.modelingEditor.getCurrentModel();
         const diagramJson = JSON.stringify(this.umlModel);
         if (this.submission && diagramJson != null) {
@@ -289,11 +282,10 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         }
     }
 
-    // TODO CZ: move to separate assessment result view?
     /**
      * Retrieves names for displaying the assessment and calculates the total score
      */
-    initializeAssessmentInfo() {
+    initializeAssessmentInfo(): void {
         if (this.assessmentResult && this.submission && this.submission.model) {
             this.assessmentsNames = this.modelingAssessmentService.getNamesForAssessments(this.assessmentResult, this.umlModel);
             let totalScore = 0;
@@ -305,9 +297,19 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     /**
+     * Handles changes of the model element selection in Apollon. This is used for displaying
+     * only the feedback of the selected model elements.
+     * @param selection the new selection
+     */
+    onSelectionChanged(selection: Selection) {
+        this.selectedEntities = selection.elements;
+        this.selectedRelationships = selection.relationships;
+    }
+
+    /**
      * Checks whether a model element in the modeling editor is selected.
      */
-    isSelected(modelElementId: string, type: ElementType) {
+    isSelected(modelElementId: string, type: ElementType): boolean {
         if ((!this.selectedEntities || this.selectedEntities.length === 0) && (!this.selectedRelationships || this.selectedRelationships.length === 0)) {
             return true;
         }
@@ -336,7 +338,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     // displays the alert for confirming leaving the page if there are unsaved changes
     @HostListener('window:beforeunload', ['$event'])
-    unloadNotification($event: any) {
+    unloadNotification($event: any): void {
         if (!this.canDeactivate()) {
             $event.returnValue = this.translateService.instant('pendingChanges');
         }
@@ -346,18 +348,13 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
      * starts a retry and resets necessary attributes
      * the retry is only persisted after saving or submitting the model
      */
-    retry() {
+    retry(): void {
         this.retryStarted = true;
-        const currentModel = this.submission.model;
+        this.umlModel.assessments = [];
         this.submission = new ModelingSubmission();
-        this.submission.model = currentModel;
         this.assessmentResult = null;
         this.result = null; // TODO: think about how we could visualize old results and assessments after retry
-
         clearInterval(this.autoSaveInterval);
-        if (this.submission.model) {
-            this.updateEditor(JSON.parse(this.submission.model));
-        }
         this.setAutoSaveTimer();
     }
 
