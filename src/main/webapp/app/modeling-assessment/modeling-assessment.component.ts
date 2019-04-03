@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, Renderer2, SimpleChanges, ViewChild } from '@angular/core';
-import { ApollonEditor, ApollonMode, DiagramType, Selection, UMLModel } from '@ls1intum/apollon';
+import { ApollonEditor, ApollonMode, DiagramType, Selection, UMLModel, Assessment } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
 import * as interact from 'interactjs';
 import { Feedback } from 'app/entities/feedback';
@@ -39,7 +39,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         }
         if (this.highlightedElementId) {
             this.updateHighlightedElement(undefined, this.highlightedElementId);
-            this.scrollIntoView(this.highlightedElementId);
+            setTimeout(() => this.scrollIntoView(this.highlightedElementId), 0);
         }
         if (this.resizeOptions) {
             if (this.resizeOptions.initialWidth) {
@@ -93,12 +93,15 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         this.apollonEditor.subscribeToSelectionChange((selection: Selection) => {
             if (this.readOnly) {
                 this.selectionChanged.emit(selection);
-            } else {
-                this.feedbacks = this.generateFeedbackFromAssessment();
-                this.calculateTotalScore();
-                this.feedbackChanged.emit(this.feedbacks);
             }
         });
+        if (!this.readOnly) {
+            this.apollonEditor.subscribeToAssessmentChange((assessments: Assessment[]) => {
+                this.feedbacks = this.generateFeedbackFromAssessment(assessments);
+                this.calculateTotalScore();
+                this.feedbackChanged.emit(this.feedbacks);
+            });
+        }
     }
 
     /**
@@ -106,8 +109,8 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
      * element feedback mapping.
      * Returns an array containing all feedback entries from the mapping.
      */
-    private generateFeedbackFromAssessment(): Feedback[] {
-        for (const assessment of this.apollonEditor.model.assessments) {
+    private generateFeedbackFromAssessment(assessments: Assessment[]): Feedback[] {
+        for (const assessment of assessments) {
             const existingFeedback = this.elementFeedback.get(assessment.modelElementId);
             if (existingFeedback) {
                 existingFeedback.credits = assessment.score;
