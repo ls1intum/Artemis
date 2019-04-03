@@ -6,6 +6,7 @@
                 "createLabel": "Create a new Exercise",
                 "createOrEditLabel": "Create or edit an Exercise"
             },
+            "resultCount": "{{resultsLength}} results",
             "created": "A new Exercise is created with identifier {{ param }}",
             "updated": "An Exercise is updated with identifier {{ param }}",
             "deleted": "An Exercise is deleted with identifier {{ param }}",

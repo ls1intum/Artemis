@@ -6,6 +6,7 @@
                 "createLabel": "Übung erstellen",
                 "createOrEditLabel": "Übung erstellen oder bearbeiten"
             },
+            "resultCount": "{{resultsLength}} Ergrbnisse",
             "created": "Übung erstellt mit ID {{ param }}",
             "updated": "Übung aktualisiert mit ID {{ param }}",
             "deleted": "Übung gelöscht mit ID {{ param }}",
