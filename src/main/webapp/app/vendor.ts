@@ -101,7 +101,6 @@ import {
     faListUl,
     faImage,
     faGripLinesVertical,
-    faArrowRight,
 } from '@fortawesome/free-solid-svg-icons';
 
 import {
