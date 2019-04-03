@@ -32,7 +32,18 @@ import { ArTEMiSQuizModule } from './quiz/participate';
 import { ArTEMiSTextModule } from './text-editor';
 import { ArTEMiSTextAssessmentModule } from './text-assessment';
 import { ArTEMiSModelingStatisticsModule } from './modeling-statistics/';
-import { ActiveMenuDirective, ErrorComponent, FooterComponent, JhiMainComponent, NavbarComponent, PageRibbonComponent, ProfileService } from './layouts';
+// jhipster-needle-angular-add-module-import JHipster will add new module here
+import {
+    ActiveMenuDirective,
+    ErrorComponent,
+    FooterComponent,
+    SystemNotificationComponent,
+    JhiMainComponent,
+    NavbarComponent,
+    PageRibbonComponent,
+    ProfileService,
+    NotificationContainerComponent,
+} from './layouts';
 import { ArTEMiSApollonDiagramsModule } from './apollon-diagrams';
 import { ArTEMiSStatisticModule } from './quiz-statistics/quiz-statistic.module';
 import { ArTEMiSModelingSubmissionModule } from 'app/modeling-submission';
@@ -47,10 +58,10 @@ import { ArTEMiSExampleSubmissionModule } from 'app/example-text-submission';
 
 import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor/markdown-editor.module';
 import { ArTEMiSComplaintsModule } from 'app/complaints';
-
-import * as moment from 'moment';
+import { ArTEMiSNotificationModule } from 'app/entities/notification/notification.module';
+import { ArTEMiSSystemNotificationModule } from 'app/entities/system-notification/system-notification.module';
 import { ArTEMiSModelingAssessmentEditorModule } from 'app/modeling-assessment-editor/modeling-assessment-editor.module';
-// jhipster-needle-angular-add-module-import JHipster will add new module here
+import * as moment from 'moment';
 
 @NgModule({
     imports: [
@@ -98,11 +109,23 @@ import { ArTEMiSModelingAssessmentEditorModule } from 'app/modeling-assessment-e
         ArTEMiSTutorExerciseDashboardModule,
         ArTEMiSExampleSubmissionModule,
         ArTEMiSComplaintsModule,
+        ArTEMiSNotificationModule,
+        ArTEMiSSystemNotificationModule,
         ArTEMiSModelingAssessmentEditorModule,
         ArTEMiSModelingSubmissionModule,
         // jhipster-needle-angular-add-module JHipster will add new module here
     ],
-    declarations: [JhiMainComponent, NavbarComponent, ErrorComponent, PageRibbonComponent, ActiveMenuDirective, FooterComponent, QuizExerciseExportComponent],
+    declarations: [
+        JhiMainComponent,
+        NavbarComponent,
+        ErrorComponent,
+        PageRibbonComponent,
+        ActiveMenuDirective,
+        FooterComponent,
+        SystemNotificationComponent,
+        NotificationContainerComponent,
+        QuizExerciseExportComponent,
+    ],
     providers: [
         ProfileService,
         RepositoryService,

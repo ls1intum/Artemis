@@ -1,15 +1,18 @@
 package de.tum.in.www1.artemis.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonView;
-import de.tum.in.www1.artemis.domain.view.QuizView;
-import org.apache.commons.text.similarity.LevenshteinDistance;
+import java.io.Serializable;
+import java.util.Objects;
+
+import javax.persistence.*;
+
+import me.xdrop.fuzzywuzzy.FuzzySearch;
+
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import javax.persistence.*;
-import java.io.Serializable;
-import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonView;
+import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
  * A ShortAnswerSubmittedText.
@@ -106,25 +109,14 @@ public class ShortAnswerSubmittedText implements Serializable {
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     /**
-     * This function checks if the submittedText (typos included) matches the solution.
-     * There can be max 2 typos at all.
-     * solutions with length 0-4 allow 0 typos
-     * solutions with length 4-8 allow 1 typo
-     * solutions with length 8< allow 2 typos
+     * This function checks if the submittedText (typos included) matches the solution. https://github.com/xdrop/fuzzywuzzy
      *
      * @param submittedText
      * @param solution
      * @return boolean true if submittedText fits the restrictions above, false when not
      */
     public boolean isSubmittedTextCorrect(String submittedText, String solution) {
-        LevenshteinDistance distance = new LevenshteinDistance();
-        int numberOfTypos = distance.apply(submittedText.toLowerCase(), solution.toLowerCase());
-        if ( (solution.length() < 4 && numberOfTypos > 0)
-            || ((solution.length() >= 4 && solution.length() <= 8) && numberOfTypos > 2)
-            || (solution.length() > 8 && numberOfTypos > 3) ) {
-            return false;
-        }
-        return true;
+        return FuzzySearch.ratio(submittedText.toLowerCase(), solution.toLowerCase()) > 85;
     }
 
     @Override
@@ -149,10 +141,6 @@ public class ShortAnswerSubmittedText implements Serializable {
 
     @Override
     public String toString() {
-        return "ShortAnswerSubmittedText{" +
-            "id=" + getId() +
-            ", text='" + getText() + "'" +
-            ", isCorrect='" + isIsCorrect() + "'" +
-            "}";
+        return "ShortAnswerSubmittedText{" + "id=" + getId() + ", text='" + getText() + "'" + ", isCorrect='" + isIsCorrect() + "'" + "}";
     }
 }

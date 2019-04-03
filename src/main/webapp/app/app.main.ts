@@ -6,6 +6,9 @@ ProdConfig();
 
 if (module['hot']) {
     module['hot'].accept();
+    if ('production' !== process.env.NODE_ENV) {
+        console.clear();
+    }
 }
 
 platformBrowserDynamic()

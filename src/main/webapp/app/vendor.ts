@@ -11,6 +11,7 @@ import {
     faAngleRight,
     faArchive,
     faArrowLeft,
+    faArrowRight,
     faArrowsAltV,
     faAsterisk,
     faBan,
