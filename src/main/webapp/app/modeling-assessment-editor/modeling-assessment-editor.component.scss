@@ -41,8 +41,7 @@ $titlebar-height: 65px;
     width: 100%;
     overflow: auto;
     jhi-modeling-assessment {
-        max-width: 100%;
-        min-width: 0;
+        flex: 1 1 auto;
     }
 }
 
