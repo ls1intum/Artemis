@@ -13,7 +13,7 @@ import * as moment from 'moment';
 @Component({
     selector: 'jhi-navbar',
     templateUrl: './navbar.component.html',
-    styleUrls: ['navbar.scss']
+    styleUrls: ['navbar.scss'],
 })
 export class NavbarComponent implements OnInit {
     inProduction: boolean;
@@ -30,9 +30,9 @@ export class NavbarComponent implements OnInit {
         private sessionStorage: SessionStorageService,
         private accountService: AccountService,
         private profileService: ProfileService,
-        private router: Router
+        private router: Router,
     ) {
-        this.version = VERSION ? 'v' + VERSION : '';
+        this.version = VERSION ? VERSION : '';
         this.isNavbarCollapsed = true;
     }
 
@@ -45,7 +45,7 @@ export class NavbarComponent implements OnInit {
             profileInfo => {
                 this.inProduction = profileInfo.inProduction;
             },
-            reason => {}
+            reason => {},
         );
         this.getCurrentAccount();
     }
