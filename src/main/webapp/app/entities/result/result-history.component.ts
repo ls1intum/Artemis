@@ -6,7 +6,7 @@ import { MIN_POINTS_GREEN, MIN_POINTS_ORANGE } from 'app/app.constants';
 @Component({
     selector: 'jhi-result-history',
     templateUrl: './result-history.component.html',
-    styleUrls: ['./result-history.scss']
+    styleUrls: ['./result-history.scss'],
 })
 export class ResultHistoryComponent {
     @Input() results: Result[];
@@ -36,9 +36,11 @@ export class ResultHistoryComponent {
             return 0;
         }
         if (result.resultString.indexOf('of') === -1) {
+            if (result.resultString.indexOf('points') === -1) {
+                return 0;
+            }
             return parseInt(result.resultString.slice(0, result.resultString.indexOf('points')), 10);
-        } else {
-            return parseInt(result.resultString.slice(0, result.resultString.indexOf('of')), 10);
         }
+        return parseInt(result.resultString.slice(0, result.resultString.indexOf('of')), 10);
     }
 }
