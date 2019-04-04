@@ -27,6 +27,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     @Input() resizeOptions: { initialWidth: string; maxWidth?: number };
     @Input() readOnly = false;
     @Input() enablePopups = true;
+    @Input() displayPoints = true;
     @Output() feedbackChanged = new EventEmitter<Feedback[]>();
     @Output() selectionChanged = new EventEmitter<Selection>();
 
