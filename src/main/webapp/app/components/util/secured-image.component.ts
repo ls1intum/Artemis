@@ -3,6 +3,13 @@ import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { DomSanitizer } from '@angular/platform-browser';
 
+// Status that is emitted to the client to describe the loading status of the picture
+export const enum QuizEmitStatus {
+    SUCCESS = 'success',
+    ERROR = 'error',
+    LOADING = 'loading',
+}
+
 /**
  * Solution taken from: https://stackblitz.com/edit/secure-image-loads?file=app%2Fsecured-image.component.ts
  * Some browsers (i.e. Chrome) perform some toString function on the src attribute, which causes null to become 'null'
@@ -26,15 +33,8 @@ export class SecuredImageComponent implements OnChanges {
     private src$ = new BehaviorSubject(this.src);
     private retryCounter = 0;
 
-    // Status that is emitted to the client to describe the loading status of the picture
-    QuizEmitStatus = {
-        SUCCESS: 'success',
-        ERROR: 'error',
-        LOADING: 'loading',
-    };
-
     @Output()
-    endLoadingProcess = new EventEmitter<string>();
+    endLoadingProcess = new EventEmitter<QuizEmitStatus>();
 
     // this stream will contain the actual url that our img tag will load
     // everytime the src changes, the previous call would be canceled and the
@@ -51,7 +51,7 @@ export class SecuredImageComponent implements OnChanges {
     // triggers the reload of the picture when the user clicks on a button
     retryLoadImage() {
         this.retryCounter = 0;
-        this.endLoadingProcess.emit(this.QuizEmitStatus.LOADING);
+        this.endLoadingProcess.emit(QuizEmitStatus.LOADING);
         this.ngOnChanges();
     }
 
@@ -59,7 +59,7 @@ export class SecuredImageComponent implements OnChanges {
         return this.httpClient
             .get(url, { responseType: 'blob' })
             .map(e => {
-                this.endLoadingProcess.emit(this.QuizEmitStatus.SUCCESS);
+                this.endLoadingProcess.emit(QuizEmitStatus.SUCCESS);
                 return this.domSanitizer.bypassSecurityTrustUrl(URL.createObjectURL(e));
             })
             .catch(error => {
@@ -67,7 +67,7 @@ export class SecuredImageComponent implements OnChanges {
                     this.retryCounter++;
                     return this.loadImage(url);
                 } else {
-                    this.endLoadingProcess.emit(this.QuizEmitStatus.ERROR);
+                    this.endLoadingProcess.emit(QuizEmitStatus.ERROR);
                 }
                 return error;
             });
