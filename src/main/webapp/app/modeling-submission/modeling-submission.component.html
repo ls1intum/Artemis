@@ -1,4 +1,4 @@
-<div class="submission-container">
+<div [ngClass]="{ 'submission-container': !submission?.submitted, 'assessment-result-container': submission?.submitted }">
     <jhi-alert></jhi-alert>
     <div class="row" [ngClass]="{'align-items-center': submission?.submitted}">
         <div class="col-12 col-lg-8">
@@ -50,8 +50,8 @@
         </div>
     </div>
 
-    <div class="row">
-        <div *ngIf="submission?.submitted" class="col-9 editor-container">
+    <div class="row editor-container">
+        <div *ngIf="submission?.submitted" class="col-9">
             <jhi-modeling-assessment
                 [model]="umlModel"
                 [feedbacks]="assessmentResult?.feedbacks"
@@ -59,10 +59,11 @@
                 [maxScore]="modelingExercise.maxScore"
                 [readOnly]="true"
                 [enablePopups]="false"
+                [displayPoints]="false"
                 (selectionChanged)="onSelectionChanged($event)"
             ></jhi-modeling-assessment>
         </div>
-        <div *ngIf="submission && !submission.submitted" class="col-12 editor-container">
+        <div *ngIf="submission && !submission.submitted" class="col-12">
             <jhi-modeling-editor
                 [umlModel]="umlModel"
                 [diagramType]="modelingExercise.diagramType"
