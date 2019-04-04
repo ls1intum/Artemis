@@ -178,6 +178,9 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     showDetails(result: Result) {
+        if (!result.participation) {
+            result.participation = this.participation;
+        }
         const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.result = result;
     }
