@@ -30,7 +30,7 @@
             <tr *ngFor="let textExercise of textExercises | sortBy: predicate: reverse ;trackBy: trackId">
                 <td><a [routerLink]="['/course', textExercise.course.id,'text-exercise', textExercise.id ]">{{textExercise.id}}</a></td>
                 <td>{{textExercise.title}}</td>
-                <td>{{textExercise.problemStatement}}</td>
+                <td [innerHTML]="convertMarkdownToHtml(textExercise.problemStatement)"></td>
                 <td>{{textExercise.releaseDate | date:'medium'}}</td>
                 <td>{{textExercise.dueDate | date:'medium'}}</td>
                 <td>{{textExercise.maxScore}}</td>
