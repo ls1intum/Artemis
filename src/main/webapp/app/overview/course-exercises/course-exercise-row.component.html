@@ -64,7 +64,7 @@
                 </h4>
 
             </div>
-            <div class="col-auto" *ngIf="exercise.dueDate || exercise.releaseDate; else noDate"
+            <div class="col-auto" *ngIf="exercise.dueDate; else noDate"
                  [ngClass]="getUrgentClass(exercise.dueDate ? exercise.dueDate : exercise.releaseDate)">{{(exercise.dueDate ? exercise.dueDate : exercise.releaseDate) |
                 date:'dd/MM/yy'}}
                 <span class="d-none d-sm-inline">
@@ -72,7 +72,7 @@
                 </span>
             </div>
             <ng-template #noDate>
-                <div class="col-auto">N/A</div>
+                <div class="col-auto">{{"arTeMiSApp.courseOverview.exerciseList.noDueDate" | translate}}</div>
             </ng-template>
         </div>
     </div>
