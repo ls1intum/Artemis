@@ -20,10 +20,6 @@
                 <fa-icon *ngIf="busy" icon="spinner" [spin]="true">&nbsp;</fa-icon>
                 <span jhiTranslate="modelingAssessmentEditor.button.nextSubmission"> Next Submission</span>
             </button>
-            <div *ngIf="conflicts && conflicts.length > 0" class="custom-control custom-switch">
-                <input type="checkbox" class="custom-control-input" id="customSwitches" [(ngModel)]="ignoreConflicts">
-                <label class="custom-control-label" for="customSwitches">Ignore Conflict</label>
-            </div>
         </div>
     </h2>
     <div class="editor-container">
@@ -40,5 +36,5 @@
     </div>
 </div>
 <ng-template #conflictResolution>
-    <!--<jhi-modeling-assessment-conflict [conflicts]="conflicts" [modelingExercise]="modelingExercise"></jhi-modeling-assessment-conflict>-->
+    <jhi-modeling-assessment-conflict [conflicts]="conflicts" [modelingExercise]="modelingExercise"></jhi-modeling-assessment-conflict>
 </ng-template>
