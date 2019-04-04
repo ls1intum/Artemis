@@ -1,17 +1,17 @@
 package de.tum.in.www1.artemis.domain;
 
-
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
-import javax.persistence.*;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.Objects;
+
+import javax.persistence.*;
+
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 /**
  * A Notification.
@@ -19,25 +19,19 @@ import java.util.Objects;
 @Entity
 @Table(name = "notification")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(
-    name = "discriminator",
-    discriminatorType = DiscriminatorType.STRING
-)
+@DiscriminatorColumn(name = "discriminator", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorValue(value = "N")
 // NOTE: Use strict cache to prevent lost updates
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "notificationType")
 // Annotation necessary to distinguish between concrete implementations of Notification when deserializing from JSON
-@JsonSubTypes({
-    @JsonSubTypes.Type(value = GroupNotification.class, name = "group"),
-    @JsonSubTypes.Type(value = SingleUserNotification.class, name = "single"),
-    @JsonSubTypes.Type(value = SystemNotification.class, name = "system"),
-})
+@JsonSubTypes({ @JsonSubTypes.Type(value = GroupNotification.class, name = "group"), @JsonSubTypes.Type(value = SingleUserNotification.class, name = "single"),
+        @JsonSubTypes.Type(value = SystemNotification.class, name = "system"), })
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class Notification implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -155,12 +149,7 @@ public abstract class Notification implements Serializable {
 
     @Override
     public String toString() {
-        return "Notification{" +
-            "id=" + getId() +
-            ", title='" + getTitle() + "'" +
-            ", text='" + getText() + "'" +
-            ", notificationDate='" + getNotificationDate() + "'" +
-            ", target='" + getTarget() + "'" +
-            "}";
+        return "Notification{" + "id=" + getId() + ", title='" + getTitle() + "'" + ", text='" + getText() + "'" + ", notificationDate='" + getNotificationDate() + "'"
+                + ", target='" + getTarget() + "'" + "}";
     }
 }

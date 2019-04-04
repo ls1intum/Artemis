@@ -32,7 +32,18 @@ import { ArTEMiSQuizModule } from './quiz/participate';
 import { ArTEMiSTextModule } from './text-editor';
 import { ArTEMiSTextAssessmentModule } from './text-assessment';
 import { ArTEMiSModelingStatisticsModule } from './modeling-statistics/';
-import { ActiveMenuDirective, ErrorComponent, FooterComponent, JhiMainComponent, NavbarComponent, PageRibbonComponent, ProfileService } from './layouts';
+// jhipster-needle-angular-add-module-import JHipster will add new module here
+import {
+    ActiveMenuDirective,
+    ErrorComponent,
+    FooterComponent,
+    SystemNotificationComponent,
+    JhiMainComponent,
+    NavbarComponent,
+    PageRibbonComponent,
+    ProfileService,
+    NotificationContainerComponent,
+} from './layouts';
 import { ArTEMiSApollonDiagramsModule } from './apollon-diagrams';
 import { ArTEMiSStatisticModule } from './quiz-statistics/quiz-statistic.module';
 import { ArTEMiSModelingEditorModule } from './modeling-editor/modeling-editor.module';
@@ -48,9 +59,10 @@ import { ArTEMiSExampleSubmissionModule } from 'app/example-text-submission';
 import { ArTEMiSMarkdownEditorModule } from 'app/markdown-editor/markdown-editor.module';
 import { ArTEMiSComplaintsModule } from 'app/complaints';
 import { ArTEMiSModelingAssessmentModule } from 'app/modeling-assessment/modeling-assessment.module';
+import { ArTEMiSNotificationModule } from 'app/entities/notification/notification.module';
+import { ArTEMiSSystemNotificationModule } from 'app/entities/system-notification/system-notification.module';
 
 import * as moment from 'moment';
-// jhipster-needle-angular-add-module-import JHipster will add new module here
 
 @NgModule({
     imports: [
@@ -67,7 +79,7 @@ import * as moment from 'moment';
             alertAsToast: false,
             alertTimeout: 8000,
             i18nEnabled: true,
-            defaultI18nLang: 'en'
+            defaultI18nLang: 'en',
         }),
         /**
          * @external Angulartics offers Vendor-agnostic analytics and integration with Matomo
@@ -98,7 +110,9 @@ import * as moment from 'moment';
         ArTEMiSTutorCourseDashboardModule,
         ArTEMiSTutorExerciseDashboardModule,
         ArTEMiSExampleSubmissionModule,
-        ArTEMiSComplaintsModule
+        ArTEMiSComplaintsModule,
+        ArTEMiSNotificationModule,
+        ArTEMiSSystemNotificationModule,
         // jhipster-needle-angular-add-module JHipster will add new module here
     ],
     declarations: [
@@ -108,7 +122,9 @@ import * as moment from 'moment';
         PageRibbonComponent,
         ActiveMenuDirective,
         FooterComponent,
-        QuizExerciseExportComponent
+        SystemNotificationComponent,
+        NotificationContainerComponent,
+        QuizExerciseExportComponent,
     ],
     providers: [
         ProfileService,
@@ -131,30 +147,30 @@ import * as moment from 'moment';
         {
             provide: HTTP_INTERCEPTORS,
             useClass: AuthInterceptor,
-            multi: true
+            multi: true,
         },
         {
             provide: HTTP_INTERCEPTORS,
             useClass: AuthExpiredInterceptor,
-            multi: true
+            multi: true,
         },
         {
             provide: HTTP_INTERCEPTORS,
             useClass: ErrorHandlerInterceptor,
-            multi: true
+            multi: true,
         },
         {
             provide: HTTP_INTERCEPTORS,
             useClass: NotificationInterceptor,
-            multi: true
+            multi: true,
         },
         {
             provide: HTTP_INTERCEPTORS,
             useClass: RepositoryInterceptor,
-            multi: true
-        }
+            multi: true,
+        },
     ],
-    bootstrap: [JhiMainComponent]
+    bootstrap: [JhiMainComponent],
 })
 export class ArTeMiSAppModule {
     constructor(private dpConfig: NgbDatepickerConfig) {

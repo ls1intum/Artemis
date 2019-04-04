@@ -1,4 +1,6 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import * as $ from 'jquery';
+
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, AfterViewInit } from '@angular/core';
 import { Location } from '@angular/common';
 import { TextExercise } from 'app/entities/text-exercise';
 import { TextSubmission } from 'app/entities/text-submission';
@@ -10,13 +12,16 @@ import { Result, ResultService } from 'app/entities/result';
 import { TextAssessmentsService } from 'app/entities/text-assessments/text-assessments.service';
 import { Feedback } from 'app/entities/feedback';
 import { Participation } from 'app/entities/participation';
+import * as interact from 'interactjs';
+import { Interactable } from 'interactjs';
+import { WindowRef } from 'app/core';
 
 @Component({
-    providers: [TextAssessmentsService],
+    providers: [TextAssessmentsService, WindowRef],
     templateUrl: './text-assessment.component.html',
-    styles: []
+    styleUrls: ['./text-assessment.component.scss'],
 })
-export class TextAssessmentComponent implements OnInit, OnDestroy {
+export class TextAssessmentComponent implements OnInit, OnDestroy, AfterViewInit {
     text: string;
     participation: Participation;
     submission: TextSubmission;
@@ -31,6 +36,14 @@ export class TextAssessmentComponent implements OnInit, OnDestroy {
     busy = true;
     showResult = true;
 
+    /** Resizable constants **/
+    resizableMinWidth = 100;
+    resizableMaxWidth = 1200;
+    resizableMinHeight = 200;
+    resizableMaxHeight = 1500;
+    interactResizable: Interactable;
+    interactResizableTop: Interactable;
+
     public getColorForIndex = HighlightColors.forIndex;
 
     constructor(
@@ -41,7 +54,8 @@ export class TextAssessmentComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         private resultService: ResultService,
         private assessmentsService: TextAssessmentsService,
-        private location: Location
+        private location: Location,
+        private $window: WindowRef,
     ) {
         this.assessments = [];
         this.assessmentsAreValid = false;
@@ -78,6 +92,52 @@ export class TextAssessmentComponent implements OnInit, OnDestroy {
                 this.checkScoreBoundaries();
             });
         }
+    }
+
+    /**
+     * @function ngAfterViewInit
+     * @desc After the view was initialized, we create an interact.js resizable object,
+     *       designate the edges which can be used to resize the target element and set min and max values.
+     *       The 'resizemove' callback function processes the event values and sets new width and height values for the element.
+     */
+    ngAfterViewInit(): void {
+        this.resizableMinWidth = this.$window.nativeWindow.screen.width / 6;
+        this.resizableMinHeight = this.$window.nativeWindow.screen.height / 7;
+
+        this.interactResizable = interact('.resizable-submission')
+            .resizable({
+                // Enable resize from left edge; triggered by class .resizing-bar
+                edges: { left: '.resizing-bar', right: false, bottom: false, top: false },
+                // Set min and max width
+                restrictSize: {
+                    min: { width: this.resizableMinWidth },
+                    max: { width: this.resizableMaxWidth },
+                },
+                inertia: true,
+            })
+            .on('resizemove', function(event) {
+                const target = event.target;
+                // Update element width
+                target.style.width = event.rect.width + 'px';
+            });
+
+        this.interactResizableTop = interact('.resizable-horizontal')
+            .resizable({
+                // Enable resize from bottom edge; triggered by class .resizing-bar-bottom
+                edges: { left: false, right: false, top: false, bottom: '.resizing-bar-bottom' },
+                // Set min and max height
+                restrictSize: {
+                    min: { height: this.resizableMinHeight },
+                    max: { height: this.resizableMaxHeight },
+                },
+                inertia: true,
+            })
+            .on('resizemove', function(event) {
+                const target = event.target;
+                // Update element height
+                target.style.height = event.rect.height + 'px';
+                $('#submission-area').css('min-height', event.rect.height - 100 + 'px');
+            });
     }
 
     public ngOnDestroy(): void {
@@ -160,5 +220,21 @@ export class TextAssessmentComponent implements OnInit, OnDestroy {
         this.totalScore = credits.reduce((a, b) => a + b, 0);
         this.assessmentsAreValid = true;
         this.invalidError = null;
+    }
+
+    toggleCollapse($event: any) {
+        const target = $event.toElement || $event.relatedTarget || $event.target;
+        target.blur();
+        const $card = $(target).closest('#instructions');
+
+        if ($card.hasClass('collapsed')) {
+            $card.removeClass('collapsed');
+            this.interactResizable.resizable({ enabled: true });
+            $card.width(this.resizableMinWidth + 'px');
+        } else {
+            $card.addClass('collapsed');
+            $card.width('55px');
+            this.interactResizable.resizable({ enabled: false });
+        }
     }
 }

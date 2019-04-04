@@ -11,6 +11,7 @@ import {
     faAngleRight,
     faArchive,
     faArrowLeft,
+    faArrowRight,
     faArrowsAltV,
     faAsterisk,
     faBan,
@@ -112,7 +113,7 @@ import {
     faPlayCircle as farPlayCircle,
     faQuestionCircle as farQuestionCircle,
     faSquare as farSquare,
-    faTimesCircle as farTimeCircle
+    faTimesCircle as farTimeCircle,
 } from '@fortawesome/free-regular-svg-icons';
 
 // Imports all fontawesome core and solid icons
@@ -127,6 +128,7 @@ library.add(faEye);
 library.add(faBan);
 library.add(faTimes);
 library.add(faArrowLeft);
+library.add(faArrowRight);
 library.add(faSave);
 library.add(faPlus);
 library.add(faPencilAlt);
