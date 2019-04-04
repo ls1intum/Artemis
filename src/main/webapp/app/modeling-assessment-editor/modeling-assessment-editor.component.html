@@ -1,4 +1,4 @@
-<div *ngIf="true; else conflictResolution" class="assessment-container">
+<div *ngIf="!conflicts; else conflictResolution" class="assessment-container">
     <h2 class="top-container">
         <div class="assessment-title row-container" jhiTranslate="modelingAssessmentEditor.assessment">
             Assessment
