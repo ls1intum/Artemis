@@ -1,20 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.TextExerciseRepository;
-import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import io.github.jhipster.web.util.ResponseUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.*;
+import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -23,11 +9,24 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import static de.tum.in.www1.artemis.web.rest.util.ResponseUtil.forbidden;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.*;
 
-/**
- * REST controller for managing TextExercise.
- */
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.TextExerciseRepository;
+import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import io.github.jhipster.web.util.ResponseUtil;
+
+/** REST controller for managing TextExercise. */
 @RestController
 @RequestMapping("/api")
 public class TextExerciseResource {
@@ -37,24 +36,28 @@ public class TextExerciseResource {
     private static final String ENTITY_NAME = "textExercise";
 
     private final TextAssessmentService textAssessmentService;
+
     private final TextExerciseService textExerciseService;
+
     private final TextExerciseRepository textExerciseRepository;
+
     private final UserService userService;
+
     private final CourseService courseService;
+
     private final AuthorizationCheckService authCheckService;
+
     private final ParticipationService participationService;
+
     private final ResultRepository resultRepository;
+
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
-    public TextExerciseResource(TextExerciseRepository textExerciseRepository,
-                                TextExerciseService textExerciseService,
-                                TextAssessmentService textAssessmentService,
-                                UserService userService,
-                                AuthorizationCheckService authCheckService,
-                                CourseService courseService,
-                                ParticipationService participationService,
-                                ResultRepository resultRepository,
-                                ExampleSubmissionRepository exampleSubmissionRepository) {
+    private final GroupNotificationService groupNotificationService;
+
+    public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, TextAssessmentService textAssessmentService,
+            UserService userService, AuthorizationCheckService authCheckService, CourseService courseService, ParticipationService participationService,
+            ResultRepository resultRepository, GroupNotificationService groupNotificationService, ExampleSubmissionRepository exampleSubmissionRepository) {
         this.textAssessmentService = textAssessmentService;
         this.textExerciseService = textExerciseService;
         this.textExerciseRepository = textExerciseRepository;
@@ -63,11 +66,12 @@ public class TextExerciseResource {
         this.authCheckService = authCheckService;
         this.participationService = participationService;
         this.resultRepository = resultRepository;
+        this.groupNotificationService = groupNotificationService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
     }
 
     /**
-     * POST  /text-exercises : Create a new textExercise.
+     * POST /text-exercises : Create a new textExercise.
      *
      * @param textExercise the textExercise to create
      * @return the ResponseEntity with status 201 (Created) and with body the new textExercise, or with status 400 (Bad Request) if the textExercise has already an ID
@@ -89,19 +93,18 @@ public class TextExerciseResource {
             throw new BadRequestAlertException("A new textExercise needs a max score", ENTITY_NAME, "missingmaxscore");
         }
 
-        if (textExercise.getDueDate() == null && textExercise.getAssessmentDueDate() != null ) {
+        if (textExercise.getDueDate() == null && textExercise.getAssessmentDueDate() != null) {
             throw new BadRequestAlertException("If you set an assessmentDueDate, then you need to add also a dueDate", ENTITY_NAME, "dueDate");
         }
 
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(textExercise.getCourse().getId());
         if (course == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this text exercise does not exist")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this text exercise does not exist"))
+                    .body(null);
         }
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-            !authCheckService.isInstructorInCourse(course, user) &&
-            !authCheckService.isAdmin()) {
+        if (!authCheckService.isTeachingAssistantInCourse(course, user) && !authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
             return forbidden();
         }
 
@@ -110,18 +113,17 @@ public class TextExerciseResource {
         }
 
         TextExercise result = textExerciseRepository.save(textExercise);
-        return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
-            .body(result);
+        groupNotificationService.notifyGroupAboutExerciseCreated(textExercise);
+        return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId())).headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
+                .body(result);
     }
 
     /**
-     * PUT  /text-exercises : Updates an existing textExercise.
+     * PUT /text-exercises : Updates an existing textExercise.
      *
      * @param textExercise the textExercise to update
-     * @return the ResponseEntity with status 200 (OK) and with body the updated textExercise,
-     * or with status 400 (Bad Request) if the textExercise is not valid,
-     * or with status 500 (Internal Server Error) if the textExercise couldn't be updated
+     * @return the ResponseEntity with status 200 (OK) and with body the updated textExercise, or with status 400 (Bad Request) if the textExercise is not valid, or with status 500
+     *         (Internal Server Error) if the textExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/text-exercises")
@@ -134,12 +136,11 @@ public class TextExerciseResource {
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(textExercise.getCourse().getId());
         if (course == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this text exercise does not exist")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this text exercise does not exist"))
+                    .body(null);
         }
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-            !authCheckService.isInstructorInCourse(course, user) &&
-            !authCheckService.isAdmin()) {
+        if (!authCheckService.isTeachingAssistantInCourse(course, user) && !authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
             return forbidden();
         }
         TextExercise result = textExerciseRepository.save(textExercise);
@@ -150,13 +151,12 @@ public class TextExerciseResource {
             result.getExampleSubmissions().forEach(exampleSubmission -> exampleSubmission.setTutorParticipation(null));
         }
 
-        return ResponseEntity.ok()
-            .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, textExercise.getId().toString()))
-            .body(result);
+        groupNotificationService.notifyGroupAboutExerciseChange(textExercise);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, textExercise.getId().toString())).body(result);
     }
 
     /**
-     * GET  /courses/:courseId/exercises : get all the exercises.
+     * GET /courses/:courseId/exercises : get all the exercises.
      *
      * @return the ResponseEntity with status 200 (OK) and the list of textExercises in body
      */
@@ -170,7 +170,7 @@ public class TextExerciseResource {
         }
         List<TextExercise> exercises = textExerciseRepository.findByCourseId(courseId);
         for (Exercise exercise : exercises) {
-            //not required in the returned json body
+            // not required in the returned json body
             exercise.setParticipations(null);
             exercise.setCourse(null);
         }
@@ -179,7 +179,7 @@ public class TextExerciseResource {
     }
 
     /**
-     * GET  /text-exercises/:id : get the "id" textExercise.
+     * GET /text-exercises/:id : get the "id" textExercise.
      *
      * @param exerciseId the id of the textExercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the textExercise, or with status 404 (Not Found)
@@ -200,7 +200,7 @@ public class TextExerciseResource {
     }
 
     /**
-     * DELETE  /text-exercises/:id : delete the "id" textExercise.
+     * DELETE /text-exercises/:id : delete the "id" textExercise.
      *
      * @param id the id of the textExercise to delete
      * @return the ResponseEntity with status 200 (OK)
@@ -213,8 +213,7 @@ public class TextExerciseResource {
         if (textExercise.isPresent()) {
             Course course = textExercise.get().getCourse();
             User user = userService.getUserWithGroupsAndAuthorities();
-            if (!authCheckService.isInstructorInCourse(course, user) &&
-                !authCheckService.isAdmin()) {
+            if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
                 return forbidden();
             }
             textExerciseService.delete(id);
@@ -224,8 +223,8 @@ public class TextExerciseResource {
     }
 
     /**
-     * Returns the data needed for the text editor, which includes the participation, textSubmission with answer if existing
-     * and the assessments if the submission was already submitted.
+     * Returns the data needed for the text editor, which includes the participation, textSubmission with answer if existing and the assessments if the submission was already
+     * submitted.
      *
      * @param participationId the participationId for which to find the data for the text editor
      * @return the ResponseEntity with json as body
@@ -236,24 +235,30 @@ public class TextExerciseResource {
     public ResponseEntity<Participation> getDataForTextEditor(@PathVariable Long participationId) {
         Participation participation = participationService.findOne(participationId);
         if (participation == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "participationNotFound", "No participation was found for the given ID.")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "participationNotFound", "No participation was found for the given ID."))
+                    .body(null);
         }
         TextExercise textExercise;
         if (participation.getExercise() instanceof TextExercise) {
             textExercise = (TextExercise) participation.getExercise();
             if (textExercise == null) {
-                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("textExercise", "exerciseEmpty", "The exercise belonging to the participation is null.")).body(null);
+                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("textExercise", "exerciseEmpty", "The exercise belonging to the participation is null."))
+                        .body(null);
             }
-        } else {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("textExercise", "wrongExerciseType", "The exercise of the participation is not a modeling exercise.")).body(null);
+        }
+        else {
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createFailureAlert("textExercise", "wrongExerciseType", "The exercise of the participation is not a modeling exercise.")).body(null);
         }
 
-        // users can only see their own submission (to prevent cheating), TAs, instructors and admins can see all answers
+        // users can only see their own submission (to prevent cheating), TAs, instructors and admins
+        // can see all answers
         if (!authCheckService.isOwnerOfParticipation(participation) && !courseService.userHasAtLeastTAPermissions(textExercise.getCourse())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        // if no results, check if there are really no results or the relation to results was not updated yet
+        // if no results, check if there are really no results or the relation to results was not
+        // updated yet
         if (participation.getResults().size() <= 0) {
             List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId());
             participation.setResults(new HashSet<>(results));
@@ -276,7 +281,6 @@ public class TextExerciseResource {
 
             participation.addSubmissions(textSubmission.get());
         }
-
 
         return ResponseEntity.ok(participation);
     }
