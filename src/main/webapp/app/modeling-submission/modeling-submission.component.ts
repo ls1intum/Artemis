@@ -328,7 +328,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         const model: UMLModel = this.modelingEditor.getCurrentModel();
         const jsonModel = JSON.stringify(model);
         if (
-            (!this.submission && model.elements.length > 0 && jsonModel !== '') ||
+            ((!this.submission || !this.submission.model) && model.elements.length > 0 && jsonModel !== '') ||
             (this.submission && this.submission.model && JSON.parse(this.submission.model).version === model.version && this.submission.model !== jsonModel)
         ) {
             return false;
