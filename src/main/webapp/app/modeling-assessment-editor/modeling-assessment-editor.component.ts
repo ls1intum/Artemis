@@ -23,13 +23,12 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     model: UMLModel;
     modelingExercise: ModelingExercise;
     result: Result;
+    localFeedbacks: Feedback[];
     conflicts: Conflict[];
     highlightedElementIds: Set<string>;
     ignoreConflicts = false;
 
     assessmentsAreValid = false;
-    submissionId: number;
-    totalScore = 0;
     busy: boolean;
     userId: number;
     isAuthorized = false;
@@ -54,8 +53,8 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         });
         this.isAtLeastInstructor = this.accountService.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
         this.route.params.subscribe(params => {
-            this.submissionId = Number(params['submissionId']);
-            this.loadSubmission(this.submissionId);
+            const submissionId = Number(params['submissionId']);
+            this.loadSubmission(submissionId);
         });
     }
 
@@ -104,7 +103,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
 
     onSaveAssessment() {
         this.removeCircularDependencies();
-        this.modelingAssessmentService.save(this.result.feedbacks, this.submission.id).subscribe(
+        this.modelingAssessmentService.save(this.localFeedbacks, this.submission.id).subscribe(
             (result: Result) => {
                 this.result = result;
                 // this.updateElementFeedbackMapping(result.feedbacks);
@@ -118,7 +117,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
 
     onSubmitAssessment() {
         this.removeCircularDependencies();
-        this.modelingAssessmentService.save(this.result.feedbacks, this.submission.id, true, this.ignoreConflicts).subscribe(
+        this.modelingAssessmentService.save(this.localFeedbacks, this.submission.id, true, this.ignoreConflicts).subscribe(
             (result: Result) => {
                 result.participation.results = [result];
                 this.result = result;
@@ -139,7 +138,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     }
 
     onFeedbackChanged(feedbacks: Feedback[]) {
-        this.result.feedbacks = feedbacks;
+        this.localFeedbacks = feedbacks;
         this.validateFeedback();
     }
 

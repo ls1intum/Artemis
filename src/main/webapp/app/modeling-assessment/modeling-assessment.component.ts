@@ -41,7 +41,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         }
         if (this.highlightedElementIds) {
             this.updateHighlightedElements(this.highlightedElementIds);
-            // setTimeout(() => this.scrollIntoView(this.highlightedElementId), 0);
+            // setTimeout(() => this.scrollIntoView(this.highlightedElementIds), 0);
         }
         if (this.resizeOptions) {
             if (this.resizeOptions.initialWidth) {
@@ -162,17 +162,6 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
                 relationship.highlight = 'white';
             }
         });
-        // const element = this.editorContainer.nativeElement as HTMLDivElement;
-        // if (previousElementID) {
-        //     $(element)
-        //         .find(`#${previousElementID}`)
-        //         .css('fill', 'white');
-        // }
-        // if (newElementID) {
-        //     $(element)
-        //         .find(`#${newElementID}`)
-        //         .css('fill', 'rgba(220,53,69,0.7)');
-        // }
     }
 
     private scrollIntoView(elementId: string) {
