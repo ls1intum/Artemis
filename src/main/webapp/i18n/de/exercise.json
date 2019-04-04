@@ -54,7 +54,8 @@
             "duration": "Dauer",
             "showUnsuccessful": "Nur unerfolgreiche anzeigen",
             "showSuccessful": "Nur erfolgreiche anzeigen",
-            "showAll": "Alle anzeigen"
+            "showAll": "Alle anzeigen",
+            "tagPlaceholder": "Neues Tag eingeben"
         },
         "exerciseLtiConfiguration": {
             "lti": "LTI",

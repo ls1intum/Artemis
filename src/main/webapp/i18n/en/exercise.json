@@ -53,7 +53,8 @@
             "duration": "Duration",
             "showUnsuccessful": "Show Unsuccessful",
             "showSuccessful": "Show Successful",
-            "showAll": "Show All"
+            "showAll": "Show All",
+            "tagPlaceholder": "Enter a new tag"
         },
         "exerciseLtiConfiguration": {
             "lti": "LTI",
