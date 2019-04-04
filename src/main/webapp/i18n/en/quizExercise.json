@@ -187,7 +187,7 @@
                 "textgaps": "text gaps",
                 "option": "option",
                 "options": "options",
-                "scoringTitle": "Scoring explanation for question {{paramIndex}}) {{paramTitle}}",
+                "scoringTitle": "Scoring explanation for question {{paramIndex}} {{paramTitle}}",
                 "scoringTypeProportional": "Scoring Proportional with Penalty: ",
                 "scoringTypeAllOrNothing": "Scoring All or Nothing: ",
                 "scoringTypeProportionalExplanation": "every correct answer gives positive points, each mistake gives negative points to avoid guesswork. ",

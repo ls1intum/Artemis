@@ -187,7 +187,7 @@
                 "textgaps": "Lücken",
                 "option": "Antwortmöglichkeit",
                 "options": "Antwortmöglichkeiten",
-                "scoringTitle": "Erklärung zur Punkteverteilung in Frage {{paramIndex}}) {{paramTitle}}",
+                "scoringTitle": "Erklärung zur Punkteverteilung in Frage {{paramIndex}} {{paramTitle}}",
                 "scoringTypeProportional": "Verteilung Anteilig mit Abzügen: ",
                 "scoringTypeAllOrNothing": "Verteilung Alles-oder-Nichts: ",
                 "scoringTypeProportionalExplanation": "Jede richtige Antwort gibt positive Punkte, jeder Fehler gibt negative Punkte, um Rätselraten zu vermeiden. ",
@@ -196,17 +196,17 @@
                 "multipleChoiceAllOrNothingNotCorrect": "Du hast {{paramScore}} {{paramPoint}} der {{paramQuestionScore}} möglichen {{paramScorePoint}} erreicht, da du {{paramInTotalWrongOptions}} {{wrongOption}} falsch und {{paramInTotalRightOptions}} {{rightOption}} richtig ausgewählt hast. Versuchen es weiter! ",
                 "multipleChoiceProp": "Du hast {{paramScore}} {{paramPoint}} der {{paramQuestionScore}} möglichen {{paramScorePoint}} erreicht. Jede der {{paramAmountOfAnswerOptions}} Antwortmöglichkeiten gewährt dir {{paramQuestionScore}}/{{paramAmountOfAnswerOptions}} Punkte, wenn du die Antwortmöglichkeiten richtig ausgewählt hast. Du hast {{paramInTotalWrongOptions}} {{wrongOption}} falsch und {{paramInTotalRightOptions}} {{rightOption}} korrekt ausgewählt. Insgesamt hast du",
                 "dragAndDropAllOrNothingCorrect": "Du hast {{paramScore}} {{paramPoint}} der {{paramQuestionScore}} möglichen {{paramScorePoint}} erreicht. Da du alle Elemente korrekt zugeordnet hast, hast du in dieser Übung alle Punkte erreicht. Tolle Arbeit!",
-                "dragAndDropAllOrNothingNotCorrect": "Du hast {{paramScore}} {{paramPoint}} der {{paramQuestionScore}} möglichen {{paramScorePoint}} erreicht, da du {{paramRightMapping}} {{rightMap}} korrekt zugeordnet hast, aber {{paramWrongMappedItems}}} {{wrongMap}} falsch zugeordnet hast. Versuchen es weiter!",
-                "dragAndDropProp": "Du hast {{paramScore}} {{paramPoint}} der {{paramQuestionScore}}} möglichen {{paramScorePoint}} erreicht. Jeder der {{paramDragAndDropElementsCount}} Elemente gewährt dir {{paramQuestionScore}}/{{paramDragAndDropElementsCount}} Punkte, wenn du ihn an die entsprechende Stelle zuordnest. Du hast {{paramWrongMappedItems}} {{wrongMap}} falsch zugeordnet und {{paramRightMapping}} {{rightMap}} korrekt zugeordnet. Insgesamt hast du",
-                "shortAnswerAllOrNothingCorrect": "Du hast {{paramScore}} {{paramPoint}}) der {{paramQuestionScore}} möglichen {{paramScorePoint}} erreicht. Da du alle Text Lücken richtig ausgefüllt hast, hast du in dieser Übung alle Punkte erreicht. Tolle Arbeit!",
+                "dragAndDropAllOrNothingNotCorrect": "Du hast {{paramScore}} {{paramPoint}} der {{paramQuestionScore}} möglichen {{paramScorePoint}} erreicht, da du {{paramRightMapping}} {{rightMap}} korrekt zugeordnet hast, aber {{paramWrongMappedItems}} {{wrongMap}} falsch zugeordnet hast. Versuchen es weiter!",
+                "dragAndDropProp": "Du hast {{paramScore}} {{paramPoint}} der {{paramQuestionScore}} möglichen {{paramScorePoint}} erreicht. Jeder der {{paramDragAndDropElementsCount}} Elemente gewährt dir {{paramQuestionScore}}/{{paramDragAndDropElementsCount}} Punkte, wenn du ihn an die entsprechende Stelle zuordnest. Du hast {{paramWrongMappedItems}} {{wrongMap}} falsch zugeordnet und {{paramRightMapping}} {{rightMap}} korrekt zugeordnet. Insgesamt hast du",
+                "shortAnswerAllOrNothingCorrect": "Du hast {{paramScore}} {{paramPoint}} der {{paramQuestionScore}} möglichen {{paramScorePoint}} erreicht. Da du alle Text Lücken richtig ausgefüllt hast, hast du in dieser Übung alle Punkte erreicht. Tolle Arbeit!",
                 "shortAnswerAllOrNothingNotCorrect": "Du hast {{paramScore}} {{paramPoint}} der {{paramQuestionScore}} möglichen {{paramScorePoint}} erreicht, da du {{paramShortAnswerWrongOption}} Text {{wrongGap}} falsch und {{paramShortAnswerCorrectAnswers}} Text {{rightGap}} korrekt ausgefüllt hast. Versuchen es weiter!",
-                "shortAnswerProp": "Du hast {{paramScore}} {{paramPoint}} der {{paramQuestionScore}} möglichen {{paramScorePoint}} erreicht. Jede Text Lücke gewährt dir {{paramQuestionScore}}}/{{paramCount}}} Punkte, wenn du diese korrekt ausfüllst. Da du {{paramShortAnswerWrongOption}} Text {{wrongGap}} falsch und {{paramShortAnswerCorrectAnswers}} Text {{rightGap}} korrekt ausgefüllt hast. Insgesamt hast du",
+                "shortAnswerProp": "Du hast {{paramScore}} {{paramPoint}} der {{paramQuestionScore}} möglichen {{paramScorePoint}} erreicht. Jede Text Lücke gewährt dir {{paramQuestionScore}}/{{paramCount}} Punkte, wenn du diese korrekt ausfüllst. Da du {{paramShortAnswerWrongOption}} Text {{wrongGap}} falsch und {{paramShortAnswerCorrectAnswers}} Text {{rightGap}} korrekt ausgefüllt hast. Insgesamt hast du",
                 "KeepTrying": "Versuchen es weiter!",
                 "zeroPointer": "(Natürlich kannst du nicht weniger als 0 Punkte haben.)"
             },
             "explanationAnswered": "Du hast die Frage beantwortet",
             "explanationNotAnswered": "Du hast die Frage noch nicht beantwortet",
-            "submissionWarning": "Bist du sicher, dass du dich einreichen willst? Du hast nicht alle Fragen beantwortet und hast noch etwas Zeit übrig!"
+            "submissionWarning": "Bist du sicher, dass du einreichen willst? Du hast nicht alle Fragen beantwortet und hast noch etwas Zeit übrig!"
         }
     }
 }
