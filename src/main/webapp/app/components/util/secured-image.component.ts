@@ -24,11 +24,17 @@ export class SecuredImageComponent implements OnChanges {
     @Input()
     private src: string;
     private src$ = new BehaviorSubject(this.src);
-    private value = 0;
     private retryCounter = 0;
 
+    // Status that is emitted to the client to describe the loading status of the picture
+    QuizEmitStatus = {
+        SUCCESS: 'success',
+        ERROR: 'error',
+        LOADING: 'loading',
+    };
+
     @Output()
-    endLoadingProcess = new EventEmitter();
+    endLoadingProcess = new EventEmitter<string>();
 
     // this stream will contain the actual url that our img tag will load
     // everytime the src changes, the previous call would be canceled and the
@@ -45,15 +51,15 @@ export class SecuredImageComponent implements OnChanges {
     // triggers the reload of the picture when the user clicks on a button
     retryLoadImage() {
         this.retryCounter = 0;
-        this.endLoadingProcess.emit('loading');
+        this.endLoadingProcess.emit(this.QuizEmitStatus.LOADING);
         this.ngOnChanges();
     }
 
     private loadImage(url: string): Observable<any> {
-        const element = this.httpClient
+        return this.httpClient
             .get(url, { responseType: 'blob' })
             .map(e => {
-                this.endLoadingProcess.emit('success');
+                this.endLoadingProcess.emit(this.QuizEmitStatus.SUCCESS);
                 return this.domSanitizer.bypassSecurityTrustUrl(URL.createObjectURL(e));
             })
             .catch(error => {
@@ -61,10 +67,9 @@ export class SecuredImageComponent implements OnChanges {
                     this.retryCounter++;
                     return this.loadImage(url);
                 } else {
-                    this.endLoadingProcess.emit('error');
+                    this.endLoadingProcess.emit(this.QuizEmitStatus.ERROR);
                 }
                 return error;
             });
-        return element;
     }
 }

@@ -28,7 +28,10 @@ window.addEventListener('touchmove', function() {});
     providers: [ArtemisMarkdown, DragAndDropQuestionUtil],
 })
 export class DragAndDropQuestionComponent implements OnChanges {
-    @ViewChild(SecuredImageComponent) secureImageComponent: SecuredImageComponent;
+    /** needed to trigger a manual reload of the drag and drop background picture */
+    @ViewChild(SecuredImageComponent)
+    secureImageComponent: SecuredImageComponent;
+
     _question: DragAndDropQuestion;
     _forceSampleSolution: boolean;
 
