@@ -20,7 +20,7 @@
             "studentSubmission": "Studentische Einreichung",
             "instructions": "&nbsp; Aufgabenstellung &nbsp;",
             "detail": {
-                "scoreFor": "Punkte für",
+                "scoreFor": "Bewertung für",
                 "feedback": "Feedback"
             },
             "editor": {

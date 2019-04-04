@@ -20,7 +20,7 @@
             "studentSubmission": "Student submission",
             "instructions": "&nbsp; Instructions &nbsp;",
             "detail": {
-                "scoreFor": "Score for",
+                "scoreFor": "Assessment for",
                 "feedback": "Feedback"
             },
             "editor": {
