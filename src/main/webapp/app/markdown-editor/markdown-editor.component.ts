@@ -77,14 +77,6 @@ export class MarkdownEditorComponent implements AfterViewInit {
 
     constructor(private artemisMarkdown: ArtemisMarkdown) {}
 
-    get previewButtonTranslateString(): string {
-        return this.previewMode ? 'entity.action.edit' : 'entity.action.preview';
-    }
-
-    get previewButtonIcon(): string {
-        return this.previewMode ? 'pencil-alt' : 'eye';
-    }
-
     /** {boolean} true when the plane html view is needed, false when the preview content is needed from the parent */
     get showDefaultPreview(): boolean {
         return this.previewChild == null;

@@ -34,7 +34,7 @@
         <div class="col">
             <div class="mb-3">
                 <span><strong>Problem Statement:</strong></span>
-                <div style="background: #f8f9fa"  [innerHTML]="problemStatement" ></div>
+                <div class="background-editor-color"  [innerHTML]="problemStatement" ></div>
             </div>
         </div>
         <div class="col text-right" *ngIf="!submission?.submitted"><p><strong>Max. Score: {{ modelingExercise.maxScore }}</strong></p></div>
