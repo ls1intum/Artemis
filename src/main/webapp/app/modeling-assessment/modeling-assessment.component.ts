@@ -144,6 +144,9 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
     }
 
     private updateHighlightedElements(newElementIDs: Set<string>) {
+        if (!newElementIDs) {
+            newElementIDs = new Set<string>();
+        }
         this.model.elements.forEach((element: UMLElement) => {
             if (newElementIDs.has(element.id)) {
                 element.highlight = 'rgba(220,53,69,0.7)';

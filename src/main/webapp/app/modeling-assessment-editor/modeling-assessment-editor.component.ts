@@ -129,6 +129,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
             (error: HttpErrorResponse) => {
                 if (error.status === 409) {
                     this.conflicts = error.error as Conflict[];
+                    this.highlightConflictingElements();
                     this.jhiAlertService.error('arTeMiSApp.apollonDiagram.assessment.submitFailedWithConflict');
                 } else {
                     this.jhiAlertService.error('arTeMiSApp.apollonDiagram.assessment.submitFailed');
@@ -160,6 +161,7 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
     }
 
     private highlightConflictingElements() {
+        this.highlightedElementIds = new Set<string>();
         this.conflicts.forEach((conflict: Conflict) => {
             this.highlightedElementIds.add(conflict.modelElementId);
         });
