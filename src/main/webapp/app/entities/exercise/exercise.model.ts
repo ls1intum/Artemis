@@ -10,7 +10,7 @@ import { StudentQuestion } from 'app/entities/student-question';
 export const enum DifficultyLevel {
     EASY = 'EASY',
     MEDIUM = 'MEDIUM',
-    HARD = 'HARD'
+    HARD = 'HARD',
 }
 
 // IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Exercise.java
@@ -19,7 +19,7 @@ export enum ExerciseType {
     MODELING = 'modeling',
     QUIZ = 'quiz',
     TEXT = 'text',
-    FILE_UPLOAD = 'file-upload'
+    FILE_UPLOAD = 'file-upload',
 }
 
 export const enum ParticipationStatus {
@@ -33,7 +33,7 @@ export const enum ParticipationStatus {
     TEXT_EXERCISE = 'text-exercise',
     UNINITIALIZED = 'uninitialized',
     INITIALIZED = 'initialized',
-    INACTIVE = 'inactive'
+    INACTIVE = 'inactive',
 }
 
 export interface ExerciseCategory {
@@ -71,6 +71,7 @@ export abstract class Exercise implements BaseEntity {
     public numberOfSuccessfulParticipations: number;
     public averagePoints: number;
     public numberOfAssessments: number;
+    public numberOfComplaints: number;
 
     protected constructor(type: ExerciseType) {
         this.type = type;
