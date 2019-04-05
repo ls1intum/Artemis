@@ -1,15 +1,16 @@
 import { Result } from 'app/entities/result';
+import { Moment } from 'moment';
 
 export class Conflict {
     id: number;
     result: Result;
     modelElementId: string;
     state: EscalationState;
-    creationDate;
-    resolutionDate;
+    creationDate: Moment;
+    resolutionDate: Moment;
     conflictingResults: ConflictingResult[];
 
-    constructor(id: number, result: Result, modelElementId: string, state: EscalationState, creationDate, resolutionDate, conflictingResults: ConflictingResult[]) {
+    constructor(id: number, result: Result, modelElementId: string, state: EscalationState, creationDate: Moment, resolutionDate: Moment, conflictingResults: ConflictingResult[]) {
         this.id = id;
         this.result = result;
         this.modelElementId = modelElementId;

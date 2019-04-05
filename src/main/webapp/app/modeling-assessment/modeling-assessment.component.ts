@@ -37,7 +37,7 @@ export class ModelingAssessmentComponent implements AfterViewInit, OnDestroy, On
         if (this.model) {
             this.initializeApollonEditor();
         } else {
-            this.jhiAlertService.error('arTeMiSApp.apollonDiagram.submission.noModel');
+            this.jhiAlertService.error('modelingAssessment.noModel');
         }
         if (this.highlightedElementIds) {
             this.updateHighlightedElements(this.highlightedElementIds);

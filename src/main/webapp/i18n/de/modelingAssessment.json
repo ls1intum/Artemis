@@ -1,6 +1,7 @@
 {
     "modelingAssessment": {
         "points": "Punkte",
-        "assessor": "Bewertet von: {{firstName}} {{lastName}}"
+        "assessor": "Bewertet von: {{firstName}} {{lastName}}",
+        "noModel": "Kein Modell zum Darstellen gefunden."
     }
 }
