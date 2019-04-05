@@ -32,6 +32,7 @@
                 "noExercises": "No exercises available for the course.",
                 "notReleased": "Not released",
                 "live": "Live",
+                "noDueDate": "No due date",
                 "userNotStartedExercise": "You have not started this exercise yet.",
                 "quizNotStarted": "The quiz hasn't started yet.",
                 "userNotStartedQuiz": "You have not started this quiz yet.",
@@ -64,7 +65,7 @@
                 "dueDate": "Due date:",
                 "categories": "Categories:",
                 "exerciseType": "Exercise Type:",
-                "level": "Level:",
+                "difficulty": "Difficulty:",
                 "exerciseStatus": "Exercise status:",
                 "maxPoints": "Max. points:",
                 "problemStatement": "Problem statement:",
@@ -78,12 +79,12 @@
                 "notParticipated": "Not participated",
                 "yourResult": "Your result:",
                 "recentResults": "Recent results:",
-                "noRatedResult": "You have no rated result.",
-                "otherResults": "Other results:",
+                "noGradedResult": "You have no graded result.",
+                "allResults": "All results:",
                 "hideResults": "Hide results",
                 "showResults": "Show all results",
-                "rated": "Rated",
-                "practice": "Practice"
+                "graded": "Graded",
+                "notGraded": "Not graded"
             }
         }
     }
