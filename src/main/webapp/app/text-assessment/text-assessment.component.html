@@ -56,7 +56,7 @@
             <h3 class="card-title">
                 <fa-icon [icon]="['far', 'list-alt']"></fa-icon>
                 <span> &nbsp; Instructions &nbsp; </span>
-            </h3>
+            </h3> 
         </div>
 
         <div class="card-body">
@@ -87,7 +87,10 @@
 
 <div class="col-12 mt-3" *ngIf="!busy">
     <div *ngIf="invalidError" class="alert alert-danger" role="alert">{{invalidError}}</div>
-    <div *ngIf="!assessments || assessments.length == 0" class="alert alert-secondary" role="alert" jhiTranslate="arTeMiSApp.textAssessment.assessInstruction"></div>
+    <div *ngIf="!assessments || assessments.length == 0" class="alert alert-secondary text-center" role="alert">
+        <p jhiTranslate="arTeMiSApp.textAssessment.assessInstruction">Please highlight the text block you want to assess and click the "Assess" button.</p>
+        <a class="alert-link" jhiTranslate="arTeMiSApp.textAssessment.predefineTextBlocks" (click)="predefineTextBlocks()">Add Text Blocks automatically.</a>
+    </div>
     <div class="row">
         <div *ngFor="let assessment of assessments; let i = index" class="col-4">
             <jhi-text-assessment-detail [(assessment)]="assessments[i]" (assessmentChange)="checkScoreBoundaries()"
