@@ -240,6 +240,7 @@ public class ModelingExerciseResource {
      * @param participationId the participationId for which to find the data for the modeling editor
      * @return the ResponseEntity with json as body
      */
+    // TODO CZ: move to ModelingSubmissionResource?
     @GetMapping("/modeling-editor/{participationId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional(readOnly = true)

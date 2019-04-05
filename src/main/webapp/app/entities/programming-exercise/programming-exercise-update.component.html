@@ -71,6 +71,22 @@
                     </select>
                 </div>
 
+                <div class="form-group-narrow" id="field_problemStatement" name="problemStatement">
+                        <label class="form-control-label" for="field_problemStatement" jhiTranslate="arTeMiSApp.programmingExercise.problemStatement"></label>
+                        <jhi-markdown-editor
+                            [markdown]="programmingExercise.problemStatement"
+                            (markdownChange)="updateProblemStatement($event)"
+                        >
+                            <jhi-programming-exercise-instructions
+                                *ngIf="problemStatementLoaded"
+                                #preview
+                                [showTemplateParticipation]="true"
+                                [participation]="programmingExercise.templateParticipation"
+                                [(exercise)]="programmingExercise"
+                            ></jhi-programming-exercise-instructions>
+                        </jhi-markdown-editor>
+                </div>
+
                 <div class="form-group-narrow">
                     <div class="form-check">
                         <label class="form-check-label" for="field_allowOnlineEditor">

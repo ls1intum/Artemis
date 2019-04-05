@@ -1,9 +1,17 @@
 package de.tum.in.www1.artemis.config;
 
-import io.github.jhipster.config.JHipsterConstants;
-import io.github.jhipster.config.JHipsterProperties;
-import io.github.jhipster.web.filter.CachingHttpHeadersFilter;
-import io.undertow.UndertowOptions;
+import static java.net.URLDecoder.decode;
+
+import java.io.File;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
+import java.util.EnumSet;
+
+import javax.servlet.DispatcherType;
+import javax.servlet.FilterRegistration;
+import javax.servlet.ServletContext;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.web.embedded.undertow.UndertowServletWebServerFactory;
@@ -20,16 +28,10 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
-import javax.servlet.DispatcherType;
-import javax.servlet.FilterRegistration;
-import javax.servlet.ServletContext;
-import java.io.File;
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
-import java.util.EnumSet;
-
-import static java.net.URLDecoder.decode;
+import io.github.jhipster.config.JHipsterConstants;
+import io.github.jhipster.config.JHipsterProperties;
+import io.github.jhipster.web.filter.CachingHttpHeadersFilter;
+import io.undertow.UndertowOptions;
 
 /**
  * Configuration of web application with Servlet 3.0 APIs.
@@ -55,7 +57,7 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
             log.info("Web application configuration, using profiles: {}", (Object[]) env.getActiveProfiles());
         }
         EnumSet<DispatcherType> disps = EnumSet.of(DispatcherType.REQUEST, DispatcherType.FORWARD, DispatcherType.ASYNC);
-//        addLoggingFilter(servletContext, disps);
+        // addLoggingFilter(servletContext, disps);
         if (env.acceptsProfiles(JHipsterConstants.SPRING_PROFILE_PRODUCTION)) {
             initCachingHttpHeadersFilter(servletContext, disps);
         }
@@ -72,17 +74,12 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
         setLocationForStaticAssets(server);
 
         /*
-         * Enable HTTP/2 for Undertow - https://twitter.com/ankinson/status/829256167700492288
-         * HTTP/2 requires HTTPS, so HTTP requests will fallback to HTTP/1.1.
-         * See the JHipsterProperties class and your application-*.yml configuration files
-         * for more information.
+         * Enable HTTP/2 for Undertow - https://twitter.com/ankinson/status/829256167700492288 HTTP/2 requires HTTPS, so HTTP requests will fallback to HTTP/1.1. See the
+         * JHipsterProperties class and your application-*.yml configuration files for more information.
          */
-        if (jHipsterProperties.getHttp().getVersion().equals(JHipsterProperties.Http.Version.V_2_0) &&
-            server instanceof UndertowServletWebServerFactory) {
+        if (jHipsterProperties.getHttp().getVersion().equals(JHipsterProperties.Http.Version.V_2_0) && server instanceof UndertowServletWebServerFactory) {
 
-            ((UndertowServletWebServerFactory) server)
-                .addBuilderCustomizers(builder ->
-                    builder.setServerOption(UndertowOptions.ENABLE_HTTP2, true));
+            ((UndertowServletWebServerFactory) server).addBuilderCustomizers(builder -> builder.setServerOption(UndertowOptions.ENABLE_HTTP2, true));
         }
     }
 
@@ -117,7 +114,8 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
         String fullExecutablePath;
         try {
             fullExecutablePath = decode(this.getClass().getResource("").getPath(), StandardCharsets.UTF_8.name());
-        } catch (UnsupportedEncodingException e) {
+        }
+        catch (UnsupportedEncodingException e) {
             /* try without decoding if this ever happens */
             fullExecutablePath = this.getClass().getResource("").getPath();
         }
@@ -133,12 +131,9 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
     /**
      * Initializes the caching HTTP Headers Filter.
      */
-    private void initCachingHttpHeadersFilter(ServletContext servletContext,
-                                              EnumSet<DispatcherType> disps) {
+    private void initCachingHttpHeadersFilter(ServletContext servletContext, EnumSet<DispatcherType> disps) {
         log.debug("Registering Caching HTTP Headers Filter");
-        FilterRegistration.Dynamic cachingHttpHeadersFilter =
-            servletContext.addFilter("cachingHttpHeadersFilter",
-                new CachingHttpHeadersFilter(jHipsterProperties));
+        FilterRegistration.Dynamic cachingHttpHeadersFilter = servletContext.addFilter("cachingHttpHeadersFilter", new CachingHttpHeadersFilter(jHipsterProperties));
 
         cachingHttpHeadersFilter.addMappingForUrlPatterns(disps, true, "/i18n/*");
         cachingHttpHeadersFilter.addMappingForUrlPatterns(disps, true, "/content/*");
@@ -146,14 +141,14 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
         cachingHttpHeadersFilter.setAsyncSupported(true);
     }
 
-//    private void addLoggingFilter(ServletContext servletContext, EnumSet<DispatcherType> disps) {
-//        log.debug("Registering Logging Filter");
-//        FilterRegistration.Dynamic loggingFilter = servletContext.addFilter("httpLoggingFilter",
-//            new HttpLoggingFilter());
-//
-//        loggingFilter.addMappingForUrlPatterns(disps, true, "/*");
-//        loggingFilter.setAsyncSupported(true);
-//    }
+    // private void addLoggingFilter(ServletContext servletContext, EnumSet<DispatcherType> disps) {
+    // log.debug("Registering Logging Filter");
+    // FilterRegistration.Dynamic loggingFilter = servletContext.addFilter("httpLoggingFilter",
+    // new HttpLoggingFilter());
+    //
+    // loggingFilter.addMappingForUrlPatterns(disps, true, "/*");
+    // loggingFilter.setAsyncSupported(true);
+    // }
 
     @Bean
     public CorsFilter corsFilter() {

@@ -29,9 +29,9 @@
 
         <div class="col-12">
             <p class="mb-3">
-                <strong>{{"arTeMiSApp.exampleSubmission.problemStatement" | translate}}:</strong> {{ exercise.problemStatement }}<br>
-                <ng-container *ngIf="exercise.sampleSolution">
-                    <strong>{{"arTeMiSApp.exampleSubmission.sampleSolution" | translate}}:</strong> {{ exercise.sampleSolution }}
+                <strong>{{"arTeMiSApp.exampleSubmission.problemStatement" | translate}}:</strong> <span [innerHTML]="formattedProblemStatement"></span><br>
+                <ng-container *ngIf="formattedSampleSolution">
+                    <strong>{{"arTeMiSApp.exampleSubmission.sampleSolution" | translate}}:</strong> <span [innerHTML]="formattedSampleSolution"></span>
                 </ng-container>
             </p>
         </div>

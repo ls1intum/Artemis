@@ -66,6 +66,7 @@
             },
             "account": {
                 "main": "Zugang",
+                "profile": "Profil",
                 "settings": "Einstellungen",
                 "password": "Passwort",
                 "sessions": "Sitzungen",
@@ -156,7 +157,7 @@
             "delete": "Löschen",
             "dashboard": "Dashboard",
             "edit": "Bearbeiten",
-            "editLink": "Link Bearbeiten",
+            "editLink": "Link bearbeiten",
             "open": "Öffnen",
             "save": "Speichern",
             "saving": "Speichern...",

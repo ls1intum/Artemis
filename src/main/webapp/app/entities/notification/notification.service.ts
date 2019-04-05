@@ -22,7 +22,7 @@ export class NotificationService {
     notificationObserver: BehaviorSubject<Notification>;
     subscribedTopics: string[] = [];
 
-    constructor(private jhiWebsocketService: JhiWebsocketService, private router: Router, private http: HttpClient, private accountService: AccountService) { }
+    constructor(private jhiWebsocketService: JhiWebsocketService, private router: Router, private http: HttpClient, private accountService: AccountService) {}
 
     create(notification: Notification): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(notification);

@@ -41,8 +41,9 @@
                 "link": "Link",
                 "orderedList": "Geordnete List",
                 "imageUpload": "Anhang",
-                "code": "Code",
-                "style": "Überschriften"
+                "style": "Überschriften",
+                "code": "code",
+                "color": "Farbe"
             }
         }
     }

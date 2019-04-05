@@ -60,23 +60,23 @@
         </div>
 
         <div class="card-body">
-            <div *ngIf="exercise.problemStatement">
+            <div *ngIf="formattedProblemStatement">
                 <h4 jhiTranslate="arTeMiSApp.exercise.problemStatement">Problem statement</h4>
-                <p>{{exercise.problemStatement}}</p>
+                <p [innerHTML]="formattedProblemStatement"></p>
 
                 <hr>
             </div>
 
-            <div *ngIf="exercise.sampleSolution">
+            <div *ngIf="formattedSampleSolution">
                 <h4 jhiTranslate="arTeMiSApp.exercise.sampleSolution">Sample solution</h4>
-                <p>{{exercise.sampleSolution}}</p>
+                <p [innerHTML]="formattedSampleSolution"></p>
 
                 <hr>
             </div>
 
-            <div *ngIf="exercise.gradingInstructions">
+            <div *ngIf="formattedGradingInstructions">
                 <h4 jhiTranslate="arTeMiSApp.exercise.gradingInstructions">Grading instructions</h4>
-                <p>{{exercise.gradingInstructions}}</p>
+                <p [innerHTML]="formattedGradingInstructions"></p>
             </div>
         </div>
     </div>
@@ -87,7 +87,10 @@
 
 <div class="col-12 mt-3" *ngIf="!busy">
     <div *ngIf="invalidError" class="alert alert-danger" role="alert">{{invalidError}}</div>
-    <div *ngIf="!assessments || assessments.length == 0" class="alert alert-secondary" role="alert" jhiTranslate="arTeMiSApp.textAssessment.assessInstruction"></div>
+    <div *ngIf="!assessments || assessments.length == 0" class="alert alert-secondary text-center" role="alert">
+        <p jhiTranslate="arTeMiSApp.textAssessment.assessInstruction">Please highlight the text block you want to assess and click the "Assess" button.</p>
+        <a class="alert-link" jhiTranslate="arTeMiSApp.textAssessment.predefineTextBlocks" (click)="predefineTextBlocks()">Add Text Blocks automatically.</a>
+    </div>
     <div class="row">
         <div *ngFor="let assessment of assessments; let i = index" class="col-4">
             <jhi-text-assessment-detail [(assessment)]="assessments[i]" (assessmentChange)="checkScoreBoundaries()"

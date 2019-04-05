@@ -7,6 +7,7 @@
                 [buttonLabel]="'arTeMiSApp.exerciseActions.practice' | translate"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
+                [hideLabelMobile]="false"
                 *ngIf="isPracticeModeAvailable()"
                 [routerLink]="['/quiz', exercise.id, 'practice']"></button>
         <button jhi-exercise-action-button
@@ -14,6 +15,7 @@
                 [buttonLabel]="'arTeMiSApp.exerciseActions.openQuiz' | translate"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
+                [hideLabelMobile]="false"
                 *ngIf="participationStatus() === QUIZ_NOT_STARTED"
                 (click)="startExercise()"></button>
         <button jhi-exercise-action-button
@@ -21,6 +23,7 @@
                 [buttonLabel]="'arTeMiSApp.exerciseActions.startQuiz' | translate"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
+                [hideLabelMobile]="false"
                 *ngIf="participationStatus() === QUIZ_UNINITIALIZED"
                 (click)="startExercise()"></button>
         <button jhi-exercise-action-button
@@ -29,6 +32,7 @@
                 *ngIf="participationStatus() === QUIZ_ACTIVE"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
+                [hideLabelMobile]="false"
                 (click)="startExercise()"></button>
     </div>
     <!-- ACTIONS END -->
@@ -72,6 +76,7 @@
                 [buttonLabel]="'arTeMiSApp.exerciseActions.startExercise' | translate"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
+                [hideLabelMobile]="false"
                 *ngIf="participationStatus() === UNINITIALIZED"
                 (click)="startExercise()"></button>
         <button jhi-exercise-action-button
@@ -79,6 +84,7 @@
                 [buttonLabel]="'arTeMiSApp.exerciseActions.resumeExercise' | translate"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
+                [hideLabelMobile]="false"
                 *ngIf="participationStatus() === INACTIVE"
                 (click)="resumeExercise()"></button>
         <button jhi-exercise-action-button
@@ -86,8 +92,9 @@
                 [buttonLabel]="'arTeMiSApp.exerciseActions.openModelingEditor' | translate"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
+                [hideLabelMobile]="false"
                 *ngIf="exercise.participations && exercise.participations.length > 0 && exercise.participations[0].initializationState === 'INITIALIZED'"
-                routerLink="/modeling-editor/{{exercise.participations[0].id}}"></button>
+                routerLink="/modeling-submission/{{exercise.participations[0].id}}"></button>
     </div>
     <!-- ACTION END -->
     <!-- INFORMATION START -->
@@ -100,7 +107,7 @@
                     [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
                     *ngIf="exercise.participations && exercise.participations.length > 0 && exercise.participations[0].initializationState === 'FINISHED'"
-                    routerLink="/modeling-editor/{{exercise.participations[0].id}}"></button>
+                    routerLink="/modeling-submission/{{exercise.participations[0].id}}"></button>
         </div>
     </div>
     <!-- INFORMATION END -->
@@ -117,6 +124,7 @@
                 [buttonLabel]="'arTeMiSApp.exerciseActions.startExercise' | translate"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
+                [hideLabelMobile]="false"
                 *ngIf="participationStatus() === UNINITIALIZED"
                 (click)="startExercise()"></button>
         <button jhi-exercise-action-button
@@ -124,6 +132,7 @@
                 [buttonLabel]="'arTeMiSApp.exerciseActions.openCodeEditor' | translate"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
+                [hideLabelMobile]="false"
                 *ngIf="isOnlineEditorAllowed() && exercise.participations && exercise.participations.length > 0"
                 routerLink="/editor/{{exercise.participations[0].id}}"></button>
         <button jhi-exercise-action-button
@@ -131,6 +140,7 @@
                 [buttonLabel]="'arTeMiSApp.exerciseActions.cloneRepository' | translate"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
+                [hideLabelMobile]="false"
                 placement="right"
                 container="body"
                 *ngIf="exercise.participations && exercise.participations.length > 0"
@@ -158,6 +168,7 @@
                 [buttonLabel]="'arTeMiSApp.exerciseActions.goToBuildPlan' | translate"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
+                [hideLabelMobile]="false"
                 *ngIf="publishBuildPlanUrl() && exercise.participations && exercise.participations.length > 0"
                 routerLink="/editor/{{exercise.participations[0].id}}"></button>
     </div>
@@ -175,6 +186,7 @@
                 [buttonLabel]="'arTeMiSApp.exerciseActions.startExercise' | translate"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
+                [hideLabelMobile]="false"
                 *ngIf="participationStatus() === UNINITIALIZED"
                 (click)="startExercise()"></button>
         <button jhi-exercise-action-button
@@ -194,6 +206,7 @@
                 outlined="true"
                 [buttonLoading]="exercise.loading"
                 [smallButton]="smallButtons"
+                [hideLabelMobile]="false"
                 *ngIf="participationStatus() === TEXT_EXERCISE && exercise.participations && exercise.participations.length > 0"
                 routerLink="/text/{{exercise.participations[0].id}}"></button>
     </div>
@@ -212,6 +225,7 @@
                 [buttonLoading]="exercise.loading"
                 *ngIf="participationStatus() === UNINITIALIZED"
                 [smallButton]="smallButtons"
+                [hideLabelMobile]="false"
                 (click)="startExercise()"></button>
         <button jhi-exercise-action-button
                 buttonIcon="play-circle"
@@ -219,6 +233,7 @@
                 [buttonLoading]="exercise.loading"
                 *ngIf="participationStatus() === INACTIVE && exercise.participations && exercise.participations.length > 0"
                 [smallButton]="smallButtons"
+                [hideLabelMobile]="false"
                 (click)="resumeExercise()"></button>
     </div>
     <!-- ACTIONS END-->

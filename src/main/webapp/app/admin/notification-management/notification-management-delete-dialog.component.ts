@@ -5,7 +5,7 @@ import { SystemNotification, SystemNotificationService } from 'app/entities/syst
 
 @Component({
     selector: 'jhi-notification-mgmt-delete-dialog',
-    templateUrl: './notification-management-delete-dialog.component.html'
+    templateUrl: './notification-management-delete-dialog.component.html',
 })
 export class NotificationMgmtDeleteDialogComponent {
     notification: SystemNotification;
@@ -20,7 +20,7 @@ export class NotificationMgmtDeleteDialogComponent {
         this.systemNotificationService.delete(id).subscribe(response => {
             this.eventManager.broadcast({
                 name: 'notificationListModification',
-                content: 'Deleted a system notification'
+                content: 'Deleted a system notification',
             });
             this.activeModal.dismiss(true);
         });

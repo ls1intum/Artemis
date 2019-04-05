@@ -1,7 +1,14 @@
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, Input, OnChanges, EventEmitter, Output } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { DomSanitizer } from '@angular/platform-browser';
+
+// Status that is emitted to the client to describe the loading status of the picture
+export const enum QuizEmitStatus {
+    SUCCESS = 'success',
+    ERROR = 'error',
+    LOADING = 'loading',
+}
 
 /**
  * Solution taken from: https://stackblitz.com/edit/secure-image-loads?file=app%2Fsecured-image.component.ts
@@ -13,7 +20,9 @@ import { DomSanitizer } from '@angular/platform-browser';
  */
 @Component({
     selector: 'jhi-secured-image',
-    template: `<img [attr.src]="dataUrl$ | async"/>`
+    template: `
+        <img [attr.src]="dataUrl$ | async" />
+    `,
 })
 export class SecuredImageComponent implements OnChanges {
     // This part just creates an rxjs stream from the src
@@ -22,6 +31,10 @@ export class SecuredImageComponent implements OnChanges {
     @Input()
     private src: string;
     private src$ = new BehaviorSubject(this.src);
+    private retryCounter = 0;
+
+    @Output()
+    endLoadingProcess = new EventEmitter<QuizEmitStatus>();
 
     // this stream will contain the actual url that our img tag will load
     // everytime the src changes, the previous call would be canceled and the
@@ -35,9 +48,28 @@ export class SecuredImageComponent implements OnChanges {
     // we need HttpClient to load the image and DomSanitizer to trust the url
     constructor(private httpClient: HttpClient, private domSanitizer: DomSanitizer) {}
 
+    // triggers the reload of the picture when the user clicks on a button
+    retryLoadImage() {
+        this.retryCounter = 0;
+        this.endLoadingProcess.emit(QuizEmitStatus.LOADING);
+        this.ngOnChanges();
+    }
+
     private loadImage(url: string): Observable<any> {
         return this.httpClient
             .get(url, { responseType: 'blob' })
-            .map(e => this.domSanitizer.bypassSecurityTrustUrl(URL.createObjectURL(e)));
+            .map(e => {
+                this.endLoadingProcess.emit(QuizEmitStatus.SUCCESS);
+                return this.domSanitizer.bypassSecurityTrustUrl(URL.createObjectURL(e));
+            })
+            .catch(error => {
+                if (this.retryCounter === 0) {
+                    this.retryCounter++;
+                    return this.loadImage(url);
+                } else {
+                    this.endLoadingProcess.emit(QuizEmitStatus.ERROR);
+                }
+                return error;
+            });
     }
 }

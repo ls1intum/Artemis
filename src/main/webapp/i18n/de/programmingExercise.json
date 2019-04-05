@@ -26,6 +26,7 @@
             "repositories": "Repositories",
             "buildplans": "Build Pläne",
             "publishBuildPlanUrl": "Build Plan veröffentlichen",
+            "problemStatement": "Problemstellung",
             "allowOnlineEditor": "Online Editor erlauben",
             "programmingLanguage": "Programmiersprache",
             "packageName": "Package Name",

@@ -10,10 +10,11 @@ import { Participation, ParticipationService } from 'app/entities/participation'
 import { TextEditorService } from 'app/text-editor/text-editor.service';
 import * as moment from 'moment';
 import { HighlightColors } from 'app/text-shared/highlight-colors';
+import { ArtemisMarkdown } from 'app/components/util/markdown.service';
 
 @Component({
     templateUrl: './text-editor.component.html',
-    providers: [ParticipationService]
+    providers: [ParticipationService],
 })
 export class TextEditorComponent implements OnInit, OnDestroy {
     textExercise: TextExercise;
@@ -25,6 +26,7 @@ export class TextEditorComponent implements OnInit, OnDestroy {
     answer: string;
     isExampleSubmission = false;
     showComplaintForm = false;
+    formattedProblemStatement: string;
 
     public getColorForIndex = HighlightColors.forIndex;
     private submissionConfirmationText: string;
@@ -36,7 +38,8 @@ export class TextEditorComponent implements OnInit, OnDestroy {
         private textSubmissionService: TextSubmissionService,
         private textService: TextEditorService,
         private jhiAlertService: JhiAlertService,
-        translateService: TranslateService
+        private artemisMarkdown: ArtemisMarkdown,
+        translateService: TranslateService,
     ) {
         this.isSaving = false;
         translateService.get('arTeMiSApp.textExercise.confirmSubmission').subscribe(text => (this.submissionConfirmationText = text));
@@ -53,6 +56,8 @@ export class TextEditorComponent implements OnInit, OnDestroy {
                 this.participation = data;
                 this.textExercise = this.participation.exercise as TextExercise;
 
+                this.formattedProblemStatement = this.artemisMarkdown.htmlForMarkdown(this.textExercise.problemStatement);
+
                 if (data.submissions && data.submissions.length > 0) {
                     this.submission = data.submissions[0] as TextSubmission;
                     if (this.submission && data.results) {
@@ -64,12 +69,9 @@ export class TextEditorComponent implements OnInit, OnDestroy {
                     }
                 }
 
-                this.isActive =
-                    this.textExercise.dueDate === undefined ||
-                    this.textExercise.dueDate === null ||
-                    new Date() <= moment(this.textExercise.dueDate).toDate();
+                this.isActive = this.textExercise.dueDate === undefined || this.textExercise.dueDate === null || new Date() <= moment(this.textExercise.dueDate).toDate();
             },
-            (error: HttpErrorResponse) => this.onError(error)
+            (error: HttpErrorResponse) => this.onError(error),
         );
     }
 
@@ -101,7 +103,7 @@ export class TextEditorComponent implements OnInit, OnDestroy {
             e => {
                 this.jhiAlertService.error('arTeMiSApp.textExercise.error');
                 this.isSaving = false;
-            }
+            },
         );
     }
 
@@ -130,7 +132,7 @@ export class TextEditorComponent implements OnInit, OnDestroy {
                 err => {
                     this.jhiAlertService.error('arTeMiSApp.modelingEditor.error');
                     this.submission.submitted = false;
-                }
+                },
             );
         }
     }

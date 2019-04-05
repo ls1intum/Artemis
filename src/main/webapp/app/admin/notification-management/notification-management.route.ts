@@ -25,35 +25,35 @@ export const notificationMgmtRoute: Routes = [
         path: 'notification-management',
         component: NotificationMgmtComponent,
         resolve: {
-            pagingParams: JhiResolvePagingParams
+            pagingParams: JhiResolvePagingParams,
         },
         data: {
             pageTitle: 'notificationManagement.home.title',
-            defaultSort: 'id,asc'
-        }
+            defaultSort: 'id,asc',
+        },
     },
     {
         path: 'notification-management/:id/view',
         component: NotificationMgmtDetailComponent,
         resolve: {
-            notification: NotificationMgmtResolve
+            notification: NotificationMgmtResolve,
         },
         data: {
-            pageTitle: 'notificationManagement.home.title'
-        }
+            pageTitle: 'notificationManagement.home.title',
+        },
     },
     {
         path: 'notification-management/new',
         component: NotificationMgmtUpdateComponent,
         resolve: {
-            notification: NotificationMgmtResolve
-        }
+            notification: NotificationMgmtResolve,
+        },
     },
     {
         path: 'notification-management/:id/edit',
         component: NotificationMgmtUpdateComponent,
         resolve: {
-            notification: NotificationMgmtResolve
-        }
-    }
+            notification: NotificationMgmtResolve,
+        },
+    },
 ];

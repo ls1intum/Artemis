@@ -5,7 +5,8 @@
             <div class="tool-bar row pt-1">
                 <div class="col-xs-6" style="margin-left: 14px">
                     <ng-container *ngFor="let command of defaultCommands">
-                        <button class="btn btn-outline-secondary mr-1"
+                        <button type="button"
+                                class="btn btn-outline-secondary mr-1"
                                 (click)="command.execute()"
                                 [ngbTooltip]= "(command.buttonTranslationString | translate)">
                             <fa-icon [icon]="command.buttonIcon" ></fa-icon>
@@ -18,16 +19,18 @@
                         <ng-container *ngFor="let command of headerCommands" ><button class="dropdown-item" (click)="command.execute()">{{command.buttonTranslationString | translate}}</button></ng-container>
                     </div>
                 </div>
+                <div class="btn-group col-xs-6">
+                    <div class="color-preview form-control btn btn-outline-secondary mr-1" [ngStyle]="{borderColor: selectedColor}" (click)="openColorSelector($event)">Color</div>
+                    <jhi-color-selector [tagColors]="markdownColors" (selectedColor)="onSelectedColor($event)"></jhi-color-selector>
+                </div>
             </div>
-            <div class="tool-bar" *ngIf="domainCommands && domainCommands.length != 0" style="margin-top: 5px" >
-                <ng-container *ngFor="let command of domainCommands">
-                    <div class="btn btn-group-sm btn-outline-secondary mr-1" (click)="command.execute()">
-                        {{command.buttonTranslationString | translate}}
+    <div class="tool-bar" *ngIf="domainCommands && domainCommands.length != 0" style="margin-top: 5px" >
+        <ng-container *ngFor="let command of domainCommands">
+            <div class="btn btn-group-sm btn-outline-secondary mr-1" (click)="command.execute()">
+                {{command.buttonTranslationString | translate}}
                     </div>
                 </ng-container>
             </div>
-
-
             <ace-editor #aceEditor [mode]="aceEditorOptions.mode"
                         [autoUpdateContent]="aceEditorOptions.autoUpdateContent" [(text)]="markdown"
                         (textChange)="markdownChange.emit($event)"
@@ -40,7 +43,7 @@
     <ngb-tab title="{{ 'entity.action.preview' | translate }}" id="editor_preview" *ngIf="showPreviewButton">
         <ng-template ngbTabContent>
             <ng-content></ng-content>
-            <div class="pt-1" *ngIf="showDefaultPreview" [innerHTML]="previewTextAsHtml">
+            <div class="pt-1 background-editor-high markdown-preview" *ngIf="showDefaultPreview" [innerHTML]="previewTextAsHtml">
                 Preview
             </div>
         </ng-template>

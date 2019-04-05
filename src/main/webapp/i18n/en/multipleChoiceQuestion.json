@@ -41,6 +41,7 @@
                 "orderedList": "Ordered List",
                 "imageUpload": "Attachment",
                 "code": "Code",
+                "color": "Color",
                 "style": "Style"
             }
         }

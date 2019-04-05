@@ -55,6 +55,10 @@ idea {
 
 spotless {
     java {
+        target project.fileTree(project.rootDir) {
+            include '**/*.java'
+            exclude 'src/main/java/de/tum/in/www1/artemis/security/SecurityConfiguration.java'
+        }
         importOrderFile 'artemis-spotless.importorder'
         removeUnusedImports()
         eclipse().configFile 'artemis-spotless-style.xml'
