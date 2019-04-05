@@ -269,6 +269,11 @@ export class ModelingAssessmentEditorComponent implements OnInit, OnDestroy {
         }
     }
 
+    onShowConflictResolution() {
+        this.modelingAssessmentService.addLocalConflicts(this.submission.id, this.conflicts);
+        this.router.navigate(['modeling-exercise', this.modelingExercise.id, 'submissions', this.submission.id, 'assessment', 'conflict']);
+    }
+
     onFeedbackChanged(feedback: Feedback[]) {
         this.referencedFeedback = feedback;
         this.validateFeedback();

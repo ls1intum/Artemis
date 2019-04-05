@@ -5,7 +5,8 @@
         "assessmentLockedCurrentUser": "You have the lock for this assessment",
         "button": {
             "overrideAssessment": "Override Assessment",
-            "nextSubmission": "Assess Next Submission"
+            "nextSubmission": "Assess Next Submission",
+            "resolveConflict": "Resolve Conflicts"
         },
         "messages": {
             "lock": "You do now have the lock on this submission. Only you can assess this model. Please assess this model before opening other submissions.",
